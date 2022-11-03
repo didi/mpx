@@ -175,7 +175,6 @@
     display block
     margin-left auto
     margin-right auto
-    margin-bottom 10px
     box-sizing border-box
     font-size 18px
     text-align center

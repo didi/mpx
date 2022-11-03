@@ -8,6 +8,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "wx-server-sdk": "0.0.8"
+    "wx-server-sdk": "2.5.3"
   }
 }

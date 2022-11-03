@@ -33,16 +33,16 @@ module.exports = {
         return noIcon;
     },
     getIcoClass : function( status,ico ){
-        var class = '';
+        var strClass = '';
         if( status === 'error' ){
-            class = 'close';
+            strClass = 'close';
         }else{
-            class = 'right';
+            strClass = 'right';
         }
         if( ico !== '' ){
-            class = ico;
+            strClass = ico;
         }
-        return class;
+        return strClass;
     },
     getItemStyle : function(len,direction){
         if( direction === 'horizontal' ){

@@ -1,10 +1,9 @@
 import { mergeInjectedMixins } from './injectMixins'
 import mergeOptions from './mergeOptions'
 import { getConvertMode } from '../convertor/getConvertMode'
-import { findItem } from '../helper/utils'
-import { warn } from '../helper/log'
+import { warn, findItem } from '@mpxjs/utils'
 
-export default function transferOptions (options, type, builtInMixins = []) {
+export default function transferOptions (options, type, needConvert = true) {
   let currentInject
   if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
     currentInject = global.currentInject
@@ -17,15 +16,22 @@ export default function transferOptions (options, type, builtInMixins = []) {
   }
   if (currentInject && currentInject.injectComputed) {
     // 编译计算属性注入
-    options.computed = Object.assign({}, options.computed, currentInject.injectComputed)
+    options.computed = Object.assign({}, currentInject.injectComputed, options.computed)
+  }
+  if (currentInject && currentInject.injectOptions) {
+    // 编译option注入,优先微信中的单独配置
+    options.options = Object.assign({}, currentInject.injectOptions, options.options)
+  }
+  if (currentInject && currentInject.pageEvents) {
+    options.mixins = options.mixins || []
+    options.mixins.unshift(currentInject.pageEvents)
   }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
-  const rawOptions = mergeOptions(options, type)
-  // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
-  rawOptions.mixins = builtInMixins
+  const rawOptions = mergeOptions(options, type, needConvert)
+
   if (currentInject && currentInject.propKeys) {
-    const computedKeys = Object.keys(options.computed || {})
+    const computedKeys = Object.keys(rawOptions.computed || {})
     // 头条和百度小程序由于props传递为异步操作，通过props向子组件传递computed数据时，子组件无法在初始时(created/attached)获取到computed数据，如需进一步处理数据建议通过watch获取
     currentInject.propKeys.forEach(key => {
       if (findItem(computedKeys, key)) {

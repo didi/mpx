@@ -17,9 +17,9 @@
   import mpx, { createPage } from '@mpxjs/core'
 
   const languageMap = {
-    'zh_CN': 'zh-CN',
-    'zh': 'zh-CN',
-    'en_US': 'en-US'
+    zh_CN: 'zh-CN',
+    zh: 'zh-CN',
+    en_US: 'en-US'
   }
 
   createPage({

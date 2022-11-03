@@ -52,8 +52,8 @@ module.exports = function ({ print }) {
         test: /^(change|animationfinish)$/,
         ali (eventName) {
           const eventMap = {
-            'change': 'change',
-            'animationfinish': 'animationEnd'
+            change: 'change',
+            animationfinish: 'animationEnd'
           }
           return eventMap[eventName]
         }

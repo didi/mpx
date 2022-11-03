@@ -1,5 +1,3 @@
-const postcss = require('postcss')
-
 /**
  * 按平台条件编译CSS，用法如下：
  * @type {postcss.Plugin<any>}
@@ -44,7 +42,7 @@ const postcss = require('postcss')
 //     @mpx-endif
 //     */
 // `
-module.exports = postcss.plugin('conditional-strip', (options = {}) => {
+module.exports = (options = {}) => {
   const { defs } = options
 
   const defKeys = Object.keys(defs)
@@ -91,71 +89,76 @@ module.exports = postcss.plugin('conditional-strip', (options = {}) => {
     return parseCondition(/@mpx-elif[^(]*?\(([\s\S]*)\)/, content)
   }
 
-  return function (root, result) {
-    const condsStacks = []
-    const currentConds = []
-    let curDepth = -1
+  return {
+    postcssPlugin: 'conditional-strip',
+    Once (root) {
+      const condsStacks = []
+      const currentConds = []
+      let curDepth = -1
 
-    root.walk(node => {
-      let isKeyword = false
-      if (node.type === 'comment') {
-        const { text } = node
-        if (isIfStart(text)) {
-          isKeyword = true
-          const cond = parseIf(text)
-          curDepth++
-          const parentCond = currentConds[curDepth - 1]
-          if (parentCond && parentCond.shouldRemove) {
-            cond.shouldRemove = true
-          }
-          cond.children.push(node)
-          condsStacks.push({
-            if: cond
-          })
-          currentConds[curDepth] = cond
-        } else if (isElseIf(text)) {
-          isKeyword = true
-          const cond = parseElseIf(text)
-          const parentCond = currentConds[curDepth - 1]
-          if (parentCond && parentCond.shouldRemove) {
-            cond.shouldRemove = true
-          }
-          cond.children.push(node)
-          condsStacks[curDepth].elif = cond
-          currentConds[curDepth] = cond
-        } else if (isElse(text)) {
-          isKeyword = true
-          const curConds = condsStacks[curDepth]
-          const cond = {
-            shouldRemove: !(curConds.if.shouldRemove && (!curConds.elif || curConds.elif.shouldRemove)),
-            children: [node]
-          }
-          const parentCond = currentConds[curDepth - 1]
-          if (parentCond && parentCond.shouldRemove) {
-            cond.shouldRemove = true
-          }
-          condsStacks[curDepth].else = cond
-          currentConds[curDepth] = cond
-        } else if (isEndIf(text)) {
-          isKeyword = true
-          const curConds = condsStacks.pop()
-          Object.keys(curConds).forEach(k => {
-            curConds[k].children.forEach(node => {
-              node.remove()
+      root.walk(node => {
+        let isKeyword = false
+        if (node.type === 'comment') {
+          const { text } = node
+          if (isIfStart(text)) {
+            isKeyword = true
+            const cond = parseIf(text)
+            curDepth++
+            const parentCond = currentConds[curDepth - 1]
+            if (parentCond && parentCond.shouldRemove) {
+              cond.shouldRemove = true
+            }
+            cond.children.push(node)
+            condsStacks.push({
+              if: cond
             })
-          })
-          currentConds.pop()
-          curDepth--
-          node.remove()
+            currentConds[curDepth] = cond
+          } else if (isElseIf(text)) {
+            isKeyword = true
+            const cond = parseElseIf(text)
+            const parentCond = currentConds[curDepth - 1]
+            if (parentCond && parentCond.shouldRemove) {
+              cond.shouldRemove = true
+            }
+            cond.children.push(node)
+            condsStacks[curDepth].elif = cond
+            currentConds[curDepth] = cond
+          } else if (isElse(text)) {
+            isKeyword = true
+            const curConds = condsStacks[curDepth]
+            const cond = {
+              shouldRemove: !(curConds.if.shouldRemove && (!curConds.elif || curConds.elif.shouldRemove)),
+              children: [node]
+            }
+            const parentCond = currentConds[curDepth - 1]
+            if (parentCond && parentCond.shouldRemove) {
+              cond.shouldRemove = true
+            }
+            condsStacks[curDepth].else = cond
+            currentConds[curDepth] = cond
+          } else if (isEndIf(text)) {
+            isKeyword = true
+            const curConds = condsStacks.pop()
+            Object.keys(curConds).forEach(k => {
+              curConds[k].children.forEach(node => {
+                node.remove()
+              })
+            })
+            currentConds.pop()
+            curDepth--
+            node.remove()
+          }
         }
-      }
 
-      if (!isKeyword) {
-        const curCond = currentConds[curDepth]
-        if (curCond && curCond.shouldRemove) {
-          curCond.children.push(node)
+        if (!isKeyword) {
+          const curCond = currentConds[curDepth]
+          if (curCond && curCond.shouldRemove) {
+            curCond.children.push(node)
+          }
         }
-      }
-    })
+      })
+    }
   }
-})
+}
+
+module.exports.postcss = true

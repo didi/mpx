@@ -1,0 +1,8 @@
+{
+  "publicComponents": {
+    "list": "./components/list"
+  },
+  "pages": {
+    "plugin-index": "./pages/index"
+  }
+}

@@ -2,7 +2,8 @@
 
 ## CSS 预编译
 
-Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器。Mpx 会根据指定的 CSS 预处理器类型，将其编译为浏览器可识别的 CSS 标准代码。
+Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器，此外需要在对应的 webpack 配置文件中
+加入对应的 loader 配置
 
 ```html
 <!-- 使用 stylus -->
@@ -15,6 +16,17 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
       background-color #f40
       color #fff
 </style>
+
+// getRules 配置文件
+rules: [
+    {
+        test: /\.styl(us)?$/,
+        use: [
+            MpxWebpackPlugin.wxssLoader(),
+            'stylus-loader'
+        ]
+    }
+]
 ```
 ```html
 <!-- 使用 sass  -->
@@ -29,6 +41,17 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
     }
   }
 </style>
+
+// getRules 配置文件
+rules: [
+    {
+        test: /\.scss$/,
+        use: [
+            'css-loader',
+            'sass-loader'
+        ]
+    }
+]
 ```
 ```html
 <!-- 使用 less -->
@@ -46,6 +69,17 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
     }
   }
 </style>
+
+// getRules 配置文件
+rules: [
+    {
+        test: /\.less$/,
+        use: [
+            'css-loader',
+            'less-loader'
+        ]
+    }
+]
 
 ```
 

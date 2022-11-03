@@ -3,8 +3,8 @@
   Author Tobias Koppers @sokra
   Modified by @hiyuki
 */
-var loaderUtils = require('loader-utils')
-var path = require('path')
+const loaderUtils = require('loader-utils')
+const path = require('path')
 
 module.exports = function getLocalIdent (loaderContext, localIdentName, localName, options) {
   if (!options.context) {
@@ -16,9 +16,10 @@ module.exports = function getLocalIdent (loaderContext, localIdentName, localNam
       options.context = loaderContext.context
     }
   }
-  var request = path.relative(options.context, loaderContext.resourcePath)
+  const request = path.relative(options.context, loaderContext.resourcePath)
   options.content = options.hashPrefix + request + '+' + localName
   localIdentName = localIdentName.replace(/\[local\]/gi, localName)
-  var hash = loaderUtils.interpolateName(loaderContext, localIdentName, options)
+  const hash = loaderUtils.interpolateName(loaderContext, localIdentName, options)
+  /* eslint-disable prefer-regex-literals */
   return hash.replace(new RegExp('[^a-zA-Z0-9\\-_\u00A0-\uFFFF]', 'g'), '-').replace(/^((-?[0-9])|--)/, '_$1')
 }

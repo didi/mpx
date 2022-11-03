@@ -1,6 +1,7 @@
+const { userConf } = require('./config/index')
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
+  parser: userConf.babel7Support ? '@babel/eslint-parser' : 'babel-eslint',
   parserOptions: {
     sourceType: 'module'
   },
@@ -9,11 +10,15 @@ module.exports = {
     "html/html-extensions": [".html", ".mpx"],  // consider .html and .mpx files as HTML
   },
   plugins: [
-    'html'
+    'html',
+    'jsx'
   ],
   'globals': {
     'wx': true,
     'getApp': true,
-    'App': true
+    'App': true,
+    'Page': true,
+    'Component': true,
+    'getCurrentPages': true
   }
 }

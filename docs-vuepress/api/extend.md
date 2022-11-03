@@ -1,3 +1,6 @@
+---
+sidebarDepth: 2
+---
 # 周边拓展
 
 ## mpx-fetch
@@ -40,6 +43,16 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
             类型：`Boolean`
         
             设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
+        - **usePre**
+            类型：`Boolean`
+            预请求开关，若设置为 true，则两次请求间隔在有效期内且请求参数和请求方式对比一致的情况下，会返回上一次的请求结果
+        - **cacheInvalidationTime**
+            类型： `number`
+            预请求缓存有效时长，单位 ms，默认为 5000ms。当两次请求时间间隔超过设置时长后再发起二次请求时，上一次的请求缓存会失效然后重新发起请求
+        - **ignorePreParamKeys**
+            类型： `array` | `string`
+            在判断缓存请求是否可用对比前后两次请求参数时，默认对比的是 options 传入的所有参数（包括 params 和 data ）。但在具体业务场景下某些参数不一致时的缓存结果依旧可使用（比如参数中带有时间戳），所以提供 ignorePreParamKeys 来设置对比参数过程中可忽略的参数的 key，支持字符串数组和字符串（字符串传多个 key 时使用英文逗号分隔）类型。
+            配置后在进行参数对比时，不会对比在 ignorePreParamKeys 设置的参数。
 
 - **示例：**
 
@@ -49,15 +62,18 @@ import mpxFetch from '@mpxjs/fetch'
 mpx.use(mpxFetch)
 // 第一种访问形式
 mpx.xfetch.fetch({
-	url: 'http://xxx.com',
-	method: 'POST',
-	params: {
-		age: 10
-	},
-	data: {
-		name: 'test'
-	},
-	emulateJSON: true 
+    url: 'http://xxx.com',
+    method: 'POST',
+    params: {
+        age: 10
+    },
+    data: {
+        name: 'test'
+    },
+    emulateJSON: true,
+    usePre: true,
+    cacheInvalidationTime: 3000,
+    ignorePreParamKeys: ['timestamp']
 }).then(res => {
 	console.log(res.data)
 })
@@ -71,7 +87,7 @@ mpx.createApp({
 ```
 
 ### CancelToken
-> 命名导出，用于创建一个取消请求的凭证。
+命名导出，用于创建一个取消请求的凭证。
 
 - **示例**:
 ```js
@@ -88,7 +104,16 @@ cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fa
 ```
 
 ### XFetch
-> 命名导出，用于创建一个新的mpx-fetch实例进行独立使用
+命名导出，用于创建一个新的mpx-fetch实例进行独立使用
+
+- **参数类型**:
+
+```ts
+interface FetchOptions{
+    useQueue: boolean // 是否开启队列功能
+    proxy: boolean // 是否开启代理功能
+}
+```
 
 - **示例**:
 ```js
@@ -113,7 +138,7 @@ mpx.xfetch.interceptors.response.use(function(res) {
 })
 ```
 
-### proxy 代理
+### proxy 代理{#proxy}
 #### setProxy
 > 配置代理项，可以传入一个数组或者一个对象，请求会按设置的规则进行代理
 
@@ -386,6 +411,45 @@ console.log(mpx.xfetch.getProxy())
 mpx.xfetch.clearProxy()
 ```
 
+### useFetch
+```ts
+useFetch(options?: FetchOptions):xfetch
+```
+
+在组合式 API 中使用，用来获取 `@mpxjs/fetch` 插件的 xfetch 实例，等用于 `mpx.xfetch`。 关于 xfetch 实例的详细介绍，请点击[查看](/api/extend.html#mpx-fetch)
+
+此外该方法可选择传入 `options` 参数，若传入参数，则会创建一个新的 XFetch 实例返回，若不传入参数，则默认将全局 `xfetch` 实例返回。
+
+示例：
+```js
+// app.mpx
+import mpx from '@mpxjs/core'
+import mpxFetch from '@mpxjs/fetch'
+mpx.use(mpxFetch)
+
+// script-setup.mpx
+import { useFetch } from '@mpxjs/fetch'
+useFetch().fetch({
+  url: 'http://xxx.com',
+  method: 'POST',
+  params: {
+    age: 10
+  },
+  data: {
+    name: 'test'
+  },
+  emulateJSON: true,
+  usePre: true,
+  cacheInvalidationTime: 3000,
+  ignorePreParamKeys: ['timestamp']
+}).then(res => {
+  console.log(res.data)
+})
+```
+
+* **注意：** options 参数同 [XFetch](./extend.md#XFetch) 章节。
+
+
 ## api-proxy
  Mpx目前已经支持的API转换列表，供参考
 
@@ -540,7 +604,354 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 这个库仅提供给 H5 使用，请勿在小程序环境引入
 :::
 
-## mpx-mock
+## size-report
+Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等维度的分析和对比，详细[请见](/advance/size-report.html)
 
-- 请参考 [数据 mock](/guide/extend/mock.md)
+### 插件配置项
 
+- **server**
+
+  类型：`object`
+
+  详细：本地可视化服务相关配置
+
+- **filename**
+
+  类型：`string`
+
+  详细：构建生成的包体积详细输出文件地址
+
+- **threshold**
+
+  类型：`object`
+
+  详细：配置项目总体积和分包体积阈值，包含两个字段，size 为项目总体积阈值，packages 为分包体积阈值
+
+  示例:
+  ```html
+  {
+     size: '16MB', // 项目总包体积限额 16M
+     packages: '2MB' // 项目每个分包体积限额 2M
+  }
+  ```
+
+- **groups**
+
+  类型：`Array<object>`
+
+  详细：配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+  
+  - name
+  
+    类型：`string`
+
+    详细：分组名称
+
+  - threshold
+  
+    类型：`string | object`
+
+    详细：分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
+
+    示例：
+    ```html
+    // 分组体积限额 500KB
+    threshold: '500KB'
+    // 或者如下方，分组体积限额500KB，分组占主包体积限额160KB
+    threshold: {
+      size: '500KB',
+      packages: {
+        main: '160KB'
+      }
+    }
+    ```
+    
+  - entryRules
+  
+    类型：`object`
+  
+    详细：配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
+  
+      - include: 包含符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
+      - exclude: 剔除符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
+    
+    示例：
+    ```html
+    include: [/@someGroup\/some-npm-package/],
+    exclude: [/@someGroup\/some-two-pack/]
+    ```
+    
+  - noEntryRules
+
+    类型：`object`
+
+    详细：配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
+  
+      - include: 包含符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
+      - exclude: 剔除符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
+    
+    示例：
+    ```html
+    include: [/@someGroup\/some-npm-package/],
+    exclude: [/@someGroup\/some-two-pack/]
+    ```
+
+- **reportPages**
+
+  类型：`boolean`
+
+  详细：是否收集页面维度体积详情，默认 false
+
+- **reportAssets**
+
+  类型：`boolean`
+
+  详细：是否收集资源维度体积详情，默认 false
+
+- **reportRedundance**
+
+  类型：`boolean`
+
+  详细：是否收集冗余资源，默认 false
+
+- **showEntrysPackages**
+
+  类型：`Array<string>`
+
+  详细：展示某些分包资源的引用来源信息，例如 ['main'] 为查看主包资源的引用来源信息，默认为 []
+
+
+配置使用示例：
+
+```html
+{
+  // 本地可视化服务相关配置
+  server: {
+    enable: true, // 是否启动本地服务，非必填，默认 true
+    autoOpenBrowser: true, // 是否自动打开可视化平台页面，非必填，默认 true
+    port: 0, // 本地服务端口，非必填，默认 0(随机端口)
+    host: '127.0.0.1', // 本地服务host，非必填
+  },
+  // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
+  filename: '../report.json',
+  // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
+  threshold: {
+    size: '16MB',
+    packages: '2MB'
+  },
+  // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+  groups: [
+    {
+      // 分组名称
+      name: 'vant',
+      // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
+      entryRules: {
+        include: '@vant/weapp'
+      }
+    },
+    {
+      name: 'pageGroup',
+      // 每个分组中可分别配置阈值，如果不配置则表示
+      threshold: '500KB',
+      entryRules: {
+        include: ['src/pages/index', 'src/pages/user']
+      }
+    },
+    {
+      name: 'someSdk',
+      entryRules: {
+        include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
+      },
+      // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
+      noEntryModules: {
+        include: 'src/lib/sdk.js'
+      }
+    }
+  ],
+  // 是否收集页面维度体积详情，默认 false
+  reportPages: true,
+  // 是否收集资源维度体积详情，默认 false
+  reportAssets: true,
+  // 是否收集冗余资源，默认 false
+  reportRedundance: true,
+  // 展示某些分包资源的引用来源信息，默认为 []
+  showEntrysPackages: ['main']
+}
+```
+
+## i18n
+
+### useI18n
+
+组合式 API 中使用，用来获取 i18n 实例。
+
+**参数选项**
+
+------
+
+#### locale
+
+* **类型：** `Locale`
+
+设置语言环境
+
+**注意：** 只传 locale，不传 messages 属性时不起作用
+
+#### fallbackLocale
+
+* **类型：** `Locale`
+
+预设的语言环境，找不到语言环境时进行回退。
+
+#### messages
+
+* **类型：** `LocaleMessages`
+
+本地化的语言环境信息。
+
+**返回实例属性和方法**
+
+-----
+
+#### locale
+* **类型：** `WritableComputedRef<Locale>`
+
+可响应性的 ref 对象，表示当前 i18n 实例所使用的 locale。
+
+修改 ref 值会对局部或者全局语言集的 locale 进行更改，并触发翻译方法重新执行。
+
+#### fallbackRoot
+* **类型：** `Boolean`
+
+本地化失败时是否回归到全局作用域。
+
+#### getLocaleMessage( locale )
+
+* **参数：**
+    * `{Locale} locale`
+* **返回值：** `LocaleMessageObject`
+
+获取语言环境的 `locale` 信息。
+
+#### setLocaleMessage( locale, message )
+
+* **参数：**
+
+    * `{Locale} locale`
+    * `{LocaleMessageObject} message`
+
+设置语言环境的 `locale` 信息。
+
+#### mergeLocaleMessage( locale, message )
+
+* **参数：**
+
+    * `{Locale} locale`
+    * `{LocaleMessageObject} message`
+
+将语言环境信息 `locale` 合并到已注册的语言环境信息中。
+
+#### messages
+
+* **类型：**
+```ts
+readonly messages: ComputedRef<{
+   [K in keyof Messages]: Messages[K];
+}>;
+```
+
+* **只读**
+
+局部或者全局的语言环境信息。
+
+#### isGlobal
+* **类型：**`Boolean`
+
+是否是全局 i18n 实例。
+
+#### t
+
+文案翻译函数
+
+* **参数：**
+
+    * {Path} key：必填
+    * {number} choice：可选
+    * {Array | Object} values：可选
+
+* **返回值：** TranslateResult
+
+根据传入的 key 以及当前 locale 环境获取对应文案，文案来源是全局作用域还是本地作用域取决于 `useI18n` 执行时是否传入对应的 `messages、locale` 等值。
+
+**choice 参数可选** ，当传入 choice 时，t 函数的表现为使用复数进行翻译，和老版本中的 tc 函数表现一致。
+
+```html
+<template>
+  <view>{{t('car', 1)}}</view>
+  <view>{{t('car', 2)}}</view>
+
+  <view>{{t('apple', 0)}}</view>
+  <view>{{t('apple', 1)}}</view>
+  <view>{{t('apple', 10, {count: 10})}}</view>
+</template>
+
+<script>
+  // 语言环境信息如下：
+  const messages = {
+    en: {
+      car: 'car | cars',
+      apple: 'no apples | one apple | {count} apples'
+    }
+  }
+</script>
+```
+输入如下：
+```html
+<view>car</view>
+<view>cars</view>
+
+<view>no apples</view>
+<view>one apple</view>
+<view>10 apples</view>
+```
+关于复数的更多信息可以点击[查看](https://kazupon.github.io/vue-i18n/zh/guide/pluralization.html#%E5%A4%8D%E6%95%B0)
+
+**values 参数可选** ，如果需要对文案信息即逆行格式化处理，则需要传入 values。
+
+```html
+<template>
+  // 模版输出 hello world
+  <view>{{t('message.hello', { msg: 'hello'})}}</view>
+</template>
+<script>
+  import {createComponent, useI18n} from "@mpxjs/core"
+
+  const messages = {
+    en: {
+      message: {
+        hello: '{msg} world'
+      }
+    }
+  }
+  
+  createComponent({
+    setup(){
+        const { t } = useI18n({
+          messages: {
+              'en-US': en
+          }
+        })
+      return {t}
+    }
+  })
+
+</script>
+```
+
+#### te
+* **参数：**
+
+    * {Path} key：必填
+* **返回值：** boolean
+
+检查 key 是否存在。

@@ -1,14 +1,15 @@
 <template>
   <div class="code-list">
     <div class="code-list__item" v-for="(item, index) in dataList" :key="index">
-      <popover :code="item.code">
+      <!-- <popover :code="item.code">
         <div class="code-list__inner" @mouseenter="handleEnter(index)" @mouseleave="handleLeave">
           <img width="40" :src="item.icon1" alt="code" loading="lazy" />
           <transition name="fade">
             <img width="40" class="code-list__big" v-show="current===index" :src="item.icon2" alt="code" loading="lazy" />
           </transition>
         </div>
-      </popover>
+      </popover> -->
+      <img width="150" height="170" :src="item.code" alt="code" loading="lazy" />
     </div>
   </div>
 </template>
@@ -48,12 +49,12 @@ export default {
 .fade-enter, .fade-leave-to
   opacity 0
 .code-list
-  margin-top 75px
+  margin-top 40px
   display flex
   .code-list__item
     margin-right 62px
-    width 40px
-    height 40px
+    width 150px
+    height 170px
     cursor pointer
   .code-list__inner
     position relative

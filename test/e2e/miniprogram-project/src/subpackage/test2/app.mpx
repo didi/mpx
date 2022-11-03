@@ -1,0 +1,7 @@
+<script name="json">
+module.exports = {
+  pages: [
+    './pages/index'
+  ]
+}
+</script>

@@ -1,4 +1,4 @@
-var camelCase = require('lodash.camelcase')
+const camelCase = require('lodash.camelcase')
 
 function dashesCamelCase (str) {
   return str.replace(/-+(\w)/g, function (match, firstLetter) {
@@ -11,15 +11,15 @@ module.exports = function compileExports (result, importItemMatcher, camelCaseKe
     return ''
   }
 
-  var exportJs = Object.keys(result.exports).reduce(function (res, key) {
-    var valueAsString = JSON.stringify(result.exports[key])
+  const exportJs = Object.keys(result.exports).reduce(function (res, key) {
+    let valueAsString = JSON.stringify(result.exports[key])
     valueAsString = valueAsString.replace(result.importItemRegExpG, importItemMatcher)
 
     function addEntry (k) {
       res.push('\t' + JSON.stringify(k) + ': ' + valueAsString)
     }
 
-    var targetKey
+    let targetKey
     switch (camelCaseKeys) {
       case true:
         addEntry(key)

@@ -1,6 +1,7 @@
+const { userConf } = require('./config/index')
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
+  parser: userConf.babel7Support ? '@babel/eslint-parser' : 'babel-eslint',
   parserOptions: {
     sourceType: 'module'
   },

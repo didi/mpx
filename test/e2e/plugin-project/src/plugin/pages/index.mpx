@@ -1,0 +1,14 @@
+<template>
+  <view>
+    <mp-view/>
+  </view>
+</template>
+
+<script lang="ts" src="./index.ts"></script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+  }
+}
+</script>

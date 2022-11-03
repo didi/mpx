@@ -1,20 +1,20 @@
 Component({
-    externalClasses: ['i-class'],
+  externalClasses: ['i-class'],
 
-    relations: {
-        '../row/index': {
-            type: 'parent'
-        }
-    },
-
-    properties: {
-        span: {
-            value: 0,
-            type: Number
-        },
-        offset: {
-            value: 0,
-            type: Number
-        }
+  relations: {
+    '../row/index': {
+      type: 'parent'
     }
-});
+  },
+
+  properties: {
+    span: {
+      value: 0,
+      type: Number
+    },
+    offset: {
+      value: 0,
+      type: Number
+    }
+  }
+})

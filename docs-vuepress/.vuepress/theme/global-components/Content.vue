@@ -1,31 +1,37 @@
 <template>
-  <div>
+<!-- style="background: #f5f5f5;" -->
+  <div style="position: relative; overflow: hidden; min-width: 950px; background: #f5f5f5;">
+    <div class="one-section__img1"></div>
+    <div class="one-section__img2"></div>
     <!-- 第一部分 -->
-    <section class="one-section one-section__content">
-      <div>
-        <h2 class="one-section__title">{{$page.frontmatter.heroText}}</h2>
-        <p class="one-section__desc">
-          {{$page.frontmatter.tagline}}
-        </p>
-        <button class="one-section__btn one-section__enter">
-          <a class="white-link" :href="$page.frontmatter.actionLink">
-            {{$page.frontmatter.actionText}}
-          </a>
-        </button>
-        <button class="one-section__btn one-section__github">
-          <a class="blue-link" :href="$page.frontmatter.githubLink">
-            {{$page.frontmatter.githubText}}
-          </a>
-        </button>
+    <section class="one-section">
+      <div class="one-section__inner one-section__content">
+        <div style="display: inline-block;">
+          <h2 class="one-section__title">{{$page.frontmatter.heroText}}</h2>
+          <p class="one-section__desc">
+            {{$page.frontmatter.tagline}}
+          </p>
+          <button class="one-section__btn one-section__enter">
+            <a class="white-link" :href="$page.frontmatter.actionLink">
+              {{$page.frontmatter.actionText}}
+            </a>
+          </button>
+          <button class="one-section__btn one-section__github">
+            <a class="blue-link" :href="$page.frontmatter.githubLink" target="_blank">
+              {{$page.frontmatter.githubText}}
+            </a>
+          </button>
+        </div>
       </div>
+      <div class="one-section__inner"></div>
     </section>
 
     <!-- 第二部分 -->
     <section class="two-section">
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $page.frontmatter.features" :key="index">
-          <img :src="item.icon" alt="svg" loading="lazy" />
-          <p class="two-section__title">{{item.item}}</p>
+          <img :src="item.icon" alt="svg" loading="lazy" width="80" height="80" />
+          <p class="two-section__title">{{item.title}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
         </li>
@@ -34,96 +40,113 @@
 
     <!-- 第三部分 -->
     <section class="three-section" :style="{ backgroundImage: `url(${$page.frontmatter.threeSection.bg})` }">
-      <div>
-        <div class="three-section__todo">
-          <div class="three-section__phone">
-            <img
-              width="410"
-              height="712"
-              src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
-              alt="phone"
-              loading="lazy" />
-          </div>
-          <div class="three-section__iframe">
-            <iframe
-              scrolling="no"
-              width="375"
-              height="667"
-              src="https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html"
-              frameborder="0">
-            </iframe>
-          </div>
-        </div>
-      </div>
-      <div class="three-section__mvc">
+      <div class="three-section__inner">
         <div>
-          <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
-          <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
-          <p class="white-text desc">
-            {{$page.frontmatter.threeSection.details}}
-          </p>
+          <div class="three-section__todo">
+            <div class="three-section__phone">
+              <img
+                width="410"
+                height="712"
+                src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
+                alt="phone"
+                loading="lazy" />
+            </div>
+            <div class="three-section__iframe">
+              <iframe
+                title="todo示例"
+                scrolling="no"
+                width="325"
+                height="617"
+                src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/index.html"
+                frameborder="0">
+              </iframe>
+            </div>
+          </div>
         </div>
-        <button class="three-section__btn btn">
-          <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
-            {{$page.frontmatter.threeSection.actionText}}
-          </a>
-        </button>
-        <code-list :dataList="mvcList"></code-list>
+        <div class="three-section__mvc">
+          <div>
+            <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
+            <p class="white-text title">{{$page.frontmatter.threeSection.title}}</p>
+            <p class="white-text desc">
+              <!-- {{$page.frontmatter.threeSection.details}} -->
+              扫码体验Mpx版本的
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
+              在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+              <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
+              进入查看。
+            </p>
+          </div>
+          <!-- <button class="three-section__btn btn">
+            <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
+              {{$page.frontmatter.threeSection.actionText}}
+            </a>
+          </button> -->
+          <code-list :dataList="mvcList"></code-list>
+        </div>
       </div>
     </section>
 
     <!-- 第四部分 -->
-    <section class="section">
+    <section class="section four-section">
       <div class="grow four-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fourSection.bg})` }">
-        <img
+      </div>
+      <div class="four-section__inner">
+        <div class="grow" style="position: relative;">
+          <img
           width="412"
           :src="$page.frontmatter.fourSection.img"
           alt="svg"
           loading="lazy" />
-      </div>
-      <div class="grow">
-        <div class="four-section__text">
-          <div>
-            <span class="dot-inner"></span>
-            <p class="title">{{$page.frontmatter.fourSection.title}}</p>
-            <p class="desc">
-              {{$page.frontmatter.fourSection.details}}
-            </p>
+        </div>
+        <div class="four-section__text grow">
+          <div style="margin-left: 86px;">
+            <div>
+              <span class="dot-inner"></span>
+              <p class="title">{{$page.frontmatter.fourSection.title}}</p>
+              <p class="desc">
+                {{$page.frontmatter.fourSection.details}}
+              </p>
+            </div>
+            <button class="btn">
+              <a :href="$page.frontmatter.fourSection.actionLink" class="white-link">
+                {{$page.frontmatter.fourSection.actionText}}
+              </a>
+            </button>
           </div>
-          <button class="btn">
-            <a :href="$page.frontmatter.fourSection.actionLink" class="white-link">
-              {{$page.frontmatter.fourSection.actionText}}
-            </a>
-          </button>
         </div>
       </div>
     </section>
 
     <!-- 第五部分 -->
-    <section class="section">
-      <div class="grow">
-        <div class="five-section__text">
-          <div>
-            <span class="dot-inner"></span>
-            <p class="title">{{$page.frontmatter.fiveSection.title}}</p>
-            <p class="desc">
-              {{$page.frontmatter.fiveSection.details}}
-            </p>
+    <section class="section five-section">
+      <div class="grow five-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fiveSection.bg})` }">
+      </div>
+      <div class="five-section__inner">
+        <div class="five-section__text grow">
+          <div style="margin-right: 86px;">
+            <div>
+              <span class="dot-inner"></span>
+              <p class="title">{{$page.frontmatter.fiveSection.title}}</p>
+              <p class="desc">
+                {{$page.frontmatter.fiveSection.details}}
+              </p>
+            </div>
+            <button class="btn">
+              <a :href="$page.frontmatter.fiveSection.actionLink"  class="white-link">
+                {{$page.frontmatter.fiveSection.actionText}}
+              </a>
+            </button>
           </div>
-          <button class="btn">
-            <a :href="$page.frontmatter.fiveSection.actionLink"  class="white-link">
-              {{$page.frontmatter.fiveSection.actionText}}
-            </a>
-          </button>
+        </div>
+        <div class="grow" style="position: relative; display: flex; justify-content: flex-end;">
+          <img
+            width="412"
+            :src="$page.frontmatter.fiveSection.img"
+            alt="svg"
+            loading="lazy" />
         </div>
       </div>
-      <div class="grow five-section__bg" :style="{ backgroundImage: `url(${$page.frontmatter.fiveSection.bg})` }">
-        <img
-          width="412"
-          :src="$page.frontmatter.fiveSection.img"
-          alt="svg"
-          loading="lazy" />
-      </div>
+
     </section>
 
     <!-- 第六部分 -->
@@ -137,7 +160,7 @@
           <li v-for="(item, index) in current" :key="index">
             <a :href="item.actionLink" class="six-section__item six-section__step">
               <div class="six-section__icon">
-                <img :src="item.icon" alt="svg" loading="lazy" />
+                <img :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
               </div>
               <div class="six-section__list">
                 <div class="six-section__bold">{{item.title}}</div>
@@ -166,7 +189,7 @@
             <img
               width="213"
               height="433"
-              src="https://dpubstatic.udache.com/static/dpubimg/hxFU4KVamb/anli_pic_phone.png"
+              src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
               alt="phone"
               loading="lazy" />
           </div>
@@ -236,6 +259,9 @@ export default {
 <style lang="stylus" scoped>
 ul li
   list-style none
+section
+  position relative
+  z-index 2
 .row
   display flex
   align-items center
@@ -264,10 +290,37 @@ ul li
   font-size 14px
 
 .one-section__content
-  padding 0 200px
+  display flex
+  justify-content flex-end
+  // padding 0 200px
 
 .one-section
   padding-top 181px
+  position relative
+  display flex
+  // background url("https://dpubstatic.udache.com/static/dpubimg/tKlPfygfIM/banner_bg.png") no-repeat top right
+  // background-size auto 100%
+
+.one-section__img1
+  position absolute
+  top 0
+  left 45%
+  width 100%
+  height 100%
+  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_bg.png") no-repeat top left
+  background-size auto 680px
+
+.one-section__img2
+  position absolute
+  top 20
+  left 53%
+  width 100%
+  height 100%
+  background url("https://dpubstatic.udache.com/static/dpubimg/u3KGxYyATw/banner_pic.png") no-repeat top left
+  background-size auto 550px
+
+.one-section__inner
+  flex 1
 
 .one-section__title
   margin-bottom 20px
@@ -313,15 +366,20 @@ ul li
   align-items center
   justify-content center
 
+.target-link
+  color #ffffff
+  font-weight 600
+  text-decoration underline
+
 .two-section
   padding-top 240px
   display flex
   justify-content center
 
-.two-section__item 
+.two-section__item
   width 280px
-  height 344px
-  padding 40px 18px 46px 18px
+  // height 344px
+  padding 40px 18px 40px 18px
   box-sizing border-box
   background #ffffff
   border 0 solid #efefef
@@ -332,7 +390,7 @@ ul li
   list-style none
   position relative
   overflow hidden
- 
+
 
 .two-section__item:nth-child(2)
   position relative
@@ -347,25 +405,35 @@ ul li
   opacity 0.6
   background-image linear-gradient(-58deg, #50BE97 30%, #31BC7F 79%)
 
-.two-section__title 
+.two-section__title
   font-size 20px
   margin 33px 0 21px 0
 
-.two-section__desc 
+.two-section__desc
   font-size 14px
   line-height 22px
- 
 
-.three-section 
+
+.three-section
   margin-top 183px
   display flex
   background-repeat no-repeat
-  background-size 100% 713px
-  padding 0 185px
+  background-size auto 100%
+  background-position center center
   height 713px
   align-items center
+  // padding 0 24px
+  position relative
 
-.three-section__mvc 
+.three-section__inner
+  width 1190px
+  margin 0 auto
+  display flex
+  align-items center
+  box-sizing border-box
+  padding 0 40px
+
+.three-section__mvc
   margin-left 60px
 
 .three-section__todo
@@ -377,8 +445,13 @@ ul li
   top 0
 
 .three-section__iframe
+  display flex
+  align-items center
+  justify-content center
   position relative
-  display inline-block
+  // display inline-block
+  width 375px
+  height 672px
   left 20px
   top 20px
   border-radius 44px
@@ -386,53 +459,90 @@ ul li
   overflow hidden
   box-shadow 0 80px 252px 0 rgba(49,188,127,0.12), 0 36px 76px 0 rgba(49,188,127,0.08), 0 15px 31px 0 rgba(49,188,127,0.06), 0 5px 11px 0 rgba(49,188,127,0.04)
 
-.white-text 
+.iframe_wrapper
+  width 375px
+  height 672px
+  display flex
+  justify-content center
+  align-items center
+
+.white-text
   color #fff
 
-.three-section__btn 
+.three-section__btn
   background #fff
 
-.section 
+.section
   display flex
   align-items center
   height 520px
   box-sizing border-box
   margin-top 183px
+  position relative
+  justify-content center
 
-.grow 
+.grow
   flex 1
 
-.four-section__bg 
-  background-repeat no-repeat   
-  background-size 100% 520px
-  height 100%
-  text-align center
+.four-section
+  // width 1190px
 
-.four-section__text 
-  padding 0 200px 0 85px
-
-.five-section__bg 
+.four-section__bg
   background-repeat no-repeat
-  background-size 100% 520px
-  height 100%
+  background-size auto 600px
+  height 600px
+  width 100%
   text-align center
- 
-.five-section__text 
-  padding 0 85px 0 200px
- 
-.six-section 
+  position absolute
+  right 50%
+  background-position top right
+
+.four-section__text
+  // box-sizing border-box
+  // padding 0 24px 0 85px
+
+.four-section__inner
+  display flex
+  width 1190px
+  align-items center
+  padding 0 40px
+  box-sizing border-box
+
+.five-section__bg
+  background-repeat no-repeat
+  background-size auto 600px
+  height 600px
+  width 100%
+  text-align center
+  position absolute
+  left 50%
+  background-position top left
+
+.five-section__text
+  // padding 0 85px 0 24px
+  // max-width 550px
+
+.five-section__inner
+  display flex
+  width 1190px
+  align-items center
+  padding 0 40px
+  box-sizing border-box
+
+.six-section
   margin-top 140px
   display flex
   align-items center
   justify-content center
   background-repeat no-repeat
-  background-size 100% 694px
+  background-size auto 100%
+  background-position center center
   height 694px
 
 .six-section__inner
   margin-bottom 50px
- 
-.six-section__item 
+
+.six-section__item
   background #ffffff
   border 0 solid #a4a4a4
   border-radius 4px
@@ -442,15 +552,15 @@ ul li
   padding 17px 0 17px 17px
   box-sizing border-box
 
-.six-section__step 
+.six-section__step
   margin-right 20px
 
-.six-section__row 
+.six-section__row
   margin-bottom 20px
   flex-wrap: wrap;
   justify-content: center;
 
-.six-section__list 
+.six-section__list
   display flex
   flex-direction column
   justify-content space-between
@@ -462,21 +572,20 @@ ul li
   font-weight 500
   white-space nowrap
 
-.six-section__title 
+.six-section__title
   margin-bottom 50px
   text-align center
   color #ffffff
 
-.six-section__icon 
+.six-section__icon
   margin-right 9px
 
-.seven-section 
+.seven-section
   margin-top 113px
-  padding 0 200px
   text-align center
   background #f5f5f5
- 
-.seven-section__center 
+
+.seven-section__center
   width 402px
   height 100%
   background-repeat no-repeat
@@ -502,7 +611,7 @@ ul li
   left 50%
   transform translate3d(-50%, 0, 0)
 
-.seven-section__title 
+.seven-section__title
   text-align right
   font-size 20px
   font-weight 600

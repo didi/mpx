@@ -1,5 +1,5 @@
 Page({
-    handleClick () {
+  handleClick () {
 
-    }
-});
+  }
+})

@@ -5,6 +5,7 @@
 </template>
 
 <script>
+  /* eslint-disable no-undef */
   Page({
     onLoad () {}
   })

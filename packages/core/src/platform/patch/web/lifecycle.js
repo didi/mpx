@@ -9,8 +9,7 @@ const COMPONENT_HOOKS = [
   'deactivated',
   'beforeDestroy',
   'destroyed',
-  'errorCaptured',
-  'onPageNotFound'
+  'errorCaptured'
 ]
 
 const PAGE_HOOKS = [
@@ -23,8 +22,12 @@ const PAGE_HOOKS = [
   'onPullDownRefresh',
   'onReachBottom',
   'onPageScroll',
+  'onAddToFavorites',
+  'onShareAppMessage',
+  'onShareTimeline',
+  'onResize',
   'onTabItemTap',
-  'onResize'
+  'onSaveExitState'
 ]
 
 const APP_HOOKS = [

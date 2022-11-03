@@ -1,3 +1,6 @@
-import vue from 'vue'
+import Vue from 'vue'
+import install from './vuePlugin'
 
-export default vue
+Vue.use(install)
+
+export default Vue

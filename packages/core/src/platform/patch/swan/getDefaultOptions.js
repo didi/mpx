@@ -9,25 +9,21 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   }
 
   const rootMixin = {
-    [hookNames[0]] (...params) {
-      if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject, params)
-      }
+    [hookNames[0]] () {
+      initProxy(this, rawOptions, currentInject)
     },
     [hookNames[1]] () {
-      this.__mpxProxy && this.__mpxProxy.mounted()
+      if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
     [hookNames[2]] () {
-      this.__mpxProxy && this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }
 
   // 如构造页面，优先使用onInit进行初始化
   if (type === 'page') {
     rootMixin.onInit = function (...params) {
-      if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject, params)
-      }
+      initProxy(this, rawOptions, currentInject, params)
     }
   }
 

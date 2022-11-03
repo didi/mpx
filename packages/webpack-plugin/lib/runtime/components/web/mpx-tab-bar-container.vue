@@ -15,7 +15,7 @@
     'mpx-tab-bar': tabBarPagesMap['mpx-tab-bar']
   }
   tabBar.list.forEach(({ pagePath }) => {
-    const name = pagePath.replace('/', '-')
+    const name = pagePath.replace(/\//g, '-')
     const page = tabBarPagesMap[pagePath]
     if (page) {
       components[name] = page
@@ -39,7 +39,7 @@
       currentComponent () {
         const index = this.currentIndex
         const tabItem = tabBar.list[index]
-        return tabItem.pagePath.replace('/', '-')
+        return tabItem.pagePath.replace(/\//g, '-')
       }
     },
     watch: {

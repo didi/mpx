@@ -1,0 +1,65 @@
+<template>
+  <view class="list">
+    <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
+    <!--test store bind state-->
+    <view class="count_location">{{count}}</view>
+    <!--test path resolve-->
+    <view class="path_index_path">{{pathIndexPath}}</view>
+    <!--图片的路径引用-->
+    <image src="../static/img/test.png" class="image_path_require"></image>
+    <button bindtap="testTransRules">click test trans rules</button>
+    <!--defs 测试使用-->
+    <view class="test_defs">{{__black__}}</view>
+    <!--decodeText 测试使用-->
+    <view class="test_decodeText">foo &#xA9; bar &#x2260; baz &#x1D306; qux</view>
+    <!--i18n 测试使用-->
+    <view class="test_i18n">{{$t('hello')}}</view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+  import store from '../store'
+  import mixins from '../mixins'
+  import pathIndexPath from '../pages/index.mpx?resolve'
+  import testPngPath from '../static/img/test.png?resolve'
+  // TODO 补充 css 相关的单测
+
+  createComponent({
+    data: {
+      listData: ['手机', '电视', '电脑'],
+      pathIndexPath: pathIndexPath,
+      testPngPath: testPngPath,
+      defBlack: __black__
+    },
+    methods: {
+      testTransRules() {
+        mpx.navigateTo({
+          url: '/pages/index'
+        })
+      }
+    },
+    mixins: [mixins],
+    computed: {
+      count () {
+        return store.state.count
+      },
+      ready () {
+        console.log('component ready:', this.list.phone)
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .list
+    background-color red
+    width 200px
+    height 100px
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

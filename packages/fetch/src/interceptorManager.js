@@ -1,4 +1,4 @@
-import { isThenable } from './util'
+import { isThenable, isFunction } from './util'
 
 export default class InterceptorManager {
   constructor () {
@@ -7,19 +7,17 @@ export default class InterceptorManager {
 
   use (fulfilled, rejected) {
     const wrappedFulfilled = (result) => {
-      const returnedResult = fulfilled(result)
-      if (returnedResult === undefined) {
-        return result
-      } else {
-        if (isThenable(returnedResult)) {
-          return returnedResult.then((resolvedReturnedResult) => resolvedReturnedResult === undefined ? result : resolvedReturnedResult)
-        }
-        return returnedResult
-      }
+      const returned = isFunction(fulfilled) ? fulfilled(result) : result
+      return returned === undefined ? result : returned
+    }
+    const wrappedRejected = (reason) => {
+      const returned = isFunction(rejected) ? rejected(reason) : reason
+      reason = returned === undefined ? reason : returned
+      return isThenable(reason) ? reason : Promise.reject(reason)
     }
     const interceptor = {
       fulfilled: wrappedFulfilled,
-      rejected
+      rejected: wrappedRejected
     }
     this.interceptors.push(interceptor)
     return function remove () {

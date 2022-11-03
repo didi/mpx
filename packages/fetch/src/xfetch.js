@@ -3,11 +3,13 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { isNotEmptyArray, isNotEmptyObject, transformReq } from './util'
+import { validate } from './validator'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
     this.CancelToken = CancelToken
+    this.cacheRequestData = {}
     // this.requestAdapter = (config) => requestAdapter(config, MPX)
     // 当存在 useQueue 配置时，才使用 this.queue 变量
     if (options && options.useQueue && typeof options.useQueue === 'object') {
@@ -52,7 +54,7 @@ export default class XFetch {
 
     if (/^POST|PUT$/i.test(config.method)) {
       const header = config.header || {}
-      let contentType = header['content-type'] || header['Content-Type']
+      const contentType = header['content-type'] || header['Content-Type']
       if (config.emulateJSON && !contentType) {
         header['content-type'] = 'application/x-www-form-urlencoded'
         config.header = header
@@ -91,6 +93,27 @@ export default class XFetch {
     this.proxyOptions = undefined
   }
 
+  setValidator (options) {
+    // 添加校验配置
+    if (isNotEmptyArray(options)) {
+      this.validatorOptions = options
+    } else if (isNotEmptyObject(options)) {
+      this.validatorOptions = [options]
+    } else {
+      console.error('仅支持不为空的对象或数组')
+    }
+  }
+
+  getValidator () {
+    // 返回校验配置
+    return this.validatorOptions
+  }
+
+  // 校验参数规则
+  checkValidator (config) {
+    return validate(this.validatorOptions, config)
+  }
+
   // 向前追加代理规则
   prependProxy (proxyRules) {
     if (isNotEmptyArray(proxyRules)) {
@@ -117,7 +140,40 @@ export default class XFetch {
     return requestProxy(this.proxyOptions, config)
   }
 
+  checkPreCache (config) {
+    // 未设置预请求 则直接 return
+    if (!config.usePre) return false
+    const cacheKey = formatCacheKey(config.url)
+    const cacheRequestData = this.cacheRequestData[cacheKey]
+    if (cacheRequestData) {
+      delete this.cacheRequestData[cacheKey]
+      const cacheInvalidationTime = config.cacheInvalidationTime || 3000
+      // 缓存是否过期 >3s 则算过期
+      if (Date.now() - cacheRequestData.lastTime <= cacheInvalidationTime &&
+        checkCacheConfig(config, cacheRequestData) &&
+        cacheRequestData.responsePromise) {
+        return cacheRequestData.responsePromise
+      }
+    }
+    const { params, data, method } = config
+    this.cacheRequestData[cacheKey] = {
+      cacheKey,
+      params,
+      data,
+      method,
+      lastTime: Date.now(),
+      responsePromise: null
+    }
+    return false
+  }
+
   fetch (config, priority) {
+    // 检查缓存
+    const responsePromise = this.checkPreCache(config)
+    if (responsePromise) {
+      return responsePromise
+    }
+
     config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
@@ -129,11 +185,15 @@ export default class XFetch {
       // 1. 检查config.url存在
       // 2. 抹平微信/支付宝header/headers字段差异
       // 3. 填充默认method为GET, method大写化
-      // 4. 抽取url中query合并至config.params
-      // 5. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
-      // 6. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
+      // 4. 对于类GET请求将config.data移动合并至config.params(最终发送请求前进行统一序列化并拼接至config.url上)
+      // 5. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
+      const checkRes = this.checkValidator(config)
+      const validatorRes = isObject(checkRes) ? checkRes.valid : checkRes
+      if (typeof validatorRes !== 'undefined' && !validatorRes) {
+        return Promise.reject(new Error(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:' + checkRes.message.join(',') : ''}`))
+      }
       config = this.checkProxy(config) // proxy
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
     }
@@ -150,6 +210,11 @@ export default class XFetch {
 
     while (chain.length) {
       promise = promise.then(chain.shift(), chain.shift())
+    }
+
+    if (config.usePre) {
+      const cacheKey = formatCacheKey(config.url)
+      this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
     }
 
     return promise

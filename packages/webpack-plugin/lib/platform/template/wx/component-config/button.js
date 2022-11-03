@@ -79,7 +79,7 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
-          } else if (supportList.indexOf(value) === -1) {
+          } else if (value && supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
           }
         },
@@ -91,7 +91,7 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             // 如果是个变量，报warning
             qqValueLog({ name, value })
-          } else if (supportList.indexOf(value) === -1) {
+          } else if (value && supportList.indexOf(value) === -1) {
             qqValueLogError({ name, value })
           }
         },
@@ -103,7 +103,7 @@ module.exports = function ({ print }) {
             ttValueLog({ name, value })
           } else {
             const supportList = ['share', 'getPhoneNumber', 'contact']
-            if (supportList.indexOf(value) === -1) {
+            if (value && supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
           }

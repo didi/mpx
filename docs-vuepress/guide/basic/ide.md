@@ -1,7 +1,7 @@
 # IDE 高亮配置
 
-- [IntelliJ](single-file.md#IntelliJ)
-- [vscode](single-file.md#vscode)
+- [IntelliJ](ide.md#IntelliJ)
+- [vscode](ide.md#vscode)
 
 ## IntelliJ
 
@@ -15,165 +15,133 @@
 
 ## vscode
 
-目前 VS Code 中实现语法高亮，有以下两种方式：
+> [git地址](https://github.com/mpx-ecology/vscode-mpx)，有任何vscode插件的问题和需求可在仓库中提issue
 
-1. 使用`mpx`插件可直接实现`.mpx`文件语法高亮提示。
+> 下载
 
-> 目前 mpx 插件支持的功能有限，支持语法高亮、javascript 路径跳转。其他更完善的功能正在进一步的筹备中，敬请期待！
+1. [下载地址](https://marketplace.visualstudio.com/items?itemName=pagnkelly.mpx)
 
-2. `.mpx`采用类似于`.vue`的单文件语法风格，在 Visual Studio Marketplace 中获取[vue 语法高亮插件](https://marketplace.visualstudio.com/items?itemName=liuji-jim.vue)然后通过[配置 vscode 扩展语言](https://code.visualstudio.com/docs/languages/overview#_adding-a-file-extension-to-a-language)，将`.mpx`绑定到`.vue`语法的支持，获得语法高亮提示。
+2. 也可直接在vscode扩展处搜索mpx即可下载
 
-```json5
+> 使用
+
+### 插件功能介绍
+
+- 高亮
+- emmet
+- 跳转定义
+- 自动补全
+- eslint
+- 格式化
+
+[视频介绍](https://gift-static.hongyibo.com.cn/static/kfpub/3227/vscodes.mp4)
+
+
+#### 高亮
+
+&ensp;&ensp;与其他语言插件无异，提供相应代码的高亮，因为Mpx分为四个模块，所以每个模块都有相应的语法高亮，还包括注释快捷键，也区分了相应模块，比如`<template>`中使用的是html的高亮，且注释是`<!-- -->`,而`<script>`中就是`js`的高亮，注释是`//`
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-0.png)
+
+#### emmet
+
+&ensp;&ensp;早在使用sublime时就在使用emmet插件，以提高写HTML的效率。
+
+&ensp;&ensp;比如键入多个`<view>`标签：`view*n`。
+
+&ensp;&ensp;比如一些标签的快速键入，配合`tab`或者`Enter`键快速键入
+
+&ensp;&ensp;不仅仅是`<template>`模块，css，scss，less，stylus，sass模块也有相应的快捷指令
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-200258.gif)
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-200331.gif)
+
+
+提示组件标签
+
+我们可以像编写 html 一样，只要输入对应的单词就会出现对应的标签，比如输入的是 view ，然后按下 tab 键，即可输入 `<view></view>` 标签。
+
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi1.png" width="500" alt="图片名称" />
+
+组件指令提示
+
+指令的提示类似于 vue 文件一样，只要输入对应的指令前缀就会出现对应的完整指令，比如输入的是 wx ，然后按下 tab 键，就可以输入 wx:if="" 指令。
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi2.png" width="500" alt="图片名称" />
+
+组件属性提示
+
+微信小程序的每个组件都有一些属性选项，在编写组件的时候输入前缀就会出现完整的属性，并且包含了属性的说明和属性的类型。
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi3.png" width="500" alt="图片名称" />
+
+组件事件提示
+
+给组件绑定事件，也是只需要输入事件的前缀，就会出现完整的事件列表，然后按下 tab 键，即可输入 bindtap="" 类似的事件。
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi4.png" width="500" alt="图片名称" />
+
+#### 跳转定义
+
+&ensp;&ensp;command + 鼠标左键 查看定义位置，也可以在当前文件查看内容，决定是否跳转
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-200848.gif)
+
+#### 自动补全
+
+&ensp;&ensp;毕竟Mpx是个小程序的框架，对于微信和支付宝的api快速补全snippets没有怎么能行，可在`<script>`中通过键入部分文字插入相应的代码块
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-201858.gif)
+
+#### eslint
+
+&ensp;&ensp;eslint这块要分两部分来讲，一部分是插件实现了按照模块区分的简单的eslint，另一部分是要配合eslint的vscode插件，配置.eslintrc高阶的eslint检测。
+
+部分一可通过配置开关
+
+`<template>`是通过我们自己实现的eslint插件`eslint-plugin-mpx`，通过调eslint提供的引擎api，返回eslint校验的结果，我们再进行展示。
+
+`<script>`中是通过调用typescript提供的检测js代码的api来进行检测，返回
+的校验结果也是不太符合语法的，基础的检测，不会过于苛刻
+
+`<style>`中会根据lang的设定进行相应的检测，此检测是vscode官方提供的库
+`vscode-css-languageservice`
+
+`<json>`模块同tempalte，用到了一个eslint插件`eslint-plugin-jsonc`来检测json的部分
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-202133@2x.png)
+
+部分二可参照此[链接](https://github.com/mpx-ecology/vscode-mpx/issues/35)配置
+
+#### 代码格式化
+
+支持代码格式化 JavaScript  (ts)· JSON · CSS (less/scss/stylus) · WXML，通过鼠标右键选择代码格式化文档。
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/3547/format.png)
+
+默认每个区块都是调用 Prettier 这个库来完成格式化的，当然也可以在设置中切换成使用其他库。
+
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/3547/format2.png)
+
+如果切换成 none 将会禁用格式化。
+
+Prettier 支持从项目根目录读取 .prettierrc 配置文件。配置选项可以参考 [官方](https://prettier.io/docs/en/configuration.html) 文档。.prettierrc 文件可以使用 JSON 语法编写，比如下面这样：
+
+```
 {
-  "files.associations": {
-    "*.mpx": "vue"
+  "tabWidth": 4,
+  "semi": false,
+  "singleQuote": true
+}
+```
+
+注意：由于 Prettier 这个库不支持格式化 stylus 语法，所以 stylus 的格式化使用另外一个 stylus-supremacy 库，配置 stylus 格式化规则只能在编辑器的 settings 中配置。
+```
+"mpx.format.defaultFormatterOptions": {
+  "stylus-supremacy": {
+    "insertColons": false, // 不使用括号
+    "insertSemicolons": false, // 不使用冒号
+    "insertBraces": false, // 不使用分号
+    "insertNewLineAroundImports": true, // import之后插入空行
+    "insertNewLineAroundBlocks": false // 每个块不添加空行
   }
 }
 ```
-
-> 下方的方案为社区同学贡献，通过更多的插件使用，可能在某些功能上有所增强，但也可能遇到一些其他问题，请个人判断是否需要！
-
-### vscode 插件
-
-**更新**: `minapp`最新版已经支持了 mpx，所以对`minapp`的使用加以修改。
-
-1. `minapp`此插件主要功能是给`template`加上`wxml`的`snippet`功能，只要在 template 标签中添加属性`minapp='mpx' xlang='wxml'`就可以使用。
-2. `Auto CLose Tag`，这个插件主要是用来自闭合标签。
-3. `wechat-snippet`，主要是使用里面的`wx.xxx`的 snippet。
-4. `vetur`主要使用其高亮和格式化功能，配套安装有`prettier`，新版配置为
-
-```json5
-{
-  "vetur.format.defaultFormatterOptions": {
-    "prettyhtml": {
-      "printWidth": 100, // No line exceeds 100 characters
-      "singleQuote": false // Prefer double quotes over single quotes
-    },
-    "prettier": {
-      // Prettier option here
-      "semi": false,
-      "singleQuote": true,
-      "eslintIntegration": true
-    }
-  },
-  // 保存代码时自动格式化(格式化方式依选择而定)
-  "editor.formatOnSave": true,
-  // 关闭 vetur 本身的语法检查
-  "vetur.validation.script": false,
-  "vetur.validation.style": false,
-  "vetur.validation.template": false
-}
-```
-
-**注意**:
-
-1. 当添加了`xlang="wxml"`后，可以使用`vetur`配置的`template`的格式化，但是会存在 vue 插件的`snippet`。
-2. **在改成`xlang="wxml"`后，虽然能格式化了，但是`image`和`input`标签的格式化会出问题，所以最好在最后完成的时候，改回`lang="wxml"`关闭格式化。**
-3. 注意使用 vscode 的工作区功能，最好把`vue`插件相关提示先关闭了，因为`mpx`单文件具有两个 script 标签，直接格式化会出问题，需要
-
-```html
-<script  type='application/json' lang='json'>
-{
-  "navigationBarTitleText": "",
-  "usingComponents": {
-    // 组件引入
-  }
-}
-</script>
-```
-
-如上，在 json 的 script 中，加上`lang="json"`，这样就不会对这个标签进行格式化。
-
-### vscode 代码片段
-
-此功能主要是为了新建文件后快速生成一些代码，只要在设置里，选择`用户代码片段`，在选择`vue.json`，将以下代码复制进去。之后只要输出写好的`prefix`，就能自动提示生成。
-如此你也可以对`javascript.json`做一些自定义的代码片段
-
-```json5
-{
-  "Print to weapp page": {
-   "prefix": "page",
-   "body": [
-     "<template minapp='mpx' xlang='wxml'>",
-     "  <view class='container'>\n",
-     "  </view>",
-     "</template>\n",
-     "<script>",
-     "import { createPage } from '@mpxjs/core'",
-     "  createPage({",
-     "    data: {",
-     "    },",
-     "    onShow() {",
-     "      // 所在页面显示之后就会执行一次",
-     "      console.log('page show')\n",
-     "    },",
-     "    onHide() {",
-     "      // 页面切入后台执行",
-     "     console.log('page hide')\n",
-     "    },",
-     "    /**",
-     "     * 页面相关事件处理函数--监听用户下拉动作",
-     "    */",
-     "    onPullDownRefresh() {},",
-     "    /**",
-     "     * 页面上拉触底事件的处理函数",
-     "    */",
-     "    onReachBottom() {},",
-     "     /**",
-     "       * 用户点击右上角分享",
-     "     */",
-     "    onShareAppMessage() {},",
-     "  })",
-     "</script>\n",
-     "<style lang='scss' scoped>\n",
-     " .container {} ",
-     "</style>",
-     "<script  type='application/json' lang='json'>",
-     "{",
-     " \"navigationBarTitleText\": \"搜索\",",
-     " \"usingComponents\": {}",
-     "}",
-     "</script>\n",
-     "$2"
-   ],
-   "description": "weapp page"
-  },
-  "Print to weapp components": {
-   "prefix": "components",
-   "body": [
-     "<template minapp='mpx' xlang='wxml'>",
-     "  <view class='container'>\n",
-     "  </view>",
-     "</template>\n",
-     "<script>",
-     "import { createComponent } from '@mpxjs/core'",
-     "  createComponent({",
-     "    properties: {\n},",
-     "    data: {",
-     "    },",
-     "    pageShow() {",
-     "      // 所在页面显示之后就会执行一次",
-     "      console.log('page show')\n",
-     "    },",
-     "    pageHide() {",
-     "      // 页面切入后台执行",
-     "     console.log('page hide')\n",
-     "    },",
-     "    methods: {\n",
-     "    }",
-     "  })",
-     "</script>\n",
-     "<style lang='scss' scoped>\n",
-     " .container {} ",
-     "</style>",
-     "<script  type='application/json' lang='json'>",
-     "{ ",
-     " \"component\": true",
-     "}",
-     "</script>\n",
-     "$2"
-   ],
-   "description": "weapp components"
-  }
-}
-```
+总结一下，配置格式化有两种方式，一种是使用 .prettierrc 文件的形式配置，另一种是在编辑器的 settings 中自行配置，通过 mpx.format.defaultFormatterOptions 选项。

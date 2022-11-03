@@ -1,6 +1,3 @@
-// @ts-ignore
-import { Mpx } from '@mpxjs/core'
-
 type AddPromise<W> = {
   [K in keyof W]: W[K] extends (...args: any) => any
     ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]

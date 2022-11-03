@@ -1,14 +1,14 @@
 Component({
-    externalClasses: ['i-class'],
+  externalClasses: ['i-class'],
 
-    properties: {
-        loading: {
-            type: Boolean,
-            value: true
-        },
-        tip: {
-            type: String,
-            value: ''
-        }
+  properties: {
+    loading: {
+      type: Boolean,
+      value: true
     },
-});
+    tip: {
+      type: String,
+      value: ''
+    }
+  }
+})

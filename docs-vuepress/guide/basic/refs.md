@@ -60,7 +60,7 @@
     },
     ready () {
       // 通过 this.$refs.list 获取的是组件实例的数组
-      this.$refs.list.foEach(item => {
+      this.$refs.list.forEach(item => {
         // 对每一个组件实例的操作...
       })
       // 通过 this.$refs.test 获取的是节点查询对象，通过相关的方法操作节点

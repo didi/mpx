@@ -1,0 +1,28 @@
+<script>
+import mpx, {createApp} from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, {usePromise: true})
+
+createApp({
+  onLaunch() {
+  }
+})
+</script>
+
+<style>
+/*此处编写全局样式*/
+</style>
+
+<script name="json">
+// 可以写注释，通过defs注入的常量做一些判断之类的操作
+const commonPages = [
+  "./pages/index/index",
+  "./pages/other/index",
+  "./pages/scoped/index",
+  "./pages/once/index",
+]
+module.exports = {
+  pages: commonPages,
+}
+</script>

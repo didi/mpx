@@ -1,15 +1,21 @@
-import { isObject, aliasReplace, findItem, makeMap } from '../helper/utils'
 import { getConvertRule } from '../convertor/convertor'
-import { error, warn } from '../helper/log'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
 import { implemented } from './implement'
+import {
+  isObject,
+  aliasReplace,
+  makeMap,
+  findItem,
+  error,
+  warn
+} from '@mpxjs/utils'
 
 let currentHooksMap = {}
 let curType
 let convertRule
 let mpxCustomKeysMap
 
-export default function mergeOptions (options = {}, type, needConvert = true) {
+export default function mergeOptions (options = {}, type, needConvert) {
   // 缓存混合模式下的自定义属性列表
   mpxCustomKeysMap = makeMap(options.mpxCustomKeysForBlend || [])
   // needConvert为false，表示衔接原生的root配置，那么此时的配置都是当前原生环境支持的配置，不需要转换
@@ -203,7 +209,7 @@ function extractPageHooks (options) {
 }
 
 function mergeMixins (parent, child) {
-  for (let key in child) {
+  for (const key in child) {
     if (currentHooksMap[key]) {
       mergeHooks(parent, child, key)
     } else if (/^(data|dataFn)$/.test(key)) {
@@ -247,7 +253,7 @@ export function mergeShallowObj (parent, child, key) {
 
 function mergeDataFn (parent, child, key) {
   let parentVal = parent[key]
-  let childVal = child[key]
+  const childVal = child[key]
 
   if (typeof parentVal === 'function' && key === 'data') {
     parent.dataFn = parentVal
@@ -345,7 +351,7 @@ function transformHOOKS (options) {
     const componentHooksMap = makeMap(convertRule.lifecycle.component)
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
-      if (typeof options[key] === 'function' && key !== 'dataFn' && !componentHooksMap[key]) {
+      if (typeof options[key] === 'function' && key !== 'dataFn' && key !== 'setup' && !componentHooksMap[key]) {
         if (!options.methods) options.methods = {}
         options.methods[key] = options[key]
         delete options[key]

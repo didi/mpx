@@ -1,16 +1,16 @@
 <template>
-  <div>
+  <div class="footer-container">
     <footer class="footer">
       <ul class="footer__list">
-        <li class="grow">
+        <li class="grow" v-if="!smallMode">
           <img
             width="180"
-            src="https://dpubstatic.udache.com/static/dpubimg/cCGcEcig69/footer_logo.png"
+            src="https://dpubstatic.udache.com/static/dpubimg/T1R-u2N8nn/footer_logo.png"
             alt="logo"
           />
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.resourcesList.title}}</span>
             </li>
@@ -20,7 +20,7 @@
           </ul>
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.communityList.title}}</span>
             </li>
@@ -33,7 +33,7 @@
           </ul>
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.helpList.title}}</span>
             </li>
@@ -43,7 +43,7 @@
           </ul>
         </li>
         <li class="grow">
-          <ul>
+          <ul class="footer-inner">
             <li class="footer__wrap">
               <span class="footer__text footer__title">{{$page.frontmatter.moreList.title}}</span>
             </li>
@@ -54,7 +54,10 @@
         </li>
       </ul>
     </footer>
-    <div class="copyright">Copyright 2020 滴滴出行</div>
+    <div class="copyright">
+      <div>备案号：<a href="https://beian.miit.gov.cn/">蜀ICP备15023364号-2</a></div>
+      <div>Copyright 2020 滴滴出行</div>
+    </div>
   </div>
 </template>
 
@@ -62,8 +65,25 @@
 import Popover from '../components/Popover.vue'
 
 export default {
+  data () {
+    return {
+      smallMode: false
+    }
+  },
   components: {
     Popover
+  },
+  mounted () {
+    const MOBILE_DESKTOP_BREAKPOINT = 719
+    const handleLinksWrapWidth = () => {
+      if (document.documentElement.clientWidth < MOBILE_DESKTOP_BREAKPOINT) {
+        this.smallMode = true
+      } else {
+        this.smallMode = false
+      }
+    }
+    handleLinksWrapWidth()
+    window.addEventListener('resize', handleLinksWrapWidth, false)
   }
 };
 </script>
@@ -71,18 +91,24 @@ export default {
 <style lang="stylus" scoped>
 ul li
   list-style none
+.footer-container
+  display flex
+  flex-direction column
+  justify-content flex-end
+  height 466px
+  background url("https://dpubstatic.udache.com/static/dpubimg/cSRXkZjG5W/footer_bg.png") no-repeat center center
+  background-size auto 100%
+  margin-top 60px
 
 .footer
-  margin-top 60px
   display flex
   text-align center
-  padding 0 200px
-  height 436px
-  background url("https://dpubstatic.udache.com/static/dpubimg/NbnyMuw0A1/footer_bg.png") no-repeat
-  background-size 100% 436px
+  max-width 1280px
+  margin 0 auto
+  width 100%
 
 .footer__list
-  margin-top 200px
+  margin-bottom 80px
   display flex
   flex 1
   text-align left
@@ -106,12 +132,12 @@ ul li
   font-weight 500
 
 .copyright
-  height 50px;
   font-size 12px
   color #ffffff
   background #3a495d
   text-align center
-  line-height 50px
+  line-height 30px
+  padding 10px 0
 
 .grow
   flex 1
@@ -122,4 +148,32 @@ ul li
   top 0
   display none
 
+@media (max-width: 750px) {
+  .footer__list {
+    margin-bottom 16px  
+  }
+
+  .footer__text {
+    font-size 12px
+  }
+
+  .footer__title {
+    font-size 12px
+    color #979797
+  }
+
+  .footer__wrap {
+    margin-bottom 0
+  }
+
+  .footer-container {
+    background #606D7C 
+    height auto
+    margin-top 0
+  }
+
+  .footer-inner {
+    padding-left 6px
+  }
+}
 </style>

@@ -1,0 +1,19 @@
+<template>
+  <m-list></m-list>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    onLoad () {}
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "m-list": "../components/list"
+    }
+  }
+</script>

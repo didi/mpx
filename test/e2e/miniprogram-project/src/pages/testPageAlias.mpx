@@ -1,0 +1,20 @@
+<template>
+  <view>
+    test page alias feature
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  onLoad () {}
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+  }
+}
+</script>

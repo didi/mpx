@@ -16,7 +16,9 @@ module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
       webpack: loaderContext,
       defs: inlineConfig.defs || {}
     }
-    loaded = load(ctx, config.path, { argv: false }).catch(err => {
+    loaded = load(ctx, config.path, {
+      loaders: { '.json': (_, content) => JSON.parse(content) }
+    }).catch(err => {
       // postcss-load-config throws error when no config file is found,
       // but for us it's optional. only emit other errors
       if (err.message.indexOf('No PostCSS Config found') >= 0) {

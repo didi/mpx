@@ -1,0 +1,24 @@
+<script lang="ts" src="./app.ts"></script>
+
+<style>
+  /*此处编写全局样式*/
+</style>
+
+<script name="json">
+  module.exports = {
+    pages: [
+      './pages/index'
+    ],
+    plugins: {
+      myPlugin: {
+        version: 'dev',
+        provider: 'touristappid'
+        // genericsImplementation: {
+        //   'plugin-index': {
+        //     'mp-view': './components/list'
+        //   }
+        // }
+      }
+    }
+  }
+</script>

@@ -1,11 +1,22 @@
 import loadScript from './loadscript'
 
 const SDK_URL_MAP = {
-  wx: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js',
-  qq: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js',
-  ali: 'https://appx/web-view.min.js',
-  baidu: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js',
-  tt: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+  wx: {
+    url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
+  },
+  qq: {
+    url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
+  },
+  ali: {
+    url: 'https://appx/web-view.min.js'
+  },
+  baidu: {
+    url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
+  },
+  tt: {
+    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+  },
+  ...window.sdkUrlMap
 }
 
 const ENV_PATH_MAP = {
@@ -31,7 +42,7 @@ window.addEventListener('message', (event) => {
   }
 }, false)
 // 环境判断
-let systemUA = navigator.userAgent
+const systemUA = navigator.userAgent
 if (systemUA.indexOf('AlipayClient') > -1) {
   env = 'ali'
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
@@ -104,7 +115,7 @@ const initWebviewBridge = () => {
     getWebviewApi()
     return
   }
-  const sdkReady = !window[env] ? SDK_URL_MAP[env] ? loadScript(SDK_URL_MAP[env]) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
+  const sdkReady = !window[env] ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url, { crossOrigin: !!SDK_URL_MAP[env].crossOrigin }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
   getWebviewApi(sdkReady)
 }
 
@@ -123,7 +134,7 @@ const getWebviewApi = (sdkReady) => {
     }
   }
 
-  for (let item in webviewApiNameList) {
+  for (const item in webviewApiNameList) {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
 
     webviewApiList[item] = (...args) => {
@@ -158,130 +169,130 @@ const getAdvancedApi = (config, mpx) => {
 
   // key为导出的标准名，对应平台不支持的话为undefined
   const ApiList = {
-    'checkJSApi': {
+    checkJSApi: {
       wx: 'checkJSApi'
     },
-    'chooseImage': {
+    chooseImage: {
       wx: 'chooseImage',
       baidu: 'chooseImage',
       ali: 'chooseImage'
     },
-    'previewImage': {
+    previewImage: {
       wx: 'previewImage',
       baidu: 'previewImage',
       ali: 'previewImage'
     },
-    'uploadImage': {
+    uploadImage: {
       wx: 'uploadImage'
     },
-    'downloadImage': {
+    downloadImage: {
       wx: 'downloadImage'
     },
-    'getLocalImgData': {
+    getLocalImgData: {
       wx: 'getLocalImgData'
     },
-    'startRecord': {
+    startRecord: {
       wx: 'startRecord'
     },
-    'stopRecord': {
+    stopRecord: {
       wx: 'stopRecord'
     },
-    'onVoiceRecordEnd': {
+    onVoiceRecordEnd: {
       wx: 'onVoiceRecordEnd'
     },
-    'playVoice': {
+    playVoice: {
       wx: 'playVoice'
     },
-    'pauseVoice': {
+    pauseVoice: {
       wx: 'pauseVoice'
     },
-    'stopVoice': {
+    stopVoice: {
       wx: 'stopVoice'
     },
-    'onVoicePlayEnd': {
+    onVoicePlayEnd: {
       wx: 'onVoicePlayEnd'
     },
-    'uploadVoice': {
+    uploadVoice: {
       wx: 'uploadVoice'
     },
-    'downloadVoice': {
+    downloadVoice: {
       wx: 'downloadVoice'
     },
-    'translateVoice': {
+    translateVoice: {
       wx: 'translateVoice'
     },
-    'getNetworkType': {
+    getNetworkType: {
       wx: 'getNetworkType',
       baidu: 'getNetworkType',
       ali: 'getNetworkType'
     },
-    'openLocation': {
+    openLocation: {
       wx: 'openLocation',
       baidu: 'openLocation',
       ali: 'openLocation'
     },
-    'getLocation': {
+    getLocation: {
       wx: 'getLocation',
       baidu: 'getLocation',
       ali: 'getLocation'
     },
-    'startSearchBeacons': {
+    startSearchBeacons: {
       wx: 'startSearchBeacons'
     },
-    'stopSearchBeacons': {
+    stopSearchBeacons: {
       wx: 'stopSearchBeacons'
     },
-    'onSearchBeacons': {
+    onSearchBeacons: {
       wx: 'onSearchBeacons'
     },
-    'scanQRCode': {
+    scanQRCode: {
       wx: 'scanQRCode'
     },
-    'chooseCard': {
+    chooseCard: {
       wx: 'chooseCard'
     },
-    'addCard': {
+    addCard: {
       wx: 'addCard'
     },
-    'openCard': {
+    openCard: {
       wx: 'openCard'
     },
-    'alert': {
+    alert: {
       ali: 'alert'
     },
-    'showLoading': {
+    showLoading: {
       ali: 'showLoading'
     },
-    'hideLoading': {
+    hideLoading: {
       ali: 'hideLoading'
     },
-    'setStorage': {
+    setStorage: {
       ali: 'setStorage'
     },
-    'getStorage': {
+    getStorage: {
       ali: 'getStorage'
     },
-    'removeStorage': {
+    removeStorage: {
       ali: 'removeStorage'
     },
-    'clearStorage': {
+    clearStorage: {
       ali: 'clearStorage'
     },
-    'getStorageInfo': {
+    getStorageInfo: {
       ali: 'getStorageInfo'
     },
-    'startShare': {
+    startShare: {
       ali: 'startShare'
     },
-    'tradePay': {
+    tradePay: {
       ali: 'tradePay'
     },
-    'onMessage': {
+    onMessage: {
       ali: 'onMessage'
     }
   }
 
-  for (let item in ApiList) {
+  for (const item in ApiList) {
     mpx[item] = (...args) => {
       if (!ApiList[item][env]) {
         console.error(`此环境不支持${item}方法`)
