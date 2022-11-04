@@ -1523,7 +1523,7 @@ try {
         return unRegisterPackage
       }
       const unRegiPackages = checkAsyncPack()
-      if (unRegiPackages.length > 1) {
+      if (unRegiPackages.length > 0) {
         stats.compilation.errors.push(new Error(`使用分包异步确没有注册对应的分包${unRegiPackages.join(',')}`))
       }
     })
