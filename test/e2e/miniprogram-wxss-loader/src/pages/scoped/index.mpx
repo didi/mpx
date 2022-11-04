@@ -1,0 +1,24 @@
+<!-- 在 page 中使用 weui 组件 -->
+<template>
+  <view class="title-wrapper">
+    <text class="title">wxcss-loader test preCompileIgnore</text>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({})
+</script>
+
+
+<style lang="less" scoped>
+  /* @mpx-import  '../../styless/global.less'; */
+  
+  .title-wrapper .title {
+    color: red;
+  }
+</style>
+
+<script name="json">
+</script>
