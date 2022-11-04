@@ -1511,11 +1511,11 @@ try {
       // check是否有分包未注册
       const checkAsyncPack = () => {
         const unRegisterPackage = []
-        let allRoot = {}
-        for (let v of  mpx.subPackages) {
+        const allRoot = {}
+        for (const v of mpx.subPackages) {
           allRoot[v.root] = true
         }
-        for (let asyncRoot in mpx.asyncRootMap) {
+        for (const asyncRoot in mpx.asyncRootMap) {
           if (!allRoot[asyncRoot]) {
             unRegisterPackage.push(asyncRoot)
           }
