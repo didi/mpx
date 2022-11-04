@@ -528,6 +528,10 @@ class MpxWebpackPlugin {
           subpackageModulesMap: {
             main: {}
           },
+          // 用于记录所有分包异步的方式引用的资源所在的包
+          asyncRootMap: {},
+          // 所有的分包配置
+          subPackages: [],
           // 记录其他资源，如pluginMain、pluginExport，无需区分主包分包
           otherResourcesMap: {},
           // 记录独立分包
@@ -994,6 +998,7 @@ class MpxWebpackPlugin {
                 parser.state.current.addPresentationalDependency(dep)
                 // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
                 parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                mpx.asyncRootMap[queryObj.root] = true
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)
@@ -1502,6 +1507,24 @@ try {
           clearFileCache(),
           cache.storePromise('cacheIsValid', null, true)
         ])
+      }
+      // check是否有分包未注册
+      const checkAsyncPack = () => {
+        const unRegisterPackage = []
+        let allRoot = {}
+        for (let v of  mpx.subPackages) {
+          allRoot[v.root] = true
+        }
+        for (let asyncRoot in mpx.asyncRootMap) {
+          if (!allRoot[asyncRoot]) {
+            unRegisterPackage.push(asyncRoot)
+          }
+        }
+        return unRegisterPackage
+      }
+      const unRegiPackages = checkAsyncPack()
+      if (unRegiPackages.length > 1) {
+        stats.compilation.errors.push(new Error(`使用分包异步确没有注册对应的分包${unRegiPackages.join(',')}`))
       }
     })
   }

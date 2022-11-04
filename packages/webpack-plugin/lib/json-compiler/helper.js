@@ -55,10 +55,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, emitEr
         // 目前只有微信支持分包异步化
         if (mode === 'wx') {
           tarRoot = queryObj.root
-          // 检测是否注册了分包
-          if (!mpx.subpackageModulesMap[tarRoot]) {
-            emitError('[app json]: 未注册分包:' + tarRoot)
-          }
+          mpx.asyncRootMap[tarRoot] = true
         }
       }
       const parsed = path.parse(resourcePath)
