@@ -1499,7 +1499,7 @@ try {
       })
     }
 
-    compiler.hooks.done.tapPromise('MpxWebpackPlugin', async () => {
+    compiler.hooks.done.tapPromise('MpxWebpackPlugin', async (stats) => {
       const cache = compiler.getCache('MpxWebpackPlugin')
       const cacheIsValid = await cache.getPromise('cacheIsValid', null)
       if (!cacheIsValid) {
