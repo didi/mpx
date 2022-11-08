@@ -28,13 +28,9 @@ export default function processOption (
       }
     }
 
-    Vue.directive('animation', (el, binding) => {
-      return animation(el, binding)
-    })
+    Vue.directive('animation', animation)
 
-    Vue.filter('transRpxStyle', style => {
-      return transRpxStyle(style)
-    })
+    Vue.filter('transRpxStyle', transRpxStyle)
 
     const routes = []
 
@@ -213,7 +209,6 @@ export default function processOption (
               }
               if (currentPage) {
                 currentPage.mpxPageStatus = 'hide'
-                currentPage.onHide && currentPage.onHide()
               }
             } else {
               if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
@@ -225,7 +220,6 @@ export default function processOption (
               }
               if (currentPage) {
                 currentPage.mpxPageStatus = 'show'
-                currentPage.onShow && currentPage.onShow()
               }
             }
           }
