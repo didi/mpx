@@ -297,21 +297,15 @@ export interface Mpx {
 
   config: MpxConfig
 
-  locale: string
-
-  fallbackLocale: string
-
-  t (key: string, values?: I18nValues): string
-
-  tc (key: string, choice: number, values?: I18nValues): string
-
-  te (key: string): boolean
-
-  tm (key: string): any
-
   i18n: {
     readonly global: UseI18n
     dispose (): void
+    locale: string
+    fallbackLocale: string
+    t (key: string, values?: I18nValues): string
+    tc (key: string, choice: number, values?: I18nValues): string
+    te (key: string): boolean
+    tm (key: string): any
   }
 }
 
