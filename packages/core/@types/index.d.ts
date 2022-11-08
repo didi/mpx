@@ -302,10 +302,10 @@ export interface Mpx {
     dispose (): void
     locale: string
     fallbackLocale: string
-    t (key: string, values?: I18nValues): string
-    tc (key: string, choice: number, values?: I18nValues): string
-    te (key: string): boolean
-    tm (key: string): any
+    t: typeof t
+    tc: typeof tc
+    te: typeof te
+    tm: typeof tm
   }
 }
 
