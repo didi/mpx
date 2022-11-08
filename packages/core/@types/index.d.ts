@@ -193,6 +193,10 @@ export interface MpxComponentIns {
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
   $forceUpdate (params?: object, callback?: () => void): void
   $nextTick (fn: () => void): void
+  $i18n: {
+    locale: string
+    fallbackLocale: string
+  }
   $t: typeof t
   $tc: typeof tc
   $te: typeof te
@@ -458,13 +462,11 @@ interface UseI18n {
   inheritLocale: boolean
   fallbackRoot: boolean
 
-  t (key: string, values?: I18nValues): string
+  t: typeof t | typeof tc
 
-  t (key: string, choice: number, values?: I18nValues): string
+  te: typeof te
 
-  te (key: string): boolean
-
-  tm (key: string): any
+  tm: typeof tm
 
   getLocaleMessage (locale: string): StringObj
 
