@@ -663,11 +663,11 @@ const getWxToAliApi = ({ optimize = false }) => {
       ALI_OBJ.connectBLEDevice(options)
     },
 
-    onBLEConnectionStateChange(callback) {
+    onBLEConnectionStateChange (callback) {
       ALI_OBJ.onBLEConnectionStateChanged(callback)
     },
 
-    offBLEConnectionStateChange(callback) {
+    offBLEConnectionStateChange (callback) {
       ALI_OBJ.offBLEConnectionStateChanged(callback)
     }
   }
