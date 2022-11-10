@@ -84,7 +84,7 @@ module.exports = function (api, options) {
 }
 ```
 
-然后在我们的项目里安装该插件即可。
+然后在我们的项目里安装该插件并运行`npx mpx-cli-service build:upload`即可。
 
 ## 项目结构变化
 
