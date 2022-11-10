@@ -68,7 +68,7 @@ module.exports = defineConfig({
 1. `webpack`插件
 2. 新建一个`mpx-cli`插件
 
-例如我们新建一个`@vue/vue-cli-plugin-mpx-build-upload`插件,用来在构建完成后上传图片到`cdn`。
+例如我们新建一个`vue-cli-plugin-mpx-build-upload`插件,用来在构建完成后上传图片到`cdn`。
 
 ```js
 // index.js
@@ -83,6 +83,8 @@ module.exports = function (api, options) {
   })
 }
 ```
+
+然后在我们的项目里安装该插件即可。
 
 ## 项目结构变化
 
