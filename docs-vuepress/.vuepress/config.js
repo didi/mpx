@@ -82,7 +82,8 @@ const sidebar = {
       collapsable: false,
       children: [
         'migrate/2.8',
-        'migrate/2.7'
+        'migrate/2.7',
+        'migrate/mpx-cli-3'
       ]
     }
   ],
