@@ -87,31 +87,33 @@ export const useOptionsStore = defineStore('options', {
 在选项式 API 中使用，如果你不能使用组合式 API，但你可以使用 `computed`, `methods`, '...'，那你可以使用 `mapState()`, `mapActions()` 辅助函数
 来将 `state`, `getter`, `action` 等映射到你的组件中。
 
+无论是 optionsStore、还是 setupStore，我们都可以在选项式组件中使用，且使用方式并无差异，下方例子我们统一使用 useSetupStore 来作为示范例
+
 ```js
 import { createComponent } from '@mpxjs/core'
 import { storeToRefs, mapState, mapActions } from '@mpxjs/pinia'
 import { useOptionsStore } from 'xxx/options'
 import { useSetupStore } from 'xxx/setup'
-// 下方例子我们统一使用 useSetupStore 来作为示范例
+
 
 // 选项式API（Options API）风格下通过mapHelper函数使用
 createComponent({
   computed: {
     // 可以访问组件中的 this.name
     // 此处与直接从 useSetupStore 中读取的数据相同
-    ...mapState(useOptionsStore, ['name', 'count']),
+    ...mapState(useSetupStore, ['name', 'count']),
     // 也可以将state修改别名，例如将name 注册为 otherName
     ...mapState(useSetupStore, {
       otherName: 'name',
       // 也可以写一个函数来获取对 useSetupStore 的访问权
       double: store => store.count * 2,
       // 也可以通过访问 `this` 拿到数据
-      magicValue(store) {
+      magicValue() {
         return this.count + this.double
       }
     }),
     // 在pinia中，getter 也是通过 mapState 来进行映射
-    ...mapGetters(useSetupStore, ['myName'])
+    ...mapState(useSetupStore, ['myName'])
   },
   methods: {
     ...mapActions(useSetupStore, ['increment']),
@@ -122,7 +124,7 @@ createComponent({
   }
 })
 ```
-
+**注意：** 在 `pinia` 中，getter 也是通过 mapState 来进行映射
 
 在组合式API (Setup API) 风格下使用
 ```js
