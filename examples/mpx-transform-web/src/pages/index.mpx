@@ -1,6 +1,6 @@
 <template>
   <view bindtap="reload">__UNPLUGIN__</view>
-  <text wx:if="{{a === 1}}" bindtap="jumpPage">test</text>
+  <text wx:if="{{a === 1}}" bindtap="jumpPage">test24</text>
   <view>{{$t('page_title')}}</view>
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
  <list list-class="list"></list>
