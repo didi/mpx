@@ -1,8 +1,4 @@
-import {
-  CompilerResult,
-  ParseResult,
-  templateCompiler
-} from '@mpxjs/compiler'
+import { CompilerResult, ParseResult, templateCompiler } from '@mpxjs/compiler'
 import parseComponent from '@mpxjs/compiler/template-compiler/parser'
 import { JsonConfig } from './transformer/json'
 
@@ -32,16 +28,20 @@ export interface SFCDescriptor extends CompilerResult {
   tabBarStr: string
 }
 
-interface Compiler {
+interface Compiler extends MpxCompiler {
   parseComponent(
     template: string,
     options: Parameters<MpxCompiler['parseComponent']>[1]
   ): SFCDescriptor
-  parse(template: string, options: Parameters<MpxCompiler['parse']>[1]): ParseResult
+  parse(
+    template: string,
+    options: Parameters<MpxCompiler['parse']>[1]
+  ): ParseResult
   serialize: MpxCompiler['serialize']
 }
 
 const compiler: Compiler = {
+  ...templateCompiler,
   parseComponent(template, options) {
     const descriptor = parseComponent(template, options) as SFCDescriptor
     if (descriptor.script && descriptor.script.map) {
@@ -51,12 +51,6 @@ const compiler: Compiler = {
       )
     }
     return descriptor
-  },
-  parse(template, options) {
-    return templateCompiler.parse(template, options)
-  },
-  serialize(root) {
-    return templateCompiler.serialize(root)
   }
 }
 
