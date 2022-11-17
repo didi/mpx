@@ -136,12 +136,16 @@ createComponent({
     const setupStore = useSetupStore()
     setupStore.count = 2
     // 作为 store 的一个属性，我们可以直接访问任何 getter(与 state )
-    store.myName // pinia
+    setupStore.myName // pinia
     
-    // 调用 action 方法  
-    useSetupStore.increment()
+    function onIncrementClick() {
+      // 调用 action 方法  
+      setupStore.increment()
+      console.log('New Count:', setupStore.count)
+    }
     return {
-      ...storeToRefs(setupStore),
+      onIncrementClick,
+      ...storeToRefs(setupStore)
     }
   }
 })
