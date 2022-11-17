@@ -23,6 +23,11 @@
       "require": "./dist/index.js",
       "import": "./dist/index.js"
     },
+    "./index": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
+    },
     "./*": "./*",
     "./vite": {
       "types": "./dist/vite.d.ts",

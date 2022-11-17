@@ -1,11 +1,10 @@
-import { styleCompiler } from '@mpxjs/compiler'
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
-import postcss from 'postcss'
-import { SourceMapInput, TransformPluginContext, TransformResult } from 'rollup'
-import { createFilter } from 'vite'
+import { TransformPluginContext, TransformResult } from 'rollup'
+import { mpxStyleTransform } from '@mpxjs/loaders/style-loader'
 import { ResolvedOptions } from '../../options'
-import loadPostcssConfig from '@mpxjs/compile-utils/loadPostcssConfig'
 import { SFCDescriptor } from '../compiler'
+import { proxyPluginContext } from '../../pluginContextProxy/index'
+import mpx from '../mpx'
 
 async function mpxTransformStyle(
   code: string,
@@ -14,65 +13,12 @@ async function mpxTransformStyle(
   options: ResolvedOptions,
   pluginContext: TransformPluginContext
 ): Promise<TransformResult> {
-  const { autoScopeRules, defs, transRpxRules: transRpxRulesRaw } = options
-  const filter = createFilter(autoScopeRules.include, autoScopeRules.exclude)
-  const autoScope = autoScopeRules.include && filter(filename)
-  const transRpxRules = transRpxRulesRaw
-    ? Array.isArray(transRpxRulesRaw)
-      ? transRpxRulesRaw
-      : [transRpxRulesRaw]
-    : []
-  const inlineConfig = { ...options.postcssInlineConfig }
-  const config = await loadPostcssConfig({ webpack: {}, defs }, inlineConfig)
-  const plugins = config.plugins.concat(styleCompiler.trim())
-
-  if (autoScope) {
-    const moduleId = descriptor.id
-    plugins.push(styleCompiler.scopeId({ id: `data-v-${moduleId}` }))
-  }
-
-  plugins.push(
-    styleCompiler.pluginCondStrip({
-      defs
-    })
-  )
-
-  for (const item of transRpxRules) {
-    const { mode, comment, designWidth, include, exclude } = item || {}
-    const filter = createFilter(include, exclude)
-    if (filter(filename)) {
-      plugins.push(styleCompiler.rpx({ mode, comment, designWidth }))
-    }
-  }
-
-  if (options.mode === 'web') {
-    plugins.push(styleCompiler.vw({ transRpxFn: options.webConfig.transRpxFn }))
-  }
-
-  const result = await postcss(plugins).process(code, {
-    to: filename,
-    from: filename,
-    map: options.sourceMap
-      ? {
-          inline: false,
-          annotation: false
-        }
-      : false,
-    ...config.options
+  return mpxStyleTransform(code, proxyPluginContext(pluginContext), {
+    sourceMap: options.sourceMap,
+    map: pluginContext.getCombinedSourcemap(),
+    resource: filename,
+    mpx: mpx
   })
-
-  if (result.messages) {
-    result.messages.forEach(({ type, file }) => {
-      if (type === 'dependency') {
-        pluginContext.addWatchFile(file)
-      }
-    })
-  }
-  // pluginContext.sourcemapChain.push(result.map && result.map.toJSON())
-  return {
-    code: result.css,
-    map: result.map && (result.map.toJSON() as SourceMapInput)
-  }
 }
 
 /**
