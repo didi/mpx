@@ -20,7 +20,7 @@ export default function (styles, options, callback) {
     })
     output += '\n'
   }
-  callback(null, {
+  return {
     output
-  })
+  }
 }

@@ -19,7 +19,7 @@ export default async function (json, {
   loaderContext,
   pagesMap,
   componentsMap
-}, rawCallback) {
+}) {
   const localPagesMap = {}
   const localComponentsMap = {}
   let output = '/* json */\n'
@@ -66,28 +66,32 @@ export default async function (json, {
     }
   })
 
-  const callback = (err) => {
-    return rawCallback(err, {
+
+  if (!json) {
+    return {
       output,
       jsonObj,
       localPagesMap,
       localComponentsMap,
       tabBarMap,
       tabBarStr
-    })
-  }
-
-  if (!json) {
-    return callback()
+    }
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
     jsonObj = parse(json.content)
   } catch (e) {
-    return callback(e)
+    return {
+      output,
+      jsonObj,
+      localPagesMap,
+      localComponentsMap,
+      tabBarMap,
+      tabBarStr
+    }
   }
 
-  // const fs = loaderContext._compiler.inputFileSystem
+  const fs = loaderContext._compiler.inputFileSystem
 
   const defaultTabbar = {
     borderStyle: 'black',
@@ -113,70 +117,72 @@ export default async function (json, {
     }
   }
 
-  const processPackages = async (packages, context) => {
+  const processPackages = (packages, context) => {
     if (packages) {
-      for (const packagePath of packages) {
+      each(packages, async (packagePath) => {
         const { queryObj } = parseRequest(packagePath)
-        const packageModule = await resolve(context, packagePath, loaderContext)
-        if (packageModule) {
-          let { rawResourcePath } = parseRequest(result)
-          let code = await fs.promises.readFile(rawResourcePath, 'utf-8')
-          const extName = extname(rawResourcePath)
-          if (extName === '.mpx') {
-            const parts = parser(content, {
-              filePath: result,
-              needMap: loaderContext.sourceMap,
-              mode,
-              env
-            })
-            const result = await getJSONContent(
-              parts.json || {},
-              loaderContext.context,
-              proxyPluginContext(loaderContext),
-              mpx.defs,
-              loaderContext._compilation.inputFileSystem
-            )
-            try {
-              code = parse(code)
-            } catch (err) {
-              return err
-            }
-            const processSelfQueue = []
-            const context = dirname(result)
-            if (content.pages) {
-              let tarRoot = queryObj.root
-              if (tarRoot) {
-                delete queryObj.root
-                let subPackage = {
-                  tarRoot,
-                  pages: content.pages,
-                  ...queryObj
-                }
+        const { rawResourcePath } = resolve(context, packagePath, loaderContext, (err, result) => {
+          if (err) return error
+          return parseRequest(result)
+        })
+        const code = await fs.promises.readFile(rawResourcePath, 'utf-8')
+        const extName = extname(rawResourcePath)
+        if (extName === '.mpx') {
+          const parts = parser(code, {
+            filePath: result,
+            needMap: loaderContext.sourceMap,
+            mode,
+            env
+          })
+          const JSONContent = await getJSONContent(
+            parts.json || {},
+            loaderContext.context,
+            proxyPluginContext(loaderContext),
+            mpx.defs,
+            loaderContext._compilation.inputFileSystem
+          )
+          let content = ''
+          try {
+            content = parse(JSONContent)
+          } catch (err) {
+            return err
+          }
 
-                if (content.plugins) {
-                  subPackage.plugins = content.plugins
-                }
-
-                processSelfQueue.push(() => {
-                  processSubPackage(subPackage, context)
-                })
-              } else {
-                processSelfQueue.push(() => {
-                  processPages(content.pages, context, '')
-                })
+          const processSelfQueue = []
+          const context = dirname(rawResourcePath)
+          if (content.pages) {
+            let tarRoot = queryObj.root
+            if (tarRoot) {
+              delete queryObj.root
+              let subPackage = {
+                tarRoot,
+                pages: content.pages,
+                ...queryObj
               }
-            }
-            if (content.packages) {
+
+              if (content.plugins) {
+                subPackage.plugins = content.plugins
+              }
+
               processSelfQueue.push(() => {
-                processPackages(content.packages, context)
+                processSubPackage(subPackage, context)
+              })
+            } else {
+              processSelfQueue.push(() => {
+                processPages(content.pages, context, '')
               })
             }
-            if (processSelfQueue.length) {
-              Promise.all(processSelfQueue)
-            }
+          }
+          if (content.packages) {
+            processSelfQueue.push(() => {
+              processPackages(content.packages, context)
+            })
+          }
+          if (processSelfQueue.length) {
+            parallel(processSelfQueue, callback)
           }
         }
-      }
+      })
     }
   }
 
@@ -184,10 +190,10 @@ export default async function (json, {
 
   const processPages = (pages, context, tarRoot = '') => {
     if (pages) {
-      for (const page of pages) {
-        processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst, key } = {}) => {
+      each(pages, async (page) => {
+        await processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst, key } = {}) => {
           if (err) return err === RESOLVE_IGNORED_ERR ? null : err
-          if (pageKeySet.has(key)) return callback()
+          if (pageKeySet.has(key)) return null
           pageKeySet.add(key)
           const { resourcePath, queryObj } = parseRequest(resource)
           if (localPagesMap[outputPath]) {
@@ -200,14 +206,14 @@ export default async function (json, {
           }
 
           pagesMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
             async: queryObj.async || tarRoot,
             isFirst
           }
+          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
         })
-      }
+      })
     }
   }
 
@@ -215,11 +221,11 @@ export default async function (json, {
     if (subPackage) {
       if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
         emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
-        return `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
+        return
       }
       let tarRoot = subPackage.tarRoot || subPackage.root || ''
       let srcRoot = subPackage.srcRoot || subPackage.root || ''
-      if (!tarRoot) return null
+      if (!tarRoot) return
       context = join(context, srcRoot)
       processPages(subPackage.pages, context, tarRoot)
     }
@@ -227,23 +233,23 @@ export default async function (json, {
 
   const processSubPackages = (subPackages, context) => {
     if (subPackages) {
-      for (const subPackage of subPackages) {
+      each(subPackages, (subPackage) => {
         processSubPackage(subPackage, context)
-      }
+      })
     }
   }
 
   const processComponents = (components, context) => {
     if (components) {
-      for (const key in components) {
-        processComponent(components[key], context, {}, (err, { resource, outputPath } = {}) => {
+      eachOf(components, (component, name) => {
+        processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
-            return err
+            return 'error'
           }
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-          localComponentsMap[key] = {
+          localComponentsMap[name] = {
             resource: addQuery(resource, {
               isComponent: true,
               outputPath
@@ -251,7 +257,7 @@ export default async function (json, {
             async: queryObj.async
           }
         })
-      }
+      })
     }
   }
 
@@ -266,22 +272,29 @@ export default async function (json, {
     }
   }
 
-  if (jsonObj.pages && jsonObj.pages[0]) {
-    if (typeof jsonObj.pages[0] !== 'string') {
-      jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
-    } else {
-      jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+  try {
+    if (jsonObj.pages && jsonObj.pages[0]) {
+      if (typeof jsonObj.pages[0] !== 'string') {
+        jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
+      } else {
+        jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+      }
     }
+    await processPages(jsonObj.pages, context, '')
+    await processComponents(jsonObj.usingComponents, context)
+    await processPackages(jsonObj.packages, context)
+    await processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context)
+    await processGenerics(jsonObj.componentGenerics, context)
+    await processTabBar(jsonObj.tabBar)
+    return {
+      output,
+      jsonObj,
+      localPagesMap,
+      localComponentsMap,
+      tabBarMap,
+      tabBarStr
+    }
+  } catch (error) {
+    pluginContext.error(`[mpx loader] process json error: ${error}`)
   }
-  Promise.all([
-    processPages(jsonObj.pages, context, ''),
-    processComponents(jsonObj.usingComponents, context),
-    processPackages(jsonObj.packages, filename),
-    processPackages(jsonConfig.packages, context),
-    processSubPackages(jsonObj.subPackages || jsonObj.subpackages),
-    processGenerics(jsonObj.componentGenerics),
-    processTabBar(jsonObj.tabBar)
-  ]).then(() => {
-    callback()
-  })
 }

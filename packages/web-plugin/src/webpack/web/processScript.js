@@ -254,8 +254,7 @@ export default function (script, {
     }
   })
   output += '\n'
-
-  callback(null, {
+  return {
     output
-  })
+  }
 }
