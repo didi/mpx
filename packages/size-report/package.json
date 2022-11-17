@@ -35,6 +35,7 @@
     "@mpxjs/webpack-plugin": "^2.7.1-beta.1"
   },
   "devDependencies": {
+    "@mpxjs/webpack-plugin": "workspace:*",
     "babel-eslint": "^10.1.0",
     "eslint": "^5.10.0",
     "eslint-config-standard": "^12.0.0",
