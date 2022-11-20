@@ -1,0 +1,29 @@
+<template>
+  <view>
+    <text>{{ name }}</text>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    name: 'jack',
+    info: {
+      address: 'shaoxing'
+    }
+  },
+  onLoad() {
+    this.name = 'ma'
+  }
+})
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      
+    }
+  }
+</script>
