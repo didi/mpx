@@ -67,7 +67,6 @@ export async function transformScript(
     pagesMap: localPagesMap,
     componentsMap: localComponentsMap
   } = descriptor
-
   const ctorType = app ? 'app' : page ? 'page' : 'component'
 
   const { i18n } = options

@@ -260,19 +260,18 @@ export async function processJSON(
   }
 
   try {
-    Promise.all([
+    await Promise.all([
       processPages(jsonConfig.pages, filename),
       processPackages(jsonConfig.packages, filename),
       processSubPackages(jsonConfig.subpackages, filename),
       processComponents(jsonConfig.usingComponents, filename),
       processGenerics(jsonConfig.componentGenerics, filename),
       processTabBar(jsonConfig.tabBar)
-    ]).then(() => {
-      descriptor.pagesMap = pagesMap
-      descriptor.componentsMap = componentsMap
-      descriptor.tabBarMap = tabBarMap
-      descriptor.tabBarStr = tabBarStr
-    })
+    ])
+    descriptor.pagesMap = pagesMap
+    descriptor.componentsMap = componentsMap
+    descriptor.tabBarMap = tabBarMap
+    descriptor.tabBarStr = tabBarStr
   } catch (error) {
     pluginContext.error(`[mpx loader] process json error: ${error}`)
   }

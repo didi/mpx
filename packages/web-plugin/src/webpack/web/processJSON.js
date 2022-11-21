@@ -265,14 +265,13 @@ export default async function (json, {
       jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
     }
   }
-  Promise.all([
+  await Promise.all([
     processPages(jsonObj.pages, context, ''),
     processComponents(jsonObj.usingComponents, context),
     processPackages(jsonObj.packages, context),
     processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context),
     processGenerics(jsonObj.componentGenerics),
     processTabBar(jsonObj.tabBar)
-  ]).then(() => {
-    callback()
-  })
+  ])
+  callback()
 }
