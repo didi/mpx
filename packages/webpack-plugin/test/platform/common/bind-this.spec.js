@@ -2,28 +2,88 @@ const bindThis = require('../../../lib/template-compiler/bind-this').transform
 
 describe('render function simplify should correct', function () {
 
-  it('should variable literal is correct', function () {
+  it('should Normal Scope Deletion is correct', function () {
     const input = `
-    function render() {
-      if (random) {
-        name;
-        sex
-      } else {
-        age;
-        sex
+    global.currentInject = {
+      render: function () {
+        /* 1 */
+        (grade)
+        if (random) {
+          (name);
+        } else {
+          (grade)
+          name
+        }
+        
+        if (random) {
+          aName
+        }
+        aName;
+        
+        bName;
+        bName;
       }
-      grade
-      if (random) {
-        name
-      } else {
-        grade
-      }
-    }`
+    }
+    `
     const res = bindThis(input, { needCollect: true }).code
     const output = `
-    function render() {
-      
-    }`
+    global.currentInject = {
+      render: function () {
+        /* 1 */
+        this._c("grade", this.grade);
+    
+        if (this._c("random", this.random)) {
+          this._c("name", this.name);
+        } else {
+          this._c("name", this.name);
+        }
+    
+        if (this._c("random", this.random)) {
+          this._c("aName", this.aName);
+        }
+    
+        this._c("aName", this.aName);
+    
+        this._c("bName", this.bName);
+      }
+    };`
+    expect(res).toMatchSnapshot(output)
+  })
+
+  // 回溯
+  it('should backtrack variable deletion is correct', function () {
+    const input = `
+    global.currentInject = {
+      render: function () {
+        aName;
+        if (aName) {};
+
+        if ( random) {
+          bName
+        } else {
+          bName
+        }
+        bName
+      }
+    }
+    `
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+    global.currentInject = {
+      render: function () {
+        this._c("aName", this.aName);
+
+        if (this._c("aName", this.aName)) {}
+    
+        if (this._c("random", this.random)) {
+          this._c("bName", this.bName);
+        } else {
+          this._c("bName", this.bName);
+        }
+    
+        this._c("bName", this.bName);
+      }
+    };`
     expect(res).toMatchSnapshot(output)
   })
 
@@ -50,24 +110,6 @@ describe('render function simplify should correct', function () {
     }`
     expect(res).toMatchSnapshot(output)
   })
-
-  it('should _p function is correct', function () {
-    const input = `
-    function render() {
-      tip;
-      this._p(tip)
-      this._p(tip && msg || 'str')
-    }`
-    const res = bindThis(input, { needCollect: true }).code
-    const output = `
-    function render() {
-      this._c("tip", this.tip);
-  
-      this._c("tip", this.tip) && this._c("msg", this.msg) || 'str';
-    }`
-    expect(res).toMatchSnapshot(output)
-  })
-
   it('should object is correct', function () {
     const input = `
     function render() {
@@ -92,23 +134,7 @@ describe('render function simplify should correct', function () {
     const res = bindThis(input, { needCollect: true }).code
     const output = `
     function render() {
-      ({
-        tap: [[]],
-        click: [[this._c("handlerName", this.handlerName)]]
-      });
-      [this._c("inArr", this.inArr)];
-    
-      if ([1, this._c("inArr", this.inArr), 'bb', true].length) {}
-    
-      this._c("grade", this.grade);
-    
-      ({});
       
-      this._c("grade.name", this.grade.name);
-    
-      ({
-        grade: this._c("grade", this.grade)[this._c("index", this.index)]
-      });
     }`
     expect(res).toMatchSnapshot(output)
   })

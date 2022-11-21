@@ -62,14 +62,19 @@ module.exports = {
       },
       BlockStatement: {
         enter (path) {
+          const currentBindings = {}
+          if (currentBlock) {
+            const { currentBindings: pBindings } = scopeBlock.get(currentBlock)
+            Object.assign(currentBindings, pBindings)
+          }
           scopeBlock.set(path, {
             parent: currentBlock,
-            currentBindings: {}
+            currentBindings
           })
           currentBlock = path
         },
         exit (path) {
-          const { parent, currentBindings } = scopeBlock.get(path)
+          const { parent } = scopeBlock.get(path)
           currentBlock = parent
         }
       },
@@ -132,7 +137,7 @@ module.exports = {
               }
               last.collectPath = t.stringLiteral(keyPath)
               const { currentBindings } = scopeBlock.get(currentBlock)
-              if (currentBindings[keyPath] && currentBindings[keyPath].canDel) {
+              if (currentBindings[keyPath] && !isIfTest) {
                 path.remove() // 当前作用域存在重复变量，则直接删除
               } else {
                 currentBindings[keyPath] = {
