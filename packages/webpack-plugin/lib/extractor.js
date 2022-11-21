@@ -22,7 +22,7 @@ module.exports.pitch = async function (remainingRequest) {
 
   if (needBabel) {
     // 创建js request应用babel
-    let request = addQuery(this.request, {}, true, ['needBabel'])
+    const request = addQuery(this.request, {}, true, ['needBabel'])
     const fakeRequest = addQuery(`${resourcePath}.js`, queryObj)
     return `module.exports = require(${loaderUtils.stringifyRequest(this, `${fakeRequest}!=!${request}`)});\n`
   }
@@ -62,7 +62,8 @@ module.exports.pitch = async function (remainingRequest) {
 
   const extractedInfo = {
     content,
-    index
+    // isStatic时不需要关注引用索引
+    index: isStatic ? 0 : index
   }
 
   this.emitFile(file, '', undefined, {

@@ -20,23 +20,23 @@ class SocketTask {
   }
 
   get CONNECTING () {
-    return this._socket['CONNECTING'] || 0
+    return this._socket.CONNECTING || 0
   }
 
   get OPEN () {
-    return this._socket['OPEN'] || 1
+    return this._socket.OPEN || 1
   }
 
   get CLOSING () {
-    return this._socket['CLOSING'] || 2
+    return this._socket.CLOSING || 2
   }
 
   get CLOSED () {
-    return this._socket['CLOSED'] || 3
+    return this._socket.CLOSED || 3
   }
 
   get readyState () {
-    return this._socket['readyState']
+    return this._socket.readyState
   }
 
   send (options) {

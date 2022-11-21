@@ -3,47 +3,21 @@ const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
 
-let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
+const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
   'require,global'
 
-let hash = {}
+const hash = {}
 names.split(',').forEach(function (name) {
   hash[name] = true
 })
 
-let dangerousKeys = 'length,size,prototype'
-let dangerousKeyMap = {}
+const dangerousKeys = 'length,size,prototype'
+const dangerousKeyMap = {}
 dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
-
-function testInIf (node) {
-  let current = node
-  while (current.parentPath) {
-    if (current.parentPath.type === 'IfStatement' &&
-      current.key === 'test') {
-      return true
-    }
-    current = current.parentPath
-  }
-  return false
-}
-
-function getMemberExp (node) {
-  if (!t.isMemberExpression(node)) return ''
-  let current = node
-  let keyPath = current.property.name
-  while (t.isMemberExpression(current.object)) {
-    keyPath = node.object.property.name + `.${keyPath}`
-    current = current.object
-  }
-  if (t.isIdentifier(current.object)) {
-    keyPath = current.object.name + `.${keyPath}`
-  }
-  return keyPath
-}
 
 module.exports = {
   transform (code, {
@@ -58,9 +32,12 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
-    const collectedConst = {}
+    let isIfTest = false
+    // block 作用域
+    const scopeBlock = new Map()
+    let currentBlock = null
 
-    let bindThisVisitor = {
+    const bindThisVisitor = {
       // 标记收集props数据
       CallExpression: {
         enter (path) {
@@ -70,17 +47,8 @@ module.exports = {
             t.isThisExpression(callee.object) &&
             (callee.property.name === '_p' || callee.property.value === '_p')
           ) {
-            const arg = path.node.arguments[0]
-            const keyPath = getMemberExp(arg)
-            if (
-              collectedConst[keyPath] ||
-              (arg.type === 'Identifier' && collectedConst[arg.name])
-            ) {
-              path.remove()
-            } else {
-              isProps = true
-              path.isProps = true
-            }
+            isProps = true
+            path.isProps = true
           }
         },
         exit (path) {
@@ -91,6 +59,32 @@ module.exports = {
             delete path.isProps
           }
         }
+      },
+      BlockStatement: {
+        enter (path) {
+          const currentBindings = {}
+          if (currentBlock) {
+            const { currentBindings: pBindings } = scopeBlock.get(currentBlock)
+            Object.assign(currentBindings, pBindings)
+          }
+          scopeBlock.set(path, {
+            parent: currentBlock,
+            currentBindings
+          })
+          currentBlock = path
+        },
+        exit (path) {
+          const { parent } = scopeBlock.get(path)
+          currentBlock = parent
+        }
+      },
+      IfStatement: {
+        enter () {
+          isIfTest = true
+        },
+        exit () {
+          isIfTest = false
+        },
       },
       Identifier (path) {
         if (
@@ -118,10 +112,8 @@ module.exports = {
               current = path.parentPath
               last = path
               let keyPath = '' + path.node.property.name
-              let hasComputed = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
-                  hasComputed = true
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
                       if (dangerousKeyMap[current.node.property.value]) {
@@ -144,73 +136,17 @@ module.exports = {
                 current = current.parentPath
               }
               last.collectPath = t.stringLiteral(keyPath)
-              if (collectedConst[keyPath]) {
-                if (
-                  (
-                    t.isExpressionStatement(last.parent) ||
-                    (t.isMemberExpression(last.parent) && t.isExpressionStatement(last.parentPath.parent) && // a['b']
-                    !t.isThisExpression(last.node.object) && // a[b]
-                    !hasComputed) // a.b[c]
-                  ) &&
-                  !testInIf(last)
-                ) {
-                  last.remove()
-                } else if (t.isObjectProperty(last.parent)) { // { name: a.b }
-                  last.parentPath.remove()
-                } else {
-                  collectedConst[keyPath] = path
-                }
+              const { currentBindings } = scopeBlock.get(currentBlock)
+              if (currentBindings[keyPath] && !isIfTest) {
+                path.remove() // 当前作用域存在重复变量，则直接删除
               } else {
-                collectedConst[keyPath] = path
+                currentBindings[keyPath] = {
+                  path,
+                  canDel: !isIfTest // 在if条件判断里，不可删除
+                }
               }
             }
           }
-        }
-      },
-      StringLiteral (path) {
-        if (
-          path.key === 'consequent' ||
-          path.key === 'alternate' ||
-          (
-            t.isBinaryExpression(path.parent) &&
-            (t.isExpressionStatement(path.parentPath.parent) || t.isBinaryExpression(path.parentPath.parent))
-          )
-        ) {
-          if (!testInIf(path)) {
-            path.node.value = ''
-          }
-        } else if (
-          (
-            t.isExpressionStatement(path.parent) || // ('str');
-            (path.listKey === 'elements' && path.parent.type === 'ArrayExpression') // ['abc']
-          ) &&
-          !testInIf(path)
-        ) {
-          path.remove()
-        }
-      },
-      'BooleanLiteral|NumericLiteral' (path) {
-        if (
-          (
-            t.isExpressionStatement(path.parentPath) || // 纯Boolean或数字值
-            (path.listKey === 'elements' && path.parent.type === 'ArrayExpression') // [true, 123]
-          ) &&
-          !testInIf(path)
-        ) {
-          path.remove()
-        }
-      },
-      ObjectProperty (path) {
-        const canDelType = ['StringLiteral', 'NumericLiteral', 'BooleanLiteral']
-        const value = path.node.value
-        if (
-          canDelType.includes(value.type) ||
-          (
-            t.isIdentifier(value) &&
-            collectedConst[value.name]
-          )
-        ) {
-          path.remove()
         }
       },
       MemberExpression: {

@@ -1,8 +1,8 @@
-import { noop } from '../helper/utils'
+import { noop } from '@mpxjs/utils'
 
 export const implemented = {}
 
-export default function implement (name, { modes = [], processor = noop(), remove = false } = {}) {
+export function implement (name, { modes = [], processor = noop, remove = false } = {}) {
   if (!name) return
   if (modes.indexOf(__mpx_mode__) > -1) {
     processor()

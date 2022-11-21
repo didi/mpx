@@ -108,7 +108,7 @@ class SizeReportPlugin {
       }
 
       const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
-        return reportGroup.hasOwnProperty('noEntryRules')
+        return !!reportGroup.noEntryRules
       })
 
       const moduleEntriesMap = new Map()
@@ -166,7 +166,7 @@ class SizeReportPlugin {
 
       function getPackageName (fileName) {
         fileName = toPosix(fileName)
-        for (let packageName of subpackages) {
+        for (const packageName of subpackages) {
           if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
@@ -177,7 +177,8 @@ class SizeReportPlugin {
         const sharedSet = new Set()
         const otherSelfEntryModules = new Set()
         entryModules.forEach((entryModule) => {
-          const entryNode = mpx.getEntryNode(entryModule)
+          // 处理ConcatenatedModule
+          const entryNode = mpx.getEntryNode(entryModule.rootModule || entryModule)
           if (entryNode) {
             selfSet.add(entryNode)
           } else {
@@ -231,7 +232,8 @@ class SizeReportPlugin {
           selfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
-          sharedSizeInfo: {}
+          sharedSizeInfo: {},
+          shareEquallySize: 0
         })
       })
 
@@ -246,6 +248,11 @@ class SizeReportPlugin {
       }
 
       function fillSizeReportGroups (entryModules, noEntryModules, packageName, fillType, fillInfo) {
+        // 依赖当前模块的页面分组
+        const sharedModulesGroupsSet = new Set()
+        // 依赖当前模块的自定义分组
+        const customGroupSharedModulesGroupsSet = new Set()
+
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
@@ -260,6 +267,7 @@ class SizeReportPlugin {
               return reportGroup.noEntryModules.has(noEntryModule)
             })) {
               reportGroup.sharedSize += fillInfo.size
+              customGroupSharedModulesGroupsSet.add(reportGroup)
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
@@ -272,11 +280,29 @@ class SizeReportPlugin {
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
             })) {
+              if (reportGroup.isPage) {
+                sharedModulesGroupsSet.add(reportGroup)
+              } else {
+                customGroupSharedModulesGroupsSet.add(reportGroup)
+              }
               reportGroup.sharedSize += fillInfo.size
               return fillSizeInfo(reportGroup.sharedSizeInfo, packageName, fillType, fillInfo)
             }
           }
         })
+
+        // 平均分配体积到指定分组的shareEquallySize
+        function divideEquallySize (groupsSet, size) {
+          if (groupsSet.size) {
+            // 页面的均摊体积 = 共享资源文件体积 / 共享该资源的页面数量
+            const sharedSize = size / groupsSet.size
+            for (const reportGroup of groupsSet) {
+              reportGroup.shareEquallySize += sharedSize
+            }
+          }
+        }
+        divideEquallySize(sharedModulesGroupsSet, fillInfo.size)
+        divideEquallySize(customGroupSharedModulesGroupsSet, fillInfo.size)
       }
 
       const resourcePathMap = {}
@@ -330,7 +356,7 @@ class SizeReportPlugin {
               // 有些contextModule可忽略
               if (!module.resource && !module.rootModule) return
 
-              let parsed = parseRequest(module.resource || module.rootModule.resource)
+              const parsed = parseRequest(module.resource || module.rootModule.resource)
               // 处理为相对路径以减少体积
               parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               if (parsed.queryObj && parsed.queryObj.resolve) return
@@ -352,7 +378,7 @@ class SizeReportPlugin {
 
       function formatAllSize (toFormatData) {
         if (Array.isArray(toFormatData) || Object.prototype.toString.call(toFormatData) === '[object Object]') {
-          for (let key in toFormatData) {
+          for (const key in toFormatData) {
             if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key])
             if (typeof toFormatData[key] === 'number') toFormatData[key] = formatSize(toFormatData[key])
           }
@@ -362,7 +388,7 @@ class SizeReportPlugin {
 
       function formatRedundanceReport () {
         const formatedReport = []
-        for (let resourcePath in resourcePathMap) {
+        for (const resourcePath in resourcePathMap) {
           const redundantSize = resourcePathMap[resourcePath].redundantSize
           const sizeInfoItem = {
             resourcePath,
@@ -412,7 +438,7 @@ class SizeReportPlugin {
       })
 
       // Generate original size info
-      for (let name in compilation.assets) {
+      for (const name in compilation.assets) {
         const packageName = getPackageName(name)
         const assetModules = mpx.assetsModulesMap.get(name)
         const assetInfo = compilation.assetsInfo.get(name)
@@ -514,7 +540,7 @@ class SizeReportPlugin {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.chunkSize += size
           sizeSummary.totalSize += size
-          for (let id in parsedLocations) {
+          for (const id in parsedLocations) {
             const module = modulesMapById[id]
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))
@@ -650,6 +676,7 @@ class SizeReportPlugin {
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
         readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
+        readableInfo.shareEquallySize = formatSize(reportGroup.shareEquallySize + reportGroup.selfSize)
         return readableInfo
       })
 
@@ -663,6 +690,7 @@ class SizeReportPlugin {
         readableInfo.selfSizeInfo = formatSizeInfo(reportGroup.selfSizeInfo)
         readableInfo.sharedSize = formatSize(reportGroup.sharedSize)
         readableInfo.sharedSizeInfo = formatSizeInfo(reportGroup.sharedSizeInfo)
+        readableInfo.shareEquallySize = formatSize(reportGroup.shareEquallySize + reportGroup.selfSize)
         return readableInfo
       })
 
@@ -692,7 +720,7 @@ class SizeReportPlugin {
 
       await mkdirpPromise(path.dirname(reportFilePath))
 
-      await writeFilePromise(reportFilePath, JSON.stringify(reportData, null, 2))
+      await writeFilePromise(reportFilePath, JSON.stringify(reportData))
 
       logger.info(`Size report is generated in ${reportFilePath}!`)
 

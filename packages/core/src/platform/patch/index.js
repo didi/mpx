@@ -4,10 +4,10 @@ import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
-import { error } from '../../helper/log'
+import { error } from '@mpxjs/utils'
 
 export default function createFactory (type) {
-  return (options, { isNative, customCtor, customCtorType } = {}) => {
+  return (options = {}, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
@@ -49,23 +49,19 @@ export default function createFactory (type) {
       getDefaultOptions = getWxDefaultOptions
     }
 
+    const { setup } = options
     const { rawOptions, currentInject } = transferOptions(options, type)
+    rawOptions.setup = setup
+    // 不接受mixin中的setup配置
     // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
     // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
     rawOptions.mixins = getBuiltInMixins(rawOptions, type)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
     if (__mpx_mode__ === 'web') {
-      global.currentOption = defaultOptions
+      global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+      global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)
-    }
-  }
-}
-
-export function getRenderCallBack (context) {
-  return () => {
-    if (__mpx_mode__ !== 'ali' || context.options.__type__ === 'page') {
-      context.updated()
     }
   }
 }

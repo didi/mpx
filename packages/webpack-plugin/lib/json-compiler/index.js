@@ -97,7 +97,7 @@ module.exports = function (content) {
               fs.readFile(file, (err, content) => {
                 if (err) return callback(err)
                 if (!this._compilation) return callback()
-                let targetPath = path.relative(context, file)
+                const targetPath = path.relative(context, file)
                 this._compilation.assets[targetPath] = {
                   size: function size () {
                     return stats.size
@@ -119,7 +119,7 @@ module.exports = function (content) {
     if (err) return nativeCallback(err)
     let output = `var json = ${JSON.stringify(json, null, 2)};\n`
     if (processOutput) output = processOutput(output)
-    output += `module.exports = JSON.stringify(json, null, 2);\n`
+    output += 'module.exports = JSON.stringify(json, null, 2);\n'
     nativeCallback(null, output)
   }
 
@@ -274,7 +274,7 @@ module.exports = function (content) {
                 })
                 // 对于通过.mpx文件声明的独立分包，默认将其自身的script block视为init module
                 if (queryObj.independent === true) queryObj.independent = result
-                getJSONContent(parts.json || {}, this, (err, content) => {
+                getJSONContent(parts.json || {}, result, this, (err, content) => {
                   callback(err, result, content)
                 })
               } else {
@@ -292,10 +292,10 @@ module.exports = function (content) {
               const context = path.dirname(result)
 
               if (content.pages) {
-                let tarRoot = queryObj.root
+                const tarRoot = queryObj.root
                 if (tarRoot) {
                   delete queryObj.root
-                  let subPackage = {
+                  const subPackage = {
                     tarRoot,
                     pages: content.pages,
                     ...queryObj
@@ -335,14 +335,14 @@ module.exports = function (content) {
     }
 
     const getOtherConfig = (config) => {
-      let result = {}
-      let blackListMap = {
+      const result = {}
+      const blackListMap = {
         tarRoot: true,
         srcRoot: true,
         root: true,
         pages: true
       }
-      for (let key in config) {
+      for (const key in config) {
         if (!blackListMap[key]) {
           result[key] = config[key]
         }
@@ -382,8 +382,8 @@ module.exports = function (content) {
           emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
           return callback()
         }
-        let tarRoot = subPackage.tarRoot || subPackage.root || ''
-        let srcRoot = subPackage.srcRoot || subPackage.root || ''
+        const tarRoot = subPackage.tarRoot || subPackage.root || ''
+        const srcRoot = subPackage.srcRoot || subPackage.root || ''
         if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
         context = path.join(context, srcRoot)
@@ -423,10 +423,10 @@ module.exports = function (content) {
     }
 
     const processTabBar = (output) => {
-      let tabBarCfg = config[mode].tabBar
-      let itemKey = tabBarCfg.itemKey
-      let iconKey = tabBarCfg.iconKey
-      let activeIconKey = tabBarCfg.activeIconKey
+      const tabBarCfg = config[mode].tabBar
+      const itemKey = tabBarCfg.itemKey
+      const iconKey = tabBarCfg.iconKey
+      const activeIconKey = tabBarCfg.activeIconKey
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
@@ -442,9 +442,9 @@ module.exports = function (content) {
     }
 
     const processOptionMenu = (output) => {
-      let optionMenuCfg = config[mode].optionMenu
+      const optionMenuCfg = config[mode].optionMenu
       if (optionMenuCfg && json.optionMenu) {
-        let iconKey = optionMenuCfg.iconKey
+        const iconKey = optionMenuCfg.iconKey
         if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey])) {
           output += `json.optionMenu.${iconKey} = require("${addQuery(urlToRequest(json.optionMenu[iconKey]), { useLocal: true })}");\n`
         }
@@ -465,7 +465,7 @@ module.exports = function (content) {
 
     const processWorkers = (workers, context, callback) => {
       if (workers) {
-        let workersPath = path.join(context, workers)
+        const workersPath = path.join(context, workers)
         this.addContextDependency(workersPath)
         copydir(workersPath, context, callback)
       } else {
@@ -480,8 +480,9 @@ module.exports = function (content) {
             delete tabBar.custom
             return callback()
           }
+          if (err) return callback(err)
           tabBar.custom = entry // hack for javascript parser call hook.
-          callback(err)
+          callback()
         })
       } else {
         callback()
@@ -571,7 +572,7 @@ module.exports = function (content) {
       delete json.subpackages
       delete json.subPackages
       json.pages = localPages
-      for (let root in subPackagesCfg) {
+      for (const root in subPackagesCfg) {
         const subPackageCfg = subPackagesCfg[root]
         // 分包不存在 pages，输出 subPackages 字段会报错
         if (subPackageCfg.pages.length) {
