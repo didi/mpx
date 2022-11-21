@@ -148,11 +148,11 @@ module.exports = async function loader (content, map, meta) {
     const cssnano = require('cssnano')
     const minimizeOptions = rawOptions.minimize || {}
     let cssnanoConfig = {
-      preset: ['default', minimizeOptions.optimisation || {}]
+      preset: ['cssnano-preset-default', minimizeOptions.optimisation || {}]
     }
     if (minimizeOptions.advanced) {
       cssnanoConfig = {
-        preset: ['advanced', minimizeOptions.optimisation || {}]
+        preset: ['cssnano-preset-advanced', minimizeOptions.optimisation || {}]
       }
     }
     plugins.push(cssnano(cssnanoConfig))

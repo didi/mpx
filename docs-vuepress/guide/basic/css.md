@@ -155,3 +155,45 @@ Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxs
 ```
 
 对于多个页面或组件公用的样式，建议使用 style src 形式引入，避免一份样式被内联打成多份，同时还能使用 less、scss 等提升编码效率。
+
+## CSS 压缩
+
+在 production 模式下，框架默认会使用 [`cssnano`](https://www.cssnano.cn/) 对 css 内容进行压缩。
+
+框架默认内置 cssnano 的 default 预设，默认配置为：
+
+```js
+cssnanoConfig = {
+  preset: ['cssnano-preset-default', minimizeOptions.optimisation || {}]
+}
+```
+以上配置为框架内置，开发者无需手动配置。
+
+如果你想要使用 cssnano advanced 预设，则需要在 wxssLoader 中传入配置开启
+
+```js
+
+{
+  test: /\.(wxss|acss|css|qss|ttss|jxss|ddss)$/,
+  use: [
+    MpxWebpackPlugin.wxssLoader({
+      minimize: {
+        advanced: true, // 使用 cssnano advanced preset
+        optimisation: {
+          'autoprefixer': true,
+          'discardUnused': true,
+          'mergeIdents': true
+        }
+      }
+    })
+  ]
+},
+```
+
+同时也需要安装 advanced 依赖：
+
+```bash
+npm i -D cssnano-preset-advanced
+```
+
+optimisation 配置可以点击[详情](https://www.cssnano.cn/docs/what-are-optimisations/)查看更多配置项。
