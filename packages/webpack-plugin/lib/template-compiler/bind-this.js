@@ -32,6 +32,10 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
+    let isIfTest = false
+    // block 作用域
+    const scopeBlock = new Map()
+    let currentBlock = null
 
     const bindThisVisitor = {
       // 标记收集props数据
@@ -55,6 +59,27 @@ module.exports = {
             delete path.isProps
           }
         }
+      },
+      BlockStatement: {
+        enter (path) {
+          scopeBlock.set(path, {
+            parent: currentBlock,
+            currentBindings: {}
+          })
+          currentBlock = path
+        },
+        exit (path) {
+          const { parent, currentBindings } = scopeBlock.get(path)
+          currentBlock = parent
+        }
+      },
+      IfStatement: {
+        enter () {
+          isIfTest = true
+        },
+        exit () {
+          isIfTest = false
+        },
       },
       Identifier (path) {
         if (
@@ -106,6 +131,15 @@ module.exports = {
                 current = current.parentPath
               }
               last.collectPath = t.stringLiteral(keyPath)
+              const { currentBindings } = scopeBlock.get(currentBlock)
+              if (currentBindings[keyPath] && currentBindings[keyPath].canDel) {
+                path.remove() // 当前作用域存在重复变量，则直接删除
+              } else {
+                currentBindings[keyPath] = {
+                  path,
+                  canDel: !isIfTest // 在if条件判断里，不可删除
+                }
+              }
             }
           }
         }
