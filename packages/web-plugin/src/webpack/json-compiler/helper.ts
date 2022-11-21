@@ -62,43 +62,35 @@ export default function createJSONHelper({
         context
       )
   }
-  const processComponent = (
+  const processComponent = async (
     component: string,
     context: string,
     { tarRoot = '', outputPath = '', relativePath = '' },
-    callback: (
-      err: Error | null,
-      entry?: EntryType | string
-    ) => void
   ) => {
-    if (!isUrlRequest(component)) return callback(null, component)
-
-    resolve(context, component, loaderContext, (err, resource) => {
-      if (err) return callback(err)
-      if (!resource) return callback(null)
-      const { resourcePath, queryObj } = parseRequest(resource)
-
-      if (queryObj.root) {
-        // 删除root query
-        resource = addQuery(resource, {}, false, ['root'])
-      }
-
-      if (!outputPath) {
-        outputPath = (getOutputPath && getOutputPath(resourcePath, 'component')) || ''
-      }
-
-      const entry = getDynamicEntry(
-        resource,
-        'component',
-        outputPath,
-        tarRoot,
-        relativePath
-      )
-      callback(null, entry)
-    })
+    if (!isUrlRequest(component)) return { entry: component}
+    let { resource } = await resolve(context, component, loaderContext)
+    if (!resource) return null
+    const { resourcePath, queryObj } = parseRequest(resource)
+    if (queryObj.root) {
+      // 删除root query
+      resource = addQuery(resource, {}, false, ['root'])
+    }
+    if (!outputPath) {
+      outputPath = (getOutputPath && getOutputPath(resourcePath, 'component')) || ''
+    }
+    const entry = getDynamicEntry(
+      resource,
+      'component',
+      outputPath,
+      tarRoot,
+      relativePath
+    )
+    return {
+      entry
+    }
   }
 
-  const processPage = (
+  const processPage = async (
     page: string | { path: string; src: string },
     context: string,
     tarRoot = '',
@@ -116,48 +108,43 @@ export default function createJSONHelper({
       aliasPath = page.path
       page = page.src
     }
-    if (!isUrlRequest(page)) return callback(null, page)
+    if (!isUrlRequest(page)) return { entry: page }
     // 增加 page 标识
     page = addQuery(page, { isPage: true })
-    resolve(context, page as string, loaderContext, (err, resource) => {
-      if (err) return callback(err)
-      if (!resource) return callback(null)
-      const {
-        resourcePath,
-        queryObj: { isFirst }
-      } = parseRequest(resource)
-      // const ext = path.extname(resourcePath)
-      let outputPath
-      if (aliasPath) {
-        outputPath = aliasPath.replace(/^\//, '')
+    const { resource } = await resolve(context, page as string, loaderContext)
+    if (!resource) return
+    const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
+    let outputPath
+    if (aliasPath) {
+      outputPath = aliasPath.replace(/^\//, '')
+    } else {
+      const relative = path.relative(context, resourcePath)
+      if (/^\./.test(relative)) {
+        // 如果当前page不存在于context中，对其进行重命名
+        outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
+        emitWarning(
+          `Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`
+        )
       } else {
-        const relative = path.relative(context, resourcePath)
-        if (/^\./.test(relative)) {
-          // 如果当前page不存在于context中，对其进行重命名
-          outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
-          emitWarning(
-            `Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`
-          )
-        } else {
-          const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)
-          if (exec) {
-            outputPath = exec[1]
-          }
+        const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)
+        if (exec) {
+          outputPath = exec[1]
         }
       }
-      const entry = getDynamicEntry(
-        resource,
-        'page',
-        outputPath,
-        tarRoot,
-        publicPath + tarRoot
-      )
-      const key = [resourcePath, outputPath, tarRoot].join('|')
-      callback(null, entry, {
-        isFirst,
-        key
-      })
-    })
+    }
+    const entry = getDynamicEntry(
+      resource,
+      'page',
+      outputPath,
+      tarRoot,
+      publicPath + tarRoot
+    )
+    const key = [resourcePath, outputPath, tarRoot].join('|')
+    return {
+      entry,
+      isFirst,
+      key
+    }
   }
 
   return {

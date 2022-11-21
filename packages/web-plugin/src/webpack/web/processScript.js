@@ -171,7 +171,6 @@ export default function (script, {
           firstPage = pagePath
         }
       })
-
       Object.keys(localComponentsMap).forEach((componentName) => {
         const componentCfg = localComponentsMap[componentName]
         const componentRequest = stringifyRequest(componentCfg.resource)
@@ -254,7 +253,7 @@ export default function (script, {
     }
   })
   output += '\n'
-  return {
+  callback(null, {
     output
-  }
+  })
 }

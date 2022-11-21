@@ -17,7 +17,7 @@
 <script lang="js" src="../common/js/index"></script>
 <style scoped>
   .list {
-    background: red;
+    background: blue;
     height: 200rpx;
   }
 </style>

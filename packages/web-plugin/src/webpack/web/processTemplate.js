@@ -136,10 +136,10 @@ export default function (template, {
     })
     output += '\n\n'
   }
-  return  {
+  callback(null, {
     output,
     builtInComponentsMap,
     genericsInfo,
     wxsModuleMap
-  }
+  })
 }

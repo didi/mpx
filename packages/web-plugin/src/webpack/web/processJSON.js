@@ -13,8 +13,9 @@ import { RESOLVE_IGNORED_ERR } from '../../constants'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import { proxyPluginContext } from '../../pluginContextProxy'
 import mpx from '../mpx'
+import fs from "fs";
 
-export default function (json, {
+export default async function (json, {
   loaderContext,
   pagesMap,
   componentsMap
@@ -86,8 +87,6 @@ export default function (json, {
     return callback(e)
   }
 
-  const fs = loaderContext._compiler.inputFileSystem
-
   const defaultTabbar = {
     borderStyle: 'black',
     position: 'bottom',
@@ -95,7 +94,7 @@ export default function (json, {
     isShow: true
   }
 
-  const processTabBar = (tabBar, callback) => {
+  const processTabBar = async (tabBar) => {
     if (tabBar) {
       tabBar = Object.assign({}, defaultTabbar, tabBar)
       tabBarMap = {}
@@ -110,229 +109,170 @@ export default function (json, {
         return matched
       })
     }
-    callback()
   }
 
-  const processPackages = (packages, context, callback) => {
+  const processPackages = async (packages, context) => {
     if (packages) {
-      each(packages, (packagePath, callback) => {
+      for (const packagePath of packages) {
         const { queryObj } = parseRequest(packagePath)
-        waterfall([
-          (callback) => {
-            resolve(context, packagePath, loaderContext, (err, result) => {
-              if (err) return callback(err)
-              const { rawResourcePath } = parseRequest(result)
-              callback(err, rawResourcePath)
+        const { resource } = await resolve(context, packagePath, loaderContext)
+        if (resource) {
+          let { rawResourcePath } = parseRequest(resource)
+          let code = await fs.promises.readFile(rawResourcePath, 'utf-8')
+          const extName = extname(rawResourcePath)
+          if (extName === '.mpx') {
+            const parts = parser(code, {
+              filePath: rawResourcePath,
+              needMap: loaderContext.sourceMap,
+              mode,
+              env
             })
-          },
-          (result, callback) => {
-            fs.readFile(result, (err, content) => {
-              if (err) return callback(err)
-              callback(err, result, content.toString('utf-8'))
-            })
-          },
-          (result, content, callback) => {
-            const extName = extname(result)
-            if (extName === '.mpx') {
-              const parts = parser(content, {
-                filePath: result,
-                needMap: loaderContext.sourceMap,
-                mode,
-                env
-              })
-              getJSONContent(
-                parts.json || {},
-                loaderContext.context,
-                proxyPluginContext(loaderContext),
-                mpx.defs,
-                loaderContext._compilation.inputFileSystem
-              ).then(res => {
-                console.log(res);
-                callback(null, result, res)
-              }).catch(err=> {
-                callback(err)
-              })
-            } else {
-              callback(null, result, content)
-            }
-          },
-          (result, content, callback) => {
+            let JSONContent = await getJSONContent(
+              parts.json || {},
+              loaderContext.context,
+              proxyPluginContext(loaderContext),
+              mpx.defs,
+              loaderContext._compilation.inputFileSystem
+            )
             try {
-              content = parse(content)
+              JSONContent = parse(JSONContent)
             } catch (err) {
-              return callback(err)
+              return err
             }
-
             const processSelfQueue = []
-            const context = dirname(result)
-
-            if (content.pages) {
+            const context = dirname(rawResourcePath)
+            if (JSONContent.pages) {
               let tarRoot = queryObj.root
               if (tarRoot) {
                 delete queryObj.root
                 let subPackage = {
                   tarRoot,
-                  pages: content.pages,
+                  pages: JSONContent.pages,
                   ...queryObj
                 }
 
-                if (content.plugins) {
-                  subPackage.plugins = content.plugins
+                if (JSONContent.plugins) {
+                  subPackage.plugins = JSONContent.plugins
                 }
 
-                processSelfQueue.push((callback) => {
-                  processSubPackage(subPackage, context, callback)
+                processSelfQueue.push(() => {
+                  processSubPackage(subPackage, context)
                 })
               } else {
-                processSelfQueue.push((callback) => {
-                  processPages(content.pages, context, '', callback)
+                processSelfQueue.push(() => {
+                  processPages(JSONContent.pages, context, '')
                 })
               }
             }
-            if (content.packages) {
-              processSelfQueue.push((callback) => {
-                processPackages(content.packages, context, callback)
+            if (JSONContent.packages) {
+              processSelfQueue.push(() => {
+                processPackages(JSONContent.packages, context)
               })
             }
             if (processSelfQueue.length) {
-              parallel(processSelfQueue, callback)
-            } else {
-              callback()
+              Promise.all(processSelfQueue)
             }
           }
-        ], (err) => {
-          callback(err === RESOLVE_IGNORED_ERR ? null : err)
-        })
-      }, callback)
-    } else {
-      callback()
+        }
+      }
     }
   }
 
   const pageKeySet = new Set()
 
-  const processPages = (pages, context, tarRoot = '', callback) => {
+  const processPages = async (pages, context, tarRoot = '') => {
     if (pages) {
-      each(pages, (page, callback) => {
-        processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst, key } = {}) => {
-          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          if (pageKeySet.has(key)) return callback()
-          pageKeySet.add(key)
-          const { resourcePath, queryObj } = parseRequest(resource)
-          if (localPagesMap[outputPath]) {
-            const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
-            if (oldResourcePath !== resourcePath) {
-              const oldOutputPath = outputPath
-              outputPath = mpx.getOutputPath(resourcePath, 'page', { conflictPath: outputPath })
-              emitWarning(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
-            }
+      for (const page of pages) {
+        let { entry: { outputPath, resource } = {}, isFirst, key } = await processPage(page, context, tarRoot)
+        if (pageKeySet.has(key)) return callback()
+        pageKeySet.add(key)
+        const { resourcePath, queryObj } = parseRequest(resource)
+        if (localPagesMap[outputPath]) {
+          const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
+          if (oldResourcePath !== resourcePath) {
+            const oldOutputPath = outputPath
+            outputPath = mpx.getOutputPath(resourcePath, 'page', { conflictPath: outputPath })
+            emitWarning(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
           }
+        }
 
-          pagesMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
-          localPagesMap[outputPath] = {
-            resource: addQuery(resource, { isPage: true }),
-            async: queryObj.async || tarRoot,
-            isFirst
-          }
-          callback()
-        })
-      }, callback)
-    } else {
-      callback()
+        pagesMap[resourcePath] = outputPath
+        loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
+        localPagesMap[outputPath] = {
+          resource: addQuery(resource, { isPage: true }),
+          async: queryObj.async || tarRoot,
+          isFirst
+        }
+      }
     }
   }
 
-  const processSubPackage = (subPackage, context, callback) => {
+  const processSubPackage = async (subPackage, context) => {
     if (subPackage) {
       if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
         emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
-        return callback()
+        return `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
       }
       let tarRoot = subPackage.tarRoot || subPackage.root || ''
       let srcRoot = subPackage.srcRoot || subPackage.root || ''
-      if (!tarRoot) return callback()
+      if (!tarRoot) return null
       context = join(context, srcRoot)
-      processPages(subPackage.pages, context, tarRoot, callback)
-    } else {
-      callback()
+      processPages(subPackage.pages, context, tarRoot)
     }
   }
 
-  const processSubPackages = (subPackages, context, callback) => {
+  const processSubPackages = async (subPackages, context) => {
     if (subPackages) {
-      each(subPackages, (subPackage, callback) => {
-        processSubPackage(subPackage, context, callback)
-      }, callback)
-    } else {
-      callback()
+      for (const subPackage of subPackages) {
+        processSubPackage(subPackage, context)
+      }
     }
   }
 
-  const processComponents = (components, context, callback) => {
+  const processComponents = async (components, context) => {
     if (components) {
-      eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
-          if (err === RESOLVE_IGNORED_ERR) {
-            return callback()
-          }
-          const { resourcePath, queryObj } = parseRequest(resource)
-          componentsMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-          localComponentsMap[name] = {
-            resource: addQuery(resource, {
-              isComponent: true,
-              outputPath
-            }),
-            async: queryObj.async
-          }
-          callback()
-        })
-      }, callback)
-    } else {
-      callback()
+      for (const key in components) {
+        let { entry: { outputPath, resource } } = await processComponent(components[key], context, {})
+        const { resourcePath, queryObj } = parseRequest(resource)
+        componentsMap[resourcePath] = outputPath
+        loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+        localComponentsMap[key] = {
+          resource: addQuery(resource, {
+            isComponent: true,
+            outputPath
+          }),
+          async: queryObj.async
+        }
+      }
     }
   }
 
-  const processGenerics = (generics, context, callback) => {
+  const processGenerics = async (generics, context) => {
     if (generics) {
       const genericsComponents = {}
       Object.keys(generics).forEach((name) => {
         const generic = generics[name]
         if (generic.default) genericsComponents[`${name}default`] = generic.default
       })
-      processComponents(genericsComponents, context, callback)
-    } else {
-      callback()
+      processComponents(genericsComponents, context)
     }
   }
 
-  parallel([
-    (callback) => {
-      // 添加首页标识
-      if (jsonObj.pages && jsonObj.pages[0]) {
-        if (typeof jsonObj.pages[0] !== 'string') {
-          jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
-        } else {
-          jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
-        }
-      }
-      processPages(jsonObj.pages, context, '', callback)
-    },
-    (callback) => {
-      processComponents(jsonObj.usingComponents, context, callback)
-    },
-    (callback) => {
-      processPackages(jsonObj.packages, context, callback)
-    },
-    (callback) => {
-      processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context, callback)
-    },
-    (callback) => {
-      processGenerics(jsonObj.componentGenerics, context, callback)
-    },
-    (callback) => {
-      processTabBar(jsonObj.tabBar, callback)
+  if (jsonObj.pages && jsonObj.pages[0]) {
+    if (typeof jsonObj.pages[0] !== 'string') {
+      jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
+    } else {
+      jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
     }
-  ], callback)
+  }
+  Promise.all([
+    processPages(jsonObj.pages, context, ''),
+    processComponents(jsonObj.usingComponents, context),
+    processPackages(jsonObj.packages, context),
+    processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context),
+    processGenerics(jsonObj.componentGenerics),
+    processTabBar(jsonObj.tabBar)
+  ]).then(() => {
+    callback()
+  })
 }
