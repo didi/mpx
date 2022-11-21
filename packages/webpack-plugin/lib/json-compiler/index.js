@@ -119,7 +119,8 @@ module.exports = function (content) {
     if (err) return nativeCallback(err)
     let output = `var json = ${JSON.stringify(json, null, 2)};\n`
     if (processOutput) output = processOutput(output)
-    output += `module.exports = JSON.stringify(json, null, 2);\n`
+    const jsonSpace = this.minimize ? 0 : 2
+    output += `module.exports = JSON.stringify(json, null, ${jsonSpace});\n`
     nativeCallback(null, output)
   }
 
