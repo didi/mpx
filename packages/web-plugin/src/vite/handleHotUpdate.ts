@@ -33,8 +33,8 @@ export default async function handleHotUpdate(
     content,
     // mock query
     {
-      page: prevDescriptor.page ? null : undefined,
-      component: prevDescriptor.component ? null : undefined
+      isPage: prevDescriptor.isPage ? null : undefined,
+      isComponent: prevDescriptor.isComponent ? null : undefined
     },
     options
   )

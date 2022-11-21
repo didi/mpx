@@ -14,8 +14,8 @@ export interface SFCDescriptor extends CompilerResult {
   id: string
   filename: string
   app: boolean
-  page: boolean
-  component: boolean
+  isPage: boolean
+  isComponent: boolean
   jsonConfig: JsonConfig
   builtInComponentsMap: Record<
     string,

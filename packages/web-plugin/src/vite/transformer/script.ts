@@ -56,7 +56,7 @@ export async function transformScript(
   const {
     id: componentId,
     app,
-    page,
+    isPage,
     jsonConfig,
     script,
     wxsModuleMap,
@@ -67,7 +67,7 @@ export async function transformScript(
     pagesMap: localPagesMap,
     componentsMap: localComponentsMap
   } = descriptor
-  const ctorType = app ? 'app' : page ? 'page' : 'component'
+  const ctorType = app ? 'app' : isPage ? 'page' : 'component'
 
   const { i18n } = options
 
@@ -202,7 +202,7 @@ export async function transformScript(
       ${stringify(Object.keys(localPagesMap)[0])},
       ${stringify(componentId)},
       ${stringify(
-        page ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage']) : {}
+      isPage ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage']) : {}
       )},
       ${shallowStringify(pagesMap)},
       ${shallowStringify(componentsMap)},

@@ -34,12 +34,12 @@ function genDescriptorScript(descriptor: SFCDescriptor) {
 import { createApp } from "@mpxjs/core"
 createApp({})`
   }
-  if (descriptor.page) {
+  if (descriptor.isPage) {
     script.content = `
 import { createPage } from "@mpxjs/core"
 createPage({})`
   }
-  if (descriptor.component) {
+  if (descriptor.isComponent) {
     script.content = `
 import { createComponent } from "@mpxjs/core"
 createComponent({})`
@@ -67,9 +67,9 @@ export function createDescriptor(
   )
   descriptor.id = pathHash(normalizedPath + (isProduction ? code : ''))
   descriptor.filename = filename
-  descriptor.page = query.page !== undefined
-  descriptor.component = query.component !== undefined
-  descriptor.app = !(descriptor.page || descriptor.component)
+  descriptor.isPage = query.isPage !== undefined
+  descriptor.isComponent = query.isComponent !== undefined
+  descriptor.app = !(descriptor.isPage || descriptor.isComponent)
   if (descriptor.app) {
     descriptor.template = genDescriptorTemplate()
   }

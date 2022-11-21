@@ -86,8 +86,7 @@ export function renderI18nCode(options: ResolvedOptions): string {
     )
     content.push(`export { i18n } `)
   }
-  console.log(content.join('\n'));
-  
+
   return content.join('\n')
 }
 
@@ -138,7 +137,7 @@ export const renderTabBarPageCode = async (
   descriptor: SFCDescriptor,
   pluginContext: PluginContext
 ): Promise<string> => {
-  const customBarPath = './custom-tab-bar/index?component'
+  const customBarPath = './custom-tab-bar/index?isComponent'
   const tabBars: string[] = []
   const {
     filename,
