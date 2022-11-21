@@ -1331,30 +1331,6 @@
     "@docsearch/css" "3.2.1"
     algoliasearch "^4.0.0"
 
-"@esbuild-kit/cjs-loader@^2.4.0":
-  version "2.4.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@esbuild-kit/cjs-loader/-/cjs-loader-2.4.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40esbuild-kit%2Fcjs-loader%2F-%2Fcjs-loader-2.4.0.tgz#643c4b2855a18f31cd983794536d4ff64d3b410d"
-  integrity sha1-ZDxLKFWhjzHNmDeUU21P9k07QQ0=
-  dependencies:
-    "@esbuild-kit/core-utils" "^3.0.0"
-    get-tsconfig "^4.2.0"
-
-"@esbuild-kit/core-utils@^3.0.0":
-  version "3.0.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@esbuild-kit/core-utils/-/core-utils-3.0.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40esbuild-kit%2Fcore-utils%2F-%2Fcore-utils-3.0.0.tgz#e0f8463a32b4a9c9b456a7f9c31a5e038c8d2c19"
-  integrity sha1-4PhGOjK0qcm0Vqf5wxpeA4yNLBk=
-  dependencies:
-    esbuild "~0.15.10"
-    source-map-support "^0.5.21"
-
-"@esbuild-kit/esm-loader@^2.5.0":
-  version "2.5.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@esbuild-kit/esm-loader/-/esm-loader-2.5.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40esbuild-kit%2Fesm-loader%2F-%2Fesm-loader-2.5.0.tgz#af208eb9e0449038e7f35957ec51b7e70135e116"
-  integrity sha1-ryCOueBEkDjn81lX7FG35wE14RY=
-  dependencies:
-    "@esbuild-kit/core-utils" "^3.0.0"
-    get-tsconfig "^4.2.0"
-
 "@esbuild/android-arm@0.15.10":
   version "0.15.10"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/@esbuild/android-arm/-/android-arm-0.15.10.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2F%40esbuild%2Fandroid-arm%2F-%2Fandroid-arm-0.15.10.tgz#a5f9432eb221afc243c321058ef25fe899886892"
@@ -6704,7 +6680,7 @@ esbuild@^0.14.14:
     esbuild-windows-64 "0.14.54"
     esbuild-windows-arm64 "0.14.54"
 
-esbuild@^0.15.9, esbuild@~0.15.10:
+esbuild@^0.15.9:
   version "0.15.10"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/esbuild/-/esbuild-0.15.10.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fesbuild%2F-%2Fesbuild-0.15.10.tgz#85c2f8446e9b1fe04fae68daceacba033eedbd42"
   integrity sha1-hcL4RG6bH+BPrmjazqy6Az7tvUI=
@@ -7108,13 +7084,6 @@ eslint@^7.28.0, eslint@^7.32.0:
     table "^6.0.9"
     text-table "^0.2.0"
     v8-compile-cache "^2.0.3"
-
-esno@^0.16.3:
-  version "0.16.3"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/esno/-/esno-0.16.3.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fesno%2F-%2Fesno-0.16.3.tgz#182bf9b9608278fba1ba2f97d589cb80ba731bc5"
-  integrity sha1-GCv5uWCCePuhui+X1YnLgLpzG8U=
-  dependencies:
-    tsx "^3.2.1"
 
 espree@^5.0.1:
   version "5.0.1"
@@ -7897,11 +7866,6 @@ get-symbol-description@^1.0.0:
   dependencies:
     call-bind "^1.0.2"
     get-intrinsic "^1.1.1"
-
-get-tsconfig@^4.2.0:
-  version "4.2.0"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/get-tsconfig/-/get-tsconfig-4.2.0.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fget-tsconfig%2F-%2Fget-tsconfig-4.2.0.tgz#ff368dd7104dab47bf923404eb93838245c66543"
-  integrity sha1-/zaN1xBNq0e/kjQE65ODgkXGZUM=
 
 get-value@^2.0.3, get-value@^2.0.6:
   version "2.0.6"
@@ -13893,7 +13857,7 @@ source-map-resolve@^0.5.0, source-map-resolve@^0.5.2:
     source-map-url "^0.4.0"
     urix "^0.1.0"
 
-source-map-support@^0.5.21, source-map-support@^0.5.6, source-map-support@~0.5.12, source-map-support@~0.5.20:
+source-map-support@^0.5.6, source-map-support@~0.5.12, source-map-support@~0.5.20:
   version "0.5.21"
   resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/source-map-support/-/source-map-support-0.5.21.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Fsource-map-support%2F-%2Fsource-map-support-0.5.21.tgz#04fe7c7f9e1ed2d662233c28cb2b35b9f63f6e4f"
   integrity sha1-BP58f54e0tZiIzwoyys1ufY/bk8=
@@ -14834,17 +14798,6 @@ tsutils@^3.21.0:
   integrity sha1-tIcX05TOpsHglpg+7Vjp1hcVtiM=
   dependencies:
     tslib "^1.8.1"
-
-tsx@^3.2.1:
-  version "3.10.1"
-  resolved "http://artifactory.intra.xiaojukeji.com/artifactory/api/npm/npm/tsx/-/tsx-3.10.1.tgz?dl=https%3A%2F%2Fregistry.npmmirror.com%2Ftsx%2F-%2Ftsx-3.10.1.tgz#4ffb1229077f648bbf46c0ed2b098f4cd8dd6d6d"
-  integrity sha1-T/sSKQd/ZIu/RsDtKwmPTNjdbW0=
-  dependencies:
-    "@esbuild-kit/cjs-loader" "^2.4.0"
-    "@esbuild-kit/core-utils" "^3.0.0"
-    "@esbuild-kit/esm-loader" "^2.5.0"
-  optionalDependencies:
-    fsevents "~2.3.2"
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
