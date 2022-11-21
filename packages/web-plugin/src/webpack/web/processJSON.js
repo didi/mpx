@@ -1,4 +1,3 @@
-import { each, waterfall, parallel, eachOf } from 'async'
 import { join, extname, dirname } from 'path'
 import { parse } from 'json5'
 import { stringifyRequest as _stringifyRequest } from 'loader-utils'
@@ -9,11 +8,11 @@ import resolve from '@mpxjs/compile-utils/resolve'
 import parser from '@mpxjs/compiler/template-compiler/parser'
 import getJSONContent from '../../utils/get-json-content'
 import createJSONHelper from '../json-compiler/helper'
-import { RESOLVE_IGNORED_ERR } from '../../constants'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import { proxyPluginContext } from '../../pluginContextProxy'
+import stringify from '../../utils/stringify'
 import mpx from '../mpx'
-import fs from "fs";
+import fs from 'fs';
 
 export default async function (json, {
   loaderContext,
@@ -23,7 +22,7 @@ export default async function (json, {
   const localPagesMap = {}
   const localComponentsMap = {}
   let output = '/* json */\n'
-  let jsonObj = {}
+  let jsonConfig = {}
   let tabBarMap
   let tabBarStr
   const {
@@ -69,7 +68,7 @@ export default async function (json, {
   const callback = (err) => {
     return rawCallback(err, {
       output,
-      jsonObj,
+      jsonConfig,
       localPagesMap,
       localComponentsMap,
       tabBarMap,
@@ -82,7 +81,7 @@ export default async function (json, {
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = parse(json.content)
+    jsonConfig = parse(json.content)
   } catch (e) {
     return callback(e)
   }
@@ -98,10 +97,10 @@ export default async function (json, {
     if (tabBar) {
       tabBar = Object.assign({}, defaultTabbar, tabBar)
       tabBarMap = {}
-      jsonObj.tabBar.list.forEach(({ pagePath }) => {
+      jsonConfig.tabBar.list.forEach(({ pagePath }) => {
         tabBarMap[pagePath] = true
       })
-      tabBarStr = JSON.stringify(tabBar)
+      tabBarStr = stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
         if (isUrlRequest($2, projectRoot)) {
           return `"${$1}":require(${stringifyRequest(urlToRequest($2, projectRoot))})`
@@ -258,20 +257,20 @@ export default async function (json, {
     }
   }
 
-  if (jsonObj.pages && jsonObj.pages[0]) {
-    if (typeof jsonObj.pages[0] !== 'string') {
-      jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
+  if (jsonConfig.pages && jsonConfig.pages[0]) {
+    if (typeof jsonConfig.pages[0] !== 'string') {
+      jsonConfig.pages[0].src = addQuery(jsonConfig.pages[0].src, { isFirst: true })
     } else {
-      jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+      jsonConfig.pages[0] = addQuery(jsonConfig.pages[0], { isFirst: true })
     }
   }
   await Promise.all([
-    processPages(jsonObj.pages, context, ''),
-    processComponents(jsonObj.usingComponents, context),
-    processPackages(jsonObj.packages, context),
-    processSubPackages(jsonObj.subPackages || jsonObj.subpackages, context),
-    processGenerics(jsonObj.componentGenerics),
-    processTabBar(jsonObj.tabBar)
+    processPages(jsonConfig.pages, context, ''),
+    processComponents(jsonConfig.usingComponents, context),
+    processPackages(jsonConfig.packages, context),
+    processSubPackages(jsonConfig.subPackages || jsonConfig.subpackages, context),
+    processGenerics(jsonConfig.componentGenerics),
+    processTabBar(jsonConfig.tabBar)
   ])
   callback()
 }

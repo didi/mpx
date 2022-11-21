@@ -210,10 +210,10 @@ export default function (
               output += jsonRes.output
               if (
                 ctorType === 'app' &&
-                jsonRes.jsonObj.window &&
-                jsonRes.jsonObj.window.navigationBarTitleText
+                jsonRes.jsonConfig.window &&
+                jsonRes.jsonConfig.window.navigationBarTitleText
               ) {
-                mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
+                mpx.appTitle = jsonRes.jsonConfig.window.navigationBarTitleText
               }
 
               processScript(
@@ -225,7 +225,7 @@ export default function (
                   moduleId,
                   isProduction,
                   componentGenerics,
-                  jsonConfig: jsonRes.jsonObj,
+                  jsonConfig: jsonRes.jsonConfig,
                   outputPath: queryObj.outputPath || '',
                   tabBarMap: jsonRes.tabBarMap,
                   tabBarStr: jsonRes.tabBarStr,

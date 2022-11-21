@@ -65,7 +65,7 @@ export default function createJSONHelper({
   const processComponent = async (
     component: string,
     context: string,
-    { tarRoot = '', outputPath = '', relativePath = '' },
+    { tarRoot = '', outputPath = '', relativePath = '' }
   ) => {
     if (!isUrlRequest(component)) return { entry: component}
     let { resource } = await resolve(context, component, loaderContext)
@@ -93,15 +93,7 @@ export default function createJSONHelper({
   const processPage = async (
     page: string | { path: string; src: string },
     context: string,
-    tarRoot = '',
-    callback: (
-      err: Error | null,
-      entry?: EntryType | string,
-      data?: {
-        isFirst: boolean
-        key: string
-      }
-    ) => void
+    tarRoot = ''
   ) => {
     let aliasPath = ''
     if (typeof page !== 'string') {
@@ -109,41 +101,40 @@ export default function createJSONHelper({
       page = page.src
     }
     if (!isUrlRequest(page)) return { entry: page }
-    // 增加 page 标识
-    page = addQuery(page, { isPage: true })
-    const { resource } = await resolve(context, page as string, loaderContext)
-    if (!resource) return
-    const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
-    let outputPath
-    if (aliasPath) {
-      outputPath = aliasPath.replace(/^\//, '')
-    } else {
-      const relative = path.relative(context, resourcePath)
-      if (/^\./.test(relative)) {
-        // 如果当前page不存在于context中，对其进行重命名
-        outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
-        emitWarning(
-          `Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`
-        )
+    const { resource } = await resolve(context, addQuery(page, { isPage: true }), loaderContext)
+    if (resource) {
+      const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
+      let outputPath
+      if (aliasPath) {
+        outputPath = aliasPath.replace(/^\//, '')
       } else {
-        const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)
-        if (exec) {
-          outputPath = exec[1]
+        const relative = path.relative(context, resourcePath)
+        if (/^\./.test(relative)) {
+          // 如果当前page不存在于context中，对其进行重命名
+          outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
+          emitWarning(
+            `Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`
+          )
+        } else {
+          const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)
+          if (exec) {
+            outputPath = exec[1]
+          }
         }
       }
-    }
-    const entry = getDynamicEntry(
-      resource,
-      'page',
-      outputPath,
-      tarRoot,
-      publicPath + tarRoot
-    )
-    const key = [resourcePath, outputPath, tarRoot].join('|')
-    return {
-      entry,
-      isFirst,
-      key
+      const entry = getDynamicEntry(
+        resource,
+        'page',
+        outputPath,
+        tarRoot,
+        publicPath + tarRoot
+      )
+      const key = [resourcePath, outputPath, tarRoot].join('|')
+      return {
+        entry,
+        isFirst,
+        key
+      }
     }
   }
 
