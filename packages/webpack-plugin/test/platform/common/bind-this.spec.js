@@ -6,7 +6,6 @@ describe('render function simplify should correct', function () {
     const input = `
     global.currentInject = {
       render: function () {
-        /* 1 */
         (grade)
         if (random) {
           (name);
@@ -15,13 +14,18 @@ describe('render function simplify should correct', function () {
           name
         }
         
+        aName;
         if (random) {
           aName
         }
-        aName;
         
         bName;
         bName;
+        if (random) {
+          bName
+        } else {
+          bName
+        }
       }
     }
     `
@@ -29,22 +33,27 @@ describe('render function simplify should correct', function () {
     const output = `
     global.currentInject = {
       render: function () {
-        /* 1 */
         this._c("grade", this.grade);
-    
+
         if (this._c("random", this.random)) {
           this._c("name", this.name);
         } else {
           this._c("name", this.name);
         }
     
-        if (this._c("random", this.random)) {
-          this._c("aName", this.aName);
-        }
-    
         this._c("aName", this.aName);
     
+        if (this._c("random", this.random)) {}
+    
         this._c("bName", this.bName);
+    
+        if (this._c("random", this.random)) {} else {}
+    
+        this._c("cName", this.cName);
+    
+        if (this._c("random", this.random)) {
+          if (this._c("random2", this.random2)) {} else {}
+        }
       }
     };`
     expect(res).toMatchSnapshot(output)
@@ -90,8 +99,6 @@ describe('render function simplify should correct', function () {
   it('should variable literal is correct', function () {
     const input = `
     function render() {
-      a;
-      a;
       a.b;
       a['b'];
       a.b[c];
@@ -110,6 +117,7 @@ describe('render function simplify should correct', function () {
     }`
     expect(res).toMatchSnapshot(output)
   })
+
   it('should object is correct', function () {
     const input = `
     function render() {

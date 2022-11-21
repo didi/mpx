@@ -32,7 +32,7 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
-    let isIfTest = false
+    let isIfBlock = false
     // block 作用域
     const scopeBlock = new Map()
     let currentBlock = null
@@ -80,10 +80,10 @@ module.exports = {
       },
       IfStatement: {
         enter () {
-          isIfTest = true
+          isIfBlock = true
         },
         exit () {
-          isIfTest = false
+          isIfBlock = false
         },
       },
       Identifier (path) {
@@ -137,12 +137,13 @@ module.exports = {
               }
               last.collectPath = t.stringLiteral(keyPath)
               const { currentBindings } = scopeBlock.get(currentBlock)
-              if (currentBindings[keyPath] && !isIfTest) {
+              const inIfTest = isIfBlock && path.key === 'test'
+              if (currentBindings[keyPath] && !inIfTest) {
                 path.remove() // 当前作用域存在重复变量，则直接删除
               } else {
                 currentBindings[keyPath] = {
                   path,
-                  canDel: !isIfTest // 在if条件判断里，不可删除
+                  canDel: !inIfTest
                 }
               }
             }
