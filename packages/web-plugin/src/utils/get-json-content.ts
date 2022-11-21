@@ -2,7 +2,7 @@ import parseRequest from '@mpxjs/compile-utils/parse-request'
 import path from 'path'
 import { promisify } from 'util'
 import { JSON_JS_EXT } from '../constants'
-import { PluginContext } from '../pluginContextProxy'
+import { ProxyPluginContext } from '../pluginContextProxy'
 
 export function evalJSONJS(
   source: string,
@@ -59,7 +59,7 @@ export default async function getJSONContent(
     useJSONJS: boolean
   },
   filename: string,
-  pluginContext: PluginContext,
+  pluginContext: ProxyPluginContext,
   defs: Record<string, any>,
   fs: any
 ): Promise<string> {
@@ -79,7 +79,7 @@ export default async function getJSONContent(
   if (useJSONJS) {
     return JSON.stringify(
       evalJSONJS(jsonContent, resourcePath, defs, fs, filename => {
-        pluginContext.addWatchFile(filename)
+        pluginContext.addDependency(filename)
       })
     )
   }

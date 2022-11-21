@@ -1,14 +1,25 @@
 import { PluginContext as RollupPluginContext } from 'rollup'
-import { LoaderContext } from 'webpack'
+import { NOOP } from '../utils'
+import { LoaderDefinition } from 'webpack'
+import { ResolvedOptions } from '../options'
 
-export interface PluginContext {
+export interface ProxyPluginContext {
   resolve(context: string, request: string): Promise<{ id: string } | null>
-  addWatchFile(filename: string): void
+  addDependency(filename: string): void
+  cacheable(): void
+  async(): any
+  resource?: string
+  resourcePath?: string
+  sourceMap?: boolean
 }
 
 export function proxyPluginContext(
-  pluginContext: RollupPluginContext | LoaderContext<null>
-): PluginContext {
+  pluginContext: RollupPluginContext | ThisParameterType<LoaderDefinition>,
+  rollupOptions?: {
+    moduleId: string
+    options: ResolvedOptions
+  }
+): ProxyPluginContext {
   if ('mode' in pluginContext) {
     return {
       resolve: (request: string, context: string) =>
@@ -20,12 +31,20 @@ export function proxyPluginContext(
             })
           })
         }),
-      addWatchFile: (filename: string) => pluginContext.addDependency(filename)
+      addDependency: pluginContext.addDependency.bind(pluginContext),
+      cacheable: pluginContext.cacheable.bind(pluginContext),
+      async: pluginContext.async.bind(pluginContext),
+      resource: pluginContext.resource,
+      sourceMap: pluginContext.sourceMap
     }
   } else {
     return {
       resolve: pluginContext.resolve.bind(pluginContext),
-      addWatchFile: pluginContext.addWatchFile.bind(pluginContext)
+      addDependency: pluginContext.addWatchFile.bind(pluginContext),
+      cacheable: NOOP,
+      async: NOOP,
+      resource: rollupOptions?.moduleId,
+      sourceMap: rollupOptions?.options.sourceMap
     }
   }
 }
