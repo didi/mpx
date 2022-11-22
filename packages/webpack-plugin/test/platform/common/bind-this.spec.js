@@ -97,23 +97,23 @@ describe('render function simplify should correct', function () {
   })
 
   it('should variable literal is correct', function () {
+    // 字面量删除 & 回溯删除前一个
     const input = `
     function render() {
       a.b;
-      a['b'];
-      a.b[c];
-      a.b['c'];
-      if (a.b) {}
+      if (a['b']) {}
+      c;
+      a[c];
+      c.d;
+      a.b[c.d];
     }`
     const res = bindThis(input, { needCollect: true }).code
     const output = `
     function render() {
-      this._c("a", this.a);
-      this._c("a.b", this.a.b);
-    
-      this._c("a.b", this.a.b)[this._c("c", this.c)];
-    
-      if (this._c("a.b", this.a.b)) {}
+      if (this._c("a.b", this.a['b'])) {}
+
+      this._c("a", this.a)[this._c("c", this.c)];
+      this._c("a.b", this.a.b)[this._c("c.d", this.c.d)];
     }`
     expect(res).toMatchSnapshot(output)
   })

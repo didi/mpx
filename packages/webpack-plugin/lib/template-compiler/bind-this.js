@@ -137,13 +137,27 @@ module.exports = {
               }
               last.collectPath = t.stringLiteral(keyPath)
               const { currentBindings } = scopeBlock.get(currentBlock)
-              const inIfTest = isIfBlock && path.key === 'test'
-              if (currentBindings[keyPath] && !inIfTest) {
-                path.remove() // 当前作用域存在重复变量，则直接删除
+              const inIfTest = isIfBlock && last.key === 'test' // 在if条件判断里
+              const hasComputed = !!last.parentPath.node.computed // a.b[c]
+              const canDel = !inIfTest && !hasComputed
+              if (currentBindings[keyPath]) {
+                if (canDel) {
+                  last.remove()
+                } else {
+                  // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
+                  const { canDel: preCanDel, path: prePath } = currentBindings[keyPath]
+                  if (preCanDel) {
+                    prePath.remove()
+                  }
+                  currentBindings[keyPath] = {
+                    path: last,
+                    canDel
+                  }
+                }
               } else {
                 currentBindings[keyPath] = {
-                  path,
-                  canDel: !inIfTest
+                  path: last,
+                  canDel
                 }
               }
             }
