@@ -14,11 +14,6 @@
       ]
     }
   },
-  "scripts": {
-    "dev": "node scripts/tsc.js",
-    "build": "rimraf ./dist && tsc && npm run post-build",
-    "post-build": "node scripts/postbuild.js executive"
-  },
   "exports": {
     "./*": "./*",
     "./file-loader": {
@@ -51,6 +46,10 @@
       "require": "./dist/url-loader.js",
       "import": "./dist/url-loader.js"
     }
+  },
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "rimraf ./dist && tsc"
   },
   "dependencies": {
     "@babel/parser": "^7.16.2",

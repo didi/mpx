@@ -60,7 +60,7 @@ const urlLoader: LoaderDefinition = function urlLoader(src: string | Buffer): st
       `data:${mimetype || ''};base64,${src.toString('base64')}`
     )}`
   } else {
-    const fallback = require(options.fallback ? options.fallback : './file-loader')
+    const fallback = options.fallback ? require(options.fallback) : require('./file-loader').default
     return fallback.call(this, src, options)
   }
 }
