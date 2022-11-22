@@ -1,7 +1,9 @@
 import mpx, { createPage } from '@mpxjs/core'
 import swiperPage from '../../packageA/pages/swiper.mpx?resolve'
+// import img from '../../images/icon1.png'
 createPage({
   data: {
+    // img,
     a: 1,
     index: 0,
     array: ['美国', '中国', '巴西', '日本']

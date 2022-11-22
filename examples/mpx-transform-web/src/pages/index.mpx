@@ -2,6 +2,7 @@
   <view bindtap="reload">__UNPLUGIN__</view>
   <text wx:if="{{a === 1}}" bindtap="jumpPage">test</text>
   <view>{{$t('page_title')}}</view>
+<!--  <image wx:src="{{img}}"></image>-->
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
  <list list-class="list"></list>
  <switch></switch>123

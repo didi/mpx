@@ -102,6 +102,7 @@ export default async function (json, {
       })
       tabBarStr = stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
+        // 引用本地路径无法识别
         if (isUrlRequest($2, projectRoot)) {
           return `"${$1}":require(${stringifyRequest(urlToRequest($2, projectRoot))})`
         }
