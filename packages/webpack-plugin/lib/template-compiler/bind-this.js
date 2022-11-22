@@ -19,6 +19,14 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
+function dealRemove(path) {
+  if (t.isObjectProperty(path.parentPath)) {
+    path.parentPath.remove()
+  } else {
+    path.remove()
+  }
+}
+
 module.exports = {
   transform (code, {
     needCollect = false,
@@ -32,7 +40,7 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
-    let isIfBlock = false
+    let inIfTest = false // if条件判断
     // block 作用域
     const scopeBlock = new Map()
     let currentBlock = null
@@ -62,6 +70,7 @@ module.exports = {
       },
       BlockStatement: {
         enter (path) {
+          inIfTest && (inIfTest = false)
           const currentBindings = {}
           if (currentBlock) {
             const { currentBindings: pBindings } = scopeBlock.get(currentBlock)
@@ -80,11 +89,8 @@ module.exports = {
       },
       IfStatement: {
         enter () {
-          isIfBlock = true
-        },
-        exit () {
-          isIfBlock = false
-        },
+          inIfTest = true
+        }
       },
       Identifier (path) {
         if (
@@ -136,18 +142,19 @@ module.exports = {
                 current = current.parentPath
               }
               last.collectPath = t.stringLiteral(keyPath)
+
               const { currentBindings } = scopeBlock.get(currentBlock)
-              const inIfTest = isIfBlock && last.key === 'test' // 在if条件判断里
-              const hasComputed = !!last.parentPath.node.computed // a.b[c]
+              const hasComputed = last.parentPath.node && last.parentPath.node.computed // a.b[c]
               const canDel = !inIfTest && !hasComputed
+
               if (currentBindings[keyPath]) {
                 if (canDel) {
-                  last.remove()
+                  dealRemove(last)
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
                   const { canDel: preCanDel, path: prePath } = currentBindings[keyPath]
                   if (preCanDel) {
-                    prePath.remove()
+                    dealRemove(prePath)
                   }
                   currentBindings[keyPath] = {
                     path: last,
