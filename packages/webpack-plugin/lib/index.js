@@ -58,6 +58,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
+require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
