@@ -45,7 +45,7 @@ Mpx具有以下功能特性：
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init mpx-project
+mpx create mpx-project
 
 # 进入项目目录
 cd mpx-project
@@ -54,7 +54,7 @@ cd mpx-project
 npm i
 
 # development
-npm run watch
+npm run serve
 
 # production
 npm run build
