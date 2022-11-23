@@ -19,17 +19,13 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function dealRemove(path, isProps) {
-  try {
-    if (isProps && path.listKey === 'arguments') {
-      path.parentPath.remove()
-    } else if (t.isObjectProperty(path.parentPath)) {
-      path.parentPath.remove()
-    } else {
-      path.remove()
-    }
-  } catch (e) {
-    console.log(e)
+function dealRemove (path, isProps) {
+  if (isProps && path.listKey === 'arguments') {
+    path.parentPath.remove()
+  } else if (t.isObjectProperty(path.parentPath)) {
+    path.parentPath.remove()
+  } else {
+    path.remove()
   }
 }
 
@@ -95,10 +91,10 @@ module.exports = {
         }
       },
       ConditionalExpression: {
-        enter() {
+        enter () {
           inConditional = true
         },
-        exit() {
+        exit () {
           inConditional = false
         }
       },
