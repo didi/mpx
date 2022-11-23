@@ -19,11 +19,17 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function dealRemove(path) {
-  if (t.isObjectProperty(path.parentPath)) {
-    path.parentPath.remove()
-  } else {
-    path.remove()
+function dealRemove(path, isProps) {
+  try {
+    if (isProps && path.listKey === 'arguments') {
+      path.parentPath.remove()
+    } else if (t.isObjectProperty(path.parentPath)) {
+      path.parentPath.remove()
+    } else {
+      path.remove()
+    }
+  } catch (e) {
+    console.log(e)
   }
 }
 
@@ -41,6 +47,7 @@ module.exports = {
     const propKeys = []
     let isProps = false
     let inIfTest = false // if条件判断
+    let inConditional = false
     // block 作用域
     const scopeBlock = new Map()
     let currentBlock = null
@@ -70,7 +77,7 @@ module.exports = {
       },
       BlockStatement: {
         enter (path) {
-          inIfTest && (inIfTest = false)
+          inIfTest && (inIfTest = false) // [if (name) name2] 场景会有异常，name2会被判定在if条件判断里面
           const currentBindings = {}
           if (currentBlock) {
             const { currentBindings: pBindings } = scopeBlock.get(currentBlock)
@@ -85,6 +92,14 @@ module.exports = {
         exit (path) {
           const { parent } = scopeBlock.get(path)
           currentBlock = parent
+        }
+      },
+      ConditionalExpression: {
+        enter() {
+          inConditional = true
+        },
+        exit() {
+          inConditional = false
         }
       },
       IfStatement: {
@@ -145,26 +160,28 @@ module.exports = {
 
               const { currentBindings } = scopeBlock.get(currentBlock)
               const hasComputed = last.parentPath.node && last.parentPath.node.computed // a.b[c]
-              const canDel = !inIfTest && !hasComputed
+              const canDel = !inIfTest && !hasComputed && !inConditional // && last.listKey !== 'arguments'
 
               if (currentBindings[keyPath]) {
                 if (canDel) {
-                  dealRemove(last)
+                  dealRemove(last, isProps)
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
-                  const { canDel: preCanDel, path: prePath } = currentBindings[keyPath]
+                  const { canDel: preCanDel, path: prePath, isProps: preIsProps } = currentBindings[keyPath]
                   if (preCanDel) {
-                    dealRemove(prePath)
+                    dealRemove(prePath, preIsProps)
                   }
                   currentBindings[keyPath] = {
                     path: last,
-                    canDel
+                    canDel,
+                    isProps: preIsProps
                   }
                 }
               } else {
                 currentBindings[keyPath] = {
                   path: last,
-                  canDel
+                  canDel,
+                  isProps
                 }
               }
             }

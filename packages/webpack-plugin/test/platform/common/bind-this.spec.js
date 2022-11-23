@@ -164,6 +164,32 @@ describe('render function simplify should correct', function () {
     expect(res).toMatchSnapshot(output)
   })
 
+  it('should _p is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          if (aName) {
+            this._p(aName)
+          }
+          
+          this._p(bName)
+          if (bName) {}
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+      global.currentInject = {
+        render: function () {
+          if (this._c("name", this.name)) {}
+
+          if (this._c("aName", this.aName)) {}
+        }
+      }
+    `
+    expect(res).toMatchSnapshot(output)
+  })
+
   it('should object is correct', function () {
     const input = `
     function render() {
