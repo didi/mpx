@@ -1,19 +1,19 @@
 create-line($i)
   opacity: 1 - $i * 0.0833
-  transform rotate($i * 30 deg) translate(0, -13px)
+  transform rotate($i * 30 deg) translate(0, -3.47vw)
   animation (__mpx__loading + $i + _start__) (0.1s * $i) linear 1, __mpx__loading__ 1.2s linear (0.1s * $i) infinite
 
-.__mpx_loading_wrapper__ 
-  width 40px
-  height 40px
+.__mpx_loading_wrapper__
+  width 10.67vw
+  height 10.67vw
   position relative
-  margin 6px auto
+  margin 1.6vw auto
   display inline-block
 
 
-.__mpx_loading_wrapper__ div 
-  width 2px
-  height 10px
+.__mpx_loading_wrapper__ div
+  width 0.63vw
+  height 2.67vw
   border-radius 1px
   background #bec2cb
   position absolute
