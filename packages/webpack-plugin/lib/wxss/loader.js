@@ -144,6 +144,20 @@ module.exports = async function loader (content, map, meta) {
     )
   }
 
+  if (this.minimize) {
+    const cssnano = require('cssnano')
+    const minimizeOptions = rawOptions.minimize || {}
+    let cssnanoConfig = {
+      preset: ['cssnano-preset-default', minimizeOptions.optimisation || {}]
+    }
+    if (minimizeOptions.advanced) {
+      cssnanoConfig = {
+        preset: ['cssnano-preset-advanced', minimizeOptions.optimisation || {}]
+      }
+    }
+    plugins.push(cssnano(cssnanoConfig))
+  }
+
   // Reuse CSS AST (PostCSS AST e.g 'postcss-loader') to avoid reparsing
   if (meta) {
     const { ast } = meta
