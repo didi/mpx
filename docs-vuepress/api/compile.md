@@ -397,10 +397,17 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  defs: {
-      __env__: 'mini'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        defs: {
+          __env__: 'mini'
+        }
+      }
     }
+  }
 })
 ```
 
@@ -422,8 +429,15 @@ const env = __env__;
 
 - **示例**：
 ```js
-new MpxWebpackPlugin({
-  attributes: ['customTag:src']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        attributes: ['customTag:src']
+      }
+    }
+  }
 })
 ```
 ```html
@@ -525,8 +539,15 @@ new MpxWebpackPlugin({
 
 - **示例**:
 ```js
-new MpxWebpackPlugin({
-  miniNpmPackage: ['@vant/weapp']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        miniNpmPackage: ['@vant/weapp']
+      }
+    }
+  }
 })
 ```
 
@@ -540,8 +561,15 @@ new MpxWebpackPlugin({
 
 - **示例**:
 ```js
-new MpxWebpackPlugin({
-  forceUsePageCtor: true
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        forceUsePageCtor: true
+      }
+    }
+  }
 })
 ```
 
