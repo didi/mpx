@@ -56,7 +56,6 @@ module.exports = defineConfig({
 })
 ```
 
-// todo: 删除
 ```js
 module.exports = {
   mode: 'production',
@@ -281,6 +280,18 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
+new MpxWebpackPlugin({
+  modeRules: {
+    ali: {
+      include: [resolve('node_modules/vant-aliapp')]
+    }
+  }
+})
+```
+
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -296,7 +307,7 @@ module.exports = defineConfig({
   }
 })
 ```
-
+:::
 ### externalClasses
 
 - **类型**：`Array<string>`
@@ -305,6 +316,13 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  externalClasses: ['custom-class', 'i-class']
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -317,6 +335,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ::: warning
 抹平支付宝和微信之间的差异，微信转支付宝时可以使用该功能。
@@ -335,6 +354,13 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
+new MpxWebpackPlugin({
+  resolveMode: 'webpack'
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -346,6 +372,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### projectRoot
 
@@ -355,6 +382,14 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  resolveMode: 'native',
+  projectRoot: path.resolve(__dirname, '../src')
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -368,6 +403,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### writeMode
 
@@ -380,6 +416,13 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
+new MpxWebpackPlugin({
+  writeMode: 'change'
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -391,6 +434,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### autoScopeRules
 
@@ -400,6 +444,16 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  autoScopeRules: {
+    include: [resolve('../src')],
+    exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -415,6 +469,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### forceDisableProxyCtor
 
@@ -433,6 +488,16 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
+new MpxWebpackPlugin({
+  transMpxRules: {
+      include: () => true,
+      exclude: ['@mpxjs']
+    },
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -447,6 +512,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### forceProxyEventRules
 
@@ -456,6 +522,15 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  forceProxyEventRules: {
+      include: ['bindtap']
+  },
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -470,7 +545,7 @@ module.exports = defineConfig({
   }
 })
 ```
-
+:::
 ### autoSplit
 
 - **类型**：`boolean`
@@ -517,6 +592,15 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
+new MpxWebpackPlugin({
+  defs: {
+      __env__: 'mini'
+    }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -530,6 +614,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 使用的时候：
 
@@ -548,6 +633,14 @@ const env = __env__;
 - **详细**：`Mpx` 提供了可以给自定义标签设置资源的功能，配置该属性后，即可在目标标签中使用 `:src` 加载相应资源文件
 
 - **示例**：
+
+```js
+new MpxWebpackPlugin({
+  attributes: ['customTag:src']
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -560,6 +653,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 ```html
 <customTag :src="'https://www....../avator.png'"></customTag>
 ```
@@ -658,6 +752,14 @@ module.exports = defineConfig({
 
 
 - **示例**:
+
+```js
+new MpxWebpackPlugin({
+  miniNpmPackage: ['@vant/weapp']
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -670,6 +772,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### forceUsePageCtor
 
@@ -680,6 +783,14 @@ module.exports = defineConfig({
 - **详细**: 为了获取更丰富的生命周期来进行更加完善的增强处理，在非支付宝小程序环境下，`Mpx` 默认会使用 `Conponent` 构造器来创建页面。将该值设置为 `true` 时，会强制使用 `Page` 构造器创建页面。
 
 - **示例**:
+
+```js
+new MpxWebpackPlugin({
+  forceUsePageCtor: true
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -692,6 +803,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### transRpxRules
 
@@ -706,6 +818,28 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+const path = require('path')
+
+new MpxWebpackPlugin({
+  transRpxRules: [
+    {
+      mode: 'only', // 只对注释为'use rpx'的块儿启用转换rpx
+      comment: 'use rpx', // mode为'only'时，默认值为'use rpx'
+      include: path.resolve('src'),
+      exclude: path.resolve('lib'),
+      designWidth: 750
+    },
+    {
+      mode: 'all', // 所有样式都启用转换rpx，除了注释为'use px'的样式不转换
+      comment: 'use px', // mode为'all'时，默认值为'use px'
+      include: path.resolve('node_modules/@didi/mpx-sec-guard')
+    }
+  ]
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 const path = require('path')
@@ -733,6 +867,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 #### 应用场景及相应配置
 
@@ -743,6 +878,16 @@ module.exports = defineConfig({
 #### 场景一
 设计师给的稿是2倍图，分辨率750px。或者更高倍图。
 
+```js
+new MpxWebpackPlugin({
+  transRpxRules: [{
+    mode: 'all',
+    designWidth: 750 // 如果是其他倍，修改此值为设计稿的宽度即可
+  }]
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -758,11 +903,23 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 #### 场景二
 
 大部分样式都用px下，某些元素期望用rpx。或者反过来。
 
+```js
+new MpxWebpackPlugin({
+  transRpxRules: [{
+    mode: 'only',
+    comment: 'use rpx',
+    designWidth: 750 // 设计稿宽度
+  }]
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -779,11 +936,35 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
+
 mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，细节请看下方附录。
 
 #### 场景三
 使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
 
+```js
+const path = require('path')
+
+new MpxWebpackPlugin({
+  transRpxRules: [
+    {
+      mode: 'only',
+      designWidth: 750,
+      comment: 'use rpx',
+      include: resolve('src')
+    },
+    {
+      mode: 'all',
+      designWidth: 1280, // 对iview单独使用一个不同的designWidth
+      include: path.resolve('node_modules/iview-weapp')
+    }
+  ]
+})
+
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 const path = require('path')
@@ -810,6 +991,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 > 注意事项：转换规则是不可以对一个文件做多次转换的，会出错，所以一旦被一个规则命中后就不会再次命中另一个规则，include 和 exclude 的编写需要注意先后顺序，就比如上面这个配置，如果第一个规则 include 的是 '/' 即整个项目，iview-weapp 里的样式就无法命中第二条规则了。
 
@@ -885,6 +1067,20 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
+new MpxWebpackPlugin ({
+  postcssInlineConfig: {
+    plugins: [
+      // require('postcss-import'),
+      // require('postcss-preset-env'),
+      // require('cssnano'),
+      // require('autoprefixer')
+    ]
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -903,6 +1099,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### decodeHTMLText
 
@@ -922,6 +1119,16 @@ module.exports = defineConfig({
 
 - **例子**
 
+
+```js
+new MpxWebpackPlugin ({
+  nativeConfig: {
+    cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -936,6 +1143,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### webConfig
 
@@ -945,6 +1153,18 @@ module.exports = defineConfig({
 
 - **例子**
 
+```js 
+new MpxWebpackPlugin ({
+  webConfig: {
+    transRpxFn: function (match, $1) {
+      if ($1 === '0') return $1
+      return `${$1 * +(100 / 750).toFixed(8)}vw`
+    }
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -962,12 +1182,34 @@ module.exports = defineConfig({
   }
 })
 ```
-
+:::
 
 
 
 ### i18n
 
+```js
+new MpxWebpackPlugin({
+  i18n: {
+    locale: 'en-US',
+    messages: {
+      'en-US': {
+        message: {
+          hello: '{msg} world'
+        }
+      },
+      'zh-CN': {
+        message: {
+          hello: '{msg} 世界'
+        }
+      }
+    },
+    // messagesPath: path.resolve(__dirname, '../src/i18n.js')
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -995,6 +1237,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 - **详细**：Mpx 支持国际化，底层实现依赖类`wxs`能力，通过指定语言标识和语言包，可实现多语言之间的动态切换。可配置项包括locale、messages、messagesPath。
 
@@ -1037,6 +1280,13 @@ messages: {
 - **示例**：
 
 ```js
+new MpxWebpackPlugin({
+  auditResource: true
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -1048,6 +1298,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### subpackageModulesRules
 
@@ -1059,6 +1310,16 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  subpackageModulesRules: {
+    include: ['@someNpm/name/src/api/*.js'],
+    exclude: ['@someNpm/name/src/api/module.js']
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -1074,6 +1335,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 > tips: 该功能是将模块分别放入多个分包，模块状态不可复用，使用前要依据模块功能做好评估，例如全局store就不适用该功能
 
 ### generateBuildMap
@@ -1084,6 +1346,13 @@ module.exports = defineConfig({
 
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  generateBuildMap: true
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -1096,6 +1365,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 - **参考**：[单元测试](../guide/tool/unit-test.md)
 
@@ -1106,6 +1376,16 @@ module.exports = defineConfig({
 - **背景**：默认情况下，自定义组件本身的那个节点是一个“普通”的节点，使用时可以在这个节点上设置 `class` 、`style` 、动画、 flex 布局等，就如同普通的 view 组件节点一样。但有些时候，自定义组件并不希望这个节点本身可以设置样式、响应 flex 布局等，而是希望自定义组件内部的第一层节点能够响应 flex 布局或者样式由自定义组件本身完全决定。这种情况下，可以将这个自定义组件设置为“虚拟的”。
 - **示例**：
 
+```js
+new MpxWebpackPlugin({
+  autoVirtualHostRules: {
+    include: [resolve('../src')],
+    exclude: [resolve('../components/other')]
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -1121,6 +1401,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 ### partialCompile
 
@@ -1129,6 +1410,27 @@ module.exports = defineConfig({
 - **类型**：`{ include: string | RegExp | Function | Array<string | RegExp | Function> }`
 
 - **示例**：
+
+```js
+// include 可以是正则、字符串、函数、数组
+new MpxWebpackPlugin({
+  partialCompile: {
+    include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
+    include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
+    include (pageResourcePath) {
+      // pageResourcePath 是小程序页面所在系统的文件路径
+      return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
+    },
+    include: [
+      '/project/pages',
+      /pages\/internal/,
+      (pageResourcePath) => pageResourcePath.includes('pages')
+    ] // 满足任意条件的页面都会被打包
+  }
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -1154,6 +1456,7 @@ module.exports = defineConfig({
   }
 })
 ```
+:::
 
 :::warning
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
@@ -1189,12 +1492,23 @@ module.exports = {
 用于统一转换 px 或者 rpx 单位，默认值为`{}`，详见 [transRpxRules](/api/compile.html#transrpxrules)
 
 :::warning
-`transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `vue.config.js` 中使用 `transRpxRules` 属性进行配置。
+`transRpx` 已在`v2.6.0`版本中**移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
 :::
 
-:::warning
-`transRpx` 在 `@mpxjs/cli 3.x`版本请在统一配置文件 `vue.config.js` 中使用 `pluginOptions.mpx.loader.transRpxRules` 属性进行配置。
+::: tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      loader: {
+        transRpxRules: [] 
+      }
+    }
+  }
+})
+```
 :::
+
 ##### Options.loaders `{Object}`
 
 可用于对某些资源文件的默认 loader 做覆盖或新增处理，以下例子演示了对 [less-loader](https://webpack.docschina.org/loaders/less-loader/) 做额外配置。
@@ -1226,9 +1540,7 @@ module.exports = {
 };
 ```
 
-:::warning
-`@mpxjs/cli 3.x`版本配置如下
-
+::: tip @mpxjs/cli 3.x 版本配置如下
 ```js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
@@ -1267,8 +1579,12 @@ const template = `view(class='gray') 这是一段pug模板`
 pug.render(template, options.templateOption)
 ```
 
-:::warning
-在 `@mpxjs/cli 3.x`版本，直接安装`pug`依赖即可。
+::: tip
+在 `@mpxjs/cli 3.x`版本已经内置了对于 `pug` 的支持，只需要安装 `pug` 依赖相关即可：
+
+```javascript
+npm install -D pug pug-plain-loader
+```
 :::
 
 ##### Options.excludedPreLoaders `{RegExp}`
@@ -1298,13 +1614,11 @@ module.exports = {
 };
 ```
 
-:::warning
-`@mpxjs/cli 3.x`版本配置如下。
-
-**vue.config.js**
-
+::: tip @mpxjs/cli 3.x 版本配置如下。
 ```js
+// vue.config.js
 const { defineConfig } = require('@vue/cli-service')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
   configureWebpack() {
     return {
@@ -1490,9 +1804,7 @@ const webpackConfig = {
   }
 }
 ```
-:::warning
-`@mpxjs/cli 3.x`版本配置如下。
-
+::: tip @mpxjs/cli 3.x 版本配置如下
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1605,9 +1917,7 @@ module.exports = {
 }
 ```
 
-:::warning
-`@mpxjs/cli 3.x`版本配置如下。
-
+::: tip @mpxjs/cli 3.x 版本配置如下
 ```js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
@@ -1615,7 +1925,7 @@ module.exports = defineConfig({
   chainWebpack(config) {
     config.entry('index').add('../src/pages/index.mpx?isPage')
     // 或者
-    config.entry('index').add(MpxWebpackPlugin.getPageEntry('./index.mpx'))
+    // config.entry('index').add(MpxWebpackPlugin.getPageEntry('./index.mpx'))
   }
 })
 ```
@@ -1650,9 +1960,7 @@ module.exports = {
 }
 ```
 
-:::warning
-`@mpxjs/cli 3.x`版本配置如下。
-
+:::warning @mpxjs/cli 3.x 版本配置如下。
 ```js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
