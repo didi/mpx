@@ -4,8 +4,59 @@ sidebarDepth: 2
 
 # 编译构建
 
-## webpack配置
-下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
+使用 `@mpxjs/cli@3.x` 脚手架初始化的项目对于项目的编译构建相关的配置统一收敛至项目根目录下的 `vue.config.js` 进行配置。一个新项目初始化的 `vue.config.js` 如下图，相较于 `@mpxjs/cli@2.x` 版本，在新的初始化项目当中原有的编译构建配置都收敛至 cli 插件当中进行管理和维护，同时还对外暴露相关的接口或者 api 使得开发者能自定义修改 cli 插件当中默认的配置。
+
+```javascript
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx', // 初始化项目过程中选择的目标平台，一般不需要改动
+      plugin: {
+        // @mpxjs/webpack-plugin 相关的配置
+      },
+      loader: {
+        // @mpxjs/webpack-plugin loader 相关的配置
+      }
+    }
+  }
+})
+```
+
+## webpack配置  
+
+相关 webpack 配置有2种设置方式，一种是通过 `configureWebpack` 配置化的方式，还有一种是通过 `chainWebpack` 的方式，选择其一即可：
+
+```javascript
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx', // 初始化项目过程中选择的目标平台，一般不需要改动
+      plugin: {
+        // @mpxjs/webpack-plugin 相关的配置
+      },
+      loader: {
+        // @mpxjs/webpack-plugin loader 相关的配置
+      }
+    }
+  },
+  configureWebpack: {
+    // 这里的配置原有的 webpack 配置一样
+  },
+  chainWebpack: function(config) {
+    // 通过 api 的方式去设置 webpack
+    config
+      .rule('some-rule')
+      .test(/some-rule/)
+      .use('some-loader')
+      .loader('some-loader')
+  }
+})
+```
+
+// todo: 删除
 ```js
 module.exports = {
   mode: 'production',
@@ -184,7 +235,7 @@ interface Rules {
 
 MpxWebpackPlugin支持传入以下配置：
 
-> 若是通过官方脚手架生成的项目，可在 `build/mpx.plugin.conf.js` 中对这些项进行配置。
+> 若是通过官方脚手架生成的项目，可在 `vue.config.js` 中对这些项进行配置。
 
 ### mode
 - **类型**：`string`
@@ -230,10 +281,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  modeRules: {
-    ali: {
-      include: [resolve('node_modules/vant-aliapp')]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        modeRules: {
+          ali: {
+            include: [resolve('node_modules/vant-aliapp')]
+          }
+        }
+      }
     }
   }
 })
@@ -248,8 +306,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  externalClasses: ['custom-class', 'i-class']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        externalClasses: ['custom-class', 'i-class']
+      }
+    }
+  }
 })
 ```
 
@@ -270,8 +335,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  resolveMode: 'webpack'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        resolveMode: 'webpack'
+      }
+    }
+  }
 })
 ```
 
@@ -284,9 +356,16 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  resolveMode: 'native',
-  projectRoot: path.resolve(__dirname, '../src')
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         resolveMode: 'native',
+         projectRoot: path.resolve(__dirname, '../src')
+      }
+    }
+  }
 })
 ```
 
@@ -301,8 +380,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  writeMode: 'change'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         writeMode: 'change'
+      }
+    }
+  }
 })
 ```
 
@@ -315,10 +401,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  autoScopeRules: {
-    include: [resolve('../src')],
-    exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         autoScopeRules: {
+           include: [resolve('../src')],
+           exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+         }
+      }
+    }
   }
 })
 ```
@@ -340,11 +433,18 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  transMpxRules: {
-      include: () => true,
-      exclude: ['@mpxjs']
-    },
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transMpxRules: {
+          include: () => true,
+          exclude: ['@mpxjs']
+        }
+      }
+    }
+  }
 })
 ```
 
@@ -357,10 +457,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  forceProxyEventRules: {
-      include: ['bindtap']
-  },
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        forceProxyEventRules: {
+          include: ['bindtap']
+        }
+      }
+    }
+  }
 })
 ```
 
@@ -410,10 +517,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  defs: {
-      __env__: 'mini'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        defs: {
+          __env__: 'mini'
+        }
+      }
     }
+  }
 })
 ```
 
@@ -435,8 +549,15 @@ const env = __env__;
 
 - **示例**：
 ```js
-new MpxWebpackPlugin({
-  attributes: ['customTag:src']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        attributes: ['customTag:src']
+      }
+    }
+  }
 })
 ```
 ```html
@@ -538,8 +659,15 @@ new MpxWebpackPlugin({
 
 - **示例**:
 ```js
-new MpxWebpackPlugin({
-  miniNpmPackage: ['@vant/weapp']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        miniNpmPackage: ['@vant/weapp']
+      }
+    }
+  }
 })
 ```
 
@@ -553,8 +681,15 @@ new MpxWebpackPlugin({
 
 - **示例**:
 ```js
-new MpxWebpackPlugin({
-  forceUsePageCtor: true
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        forceUsePageCtor: true
+      }
+    }
+  }
 })
 ```
 
@@ -572,23 +707,30 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
+// vue.config.js
 const path = require('path')
 
-new MpxWebpackPlugin({
-  transRpxRules: [
-    {
-      mode: 'only', // 只对注释为'use rpx'的块儿启用转换rpx
-      comment: 'use rpx', // mode为'only'时，默认值为'use rpx'
-      include: path.resolve('src'),
-      exclude: path.resolve('lib'),
-      designWidth: 750
-    },
-    {
-      mode: 'all', // 所有样式都启用转换rpx，除了注释为'use px'的样式不转换
-      comment: 'use px', // mode为'all'时，默认值为'use px'
-      include: path.resolve('node_modules/@didi/mpx-sec-guard')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [
+          {
+            mode: 'only', // 只对注释为'use rpx'的块儿启用转换rpx
+            comment: 'use rpx', // mode为'only'时，默认值为'use rpx'
+            include: path.resolve('src'),
+            exclude: path.resolve('lib'),
+            designWidth: 750
+          },
+          {
+            mode: 'all', // 所有样式都启用转换rpx，除了注释为'use px'的样式不转换
+            comment: 'use px', // mode为'all'时，默认值为'use px'
+            include: path.resolve('node_modules/@didi/mpx-sec-guard')
+          }
+        ]
+      }
     }
-  ]
+  }
 })
 ```
 
@@ -602,11 +744,18 @@ new MpxWebpackPlugin({
 设计师给的稿是2倍图，分辨率750px。或者更高倍图。
 
 ```js
-new MpxWebpackPlugin({
-  transRpxRules: [{
-    mode: 'all',
-    designWidth: 750 // 如果是其他倍，修改此值为设计稿的宽度即可
-  }]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [{
+          mode: 'all',
+          designWidth: 750 // 如果是其他倍，修改此值为设计稿的宽度即可
+        }]
+      }
+    }
+  }
 })
 ```
 
@@ -615,12 +764,19 @@ new MpxWebpackPlugin({
 大部分样式都用px下，某些元素期望用rpx。或者反过来。
 
 ```js
-new MpxWebpackPlugin({
-  transRpxRules: [{
-    mode: 'only',
-    comment: 'use rpx',
-    designWidth: 750 // 设计稿宽度
-  }]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [{
+          mode: 'only',
+          comment: 'use rpx',
+          designWidth: 750 // 设计稿宽度
+        }]
+      }
+    }
+  }
 })
 ```
 mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，细节请看下方附录。
@@ -629,24 +785,30 @@ mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，�
 使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
 
 ```js
+// vue.config.js
 const path = require('path')
 
-new MpxWebpackPlugin({
-  transRpxRules: [
-    {
-      mode: 'only',
-      designWidth: 750,
-      comment: 'use rpx',
-      include: resolve('src')
-    },
-    {
-      mode: 'all',
-      designWidth: 1280, // 对iview单独使用一个不同的designWidth
-      include: path.resolve('node_modules/iview-weapp')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [
+          {
+            mode: 'only',
+            designWidth: 750,
+            comment: 'use rpx',
+            include: resolve('src')
+          },
+          {
+            mode: 'all',
+            designWidth: 1280, // 对iview单独使用一个不同的designWidth
+            include: path.resolve('node_modules/iview-weapp')
+          }
+        ]
+      }
     }
-  ]
+  }
 })
-
 ```
 
 > 注意事项：转换规则是不可以对一个文件做多次转换的，会出错，所以一旦被一个规则命中后就不会再次命中另一个规则，include 和 exclude 的编写需要注意先后顺序，就比如上面这个配置，如果第一个规则 include 的是 '/' 即整个项目，iview-weapp 里的样式就无法命中第二条规则了。
@@ -723,14 +885,21 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin ({
-  postcssInlineConfig: {
-    plugins: [
-      // require('postcss-import'),
-      // require('postcss-preset-env'),
-      // require('cssnano'),
-      // require('autoprefixer')
-    ]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        postcssInlineConfig: {
+          plugins: [
+            // require('postcss-import'),
+            // require('postcss-preset-env'),
+            // require('cssnano'),
+            // require('autoprefixer')
+          ]
+        }
+      }
+    }
   }
 })
 ```
@@ -754,10 +923,16 @@ new MpxWebpackPlugin ({
 - **例子**
 
 ```js
-
-new MpxWebpackPlugin ({
-  nativeConfig: {
-    cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        nativeConfig: {
+          cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+        }
+      }
+    }
   }
 })
 ```
@@ -771,11 +946,18 @@ new MpxWebpackPlugin ({
 - **例子**
 
 ```js
-new MpxWebpackPlugin ({
-  webConfig: {
-    transRpxFn: function (match, $1) {
-      if ($1 === '0') return $1
-      return `${$1 * +(100 / 750).toFixed(8)}vw`
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        webConfig: {
+          transRpxFn: function (match, $1) {
+            if ($1 === '0') return $1
+            return `${$1 * +(100 / 750).toFixed(8)}vw`
+          }
+        }
+      }
     }
   }
 })
@@ -787,22 +969,29 @@ new MpxWebpackPlugin ({
 ### i18n
 
 ```js
-new MpxWebpackPlugin({
-  i18n: {
-    locale: 'en-US',
-    messages: {
-      'en-US': {
-        message: {
-          hello: '{msg} world'
-        }
-      },
-      'zh-CN': {
-        message: {
-          hello: '{msg} 世界'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        i18n: {
+          locale: 'en-US',
+          messages: {
+            'en-US': {
+              message: {
+                hello: '{msg} world'
+              }
+            },
+            'zh-CN': {
+              message: {
+                hello: '{msg} 世界'
+              }
+            }
+          },
+          // messagesPath: path.resolve(__dirname, '../src/i18n.js')
         }
       }
-    },
-    // messagesPath: path.resolve(__dirname, '../src/i18n.js')
+    }
   }
 })
 ```
@@ -848,8 +1037,15 @@ messages: {
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  auditResource: true
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        auditResource: true
+      }
+    }
+  }
 })
 ```
 
@@ -864,10 +1060,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  subpackageModulesRules: {
-    include: ['@someNpm/name/src/api/*.js'],
-    exclude: ['@someNpm/name/src/api/module.js']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        subpackageModulesRules: {
+          include: ['@someNpm/name/src/api/*.js'],
+          exclude: ['@someNpm/name/src/api/module.js']
+        }
+      }
+    }
   }
 })
 ```
@@ -882,8 +1085,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  generateBuildMap: true
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        generateBuildMap: true
+      }
+    }
+  }
 })
 ```
 
@@ -897,10 +1107,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  autoVirtualHostRules: {
-    include: [resolve('../src')],
-    exclude: [resolve('../components/other')]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        autoVirtualHostRules: {
+          include: [resolve('../src')],
+          exclude: [resolve('../components/other')]
+        }
+      }
+    }
   }
 })
 ```
@@ -913,20 +1130,27 @@ new MpxWebpackPlugin({
 
 - **示例**：
 ```js
-// include 可以是正则、字符串、函数、数组
-new MpxWebpackPlugin({
-  partialCompile: {
-    include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
-    include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
-    include (pageResourcePath) {
-      // pageResourcePath 是小程序页面所在系统的文件路径
-      return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
-    },
-    include: [
-      '/project/pages',
-      /pages\/internal/,
-      (pageResourcePath) => pageResourcePath.includes('pages')
-    ] // 满足任意条件的页面都会被打包
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        // include 可以是正则、字符串、函数、数组
+        partialCompile: {
+          include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
+          include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
+          include (pageResourcePath) {
+            // pageResourcePath 是小程序页面所在系统的文件路径
+            return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
+          },
+          include: [
+            '/project/pages',
+            /pages\/internal/,
+            (pageResourcePath) => pageResourcePath.includes('pages')
+          ] // 满足任意条件的页面都会被打包
+        }
+      }
+    }
   }
 })
 ```
@@ -965,7 +1189,7 @@ module.exports = {
 用于统一转换 px 或者 rpx 单位，默认值为`{}`，详见 [transRpxRules](/api/compile.html#transrpxrules)
 
 :::warning
-`transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
+`transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `vue.config.js` 中使用 `transRpxRules` 属性进行配置。
 :::
 
 :::warning

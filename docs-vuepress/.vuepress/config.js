@@ -108,7 +108,8 @@ const sidebar = {
     { title: '基于Mpx的小程序体积优化', path: 'size-control' },
     { title: 'Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导', path: 'ts-derivation' },
     { title: 'Mpx2.7 版本正式发布，大幅提升编译构建速度', path: '2.7-release' },
-    { title: 'Mpx2.8 版本正式发布，使用组合式 API 开发小程序', path: '2.8-release' }
+    { title: 'Mpx2.8 版本正式发布，使用组合式 API 开发小程序', path: '2.8-release' },
+    { title: 'Mpx-cli 插件化改造', path: 'mpx-cli-next' }
   ]
 }
 
@@ -125,11 +126,11 @@ module.exports = {
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
-  title: 'Mpx框架',
+  title: '框架文档存放 - Mpx框架',
   locales: {
     '/': {
       lang: 'zh-CN', // 将会被设置为 <html> 的 lang 属性
-      title: 'Mpx框架',
+      title: '框架文档存放 - Mpx框架',
       description: '深度性能优化的增强型小程序开发框架'
     },
   },

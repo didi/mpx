@@ -11,7 +11,9 @@
 
 ## 近期更新
 
-Mpx2.8 版本正式发布，完整支持组合式 API，更多详情查看[这里](https://mpxjs.cn/articles/2.8-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.8.html)，相关指南及 API 参考文档已更新。
+Mpx 2.8 版本正式发布，完整支持组合式 API，更多详情查看[这里](https://mpxjs.cn/articles/2.8-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.8.html)，相关指南及 API 参考文档已更新。
+
+`@mpxjs/cli` 3.2 版本正式发布，基于 `@vue/cli` 插件化架构实现的全新脚手架，更多详情查看[这里](https://github.com/mpx-ecology/mpx-cli)。
 
 ## 简介
 
@@ -45,7 +47,7 @@ Mpx具有以下功能特性：
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init mpx-project
+mpx create mpx-project
 
 # 进入项目目录
 cd mpx-project
@@ -54,7 +56,7 @@ cd mpx-project
 npm i
 
 # development
-npm run watch
+npm run serve
 
 # production
 npm run build
@@ -214,8 +216,8 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |在武院|三股绳Lite|学而思优选课|                                                                                  食享会                                                                                   |                                              青铜安全医生                                               |青铜安全培训|视穹云机械|
 |![店有生意通](https://dpubstatic.udache.com/static/dpubimg/7f1b5f22-d765-4142-862a-999c1ed9d10f.png)|            ![花小猪打车](https://dpubstatic.udache.com/static/dpubimg/JzHnEyu8VT/aaa.jpeg)             |  ![橙心优选](https://dpubstatic.udache.com/static/dpubimg/37222642-c508-4a67-8cbc-036a66985bfc.jpeg)  |                                           ![小二押镖](https://dpubstatic.udache.com/static/dpubimg/nB6-p3WzIQ/xiaoeryabiao.png)                                            |          ![顺鑫官方微商城](https://dpubstatic.udache.com/static/dpubimg/nY2bg3A1L_/shunxin.jpg)          |![嘀嗒出行](https://dpubstatic.udache.com/static/dpubimg/DO3m0Iflq1/didachuxing.jpeg)|![汉行通Pro](https://dpubstatic.udache.com/static/dpubimg/86cd89be-de29-48ad-8cb0-72c432446e7b.jpg)|
 |店有生意通|花小猪打车|橙心优选|                                                                                  小二押镖                                                                                  |                                              顺鑫官方微商城                                              |嘀嗒出行|汉行通Pro|
-|![交圈](https://dpubstatic.udache.com/static/dpubimg/eaf24702-6d49-4853-9cab-cce7240dda85.png)|  ![青桔单车](https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg)   |  ![滴滴顺风车](https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png)  |![滴滴代驾](https://dpubstatic.udache.com/static/dpubimg/cn2A4-zw30i8YB8lb75X5.jpg)|          ![新桔代驾](https://dpubstatic.udache.com/static/dpubimg/vVBnrKlgI4OGe3bdpTbbD.jpg)          |||
-|交圈|青桔单车|滴滴顺风车|滴滴代驾|新桔代驾|||
+|![交圈](https://dpubstatic.udache.com/static/dpubimg/eaf24702-6d49-4853-9cab-cce7240dda85.png)|  ![青桔单车](https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg)   |  ![滴滴顺风车](https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png)  |![滴滴代驾](https://dpubstatic.udache.com/static/dpubimg/cn2A4-zw30i8YB8lb75X5.jpg)|          ![新桔代驾](https://dpubstatic.udache.com/static/dpubimg/vVBnrKlgI4OGe3bdpTbbD.jpg)|![标贝知音](https://dpubstatic.udache.com/static/dpubimg/k2rTzT4frRgsHghUNgdtq_136727190-f481d792-fb9d-4198-b95d-a4e151c65dde.jpg)||
+|交圈|青桔单车|滴滴顺风车|滴滴代驾|新桔代驾|标贝知音||
 
 其他平台小程序：
 
