@@ -5,7 +5,9 @@ sidebarDepth: 2
 # 编译构建
 
 ## webpack配置
-下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
+
+使用 `@mpxjs/cli@3.x` 脚手架初始化的项目，相关 webpack 配置统一收敛至项目根目录下的 `vue.config.js` 进行配置：
+
 ```js
 module.exports = {
   entry: {
