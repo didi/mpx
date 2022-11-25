@@ -168,10 +168,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  modeRules: {
-    ali: {
-      include: [resolve('node_modules/vant-aliapp')]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        modeRules: {
+          ali: {
+            include: [resolve('node_modules/vant-aliapp')]
+          }
+        }
+      }
     }
   }
 })
@@ -587,23 +594,30 @@ module.exports = defineConfig({
 - **示例**：
 
 ```js
+// vue.config.js
 const path = require('path')
 
-new MpxWebpackPlugin({
-  transRpxRules: [
-    {
-      mode: 'only', // 只对注释为'use rpx'的块儿启用转换rpx
-      comment: 'use rpx', // mode为'only'时，默认值为'use rpx'
-      include: path.resolve('src'),
-      exclude: path.resolve('lib'),
-      designWidth: 750
-    },
-    {
-      mode: 'all', // 所有样式都启用转换rpx，除了注释为'use px'的样式不转换
-      comment: 'use px', // mode为'all'时，默认值为'use px'
-      include: path.resolve('node_modules/@didi/mpx-sec-guard')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [
+          {
+            mode: 'only', // 只对注释为'use rpx'的块儿启用转换rpx
+            comment: 'use rpx', // mode为'only'时，默认值为'use rpx'
+            include: path.resolve('src'),
+            exclude: path.resolve('lib'),
+            designWidth: 750
+          },
+          {
+            mode: 'all', // 所有样式都启用转换rpx，除了注释为'use px'的样式不转换
+            comment: 'use px', // mode为'all'时，默认值为'use px'
+            include: path.resolve('node_modules/@didi/mpx-sec-guard')
+          }
+        ]
+      }
     }
-  ]
+  }
 })
 ```
 
@@ -617,11 +631,18 @@ new MpxWebpackPlugin({
 设计师给的稿是2倍图，分辨率750px。或者更高倍图。
 
 ```js
-new MpxWebpackPlugin({
-  transRpxRules: [{
-    mode: 'all',
-    designWidth: 750 // 如果是其他倍，修改此值为设计稿的宽度即可
-  }]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [{
+          mode: 'all',
+          designWidth: 750 // 如果是其他倍，修改此值为设计稿的宽度即可
+        }]
+      }
+    }
+  }
 })
 ```
 
@@ -630,12 +651,19 @@ new MpxWebpackPlugin({
 大部分样式都用px下，某些元素期望用rpx。或者反过来。
 
 ```js
-new MpxWebpackPlugin({
-  transRpxRules: [{
-    mode: 'only',
-    comment: 'use rpx',
-    designWidth: 750 // 设计稿宽度
-  }]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [{
+          mode: 'only',
+          comment: 'use rpx',
+          designWidth: 750 // 设计稿宽度
+        }]
+      }
+    }
+  }
 })
 ```
 mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，细节请看下方附录。
@@ -644,24 +672,30 @@ mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，�
 使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
 
 ```js
+// vue.config.js
 const path = require('path')
 
-new MpxWebpackPlugin({
-  transRpxRules: [
-    {
-      mode: 'only',
-      designWidth: 750,
-      comment: 'use rpx',
-      include: resolve('src')
-    },
-    {
-      mode: 'all',
-      designWidth: 1280, // 对iview单独使用一个不同的designWidth
-      include: path.resolve('node_modules/iview-weapp')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transRpxRules: [
+          {
+            mode: 'only',
+            designWidth: 750,
+            comment: 'use rpx',
+            include: resolve('src')
+          },
+          {
+            mode: 'all',
+            designWidth: 1280, // 对iview单独使用一个不同的designWidth
+            include: path.resolve('node_modules/iview-weapp')
+          }
+        ]
+      }
     }
-  ]
+  }
 })
-
 ```
 
 > 注意事项：转换规则是不可以对一个文件做多次转换的，会出错，所以一旦被一个规则命中后就不会再次命中另一个规则，include 和 exclude 的编写需要注意先后顺序，就比如上面这个配置，如果第一个规则 include 的是 '/' 即整个项目，iview-weapp 里的样式就无法命中第二条规则了。
@@ -738,14 +772,21 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin ({
-  postcssInlineConfig: {
-    plugins: [
-      // require('postcss-import'),
-      // require('postcss-preset-env'),
-      // require('cssnano'),
-      // require('autoprefixer')
-    ]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        postcssInlineConfig: {
+          plugins: [
+            // require('postcss-import'),
+            // require('postcss-preset-env'),
+            // require('cssnano'),
+            // require('autoprefixer')
+          ]
+        }
+      }
+    }
   }
 })
 ```
@@ -769,10 +810,16 @@ new MpxWebpackPlugin ({
 - **例子**
 
 ```js
-
-new MpxWebpackPlugin ({
-  nativeConfig: {
-    cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        nativeConfig: {
+          cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
+        }
+      }
+    }
   }
 })
 ```
@@ -786,11 +833,18 @@ new MpxWebpackPlugin ({
 - **例子**
 
 ```js
-new MpxWebpackPlugin ({
-  webConfig: {
-    transRpxFn: function (match, $1) {
-      if ($1 === '0') return $1
-      return `${$1 * +(100 / 750).toFixed(8)}vw`
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        webConfig: {
+          transRpxFn: function (match, $1) {
+            if ($1 === '0') return $1
+            return `${$1 * +(100 / 750).toFixed(8)}vw`
+          }
+        }
+      }
     }
   }
 })
@@ -802,22 +856,29 @@ new MpxWebpackPlugin ({
 ### i18n
 
 ```js
-new MpxWebpackPlugin({
-  i18n: {
-    locale: 'en-US',
-    messages: {
-      'en-US': {
-        message: {
-          hello: '{msg} world'
-        }
-      },
-      'zh-CN': {
-        message: {
-          hello: '{msg} 世界'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        i18n: {
+          locale: 'en-US',
+          messages: {
+            'en-US': {
+              message: {
+                hello: '{msg} world'
+              }
+            },
+            'zh-CN': {
+              message: {
+                hello: '{msg} 世界'
+              }
+            }
+          },
+          // messagesPath: path.resolve(__dirname, '../src/i18n.js')
         }
       }
-    },
-    // messagesPath: path.resolve(__dirname, '../src/i18n.js')
+    }
   }
 })
 ```
@@ -863,8 +924,15 @@ messages: {
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  auditResource: true
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        auditResource: true
+      }
+    }
+  }
 })
 ```
 
@@ -879,10 +947,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  subpackageModulesRules: {
-    include: ['@someNpm/name/src/api/*.js'],
-    exclude: ['@someNpm/name/src/api/module.js']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        subpackageModulesRules: {
+          include: ['@someNpm/name/src/api/*.js'],
+          exclude: ['@someNpm/name/src/api/module.js']
+        }
+      }
+    }
   }
 })
 ```
@@ -897,8 +972,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  generateBuildMap: true
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        generateBuildMap: true
+      }
+    }
+  }
 })
 ```
 
@@ -912,10 +994,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  autoVirtualHostRules: {
-    include: [resolve('../src')],
-    exclude: [resolve('../components/other')]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        autoVirtualHostRules: {
+          include: [resolve('../src')],
+          exclude: [resolve('../components/other')]
+        }
+      }
+    }
   }
 })
 ```
@@ -928,20 +1017,27 @@ new MpxWebpackPlugin({
 
 - **示例**：
 ```js
-// include 可以是正则、字符串、函数、数组
-new MpxWebpackPlugin({
-  partialCompile: {
-    include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
-    include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
-    include (pageResourcePath) {
-      // pageResourcePath 是小程序页面所在系统的文件路径
-      return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
-    },
-    include: [
-      '/project/pages',
-      /pages\/internal/,
-      (pageResourcePath) => pageResourcePath.includes('pages')
-    ] // 满足任意条件的页面都会被打包
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        // include 可以是正则、字符串、函数、数组
+        partialCompile: {
+          include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
+          include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
+          include (pageResourcePath) {
+            // pageResourcePath 是小程序页面所在系统的文件路径
+            return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
+          },
+          include: [
+            '/project/pages',
+            /pages\/internal/,
+            (pageResourcePath) => pageResourcePath.includes('pages')
+          ] // 满足任意条件的页面都会被打包
+        }
+      }
+    }
   }
 })
 ```
