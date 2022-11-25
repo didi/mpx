@@ -8,75 +8,139 @@ sidebarDepth: 2
 下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
 ```js
 module.exports = {
+  mode: 'production',
+  name: 'wx-compiler',
   entry: {
-    app: resolveSrc('app.mpx')
+    app: [
+      'src/app.mpx'
+    ]
   },
   output: {
-    // 和 webpack 配置一致,编译后文件输出的路径
-    path: resolveDist(),
-    publicPath: '/',
-    filename: '[name].js'
+    // 和 webpack 配置一致,编译后文件输出的径
+    path: 'dist',
+    clean: true
   },
-  node: {
-    global: true
+  snapshot: {
+    managedPaths: [
+      'node_modules'
+    ]
+  },
+  cache: {
+    type: 'filesystem'
   },
   module: {
     rules: [
+      /* config.module.rule('fonts') */
       {
-        test: /\.mpx$/,
-        // 以 .mpx 结尾的文件需要使用 Mpx 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
-        use: MpxWebpackPlugin.loader({
-          // 自定义 loaders
-          loaders: {
-            scss: [
-              {loader: 'css-loader'},
-              {loader: 'sass-loader', options: {sassOptions: {outputStyle: 'nested'}}}
-            ]
-          }
-        })
+        test: /\.(woff2?|eot|ttf|otf)(\?*)?$/i,
+        type: 'asset',
+        generator: {
+          filename: 'fonts/[name][hash:8][ext]'
+        }
       },
+      /* config.module.rule('json') */
+      // 适用于<script type="applicationjson" src="../common.json">，Mpx部会添加上__component，设置 type 以止走 webpack 内建的 json 解析
+      // webpack json解析，抽取内容的占位容必须为合法 json，否则会在 parse 阶报错
       {
-        test: /\.js$/,
-        // js 文件走正常的 babel 解析
-        loader: 'babel-loader',
-        // include 和 exclude 定义哪些 .js 文件走 babel 编译，哪些不走 babel 编译，配置include、exclude 可以提高查找效率
-        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')],
-        exclude: [resolve('node_modules/**/src/third_party/')]
-      },
-      {
-        // 适用于<script type="application/json" src="../common.json">，Mpx内部会添加上__component，设置 type 以防止走 webpack 内建的 json 解析
-        // webpack json解析，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
         test: /\.json$/,
-        resourceQuery: /__component/,
+        resourceQuery: /asScript/,
         type: 'javascript/auto'
       },
+      /* config.module.rul('wxs-pre-loader') */
+      // 各小程序平台自有脚本的差异抹平
       {
-        // 各小程序平台自有脚本的差异抹平
-        test: /\.(wxs|qs|sjs|filter\.js)$/,
-        loader: MpxWebpackPlugin.wxsPreLoader(),
-        enforce: 'pre'
+        test: /\.(wxs|qs|sjs|filter)\.js$/,
+        enforce: 'pre',
+        use: [
+          /* config.module.rul('wxs-pre-loader').us('mpx-wxs-pre-loader') */
+          {
+            loader: '@mpxjswebpack-plugin/lib/wxspre-loader'
+          }
+        ]
       },
+      /* config.module.rule('js') */
+      // js 文件走正常的 babel 解析
+      {
+        test: /\.js$/,
+        // include 和 exclude 定义哪些 js 文件走 babel 编译，哪些不走babel 编译，配置include、exclude 以提高查找效率
+        include: [
+          filepath =>transpileDepRegex &&transpileDepRegex.tes(filepath),
+          filepath => /\.mpx\.js/.tes(filepath),
+          'src',
+          /@mpxjs/,
+          'test'
+        ],
+        use: [
+          /* config.module.rule('js').us('babel-loader') */
+          {
+            loader: 'babel-loader'
+          }
+        ]
+      },
+      /* config.module.rule('images') */
+      // Mpx 提供图像资源处理，支持 CDN 和Base64 两种
       {
         test: /\.(png|jpe?g|gif|svg)$/,
-        // Mpx 提供图像资源处理，支持 CDN 和 Base64 两种
-        loader: MpxWebpackPlugin.urlLoader({
-          name: 'img/[name][hash].[ext]'
-        })
-      }
+        use: [
+          /* config.module.rul('images').us('mpx-url-loader') */
+          {
+            loader: '@mpxjswebpack-plugin/liburl-loader',
+            options: {
+              name: 'img/[name][hash][ext]'
+            }
+          }
+        ]
+      },
+      /* config.module.rule('mpx') */
+      // 以 .mpx 结尾的文件需要使用 Mpx 提的 loader 进行解析，处理 .mpx 文件包的template，script, style, json等个部分
+      {
+        test: /\.mpx$/,
+        use: [
+          /* config.module.rule('mpx')use('mpx-loader') */
+          {
+            loader: '@mpxjswebpack-plugin/lib/loader',
+            options: {
+              __foo__: 'bar'
+            }
+          }
+        ]
+      },
+      /* config.module.rule('wxml') */
+      {
+        test: /\.(wxml|axml|swan|qmlttml|qxml|jxml|ddml)$/,
+        use: [
+          /* config.module.rule('wxml')use('mpx-wxml-loader') */
+          {
+            loader: '@mpxjswebpack-plugin/lib/wxmlloader'
+          }
+        ]
+      },
+      /* config.module.rule('wxss') */
+      {
+        test: /\.(wxss|acss|css|qss|ttssjxss|ddss)$/,
+        use: [
+          /* config.module.rule('wxss')use('mpx-wxss-loader') */
+          {
+            loader: '@mpxjswebpack-plugin/lib/wxssindex'
+          }
+        ]
+      },
     ]
   },
-  mode: 'production',
-  resolve: {
-    extensions: ['.mpx', '.js']
-  },
   plugins: [
-    new MpxWebpackPlugin({
-      mode: 'wx', // 可选值 wx/ali/swan/qq/tt/web
-      srcMode: 'ali' // 暂时只支持微信为源mode做跨平台，为其他时mode必须和srcMode一致
-    })
+    /* config.plugi('webpack-mp-result-plugin') */
+    new WebpackMpResultPlugin(),
+    /* config.plugi('mpx-webpack-plugin') */
+    new MpxWebpackPlugin(
+      {
+        mode: 'wx', // 可选值 wx/aliswan/qq/tt/web
+        srcMode: 'ali' // 暂时只支持微信源mode做跨平台，为其他时mode必须srcMode一致
+      }
+    )
   ]
 }
 ```
+
 - 下面是对 webpack 自带的配置，在 Mpx 中特殊配置的具体说明。
 ### output.publicPath
 
@@ -881,8 +945,6 @@ new MpxWebpackPlugin({
 
 > \* 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
 
-**webpack.conf.js**
-
 ```js
 module.exports = {
   module: {
@@ -906,6 +968,9 @@ module.exports = {
 `transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
 :::
 
+:::warning
+`transRpx` 在 `@mpxjs/cli 3.x`版本请在统一配置文件 `vue.config.js` 中使用 `pluginOptions.mpx.loader.transRpxRules` 属性进行配置。
+:::
 ##### Options.loaders `{Object}`
 
 可用于对某些资源文件的默认 loader 做覆盖或新增处理，以下例子演示了对 [less-loader](https://webpack.docschina.org/loaders/less-loader/) 做额外配置。
@@ -937,6 +1002,35 @@ module.exports = {
 };
 ```
 
+:::warning
+`@mpxjs/cli 3.x`版本配置如下
+
+```js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      loader: {
+        loaders: { // loaders选项
+          less: [ // 针对less做loader配置
+            'css-loader',
+            {
+              loader: 'less-loader',
+              options: { // 为less-loader添加额外配置
+                lessOptions: {
+                  strictMath: true
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+})
+```
+:::
+
 ##### Options.templateOption `{Object}`
 
 针对使用其他模板引擎(如 [pug](https://www.pugjs.cn/api/getting-started.html))来编写 template 的情景下，可通过 `options.templateOption` 来传入引擎渲染时的额外参数。等同于：
@@ -949,13 +1043,17 @@ const template = `view(class='gray') 这是一段pug模板`
 pug.render(template, options.templateOption)
 ```
 
+:::warning
+在 `@mpxjs/cli 3.x`版本，直接安装`pug`依赖即可。
+:::
+
 ##### Options.excludedPreLoaders `{RegExp}`
 
 在构建过程中忽略特定 `pre-loader` 对文件的处理，仅支持正则表达式，默认值为 `/eslint-loader/`。
 
 ### MpxWebpackPlugin.pluginLoader
 
-:::tip
+:::warning
 该 loader 仅在开发**小程序插件**时使用，可在使用 Mpx 脚手架进行项目初始化时选择进行组件开发来生成对应的配置文件。
 :::
 
@@ -975,6 +1073,30 @@ module.exports = {
   }
 };
 ```
+
+:::warning
+`@mpxjs/cli 3.x`版本配置如下。
+
+**vue.config.js**
+
+```js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  configureWebpack() {
+    return {
+      module: {
+        rules: [
+          {
+            resource: path.resolve('src/plugin/plugin.json'), // 小程序插件的plugin.json的绝对路径
+            use: MpxWebpackPlugin.pluginLoader()
+          }
+        ]
+      }
+    }
+  }
+})
+```
+:::
 
 更多细节请查阅 [小程序插件开发](https://developers.weixin.qq.com/miniprogram/dev/framework/plugin/development.html)
 
@@ -1144,6 +1266,31 @@ const webpackConfig = {
   }
 }
 ```
+:::warning
+`@mpxjs/cli 3.x`版本配置如下。
+
+```js
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx',
+      plugin: {},
+      loader: {},
+      urlLoader: {
+        name: 'img/[name][hash].[ext]',
+        publicPath: 'http://a.com/',
+        fallback: 'file-loader' // 自定义fallback为true时使用的loader
+      }
+    }
+  }
+})
+
+```
+
+:::
+
 ```css
 /* png资源引入 */
 <style>
@@ -1234,6 +1381,22 @@ module.exports = {
 }
 ```
 
+:::warning
+`@mpxjs/cli 3.x`版本配置如下。
+
+```js
+const { defineConfig } = require('@vue/cli-service')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = defineConfig({
+  chainWebpack(config) {
+    config.entry('index').add('../src/pages/index.mpx?isPage')
+    // 或者
+    config.entry('index').add(MpxWebpackPlugin.getPageEntry('./index.mpx'))
+  }
+})
+```
+:::
+
 ### ?isComponent
 
 - **类型**：`Boolean`
@@ -1262,6 +1425,20 @@ module.exports = {
   }
 }
 ```
+
+:::warning
+`@mpxjs/cli 3.x`版本配置如下。
+
+```js
+const { defineConfig } = require('@vue/cli-service')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = defineConfig({
+  chainWebpack(config) {
+    config.entry('index').add(MpxWebpackPlugin.getComponentEntry('./components/list.mpx'))
+  }
+})
+```
+:::
 
 ### ?async
 
