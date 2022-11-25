@@ -1753,9 +1753,6 @@ const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
-      srcMode: 'wx',
-      plugin: {},
-      loader: {},
       urlLoader: {
         name: 'img/[name][hash].[ext]',
         publicPath: 'http://a.com/',
@@ -1764,9 +1761,7 @@ module.exports = defineConfig({
     }
   }
 })
-
 ```
-
 :::
 
 ```css
