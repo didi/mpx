@@ -128,6 +128,21 @@ new MpxWebpackPlugin({
   resolveMode: 'webpack'
 })
 ```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         resolveMode: 'webpack'
+      }
+    }
+  }
+})
+```
+:::
 在 MpxWebpackPlugin 插件中设置 resolveMode 项，默认值为 webpack，可选值有 webpack/native，推荐使用 webpack 模式，更舒服一些，配置项为 webpack 时，json 中的 pages/usingComponents 等需要写相对路径，但是也可以直接写 npm 包路径。例如：
 ```js
 {
@@ -157,3 +172,20 @@ new MpxWebpackPlugin({
   }
 }
 ```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        resolveMode: 'native',
+        // 当resolveMode为native时可通过该字段指定项目根目录
+        projectRoot: path.resolve(__dirname, '../src')
+      }
+    }
+  }
+})
+```
+:::
