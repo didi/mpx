@@ -4,10 +4,59 @@ sidebarDepth: 2
 
 # 编译构建
 
-## webpack配置
+使用 `@mpxjs/cli@3.x` 脚手架初始化的项目对于项目的编译构建相关的配置统一收敛至项目根目录下的 `vue.config.js` 进行配置。一个新项目初始化的 `vue.config.js` 如下图，相较于 `@mpxjs/cli@2.x` 版本，在新的初始化项目当中原有的编译构建配置都收敛至 cli 插件当中进行管理和维护，同时还对外暴露相关的接口或者 api 使得开发者能自定义修改 cli 插件当中默认的配置。
 
-使用 `@mpxjs/cli@3.x` 脚手架初始化的项目，相关 webpack 配置统一收敛至项目根目录下的 `vue.config.js` 进行配置：
+```javascript
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
 
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx', // 初始化项目过程中选择的目标平台，一般不需要改动
+      plugin: {
+        // @mpxjs/webpack-plugin 相关的配置
+      },
+      loader: {
+        // @mpxjs/webpack-plugin loader 相关的配置
+      }
+    }
+  }
+})
+```
+
+## webpack配置  
+
+相关 webpack 配置有2种设置方式，一种是通过 `configureWebpack` 配置化的方式，还有一种是通过 `chainWebpack` 的方式，选择其一即可：
+
+```javascript
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx', // 初始化项目过程中选择的目标平台，一般不需要改动
+      plugin: {
+        // @mpxjs/webpack-plugin 相关的配置
+      },
+      loader: {
+        // @mpxjs/webpack-plugin loader 相关的配置
+      }
+    }
+  },
+  configureWebpack: {
+    // 这里的配置原有的 webpack 配置一样
+  },
+  chainWebpack: function(config) {
+    // 通过 api 的方式去设置 webpack
+    config
+      .rule('some-rule')
+      .test(/some-rule/)
+      .use('some-loader')
+      .loader('some-loader')
+  }
+})
+```
+
+// todo: 删除
 ```js
 module.exports = {
   entry: {
