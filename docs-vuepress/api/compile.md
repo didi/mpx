@@ -122,7 +122,7 @@ interface Rules {
 
 MpxWebpackPlugin支持传入以下配置：
 
-> 若是通过官方脚手架生成的项目，可在 `build/mpx.plugin.conf.js` 中对这些项进行配置。
+> 若是通过官方脚手架生成的项目，可在 `vue.config.js` 中对这些项进行配置。
 
 ### mode
 - **类型**：`string`
@@ -186,8 +186,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  externalClasses: ['custom-class', 'i-class']
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        externalClasses: ['custom-class', 'i-class']
+      }
+    }
+  }
 })
 ```
 
@@ -208,8 +215,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  resolveMode: 'webpack'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        resolveMode: 'webpack'
+      }
+    }
+  }
 })
 ```
 
@@ -222,9 +236,16 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  resolveMode: 'native',
-  projectRoot: path.resolve(__dirname, '../src')
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         resolveMode: 'native',
+         projectRoot: path.resolve(__dirname, '../src')
+      }
+    }
+  }
 })
 ```
 
@@ -239,8 +260,15 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  writeMode: 'change'
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         writeMode: 'change'
+      }
+    }
+  }
 })
 ```
 
@@ -253,10 +281,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  autoScopeRules: {
-    include: [resolve('../src')],
-    exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         autoScopeRules: {
+           include: [resolve('../src')],
+           exclude: [resolve('../node_modules/vant-aliapp')] // 比如一些组件库本来就是为支付宝小程序编写的，应该已经考虑过样式隔离，就不需要再添加
+         }
+      }
+    }
   }
 })
 ```
@@ -278,11 +313,18 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  transMpxRules: {
-      include: () => true,
-      exclude: ['@mpxjs']
-    },
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        transMpxRules: {
+          include: () => true,
+          exclude: ['@mpxjs']
+        }
+      }
+    }
+  }
 })
 ```
 
@@ -295,10 +337,17 @@ new MpxWebpackPlugin({
 - **示例**：
 
 ```js
-new MpxWebpackPlugin({
-  forceProxyEventRules: {
-      include: ['bindtap']
-  },
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        forceProxyEventRules: {
+          include: ['bindtap']
+        }
+      }
+    }
+  }
 })
 ```
 
@@ -905,7 +954,7 @@ module.exports = {
 用于统一转换 px 或者 rpx 单位，默认值为`{}`，详见 [transRpxRules](/api/compile.html#transrpxrules)
 
 :::warning
-`transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
+`transRpx` 即将在`v2.6.0`版本中**移除**，请在统一配置文件 `vue.config.js` 中使用 `transRpxRules` 属性进行配置。
 :::
 
 ##### Options.loaders `{Object}`
