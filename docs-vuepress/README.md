@@ -282,16 +282,13 @@ moreList:
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init <project-name>
+mpx create <project-name>
 
 # 进入项目目录
 cd <project-name>
 
-# 安装依赖
-npm i
-
 # development
-npm run watch
+npm run serve
 
 # production
 npm run build

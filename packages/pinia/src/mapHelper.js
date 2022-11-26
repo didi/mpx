@@ -19,9 +19,9 @@ function mapState (useStore, keysOrMapper) {
       reduced[key] = function () {
         const store = useStore(pinia)
         const storeKey = keysOrMapper[key]
-        return typeof store[storeKey] === 'function'
+        return typeof storeKey === 'function'
           // eslint-disable-next-line
-          ? store[storeKey].call(store, store)
+          ? storeKey.call(store, store)
           : store[storeKey]
       }
       return reduced

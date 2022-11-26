@@ -20,25 +20,25 @@
 
 推荐使用 mpx 官方脚手架 @mpxjs/cli 创建一个小程序插件项目来快速的进入插件开发阶段，首先全局安装 @mpxjs/cli
 
-```html
+```sh
 npm i -g @mpxjs/cli
 ```
 
 然后使用 cli 初始化项目
 
-```html
-mpx init
+```sh
+mpx create <project-name>
+? 请选择小程序项目所属平台（目前仅微信下支持跨平台输出） wx
+? 是否需要跨小程序平台 No
+? 是否需要使用小程序云开发能力 No
+? 是否是个插件项目?（不清楚请选 No ！什么是插件项目请看微信官方文档！） Yes
+? 是否需要typescript No
+? 项目描述 A mpx project
+? 请输入小程序的Appid touristappid
 ```
-
-我们以开发微信小程序插件为例，弹框会询问是否在当前文件目录下创建项目，选择yes，在问询步骤中选择插件模式(**注意跨平台输出选项需要选择否**)，是否使用 TypeScript，Babel，ESlint，Dll，单元测试这些可根据自身情况选择，同时注意**由于插件需要 appid 才能工作，请填入一个 appid；**
-
-全部选择完之后，会在当前文件夹生成小程序插件项目
 
 **文件目录**
 ```
-  build // mpx 构建文件
-  |-- build.js 
-  |-- webpack.config.js
   src
   |-- miniprogram // 目录：放置一个小程序，用于调试插件。
   |   --pages
@@ -46,13 +46,8 @@ mpx init
   |-- plugin // 目录：插件代码目录
   |   --components // 插件组件
   |     -- list.mpx // 插件提供的列表组件
-  |   --pages // 插件页面
-  |     -- hello-page.mpx // 插件提供的页面
   |   --plugin.json // 插件配置文件
-  test // 单元测试
   ```
-
-然后 **npm i**  安装项目依赖
 
 我们在 plugin/components/list.mpx 中开发插件中的列表组件，开发完成后，在plugin.json中我们向使用者小程序开放的所有自定义组件、页面和 js 接口，格式如下：
 
@@ -69,7 +64,7 @@ mpx init
 }
  ```
 
-运行 **npm run build/watch** 构建小程序产物，在 dist 文件夹下，生成最终的小程序插件产物，使用微信开发者工具，打开代码片段菜单栏，选择插件模式，打开 dist 文件夹。
+运行 **npm run build/serve** 构建小程序产物，在 dist 文件夹下，生成最终的小程序插件产物，使用微信开发者工具，打开代码片段菜单栏，选择插件模式，打开 dist 文件夹。
 
 我们可以像小程序一样预览和上传，但插件没有体验版，同时我们通常将 miniprogram 下的代码当做使用插件的小程序代码，来进行插件的调试和测试。
 
