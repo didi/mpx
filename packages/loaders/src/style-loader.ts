@@ -18,7 +18,8 @@ export const mpxStyleTransform = async function (
     sourceMap?: boolean
     resource: string
     mpx: Mpx
-    map: any
+    map: any,
+    isApp?: boolean
   }
 ): Promise<{
   code: string
@@ -34,7 +35,7 @@ export const mpxStyleTransform = async function (
     const appInfo = mpx.appInfo || {}
     const defs = mpx.defs || {}
     const mode = mpx.mode
-    const isApp = resourcePath === appInfo.resourcePath
+    const isApp = options.isApp || resourcePath === appInfo.resourcePath
     const transRpxRulesRaw = mpx.transRpxRules
     const transRpxRules = transRpxRulesRaw
       ? Array.isArray(transRpxRulesRaw)
@@ -70,7 +71,6 @@ export const mpxStyleTransform = async function (
         )
         for (const item of transRpxRules) {
           const { mode, comment, include, exclude, designWidth } = item || {}
-
           if (testResolveRange(include, exclude)) {
             // 对同一个资源一旦匹配到，推入一个rpx插件后就不再继续推了
             plugins.push(styleCompiler.rpx({ mode, comment, designWidth }))

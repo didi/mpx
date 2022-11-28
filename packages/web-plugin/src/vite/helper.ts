@@ -86,7 +86,6 @@ export function renderI18nCode(options: ResolvedOptions): string {
     )
     content.push(`export { i18n } `)
   }
-
   return content.join('\n')
 }
 

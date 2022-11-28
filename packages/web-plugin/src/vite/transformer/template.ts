@@ -125,6 +125,10 @@ export function processTemplate(
         const childLen = calculateRootEleChild(parsed.root.children)
         if (childLen >= 2) {
           parsed.root.tag = 'div'
+          templateCompiler.addAttrs(parsed.root, [{
+            name: 'class',
+            value: 'mpx-root-view'
+          }])
         }
       }
 

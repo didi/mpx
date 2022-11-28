@@ -84,7 +84,7 @@ export async function transformScript(
     `\n${genImport(
       addQuery(descriptor.filename, {
         mpx: true,
-        type: 'global'
+        type: 'globalDefine'
       })
     )}`
   )

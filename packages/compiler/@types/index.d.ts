@@ -103,6 +103,7 @@ interface Compiler {
     }
   ): ParseResult
   serialize(root: ParseHtmlNode): string
+  addAttrs(root: ParseHtmlNode, options: any[])
 }
 
 export const styleCompiler: {

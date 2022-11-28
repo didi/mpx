@@ -2,8 +2,7 @@
   "pages": [
     "./pages/wxs?async=app_pages2",
     "./pages/index",
-    "./pages/index2?async",
-    "./pages/index2"
+//    "./pages/index2?=app_pages1"
   ],
   "packages": ["./packages/index"],
   "subpackages": [

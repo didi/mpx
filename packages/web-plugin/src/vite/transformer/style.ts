@@ -5,6 +5,7 @@ import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../compiler'
 import { proxyPluginContext } from '../../pluginContextProxy/index'
 import mpx from '../mpx'
+import pathHash from '../utils/pageHash'
 
 async function mpxTransformStyle(
   code: string,
@@ -17,7 +18,14 @@ async function mpxTransformStyle(
     sourceMap: options.sourceMap,
     map: pluginContext.getCombinedSourcemap(),
     resource: filename,
-    mpx: mpx
+    mpx: {
+      ...mpx,
+      ...options,
+      pathHash: pathHash,
+      isApp: descriptor.app
+    }
+  }).then(res => {
+    return res
   })
 }
 
