@@ -117,7 +117,7 @@ function createMpxPlugin(
             block = descriptor.template
           } else if (query.type === 'style') {
             block = descriptor.styles[Number(query.index)]
-          } else if (query.type === 'global'){
+          } else if (query.type === 'globalDefine'){
             block = {
               content: renderMpxPresetCode(descriptor, options)
             }
