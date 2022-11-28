@@ -1897,7 +1897,7 @@ module.exports = {
 }
 ```
 
-:::warning @mpxjs/cli 3.x 版本配置如下。
+:::tip @mpxjs/cli 3.x 版本配置如下
 ```js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')

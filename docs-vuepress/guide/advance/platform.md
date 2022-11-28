@@ -60,6 +60,30 @@ new MpxwebpackPlugin({
 })
 ```
 
+::: tip @mpxjs/cli@3.x 版本配置如下
+
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
+    }
+  }
+})
+```
+
+通过在 `npm script` 当中定义 `targets` 来设置mpx编译的目标平台
+
+```javascript
+// 项目 package.json
+{
+  "script": {
+    "build:cross": "mpx-cli-service build:mp --targets=wx,ali"
+  }
+}
+```
+:::
 ### 跨平台差异抹平
 
 为了实现小程序的跨平台编译，我们在编译和运行时做了很多工作以抹平小程序开发中各个方面的跨平台差异
@@ -155,6 +179,23 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
     }
   }
 ```
+
+:::tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  configureWebpack() {
+    return {
+      resolve: {
+        alias: {
+          'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+        }
+      }
+    }
+  }
+})
+```
+:::
 
 #### 区块维度条件编译
 
@@ -323,6 +364,22 @@ new MpxWebpackPlugin({
   env: 'didi'
 })
 ```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx   
+      plugin: {
+        env: "didi" // env为mpx编译的目标环境，需自定义
+      }
+    }
+  }
+})
+```
+:::
 
 #### 文件维度条件编译
 
