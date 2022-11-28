@@ -5,6 +5,7 @@
     "./pages/index2?async",
     "./pages/index2"
   ],
+  "packages": ["./packages/index"],
   "subpackages": [
     {
       "root": "packageA",

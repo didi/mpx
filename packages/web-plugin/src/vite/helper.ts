@@ -168,7 +168,6 @@ export const renderTabBarPageCode = async (
     tabBarPagesMap['mpx-tab-bar'] = genComponentCode(varName, tabBarPath)
     Object.keys(tabBarMap).forEach((tarbarName, index) => {
       const tabBarId = localPagesMap[tarbarName].resource
-      console.log('weewe', tabBarId)
       if (tabBarId) {
         const varName = `__mpx_tabBar__${index}`
         const { queryObj: query } = parseRequest(tabBarId)

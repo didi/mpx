@@ -1,0 +1,31 @@
+<template>
+  <view bindtap="reload">other</view>
+  <text wx:if="{{a === 1}}" bindtap="jumpPage">test</text>
+  <view>{{$t('page_title')}}</view>
+<!--  <image wx:src="{{img}}"></image>-->
+<!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
+ <list list-class="list"></list>
+ <switch></switch>123
+ <scroll-view></scroll-view>
+ <input></input>
+ <picker value="{{index}}" range="{{array}}">
+    <view class="picker">
+      当前选择：{{array[index]}}
+    </view>
+  </picker>
+</template>
+
+<script lang="js" src="../../common/js/index"></script>
+<style scoped>
+  .list {
+    background: blue;
+    height: 200rpx;
+  }
+</style>
+<script type="application/json">
+  {
+    "usingComponents": {
+      "list": "../../components/list"
+    }
+  }
+</script>

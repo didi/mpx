@@ -67,7 +67,6 @@ export default function createJSONHelper({ pluginContext, mpx, type }: {
       context = path.join(context, tarRoot)
     }
     const pageModule = await pluginContext.resolve(addQuery(page, { isPage: true }), context)
-    console.log('23', page, context)
     if (pageModule) {
       const pageId = pageModule.id
       const { resourcePath } = parseRequest(pageId)

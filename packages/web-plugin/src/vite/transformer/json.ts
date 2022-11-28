@@ -239,7 +239,6 @@ export async function processJSON(
   ) => {
     for (const subPackage of subPackages) {
       processSubPackage(subPackage, context)
-      // await processPages(subPackage.pages, context, subPackage.root)
     }
   }
   const processSubPackage = async (subPackage, context) => {
@@ -249,9 +248,9 @@ export async function processJSON(
         return `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
       }
       const tarRoot = subPackage.tarRoot || subPackage.root || ''
-      const srcRoot = subPackage.srcRoot || subPackage.root || ''
+      // const srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (tarRoot) {
-        context = join(context, srcRoot)
+        // context = join(context, srcRoot)
         processPages(subPackage.pages, context, tarRoot)
       }
     }
