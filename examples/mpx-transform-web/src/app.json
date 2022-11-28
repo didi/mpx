@@ -1,9 +1,10 @@
 {
   "pages": [
     "./pages/index",
-    "./pages/wxs?async=app_pages2",
-    "./pages/index2?async"
+    "./pages/wxs",
+    "./pages/index2"
   ],
+  "packages": ["./packages/index"],
   "subpackages": [
     {
       "root": "packageA",
