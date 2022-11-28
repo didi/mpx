@@ -12,7 +12,7 @@ import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/
 import { proxyPluginContext } from '../../pluginContextProxy'
 import stringify from '../../utils/stringify'
 import mpx from '../mpx'
-import fs from 'fs';
+import fs from 'fs'
 
 export default async function (json, {
   loaderContext,
@@ -155,22 +155,16 @@ export default async function (json, {
                   subPackage.plugins = JSONContent.plugins
                 }
 
-                processSelfQueue.push(() => {
-                  processSubPackage(subPackage, context)
-                })
+                processSelfQueue.push(processSubPackage(subPackage, context))
               } else {
-                processSelfQueue.push(() => {
-                  processPages(JSONContent.pages, context, '')
-                })
+                processSelfQueue.push(processPages(JSONContent.pages, context, ''))
               }
             }
             if (JSONContent.packages) {
-              processSelfQueue.push(() => {
-                processPackages(JSONContent.packages, context)
-              })
+              processSelfQueue.push(processPackages(JSONContent.packages, context))
             }
             if (processSelfQueue.length) {
-              Promise.all(processSelfQueue)
+              await Promise.all(processSelfQueue)
             }
           }
         }
@@ -213,14 +207,14 @@ export default async function (json, {
       let srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return null
       context = join(context, srcRoot)
-      processPages(subPackage.pages, context, tarRoot)
+      await processPages(subPackage.pages, context, tarRoot)
     }
   }
 
   const processSubPackages = async (subPackages, context) => {
     if (subPackages) {
       for (const subPackage of subPackages) {
-        processSubPackage(subPackage, context)
+        await processSubPackage(subPackage, context)
       }
     }
   }
