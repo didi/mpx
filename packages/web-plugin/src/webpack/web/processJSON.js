@@ -183,8 +183,8 @@ export default async function (json, {
   const processPages = async (pages, context, tarRoot = '') => {
     if (pages) {
       for (const page of pages) {
-        let { entry: { outputPath, resource } = {}, isFirst, key } = await processPage(page, context, tarRoot)
-        if (pageKeySet.has(key)) return callback()
+        let { entry: { outputPath, resource } = {}, key } = await processPage(page, context, tarRoot)
+        if (pageKeySet.has(key)) return
         pageKeySet.add(key)
         const { resourcePath, queryObj } = parseRequest(resource)
         if (localPagesMap[outputPath]) {
@@ -200,9 +200,9 @@ export default async function (json, {
         loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
         localPagesMap[outputPath] = {
           resource: addQuery(resource, { isPage: true }),
-          async: queryObj.async || tarRoot,
-          isFirst
+          async: queryObj.async || tarRoot
         }
+        console.log(localPagesMap)
       }
     }
   }
@@ -258,13 +258,7 @@ export default async function (json, {
     }
   }
 
-  if (jsonConfig.pages && jsonConfig.pages[0]) {
-    if (typeof jsonConfig.pages[0] !== 'string') {
-      jsonConfig.pages[0].src = addQuery(jsonConfig.pages[0].src, { isFirst: true })
-    } else {
-      jsonConfig.pages[0] = addQuery(jsonConfig.pages[0], { isFirst: true })
-    }
-  }
+
   await Promise.all([
     processPages(jsonConfig.pages, context, ''),
     processComponents(jsonConfig.usingComponents, context),

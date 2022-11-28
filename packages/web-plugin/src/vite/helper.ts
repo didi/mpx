@@ -144,7 +144,7 @@ export const renderTabBarPageCode = async (
     tabBarStr,
     jsonConfig,
     tabBarMap,
-    pagesMap: localPagesMap
+    localPagesMap
   } = descriptor
   const { tabBar } = jsonConfig
 
@@ -167,7 +167,8 @@ export const renderTabBarPageCode = async (
     tabBars.push(genImport(tabBarPath, varName))
     tabBarPagesMap['mpx-tab-bar'] = genComponentCode(varName, tabBarPath)
     Object.keys(tabBarMap).forEach((tarbarName, index) => {
-      const tabBarId = localPagesMap[tarbarName]
+      const tabBarId = localPagesMap[tarbarName].resource
+      console.log('weewe', tabBarId)
       if (tabBarId) {
         const varName = `__mpx_tabBar__${index}`
         const { queryObj: query } = parseRequest(tabBarId)

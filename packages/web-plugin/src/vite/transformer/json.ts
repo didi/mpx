@@ -101,8 +101,8 @@ export async function processJSON(
     pluginContext
   ))
   const { filename } = descriptor
-  const pagesMap: SFCDescriptor['pagesMap'] = {}
-  const componentsMap: SFCDescriptor['componentsMap'] = {}
+  const localPagesMap: SFCDescriptor['localPagesMap'] = {}
+  const localComponentsMap: SFCDescriptor['localComponentsMap'] = {}
 
   let tabBarMap: Record<string, unknown> = {}
   let tabBarStr = ''
@@ -155,29 +155,28 @@ export async function processJSON(
     for (const page of pages) {
       const customPage = !(typeof page === 'string')
       const pageSrc = !customPage ? page : page.src
-      const pageModule = await pluginContext.resolve(
-        addQuery(path.resolve(context, root, pageSrc), {
-          isPage: true
-        }),
-        path.join(context, root)
-      )
+      const pageModule = await pluginContext.resolve(path.resolve(context, root, pageSrc), path.join(context, root))
+
       if (pageModule) {
         const pageId = pageModule.id
-        const { resourcePath: pageFileName } = parseRequest(pageModule.id)
+        const { resourcePath, queryObj } = parseRequest(pageModule.id)
         const pageRoute = !customPage
-          ? genPageRoute(pageFileName, context)
+          ? genPageRoute(resourcePath, context)
           : page.path
-        if (pagesMap[pageRoute]) {
+        if (localPagesMap[pageRoute]) {
           emitWarning(
             `Current page [${pageSrc}] which is imported from [${importer}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`
           )
           return
         }
         // record page route for resolve
-        mpxGlobal.pagesMap[pageFileName] = pageRoute
-        mpxGlobal.pagesEntryMap[pageFileName] = importer
+        mpxGlobal.pagesMap[resourcePath] = pageRoute
+        mpxGlobal.pagesEntryMap[resourcePath] = importer
         // resolved page
-        pagesMap[pageRoute] = pageId
+        localPagesMap[pageRoute] = {
+          resource: addQuery(pageId, { isPage: true }),
+          async: queryObj.async
+        }
       } else {
         emitWarning(
           `Current page [${pageSrc}] is not in current pages directory [${context}]`
@@ -201,7 +200,7 @@ export async function processJSON(
         const { resourcePath: componentFileName } = parseRequest(componentId)
         mpxGlobal.componentsMap[componentFileName] =
           componentFileName + pathHash(componentFileName)
-        componentsMap[componentName] = componentId
+        localComponentsMap[componentName] = componentId
       }
     }
   }
@@ -268,8 +267,8 @@ export async function processJSON(
       processGenerics(jsonConfig.componentGenerics, filename),
       processTabBar(jsonConfig.tabBar)
     ])
-    descriptor.pagesMap = pagesMap
-    descriptor.componentsMap = componentsMap
+    descriptor.localPagesMap = localPagesMap
+    descriptor.localComponentsMap = localComponentsMap
     descriptor.tabBarMap = tabBarMap
     descriptor.tabBarStr = tabBarStr
   } catch (error) {

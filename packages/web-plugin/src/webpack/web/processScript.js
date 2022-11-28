@@ -150,7 +150,6 @@ export default function (script, {
           content += `  wxsModules.${module} = ${expression}\n`
         })
       }
-      let firstPage = ''
       const pagesMap = {}
       const componentsMap = {}
       Object.keys(localPagesMap).forEach((pagePath) => {
@@ -165,10 +164,6 @@ export default function (script, {
             // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
             pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
           }
-        }
-
-        if (pageCfg.isFirst) {
-          firstPage = pagePath
         }
       })
       Object.keys(localComponentsMap).forEach((componentName) => {
@@ -227,7 +222,7 @@ export default function (script, {
       content += `  export default processOption(
     currentOption,
     ${JSON.stringify(ctorType)},
-    ${JSON.stringify(firstPage)},
+    ${JSON.stringify(Object.keys(localPagesMap)[0])},
     ${JSON.stringify(outputPath)},
     ${JSON.stringify(pageConfig)},
     // @ts-ignore

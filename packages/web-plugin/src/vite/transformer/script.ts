@@ -64,8 +64,8 @@ export async function transformScript(
     tabBarMap,
     builtInComponentsMap,
     genericsInfo,
-    pagesMap: localPagesMap,
-    componentsMap: localComponentsMap
+    localPagesMap,
+    localComponentsMap
   } = descriptor
   const ctorType = app ? 'app' : isPage ? 'page' : 'component'
 
@@ -91,13 +91,13 @@ export async function transformScript(
 
   // import page by page json config
   Object.keys(localPagesMap).forEach((pageName, index) => {
+    const pageCfg = localPagesMap[pageName]
     const varName = `__mpx__page__${index}`
     const isTabBar = tabBarMap && tabBarMap[pageName]
     const newPagePath = isTabBar
       ? TAB_BAR_CONTAINER_PATH
-      : localPagesMap[pageName]
-    const { queryObj: query } = parseRequest(newPagePath)
-    const async = query.async !== undefined
+      : pageCfg.resource
+    const async = pageCfg.async !== undefined
     !async && s.prepend(`\n${genImport(newPagePath, varName)}`)
     pagesMap[pageName] = genComponentCode(
       varName,
