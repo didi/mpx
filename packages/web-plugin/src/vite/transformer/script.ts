@@ -115,10 +115,10 @@ export async function transformScript(
 
   // import component by component json config
   Object.keys(localComponentsMap).forEach((componentName, index) => {
-    const componentId = localComponentsMap[componentName]
-    const { queryObj: query } = parseRequest(componentId)
+    const componentCfg = localComponentsMap[componentName]
+    const componentId = componentCfg.resource
     const varName = `__mpx__component__${index}`
-    const async = query.async !== undefined
+    const async = componentCfg.async !== undefined
     !async && s.prepend(`\n${genImport(componentId, varName)}`)
     componentsMap[componentName] = genComponentCode(varName, componentId, {
       async

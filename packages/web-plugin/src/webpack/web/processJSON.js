@@ -183,7 +183,7 @@ export default async function (json, {
   const processPages = async (pages, context, tarRoot = '') => {
     if (pages) {
       for (const page of pages) {
-        let { entry: { outputPath, resource } = {}, key } = await processPage(page, context, tarRoot)
+        let { entry: { outputPath, resource } = {}, key } = await processPage(page, context, tarRoot, proxyPluginContext(loaderContext))
         if (pageKeySet.has(key)) return
         pageKeySet.add(key)
         const { resourcePath, queryObj } = parseRequest(resource)
@@ -198,11 +198,7 @@ export default async function (json, {
 
         pagesMap[resourcePath] = outputPath
         loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
-        localPagesMap[outputPath] = {
-          resource: addQuery(resource, { isPage: true }),
-          async: queryObj.async || tarRoot
-        }
-        console.log(localPagesMap)
+        localPagesMap[outputPath] = { resource, async: queryObj.async || tarRoot }
       }
     }
   }

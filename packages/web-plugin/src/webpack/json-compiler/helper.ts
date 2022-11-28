@@ -100,8 +100,10 @@ export default function createJSONHelper({
       aliasPath = page.path
       page = page.src
     }
+    console.log(page, context)
     if (!isUrlRequest(page)) return { entry: page }
-    const { resource } = await resolve(context, addQuery(page, { isPage: true }), loaderContext)
+    const { resource } = await resolve(context, addQuery(path.resolve(context, tarRoot, page), { isPage: true }), loaderContext)
+    console.log(123, resource)
     if (resource) {
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       let outputPath

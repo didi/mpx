@@ -1,6 +1,6 @@
 import fs from 'fs'
 import json5 from 'json5'
-import path from 'path'
+import path, { join } from 'path'
 import { TransformPluginContext } from 'rollup'
 import { normalizePath } from 'vite'
 import { ResolvedOptions } from '../../options'
@@ -14,6 +14,9 @@ import { SFCDescriptor } from '../compiler'
 import mpxGlobal from '../mpx'
 import { createDescriptor } from '../utils/descriptorCache'
 import pathHash from '../utils/pageHash'
+import createJSONHelper from '../../transfrom/json'
+import toPosix from '@mpxjs/compile-utils/to-posix'
+import mpx from "../../webpack/mpx";
 
 /**
  * wechat miniprogram app/page/component config type
@@ -26,10 +29,10 @@ export interface JsonConfig {
   pages?: (
     | string
     | {
-        src: string
-        path: string
-      }
-  )[]
+    src: string
+    path: string
+  }
+    )[]
   tabBar?: {
     custom?: boolean
     color?: string
@@ -95,6 +98,15 @@ export async function processJSON(
   options: ResolvedOptions,
   pluginContext: TransformPluginContext
 ): Promise<void> {
+  const {
+    processPage,
+    processComponent
+  } = createJSONHelper({
+    pluginContext: proxyPluginContext(pluginContext),
+    mpx: mpxGlobal,
+    type: 'vite'
+  })
+
   const jsonConfig = (descriptor.jsonConfig = await resolveJson(
     descriptor,
     options,
@@ -114,19 +126,8 @@ export async function processJSON(
     isShow: true
   }
 
-  function emitWarning(msg: string) {
-    pluginContext.warn('[json processor]: ' + msg)
-  }
-
-  /**
-   * ./page/index/index.mpx = page/index/index
-   * @param page - pagePath
-   */
-  function genPageRoute(page: string, context: string, root = '') {
-    const relative = path.relative(context, page)
-    return normalizePath(
-      path.join(root, /^(.*?)(\.[^.]*)?$/.exec(relative)?.[1] || '')
-    )
+  function emitWarning(msg: string | Error) {
+    proxyPluginContext(pluginContext).warn('[json processor]: ' + msg)
   }
 
   const processTabBar = async (tabBar: JsonConfig['tabBar']) => {
@@ -146,61 +147,33 @@ export async function processJSON(
     }
   }
 
+  const pageKeySet = new Set()
   const processPages = async (
     pages: JsonConfig['pages'] = [],
     importer: string,
-    root = '.'
+    tarRoot = ''
   ) => {
     const context = resolveModuleContext(importer)
     for (const page of pages) {
-      const customPage = !(typeof page === 'string')
-      const pageSrc = !customPage ? page : page.src
-      const pageModule = await pluginContext.resolve(path.resolve(context, root, pageSrc), path.join(context, root))
-
-      if (pageModule) {
-        const pageId = pageModule.id
-        const { resourcePath, queryObj } = parseRequest(pageModule.id)
-        const pageRoute = !customPage
-          ? genPageRoute(resourcePath, context)
-          : page.path
-        if (localPagesMap[pageRoute]) {
-          emitWarning(
-            `Current page [${pageSrc}] which is imported from [${importer}] has been registered in pagesMap already, it will be ignored, please check it and remove the redundant page declaration!`
-          )
-          return
+      let { entry: { outputPath, resource } = {}, key } = await processPage(page, context, tarRoot)
+      if (!pageKeySet.has(key)) {
+        pageKeySet.add(key)
+        const { resourcePath, queryObj } = parseRequest(resource)
+        if (localPagesMap[outputPath]) {
+          const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
+          if (oldResourcePath !== resourcePath) {
+            const oldOutputPath = outputPath
+            outputPath = mpx.getOutputPath && mpx.getOutputPath(resourcePath, 'page', { conflictPath: outputPath })
+            emitWarning(new Error(`Current page [${ resourcePath }] is registered with a conflict outputPath [${ oldOutputPath }] which is already existed in system, will be renamed with [${ outputPath }], use ?resolve to get the real outputPath!`))
+          }
         }
-        // record page route for resolve
-        mpxGlobal.pagesMap[resourcePath] = pageRoute
+        mpxGlobal.pagesMap[resourcePath] = outputPath
         mpxGlobal.pagesEntryMap[resourcePath] = importer
         // resolved page
-        localPagesMap[pageRoute] = {
-          resource: addQuery(pageId, { isPage: true }),
-          async: queryObj.async
+        localPagesMap[outputPath] = {
+          resource,
+          async: queryObj.async || tarRoot
         }
-      } else {
-        emitWarning(
-          `Current page [${pageSrc}] is not in current pages directory [${context}]`
-        )
-      }
-    }
-  }
-
-  const processComponent = async (
-    componentName: string,
-    componentPath: string,
-    importer: string
-  ) => {
-    if (componentPath) {
-      const componetModule = await pluginContext.resolve(
-        addQuery(componentPath, { isComponent: true }),
-        importer
-      )
-      if (componetModule) {
-        const componentId = componetModule.id
-        const { resourcePath: componentFileName } = parseRequest(componentId)
-        mpxGlobal.componentsMap[componentFileName] =
-          componentFileName + pathHash(componentFileName)
-        localComponentsMap[componentName] = componentId
       }
     }
   }
@@ -210,7 +183,16 @@ export async function processJSON(
     importer: string
   ) => {
     for (const key in components) {
-      await processComponent(key, components[key], importer)
+      let { entry: { outputPath, resource } } = await processComponent(components[key], importer, {})
+      const { resourcePath, queryObj } = parseRequest(resource)
+      mpxGlobal.componentsMap[resourcePath] = outputPath
+      localComponentsMap[key] = {
+        resource: addQuery(resource, {
+          isComponent: true,
+          outputPath
+        }),
+        async: queryObj.async
+      }
     }
   }
 
@@ -218,11 +200,13 @@ export async function processJSON(
     generics: JsonConfig['componentGenerics'] = {},
     importer: string
   ) => {
-    for (const key in generics) {
-      const generic = generics[key]
-      if (generic.default) {
-        await processComponent(`${key}default`, generic.default, importer)
-      }
+    if (generics) {
+      const genericsComponents = {}
+      Object.keys(generics).forEach((name) => {
+        const generic = generics[name]
+        if (generic.default) genericsComponents[`${name}default`] = generic.default
+      })
+      await processComponents(genericsComponents, importer)
     }
   }
 
@@ -254,7 +238,22 @@ export async function processJSON(
     context: string
   ) => {
     for (const subPackage of subPackages) {
-      await processPages(subPackage.pages, context, subPackage.root)
+      processSubPackage(subPackage, context)
+      // await processPages(subPackage.pages, context, subPackage.root)
+    }
+  }
+  const processSubPackage = async (subPackage, context) => {
+    if (subPackage) {
+      if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
+        proxyPluginContext(pluginContext).error(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
+        return `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
+      }
+      const tarRoot = subPackage.tarRoot || subPackage.root || ''
+      const srcRoot = subPackage.srcRoot || subPackage.root || ''
+      if (tarRoot) {
+        context = join(context, srcRoot)
+        processPages(subPackage.pages, context, tarRoot)
+      }
     }
   }
 
@@ -272,6 +271,6 @@ export async function processJSON(
     descriptor.tabBarMap = tabBarMap
     descriptor.tabBarStr = tabBarStr
   } catch (error) {
-    pluginContext.error(`[mpx loader] process json error: ${error}`)
+    proxyPluginContext(pluginContext).error(`[mpx loader] process json error: ${ error }`)
   }
 }
