@@ -8,97 +8,147 @@
 
 > 如果你之前使用过 Selenium WebDriver 或者 Puppeteer，那你可以很容易快速上手。小程序自动化 SDK 与它们的工作原理是类似的，主要区别在于控制对象由浏览器换成了小程序。
 
-如果是初始化项目，自动化测试相关的项目依赖和配置可以通过 @mpx/cli 创建项目时选择使用 E2E 测试选项自动生成，如果时旧项目需要使用，可以按照下方步骤安装依赖和添加配置。
 
+## 一、@mpx/cli 脚手架集成E2E
 
+当使用 @mpxjs/cli 初始化 Mpx 项目的时候，交互式命令行里面新增了 E2E 选项，当选择了此选项，项目将会初始化 E2E 配置，完成相关内容的生成。
 
-## 安装依赖
-```html
-npm i -D miniprogram-automator jest @types/jest @mpxjs/e2e @mpxjs/e2e-scripts
+![](https://gift-static.hongyibo.com.cn/static/kfpub/3547/mpxtemplate.png)
 
-// 如果项目使用了ts，则还需要安装
-npm i -D ts-jest
+关于 E2E 的模板文件如下：
 ```
-## jest 相关配置
+# 忽略部分文件夹
+vue-project
+├─ .e2erc.js # E2E配置
+├─ src
+│  ├─ app.mpx
+│  ├─ pages
+│  │  └─ index.png
+│  └─ components
+│     └─ list.mpx
+├─ test
+│  └─ e2e # case目录
+│     └─ list.spec.js # 示例文件
+├─ jest-e2e.config.js # Jest配置
+└─ package.json
+```
+这里罗列了 E2E 项目中约定(或推荐)的目录结构，在项目开发中，请遵照这个目录结构组织代码。
 
-首先在项目根目录创建 jest.config.js 配置文件，并加入以下关键配置：
+### 文件说明
 
-```html
+**package.json**
+
+使用自动化测试，我们要做的第一件事就是安装 @mpxjs/e2e 和 @mpxjs/e2e-scripts，然后我们需要在 package.json 中定义两个自动化测试的脚本 test 和 testServer。
+```json
+{
+  "devDependencies": {
+    "@mpxjs/e2e": "0.0.12",
+    "@mpxjs/e2e-scripts": "0.0.10",
+  }
+  "scripts": {
+    "test": "e2e-runner",
+    "testServer": "e2e-runner --preview"
+  }
+}
+```
+小程序自动化 SDK 为开发者提供了一套通过外部脚本操控小程序的方案，从而实现小程序自动化测试的目的。
+
+**.e2erc.js**
+
+E2E 配置文件，包含 E2E 内置功能和插件的配置。可以在这里扩展运行时的能力，比如修改运行时是否自动保存页面快照。
+```js
+const path = require('path');
+const PluginReport = require('@mpxjs/e2e/report-server/server.js');
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testTimeout: 1000000000
+  recordsDir: 'dist/wx/minitest', // 录制 json 文件的存储目录
+  connectFirst: false, // 优先使用 automator.connect，默认 automator.launch 优先
+  defaultWaitFor: 5000, // 默认 waitFor 时长
+  devServer: { // 测试报告服务器配置
+    open: true,
+    port: 8886
+  },
+  jestTimeout: 990000, // jestTimeout
+  jsonCaseCpDir: 'test/e2e/e2e-json', // 从 minitest 目录复制 json 文件到该目录下
+  needRealMachine: false, // 是否需要真机
+  plugins: [new PluginReport()], // 自定义测试报告的插件
+  projectPath: path.resolve(__dirname, './dist/wx'),
+  sequence: [ // e2e 的 case 的执行顺序
+    // 'minitest-1'
+  ],
+  testSuitsDir: 'test/e2e/', // e2e 的 case 存放目录
+  useTS: false, // e2e 的 case 是否为 TS 语法
+  wsEndpoint: 'ws://localhost:9420', // automator.connect 的 wsEndpoint
+  timeoutSave: 3000, // 定时截图默认开启，设置为 false 即可关闭
+  cacheDirectory: path.resolve(__dirname, './node_modules/@mpxjs/e2e/report-server/cache'), // 配置截图数据的保存目录
+  tapSave: true, // 点击截图默认开启，设置为 false 即可关闭
+  routeUpdateSave: true, // 路由切换截图默认开启，设置为 false 即可关闭
+  routeTime: 300, // 路由切换 300ms 后再截图
+  watchResponse: [ { url: '/api/list', handler (newRes, oldRes) { return true }} ], // 配置接口请求截图
 }
 ```
 
-在 package.json 加入以下关键配置：
+我们提供了丰富的配置化选项，满足各种场景运行。
+
+| 参数 | 类型 | 默认值 | 说明 |
+| - | - | - | - |
+| projectPath | String | ./dist/wx | 小程序代码路径，Mpx 框架的 wx 输出目录 |
+| projectPath | String | test/e2e/suits/ | e2e 的 case 存放目录 |
+| sequence | string[ ] | [ ] | 用例运行的顺序 |
+| recordsDir | String | dist/wx/minitest | 录制 json 文件的存储目录 |
+| connectFirst | Boolean | false | 优先使用 automator 的 connect 方法 |
+| wsEndpoint | String | ws://localhost:9420 | 使用 connect 方式时的 wsEndpoint 选项 |
+| defaultWaitFor | Number | 15000 | 默认 waitFor 时长 |
+| useTS | Boolean | false | 用例是否为 TS 语法 |
+| jestTimeout | Number | 990000 |  默认测试超时时间 |
+| jsonCaseCpDir | String | 'test/e2e-json' |  从 minitest 目录复制 json 文件到该目录下 |
+| needRealMachine | Boolean | false | 是否需要真机回放 |
+| devServer | Object | null | 测试报告服务器配置 |
+| plugins | Array | [ ] | 自定义测试报告的插件 |
+| timeoutSave | Number | 3000 | 定时3000ms保存页面快照 |
+| cacheDirectory | String | report-server/cache | 页面快照的保存目录 |
+| tapSave | Boolean | true | 点击时候保存页面快照 |
+| routeUpdateSave | Boolean | true | 路由切换时候保存页面快照 |
+| routeTime | Number | 300 | 路由切换300ms后保存页面快照 |
+| watchResponse | Object | null | 监听接口请求保存页面快照 |
+
+
+
+
+**e2e**
+
+e2e 目录，所有的 case 文件存放在此目录下，默认会创建一个演示 demo 文件，也就是 list.spec.js 文件，约定 e2e 下所有的 .spec.js 结尾的作为自动化测试的文件，使用 Typescript 编写测试文件的时, 需要将文件名改成 .spec.ts 格式，然后 tsconfig.json 加上 "esModuleInterop": true。
 ```js
-<script>
-  "test:e2e": "npx e2e-runner"
-  ...
-</script>
-```
-@mpxjs/e2e-scripts 提供 e2e 测试中需要的命令脚本，为了串行执行 spec 文件特别提供了 `e2e-runner` 命令。
-
-关于环境配置，请确保小程序模拟器打开服务端口，如图
-
-![](https://gift-static.hongyibo.com.cn/static/kfpub/3547/image2022-2-24_14-20-36.png)
-
-## 简单的断言
-
-暂时进行一个简单的组件单元测试书写，对于复杂组件以及通用测试逻辑的总结我们会在后续进行发布。
-
-示例如下：
-```html
-<template>
-  <view class="list">
-    <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
-  </view>
-</template>
-
-<script lang="ts">
-  import { createComponent } from '@mpxjs/core'
-
-  createComponent({
-    data: {
-      listData: ['手机', '电视', '电脑']
-    }
-  })
-</script>
-
-<style lang="stylus">
-  .list
-    background-color red
-</style>
-
-<script type="application/json">
-  {
-    "component": true
-  }
-</script>
-```
-
-对应的 list.spec.js 
-```js
-import automator from '@didi/e2e-extension'
-const path = require('path')
+/**
+ * @file e2e test example
+ * 首先开启工具安全设置中的 CLI/HTTP 调用功能
+ * docs of miniprogram-automator: https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/quick-start.html
+ */
+import automator from '@mpxjs/e2e'
 
 describe('index', () => {
   let miniProgram
   let page
 
   beforeAll(async () => {
-    miniProgram = await automator.launch({
-      projectPath: path.resolve(__dirname, '../../dist/wx')
-    })
+    try {
+      miniProgram = await automator.connect({ wsEndpoint: 'ws://localhost:9420' })
+    } catch (e) {
+      miniProgram = await automator.launch({ projectPath: './dist/wx' })
+    }
     page = await miniProgram.reLaunch('/pages/index')
     await page.waitFor(500)
   }, 30000)
 
   it('desc', async () => {
     const desc = await page.$('list', 'components/list2271575d/index')
+    // 断言页面标签
     expect(desc.tagName).toBe('view')
+    // 断言文字内容
     expect(await desc.text()).toContain('手机')
+    // 保存页面快照
+    await miniProgram.screenshot({
+      path: 'test/e2e/screenshot/homePage.png'
+    })
   })
 
   afterAll(async () => {
@@ -106,7 +156,82 @@ describe('index', () => {
   })
 })
 ```
-小程序视图层的更新是异步的，一些依赖视图更新结果的断言必须 page.waitFor() 后进行。关于 SDK 提供的接口，更多详细用法可以参阅 [Automator](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/automator.html)、[MiniProgram](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/miniprogram.html)、[Page](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/page.html)、[Element](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/element.html)。
+如果你已经熟悉了 Jest，你应该很适应 Jest 的断言 API。
+
+**jest-e2e.config.js**
+
+Jest 配置文件，这些选项可让你控制 Jest 的行为，你可以了解 Jest 的默认选项，以便在必要时扩展它们：
+```js
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testTimeout: 1000000000,
+  maxWorkers: 1,
+  reporters: [
+    'default',
+    ['<rootDir>/node_modules/@mpxjs/e2e/report-server/report.js', {}], // 自定义测试报告
+  ]
+}
+```
+除了 Jest 提供的默认测试报告器外，我们还可以自定义测试报告。框架 @mpxjs/e2e 内部提供了可视化测试报告平台，需要配置 reporters 字段。
+
+## 二、@mpxjs/e2e-scripts
+
+默认情况下，Jest 将会递归的找到整个工程里所有 .spec.js 或 .test.js 扩展名的文件。 Jest 支持并行运行 test ，特别是在 ci 场景，将会极大减少 test 消耗时间。配置 --maxWorkers 参数表示的是 Jest 会开启多少个线程去完成所有的测试任务，默认值是 50% * os.cpus().length，相关的文档可见：[链接](https://jestjs.io/docs/cli#--maxworkersnumstring)。 
+
+合理的设置 maxWorkers 会使得运行变快，依赖的是并行跑用例，但是在自动化测试环境下，用例通过脚本操控模拟器或真机环境，多个用例不能同时操控一个环境，否则会相互干扰，就好比 JS 只能是单线程执行一样。
+
+因为用例只能一个一个的执行，一个完整的项目自然会包含很多用例，但是一次只能执行一个用例的话，我们需要人工的操作很多次，才能全部执行完。为了跑一个遍就把所有的用例都执行完的话，我们会想到写一个脚本通过遍历的方式依次执行，这就是 @mpxjs/e2e-scripts 设计的初衷。
+
+使用 @mpxjs/e2e-scripts 内部提供的命令脚本，执行 npx e2e-runner 将会按照 sequence 的定义的顺序依次执行用例文件。
+
+```js
+module.exports = {
+  sequence: [ // 测试用例的执行顺序
+    'minitest-1',
+    'minitest-2'
+  ]
+}
+```
+
+上面代码表示会先执行 minitest-1.spec.js 文件，然后再执行 minitest-2.spec.js 文件。
+
+
+## E2E可视化报告平台
+E2E内置的 Jest 默认支持输出 HTML 的报告，因其只支持对测试结果数据的简单展示，故我们希望在其基础上，不仅针对报告查看的广度和颗粒度进行细化，还将对自动化测试过程中涉及到的痛点实现功能上的增强。
+
+![](https://gift-static.hongyibo.com.cn/static/kfpub/8498/baogao-1.png)
+![](https://gift-static.hongyibo.com.cn/static/kfpub/8498/jietu-1.png)
+
+E2E可视化报告平台是一个运行在本地环境，统合了用例管理、测试报告、页面快照和错误日志的平台。支持对通过 WechatDevTools 录制回放功能录制出的 case 进行自定义增强的能力，同时提供执行 E2E 测试过程中产出的页面快照和错误日志等信息进行快捷、直观地查看的功能。
+
+目前支持多种交互动作保存快照（点击、输入、滑动等），我们还在页面快照方面做了增强，提供了快照标记的功能，可以完善测试报告，增强排查手段，如上图所示，当点击元素后，页面快照上会自动标记出点击的区域或者元素。
+
+
+## E2E录制+自动化生成case
+
+微信推出了官方的录制回放能力。通过微信开发者工具可以录制用户的操作过程，期间可以进行简单断言，录制结束后支持回放。但是经过实际使用发现录制回放存在下列不足：
+
+1. 录制结果结果以 json 形式存在于 dist 目录，难以扩展、难维护；
+2. 仅支持 data快照、wxml快照、检查元素、检查路径四种简单断言，难以满足复杂业务场景的细粒度断言诉求；
+3. 因等待时长、接口响应时机、组件更新时机等难以和录制时对应，录制结果回放失败频率高、不稳定；
+
+
+我们通过基于微信原生的录制进行增强的方案。使用录制的便捷性降低手写流程的成本，再通过 sdk 的能力对录制所得 Case 进行增强。
+
+这样，我们通过分析录制 JSON 文件，把 JSON 中的每一条进行分析转换，最终得到 spec 的 JS 代码文件，通过这种方式，可以大幅度降低获取元素、触发事件等常规 Case 的编写。
+
+JSON to Spec 本质只是录制结果的一种呈现，而这种转换的目的在于通过扩展强化录制 Case，弥补录制的能力有限。
+
+为了方便我们进行扩展，首先需要对录制所得的 JSON 文件进行语义化的分析。这么做的意义在于把录制的操作步骤和 JSON 的数据关联起来，而关联步骤和数据又可以增强可读性为用户在某一个步骤之后进行扩展增加了极大的便利性。
+
+上一个部分已经论证过把录制和SDK增强接合起来的可行性，但是上面一系列的操作都是通过脚本的形式呈现的，这对于我们前面的降低门槛来说仍然是繁琐的。最起码对于不会写代码的的人来说，还是不够理想。接下来就是探索如何更直观、更高效的方式把这种方案落地。
+
+我们设计了 Mpx-E2E 的工作台，当然这些也都集成到了 Mpx-E2E 的可视化平台中，下面我们看看这些具体的可视化的工作。
+
+![](https://gift-static.hongyibo.com.cn/static/kfpub/2915/yuyihua.png)
+
+分析 JSON 操作步骤后，我们把依据 JSON 生成的 Spec 同样做了可视化处理，起初的时候我们只是做了 Spec 代码的 highlight，并没有支持编辑。但是考虑到所见即所得的效率，我们又在此支持了 WEB-IDE。在生成 Spec 代码后，即可在线进行编辑，点击保存即可得到 spec 文件。
 
 ## 增强API
 
@@ -237,31 +362,4 @@ un();
 Automator.removeMockFromMap (path:string): void
 ```
 
-## E2E runner
-
-提供 E2E 测试中需要的命令脚本：执行命令 `e2e-runner`
-
-主要用与复杂的业务体系，给开发同学提供自行组织case串行执行顺序的能力
-> 注意这个命令不支持全局调用
-
-执行该命令需要在小程序项目根目录下执行，另外此目录要求存在 `.e2erc.js` 配置文件，配置文件形如：
-
-```javascript
-module.exports = {
-  sequence: [ // spec 文件执行顺序
-    'aTob',
-    'bToc',
-  ],
-  reportsDir: 'test/reports', // 测试报告存放文件夹
-  testSuitsDir: 'test/e2e/suits/', // spec 文件存放目录
-  record: true // 是否需要记录运行时间日志，为 true 时会在项目目录中创建 e2e-record.txt 文件
-}
-
-```
-调用
-```shell script
-npx e2e-runner
-```
-
-微信对于小程序自动化测试能力也在不断增强，我们会不断基于微信的基础能力去完善MPX E2E, 比如结合WX导出的用例json转成可执行spec，
-持续增强断言能力；通过支持录制/回放稳定运行自动化流程；并通过快照/截图比对进行结果判断；以及完善测试报告的可视化呈现。
+流程；并通过快照/截图比对进行结果判断；以及完善测试报告的可视化呈现。
