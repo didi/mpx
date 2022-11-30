@@ -95,6 +95,22 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
 
 }
 ```
+::: tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+const MpxSizeReportPlugin = require('@mpxjs/size-report')
+module.exports = defineConfig({
+  configureWebpack() {
+    return {
+      plugins: [
+        new MpxSizeReportPlugin(...)
+      ]
+    }
+  }
+})
+```
+:::
+
 参考上述示例进行配置后，构建代码后，dist 目录下会产出 report.json 文件，里边是项目的具体体积信息，关于输入 json 的简单示例如下：
 
 ```html
