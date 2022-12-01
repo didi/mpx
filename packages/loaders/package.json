@@ -52,11 +52,14 @@
     "build": "rimraf ./dist && tsc"
   },
   "dependencies": {
+    "@babel/types": "^7.16.0",
     "@babel/parser": "^7.16.2",
+    "@babel/generator": "^7.16.0",
     "@babel/traverse": "^7.16.0",
     "json5": "^2.1.3",
     "loader-utils": "^2.0.2",
-    "mime": "^2.6.0"
+    "mime": "^2.6.0",
+    "postcss": "^8.4.5"
   },
   "devDependencies": {
     "@mpxjs/compiler": "workspace:*",
