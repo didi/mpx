@@ -27,7 +27,7 @@ import { preProcessDefs } from '@mpxjs/compile-utils'
 import hash from 'hash-sum'
 import path from 'path'
 
-const styleCompilerPath = '@mpxjs/loaders/dist/style-loader.js'
+const styleCompilerPath = require.resolve('@mpxjs/loaders/dist/style-loader.js')
 const isProductionLikeMode = (options: any) => {
   return options.mode === 'production' || !options.mode
 }
