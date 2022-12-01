@@ -82,6 +82,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-tsdoc": "^0.2.14",
+    "fast-glob": "^3.2.12",
     "rollup": "^2.60.2",
     "typescript": "^4.3.2",
     "vite": "^3.0.0",
