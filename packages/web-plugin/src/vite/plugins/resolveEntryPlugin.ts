@@ -13,6 +13,7 @@ export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
       if (!filter(source)) return
       const { queryObj: query } = parseRequest(source)
       if (
+        mpxGlobal.entry === undefined &&
         query.resolve === undefined &&
         query.mpx === undefined &&
         query.app === undefined &&
