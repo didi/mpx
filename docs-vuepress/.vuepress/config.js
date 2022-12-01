@@ -124,11 +124,11 @@ module.exports = {
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }]
   ],
-  title: '框架文档存放 - Mpx框架',
+  title: 'Mpx框架',
   locales: {
     '/': {
       lang: 'zh-CN', // 将会被设置为 <html> 的 lang 属性
-      title: '框架文档存放 - Mpx框架',
+      title: 'Mpx框架',
       description: '深度性能优化的增强型小程序开发框架'
     },
   },
