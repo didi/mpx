@@ -91,6 +91,13 @@
   "dependencies": {
     "@babel/generator": "^7.16.0",
     "@babel/types": "^7.16.0",
+    "@better-scroll/core": "^2.2.1",
+    "@better-scroll/movable": "^2.2.1",
+    "@better-scroll/observe-dom": "^2.2.1",
+    "@better-scroll/pull-down": "^2.2.1",
+    "@better-scroll/slide": "^2.2.1",
+    "@better-scroll/wheel": "^2.2.1",
+    "@better-scroll/zoom": "^2.2.1",
     "async": "^2.6.0",
     "debug": "^4.3.2",
     "hash-sum": "^1.0.2",
