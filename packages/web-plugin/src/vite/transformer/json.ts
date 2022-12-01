@@ -211,29 +211,6 @@ export async function processJSON(
     }
   }
 
-  // const processPackages = async (
-  //   packages: JsonConfig['packages'] = [],
-  //   context: string
-  // ) => {
-  //   for (const packagePath of packages) {
-  //     const { resourcePath: filename, queryObj: query } = parseRequest(packagePath)
-  //     const packageModule = await pluginContext.resolve(filename, context)
-  //     if (packageModule) {
-  //       const packageId = packageModule.id
-  //       pluginContext.addWatchFile(packageId)
-  //       const code = await fs.promises.readFile(packageId, 'utf-8')
-  //       const descriptor = createDescriptor(packageId, code, query, options)
-  //       const { pages, packages } = (descriptor.jsonConfig = await resolveJson(
-  //         descriptor,
-  //         options,
-  //         pluginContext
-  //       ))
-  //       await processPages(pages, packageId, query.root)
-  //       await processPackages(packages, packageId)
-  //     }
-  //   }
-  // }
-
   const processPackages = async (
     packages: JsonConfig['packages'] = [],
     context: string
@@ -244,7 +221,7 @@ export async function processJSON(
         const packageModule = await proxyPluginContext(pluginContext).resolve(packagePath, context)
         if (packageModule) {
           const packageId = packageModule.id
-          // pluginContext.addWatchFile(packageId)
+          pluginContext.addWatchFile(packageId)
           const { rawResourcePath } = parseRequest(packageId)
           const code = await fs.promises.readFile(rawResourcePath, 'utf-8')
           const extName = extname(rawResourcePath)
