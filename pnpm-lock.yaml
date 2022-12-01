@@ -990,6 +990,7 @@ importers:
       '@typescript-eslint/parser': ^4.26.1
       eslint: ^7.28.0
       eslint-plugin-tsdoc: ^0.2.14
+      fast-glob: ^3.2.12
       json5: ^2.1.3
       loader-utils: ^2.0.2
       postcss-load-config: ^3.1.1
@@ -1004,6 +1005,7 @@ importers:
       '@typescript-eslint/parser': 4.33.0_77fvizpdb3y4icyeo2mf4eo7em
       eslint: 7.32.0
       eslint-plugin-tsdoc: 0.2.17
+      fast-glob: 3.2.12
       typescript: 4.9.3
 
   packages/compiler:
@@ -1154,6 +1156,7 @@ importers:
       eslint-plugin-node: ^11.1.0
       eslint-plugin-promise: ^5.1.0
       eslint-plugin-tsdoc: ^0.2.14
+      fast-glob: ^3.2.12
       hash-sum: ^1.0.2
       json5: ^2.1.3
       loader-utils: ^2.0.2
@@ -1213,6 +1216,7 @@ importers:
       eslint-plugin-node: 11.1.0_eslint@7.32.0
       eslint-plugin-promise: 5.2.0_eslint@7.32.0
       eslint-plugin-tsdoc: 0.2.17
+      fast-glob: 3.2.12
       rollup: 2.79.1
       typescript: 4.9.3
       vite: 3.2.4_@types+node@16.18.3

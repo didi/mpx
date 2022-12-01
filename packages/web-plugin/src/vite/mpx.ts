@@ -8,7 +8,7 @@ export interface ViteMpx extends Mpx {
 }
 
 const mpx: ViteMpx = {
-  entry: '',
+  entry: undefined,
   pagesMap: {},
   componentsMap: {},
   pagesEntryMap: {}
