@@ -1,6 +1,6 @@
 import fs from 'fs'
-import json5 from 'json5'
-import path, { join } from 'path'
+import json5, { parse } from 'json5'
+import path, { dirname, extname, join } from 'path'
 import { TransformPluginContext } from 'rollup'
 import { normalizePath } from 'vite'
 import { ResolvedOptions } from '../../options'
@@ -17,6 +17,7 @@ import pathHash from '../utils/pageHash'
 import createJSONHelper from '../../transfrom/json'
 import toPosix from '@mpxjs/compile-utils/to-posix'
 import mpx from "../../webpack/mpx";
+import parser from "@mpxjs/compiler/template-compiler/parser";
 
 /**
  * wechat miniprogram app/page/component config type
@@ -204,31 +205,69 @@ export async function processJSON(
       const genericsComponents = {}
       Object.keys(generics).forEach((name) => {
         const generic = generics[name]
-        if (generic.default) genericsComponents[`${name}default`] = generic.default
+        if (generic.default) genericsComponents[`${ name }default`] = generic.default
       })
       await processComponents(genericsComponents, importer)
     }
   }
 
+  // const processPackages = async (
+  //   packages: JsonConfig['packages'] = [],
+  //   context: string
+  // ) => {
+  //   for (const packagePath of packages) {
+  //     const { resourcePath: filename, queryObj: query } = parseRequest(packagePath)
+  //     const packageModule = await pluginContext.resolve(filename, context)
+  //     if (packageModule) {
+  //       const packageId = packageModule.id
+  //       pluginContext.addWatchFile(packageId)
+  //       const code = await fs.promises.readFile(packageId, 'utf-8')
+  //       const descriptor = createDescriptor(packageId, code, query, options)
+  //       const { pages, packages } = (descriptor.jsonConfig = await resolveJson(
+  //         descriptor,
+  //         options,
+  //         pluginContext
+  //       ))
+  //       await processPages(pages, packageId, query.root)
+  //       await processPackages(packages, packageId)
+  //     }
+  //   }
+  // }
+
   const processPackages = async (
     packages: JsonConfig['packages'] = [],
     context: string
   ) => {
-    for (const packagePath of packages) {
-      const { resourcePath: filename, queryObj: query } = parseRequest(packagePath)
-      const packageModule = await pluginContext.resolve(filename, context)
-      if (packageModule) {
-        const packageId = packageModule.id
-        pluginContext.addWatchFile(packageId)
-        const code = await fs.promises.readFile(packageId, 'utf-8')
-        const descriptor = createDescriptor(packageId, code, query, options)
-        const { pages, packages } = (descriptor.jsonConfig = await resolveJson(
-          descriptor,
-          options,
-          pluginContext
-        ))
-        await processPages(pages, packageId, query.root)
-        await processPackages(packages, packageId)
+    if (packages) {
+      for (const packagePath of packages) {
+        const { queryObj } = parseRequest(packagePath)
+        const packageModule = await proxyPluginContext(pluginContext).resolve(packagePath, context)
+        if (packageModule) {
+          const packageId = packageModule.id
+          // pluginContext.addWatchFile(packageId)
+          const { rawResourcePath } = parseRequest(packageId)
+          const code = await fs.promises.readFile(rawResourcePath, 'utf-8')
+          const extName = extname(rawResourcePath)
+          if (extName === '.mpx') {
+            const descriptor = createDescriptor(packageId, code, queryObj, options)
+            const { pages, packages } = (descriptor.jsonConfig = await resolveJson(
+              descriptor,
+              options,
+              pluginContext))
+            const processSelfQueue = []
+            // const context = dirname(rawResourcePath)
+            const context = packageId
+            if (pages) {
+              processSelfQueue.push(processPages(pages, context, queryObj.root))
+            }
+            if (packages) {
+              processSelfQueue.push(processPackages(packages, context))
+            }
+            if (processSelfQueue.length) {
+              await Promise.all(processSelfQueue)
+            }
+          }
+        }
       }
     }
   }
@@ -244,8 +283,8 @@ export async function processJSON(
   const processSubPackage = async (subPackage, context) => {
     if (subPackage) {
       if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
-        proxyPluginContext(pluginContext).error(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
-        return `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
+        proxyPluginContext(pluginContext).error(`Current subpackage root [${ subPackage.root }] is not allow starts with '.'`)
+        return `Current subpackage root [${ subPackage.root }] is not allow starts with '.'`
       }
       const tarRoot = subPackage.tarRoot || subPackage.root || ''
       // const srcRoot = subPackage.srcRoot || subPackage.root || ''
