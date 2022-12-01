@@ -1189,8 +1189,8 @@ function parseMustache (raw = '') {
 
       if (i18n) {
         for (const i18nFuncName of i18nFuncNames) {
-          const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
-          const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
+          const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
+          const funcNameREG = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
             if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
               const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`

@@ -60,6 +60,30 @@ new MpxwebpackPlugin({
 })
 ```
 
+::: tip @mpxjs/cli@3.x 版本配置如下
+
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
+    }
+  }
+})
+```
+
+通过在 `npm script` 当中定义 `targets` 来设置mpx编译的目标平台
+
+```javascript
+// 项目 package.json
+{
+  "script": {
+    "build:cross": "mpx-cli-service build:mp --targets=wx,ali"
+  }
+}
+```
+:::
 ### 跨平台差异抹平
 
 为了实现小程序的跨平台编译，我们在编译和运行时做了很多工作以抹平小程序开发中各个方面的跨平台差异
@@ -155,6 +179,23 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
     }
   }
 ```
+
+:::tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  configureWebpack() {
+    return {
+      resolve: {
+        alias: {
+          'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+        }
+      }
+    }
+  }
+})
+```
+:::
 
 #### 区块维度条件编译
 
@@ -324,6 +365,22 @@ new MpxWebpackPlugin({
 })
 ```
 
+::: tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx   
+      plugin: {
+        env: "didi" // env为mpx编译的目标环境，需自定义
+      }
+    }
+  }
+})
+```
+:::
+
 #### 文件维度条件编译
 
 微信转支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，而且这个地图组件在不同的目标环境中也有很大的差异，这时你可以在相同的位置新建一个 map.ali.didi.mpx 或 map.ali.qingju.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的 mode 和 env 来加载对应模块，当 mode 为 ali，env 为 didi 时，会优先加载 map.ali.didi.mpx、map.ali.mpx，如果没有定义 env，则会优先加载 map.ali.mpx，反之则会加载 map.mpx。
@@ -416,7 +473,7 @@ env 属性维度的编译同样支持对整个节点或者节点标签名进行�
 
 ### 使用方法
 
-使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web:serve`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
+使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run build:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
 ### 支持范围
 目前对输出web的通用能力支持已经非常完备，下列表格中显示了当前版本中已支持的能力范围

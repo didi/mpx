@@ -1,4 +1,4 @@
-import { isRef } from '@mpxjs/core'
+import { isRef, isReactive } from '@mpxjs/core'
 import { type, noop } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -117,7 +117,7 @@ function proxy (target, source, keys, readonly, onConflict) {
     const descriptor = {
       get () {
         const val = source[key]
-        return isRef(val) ? val.value : val
+        return !isReactive(source) && isRef(val) ? val.value : val
       },
       configurable: true,
       enumerable: true
@@ -125,12 +125,15 @@ function proxy (target, source, keys, readonly, onConflict) {
     descriptor.set = readonly
       ? noop
       : function (val) {
-        const oldVal = source[key]
-        if (isRef(oldVal) && !isRef(val)) {
-          oldVal.value = val
-        } else {
-          source[key] = val
+        // 对reactive对象代理时不需要处理ref解包
+        if (!isReactive(source)) {
+          const oldVal = source[key]
+          if (isRef(oldVal) && !isRef(val)) {
+            oldVal.value = val
+            return
+          }
         }
+        source[key] = val
       }
     if (onConflict) {
       if (key in target) {

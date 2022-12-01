@@ -10,13 +10,13 @@ npm i -g @mpxjs/cli
 在当前目录下创建mpx项目。
 
 ```shell
-mpx init mpx-project
+mpx create mpx-project
 ```
 
 也可以使用npx在不全局安装脚手架情况下创建项目。
 
 ```shell
-npx @mpxjs/cli init mpx-project
+npx @mpxjs/cli create mpx-project
 ```
 
 执行命令后会弹出一系列问题进行项目初始配置，根据自身需求进行选择，完成后进入项目目录进行依赖安装。
@@ -32,7 +32,7 @@ npm install
 使用npm script执行mpx的编译构建，在开发模式下我们执行watch命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
 
 ```shell
-npm run watch
+npm run serve
 ```
 
 ## 预览调试
