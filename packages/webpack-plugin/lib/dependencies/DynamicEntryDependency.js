@@ -184,7 +184,8 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
       replaceContent = JSON.stringify(true)
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
-        const relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
+        let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
+        if (!relativePath.startsWith('.')) relativePath = './' + relativePath
         replaceContent = JSON.stringify(relativePath)
         if (extraOptions.retryRequireAsync) {
           replaceContent += `).catch(function (e) {
