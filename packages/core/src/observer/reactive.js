@@ -139,8 +139,7 @@ export function defineReactive (obj, key, val, shallow) {
     },
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
-      /* eslint-disable no-self-compare */
-      if (!(shallow && isForceTrigger) && (!hasChanged(newVal, value) || (newVal !== newVal && value !== value))) {
+      if (!(shallow && isForceTrigger) && !hasChanged(newVal, value)) {
         return
       }
       if (!shallow && isRef(value) && !isRef(newVal)) {
