@@ -15,6 +15,7 @@ import { LoaderContext } from 'webpack'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency';
 import parser from '@mpxjs/compiler/template-compiler/parser'
 import { Mpx } from '../types/mpx'
+import getOutputPath from '../utils/get-output-path'
 
 const defaultTabbar = {
   borderStyle: 'black',
@@ -90,7 +91,7 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
           if (oldResourcePath !== resourcePath) {
             const oldOutputPath = outputPath
             // todo
-            outputPath = mpx.getOutputPath && mpx.getOutputPath(resourcePath, 'page', mpx, { conflictPath: outputPath })
+            outputPath = getOutputPath(resourcePath, 'page', mpx, { conflictPath: outputPath })
             emitWarning(new Error(`Current page [${ resourcePath }] is registered with a conflict outputPath [${ oldOutputPath }] which is already existed in system, will be renamed with [${ outputPath }], use ?resolve to get the real outputPath!`))
           }
         }

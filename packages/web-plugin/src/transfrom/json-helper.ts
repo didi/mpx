@@ -7,6 +7,7 @@ import toPosix from '@mpxjs/compile-utils/to-posix'
 import { ProxyPluginContext, proxyPluginContext } from '../pluginContextProxy'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
+import getOutputPath from '../utils/get-output-path'
 import { Mpx } from '../types/mpx'
 
 export default function createJSONHelper({ pluginContext, mpx, mode }: {
@@ -23,7 +24,6 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
 } {
   const externals = mpx.externals || []
   const root = mpx.projectRoot
-  const getOutputPath = mpx.getOutputPath
   const mpxPluginContext:ProxyPluginContext = proxyPluginContext(pluginContext)
 
   const isUrlRequest = (r: string) => isUrlRequestRaw(r, root, externals)
@@ -48,7 +48,7 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
       resource = addQuery(resource, {}, false, ['root'])
     }
     if (!outputPath) {
-      outputPath = (getOutputPath && getOutputPath(resourcePath, 'component', mpx)) || ''
+      outputPath = (getOutputPath(resourcePath, 'component', mpx)) || ''
     }
 
     const entry = {
@@ -87,7 +87,7 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
         const relative = path.relative(context, resourcePath)
         if (/^\./.test(relative)) {
           // 如果当前page不存在于context中，对其进行重命名
-          outputPath = (getOutputPath && getOutputPath(resourcePath, 'page', mpx)) || ''
+          outputPath = (getOutputPath(resourcePath, 'page', mpx)) || ''
           mpxPluginContext.warn(
             `Current page [${ resourcePath }] is not in current pages directory [${ context }], the page path will be replaced with [${ outputPath }], use ?resolve to get the page path and navigate to it!`
           )

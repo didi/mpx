@@ -16,8 +16,6 @@ const mpx: Mpx = {
   vueContentCache: new Map(),
   webConfig: {},
   wxsContentMap: {},
-  pathHash: (resourcePath) => '',
-  getOutputPath: () => '',
   recordResourceMap: () => ''
 }
 

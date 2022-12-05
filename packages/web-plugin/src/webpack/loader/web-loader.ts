@@ -18,6 +18,8 @@ import processJSON from '../web/processJSON'
 import processScript from '../web/processScript'
 import processStyles from '../web/processStyles'
 import processTemplate from '../web/processTemplate'
+import pathHash from '../../utils/pageHash'
+import getOutputPath  from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
 
 export default function (
@@ -62,7 +64,6 @@ export default function (
     loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = mpx.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const { pathHash, getOutputPath } = mpx
   const moduleId =
     ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + (pathHash && pathHash(filePath) || '')
 

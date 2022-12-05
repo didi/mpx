@@ -5,7 +5,6 @@ import resolveJson from '../../utils/resolve-json-content'
 import { SFCDescriptor } from '../../types/compiler'
 import mpxGlobal from '../mpx'
 import { jsonCompiler } from '../../transfrom/json-compiler'
-import getOutputPath from '../../utils/get-output-path'
 
 export async function processJSON(
   descriptor: SFCDescriptor,
@@ -20,8 +19,7 @@ export async function processJSON(
       jsonConfig,
       mpx: {
         ...mpxGlobal,
-        ...options,
-        getOutputPath: getOutputPath
+        ...options
       },
       context: filename,
       pluginContext,

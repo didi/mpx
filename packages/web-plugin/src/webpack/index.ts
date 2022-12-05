@@ -23,8 +23,7 @@ import { processOptions, Options } from '../options'
 import mpx from './mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 import { preProcessDefs } from '@mpxjs/compile-utils'
-import hash from 'hash-sum'
-import path from 'path'
+import getOutputPath from '../utils/get-output-path'
 
 const styleCompilerPath = require.resolve('@mpxjs/loaders/dist/style-loader.js')
 const isProductionLikeMode = (options: any) => {
@@ -265,7 +264,6 @@ class MpxWebpackPlugin {
               main: {}
             },
             usingComponents: {},
-            wxsAssetsCache: new Map(),
             currentPackageRoot: '',
             wxsContentMap: {},
             minimize: false,
@@ -287,40 +285,8 @@ class MpxWebpackPlugin {
             checkUsingComponentsRules: this.options.checkUsingComponentsRules,
             appTitle: 'Index homepage',
             externals: this.options.externals || [],
-            pathHash: (resourcePath: string) => {
-              if (
-                this.options.pathHashMode === 'relative' &&
-                this.options.projectRoot
-              ) {
-                return hash(
-                  path.relative(this.options.projectRoot, resourcePath)
-                )
-              }
-              return hash(resourcePath)
-            },
-            getOutputPath: (
-              resourcePath: string,
-              type: 'component' | 'page',
-              mpx,
-              { ext = '', conflictPath = '' } = {}
-            ) => {
-              const name = path.parse(resourcePath).name
-              const hash = (mpx.pathHash && mpx.pathHash(resourcePath)) || ''
-              const customOutputPath = this.options.customOutputPath
-              if (conflictPath)
-                return conflictPath.replace(
-                  /(\.[^\\/]+)?$/,
-                  match => hash + match
-                )
-              if (typeof customOutputPath === 'function')
-                return customOutputPath(type, name, hash, ext).replace(
-                  /^\//,
-                  ''
-                )
-              if (type === 'component' || type === 'page')
-                return path.join(type + 's', name + hash, 'index' + ext)
-              return path.join(type, name + hash + ext)
-            },
+            pathHashMode: this.options.pathHashMode,
+            customOutputPath: this.options.customOutputPath,
             recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
               const packageName = packageRoot || 'main'
               const resourceMap = mpx[`${resourceType}sMap`] as any
@@ -341,7 +307,7 @@ class MpxWebpackPlugin {
                         currentResourceMap[key] === outputPath &&
                         key !== resourcePath
                       ) {
-                        outputPath = (mpx.getOutputPath && mpx.getOutputPath(resourcePath, resourceType, mpx, { conflictPath: outputPath })) || ''
+                        outputPath = (getOutputPath(resourcePath, resourceType, mpx, { conflictPath: outputPath })) || ''
                         warn && warn(
                           new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`)
                         )
