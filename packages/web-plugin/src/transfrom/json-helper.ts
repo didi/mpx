@@ -87,7 +87,7 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
         const relative = path.relative(context, resourcePath)
         if (/^\./.test(relative)) {
           // 如果当前page不存在于context中，对其进行重命名
-          outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
+          outputPath = (getOutputPath && getOutputPath(resourcePath, 'page', mpx)) || ''
           mpxPluginContext.warn(
             `Current page [${ resourcePath }] is not in current pages directory [${ context }], the page path will be replaced with [${ outputPath }], use ?resolve to get the page path and navigate to it!`
           )

@@ -22,7 +22,10 @@ export async function processJSON(
         ...mpxGlobal,
         ...options,
         getOutputPath: getOutputPath
-      }, context: filename, pluginContext, mode: 'vite'
+      },
+      context: filename,
+      pluginContext,
+      mode: 'vite'
     })
     descriptor.localPagesMap = localPagesMap
     descriptor.localComponentsMap = localComponentsMap

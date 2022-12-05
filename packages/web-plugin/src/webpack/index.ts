@@ -341,7 +341,7 @@ class MpxWebpackPlugin {
                         currentResourceMap[key] === outputPath &&
                         key !== resourcePath
                       ) {
-                        outputPath = (mpx.getOutputPath && mpx.getOutputPath(resourcePath, resourceType, { conflictPath: outputPath })) || ''
+                        outputPath = (mpx.getOutputPath && mpx.getOutputPath(resourcePath, resourceType, mpx, { conflictPath: outputPath })) || ''
                         warn && warn(
                           new Error(`Current ${resourceType} [${resourcePath}] is registered with conflicted outputPath [${currentResourceMap[key]}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`)
                         )

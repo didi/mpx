@@ -69,7 +69,7 @@ export default function (
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
     const entryName =
-      getEntryName(this) || (getOutputPath && getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')) || ''
+      getEntryName(this) || (getOutputPath && getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page', mpx)) || ''
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module?.addPresentationalDependency(
       <Dependency>new RecordResourceMapDependency(
