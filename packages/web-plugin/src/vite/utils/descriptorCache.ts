@@ -1,10 +1,9 @@
 import path from 'path'
 import slash from 'slash'
-import { ResolvedOptions } from '../../options'
 import { Query } from '../../types/query'
-import compiler, { SFCDescriptor } from '../compiler'
-import pathHash from './pageHash'
-
+import compiler, { SFCDescriptor } from '../../types/compiler'
+import pathHash from '../../utils/pageHash'
+import { ResolvedOptions } from '../../options'
 const cache = new Map<string, SFCDescriptor>()
 const prevCache = new Map<string, SFCDescriptor | undefined>()
 
@@ -53,7 +52,7 @@ export function createDescriptor(
   query: Query,
   options: ResolvedOptions
 ): SFCDescriptor {
-  const { projectRoot, isProduction, mode, defs, env, sourceMap } = options
+  const { projectRoot = '', isProduction, mode = 'web', defs, env, sourceMap } = options
   const descriptor = compiler.parseComponent(code, {
     mode,
     defs,

@@ -2,10 +2,10 @@ import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { mpxStyleTransform } from '@mpxjs/loaders/style-loader'
 import { ResolvedOptions } from '../../options'
-import { SFCDescriptor } from '../compiler'
+import { SFCDescriptor } from '../../types/compiler'
 import { proxyPluginContext } from '../../pluginContextProxy/index'
 import mpx from '../mpx'
-import pathHash from '../utils/pageHash'
+import pathHash from '../../utils/pageHash'
 
 async function mpxTransformStyle(
   code: string,

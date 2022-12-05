@@ -6,7 +6,7 @@ import { TransformResult } from 'vite'
 import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template.js'
 import { ResolvedOptions } from '../../options'
 import * as normalize from '@mpxjs/compile-utils/normalize'
-import templateCompiler, { SFCDescriptor } from '../compiler'
+import templateCompiler, { SFCDescriptor } from '../../types/compiler'
 
 const templateTransformCache: Record<string, string> = {}
 

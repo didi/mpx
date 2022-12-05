@@ -20,7 +20,6 @@ import { matchCondition } from '@mpxjs/compile-utils/match-condition'
 import stringifyLoadersAndResource from '@mpxjs/compile-utils/stringify-loaders-resource'
 import async from 'async'
 import { processOptions, Options } from '../options'
-import { createMpx } from '../mpx'
 import mpx from './mpx'
 import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
 import { preProcessDefs } from '@mpxjs/compile-utils'
@@ -255,7 +254,7 @@ class MpxWebpackPlugin {
         compilation.errors = compilation.errors.concat(errors)
         const moduleGraph = compilation.moduleGraph
         if (!compilation.__mpx__) {
-          Object.assign(mpx, createMpx({
+          Object.assign(mpx, {
             // pages全局记录，无需区分主包分包
             pagesMap: {},
             // 组件资源记录，依照所属包进行记录
@@ -302,6 +301,7 @@ class MpxWebpackPlugin {
             getOutputPath: (
               resourcePath: string,
               type: 'component' | 'page',
+              mpx,
               { ext = '', conflictPath = '' } = {}
             ) => {
               const name = path.parse(resourcePath).name
@@ -370,7 +370,7 @@ class MpxWebpackPlugin {
                 alreadyOutputted
               }
             }
-          }))
+          })
           compilation.__mpx__ = mpx
         }
         const rawProcessModuleDependencies =

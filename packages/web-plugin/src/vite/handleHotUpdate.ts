@@ -1,7 +1,7 @@
 import _debug from 'debug'
 import { HmrContext, ModuleNode } from 'vite'
 import { ResolvedOptions } from '../options'
-import { SFCBlock } from './compiler'
+import { SFCBlock } from '../types/compiler'
 import { processTemplate } from './transformer/template'
 import {
   createDescriptor, getDescriptor,
@@ -28,16 +28,10 @@ export default async function handleHotUpdate(
   }
   setPrevDescriptor(file, prevDescriptor)
   const content = await read()
-  const descriptor = createDescriptor(
-    file,
-    content,
-    // mock query
-    {
-      isPage: prevDescriptor.isPage ? null : undefined,
-      isComponent: prevDescriptor.isComponent ? null : undefined
-    },
-    options
-  )
+  const descriptor = createDescriptor(file, content, {
+    isPage: prevDescriptor.isPage ? null : undefined,
+    isComponent: prevDescriptor.isComponent ? null : undefined
+  }, options)
 
   const updateType = []
   const affectedModules = new Set<ModuleNode | undefined>()

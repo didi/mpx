@@ -1,9 +1,6 @@
-import { Mpx } from '../mpx'
+import { Mpx } from '../types/mpx'
 const mpx: Mpx = {
-  componentsMap: {
-    main: {}
-  },
-  currentPackageRoot: '',
+  componentsMap: {},
   defs: {},
   externals: [],
   mode: 'web',
@@ -13,16 +10,11 @@ const mpx: Mpx = {
   pagesMap: {},
   postcssInlineConfig: {},
   srcMode: 'wx',
-  staticResourcesMap: {
-    main: {}
-  },
   transRpxRules: {},
   // 组件资源记录，依照所属包进行记录
   usingComponents: {},
   vueContentCache: new Map(),
   webConfig: {},
-  // todo es6 map读写性能高于object，之后会逐步替换
-  wxsAssetsCache: new Map(),
   wxsContentMap: {},
   pathHash: (resourcePath) => '',
   getOutputPath: () => '',

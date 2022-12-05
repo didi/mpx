@@ -9,7 +9,7 @@ import { genImport } from '../../utils/genCode'
 import omit from '../../utils/omit'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
 import stringify, { shallowStringify } from '../../utils/stringify'
-import { SFCDescriptor } from '../compiler'
+import { SFCDescriptor } from '../../types/compiler'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
@@ -115,7 +115,10 @@ export async function transformScript(
 
   // import component by component json config
   Object.keys(localComponentsMap).forEach((componentName, index) => {
-    const componentCfg = localComponentsMap[componentName]
+    const componentCfg: {
+      resource: string
+      async: boolean
+    } = localComponentsMap[componentName]
     const componentId = componentCfg.resource
     const varName = `__mpx__component__${index}`
     const async = componentCfg.async !== undefined

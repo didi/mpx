@@ -4,8 +4,6 @@ import { Options, processOptions, ResolvedOptions } from '../options'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
 import { stringifyObject } from '../utils/stringify'
 import handleHotUpdate from './handleHotUpdate'
-import hash from 'hash-sum'
-import path from 'path'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
@@ -179,21 +177,6 @@ export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
   const { mode, env, fileConditionRules } = resolvedOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
-  mpxGlobal.pathHash = (resourcePath) => {
-    if (options.pathHashMode === 'relative' && options.projectRoot) {
-      return hash(path.relative(options.projectRoot, resourcePath))
-    }
-    return hash(resourcePath)
-  }
-  mpxGlobal.getOutputPath = (resourcePath, type, { ext = '', conflictPath = '' } = {}) => {
-    const name = path.parse(resourcePath).name
-    const hash = mpxGlobal.pathHash(resourcePath)
-    const customOutputPath = options.customOutputPath
-    if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
-    if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext).replace(/^\//, '')
-    if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
-    return path.join(type, name + hash + ext)
-  }
   const plugins = [
     // mpx => vue
     createMpxPlugin(resolvedOptions, {

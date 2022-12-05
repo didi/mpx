@@ -13,14 +13,14 @@ import { proxyPluginContext } from '../../pluginContextProxy'
 import stringify from '../../utils/stringify'
 import mpx from '../mpx'
 import fs from 'fs'
+import { mpxJSONTransform } from "../../transfrom/json-compiler";
+import mpxGlobal from "../../vite/mpx";
 
 export default async function (json, {
-  loaderContext,
-  pagesMap,
-  componentsMap
+  loaderContext
 }, rawCallback) {
-  const localPagesMap = {}
-  const localComponentsMap = {}
+  let localPagesMap = {}
+  let localComponentsMap = {}
   let output = '/* json */\n'
   let jsonConfig = {}
   let tabBarMap

@@ -11,8 +11,8 @@ export interface ProxyPluginContext {
   resource?: string
   resourcePath?: string
   sourceMap?: boolean
-  warn(warn?: any): void,
-  error(err?: any): void
+  warn(warn: any): void,
+  error(err: any): void
 }
 
 export function proxyPluginContext(

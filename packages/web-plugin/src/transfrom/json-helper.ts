@@ -1,16 +1,21 @@
 import path, { join } from 'path'
 import addQuery from '@mpxjs/compile-utils/add-query'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
-import loaderUtils from 'loader-utils'
+import loaderUtils, { stringifyRequest as _stringifyRequest } from 'loader-utils'
 import isUrlRequestRaw from '@mpxjs/compile-utils/is-url-request'
 import toPosix from '@mpxjs/compile-utils/to-posix'
+import { ProxyPluginContext, proxyPluginContext } from '../pluginContextProxy'
+import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
+import { Mpx } from '../types/mpx'
 
-export default function createJSONHelper({ pluginContext, mpx, type }: {
-  pluginContext: LoaderContext<null>
-  mpx: any,
-  type: 'vite'| 'webpack'
+export default function createJSONHelper({ pluginContext, mpx, mode }: {
+  pluginContext: LoaderContext<null> | PluginContext | any,
+  mpx: Mpx
+  mode: 'vite'| 'webpack'
 }): {
+  stringifyRequest: any
+  emitWarning: any
   processComponent: any
   processPage: any
   isUrlRequest: any
@@ -19,30 +24,35 @@ export default function createJSONHelper({ pluginContext, mpx, type }: {
   const externals = mpx.externals || []
   const root = mpx.projectRoot
   const getOutputPath = mpx.getOutputPath
+  const mpxPluginContext:ProxyPluginContext = proxyPluginContext(pluginContext)
 
   const isUrlRequest = (r: string) => isUrlRequestRaw(r, root, externals)
   const urlToRequest = (r: string) => loaderUtils.urlToRequest(r)
+  const stringifyRequest = (r: string) => _stringifyRequest(pluginContext, r)
+  const emitWarning = (msg: string | Error) => {
+    mpxPluginContext.warn('[json processor]: ' + msg)
+  }
 
   const processComponent = async (
     component: string,
     context: string,
-    { tarRoot = '', outputPath = '', relativePath = '' }
+    { tarRoot = '', outputPath = '' }
   ) => {
     if (!isUrlRequest(component)) return { entry: component }
-    let componetModule = await pluginContext.resolve(component, context)
-    if (!componetModule) return null
-    const componentId = componetModule.id
-    const { resourcePath, queryObj } = parseRequest(componentId)
+    const componentModule = await mpxPluginContext.resolve(component, context)
+    if (!componentModule) return null
+    let resource = componentModule.id
+    const { resourcePath, queryObj } = parseRequest(resource)
     if (queryObj.root) {
       // 删除root query
-      componentId = addQuery(componentId, {}, false, ['root'])
+      resource = addQuery(resource, {}, false, ['root'])
     }
     if (!outputPath) {
-      outputPath = (getOutputPath && getOutputPath(resourcePath, 'component')) || ''
+      outputPath = (getOutputPath && getOutputPath(resourcePath, 'component', mpx)) || ''
     }
 
     const entry = {
-      resource: componentId,
+      resource,
       outputPath: toPosix(join(tarRoot, outputPath)),
       packageRoot: tarRoot
     }
@@ -62,15 +72,15 @@ export default function createJSONHelper({ pluginContext, mpx, type }: {
       page = page.src
     }
     if (!isUrlRequest(page)) return { entry: page }
-    if (type === 'vite') {
+    if (mode === 'vite') {
       page = path.resolve(context, tarRoot, page)
       context = path.join(context, tarRoot)
     }
-    const pageModule = await pluginContext.resolve(addQuery(page, { isPage: true }), context)
+    const pageModule = await mpxPluginContext.resolve(addQuery(page, { isPage: true }), context)
     if (pageModule) {
-      const pageId = pageModule.id
-      const { resourcePath } = parseRequest(pageId)
-      let outputPath
+      const resource = pageModule.id
+      const { resourcePath } = parseRequest(resource)
+      let outputPath = ''
       if (aliasPath) {
         outputPath = aliasPath.replace(/^\//, '')
       } else {
@@ -78,7 +88,7 @@ export default function createJSONHelper({ pluginContext, mpx, type }: {
         if (/^\./.test(relative)) {
           // 如果当前page不存在于context中，对其进行重命名
           outputPath = (getOutputPath && getOutputPath(resourcePath, 'page')) || ''
-          pluginContext.warn(
+          mpxPluginContext.warn(
             `Current page [${ resourcePath }] is not in current pages directory [${ context }], the page path will be replaced with [${ outputPath }], use ?resolve to get the page path and navigate to it!`
           )
         } else {
@@ -89,7 +99,7 @@ export default function createJSONHelper({ pluginContext, mpx, type }: {
         }
       }
       const entry = {
-        resource: pageId,
+        resource,
         outputPath: toPosix(join(tarRoot, outputPath)),
         packageRoot: tarRoot
       }
@@ -102,6 +112,8 @@ export default function createJSONHelper({ pluginContext, mpx, type }: {
   }
 
   return {
+    stringifyRequest,
+    emitWarning,
     processComponent,
     processPage,
     isUrlRequest,

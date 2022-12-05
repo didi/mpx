@@ -1,6 +1,6 @@
 import { CompilerResult, ParseResult, templateCompiler } from '@mpxjs/compiler'
 import parseComponent from '@mpxjs/compiler/template-compiler/parser'
-import { JsonConfig } from './transformer/json'
+import { JsonConfig } from './json-config'
 
 export * from '@mpxjs/compiler'
 
@@ -20,8 +20,18 @@ export interface SFCDescriptor extends CompilerResult {
     }
   >
   genericsInfo?: Record<string, unknown>
-  localPagesMap: Record<string, string>
-  localComponentsMap: Record<string, string>
+  localPagesMap: {
+    [key: string]: {
+      resource: string
+      async: boolean
+    }
+  }
+  localComponentsMap: {
+    [key: string]: {
+      resource: string
+      async: boolean
+    }
+  }
   wxsModuleMap: Record<string, string>
   wxsContentMap: Record<string, string>
   tabBarMap: Record<string, unknown>

@@ -57,7 +57,7 @@ export default function (
   }
 
   // eslint-disable-next-line @typescript-eslint/no-this-alias
-  const loaderContext = this
+  const loaderContext: any = this
   const stringifyRequest = (r: string) =>
     loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = mpx.minimize || process.env.NODE_ENV === 'production'
@@ -189,11 +189,9 @@ export default function (
                   },
                   callback => {
                     processJSON(
-                      parts.json,
+                      parts.json || {},
                       {
-                        loaderContext,
-                        pagesMap,
-                        componentsMap
+                        loaderContext
                       },
                       callback
                     )
