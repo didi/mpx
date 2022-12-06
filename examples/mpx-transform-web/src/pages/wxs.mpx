@@ -1,7 +1,7 @@
 <template>
   <view class="p-container-h">
     <wxs module="foo">
-      var some_msg1 = "222=www";
+      var some_msg1 = "=====";
       module.exports = {
       msg : some_msg1,
       }

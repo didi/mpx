@@ -25,22 +25,22 @@ export default function (template: { content: string, tag: string, attrs: Record
   let wxsModuleMap
   let genericsInfo
   let output = '/* template */\n'
+  const app = ctorType === 'app'
 
+  if (app) {
+    template = {
+      attrs: null,
+      tag: 'template',
+      content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+    }
+  }
   if (template) {
-    const app = ctorType === 'app'
     // 由于远端src template资源引用的相对路径可能发生变化，暂时不支持。
     if (template.src) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
-    }
-    if (app) {
-      template = {
-        attrs: null,
-        tag: 'template',
-        content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
-      }
     }
     const result = templateTransform({ template,
       mpx,
