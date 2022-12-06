@@ -9,6 +9,7 @@ export interface Mpx {
   minimize?: boolean
   env?: string
   staticResourcesMap?: Record<string, any>
+  externalClasses?: Array<string>,
   mode?: 'wx' | 'web' | 'ali' | 'swan'
   recordResourceMap?(record: {
     resourcePath: string

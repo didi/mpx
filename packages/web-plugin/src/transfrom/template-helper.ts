@@ -21,30 +21,33 @@ const calculateRootEleChild = (arr: ParseHtmlNode[]) => {
   }, 0)
 }
 
-export default function templateTransform ({ template, mpx, pluginContext, jsonConfig, resource, moduleId, app}: {
+export default function templateTransform ({ template, mpx, pluginContext, jsonConfig, hasScoped, resource, moduleId, app, compileMode}: {
   template: Record<string, any>
   mpx: Mpx,
   pluginContext: LoaderContext<null> | PluginContext | any,
   jsonConfig: JsonConfig,
   resource: string,
   moduleId: string,
-  app: boolean
+  app: boolean,
+  hasScoped: boolean,
+  compileMode: 'vite' | 'webpack'
 }){
-  const mpxPluginContext = pluginContext
+  // todo vite 热更新时调用 processTemplate 拿不到 pluginContext
+  const mpxPluginContext = pluginContext ? proxyPluginContext(pluginContext): null
   const { usingComponents = {}, componentGenerics = {} } = jsonConfig
   const builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
   let genericsInfo: SFCDescriptor['genericsInfo']
-  const wxsContentMap: SFCDescriptor['wxsContentMap'] = {}
   let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
-  const templateInfo: Record<string, any> = {}
+  let content = ''
   const {
-    mode,
+    mode = 'web',
     srcMode,
-    defs,
-    decodeHTMLText,
-    externalClasses,
-    checkUsingComponents
+    defs = {},
+    decodeHTMLText = false,
+    externalClasses = [],
+    checkUsingComponents = false
   } = mpx
+  const wxsContentMap: SFCDescriptor['wxsContentMap'] = compileMode === 'webpack' ? mpx.wxsContentMap : {}
   const addBuildComponent = (name: string, resource: string) => {
     builtInComponentsMap[name] = {
       resource: addQuery(resource, { isComponent: true })
@@ -52,14 +55,14 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
   }
   if (app) {
     addBuildComponent('mpx-keep-alive', '@mpxjs/web-plugin/src/runtime/components/web/mpx-keep-alive.vue')
-    templateInfo.content = template.content
+    content = template.content
   } else {
     const { root, meta } = templateCompiler.parse(template.content, {
       warn: msg => {
-        mpxPluginContext.warn('[template compiler]: ' + msg)
+        mpxPluginContext?.warn('[template compiler]: ' + msg)
       },
       error: msg => {
-        mpxPluginContext.error('[template compiler]: ' + msg)
+        mpxPluginContext?.error('[template compiler]: ' + msg)
       },
       usingComponents: Object.keys(usingComponents),
       hasComment: !!template?.attrs?.comments,
@@ -70,7 +73,7 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
       defs,
       decodeHTMLText,
       externalClasses,
-      hasScoped: false,
+      hasScoped: hasScoped || false,
       moduleId,
       filePath: resource,
       i18n: null,
@@ -86,8 +89,20 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
         ([name, resource]) => addBuildComponent(name, resource)
       )
     }
+    if (meta.wxsModuleMap) {
+      wxsModuleMap = meta.wxsModuleMap
+    }
 
-    genericsInfo = meta.genericsInfo
+    if (meta.wxsContentMap) {
+      for (const module in meta.wxsContentMap) {
+        wxsContentMap[`${resource}~${module}`] =
+          meta.wxsContentMap[module]
+      }
+    }
+
+    if (meta.genericsInfo) {
+      genericsInfo = meta.genericsInfo
+    }
 
     if (root.tag === 'temp-node') {
       const childLen = calculateRootEleChild(root.children)
@@ -99,22 +114,10 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
         }])
       }
     }
-
-    if (meta.wxsModuleMap) {
-      wxsModuleMap = meta.wxsModuleMap
-    }
-
-    if (meta.wxsContentMap) {
-      for (const module in meta.wxsContentMap) {
-        wxsContentMap[`${resource}~${module}`] =
-          meta.wxsContentMap[module]
-      }
-    }
-    templateInfo.root = root
-    templateInfo.content = templateCompiler.serialize(root)
+    content = templateCompiler.serialize(root)
   }
   return {
-    ...templateInfo,
+    content,
     wxsModuleMap,
     wxsContentMap,
     genericsInfo,

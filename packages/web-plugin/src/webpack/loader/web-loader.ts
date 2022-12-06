@@ -110,9 +110,6 @@ export default function (
       (callback: any) => {
         const hasScoped =
           parts.styles.some(({ scoped }: any) => scoped) || autoScope
-        const templateAttrs = parts.template && parts.template.attrs
-        const hasComment = templateAttrs && templateAttrs.comments
-        const isNative = false
 
         let usingComponents = Object.keys(mpx.usingComponents || {})
 
@@ -166,8 +163,6 @@ export default function (
                       {
                         loaderContext,
                         hasScoped,
-                        hasComment,
-                        isNative,
                         srcMode,
                         moduleId,
                         ctorType,

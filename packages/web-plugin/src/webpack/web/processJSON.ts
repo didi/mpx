@@ -5,7 +5,7 @@ import { LoaderContext } from 'webpack'
 
 export default async function (json: Record<string, string>, { loaderContext }: {
   loaderContext: LoaderContext<null>
-}, rawCallback: (err?: Error | undefined, result?: any) => void) {
+}, rawCallback: (err?: Error | null, result?: any) => void) {
   const output = '/* json */\n'
   let localPagesMap = {}
   let localComponentsMap = {}

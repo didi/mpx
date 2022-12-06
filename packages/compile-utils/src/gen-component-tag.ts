@@ -5,7 +5,7 @@ function stringifyAttrs(attrs: { [x: string]: any }) {
   let result = ''
   Object.keys(attrs).forEach(function (name) {
     result += ' ' + name
-    let value = attrs[name]
+    const value = attrs[name]
     if (value != null && value !== true) {
       result += '=' + stringifyAttr(value)
     }
@@ -14,7 +14,7 @@ function stringifyAttrs(attrs: { [x: string]: any }) {
 }
 
 export default function genComponentTag(
-  part: { content: any; tag: any; attrs: any },
+  part: { content: string, tag: string, attrs: Record<string, string> | null},
   processor: any = {}
 ) {
   // normalize

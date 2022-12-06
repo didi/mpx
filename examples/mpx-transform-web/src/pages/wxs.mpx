@@ -1,9 +1,9 @@
 <template>
   <view class="p-container-h">
     <wxs module="foo">
-      var some_msg = "222=";
+      var some_msg1 = "222=www";
       module.exports = {
-      msg : some_msg,
+      msg : some_msg1,
       }
     </wxs>
     <view>wxs1: {{foo.msg}} </view>

@@ -1,127 +1,33 @@
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
-import addQuery from '@mpxjs/compile-utils/add-query'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
-import templateCompiler from '@mpxjs/compiler/template-compiler/compiler'
 import mpx from '../mpx'
 import templateTransform from '../../transfrom/template-helper'
+import { LoaderContext } from 'webpack'
+import { JsonConfig } from '../../types/json-config'
 
-function calculateRootEleChild (arr) {
-  if (!arr) {
-    return 0
-  }
-  return arr.reduce((total, item) => {
-    if (item.type === 1) {
-      if (item.tag === 'template') {
-        total += calculateRootEleChild(item.children)
-      } else {
-        total += 1
-      }
-    }
-    return total
-  }, 0)
-}
-
-export default function (template, {
+export default function (template: { content: string, tag: string, attrs: Record<string, string> | null, src?: string, lang?: string}, {
   loaderContext,
   hasScoped,
-  hasComment,
-  isNative,
-  srcMode,
   moduleId,
   ctorType,
   usingComponents,
   componentGenerics
-}, callback) {
-  const {
-    mode,
-    defs,
-    wxsContentMap,
-    decodeHTMLText,
-    externalClasses,
-    checkUsingComponents
-  } = mpx
+}: {
+  loaderContext: LoaderContext<null>
+  hasScoped: boolean,
+  moduleId: string,
+  ctorType: 'app' | 'component',
+  usingComponents: JsonConfig['usingComponents'],
+  componentGenerics: JsonConfig['componentGenerics']
+}, callback: (err?: Error | null, result?: any) => void) {
   const { resourcePath } = parseRequest(loaderContext.resource)
-  const builtInComponentsMap = {}
-
-  let wxsModuleMap, genericsInfo
-  const output = '/* template */\n'
-  // if (ctorType === 'app') {
-  //   // template = {
-  //   //   tag: 'template',
-  //   //   content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
-  //   // }
-  //   // builtInComponentsMap['mpx-keep-alive'] = {
-  //   //   resource: addQuery('@mpxjs/web-plugin/src/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
-  //   // }
-  //   return template.content
-  // } else {
-  //   if (template.content) {
-  //     const { root, meta } = templateCompiler.parse(template.content, {
-  //       warn: (msg) => {
-  //         loaderContext.emitWarning(
-  //           new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-  //         )
-  //       },
-  //       error: (msg) => {
-  //         loaderContext.emitError(
-  //           new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-  //         )
-  //       },
-  //       usingComponents,
-  //       hasComment,
-  //       isNative,
-  //       isComponent: ctorType === 'component',
-  //       mode,
-  //       srcMode: template.mode || srcMode,
-  //       defs,
-  //       decodeHTMLText,
-  //       externalClasses,
-  //       // todo 后续输出web也采用mpx的scoped处理
-  //       hasScoped: false,
-  //       moduleId,
-  //       filePath: resourcePath,
-  //       i18n: null,
-  //       checkUsingComponents,
-  //       // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
-  //       globalComponents: [],
-  //       // web模式下实现抽象组件
-  //       componentGenerics
-  //     })
-  //     if (meta.wxsModuleMap) {
-  //       wxsModuleMap = meta.wxsModuleMap
-  //     }
-  //     if (meta.wxsContentMap) {
-  //       for (let module in meta.wxsContentMap) {
-  //         wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
-  //       }
-  //     }
-  //     if (meta.builtInComponentsMap) {
-  //       Object.keys(meta.builtInComponentsMap).forEach((name) => {
-  //         builtInComponentsMap[name] = {
-  //           resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-  //         }
-  //       })
-  //     }
-  //     if (meta.genericsInfo) {
-  //       genericsInfo = meta.genericsInfo
-  //     }
-  //     // 输出H5有多个root element时, 使用mpx-root-view标签包裹
-  //     // todo 后续输出web也基于autoVirtualHostRules决定是否添加root wrapper
-  //     if (root.tag === 'temp-node') {
-  //       const childLen = calculateRootEleChild(root.children)
-  //       if (childLen >= 2) {
-  //         root.tag = 'div'
-  //         templateCompiler.addAttrs(root, [{
-  //           name: 'class',
-  //           value: 'mpx-root-view'
-  //         }])
-  //       }
-  //     }
-  //     return templateCompiler.serialize(root)
-  //   }
-  // }
+  let builtInComponentsMap = {}
+  let wxsModuleMap
+  let genericsInfo
+  let output = '/* template */\n'
 
   if (template) {
+    const app = ctorType === 'app'
     // 由于远端src template资源引用的相对路径可能发生变化，暂时不支持。
     if (template.src) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
@@ -129,26 +35,31 @@ export default function (template, {
     if (template.lang) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
-    if (ctorType === 'app') {
+    if (app) {
       template = {
+        attrs: null,
         tag: 'template',
         content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
       }
     }
     const result = templateTransform({ template,
-      mpx: options,
-      pluginContext,
-      jsonConfig,
+      mpx,
+      pluginContext: loaderContext,
+      jsonConfig: {
+        usingComponents,
+        componentGenerics
+      },
+      hasScoped,
       app,
-      resource: filename,
-      moduleId
+      resource: resourcePath,
+      moduleId,
+      compileMode: 'webpack'
     })
     wxsModuleMap = result.wxsModuleMap
-    wxsContentMap = result.wxsContentMap
     genericsInfo = result.genericsInfo
     builtInComponentsMap = result.builtInComponentsMap
-    output += genComponentTag(template)
-    output += '\n\n'
+    template.content = result.content
+    output += `${genComponentTag(template)}\n\n`
   }
   callback(null, {
     output,
