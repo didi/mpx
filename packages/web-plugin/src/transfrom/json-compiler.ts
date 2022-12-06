@@ -1,21 +1,21 @@
-import { proxyPluginContext } from '../pluginContextProxy'
+import fs from 'fs'
+import { extname, dirname, join } from 'path'
+import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
+import parser from '@mpxjs/compiler/template-compiler/parser'
 import createJSONHelper from './json-helper'
-import { SFCDescriptor } from '../types/compiler'
+import { proxyPluginContext } from '../pluginContextProxy'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
+import addQuery from '@mpxjs/compile-utils/add-query'
+import { createDescriptor } from '../vite/utils/descriptorCache'
+import resolveJson from '../utils/resolve-json-content'
+import getOutputPath from '../utils/get-output-path'
 import resolveModuleContext from '../utils/resolveModuleContext'
 import stringify from '../utils/stringify'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
-import { createDescriptor } from '../vite/utils/descriptorCache'
-import { extname, dirname, join } from 'path'
+import { Mpx } from '../types/mpx'
 import { JsonConfig } from '../types/json-config'
-import addQuery from '@mpxjs/compile-utils/add-query'
-import resolveJson from '../utils/resolve-json-content'
-import fs from 'fs'
+import { SFCDescriptor } from '../types/compiler'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
-import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency';
-import parser from '@mpxjs/compiler/template-compiler/parser'
-import { Mpx } from '../types/mpx'
-import getOutputPath from '../utils/get-output-path'
 
 const defaultTabbar = {
   borderStyle: 'black',
@@ -90,7 +90,6 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
           const { resourcePath: oldResourcePath } = parseRequest(oldResource)
           if (oldResourcePath !== resourcePath) {
             const oldOutputPath = outputPath
-            // todo
             outputPath = getOutputPath(resourcePath, 'page', mpx, { conflictPath: outputPath })
             emitWarning(new Error(`Current page [${ resourcePath }] is registered with a conflict outputPath [${ oldOutputPath }] which is already existed in system, will be renamed with [${ outputPath }], use ?resolve to get the real outputPath!`))
           }
@@ -111,11 +110,11 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
 
   const processComponents = async (
     components: JsonConfig['usingComponents'],
-    importer: string
+    context: string
   ) => {
     if (components) {
       for (const key in components) {
-        const { entry: { outputPath, resource } } = await processComponent(components[key], importer, {})
+        const { entry: { outputPath, resource } } = await processComponent(components[key], context, {})
         const { resourcePath, queryObj } = parseRequest(resource)
 
         if (mode === 'webpack') {
@@ -137,7 +136,7 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
 
   const processGenerics = async (
     generics: JsonConfig['componentGenerics'] = {},
-    importer: string
+    context: string
   ) => {
     if (generics) {
       const genericsComponents: Record<string, string> = {}
@@ -145,7 +144,7 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
         const generic = generics[name]
         if (generic.default) genericsComponents[`${ name }default`] = generic.default
       })
-      await processComponents(genericsComponents, importer)
+      await processComponents(genericsComponents, context)
     }
   }
 
@@ -158,8 +157,8 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
         const { queryObj } = parseRequest(packagePath)
         const packageModule = await mpxPluginContext.resolve(packagePath, context)
         if (packageModule) {
-          const packageId = packageModule.id
-          const { rawResourcePath } = parseRequest(packageId)
+          const resource = packageModule.id
+          const { rawResourcePath } = parseRequest(resource)
           const code = await fs.promises.readFile(rawResourcePath, 'utf-8')
           const extName = extname(rawResourcePath)
           if (extName === '.mpx') {
@@ -182,9 +181,9 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
                 pluginContext._compilation.inputFileSystem
               )
             } else {
-              context = packageId
+              context = resource
               const { projectRoot = '', isProduction, mode = 'web', defs = {}, env = '', sourceMap } = mpx
-              const descriptor = createDescriptor(packageId, code, queryObj, {
+              const descriptor = createDescriptor(resource, code, queryObj, {
                 projectRoot,
                 isProduction,
                 mode,
@@ -193,7 +192,7 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
                 sourceMap
               })
               jsonConfig = (descriptor.jsonConfig = await resolveJson(descriptor, descriptor.filename, pluginContext, { defs: mpx.defs || {} }))
-              pluginContext.addWatchFile(packageId)
+              pluginContext.addWatchFile(resource)
             }
             const { pages, packages } = jsonConfig
 

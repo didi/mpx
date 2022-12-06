@@ -1,7 +1,7 @@
 <template>
   <view class="p-container-h">
     <wxs module="foo">
-      var some_msg = "123324123";
+      var some_msg = "222=";
       module.exports = {
       msg : some_msg,
       }
@@ -17,7 +17,7 @@
   createPage({
     data: {},
     ready () {
-      console.log('---进入wxs页面')
+      console.log('进入wxs页面')
     }
   })
 </script>

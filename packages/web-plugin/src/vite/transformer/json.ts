@@ -1,10 +1,10 @@
-import { TransformPluginContext } from 'rollup'
-import { ResolvedOptions } from '../../options'
+import { jsonCompiler } from '../../transfrom/json-compiler'
 import { proxyPluginContext } from '../../pluginContextProxy'
 import resolveJson from '../../utils/resolve-json-content'
-import { SFCDescriptor } from '../../types/compiler'
 import mpxGlobal from '../mpx'
-import { jsonCompiler } from '../../transfrom/json-compiler'
+import { ResolvedOptions } from '../../options'
+import { TransformPluginContext } from 'rollup'
+import { SFCDescriptor } from '../../types/compiler'
 
 export async function processJSON(
   descriptor: SFCDescriptor,

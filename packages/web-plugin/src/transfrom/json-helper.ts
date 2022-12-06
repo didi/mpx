@@ -1,13 +1,13 @@
 import path, { join } from 'path'
+import { ProxyPluginContext, proxyPluginContext } from '../pluginContextProxy'
 import addQuery from '@mpxjs/compile-utils/add-query'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
-import loaderUtils, { stringifyRequest as _stringifyRequest } from 'loader-utils'
 import isUrlRequestRaw from '@mpxjs/compile-utils/is-url-request'
 import toPosix from '@mpxjs/compile-utils/to-posix'
-import { ProxyPluginContext, proxyPluginContext } from '../pluginContextProxy'
+import getOutputPath from '../utils/get-output-path'
+import loaderUtils, { stringifyRequest as _stringifyRequest } from 'loader-utils'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
-import getOutputPath from '../utils/get-output-path'
 import { Mpx } from '../types/mpx'
 
 export default function createJSONHelper({ pluginContext, mpx, mode }: {

@@ -44,7 +44,6 @@ export default function (template, {
 
   let wxsModuleMap, genericsInfo
   let output = '/* template */\n'
-
   if (ctorType === 'app') {
     template = {
       tag: 'template',
