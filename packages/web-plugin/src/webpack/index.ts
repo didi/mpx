@@ -167,7 +167,11 @@ class MpxWebpackPlugin {
 
     const defs = this.options.defs || {}
 
-    const defsOpt: {[k: string]: any} = {}
+    const defsOpt: {[k: string]: any} = {
+      __mpx_wxs__: DefinePlugin.runtimeValue(({ module }) => {
+        return JSON.stringify(!!module.wxs)
+      })
+    }
 
     Object.keys(defs).forEach(key => {
       defsOpt[key] = JSON.stringify(defs[key])
@@ -254,6 +258,7 @@ class MpxWebpackPlugin {
         const moduleGraph = compilation.moduleGraph
         if (!compilation.__mpx__) {
           Object.assign(mpx, {
+            appInfo: {},
             // pages全局记录，无需区分主包分包
             pagesMap: {},
             // 组件资源记录，依照所属包进行记录
@@ -426,7 +431,6 @@ class MpxWebpackPlugin {
                   }
                 }
               })
-            console.log(mpx.srcMode, mpx.mode)
             // 处理跨平台转换
             if (mpx.srcMode !== mpx.mode) {
               // 处理跨平台全局对象转换

@@ -1,5 +1,6 @@
 import { Mpx } from '../types/mpx'
 const mpx: Mpx = {
+  appInfo: {},
   componentsMap: {},
   defs: {},
   externals: [],

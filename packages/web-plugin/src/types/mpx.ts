@@ -1,4 +1,5 @@
 export interface Mpx {
+  appInfo?: Record<string, string>
   pagesMap: any
   componentsMap: any
   checkUsingComponents?: boolean;

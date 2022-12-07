@@ -36,7 +36,8 @@ export default function (script, {
   const {
     i18n,
     projectRoot,
-    webConfig
+    webConfig,
+    appInfo
   } = mpx
 
   const { getRequire } = createHelpers(loaderContext)
@@ -140,6 +141,10 @@ export default function (script, {
   Mpx.i18n = i18n
   \n`
         }
+      }
+      let hasApp = true
+      if (!appInfo.name) {
+        hasApp = false
       }
       // 注入wxs模块
       content += '  const wxsModules = {}\n'
