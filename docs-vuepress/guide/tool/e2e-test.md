@@ -9,7 +9,7 @@
 > 如果你之前使用过 Selenium WebDriver 或者 Puppeteer，那你可以很容易快速上手。小程序自动化 SDK 与它们的工作原理是类似的，主要区别在于控制对象由浏览器换成了小程序。
 
 
-## 一、@mpx/cli 脚手架集成E2E
+## @mpx/cli 脚手架集成E2E
 
 当使用 @mpxjs/cli 初始化 Mpx 项目的时候，交互式命令行里面新增了 E2E 选项，当选择了此选项，项目将会初始化 E2E 配置，完成相关内容的生成。
 
@@ -42,8 +42,8 @@ vue-project
 ```json
 {
   "devDependencies": {
-    "@mpxjs/e2e": "0.0.12",
-    "@mpxjs/e2e-scripts": "0.0.10",
+    "@mpxjs/e2e": "0.0.13",
+    "@mpxjs/e2e-scripts": "0.0.12",
   }
   "scripts": {
     "test": "e2e-runner",
@@ -92,7 +92,7 @@ module.exports = {
 | 参数 | 类型 | 默认值 | 说明 |
 | - | - | - | - |
 | projectPath | String | ./dist/wx | 小程序代码路径，Mpx 框架的 wx 输出目录 |
-| projectPath | String | test/e2e/suits/ | e2e 的 case 存放目录 |
+| testSuitsDir | String | test/e2e/suits/ | e2e 的 case 存放目录 |
 | sequence | string[ ] | [ ] | 用例运行的顺序 |
 | recordsDir | String | dist/wx/minitest | 录制 json 文件的存储目录 |
 | connectFirst | Boolean | false | 优先使用 automator 的 connect 方法 |
@@ -100,7 +100,7 @@ module.exports = {
 | defaultWaitFor | Number | 15000 | 默认 waitFor 时长 |
 | useTS | Boolean | false | 用例是否为 TS 语法 |
 | jestTimeout | Number | 990000 |  默认测试超时时间 |
-| jsonCaseCpDir | String | 'test/e2e-json' |  从 minitest 目录复制 json 文件到该目录下 |
+| jsonCaseCpDir | String | test/e2e-json |  从 minitest 目录复制 json 文件到该目录下 |
 | needRealMachine | Boolean | false | 是否需要真机回放 |
 | devServer | Object | null | 测试报告服务器配置 |
 | plugins | Array | [ ] | 自定义测试报告的插件 |
@@ -116,7 +116,7 @@ module.exports = {
 
 **e2e**
 
-e2e 目录，所有的 case 文件存放在此目录下，默认会创建一个演示 demo 文件，也就是 list.spec.js 文件，约定 e2e 下所有的 .spec.js 结尾的作为自动化测试的文件，使用 Typescript 编写测试文件的时, 需要将文件名改成 .spec.ts 格式，然后 tsconfig.json 加上 "esModuleInterop": true。
+e2e 目录，所有的 case 文件存放在此目录下，默认会创建一个演示 demo 文件，也就是 list.spec.js 文件，约定 e2e 下所有的 .spec.js 结尾的作为自动化测试的文件，使用 Typescript 编写测试文件的时候, 需要将文件名改成 .spec.ts 格式，然后 tsconfig.json 加上 "esModuleInterop": true。
 ```js
 /**
  * @file e2e test example
@@ -177,7 +177,7 @@ module.exports = {
 
 目前对于@mpx/cli@3.*版本也会陆续完成E2E的相关支持。
 
-## 二、@mpxjs/e2e-scripts
+## @mpxjs/e2e-scripts
 
 默认情况下，Jest 将会递归的找到整个工程里所有 .spec.js 或 .test.js 扩展名的文件。 Jest 支持并行运行 test ，特别是在 ci 场景，将会极大减少 test 消耗时间。配置 --maxWorkers 参数表示的是 Jest 会开启多少个线程去完成所有的测试任务，默认值是 50% * os.cpus().length，相关的文档可见：[链接](https://jestjs.io/docs/cli#--maxworkersnumstring)。 
 
@@ -207,7 +207,7 @@ E2E内置的 Jest 默认支持输出 HTML 的报告，因其只支持对测试
 
 E2E可视化报告平台是一个运行在本地环境，统合了用例管理、测试报告、页面快照和错误日志的平台。支持对通过 WechatDevTools 录制回放功能录制出的 case 进行自定义增强的能力，同时提供执行 E2E 测试过程中产出的页面快照和错误日志等信息进行快捷、直观地查看的功能。
 
-目前支持多种交互动作保存快照（点击、输入、滑动等），我们还在页面快照方面做了增强，提供了快照标记的功能，可以完善测试报告，增强排查手段，如上图所示，当点击元素后，页面快照上会自动标记出点击的区域或者元素。
+目前支持多种交互动作保存快照（点击、输入、滑动等），我们还在页面快照方面做了增强，提供了快照标记的功能，可以完善测试报告，增强排查手段，当点击元素后，页面快照上会自动标记出点击的区域或者元素。
 
 
 ## E2E录制+自动化生成case
