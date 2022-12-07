@@ -2,7 +2,7 @@
 
 微信小程序的官方文档推荐 [miniprogram-automator](https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/quick-start.html)，其与小程序IDE的关系，正如 Google 与 UiAutomator、selenium 与 webdriver 一样；它是最契合小程序的。
 
-虽然微信小程序提供了 automator + ide 的 E2E 的解决方案，但该项目维护频率低且 case 编写效率低、API 不够友好等问题，所以基于 Mpx 生态，我们提供了小程序 E2E 自动化测试的能力增强。
+虽然微信小程序提供了 automator + ide 的 E2E 的解决方案，但该项目维护频率低且 case 编写效率低、API 不够友好等问题，因此基于微信提供的能力& Mpx 生态我们产出了相对完善的小程序E2E自动化测试增强方案，此外还提供了可扩展的开箱即用的E2E基础设施。
 
 小程序自动化 SDK 为开发者提供了一套通过外部脚本操控小程序的方案，从而实现小程序自动化测试的目的。
 
@@ -175,6 +175,8 @@ module.exports = {
 ```
 除了 Jest 提供的默认测试报告器外，我们还可以自定义测试报告。框架 @mpxjs/e2e 内部提供了可视化测试报告平台，需要配置 reporters 字段。
 
+目前对于@mpx/cli@3.*版本也会陆续完成E2E的相关支持。
+
 ## 二、@mpxjs/e2e-scripts
 
 默认情况下，Jest 将会递归的找到整个工程里所有 .spec.js 或 .test.js 扩展名的文件。 Jest 支持并行运行 test ，特别是在 ci 场景，将会极大减少 test 消耗时间。配置 --maxWorkers 参数表示的是 Jest 会开启多少个线程去完成所有的测试任务，默认值是 50% * os.cpus().length，相关的文档可见：[链接](https://jestjs.io/docs/cli#--maxworkersnumstring)。 
@@ -201,7 +203,7 @@ module.exports = {
 E2E内置的 Jest 默认支持输出 HTML 的报告，因其只支持对测试结果数据的简单展示，故我们希望在其基础上，不仅针对报告查看的广度和颗粒度进行细化，还将对自动化测试过程中涉及到的痛点实现功能上的增强。
 
 ![](https://gift-static.hongyibo.com.cn/static/kfpub/8498/baogao-1.png)
-![](https://gift-static.hongyibo.com.cn/static/kfpub/8498/jietu-1.png)
+
 
 E2E可视化报告平台是一个运行在本地环境，统合了用例管理、测试报告、页面快照和错误日志的平台。支持对通过 WechatDevTools 录制回放功能录制出的 case 进行自定义增强的能力，同时提供执行 E2E 测试过程中产出的页面快照和错误日志等信息进行快捷、直观地查看的功能。
 
@@ -229,11 +231,17 @@ JSON to Spec 本质只是录制结果的一种呈现，而这种转换的目的�
 
 我们设计了 Mpx-E2E 的工作台，当然这些也都集成到了 Mpx-E2E 的可视化平台中，下面我们看看这些具体的可视化的工作。
 
-![](https://gift-static.hongyibo.com.cn/static/kfpub/2915/yuyihua.png)
+![](https://gift-static.hongyibo.com.cn/static/kfpub/8806/clipboard_image_1670390586588.png)
 
-分析 JSON 操作步骤后，我们把依据 JSON 生成的 Spec 同样做了可视化处理，起初的时候我们只是做了 Spec 代码的 highlight，并没有支持编辑。但是考虑到所见即所得的效率，我们又在此支持了 WEB-IDE。在生成 Spec 代码后，即可在线进行编辑，点击保存即可得到 spec 文件。
+分析 JSON 操作步骤后，我们把依据 JSON 生成的 Spec 同样做了可视化处理，起初的时候我们只是做了 Spec 代码的 highlight，并没有支持编辑。但是考虑到所见即所得的效率，我们又在此支持了 WEB-IDE。在生成 Spec 代码后，即可在线进行编辑，最终通过我们的@mpxjs/e2e SDK核心能力，完成了保存spec文件。
 
 ## 增强API
+
+> @mpxjs/e2e
+
+小程序自动化 SDK 为开发者提供了一套通过外部脚本操控小程序的方案，从而实现小程序自动化测试的目的。
+
+然而在我们使用过程中发现原始小程序官网提供的sdk存在能力的不足和缺失，或者说无法满足我们复杂的业务流程，针对这一系列的能力的缺失，我们开发了针对e2e的增强型api，来满足我们的整个自动化流程所需的功能
 
 1、获取页面中的DOM元素 $ 方法 ：
 
@@ -362,4 +370,161 @@ un();
 Automator.removeMockFromMap (path:string): void
 ```
 
-流程；并通过快照/截图比对进行结果判断；以及完善测试报告的可视化呈现。
+## SOP
+
+**一、环境要求**
+1.1 微信环境
+安装 Node.js 并且版本大于 8.0
+基础库版本为 2.7.3 及以上
+开发者工具版本为 1.02.1907232 及以上
+ 
+1.2 Mpx 环境
+Mpx-E2E 很多能力基于 Mpx 增强的，最低版本要求如下：
+@mpxjs/core >= 2.7.2
+@mpxjs/api-proxy >= 2.7.1
+@mpxjs/webpack-plugin >= 2.7.8
+
+**二、新建项目**
+
+2.1 安装 @mpxjs/cli 脚手架
+```js
+$ npm install -g @mpxjs/cli
+```
+
+2.2 初始化项目选择 E2E 测试，执行以下命令执行初始化项目
+```js
+$ mpx init some-proj
+```
+
+执行该命令后稍等片刻，等模板下载完成 Terminal 会输出以下提示，当输出到 ”是否需要 E2E 测试“时输入 “yes“ ，脚手架内置了 E2E 需要的依赖和简单的测试用例。待脚手架初始化完成后，你的新项目就已经拥有了开箱即用的E2E能力。
+
+**三、已有项目**
+
+3.1 安装 E2E sdk、runner
+```js
+npm i @mpxjs/e2e  @mpxjs/e2e-scripts --save-dev
+```
+
+3.2 创建 .e2erc 配置文件
+>在项目的源文件目录下创建名为 .e2erc.js 的配置文件，以下为 e2erc 各选项及其含义，建议直接复制到项目中
+
+```js
+const path = require('path');
+const PluginReport = require('@mpxjs/e2e/report-server/server.js'); // E2E 报告插件
+module.exports = {
+  recordsDir: 'dist/wx/minitest', // 录制 json 文件的存储目录
+  connectFirst: false, // 优先使用 automator.connect，默认 automator.launch 优先
+  wsEndpoint: 'ws://localhost:9420', // automator.connect 的 wsEndpoint 选项，用于 connectFirst 时链接到模拟器服务
+  defaultWaitFor: 15000, // 默认 waitFor 时长
+  useTS: false, // 是否启用 TS , 该特性暂不支持，
+  devServer: {
+    open: true
+  },
+  jestTimeout: 990000, // jestTimeout
+  jsonCaseCpDir: 'test/e2e-json', // 从 minitest 目录复制 json 文件到该目录下
+  needRealMachine: false, // 是否需要真机
+  plugins: [new PluginReport()], 
+  projectPath: path.resolve(__dirname, './dist/wx'), // 小程序代码路径，Mpx 框架的 wx 输出目录
+  testSuitsDir: 'test/e2e/suits/', // e2e 的 case 存放目录
+  sequence: [ // E2E case，runner 将会按照这个数组顺序执行其中的 case 文件，
+    'minitest-20', // 不需要写 .spec.js 这个扩展名
+  ],
+  reportsDir: 'test/reports' // 报告输出目录
+}
+```
+
+**四、获取 Case**
+4.1 录制 JSON Case
+录制 case 是依托于微信开发者工具已有的能力，操作流程如下：
+1) 启动录制
+启动微信开发者工具 -> 工具 -> 自动化测试
+2) 创建用例
+选择【开始录制】按钮
+【用例名】会成为录制 JSON case 的文件名，比如上图中录制结束后会得到一个名为
+minitest-3.json 的 JSON 文件；我们推荐您采用更语义化的测试用例名称，便于后续的 CASE 管理。
+【结束录制】后，开发者工具会在小程序的代目录（Mpx 的产物输出目录，如 dist/wx）下新增 minitest/ 目录，该目录是微信开发者工具自动创建的，用于存放录制 JSON case。例如上面的例子中，录制结束后该目录下就应该有 名为 minitest-3.json 的 文件。
+
+4.2 生成 Spec Case
+
+启动 Mpx-E2E 平台服务，首先在项目的 package.json 中加入以下 npm script：
+```js
+{
+  "e2eServe": "npx e2e-runner --preview"
+},
+```
+在小程序项目录下通过命令行启动 Mpx-E2E 平台服务:
+```js
+npm run e2eServe
+```
+平台服务已经成功启动！打开 Mpx-E2E 的可视化平台:
+选择【用例管理】，加载录制的 JSON Case，点击可视化平台上的 【JSON 导入】按钮。界面中间是对当前 JSON 文件的语义化解析，最后侧是包含自动生成代码的 Web IDE。点击中间的语义化解析会联动右侧 WebIDE 代码跳转到对应的区域。
+
+4.3 可视化扩展 Spec Case
+
+1) 新增
+鼠标悬浮在中间语义化区域中每一条的左侧的绿色按钮时，就会出现一个扩展菜单，在弹出框中填写相关信息，点击【保存】即可新增一条操作
+
+2) 编辑
+通过可视化的方式扩展的操作可以编辑，录制的操作不能编辑；
+
+4.4 保存 Spec case
+
+在完成上述操作后，点击 Web-IDE 下面的 【保存】即可.
+
+点击保存后， Web-IDE 中的内容将会被写入到 .e2erc.js 的 testSuitsDir 字段指定的目录中。当文件写入成功后，被保存的 spec 文件名会被自动写入到剪贴板中。
+
+另外，生成这份 Case 的 JSON 文件也会被复制到 .e2erc.js 的 jsonCaseCpDir 目录下，之所以保存 JSON 文件主要是做备份，你可以不关心这个 json 的文件内容，但是我们建议你随着 spec 代码已经提交到版本库；
+ 
+经过保存后，我们就得到了 minitest-3.spec.js Case 文件。
+
+**五、修改 .e2erc.js sequence**
+
+5.1 sequence 数组
+经过前面的获取 Case 后步骤后，我们已经得到了 minitest-3.spec.js Case 文件。在正式运行前，我们需要把这个 minitest-3.spec.js Case 加入到 .e2erc.js 的 sequence 字段数组中。
+
+```js
+sequence: [ 
+  'minitest-3', // 不用写 .spec.js 
+]
+```
+
+5.2 为什么手动维护？
+之所以需要手动维护这个数组，是因为微信的 automator 不能并发运行，进而 E2E 的 Case 无法并发运行；又或者某几个 spec 间是有联系的， 这种情况下只能把顺序交给人工维护。
+
+**六、运行 e2e**
+
+6.1 新增 npm scripts
+修改项目的 package.json 中 scripts 字段，向其中加入 "test:e2e":"npx e2e-runner" 命令
+
+6.2 运行 E2E 测试命令
+```js
+npm run test:e2e
+```
+
+6.3 在真机中运行 E2E
+1) 真机运行 E2E 相当于微信开发者工具的【真机调试】，首先需要确保你的 Mpx 构建输出产物是 prod 模式下的产物；
+2) 修改 .e2erc.js 中的 needRealMachine 字段为 true，再执行 npm run test:e2e 命令；
+静等微信开发者工具完成真机调试二维码的构建完成，待完成后用真机扫描二维码即可开始；
+
+>注：目前因为微信 automator 的限制，包括 wait 接口请求等能力暂时在真机上不能支持，这些问题目前已经反馈到微信，有进展我们会及时更新！
+
+**七、测试报告**
+在 .e2erc.js 中配置 report-plugin（详情见.e2erc.js 配置文件部分） 即可在所有 spec 运行结束后自动打开浏览器并呈现测试结果，测试结果包含以下三部分:
+
+1） Jest 数据
+2） 自动截图：
+截图分析：在 Mpx-E2E 平台下，点击【截图】Tab 即可，截图以 spec 文件为维度展示，目前包含三种自动时机的截图：定时、点击时、路由发生时，默认全部展示。
+截图筛选：通过操作 timeout/tap/router 的复选框即可实现分类查看，另外在点击时的自动截图还会对点击位置进行标记；
+3）JSError 分析
+如果运行过程中小程序抛出 JS 异常，此时会触发 Mpx-E2E 的收集动作，同时会抓取报错瞬间的截图
+
+未来可视化平台会持续集成更多功能，可以涵盖业务稳定，数据稳定(埋点测试)和性能数据，持续更新...
+
+
+
+
+
+
+
+
+
