@@ -26,11 +26,11 @@ import { preProcessDefs } from '@mpxjs/compile-utils'
 import getOutputPath from '../utils/get-output-path'
 
 const styleCompilerPath = require.resolve('@mpxjs/loaders/dist/style-loader.js')
-const isProductionLikeMode = (options: any) => {
+const isProductionLikeMode = (options: { mode?: 'production' | 'development' | 'none' | undefined}) => {
   return options.mode === 'production' || !options.mode
 }
-const warnings = [] as any[]
-const errors = [] as any[]
+const warnings: Array<any> = []
+const errors:Array<any> = []
 
 class MpxWebpackPlugin {
   options: Options
@@ -43,7 +43,7 @@ class MpxWebpackPlugin {
     FileSystemInfo.prototype.resolveBuildDependencies
     FileSystemInfo.prototype.resolveBuildDependencies = function (
       context: string,
-      deps: any,
+      deps: Dependency,
       rawCallback: (err: string, result: string) => void
     ) {
       return rawResolveBuildDependencies.call(
@@ -62,7 +62,7 @@ class MpxWebpackPlugin {
     }
   }
 
-  static loader(options: {[k: string]: any}) {
+  static loader(options: {[k: string]: unknown}) {
     if (options.transRpx) {
       warnings.push(
         'Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!'
@@ -110,7 +110,7 @@ class MpxWebpackPlugin {
     }
   }
 
-  apply(compiler: {[k: string]: any} & Compiler ) {
+  apply(compiler: {[k: string]: unknown} & Compiler ) {
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -150,7 +150,7 @@ class MpxWebpackPlugin {
     if (this.options.writeMode === 'changed') {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
-      compiler.outputFileSystem.writeFile = (filePath: string, content: any, callback: () => any) => {
+      compiler.outputFileSystem.writeFile = (filePath: string, content: any, callback: () => void) => {
         const lastContent = writedFileContentMap.get(filePath)
         if (
           Buffer.isBuffer(lastContent)
@@ -292,9 +292,17 @@ class MpxWebpackPlugin {
             externals: this.options.externals || [],
             pathHashMode: this.options.pathHashMode,
             customOutputPath: this.options.customOutputPath,
-            recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
+            recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }: {
+              resourcePath: string;
+              resourceType: string;
+              outputPath: string;
+              packageRoot: string;
+              recordOnly: boolean;
+              warn: (warn?: Error | string) => void;
+              error: (error?: Error | string) => void;
+            }) => {
               const packageName = packageRoot || 'main'
-              const resourceMap = mpx[`${resourceType}sMap`] as any
+              const resourceMap = mpx[`${resourceType}sMap`]
               const currentResourceMap = (resourceMap).main
                 ? (resourceMap[packageName] = resourceMap[packageName] || {})
                 : resourceMap
@@ -368,7 +376,7 @@ class MpxWebpackPlugin {
         }
         normalModuleFactory.hooks.parser
           .for('javascript/auto')
-          .tap('MpxWebpackPlugin', (parser: any) => {
+          .tap('MpxWebpackPlugin', (parser: Record<string, any>) => {
             parser.hooks.call
               .for('__mpx_resolve_path__')
               .tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
@@ -391,7 +399,7 @@ class MpxWebpackPlugin {
                 }
               })
             // hack babel polyfill global
-            parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr: any) => {
+            parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
               if (/core-js.+microtask/.test(parser.state.module.resource)) {
                 if (
                   expr.test.left &&
@@ -411,7 +419,7 @@ class MpxWebpackPlugin {
 
             parser.hooks.evaluate
               .for('CallExpression')
-              .tap('MpxWebpackPlugin', (expr: any) => {
+              .tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
                 const current = parser.state.current
                 const arg0 = expr.arguments[0]
                 const callee = expr.callee
@@ -434,7 +442,7 @@ class MpxWebpackPlugin {
             // 处理跨平台转换
             if (mpx.srcMode !== mpx.mode) {
               // 处理跨平台全局对象转换
-              const transGlobalObject = (expr: any) => {
+              const transGlobalObject = (expr: Record<string, any>) => {
                 const module = parser.state.module
                 const current = parser.state.current
                 const { queryObj, resourcePath } = parseRequest(module.resource)
@@ -512,12 +520,12 @@ class MpxWebpackPlugin {
                 'getMixin',
                 'getComputed',
                 'implement'
-              ].reduce((map: Record<string, any>, api: string) => {
+              ].reduce((map: Record<string, boolean>, api: string) => {
                 map[api] = true
                 return map
               }, {})
 
-              const injectSrcModeForTransApi = (expr: any, members: Array<any>) => {
+              const injectSrcModeForTransApi = (expr: Record<string, any>, members: Array<unknown>) => {
                 // members为空数组时，callee并不是memberExpression
                 if (!members.length) return
                 const callee = expr.callee
