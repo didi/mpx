@@ -3,7 +3,7 @@ import { TransformPluginContext, TransformResult } from 'rollup'
 import { mpxStyleTransform } from '@mpxjs/loaders/style-loader'
 import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../../types/compiler'
-import { proxyPluginContext } from '../../pluginContextProxy/index'
+import { proxyPluginContext } from '../../pluginContextProxy'
 import mpx from '../mpx'
 import pathHash from '../../utils/pageHash'
 

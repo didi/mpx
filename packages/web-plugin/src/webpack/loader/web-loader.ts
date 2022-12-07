@@ -21,6 +21,7 @@ import processTemplate from '../web/processTemplate'
 import pathHash from '../../utils/pageHash'
 import getOutputPath  from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
+import { JsonConfig } from '../../types/json-config'
 
 export default function (
   this: LoaderContext<null>,
@@ -44,9 +45,6 @@ export default function (
   const componentsMap = mpx.componentsMap[packageName]
   const mode = mpx.mode
   const env = mpx.env
-  const globalSrcMode = mpx.srcMode
-  const localSrcMode = queryObj.mode
-  const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
 
   let ctorType = 'app'
@@ -75,7 +73,6 @@ export default function (
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const loaderContext: any = this
   const stringifyRequest = (r: string) => loaderUtils.stringifyRequest(loaderContext, r)
-  const isProduction = mpx.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
   const moduleId =
     ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + (pathHash && pathHash(filePath) || '')
@@ -92,7 +89,7 @@ export default function (
 
   async.waterfall(
     [
-      (callback: any) => {
+      (callback: (err?: Error | null, result?: any) => void) => {
         getJSONContent(
           parts.json || {},
           loaderContext.context,
@@ -106,27 +103,21 @@ export default function (
           })
           .catch(callback)
       },
-      (callback: any) => {
+      (callback: (err?: Error | null, result?: any) => void) => {
         const hasScoped =
-          parts.styles.some(({ scoped }: any) => scoped) || autoScope
+          parts.styles.some(({ scoped }: { scoped: boolean}) => scoped) || autoScope
 
-        let usingComponents = Object.keys(mpx.usingComponents || {})
-
+        let jsonConfig: JsonConfig = {}
         let componentGenerics = {}
 
         if (parts.json && parts.json.content) {
           try {
-            const ret = JSON5.parse(parts.json.content)
-            if (ret.usingComponents) {
-              usingComponents = usingComponents.concat(
-                Object.keys(ret.usingComponents)
-              )
-            }
-            if (ret.componentGenerics) {
-              componentGenerics = Object.assign({}, ret.componentGenerics)
+            jsonConfig = JSON5.parse(parts.json.content)
+            if (jsonConfig.componentGenerics) {
+              componentGenerics = Object.assign({}, jsonConfig.componentGenerics)
             }
           } catch (e) {
-            return callback(e)
+            return callback(e as Error)
           }
         }
 
@@ -153,7 +144,7 @@ export default function (
         if (cacheContent) return callback(null, cacheContent)
         return async.waterfall(
           [
-            (callback: any) => {
+            (callback: (err?: Error | null, result?: any) => void) => {
               async.parallel(
                 [
                   callback => {
@@ -162,11 +153,9 @@ export default function (
                       {
                         loaderContext,
                         hasScoped,
-                        srcMode,
                         moduleId,
                         ctorType,
-                        usingComponents,
-                        componentGenerics
+                        jsonConfig
                       },
                       callback
                     )
@@ -197,7 +186,7 @@ export default function (
                 }
               )
             },
-            ([templateRes, stylesRes, jsonRes]: any, callback: any) => {
+            ([templateRes, stylesRes, jsonRes]: any, callback: (err?: Error | null, result?: any) => void) => {
               output += templateRes.output
               output += stylesRes.output
               output += jsonRes.output
@@ -214,9 +203,7 @@ export default function (
                 {
                   loaderContext,
                   ctorType,
-                  srcMode,
                   moduleId,
-                  isProduction,
                   componentGenerics,
                   jsonConfig: jsonRes.jsonConfig,
                   outputPath: queryObj.outputPath || '',

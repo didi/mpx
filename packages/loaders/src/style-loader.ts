@@ -6,7 +6,6 @@ import { matchCondition } from '@mpxjs/compile-utils/match-condition'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
 import {
   ProxyPluginContext,
-  Mpx,
   proxyPluginContext
 } from '@mpxjs/web-plugin/index'
 import { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } from './constants'
@@ -17,7 +16,7 @@ export const mpxStyleTransform = async function (
   options: {
     sourceMap?: boolean
     resource: string
-    mpx: Mpx
+    mpx: any
     map: any,
     isApp?: boolean
   }

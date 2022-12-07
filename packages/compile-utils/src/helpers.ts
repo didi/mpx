@@ -1,7 +1,6 @@
 import loaderUtils from 'loader-utils'
 import addQuery from './add-query'
 import parseRequest from './parse-request'
-import { LoaderContext } from 'webpack'
 
 const selectorPath = '@mpxjs/loaders/dist/selector'
 
@@ -31,7 +30,7 @@ const defaultLang: defaultLangType = {
   wxs: 'wxs'
 }
 
-export default function createHelpers (loaderContext: LoaderContext<null>) {
+export default function createHelpers (loaderContext: any) {
   const rawRequest = loaderUtils.getRemainingRequest(loaderContext)
   const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
   // @ts-ignore

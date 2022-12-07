@@ -19,9 +19,7 @@ function getAsyncChunkName (chunkName) {
 export default function (script, {
   loaderContext,
   ctorType,
-  srcMode,
   moduleId,
-  isProduction,
   componentGenerics,
   jsonConfig,
   outputPath,
@@ -37,12 +35,14 @@ export default function (script, {
     i18n,
     projectRoot,
     webConfig,
-    appInfo
+    appInfo,
+    srcMode,
+    minimize
   } = mpx
 
   const { getRequire } = createHelpers(loaderContext)
   const tabBar = jsonConfig.tabBar
-
+  const isProduction = minimize || process.env.NODE_ENV === 'production'
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
       new Error('[script processor][' + loaderContext.resource + ']: ' + msg)

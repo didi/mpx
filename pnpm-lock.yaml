@@ -991,6 +991,7 @@ importers:
   packages/compile-utils:
     specifiers:
       '@mpxjs/compiler': workspace:*
+      '@types/loader-utils': ^2.0.3
       '@typescript-eslint/eslint-plugin': ^4.26.1
       '@typescript-eslint/parser': ^4.26.1
       eslint: ^7.28.0
@@ -1001,6 +1002,7 @@ importers:
       postcss-load-config: ^3.1.1
       typescript: ^4.3.2
     dependencies:
+      '@types/loader-utils': 2.0.3
       json5: 2.2.1
       loader-utils: 2.0.4
       postcss-load-config: 3.1.4
@@ -1068,6 +1070,10 @@ importers:
       '@mpxjs/compiler': workspace:*
       '@mpxjs/web-plugin': workspace:*
       '@mpxjs/webpack-plugin': workspace:*
+      '@types/babel__generator': ^7.6.4
+      '@types/babel__traverse': ^7.18.3
+      '@types/loader-utils': ^2.0.3
+      '@types/mime': ^3.0.1
       '@typescript-eslint/eslint-plugin': ^4.26.1
       '@typescript-eslint/parser': ^4.26.1
       eslint: ^7.28.0
@@ -1082,6 +1088,7 @@ importers:
       '@babel/parser': 7.20.5
       '@babel/traverse': 7.20.5
       '@babel/types': 7.20.5
+      '@types/mime': 3.0.1
       json5: 2.2.1
       loader-utils: 2.0.4
       mime: 2.6.0
@@ -1091,6 +1098,9 @@ importers:
       '@mpxjs/compiler': link:../compiler
       '@mpxjs/web-plugin': link:../web-plugin
       '@mpxjs/webpack-plugin': link:../webpack-plugin
+      '@types/babel__generator': 7.6.4
+      '@types/babel__traverse': 7.18.3
+      '@types/loader-utils': 2.0.3
       '@typescript-eslint/eslint-plugin': 4.33.0_b437dje45jwsli5vlhomcei76i
       '@typescript-eslint/parser': 4.33.0_77fvizpdb3y4icyeo2mf4eo7em
       eslint: 7.32.0
@@ -5474,9 +5484,8 @@ packages:
   /@types/loader-utils/2.0.3:
     resolution: {integrity: sha512-sDXXzZnTLXgdso54/iOpAFSDgqhVXabCvwGAt77Agadh/Xk0QYgOk520r3tpOouI098gyqGIFywx8Op1voc3vQ==}
     dependencies:
-      '@types/node': 16.18.4
+      '@types/node': 18.11.10
       '@types/webpack': 4.41.33
-    dev: true
 
   /@types/long/4.0.2:
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
@@ -5491,7 +5500,6 @@ packages:
 
   /@types/mime/3.0.1:
     resolution: {integrity: sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==}
-    dev: true
 
   /@types/minimatch/5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
@@ -5584,7 +5592,6 @@ packages:
 
   /@types/source-list-map/0.1.2:
     resolution: {integrity: sha512-K5K+yml8LTo9bWJI/rECfIPrGgxdpeNbj+d53lwN4QjW1MCwlkhUms+gtdzigTeUyBr09+u8BwOIY3MXvHdcsA==}
-    dev: true
 
   /@types/stack-utils/1.0.1:
     resolution: {integrity: sha512-l42BggppR6zLmpfU6fq9HEa2oGPEI8yrSPL3GITjfRInppYFahObbIQOQK3UGxEnyQpltZLaPe75046NOZQikw==}
@@ -5596,32 +5603,28 @@ packages:
 
   /@types/tapable/1.0.8:
     resolution: {integrity: sha512-ipixuVrh2OdNmauvtT51o3d8z12p6LtFW9in7U79der/kwejjdNchQC5UMn5u/KxNoM7VHHOs/l8KS8uHxhODQ==}
-    dev: true
 
   /@types/uglify-js/3.17.1:
     resolution: {integrity: sha512-GkewRA4i5oXacU/n4MA9+bLgt5/L3F1mKrYvFGm7r2ouLXhRKjuWwo9XHNnbx6WF3vlGW21S3fCvgqxvxXXc5g==}
     dependencies:
       source-map: 0.6.1
-    dev: true
 
   /@types/webpack-sources/3.2.0:
     resolution: {integrity: sha512-Ft7YH3lEVRQ6ls8k4Ff1oB4jN6oy/XmU6tQISKdhfh+1mR+viZFphS6WL0IrtDOzvefmJg5a0s7ZQoRXwqTEFg==}
     dependencies:
-      '@types/node': 16.18.4
+      '@types/node': 18.11.10
       '@types/source-list-map': 0.1.2
       source-map: 0.7.4
-    dev: true
 
   /@types/webpack/4.41.33:
     resolution: {integrity: sha512-PPajH64Ft2vWevkerISMtnZ8rTs4YmRbs+23c402J0INmxDKCrhZNvwZYtzx96gY2wAtXdrK1BS2fiC8MlLr3g==}
     dependencies:
-      '@types/node': 16.18.4
+      '@types/node': 18.11.10
       '@types/tapable': 1.0.8
       '@types/uglify-js': 3.17.1
       '@types/webpack-sources': 3.2.0
       anymatch: 3.1.3
       source-map: 0.6.1
-    dev: true
 
   /@types/ws/8.5.3:
     resolution: {integrity: sha512-6YOoWjruKj1uLf3INHH7D3qTXwFfEsg1kf3c0uDdSBJwfa/llkwIjrAGV7j7mVgGNbzTQ3HiHKKDXl6bJPD97w==}
@@ -6565,7 +6568,6 @@ packages:
     dependencies:
       normalize-path: 3.0.0
       picomatch: 2.3.1
-    dev: true
 
   /aproba/1.2.0:
     resolution: {integrity: sha512-Y9J6ZjXtoYh8RnXVCMOU/ttDmk1aBjunq9vO0ta5x85WDQiQfUF9sIPBITdbiiIVcBo03Hi3jMxigBtsddlXRw==}
@@ -14704,7 +14706,6 @@ packages:
   /normalize-path/3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /normalize-range/0.1.2:
     resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}

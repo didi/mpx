@@ -10,15 +10,13 @@ export default function (template: { content: string, tag: string, attrs: Record
   hasScoped,
   moduleId,
   ctorType,
-  usingComponents,
-  componentGenerics
+  jsonConfig
 }: {
   loaderContext: LoaderContext<null>
   hasScoped: boolean,
   moduleId: string,
-  ctorType: 'app' | 'component',
-  usingComponents: JsonConfig['usingComponents'],
-  componentGenerics: JsonConfig['componentGenerics']
+  ctorType: string,
+  jsonConfig: JsonConfig
 }, callback: (err?: Error | null, result?: any) => void) {
   const { resourcePath } = parseRequest(loaderContext.resource)
   let builtInComponentsMap = {}
@@ -46,10 +44,7 @@ export default function (template: { content: string, tag: string, attrs: Record
     ({wxsModuleMap, genericsInfo, builtInComponentsMap, templateContent} = templateTransform({ template,
       mpx,
       pluginContext: loaderContext,
-      jsonConfig: {
-        usingComponents,
-        componentGenerics
-      },
+      jsonConfig,
       hasScoped,
       app,
       resource: resourcePath,
