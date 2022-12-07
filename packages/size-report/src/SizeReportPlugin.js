@@ -59,27 +59,34 @@ class SizeReportPlugin {
         return './' + toPosix(path.relative(mpx.projectRoot, resourcePath))
       }
 
+      // 简化identifier
+      function succinctIdentifier (identifier) {
+        return identifier.split(/!|\?/)[0]
+      }
+
       function walkEntry (entryModule, sideEffect) {
-        const modulesSet = new Set()
+        const sourceStack = [entryModule]
 
         function walk (module) {
-          if (modulesSet.has(module)) return
-          sideEffect && sideEffect(module, entryModule)
-          modulesSet.add(module)
-          for (const connection of moduleGraph.getOutgoingConnections(module)) {
-            const d = connection.dependency
-            // We skip connections without dependency
-            if (!d) continue
-            const m = connection.module
-            // We skip connections without Module pointer
-            if (!m) continue
-            // We skip weak connections
-            if (connection.weak) continue
-            // Use undefined runtime
-            const state = connection.getActiveState(/* runtime */)
-            // We skip inactive connections
-            if (state === false) continue
-            walk(m)
+          // sideEffect 返回 true 继续遍历
+          if (sideEffect && sideEffect(module, entryModule, [...sourceStack])) {
+            for (const connection of moduleGraph.getOutgoingConnections(module)) {
+              const d = connection.dependency
+              // We skip connections without dependency
+              if (!d) continue
+              const m = connection.module
+              // We skip connections without Module pointer
+              if (!m) continue
+              // We skip weak connections
+              if (connection.weak) continue
+              // Use undefined runtime
+              const state = connection.getActiveState(/* runtime */)
+              // We skip inactive connections
+              if (state === false) continue
+              sourceStack.push(m)
+              walk(m)
+              sourceStack.pop()
+            }
           }
         }
 
@@ -92,7 +99,7 @@ class SizeReportPlugin {
 
       const reportRedundance = this.options.reportRedundance
 
-      const showEntrysPackages = this.options.showEntrysPackages || []
+      const needEntryPathRules = this.options.needEntryPathRules || {}
 
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
@@ -110,6 +117,22 @@ class SizeReportPlugin {
       const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
         return !!reportGroup.noEntryRules
       })
+
+      const moduleEntryPathMap = new Map() // Map<module, module[][]> 存放模块引用链路
+
+      function setModuleEntryPath (module, entryPath) {
+        const resource = module.resource || (module.rootModule && module.rootModule.resource)
+        if (resource && matchCondition(parseRequest(resource).resourcePath, needEntryPathRules)) {
+          if (entryPath.length > 1) {
+            const entryPathArr = moduleEntryPathMap.get(module)
+            if (!Array.isArray(entryPathArr)) {
+              moduleEntryPathMap.set(module, [entryPath])
+            } else {
+              entryPathArr.push(entryPath)
+            }
+          }
+        }
+      }
 
       const moduleEntriesMap = new Map()
 
@@ -132,8 +155,13 @@ class SizeReportPlugin {
       })
 
       for (const entryModule of entryModules) {
-        walkEntry(entryModule, (module, entryModule) => {
+        const walkModulesSet = new Set()
+        walkEntry(entryModule, (module, entryModule, stack) => {
+          setModuleEntryPath(module, stack)
+          if (walkModulesSet.has(module)) return false
+          walkModulesSet.add(module)
           setModuleEntries(module, entryModule)
+          return true
         })
         reportGroups.forEach((reportGroup) => {
           reportGroup.entryModules = reportGroup.entryModules || new Set()
@@ -153,8 +181,13 @@ class SizeReportPlugin {
             if (resource && matchCondition(parseRequest(resource).resourcePath, reportGroup.noEntryRules)) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module)
-              walkEntry(module, (module, noEntryModule) => {
+
+              const walkModulesSet = new Set()
+              walkEntry(module, (module, noEntryModule, stack) => {
+                if (walkModulesSet.has(module)) return false
+                walkModulesSet.add(module)
                 setModuleEntries(module, noEntryModule, true)
+                return true
               })
             }
           })
@@ -447,7 +480,7 @@ class SizeReportPlugin {
           const noEntryModules = new Set()
           const size = compilation.assets[name].size()
           const identifierSet = new Set()
-          const entryModulePathMap = new Map()
+          const moduleMap = new Map() // Map<identifier, module>
 
           let identifier = ''
 
@@ -455,13 +488,11 @@ class SizeReportPlugin {
             // 循环 modules，存储到 entryModules 和 noEntryModules 中
             const _entryModules = getModuleEntries(module)
             const _noEntryModules = getModuleEntries(module, true)
-            const entryModulePathSet = new Set()
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
                 if (resource) {
                   entryModules.add(entryModule)
-                  entryModulePathSet.add(getRelativePathToProject(parseRequest(resource).resourcePath))
                 }
               })
             }
@@ -472,8 +503,8 @@ class SizeReportPlugin {
             }
             const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
-            entryModulePathMap.set(moduleIdentifier, entryModulePathSet)
-            if (!identifier) identifier = moduleIdentifier
+            moduleMap.set(moduleIdentifier, module)
+            if (!identifier) identifier = succinctIdentifier(identifier)
           })
 
           if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
@@ -496,10 +527,7 @@ class SizeReportPlugin {
             size,
             modules: mapToArr(identifierSet, (identifier) => {
               const retModule = {
-                identifier
-              }
-              if (showEntrysPackages.includes(packageName)) {
-                retModule.entryModulePaths = [...entryModulePathMap.get(identifier)]
+                identifier: succinctIdentifier(identifier)
               }
               return retModule
             })
@@ -544,17 +572,9 @@ class SizeReportPlugin {
             const module = modulesMapById[id]
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))
-            const identifier = module.readableIdentifier(compilation.requestShortener)
+            const identifier = succinctIdentifier(module.readableIdentifier(compilation.requestShortener))
             const entryModules = getModuleEntries(module)
             const noEntryModules = getModuleEntries(module, true)
-            const entryModulePathSet = new Set()
-
-            entryModules.forEach((module) => {
-              const resource = module.resource || (module.rootModule && module.rootModule.resource)
-              if (resource) {
-                entryModulePathSet.add(getRelativePathToProject(parseRequest(resource).resourcePath))
-              }
-            })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
               identifier,
@@ -569,8 +589,8 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             }
-            if (showEntrysPackages.includes(packageName)) {
-              moduleData.entryModulePaths = [...entryModulePathSet]
+            if (moduleEntryPathMap.has(module)) {
+              moduleData.traceabilityPath = formatTraceabilityPath(moduleEntryPathMap.get(module))
             }
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
@@ -638,6 +658,9 @@ class SizeReportPlugin {
       // function mapModulesReadable (modulesSet) {
       //   return mapToArr(modulesSet, (module) => module.readableIdentifier(compilation.requestShortener))
       // }
+      function formatTraceabilityPath (paths) {
+        return [...new Set(paths.map(modules => modules.map(module => succinctIdentifier(module.readableIdentifier(compilation.requestShortener))).join('->')))].map(str => str.split('->'))
+      }
 
       function formatSizeInfo (sizeInfo) {
         const result = {}
