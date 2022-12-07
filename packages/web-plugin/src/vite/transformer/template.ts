@@ -51,21 +51,18 @@ export function processTemplate(
   let genericsInfo: SFCDescriptor['genericsInfo']
   let wxsContentMap: SFCDescriptor['wxsContentMap'] = {}
   let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
+  let templateContent
 
   if (template) {
-    const result = templateTransform({ template,
+    ({ wxsModuleMap, wxsContentMap, genericsInfo, builtInComponentsMap, templateContent } = templateTransform({ template,
       mpx: options,
       pluginContext,
       jsonConfig,
       app,
       resource: filename,
       moduleId: id
-    })
-    wxsModuleMap = result.wxsModuleMap
-    wxsContentMap = result.wxsContentMap
-    genericsInfo = result.genericsInfo
-    builtInComponentsMap = result.builtInComponentsMap
-    templateTransformCache[filename] = result.content
+    }))
+    templateTransformCache[filename] = templateContent
   }
 
   descriptor.wxsModuleMap = wxsModuleMap

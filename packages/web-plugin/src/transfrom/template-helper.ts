@@ -38,7 +38,7 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
   const builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
   let genericsInfo: SFCDescriptor['genericsInfo']
   let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
-  let content = ''
+  let templateContent = ''
   const {
     mode = 'web',
     srcMode,
@@ -55,7 +55,7 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
   }
   if (app) {
     addBuildComponent('mpx-keep-alive', '@mpxjs/web-plugin/src/runtime/components/web/mpx-keep-alive.vue')
-    content = template.content
+    templateContent = template.content
   } else {
     const { root, meta } = templateCompiler.parse(template.content, {
       warn: msg => {
@@ -114,10 +114,10 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
         }])
       }
     }
-    content = templateCompiler.serialize(root)
+    templateContent = templateCompiler.serialize(root)
   }
   return {
-    content,
+    templateContent,
     wxsModuleMap,
     wxsContentMap,
     genericsInfo,

@@ -24,6 +24,7 @@ export default function (template: { content: string, tag: string, attrs: Record
   let builtInComponentsMap = {}
   let wxsModuleMap
   let genericsInfo
+  let templateContent
   let output = '/* template */\n'
   const app = ctorType === 'app'
 
@@ -42,7 +43,7 @@ export default function (template: { content: string, tag: string, attrs: Record
     if (template.lang) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
-    const result = templateTransform({ template,
+    ({wxsModuleMap, genericsInfo, builtInComponentsMap, templateContent} = templateTransform({ template,
       mpx,
       pluginContext: loaderContext,
       jsonConfig: {
@@ -54,11 +55,8 @@ export default function (template: { content: string, tag: string, attrs: Record
       resource: resourcePath,
       moduleId,
       compileMode: 'webpack'
-    })
-    wxsModuleMap = result.wxsModuleMap
-    genericsInfo = result.genericsInfo
-    builtInComponentsMap = result.builtInComponentsMap
-    template.content = result.content
+    }))
+    template.content = templateContent
     output += `${genComponentTag(template)}\n\n`
   }
   callback(null, {

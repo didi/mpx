@@ -30,6 +30,6 @@ export async function processJSON(
     descriptor.tabBarMap = tabBarMap
     descriptor.tabBarStr = tabBarStr
   } catch (error) {
-    proxyPluginContext(pluginContext).error(`[mpx loader] process json error: ${ error }`)
+    proxyPluginContext(pluginContext).error(`[mpx] process json error: ${ error }`)
   }
 }

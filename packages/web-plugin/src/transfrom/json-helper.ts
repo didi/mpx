@@ -10,18 +10,20 @@ import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
 import { Mpx } from '../types/mpx'
 
+export interface CreateJSONHelper {
+  stringifyRequest: (r: string) => string
+  emitWarning: (r: string) => void
+  processComponent: (component: string, context: string, { tarRoot, outputPath }: { tarRoot?: string; outputPath?: string; }) => Promise<{ resource: string; outputPath: string; packageRoot: string; } | undefined>
+  processPage: (page: string | { path: string; src: string; }, context: string, tarRoot?: string) => Promise<{ resource: string; outputPath: string; packageRoot: string; key: string; } | undefined>
+  isUrlRequest: (r: string, root: string) => boolean
+  urlToRequest: (r: string, root: string) => string
+}
+
 export default function createJSONHelper({ pluginContext, mpx, mode }: {
   pluginContext: LoaderContext<null> | PluginContext | any,
   mpx: Mpx
   mode: 'vite'| 'webpack'
-}): {
-  stringifyRequest: any
-  emitWarning: any
-  processComponent: any
-  processPage: any
-  isUrlRequest: any
-  urlToRequest: any
-} {
+}): CreateJSONHelper {
   const externals = mpx.externals || []
   const root = mpx.projectRoot
   const mpxPluginContext:ProxyPluginContext = proxyPluginContext(pluginContext)
@@ -38,9 +40,9 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
     context: string,
     { tarRoot = '', outputPath = '' }
   ) => {
-    if (!isUrlRequest(component)) return { entry: component }
+    if (!isUrlRequest(component)) return
     const componentModule = await mpxPluginContext.resolve(component, context)
-    if (!componentModule) return null
+    if (!componentModule || !componentModule.id) return
     let resource = componentModule.id
     const { resourcePath, queryObj } = parseRequest(resource)
     if (queryObj.root) {
@@ -50,14 +52,10 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
     if (!outputPath) {
       outputPath = (getOutputPath(resourcePath, 'component', mpx)) || ''
     }
-
-    const entry = {
+    return {
       resource,
       outputPath: toPosix(join(tarRoot, outputPath)),
       packageRoot: tarRoot
-    }
-    return {
-      entry
     }
   }
 
@@ -71,43 +69,40 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
       aliasPath = page.path
       page = page.src
     }
-    if (!isUrlRequest(page)) return { entry: page }
+    if (!isUrlRequest(page)) return
     if (mode === 'vite') {
       page = path.resolve(context, tarRoot, page)
       context = path.join(context, tarRoot)
     }
     const pageModule = await mpxPluginContext.resolve(addQuery(page, { isPage: true }), context)
-    if (pageModule) {
-      const resource = pageModule.id
-      const { resourcePath } = parseRequest(resource)
-      let outputPath = ''
-      if (aliasPath) {
-        outputPath = aliasPath.replace(/^\//, '')
+    if (!pageModule || !pageModule.id) return
+    const resource = pageModule.id
+    const { resourcePath } = parseRequest(resource)
+    let outputPath = ''
+    if (aliasPath) {
+      outputPath = aliasPath.replace(/^\//, '')
+    } else {
+      const relative = path.relative(context, resourcePath)
+      if (/^\./.test(relative)) {
+        // 如果当前page不存在于context中，对其进行重命名
+        outputPath = (getOutputPath(resourcePath, 'page', mpx)) || ''
+        mpxPluginContext.warn(
+          `Current page [${ resourcePath }] is not in current pages directory [${ context }], the page path will be replaced with [${ outputPath }], use ?resolve to get the page path and navigate to it!`
+        )
       } else {
-        const relative = path.relative(context, resourcePath)
-        if (/^\./.test(relative)) {
-          // 如果当前page不存在于context中，对其进行重命名
-          outputPath = (getOutputPath(resourcePath, 'page', mpx)) || ''
-          mpxPluginContext.warn(
-            `Current page [${ resourcePath }] is not in current pages directory [${ context }], the page path will be replaced with [${ outputPath }], use ?resolve to get the page path and navigate to it!`
-          )
-        } else {
-          const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)
-          if (exec) {
-            outputPath = exec[1]
-          }
+        const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)
+        if (exec) {
+          outputPath = exec[1]
         }
       }
-      const entry = {
-        resource,
-        outputPath: toPosix(join(tarRoot, outputPath)),
-        packageRoot: tarRoot
-      }
-      const key = [resourcePath, outputPath, tarRoot].join('|')
-      return {
-        entry,
-        key
-      }
+    }
+
+    const key = [resourcePath, outputPath, tarRoot].join('|')
+    return {
+      resource,
+      outputPath: toPosix(join(tarRoot, outputPath)),
+      packageRoot: tarRoot,
+      key
     }
   }
 

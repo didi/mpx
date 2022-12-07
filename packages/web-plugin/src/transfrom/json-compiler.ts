@@ -80,29 +80,31 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
     const context = mode === 'vite' ? resolveModuleContext(importer) : importer
     for (const page of pages) {
       const pageModule = await processPage(page, context, tarRoot)
-      const { key, entry: { resource } } = pageModule
-      let { entry: { outputPath } } = pageModule
-      if (!pageKeySet.has(key)) {
-        pageKeySet.add(key)
-        const { resourcePath, queryObj } = parseRequest(resource)
-        if (localPagesMap[outputPath]) {
-          const oldResource = localPagesMap[outputPath]?.resource || ''
-          const { resourcePath: oldResourcePath } = parseRequest(oldResource)
-          if (oldResourcePath !== resourcePath) {
-            const oldOutputPath = outputPath
-            outputPath = getOutputPath(resourcePath, 'page', mpx, { conflictPath: outputPath })
-            emitWarning(new Error(`Current page [${ resourcePath }] is registered with a conflict outputPath [${ oldOutputPath }] which is already existed in system, will be renamed with [${ outputPath }], use ?resolve to get the real outputPath!`))
+      if (pageModule) {
+        const { key, resource } = pageModule
+        let { outputPath } = pageModule
+        if (!pageKeySet.has(key)) {
+          pageKeySet.add(key)
+          const { resourcePath, queryObj } = parseRequest(resource)
+          if (localPagesMap[outputPath]) {
+            const oldResource = localPagesMap[outputPath]?.resource || ''
+            const { resourcePath: oldResourcePath } = parseRequest(oldResource)
+            if (oldResourcePath !== resourcePath) {
+              const oldOutputPath = outputPath
+              outputPath = getOutputPath(resourcePath, 'page', mpx, { conflictPath: outputPath })
+              emitWarning(`Current page [${ resourcePath }] is registered with a conflict outputPath [${ oldOutputPath }] which is already existed in system, will be renamed with [${ outputPath }], use ?resolve to get the real outputPath!`)
+            }
           }
-        }
-        mpx.pagesMap[resourcePath] = outputPath
-        if (mode === 'webpack') {
-          pluginContext._module && pluginContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath, ''))
-        }
-        // todo 确认是不是 vite 可以不用
-        // mpx.pagesEntryMap[resourcePath] = importer
-        localPagesMap[outputPath] = {
-          resource,
-          async: queryObj.async || tarRoot
+          mpx.pagesMap[resourcePath] = outputPath
+          if (mode === 'webpack') {
+            pluginContext._module && pluginContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath, ''))
+          }
+          // todo 确认是不是 vite 可以不用
+          // mpx.pagesEntryMap[resourcePath] = importer
+          localPagesMap[outputPath] = {
+            resource,
+            async: queryObj.async || tarRoot
+          }
         }
       }
     }
@@ -114,21 +116,24 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
   ) => {
     if (components) {
       for (const key in components) {
-        const { entry: { outputPath, resource } } = await processComponent(components[key], context, {})
-        const { resourcePath, queryObj } = parseRequest(resource)
+        const componentModule = await processComponent(components[key], context, {})
+        if (componentModule) {
+          const { resource, outputPath } = componentModule
+          const { resourcePath, queryObj } = parseRequest(resource)
 
-        if (mode === 'webpack') {
-          pluginContext._module && pluginContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath, ''))
-          mpx.componentsMap['main'][resourcePath] = outputPath
-        } else {
-          mpx.componentsMap[resourcePath] = outputPath
-        }
-        localComponentsMap[key] = {
-          resource: addQuery(resource, {
-            isComponent: true,
-            outputPath
-          }),
-          async: queryObj.async
+          if (mode === 'webpack') {
+            pluginContext._module && pluginContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath, ''))
+            mpx.componentsMap['main'][resourcePath] = outputPath
+          } else {
+            mpx.componentsMap[resourcePath] = outputPath
+          }
+          localComponentsMap[key] = {
+            resource: addQuery(resource, {
+              isComponent: true,
+              outputPath
+            }),
+            async: queryObj.async
+          }
         }
       }
     }
@@ -156,55 +161,54 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
       for (const packagePath of packages) {
         const { queryObj } = parseRequest(packagePath)
         const packageModule = await mpxPluginContext.resolve(packagePath, context)
-        if (packageModule) {
-          const resource = packageModule.id
-          const { rawResourcePath } = parseRequest(resource)
-          const code = await fs.promises.readFile(rawResourcePath, 'utf-8')
-          const extName = extname(rawResourcePath)
-          if (extName === '.mpx') {
-            const processSelfQueue = []
-            let jsonConfig: JsonConfig = {}
-            let context = ''
-            if (mode === 'webpack') {
-              context = dirname(rawResourcePath)
-              const parts = parser(code, {
-                filePath: rawResourcePath,
-                needMap: pluginContext.sourceMap,
-                mode: mpx.mode,
-                env: mpx.env
-              })
-              jsonConfig = await resolveJson(
-                parts,
-                pluginContext.context,
-                pluginContext,
-                { defs: mpx.defs || {}},
-                pluginContext._compilation.inputFileSystem
-              )
-            } else {
-              context = resource
-              const { projectRoot = '', isProduction, mode = 'web', defs = {}, env = '', sourceMap } = mpx
-              const descriptor = createDescriptor(resource, code, queryObj, {
-                projectRoot,
-                isProduction,
-                mode,
-                defs,
-                env,
-                sourceMap
-              })
-              jsonConfig = (descriptor.jsonConfig = await resolveJson(descriptor, descriptor.filename, pluginContext, { defs: mpx.defs || {} }))
-              pluginContext.addWatchFile(resource)
-            }
-            const { pages, packages } = jsonConfig
+        if (!packageModule || !packageModule.id) return
+        const resource = packageModule.id
+        const { rawResourcePath } = parseRequest(resource)
+        const code = await fs.promises.readFile(rawResourcePath, 'utf-8')
+        const extName = extname(rawResourcePath)
+        if (extName === '.mpx') {
+          const processSelfQueue = []
+          let jsonConfig: JsonConfig = {}
+          let context = ''
+          if (mode === 'webpack') {
+            context = dirname(rawResourcePath)
+            const parts = parser(code, {
+              filePath: rawResourcePath,
+              needMap: pluginContext.sourceMap,
+              mode: mpx.mode,
+              env: mpx.env
+            })
+            jsonConfig = await resolveJson(
+              parts,
+              pluginContext.context,
+              pluginContext,
+              { defs: mpx.defs || {}},
+              pluginContext._compilation.inputFileSystem
+            )
+          } else {
+            context = resource
+            const { projectRoot = '', isProduction, mode = 'web', defs = {}, env = '', sourceMap } = mpx
+            const descriptor = createDescriptor(resource, code, queryObj, {
+              projectRoot,
+              isProduction,
+              mode,
+              defs,
+              env,
+              sourceMap
+            })
+            jsonConfig = (descriptor.jsonConfig = await resolveJson(descriptor, descriptor.filename, pluginContext, { defs: mpx.defs || {} }))
+            pluginContext.addWatchFile(resource)
+          }
+          const { pages, packages } = jsonConfig
 
-            if (pages) {
-              processSelfQueue.push(processPages(pages, context, queryObj.root))
-            }
-            if (packages) {
-              processSelfQueue.push(processPackages(packages, context))
-            }
-            if (processSelfQueue.length) {
-              await Promise.all(processSelfQueue)
-            }
+          if (pages) {
+            processSelfQueue.push(processPages(pages, context, queryObj.root))
+          }
+          if (packages) {
+            processSelfQueue.push(processPackages(packages, context))
+          }
+          if (processSelfQueue.length) {
+            await Promise.all(processSelfQueue)
           }
         }
       }

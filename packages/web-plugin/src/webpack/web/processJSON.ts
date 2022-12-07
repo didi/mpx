@@ -35,17 +35,12 @@ export default async function (json: Record<string, string>, { loaderContext }: 
     return callback(e as Error)
   }
 
-  const result = await jsonCompiler({
+  ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap, tabBarStr } = await jsonCompiler({
     jsonConfig,
     mpx,
     context,
     pluginContext: loaderContext,
     mode: 'webpack'
-  })
-  jsonConfig = result.jsonConfig
-  localPagesMap = result.localPagesMap
-  localComponentsMap = result.localComponentsMap
-  tabBarMap = result.tabBarMap
-  tabBarStr = result.tabBarStr
+  }))
   callback()
 }
