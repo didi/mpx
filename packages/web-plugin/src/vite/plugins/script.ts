@@ -56,7 +56,7 @@ export async function transformScript(
   const {
     id: componentId,
     app,
-    isPage,
+    page,
     jsonConfig,
     script,
     wxsModuleMap,
@@ -64,10 +64,11 @@ export async function transformScript(
     tabBarMap,
     builtInComponentsMap,
     genericsInfo,
-    localPagesMap,
-    localComponentsMap
+    pagesMap: localPagesMap,
+    componentsMap: localComponentsMap
   } = descriptor
-  const ctorType = app ? 'app' : isPage ? 'page' : 'component'
+
+  const ctorType = app ? 'app' : page ? 'page' : 'component'
 
   const { i18n } = options
 
@@ -91,13 +92,13 @@ export async function transformScript(
 
   // import page by page json config
   Object.keys(localPagesMap).forEach((pageName, index) => {
-    const pageCfg = localPagesMap[pageName]
     const varName = `__mpx__page__${index}`
     const isTabBar = tabBarMap && tabBarMap[pageName]
     const newPagePath = isTabBar
       ? TAB_BAR_CONTAINER_PATH
-      : pageCfg.resource
-    const async = pageCfg.async
+      : localPagesMap[pageName]
+    const { queryObj: query } = parseRequest(newPagePath)
+    const async = query.async !== undefined
     !async && s.prepend(`\n${genImport(newPagePath, varName)}`)
     pagesMap[pageName] = genComponentCode(
       varName,
@@ -112,15 +113,13 @@ export async function transformScript(
         }
     )
   })
+
   // import component by component json config
   Object.keys(localComponentsMap).forEach((componentName, index) => {
-    const componentCfg: {
-      resource: string
-      async: boolean
-    } = localComponentsMap[componentName]
-    const componentId = componentCfg.resource
+    const componentId = localComponentsMap[componentName]
+    const { queryObj: query } = parseRequest(componentId)
     const varName = `__mpx__component__${index}`
-    const async = componentCfg.async
+    const async = query.async !== undefined
     !async && s.prepend(`\n${genImport(componentId, varName)}`)
     componentsMap[componentName] = genComponentCode(varName, componentId, {
       async
@@ -204,7 +203,7 @@ export async function transformScript(
       ${stringify(Object.keys(localPagesMap)[0])},
       ${stringify(componentId)},
       ${stringify(
-      isPage ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage']) : {}
+      page ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage']) : {}
     )},
       ${shallowStringify(pagesMap)},
       ${shallowStringify(componentsMap)},
