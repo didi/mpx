@@ -61,32 +61,37 @@ class SizeReportPlugin {
 
       // 简化identifier
       function succinctIdentifier (identifier) {
-        return identifier.split(/!|\?/)[0]
+        // 保留packageRoot信息
+        const end = identifier.match(/\?|!/)?.index
+        if (!end) return identifier
+        // 保留第一个?后的packageRoot信息，不存在就切割
+        return identifier.match(/^[^?!]*\?packageRoot=(\w+)/)?.[0] || identifier.substring(0, end)
       }
 
       function walkEntry (entryModule, sideEffect) {
+        const modulesSet = new Set()
         const sourceStack = [entryModule]
 
         function walk (module) {
-          // sideEffect 返回 true 继续遍历
-          if (sideEffect && sideEffect(module, entryModule, [...sourceStack])) {
-            for (const connection of moduleGraph.getOutgoingConnections(module)) {
-              const d = connection.dependency
-              // We skip connections without dependency
-              if (!d) continue
-              const m = connection.module
-              // We skip connections without Module pointer
-              if (!m) continue
-              // We skip weak connections
-              if (connection.weak) continue
-              // Use undefined runtime
-              const state = connection.getActiveState(/* runtime */)
-              // We skip inactive connections
-              if (state === false) continue
-              sourceStack.push(m)
-              walk(m)
-              sourceStack.pop()
-            }
+          sideEffect && sideEffect(module, entryModule, [...sourceStack])
+          if (modulesSet.has(module)) return
+          modulesSet.add(module)
+          for (const connection of moduleGraph.getOutgoingConnections(module)) {
+            const d = connection.dependency
+            // We skip connections without dependency
+            if (!d) continue
+            const m = connection.module
+            // We skip connections without Module pointer
+            if (!m) continue
+            // We skip weak connections
+            if (connection.weak) continue
+            // Use undefined runtime
+            const state = connection.getActiveState(/* runtime */)
+            // We skip inactive connections
+            if (state === false) continue
+            sourceStack.push(m)
+            walk(m)
+            sourceStack.pop()
           }
         }
 
@@ -118,18 +123,22 @@ class SizeReportPlugin {
         return !!reportGroup.noEntryRules
       })
 
-      const moduleEntryPathMap = new Map() // Map<module, module[][]> 存放模块引用链路
+      const moduleEntryGraphMap = new Map() // Map<moduleId, {target: boolean, children: Set<moduleId>, parents: Set<moduleId>}> 存放模块引用关系
 
-      function setModuleEntryPath (module, entryPath) {
-        const resource = module.resource || (module.rootModule && module.rootModule.resource)
-        if (resource && matchCondition(parseRequest(resource).resourcePath, needEntryPathRules)) {
-          if (entryPath.length > 1) {
-            const entryPathArr = moduleEntryPathMap.get(module)
-            if (!Array.isArray(entryPathArr)) {
-              moduleEntryPathMap.set(module, [entryPath])
-            } else {
-              entryPathArr.push(entryPath)
-            }
+      function addModuleEntryGraph(moduleId, relation) {
+        if (typeof moduleId !== 'number') return
+        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { children: new Set(), parents: new Set() })
+        const value = moduleEntryGraphMap.get(moduleId)
+
+        if (Array.isArray(relation.children)) {
+          for (let i = 0; i < relation.children.length; i++) {
+            value.children.add(relation.children[0])
+          }
+        }
+
+        if (Array.isArray(relation.parents)) {
+          for (let i = 0; i < relation.parents.length; i++) {
+            value.parents.add(relation.parents[0])
           }
         }
       }
@@ -154,14 +163,31 @@ class SizeReportPlugin {
         entryModules = concat(entryModules, new Set(chunkGraph.getChunkEntryModulesIterable(chunk)))
       })
 
+      const modulesMapById = {}
+
+      compilation.modules.forEach(module => {
+        const id = chunkGraph.getModuleId(module)
+        modulesMapById[id] = module
+        const resource = module.resource || (module.rootModule && module.rootModule.resource)
+        if (resource && matchCondition(parseRequest(resource).resourcePath, needEntryPathRules)) {
+          moduleEntryGraphMap.set(id, { target: true, children: new Set(), parents: new Set() })
+        }
+      })
+
       for (const entryModule of entryModules) {
-        const walkModulesSet = new Set()
         walkEntry(entryModule, (module, entryModule, stack) => {
-          setModuleEntryPath(module, stack)
-          if (walkModulesSet.has(module)) return false
-          walkModulesSet.add(module)
+          const id = chunkGraph.getModuleId(module)
+          if (moduleEntryGraphMap.has(id)) {
+            // 将stack中所有节点加入moduleEntryGraphMap中并且记录其节点关系
+            if (stack.length > 1) {
+              for (let i = 1, len = stack.length-1; i < len; i++) {
+                addModuleEntryGraph(chunkGraph.getModuleId(stack[i]), {children: [chunkGraph.getModuleId(stack[i+1])], parents: [chunkGraph.getModuleId(stack[i-1])] })
+              }
+              addModuleEntryGraph(chunkGraph.getModuleId(stack[0]), {children: [chunkGraph.getModuleId(stack[1])]})
+              addModuleEntryGraph(chunkGraph.getModuleId(stack[stack.length-1]), {parents: [chunkGraph.getModuleId(stack[stack.length-2])]})
+            }
+          }
           setModuleEntries(module, entryModule)
-          return true
         })
         reportGroups.forEach((reportGroup) => {
           reportGroup.entryModules = reportGroup.entryModules || new Set()
@@ -181,13 +207,8 @@ class SizeReportPlugin {
             if (resource && matchCondition(parseRequest(resource).resourcePath, reportGroup.noEntryRules)) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module)
-
-              const walkModulesSet = new Set()
-              walkEntry(module, (module, noEntryModule, stack) => {
-                if (walkModulesSet.has(module)) return false
-                walkModulesSet.add(module)
+              walkEntry(module, (module, noEntryModule) => {
                 setModuleEntries(module, noEntryModule, true)
-                return true
               })
             }
           })
@@ -463,13 +484,6 @@ class SizeReportPlugin {
         packagesSizeInfo[packageName] += size
       }
 
-      const modulesMapById = {}
-
-      compilation.modules.forEach(module => {
-        const id = chunkGraph.getModuleId(module)
-        modulesMapById[id] = module
-      })
-
       // Generate original size info
       for (const name in compilation.assets) {
         const packageName = getPackageName(name)
@@ -480,7 +494,6 @@ class SizeReportPlugin {
           const noEntryModules = new Set()
           const size = compilation.assets[name].size()
           const identifierSet = new Set()
-          const moduleMap = new Map() // Map<identifier, module>
 
           let identifier = ''
 
@@ -503,7 +516,6 @@ class SizeReportPlugin {
             }
             const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
-            moduleMap.set(moduleIdentifier, module)
             if (!identifier) identifier = succinctIdentifier(identifier)
           })
 
@@ -589,9 +601,12 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             }
-            if (moduleEntryPathMap.has(module)) {
-              moduleData.traceabilityPath = formatTraceabilityPath(moduleEntryPathMap.get(module))
+
+            // 将被联合的模块中所有的子模块identifier输出
+            if (identifier.endsWith(' modules') && module.modules) {
+              moduleData.identifiers = [...module.modules].map(module => succinctIdentifier(module.readableIdentifier(compilation.requestShortener)))
             }
+
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
@@ -658,9 +673,6 @@ class SizeReportPlugin {
       // function mapModulesReadable (modulesSet) {
       //   return mapToArr(modulesSet, (module) => module.readableIdentifier(compilation.requestShortener))
       // }
-      function formatTraceabilityPath (paths) {
-        return [...new Set(paths.map(modules => modules.map(module => succinctIdentifier(module.readableIdentifier(compilation.requestShortener))).join('->')))].map(str => str.split('->'))
-      }
 
       function formatSizeInfo (sizeInfo) {
         const result = {}
@@ -729,8 +741,21 @@ class SizeReportPlugin {
         packagesSizeInfo[packageName] = formatSize(packagesSizeInfo[packageName])
       }
 
+      const moduleEntryGraph = [...moduleEntryGraphMap.entries()].reduce((obj, [id, value]) => {
+        if (value.parents.size || value.children.size) {
+          obj[id] = {
+            target: !!value.target,
+            parents: [...value.parents],
+            children: [...value.children],
+            identifier: succinctIdentifier((modulesMapById[id]).readableIdentifier(compilation.requestShortener))
+          }
+        }
+        return obj
+      }, {})
+
       const reportData = {
-        sizeSummary
+        sizeSummary,
+        moduleEntryGraph
       }
 
       const redundanceSizeInfo = formatRedundanceReport()
