@@ -20,7 +20,8 @@ export {
   aliasReplace,
   dash2hump,
   hump2dash,
-  def
+  def,
+  hasChanged
 } from './base'
 
 export {
