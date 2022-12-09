@@ -11,7 +11,8 @@ import {
   warn,
   isArray,
   remove,
-  callWithErrorHandling
+  callWithErrorHandling,
+  hasChanged
 } from '@mpxjs/utils'
 
 export function watchEffect (effect, options) {
@@ -30,7 +31,7 @@ const warnInvalidSource = (s) => {
   warn(`Invalid watch source: ${s}\nA watch source can only be a getter/effect function, a ref, a reactive object, or an array of these types.`)
 }
 
-const shouldTrigger = (value, oldValue) => !Object.is(value, oldValue) || isObject(value)
+const shouldTrigger = (value, oldValue) => hasChanged(value, oldValue) || isObject(value)
 
 const processWatchOptionsCompat = (options) => {
   const newOptions = { ...options }

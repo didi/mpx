@@ -89,6 +89,11 @@ function aliasReplace (options = {}, alias, target) {
   return options
 }
 
+// 比较一个值是否发生了变化（考虑NaN）。
+function hasChanged (value, oldValue) {
+  return !Object.is(value, oldValue)
+}
+
 export {
   hasProto,
   noop,
@@ -106,5 +111,6 @@ export {
   aliasReplace,
   dash2hump,
   hump2dash,
-  def
+  def,
+  hasChanged
 }
