@@ -36,6 +36,7 @@ module.exports = function (content) {
   const appInfo = mpx.appInfo
   const mode = mpx.mode
   const env = mpx.env
+  const enableAliRequireAsync = mpx.enableAliRequireAsync
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -168,7 +169,8 @@ module.exports = function (content) {
     json = Object.assign({}, defaultConf, json)
   }
 
-  if (mode === 'ali' && json.usingComponents) {
+  // 兜底 ali componentPlaceholder
+  if (enableAliRequireAsync && mode === 'ali' && json.usingComponents) {
     const diyComponents = json.usingComponents
     const commonPlaceholder = path.resolve(__dirname, '../runtime/components/ali/common-placeholder.mpx');
     for (const key of Object.keys(diyComponents)) {
