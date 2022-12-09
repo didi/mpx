@@ -1,5 +1,5 @@
 <template>
-  <view class="kf-common-dialog-wrapper">
+  <view class="mpx-component-placeholder">
   </view>
 </template>
 <script>
@@ -9,8 +9,6 @@ createComponent({})
 </script>
 <script type="application/json">
   {
-    "component": true,
-    "usingComponents": {
-    }
+    "component": true
   }
 </script>
