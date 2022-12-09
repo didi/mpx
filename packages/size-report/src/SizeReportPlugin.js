@@ -763,7 +763,7 @@ class SizeReportPlugin {
       }
 
       const redundanceSizeInfo = formatRedundanceReport()
-      if (moduleEntryGraph) reportData.moduleEntryGraph = moduleEntryGraph
+      if (Object.keys(moduleEntryGraph).length) reportData.moduleEntryGraph = moduleEntryGraph
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
       if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
