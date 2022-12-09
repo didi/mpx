@@ -49,8 +49,8 @@ export interface Options {
 export interface ResolvedOptions extends Options {
   sourceMap?: boolean
   devServer?: ViteDevServer
-  root?: string
-  isProduction?: boolean,
+  root: string
+  isProduction: boolean
   base?: string
 }
 

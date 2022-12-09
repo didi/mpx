@@ -14,7 +14,7 @@ function stringifyAttrs(attrs: { [x: string]: any }) {
 }
 
 export default function genComponentTag(
-  part: { content: string, tag: string, attrs: Record<string, string> | null},
+  part: { content: string;  tag: string;  attrs: any},
   processor: any = {}
 ) {
   // normalize

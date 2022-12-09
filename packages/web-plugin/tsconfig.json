@@ -12,6 +12,7 @@
     "noUnusedLocals": true,
     "esModuleInterop": true,
     "baseUrl": ".",
+    "noEmit": true,
     "skipLibCheck": true
   },
   "include": ["src"],

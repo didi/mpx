@@ -3,7 +3,7 @@ import { JsonConfig } from '../types/json-config';
 import getJSONContent from './get-json-content'
 import { proxyPluginContext } from '../pluginContextProxy'
 import { TransformPluginContext } from 'rollup'
-import { ResolvedOptions } from '../options'
+import { Options } from '../options'
 import json5 from 'json5'
 import fs from 'fs'
 
@@ -18,7 +18,7 @@ export default async function resolveJson(
   descriptor: SFCDescriptor,
   context: string,
   pluginContext: TransformPluginContext,
-  options: ResolvedOptions,
+  options: Options,
   fsInfo?: any
 ): Promise<JsonConfig> {
   const { defs } = options

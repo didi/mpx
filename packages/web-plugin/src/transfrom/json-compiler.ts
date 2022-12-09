@@ -187,15 +187,7 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
             )
           } else {
             context = resource
-            const { projectRoot = '', isProduction, mode = 'web', defs = {}, env = '', sourceMap } = mpx
-            const descriptor = createDescriptor(resource, code, queryObj, {
-              projectRoot,
-              isProduction,
-              mode,
-              defs,
-              env,
-              sourceMap
-            })
+            const descriptor = createDescriptor(resource, code, queryObj, mpx)
             jsonConfig = (descriptor.jsonConfig = await resolveJson(descriptor, descriptor.filename, pluginContext, { defs: mpx.defs || {} }))
             pluginContext.addWatchFile(resource)
           }

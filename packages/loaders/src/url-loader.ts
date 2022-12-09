@@ -22,6 +22,7 @@ const getOptions = loaderUtils.getOptions
 
 const urlLoader: LoaderDefinition = function urlLoader(src: string | Buffer): string {
   let transBase64 = false
+  // @ts-ignore
   const options: Options = Object.assign({}, getOptions(this))
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mimetype = options.mimetype || mime.getType(resourcePath)

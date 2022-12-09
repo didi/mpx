@@ -1,15 +1,16 @@
 import path from 'path'
 import loaderUtils from 'loader-utils'
-import { LoaderDefinition } from 'webpack'
 import toPosix from '@mpxjs/compile-utils/to-posix'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
-import { Dependency } from 'webpack'
+import { Dependency, LoaderDefinition } from 'webpack'
 
 const loader:LoaderDefinition = function (content:string, prevOptions?: any) {
+  // @ts-ignore
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
 
+  // @ts-ignore
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
     content,

@@ -1,6 +1,6 @@
 import parser from '@mpxjs/compiler/template-compiler/parser'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
-import { LoaderDefinition } from "webpack";
+import { LoaderDefinition } from 'webpack'
 
 const selector: LoaderDefinition = function (content: string) {
   this.cacheable()
