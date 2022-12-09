@@ -60,7 +60,8 @@ class SizeReportPlugin {
       }
 
       // 简化identifier
-      function succinctIdentifier (identifier) {
+      function getSuccinctIdentifier (module) {
+        const identifier = module.readableIdentifier(compilation.requestShortener)
         // 保留packageRoot信息
         const end = identifier.match(/\?|!/)?.index
         if (!end) return identifier
@@ -127,7 +128,7 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { children: new Set(), parents: new Set() })
+        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!relation?.target, children: new Set(), parents: new Set() })
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
@@ -170,7 +171,7 @@ class SizeReportPlugin {
         modulesMapById[id] = module
         const resource = module.resource || (module.rootModule && module.rootModule.resource)
         if (resource && matchCondition(parseRequest(resource).resourcePath, needEntryPathRules)) {
-          moduleEntryGraphMap.set(id, { target: true, children: new Set(), parents: new Set() })
+          addModuleEntryGraph(id, { target: true })
         }
       })
 
@@ -516,9 +517,9 @@ class SizeReportPlugin {
                 noEntryModules.add(noEntryModule)
               })
             }
-            const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
+            const moduleIdentifier = getSuccinctIdentifier(module)
             identifierSet.add(moduleIdentifier)
-            if (!identifier) identifier = succinctIdentifier(identifier)
+            if (!identifier) identifier = moduleIdentifier
           })
 
           if (identifierSet.size > 1) identifier += ` + ${identifierSet.size - 1} modules`
@@ -541,7 +542,7 @@ class SizeReportPlugin {
             size,
             modules: mapToArr(identifierSet, (identifier) => {
               const retModule = {
-                identifier: succinctIdentifier(identifier)
+                identifier
               }
               return retModule
             })
@@ -586,7 +587,7 @@ class SizeReportPlugin {
             const module = modulesMapById[id]
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))
-            const identifier = succinctIdentifier(module.readableIdentifier(compilation.requestShortener))
+            const identifier = getSuccinctIdentifier(module)
             const entryModules = getModuleEntries(module)
             const noEntryModules = getModuleEntries(module, true)
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
@@ -606,7 +607,9 @@ class SizeReportPlugin {
 
             // 将被联合的模块中所有的子模块identifier输出
             if (identifier.endsWith(' modules') && module.modules) {
-              moduleData.identifiers = [...module.modules].map(module => succinctIdentifier(module.readableIdentifier(compilation.requestShortener)))
+              moduleData.modules = [...module.modules].map(module => ({
+                identifier: getSuccinctIdentifier(module)
+              }))
             }
 
             chunkAssetInfo.modules.push(moduleData)
@@ -749,18 +752,18 @@ class SizeReportPlugin {
             target: !!value.target,
             parents: [...value.parents],
             children: [...value.children],
-            identifier: succinctIdentifier((modulesMapById[id]).readableIdentifier(compilation.requestShortener))
+            identifier: getSuccinctIdentifier((modulesMapById[id]))
           }
         }
         return obj
       }, {})
 
       const reportData = {
-        sizeSummary,
-        moduleEntryGraph
+        sizeSummary
       }
 
       const redundanceSizeInfo = formatRedundanceReport()
+      if (moduleEntryGraph) reportData.moduleEntryGraph = moduleEntryGraph
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
       if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
