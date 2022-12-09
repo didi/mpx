@@ -125,7 +125,7 @@ class SizeReportPlugin {
 
       const moduleEntryGraphMap = new Map() // Map<moduleId, {target: boolean, children: Set<moduleId>, parents: Set<moduleId>}> 存放模块引用关系
 
-      function addModuleEntryGraph(moduleId, relation) {
+      function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
         if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { children: new Set(), parents: new Set() })
         const value = moduleEntryGraphMap.get(moduleId)
@@ -180,11 +180,13 @@ class SizeReportPlugin {
           if (moduleEntryGraphMap.has(id)) {
             // 将stack中所有节点加入moduleEntryGraphMap中并且记录其节点关系
             if (stack.length > 1) {
-              for (let i = 1, len = stack.length-1; i < len; i++) {
-                addModuleEntryGraph(chunkGraph.getModuleId(stack[i]), {children: [chunkGraph.getModuleId(stack[i+1])], parents: [chunkGraph.getModuleId(stack[i-1])] })
+              for (let i = 0, len = stack.length; i < len; i++) {
+                addModuleEntryGraph(chunkGraph.getModuleId(stack[i]),
+                  {
+                    children: stack[i + 1] && [chunkGraph.getModuleId(stack[i + 1])],
+                    parents: stack[i - 1] && [chunkGraph.getModuleId(stack[i - 1])]
+                  })
               }
-              addModuleEntryGraph(chunkGraph.getModuleId(stack[0]), {children: [chunkGraph.getModuleId(stack[1])]})
-              addModuleEntryGraph(chunkGraph.getModuleId(stack[stack.length-1]), {parents: [chunkGraph.getModuleId(stack[stack.length-2])]})
             }
           }
           setModuleEntries(module, entryModule)
