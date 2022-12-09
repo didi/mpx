@@ -168,6 +168,21 @@ module.exports = function (content) {
     json = Object.assign({}, defaultConf, json)
   }
 
+  if (mode === 'ali' && json.usingComponents) {
+    const diyComponents = json.usingComponents
+    const commonPlaceholder = path.resolve(__dirname, '../runtime/components/ali/common-placeholder.mpx');
+    for (const key of Object.keys(diyComponents)) {
+      if (!/\?root=/g.test(diyComponents[key])) continue;
+      let componentsPlaceholder = json.componentPlaceholder || (json.componentPlaceholder = {});
+      if (!componentsPlaceholder[key] || !diyComponents[componentsPlaceholder[key]]) {
+        diyComponents['mpx-component-placeholder-fallback'] = commonPlaceholder;
+        componentsPlaceholder[key] = 'mpx-component-placeholder-fallback';
+        // emitWarning(`'${key}' has an illegal [componentPlaceholder], A 'mpx-component-placeholder-fallback' has been set as  fallback!`)
+      }
+    }
+  }
+
+
   const rulesRunnerOptions = {
     mode,
     mpx,

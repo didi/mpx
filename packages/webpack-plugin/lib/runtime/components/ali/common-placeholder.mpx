@@ -1,0 +1,16 @@
+<template>
+  <view class="kf-common-dialog-wrapper">
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({})
+</script>
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+    }
+  }
+</script>
