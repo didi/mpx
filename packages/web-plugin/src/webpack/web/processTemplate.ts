@@ -13,9 +13,9 @@ export default function (template: { content: string, tag: string, attrs: Record
   jsonConfig
 }: {
   loaderContext: LoaderContext<null>
-  hasScoped: boolean,
-  moduleId: string,
-  ctorType: string,
+  hasScoped: boolean
+  moduleId: string
+  ctorType: string
   jsonConfig: JsonConfig
 }, callback: (err?: Error | null, result?: any) => void) {
   const { resourcePath } = parseRequest(loaderContext.resource)

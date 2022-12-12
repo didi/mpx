@@ -7,6 +7,9 @@ import mpx from '../mpx'
 import { proxyPluginContext } from '../../pluginContextProxy'
 import { genImport } from '../../utils/genCode'
 import MagicString from 'magic-string'
+import { LoaderContext } from 'webpack'
+import { JsonConfig } from '../../types/json-config'
+import { SFCDescriptor } from "../../types/compiler";
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
 const tabBarContainerPath = '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar-container.vue'
@@ -19,7 +22,7 @@ function getAsyncChunkName(chunkName: boolean | string) {
   return ''
 }
 
-export default function (script, {
+export default function (script: { content?: string, tag: 'script', attrs?: Record<string, string>, src?: string, lang?: string, mode?: 'wx'}, {
   loaderContext,
   ctorType,
   moduleId,
@@ -33,12 +36,27 @@ export default function (script, {
   wxsModuleMap,
   localComponentsMap,
   localPagesMap
-}, callback) {
+}: {
+  loaderContext: LoaderContext<null> | any
+  moduleId: string
+  ctorType: string
+  outputPath: string,
+  componentGenerics: JsonConfig['componentGenerics'],
+  tabBarMap: SFCDescriptor['tabBarMap']
+  tabBarStr: SFCDescriptor['tabBarStr']
+  jsonConfig: JsonConfig
+  builtInComponentsMap: SFCDescriptor['builtInComponentsMap']
+  genericsInfo: SFCDescriptor['genericsInfo'],
+  wxsModuleMap: SFCDescriptor['wxsModuleMap'],
+  localComponentsMap: SFCDescriptor['localPagesMap']
+  localPagesMap: SFCDescriptor['localPagesMap']
+
+}, callback: (err?: Error | null, result?: any) => void) {
   const {
     i18n,
     projectRoot,
     webConfig = {},
-    appInfo,
+    // appInfo,
     srcMode,
     minimize
   } = mpx
@@ -83,8 +101,9 @@ export default function (script, {
   } else {
     script = { tag: 'script' }
   }
+  // @ts-ignore
   output += genComponentTag(script, {
-    attrs(script) {
+    attrs(script: { attrs: { src?: string; setup?: boolean}}) {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
       delete attrs.src
@@ -92,7 +111,7 @@ export default function (script, {
       delete attrs.setup
       return attrs
     },
-    content(script) {
+    content: function (script: { content?: string }) {
       const content = new MagicString(`\n  import processOption, { getComponent, getWxsMixin } from ${ stringifyRequest(optionProcessorPath) }\n`)
       // add import
       if (ctorType === 'app') {
@@ -125,7 +144,7 @@ export default function (script, {
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content.append(
-            `${genImport('vue-i18n', 'VueI18n') }
+            `${ genImport('vue-i18n', 'VueI18n') }
             Vue.use(VueI18n)
             `
           )
@@ -161,8 +180,8 @@ export default function (script, {
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach((module) => {
           const src = urlToRequest(wxsModuleMap[module], projectRoot)
-          const expression = `require(${ stringifyRequest(src) })`
-          content.append(`  wxsModules.${ module } = ${ expression }\n`)
+          // const expression = `require(${ stringifyRequest(src) })`
+          content.append(`  wxsModules.${ module } = require(${ stringifyRequest(src) })\n`)
         })
       }
       const pagesMap: Record<string, string> = {}
@@ -199,9 +218,7 @@ export default function (script, {
       }
       content.append('  /** script content **/\n')
       // 传递ctorType以补全js内容
-      const extraOptions = {
-        ctorType
-      }
+      const extraOptions = { ctorType }
       // todo 仅靠vueContentCache保障模块唯一性还是不够严谨，后续需要考虑去除原始query后构建request
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content.append(
@@ -210,7 +227,7 @@ export default function (script, {
         `
       )
       // 获取pageConfig
-      const pageConfig: Record<string, string> = {}
+      const pageConfig: Record<string, string | Record<string, unknown>> = {}
       if (ctorType === 'page') {
         const uselessOptions = new Set([
           'usingComponents',
@@ -220,6 +237,7 @@ export default function (script, {
         Object.keys(jsonConfig)
           .filter(key => !uselessOptions.has(key))
           .forEach(key => {
+            // @ts-ignore
             pageConfig[key] = jsonConfig[key]
           })
       }
