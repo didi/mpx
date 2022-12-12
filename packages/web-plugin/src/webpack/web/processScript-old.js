@@ -2,7 +2,7 @@ import { stringifyRequest as _stringifyRequest, urlToRequest } from 'loader-util
 import addQuery from '@mpxjs/compile-utils/add-query'
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import createHelpers from '@mpxjs/compile-utils/helpers'
-import { shallowStringify } from '../../utils/stringify'
+import stringify, { shallowStringify } from '../../utils/stringify'
 import mpx from '../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
@@ -50,21 +50,38 @@ export default function (script, {
   }
 
   const stringifyRequest = r => _stringifyRequest(loaderContext, r)
+  const genComponentCode = (resource, { async = false } = {}, params = {}) => {
+    const resourceRequest = stringifyRequest(resource)
+    if (!async) {
+      return `getComponent(require(${resourceRequest}),${stringify(params)}) })`
+    } else {
+      return `()=>import(${getAsyncChunkName(async)}${resourceRequest}).then(res =>
+    getComponent(res, ${stringify(params)})))`
+    }
+  }
   let tabBarPagesMap = {}
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
-    const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
-    tabBarPagesMap['mpx-tab-bar'] = `getComponent(require(${tabBarRequest}))`
+    // const tabBarRequest = stringifyRequest(addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
+    const tabBarRequest = addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true })
+    tabBarPagesMap['mpx-tab-bar'] = genComponentCode(tabBarRequest)
     // 挂载tabBar页面
     Object.keys(tabBarMap).forEach((pagePath) => {
       const pageCfg = localPagesMap[pagePath]
+      const { resource, async } = pageCfg
       if (pageCfg) {
-        const pageRequest = stringifyRequest(pageCfg.resource)
-        if (pageCfg.async) {
-          tabBarPagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
-        } else {
-          tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
-        }
+        tabBarPagesMap[pagePath] = genComponentCode(
+          resource,
+          { async },
+          { __mpxPageRoute: JSON.stringify(pagePath) }
+          )
+        // const pageRequest = stringifyRequest(pageCfg.resource)
+        //
+        // if (pageCfg.async) {
+        //   tabBarPagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+        // } else {
+        //   tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
+        // }
       } else {
         emitWarning(`TabBar page path ${pagePath} is not exist in local page map, please check!`)
       }
@@ -84,8 +101,8 @@ export default function (script, {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
       delete attrs.src
-      // 目前ts模式都建议使用src来引ts，不支持使用lang内联编写ts
-      // delete attrs.lang
+      // script setup通过mpx处理，删除该属性避免vue报错
+      delete attrs.setup
       return attrs
     },
     content (script) {
@@ -159,16 +176,19 @@ export default function (script, {
       const componentsMap = {}
       Object.keys(localPagesMap).forEach((pagePath) => {
         const pageCfg = localPagesMap[pagePath]
-        const pageRequest = stringifyRequest(pageCfg.resource)
+        const { resource, async } = pageCfg
+        // const pageRequest = stringifyRequest(pageCfg.resource)
         if (tabBarMap && tabBarMap[pagePath]) {
-          pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), { __mpxBuiltIn: true })`
+          // pagesMap[pagePath] = `getComponent(require(${stringifyRequest(tabBarContainerPath)}), { __mpxBuiltIn: true })`
+          pagesMap[pagePath] = genComponentCode(tabBarContainerPath,  { async: false}, {  __mpxBuiltIn: true })
         } else {
-          if (pageCfg.async) {
-            pagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
-          } else {
-            // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-            pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
-          }
+          pagesMap[pagePath] = genComponentCode(resource, { async }, { __mpxPageRoute: JSON.stringify(pagePath) })
+          // if (pageCfg.async) {
+          //   pagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+          // } else {
+          //   // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
+          //   pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
+          // }
         }
       })
       Object.keys(localComponentsMap).forEach((componentName) => {

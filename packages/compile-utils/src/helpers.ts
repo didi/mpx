@@ -36,7 +36,7 @@ export default function createHelpers (loaderContext: any) {
   // @ts-ignore
   const { mode, env } = loaderContext.getMpx() || {}
 
-  function getRequire (type: string, part: Record<string, any>, extraOptions: Record<string, any>, index: number) {
+  function getRequire (type: string, part: Record<string, any>, extraOptions: Record<string, any>, index?: number) {
     return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
   }
 

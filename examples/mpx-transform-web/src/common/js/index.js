@@ -13,7 +13,7 @@ createPage({
   },
   onShow () {
     console.log('show index123')
-    console.log('test', swiperPage, mpx.i18n.locale)
+    console.log('test', swiperPage, mpx.i18n.t('message.title'))
   },
   methods: {
     reload () {

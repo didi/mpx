@@ -48,11 +48,13 @@ module.exports = {
     messages: {
       'en-US': {
         message: {
+          title: 'test',
           hello: '{msg} world'
         }
       },
       'zh-CN': {
         message: {
+          title: '中文',
           hello: '{msg} 世界'
         }
       }
