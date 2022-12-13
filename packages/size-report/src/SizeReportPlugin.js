@@ -728,6 +728,8 @@ class SizeReportPlugin {
         startServer(JSON.stringify(reportData), Object.assign({ logger }, this.options.server))
       }
 
+      this.options.callback && this.options.callback(reportData)
+
       logger.timeEnd('compute size')
     })
   }
