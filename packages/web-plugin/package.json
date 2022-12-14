@@ -76,7 +76,7 @@
     "@types/qs": "^6.9.7",
     "@typescript-eslint/eslint-plugin": "^4.26.1",
     "@typescript-eslint/parser": "^4.26.1",
-    "esbuild": "^0.16.3",
+    "esbuild": "^0.15.18",
     "eslint": "^7.28.0",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
@@ -98,6 +98,7 @@
     "@better-scroll/slide": "^2.2.1",
     "@better-scroll/wheel": "^2.2.1",
     "@better-scroll/zoom": "^2.2.1",
+    "@vitejs/plugin-vue2": "^2.0.0",
     "async": "^2.6.0",
     "debug": "^4.3.2",
     "hash-sum": "^1.0.2",
@@ -112,8 +113,7 @@
     "qs": "^6.10.1",
     "slash": "^3.0.0",
     "source-list-map": "^2.0.0",
-    "vite-plugin-vue2": "^2.0.0",
-    "vue-template-compiler": "~2.6.10"
+    "vue": "^2.7.0"
   },
   "peerDependencies": {
     "@better-scroll/core": "^2.2.1",
@@ -127,7 +127,7 @@
     "@mpxjs/webpack-plugin": "^2.7.40",
     "@mpxjs/compile-utils": "^2.7.40",
     "@mpxjs/loaders": "^2.7.40",
-    "esbuild": "^0.16.3",
+    "esbuild": "^0.15.18",
     "rollup": "^3.0.0",
     "vite": "^4.0.0",
     "webpack": "^5.48.0"

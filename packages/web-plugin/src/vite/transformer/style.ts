@@ -1,33 +1,12 @@
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
-import { TransformPluginContext, TransformResult } from 'rollup'
+import { TransformPluginContext } from 'rollup'
+import { TransformResult } from 'vite'
 import { mpxStyleTransform } from '@mpxjs/loaders/style-loader'
 import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../compiler'
 import { proxyPluginContext } from '../../pluginContextProxy/index'
 import mpx from '../mpx'
 import pathHash from '../utils/pageHash'
-
-async function mpxTransformStyle(
-  code: string,
-  filename: string,
-  descriptor: SFCDescriptor,
-  options: ResolvedOptions,
-  pluginContext: TransformPluginContext
-): Promise<TransformResult> {
-  return mpxStyleTransform(code, proxyPluginContext(pluginContext), {
-    sourceMap: options.sourceMap,
-    map: pluginContext.getCombinedSourcemap(),
-    resource: filename,
-    mpx: {
-      ...mpx,
-      ...options,
-      pathHash: pathHash,
-      isApp: descriptor.app
-    }
-  }).then(res => {
-    return res
-  })
-}
 
 /**
  * transfrom style
@@ -42,17 +21,19 @@ export async function transformStyle(
   filename: string,
   descriptor: SFCDescriptor,
   options: ResolvedOptions,
-  index: number,
   pluginContext: TransformPluginContext
 ): Promise<TransformResult | undefined> {
-  const mpxStyle = await mpxTransformStyle(
-    code,
-    filename,
-    descriptor,
-    options,
-    pluginContext
-  )
-  return mpxStyle
+  return mpxStyleTransform(code, proxyPluginContext(pluginContext), {
+    sourceMap: options.sourceMap,
+    map: pluginContext.getCombinedSourcemap(),
+    resource: filename,
+    mpx: {
+      ...mpx,
+      ...options,
+      pathHash: pathHash,
+      isApp: descriptor.app
+    }
+  })
 }
 
 /**

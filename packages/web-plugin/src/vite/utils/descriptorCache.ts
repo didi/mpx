@@ -76,6 +76,10 @@ export function createDescriptor(
   if (!descriptor.script) {
     descriptor.script = genDescriptorScript(descriptor)
   }
+  descriptor.wxsModuleMap = {}
+  descriptor.wxsContentMap = {}
+  descriptor.genericsInfo = undefined
+  descriptor.builtInComponentsMap = {}
   cache.set(filename, descriptor)
   return descriptor
 }

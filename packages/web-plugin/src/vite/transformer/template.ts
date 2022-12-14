@@ -1,13 +1,13 @@
 import { ParseHtmlNode } from '@mpxjs/compiler'
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import path from 'path'
-import { TransformPluginContext } from 'rollup'
+import { PluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { ResolvedOptions } from '../../options'
 import * as normalize from '@mpxjs/compile-utils/normalize'
 import templateCompiler, { SFCDescriptor } from '../compiler'
 
-const templateTransformCache: Record<string, string> = {}
+const mpxKeepAlivePath = normalize.runtime('components/web/mpx-keep-alive.vue')
 
 function calculateRootEleChild(arr: ParseHtmlNode[]) {
   if (!arr) return 0
@@ -32,30 +32,10 @@ function calculateRootEleChild(arr: ParseHtmlNode[]) {
  * @param pluginContext - TransformPluginContext
  */
 export async function transformTemplate(
-  code: string,
-  filename: string,
-  descriptor: SFCDescriptor
-): Promise<TransformResult | undefined> {
-  if (descriptor.template) {
-    return {
-      code: templateTransformCache[filename],
-      map: null
-    }
-  }
-}
-
-const mpxKeepAlivePath = normalize.runtime('components/web/mpx-keep-alive.vue')
-/**
- * collect template buildInComponent
- * @param descriptor - SFCDescriptor
- * @param options - ResolvedOptions
- * @param pluginContext - TransformPluginContext
- */
-export function processTemplate(
   descriptor: SFCDescriptor,
   options: ResolvedOptions,
-  pluginContext?: TransformPluginContext
-): void {
+  pluginContext: PluginContext
+): Promise<TransformResult | undefined> {
   const {
     mode,
     srcMode,
@@ -71,6 +51,8 @@ export function processTemplate(
   const wxsContentMap: SFCDescriptor['wxsContentMap'] = {}
   let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
 
+  let result
+
   if (template) {
     function addBuildComponent(name: string, resource: string) {
       builtInComponentsMap[name] = builtInComponentsMap[name] || {}
@@ -79,7 +61,10 @@ export function processTemplate(
 
     if (app) {
       addBuildComponent('mpx-keep-alive', mpxKeepAlivePath)
-      templateTransformCache[filename] = template.content
+      result = {
+        code: template.content,
+        map: null
+      }
     } else {
       const parsed = templateCompiler.parse(template.content, {
         warn: msg => {
@@ -119,10 +104,12 @@ export function processTemplate(
         const childLen = calculateRootEleChild(parsed.root.children)
         if (childLen >= 2) {
           parsed.root.tag = 'div'
-          templateCompiler.addAttrs(parsed.root, [{
-            name: 'class',
-            value: 'mpx-root-view'
-          }])
+          templateCompiler.addAttrs(parsed.root, [
+            {
+              name: 'class',
+              value: 'mpx-root-view'
+            }
+          ])
         }
       }
 
@@ -137,7 +124,10 @@ export function processTemplate(
         }
       }
 
-      templateTransformCache[filename] = templateCompiler.serialize(parsed.root)
+      result = {
+        code: templateCompiler.serialize(parsed.root),
+        map: null
+      }
     }
   }
 
@@ -145,6 +135,8 @@ export function processTemplate(
   descriptor.wxsContentMap = wxsContentMap
   descriptor.genericsInfo = genericsInfo
   descriptor.builtInComponentsMap = builtInComponentsMap
+
+  return result
 }
 
 /**
@@ -152,11 +144,23 @@ export function processTemplate(
  * @param descriptor - SFCDescriptor
  * @returns <template>descriptor.template.content</template>
  */
-export function genTemplateBlock(descriptor: SFCDescriptor): {
+export async function genTemplateBlock(
+  descriptor: SFCDescriptor,
+  options: ResolvedOptions,
+  pluginContext: PluginContext
+): Promise<{
   output: string
-} {
+}> {
+  const templateContent = await transformTemplate(
+    descriptor,
+    options,
+    pluginContext
+  )
   return {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    output: genComponentTag(descriptor.template!)
+    output: genComponentTag({
+      content: templateContent?.code,
+      tag: 'template',
+      attrs: descriptor.template?.attrs
+    })
   }
 }

@@ -23,7 +23,7 @@
   "license": "ISC",
   "dependencies": {
     "@mpxjs/api-proxy": "^2.7.1",
-    "vue": "^2.6.10",
+    "vue": "~2.6.10",
     "vue-i18n": "^8.15.3",
     "@mpxjs/core": "^2.7.2"
   },

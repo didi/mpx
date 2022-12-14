@@ -13,9 +13,8 @@ export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
       if (!filter(source)) return
       const { queryObj: query } = parseRequest(source)
       if (
-        mpxGlobal.entry === undefined &&
         query.resolve === undefined &&
-        query.mpx === undefined &&
+        query.vue === undefined &&
         query.app === undefined &&
         query.page === undefined &&
         query.component === undefined
@@ -25,13 +24,19 @@ export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
           skipSelf: true,
           ...options
         })
-        if (resolution) mpxGlobal.entry = resolution.id
-        return ENTRY_HELPER_CODE
+        if (resolution) {
+          if (mpxGlobal.entry === undefined) {
+            mpxGlobal.entry = resolution.id
+          } else if (mpxGlobal.entry === resolution.id) {
+            return ENTRY_HELPER_CODE
+          }
+        }
       }
     },
     load(id) {
-      if (id === ENTRY_HELPER_CODE && mpxGlobal.entry)
+      if (id === ENTRY_HELPER_CODE && mpxGlobal.entry) {
         return renderEntryCode(mpxGlobal.entry, options)
+      }
     }
   }
 }

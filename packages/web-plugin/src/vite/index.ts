@@ -1,5 +1,5 @@
 import { createFilter, Plugin, UserConfig } from 'vite'
-import { createVuePlugin } from 'vite-plugin-vue2'
+import createVuePlugin from '@vitejs/plugin-vue2'
 import { Options, processOptions, ResolvedOptions } from '../options'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
 import { stringifyObject } from '../utils/stringify'
@@ -24,12 +24,7 @@ import { createSplitPackageChunkPlugin } from './plugins/splitPackageChunkPlugin
 import { createWxsPlugin } from './plugins/wxsPlugin'
 import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
-import { transformTemplate } from './transformer/template'
 import { getDescriptor } from './utils/descriptorCache'
-
-export const mpxVuePlugin = createVuePlugin({
-  include: /\.vue|\.mpx$/
-})
 
 function createMpxPlugin(
   options: ResolvedOptions,
@@ -105,22 +100,10 @@ function createMpxPlugin(
       if (query.resolve !== undefined) {
         return renderPageRouteCode(options, filename)
       }
-      if (query.vue !== undefined) {
+      if (query.type === 'globalDefine') {
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          let block
-          if (query.type === 'template') {
-            block = descriptor.template
-          } else if (query.type === 'style') {
-            block = descriptor.styles[Number(query.index)]
-          } else if (query.type === 'globalDefine') {
-            block = {
-              content: renderMpxPresetCode(descriptor, options)
-            }
-          }
-          if (block) {
-            return block.content
-          }
+          return renderMpxPresetCode(descriptor, options)
         }
       }
     },
@@ -133,13 +116,6 @@ function createMpxPlugin(
         // mpx file => vue file
         return await transformMain(code, filename, query, options, this)
       } else {
-        if (query.type === 'template') {
-          // mpx template => vue template
-          const descriptor = getDescriptor(filename)
-          if (descriptor) {
-            return await transformTemplate(code, filename, descriptor)
-          }
-        }
         if (query.type === 'style') {
           // mpx style => vue style
           const descriptor = getDescriptor(filename)
@@ -149,7 +125,6 @@ function createMpxPlugin(
               filename,
               descriptor,
               options,
-              Number(query.index),
               this
             )
           }
@@ -168,6 +143,12 @@ export default function mpx(options: Options = {}): Plugin[] {
   const { mode, env, fileConditionRules } = resolvedOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
   const plugins = [
+    // add custom extensions
+    customExtensionsPlugin({
+      include: /@mpxjs|\.mpx/,
+      fileConditionRules,
+      extensions: customExtensions
+    }),
     // mpx => vue
     createMpxPlugin(resolvedOptions, {
       optimizeDeps: {
@@ -184,18 +165,14 @@ export default function mpx(options: Options = {}): Plugin[] {
       }
     }),
     createWxsPlugin(),
-    // add custom extensions
-    customExtensionsPlugin({
-      include: /@mpxjs|\.mpx/,
-      fileConditionRules,
-      extensions: customExtensions
-    }),
     // ensure mpx entry point
     createResolveEntryPlugin(resolvedOptions),
     // split subpackage chunk
     createSplitPackageChunkPlugin(),
     // vue support for mpxjs/rumtime
-    mpxVuePlugin
+    createVuePlugin({
+      include: /\.vue|\.mpx$/
+    })
   ]
 
   return plugins

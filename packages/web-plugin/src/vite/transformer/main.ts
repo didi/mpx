@@ -5,7 +5,7 @@ import { createDescriptor } from '../utils/descriptorCache'
 import { processJSON } from './json'
 import { genScriptBlock, transformScript } from './script'
 import { genStylesBlock } from './style'
-import { genTemplateBlock, processTemplate } from './template'
+import { genTemplateBlock } from './template'
 
 export async function transformMain(
   code: string,
@@ -18,10 +18,12 @@ export async function transformMain(
   if (descriptor) {
     // set pages/component to descriptor
     await processJSON(descriptor, options, pluginContext)
-    // set builtInComponent/genericsInfo to descriptor
-    processTemplate(descriptor, options, pluginContext)
     // generate template block, delay transform template
-    const templateBlock = genTemplateBlock(descriptor)
+    const templateBlock = await genTemplateBlock(
+      descriptor,
+      options,
+      pluginContext
+    )
     // transform script
     const { code, map } = await transformScript(
       descriptor,
@@ -31,7 +33,7 @@ export async function transformMain(
     // generate script block
     const scriptBlock = await genScriptBlock(descriptor, code)
     // generate styles block, delay transform style
-    const stylesBlock = genStylesBlock(descriptor)
+    const stylesBlock = await genStylesBlock(descriptor)
     const vueSfc = genVueSfc(templateBlock, scriptBlock, stylesBlock)
     if (query.type === 'main') descriptor.vueSfc = vueSfc
     return {

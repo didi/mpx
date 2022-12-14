@@ -1,4 +1,5 @@
 import { matchCondition } from '@mpxjs/compile-utils/match-condition'
+import parseRequest from '@mpxjs/compile-utils/parse-request'
 import { Plugin as EsbuildPlugin } from 'esbuild'
 import fs from 'fs'
 import path from 'path'
@@ -62,15 +63,14 @@ export function customExtensionsPlugin(
     name: 'vite:mpx-custom-estensions',
     async load(id) {
       if (!filter(id) || !matchCondition(id, options.fileConditionRules)) return
-      if (id) {
-        const [filename] = id.split('?', 2)
-        for (const extendsion of options.extensions) {
-          try {
-            const filePath = genExtensionsFilePath(filename, extendsion)
-            await fs.promises.access(filePath)
-            return await fs.promises.readFile(filePath, 'utf-8')
-          } catch {}
-        }
+      const { resourcePath: filename, queryObj: query } = parseRequest(id)
+      if (query.vue) return
+      for (const extendsion of options.extensions) {
+        try {
+          const filePath = genExtensionsFilePath(filename, extendsion)
+          await fs.promises.access(filePath)
+          return await fs.promises.readFile(filePath, 'utf-8')
+        } catch {}
       }
     }
   }
