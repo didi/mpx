@@ -56,7 +56,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['lodash/throttle']
+    // include: ['lodash']
   },
   css: {
     devSourcemap: !(process.env.NODE_ENV === 'production')

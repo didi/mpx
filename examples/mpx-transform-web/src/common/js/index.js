@@ -1,5 +1,5 @@
 import mpx, { createPage } from '@mpxjs/core'
-import swiperPage from '../../packageA/pages/swiper.mpx?resolve'
+// import swiperPage from '../../packageA/pages/swiper.mpx?resolve'
 createPage({
   data: {
     a: 1,
@@ -10,8 +10,8 @@ createPage({
     console.log('load index')
   },
   onShow () {
-    console.log('show index123')
-    console.log('test', swiperPage, mpx.i18n.locale)
+    console.log('show index12455555511121312313')
+    // console.log('test', swiperPage, mpx.i18n.locale)
   },
   methods: {
     reload () {
@@ -19,7 +19,7 @@ createPage({
     },
     jumpPage () {
       mpx.navigateTo({
-        url: swiperPage
+        // url: swiperPage
       })
     }
   }

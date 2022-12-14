@@ -1,5 +1,5 @@
 import mpx, { createPage } from '@mpxjs/core'
-import swiperPage from '../packageA/pages/swiper.mpx?resolve'
+// import swiperPage from '../packageA/pages/swiper.mpx?resolve'
 createPage({
   data: {
     a: 1,
@@ -11,7 +11,7 @@ createPage({
   },
   onShow () {
     console.log('show index')
-    console.log(111, swiperPage)
+    // console.log(111, swiperPage)
   },
   methods: {
     reload () {
@@ -19,7 +19,7 @@ createPage({
     },
     jumpPage () {
       mpx.navigateTo({
-        url: swiperPage
+        // url: swiperPage
       })
     }
   }
