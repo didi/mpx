@@ -1,5 +1,4 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
-import { transformMain as vueTransformMain } from 'vite-plugin-vue2/dist/main.js'
 import { ResolvedOptions } from '../../options'
 import { Query } from '../../types/query'
 import { createDescriptor } from '../utils/descriptorCache'
@@ -33,25 +32,15 @@ export async function transformMain(
     const scriptBlock = await genScriptBlock(descriptor, code)
     // generate styles block, delay transform style
     const stylesBlock = genStylesBlock(descriptor)
-    // transform to vue
-    const { code: vueCode } = await vueTransformMain(
-      genVueSfc(templateBlock, scriptBlock, stylesBlock),
-      filename,
-      options,
-      pluginContext
-    )
-    // replace "*.mpx?vue" to "*.mpx?mpx"
-    // this way mpx does not enter the logic of the VuePlugin
-    // replace all \/\/\n for sourceMap
+    const vueSfc = genVueSfc(templateBlock, scriptBlock, stylesBlock)
+    if (query.type === 'main') descriptor.vueSfc = vueSfc
     return {
-      code: vueCode
-        .replace(/(\.mpx)(\?vue)/g, `$1?mpx`)
-        .replace(/^(\/\/\n)*/, ''),
+      code: vueSfc,
       map: map
     }
   }
 }
 
 function genVueSfc(...args: { output: string }[]) {
-  return args.map((v) => v.output).join('\n')
+  return args.map(v => v.output).join('\n')
 }

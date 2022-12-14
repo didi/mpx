@@ -4,7 +4,7 @@
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
   import ObserveDom from '@better-scroll/observe-dom'
-  import throttle from 'lodash/throttle'
+  import throttle from 'lodash-es/throttle'
 
   BScroll.use(ObserveDom)
   BScroll.use(PullDown)

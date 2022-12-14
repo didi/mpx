@@ -25,7 +25,8 @@ export interface SFCDescriptor extends CompilerResult {
   wxsModuleMap: Record<string, string>
   wxsContentMap: Record<string, string>
   tabBarMap: Record<string, unknown>
-  tabBarStr: string
+  tabBarStr: string,
+  vueSfc: string
 }
 
 interface Compiler extends MpxCompiler {

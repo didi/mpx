@@ -84,7 +84,7 @@ export async function transformScript(
   s.prepend(
     `\n${genImport(
       addQuery(descriptor.filename, {
-        mpx: true,
+        vue: true,
         type: 'globalDefine'
       })
     )}`

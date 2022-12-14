@@ -27,16 +27,16 @@ import { transformStyle } from './transformer/style'
 import { transformTemplate } from './transformer/template'
 import { getDescriptor } from './utils/descriptorCache'
 
+export const mpxVuePlugin = createVuePlugin({
+  include: /\.vue|\.mpx$/
+})
+
 function createMpxPlugin(
   options: ResolvedOptions,
   userConfig?: UserConfig
 ): Plugin {
   const { include, exclude } = options
   const filter = createFilter(include, exclude)
-
-  const mpxVuePlugin = createVuePlugin({
-    include
-  })
 
   return {
     name: 'vite:mpx',
@@ -70,10 +70,10 @@ function createMpxPlugin(
     },
 
     handleHotUpdate(ctx) {
-      return handleHotUpdate(ctx, options)
+      return handleHotUpdate(ctx)
     },
 
-    async resolveId(id, ...args) {
+    async resolveId(id) {
       if (
         id === APP_HELPER_CODE ||
         id === I18N_HELPER_CODE ||
@@ -81,10 +81,6 @@ function createMpxPlugin(
       ) {
         return id
       }
-      // return vue resolveId
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      return mpxVuePlugin.resolveId?.call(this, id, ...args)
     },
 
     load(id) {
@@ -109,7 +105,7 @@ function createMpxPlugin(
       if (query.resolve !== undefined) {
         return renderPageRouteCode(options, filename)
       }
-      if (query.mpx !== undefined) {
+      if (query.vue !== undefined) {
         const descriptor = getDescriptor(filename)
         if (descriptor) {
           let block
@@ -117,7 +113,7 @@ function createMpxPlugin(
             block = descriptor.template
           } else if (query.type === 'style') {
             block = descriptor.styles[Number(query.index)]
-          } else if (query.type === 'globalDefine'){
+          } else if (query.type === 'globalDefine') {
             block = {
               content: renderMpxPresetCode(descriptor, options)
             }
@@ -127,17 +123,13 @@ function createMpxPlugin(
           }
         }
       }
-      // return vue load
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      return mpxVuePlugin.load?.call(this, id)
     },
 
     async transform(code, id) {
       const { queryObj: query, resourcePath: filename } = parseRequest(id)
       if (!filter(filename)) return
       if (query.resolve !== undefined) return
-      if (query.mpx === undefined) {
+      if (query.vue === undefined) {
         // mpx file => vue file
         return await transformMain(code, filename, query, options, this)
       } else {
@@ -145,13 +137,7 @@ function createMpxPlugin(
           // mpx template => vue template
           const descriptor = getDescriptor(filename)
           if (descriptor) {
-            return await transformTemplate(
-              code,
-              filename,
-              descriptor,
-              options,
-              this
-            )
+            return await transformTemplate(code, filename, descriptor)
           }
         }
         if (query.type === 'style') {
@@ -167,6 +153,10 @@ function createMpxPlugin(
               this
             )
           }
+        }
+        if (query.type === 'main') {
+          await transformMain(code, filename, query, options, this)
+          return 'export default {}'
         }
       }
     }
@@ -205,7 +195,7 @@ export default function mpx(options: Options = {}): Plugin[] {
     // split subpackage chunk
     createSplitPackageChunkPlugin(),
     // vue support for mpxjs/rumtime
-    createVuePlugin()
+    mpxVuePlugin
   ]
 
   return plugins

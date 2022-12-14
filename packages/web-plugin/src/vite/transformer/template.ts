@@ -3,7 +3,6 @@ import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import path from 'path'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
-import { compileSFCTemplate as vueTransformTemplate } from 'vite-plugin-vue2/dist/template.js'
 import { ResolvedOptions } from '../../options'
 import * as normalize from '@mpxjs/compile-utils/normalize'
 import templateCompiler, { SFCDescriptor } from '../compiler'
@@ -35,18 +34,13 @@ function calculateRootEleChild(arr: ParseHtmlNode[]) {
 export async function transformTemplate(
   code: string,
   filename: string,
-  descriptor: SFCDescriptor,
-  options: ResolvedOptions,
-  pluginContext: TransformPluginContext
+  descriptor: SFCDescriptor
 ): Promise<TransformResult | undefined> {
   if (descriptor.template) {
-    return await vueTransformTemplate(
-      templateTransformCache[filename], // use processTemplate transform cache
-      descriptor.template,
-      filename,
-      options,
-      pluginContext
-    )
+    return {
+      code: templateTransformCache[filename],
+      map: null
+    }
   }
 }
 

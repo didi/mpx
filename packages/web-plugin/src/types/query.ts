@@ -6,7 +6,7 @@ export interface Query {
   component?: null
   resolve?: null
   src?: string
-  type?: 'script' | 'template' | 'style' | 'custom' | 'global'
+  type?: 'script' | 'template' | 'style' | 'custom' | 'global' | 'main'
   index?: string
   lang?: string
   raw?: string

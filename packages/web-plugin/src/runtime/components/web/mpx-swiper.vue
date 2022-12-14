@@ -2,7 +2,7 @@
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import Slide from '@better-scroll/slide'
-  import throttle from 'lodash/throttle'
+  import throttle from 'lodash-es/throttle'
 
   BScroll.use(Slide)
 
