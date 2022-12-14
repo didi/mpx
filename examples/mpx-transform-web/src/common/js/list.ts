@@ -1,5 +1,7 @@
 import { createComponent } from '@mpxjs/core'
 
+console.log(123131344445555)
+
 createComponent({
   externalClasses: ['list-class'],
   data: {

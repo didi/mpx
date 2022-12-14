@@ -6,7 +6,7 @@
 
 <script lang="ts" src="../common/js/list.ts"></script>
 
-<style lang="stylus">
+<style lang="stylus" scoped>
   .container
     color #fff
 </style>

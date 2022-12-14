@@ -26,7 +26,7 @@
     "@mpxjs/web-plugin": "workspace:*",
     "@mpxjs/webpack-plugin": "workspace:*",
     "mime": "^2.6.0",
-    "vue": "~2.6.10",
+    "vue": "~2.7.0",
     "vue-i18n": "^8.15.3"
   },
   "browserslist": [
@@ -83,6 +83,6 @@
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-merge": "^5.8.0",
     "lodash": "^4.1.1",
-    "esbuild": "^0.14.14"
+    "esbuild": "^0.15.18"
   }
 }

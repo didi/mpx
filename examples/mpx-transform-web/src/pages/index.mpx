@@ -1,5 +1,5 @@
 <template>
-  <view bindtap="reload">12319999123131321321</view>
+  <view bindtap="reload">222</view>
   <text wx:if="{{a === 1}}" bindtap="jumpPage">test24</text>
   <view>{{$t('page_title')}}</view>
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
