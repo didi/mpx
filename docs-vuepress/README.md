@@ -28,7 +28,7 @@ threeSection:
   actionText: 查看详情
   actionLink: https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html#/pages/index
   img: https://dpubstatic.udache.com/static/dpubimg/nYbrJSPSz7/anli_pic_phone.png
-  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_bg.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_bg_v2.png
   list:
     - title: 微信
       icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_normal.png
@@ -56,7 +56,7 @@ fourSection:
   details: 得益于增强的设计思路，Mpx在运行时没有复杂的封装抹平逻辑，而是专注于实现数据响应，setData优化和Composition api等关键增强能力，压缩后体积占用仅为60KB；配合编译构建中灵活强大的包体积分析优化能力，Mpx在性能与包体积方面做到了业内最优。
   img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
   mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
-  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jizhi_bg.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jizhi_bg_v2.png
   actionText: 点击进入
   actionLink: /guide/basic/start.html
 fiveSection:
@@ -64,13 +64,13 @@ fiveSection:
   details: 同样得益于增强的设计思路，Mpx能够完整兼容小程序原生技术规范，并以较低的成本进行持续跟进；借助框架提供的渐进迁移能力，小程序开发者可以方便地在Mpx项目中使用已有的原生开发生态，如组件库，统计工具等，同时也能将Mpx开发的组件输出到原生小程序项目中使用。
   img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
   mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
-  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jianjin_bg.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jianjin_bg_v2.png
   actionText: 点击进入
   actionLink: /guide/basic/start.html
 sixSection:
   title: 开发生态
   mtitle: 开发生态
-  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/kaifa_bg.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/kaifa_bg_v2.png
   details:
   - title: '@mpxjs/core'
     details: 运行时核心
@@ -110,7 +110,7 @@ sixSection:
     actionLink: /guide/advance/size-report.html
 sevenSection:
   title: 成功案例
-  bg: https://dpubstatic.udache.com/static/dpubimg/2OIisHD1qa/anli_bg.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/anli_bg_v2.png
   details:
   - title: 滴滴出行
     details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
