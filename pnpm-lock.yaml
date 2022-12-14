@@ -585,7 +585,7 @@ importers:
       '@mpxjs/webpack-plugin': link:../../packages/webpack-plugin
       mime: 2.6.0
       vue: 2.6.14
-      vue-i18n: 8.28.2_vue@2.6.14
+      vue-i18n: 8.28.2
     devDependencies:
       '@babel/core': 7.20.5
       '@babel/eslint-parser': 7.19.1_q7hszagzy73il6awuziitdhqxe
@@ -631,7 +631,7 @@ importers:
       vconsole: 3.15.0
       vite: 4.0.1_75iag5z6lodagqrx6mnrcpq6jy
       vue-loader: 15.10.1_tol3wgcfbjl54e2ppfs7m6pkna
-      vue-router: 3.6.5_vue@2.6.14
+      vue-router: 3.6.5
       vue-style-loader: 4.1.3
       vue-template-compiler: 2.6.14
       webpack: 5.75.0_esbuild@0.14.54
@@ -700,7 +700,7 @@ importers:
       '@mpxjs/api-proxy': link:../../packages/api-proxy
       '@mpxjs/core': link:../../packages/core
       vue: 2.6.14
-      vue-i18n: 8.28.2_vue@2.6.14
+      vue-i18n: 8.28.2
     devDependencies:
       '@babel/core': 7.20.5
       '@babel/eslint-parser': 7.19.1_q7hszagzy73il6awuziitdhqxe
@@ -741,7 +741,7 @@ importers:
       ts-loader: 9.4.2_vfotqvx6lgcbf3upbs6hgaza4q
       typescript: 4.9.3
       vue-loader: 15.10.1_3ho5ykzbvmvfkuf2v27g4fqpj4
-      vue-router: 3.6.5_vue@2.6.14
+      vue-router: 3.6.5
       vue-style-loader: 4.1.3
       vue-template-compiler: 2.6.14
       webpack: 5.75.0
@@ -1058,8 +1058,10 @@ importers:
 
   packages/loaders:
     specifiers:
+      '@babel/generator': ^7.16.0
       '@babel/parser': ^7.16.2
       '@babel/traverse': ^7.16.0
+      '@babel/types': ^7.16.0
       '@mpxjs/compile-utils': workspace:*
       '@mpxjs/compiler': workspace:*
       '@mpxjs/web-plugin': workspace:*
@@ -1071,13 +1073,17 @@ importers:
       json5: ^2.1.3
       loader-utils: ^2.0.2
       mime: ^2.6.0
+      postcss: ^8.4.5
       typescript: ^4.3.2
     dependencies:
+      '@babel/generator': 7.20.5
       '@babel/parser': 7.20.5
       '@babel/traverse': 7.20.5
+      '@babel/types': 7.20.5
       json5: 2.2.1
       loader-utils: 2.0.4
       mime: 2.6.0
+      postcss: 8.4.19
     devDependencies:
       '@mpxjs/compile-utils': link:../compile-utils
       '@mpxjs/compiler': link:../compiler
@@ -7031,7 +7037,7 @@ packages:
       loader-utils: 2.0.4
       make-dir: 3.1.0
       schema-utils: 2.7.1
-      webpack: 5.75.0_esbuild@0.14.54
+      webpack: 5.75.0
     dev: true
 
   /babel-plugin-istanbul/5.2.0:
@@ -18315,7 +18321,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.3.8
       typescript: 4.9.3
-      webpack: 5.75.0_esbuild@0.14.54
+      webpack: 5.75.0
     dev: true
 
   /ts-node/8.10.2:
@@ -18955,12 +18961,8 @@ packages:
     resolution: {integrity: sha512-BXq3jwIagosjgNVae6tkHzzIk6a8MHFtzAdwhnV5VlvPTFxDCvIttgSiHWjdGoTJvXtmRu5HacExfdarRcFhog==}
     dev: true
 
-  /vue-i18n/8.28.2_vue@2.6.14:
+  /vue-i18n/8.28.2:
     resolution: {integrity: sha512-C5GZjs1tYlAqjwymaaCPDjCyGo10ajUphiwA922jKt9n7KPpqR7oM1PCwYzhB/E7+nT3wfdG3oRre5raIT1rKA==}
-    peerDependencies:
-      vue: ^2
-    dependencies:
-      vue: 2.6.14
     dev: false
 
   /vue-lazyload/1.2.3:
@@ -19208,16 +19210,6 @@ packages:
 
   /vue-router/3.6.5:
     resolution: {integrity: sha512-VYXZQLtjuvKxxcshuRAwjHnciqZVoXAjTjcqBTz4rKc8qih9g9pI3hbDjmqXaHdgL3v8pV6P8Z335XvHzESxLQ==}
-    peerDependencies:
-      vue: ^2
-    dev: true
-
-  /vue-router/3.6.5_vue@2.6.14:
-    resolution: {integrity: sha512-VYXZQLtjuvKxxcshuRAwjHnciqZVoXAjTjcqBTz4rKc8qih9g9pI3hbDjmqXaHdgL3v8pV6P8Z335XvHzESxLQ==}
-    peerDependencies:
-      vue: ^2
-    dependencies:
-      vue: 2.6.14
     dev: true
 
   /vue-style-loader/4.1.3:
