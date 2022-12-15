@@ -1,4 +1,4 @@
-import { TransformPluginContext } from 'rollup'
+import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 import { ResolvedOptions } from '../options'
 import addQuery from '@mpxjs/compile-utils/add-query'
@@ -134,7 +134,7 @@ export function renderAppHelpCode(
 export const renderTabBarPageCode = async (
   options: ResolvedOptions,
   descriptor: SFCDescriptor,
-  pluginContext: TransformPluginContext
+  pluginContext: PluginContext
 ): Promise<string> => {
   const customBarPath = './custom-tab-bar/index?component'
   const tabBars: string[] = []
