@@ -20,8 +20,7 @@ export default async function handleHotUpdate(ctx: HmrContext) {
     })
     await ctx.server.transformRequest(id)
     const descriptor = getDescriptor(filename)
-    if (descriptor && descriptor.vueSfc) return descriptor.vueSfc
-    return ''
+    return descriptor?.vueSfc || ''
   }
 }
 
