@@ -46,11 +46,11 @@ export interface Options {
   hackResolveBuildDependencies?: (result?: string) => void
 }
 
-export interface ResolvedOptions extends Required<Options> {
+export interface ResolvedOptions extends Options {
   sourceMap?: boolean
   devServer?: ViteDevServer
   root: string
-  isProduction: boolean,
+  isProduction: boolean
   base?: string
 }
 

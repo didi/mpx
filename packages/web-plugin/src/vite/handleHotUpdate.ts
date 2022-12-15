@@ -14,14 +14,13 @@ export default async function handleHotUpdate(ctx: HmrContext) {
     const id = addQuery(filename, {
       type: 'main',
       vue: true,
-      page: prevDescriptor?.page,
+      page: prevDescriptor?.isPage,
       app: prevDescriptor?.app,
-      component: prevDescriptor?.component
+      component: prevDescriptor?.isComponent
     })
     await ctx.server.transformRequest(id)
     const descriptor = getDescriptor(filename)
-    if (descriptor && descriptor.vueSfc) return descriptor.vueSfc
-    return ''
+    return descriptor?.vueSfc || ''
   }
 }
 

@@ -42,7 +42,7 @@ export function evalJSONJS(
       const filename = require.resolve(request)
       callback(filename)
       const source = fs.readFileSync(filename).toString('utf-8')
-      return evalJSONJS(source, filename, fs, defs, callback)
+      return evalJSONJS(source, filename, fs, defs || {}, callback)
     },
     filename,
     dirname,
@@ -60,7 +60,7 @@ export default async function getJSONContent(
   },
   filename: string,
   pluginContext: ProxyPluginContext,
-  defs: Record<string, any>,
+  defs: Record<string, any> | unknown,
   fs: any
 ): Promise<string> {
   let jsonContent = json.content
@@ -78,7 +78,7 @@ export default async function getJSONContent(
   }
   if (useJSONJS) {
     return JSON.stringify(
-      evalJSONJS(jsonContent, resourcePath, defs, fs, filename => {
+      evalJSONJS(jsonContent, resourcePath, defs || {} , fs, filename => {
         pluginContext.addDependency(filename)
       })
     )

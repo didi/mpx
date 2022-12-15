@@ -1,7 +1,8 @@
 <template>
-  <view bindtap="reload">222</view>
+  <view bindtap="reload">__UNPLUGIN__1111</view>
   <text wx:if="{{a === 1}}" bindtap="jumpPage">test24</text>
-  <view>{{$t('page_title')}}</view>
+  <view>{{$t('message.title')}}</view>
+<!--  <image wx:src="{{img}}"></image>-->
 <!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
  <list list-class="list"></list>
  <switch></switch>123
@@ -17,7 +18,7 @@
 <script lang="js" src="../common/js/index"></script>
 <style scoped>
   .list {
-    background: red;
+    background: blue;
     height: 200rpx;
   }
 </style>

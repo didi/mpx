@@ -11,6 +11,7 @@
         bindtap="switchTab(item)">
 
         <view class="wrapper" id="{{ item.id }}">
+          <image src="{{item.iconPath}}" wx:if="{{item.iconPath}}"></image>
           <view class="item-text" wx:if="{{item.text}}" wx:style="{{'color: ' + item.text_color}}">{{ item.text }}</view>
         </view>
       </view>

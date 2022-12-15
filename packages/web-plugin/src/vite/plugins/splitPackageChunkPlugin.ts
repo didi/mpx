@@ -9,7 +9,7 @@ function createSplitPackageChunk() {
       const descriptor = getDescriptor(mpxGlobal.entry)
       if (descriptor) {
         const { jsonConfig } = descriptor
-        const { subpackages } = jsonConfig
+        const { subpackages = [] } = jsonConfig
         for (const { root } of subpackages) {
           if (root && (id.includes(root))) {
             return root

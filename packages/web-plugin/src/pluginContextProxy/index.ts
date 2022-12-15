@@ -11,6 +11,8 @@ export interface ProxyPluginContext {
   resource?: string
   resourcePath?: string
   sourceMap?: boolean
+  warn(warn: any): void,
+  error(err: any): void
 }
 
 export function proxyPluginContext(
@@ -35,12 +37,16 @@ export function proxyPluginContext(
       cacheable: pluginContext.cacheable.bind(pluginContext),
       async: pluginContext.async.bind(pluginContext),
       resource: pluginContext.resource,
-      sourceMap: pluginContext.sourceMap
+      sourceMap: pluginContext.sourceMap,
+      warn: pluginContext.emitWarning.bind(pluginContext),
+      error: pluginContext.emitError.bind(pluginContext)
     }
   } else {
     return {
       resolve: pluginContext.resolve.bind(pluginContext),
       addDependency: pluginContext.addWatchFile.bind(pluginContext),
+      warn:pluginContext.warn.bind(pluginContext),
+      error: pluginContext.error.bind(pluginContext),
       cacheable: NOOP,
       async: NOOP,
       resource: rollupOptions?.moduleId,

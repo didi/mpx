@@ -1,8 +1,8 @@
 {
   "pages": [
+    "./pages/wxs?async=app_pages2",
     "./pages/index",
-    "./pages/wxs",
-    "./pages/index2"
+    "./pages/index2?async=app_pages1"
   ],
   "packages": ["./packages/index"],
   "subpackages": [
@@ -22,10 +22,14 @@
     "backgroundColor": "#fff",
     "list": [{
       "pagePath": "pages/index",
-      "text": "page1"
+      "text": "page1",
+//      "iconPath": "./images/icon1.png"
+      "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
     }, {
       "pagePath": "pages/wxs",
-      "text": "page2"
+      "text": "page2",
+//      "iconPath": "./images/icon2.png"
+      "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
     }]
   }
 }

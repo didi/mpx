@@ -1,4 +1,4 @@
-const isUrlRequestRaw = require('loader-utils').isUrlRequest
+import loaderUtils from 'loader-utils'
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
 
 export default function isUrlRequest (url: string, root: any, externals: any[]) {
@@ -18,5 +18,5 @@ export default function isUrlRequest (url: string, root: any, externals: any[]) 
     }
     return false
   })) return false
-  return isUrlRequestRaw(url, root)
+  return loaderUtils.isUrlRequest(url, root)
 }

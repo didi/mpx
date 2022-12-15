@@ -38,7 +38,7 @@ module.exports = {
       mode: 'only',
       comment: 'use rpx',
       include: resolve('src')
-    },
+    }
   ],
 
   // 多语言i18n能力 以下是简单示例，更多详情请参考文档：https://didi.github.io/mpx/i18n.html
@@ -48,11 +48,13 @@ module.exports = {
     messages: {
       'en-US': {
         message: {
+          title: 'test',
           hello: '{msg} world'
         }
       },
       'zh-CN': {
         message: {
+          title: '中文',
           hello: '{msg} 世界'
         }
       }

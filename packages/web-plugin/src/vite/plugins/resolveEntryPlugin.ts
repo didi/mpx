@@ -16,8 +16,8 @@ export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
         query.resolve === undefined &&
         query.vue === undefined &&
         query.app === undefined &&
-        query.page === undefined &&
-        query.component === undefined
+        query.isPage === undefined &&
+        query.isComponent === undefined
       ) {
         // entry mpx
         const resolution = await this.resolve(source, importer, {

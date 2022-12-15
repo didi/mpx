@@ -1,10 +1,10 @@
 import path from 'path'
 import slash from 'slash'
-import { ResolvedOptions } from '../../options'
+import compiler from '../compiler'
 import { Query } from '../../types/query'
-import compiler, { SFCDescriptor } from '../compiler'
-import pathHash from './pageHash'
-
+import { SFCDescriptor } from '../../types/compiler'
+import pathHash from '../../utils/pageHash'
+import { ResolvedOptions } from '../../options'
 const cache = new Map<string, SFCDescriptor>()
 const prevCache = new Map<string, SFCDescriptor | undefined>()
 
@@ -34,12 +34,12 @@ function genDescriptorScript(descriptor: SFCDescriptor) {
 import { createApp } from "@mpxjs/core"
 createApp({})`
   }
-  if (descriptor.page) {
+  if (descriptor.isPage) {
     script.content = `
 import { createPage } from "@mpxjs/core"
 createPage({})`
   }
-  if (descriptor.component) {
+  if (descriptor.isComponent) {
     script.content = `
 import { createComponent } from "@mpxjs/core"
 createComponent({})`
@@ -53,7 +53,7 @@ export function createDescriptor(
   query: Query,
   options: ResolvedOptions
 ): SFCDescriptor {
-  const { projectRoot, isProduction, mode, defs, env, sourceMap } = options
+  const { projectRoot = '', isProduction, mode = 'web', defs, env, sourceMap } = options
   const descriptor = compiler.parseComponent(code, {
     mode,
     defs,
@@ -67,9 +67,9 @@ export function createDescriptor(
   )
   descriptor.id = pathHash(normalizedPath + (isProduction ? code : ''))
   descriptor.filename = filename
-  descriptor.page = query.page !== undefined
-  descriptor.component = query.component !== undefined
-  descriptor.app = !(descriptor.page || descriptor.component)
+  descriptor.isPage = query.isPage !== undefined
+  descriptor.isComponent = query.isComponent !== undefined
+  descriptor.app = !(descriptor.isPage || descriptor.isComponent)
   if (descriptor.app) {
     descriptor.template = genDescriptorTemplate()
   }

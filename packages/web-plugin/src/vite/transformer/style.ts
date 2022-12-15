@@ -3,13 +3,13 @@ import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { mpxStyleTransform } from '@mpxjs/loaders/style-loader'
 import { ResolvedOptions } from '../../options'
-import { SFCDescriptor } from '../compiler'
-import { proxyPluginContext } from '../../pluginContextProxy/index'
+import { SFCDescriptor } from '../../types/compiler'
+import { proxyPluginContext } from '../../pluginContextProxy'
 import mpx from '../mpx'
-import pathHash from '../utils/pageHash'
+import pathHash from '../../utils/pageHash'
 
 /**
- * transfrom style
+ * transform style
  * @param code - style code
  * @param filename - filename
  * @param descriptor - SFCDescriptor

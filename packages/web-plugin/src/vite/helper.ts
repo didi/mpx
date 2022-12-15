@@ -5,7 +5,7 @@ import addQuery from '@mpxjs/compile-utils/add-query'
 import { genImport } from '../utils/genCode'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
 import stringify, { shallowStringify } from '../utils/stringify'
-import { SFCDescriptor } from './compiler'
+import { SFCDescriptor } from '../types/compiler'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
 
@@ -41,7 +41,7 @@ export const renderEntryCode = async (
     BScroll.use(PullDown)
     global.BScroll = BScroll
     new Vue({
-      el: ${options.webConfig.el || '"#app"'},
+      el: ${options.webConfig?.el || '"#app"'},
       ${options.i18n ? `i18n,` : ''}
       render: function(h){
         return h(App)
@@ -136,14 +136,14 @@ export const renderTabBarPageCode = async (
   descriptor: SFCDescriptor,
   pluginContext: PluginContext
 ): Promise<string> => {
-  const customBarPath = './custom-tab-bar/index?component'
+  const customBarPath = './custom-tab-bar/index?isComponent'
   const tabBars: string[] = []
   const {
     filename,
     tabBarStr,
     jsonConfig,
     tabBarMap,
-    pagesMap: localPagesMap
+    localPagesMap
   } = descriptor
   const { tabBar } = jsonConfig
 
@@ -166,7 +166,7 @@ export const renderTabBarPageCode = async (
     tabBars.push(genImport(tabBarPath, varName))
     tabBarPagesMap['mpx-tab-bar'] = genComponentCode(varName, tabBarPath)
     Object.keys(tabBarMap).forEach((tarbarName, index) => {
-      const tabBarId = localPagesMap[tarbarName]
+      const tabBarId = localPagesMap[tarbarName].resource
       if (tabBarId) {
         const varName = `__mpx_tabBar__${index}`
         const { queryObj: query } = parseRequest(tabBarId)

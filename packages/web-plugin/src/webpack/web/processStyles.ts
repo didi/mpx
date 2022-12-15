@@ -1,11 +1,14 @@
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 
-export default function (styles: any, options: any, callback: any) {
+export default function (styles: Array<{ content: string; tag: string; attrs: Record<string, any> }>,
+                         options: { autoScope?: boolean, moduleId?:string, ctorType: string},
+                         callback: (err?: Error | null, result?: Record<string, string>) => void
+) {
   let output = '/* styles */\n'
   if (styles.length) {
-    styles.forEach((style: any) => {
+    styles.forEach((style) => {
       output += genComponentTag(style, {
-        attrs (style: any) {
+        attrs (style: {attrs: Record<string, string | boolean>}) {
           const attrs = Object.assign({}, style.attrs)
           if (options.autoScope) attrs.scoped = true
           attrs.mpxStyleOptions = JSON.stringify({

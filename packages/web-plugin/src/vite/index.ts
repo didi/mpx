@@ -140,7 +140,7 @@ function createMpxPlugin(
 
 export default function mpx(options: Options = {}): Plugin[] {
   const resolvedOptions = processOptions({ ...options })
-  const { mode, env, fileConditionRules } = resolvedOptions
+  const { mode = '', env = '', fileConditionRules } = resolvedOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
   const plugins = [
     // add custom extensions

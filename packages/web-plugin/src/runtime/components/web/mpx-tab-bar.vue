@@ -1,7 +1,5 @@
 <script>
   import getInnerListeners from './getInnerListeners'
-
-  const tabBar = global.__tabBar
   export default {
     name: 'mpx-tab-bar',
     props: {
@@ -12,6 +10,7 @@
     },
     computed: {
       wrapperStyle () {
+        const tabBar = global.__tabBar
         let style = `background-color: ${tabBar.backgroundColor}; border-top: 1px solid ${tabBar.borderStyle};`
         style += tabBar.position === 'bottom' ? 'bottom: 0;' : 'top: 0;'
         return style
@@ -23,6 +22,7 @@
       }
     },
     render (createElement) {
+      const tabBar = global.__tabBar
       const iconImage = (item, index) => createElement('img',
         {
           class: 'icon',
@@ -42,7 +42,6 @@
           domProps: { innerHTML: item.text }
         }
       )
-
       const tabBarWrapper = createElement('div', { class: 'tab-bar-wrapper' },
         [tabBar.list.map((item, index) => {
           return createElement('div', {
