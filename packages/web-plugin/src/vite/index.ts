@@ -143,12 +143,18 @@ export default function mpx(options: Options = {}): Plugin[] {
   const { mode, env, fileConditionRules } = resolvedOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
   const plugins = [
+    // split subpackage chunk
+    createSplitPackageChunkPlugin(),
     // add custom extensions
     customExtensionsPlugin({
       include: /@mpxjs|\.mpx/,
       fileConditionRules,
       extensions: customExtensions
     }),
+    // ensure mpx entry point
+    createResolveEntryPlugin(resolvedOptions),
+    // wxs => js
+    createWxsPlugin(),
     // mpx => vue
     createMpxPlugin(resolvedOptions, {
       optimizeDeps: {
@@ -164,11 +170,6 @@ export default function mpx(options: Options = {}): Plugin[] {
         }
       }
     }),
-    createWxsPlugin(),
-    // ensure mpx entry point
-    createResolveEntryPlugin(resolvedOptions),
-    // split subpackage chunk
-    createSplitPackageChunkPlugin(),
     // vue support for mpxjs/rumtime
     createVuePlugin({
       include: /\.vue|\.mpx$/

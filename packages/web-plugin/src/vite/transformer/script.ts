@@ -45,16 +45,11 @@ export async function transformScript(
   pluginContext: TransformPluginContext
 ): Promise<{
   code: string
-  map: SourceMap
+  map?: SourceMap
 }> {
-  const { code, id: filename } = await resolveScript(
-    descriptor,
-    options,
-    pluginContext
-  )
-  const s = new MagicString(code)
   const {
     id: componentId,
+    filename,
     app,
     page,
     jsonConfig,
@@ -68,6 +63,14 @@ export async function transformScript(
     componentsMap: localComponentsMap
   } = descriptor
 
+  if (!script?.content) {
+    return {
+      code: ''
+    }
+  }
+
+  const s = new MagicString(script.content)
+
   const ctorType = app ? 'app' : page ? 'page' : 'component'
 
   const { i18n } = options
@@ -77,17 +80,20 @@ export async function transformScript(
   const pagesMap: Record<string, string> = {}
   const componentsMap: Record<string, string> = {}
 
-  s.trimLines()
-
-  s.prepend('\n')
+  if(script.src){
+    const id = await resolveScriptSrc(script.src, descriptor, pluginContext)
+    if(id){
+      s.prepend(`${genImport(id)}\n`)
+    }
+  }
 
   s.prepend(
-    `\n${genImport(
+    `${genImport(
       addQuery(descriptor.filename, {
         vue: true,
         type: 'globalDefine'
       })
-    )}`
+    )}\n`
   )
 
   // import page by page json config
@@ -99,7 +105,7 @@ export async function transformScript(
       : localPagesMap[pageName]
     const { queryObj: query } = parseRequest(newPagePath)
     const async = query.async !== undefined
-    !async && s.prepend(`\n${genImport(newPagePath, varName)}`)
+    !async && s.prepend(`${genImport(newPagePath, varName)}\n`)
     pagesMap[pageName] = genComponentCode(
       varName,
       newPagePath,
@@ -120,7 +126,7 @@ export async function transformScript(
     const { queryObj: query } = parseRequest(componentId)
     const varName = `__mpx__component__${index}`
     const async = query.async !== undefined
-    !async && s.prepend(`\n${genImport(componentId, varName)}`)
+    !async && s.prepend(`${genImport(componentId, varName)}\n`)
     componentsMap[componentName] = genComponentCode(varName, componentId, {
       async
     })
@@ -130,7 +136,7 @@ export async function transformScript(
   Object.keys(builtInComponentsMap).forEach((componentName, index) => {
     const componentCfg = builtInComponentsMap[componentName]
     const varName = `__mpx__builtInComponent__${index}`
-    s.prepend(`\n${genImport(componentCfg.resource, varName)}`)
+    s.prepend(`${genImport(componentCfg.resource, varName)}\n`)
     componentsMap[componentName] = genComponentCode(
       varName,
       componentCfg.resource,
@@ -140,24 +146,27 @@ export async function transformScript(
   })
 
   s.prepend(
-    `\n${genImport(
+    `${genImport(
       OPTION_PROCESSOR_PATH,
       'processOption, { getComponent, getWxsMixin }'
-    )}`
+    )}\n`
   )
 
-  i18n && s.prepend(`\n${genImport(I18N_HELPER_CODE, '{ i18n }')}`)
+  if (i18n) {
+    s.prepend(`${genImport(I18N_HELPER_CODE, '{ i18n }')}\n`)
+  }
 
-  app &&
+  if (app) {
     s.prepend(
-      `\n${genImport(APP_HELPER_CODE)}
+      `${genImport(APP_HELPER_CODE)}
   ${genImport(TAB_BAR_PAGE_HELPER_CODE)}
   ${genImport('vue', 'Vue')}
-  ${genImport('vue-router', 'VueRouter')}`
+  ${genImport('vue-router', 'VueRouter')}\n`
     )
+  }
 
   // after source code
-  s.append(`\nconst wxsModules = {}`)
+  s.append(`const wxsModules = {}\n`)
 
   if (wxsModuleMap) {
     const wxsModuleKeys = Object.keys(wxsModuleMap)
@@ -167,7 +176,8 @@ export async function transformScript(
       // inline wxs module, transform to iife
       if (wxsModuleId.startsWith('~')) {
         const mpxWxsPath = wxsModuleId.split('!=!')[1]
-        const { resourcePath: filename, queryObj: query } = parseRequest(mpxWxsPath)
+        const { resourcePath: filename, queryObj: query } =
+          parseRequest(mpxWxsPath)
         const wxsContent = wxsContentMap[`${filename}~${query.wxsModule}`]
         if (wxsContent) {
           const varName = `__mpx__wxs__${i}`
@@ -175,29 +185,29 @@ export async function transformScript(
             globalName: varName,
             format: 'iife'
           })
-          s.append(`\n${result.code}`)
-          s.append(`\nwxsModules.${key} = ${varName}\n`)
+          s.append(`${result.code}\n`)
+          s.append(`wxsModules.${key} = ${varName}\n`)
         }
       } else {
         // wxs file, tranfrom to esm with wxsPlugin
         const resolved = await pluginContext.resolve(wxsModuleId, filename)
         if (resolved) {
           const varName = `__mpx__wxs__${i}`
-          s.append(`\n${genImport(resolved.id, varName)}`)
-          s.append(`\nwxsModules.${key} = ${varName}\n`)
+          s.append(`${genImport(resolved.id, varName)}\n`)
+          s.append(`wxsModules.${key} = ${varName}\n`)
         }
       }
     }
   }
 
   s.append(
-    `\nconst currentOption = global.__mpxOptionsMap[${stringify(
+    `const currentOption = global.__mpxOptionsMap[${stringify(
       descriptor.id
-    )}]`
+    )}]\n`
   )
 
   s.append(
-    `\nexport default processOption(
+    `export default processOption(
       currentOption,
       ${stringify(ctorType)},
       ${stringify(Object.keys(localPagesMap)[0])},
@@ -212,7 +222,7 @@ export async function transformScript(
       ${stringify(genericsInfo)},
       getWxsMixin(wxsModules),
       ${app ? `Vue, VueRouter` : i18n ? 'i18n' : ''}
-    )`
+    )\n`
   )
 
   // transform ts
@@ -245,33 +255,15 @@ export async function transformScript(
  * @param pluginContext - TransformPluginContext
  * @returns script content
  */
-export async function resolveScript(
+export async function resolveScriptSrc(
+  src: string,
   descriptor: SFCDescriptor,
-  options: ResolvedOptions,
   pluginContext: TransformPluginContext
-): Promise<{
-  code: string
-  id: string
-}> {
-  const { script } = descriptor
-  let code = script?.content || ''
-  if (script?.src) {
-    const resolvedId = await pluginContext.resolve(
-      script.src,
-      descriptor.filename
-    )
-    if (resolvedId) {
-      pluginContext.addWatchFile(resolvedId.id)
-      code = `${genImport(resolvedId.id)}\n`
-      return {
-        code,
-        id: resolvedId.id
-      }
-    }
-  }
-  return {
-    code,
-    id: descriptor.filename
+): Promise<string | undefined> {
+  const resolvedId = await pluginContext.resolve(src, descriptor.filename)
+  if (resolvedId) {
+    pluginContext.addWatchFile(resolvedId.id)
+    return resolvedId.id
   }
 }
 

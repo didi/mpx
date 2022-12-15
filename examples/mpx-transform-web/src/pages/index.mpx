@@ -14,7 +14,34 @@
   </picker>
 </template>
 
-<script lang="js" src="../common/js/index"></script>
+<script lang="js">
+import mpx, { createPage } from '@mpxjs/core'
+// import swiperPage from '../../packageA/pages/swiper.mpx?resolve'
+createPage({
+  data: {
+    a: 1,
+    index: 0,
+    array: ['美国', '中国', '巴西', '日本']
+  },
+  onLoad () {
+    console.log('load index')
+  },
+  onShow () {
+    console.log('show index12455555511121312313123132')
+    // console.log('test', swiperPage, mpx.i18n.locale)
+  },
+  methods: {
+    reload () {
+      window.location.reload()
+    },
+    jumpPage () {
+      mpx.navigateTo({
+        // url: swiperPage
+      })
+    }
+  }
+})
+</script>
 <style scoped>
   .list {
     background: red;
