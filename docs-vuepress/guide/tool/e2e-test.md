@@ -13,7 +13,7 @@
 
 当使用 @mpxjs/cli 初始化 Mpx 项目的时候，交互式命令行里面新增了 E2E 选项，当选择了此选项，项目将会初始化 E2E 配置，完成相关内容的生成。
 
-![](https://gift-static.hongyibo.com.cn/static/kfpub/3547/mpxtemplate.png)
+![](https://gift-static.hongyibo.com.cn/static/kfpub/3547/mpxtemplate_v2.png)
 
 关于 E2E 的模板文件如下：
 ```
@@ -202,7 +202,7 @@ module.exports = {
 ## E2E可视化报告平台
 E2E内置的 Jest 默认支持输出 HTML 的报告，因其只支持对测试结果数据的简单展示，故我们希望在其基础上，不仅针对报告查看的广度和颗粒度进行细化，还将对自动化测试过程中涉及到的痛点实现功能上的增强。
 
-![](https://gift-static.hongyibo.com.cn/static/kfpub/8498/baogao-1.png)
+![](https://gift-static.hongyibo.com.cn/static/kfpub/3547/baogao-2.jpeg)
 
 
 E2E可视化报告平台是一个运行在本地环境，统合了用例管理、测试报告、页面快照和错误日志的平台。支持对通过 WechatDevTools 录制回放功能录制出的 case 进行自定义增强的能力，同时提供执行 E2E 测试过程中产出的页面快照和错误日志等信息进行快捷、直观地查看的功能。
@@ -231,7 +231,7 @@ JSON to Spec 本质只是录制结果的一种呈现，而这种转换的目的�
 
 我们设计了 Mpx-E2E 的工作台，当然这些也都集成到了 Mpx-E2E 的可视化平台中，下面我们看看这些具体的可视化的工作。
 
-![](https://gift-static.hongyibo.com.cn/static/kfpub/8806/clipboard_image_1670390586588.png)
+![](https://gift-static.hongyibo.com.cn/static/kfpub/3547/gencae.png)
 
 分析 JSON 操作步骤后，我们把依据 JSON 生成的 Spec 同样做了可视化处理，起初的时候我们只是做了 Spec 代码的 highlight，并没有支持编辑。但是考虑到所见即所得的效率，我们又在此支持了 WEB-IDE。在生成 Spec 代码后，即可在线进行编辑，最终通过我们的@mpxjs/e2e SDK核心能力，完成了保存spec文件。
 
@@ -269,7 +269,7 @@ const id = await page.$('#id')
 </base-dialog>
 
 // 对应获取元素的方法
-const cancelbtn = await page.$('confirm-btn', 'homepage/components/dialogd2d0cea6/index')
+const cancelbtn = await page.$('cancel-btn', 'homepage/components/dialogd2d0cea6/index')
 const confirmbtn = await page.$('confirm-btn', 'homepage/components/dialogd2d0cea6/index')
 ```
 
@@ -373,6 +373,7 @@ Automator.removeMockFromMap (path:string): void
 ## SOP
 
 **一、环境要求**
+
 1.1 微信环境
 安装 Node.js 并且版本大于 8.0
 基础库版本为 2.7.3 及以上
@@ -434,7 +435,9 @@ module.exports = {
 ```
 
 **四、获取 Case**
+
 4.1 录制 JSON Case
+
 录制 case 是依托于微信开发者工具已有的能力，操作流程如下：
 1) 启动录制
 启动微信开发者工具 -> 工具 -> 自动化测试
@@ -509,6 +512,7 @@ npm run test:e2e
 >注：目前因为微信 automator 的限制，包括 wait 接口请求等能力暂时在真机上不能支持，这些问题目前已经反馈到微信，有进展我们会及时更新！
 
 **七、测试报告**
+
 在 .e2erc.js 中配置 report-plugin（详情见.e2erc.js 配置文件部分） 即可在所有 spec 运行结束后自动打开浏览器并呈现测试结果，测试结果包含以下三部分:
 
 1） Jest 数据

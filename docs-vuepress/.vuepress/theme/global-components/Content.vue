@@ -307,7 +307,7 @@ section
   left 45%
   width 100%
   height 100%
-  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_bg_v2.png") no-repeat top left
+  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_bg_v3.png") no-repeat top left
   background-size auto 680px
 
 .one-section__img2
@@ -316,7 +316,7 @@ section
   left 53%
   width 100%
   height 100%
-  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_pic_v2.png") no-repeat top left
+  background url("https://gift-static.hongyibo.com.cn/static/kfpub/3547/banner_pic_v3.png") no-repeat top left
   background-size auto 550px
 
 .one-section__inner
