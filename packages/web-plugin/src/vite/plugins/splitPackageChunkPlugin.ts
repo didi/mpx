@@ -5,6 +5,10 @@ import { getDescriptor } from '../utils/descriptorCache'
 
 function createSplitPackageChunk() {
   const manualChunksOption: ManualChunksOption = (id: string) => {
+    if(/plugin-vue2:normalizer/.test(id)){
+      // 强制将normalizer分到vendor里去，否则会引起TDZ
+      return 'vendor'
+    }
     if (mpxGlobal.entry) {
       const descriptor = getDescriptor(mpxGlobal.entry)
       if (descriptor) {

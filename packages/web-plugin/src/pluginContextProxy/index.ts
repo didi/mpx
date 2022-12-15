@@ -1,4 +1,4 @@
-import { PluginContext as RollupPluginContext } from 'rollup'
+import { TransformPluginContext } from 'rollup'
 import { NOOP } from '../utils'
 import { LoaderDefinition } from 'webpack'
 import { ResolvedOptions } from '../options'
@@ -16,7 +16,7 @@ export interface ProxyPluginContext {
 }
 
 export function proxyPluginContext(
-  pluginContext: RollupPluginContext | ThisParameterType<LoaderDefinition>,
+  pluginContext: TransformPluginContext | ThisParameterType<LoaderDefinition>,
   rollupOptions?: {
     moduleId: string
     options: ResolvedOptions

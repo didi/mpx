@@ -61,6 +61,7 @@ export async function transformScript(
     localPagesMap,
     localComponentsMap
   } = descriptor
+
   if (!script?.content) {
     return {
       code: ''

@@ -27,7 +27,8 @@ export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
         if (resolution) {
           if (mpxGlobal.entry === undefined) {
             mpxGlobal.entry = resolution.id
-          } else if (mpxGlobal.entry === resolution.id) {
+          }
+          if (mpxGlobal.entry === resolution.id) {
             return ENTRY_HELPER_CODE
           }
         }

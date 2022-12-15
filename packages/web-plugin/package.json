@@ -106,7 +106,7 @@
     "loader-utils": "^2.0.2",
     "lodash-es": "^4.17.15",
     "lru-cache": "^4.1.2",
-    "magic-string": "^0.26.1",
+    "magic-string": "^0.27.0",
     "mime": "^2.2.2",
     "postcss": "^8.4.5",
     "postcss-load-config": "^3.1.1",
