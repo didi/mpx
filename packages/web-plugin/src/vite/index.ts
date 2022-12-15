@@ -20,7 +20,7 @@ import {
   esbuildCustomExtensionsPlugin
 } from './plugins/addExtensionsPlugin'
 import { createResolveEntryPlugin } from './plugins/resolveEntryPlugin'
-// import { createSplitPackageChunkPlugin } from './plugins/splitPackageChunkPlugin'
+import { createSplitPackageChunkPlugin } from './plugins/splitPackageChunkPlugin'
 import { createWxsPlugin } from './plugins/wxsPlugin'
 import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
@@ -144,7 +144,7 @@ export default function mpx(options: Options = {}): Plugin[] {
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
   const plugins = [
     // split subpackage chunk
-    // createSplitPackageChunkPlugin(),
+    createSplitPackageChunkPlugin(),
     // add custom extensions
     customExtensionsPlugin({
       include: /@mpxjs|\.mpx/,
