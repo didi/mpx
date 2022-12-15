@@ -1,6 +1,6 @@
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import MagicString from 'magic-string'
-import { SourceMap, TransformPluginContext } from 'rollup'
+import { SourceMap } from 'rollup'
 import addQuery from '@mpxjs/compile-utils/add-query'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
@@ -41,8 +41,7 @@ export const genComponentCode = (
  */
 export async function transformScript(
   descriptor: SFCDescriptor,
-  options: ResolvedOptions,
-  pluginContext: TransformPluginContext
+  options: ResolvedOptions
 ): Promise<{
   code: string
   map?: SourceMap

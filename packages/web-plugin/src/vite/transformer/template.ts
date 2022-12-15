@@ -1,7 +1,7 @@
 import { ParseHtmlNode } from '@mpxjs/compiler'
 import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
 import path from 'path'
-import { PluginContext } from 'rollup'
+import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { ResolvedOptions } from '../../options'
 import * as normalize from '@mpxjs/compile-utils/normalize'
@@ -34,7 +34,7 @@ function calculateRootEleChild(arr: ParseHtmlNode[]) {
 export async function transformTemplate(
   descriptor: SFCDescriptor,
   options: ResolvedOptions,
-  pluginContext: PluginContext
+  pluginContext?: TransformPluginContext
 ): Promise<TransformResult | undefined> {
   const {
     mode,
@@ -147,7 +147,7 @@ export async function transformTemplate(
 export async function genTemplateBlock(
   descriptor: SFCDescriptor,
   options: ResolvedOptions,
-  pluginContext: PluginContext
+  pluginContext?: TransformPluginContext
 ): Promise<{
   output: string
 }> {
