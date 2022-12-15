@@ -80,11 +80,8 @@ export async function transformScript(
   const pagesMap: Record<string, string> = {}
   const componentsMap: Record<string, string> = {}
 
-  if(script.src){
-    const id = await resolveScriptSrc(script.src, descriptor, pluginContext)
-    if(id){
-      s.prepend(`${genImport(id)}\n`)
-    }
+  if (script.src) {
+    s.prepend(`${genImport(script.src)}\n`)
   }
 
   s.prepend(
@@ -190,12 +187,9 @@ export async function transformScript(
         }
       } else {
         // wxs file, tranfrom to esm with wxsPlugin
-        const resolved = await pluginContext.resolve(wxsModuleId, filename)
-        if (resolved) {
-          const varName = `__mpx__wxs__${i}`
-          s.append(`${genImport(resolved.id, varName)}\n`)
-          s.append(`wxsModules.${key} = ${varName}\n`)
-        }
+        const varName = `__mpx__wxs__${i}`
+        s.append(`${genImport(wxsModuleId, varName)}\n`)
+        s.append(`wxsModules.${key} = ${varName}\n`)
       }
     }
   }
@@ -245,25 +239,6 @@ export async function transformScript(
       file: filename + '.map',
       source: filename
     })
-  }
-}
-
-/**
- * resolve script content
- * @param descriptor - SFCDescriptor
- * @param options - ResolvedOptions
- * @param pluginContext - TransformPluginContext
- * @returns script content
- */
-export async function resolveScriptSrc(
-  src: string,
-  descriptor: SFCDescriptor,
-  pluginContext: TransformPluginContext
-): Promise<string | undefined> {
-  const resolvedId = await pluginContext.resolve(src, descriptor.filename)
-  if (resolvedId) {
-    pluginContext.addWatchFile(resolvedId.id)
-    return resolvedId.id
   }
 }
 
