@@ -44,5 +44,5 @@ export async function transformMain(
 }
 
 function genVueSfc(...args: { output: string }[]) {
-  return args.map(v => v.output).join('\n')
+  return args.map(v => v.output).join()
 }
