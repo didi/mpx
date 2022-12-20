@@ -25,10 +25,14 @@
   "author": "octoberluobin <octoberluobin@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.7.1",
-    "@mpxjs/core": "^2.7.2",
     "vue": "^2.6.10",
-    "vue-i18n": "^8.15.3"
+    "vue-i18n": "^8.15.3",
+    "@mpxjs/api-proxy": "^2.8.0",
+    "@mpxjs/core": "^2.8.0",
+    "@mpxjs/fetch": "^2.8.0",
+    "@mpxjs/pinia": "^2.8.0",
+    "@mpxjs/store": "^2.8.0",
+    "@mpxjs/utils": "^2.8.0"
   },
   "browserslist": [
     "ios >= 9",
@@ -41,7 +45,7 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.16",
-    "@mpxjs/webpack-plugin": "^2.7.55",
+    "@mpxjs/webpack-plugin": "^2.8.0",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",
