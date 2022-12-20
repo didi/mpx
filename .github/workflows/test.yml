@@ -27,6 +27,10 @@ jobs:
             test/e2e/plugin-project/node_modules
             packages/webpack-plugin/node_modules
             packages/core/node_modules
+            packages/store/node_modules
+            packages/pinia/node_modules
+            packages/fetch/node_modules
+            packages/utils/node_modules
             packages/api-proxy/node_modules
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
