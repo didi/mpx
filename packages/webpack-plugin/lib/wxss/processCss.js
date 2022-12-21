@@ -103,12 +103,13 @@ const parserPlugin = function (options) {
           case 'nested-item':
             item.nodes.forEach(processNode)
             break
-          case 'item':
+          case 'item': {
             const importIndex = imports['$' + item.name]
             if (typeof importIndex === 'number') {
               item.name = '___CSS_LOADER_IMPORT___' + importIndex + '___'
             }
             break
+          }
           case 'url':
             if (options.url && item.url.replace(/\s/g, '').length && !/^#/.test(item.url) && (isAlias(item.url) || isUrlRequest(item.url, options.root))) {
               // Strip quotes, they will be re-added if the module needs them
@@ -210,12 +211,14 @@ module.exports = function processCss (inputSource, inputMap, options, callback) 
     // we need a prefix to avoid path rewriting of PostCSS
     from: '/css-loader!' + options.from,
     to: options.to,
-    map: options.sourceMap ? {
-      prev: inputMap,
-      sourcesContent: true,
-      inline: false,
-      annotation: false
-    } : null
+    map: options.sourceMap
+      ? {
+          prev: inputMap,
+          sourcesContent: true,
+          inline: false,
+          annotation: false
+        }
+      : null
   }).then(function (result) {
     callback(null, {
       source: result.css,

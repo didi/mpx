@@ -10,13 +10,13 @@ npm i -g @mpxjs/cli
 在当前目录下创建mpx项目。
 
 ```shell
-mpx init mpx-project
+mpx create mpx-project
 ```
 
 也可以使用npx在不全局安装脚手架情况下创建项目。
 
 ```shell
-npx @mpxjs/cli init mpx-project
+npx @mpxjs/cli create mpx-project
 ```
 
 执行命令后会弹出一系列问题进行项目初始配置，根据自身需求进行选择，完成后进入项目目录进行依赖安装。
@@ -32,7 +32,7 @@ npm install
 使用npm script执行mpx的编译构建，在开发模式下我们执行watch命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
 
 ```shell
-npm run watch
+npm run serve
 ```
 
 ## 预览调试
@@ -50,7 +50,7 @@ js区块中调用createApp用于注册小程序，传入的配置可以参考[�
 
 style区块对应app.wxss定义了全局样式，可以自由使用sass/less/stylus等css预编译语言。
 
-json区块完全支持小程序原生的[app.json配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html)，还额外支持了[packages多人合作](../advance/subpackage.md#todoHash)等增强特性。
+json区块完全支持小程序原生的[app.json配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html)，还额外支持了[packages多人合作](../advance/subpackage.md#packages)等增强特性。
 
 ```html
 <script>
@@ -88,7 +88,7 @@ json区块完全支持小程序原生的[app.json配置](https://developers.weix
 
 在json中，我们同样支持原生的[页面json配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)，此外，我们能够直接在`usingComponents`中填写npm地址引用npm包中的组件，mpx组件和原生小程序组件均可引用，无需调用开发者工具npm编译，且能够通过依赖收集按需进行打包。
 
-> 为了保障增强能力的完整性，在支持的平台中Mpx优先使用Component构造器创建页面，支持全部Component生命周期；在某些特殊情况下，你可以在[@mpxjs/webpack-plugin](../../api/compile.md#todoHash)中传入forceUsePageCtor:true配置来禁用掉这个行为。
+> 为了保障增强能力的完整性，在支持的平台中Mpx优先使用Component构造器创建页面，支持全部Component生命周期；在某些特殊情况下，你可以在[@mpxjs/webpack-plugin](../../api/compile.md#forceusepagector)中传入forceUsePageCtor:true配置来禁用掉这个行为。
 
 ```html
 <template>

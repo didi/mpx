@@ -1,4 +1,4 @@
-# 实例api
+# 实例 API
 
 ## $set
 
@@ -171,10 +171,10 @@
     })
   ```
 * **参考：** [Mpx.delete](global-api.html#delete)
+
 ## $refs
 * **类型：** `Object`
 * **详细：**
-
 
   一个对象，持有注册过 [ref](../api/directives.html#wx-ref)的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。
 * **示例**
@@ -187,7 +187,7 @@
   javascript 中可以调用组件的方法
 
   ```javascript
-  import {createComponent} from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
   createComponent({
   ready (){
     // 调用child中的方法
@@ -199,6 +199,25 @@
   ```
 * **参考：**
   [组件 ref](../guide/basic/refs.html)
+
+## $asyncRefs
+**仅字节小程序可用**，因为字节小程序 `selectComponent` 和 `selectAllComponents` 方法为异步方法，因此使用 $refs 同步获取组件实例并不保证能够拿到正确的组件实例，需使用异步 `$asyncRefs`。
+
+```js
+import mpx, {createComponent} from '@mpxjs/core'
+
+createComponent({
+  ready() {
+    if (__mpx_mode__ === 'tt') {
+      this.$asyncRefs.mlist.then(res => {
+        const data = res.data
+        //......
+      })
+    }
+  }
+})
+```
+
 ## $forceUpdate
 * **参数：** 
   * `{Object} target`
@@ -234,40 +253,41 @@
     }
     })
   ```
+
 ## $nextTick
 * **参数：** 
   * `{Function} callback`
-* **用法：** 
-  
+* **用法：**
   
   将回调延迟到下次 DOM 更新循环之后执行。在修改数据之后立即使用它，然后等待 DOM 更新。**注意：`callback`中`this`并不是绑定当前实例，你可以使用箭头函数避免this指向问题**。
 * **示例：** 
  ``` js
       import {createComponent} from '@mpxjs/core'
-      createComponent({
-      data: {
-        info: {
-          name: 1
+        createComponent({
+        data: {
+          info: {
+            name: 1
+          }
+        },
+        attached () {
+          // 修改数据
+          this.info.name = 2
+          // DOM 还没有更新
+  
+          // this.$nextTick(function() {
+          //   // DOM 现在更新了
+          //   console.log('会在由name变化引起的视图更新之后执行')
+          //   this.doSomthing() // 报错
+          // })
+          this.$nextTick(() => {
+            // DOM 现在更新了
+            console.log('会在由name变化引起的视图更新之后执行')
+            this.doSomthing()
+          })
         }
-      },
-      attached () {
-        // 修改数据
-        this.info.name = 2
-        // DOM 还没有更新
-
-        // this.$nextTick(function() {
-        //   // DOM 现在更新了
-        //   console.log('会在由name变化引起的视图更新之后执行')
-        //   this.doSomthing() // 报错
-        // })
-        this.$nextTick(() => {
-          // DOM 现在更新了
-          console.log('会在由name变化引起的视图更新之后执行')
-          this.doSomthing()
-        })
-      }
       })
   ```
+
 ## $i18n
 
 * **用法：** 
@@ -315,81 +335,31 @@
     }
     })
   ```
-  ## $getRenderWatcher
-* **返回值**：Watcher 实例
-* **用法：** 
-  用来获取组件或者页面的 renderWatcher
-* **示例：** 
- ``` js
-import {createComponent} from '@mpxjs/core'
-createPage({
-  ready () {
-    this.renderWatcher = this.getRenderWatcher()
-  },
-  show() {
-    this.renderWatcher.resume()
-  },
-  hide() {
-    this.renderWatcher.pause()
+
+## $rawOptions
+
+* **类型：** `Object`
+* **详细：**
+
+获取组件或页面构造器的构造参数。
+
+```js
+import { createComponent } from "@mpxjs/core"
+
+createComponent({
+  ready() {
+    console.log(this.$rawOptions)
+    /**
+     * attached
+     * detached
+     * methods
+     * mpxConvertMode
+     * mpxCustomKeysForBlend
+     * mpxFileResource
+     * ready
+     * setup
+     * ...其他构造参数
+     */
   }
 })
-  ```
-## $getWatcherByName
-* **参数**：
-  - `{string} name` 
-* **返回值**：Watcher 实例
-* **用法：** 
-  用来获取当前组件或者页面中命名为 name 的 Watcher 实例
-* **示例：** 
- ``` js
-import {createComponent} from '@mpxjs/core'
-createPage({
-  ready () {
-    this.renderWatcher = this.getRenderWatcher()
-  },
-  show() {
-    this.renderWatcher.resume()
-  },
-  hide() {
-    this.renderWatcher.pause()
-  }
-})
-  ```
-  ## $getPausableWatchers
-* **返回值**：Watcher 实例
-* **用法：** 
-  用来获取当前组件或者页面中所有设置了选项 pausable: true 的 Watcher 实例，获取之后可在页面 hide 时调用 watcher.pause() 暂停监听，在页面 show 时调用 watcher.resume() 来恢复监听。
-* **示例：** 
- ``` js
-import {createComponent} from '@mpxjs/core'
-createPage({
-  watch: {
-    locationPoi: {
-      handler() {
-      },
-      pausable: true
-    }
-  },
-  show() {
-    this.setPausedWatch(false)
-  },
-  hide() {
-    this.setPausedWatch(true)
-  },
-  methods: {
-    setPausedWatch (isHide) {
-      const watchers = this.$getPausableWatchers()
-      if (watchers && watchers.length) {
-        for (let i = 0; i < watchers.length; i++) {
-          const watcher = watchers[i]
-          isHide && watcher.pause()
-          !isHide && watcher.resume()
-        }
-      }
-    }
-  }
-})
-  ```
-* **参考：** 
-   * [Vue I18n](http://kazupon.github.io/vue-i18n/api/#vue-constructor-options)
-   * [国际化i18n](../guide/tool/i18n.html)
+```

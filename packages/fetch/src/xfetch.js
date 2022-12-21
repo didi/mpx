@@ -54,7 +54,7 @@ export default class XFetch {
 
     if (/^POST|PUT$/i.test(config.method)) {
       const header = config.header || {}
-      let contentType = header['content-type'] || header['Content-Type']
+      const contentType = header['content-type'] || header['Content-Type']
       if (config.emulateJSON && !contentType) {
         header['content-type'] = 'application/x-www-form-urlencoded'
         config.header = header
@@ -113,6 +113,7 @@ export default class XFetch {
   checkValidator (config) {
     return validate(this.validatorOptions, config)
   }
+
   // 向前追加代理规则
   prependProxy (proxyRules) {
     if (isNotEmptyArray(proxyRules)) {

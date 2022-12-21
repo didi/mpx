@@ -6,6 +6,7 @@ node_modules/
 *.log
 package-lock.json
 pnpm-lock.yaml
+yarn.lock
 .DS_Store
 docs-vuepress/docs/.vuepress/dist
 elevate/

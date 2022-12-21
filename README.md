@@ -11,14 +11,17 @@
 
 ## 近期更新
 
-Mpx@2.7版本正式发布，编译构建升级至`webpack5`，完整支持持久化缓存，编译速度最高可提升10倍，[点击查看详情](https://www.mpxjs.cn/articles/2.7-release.html)。
+Mpx 2.8 版本正式发布，完整支持组合式 API，更多详情查看[这里](https://mpxjs.cn/articles/2.8-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.8.html)，相关指南及 API 参考文档已更新。
+
+`@mpxjs/cli` 3.2 版本正式发布，基于 `@vue/cli` 插件化架构实现的全新脚手架，更多详情查看[这里](https://github.com/mpx-ecology/mpx-cli)。
 
 ## 简介
 
-Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以最新的web开发理念高效优雅地构筑出高性能跨端小程序应用，在所有开放的小程序平台及web平台中运行。
+Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以类Vue的开发体验高效优雅地构筑出高性能跨端小程序应用，在所有开放的小程序平台及web平台中运行。
 
 Mpx具有以下功能特性：
 * [数据响应](https://www.mpxjs.cn/guide/basic/reactive.html) (赋值响应 / [watch](https://www.mpxjs.cn/api/global-api.html#watch) / computed)
+* [组合式 API](#todo link)
 * 增强模板语法 ([动态组件](https://www.mpxjs.cn/guide/basic/component.html#%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6) / [样式绑定 / 类名绑定 ](https://www.mpxjs.cn/guide/basic/class-style-binding.html#%E7%B1%BB%E5%90%8D%E7%BB%91%E5%AE%9A) / [内联事件函数](https://www.mpxjs.cn/guide/basic/event.html) / [双向绑定](https://www.mpxjs.cn/guide/basic/two-way-binding.html) / [refs](https://www.mpxjs.cn/guide/basic/refs.html))
 * 极致性能 ([运行时性能优化](https://www.mpxjs.cn/guide/understand/runtime.html) / [包体积优化](https://www.mpxjs.cn/guide/understand/compile.html#%E5%88%86%E5%8C%85%E5%A4%84%E7%90%86) / 框架运行时体积14KB)
 * [高效强大的编译构建](https://www.mpxjs.cn/guide/understand/compile.html#%E5%88%86%E5%8C%85%E5%A4%84%E7%90%86) (基于webpack5 / 支持持久化缓存 / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
@@ -36,7 +39,6 @@ Mpx具有以下功能特性：
 * [单元测试支持](https://www.mpxjs.cn/guide/tool/unit-test.html)
 * [E2E测试支持](https://www.mpxjs.cn/guide/tool/e2e-test.html)
 * [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
-* Composition api (即将到来)
 
 ## 快速开始
 
@@ -45,7 +47,7 @@ Mpx具有以下功能特性：
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init mpx-project
+mpx create mpx-project
 
 # 进入项目目录
 cd mpx-project
@@ -54,7 +56,7 @@ cd mpx-project
 npm i
 
 # development
-npm run watch
+npm run serve
 
 # production
 npm run build
@@ -185,11 +187,15 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |-----|----|----|
 |@mpxjs/core|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcore.svg)](https://badge.fury.io/js/%40mpxjs%2Fcore)|mpx运行时核心|
 |@mpxjs/webpack-plugin|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin)|mpx编译核心|
-|@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
-|@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
-|@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
 |@mpxjs/api-proxy|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy.svg)](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy)|将各个平台的 api 进行转换，也可以将 api 转为 promise 格式|
+|@mpxjs/store|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fstore.svg)](https://badge.fury.io/js/%40mpxjs%2Fstore)|类vuex store|
+|@mpxjs/pinia|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fpinia.svg)](https://badge.fury.io/js/%40mpxjs%2Fpinia)|mpx pinia store|
+|@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
+|@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
+|@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
 |@mpxjs/mock|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmock.svg)](https://badge.fury.io/js/%40mpxjs%2Fmock)|结合mockjs提供数据mock能力|
+|@mpxjs/utils|[![npm version](https://badge.fury.io/js/%40mpxjs%2Futils.svg)](https://badge.fury.io/js/%40mpxjs%2Futils)|mpx运行时工具库|
+|@mpxjs/babel-plugin-inject-page-events|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events.svg)](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events)|组合式API页面事件处理插件|
 
 ## 开发团队
 
@@ -210,8 +216,8 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |在武院|三股绳Lite|学而思优选课|                                                                                  食享会                                                                                   |                                              青铜安全医生                                               |青铜安全培训|视穹云机械|
 |![店有生意通](https://dpubstatic.udache.com/static/dpubimg/7f1b5f22-d765-4142-862a-999c1ed9d10f.png)|            ![花小猪打车](https://dpubstatic.udache.com/static/dpubimg/JzHnEyu8VT/aaa.jpeg)             |  ![橙心优选](https://dpubstatic.udache.com/static/dpubimg/37222642-c508-4a67-8cbc-036a66985bfc.jpeg)  |                                           ![小二押镖](https://dpubstatic.udache.com/static/dpubimg/nB6-p3WzIQ/xiaoeryabiao.png)                                            |          ![顺鑫官方微商城](https://dpubstatic.udache.com/static/dpubimg/nY2bg3A1L_/shunxin.jpg)          |![嘀嗒出行](https://dpubstatic.udache.com/static/dpubimg/DO3m0Iflq1/didachuxing.jpeg)|![汉行通Pro](https://dpubstatic.udache.com/static/dpubimg/86cd89be-de29-48ad-8cb0-72c432446e7b.jpg)|
 |店有生意通|花小猪打车|橙心优选|                                                                                  小二押镖                                                                                  |                                              顺鑫官方微商城                                              |嘀嗒出行|汉行通Pro|
-|![交圈](https://dpubstatic.udache.com/static/dpubimg/eaf24702-6d49-4853-9cab-cce7240dda85.png)|  ![青桔单车](https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg)   |  ![滴滴顺风车](https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png)  |![滴滴代驾](https://dpubstatic.udache.com/static/dpubimg/cn2A4-zw30i8YB8lb75X5.jpg)|          ![新桔代驾](https://dpubstatic.udache.com/static/dpubimg/vVBnrKlgI4OGe3bdpTbbD.jpg)          |||
-|交圈|青桔单车|滴滴顺风车|滴滴代驾|新桔代驾|||
+|![交圈](https://dpubstatic.udache.com/static/dpubimg/eaf24702-6d49-4853-9cab-cce7240dda85.png)|  ![青桔单车](https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg)   |  ![滴滴顺风车](https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png)  |![滴滴代驾](https://dpubstatic.udache.com/static/dpubimg/cn2A4-zw30i8YB8lb75X5.jpg)|          ![新桔代驾](https://dpubstatic.udache.com/static/dpubimg/vVBnrKlgI4OGe3bdpTbbD.jpg)|![标贝知音](https://dpubstatic.udache.com/static/dpubimg/k2rTzT4frRgsHghUNgdtq_136727190-f481d792-fb9d-4198-b95d-a4e151c65dde.jpg)||
+|交圈|青桔单车|滴滴顺风车|滴滴代驾|新桔代驾|标贝知音||
 
 其他平台小程序：
 

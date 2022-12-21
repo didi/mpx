@@ -13,7 +13,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -29,8 +29,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -83,7 +83,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -103,8 +103,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -155,7 +155,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -171,8 +171,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -222,7 +222,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -238,8 +238,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -289,7 +289,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -305,8 +305,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -370,7 +370,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -386,8 +386,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -437,7 +437,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -453,8 +453,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`
@@ -504,7 +504,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        let match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -520,8 +520,8 @@ module.exports = {
       defaultModelEvent: 'input',
       defaultModelValuePath: 'value',
       shallowStringify (obj) {
-        let arr = []
-        for (let key in obj) {
+        const arr = []
+        for (const key in obj) {
           let value = obj[key]
           if (Array.isArray(value)) {
             value = `[${value.join(',')}]`

@@ -3,18 +3,18 @@
   Author Tobias Koppers @sokra
   Modified by @hiyuki
 */
-var loaderUtils = require('loader-utils')
-var processCss = require('./processCss')
-var compileExports = require('./compile-exports')
-var createResolver = require('./createResolver')
+const loaderUtils = require('loader-utils')
+const processCss = require('./processCss')
+const compileExports = require('./compile-exports')
+const createResolver = require('./createResolver')
 
 module.exports = function (content) {
   if (this.cacheable) this.cacheable()
-  var callback = this.async()
-  var query = loaderUtils.getOptions(this) || {}
-  var moduleMode = query.modules || query.module
-  var camelCaseKeys = query.camelCase || query.camelcase
-  var resolve = createResolver(query.alias)
+  const callback = this.async()
+  const query = loaderUtils.getOptions(this) || {}
+  const moduleMode = query.modules || query.module
+  const camelCaseKeys = query.camelCase || query.camelcase
+  const resolve = createResolver(query.alias)
 
   processCss(content, null, {
     mode: moduleMode ? 'local' : 'global',
@@ -26,15 +26,15 @@ module.exports = function (content) {
     if (err) return callback(err)
 
     function importItemMatcher (item) {
-      var match = result.importItemRegExp.exec(item)
-      var idx = +match[1]
-      var importItem = result.importItems[idx]
-      var importUrl = importItem.url
+      const match = result.importItemRegExp.exec(item)
+      const idx = +match[1]
+      const importItem = result.importItems[idx]
+      const importUrl = importItem.url
       return '" + require(' + loaderUtils.stringifyRequest(this, importUrl) + ')' +
         '[' + JSON.stringify(importItem.export) + '] + "'
     }
 
-    var exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys)
+    let exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys)
     if (exportJs) {
       exportJs = 'module.exports = ' + exportJs + ';'
     }

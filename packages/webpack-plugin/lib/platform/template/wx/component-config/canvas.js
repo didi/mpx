@@ -35,11 +35,11 @@ module.exports = function ({ print }) {
         test: /^(touchstart|touchmove|touchend|touchcancel|longtap)$/,
         ali (eventName) {
           const eventMap = {
-            'touchstart': 'touchStart',
-            'touchmove': 'touchMove',
-            'touchend': 'touchEnd',
-            'touchcancel': 'touchCancel',
-            'longtap': 'longTap'
+            touchstart: 'touchStart',
+            touchmove: 'touchMove',
+            touchend: 'touchEnd',
+            touchcancel: 'touchCancel',
+            longtap: 'longTap'
           }
           return eventMap[eventName]
         }

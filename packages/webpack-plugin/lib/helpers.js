@@ -1,6 +1,7 @@
 const loaderUtils = require('loader-utils')
 const normalize = require('./utils/normalize')
 const selectorPath = normalize.lib('selector')
+const scriptSetupPath = normalize.lib('script-setup-compiler/index')
 const addQuery = require('./utils/add-query')
 const parseRequest = require('./utils/parse-request')
 
@@ -68,7 +69,8 @@ module.exports = function createHelpers (loaderContext) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))
     } else {
       const fakeRequest = getFakeRequest(type, part)
-      const request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, options, true)}`
+      let request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, options, true)}`
+      if (part.setup && type === 'script') request = scriptSetupPath + '!' + request
       return loaderUtils.stringifyRequest(loaderContext, `${fakeRequest}!=!${request}`)
     }
   }
