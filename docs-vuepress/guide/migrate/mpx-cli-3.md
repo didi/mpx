@@ -88,7 +88,7 @@ module.exports = function (api, options) {
 
 ## 项目结构变化
 
-<img src="../../assets/images/1666074957603.jpg" width="800"/>
+![项目结构变化](https://gift-static.hongyibo.com.cn/static/kfpub/3547/filetree.jpg)
 
 v3 版本相对于 v2 版本的目录结构更加清晰。
 
