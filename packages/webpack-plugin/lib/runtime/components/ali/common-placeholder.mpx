@@ -1,9 +1,0 @@
-<template>
-  <view><slot></slot></view>
-</template>
-
-<script type="application/json">
-  {
-    "component": true
-  }
-</script>
