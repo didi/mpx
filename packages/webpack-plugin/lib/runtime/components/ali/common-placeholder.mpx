@@ -1,12 +1,7 @@
 <template>
-  <view class="mpx-component-placeholder">
-  </view>
+  <view><slot></slot></view>
 </template>
-<script>
-import { createComponent } from '@mpxjs/core'
 
-createComponent({})
-</script>
 <script type="application/json">
   {
     "component": true
