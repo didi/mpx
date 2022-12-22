@@ -339,7 +339,7 @@ export interface Mpx {
   toPureObject: typeof toPureObject
   observable: typeof observable
 
-  watch: typeof watch
+  watch (expr: () => any, handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
   use (plugin: ((...args: any) => any) | { install: (...args: any) => any, [key: string]: any }, ...rest: any): Mpx
 
