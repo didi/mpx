@@ -44,18 +44,12 @@ module.exports = function getSpec ({ warn, error }) {
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
   function aliComponentPlaceholderFallback (input) {
-    let componentPlaceholder = input.componentPlaceholder
-    let usingComponents = input.usingComponents || (input.usingComponents = {})
-    // for (const key in usingComponents) {
-    //   if (!usingComponents[key].includes('?root')) continue
-    //   if (!componentPlaceholder[key]) {
-    //     componentPlaceholder[key] = 'view'
-    //   }
-    // }
+    const componentPlaceholder = input.componentPlaceholder
+    const usingComponents = input.usingComponents || (input.usingComponents = {})
     for (const cph in componentPlaceholder) {
       const cur = componentPlaceholder[cph]
-      let placeholderCompMatched = cur.match(/^(?:view|text)$/g)
-      if (!Array.isArray(placeholderCompMatched)) continue;
+      const placeholderCompMatched = cur.match(/^(?:view|text)$/g)
+      if (!Array.isArray(placeholderCompMatched)) continue
       let compName, compPath
       switch (placeholderCompMatched[0]) {
         case 'view':
@@ -66,8 +60,8 @@ module.exports = function getSpec ({ warn, error }) {
           compName = 'mpx-text'
           compPath = mpxTextPath
       }
-      usingComponents[compName] = compPath;
-      componentPlaceholder[cph] = compName;
+      usingComponents[compName] = compPath
+      componentPlaceholder[cph] = compName
     }
     return input
   }
