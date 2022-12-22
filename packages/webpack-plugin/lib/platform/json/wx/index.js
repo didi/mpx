@@ -1,8 +1,10 @@
 const runRules = require('../../run-rules')
 const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
-const mpxViewPath = path.resolve(__dirname, '../../../runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = path.resolve(__dirname, '../../../runtime/components/ali/mpx-text.mpx')
+const normalize = require('../../../utils/normalize')
+
+const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
+const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
 module.exports = function getSpec ({ warn, error }) {
   function print (mode, path, isError) {
