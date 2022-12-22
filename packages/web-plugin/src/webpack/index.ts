@@ -21,7 +21,7 @@ import stringifyLoadersAndResource from '@mpxjs/compile-utils/stringify-loaders-
 import async from 'async'
 import { processOptions, Options } from '../options'
 import mpx from './mpx'
-import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module } from 'webpack'
+import { NormalModule, DefinePlugin, ExternalsPlugin, Compiler, Dependency, Module, WebpackError } from 'webpack'
 import { preProcessDefs } from '@mpxjs/compile-utils'
 import getOutputPath from '../utils/get-output-path'
 
@@ -29,8 +29,9 @@ const styleCompilerPath = require.resolve('@mpxjs/loaders/dist/style-loader.js')
 const isProductionLikeMode = (options: { mode?: 'production' | 'development' | 'none' | undefined}) => {
   return options.mode === 'production' || !options.mode
 }
-const warnings: Array<any> = []
-const errors:Array<any> = []
+
+const warnings: Array<string | WebpackError> = []
+const errors: Array<string | WebpackError> = []
 
 class MpxWebpackPlugin {
   options: Options
@@ -251,8 +252,8 @@ class MpxWebpackPlugin {
     compiler.hooks.thisCompilation.tap(
       'MpxWebpackPlugin',
       (compilation, { normalModuleFactory }) => {
-        compilation.warnings = compilation.warnings.concat(warnings)
-        compilation.errors = compilation.errors.concat(errors)
+        compilation.warnings = compilation.warnings.concat(<WebpackError[]>warnings)
+        compilation.errors = compilation.errors.concat(<WebpackError[]>errors)
         const moduleGraph = compilation.moduleGraph
         if (!compilation.__mpx__) {
           Object.assign(mpx, {
