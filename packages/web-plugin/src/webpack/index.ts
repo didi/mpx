@@ -11,8 +11,8 @@ import NullFactory from 'webpack/lib/NullFactory'
 import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
 import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
 import FileSystemInfo from 'webpack/lib/FileSystemInfo'
-import AddModePlugin from './resolver/AddModePlugin'
-import AddEnvPlugin from './resolver/AddEnvPlugin'
+import AddModePlugin from '@mpxjs/webpack-plugin/lib/resolver/AddModePlugin'
+import AddEnvPlugin from '@mpxjs/webpack-plugin/lib/resolver/AddEnvPlugin'
 import toPosix from '@mpxjs/compile-utils/to-posix'
 import addQuery from '@mpxjs/compile-utils/add-query'
 import parseRequest from '@mpxjs/compile-utils/parse-request'
@@ -61,7 +61,6 @@ class MpxWebpackPlugin {
       )
     }
   }
-
   static loader(options: {[k: string]: unknown}) {
     if (options.transRpx) {
       warnings.push(
@@ -176,7 +175,6 @@ class MpxWebpackPlugin {
     Object.keys(defs).forEach(key => {
       defsOpt[key] = JSON.stringify(defs[key])
     })
-
     // define mode & defs
     new DefinePlugin(defsOpt).apply(compiler)
 

@@ -15,7 +15,6 @@ export interface CustomExtensionsOptions {
 /**
  * generate file path with mode
  * @param originPath - path/to/index.js
- * @param originPath - path/to/index.js
  * @param extendsion - string
  * @returns path/to/index.extendsion.js
  */

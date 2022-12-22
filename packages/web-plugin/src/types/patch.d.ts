@@ -81,6 +81,18 @@ declare module '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependenc
   }
 }
 
+declare module '@mpxjs/webpack-plugin/lib/resolver/AddModePlugin' {
+  export default class AddModePlugin {
+    constructor(source: string, env: string, fileConditionRules, target)
+  }
+}
+
+declare module '@mpxjs/webpack-plugin/lib/resolver/AddEnvPlugin' {
+  export default class AddEnvPlugin {
+    constructor(source: string, mode: string, fileConditionRules, target)
+  }
+}
+
 declare interface DepConstructor {
   new (...args: any[]): any;
 }
