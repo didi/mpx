@@ -19,11 +19,9 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function dealRemove (path, isProps) {
-  if (isProps && path.listKey === 'arguments') {
-    path.parentPath.remove()
-  } else if (t.isObjectProperty(path.parentPath)) {
-    path.parentPath.remove()
+function dealRemove (path, replace) {
+  if (replace) {
+    path.replaceWith(t.stringLiteral(''))
   } else {
     path.remove()
   }
@@ -129,6 +127,8 @@ module.exports = {
               current = path.parentPath
               last = path
               let keyPath = '' + path.node.property.name
+              let hasComputed = false
+              let replace = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
@@ -141,6 +141,7 @@ module.exports = {
                       keyPath += `[${current.node.property.value}]`
                     }
                   } else {
+                    hasComputed = true
                     break
                   }
                 } else {
@@ -155,29 +156,48 @@ module.exports = {
               last.collectPath = t.stringLiteral(keyPath)
 
               const { currentBindings } = scopeBlock.get(currentBlock)
-              const hasComputed = last.parentPath.node && last.parentPath.node.computed // a.b[c]
-              const canDel = !inIfTest && !hasComputed && !inConditional // && last.listKey !== 'arguments'
+              let canDel = !inIfTest && !hasComputed && last.key !== 'property' // && !inConditional // && last.listKey !== 'arguments'
+              if (last.key === 'argument') {
+                last = last.parentPath
+                while (t.isUnaryExpression(last) && last.key === 'argument') {
+                  last = last.parentPath
+                }
+              } else if (last.key === 'object') {
+                last = last.parentPath
+              }
+              if (canDel && inConditional) {
+                if (last.key === 'test') {
+                  canDel = false
+                } else {
+                  replace = true
+                }
+              }
+
+              // t.isObjectProperty(path.parentPath)
+              // isProps && path.listKey === 'arguments'
+              //
+              // let a = t.isObjectProperty(last.parentPath)
 
               if (currentBindings[keyPath]) {
                 if (canDel) {
-                  dealRemove(last, isProps)
+                  dealRemove(last, replace)
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
-                  const { canDel: preCanDel, path: prePath, isProps: preIsProps } = currentBindings[keyPath]
+                  const { canDel: preCanDel, path: prePath, replace: preReplace } = currentBindings[keyPath]
                   if (preCanDel) {
-                    dealRemove(prePath, preIsProps)
+                    dealRemove(prePath, preReplace)
                   }
                   currentBindings[keyPath] = {
                     path: last,
                     canDel,
-                    isProps: preIsProps
+                    replace
                   }
                 }
               } else {
                 currentBindings[keyPath] = {
                   path: last,
                   canDel,
-                  isProps
+                  replace
                 }
               }
             }

@@ -105,6 +105,34 @@ describe('render function simplify should correct', function () {
     expect(res).toMatchSnapshot(output)
   })
 
+  it('should expression is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          name;
+          !name;
+          !!name;
+          
+          name2;
+          name3;
+          name3[name2];
+          
+          name4['length']
+          name4.length;
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+      global.currentInject = {
+        render: function () {
+          
+        }
+      }
+    `
+    expect(res).toMatchSnapshot(output)
+  })
+
   // 回溯 目前没处理
   it('should backtrack variable deletion is correct', function () {
     const input = `
