@@ -19,13 +19,21 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function dealRemove (path, isProps) {
-  if (isProps && path.listKey === 'arguments') {
-    path.parentPath.remove()
-  } else if (t.isObjectProperty(path.parentPath)) {
-    path.parentPath.remove()
-  } else {
-    path.remove()
+function dealRemove (path, isProps, keyPath) {
+  try {
+    if (
+      (isProps && path.listKey === 'arguments') ||
+      t.isObjectProperty(path.parentPath)
+    ) {
+      path.parentPath.remove()
+    } else if (t.isBinaryExpression(path.parentPath)) {
+      path.replaceWith(t.stringLiteral(''))
+    } else {
+      path.remove()
+    }
+  } catch (e) {
+    console.log('--------- ', keyPath)
+    console.log(e)
   }
 }
 
@@ -44,6 +52,7 @@ module.exports = {
     let isProps = false
     let inIfTest = false // if条件判断
     let inConditional = false
+    let inLogical = false
     // block 作用域
     const scopeBlock = new Map()
     let currentBlock = null
@@ -90,6 +99,14 @@ module.exports = {
           currentBlock = parent
         }
       },
+      'LogicalExpression|BinaryExpression' : {
+        enter () {
+          inLogical = true
+        },
+        exit () {
+          inLogical = false
+        }
+      },
       ConditionalExpression: {
         enter () {
           inConditional = true
@@ -129,6 +146,7 @@ module.exports = {
               current = path.parentPath
               last = path
               let keyPath = '' + path.node.property.name
+              let hasComputed = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
@@ -140,6 +158,7 @@ module.exports = {
                     } else {
                       keyPath += `[${current.node.property.value}]`
                     }
+                    hasComputed = true
                   } else {
                     break
                   }
@@ -155,22 +174,22 @@ module.exports = {
               last.collectPath = t.stringLiteral(keyPath)
 
               const { currentBindings } = scopeBlock.get(currentBlock)
-              const hasComputed = last.parentPath.node && last.parentPath.node.computed // a.b[c]
-              const canDel = !inIfTest && !hasComputed && !inConditional // && last.listKey !== 'arguments'
+              const isForArg = last.listKey === 'arguments' && t.isCallExpression(last.parentPath.node) && last.parentPath.node.callee.property && last.parentPath.node.callee.property.name === '_i'
+              const canDel = !inIfTest && !hasComputed && !isForArg && !inConditional && !inLogical
 
               if (currentBindings[keyPath]) {
                 if (canDel) {
-                  dealRemove(last, isProps)
+                  dealRemove(last, isProps, keyPath)
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
                   const { canDel: preCanDel, path: prePath, isProps: preIsProps } = currentBindings[keyPath]
                   if (preCanDel) {
-                    dealRemove(prePath, preIsProps)
+                    dealRemove(prePath, preIsProps, keyPath + '---------')
                   }
                   currentBindings[keyPath] = {
                     path: last,
                     canDel,
-                    isProps: preIsProps
+                    isProps
                   }
                 }
               } else {

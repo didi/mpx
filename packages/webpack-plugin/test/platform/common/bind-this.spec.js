@@ -145,21 +145,25 @@ describe('render function simplify should correct', function () {
   it('should variable literal is correct', function () {
     // 字面量删除 & 回溯删除前一个
     const input = `
-    function render() {
-      a.b;
-      if (a['b']) {}
-      c;
-      a[c];
-      c.d;
-      a.b[c.d];
+    global.currentInject = {
+      render: function () {
+        a.b;
+        if (a['b']) {}
+        c;
+        a[c];
+        c.d;
+        a.b[c.d];
+      }
     }`
     const res = bindThis(input, { needCollect: true }).code
     const output = `
-    function render() {
-      if (this._c("a.b", this.a['b'])) {}
-
-      this._c("a", this.a)[this._c("c", this.c)];
-      this._c("a.b", this.a.b)[this._c("c.d", this.c.d)];
+    global.currentInject = {
+      render: function () {
+        if (this._c("a.b", this.a['b'])) {}
+  
+        this._c("a", this.a)[this._c("c", this.c)];
+        this._c("a.b", this.a.b)[this._c("c.d", this.c.d)];
+      }
     }`
     expect(res).toMatchSnapshot(output)
   })
@@ -192,48 +196,90 @@ describe('render function simplify should correct', function () {
 
   it('should object is correct', function () {
     const input = `
-    function render() {
+    global.currentInject = {
+      render: function () {
 
-      handlerName;
-      ({tap:[["handler",true, 123]],click:[["handler",handlerName]]});
-
-      aName;
-      ({
-        open: true,
-        str: 'str',
-        name: aName
-      });
-
-      ({
-        name: bName
-      });
-      if (bName) {}
-      if (Object.keys({ name: bName }).length) {}
+        handlerName;
+        ({tap:[["handler",true, 123]],click:[["handler",handlerName]]});
+  
+        aName;
+        ({
+          open: true,
+          str: 'str',
+          name: aName
+        });
+  
+        ({
+          name: bName
+        });
+        if (bName) {}
+        if (Object.keys({ name: bName }).length) {}
+        Object.keys({ name: bName }).length ? bName1 : bName2
+      }
     }`
     const res = bindThis(input, { needCollect: true }).code
     const output = `
-    function render() {
-      this._c("handlerName", this.handlerName);
+    global.currentInject = {
+      render: function () {
+        this._c("handlerName", this.handlerName);
+  
+        ({
+          tap: [["handler", true, 123]],
+          click: [["handler"]]
+        });
+    
+        this._c("aName", this.aName);
+    
+        ({
+          open: true,
+          str: 'str'
+        });
+  
+        ({});
+    
+        if (this._c("bName", this.bName)) {}
+    
+        if (Object.keys({
+          name: this._c("bName", this.bName)
+        }).length) {}
+      }
+    }`
+    expect(res).toMatchSnapshot(output)
+  })
 
-      ({
-        tap: [["handler", true, 123]],
-        click: [["handler"]]
-      });
-  
-      this._c("aName", this.aName);
-  
-      ({
-        open: true,
-        str: 'str'
-      });
+  it('should for loop is correct', function () {
+    const input = `
+    global.currentInject = {
+      render: function () {
+      }
+    }`
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+    global.currentInject = {
+      render: function () {
+      }
+    }`
+    expect(res).toMatchSnapshot(output)
+  })
 
-      ({});
-  
-      if (this._c("bName", this.bName)) {}
-  
-      if (Object.keys({
-        name: this._c("bName", this.bName)
-      }).length) {}
+  it('should operation is correct', function () {
+    const input = `
+    global.currentInject = {
+      render: function () {
+        if((geo || currentLocation)){
+          this._p((geo || currentLocation));
+        }
+        
+        if (lang) {}
+        (__stringify__.stringifyClass("class_name", { active: !lang }));
+        
+      }
+    }`
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+    global.currentInject = {
+      render: function () {
+      }
     }`
     expect(res).toMatchSnapshot(output)
   })
