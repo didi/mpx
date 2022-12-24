@@ -157,19 +157,21 @@ module.exports = {
 
               const { currentBindings } = scopeBlock.get(currentBlock)
               let canDel = !inIfTest && !hasComputed && last.key !== 'property' // && !inConditional // && last.listKey !== 'arguments'
-              if (last.key === 'argument') {
-                last = last.parentPath
-                while (t.isUnaryExpression(last) && last.key === 'argument') {
+              if (canDel) {
+                if (last.key === 'argument') {
+                  last = last.parentPath
+                  while (t.isUnaryExpression(last) && last.key === 'argument') { // !!a
+                    last = last.parentPath
+                  }
+                } else if (last.key === 'object') { // TODO 记录一下什么情况key是object
                   last = last.parentPath
                 }
-              } else if (last.key === 'object') {
-                last = last.parentPath
-              }
-              if (canDel && inConditional) {
-                if (last.key === 'test') {
-                  canDel = false
-                } else {
-                  replace = true
+                if (inConditional) {
+                  if (last.key === 'test') {
+                    canDel = false
+                  } else {
+                    replace = true
+                  }
                 }
               }
 
