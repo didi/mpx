@@ -105,6 +105,60 @@ describe('render function simplify should correct', function () {
     expect(res).toMatchSnapshot(output)
   })
 
+  it('should expression is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          name;
+          !name;
+          !!name;
+          
+          name2;
+          name3;
+          name3[name2];
+          
+          name44 && name4.length;
+          name4['length']
+          !name4.length;
+          
+          $t('xxx');
+          this._p($t('xxx'));
+          name5;
+          this._p(name5);
+          
+          name6;
+          name7;
+          name6 + name7;
+          
+          name8;
+          name9;
+          ({ key: name8 && !name9 });
+          
+          // 跨block
+          this._p(name10);
+          if (xxx) {
+            this._p(name10);
+            if (name10){}
+          }
+          if (name10){}
+
+          this._p(aa.length);
+          this._p(aa);
+          this._i(aa, function(item){})
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+      global.currentInject = {
+        render: function () {
+          
+        }
+      }
+    `
+    expect(res).toMatchSnapshot(output)
+  })
+
   // 回溯 目前没处理
   it('should backtrack variable deletion is correct', function () {
     const input = `

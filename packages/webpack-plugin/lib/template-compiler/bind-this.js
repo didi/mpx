@@ -19,20 +19,14 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function dealRemove (path, isProps, keyPath) {
+function dealRemove (path, replace) {
   try {
-    if (
-      (isProps && path.listKey === 'arguments') ||
-      t.isObjectProperty(path.parentPath)
-    ) {
-      path.parentPath.remove()
-    } else if (t.isBinaryExpression(path.parentPath)) {
+    if (replace) {
       path.replaceWith(t.stringLiteral(''))
     } else {
       path.remove()
     }
   } catch (e) {
-    console.log('--------- ', keyPath)
     console.log(e)
   }
 }
@@ -52,7 +46,6 @@ module.exports = {
     let isProps = false
     let inIfTest = false // if条件判断
     let inConditional = false
-    let inLogical = false
     // block 作用域
     const scopeBlock = new Map()
     let currentBlock = null
@@ -74,7 +67,10 @@ module.exports = {
         exit (path) {
           if (path.isProps) {
             // 移除无意义的__props调用
-            path.replaceWith(path.node.arguments[0])
+            const arg = path.node.arguments[0] // this._p里的参数可能被删除，比如 this._p($t('xxx'))
+            if (arg) {
+              path.replaceWith(arg)
+            }
             isProps = false
             delete path.isProps
           }
@@ -97,14 +93,6 @@ module.exports = {
         exit (path) {
           const { parent } = scopeBlock.get(path)
           currentBlock = parent
-        }
-      },
-      'LogicalExpression|BinaryExpression' : {
-        enter () {
-          inLogical = true
-        },
-        exit () {
-          inLogical = false
         }
       },
       ConditionalExpression: {
@@ -147,23 +135,27 @@ module.exports = {
               last = path
               let keyPath = '' + path.node.property.name
               let hasComputed = false
+              let replace = false
+              let hasDangerous = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
                       if (dangerousKeyMap[current.node.property.value]) {
+                        hasDangerous = true
                         break
                       }
                       keyPath += `.${current.node.property.value}`
                     } else {
                       keyPath += `[${current.node.property.value}]`
                     }
-                    hasComputed = true
                   } else {
+                    hasComputed = true
                     break
                   }
                 } else {
                   if (dangerousKeyMap[current.node.property.name]) {
+                    hasDangerous = true
                     break
                   }
                   keyPath += `.${current.node.property.name}`
@@ -174,29 +166,87 @@ module.exports = {
               last.collectPath = t.stringLiteral(keyPath)
 
               const { currentBindings } = scopeBlock.get(currentBlock)
-              const isForArg = last.listKey === 'arguments' && t.isCallExpression(last.parentPath.node) && last.parentPath.node.callee.property && last.parentPath.node.callee.property.name === '_i'
-              const canDel = !inIfTest && !hasComputed && !isForArg && !inConditional && !inLogical
+              let canDel = !inIfTest && !hasComputed
+                && last.key !== 'property' && last.parentPath.key !== 'property'
+              if (last.key === 'callee') {
+                if (last.node.property.name === '$t') {
+                  dealRemove(last.parentPath)
+                  return
+                } else {
+                  canDel && (canDel = false)
+                }
+              }
+              if (canDel) {
+                // 'object' 的判断，要在 'argument' 之前 !a.length
+                if (last.key === 'object' && hasDangerous) { // a.length
+                  last = last.parentPath
+                }
+                if (last.key === 'argument') {
+                  last = last.parentPath
+                  while (t.isUnaryExpression(last) && last.key === 'argument') { // !!a
+                    last = last.parentPath
+                  }
+                }
+                if (last.listKey === 'arguments' && last.key === 0 &&
+                  t.isCallExpression(last.parent)
+                ) {
+                  const name = last.parent.callee.property.name
+                  if (name === '_i') {
+                    canDel = false
+                  } else if (name === '_p') {
+                    last = last.parentPath
+                  }
+                }
+                if (inConditional) {
+                  let current = last
+                  let inTest = false
+                  while (current) {
+                    if (current.key === 'test') {
+                      inTest = true
+                      break
+                    }
+                    current = current.parentPath
+                  }
+                  if (inTest) {
+                    canDel = false
+                  } else {
+                    replace = true
+                  }
+                }
+                if (t.isBinaryExpression(last.container)) { // a + b
+                  replace = true
+                }
+                if (t.isLogicalExpression(last.container)) { // a && b
+                  replace = true
+                }
+                if (last.key === 'value' && t.isObjectProperty(last.container)) {
+                  replace = true
+                }
+              }
 
               if (currentBindings[keyPath]) {
                 if (canDel) {
-                  dealRemove(last, isProps, keyPath)
+                  dealRemove(last, replace)
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
-                  const { canDel: preCanDel, path: prePath, isProps: preIsProps } = currentBindings[keyPath]
-                  if (preCanDel) {
-                    dealRemove(prePath, preIsProps, keyPath + '---------')
+                  const { canDel: preCanDel, path: prePath, replace: preReplace, current: preCurrent } = currentBindings[keyPath]
+                  if (preCanDel && preCurrent === currentBlock) {
+                    dealRemove(prePath, preReplace)
+                    // currentBindings[keyPath] = null // 删除 前一个节点，则
                   }
                   currentBindings[keyPath] = {
                     path: last,
                     canDel,
-                    isProps
+                    replace,
+                    current: currentBlock
                   }
                 }
               } else {
                 currentBindings[keyPath] = {
                   path: last,
                   canDel,
-                  isProps
+                  replace,
+                  current: currentBlock
                 }
               }
             }
