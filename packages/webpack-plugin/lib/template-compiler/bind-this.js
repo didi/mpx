@@ -20,10 +20,14 @@ dangerousKeys.split(',').forEach((key) => {
 })
 
 function dealRemove (path, replace) {
-  if (replace) {
-    path.replaceWith(t.stringLiteral(''))
-  } else {
-    path.remove()
+  try {
+    if (replace) {
+      path.replaceWith(t.stringLiteral(''))
+    } else {
+      path.remove()
+    }
+  } catch (e) {
+    console.log(e)
   }
 }
 
@@ -129,11 +133,13 @@ module.exports = {
               let keyPath = '' + path.node.property.name
               let hasComputed = false
               let replace = false
+              let hasDangerous = false
               while (current.isMemberExpression() && last.parentKey !== 'property') {
                 if (current.node.computed) {
                   if (t.isLiteral(current.node.property)) {
                     if (t.isStringLiteral(current.node.property)) {
                       if (dangerousKeyMap[current.node.property.value]) {
+                        hasDangerous = true
                         break
                       }
                       keyPath += `.${current.node.property.value}`
@@ -146,6 +152,7 @@ module.exports = {
                   }
                 } else {
                   if (dangerousKeyMap[current.node.property.name]) {
+                    hasDangerous = true
                     break
                   }
                   keyPath += `.${current.node.property.name}`
@@ -156,15 +163,21 @@ module.exports = {
               last.collectPath = t.stringLiteral(keyPath)
 
               const { currentBindings } = scopeBlock.get(currentBlock)
-              let canDel = !inIfTest && !hasComputed && last.key !== 'property' // && !inConditional // && last.listKey !== 'arguments'
+              let canDel = !inIfTest && !hasComputed && last.key !== 'property' && last.parentPath.key !== 'property'
               if (canDel) {
                 if (last.key === 'argument') {
                   last = last.parentPath
                   while (t.isUnaryExpression(last) && last.key === 'argument') { // !!a
                     last = last.parentPath
                   }
-                } else if (last.key === 'object') { // TODO 记录一下什么情况key是object
+                } else if (last.key === 'object' && hasDangerous) {
                   last = last.parentPath
+                }
+                if (last.listKey === 'arguments' && last.key === 0 &&
+                  t.isCallExpression(last.parent) &&
+                  last.parent.callee.property.name === '_i'
+                ) {
+                  canDel = false
                 }
                 if (inConditional) {
                   if (last.key === 'test') {
