@@ -119,6 +119,15 @@ describe('render function simplify should correct', function () {
           
           name4['length']
           name4.length;
+          
+          $t('xxx');
+          this._p($t('xxx'));
+          name5;
+          this._p(name5);
+          
+          name6;
+          name7;
+          name6 + name7;
         }
       }
     `

@@ -67,7 +67,10 @@ module.exports = {
         exit (path) {
           if (path.isProps) {
             // 移除无意义的__props调用
-            path.replaceWith(path.node.arguments[0])
+            const arg = path.node.arguments[0] // this._p里的参数可能被删除，比如 this._p($t('xxx'))
+            if (arg) {
+              path.replaceWith(arg)
+            }
             isProps = false
             delete path.isProps
           }
@@ -163,7 +166,16 @@ module.exports = {
               last.collectPath = t.stringLiteral(keyPath)
 
               const { currentBindings } = scopeBlock.get(currentBlock)
-              let canDel = !inIfTest && !hasComputed && last.key !== 'property' && last.parentPath.key !== 'property'
+              let canDel = !inIfTest && !hasComputed
+                && last.key !== 'property' && last.parentPath.key !== 'property'
+              if (last.key === 'callee') {
+                if (last.node.property.name === '$t') {
+                  dealRemove(last.parentPath)
+                  return
+                } else {
+                  canDel && (canDel = false)
+                }
+              }
               if (canDel) {
                 if (last.key === 'argument') {
                   last = last.parentPath
@@ -185,6 +197,9 @@ module.exports = {
                   } else {
                     replace = true
                   }
+                }
+                if (t.isBinaryExpression(path.container)) {
+                  replace = true
                 }
               }
 
