@@ -166,10 +166,9 @@ module.exports = {
               last.collectPath = t.stringLiteral(keyPath)
 
               const { currentBindings } = scopeBlock.get(currentBlock)
-              let canDel = !inIfTest && !hasComputed
-                && last.key !== 'property' && last.parentPath.key !== 'property'
+              let canDel = !inIfTest && !hasComputed && last.key !== 'property' && last.parentPath.key !== 'property'
               if (last.key === 'callee') {
-                if (last.node.property.name === '$t') {
+                if (last.node.property.name === '$t') { // i18n直接删除
                   dealRemove(last.parentPath)
                   return
                 } else {
@@ -177,7 +176,7 @@ module.exports = {
                 }
               }
               if (canDel) {
-                // 'object' 的判断，要在 'argument' 之前 !a.length
+                // 'object' 的判断，要在 'argument' 之前,为了处理 !a.length 之类的语句
                 if (last.key === 'object' && hasDangerous) { // a.length
                   last = last.parentPath
                 }
@@ -200,7 +199,7 @@ module.exports = {
                 if (inConditional) {
                   let current = last
                   let inTest = false
-                  while (current) {
+                  while (current) { // TODO 待优化，耗费性能
                     if (current.key === 'test') {
                       inTest = true
                       break
@@ -232,7 +231,6 @@ module.exports = {
                   const { canDel: preCanDel, path: prePath, replace: preReplace, current: preCurrent } = currentBindings[keyPath]
                   if (preCanDel && preCurrent === currentBlock) {
                     dealRemove(prePath, preReplace)
-                    // currentBindings[keyPath] = null // 删除 前一个节点，则
                   }
                   currentBindings[keyPath] = {
                     path: last,
