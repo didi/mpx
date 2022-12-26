@@ -142,6 +142,9 @@ describe('render function simplify should correct', function () {
           }
           if (name10){}
 
+          this._p(aa.length);
+          this._p(aa);
+          this._i(aa, function(item){})
         }
       }
     `

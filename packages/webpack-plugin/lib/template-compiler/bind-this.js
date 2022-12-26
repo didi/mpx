@@ -189,10 +189,14 @@ module.exports = {
                   }
                 }
                 if (last.listKey === 'arguments' && last.key === 0 &&
-                  t.isCallExpression(last.parent) &&
-                  last.parent.callee.property.name === '_i'
+                  t.isCallExpression(last.parent)
                 ) {
-                  canDel = false
+                  const name = last.parent.callee.property.name
+                  if (name === '_i') {
+                    canDel = false
+                  } else if (name === '_p') {
+                    last = last.parentPath
+                  }
                 }
                 if (inConditional) {
                   let current = last
