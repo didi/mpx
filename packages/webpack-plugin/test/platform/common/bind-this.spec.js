@@ -117,8 +117,9 @@ describe('render function simplify should correct', function () {
           name3;
           name3[name2];
           
+          name44 && name4.length;
           name4['length']
-          name4.length;
+          !name4.length;
           
           $t('xxx');
           this._p($t('xxx'));
@@ -128,6 +129,19 @@ describe('render function simplify should correct', function () {
           name6;
           name7;
           name6 + name7;
+          
+          name8;
+          name9;
+          ({ key: name8 && !name9 });
+          
+          // 跨block
+          this._p(name10);
+          if (xxx) {
+            this._p(name10);
+            if (name10){}
+          }
+          if (name10){}
+
         }
       }
     `

@@ -71,6 +71,7 @@ module.exports = {
             if (arg) {
               path.replaceWith(arg)
             }
+            // TODO this._p() 待删除
             isProps = false
             delete path.isProps
           }
@@ -177,13 +178,15 @@ module.exports = {
                 }
               }
               if (canDel) {
+                // 'object' 的判断，要在 'argument' 之前 !a.length
+                if (last.key === 'object' && hasDangerous) { // a.length
+                  last = last.parentPath
+                }
                 if (last.key === 'argument') {
                   last = last.parentPath
                   while (t.isUnaryExpression(last) && last.key === 'argument') { // !!a
                     last = last.parentPath
                   }
-                } else if (last.key === 'object' && hasDangerous) {
-                  last = last.parentPath
                 }
                 if (last.listKey === 'arguments' && last.key === 0 &&
                   t.isCallExpression(last.parent) &&
@@ -192,7 +195,16 @@ module.exports = {
                   canDel = false
                 }
                 if (inConditional) {
-                  if (last.key === 'test') {
+                  let current = last
+                  let inTest = false
+                  while (current) {
+                    if (current.key === 'test') {
+                      inTest = true
+                      break
+                    }
+                    current = current.parentPath
+                  }
+                  if (inTest) {
                     canDel = false
                   } else {
                     replace = true
@@ -214,21 +226,24 @@ module.exports = {
                   dealRemove(last, replace)
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
-                  const { canDel: preCanDel, path: prePath, replace: preReplace } = currentBindings[keyPath]
-                  if (preCanDel) {
+                  const { canDel: preCanDel, path: prePath, replace: preReplace, current: preCurrent } = currentBindings[keyPath]
+                  if (preCanDel && preCurrent === currentBlock) {
                     dealRemove(prePath, preReplace)
+                    // currentBindings[keyPath] = null // 删除 前一个节点，则
                   }
                   currentBindings[keyPath] = {
                     path: last,
                     canDel,
-                    replace
+                    replace,
+                    current: currentBlock
                   }
                 }
               } else {
                 currentBindings[keyPath] = {
                   path: last,
                   canDel,
-                  replace
+                  replace,
+                  current: currentBlock
                 }
               }
             }
