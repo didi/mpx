@@ -198,15 +198,16 @@ module.exports = {
                     replace = true
                   }
                 }
-                if (t.isBinaryExpression(path.container)) {
+                if (t.isBinaryExpression(last.container)) { // a + b
+                  replace = true
+                }
+                if (t.isLogicalExpression(last.container)) { // a && b
+                  replace = true
+                }
+                if (last.key === 'value' && t.isObjectProperty(last.container)) {
                   replace = true
                 }
               }
-
-              // t.isObjectProperty(path.parentPath)
-              // isProps && path.listKey === 'arguments'
-              //
-              // let a = t.isObjectProperty(last.parentPath)
 
               if (currentBindings[keyPath]) {
                 if (canDel) {
