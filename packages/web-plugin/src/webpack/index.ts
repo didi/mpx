@@ -373,202 +373,161 @@ class MpxWebpackPlugin {
             }
           )
         }
-        normalModuleFactory.hooks.parser
-          .for('javascript/auto')
-          .tap('MpxWebpackPlugin', (parser: Record<string, any>) => {
-            parser.hooks.call
-              .for('__mpx_resolve_path__')
-              .tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
-                if (expr.arguments[0]) {
-                  const resource = expr.arguments[0].value
-                  const packageName = mpx.currentPackageRoot || 'main'
-                  const module: Module = parser.state.module
-                  const moduleGraphReturn = moduleGraph.getIssuer(module) as Module & {resource: any}
-                  const resource1: string = moduleGraphReturn.resource
-                  const issuerResource = resource1
-                  const range = expr.range
-                  const dep = new ResolveDependency(
-                    resource,
-                    packageName,
-                    issuerResource,
-                    range
-                  )
-                  parser.state.current.addPresentationalDependency(dep)
-                  return true
-                }
-              })
-            // hack babel polyfill global
-            parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
-              if (/core-js.+microtask/.test(parser.state.module.resource)) {
-                if (
-                  expr.test.left &&
-                  (expr.test.left.name === 'Observer' ||
-                    expr.test.left.name === 'MutationObserver')
-                ) {
-                  const current = parser.state.current
-                  current.addPresentationalDependency(
-                    new InjectDependency({
-                      content: 'document && ',
-                      index: expr.test.range[0]
-                    })
-                  )
-                }
-              }
-            })
-
-            parser.hooks.evaluate
-              .for('CallExpression')
-              .tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
-                const current = parser.state.current
-                const arg0 = expr.arguments[0]
-                const callee = expr.callee
-                // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
-                if (/core-js.+global/.test(parser.state.module.resource)) {
-                  if (
-                    callee.name === 'Function' &&
-                    arg0 &&
-                    arg0.value === 'return this'
-                  ) {
-                    current.addPresentationalDependency(
-                      new InjectDependency({
-                        content: '(function() { return this })() || ',
-                        index: expr.range[0]
-                      })
-                    )
-                  }
-                }
-              })
-            // 处理跨平台转换
-            if (mpx.srcMode !== mpx.mode) {
-              // 处理跨平台全局对象转换
-              const transGlobalObject = (expr: Record<string, any>) => {
-                const module = parser.state.module
-                const current = parser.state.current
-                const { queryObj, resourcePath } = parseRequest(module.resource)
-                const localSrcMode = queryObj.mode
-                const globalSrcMode = mpx.srcMode
-                const srcMode = localSrcMode || globalSrcMode
-                const mode = mpx.mode
-
-                let target
-                if (expr.type === 'Identifier') {
-                  target = expr
-                } else if (expr.type === 'MemberExpression') {
-                  target = expr.object
-                }
-
-                if (
-                  !matchCondition(resourcePath, this.options.transMpxRules) ||
-                  resourcePath.indexOf('@mpxjs') !== -1 ||
-                  !target ||
-                  mode === srcMode
-                )
-                  return
-
-                const type = target.name
-                const name = type === 'wx' ? 'mpx' : 'createFactory'
-                const replaceContent =
-                  type === 'wx'
-                    ? 'mpx'
-                    : `createFactory(${JSON.stringify(type)})`
-
-                const dep = new ReplaceDependency(replaceContent, target.range)
-                current.addPresentationalDependency(dep)
-
-                let needInject = true
-                for (const dep of module.dependencies) {
-                  if (
-                    dep instanceof CommonJsVariableDependency &&
-                    dep.name === name
-                  ) {
-                    needInject = false
-                    break
-                  }
-                }
-                if (needInject) {
-                  const dep = new CommonJsVariableDependency(
-                    `@mpxjs/core/src/runtime/${name}`,
-                    name
-                  )
-                  module.addDependency(dep)
-                }
-              }
-
-              // 转换wx全局对象
-              parser.hooks.expression
-                .for('wx')
-                .tap('MpxWebpackPlugin', transGlobalObject)
-
-              // 为跨平台api调用注入srcMode参数指导api运行时转换
-              const apiBlackListMap = [
-                'createApp',
-                'createPage',
-                'createComponent',
-                'createStore',
-                'createStoreWithThis',
-                'mixin',
-                'injectMixins',
-                'toPureObject',
-                'observable',
-                'watch',
-                'use',
-                'set',
-                'remove',
-                'delete',
-                'setConvertRule',
-                'getMixin',
-                'getComputed',
-                'implement'
-              ].reduce((map: Record<string, boolean>, api: string) => {
-                map[api] = true
-                return map
-              }, {})
-
-              const injectSrcModeForTransApi = (expr: Record<string, any>, members: Array<unknown>) => {
-                // members为空数组时，callee并不是memberExpression
-                if (!members.length) return
-                const callee = expr.callee
-                const args = expr.arguments
-                const name = callee.object.name
-                const { queryObj, resourcePath } = parseRequest(
-                  parser.state.module.resource
-                )
-                const localSrcMode = queryObj.mode
-                const globalSrcMode = mpx.srcMode
-                const srcMode = localSrcMode || globalSrcMode
-
-                if (
-                  srcMode === globalSrcMode ||
-                  apiBlackListMap[
-                    callee.property.name || callee.property.value
-                  ] ||
-                  (name !== 'mpx' && name !== 'wx') ||
-                  (name === 'wx' &&
-                    !matchCondition(resourcePath, this.options.transMpxRules))
-                )
-                  return
-
-                const srcModeString = `__mpx_src_mode_${srcMode}__`
-                const dep = new InjectDependency({
-                  content: args.length
-                    ? `, ${JSON.stringify(srcModeString)}`
-                    : JSON.stringify(srcModeString),
-                  index: expr.end - 1
-                })
-                parser.state.current.addPresentationalDependency(dep)
-              }
-
-              parser.hooks.callMemberChain
-                .for(harmonySpecifierTag)
-                .tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-              parser.hooks.callMemberChain
-                .for('mpx')
-                .tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-              parser.hooks.callMemberChain
-                .for('wx')
-                .tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+        const normalModuleFactoryParserCallback = (parser: Record<string, any>) => {
+          parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
+            if (expr.arguments[0]) {
+              const resource = expr.arguments[0].value
+              const packageName = mpx.currentPackageRoot || 'main'
+              const module: Module = parser.state.module
+              const moduleGraphReturn = moduleGraph.getIssuer(module) as Module & {resource: any}
+              const resource1: string = moduleGraphReturn.resource
+              const issuerResource = resource1
+              const range = expr.range
+              const dep = new ResolveDependency(
+                resource,
+                packageName,
+                issuerResource,
+                range
+              )
+              parser.state.current.addPresentationalDependency(dep)
+              return true
             }
           })
+
+          // hack babel polyfill global
+          parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
+            if (/core-js.+microtask/.test(parser.state.module.resource)) {
+              if (expr.test.left && (expr.test.left.name === 'Observer' || expr.test.left.name === 'MutationObserver')) {
+                const current = parser.state.current
+                current.addPresentationalDependency(new InjectDependency({
+                  content: 'document && ',
+                  index: expr.test.range[0]
+                }))
+              }
+            }
+          })
+
+          parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr: Record<string, any>) => {
+            const current = parser.state.current
+            const arg0 = expr.arguments[0]
+            const arg1 = expr.arguments[1]
+            const callee = expr.callee
+            // todo 该逻辑在corejs3中不需要，等corejs3比较普及之后可以干掉
+            if (/core-js.+global/.test(parser.state.module.resource)) {
+              if (callee.name === 'Function' && arg0 && arg0.value === 'return this') {
+                current.addPresentationalDependency(new InjectDependency({
+                  content: '(function() { return this })() || ',
+                  index: expr.range[0]
+                }))
+              }
+            }
+            if (/regenerator/.test(parser.state.module.resource)) {
+              if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
+                current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
+              }
+            }
+          })
+
+          // 处理跨平台转换
+          if (mpx.srcMode !== mpx.mode) {
+            // 处理跨平台全局对象转换
+            const transGlobalObject = (expr: Record<string, any>) => {
+              const module = parser.state.module
+              const current = parser.state.current
+              const { queryObj, resourcePath } = parseRequest(module.resource)
+              const localSrcMode = queryObj.mode
+              const globalSrcMode = mpx.srcMode
+              const srcMode = localSrcMode || globalSrcMode
+              const mode = mpx.mode
+
+              let target
+              if (expr.type === 'Identifier') {
+                target = expr
+              } else if (expr.type === 'MemberExpression') {
+                target = expr.object
+              }
+
+              if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
+
+              const type = target.name
+              const name = type === 'wx' ? 'mpx' : 'createFactory'
+              const replaceContent = type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
+
+              const dep = new ReplaceDependency(replaceContent, target.range)
+              current.addPresentationalDependency(dep)
+
+              let needInject = true
+              for (const dep of module.dependencies) {
+                if (dep instanceof CommonJsVariableDependency && dep.name === name) {
+                  needInject = false
+                  break
+                }
+              }
+              if (needInject) {
+                const dep = new CommonJsVariableDependency(`@mpxjs/core/src/runtime/${name}`, name)
+                module.addDependency(dep)
+              }
+            }
+
+            // 转换wx全局对象
+            parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transGlobalObject)
+
+            // 为跨平台api调用注入srcMode参数指导api运行时转换
+            const apiBlackListMap = [
+              'createApp',
+              'createPage',
+              'createComponent',
+              'createStore',
+              'createStoreWithThis',
+              'mixin',
+              'injectMixins',
+              'toPureObject',
+              'observable',
+              'watch',
+              'use',
+              'set',
+              'remove',
+              'delete',
+              'setConvertRule',
+              'getMixin',
+              'getComputed',
+              'implement'
+            ].reduce((map: Record<string, boolean>, api: string) => {
+              map[api] = true
+              return map
+            }, {})
+
+            const injectSrcModeForTransApi = (expr: Record<string, any>, members: Array<unknown>) => {
+              // members为空数组时，callee并不是memberExpression
+              if (!members.length) return
+              const callee = expr.callee
+              const args = expr.arguments
+              const name = callee.object.name
+              const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
+              const localSrcMode = queryObj.mode
+              const globalSrcMode = mpx.srcMode
+              const srcMode = localSrcMode || globalSrcMode
+
+              if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
+
+              const srcModeString = `__mpx_src_mode_${srcMode}__`
+              const dep = new InjectDependency({
+                content: args.length
+                  ? `, ${JSON.stringify(srcModeString)}`
+                  : JSON.stringify(srcModeString),
+                index: expr.end - 1
+              })
+              parser.state.current.addPresentationalDependency(dep)
+            }
+
+            parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+            parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+            parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+          }
+        }
+        normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
+        normalModuleFactory.hooks.parser.for('javascript/dynamic').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
+        normalModuleFactory.hooks.parser.for('javascript/esm').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
       }
     )
 
