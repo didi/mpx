@@ -169,6 +169,9 @@ module.exports = {
               let canDel = !inIfTest && !hasComputed && last.key !== 'property' && last.parentPath.key !== 'property'
               if (last.key === 'callee') {
                 if (last.node.property.name === '$t') { // i18n直接删除
+                  if (t.isCallExpression(last.parent)) {
+                    last = last.parentPath
+                  }
                   dealRemove(last.parentPath)
                   return
                 } else {
