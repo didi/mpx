@@ -54,6 +54,7 @@ const loader:LoaderDefinition = function (content:string, prevOptions?: any) {
 }
 
 // @ts-ignore
-loader.raw = true
+// 设置 raw，获取二进制数据
+module.exports.raw = true
 
 export default loader

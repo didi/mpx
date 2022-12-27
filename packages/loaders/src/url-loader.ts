@@ -67,6 +67,7 @@ const urlLoader: LoaderDefinition = function urlLoader(src: string | Buffer): st
 }
 
 // @ts-ignore
-urlLoader.raw = true
+// 设置 raw，获取二进制数据
+module.exports.raw = true
 
 export default urlLoader
