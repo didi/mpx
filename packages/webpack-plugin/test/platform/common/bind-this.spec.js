@@ -71,7 +71,7 @@ describe('render function simplify should correct', function () {
     expect(res).toMatchSnapshot(output)
   })
 
-  it('should If condition judgment is correct', function () {
+  it('should condition judgment is correct', function () {
     const input = `
       global.currentInject = {
         render: function () {
@@ -82,6 +82,7 @@ describe('render function simplify should correct', function () {
           
           name3;
           if (name3 ? 'big' : 'small') {}
+          if (name2 ? name3 : 'small') {}
           
           name4;
           if ([name4].length) {}

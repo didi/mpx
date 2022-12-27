@@ -193,35 +193,31 @@ module.exports = {
                   t.isCallExpression(last.parent)
                 ) {
                   const name = last.parent.callee.property.name
-                  if (name === '_i') {
+                  if (name === '_i') { // wx:for
                     canDel = false
                   } else if (name === '_p') {
                     last = last.parentPath
                   }
                 }
                 if (inConditional) {
-                  let current = last
-                  let inTest = false
-                  while (current) { // TODO 待优化，耗费性能
-                    if (current.key === 'test') {
-                      inTest = true
+                  let cur = last
+                  while (cur) { // (a & !b[key]) ? c : 'd'
+                    const { key } = cur
+                    if (key === 'test') {
+                      canDel = false
                       break
                     }
-                    current = current.parentPath
+                    if (key === 'consequent' || key === 'alternate') {
+                      replace = true
+                      break
+                    }
+                    cur = cur.parentPath
                   }
-                  if (inTest) {
-                    canDel = false
-                  } else {
-                    replace = true
-                  }
                 }
-                if (t.isBinaryExpression(last.container)) { // a + b
-                  replace = true
-                }
-                if (t.isLogicalExpression(last.container)) { // a && b
-                  replace = true
-                }
-                if (last.key === 'value' && t.isObjectProperty(last.container)) {
+                if (t.isBinaryExpression(last.container) || // a + b
+                  t.isLogicalExpression(last.container) || // a && !b
+                  (last.key === 'value' && t.isObjectProperty(last.container)) // ({ key: a && !b })
+                ) {
                   replace = true
                 }
               }
@@ -232,7 +228,7 @@ module.exports = {
                 } else {
                   // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
                   const { canDel: preCanDel, path: prePath, replace: preReplace, current: preCurrent } = currentBindings[keyPath]
-                  if (preCanDel && preCurrent === currentBlock) {
+                  if (preCanDel && preCurrent === currentBlock) { // 当前作用域不能删除父级作用域的变量
                     dealRemove(prePath, preReplace)
                   }
                   currentBindings[keyPath] = {
