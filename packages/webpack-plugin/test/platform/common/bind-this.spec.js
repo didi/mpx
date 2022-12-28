@@ -143,6 +143,10 @@ describe('render function simplify should correct', function () {
           }
           if (name10){}
 
+          name11;
+          Number(name11); // 删除
+          test1(name11); // 保留
+
           this._p(aa.length);
           this._p(aa);
           this._i(aa, function(item){})

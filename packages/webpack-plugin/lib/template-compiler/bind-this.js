@@ -192,11 +192,14 @@ module.exports = {
                 if (last.listKey === 'arguments' && last.key === 0 &&
                   t.isCallExpression(last.parent)
                 ) {
-                  const name = last.parent.callee.property.name
+                  const p = last.parent
+                  const name = p.callee.name || p.callee.property && p.callee.property.name
                   if (name === '_i') { // wx:for
                     canDel = false
-                  } else if (name === '_p') {
+                  } else if (name && (name === '_p' || hash[name])) { // this._p() || Number(a)
                     last = last.parentPath
+                  } else {
+                    canDel = false
                   }
                 }
                 if (inConditional) {
