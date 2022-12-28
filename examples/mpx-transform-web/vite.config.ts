@@ -1,7 +1,7 @@
 import mpx from '@mpxjs/web-plugin/vite'
 import path from 'path'
 import { defineConfig, splitVendorChunkPlugin } from 'vite'
-import legacy from '@vitejs/plugin-legacy'
+// import legacy from '@vitejs/plugin-legacy'
 
 export default defineConfig({
   plugins: [
@@ -26,7 +26,21 @@ export default defineConfig({
       i18n: {
         locale: 'en-US',
         // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
-        messagesPath: path.resolve('./src/i18n/index.js')
+        // messagesPath: path.resolve('./src/i18n/index.js'),
+        messages: {
+          'en-US': {
+            message: {
+              title: 'test',
+              hello: '{msg} world'
+            }
+          },
+          'zh-CN': {
+            message: {
+              title: '中文',
+              hello: '{msg} 世界'
+            }
+          }
+        }
       }
     }),
     // test with split chunk

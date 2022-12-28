@@ -2,6 +2,22 @@ import { ViteDevServer, FilterPattern } from 'vite'
 
 export type Mode = 'wx' | 'web' | 'ali' | 'swan'
 
+interface i18nMessage {
+  [key: string]: {
+    message: {
+      [key: string]: string
+    }
+  }
+}
+
+interface I18nTypes {
+  locale?: string
+  messagesPath?: string
+  dateTimeFormats?: string
+  numberFormats?: string
+  messages?: i18nMessage
+}
+
 interface RpxRule {
   mode?: 'none' | 'only' | 'all'
   designWidth?: number
@@ -9,6 +25,7 @@ interface RpxRule {
   exclude?: string
   comment?: string
 }
+
 export interface Options {
   include?: string | RegExp | (string | RegExp)[]
   exclude?: string | RegExp | (string | RegExp)[]
@@ -30,7 +47,7 @@ export interface Options {
   postcssInlineConfig?: Record<string, unknown>
   transRpxRules?: RpxRule[] | RpxRule | null
   decodeHTMLText?: boolean
-  i18n?: Record<string, string> | null
+  i18n?: I18nTypes | null
   checkUsingComponents?: boolean
   checkUsingComponentsRules?: unknown
   reportSize?: boolean | null

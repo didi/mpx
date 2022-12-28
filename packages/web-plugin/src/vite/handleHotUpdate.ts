@@ -13,9 +13,9 @@ export default async function handleHotUpdate(ctx: HmrContext) {
     const id = addQuery(filename, {
       type: 'main',
       vue: true,
-      page: prevDescriptor?.isPage,
+      isPage: prevDescriptor?.isPage,
       app: prevDescriptor?.app,
-      component: prevDescriptor?.isComponent
+      isComponent: prevDescriptor?.isComponent
     })
     await ctx.server.transformRequest(id)
     const descriptor = getDescriptor(filename)
