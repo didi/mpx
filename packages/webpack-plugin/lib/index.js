@@ -39,6 +39,7 @@ const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const PartialCompilePlugin = require('./partial-compile/index')
+const ReplacePagesPlugin = require('./partial-compile/replace-page')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
@@ -167,6 +168,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.replacePagesConfig = options.mode !== 'web' && options.replacePagesConfig
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     this.options = options
@@ -382,6 +384,10 @@ class MpxWebpackPlugin {
 
     if (this.options.partialCompile) {
       new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
+    }
+
+    if (this.options.replacePagesConfig) {
+      new ReplacePagesPlugin(this.options.replacePagesConfig).apply(compiler)
     }
 
     const getPackageCacheGroup = packageName => {

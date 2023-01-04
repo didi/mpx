@@ -102,7 +102,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
       if (err) return callback(err)
-      const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
+      const { resourcePath, queryObj: { isFirst, aliasResourcePath} } = parseRequest(resource)
       const ext = path.extname(resourcePath)
       let outputPath
       if (aliasPath) {
@@ -120,7 +120,12 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       if (ext === '.js' && mode !== 'web') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
-      const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
+      let entry = ''
+      if (aliasResourcePath) {
+        entry = getDynamicEntry(aliasResourcePath, 'page', outputPath, tarRoot, publicPath + tarRoot)
+      } else {
+        entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
+      }
       const key = [resourcePath, outputPath, tarRoot].join('|')
       callback(null, entry, {
         isFirst,
