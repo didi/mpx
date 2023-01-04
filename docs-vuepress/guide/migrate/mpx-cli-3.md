@@ -73,6 +73,10 @@ module.exports = defineConfig({
 ```js
 // index.js
 module.exports = function (api, options) {
+  function runServiceCommand(api, command, ...args){
+    const { fn } = api.service.commands[command]
+    return fn && fn(...args)
+  }
   // 注册一个新的命令
   api.registerCommand('build:upload', function deploy(...args) {
     // 运行原有的build命令，build会返回一个promise来表示构建完成
