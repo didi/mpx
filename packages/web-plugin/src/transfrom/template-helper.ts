@@ -21,15 +21,14 @@ const calculateRootEleChild = (arr: ParseHtmlNode[]) => {
   }, 0)
 }
 
-export default function templateTransform ({ template, mpx, pluginContext, jsonConfig, hasScoped, resource, moduleId, app, compileMode}: {
+export default function templateTransform ({ template, mpx, pluginContext, jsonConfig, resource, moduleId, app, compileMode}: {
   template: Record<string, any>
-  mpx: Mpx,
+  mpx: Mpx
   pluginContext: LoaderContext<null> | PluginContext | any,
-  jsonConfig: JsonConfig,
-  resource: string,
-  moduleId: string,
+  jsonConfig: JsonConfig
+  resource: string
+  moduleId: string
   app: boolean,
-  hasScoped: boolean,
   compileMode: 'vite' | 'webpack'
 }){
   // todo vite 热更新时调用 processTemplate 拿不到 pluginContext
@@ -73,7 +72,8 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
       defs,
       decodeHTMLText,
       externalClasses,
-      hasScoped: hasScoped || false,
+      // todo 后续输出web也采用mpx的scoped处理
+      hasScoped: false,
       moduleId,
       filePath: resource,
       i18n: null,

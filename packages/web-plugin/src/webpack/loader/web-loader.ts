@@ -104,8 +104,6 @@ export default function (
           .catch(callback)
       },
       (callback: (err?: Error | null, result?: any) => void) => {
-        const hasScoped =
-          parts.styles.some(({ scoped }: { scoped: boolean}) => scoped) || autoScope
 
         let jsonConfig: JsonConfig = {}
         let componentGenerics = {}
@@ -152,7 +150,6 @@ export default function (
                       parts.template,
                       {
                         loaderContext,
-                        hasScoped,
                         moduleId,
                         ctorType,
                         jsonConfig

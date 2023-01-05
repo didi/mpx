@@ -7,13 +7,11 @@ import { JsonConfig } from '../../types/json-config'
 
 export default function (template: { content: string, tag: string, attrs: Record<string, string> | null, src?: string, lang?: string}, {
   loaderContext,
-  hasScoped,
   moduleId,
   ctorType,
   jsonConfig
 }: {
   loaderContext: LoaderContext<null>
-  hasScoped: boolean
   moduleId: string
   ctorType: string
   jsonConfig: JsonConfig
@@ -45,7 +43,6 @@ export default function (template: { content: string, tag: string, attrs: Record
       mpx,
       pluginContext: loaderContext,
       jsonConfig,
-      hasScoped,
       app,
       resource: resourcePath,
       moduleId,
