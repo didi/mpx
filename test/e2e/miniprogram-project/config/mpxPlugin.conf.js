@@ -26,6 +26,18 @@ module.exports = {
     //   include: [resolve('node_modules/vant-aliapp')]
     // }
   },
+  partialCompile: {
+    test: {
+      include: [],
+      exclude: []
+    },
+    custom: (path) => {
+      // 自定义页面替换资源
+    },
+    isReplacePage: false, // 当该值为true时，开启页面替换功能，默认为false
+    keepOriginalPath: true, // 开启页面替换功能时，是否保留输出原页面路径
+    defaultPageResource: resolve('pages/index3') // 开启页面替换功能时，全局默认的替换资源，若不配置，则框架会内置一个配置兜底资源
+  },
 
   // 定义一些全局环境变量，可在JS/模板/样式/JSON中使用
   defs: {
