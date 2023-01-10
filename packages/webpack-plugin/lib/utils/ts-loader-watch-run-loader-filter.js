@@ -5,19 +5,18 @@ const { has } = require('./set')
 
 const tsLoaderWatchRunFilterLoaders = [
   selectorPath,
-  scriptSetupPath
+  scriptSetupPath,
+  'node_modules/vue-loader/lib/index.js'
 ]
 
 module.exports = (loaders, loaderIndex) => {
-  let loaderLen = loaders.length
-  while (loaderLen > 0) {
-    const currentLoader = loaders[loaderLen - 1]
+  for (let len = loaders.length; len > 0; --len) {
+    const currentLoader = loaders[len - 1]
     if (!has(tsLoaderWatchRunFilterLoaders, (filterLoaderPath) => {
       return currentLoader.path.endsWith(filterLoaderPath)
     })) {
       break
     }
-    loaderLen -= 1
     loaderIndex -= 1
   }
   return loaderIndex
