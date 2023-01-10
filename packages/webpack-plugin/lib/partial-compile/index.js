@@ -2,8 +2,10 @@ const { matchCondition } = require('../utils/match-condition')
 const { parseQuery } = require('loader-utils')
 
 class MpxPartialCompilePlugin {
-  constructor (condition) {
-    this.condition = condition
+  constructor (options) {
+    this.options = options
+    this.test = options.test
+    this.isReplacePage = options.isReplacePage || false
   }
 
   isResolvingPage (obj) {
