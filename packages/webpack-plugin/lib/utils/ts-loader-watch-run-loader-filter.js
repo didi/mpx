@@ -1,11 +1,13 @@
 const normalize = require('./normalize')
 const selectorPath = normalize.lib('selector.js')
 const scriptSetupPath = normalize.lib('script-setup-compiler/index.js')
+const mpxLoaderPath = normalize.lib('loader.js')
 const { has } = require('./set')
 
 const tsLoaderWatchRunFilterLoaders = [
   selectorPath,
   scriptSetupPath,
+  mpxLoaderPath,
   'node_modules/vue-loader/lib/index.js'
 ]
 
