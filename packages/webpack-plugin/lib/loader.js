@@ -18,6 +18,7 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 
@@ -26,7 +27,7 @@ module.exports = function (content) {
 
   // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
   if (path.extname(this.resourcePath) === '.ts') {
-    this.loaderIndex -= 2
+    this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
 
