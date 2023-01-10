@@ -1,9 +1,14 @@
+const path = require('path')
 const parseComponent = require('./parser')
 const parseRequest = require('./utils/parse-request')
+const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 
 module.exports = function (content) {
   this.cacheable()
-
+  if (path.extname(this.resourcePath) === '.ts') {
+    this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
+    return content
+  }
   // 移除mpx访问依赖，支持 thread-loader
   const { mode, env } = this.getOptions() || {}
   if (!mode && !env) {

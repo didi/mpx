@@ -8,16 +8,17 @@ const tsLoaderWatchRunFilterLoaders = [
   scriptSetupPath
 ]
 
-module.exports = (loaders) => {
+module.exports = (loaders, loaderIndex) => {
   let loaderLen = loaders.length
   while (loaderLen > 0) {
-    const currentLoader = this.loaders[loaderLen - 1]
+    const currentLoader = loaders[loaderLen - 1]
     if (!has(tsLoaderWatchRunFilterLoaders, (filterLoaderPath) => {
       return currentLoader.path.endsWith(filterLoaderPath)
     })) {
       break
     }
     loaderLen -= 1
-    this.loaderIndex -= 1
+    loaderIndex -= 1
   }
+  return loaderIndex
 }
