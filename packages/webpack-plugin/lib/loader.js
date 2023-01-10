@@ -25,8 +25,9 @@ const path = require('path')
 module.exports = function (content) {
   this.cacheable()
 
-  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
-  if (path.extname(this.resourcePath) === '.ts') {
+  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
+  const pathExtname = path.extname(this.resourcePath)
+  if (!['.vue', '.mpx'].includes(pathExtname)) {
     this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
