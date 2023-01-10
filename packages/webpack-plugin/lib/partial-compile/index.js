@@ -22,8 +22,29 @@ class MpxPartialCompilePlugin {
             name: 'MpxPartialCompilePlugin',
             stage: -100
           }, (obj, resolverContext, callback) => {
-            if (this.isResolvingPage(obj) && !matchCondition(obj.path, this.condition)) {
-              obj.path = false
+            if (this.isResolvingPage(obj)) {
+              if (this.isReplacePage) {
+                let aliasResourcePath = null
+                if (matchCondition(obj.path, this.test)) {
+                  aliasResourcePath = options.defaultPageResource || '框架内置资源'
+                }
+                // 页面替换
+                if (options.custom) {
+                  // 如果有自定义兜底路径的需求
+                  let customResourcePath = options.custom(obj.path)
+                  if (customResourcePath && '判断资源路径是否可索引') {
+                    aliasResourcePath = customResourcePath
+                  }
+                }
+                if (aliasResourcePath) {
+                  obj.path = addQuery(obj.path + obj.query, {aliasResourcePath})
+                }
+              } else {
+                // 局部编译
+                if (!matchCondition(obj.path, this.test)) {
+                  obj.path = false
+                }
+              }
             }
             callback(null, obj)
           })
