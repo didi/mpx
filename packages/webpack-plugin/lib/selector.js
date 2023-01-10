@@ -1,7 +1,7 @@
 const parseComponent = require('./parser')
 const parseRequest = require('./utils/parse-request')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
-const path = require("path");
+const path = require('path')
 
 module.exports = function (content) {
   this.cacheable()
