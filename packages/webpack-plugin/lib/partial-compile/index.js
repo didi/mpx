@@ -1,4 +1,5 @@
 const { matchCondition } = require('../utils/match-condition')
+const addQuery  = require('../utils/add-query')
 const { parseQuery } = require('loader-utils')
 
 class MpxPartialCompilePlugin {
@@ -6,6 +7,7 @@ class MpxPartialCompilePlugin {
     this.options = options
     this.test = options.test
     this.isReplacePage = options.isReplacePage || false
+    this.keepOriginalPath = options.keepOriginalPath || true
   }
 
   isResolvingPage (obj) {
@@ -26,18 +28,19 @@ class MpxPartialCompilePlugin {
               if (this.isReplacePage) {
                 let aliasResourcePath = null
                 if (matchCondition(obj.path, this.test)) {
-                  aliasResourcePath = options.defaultPageResource || '框架内置资源'
+                  aliasResourcePath = this.options.defaultPageResource || '框架内置资源'
                 }
                 // 页面替换
-                if (options.custom) {
+                if (this.options.custom) {
                   // 如果有自定义兜底路径的需求
-                  let customResourcePath = options.custom(obj.path)
+                  let customResourcePath = this.options.custom(obj.path)
                   if (customResourcePath && '判断资源路径是否可索引') {
                     aliasResourcePath = customResourcePath
                   }
                 }
                 if (aliasResourcePath) {
-                  obj.path = addQuery(obj.path + obj.query, {aliasResourcePath})
+                  // obj.path = aliasResourcePath
+                  obj.path = addQuery(obj.path + obj.query, {aliasResourcePath, keepOriginalPath: this.keepOriginalPath})
                 }
               } else {
                 // 局部编译
