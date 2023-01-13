@@ -318,9 +318,6 @@ function composeHooks (target, includes) {
             const data = hooksArr[i].apply(this, args)
             data !== undefined && (result = data)
           }
-          if (result === '__abort__') {
-            break
-          }
         }
         return result
       })
