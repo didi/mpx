@@ -780,9 +780,9 @@ props 可以通过给 `defineProps` 传递纯类型函数的方式来声明：
 
 ```ts
     const props = defineProps<{
-        foo: string
+        foo: string,
         bar: number
-    }>
+    }>()
 
     // 构建转换为
     {
