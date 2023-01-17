@@ -130,7 +130,9 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, 
   options?: Partial<{
     addGlobalClass: boolean
     multipleSlots: boolean
-    styleIsolation: string
+    styleIsolation: string,
+    virtualHost: boolean,
+    pureDataPattern: RegExp
   }>
 
   setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: Context) => S
@@ -621,6 +623,28 @@ export function useI18n<Options extends {
   options?: Options
 ): UseI18n
 
+// `<script setup>`
+type NotUndefined<T> = T extends undefined ? never : T
+
+type InferDefaults<T> = {
+  [K in keyof T]?: InferDefault<T, NotUndefined<T[K]>>
+}
+
+type InferDefault<P, T> = T extends
+  | null
+  | number
+  | string
+  | boolean
+  | symbol
+  | Array<any>
+  | Object
+  ? T | ((props: P) => T)
+  : (props: P) => T
+
+type PropsWithDefaults<Base, Defaults> = Base & {
+  [K in keyof Defaults]: K extends keyof Base ? NotUndefined<Base[K]> : never
+}
+
 // inner lifecycle
 export const BEFORECREATE: string
 export const CREATED: string
@@ -640,4 +664,5 @@ declare global {
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
+  const withDefaults: <Props, Defaults extends InferDefaults<Props>>(props: Props, defaults: Defaults) => PropsWithDefaults<Props, Defaults>
 }
