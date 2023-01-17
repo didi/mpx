@@ -115,8 +115,7 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
-type Options = Partial<WechatMiniprogram.Component.Lifetimes>&Partial<WechatMiniprogram.Component.OtherOption>
-interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Options{
+interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption>{
   data?: D
   properties?: P
   computed?: C
