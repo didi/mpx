@@ -69,10 +69,6 @@ interface WatchField {
   [key: string]: WatchHandler | WatchOptWithHandler
 }
 
-interface ObserversDefs {
-  [expression: string]: (...fields: any[]) => any
-}
-
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
 type PropValueType<Def> = Def extends {
@@ -119,35 +115,19 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
-interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes> {
+type Options = Partial<WechatMiniprogram.Component.Lifetimes>&Partial<WechatMiniprogram.Component.OtherOption>
+interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Options{
   data?: D
   properties?: P
   computed?: C
   methods?: M
   mixins?: Mi
   watch?: WatchField
-  observers?: ObserversDefs
-  options?: Partial<{
-    addGlobalClass: boolean
-    multipleSlots: boolean
-    styleIsolation: string,
-    virtualHost: boolean,
-    pureDataPattern: RegExp
-  }>
-
   setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: Context) => S
 
   pageShow?: () => void
 
   pageHide?: () => void
-
-  externalClasses?: string[]
-
-  lifetimes?: Partial<WechatMiniprogram.Component.Lifetimes>
-
-  pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes>
-
-  relations?: { [key: string]: WechatMiniprogram.Component.RelationOption }
 
   [index: string]: any
 }
