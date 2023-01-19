@@ -86,10 +86,14 @@ describe('render function simplify should correct', function () {
           
           name4;
           if ([name4].length) {}
+          
+          name5;
+          name5 ? 'a' : 'b'; // 字符串 a 和 b 会被tenser
         }
       }
     `
     const res = bindThis(input, { needCollect: true }).code
+    console.log(res)
     const output = `
       global.currentInject = {
         render: function () {
@@ -100,6 +104,8 @@ describe('render function simplify should correct', function () {
           if (this._c("name3", this.name3) ? 'big' : 'small') {}
           
           if ([this._c("name4", this.name4)].length) {}
+          
+          this._c("name5", this.name5) ? 'a' : 'b'; // 字符串 a 和 b 会被tenser
         }
       }
     `
@@ -113,6 +119,7 @@ describe('render function simplify should correct', function () {
           name;
           !name;
           !!name;
+          !!!!!!!name;
           
           name2;
           name3;
@@ -139,17 +146,18 @@ describe('render function simplify should correct', function () {
           this._p(name10);
           if (xxx) {
             this._p(name10);
-            if (name10){}
+            if (name10){} // 保留，不会删除外层 name10
           }
-          if (name10){}
+          if (name10){} // 保留
 
           name11;
           Number(name11); // 删除
           test1(name11); // 保留
+          this._p(name11);
 
-          this._p(aa.length);
-          this._p(aa);
-          this._i(aa, function(item){})
+          this._p(name12.length);
+          this._p(name12);
+          this._i(name12, function(item){})
         }
       }
     `
@@ -157,7 +165,40 @@ describe('render function simplify should correct', function () {
     const output = `
       global.currentInject = {
         render: function () {
-          
+          this._c("name", this.name);
+
+          this._c("name3", this.name3)[this._c("name2", this.name2)];
+          this._c("name44", this.name44) && this._c("name4", this.name4).length;
+      
+          this._c("name5", this.name5);
+      
+          this._c("name6", this.name6);
+      
+          this._c("name7", this.name7);
+      
+          "" + "";
+      
+          this._c("name8", this.name8);
+      
+          this._c("name9", this.name9);
+      
+          ({
+            key: "" && ""
+          }); // 跨block
+      
+          if (this._c("xxx", this.xxx)) {
+            if (this._c("name10", this.name10)) {} // 保留，不会删除外层 name10
+      
+          }
+      
+          if (this._c("name10", this.name10)) {} // 保留
+      
+      
+          // 删除
+          this._c("test1", this.test1)(this._c("name11", this.name11)); // 保留
+      
+      
+          this._i(this._c("name12", this.name12), function (item) {});
         }
       }
     `
@@ -227,32 +268,6 @@ describe('render function simplify should correct', function () {
     expect(res).toMatchSnapshot(output)
   })
 
-  it('should _p is correct', function () {
-    const input = `
-      global.currentInject = {
-        render: function () {
-          if (aName) {
-            this._p(aName)
-          }
-          
-          this._p(bName)
-          if (bName) {}
-        }
-      }
-    `
-    const res = bindThis(input, { needCollect: true }).code
-    const output = `
-      global.currentInject = {
-        render: function () {
-          if (this._c("name", this.name)) {}
-
-          if (this._c("aName", this.aName)) {}
-        }
-      }
-    `
-    expect(res).toMatchSnapshot(output)
-  })
-
   it('should object is correct', function () {
     const input = `
     global.currentInject = {
@@ -301,21 +316,10 @@ describe('render function simplify should correct', function () {
         if (Object.keys({
           name: this._c("bName", this.bName)
         }).length) {}
-      }
-    }`
-    expect(res).toMatchSnapshot(output)
-  })
-
-  it('should for loop is correct', function () {
-    const input = `
-    global.currentInject = {
-      render: function () {
-      }
-    }`
-    const res = bindThis(input, { needCollect: true }).code
-    const output = `
-    global.currentInject = {
-      render: function () {
+        
+        Object.keys({
+          name: this._c("bName", this.bName)
+        }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
       }
     }`
     expect(res).toMatchSnapshot(output)
@@ -325,19 +329,27 @@ describe('render function simplify should correct', function () {
     const input = `
     global.currentInject = {
       render: function () {
-        if((geo || currentLocation)){
-          this._p((geo || currentLocation));
+        if((a || b)){
+          this._p((a || b));
         }
         
-        if (lang) {}
-        (__stringify__.stringifyClass("class_name", { active: !lang }));
-        
+        if (c) {}
+        ({ active: !c })
       }
     }`
     const res = bindThis(input, { needCollect: true }).code
     const output = `
     global.currentInject = {
       render: function () {
+        if (this._c("a", this.a) || this._c("b", this.b)) {
+          "" || "";
+        }
+    
+        if (this._c("c", this.c)) {}
+    
+        ({
+          active: ""
+        });
       }
     }`
     expect(res).toMatchSnapshot(output)
