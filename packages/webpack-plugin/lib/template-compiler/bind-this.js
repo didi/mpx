@@ -193,7 +193,7 @@ module.exports = {
                   t.isCallExpression(last.parent)
                 ) {
                   const p = last.parent
-                  const name = p.callee.name || p.callee.property && p.callee.property.name
+                  const name = p.callee.name || (p.callee.property && p.callee.property.name)
                   if (name === '_i') { // wx:for
                     canDel = false
                   } else if (name && (name === '_p' || hash[name])) { // this._p() || Number(a)
