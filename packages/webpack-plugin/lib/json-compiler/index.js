@@ -582,7 +582,6 @@ module.exports = function (content) {
           json.subPackages.push(subPackageCfg)
         }
       }
-      mpx.subPackages = json.subPackages || []
       const processOutput = (output) => {
         output = processDynamicEntry(output)
         output = processTabBar(output)

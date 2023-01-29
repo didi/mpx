@@ -528,10 +528,6 @@ class MpxWebpackPlugin {
           subpackageModulesMap: {
             main: {}
           },
-          // 用于记录所有分包异步的方式引用的资源所在的包
-          asyncRootMap: {},
-          // 所有的分包配置
-          subPackages: [],
           // 记录其他资源，如pluginMain、pluginExport，无需区分主包分包
           otherResourcesMap: {},
           // 记录独立分包
@@ -539,6 +535,8 @@ class MpxWebpackPlugin {
           subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
+          // 记录分包异步的映射
+          dynamicPackageMap: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
           // 记录与asset相关联的modules，用于体积分析
@@ -998,7 +996,6 @@ class MpxWebpackPlugin {
                 parser.state.current.addPresentationalDependency(dep)
                 // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
                 parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
-                mpx.asyncRootMap[queryObj.root] = true
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)
@@ -1508,24 +1505,14 @@ try {
           cache.storePromise('cacheIsValid', null, true)
         ])
       }
-      // check是否有分包未注册
-      const checkAsyncPack = () => {
-        const unRegisterPackage = []
-        const allRoot = {}
-        for (const v of mpx.subPackages) {
-          allRoot[v.root] = true
-        }
-        for (const asyncRoot in mpx.asyncRootMap) {
-          if (!allRoot[asyncRoot]) {
-            unRegisterPackage.push(asyncRoot)
+      const checkDynamicPackage = () => {
+        for (let packRoot in mpx.dynamicPackageMap) {
+          if (packRoot && !mpx.subPackagesCfg[packRoot]) {
+            stats.compilation.errors.push(new Error(`资源${mpx.dynamicPackageMap[packRoot]}目标是打入${packRoot}分包,但是app.json中并未声明`))
           }
         }
-        return unRegisterPackage
       }
-      const unRegiPackages = checkAsyncPack()
-      if (unRegiPackages.length > 0) {
-        stats.compilation.errors.push(new Error(`使用分包异步确没有注册对应的分包${unRegiPackages.join(',')}`))
-      }
+      checkDynamicPackage()
     })
   }
 }

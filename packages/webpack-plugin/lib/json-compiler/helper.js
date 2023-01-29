@@ -55,7 +55,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, emitEr
         // 目前只有微信支持分包异步化
         if (mode === 'wx') {
           tarRoot = queryObj.root
-          mpx.asyncRootMap[tarRoot] = true
         }
       }
       const parsed = path.parse(resourcePath)
