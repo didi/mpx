@@ -7,7 +7,7 @@ const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 
-module.exports = function createJSONHelper ({ loaderContext, emitWarning, emitError, customGetDynamicEntry }) {
+module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
@@ -53,9 +53,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, emitEr
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (mode === 'wx') {
-          tarRoot = queryObj.root
-        }
+        if (mode === 'wx') tarRoot = queryObj.root
       }
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
