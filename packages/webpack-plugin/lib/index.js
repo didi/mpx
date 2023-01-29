@@ -537,6 +537,8 @@ class MpxWebpackPlugin {
           exportModules: new Set(),
           // 记录分包异步的映射
           dynamicPackageMap: {},
+          // 存储所有subPackages配置
+          subPackagesCfg: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
           // 记录与asset相关联的modules，用于体积分析
