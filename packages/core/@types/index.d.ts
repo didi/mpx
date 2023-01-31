@@ -267,8 +267,7 @@ export interface Mpx {
   injectMixins: typeof injectMixins
   toPureObject: typeof toPureObject
   observable: typeof observable
-
-  // watch: typeof watch
+  watch: typeof watch
 
   use (plugin: Plugin, ...rest: any[]): Mpx
 
