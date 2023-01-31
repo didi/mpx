@@ -433,17 +433,18 @@ interface EffectScope {
 type StringObj = {
   [k: string]: string | StringObj
 }
+type Locale = string
 
 interface UseI18n {
   id: number
-  locale: string
+  locale: WritableComputedRef<Locale>
   fallbackLocale: string
   readonly messages: StringObj
   readonly isGlobal: boolean
   inheritLocale: boolean
   fallbackRoot: boolean
 
-  t: typeof t | typeof tc
+  t: typeof t & typeof tc
 
   te: typeof te
 
