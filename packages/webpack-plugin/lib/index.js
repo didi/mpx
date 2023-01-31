@@ -537,8 +537,8 @@ class MpxWebpackPlugin {
           exportModules: new Set(),
           // 记录分包异步的映射
           dynamicPackageMap: {},
-          // 存储所有subPackages配置
-          subPackagesCfg: {},
+          // 存储所有注册的分包
+          registerPackRoot: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
           // 记录与asset相关联的modules，用于体积分析
@@ -1509,7 +1509,7 @@ try {
       }
       const checkDynamicPackage = () => {
         for (let packRoot in mpx.dynamicPackageMap) {
-          if (packRoot && !mpx.subPackagesCfg[packRoot]) {
+          if (packRoot && !mpx.registerPackRoot[packRoot]) {
             stats.compilation.errors.push(new Error(`资源${mpx.dynamicPackageMap[packRoot]}目标是打入${packRoot}分包,但是app.json中并未声明`))
           }
         }

@@ -217,7 +217,7 @@ module.exports = function (content) {
   if (isApp) {
     // app.json
     const localPages = []
-    const subPackagesCfg = mpx.subPackagesCfg || {}
+    const subPackagesCfg = {}
     const pageKeySet = new Set()
 
     const processPages = (pages, context, tarRoot = '', callback) => {

@@ -29,19 +29,22 @@ class DynamicEntryDependency extends NullDependency {
   }
 
   collectDynamicRequest (mpx) {
-    // 每个分包只收集一个还是所有的都收集，一个也能看出问题
-    if (!mpx.dynamicPackageMap[this.packageRoot]) {
+    // 收集一次组件分包异步component + require async = export两种方式
+    if (!this.packageRoot) return
+    if (this.entryType !== 'page' && !mpx.dynamicPackageMap[this.packageRoot]) {
       mpx.dynamicPackageMap[this.packageRoot] = this.request
+    }
+    // 收集非主包的分包
+    if (this.entryType === 'page') {
+      mpx.registerPackRoot[this.packageRoot] = true
     }
   }
 
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
     let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
-    // page的是要收集wx原生配置的subpackages中有无声明root么? 在json-compiler中processSubPackage无root直接callback了
-    if (this.entryType !== 'page') {
-      this.collectDynamicRequest(mpx)
-    }
+    this.collectDynamicRequest(mpx)
+    
     async.waterfall([
       (callback) => {
         if (context && resolver) {
