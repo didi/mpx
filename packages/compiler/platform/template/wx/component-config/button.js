@@ -1,4 +1,4 @@
-const { isMustache } = require('@mpxjs/compile-utils/string')
+const { isMustache } = require('@mpxjs/compile-utils')
 
 const TAG_NAME = 'button'
 

@@ -1,5 +1,4 @@
-import { matchCondition } from '@mpxjs/compile-utils/match-condition'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { matchCondition, parseRequest } from '@mpxjs/compile-utils'
 import { Plugin as EsbuildPlugin } from 'esbuild'
 import fs from 'fs'
 import path from 'path'

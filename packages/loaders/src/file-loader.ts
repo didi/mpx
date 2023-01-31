@@ -1,7 +1,6 @@
 import path from 'path'
 import loaderUtils from 'loader-utils'
-import toPosix from '@mpxjs/compile-utils/to-posix'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { toPosix, parseRequest } from '@mpxjs/compile-utils'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import { Dependency, LoaderDefinition } from 'webpack'
 

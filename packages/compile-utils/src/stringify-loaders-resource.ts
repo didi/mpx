@@ -14,7 +14,7 @@ const loaderToIdent = (data: { options: string; loader: string; ident: string })
   return data.loader + '?' + JSON.stringify(data.options)
 }
 
-const stringifyLoadersAndResource = (loaders: any, resource: string) => {
+export const stringifyLoadersAndResource = (loaders: any, resource: string) => {
   let str = ''
   for (const loader of loaders) {
     str += loaderToIdent(loader) + '!'
@@ -22,4 +22,3 @@ const stringifyLoadersAndResource = (loaders: any, resource: string) => {
   return str + resource
 }
 
-export default stringifyLoadersAndResource

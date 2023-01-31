@@ -1,6 +1,6 @@
 import { createFilter, Plugin } from 'vite'
 import { ResolvedOptions } from '../../options'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { parseRequest } from '@mpxjs/compile-utils'
 import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
 import mpxGlobal from '../mpx'
 

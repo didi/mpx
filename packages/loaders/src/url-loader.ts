@@ -1,17 +1,17 @@
 import loaderUtils from 'loader-utils'
 import mime from 'mime'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { parseRequest } from '@mpxjs/compile-utils'
 import { LoaderDefinition } from 'webpack'
 
 export interface Options {
-  name?: string,
-  publicPathScope?: string,
-  mimetype?: string,
-  limit?: number,
-  publicPath?: string,
+  name?: string
+  publicPathScope?: string
+  mimetype?: string
+  limit?: number
+  publicPath?: string
   fallback?: string
 }
-function isStyleRequest(request:string) {
+function isStyleRequest(request: string) {
   const { loaderString, queryObj } = parseRequest(request)
   if (queryObj.type === 'styles') return true
   if (/(css-loader|wxss\/loader)/.test(loaderString)) return true
@@ -20,14 +20,18 @@ function isStyleRequest(request:string) {
 
 const getOptions = loaderUtils.getOptions
 
-const urlLoader: LoaderDefinition = function urlLoader(src: string | Buffer): string {
+const urlLoader: LoaderDefinition = function urlLoader(
+  src: string | Buffer
+): string {
   let transBase64 = false
   // @ts-ignore
   const options: Options = Object.assign({}, getOptions(this))
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mimetype = options.mimetype || mime.getType(resourcePath)
   const moduleGraph = this._compilation?.moduleGraph
-  const issuer: Record<string, any> | undefined | null = moduleGraph?.getIssuer(this._module!)
+  const issuer: Record<string, any> | undefined | null = moduleGraph?.getIssuer(
+    this._module!
+  )
   const publicPathScope =
     options.publicPathScope === 'all' ? 'all' : 'styleOnly'
   const limit = options.limit
@@ -61,7 +65,10 @@ const urlLoader: LoaderDefinition = function urlLoader(src: string | Buffer): st
       `data:${mimetype || ''};base64,${src.toString('base64')}`
     )}`
   } else {
-    const fallback = options.fallback ? require(options.fallback) : require('./file-loader').default
+    const fallback = options.fallback
+      ? require(options.fallback)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      : require('./file-loader').default
     return fallback.call(this, src, options)
   }
 }

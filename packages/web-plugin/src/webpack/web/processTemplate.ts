@@ -1,21 +1,30 @@
-import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
 import mpx from '../mpx'
 import templateTransform from '../../transfrom/template-helper'
 import { LoaderContext } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
 
-export default function (template: { content: string, tag: string, attrs: Record<string, string> | null, src?: string, lang?: string}, {
-  loaderContext,
-  moduleId,
-  ctorType,
-  jsonConfig
-}: {
-  loaderContext: LoaderContext<null>
-  moduleId: string
-  ctorType: string
-  jsonConfig: JsonConfig
-}, callback: (err?: Error | null, result?: any) => void) {
+export default function (
+  template: {
+    content: string
+    tag: string
+    attrs: Record<string, string> | null
+    src?: string
+    lang?: string
+  },
+  {
+    loaderContext,
+    moduleId,
+    ctorType,
+    jsonConfig
+  }: {
+    loaderContext: LoaderContext<null>
+    moduleId: string
+    ctorType: string
+    jsonConfig: JsonConfig
+  },
+  callback: (err?: Error | null, result?: any) => void
+) {
   const { resourcePath } = parseRequest(loaderContext.resource)
   let builtInComponentsMap = {}
   let wxsModuleMap
@@ -28,26 +37,43 @@ export default function (template: { content: string, tag: string, attrs: Record
     template = {
       attrs: null,
       tag: 'template',
-      content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+      content:
+        '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
     }
   }
   if (template) {
     // 由于远端src template资源引用的相对路径可能发生变化，暂时不支持。
     if (template.src) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
+      return callback(
+        new Error(
+          '[mpx loader][' +
+            loaderContext.resource +
+            ']: ' +
+            'template content must be inline in .mpx files!'
+        )
+      )
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
+      return callback(
+        new Error(
+          '[mpx loader][' +
+            loaderContext.resource +
+            ']: ' +
+            'template lang is not supported in trans web mode temporarily, we will support it in the future!'
+        )
+      )
     }
-    ({wxsModuleMap, genericsInfo, builtInComponentsMap, templateContent} = templateTransform({ template,
-      mpx,
-      pluginContext: loaderContext,
-      jsonConfig,
-      app,
-      resource: resourcePath,
-      moduleId,
-      compileMode: 'webpack'
-    }))
+    ({ wxsModuleMap, genericsInfo, builtInComponentsMap, templateContent } =
+      templateTransform({
+        template,
+        mpx,
+        pluginContext: loaderContext,
+        jsonConfig,
+        app,
+        resource: resourcePath,
+        moduleId,
+        compileMode: 'webpack'
+      }))
     template.content = templateContent
     output += `${genComponentTag(template)}\n\n`
   }

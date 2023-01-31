@@ -10,25 +10,6 @@
   ],
   "author": "lareinayanyu",
   "license": "ISC",
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/*"
-      ]
-    }
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.js"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "require": "./dist/*.js",
-      "import": "./dist/*.js"
-    }
-  },
   "scripts": {
     "dev": "node scripts/tsc.js",
     "build": "rimraf ./dist && tsc && npm run post-build",

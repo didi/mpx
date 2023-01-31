@@ -1,3 +1,3 @@
-export default function (path: string) {
+export function toPosix (path: string) {
   return path.replace(/\\/g, '/')
 }

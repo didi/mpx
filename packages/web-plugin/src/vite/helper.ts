@@ -1,9 +1,8 @@
 import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 import { ResolvedOptions } from '../options'
-import addQuery from '@mpxjs/compile-utils/add-query'
 import { genImport } from '../utils/genCode'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { parseRequest, addQuery } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../utils/stringify'
 import { SFCDescriptor } from '../types/compiler'
 import mpxGlobal from './mpx'
@@ -138,13 +137,8 @@ export const renderTabBarPageCode = async (
 ): Promise<string> => {
   const customBarPath = './custom-tab-bar/index?isComponent'
   const tabBars: string[] = []
-  const {
-    filename,
-    tabBarStr,
-    jsonConfig,
-    tabBarMap,
-    localPagesMap
-  } = descriptor
+  const { filename, tabBarStr, jsonConfig, tabBarMap, localPagesMap } =
+    descriptor
   const { tabBar } = jsonConfig
 
   const tabBarPagesMap: Record<string, string> = {}

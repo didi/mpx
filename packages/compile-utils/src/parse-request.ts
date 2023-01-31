@@ -8,7 +8,7 @@ function genQueryObj(result: { queryObj: OptionObject; resourceQuery: any }) {
   return result as any
 }
 
-export default function parseRequest(request: string) {
+export function parseRequest(request: string) {
   if (seen.has(request)) {
     return genQueryObj(seen.get(request))
   }

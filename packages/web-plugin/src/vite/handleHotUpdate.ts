@@ -1,5 +1,4 @@
-import addQuery from '@mpxjs/compile-utils/add-query'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { parseRequest, addQuery } from '@mpxjs/compile-utils'
 import { HmrContext } from 'vite'
 import { getDescriptor, setPrevDescriptor } from './utils/descriptorCache'
 

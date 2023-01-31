@@ -1,13 +1,11 @@
-import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
+import { genComponentTag, addQuery, parseRequest } from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
 import { SourceMap } from 'rollup'
-import addQuery from '@mpxjs/compile-utils/add-query'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { ResolvedOptions } from '../../options'
 import { genImport } from '../../utils/genCode'
 import omit from '../../utils/omit'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
 import stringify, { shallowStringify } from '../../utils/stringify'
 import { SFCDescriptor } from '../../types/compiler'
 import {
@@ -95,9 +93,7 @@ export async function transformScript(
     const pageCfg = localPagesMap[pageName]
     const varName = `__mpx__page__${index}`
     const isTabBar = tabBarMap && tabBarMap[pageName]
-    const newPagePath = isTabBar
-      ? TAB_BAR_CONTAINER_PATH
-      : pageCfg.resource
+    const newPagePath = isTabBar ? TAB_BAR_CONTAINER_PATH : pageCfg.resource
     const async = pageCfg.async
     !async && s.prepend(`${genImport(newPagePath, varName)}\n`)
     pagesMap[pageName] = genComponentCode(
@@ -109,8 +105,8 @@ export async function transformScript(
       isTabBar
         ? { __mpxBuiltIn: true }
         : {
-          __mpxPageRoute: pageName
-        }
+            __mpxPageRoute: pageName
+          }
     )
   })
   // import component by component json config
@@ -206,8 +202,10 @@ export async function transformScript(
       ${stringify(Object.keys(localPagesMap)[0])},
       ${stringify(componentId)},
       ${stringify(
-      isPage ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage']) : {}
-    )},
+        isPage
+          ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage'])
+          : {}
+      )},
       ${shallowStringify(pagesMap)},
       ${shallowStringify(componentsMap)},
       ${stringify(tabBarMap)},

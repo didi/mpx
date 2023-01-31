@@ -4,8 +4,7 @@ import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/
 import parser from '@mpxjs/compiler/template-compiler/parser'
 import createJSONHelper from './json-helper'
 import { proxyPluginContext } from '../pluginContextProxy'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
-import addQuery from '@mpxjs/compile-utils/add-query'
+import { addQuery, parseRequest } from '@mpxjs/compile-utils'
 import { createDescriptor } from '../vite/utils/descriptorCache'
 import resolveJson from '../utils/resolve-json-content'
 import getOutputPath from '../utils/get-output-path'
@@ -24,17 +23,23 @@ const defaultTabbar = {
   isShow: true
 }
 
-export const jsonCompiler = async function ({ jsonConfig, pluginContext, context, mpx, mode }: {
-  jsonConfig: JsonConfig,
-  pluginContext: LoaderContext<null> | PluginContext | any,
-  context: string,
-  mpx: Mpx,
+export const jsonCompiler = async function ({
+  jsonConfig,
+  pluginContext,
+  context,
+  mpx,
+  mode
+}: {
+  jsonConfig: JsonConfig
+  pluginContext: LoaderContext<null> | PluginContext | any
+  context: string
+  mpx: Mpx
   mode: 'vite' | 'webpack'
 }): Promise<{
   jsonConfig: JsonConfig
-  localPagesMap: SFCDescriptor['localPagesMap'],
-  localComponentsMap: SFCDescriptor['localComponentsMap'],
-  tabBarMap: SFCDescriptor['tabBarMap'],
+  localPagesMap: SFCDescriptor['localPagesMap']
+  localComponentsMap: SFCDescriptor['localComponentsMap']
+  tabBarMap: SFCDescriptor['tabBarMap']
   tabBarStr: string
 }> {
   const localPagesMap: SFCDescriptor['localPagesMap'] = {}
@@ -43,7 +48,14 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
   const mpxPluginContext = proxyPluginContext(pluginContext)
   let tabBarMap: SFCDescriptor['tabBarMap'] = {}
   let tabBarStr = ''
-  const { stringifyRequest, emitWarning, urlToRequest, isUrlRequest, processPage, processComponent } = createJSONHelper({
+  const {
+    stringifyRequest,
+    emitWarning,
+    urlToRequest,
+    isUrlRequest,
+    processPage,
+    processComponent
+  } = createJSONHelper({
     pluginContext,
     mpx,
     mode
@@ -53,9 +65,11 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
     if (tabBar) {
       tabBar = { ...defaultTabbar, ...tabBar }
       tabBarMap = {}
-      jsonConfig?.tabBar?.list?.forEach(({ pagePath }: { pagePath: string }) => {
-        tabBarMap[pagePath] = true
-      })
+      jsonConfig?.tabBar?.list?.forEach(
+        ({ pagePath }: { pagePath: string }) => {
+          tabBarMap[pagePath] = true
+        }
+      )
       tabBarStr = stringify(tabBar)
 
       tabBarStr = tabBarStr.replace(
@@ -63,7 +77,9 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
         function (matched, $1, $2) {
           // vite 引用本地路径无法识别
           if (isUrlRequest($2, projectRoot) && mode === 'webpack') {
-            return `"${ $1 }":require(${ stringifyRequest(urlToRequest($2, projectRoot)) })`
+            return `"${$1}":require(${stringifyRequest(
+              urlToRequest($2, projectRoot)
+            )})`
           }
           return matched
         }
@@ -91,13 +107,25 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
             const { resourcePath: oldResourcePath } = parseRequest(oldResource)
             if (oldResourcePath !== resourcePath) {
               const oldOutputPath = outputPath
-              outputPath = getOutputPath(resourcePath, 'page', mpx, { conflictPath: outputPath })
-              emitWarning(`Current page [${ resourcePath }] is registered with a conflict outputPath [${ oldOutputPath }] which is already existed in system, will be renamed with [${ outputPath }], use ?resolve to get the real outputPath!`)
+              outputPath = getOutputPath(resourcePath, 'page', mpx, {
+                conflictPath: outputPath
+              })
+              emitWarning(
+                `Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`
+              )
             }
           }
           mpx.pagesMap[resourcePath] = outputPath
           if (mode === 'webpack') {
-            pluginContext._module && pluginContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath, ''))
+            pluginContext._module &&
+              pluginContext._module.addPresentationalDependency(
+                new RecordResourceMapDependency(
+                  resourcePath,
+                  'page',
+                  outputPath,
+                  ''
+                )
+              )
           }
           // todo 确认是不是 vite 可以不用
           // mpx.pagesEntryMap[resourcePath] = importer
@@ -116,13 +144,25 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
   ) => {
     if (components) {
       for (const key in components) {
-        const componentModule = await processComponent(components[key], context, {})
+        const componentModule = await processComponent(
+          components[key],
+          context,
+          {}
+        )
         if (componentModule) {
           const { resource, outputPath } = componentModule
           const { resourcePath, queryObj } = parseRequest(resource)
 
           if (mode === 'webpack') {
-            pluginContext._module && pluginContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath, ''))
+            pluginContext._module &&
+              pluginContext._module.addPresentationalDependency(
+                new RecordResourceMapDependency(
+                  resourcePath,
+                  'component',
+                  outputPath,
+                  ''
+                )
+              )
             mpx.componentsMap['main'][resourcePath] = outputPath
           } else {
             mpx.componentsMap[resourcePath] = outputPath
@@ -145,9 +185,10 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
   ) => {
     if (generics) {
       const genericsComponents: Record<string, string> = {}
-      Object.keys(generics).forEach((name) => {
+      Object.keys(generics).forEach(name => {
         const generic = generics[name]
-        if (generic.default) genericsComponents[`${ name }default`] = generic.default
+        if (generic.default)
+          genericsComponents[`${name}default`] = generic.default
       })
       await processComponents(genericsComponents, context)
     }
@@ -160,7 +201,10 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
     if (packages) {
       for (const packagePath of packages) {
         const { queryObj } = parseRequest(packagePath)
-        const packageModule = await mpxPluginContext.resolve(packagePath, context)
+        const packageModule = await mpxPluginContext.resolve(
+          packagePath,
+          context
+        )
         if (!packageModule || !packageModule.id) return
         const resource = packageModule.id
         const { rawResourcePath } = parseRequest(resource)
@@ -182,13 +226,18 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
               parts,
               pluginContext.context,
               pluginContext,
-              { defs: mpx.defs || {}},
+              { defs: mpx.defs || {} },
               pluginContext._compilation.inputFileSystem
             )
           } else {
             context = resource
             const descriptor = createDescriptor(resource, code, queryObj, mpx)
-            jsonConfig = (descriptor.jsonConfig = await resolveJson(descriptor, descriptor.filename, pluginContext, { defs: mpx.defs || {} }))
+            jsonConfig = descriptor.jsonConfig = await resolveJson(
+              descriptor,
+              descriptor.filename,
+              pluginContext,
+              { defs: mpx.defs || {} }
+            )
             pluginContext.addWatchFile(resource)
           }
           const { pages, packages } = jsonConfig
@@ -216,14 +265,22 @@ export const jsonCompiler = async function ({ jsonConfig, pluginContext, context
     }
   }
 
-  const processSubPackage = async (subPackage: {
-    root?: 'string'
-    pages: JsonConfig['pages']
-  }, context: string) => {
+  const processSubPackage = async (
+    subPackage: {
+      root?: 'string'
+      pages: JsonConfig['pages']
+    },
+    context: string
+  ) => {
     if (subPackage) {
-      if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
-        mpxPluginContext.error(`Current subpackage root [${ subPackage.root }] is not allow starts with '.'`)
-        return `Current subpackage root [${ subPackage.root }] is not allow starts with '.'`
+      if (
+        typeof subPackage.root === 'string' &&
+        subPackage.root.startsWith('.')
+      ) {
+        mpxPluginContext.error(
+          `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
+        )
+        return `Current subpackage root [${subPackage.root}] is not allow starts with '.'`
       }
       if (subPackage.root) {
         if (mode === 'webpack') {

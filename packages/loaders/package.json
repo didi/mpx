@@ -7,46 +7,9 @@
   ],
   "author": "lareinayanyu",
   "license": "ISC",
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/*"
-      ]
-    }
-  },
-  "exports": {
-    "./*": "./*",
-    "./file-loader": {
-      "types": "./dist/file-loader.d.ts",
-      "require": "./dist/file-loader.js",
-      "import": "./dist/file-loader.js"
-    },
-    "./pre-loader": {
-      "types": "./dist/pre-loader.d.ts",
-      "require": "./dist/pre-loader.js",
-      "import": "./dist/pre-loader.js"
-    },
-    "./resolve-loader": {
-      "types": "./dist/resolve-loader.d.ts",
-      "require": "./dist/resolve-loader.js",
-      "import": "./dist/resolve-loader.js"
-    },
-    "./selector": {
-      "types": "./dist/selector.d.ts",
-      "require": "./dist/selector.js",
-      "import": "./dist/selector.js"
-    },
-    "./style-loader": {
-      "types": "./dist/style-loader.d.ts",
-      "require": "./dist/style-loader.js",
-      "import": "./dist/style-loader.js"
-    },
-    "./url-loader": {
-      "types": "./dist/url-loader.d.ts",
-      "require": "./dist/url-loader.js",
-      "import": "./dist/url-loader.js"
-    }
-  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsc -w",
     "build": "rimraf ./dist && tsc"

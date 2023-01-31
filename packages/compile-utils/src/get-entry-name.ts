@@ -1,6 +1,6 @@
 import { LoaderContext, NormalModule } from 'webpack'
 
-export default function (loaderContext: LoaderContext<null>): string {
+export function getEntryName (loaderContext: LoaderContext<null>): string {
   if (!loaderContext._compilation) return ''
   const moduleGraph = loaderContext._compilation.moduleGraph
   let entryName = ''

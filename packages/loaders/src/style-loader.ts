@@ -1,13 +1,12 @@
 import postcss from 'postcss'
 import { LoaderDefinition } from 'webpack'
 import { styleCompiler } from '@mpxjs/compiler'
-import loadPostcssConfig from '@mpxjs/compile-utils/loadPostcssConfig'
-import { matchCondition } from '@mpxjs/compile-utils/match-condition'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
 import {
-  ProxyPluginContext,
-  proxyPluginContext
-} from '@mpxjs/web-plugin/index'
+  loadPostcssConfig,
+  matchCondition,
+  parseRequest
+} from '@mpxjs/compile-utils'
+import { ProxyPluginContext, proxyPluginContext } from '@mpxjs/web-plugin/index'
 import { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } from './constants'
 
 export const mpxStyleTransform = async function (
@@ -17,7 +16,7 @@ export const mpxStyleTransform = async function (
     sourceMap?: boolean
     resource: string
     mpx: any
-    map: any,
+    map: any
     isApp?: boolean
   }
 ): Promise<{

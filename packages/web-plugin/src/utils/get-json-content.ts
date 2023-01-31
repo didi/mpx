@@ -1,4 +1,4 @@
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { parseRequest } from '@mpxjs/compile-utils'
 import path from 'path'
 import { promisify } from 'util'
 import { JSON_JS_EXT } from '../constants'
@@ -72,13 +72,13 @@ export default async function getJSONContent(
       const { rawResourcePath } = parseRequest(jsonPath.id)
       useJSONJS = rawResourcePath.endsWith(JSON_JS_EXT)
       const readFile = promisify(fs.readFile)
-      jsonContent = await readFile(rawResourcePath,'utf-8')
+      jsonContent = await readFile(rawResourcePath, 'utf-8')
       resourcePath = rawResourcePath
     }
   }
   if (useJSONJS) {
     return JSON.stringify(
-      evalJSONJS(jsonContent, resourcePath, defs || {} , fs, filename => {
+      evalJSONJS(jsonContent, resourcePath, defs || {}, fs, filename => {
         pluginContext.addDependency(filename)
       })
     )

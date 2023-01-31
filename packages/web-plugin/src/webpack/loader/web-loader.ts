@@ -1,7 +1,10 @@
 import parser from '@mpxjs/compiler/template-compiler/parser'
-import addQuery from '@mpxjs/compile-utils/add-query'
-import { matchCondition } from '@mpxjs/compile-utils/match-condition'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import {
+  addQuery,
+  matchCondition,
+  parseRequest,
+  getEntryName
+} from '@mpxjs/compile-utils'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import RecordVueContentDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency'
 import async from 'async'
@@ -13,13 +16,12 @@ import { MPX_APP_MODULE_ID } from '../../constants'
 import { proxyPluginContext } from '../../pluginContextProxy'
 import getJSONContent from '../../utils/get-json-content'
 import mpx from '../mpx'
-import getEntryName from '@mpxjs/compile-utils/get-entry-name'
 import processJSON from '../web/processJSON'
 import processScript from '../web/processScript'
 import processStyles from '../web/processStyles'
 import processTemplate from '../web/processTemplate'
 import pathHash from '../../utils/pageHash'
-import getOutputPath  from '../../utils/get-output-path'
+import getOutputPath from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
 
@@ -57,9 +59,25 @@ export default function (
   }
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-    const entryName = getEntryName(this) || getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page', mpx) || ''
+    const entryName =
+      getEntryName(this) ||
+      getOutputPath(
+        resourcePath,
+        queryObj.isComponent ? 'component' : 'page',
+        mpx
+      ) ||
+      ''
     ctorType = queryObj.isComponent ? 'component' : 'page'
-    this._module?.addPresentationalDependency(<Dependency>new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+    this._module?.addPresentationalDependency(
+      <Dependency>(
+        new RecordResourceMapDependency(
+          resourcePath,
+          ctorType,
+          entryName,
+          packageRoot
+        )
+      )
+    )
   }
 
   if (ctorType === 'app') {
@@ -72,10 +90,13 @@ export default function (
   }
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const loaderContext: any = this
-  const stringifyRequest = (r: string) => loaderUtils.stringifyRequest(loaderContext, r)
+  const stringifyRequest = (r: string) =>
+    loaderUtils.stringifyRequest(loaderContext, r)
   const filePath = this.resourcePath
   const moduleId =
-    ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + (pathHash && pathHash(filePath) || '')
+    ctorType === 'app'
+      ? MPX_APP_MODULE_ID
+      : 'm' + ((pathHash && pathHash(filePath)) || '')
 
   // 将mpx文件 分成四部分
   const parts = parser(content, {
@@ -104,7 +125,6 @@ export default function (
           .catch(callback)
       },
       (callback: (err?: Error | null, result?: any) => void) => {
-
         let jsonConfig: JsonConfig = {}
         let componentGenerics = {}
 
@@ -112,7 +132,10 @@ export default function (
           try {
             jsonConfig = JSON5.parse(parts.json.content)
             if (jsonConfig.componentGenerics) {
-              componentGenerics = Object.assign({}, jsonConfig.componentGenerics)
+              componentGenerics = Object.assign(
+                {},
+                jsonConfig.componentGenerics
+              )
             }
           } catch (e) {
             return callback(e as Error)
@@ -122,7 +145,7 @@ export default function (
         // 处理mode为web时输出vue格式文件
         if (ctorType === 'app' && !queryObj.isApp) {
           const request = addQuery(this.resource, { isApp: true })
-          const el = mpx.webConfig && mpx.webConfig.el || '#app'
+          const el = (mpx.webConfig && mpx.webConfig.el) || '#app'
           output += `
       import App from ${stringifyRequest(request)}
       import Vue from 'vue'
@@ -138,7 +161,8 @@ export default function (
           return callback(null, output)
         }
         // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-        const cacheContent = mpx.vueContentCache && mpx.vueContentCache.get(filePath)
+        const cacheContent =
+          mpx.vueContentCache && mpx.vueContentCache.get(filePath)
         if (cacheContent) return callback(null, cacheContent)
         return async.waterfall(
           [
@@ -183,7 +207,10 @@ export default function (
                 }
               )
             },
-            ([templateRes, stylesRes, jsonRes]: any, callback: (err?: Error | null, result?: any) => void) => {
+            (
+              [templateRes, stylesRes, jsonRes]: any,
+              callback: (err?: Error | null, result?: any) => void
+            ) => {
               output += templateRes.output
               output += stylesRes.output
               output += jsonRes.output
@@ -219,7 +246,10 @@ export default function (
           (err, scriptRes: any) => {
             if (err) return callback(err)
             output += scriptRes.output
-            this._module && this._module.addPresentationalDependency(<Dependency>new RecordVueContentDependency(filePath, output))
+            this._module &&
+              this._module.addPresentationalDependency(
+                <Dependency>new RecordVueContentDependency(filePath, output)
+              )
             callback(null, output)
           }
         )

@@ -85,7 +85,6 @@ interface Compiler {
       defs: Record<string, unknown>
       mode: Mode
       srcMode: Mode
-      isNative: boolean
       i18n: Record<string, unknown> | null
       decodeHTMLText: boolean
       externalClasses: string[]

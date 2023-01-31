@@ -6,7 +6,7 @@
  */
 import JSON5 from 'json5'
 
-function stringifyQuery(obj: any, useJSON?: boolean) {
+export function stringifyQuery(obj: any, useJSON?: boolean) {
   if (useJSON) return `?${JSON5.stringify(obj)}`
 
   const res = obj
@@ -43,4 +43,3 @@ function stringifyQuery(obj: any, useJSON?: boolean) {
   return res ? `?${res}` : ''
 }
 
-export default stringifyQuery

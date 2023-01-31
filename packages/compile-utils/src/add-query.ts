@@ -3,7 +3,7 @@ import stringifyQuery from './stringify-query'
 import t from './type'
 
 // 默认为非强行覆盖原query，如需强行覆盖传递force为true
-export default function addQuery(
+export function addQuery(
   request: any,
   data: any = {},
   force?: any,

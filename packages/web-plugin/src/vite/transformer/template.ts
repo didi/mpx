@@ -1,4 +1,4 @@
-import genComponentTag from '@mpxjs/compile-utils/gen-component-tag'
+import { genComponentTag } from '@mpxjs/compile-utils'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { ResolvedOptions } from '../../options'
@@ -19,7 +19,6 @@ export async function transformTemplate(
   options: ResolvedOptions,
   pluginContext?: TransformPluginContext
 ): Promise<TransformResult | undefined> {
-
   const { id, filename, jsonConfig, app, template } = descriptor
   let builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
   let genericsInfo: SFCDescriptor['genericsInfo']
@@ -27,7 +26,14 @@ export async function transformTemplate(
   let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
   let templateContent = ''
   if (template) {
-    ({ wxsModuleMap, wxsContentMap, genericsInfo, builtInComponentsMap, templateContent } = templateTransform({ template,
+    ({
+      wxsModuleMap,
+      wxsContentMap,
+      genericsInfo,
+      builtInComponentsMap,
+      templateContent
+    } = templateTransform({
+      template,
       mpx: options,
       pluginContext,
       jsonConfig,

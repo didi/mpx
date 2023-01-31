@@ -1,5 +1,5 @@
 import parser from '@mpxjs/compiler/template-compiler/parser'
-import parseRequest from '@mpxjs/compile-utils/parse-request'
+import { parseRequest } from '@mpxjs/compile-utils'
 import { LoaderDefinition } from 'webpack'
 
 const selector: LoaderDefinition = function (content: string) {
@@ -32,15 +32,16 @@ const selector: LoaderDefinition = function (content: string) {
     if (type === 'script') {
       switch (ctorType) {
         case 'app':
-          content += 'import {createApp} from "@mpxjs/core"\n' +
-            'createApp({})\n'
+          content +=
+            'import {createApp} from "@mpxjs/core"\n' + 'createApp({})\n'
           break
         case 'page':
-          content += 'import {createPage} from "@mpxjs/core"\n' +
-            'createPage({})\n'
+          content +=
+            'import {createPage} from "@mpxjs/core"\n' + 'createPage({})\n'
           break
         case 'component':
-          content += 'import {createComponent} from "@mpxjs/core"\n' +
+          content +=
+            'import {createComponent} from "@mpxjs/core"\n' +
             'createComponent({})\n'
       }
     }

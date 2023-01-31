@@ -1,6 +1,6 @@
-import { ParseHtmlNode } from '@mpxjs/compiler';
+import { ParseHtmlNode } from '@mpxjs/compiler'
 import { proxyPluginContext } from '../pluginContextProxy'
-import addQuery from '@mpxjs/compile-utils/add-query'
+import { addQuery } from '@mpxjs/compile-utils'
 import { Mpx } from '../types/mpx'
 import templateCompiler, { SFCDescriptor } from '../types/compiler'
 import { JsonConfig } from '../types/json-config'
@@ -21,18 +21,29 @@ const calculateRootEleChild = (arr: ParseHtmlNode[]) => {
   }, 0)
 }
 
-export default function templateTransform ({ template, mpx, pluginContext, jsonConfig, resource, moduleId, app, compileMode}: {
+export default function templateTransform({
+  template,
+  mpx,
+  pluginContext,
+  jsonConfig,
+  resource,
+  moduleId,
+  app,
+  compileMode
+}: {
   template: Record<string, any>
   mpx: Mpx
-  pluginContext: LoaderContext<null> | PluginContext | any,
+  pluginContext: LoaderContext<null> | PluginContext | any
   jsonConfig: JsonConfig
   resource: string
   moduleId: string
-  app: boolean,
+  app: boolean
   compileMode: 'vite' | 'webpack'
-}){
+}) {
   // todo vite 热更新时调用 processTemplate 拿不到 pluginContext
-  const mpxPluginContext = pluginContext ? proxyPluginContext(pluginContext): null
+  const mpxPluginContext = pluginContext
+    ? proxyPluginContext(pluginContext)
+    : null
   const { usingComponents = {}, componentGenerics = {} } = jsonConfig
   const builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
   let genericsInfo: SFCDescriptor['genericsInfo']
@@ -46,14 +57,18 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
     externalClasses = [],
     checkUsingComponents = false
   } = mpx
-  const wxsContentMap: SFCDescriptor['wxsContentMap'] = compileMode === 'webpack' ? mpx.wxsContentMap : {}
+  const wxsContentMap: SFCDescriptor['wxsContentMap'] =
+    compileMode === 'webpack' ? mpx.wxsContentMap : {}
   const addBuildComponent = (name: string, resource: string) => {
     builtInComponentsMap[name] = {
       resource: addQuery(resource, { isComponent: true })
     }
   }
   if (app) {
-    addBuildComponent('mpx-keep-alive', '@mpxjs/web-plugin/src/runtime/components/web/mpx-keep-alive.vue')
+    addBuildComponent(
+      'mpx-keep-alive',
+      '@mpxjs/web-plugin/src/runtime/components/web/mpx-keep-alive.vue'
+    )
     templateContent = template.content
   } else {
     const { root, meta } = templateCompiler.parse(template.content, {
@@ -85,8 +100,8 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
     })
 
     if (meta.builtInComponentsMap) {
-      Object.entries(meta.builtInComponentsMap).forEach(
-        ([name, resource]) => addBuildComponent(name, resource)
+      Object.entries(meta.builtInComponentsMap).forEach(([name, resource]) =>
+        addBuildComponent(name, resource)
       )
     }
     if (meta.wxsModuleMap) {
@@ -95,8 +110,7 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
 
     if (meta.wxsContentMap) {
       for (const module in meta.wxsContentMap) {
-        wxsContentMap[`${resource}~${module}`] =
-          meta.wxsContentMap[module]
+        wxsContentMap[`${resource}~${module}`] = meta.wxsContentMap[module]
       }
     }
 
@@ -108,10 +122,12 @@ export default function templateTransform ({ template, mpx, pluginContext, jsonC
       const childLen = calculateRootEleChild(root.children)
       if (childLen >= 2) {
         root.tag = 'div'
-        templateCompiler.addAttrs(root, [{
-          name: 'class',
-          value: 'mpx-root-view'
-        }])
+        templateCompiler.addAttrs(root, [
+          {
+            name: 'class',
+            value: 'mpx-root-view'
+          }
+        ])
       }
     }
     templateContent = templateCompiler.serialize(root)

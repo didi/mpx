@@ -19,6 +19,7 @@ module.exports = {
     'tsdoc/syntax': 'warn',
     'comma-dangle': ['error', 'never'],
     'no-var-requires': 0,
-    '@typescript-eslint/ban-ts-comment': 'off'
+    '@typescript-eslint/ban-ts-comment': 'off',
+    "@typescript-eslint/explicit-module-boundary-types": "off"
   }
 }

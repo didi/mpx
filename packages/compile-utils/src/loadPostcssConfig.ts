@@ -1,6 +1,6 @@
 import load from 'postcss-load-config'
 
-export default function loadPostcssConfig(
+export function loadPostcssConfig(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: Record<string, any>,
   inlineConfig: {

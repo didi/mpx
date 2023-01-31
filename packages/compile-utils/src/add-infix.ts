@@ -1,6 +1,6 @@
 import path from 'path'
 
-export default function addInfix (
+export function addInfix (
   resourcePath: string,
   infix: string,
   extname: string | any[]

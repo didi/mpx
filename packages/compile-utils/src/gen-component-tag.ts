@@ -1,5 +1,5 @@
 import { stringifyAttr } from '@mpxjs/compiler/template-compiler/compiler'
-import t from './type'
+import { type as t } from './index'
 
 function stringifyAttrs(attrs: { [x: string]: any }) {
   let result = ''
@@ -13,7 +13,7 @@ function stringifyAttrs(attrs: { [x: string]: any }) {
   return result
 }
 
-export default function genComponentTag(
+export function genComponentTag(
   part: { content: string;  tag: string;  attrs: any},
   processor: any = {}
 ) {
