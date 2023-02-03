@@ -1190,6 +1190,7 @@ importers:
       '@types/debug': ^4.1.7
       '@types/hash-sum': ^1.0.0
       '@types/loader-utils': ^2.0.3
+      '@types/lodash-es': ^4.17.6
       '@types/lru-cache': ^7.10.10
       '@types/node': ^16.11.6
       '@types/qs': ^6.9.7
@@ -1260,6 +1261,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/hash-sum': 1.0.0
       '@types/loader-utils': 2.0.3
+      '@types/lodash-es': 4.17.6
       '@types/lru-cache': 7.10.10
       '@types/node': 16.18.4
       '@types/qs': 6.9.7
@@ -5673,6 +5675,16 @@ packages:
     dependencies:
       '@types/node': 18.11.10
       '@types/webpack': 4.41.33
+    dev: true
+
+  /@types/lodash-es/4.17.6:
+    resolution: {integrity: sha512-R+zTeVUKDdfoRxpAryaQNRKk3105Rrgx2CFRClIgRGaqDTdjsm8h6IYA8ir584W3ePzkZfst5xIgDwYrlh9HLg==}
+    dependencies:
+      '@types/lodash': 4.14.191
+    dev: true
+
+  /@types/lodash/4.14.191:
+    resolution: {integrity: sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ==}
     dev: true
 
   /@types/long/4.0.2:

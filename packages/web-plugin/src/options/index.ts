@@ -1,4 +1,4 @@
-import { ViteDevServer, FilterPattern } from 'vite'
+import { preProcessDefs } from "@mpxjs/compile-utils"
 
 export type Mode = 'wx' | 'web' | 'ali' | 'swan'
 
@@ -13,8 +13,8 @@ interface i18nMessage {
 interface I18nTypes {
   locale?: string
   messagesPath?: string
-  dateTimeFormats?: string
-  numberFormats?: string
+  dateTimeFormatsPath?: string
+  numberFormatsPath?: string
   messages?: i18nMessage
 }
 
@@ -27,55 +27,47 @@ interface RpxRule {
 }
 
 export interface Options {
-  include?: string | RegExp | (string | RegExp)[]
-  exclude?: string | RegExp | (string | RegExp)[]
-  mode?: Mode
-  env?: string
-  srcMode?: Mode
-  externalClasses?: string[]
-  resolveMode?: 'webpack' | 'native'
-  writeMode?: 'changed' | 'full' | null
-  autoScopeRules?: {
-    include?: FilterPattern
-    exclude?: FilterPattern
+  include: string | RegExp | (string | RegExp)[]
+  exclude: string | RegExp | (string | RegExp)[]
+  mode: Mode
+  env: string
+  srcMode: Mode
+  externalClasses: string[]
+  resolveMode: 'webpack' | 'native'
+  writeMode: 'changed' | 'full' | null
+  autoScopeRules: {
+    include?: string | RegExp | readonly (string | RegExp)[] | null
+    exclude?: string | RegExp | readonly (string | RegExp)[] | null
   }
-  transMpxRules?: Record<string, () => boolean>
-  defs?: Record<string, unknown>
-  modeRules?: Record<string, unknown>
-  externals?: string[] | RegExp[]
-  projectRoot?: string
-  postcssInlineConfig?: Record<string, unknown>
-  transRpxRules?: RpxRule[] | RpxRule | null
-  decodeHTMLText?: boolean
-  i18n?: I18nTypes | null
-  checkUsingComponents?: boolean
-  checkUsingComponentsRules?: unknown
-  reportSize?: boolean | null
-  pathHashMode?:
+  transMpxRules: Record<string, () => boolean>
+  defs: Record<string, unknown>
+  modeRules: Record<string, unknown>
+  externals: string[] | RegExp[]
+  projectRoot: string
+  postcssInlineConfig: Record<string, unknown>
+  transRpxRules: RpxRule[] | RpxRule | null
+  decodeHTMLText: boolean
+  i18n: I18nTypes | null
+  checkUsingComponents: boolean
+  checkUsingComponentsRules: unknown
+  reportSize: boolean | null
+  pathHashMode:
     | 'absolute'
     | 'relative'
     | ((resourcePath: string, projectRoot: string) => string)
-  fileConditionRules?: Record<string, () => boolean>
-  customOutputPath?:
+  fileConditionRules: Record<string, () => boolean>
+  customOutputPath:
     | ((type: string, name: string, hash: string, ext: string) => string)
     | null
-  webConfig?: Record<string, unknown>
-  hackResolveBuildDependencies?: (result?: string) => void
-}
-
-export interface ResolvedOptions extends Options {
-  sourceMap?: boolean
-  devServer?: ViteDevServer
-  root: string
-  isProduction: boolean
-  base?: string
+  webConfig: Record<string, unknown>
+  hackResolveBuildDependencies: (result: string) => void
 }
 
 const externalsMap: Record<string, RegExp> = {
   weui: /^weui-miniprogram/
 }
 
-export function processOptions(rawOptions: Options): ResolvedOptions {
+export function processOptions(rawOptions: Partial<Options>): Options {
   rawOptions.include = rawOptions.include || [/\.mpx$/]
   rawOptions.exclude = rawOptions.exclude || []
   rawOptions.mode = rawOptions.mode || 'web'
@@ -101,12 +93,12 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
     include: () => true
   }
   // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
-  rawOptions.defs = {
+  rawOptions.defs = preProcessDefs({
     ...rawOptions.defs,
     __mpx_mode__: rawOptions.mode,
     __mpx_src_mode__: rawOptions.srcMode,
     __mpx_env__: rawOptions.env
-  }
+  })
   // 批量指定源码mode
   rawOptions.modeRules = rawOptions.modeRules || {}
   rawOptions.externals = (rawOptions.externals || []).map(external => {
@@ -120,17 +112,16 @@ export function processOptions(rawOptions: Options): ResolvedOptions {
   rawOptions.decodeHTMLText = rawOptions.decodeHTMLText || false
   rawOptions.i18n = rawOptions.i18n || null
   rawOptions.checkUsingComponents = rawOptions.checkUsingComponents || false
-  rawOptions.checkUsingComponentsRules = rawOptions.checkUsingComponentsRules || (rawOptions.checkUsingComponents ? { include: () => true } : { exclude: () => true })
+  rawOptions.checkUsingComponentsRules =
+    rawOptions.checkUsingComponentsRules ||
+    (rawOptions.checkUsingComponents
+      ? { include: () => true }
+      : { exclude: () => true })
   rawOptions.pathHashMode = rawOptions.pathHashMode || 'absolute'
   rawOptions.fileConditionRules = rawOptions.fileConditionRules || {
     include: () => true
   }
   rawOptions.customOutputPath = rawOptions.customOutputPath || null
   rawOptions.webConfig = rawOptions.webConfig || {}
-  const options: ResolvedOptions = {
-    ...(rawOptions as Required<Options>),
-    isProduction: process.env.NODE_ENV === 'production',
-    root: ''
-  }
-  return options
+  return rawOptions as Required<Options>
 }

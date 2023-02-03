@@ -72,6 +72,7 @@
     "@types/debug": "^4.1.7",
     "@types/hash-sum": "^1.0.0",
     "@types/loader-utils": "^2.0.3",
+    "@types/lodash-es": "^4.17.6",
     "@types/lru-cache": "^7.10.10",
     "@types/node": "^16.11.6",
     "@types/qs": "^6.9.7",

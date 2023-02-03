@@ -1,4 +1,4 @@
-import { Mpx } from '../types/mpx'
+import { Mpx } from '../mpx'
 const mpx: Mpx = {
   appInfo: {},
   componentsMap: {},

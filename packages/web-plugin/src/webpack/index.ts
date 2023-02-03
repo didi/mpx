@@ -18,8 +18,7 @@ import {
   parseRequest,
   matchCondition,
   addQuery,
-  toPosix,
-  preProcessDefs
+  toPosix
 } from '@mpxjs/compile-utils'
 import async from 'async'
 import { processOptions, Options } from '../options'
@@ -48,7 +47,7 @@ const errors: Array<string | WebpackError> = []
 class MpxWebpackPlugin {
   options: Options
 
-  constructor(options: Options) {
+  constructor(options: Partial<Options>) {
     options = options || {}
     this.options = processOptions(options)
     // Hack for buildDependencies
@@ -302,15 +301,15 @@ class MpxWebpackPlugin {
             decodeHTMLText: this.options.decodeHTMLText,
             // 输出web专用配置
             webConfig: this.options.webConfig,
-            vueContentCache: new Map(),
-            defs: preProcessDefs(this.options.defs),
+            defs: this.options.defs,
             i18n: this.options.i18n,
             checkUsingComponents: this.options.checkUsingComponents,
             checkUsingComponentsRules: this.options.checkUsingComponentsRules,
-            appTitle: 'Index homepage',
             externals: this.options.externals || [],
             pathHashMode: this.options.pathHashMode,
             customOutputPath: this.options.customOutputPath,
+            appTitle: 'Index homepage',
+            vueContentCache: new Map(),
             recordResourceMap: ({
               resourcePath,
               resourceType,

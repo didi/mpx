@@ -4,7 +4,7 @@ import compiler from '../compiler'
 import { Query } from '../../types/query'
 import { SFCDescriptor } from '../../types/compiler'
 import pathHash from '../../utils/pageHash'
-import { ResolvedOptions } from '../../options'
+import { ResolvedOptions } from '../options'
 const cache = new Map<string, SFCDescriptor>()
 const prevCache = new Map<string, SFCDescriptor | undefined>()
 
@@ -12,7 +12,8 @@ function genDescriptorTemplate() {
   const template: SFCDescriptor['template'] = {
     tag: 'template',
     type: 'template',
-    content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>',
+    content:
+      '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>',
     attrs: {},
     start: 0,
     end: 0
@@ -53,8 +54,20 @@ export function createDescriptor(
   query: Query,
   options: ResolvedOptions
 ): SFCDescriptor {
-  const { projectRoot = '', isProduction, mode = 'web', defs, env, sourceMap } = options
-  const descriptor = compiler.parseComponent(code, {
+  const {
+    projectRoot = '',
+    isProduction,
+    mode = 'web',
+    defs,
+    env,
+    sourceMap
+  } = options
+  const normalizedPath = slash(
+    path.normalize(path.relative(projectRoot, filename))
+  )
+  const isPage = query.isPage !== undefined
+  const isComponent = query.isComponent !== undefined
+  const compilerResult = compiler.parseComponent(code, {
     mode,
     defs,
     env,
@@ -62,24 +75,29 @@ export function createDescriptor(
     pad: 'line',
     needMap: sourceMap
   })
-  const normalizedPath = slash(
-    path.normalize(path.relative(projectRoot, filename))
-  )
-  descriptor.id = pathHash(normalizedPath + (isProduction ? code : ''))
-  descriptor.filename = filename
-  descriptor.isPage = query.isPage !== undefined
-  descriptor.isComponent = query.isComponent !== undefined
-  descriptor.app = !(descriptor.isPage || descriptor.isComponent)
+  const descriptor: SFCDescriptor = {
+    ...compilerResult,
+    id: pathHash(normalizedPath + (isProduction ? code : '')),
+    filename,
+    isPage,
+    isComponent,
+    app: !(isPage || isComponent),
+    wxsModuleMap: {},
+    wxsContentMap: {},
+    builtInComponentsMap: {},
+    genericsInfo: undefined,
+    jsonConfig: {},
+    localPagesMap: {},
+    localComponentsMap: {},
+    tabBarMap: {},
+    tabBarStr: ''
+  }
   if (descriptor.app) {
     descriptor.template = genDescriptorTemplate()
   }
   if (!descriptor.script) {
     descriptor.script = genDescriptorScript(descriptor)
   }
-  descriptor.wxsModuleMap = {}
-  descriptor.wxsContentMap = {}
-  descriptor.genericsInfo = undefined
-  descriptor.builtInComponentsMap = {}
   cache.set(filename, descriptor)
   return descriptor
 }

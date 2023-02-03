@@ -1,10 +1,10 @@
 import { createFilter, Plugin } from 'vite'
-import { ResolvedOptions } from '../../options'
+import { Options } from '../options'
 import { parseRequest } from '@mpxjs/compile-utils'
 import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
 import mpxGlobal from '../mpx'
 
-export function createResolveEntryPlugin(options: ResolvedOptions): Plugin {
+export function createResolveEntryPlugin(options: Options): Plugin {
   const filter = createFilter([/\.mpx$/])
   return {
     name: 'vite:mpx-resolve-entry',

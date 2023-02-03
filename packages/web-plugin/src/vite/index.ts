@@ -1,6 +1,6 @@
 import { createFilter, Plugin, UserConfig } from 'vite'
 import createVuePlugin from '@vitejs/plugin-vue2'
-import { Options, processOptions, ResolvedOptions } from '../options'
+import { Options, processOptions, ResolvedOptions } from './options'
 import { parseRequest } from '@mpxjs/compile-utils'
 import { stringifyObject } from '../utils/stringify'
 import handleHotUpdate from './handleHotUpdate'
@@ -26,10 +26,13 @@ import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
 import { getDescriptor } from './utils/descriptorCache'
 
-function createMpxPlugin(
-  options: ResolvedOptions,
-  userConfig?: UserConfig
-): Plugin {
+function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
+  const resolvedOptions: ResolvedOptions = {
+    ...options,
+    base: '',
+    sourceMap: false,
+    isProduction: false
+  }
   const { include, exclude } = options
   const filter = createFilter(include, exclude)
 
@@ -42,23 +45,17 @@ function createMpxPlugin(
         define: {
           global: 'globalThis', // polyfill node global
           'process.env.NODE_ENV': JSON.stringify(
-            options.isProduction ? '"production"' : '"development"'
+            resolvedOptions.isProduction ? '"production"' : '"development"'
           ),
           ...userConfig?.define,
-          ...stringifyObject(options.defs)
+          ...stringifyObject(resolvedOptions.defs)
         }
       }
     },
 
-    configureServer(server) {
-      options.devServer = server
-    },
-
     configResolved(config) {
-      Object.assign(options, {
-        ...options,
+      Object.assign(resolvedOptions, {
         base: config.base,
-        root: config.root,
         sourceMap: config.command === 'build' ? !!config.build.sourcemap : true,
         isProduction: config.isProduction
       })
@@ -83,27 +80,27 @@ function createMpxPlugin(
         const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderAppHelpCode(options, descriptor)
+          return renderAppHelpCode(resolvedOptions, descriptor)
         }
       }
       if (id === TAB_BAR_PAGE_HELPER_CODE && mpxGlobal.entry) {
         const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderTabBarPageCode(options, descriptor, this)
+          return renderTabBarPageCode(resolvedOptions, descriptor, this)
         }
       }
       if (id === I18N_HELPER_CODE) {
-        return renderI18nCode(options)
+        return renderI18nCode(resolvedOptions)
       }
       const { resourcePath: filename, queryObj: query } = parseRequest(id)
       if (query.resolve !== undefined) {
-        return renderPageRouteCode(options, filename)
+        return renderPageRouteCode(resolvedOptions, filename)
       }
       if (query.type === 'globalDefine') {
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderMpxPresetCode(descriptor, options)
+          return renderMpxPresetCode(resolvedOptions, descriptor)
         }
       }
     },
@@ -114,7 +111,7 @@ function createMpxPlugin(
       if (query.resolve !== undefined) return
       if (query.vue === undefined) {
         // mpx file => vue file
-        return await transformMain(code, filename, query, options, this)
+        return await transformMain(code, filename, query, resolvedOptions, this)
       } else {
         if (query.type === 'style') {
           // mpx style => vue style
@@ -124,13 +121,13 @@ function createMpxPlugin(
               code,
               filename,
               descriptor,
-              options,
+              resolvedOptions,
               this
             )
           }
         }
         if (query.type === 'main') {
-          await transformMain(code, filename, query, options, this)
+          await transformMain(code, filename, query, resolvedOptions, this)
           return 'export default {}'
         }
       }
@@ -138,9 +135,9 @@ function createMpxPlugin(
   }
 }
 
-export default function mpx(options: Options = {}): Plugin[] {
-  const resolvedOptions = processOptions({ ...options })
-  const { mode = '', env = '', fileConditionRules } = resolvedOptions
+export default function mpx(options: Partial<Options> = {}): Plugin[] {
+  const baseOptions = processOptions({ ...options })
+  const { mode = '', env = '', fileConditionRules } = baseOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)
   const plugins = [
     // split subpackage chunk
@@ -152,11 +149,11 @@ export default function mpx(options: Options = {}): Plugin[] {
       extensions: customExtensions
     }),
     // ensure mpx entry point
-    createResolveEntryPlugin(resolvedOptions),
+    createResolveEntryPlugin(baseOptions),
     // wxs => js
     createWxsPlugin(),
     // mpx => vue
-    createMpxPlugin(resolvedOptions, {
+    createMpxPlugin(baseOptions, {
       optimizeDeps: {
         esbuildOptions: {
           plugins: [

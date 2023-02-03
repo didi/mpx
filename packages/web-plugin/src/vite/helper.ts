@@ -1,6 +1,6 @@
 import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
-import { ResolvedOptions } from '../options'
+import { ResolvedOptions, Options } from './options'
 import { genImport } from '../utils/genCode'
 import { parseRequest, addQuery } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../utils/stringify'
@@ -24,7 +24,7 @@ export const renderPageRouteCode = (
 
 export const renderEntryCode = async (
   importer: string,
-  options: ResolvedOptions
+  options: Options
 ): Promise<string> => {
   return `
     ${genImport(addQuery(importer, { app: true }), 'App')}
@@ -61,7 +61,7 @@ export function renderI18nCode(options: ResolvedOptions): string {
     const requestObj: Record<string, string> = {}
     const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
     i18nKeys.forEach(key => {
-      const keyPath = `${key}Path`
+      const keyPath = `${key}Path` as keyof typeof i18nObj
       if (i18nObj[keyPath]) {
         requestObj[key] = stringify(i18nObj[keyPath])
         delete i18nObj[keyPath]
@@ -198,8 +198,8 @@ export const renderTabBarPageCode = async (
 }
 
 export function renderMpxPresetCode(
-  descriptor: SFCDescriptor,
-  options: ResolvedOptions
+  options: ResolvedOptions,
+  descriptor: SFCDescriptor
 ): string {
   return [
     !options.isProduction &&

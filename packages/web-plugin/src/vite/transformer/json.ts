@@ -1,7 +1,7 @@
 import { jsonCompiler } from '../../transfrom/json-compiler'
 import resolveJson from '../../utils/resolve-json-content'
 import mpxGlobal from '../mpx'
-import { ResolvedOptions } from '../../options'
+import { ResolvedOptions } from '../options'
 import { TransformPluginContext } from 'rollup'
 import { SFCDescriptor } from '../../types/compiler'
 
