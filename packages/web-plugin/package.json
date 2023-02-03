@@ -65,6 +65,7 @@
     "@mpxjs/webpack-plugin": "workspace:*",
     "@mpxjs/compile-utils": "workspace:*",
     "@mpxjs/loaders": "workspace:*",
+    "@mpxjs/plugin-proxy": "^2.7.40",
     "@types/async": "^2.4.2",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",

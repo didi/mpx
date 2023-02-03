@@ -1,5 +1,5 @@
 import { ParseHtmlNode } from '@mpxjs/compiler'
-import { proxyPluginContext } from '../pluginContextProxy'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { addQuery } from '@mpxjs/compile-utils'
 import { Mpx } from '../types/mpx'
 import templateCompiler, { SFCDescriptor } from '../types/compiler'
@@ -40,10 +40,7 @@ export default function templateTransform({
   app: boolean
   compileMode: 'vite' | 'webpack'
 }) {
-  // todo vite 热更新时调用 processTemplate 拿不到 pluginContext
-  const mpxPluginContext = pluginContext
-    ? proxyPluginContext(pluginContext)
-    : null
+  const mpxPluginContext = proxyPluginContext(pluginContext)
   const { usingComponents = {}, componentGenerics = {} } = jsonConfig
   const builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
   let genericsInfo: SFCDescriptor['genericsInfo']

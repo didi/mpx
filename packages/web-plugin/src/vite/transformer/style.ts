@@ -4,7 +4,7 @@ import { TransformResult } from 'vite'
 import { mpxStyleTransform } from '@mpxjs/loaders'
 import { ResolvedOptions } from '../../options'
 import { SFCDescriptor } from '../../types/compiler'
-import { proxyPluginContext } from '../../pluginContextProxy'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import mpx from '../mpx'
 import pathHash from '../../utils/pageHash'
 

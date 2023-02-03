@@ -1,7 +1,7 @@
 import { SFCDescriptor } from '../types/compiler';
 import { JsonConfig } from '../types/json-config';
 import getJSONContent from './get-json-content'
-import { proxyPluginContext } from '../pluginContextProxy'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { TransformPluginContext } from 'rollup'
 import { Options } from '../options'
 import json5 from 'json5'

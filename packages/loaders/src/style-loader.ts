@@ -6,7 +6,7 @@ import {
   matchCondition,
   parseRequest
 } from '@mpxjs/compile-utils'
-import { ProxyPluginContext, proxyPluginContext } from '@mpxjs/web-plugin/index'
+import { ProxyPluginContext, proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } from './constants'
 
 export const mpxStyleTransform = async function (

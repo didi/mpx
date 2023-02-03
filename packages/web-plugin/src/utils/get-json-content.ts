@@ -2,7 +2,7 @@ import { parseRequest } from '@mpxjs/compile-utils'
 import path from 'path'
 import { promisify } from 'util'
 import { JSON_JS_EXT } from '../constants'
-import { ProxyPluginContext } from '../pluginContextProxy'
+import { ProxyPluginContext } from '@mpxjs/plugin-proxy'
 
 export function evalJSONJS(
   source: string,

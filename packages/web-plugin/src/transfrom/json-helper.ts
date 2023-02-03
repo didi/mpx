@@ -1,5 +1,5 @@
 import path, { join } from 'path'
-import { ProxyPluginContext, proxyPluginContext } from '../pluginContextProxy'
+import { ProxyPluginContext, proxyPluginContext } from '@mpxjs/plugin-proxy'
 import {addQuery, toPosix, isUrlRequest as isUrlRequestRaw, parseRequest} from '@mpxjs/compile-utils'
 import getOutputPath from '../utils/get-output-path'
 import loaderUtils, { stringifyRequest as _stringifyRequest } from 'loader-utils'

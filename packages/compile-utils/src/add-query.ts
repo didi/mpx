@@ -1,6 +1,6 @@
-import parseRequest from './parse-request'
-import stringifyQuery from './stringify-query'
-import t from './type'
+import { parseRequest } from './parse-request'
+import { stringifyQuery } from './stringify-query'
+import { type as t } from './type'
 
 // 默认为非强行覆盖原query，如需强行覆盖传递force为true
 export function addQuery(

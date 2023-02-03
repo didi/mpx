@@ -1,7 +1,5 @@
 import { TransformPluginContext } from 'rollup'
-import { NOOP } from '../utils'
 import { LoaderDefinition } from 'webpack'
-import { ResolvedOptions } from '../options'
 
 export interface ProxyPluginContext {
   resolve(context: string, request: string): Promise<{ id: string } | null>
@@ -11,15 +9,21 @@ export interface ProxyPluginContext {
   resource?: string
   resourcePath?: string
   sourceMap?: boolean
-  warn(warn: any): void,
+  warn(warn: any): void
   error(err: any): void
 }
 
+/**
+ * 代理webpack loader 和 vite plugin 的上下文，并返回统一的格式
+ * @param pluginContext 
+ * @param rollupOptions 
+ * @returns 
+ */
 export function proxyPluginContext(
   pluginContext: TransformPluginContext | ThisParameterType<LoaderDefinition>,
   rollupOptions?: {
     moduleId: string
-    options: ResolvedOptions
+    sourceMap: boolean
   }
 ): ProxyPluginContext {
   if ('mode' in pluginContext) {
@@ -45,12 +49,12 @@ export function proxyPluginContext(
     return {
       resolve: pluginContext.resolve.bind(pluginContext),
       addDependency: pluginContext.addWatchFile.bind(pluginContext),
-      warn:pluginContext.warn.bind(pluginContext),
+      warn: pluginContext.warn.bind(pluginContext),
       error: pluginContext.error.bind(pluginContext),
-      cacheable: NOOP,
-      async: NOOP,
+      cacheable: function () {},
+      async: function () {},
       resource: rollupOptions?.moduleId,
-      sourceMap: rollupOptions?.options.sourceMap
+      sourceMap: rollupOptions?.sourceMap
     }
   }
 }

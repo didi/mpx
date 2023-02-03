@@ -27,8 +27,8 @@
   "devDependencies": {
     "@mpxjs/compile-utils": "workspace:*",
     "@mpxjs/compiler": "workspace:*",
-    "@mpxjs/web-plugin": "workspace:*",
     "@mpxjs/webpack-plugin": "workspace:*",
+    "@mpxjs/plugin-proxy": "^2.7.40",
     "@types/babel__generator": "^7.6.4",
     "@types/babel__traverse": "^7.18.3",
     "@types/loader-utils": "^2.0.3",
@@ -42,8 +42,8 @@
   "peerDependencies": {
     "@mpxjs/compile-utils": "^2.7.40",
     "@mpxjs/compiler": "^2.7.40",
-    "@mpxjs/web-plugin": "^2.7.40",
-    "@mpxjs/webpack-plugin": "^2.7.40"
+    "@mpxjs/webpack-plugin": "^2.7.40",
+    "@mpxjs/plugin-proxy": "^2.7.40"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"

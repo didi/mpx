@@ -1,5 +1,4 @@
 import { jsonCompiler } from '../../transfrom/json-compiler'
-import { proxyPluginContext } from '../../pluginContextProxy'
 import resolveJson from '../../utils/resolve-json-content'
 import mpxGlobal from '../mpx'
 import { ResolvedOptions } from '../../options'
@@ -30,6 +29,6 @@ export async function processJSON(
     descriptor.tabBarMap = tabBarMap
     descriptor.tabBarStr = tabBarStr
   } catch (error) {
-    proxyPluginContext(pluginContext).error(`[mpx] process json error: ${ error }`)
+    pluginContext.error(`[mpx] process json error: ${ error }`)
   }
 }

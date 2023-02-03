@@ -1,0 +1,44 @@
+{
+  "name": "@mpxjs/plugin-proxy",
+  "version": "2.7.40",
+  "description": "mpx webpack or vite plugin proxy",
+  "keywords": [
+    "mpx"
+  ],
+  "author": "donghongping",
+  "license": "Apache",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "node scripts/tsc.js",
+    "build": "rimraf ./dist && tsc && npm run post-build",
+    "post-build": "node scripts/postbuild.js executive"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "devDependencies": {
+    "fast-glob": "^3.2.12",
+    "rollup": "^3.0.0",
+    "typescript": "^4.3.2",
+    "vite": "^4.0.0",
+    "webpack": "^5.48.0"
+  },
+  "dependencies": {},
+  "peerDependencies": {},
+  "engines": {
+    "node": ">=14.14.0"
+  }
+}

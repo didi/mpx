@@ -5,7 +5,7 @@ import {
 import { addQuery, genComponentTag, createHelpers } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../../utils/stringify'
 import mpx from '../mpx'
-import { proxyPluginContext } from '../../pluginContextProxy'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { genImport } from '../../utils/genCode'
 import MagicString from 'magic-string'
 import { LoaderContext } from 'webpack'
