@@ -1508,7 +1508,7 @@ try {
         ])
       }
       const checkDynamicPackage = () => {
-        for (let packRoot in mpx.dynamicPackageMap) {
+        for (const packRoot in mpx.dynamicPackageMap) {
           if (packRoot && !mpx.registerPackRoot[packRoot]) {
             stats.compilation.errors.push(new Error(`资源${mpx.dynamicPackageMap[packRoot]}目标是打入${packRoot}分包,但是app.json中并未声明`))
           }

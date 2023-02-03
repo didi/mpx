@@ -44,7 +44,6 @@ class DynamicEntryDependency extends NullDependency {
     const mpx = compilation.__mpx__
     let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
     this.collectDynamicRequest(mpx)
-    
     async.waterfall([
       (callback) => {
         if (context && resolver) {
