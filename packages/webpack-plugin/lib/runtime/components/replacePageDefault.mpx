@@ -1,0 +1,17 @@
+<template>
+  <view class="container">功能已下线</view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+createPage({
+})
+</script>
+
+<style>
+.container{
+  height: 100px;
+  text-align: center;
+  line-height: 100px;
+}
+</style>
