@@ -1,5 +1,5 @@
 import { Options } from 'src/options'
-import omit from 'lodash-es/omit'
+import pick from 'lodash-es/pick'
 
 const options = [
   'mode',
@@ -52,6 +52,6 @@ export type Mpx = {
     [k: string]: any
   }
 
-export function getOptions(mpx: Mpx): Omit<Mpx, ArrToInterSection<typeof options>> {
-  return omit(mpx, options)
+export function getOptions(mpx: Mpx) {
+  return pick(mpx, options)
 }
