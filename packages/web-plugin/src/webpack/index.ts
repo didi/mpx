@@ -710,7 +710,7 @@ class MpxWebpackPlugin {
                     loader: styleCompilerPath,
                     options:
                       (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
-                  })
+                  } as any)
               }
             }
 

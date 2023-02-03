@@ -48,10 +48,12 @@ export type Mpx = {
     warn(e: Error): void
     error(e: Error): void
   }): void
-} & Pick<Options, ArrToInterSection<typeof options>> & {
-    [k: string]: any
-  }
+}
 
-export function getOptions(mpx: Mpx) {
+export type MpxWithOptions = Mpx & Pick<Options, ArrToInterSection<typeof options>> & {
+  [k: string]: any
+}
+
+export function getOptions(mpx: MpxWithOptions) {
   return pick(mpx, options)
 }

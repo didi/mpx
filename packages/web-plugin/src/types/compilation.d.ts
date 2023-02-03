@@ -1,9 +1,9 @@
+import { MpxWithOptions } from 'src/mpx'
 import 'webpack'
-import { Mpx } from '../types/mpx'
 
 declare module 'webpack' {
   interface Compilation {
-    __mpx__: Mpx
+    __mpx__: MpxWithOptions
   }
 
   interface NormalModule {
