@@ -1,30 +1,3 @@
-# `@mpxjs/web-plugin`
+# `@mpxjs/plugin-proxy`
 
-> a plugin for mpx web compile
-
-## Usage
-
-```js
-const mpxWebWebpackPlugin = require('@mpxjs/web-plugin/webpack');
-// webpack.conf.js
-module.exports = {
-  plugins: [
-    new mpxWebpackPlugin({
-      mode: 'wx'
-    })
-  ],
-}
-```
-
-```js
-const mpxWebVitePlugin = require('@mpxjs/web-plugin/vite');
-// vite.config.js
-module.exports = {
-  plugins: [
-    new vitePlugin({
-      mode: 'wx'
-    })
-  ],
-}
-```
-
+> mpx webpack or vite plugin proxy
