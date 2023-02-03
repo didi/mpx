@@ -27,15 +27,11 @@ module.exports = {
     // }
   },
   partialCompile: {
-    test: {
-      include: [],
-      exclude: []
-    },
+    include: [],
     custom: (path) => {
       // 自定义页面替换资源
     },
     isReplacePage: false, // 当该值为true时，开启页面替换功能，默认为false
-    keepOriginalPath: true, // 开启页面替换功能时，是否保留输出原页面路径
     defaultPageResource: resolve('pages/index3') // 开启页面替换功能时，全局默认的替换资源，若不配置，则框架会内置一个配置兜底资源
   },
 
