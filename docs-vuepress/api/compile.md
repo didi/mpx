@@ -1347,10 +1347,20 @@ module.exports = defineConfig({
 
 ### partialCompile
 
-- **详细**：在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持打包指定的小程序页面。
+- **详细**：在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages；另外在大型项目中也会有希望将特定的几个页面替换掉的场景。
+该配置项支持打包指定的小程序页面，或者是替换掉指定的小程序页面。
 
-- **类型**：`{ include: string | RegExp | Function | Array<string | RegExp | Function> }`
+- **类型**：
+```js
+{ 
+  include: string | RegExp | Function | Array<string | RegExp | Function> 需要处理的指定页面
+  isReplacePage?: boolean = false // 是否为替换指定小程序页面，默认为否
+  defaultPageResource?: string // 若为替换页面，可指定替换资源路径
+  custom?: Fucntion // 若为替换替换页面，可对灵活自定义页面替换资源
+}
+```
 
+1. 该配置具有两种能力，仅打包某些指定页面或仅下线某些指定页面，通过 **isReplacePage** 来控制，默认能力为仅打包某些指定页面
 - **示例**：
 
 ```js
@@ -1372,7 +1382,70 @@ new MpxWebpackPlugin({
 })
 ```
 
-::: tip @mpxjs/cli@3.x 版本配置如下
+2. 当我们需要使用下线部分指定页面的功能时，需要开启配置 **isReplacePage: true**
+
+- **示例**：
+
+```js
+// 配置说明 include 可以是正则、字符串、函数、数组
+new MpxWebpackPlugin({
+  partialCompile: {
+    isReplacePage: true, // 满足 include 条件的页面会被替换下线
+    include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被替换下线
+    // 或者
+    include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被替换下线
+    // 或者
+    include (pageResourcePath) {
+      // pageResourcePath 是小程序页面所在系统的文件路径
+      return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被替换下线
+    },
+    defaultPageResource: path.join(__dirname, './src/pages/default.mpx'), // 满足 include 条件的页面默认会被次资源替换
+    custom: (pageResourcePath) => {
+      // pageResourcePath 是小程序页面所在系统的文件路径
+      if (pageResourcePath.includes('pages/index2')) {
+        // pages/index2 页面使用default2 资源替换，其余页面还使用default.mpx资源替换  
+        return path.join(__dirname, './src/pages/default2.mpx')
+      }
+    }
+  }
+})
+
+// 项目中的具体使用
+// app.json
+{
+    pages: [
+      "./pages/index",
+      "./pages/index2",
+      "./pages/index3",
+      "./pages/index4",
+      "./pages/index5"
+    ]
+}
+// mpxPlugin.conf.js
+new MpxWebpackPlugin({
+  partialCompile: {
+    include: [
+      resolve('src/pages/index2.mpx'),
+      resolve('src/pages/index3.mpx'),
+      resolve('src/pages/index4.mpx')
+    ],
+    isReplacePage: true, // 当该值为true时，开启页面替换功能，默认为false
+    defaultPageResource: resolve('src/pages/default.mpx') // 开启页面替换功能时，全局默认的替换资源，若不配置，则框架会内置一个配置兜底资源
+  }
+})
+
+// 构建后产物 app.json
+{
+  pages: [
+    "./pages/index",
+    "./pages/index5",
+    "./pages/default"
+  ]
+}
+```
+由上述例子可以看到，开启页面替换功能后， pages/index2、pages/index3、pages/index4 全被替换为了 pages/default，当我们使用 ?resolve 索引 pages/index2 页面路径的时候，拿到的也是 pages/default
+
+::: tip @mpxjs/cli@3.x 版本配置如下(下方仅举例打包部分页面的配置)
 ```js
 // vue.config.js
 module.exports = defineConfig({

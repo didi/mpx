@@ -6,7 +6,9 @@ const replacePageDefaultPath = normalize.lib('runtime/components/replacePageDefa
 class MpxPartialCompilePlugin {
   constructor (options) {
     this.options = options
-    this.test = options.test
+    this.test = {
+      include: options.include
+    }
     this.isReplacePage = options.isReplacePage || false
   }
 
