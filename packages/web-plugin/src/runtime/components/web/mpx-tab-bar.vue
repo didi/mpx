@@ -1,7 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
 
-  const tabBar = global.__tabBar
   export default {
     name: 'mpx-tab-bar',
     props: {
@@ -12,8 +11,8 @@
     },
     computed: {
       wrapperStyle () {
-        let style = `background-color: ${tabBar.backgroundColor}; border-top: 1px solid ${tabBar.borderStyle};`
-        style += tabBar.position === 'bottom' ? 'bottom: 0;' : 'top: 0;'
+        let style = `background-color: ${global.__tabBar.backgroundColor}; border-top: 1px solid ${global.__tabBar.borderStyle};`
+        style += global.__tabBar.position === 'bottom' ? 'bottom: 0;' : 'top: 0;'
         return style
       }
     },
@@ -38,13 +37,13 @@
       const textSpan = (item, index) => createElement('span',
         {
           class: 'tab-cell',
-          style: { color: this.currentIndex === index ? tabBar.selectedColor : tabBar.color },
+          style: { color: this.currentIndex === index ? global.__tabBar.selectedColor : global.__tabBar.color },
           domProps: { innerHTML: item.text }
         }
       )
 
       const tabBarWrapper = createElement('div', { class: 'tab-bar-wrapper' },
-        [tabBar.list.map((item, index) => {
+        [global.__tabBar.list.map((item, index) => {
           return createElement('div', {
               class: 'tab-item',
               on: { click: this.itemClickHandler.bind(this, item, index) }

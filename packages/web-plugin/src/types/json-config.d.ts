@@ -1,7 +1,15 @@
 /**
  * wechat miniprogram app/page/component config type
  */
+
+export type TabBarItem = {
+  pagePath: string
+  text: string
+  iconPath?: string
+  selectedIconPath?: string
+}
 export interface JsonConfig {
+  path?: string,
   component?: boolean
   usingComponents?: Record<string, string>
   componentGenerics?: Record<string, { default?: string }>
@@ -9,19 +17,16 @@ export interface JsonConfig {
   pages?: (
     | string
     | {
-    src: string
-    path: string
-  }
-    )[]
+        src: string
+        path: string
+      }
+  )[]
   tabBar?: {
     custom?: boolean
     color?: string
     selectedColor?: string
     backgroundColor?: string
-    list?: {
-      pagePath: string
-      text: string
-    }[]
+    list?: TabBarItem[]
   }
   networkTimeout?: {
     request: number

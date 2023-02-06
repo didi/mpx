@@ -15,21 +15,17 @@ export async function processJSON(
     pluginContext,
     options
   ))
-  const { filename } = descriptor
-
   try {
-    const { localPagesMap, localComponentsMap, tabBarMap, tabBarStr } =
-      await jsonCompiler({
-        jsonConfig,
-        pluginContext,
-        context: filename,
-        options,
-        mode: 'vite'
-      })
-    descriptor.localPagesMap = localPagesMap
-    descriptor.localComponentsMap = localComponentsMap
-    descriptor.tabBarMap = tabBarMap
-    descriptor.tabBarStr = tabBarStr
+    const jsonResult = await jsonCompiler({
+      jsonConfig,
+      pluginContext,
+      context: jsonConfig.path || descriptor.filename,
+      options,
+      mode: 'vite'
+    })
+    descriptor.localPagesMap = jsonResult.localPagesMap
+    descriptor.localComponentsMap = jsonResult.localComponentsMap
+    descriptor.tabBarMap = jsonResult.tabBarMap
   } catch (error) {
     pluginContext.error(`[mpx] process json error: ${error}`)
   }

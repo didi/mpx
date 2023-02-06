@@ -9,7 +9,7 @@ import {
   I18N_HELPER_CODE,
   renderAppHelpCode,
   renderI18nCode,
-  renderMpxPresetCode,
+  renderMpxGlobalDefineCode,
   renderPageRouteCode,
   renderTabBarPageCode,
   TAB_BAR_PAGE_HELPER_CODE
@@ -75,7 +75,7 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
         const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderAppHelpCode(options, descriptor)
+          return renderAppHelpCode(options, descriptor, this)
         }
       }
       if (id === TAB_BAR_PAGE_HELPER_CODE && mpxGlobal.entry) {
@@ -95,7 +95,7 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
       if (query.type === 'globalDefine') {
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderMpxPresetCode(options, descriptor)
+          return renderMpxGlobalDefineCode(options, descriptor)
         }
       }
     },

@@ -1,6 +1,7 @@
-export default function stringify(path: unknown): string {
-  return JSON.stringify(path)
-}
+const stringify =  JSON.stringify.bind(JSON)
+
+export default stringify
+
 
 export function stringifyObject(
   obj?: Record<string, unknown>

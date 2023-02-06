@@ -2,12 +2,13 @@ import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 import { Options } from '../options'
 import { genImport } from '../utils/genCode'
-import { parseRequest, addQuery } from '@mpxjs/compile-utils'
+import { parseRequest, addQuery, isUrlRequest } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../utils/stringify'
 import { SFCDescriptor } from './utils/descriptorCache'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
 import { resolvedConfig } from './config'
+import { TabBarItem } from '../types/json-config'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
@@ -94,12 +95,50 @@ export function renderI18nCode(options: Options): string {
  * @param descriptor - SFCDescriptor
  * @returns
  */
-export function renderAppHelpCode(
+export async function renderAppHelpCode(
   options: Options,
-  descriptor: SFCDescriptor
-): string {
-  const { jsonConfig, tabBarStr } = descriptor
+  descriptor: SFCDescriptor,
+  pluginContext: PluginContext
+) {
+  const { jsonConfig } = descriptor
   const content = []
+  const tabBar = {
+    ...jsonConfig.tabBar
+  }
+  const list = tabBar.list || []
+  const newList = []
+  const needReplaceName: string[] = []
+  async function resolveTabBarItemIcon(
+    item: TabBarItem,
+    key: 'iconPath' | 'selectedIconPath'
+  ) {
+    const iconPath = item[key]
+    if (
+      iconPath &&
+      isUrlRequest(iconPath, jsonConfig.path, options.externals)
+    ) {
+      const varName = `__mpx_icon_${needReplaceName.length}__`
+      needReplaceName.push(varName)
+      const resolveIcon = await pluginContext.resolve(iconPath, jsonConfig.path)
+      if (resolveIcon) {
+        item[key] = varName
+        content.push(`import ${varName} from "${resolveIcon.id}"`)
+      }
+    }
+  }
+  for (let i = 0; i < list.length; i++) {
+    const item = {
+      ...list[i]
+    }
+    await resolveTabBarItemIcon(item, 'iconPath')
+    await resolveTabBarItemIcon(item, 'selectedIconPath')
+    newList.push(item)
+  }
+  tabBar.list = newList
+  let tabBarStr = stringify(tabBar)
+  needReplaceName.forEach(v => {
+    tabBarStr = tabBarStr.replace(`"${v}"`, v)
+  })
   content.push(
     `global.__networkTimeout = ${stringify(jsonConfig.networkTimeout)}`,
     `global.__style = ${stringify(jsonConfig.style || 'v1')}`,
@@ -138,8 +177,7 @@ export const renderTabBarPageCode = async (
 ): Promise<string> => {
   const customBarPath = './custom-tab-bar/index?isComponent'
   const tabBars: string[] = []
-  const { filename, tabBarStr, jsonConfig, tabBarMap, localPagesMap } =
-    descriptor
+  const { filename, jsonConfig, tabBarMap, localPagesMap } = descriptor
   const { tabBar } = jsonConfig
 
   const tabBarPagesMap: Record<string, string> = {}
@@ -189,16 +227,15 @@ export const renderTabBarPageCode = async (
     genImport('vue', 'Vue'),
     genImport(OPTION_PROCESSOR_PATH, 'processOption, { getComponent }'),
     tabBars.join('\n'),
-    tabBarStr &&
-      tabBarPagesMap &&
-      `Vue.observable(global.__tabBar)
-      // @ts-ignore
+    `global.__tabBar && Vue.observable(global.__tabBar)`,
+    tabBarPagesMap &&
+      `// @ts-ignore
       global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}`
   ]
   return content.join('\n')
 }
 
-export function renderMpxPresetCode(
+export function renderMpxGlobalDefineCode(
   options: Options,
   descriptor: SFCDescriptor
 ): string {

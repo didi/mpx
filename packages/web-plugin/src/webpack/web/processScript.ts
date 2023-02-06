@@ -2,9 +2,9 @@ import {
   stringifyRequest as _stringifyRequest,
   urlToRequest
 } from 'loader-utils'
-import { addQuery, genComponentTag, createHelpers } from '@mpxjs/compile-utils'
+import { addQuery, genComponentTag, createHelpers, isUrlRequest } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../../utils/stringify'
-import mpx, { MpxWithOptions } from '../mpx'
+import mpx, { getOptions, MpxWithOptions } from '../mpx'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { genImport } from '../../utils/genCode'
 import MagicString from 'magic-string'
@@ -37,7 +37,6 @@ export default function (
     jsonConfig,
     outputPath,
     tabBarMap,
-    tabBarStr,
     builtInComponentsMap,
     genericsInfo,
     wxsModuleMap,
@@ -50,7 +49,6 @@ export default function (
     outputPath: string
     componentGenerics: JsonConfig['componentGenerics']
     tabBarMap: JsonTransfromResult['tabBarMap']
-    tabBarStr: JsonTransfromResult['tabBarStr']
     jsonConfig: JsonConfig
     builtInComponentsMap: TemplateTransformResult['builtInComponentsMap']
     genericsInfo: TemplateTransformResult['genericsInfo']
@@ -293,6 +291,20 @@ export default function (
           })
       }
       // 为了执行顺序正确，tabBarPagesMap在app逻辑执行完成后注入，保障小程序中app->page->component的js执行顺序
+
+      let tabBarStr = stringify(jsonConfig.tabBar)
+      tabBarStr = tabBarStr.replace(
+        /"(iconPath|selectedIconPath)":"([^"]+)"/g,
+        function (matched, $1, $2) {
+          // vite 引用本地路径无法识别
+          if (isUrlRequest($2, projectRoot, getOptions().externals)) {
+            return `"${$1}":require(${stringifyRequest(
+              urlToRequest($2, projectRoot)
+            )})`
+          }
+          return matched
+        }
+      )
       if (tabBarStr && tabBarPagesMap) {
         content.append(
           `  global.__tabBar = ${tabBarStr}

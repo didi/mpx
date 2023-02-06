@@ -18,7 +18,6 @@ export default async function (
   let localComponentsMap = {}
   let jsonConfig = {}
   let tabBarMap = {}
-  let tabBarStr = ''
 
   const context = loaderContext.context
 
@@ -28,8 +27,7 @@ export default async function (
       jsonConfig,
       localPagesMap,
       localComponentsMap,
-      tabBarMap,
-      tabBarStr
+      tabBarMap
     })
   }
 
@@ -42,7 +40,7 @@ export default async function (
     return callback(e as Error)
   }
 
-  ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap, tabBarStr } =
+  ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap } =
     await jsonCompiler({
       jsonConfig,
       pluginContext: loaderContext,

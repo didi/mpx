@@ -16,15 +16,15 @@
     }
   ],
   "tabBar": {
-    "custom": true,
+    "custom": false,
     "color": "red",
     "selectedColor": "blue",
     "backgroundColor": "#fff",
     "list": [{
       "pagePath": "pages/index",
       "text": "page1",
-//      "iconPath": "./images/icon1.png"
-      "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
+     "iconPath": "./images/icon1.png"
+      // "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
     }, {
       "pagePath": "pages/wxs",
       "text": "page2",

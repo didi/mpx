@@ -49,10 +49,6 @@ createPage({
     height: 200rpx;
   }
 </style>
-<script type="application/json">
-  {
-    "usingComponents": {
-      "list": "../components/list"
-    }
-  }
+<script type="application/json" src="./config/index.json">
+  
 </script>

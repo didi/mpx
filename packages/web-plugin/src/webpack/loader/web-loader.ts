@@ -14,7 +14,6 @@ import path from 'path'
 import { LoaderContext } from 'webpack'
 import { MPX_APP_MODULE_ID } from '../../constants'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
-import getJSONContent from '../../utils/get-json-content'
 import mpx from '../mpx'
 import processJSON from '../web/processJSON'
 import processScript from '../web/processScript'
@@ -24,6 +23,7 @@ import pathHash from '../../utils/pageHash'
 import getOutputPath from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
+import { getJSONContent } from '../../utils/resolve-json-content'
 
 export default function (
   this: LoaderContext<null>,
@@ -119,7 +119,7 @@ export default function (
           loaderContext._compilation?.inputFileSystem
         )
           .then(res => {
-            if (parts.json) parts.json.content = res
+            if (parts.json) parts.json.content = res.content
             callback()
           })
           .catch(callback)
@@ -232,7 +232,6 @@ export default function (
                   jsonConfig: jsonRes.jsonConfig,
                   outputPath: queryObj.outputPath || '',
                   tabBarMap: jsonRes.tabBarMap,
-                  tabBarStr: jsonRes.tabBarStr,
                   builtInComponentsMap: templateRes.builtInComponentsMap,
                   genericsInfo: templateRes.genericsInfo,
                   wxsModuleMap: templateRes.wxsModuleMap,

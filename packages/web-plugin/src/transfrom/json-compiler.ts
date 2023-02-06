@@ -9,19 +9,11 @@ import { createDescriptor } from '../vite/utils/descriptorCache'
 import resolveJson from '../utils/resolve-json-content'
 import getOutputPath from '../utils/get-output-path'
 import resolveModuleContext from '../utils/resolveModuleContext'
-import stringify from '../utils/stringify'
 import { Mpx } from '../webpack/mpx'
 import { Options } from '../options'
 import { JsonConfig } from '../types/json-config'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
-
-const defaultTabbar = {
-  borderStyle: 'black',
-  position: 'bottom',
-  custom: false,
-  isShow: true
-}
 
 export type JsonTransfromResult = {
   localPagesMap: {
@@ -37,7 +29,6 @@ export type JsonTransfromResult = {
     }
   }
   tabBarMap: Record<string, unknown>
-  tabBarStr: string
   jsonConfig: JsonConfig
 }
 
@@ -58,15 +49,10 @@ export const jsonCompiler = async function ({
 }): Promise<JsonTransfromResult> {
   const localPagesMap: JsonTransfromResult['localPagesMap'] = {}
   const localComponentsMap: JsonTransfromResult['localComponentsMap'] = {}
-  const projectRoot = options.projectRoot || ''
   const mpxPluginContext = proxyPluginContext(pluginContext)
   let tabBarMap: JsonTransfromResult['tabBarMap'] = {}
-  let tabBarStr = ''
   const {
-    stringifyRequest,
     emitWarning,
-    urlToRequest,
-    isUrlRequest,
     processPage,
     processComponent
   } = createJSONHelper({
@@ -77,27 +63,10 @@ export const jsonCompiler = async function ({
 
   const processTabBar = async (tabBar: JsonConfig['tabBar']) => {
     if (tabBar) {
-      tabBar = { ...defaultTabbar, ...tabBar }
       tabBarMap = {}
-      jsonConfig?.tabBar?.list?.forEach(
-        ({ pagePath }: { pagePath: string }) => {
-          tabBarMap[pagePath] = true
-        }
-      )
-      tabBarStr = stringify(tabBar)
-
-      tabBarStr = tabBarStr.replace(
-        /"(iconPath|selectedIconPath)":"([^"]+)"/g,
-        function (matched, $1, $2) {
-          // vite 引用本地路径无法识别
-          if (isUrlRequest($2, projectRoot) && mode === 'webpack') {
-            return `"${$1}":require(${stringifyRequest(
-              urlToRequest($2, projectRoot)
-            )})`
-          }
-          return matched
-        }
-      )
+      tabBar?.list?.forEach(({ pagePath }: { pagePath: string }) => {
+        tabBarMap[pagePath] = true
+      })
     }
   }
 
@@ -226,7 +195,7 @@ export const jsonCompiler = async function ({
         const extName = extname(rawResourcePath)
         if (extName === '.mpx') {
           const processSelfQueue = []
-          let jsonConfig: JsonConfig = {}
+          let jsonConfig: JsonConfig
           let context = ''
           if (mode === 'webpack') {
             context = dirname(rawResourcePath)
@@ -322,7 +291,6 @@ export const jsonCompiler = async function ({
     jsonConfig,
     localPagesMap,
     localComponentsMap,
-    tabBarMap,
-    tabBarStr
+    tabBarMap
   }
 }

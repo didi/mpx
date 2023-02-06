@@ -104,8 +104,7 @@ export function createDescriptor(
     jsonConfig: {},
     localPagesMap: {},
     localComponentsMap: {},
-    tabBarMap: {},
-    tabBarStr: ''
+    tabBarMap: {}
   }
   if (descriptor.app) {
     descriptor.template = genDescriptorTemplate()

@@ -9,3 +9,10 @@ export const TAB_BAR_PATH = normalize.runtime('components/web/mpx-tab-bar.vue')
 export const TAB_BAR_CONTAINER_PATH = normalize.runtime(
   'components/web/mpx-tab-bar-container.vue'
 )
+
+export const DEFAULT_TAB_BAR_CONFIG = {
+  borderStyle: 'black',
+  position: 'bottom',
+  custom: false,
+  isShow: true
+}
