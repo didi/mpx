@@ -255,35 +255,32 @@ module.exports = {
 样式的条件编译：
 ```css
 /*
-  @mpx-if (
-      __mpx_mode__ === 'wx' ||
-      __mpx_mode__ === 'qq'
-  )
+  @mpx-if (__mpx_env__ === 'someEvn')
 */
   /* @mpx-if (__mpx_mode__ === 'wx') */
-  wx {
+  .backColor {
     background: green;
   }
   /*
     @mpx-elif (__mpx_mode__ === 'qq')
   */
-  qq {
+  .backColor {
     background: black;
   }
   /* @mpx-endif */
 
   /* @mpx-if (__mpx_mode__ === 'swan') */
-  swan {
+  .backColor {
     background: cyan;
   }
   /* @mpx-endif */
-  always {
-    background: white;
+  .textSize {
+    font-size: 18px;
   }
 /*
   @mpx-else
 */
-other {
+.backColor {
   /* @mpx-if (__mpx_mode__ === 'swan') */
   background: blue;
   /* @mpx-else */

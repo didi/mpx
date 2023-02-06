@@ -14,3 +14,4 @@ sidebarDepth: 0
 * [Mpx2.7 版本正式发布，大幅提升编译构建速度](2.7-release.md)
 * [Mpx2.8 版本正式发布，使用组合式 API 开发小程序](2.8-release.md)
 * [Mpx-cli 插件化改造](mpx-cli-next.md)
+* [Mpx 小程序单元测试能力建设与实践](unit-test.md)
