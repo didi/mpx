@@ -22,7 +22,7 @@ import {
 } from '@mpxjs/compile-utils'
 import async from 'async'
 import { processOptions, Options } from '../options'
-import mpx from './mpx'
+import mpx, { MpxWithOptions } from './mpx'
 import {
   NormalModule,
   DefinePlugin,
@@ -276,6 +276,7 @@ class MpxWebpackPlugin {
         const moduleGraph = compilation.moduleGraph
         if (!compilation.__mpx__) {
           Object.assign(mpx, {
+            ...this.options,
             appInfo: {},
             // pages全局记录，无需区分主包分包
             pagesMap: {},
@@ -290,24 +291,7 @@ class MpxWebpackPlugin {
             currentPackageRoot: '',
             wxsContentMap: {},
             minimize: false,
-            mode: this.options.mode,
-            srcMode: this.options.srcMode || 'wx',
-            env: this.options.env,
-            externalClasses: this.options.externalClasses,
-            projectRoot: this.options.projectRoot || '',
-            autoScopeRules: this.options.autoScopeRules,
-            transRpxRules: this.options.transRpxRules,
-            postcssInlineConfig: this.options.postcssInlineConfig,
-            decodeHTMLText: this.options.decodeHTMLText,
             // 输出web专用配置
-            webConfig: this.options.webConfig,
-            defs: this.options.defs,
-            i18n: this.options.i18n,
-            checkUsingComponents: this.options.checkUsingComponents,
-            checkUsingComponentsRules: this.options.checkUsingComponentsRules,
-            externals: this.options.externals || [],
-            pathHashMode: this.options.pathHashMode,
-            customOutputPath: this.options.customOutputPath,
             appTitle: 'Index homepage',
             vueContentCache: new Map(),
             recordResourceMap: ({
@@ -328,7 +312,7 @@ class MpxWebpackPlugin {
               error: (error?: Error | string) => void
             }) => {
               const packageName = packageRoot || 'main'
-              const resourceMap = mpx[`${resourceType}sMap`]
+              const resourceMap = mpx[`${resourceType}sMap` as keyof MpxWithOptions]
               const currentResourceMap = resourceMap.main
                 ? (resourceMap[packageName] = resourceMap[packageName] || {})
                 : resourceMap

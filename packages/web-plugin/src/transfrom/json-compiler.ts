@@ -10,7 +10,8 @@ import resolveJson from '../utils/resolve-json-content'
 import getOutputPath from '../utils/get-output-path'
 import resolveModuleContext from '../utils/resolveModuleContext'
 import stringify from '../utils/stringify'
-import { Mpx } from '../types/mpx'
+import { Mpx } from '../mpx'
+import { Options } from 'src/options'
 import { JsonConfig } from '../types/json-config'
 import { SFCDescriptor } from '../types/compiler'
 import { PluginContext } from 'rollup'
@@ -27,12 +28,14 @@ export const jsonCompiler = async function ({
   jsonConfig,
   pluginContext,
   context,
+  options,
   mpx,
   mode
 }: {
   jsonConfig: JsonConfig
   pluginContext: LoaderContext<null> | PluginContext | any
   context: string
+  options: Options
   mpx: Mpx
   mode: 'vite' | 'webpack'
 }): Promise<{
@@ -44,7 +47,7 @@ export const jsonCompiler = async function ({
 }> {
   const localPagesMap: SFCDescriptor['localPagesMap'] = {}
   const localComponentsMap: SFCDescriptor['localComponentsMap'] = {}
-  const projectRoot = mpx.projectRoot || ''
+  const projectRoot = options.projectRoot || ''
   const mpxPluginContext = proxyPluginContext(pluginContext)
   let tabBarMap: SFCDescriptor['tabBarMap'] = {}
   let tabBarStr = ''
@@ -107,7 +110,7 @@ export const jsonCompiler = async function ({
             const { resourcePath: oldResourcePath } = parseRequest(oldResource)
             if (oldResourcePath !== resourcePath) {
               const oldOutputPath = outputPath
-              outputPath = getOutputPath(resourcePath, 'page', mpx, {
+              outputPath = getOutputPath(resourcePath, 'page', options, {
                 conflictPath: outputPath
               })
               emitWarning(
@@ -219,24 +222,29 @@ export const jsonCompiler = async function ({
             const parts = parser(code, {
               filePath: rawResourcePath,
               needMap: pluginContext.sourceMap,
-              mode: mpx.mode,
-              env: mpx.env
+              mode: options.mode,
+              env: options.env
             })
             jsonConfig = await resolveJson(
               parts,
               pluginContext.context,
               pluginContext,
-              { defs: mpx.defs || {} },
+              options.defs || {},
               pluginContext._compilation.inputFileSystem
             )
           } else {
             context = resource
-            const descriptor = createDescriptor(resource, code, queryObj, mpx)
+            const descriptor = createDescriptor(
+              resource,
+              code,
+              queryObj,
+              options
+            )
             jsonConfig = descriptor.jsonConfig = await resolveJson(
               descriptor,
               descriptor.filename,
               pluginContext,
-              { defs: mpx.defs || {} }
+              options.defs || {}
             )
             pluginContext.addWatchFile(resource)
           }

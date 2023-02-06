@@ -1,32 +1,4 @@
 import { Options } from 'src/options'
-import pick from 'lodash-es/pick'
-
-const options = [
-  'mode',
-  'srcMode',
-  'env',
-  'externalClasses',
-  'projectRoot',
-  'autoScopeRules',
-  'transRpxRules',
-  'postcssInlineConfig',
-  'decodeHTMLText',
-  'webConfig',
-  'defs',
-  'i18n',
-  'checkUsingComponents',
-  'checkUsingComponentsRules',
-  'externals',
-  'pathHashMode',
-  'customOutputPath'
-] as const
-
-type ArrToInterSection<T extends readonly string[]> = T extends readonly [
-  infer A,
-  ...infer B
-]
-  ? A | ArrToInterSection<string[] & B>
-  : never
 
 export type Mpx = {
   appInfo?: Record<string, string>
@@ -50,10 +22,4 @@ export type Mpx = {
   }): void
 }
 
-export type MpxWithOptions = Mpx & Pick<Options, ArrToInterSection<typeof options>> & {
-  [k: string]: any
-}
-
-export function getOptions(mpx: MpxWithOptions) {
-  return pick(mpx, options)
-}
+export type MpxWithOptions = Mpx & Options

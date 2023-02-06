@@ -18,10 +18,9 @@ export default async function resolveJson(
   descriptor: SFCDescriptor,
   context: string,
   pluginContext: TransformPluginContext,
-  options: Options,
+  defs: Options['defs'],
   fsInfo?: any
 ): Promise<JsonConfig> {
-  const { defs } = options
   const { json } = descriptor
   let content = json?.content || '{}'
   if (json) {

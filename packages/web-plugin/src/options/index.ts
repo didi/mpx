@@ -1,4 +1,4 @@
-import { preProcessDefs } from "@mpxjs/compile-utils"
+import { preProcessDefs } from '@mpxjs/compile-utils'
 
 export type Mode = 'wx' | 'web' | 'ali' | 'swan'
 
@@ -67,6 +67,8 @@ const externalsMap: Record<string, RegExp> = {
   weui: /^weui-miniprogram/
 }
 
+export let optionKeys: (keyof Options)[] = []
+
 export function processOptions(rawOptions: Partial<Options>): Options {
   rawOptions.include = rawOptions.include || [/\.mpx$/]
   rawOptions.exclude = rawOptions.exclude || []
@@ -123,5 +125,6 @@ export function processOptions(rawOptions: Partial<Options>): Options {
   }
   rawOptions.customOutputPath = rawOptions.customOutputPath || null
   rawOptions.webConfig = rawOptions.webConfig || {}
+  optionKeys = Object.keys(rawOptions) as unknown as (keyof Options)[]
   return rawOptions as Required<Options>
 }
