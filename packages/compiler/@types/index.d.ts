@@ -7,10 +7,10 @@ export interface SFCBlock {
   tag: 'template' | 'script' | 'style'
   content: string
   result?: string
-  start: number
+  start?: number
   attrs: { [key: string]: string | true }
   priority?: number
-  end: number
+  end?: number
   src?: string
   map?: RawSourceMap
 }

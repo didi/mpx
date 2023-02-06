@@ -1,11 +1,11 @@
 import path from 'path'
 import pathHash from './pageHash'
-import { MpxOptions } from '../mpx'
+import { Options } from 'src/options'
 
 export default function getOutputPath(
   resourcePath:string,
   type: string,
-  options: MpxOptions,
+  options: Options,
   { ext = '', conflictPath = '' } = {}): string {
   const name = path.parse(resourcePath).name
   const hash = pathHash(resourcePath)

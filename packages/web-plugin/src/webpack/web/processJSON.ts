@@ -1,11 +1,18 @@
 import { parse } from 'json5'
-import mpx from '../mpx'
+import mpx, { getOptions } from '../mpx'
 import { jsonCompiler } from '../../transfrom/json-compiler'
 import { LoaderContext } from 'webpack'
+import { CompilerResult } from '@mpxjs/compiler'
 
-export default async function (json: Record<string, string>, { loaderContext }: {
-  loaderContext: LoaderContext<null>
-}, rawCallback: (err?: Error | null, result?: any) => void) {
+export default async function (
+  json: CompilerResult['json'],
+  {
+    loaderContext
+  }: {
+    loaderContext: LoaderContext<null>
+  },
+  rawCallback: (err?: Error | null, result?: any) => void
+) {
   const output = '/* json */\n'
   let localPagesMap = {}
   let localComponentsMap = {}
@@ -35,12 +42,14 @@ export default async function (json: Record<string, string>, { loaderContext }: 
     return callback(e as Error)
   }
 
-  ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap, tabBarStr } = await jsonCompiler({
-    jsonConfig,
-    mpx,
-    context,
-    pluginContext: loaderContext,
-    mode: 'webpack'
-  }))
+  ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap, tabBarStr } =
+    await jsonCompiler({
+      jsonConfig,
+      pluginContext: loaderContext,
+      context,
+      options: getOptions(),
+      mode: 'webpack',
+      mpx
+    }))
   callback()
 }

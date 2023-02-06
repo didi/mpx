@@ -3,6 +3,7 @@ import path from 'path'
 import { promisify } from 'util'
 import { JSON_JS_EXT } from '../constants'
 import { ProxyPluginContext } from '@mpxjs/plugin-proxy'
+import { CompilerResult } from '@mpxjs/compiler'
 
 export function evalJSONJS(
   source: string,
@@ -53,35 +54,34 @@ export function evalJSONJS(
 }
 
 export default async function getJSONContent(
-  json: {
-    src?: string
-    content: string
-    useJSONJS: boolean
-  },
+  json: CompilerResult['json'],
   filename: string,
   pluginContext: ProxyPluginContext,
   defs: Record<string, any> | unknown,
   fs: any
 ): Promise<string> {
-  let jsonContent = json.content
-  let useJSONJS = json.useJSONJS
-  let resourcePath = ''
-  if (json.src) {
-    const jsonPath = await pluginContext.resolve(json.src, filename)
-    if (jsonPath) {
-      const { rawResourcePath } = parseRequest(jsonPath.id)
-      useJSONJS = rawResourcePath.endsWith(JSON_JS_EXT)
-      const readFile = promisify(fs.readFile)
-      jsonContent = await readFile(rawResourcePath, 'utf-8')
-      resourcePath = rawResourcePath
+  if (json) {
+    let jsonContent = json.content
+    let useJSONJS = json.useJSONJS
+    let resourcePath = ''
+    if (json.src) {
+      const jsonPath = await pluginContext.resolve(json.src, filename)
+      if (jsonPath) {
+        const { rawResourcePath } = parseRequest(jsonPath.id)
+        useJSONJS = rawResourcePath.endsWith(JSON_JS_EXT)
+        const readFile = promisify(fs.readFile)
+        jsonContent = await readFile(rawResourcePath, 'utf-8')
+        resourcePath = rawResourcePath
+      }
     }
+    if (useJSONJS) {
+      return JSON.stringify(
+        evalJSONJS(jsonContent, resourcePath, defs || {}, fs, filename => {
+          pluginContext.addDependency(filename)
+        })
+      )
+    }
+    return jsonContent
   }
-  if (useJSONJS) {
-    return JSON.stringify(
-      evalJSONJS(jsonContent, resourcePath, defs || {}, fs, filename => {
-        pluginContext.addDependency(filename)
-      })
-    )
-  }
-  return jsonContent
+  return '{}'
 }

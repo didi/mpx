@@ -1,12 +1,27 @@
+import { CompilerResult, templateCompiler } from '@mpxjs/compiler'
 import path from 'path'
 import slash from 'slash'
-import compiler from '../compiler'
+import { Options } from 'src/options'
+import { JsonTransfromResult } from 'src/transfrom/json-compiler'
+import { TemplateTransformResult } from 'src/transfrom/template-helper'
 import { Query } from '../../types/query'
-import { SFCDescriptor } from '../../types/compiler'
 import pathHash from '../../utils/pageHash'
-import { ResolvedOptions } from '../options'
+import { resolvedConfig } from '../config'
+
 const cache = new Map<string, SFCDescriptor>()
 const prevCache = new Map<string, SFCDescriptor | undefined>()
+
+export interface SFCDescriptor
+  extends CompilerResult,
+    Omit<TemplateTransformResult, 'templateContent'>,
+    JsonTransfromResult {
+  id: string
+  filename: string
+  app: boolean
+  isPage: boolean
+  isComponent: boolean
+  vueSfc?: string
+}
 
 function genDescriptorTemplate() {
   const template: SFCDescriptor['template'] = {
@@ -52,22 +67,16 @@ export function createDescriptor(
   filename: string,
   code: string,
   query: Query,
-  options: ResolvedOptions
+  options: Options
 ): SFCDescriptor {
-  const {
-    projectRoot = '',
-    isProduction,
-    mode = 'web',
-    defs,
-    env,
-    sourceMap
-  } = options
+  const { projectRoot = '', mode = 'web', defs, env } = options
+  const { isProduction, sourceMap } = resolvedConfig
   const normalizedPath = slash(
     path.normalize(path.relative(projectRoot, filename))
   )
   const isPage = query.isPage !== undefined
   const isComponent = query.isComponent !== undefined
-  const compilerResult = compiler.parseComponent(code, {
+  const compilerResult = templateCompiler.parseComponent(code, {
     mode,
     defs,
     env,
@@ -75,6 +84,12 @@ export function createDescriptor(
     pad: 'line',
     needMap: sourceMap
   })
+  if (compilerResult.script && compilerResult.script.map) {
+    const sources = compilerResult.script.map.sources || []
+    compilerResult.script.map.sources = sources.map(
+      (v: string) => v.split('?')[0]
+    )
+  }
   const descriptor: SFCDescriptor = {
     ...compilerResult,
     id: pathHash(normalizedPath + (isProduction ? code : '')),
@@ -117,7 +132,7 @@ export function getDescriptor(
   filename: string,
   code?: string,
   query?: Query,
-  options?: ResolvedOptions,
+  options?: Options,
   createIfNotFound = true
 ): SFCDescriptor | undefined {
   if (cache.has(filename)) {

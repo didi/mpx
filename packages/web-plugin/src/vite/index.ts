@@ -1,6 +1,6 @@
 import { createFilter, Plugin, UserConfig } from 'vite'
 import createVuePlugin from '@vitejs/plugin-vue2'
-import { Options, processOptions, ResolvedOptions } from './options'
+import { Options, processOptions } from 'src/options'
 import { parseRequest } from '@mpxjs/compile-utils'
 import { stringifyObject } from '../utils/stringify'
 import handleHotUpdate from './handleHotUpdate'
@@ -25,14 +25,9 @@ import { createWxsPlugin } from './plugins/wxsPlugin'
 import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
 import { getDescriptor } from './utils/descriptorCache'
+import { resolvedConfig } from './config'
 
 function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
-  const resolvedOptions: ResolvedOptions = {
-    ...options,
-    base: '',
-    sourceMap: false,
-    isProduction: false
-  }
   const { include, exclude } = options
   const filter = createFilter(include, exclude)
 
@@ -45,19 +40,19 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
         define: {
           global: 'globalThis', // polyfill node global
           'process.env.NODE_ENV': JSON.stringify(
-            resolvedOptions.isProduction ? '"production"' : '"development"'
+            resolvedConfig.isProduction ? '"production"' : '"development"'
           ),
           ...userConfig?.define,
-          ...stringifyObject(resolvedOptions.defs)
+          ...stringifyObject(options.defs)
         }
       }
     },
 
-    configResolved(config) {
-      Object.assign(resolvedOptions, {
-        base: config.base,
-        sourceMap: config.command === 'build' ? !!config.build.sourcemap : true,
-        isProduction: config.isProduction
+    configResolved(c) {
+      Object.assign(resolvedConfig, {
+        base: c.base,
+        sourceMap: c.command === 'build' ? !!c.build.sourcemap : true,
+        isProduction: c.isProduction
       })
     },
 
@@ -80,27 +75,27 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
         const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderAppHelpCode(resolvedOptions, descriptor)
+          return renderAppHelpCode(options, descriptor)
         }
       }
       if (id === TAB_BAR_PAGE_HELPER_CODE && mpxGlobal.entry) {
         const { resourcePath: filename } = parseRequest(mpxGlobal.entry)
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderTabBarPageCode(resolvedOptions, descriptor, this)
+          return renderTabBarPageCode(options, descriptor, this)
         }
       }
       if (id === I18N_HELPER_CODE) {
-        return renderI18nCode(resolvedOptions)
+        return renderI18nCode(options)
       }
       const { resourcePath: filename, queryObj: query } = parseRequest(id)
       if (query.resolve !== undefined) {
-        return renderPageRouteCode(resolvedOptions, filename)
+        return renderPageRouteCode(options, filename)
       }
       if (query.type === 'globalDefine') {
         const descriptor = getDescriptor(filename)
         if (descriptor) {
-          return renderMpxPresetCode(resolvedOptions, descriptor)
+          return renderMpxPresetCode(options, descriptor)
         }
       }
     },
@@ -111,7 +106,7 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
       if (query.resolve !== undefined) return
       if (query.vue === undefined) {
         // mpx file => vue file
-        return await transformMain(code, filename, query, resolvedOptions, this)
+        return await transformMain(code, filename, query, options, this)
       } else {
         if (query.type === 'style') {
           // mpx style => vue style
@@ -121,13 +116,13 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
               code,
               filename,
               descriptor,
-              resolvedOptions,
+              options,
               this
             )
           }
         }
         if (query.type === 'main') {
-          await transformMain(code, filename, query, resolvedOptions, this)
+          await transformMain(code, filename, query, options, this)
           return 'export default {}'
         }
       }

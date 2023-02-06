@@ -3,12 +3,12 @@ import { Plugin as EsbuildPlugin } from 'esbuild'
 import fs from 'fs'
 import path from 'path'
 import { createFilter, Plugin } from 'vite'
-import { ResolvedOptions } from '../../options'
+import { Options } from 'src/options'
 
 export interface CustomExtensionsOptions {
   include: RegExp
   extensions: string[]
-  fileConditionRules: ResolvedOptions['fileConditionRules']
+  fileConditionRules: Options['fileConditionRules']
 }
 
 /**

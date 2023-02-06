@@ -1,4 +1,3 @@
-import { SFCDescriptor } from '../types/compiler';
 import { JsonConfig } from '../types/json-config';
 import getJSONContent from './get-json-content'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
@@ -6,6 +5,7 @@ import { TransformPluginContext } from 'rollup'
 import { Options } from '../options'
 import json5 from 'json5'
 import fs from 'fs'
+import { CompilerResult } from '@mpxjs/compiler';
 
 /**
  * resolve json content
@@ -15,22 +15,20 @@ import fs from 'fs'
  * @returns json config
  */
 export default async function resolveJson(
-  descriptor: SFCDescriptor,
+  compilerResult: CompilerResult,
   context: string,
   pluginContext: TransformPluginContext,
-  defs: Options['defs'],
+  options: Options,
   fsInfo?: any
 ): Promise<JsonConfig> {
-  const { json } = descriptor
+  const { json } = compilerResult
   let content = json?.content || '{}'
-  if (json) {
-    content = await getJSONContent(
-      json,
-      context,
-      proxyPluginContext(pluginContext),
-      defs,
-      fsInfo || fs
-    )
-  }
+  content = await getJSONContent(
+    json,
+    context,
+    proxyPluginContext(pluginContext),
+    options,
+    fsInfo || fs
+  )
   return json5.parse(content)
 }

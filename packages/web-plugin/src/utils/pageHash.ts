@@ -1,10 +1,10 @@
 import hash from 'hash-sum'
 import path from 'path'
-import { ResolvedOptions } from '../options'
+import { Options } from '../options'
 
 export default function pathHash(
   resourcePath: string,
-  options?: ResolvedOptions
+  options?: Options
 ): string {
   let hashPath = resourcePath
   const pathHashMode = options?.pathHashMode

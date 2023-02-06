@@ -1,12 +1,13 @@
 import { genComponentTag } from '@mpxjs/compile-utils'
-import { TransformPluginContext } from 'rollup'
-import { TransformResult } from 'vite'
 import { mpxStyleTransform } from '@mpxjs/loaders'
-import { ResolvedOptions } from '../../options'
-import { SFCDescriptor } from '../../types/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
-import mpx from '../mpx'
+import { TransformPluginContext } from 'rollup'
+import { Options } from 'src/options'
+import { TransformResult } from 'vite'
 import pathHash from '../../utils/pageHash'
+import { SFCDescriptor } from '../utils/descriptorCache'
+import { resolvedConfig } from '../config'
+import mpx from '../mpx'
 
 /**
  * transform style
@@ -20,11 +21,11 @@ export async function transformStyle(
   code: string,
   filename: string,
   descriptor: SFCDescriptor,
-  options: ResolvedOptions,
+  options: Options,
   pluginContext: TransformPluginContext
 ): Promise<TransformResult | undefined> {
   return mpxStyleTransform(code, proxyPluginContext(pluginContext), {
-    sourceMap: options.sourceMap,
+    sourceMap: resolvedConfig.sourceMap,
     map: pluginContext.getCombinedSourcemap(),
     resource: filename,
     mpx: {

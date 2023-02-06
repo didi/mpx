@@ -1,5 +1,5 @@
 import { createFilter, Plugin } from 'vite'
-import { Options } from '../options'
+import { Options } from 'src/options'
 import { parseRequest } from '@mpxjs/compile-utils'
 import { ENTRY_HELPER_CODE, renderEntryCode } from '../helper'
 import mpxGlobal from '../mpx'

@@ -1,4 +1,4 @@
-import { Mpx } from "../types/mpx"
+import { Mpx } from "src/mpx"
 
 export interface ViteMpx extends Mpx {
   entry?: string

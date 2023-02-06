@@ -1,12 +1,13 @@
 import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
-import { ResolvedOptions, Options } from './options'
+import { Options } from 'src/options'
 import { genImport } from '../utils/genCode'
 import { parseRequest, addQuery } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../utils/stringify'
-import { SFCDescriptor } from '../types/compiler'
+import { SFCDescriptor } from './utils/descriptorCache'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
+import { resolvedConfig } from './config'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'
@@ -14,11 +15,11 @@ export const I18N_HELPER_CODE = '\0/vite/mpx-i18n-helper'
 export const TAB_BAR_PAGE_HELPER_CODE = '\0/vite/mpx-tab-bar-page-helper'
 
 export const renderPageRouteCode = (
-  options: ResolvedOptions,
+  options: Options,
   importer: string
 ): string => {
   return `export default ${stringify(
-    options.base + mpxGlobal.pagesMap[importer]
+    resolvedConfig.base + mpxGlobal.pagesMap[importer]
   )}`
 }
 
@@ -49,7 +50,7 @@ export const renderEntryCode = async (
   `
 }
 
-export function renderI18nCode(options: ResolvedOptions): string {
+export function renderI18nCode(options: Options): string {
   const content = []
   const { i18n } = options
   if (i18n) {
@@ -94,7 +95,7 @@ export function renderI18nCode(options: ResolvedOptions): string {
  * @returns
  */
 export function renderAppHelpCode(
-  options: ResolvedOptions,
+  options: Options,
   descriptor: SFCDescriptor
 ): string {
   const { jsonConfig, tabBarStr } = descriptor
@@ -131,7 +132,7 @@ export function renderAppHelpCode(
  * @returns
  */
 export const renderTabBarPageCode = async (
-  options: ResolvedOptions,
+  options: Options,
   descriptor: SFCDescriptor,
   pluginContext: PluginContext
 ): Promise<string> => {
@@ -198,11 +199,11 @@ export const renderTabBarPageCode = async (
 }
 
 export function renderMpxPresetCode(
-  options: ResolvedOptions,
+  options: Options,
   descriptor: SFCDescriptor
 ): string {
   return [
-    !options.isProduction &&
+    !resolvedConfig.isProduction &&
       `global.currentResource = ${stringify(descriptor.filename)}`,
     `global.currentModuleId = ${stringify(descriptor.id)}`
   ].join('\n')

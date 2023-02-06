@@ -112,7 +112,7 @@ export default function (
     [
       (callback: (err?: Error | null, result?: any) => void) => {
         getJSONContent(
-          parts.json || {},
+          parts.json,
           loaderContext.context,
           proxyPluginContext(loaderContext),
           mpx.defs || {},
@@ -194,7 +194,7 @@ export default function (
                   },
                   callback => {
                     processJSON(
-                      parts.json || {},
+                      parts.json,
                       {
                         loaderContext
                       },
@@ -223,7 +223,7 @@ export default function (
               }
 
               processScript(
-                parts.script,
+                parts.script!,
                 {
                   loaderContext,
                   ctorType,

@@ -1,8 +1,9 @@
 import { ParseHtmlNode } from '@mpxjs/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { addQuery } from '@mpxjs/compile-utils'
-import { Mpx } from '../types/mpx'
-import templateCompiler, { SFCDescriptor } from '../types/compiler'
+import { Options } from 'src/options'
+import { Mpx } from 'src/mpx'
+import { templateCompiler } from '@mpxjs/compiler'
 import { JsonConfig } from '../types/json-config'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
@@ -21,30 +22,46 @@ const calculateRootEleChild = (arr: ParseHtmlNode[]) => {
   }, 0)
 }
 
+export type TemplateTransformResult = {
+  templateContent: string
+  builtInComponentsMap: Record<
+    string,
+    {
+      resource: string
+    }
+  >
+  genericsInfo?: Record<string, unknown>
+  wxsModuleMap: {
+    [key: string]: string
+  }
+  wxsContentMap: {
+    [key: string]: string
+  }
+}
+
 export default function templateTransform({
   template,
-  mpx,
+  options,
   pluginContext,
   jsonConfig,
   resource,
   moduleId,
-  app,
-  compileMode
+  app
 }: {
   template: Record<string, any>
-  mpx: Mpx
+  options: Options
   pluginContext: LoaderContext<null> | PluginContext | any
   jsonConfig: JsonConfig
   resource: string
   moduleId: string
   app: boolean
-  compileMode: 'vite' | 'webpack'
 }) {
   const mpxPluginContext = proxyPluginContext(pluginContext)
   const { usingComponents = {}, componentGenerics = {} } = jsonConfig
-  const builtInComponentsMap: SFCDescriptor['builtInComponentsMap'] = {}
-  let genericsInfo: SFCDescriptor['genericsInfo']
-  let wxsModuleMap: SFCDescriptor['wxsModuleMap'] = {}
+  const builtInComponentsMap: TemplateTransformResult['builtInComponentsMap'] =
+    {}
+  let genericsInfo: TemplateTransformResult['genericsInfo']
+  let wxsModuleMap: TemplateTransformResult['wxsModuleMap'] = {}
   let templateContent = ''
   const {
     mode = 'web',
@@ -53,9 +70,8 @@ export default function templateTransform({
     decodeHTMLText = false,
     externalClasses = [],
     checkUsingComponents = false
-  } = mpx
-  const wxsContentMap: SFCDescriptor['wxsContentMap'] =
-    compileMode === 'webpack' ? mpx.wxsContentMap : {}
+  } = options
+  const wxsContentMap: Mpx['wxsContentMap'] = {}
   const addBuildComponent = (name: string, resource: string) => {
     builtInComponentsMap[name] = {
       resource: addQuery(resource, { isComponent: true })

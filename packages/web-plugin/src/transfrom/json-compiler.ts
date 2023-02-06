@@ -13,7 +13,6 @@ import stringify from '../utils/stringify'
 import { Mpx } from '../mpx'
 import { Options } from 'src/options'
 import { JsonConfig } from '../types/json-config'
-import { SFCDescriptor } from '../types/compiler'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
 
@@ -24,32 +23,44 @@ const defaultTabbar = {
   isShow: true
 }
 
+export type JsonTransfromResult = {
+  localPagesMap: {
+    [key: string]: {
+      resource: string
+      async: boolean
+    }
+  }
+  localComponentsMap: {
+    [key: string]: {
+      resource: string
+      async: boolean
+    }
+  }
+  tabBarMap: Record<string, unknown>
+  tabBarStr: string
+  jsonConfig: JsonConfig
+}
+
 export const jsonCompiler = async function ({
   jsonConfig,
   pluginContext,
   context,
   options,
-  mpx,
-  mode
+  mode,
+  mpx
 }: {
   jsonConfig: JsonConfig
   pluginContext: LoaderContext<null> | PluginContext | any
   context: string
   options: Options
-  mpx: Mpx
   mode: 'vite' | 'webpack'
-}): Promise<{
-  jsonConfig: JsonConfig
-  localPagesMap: SFCDescriptor['localPagesMap']
-  localComponentsMap: SFCDescriptor['localComponentsMap']
-  tabBarMap: SFCDescriptor['tabBarMap']
-  tabBarStr: string
-}> {
-  const localPagesMap: SFCDescriptor['localPagesMap'] = {}
-  const localComponentsMap: SFCDescriptor['localComponentsMap'] = {}
+  mpx?: Mpx
+}): Promise<JsonTransfromResult> {
+  const localPagesMap: JsonTransfromResult['localPagesMap'] = {}
+  const localComponentsMap: JsonTransfromResult['localComponentsMap'] = {}
   const projectRoot = options.projectRoot || ''
   const mpxPluginContext = proxyPluginContext(pluginContext)
-  let tabBarMap: SFCDescriptor['tabBarMap'] = {}
+  let tabBarMap: JsonTransfromResult['tabBarMap'] = {}
   let tabBarStr = ''
   const {
     stringifyRequest,
@@ -60,7 +71,7 @@ export const jsonCompiler = async function ({
     processComponent
   } = createJSONHelper({
     pluginContext,
-    mpx,
+    options,
     mode
   })
 
@@ -118,7 +129,7 @@ export const jsonCompiler = async function ({
               )
             }
           }
-          mpx.pagesMap[resourcePath] = outputPath
+          mpx && (mpx.pagesMap[resourcePath] = outputPath)
           if (mode === 'webpack') {
             pluginContext._module &&
               pluginContext._module.addPresentationalDependency(
@@ -166,9 +177,9 @@ export const jsonCompiler = async function ({
                   ''
                 )
               )
-            mpx.componentsMap['main'][resourcePath] = outputPath
+            mpx && (mpx.componentsMap['main'][resourcePath] = outputPath)
           } else {
-            mpx.componentsMap[resourcePath] = outputPath
+            mpx && (mpx.componentsMap[resourcePath] = outputPath)
           }
           localComponentsMap[key] = {
             resource: addQuery(resource, {
@@ -229,7 +240,7 @@ export const jsonCompiler = async function ({
               parts,
               pluginContext.context,
               pluginContext,
-              options.defs || {},
+              options,
               pluginContext._compilation.inputFileSystem
             )
           } else {
@@ -244,7 +255,7 @@ export const jsonCompiler = async function ({
               descriptor,
               descriptor.filename,
               pluginContext,
-              options.defs || {}
+              options
             )
             pluginContext.addWatchFile(resource)
           }

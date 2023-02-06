@@ -4,13 +4,15 @@ import {
 } from 'loader-utils'
 import { addQuery, genComponentTag, createHelpers } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../../utils/stringify'
-import mpx from '../mpx'
+import mpx, { MpxWithOptions } from '../mpx'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { genImport } from '../../utils/genCode'
 import MagicString from 'magic-string'
 import { LoaderContext } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
-import { SFCDescriptor } from '../../types/compiler'
+import { JsonTransfromResult } from 'src/transfrom/json-compiler'
+import { TemplateTransformResult } from 'src/transfrom/template-helper'
+import { CompilerResult } from '@mpxjs/compiler'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
 const tabBarContainerPath =
@@ -26,14 +28,7 @@ function getAsyncChunkName(chunkName: boolean | string) {
 }
 
 export default function (
-  script: {
-    content?: string
-    tag: 'script'
-    attrs?: Record<string, string>
-    src?: string
-    lang?: string
-    mode?: 'wx'
-  },
+  script: CompilerResult['script'] | null,
   {
     loaderContext,
     ctorType,
@@ -54,14 +49,14 @@ export default function (
     ctorType: string
     outputPath: string
     componentGenerics: JsonConfig['componentGenerics']
-    tabBarMap: SFCDescriptor['tabBarMap']
-    tabBarStr: SFCDescriptor['tabBarStr']
+    tabBarMap: JsonTransfromResult['tabBarMap']
+    tabBarStr: JsonTransfromResult['tabBarStr']
     jsonConfig: JsonConfig
-    builtInComponentsMap: SFCDescriptor['builtInComponentsMap']
-    genericsInfo: SFCDescriptor['genericsInfo']
-    wxsModuleMap: SFCDescriptor['wxsModuleMap']
-    localComponentsMap: SFCDescriptor['localPagesMap']
-    localPagesMap: SFCDescriptor['localPagesMap']
+    builtInComponentsMap: TemplateTransformResult['builtInComponentsMap']
+    genericsInfo: TemplateTransformResult['genericsInfo']
+    wxsModuleMap: TemplateTransformResult['wxsModuleMap']
+    localComponentsMap: JsonTransfromResult['localPagesMap']
+    localPagesMap: JsonTransfromResult['localPagesMap']
   },
   callback: (err?: Error | null, result?: any) => void
 ) {
@@ -130,7 +125,14 @@ export default function (
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
-    script = { tag: 'script' }
+    script = {
+      tag: 'script',
+      type: 'script',
+      content: '',
+      attrs: {},
+      start: 0,
+      end: 0
+    }
   }
   // @ts-ignore
   output += genComponentTag(script, {
@@ -186,9 +188,10 @@ export default function (
           const requestObj: Record<string, string> = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
           i18nKeys.forEach(key => {
-            if (i18nObj[`${key}Path`]) {
-              requestObj[key] = stringifyRequest(i18nObj[`${key}Path`])
-              delete i18nObj[`${key}Path`]
+            const i18nKey = `${key}Path` as keyof MpxWithOptions['i18n']
+            if (i18nObj[i18nKey]) {
+              requestObj[key] = stringifyRequest(i18nObj[i18nKey])
+              delete i18nObj[i18nKey]
             }
           })
           content.append(`  const i18nCfg = ${JSON.stringify(i18nObj)}\n`)

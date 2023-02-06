@@ -1,13 +1,13 @@
-import { genComponentTag, addQuery, parseRequest } from '@mpxjs/compile-utils'
+import { addQuery, genComponentTag, parseRequest } from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
 import { SourceMap } from 'rollup'
+import { Options } from 'src/options'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
-import { ResolvedOptions } from '../../options'
 import { genImport } from '../../utils/genCode'
 import omit from '../../utils/omit'
 import stringify, { shallowStringify } from '../../utils/stringify'
-import { SFCDescriptor } from '../../types/compiler'
+import { SFCDescriptor } from '../utils/descriptorCache'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
@@ -39,7 +39,7 @@ export const genComponentCode = (
  */
 export async function transformScript(
   descriptor: SFCDescriptor,
-  options: ResolvedOptions
+  options: Options
 ): Promise<{
   code: string
   map?: SourceMap

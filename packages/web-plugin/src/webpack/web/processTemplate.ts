@@ -1,17 +1,12 @@
 import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
-import mpx from '../mpx'
+import { getOptions } from '../mpx'
 import templateTransform from '../../transfrom/template-helper'
 import { LoaderContext } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
+import { CompilerResult } from '@mpxjs/compiler'
 
 export default function (
-  template: {
-    content: string
-    tag: string
-    attrs: Record<string, string> | null
-    src?: string
-    lang?: string
-  },
+  template: CompilerResult['template'],
   {
     loaderContext,
     moduleId,
@@ -35,7 +30,8 @@ export default function (
 
   if (app) {
     template = {
-      attrs: null,
+      type: 'template',
+      attrs: {},
       tag: 'template',
       content:
         '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
@@ -66,13 +62,12 @@ export default function (
     ({ wxsModuleMap, genericsInfo, builtInComponentsMap, templateContent } =
       templateTransform({
         template,
-        mpx,
+        options: getOptions(),
         pluginContext: loaderContext,
         jsonConfig,
         app,
         resource: resourcePath,
-        moduleId,
-        compileMode: 'webpack'
+        moduleId
       }))
     template.content = templateContent
     output += `${genComponentTag(template)}\n\n`

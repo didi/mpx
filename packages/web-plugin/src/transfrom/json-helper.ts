@@ -1,29 +1,53 @@
 import path, { join } from 'path'
 import { ProxyPluginContext, proxyPluginContext } from '@mpxjs/plugin-proxy'
-import {addQuery, toPosix, isUrlRequest as isUrlRequestRaw, parseRequest} from '@mpxjs/compile-utils'
+import {
+  addQuery,
+  toPosix,
+  isUrlRequest as isUrlRequestRaw,
+  parseRequest
+} from '@mpxjs/compile-utils'
 import getOutputPath from '../utils/get-output-path'
-import loaderUtils, { stringifyRequest as _stringifyRequest } from 'loader-utils'
+import loaderUtils, {
+  stringifyRequest as _stringifyRequest
+} from 'loader-utils'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
-import { Mpx } from '../types/mpx'
+import { Options } from 'src/options'
 
 export interface CreateJSONHelper {
   stringifyRequest: (r: string) => string
   emitWarning: (r: string) => void
-  processComponent: (component: string, context: string, { tarRoot, outputPath }: { tarRoot?: string; outputPath?: string; }) => Promise<{ resource: string; outputPath: string; packageRoot: string; } | undefined>
-  processPage: (page: string | { path: string; src: string; }, context: string, tarRoot?: string) => Promise<{ resource: string; outputPath: string; packageRoot: string; key: string; } | undefined>
+  processComponent: (
+    component: string,
+    context: string,
+    { tarRoot, outputPath }: { tarRoot?: string; outputPath?: string }
+  ) => Promise<
+    { resource: string; outputPath: string; packageRoot: string } | undefined
+  >
+  processPage: (
+    page: string | { path: string; src: string },
+    context: string,
+    tarRoot?: string
+  ) => Promise<
+    | { resource: string; outputPath: string; packageRoot: string; key: string }
+    | undefined
+  >
   isUrlRequest: (r: string, root: string) => boolean
   urlToRequest: (r: string, root: string) => string
 }
 
-export default function createJSONHelper({ pluginContext, mpx, mode }: {
-  pluginContext: LoaderContext<null> | PluginContext | any,
-  mpx: Mpx
-  mode: 'vite'| 'webpack'
+export default function createJSONHelper({
+  pluginContext,
+  options,
+  mode
+}: {
+  pluginContext: LoaderContext<null> | PluginContext | any
+  options: Options
+  mode: 'vite' | 'webpack'
 }): CreateJSONHelper {
-  const externals = mpx.externals || []
-  const root = mpx.projectRoot
-  const mpxPluginContext:ProxyPluginContext = proxyPluginContext(pluginContext)
+  const externals = options.externals || []
+  const root = options.projectRoot
+  const mpxPluginContext: ProxyPluginContext = proxyPluginContext(pluginContext)
 
   const isUrlRequest = (r: string) => isUrlRequestRaw(r, root, externals)
   const urlToRequest = (r: string) => loaderUtils.urlToRequest(r)
@@ -47,7 +71,7 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
       resource = addQuery(resource, {}, false, ['root'])
     }
     if (!outputPath) {
-      outputPath = (getOutputPath(resourcePath, 'component', mpx)) || ''
+      outputPath = getOutputPath(resourcePath, 'component', options) || ''
     }
     return {
       resource,
@@ -71,7 +95,10 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
       page = path.resolve(context, tarRoot, page)
       context = path.join(context, tarRoot)
     }
-    const pageModule = await mpxPluginContext.resolve(addQuery(page, { isPage: true }), context)
+    const pageModule = await mpxPluginContext.resolve(
+      addQuery(page, { isPage: true }),
+      context
+    )
     if (!pageModule || !pageModule.id) return
     const resource = pageModule.id
     const { resourcePath } = parseRequest(resource)
@@ -82,9 +109,9 @@ export default function createJSONHelper({ pluginContext, mpx, mode }: {
       const relative = path.relative(context, resourcePath)
       if (/^\./.test(relative)) {
         // 如果当前page不存在于context中，对其进行重命名
-        outputPath = (getOutputPath(resourcePath, 'page', mpx)) || ''
+        outputPath = getOutputPath(resourcePath, 'page', options) || ''
         mpxPluginContext.warn(
-          `Current page [${ resourcePath }] is not in current pages directory [${ context }], the page path will be replaced with [${ outputPath }], use ?resolve to get the page path and navigate to it!`
+          `Current page [${resourcePath}] is not in current pages directory [${context}], the page path will be replaced with [${outputPath}], use ?resolve to get the page path and navigate to it!`
         )
       } else {
         const exec = /^(.*?)(\.[^.]*)?$/.exec(relative)

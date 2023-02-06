@@ -1,8 +1,8 @@
 import { genComponentTag } from '@mpxjs/compile-utils'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
-import { ResolvedOptions } from '../../options'
-import { SFCDescriptor } from '../../types/compiler'
+import { Options } from 'src/options'
+import { SFCDescriptor } from '../utils/descriptorCache'
 import templateTransform from '../../transfrom/template-helper'
 
 /**
@@ -16,7 +16,7 @@ import templateTransform from '../../transfrom/template-helper'
 
 export async function transformTemplate(
   descriptor: SFCDescriptor,
-  options: ResolvedOptions,
+  options: Options,
   pluginContext?: TransformPluginContext
 ): Promise<TransformResult | undefined> {
   const { id, filename, jsonConfig, app, template } = descriptor
@@ -34,7 +34,7 @@ export async function transformTemplate(
       templateContent
     } = templateTransform({
       template,
-      mpx: options,
+      options,
       pluginContext,
       jsonConfig,
       app,
@@ -60,7 +60,7 @@ export async function transformTemplate(
  */
 export async function genTemplateBlock(
   descriptor: SFCDescriptor,
-  options: ResolvedOptions,
+  options: Options,
   pluginContext?: TransformPluginContext
 ): Promise<{
   output: string
@@ -72,7 +72,7 @@ export async function genTemplateBlock(
   )
   return {
     output: genComponentTag({
-      content: templateContent?.code,
+      content: templateContent?.code || '',
       tag: 'template',
       attrs: descriptor.template?.attrs
     })

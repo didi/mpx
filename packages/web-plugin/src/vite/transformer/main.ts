@@ -1,5 +1,5 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
-import { ResolvedOptions } from '../../options'
+import { Options } from 'src/options'
 import { Query } from '../../types/query'
 import { createDescriptor } from '../utils/descriptorCache'
 import { processJSON } from './json'
@@ -11,7 +11,7 @@ export async function transformMain(
   code: string,
   filename: string,
   query: Query,
-  options: ResolvedOptions,
+  options: Options,
   pluginContext: TransformPluginContext
 ): Promise<TransformResult | undefined> {
   const descriptor = createDescriptor(filename, code, query, options)

@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'webpack/lib/InitFragment' {
   export default class InitFragment {
@@ -10,7 +11,8 @@ declare module 'webpack/lib/util/makeSerializable' {
 }
 declare module 'webpack/lib/dependencies/ModuleDependency' {}
 declare module '@mpxjs/compiler/template-compiler/parser' {
-  export default function parser(...args: any[]): any
+  import { CompilerResult } from "@mpxjs/compiler";
+  export default function parser(...args: any[]): CompilerResult
 }
 declare module 'webpack/lib/NullFactory' {
   export default class NullFactory {
