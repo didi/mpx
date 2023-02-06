@@ -7,7 +7,8 @@ function resolvePackages (subPath) {
 module.exports = {
   resolve: {
     alias: {
-      '@mpxjs/utils': resolvePackages('utils')
+      '@mpxjs/utils': resolvePackages('utils'),
+      '@mpxjs/store': resolvePackages('store')
     }
   }
 }
