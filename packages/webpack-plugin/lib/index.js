@@ -1173,7 +1173,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (mpx.mode === 'web') return
+        if (mpx.mode === 'web' || mpx.mode === 'tenon') return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
