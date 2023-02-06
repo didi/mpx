@@ -86,13 +86,42 @@ module.exports = function (css, map) {
         if (mode === 'ali' && isApp) {
           result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
-        if (result.messages) {
-          result.messages.forEach(({ type, file }) => {
-            if (type === 'dependency') {
-              this.addDependency(file)
-            }
-          })
+
+        for (const warning of result.warnings()) {
+          this.emitWarning(warning)
         }
+
+        // todo 后续考虑直接使用postcss-loader来处理postcss
+        for (const message of result.messages) {
+          // eslint-disable-next-line default-case
+          switch (message.type) {
+            case 'dependency':
+              this.addDependency(message.file)
+              break
+
+            case 'build-dependency':
+              this.addBuildDependency(message.file)
+              break
+
+            case 'missing-dependency':
+              this.addMissingDependency(message.file)
+              break
+
+            case 'context-dependency':
+              this.addContextDependency(message.file)
+              break
+
+            case 'dir-dependency':
+              this.addContextDependency(message.dir)
+              break
+
+            case 'asset':
+              if (message.content && message.file) {
+                this.emitFile(message.file, message.content, message.sourceMap, message.info)
+              }
+          }
+        }
+
         const map = result.map && result.map.toJSON()
         cb(null, result.css, map)
         return null // silence bluebird warning

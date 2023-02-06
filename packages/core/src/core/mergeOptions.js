@@ -47,7 +47,7 @@ export default function mergeOptions (options = {}, type, needConvert) {
 
 export function getMixin (mixin = {}) {
   // 用于ts反向推导mixin类型
-  return mixin.mixins ? extractMixins({}, mixin, true) : mixin
+  return mixin
 }
 
 function extractMixins (mergeOptions, options, needConvert) {
@@ -317,9 +317,6 @@ function composeHooks (target, includes) {
           if (typeof hooksArr[i] === 'function') {
             const data = hooksArr[i].apply(this, args)
             data !== undefined && (result = data)
-          }
-          if (result === '__abort__') {
-            break
           }
         }
         return result
