@@ -2,7 +2,6 @@ import { ParseHtmlNode } from '@mpxjs/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { addQuery } from '@mpxjs/compile-utils'
 import { Options } from '../options'
-import { Mpx } from '../mpx'
 import { templateCompiler } from '@mpxjs/compiler'
 import { JsonConfig } from '../types/json-config'
 import { PluginContext } from 'rollup'
@@ -71,7 +70,7 @@ export default function templateTransform({
     externalClasses = [],
     checkUsingComponents = false
   } = options
-  const wxsContentMap: Mpx['wxsContentMap'] = {}
+  const wxsContentMap: TemplateTransformResult['wxsContentMap'] = {}
   const addBuildComponent = (name: string, resource: string) => {
     builtInComponentsMap[name] = {
       resource: addQuery(resource, { isComponent: true })
