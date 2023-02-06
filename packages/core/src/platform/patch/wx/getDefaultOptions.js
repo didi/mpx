@@ -112,8 +112,14 @@ export function filterOptions (options) {
     if (builtInKeysMap[key]) {
       return
     }
-    if (key === 'properties' || key === 'props') {
-      newOptions.properties = transformProperties(Object.assign({}, options.properties, options.props))
+    if (key === 'data' || key === 'initData') {
+      if (!hasOwn(newOptions, 'data')) {
+        newOptions.data = Object.assign({}, options.initData, options.data)
+      }
+    } else if (key === 'properties' || key === 'props') {
+      if (!hasOwn(newOptions, 'properties')) {
+        newOptions.properties = transformProperties(Object.assign({}, options.props, options.properties))
+      }
     } else if (key === 'methods' && options.__pageCtor__) {
       // 构造器为Page时抽取所有methods方法到顶层
       Object.assign(newOptions, options[key])

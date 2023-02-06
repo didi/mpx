@@ -214,7 +214,7 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (/^(data|dataFn)$/.test(key)) {
       mergeDataFn(parent, child, key)
-    } else if (/^(computed|properties|props|methods|proto|options|relations)$/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto|options|relations|initData)$/.test(key)) {
       mergeShallowObj(parent, child, key)
     } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
       mergeToArray(parent, child, key)
