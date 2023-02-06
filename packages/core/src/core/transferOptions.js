@@ -24,7 +24,8 @@ export default function transferOptions (options, type, needConvert = true) {
   }
   if (currentInject && currentInject.pageEvents) {
     options.mixins = options.mixins || []
-    options.mixins.unshift(currentInject.pageEvents)
+    // 驱动层视作用户本地逻辑，作为最后的mixin来执行
+    options.mixins.push(currentInject.pageEvents)
   }
   // 转换mode
   options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
