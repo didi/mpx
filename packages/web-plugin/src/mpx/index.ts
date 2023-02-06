@@ -1,4 +1,4 @@
-import { Options } from 'src/options'
+import { Options } from '../options'
 
 export type Mpx = {
   appInfo?: Record<string, string>

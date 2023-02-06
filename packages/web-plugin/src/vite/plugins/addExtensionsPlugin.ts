@@ -3,7 +3,7 @@ import { Plugin as EsbuildPlugin } from 'esbuild'
 import fs from 'fs'
 import path from 'path'
 import { createFilter, Plugin } from 'vite'
-import { Options } from 'src/options'
+import { Options } from '../../options'
 
 export interface CustomExtensionsOptions {
   include: RegExp

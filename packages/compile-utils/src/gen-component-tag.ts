@@ -1,5 +1,22 @@
-import { stringifyAttr } from '@mpxjs/compiler/template-compiler/compiler'
-import { type as t } from './index'
+import { type as t } from './type'
+
+function stringifyAttr(val: string) {
+  if (typeof val === 'string') {
+    const hasSingle = val.indexOf("'") > -1
+    const hasDouble = val.indexOf('"') > -1
+    // 移除属性中换行
+    val = val.replace(/\n/g, '')
+
+    if (hasSingle && hasDouble) {
+      val = val.replace(/'/g, '"')
+    }
+    if (hasDouble) {
+      return `'${val}'`
+    } else {
+      return `"${val}"`
+    }
+  }
+}
 
 function stringifyAttrs(attrs: { [x: string]: any }) {
   let result = ''
@@ -14,7 +31,7 @@ function stringifyAttrs(attrs: { [x: string]: any }) {
 }
 
 export function genComponentTag(
-  part: { content: string;  tag: string;  attrs: any},
+  part: { content: string; tag: string; attrs: any },
   processor: any = {}
 ) {
   // normalize

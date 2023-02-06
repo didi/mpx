@@ -1,5 +1,5 @@
 import { TransformPluginContext } from 'rollup'
-import { Options } from 'src/options'
+import { Options } from '../../options'
 import { jsonCompiler } from '../../transfrom/json-compiler'
 import resolveJson from '../../utils/resolve-json-content'
 import { SFCDescriptor } from '../utils/descriptorCache'

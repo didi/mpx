@@ -1,8 +1,8 @@
-import pick from 'lodash-es/pick'
-import { Options, optionKeys } from 'src/options'
+import pick from 'lodash/pick'
+import { Options, optionKeys } from '../options'
 import { MpxWithOptions } from '../mpx'
 
-export * from 'src/mpx'
+export * from '../mpx'
 
 const mpx: MpxWithOptions = {} as MpxWithOptions
 

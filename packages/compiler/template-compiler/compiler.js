@@ -1,21 +1,24 @@
 const JSON5 = require('json5')
 const he = require('he')
-const { normalize } = require('@mpxjs/compile-utils')
-const addQuery = require(normalize.utils('add-query'))
-const { inBrowser } = require(normalize.utils('env'))
-const { normalizeCondition } = require(normalize.utils('match-condition'))
-const isValidIdentifierStr = require(normalize.utils('is-valid-identifier-str'))
-const isEmptyObject = require(normalize.utils('is-empty-object'))
+const {
+  normalize,
+  addQuery,
+  inBrowser,
+  matchCondition,
+  isValidIdentifierStr,
+  isEmptyObject,
+} = require('@mpxjs/compile-utils')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const getRulesRunner = require('../platform/index')
 const config = require('./config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('./utils/const')
 const dash2hump = require('./utils/hump-dash').dash2hump
+const normalizeCondition = matchCondition
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
  */
-function makeMap (str, expectsLowerCase) {
+function makeMap(str, expectsLowerCase) {
   let map = Object.create(null)
   let list = str.split(',')
   for (let i = 0; i < list.length; i++) {
@@ -23,11 +26,11 @@ function makeMap (str, expectsLowerCase) {
   }
   return expectsLowerCase
     ? function (val) {
-      return map[val.toLowerCase()]
-    }
+        return map[val.toLowerCase()]
+      }
     : function (val) {
-      return map[val]
-    }
+        return map[val]
+      }
 }
 
 const no = function () {
@@ -38,10 +41,10 @@ const no = function () {
 // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
 const isNonPhrasingTag = makeMap(
   'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
-  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
-  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track'
+    'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
+    'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
+    'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
+    'title,tr,track'
 )
 
 /*!
@@ -52,12 +55,13 @@ const isNonPhrasingTag = makeMap(
  */
 
 // Regular Expressions for parsing tags and attributes
-const attribute = /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+const attribute =
+  /^\s*([^\s"'<>/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 const ncname = '[a-zA-Z_][\\w\\-\\.]*'
 const qnameCapture = '((?:' + ncname + '\\:)?' + ncname + ')'
-const startTagOpen = new RegExp(('^<' + qnameCapture))
+const startTagOpen = new RegExp('^<' + qnameCapture)
 const startTagClose = /^\s*(\/?)>/
-const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
+const endTag = new RegExp('^<\\/' + qnameCapture + '[^>]*>')
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
@@ -85,7 +89,7 @@ const ieNSBug = /^xmlns:NS\d+/
 const ieNSPrefix = /^NS\d+:/
 
 /* istanbul ignore next */
-function guardIESVGBug (attrs) {
+function guardIESVGBug(attrs) {
   let res = []
   for (let i = 0; i < attrs.length; i++) {
     let attr = attrs[i]
@@ -97,7 +101,7 @@ function guardIESVGBug (attrs) {
   return res
 }
 
-function makeAttrsMap (attrs) {
+function makeAttrsMap(attrs) {
   let map = {}
   for (let i = 0, l = attrs.length; i < l; i++) {
     // if (map[attrs[i].name] && !isIE && !isEdge) {
@@ -108,7 +112,7 @@ function makeAttrsMap (attrs) {
   return map
 }
 
-function createASTElement (tag, attrs, parent) {
+function createASTElement(tag, attrs, parent) {
   return {
     type: 1,
     tag: tag,
@@ -119,13 +123,11 @@ function createASTElement (tag, attrs, parent) {
   }
 }
 
-function isForbiddenTag (el) {
+function isForbiddenTag(el) {
   return (
     el.tag === 'style' ||
-    (el.tag === 'script' && (
-      !el.attrsMap.type ||
-      el.attrsMap.type === 'text/javascript'
-    ))
+    (el.tag === 'script' &&
+      (!el.attrsMap.type || el.attrsMap.type === 'text/javascript'))
   )
 }
 
@@ -156,38 +158,39 @@ let platformGetTagNamespace
 let filePath
 let refId
 
-function updateForScopesMap () {
-  forScopes.forEach((scope) => {
+function updateForScopesMap() {
+  forScopes.forEach(scope => {
     forScopesMap[scope.index] = 'index'
     forScopesMap[scope.item] = 'item'
   })
   return forScopesMap
 }
 
-function pushForScopes (scope) {
+function pushForScopes(scope) {
   forScopes.push(scope)
   updateForScopesMap()
   return scope
 }
 
-function popForScopes () {
+function popForScopes() {
   let scope = forScopes.pop()
   updateForScopesMap()
   return scope
 }
 
 const rulesResultMap = new Map()
-const deleteErrorInResultMap = (node) => {
+const deleteErrorInResultMap = node => {
   rulesResultMap.delete(node)
-  Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
+  Array.isArray(node.children) &&
+    node.children.forEach(item => deleteErrorInResultMap(item))
 }
 
-function baseWarn (msg) {
-  console.warn(('[template compiler]: ' + msg))
+function baseWarn(msg) {
+  console.warn('[template compiler]: ' + msg)
 }
 
-function baseError (msg) {
-  console.error(('[template compiler]: ' + msg))
+function baseError(msg) {
+  console.error('[template compiler]: ' + msg)
 }
 
 const decodeMap = {
@@ -195,11 +198,11 @@ const decodeMap = {
   '&gt;': '>',
   '&quot;': '"',
   '&amp;': '&',
-  '&#39;': '\''
+  '&#39;': "'"
 }
 const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
 
-function decode (value) {
+function decode(value) {
   if (value != null) {
     return value.replace(encodedRe, function (match) {
       return decodeMap[match]
@@ -220,9 +223,9 @@ const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
 const tagREG = /\{\{((?:.|\n|\r)+?)\}\}(?!})/g
 
-function decodeInMustache (value) {
+function decodeInMustache(value) {
   const sArr = value.split(tagRES)
-  const ret = sArr.map((s) => {
+  const ret = sArr.map(s => {
     if (tagRES.test(s)) {
       return decode(s)
     }
@@ -231,7 +234,7 @@ function decodeInMustache (value) {
   return ret.join('')
 }
 
-function parseHTML (html, options) {
+function parseHTML(html, options) {
   let stack = []
   let expectHTML = options.expectHTML
   let isUnaryTag$$1 = options.isUnaryTag || no
@@ -294,12 +297,17 @@ function parseHTML (html, options) {
         }
       }
 
-      let text = (void 0)
-      let rest = (void 0)
-      let next = (void 0)
+      let text = void 0
+      let rest = void 0
+      let next = void 0
       if (textEnd >= 0) {
         rest = html.slice(textEnd)
-        while (!endTag.test(rest) && !startTagOpen.test(rest) && !comment.test(rest) && !conditionalComment.test(rest)) {
+        while (
+          !endTag.test(rest) &&
+          !startTagOpen.test(rest) &&
+          !comment.test(rest) &&
+          !conditionalComment.test(rest)
+        ) {
           // < in plain text, be forgiving and treat it as text
           next = rest.indexOf('<', 1)
           if (next < 0) {
@@ -323,7 +331,12 @@ function parseHTML (html, options) {
     } else {
       let endTagLength = 0
       let stackedTag = lastTag.toLowerCase()
-      let reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'))
+      let reStackedTag =
+        reCache[stackedTag] ||
+        (reCache[stackedTag] = new RegExp(
+          '([\\s\\S]*?)(</' + stackedTag + '[^>]*>)',
+          'i'
+        ))
       let rest$1 = html.replace(reStackedTag, function (all, text, endTag) {
         endTagLength = endTag.length
         if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
@@ -347,7 +360,7 @@ function parseHTML (html, options) {
     if (html === last) {
       options.chars && options.chars(html)
       if (!stack.length && options.warn) {
-        options.warn(('Mal-formatted tag at end of template: "' + html + '"'))
+        options.warn('Mal-formatted tag at end of template: "' + html + '"')
       }
       break
     }
@@ -356,12 +369,12 @@ function parseHTML (html, options) {
   // Clean up any remaining tags
   parseEndTag()
 
-  function advance (n) {
+  function advance(n) {
     index += n
     html = html.substring(n)
   }
 
-  function parseStartTag () {
+  function parseStartTag() {
     let start = html.match(startTagOpen)
     if (start) {
       let match = {
@@ -371,7 +384,10 @@ function parseHTML (html, options) {
       }
       advance(start[0].length)
       let end, attr
-      while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+      while (
+        !(end = html.match(startTagClose)) &&
+        (attr = html.match(attribute))
+      ) {
         advance(attr[0].length)
         match.attrs.push(attr)
       }
@@ -384,7 +400,7 @@ function parseHTML (html, options) {
     }
   }
 
-  function handleStartTag (match) {
+  function handleStartTag(match) {
     let tagName = match.tagName
     let unarySlash = match.unarySlash
 
@@ -429,7 +445,11 @@ function parseHTML (html, options) {
     }
 
     if (!unary) {
-      stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs })
+      stack.push({
+        tag: tagName,
+        lowerCasedTag: tagName.toLowerCase(),
+        attrs: attrs
+      })
       lastTag = tagName
     }
 
@@ -438,7 +458,7 @@ function parseHTML (html, options) {
     }
   }
 
-  function parseEndTag (tagName, start, end) {
+  function parseEndTag(tagName, start, end) {
     let pos, lowerCasedTagName
     if (start == null) {
       start = index
@@ -467,9 +487,7 @@ function parseHTML (html, options) {
       // Close all the open elements, up the stack
       for (let i = stack.length - 1; i >= pos; i--) {
         if ((i > pos || !tagName) && options.warn) {
-          options.warn(
-            ('tag <' + (stack[i].tag) + '> has no matching end tag.')
-          )
+          options.warn('tag <' + stack[i].tag + '> has no matching end tag.')
         }
         if (options.end) {
           options.end(stack[i].tag, start, end)
@@ -494,7 +512,7 @@ function parseHTML (html, options) {
   }
 }
 
-function parseComponent (content, options) {
+function parseComponent(content, options) {
   mode = options.mode || 'wx'
   env = options.env
   filePath = options.filePath
@@ -509,7 +527,7 @@ function parseComponent (content, options) {
   let depth = 0
   let currentBlock = null
 
-  function start (tag, attrs, unary, start, end) {
+  function start(tag, attrs, unary, start, end) {
     if (depth === 0) {
       currentBlock = {
         tag,
@@ -544,7 +562,10 @@ function parseComponent (content, options) {
         } else {
           if (tag === 'script') {
             // 支持type写为application\/json5
-            if (/^application\/json/.test(currentBlock.type) || currentBlock.name === 'json') {
+            if (
+              /^application\/json/.test(currentBlock.type) ||
+              currentBlock.name === 'json'
+            ) {
               tag = 'json'
             }
             if (currentBlock.name === 'json') {
@@ -572,7 +593,8 @@ function parseComponent (content, options) {
             }
           }
         }
-      } else { // custom blocks
+      } else {
+        // custom blocks
         sfc.customBlocks.push(currentBlock)
       }
     }
@@ -581,7 +603,7 @@ function parseComponent (content, options) {
     }
   }
 
-  function checkAttrs (block, attrs) {
+  function checkAttrs(block, attrs) {
     for (let i = 0; i < attrs.length; i++) {
       let attr = attrs[i]
       if (attr.name === 'lang') {
@@ -608,7 +630,7 @@ function parseComponent (content, options) {
     }
   }
 
-  function end (tag, start) {
+  function end(tag, start) {
     if (depth === 1 && currentBlock) {
       currentBlock.end = start
       let text = content.slice(currentBlock.start, currentBlock.end)
@@ -623,7 +645,7 @@ function parseComponent (content, options) {
     depth--
   }
 
-  function padContent (block, pad) {
+  function padContent(block, pad) {
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
@@ -641,24 +663,32 @@ function parseComponent (content, options) {
   return sfc
 }
 
-function parse (template, options) {
+function parse(template, options) {
   rulesResultMap.clear()
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
   i18nInjectableComputed = []
 
   const _warn = content => {
-    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
-      warnArray: [],
-      errorArray: []
-    }).get(currentEl)
+    const currentElementRuleResult =
+      rulesResultMap.get(currentEl) ||
+      rulesResultMap
+        .set(currentEl, {
+          warnArray: [],
+          errorArray: []
+        })
+        .get(currentEl)
     currentElementRuleResult.warnArray.push(content)
   }
   const _error = content => {
-    const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
-      warnArray: [],
-      errorArray: []
-    }).get(currentEl)
+    const currentElementRuleResult =
+      rulesResultMap.get(currentEl) ||
+      rulesResultMap
+        .set(currentEl, {
+          warnArray: [],
+          errorArray: []
+        })
+        .get(currentEl)
     currentElementRuleResult.errorArray.push(content)
   }
 
@@ -695,7 +725,7 @@ function parse (template, options) {
   // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
   let tagNames = new Set()
 
-  function genTempRoot () {
+  function genTempRoot() {
     // 使用临时节点作为root，处理multi root的情况
     root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
@@ -707,10 +737,11 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
-    start: function start (tag, attrs, unary) {
+    start: function start(tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
-      let ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
+      let ns =
+        (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       // handle IE svg bug
       /* istanbul ignore if */
@@ -727,8 +758,11 @@ function parse (template, options) {
         element.forbidden = true
         warn$1(
           'Templates should only be responsible for mapping the state to the ' +
-          'UI. Avoid placing tags with side-effects in your templates, such as ' +
-          '<' + tag + '>' + ', as they will not be parsed.'
+            'UI. Avoid placing tags with side-effects in your templates, such as ' +
+            '<' +
+            tag +
+            '>' +
+            ', as they will not be parsed.'
         )
       }
 
@@ -749,7 +783,7 @@ function parse (template, options) {
       }
     },
 
-    end: function end () {
+    end: function end() {
       // remove trailing whitespace
       let element = stack[stack.length - 1]
       if (element) {
@@ -764,11 +798,12 @@ function parse (template, options) {
       }
     },
 
-    chars: function chars (text) {
+    chars: function chars(text) {
       if (!currentParent) genTempRoot()
       // IE textarea placeholder bug
       /* istanbul ignore if */
-      if (isIE &&
+      if (
+        isIE &&
         currentParent.tag === 'textarea' &&
         currentParent.attrsMap.placeholder === text
       ) {
@@ -780,12 +815,19 @@ function parse (template, options) {
         text = text.trim()
       }
 
-      if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
+      if (
+        (!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) &&
+        options.decodeHTMLText
+      ) {
         text = he.decode(text)
       }
 
       if (text) {
-        if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
+        if (
+          text !== ' ' ||
+          !children.length ||
+          children[children.length - 1].text !== ' '
+        ) {
           let el = {
             type: 3,
             // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
@@ -797,7 +839,7 @@ function parse (template, options) {
         }
       }
     },
-    comment: function comment (text) {
+    comment: function comment(text) {
       if (!currentParent) genTempRoot()
       if (options.hasComment) {
         currentParent.children.push({
@@ -811,7 +853,9 @@ function parse (template, options) {
   })
 
   if (multiRootError) {
-    error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
+    error$1(
+      'Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!'
+    )
   }
 
   if (hasI18n) {
@@ -825,23 +869,33 @@ function parse (template, options) {
     }
   }
 
-  injectNodes.forEach((node) => {
+  injectNodes.forEach(node => {
     addChild(root, node, true)
   })
 
-  rulesResultMap.forEach((val) => {
+  rulesResultMap.forEach(val => {
     Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
-    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
+    Array.isArray(val.errorArray) &&
+      val.errorArray.forEach(item => error$1(item))
   })
 
   if (!tagNames.has('component') && options.checkUsingComponents) {
     const arr = []
-    options.usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+    options.usingComponents.forEach(item => {
+      if (
+        !tagNames.has(item) &&
+        !options.globalComponents.includes(item) &&
+        !options.componentPlaceholder.includes(item)
+      ) {
         arr.push(item)
       }
     })
-    arr.length && warn$1(`\n ${options.filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
+    arr.length &&
+      warn$1(
+        `\n ${options.filePath} \n 组件 ${arr.join(
+          ' | '
+        )} 注册了，但是未被对应的模板引用，建议删除！`
+      )
   }
 
   return {
@@ -850,11 +904,11 @@ function parse (template, options) {
   }
 }
 
-function getTempNode () {
+function getTempNode() {
   return createASTElement('temp-node', [])
 }
 
-function addChild (parent, newChild, before) {
+function addChild(parent, newChild, before) {
   parent.children = parent.children || []
   if (before) {
     parent.children.unshift(newChild)
@@ -864,7 +918,7 @@ function addChild (parent, newChild, before) {
   newChild.parent = parent
 }
 
-function getAndRemoveAttr (el, name, removeFromMap = true) {
+function getAndRemoveAttr(el, name, removeFromMap = true) {
   let val, has
   const list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
@@ -884,7 +938,7 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   }
 }
 
-function addAttrs (el, attrs) {
+function addAttrs(el, attrs) {
   const list = el.attrsList
   const map = el.attrsMap
   for (let i = 0, l = attrs.length; i < l; i++) {
@@ -896,7 +950,7 @@ function addAttrs (el, attrs) {
   }
 }
 
-function modifyAttr (el, name, val) {
+function modifyAttr(el, name, val) {
   el.attrsMap[name] = val
   let list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
@@ -907,7 +961,7 @@ function modifyAttr (el, name, val) {
   }
 }
 
-function moveBaseDirective (target, from, isDelete = true) {
+function moveBaseDirective(target, from, isDelete = true) {
   target.for = from.for
   target.if = from.if
   target.elseif = from.elseif
@@ -920,7 +974,7 @@ function moveBaseDirective (target, from, isDelete = true) {
   }
 }
 
-function stringify (str) {
+function stringify(str) {
   return JSON.stringify(str)
 }
 
@@ -953,41 +1007,47 @@ function stringify (str) {
 
 const genericRE = /^generic:(.+)$/
 
-function processComponentGenericsForWeb (el, options, meta) {
+function processComponentGenericsForWeb(el, options, meta) {
   if (options.componentGenerics && options.componentGenerics[el.tag]) {
     const generic = dash2hump(el.tag)
     el.tag = 'component'
-    addAttrs(el, [{
-      name: ':is',
-      value: `generic${generic}`
-    }])
+    addAttrs(el, [
+      {
+        name: ':is',
+        value: `generic${generic}`
+      }
+    ])
   }
 
   let hasGeneric = false
 
   const genericHash = options.moduleId
 
-  el.attrsList.forEach((attr) => {
+  el.attrsList.forEach(attr => {
     if (genericRE.test(attr.name)) {
       getAndRemoveAttr(el, attr.name)
-      addAttrs(el, [{
-        name: attr.name.replace(':', ''),
-        value: attr.value
-      }])
+      addAttrs(el, [
+        {
+          name: attr.name.replace(':', ''),
+          value: attr.value
+        }
+      ])
       hasGeneric = true
       addGenericInfo(meta, genericHash, attr.value)
     }
   })
 
   if (hasGeneric) {
-    addAttrs(el, [{
-      name: 'generichash',
-      value: genericHash
-    }])
+    addAttrs(el, [
+      {
+        name: 'generichash',
+        value: genericHash
+      }
+    ])
   }
 }
 
-function addGenericInfo (meta, genericHash, genericValue) {
+function addGenericInfo(meta, genericHash, genericValue) {
   if (!meta.genericsInfo) {
     meta.genericsInfo = {
       hash: genericHash,
@@ -997,7 +1057,7 @@ function addGenericInfo (meta, genericHash, genericValue) {
   meta.genericsInfo.map[genericValue] = true
 }
 
-function processComponentIs (el, options) {
+function processComponentIs(el, options) {
   if (el.tag !== 'component') {
     return
   }
@@ -1005,7 +1065,9 @@ function processComponentIs (el, options) {
   options = options || {}
   el.components = options.usingComponents
   if (!el.components) {
-    warn$1('Component in which <component> tag is used must have a nonblank usingComponents field')
+    warn$1(
+      'Component in which <component> tag is used must have a nonblank usingComponents field'
+    )
   }
 
   let is = getAndRemoveAttr(el, 'is').val
@@ -1018,7 +1080,7 @@ function processComponentIs (el, options) {
 
 const eventIdentifier = '__mpx_event__'
 
-function parseFuncStr2 (str) {
+function parseFuncStr2(str) {
   let funcRE = /^([^()]+)(\((.*)\))?/
   let match = funcRE.exec(str)
   if (match) {
@@ -1031,7 +1093,10 @@ function parseFuncStr2 (str) {
       if (subIndex) {
         const index1 = ret.index + subIndex
         const index2 = index1 + 6
-        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+        args =
+          args.substring(0, index1) +
+          JSON.stringify(eventIdentifier) +
+          args.substring(index2)
       }
     }
     return {
@@ -1041,7 +1106,7 @@ function parseFuncStr2 (str) {
   }
 }
 
-function stringifyWithResolveComputed (modelValue) {
+function stringifyWithResolveComputed(modelValue) {
   let result = []
   let inString = false
   let computedStack = []
@@ -1053,7 +1118,7 @@ function stringifyWithResolveComputed (modelValue) {
       if (char === inString) {
         inString = false
       }
-    } else if (char === '"' || char === '\'') {
+    } else if (char === '"' || char === "'") {
       inString = char
     } else if (char === '[') {
       computedStack.push(char)
@@ -1081,7 +1146,7 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processBindEvent (el, options) {
+function processBindEvent(el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function (attr) {
     let parsedEvent = config[mode].event.parseEvent(attr.name)
@@ -1109,11 +1174,24 @@ function processBindEvent (el, options) {
   if (modelExp) {
     let match = tagRE.exec(modelExp)
     if (match) {
-      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
-      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
-      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
-      const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
-      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
+      const modelProp =
+        getAndRemoveAttr(el, config[mode].directive.modelProp).val ||
+        config[mode].event.defaultModelProp
+      const modelEvent =
+        getAndRemoveAttr(el, config[mode].directive.modelEvent).val ||
+        config[mode].event.defaultModelEvent
+      const modelValuePathRaw = getAndRemoveAttr(
+        el,
+        config[mode].directive.modelValuePath
+      ).val
+      const modelValuePath =
+        modelValuePathRaw === undefined
+          ? config[mode].event.defaultModelValuePath
+          : modelValuePathRaw
+      const modelFilter = getAndRemoveAttr(
+        el,
+        config[mode].directive.modelFilter
+      ).val
       let modelValuePathArr
       try {
         modelValuePathArr = JSON5.parse(modelValuePath)
@@ -1125,7 +1203,9 @@ function processBindEvent (el, options) {
         }
       }
       if (!isValidIdentifierStr(modelEvent)) {
-        warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
+        warn$1(
+          `EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`
+        )
         return
       }
       let modelValue = match[1].trim()
@@ -1143,7 +1223,9 @@ function processBindEvent (el, options) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(
+          eventIdentifier
+        )},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
       addAttrs(el, [
         {
@@ -1166,7 +1248,9 @@ function processBindEvent (el, options) {
     }
     // 排除特殊情况
     if (needBind && !isValidIdentifierStr(type)) {
-      warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
+      warn$1(
+        `EventName ${type} which need be framework proxy processed must be a valid identifier!`
+      )
       needBind = false
     }
     if (needBind) {
@@ -1186,7 +1270,7 @@ function processBindEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[type] = configs.map((item) => {
+      eventConfigMap[type] = configs.map(item => {
         return item.expStr
       })
     } else {
@@ -1195,24 +1279,26 @@ function processBindEvent (el, options) {
   }
 
   if (!isEmptyObject(eventConfigMap)) {
-    addAttrs(el, [{
-      name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
-    }])
+    addAttrs(el, [
+      {
+        name: 'data-eventconfigs',
+        value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+      }
+    ])
   }
 }
 
-function wrapMustache (val) {
+function wrapMustache(val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
 }
 
-function parseMustache (raw = '') {
+function parseMustache(raw = '') {
   let replaced = false
   if (tagRE.test(raw)) {
     let ret = []
     let lastLastIndex = 0
     let match
-    while (match = tagREG.exec(raw)) {
+    while ((match = tagREG.exec(raw))) {
       let pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
         ret.push(stringify(pre))
@@ -1221,7 +1307,7 @@ function parseMustache (raw = '') {
 
       // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
       const defKeys = Object.keys(defs)
-      defKeys.forEach((defKey) => {
+      defKeys.forEach(defKey => {
         const defRE = new RegExp(`\\b${defKey}\\b`)
         const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
         if (defRE.test(exp)) {
@@ -1231,13 +1317,17 @@ function parseMustache (raw = '') {
       })
 
       if (i18n) {
-        i18nFuncNames.forEach((i18nFuncName) => {
+        i18nFuncNames.forEach(i18nFuncName => {
           const funcNameRE = new RegExp(`${i18nFuncName}\\(`)
           const funcNameREG = new RegExp(`${i18nFuncName}\\(`, 'g')
           if (funcNameRE.test(exp)) {
             if (i18n.useComputed) {
-              const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
-              i18nInjectableComputed.push(`${i18nInjectComputedKey}: function(){\nreturn ${exp.trim()}}`)
+              const i18nInjectComputedKey = `_i${
+                i18nInjectableComputed.length + 1
+              }`
+              i18nInjectableComputed.push(
+                `${i18nInjectComputedKey}: function(){\nreturn ${exp.trim()}}`
+              )
               exp = i18nInjectComputedKey
             } else {
               exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(mpxLocale, `)
@@ -1276,7 +1366,7 @@ function parseMustache (raw = '') {
   }
 }
 
-function addExp (el, exp, isProps) {
+function addExp(el, exp, isProps) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
@@ -1285,7 +1375,7 @@ function addExp (el, exp, isProps) {
   }
 }
 
-function processIf (el) {
+function processIf(el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     if (mode === 'swan') val = wrapMustache(val)
@@ -1294,7 +1384,7 @@ function processIf (el) {
       raw: parsed.val,
       exp: parsed.result
     }
-  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
+  } else if ((val = getAndRemoveAttr(el, config[mode].directive.elseif).val)) {
     if (mode === 'swan') val = wrapMustache(val)
     let parsed = parseMustache(val)
     el.elseif = {
@@ -1306,14 +1396,14 @@ function processIf (el) {
   }
 }
 
-function processIfForWeb (el) {
+function processIfForWeb(el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     el.if = {
       raw: val,
       exp: val
     }
-  } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
+  } else if ((val = getAndRemoveAttr(el, config[mode].directive.elseif).val)) {
     el.elseif = {
       raw: val,
       exp: val
@@ -1323,9 +1413,10 @@ function processIfForWeb (el) {
   }
 }
 
-const swanForInRe = /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\S+)(?:\s+trackBy\s+(\S+))?\s*$/
+const swanForInRe =
+  /^\s*(\w+)(?:\s*,\s*(\w+))?\s+in\s+(\S+)(?:\s+trackBy\s+(\S+))?\s*$/
 
-function processFor (el) {
+function processFor(el) {
   let val = getAndRemoveAttr(el, config[mode].directive.for).val
   if (val) {
     let matched
@@ -1343,13 +1434,13 @@ function processFor (el) {
         raw: parsed.val,
         exp: parsed.result
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.forIndex).val) {
+      if ((val = getAndRemoveAttr(el, config[mode].directive.forIndex).val)) {
         el.for.index = val
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.forItem).val) {
+      if ((val = getAndRemoveAttr(el, config[mode].directive.forItem).val)) {
         el.for.item = val
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.key).val) {
+      if ((val = getAndRemoveAttr(el, config[mode].directive.key).val)) {
         el.for.key = val
       }
     }
@@ -1360,7 +1451,7 @@ function processFor (el) {
   }
 }
 
-function processRef (el, options, meta) {
+function processRef(el, options, meta) {
   let val = getAndRemoveAttr(el, config[mode].directive.ref).val
   let type = isComponentNode(el, options) ? 'component' : 'node'
   if (val) {
@@ -1376,10 +1467,12 @@ function processRef (el, options, meta) {
     }
     let className = getAndRemoveAttr(el, 'class').val
     className = className ? className + ' ' + refClassName : refClassName
-    addAttrs(el, [{
-      name: 'class',
-      value: className
-    }])
+    addAttrs(el, [
+      {
+        name: 'class',
+        value: className
+      }
+    ])
     meta.refs.push({
       key: val,
       selector: `.${refClassName}`,
@@ -1389,14 +1482,16 @@ function processRef (el, options, meta) {
   }
 
   if (type === 'component' && mode === 'ali') {
-    addAttrs(el, [{
-      name: 'onUpdateRef',
-      value: '__handleUpdateRef'
-    }])
+    addAttrs(el, [
+      {
+        name: 'onUpdateRef',
+        value: '__handleUpdateRef'
+      }
+    ])
   }
 }
 
-function addWxsModule (meta, module, src) {
+function addWxsModule(meta, module, src) {
   if (!meta.wxsModuleMap) {
     meta.wxsModuleMap = {}
   }
@@ -1404,7 +1499,7 @@ function addWxsModule (meta, module, src) {
   meta.wxsModuleMap[module] = src
 }
 
-function addWxsContent (meta, module, content) {
+function addWxsContent(meta, module, content) {
   if (!meta.wxsContentMap) {
     meta.wxsContentMap = {}
   }
@@ -1412,7 +1507,7 @@ function addWxsContent (meta, module, content) {
   meta.wxsContentMap[module] = content
 }
 
-function postProcessWxs (el, meta) {
+function postProcessWxs(el, meta) {
   if (el.tag === config[mode].wxs.tag) {
     let module = el.attrsMap[config[mode].wxs.module]
     if (module) {
@@ -1420,9 +1515,12 @@ function postProcessWxs (el, meta) {
       if (el.attrsMap[config[mode].wxs.src]) {
         src = el.attrsMap[config[mode].wxs.src]
       } else {
-        content = el.children.filter((child) => {
-          return child.type === 3 && !child.isComment
-        }).map(child => child.text).join('\n')
+        content = el.children
+          .filter(child => {
+            return child.type === 3 && !child.isComment
+          })
+          .map(child => child.text)
+          .join('\n')
 
         const fakeRequest = filePath + config[mode].wxs.ext
 
@@ -1430,10 +1528,12 @@ function postProcessWxs (el, meta) {
           wxsModule: module
         })
 
-        addAttrs(el, [{
-          name: config[mode].wxs.src,
-          value: src
-        }])
+        addAttrs(el, [
+          {
+            name: config[mode].wxs.src,
+            value: src
+          }
+        ])
         el.children = []
       }
       src && addWxsModule(meta, module, src)
@@ -1445,15 +1545,17 @@ function postProcessWxs (el, meta) {
   }
 }
 
-function processAttrs (el, options) {
-  el.attrsList.forEach((attr) => {
+function processAttrs(el, options) {
+  el.attrsList.forEach(attr => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
     let parsed = parseMustache(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
-      const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
+      const isProps =
+        isComponentNode(el, options) &&
+        !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
     }
     if (parsed.replaced) {
@@ -1462,7 +1564,7 @@ function processAttrs (el, options) {
   })
 }
 
-function postProcessFor (el) {
+function postProcessFor(el) {
   if (el.for) {
     /*
       对百度小程序同时带有if和for的指令外套一层block，并将for放到外层
@@ -1509,7 +1611,7 @@ function postProcessFor (el) {
   }
 }
 
-function evalExp (exp) {
+function evalExp(exp) {
   let result = { success: false }
   try {
     // eslint-disable-next-line no-new-func
@@ -1518,12 +1620,11 @@ function evalExp (exp) {
       success: true,
       result: fn()
     }
-  } catch (e) {
-  }
+  } catch (e) {}
   return result
 }
 
-function postProcessIf (el) {
+function postProcessIf(el) {
   let attrs, result, prevNode
   if (el.if) {
     result = evalExp(el.if.exp)
@@ -1535,10 +1636,12 @@ function postProcessIf (el) {
         replaceNode(el, getTempNode())._if = false
       }
     } else {
-      attrs = [{
-        name: config[mode].directive.if,
-        value: el.if.raw
-      }]
+      attrs = [
+        {
+          name: config[mode].directive.if,
+          value: el.if.raw
+        }
+      ]
     }
   } else if (el.elseif) {
     prevNode = findPrevNode(el)
@@ -1561,10 +1664,12 @@ function postProcessIf (el) {
           removeNode(el)
         }
       } else {
-        attrs = [{
-          name: config[mode].directive.elseif,
-          value: el.elseif.raw
-        }]
+        attrs = [
+          {
+            name: config[mode].directive.elseif,
+            value: el.elseif.raw
+          }
+        ]
       }
     }
   } else if (el.else) {
@@ -1574,10 +1679,12 @@ function postProcessIf (el) {
     } else if (prevNode._if === false) {
       delete el.else
     } else {
-      attrs = [{
-        name: config[mode].directive.else,
-        value: undefined
-      }]
+      attrs = [
+        {
+          name: config[mode].directive.else,
+          value: undefined
+        }
+      ]
     }
   }
   if (attrs) {
@@ -1585,7 +1692,7 @@ function postProcessIf (el) {
   }
 }
 
-function processText (el) {
+function processText(el) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -1609,7 +1716,7 @@ function processText (el) {
 //   }])
 // }
 
-function injectWxs (meta, module, src) {
+function injectWxs(meta, module, src) {
   if (addWxsModule(meta, module, src)) {
     return
   }
@@ -1626,116 +1733,154 @@ function injectWxs (meta, module, src) {
   injectNodes.push(wxsNode)
 }
 
-function processClass (el, meta) {
+function processClass(el, meta) {
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
-  let dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
+  let dynamicClass = getAndRemoveAttr(
+    el,
+    config[mode].directive.dynamicClass
+  ).val
   let staticClass = getAndRemoveAttr(el, type).val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     let staticClassExp = parseMustache(staticClass).result
-    let dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result, {
-      error: error$1
-    })
-    addAttrs(el, [{
-      name: targetType,
-      // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
-    }])
+    let dynamicClassExp = transDynamicClassExpr(
+      parseMustache(dynamicClass).result,
+      {
+        error: error$1
+      }
+    )
+    addAttrs(el, [
+      {
+        name: targetType,
+        // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
+        value:
+          mode === 'swan' && staticClass
+            ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}`
+            : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      }
+    ])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
-    addAttrs(el, [{
-      name: targetType,
-      value: staticClass
-    }])
+    addAttrs(el, [
+      {
+        name: targetType,
+        value: staticClass
+      }
+    ])
   }
 
   if (needEx && staticClass) {
     const refClassRegExp = /ref_(\w+)_(\d+)/
     const match = staticClass.match(refClassRegExp)
     if (match) {
-      addAttrs(el, [{
-        name: 'class',
-        value: match[0]
-      }])
+      addAttrs(el, [
+        {
+          name: 'class',
+          value: match[0]
+        }
+      ])
     }
   }
 }
 
-function processStyle (el, meta) {
+function processStyle(el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
-  let dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
+  let dynamicStyle = getAndRemoveAttr(
+    el,
+    config[mode].directive.dynamicStyle
+  ).val
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
     let staticStyleExp = parseMustache(staticStyle).result
     let dynamicStyleExp = parseMustache(dynamicStyle).result
-    addAttrs(el, [{
-      name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
-    }])
+    addAttrs(el, [
+      {
+        name: targetType,
+        value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      }
+    ])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
-    addAttrs(el, [{
-      name: targetType,
-      value: staticStyle
-    }])
+    addAttrs(el, [
+      {
+        name: targetType,
+        value: staticStyle
+      }
+    ])
   }
 }
 
-function isRealNode (el) {
-  const virtualNodeTagMap = ['block', 'template', 'import', config[mode].wxs.tag].reduce((map, item) => {
+function isRealNode(el) {
+  const virtualNodeTagMap = [
+    'block',
+    'template',
+    'import',
+    config[mode].wxs.tag
+  ].reduce((map, item) => {
     map[item] = true
     return map
   }, {})
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el, options) {
-  return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+function isComponentNode(el, options) {
+  return (
+    options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+  )
 }
 
-function processAliExternalClassesHack (el, options) {
+function processAliExternalClassesHack(el, options) {
   const isComponent = isComponentNode(el, options)
   // 处理组件externalClass多层传递
-  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
-  classLikeAttrNames.forEach((classLikeAttrName) => {
+  const classLikeAttrNames = isComponent
+    ? ['class'].concat(options.externalClasses)
+    : ['class']
+  classLikeAttrNames.forEach(classLikeAttrName => {
     let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
     if (classLikeAttrValue) {
-      options.externalClasses.forEach((className) => {
+      options.externalClasses.forEach(className => {
         const reg = new RegExp('\\b' + className + '\\b', 'g')
         const replacement = dash2hump(className)
-        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
+        classLikeAttrValue = classLikeAttrValue.replace(
+          reg,
+          `{{${replacement}||''}}`
+        )
       })
-      addAttrs(el, [{
-        name: classLikeAttrName,
-        value: classLikeAttrValue
-      }])
+      addAttrs(el, [
+        {
+          name: classLikeAttrName,
+          value: classLikeAttrValue
+        }
+      ])
     }
   })
 
   if (options.hasScoped && isComponent) {
-    options.externalClasses.forEach((className) => {
+    options.externalClasses.forEach(className => {
       let externalClass = getAndRemoveAttr(el, className).val
       if (externalClass) {
-        addAttrs(el, [{
-          name: className,
-          value: `${externalClass} ${options.moduleId}`
-        }])
+        addAttrs(el, [
+          {
+            name: className,
+            value: `${externalClass} ${options.moduleId}`
+          }
+        ])
       }
     })
   }
 }
 
 // externalClasses只能模拟静态传递
-function processWebExternalClassesHack (el, options) {
+function processWebExternalClassesHack(el, options) {
   const staticClass = getAndRemoveAttr(el, 'class').val
   if (staticClass) {
     const classNames = staticClass.split(/\s+/)
     const replacements = []
-    options.externalClasses.forEach((className) => {
+    options.externalClasses.forEach(className => {
       const index = classNames.indexOf(className)
       if (index > -1) {
         replacements.push(`$attrs[${JSON.stringify(className)}]`)
@@ -1744,32 +1889,36 @@ function processWebExternalClassesHack (el, options) {
     })
 
     if (classNames.length) {
-      addAttrs(el, [{
-        name: 'class',
-        value: classNames.join(' ')
-      }])
+      addAttrs(el, [
+        {
+          name: 'class',
+          value: classNames.join(' ')
+        }
+      ])
     }
 
     if (replacements.length) {
       const dynamicClass = getAndRemoveAttr(el, ':class').val
       if (dynamicClass) replacements.push(dynamicClass)
 
-      addAttrs(el, [{
-        name: ':class',
-        value: `[${replacements.join(',')}]`
-      }])
+      addAttrs(el, [
+        {
+          name: ':class',
+          value: `[${replacements.join(',')}]`
+        }
+      ])
     }
   }
 
   // 处理externalClasses多层透传
   const isComponent = isComponentNode(el, options)
   if (isComponent) {
-    options.externalClasses.forEach((classLikeAttrName) => {
+    options.externalClasses.forEach(classLikeAttrName => {
       let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
       if (classLikeAttrValue) {
         const classNames = classLikeAttrValue.split(/\s+/)
         const replacements = []
-        options.externalClasses.forEach((className) => {
+        options.externalClasses.forEach(className => {
           const index = classNames.indexOf(className)
           if (index > -1) {
             replacements.push(`$attrs[${JSON.stringify(className)}]`)
@@ -1781,42 +1930,48 @@ function processWebExternalClassesHack (el, options) {
           replacements.unshift(JSON.stringify(classNames.join(' ')))
         }
 
-        addAttrs(el, [{
-          name: ':' + classLikeAttrName,
-          value: `[${replacements.join(',')}].join(' ')`
-        }])
+        addAttrs(el, [
+          {
+            name: ':' + classLikeAttrName,
+            value: `[${replacements.join(',')}].join(' ')`
+          }
+        ])
       }
     })
   }
 }
 
-function processScoped (el, options) {
+function processScoped(el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
     const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
-    addAttrs(el, [{
-      name: 'class',
-      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
-    }])
+    addAttrs(el, [
+      {
+        name: 'class',
+        value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+      }
+    ])
   }
 }
 
 const builtInComponentsPrefix = '@mpxjs/web-plugin/src/runtime/components'
 
-function processBuiltInComponents (el, meta) {
+function processBuiltInComponents(el, meta) {
   if (el.isBuiltIn) {
     if (!meta.builtInComponentsMap) {
       meta.builtInComponentsMap = {}
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
+      meta.builtInComponentsMap[
+        tag
+      ] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
     }
   }
 }
 
-function processAliAddComponentRootView (el, options) {
+function processAliAddComponentRootView(el, options) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -1834,19 +1989,21 @@ function processAliAddComponentRootView (el, options) {
   let newElAttrs = []
   let allAttrs = cloneAttrsList(el.attrsList)
 
-  function processClone (attr) {
+  function processClone(attr) {
     newElAttrs.push(attr)
   }
 
-  function processMove (attr) {
+  function processMove(attr) {
     getAndRemoveAttr(el, attr.name)
     newElAttrs.push(attr)
   }
 
-  function processAppendRules (el) {
-    processAppendAttrsRules.forEach((rule) => {
+  function processAppendRules(el) {
+    processAppendAttrsRules.forEach(rule => {
       const getNeedAppendAttrValue = el.attrsMap[rule.name]
-      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
+      const value = getNeedAppendAttrValue
+        ? getNeedAppendAttrValue + ' ' + rule.value
+        : rule.value
       newElAttrs.push({
         name: rule.name,
         value
@@ -1856,7 +2013,7 @@ function processAliAddComponentRootView (el, options) {
 
   processAttrsConditions.forEach(item => {
     const matcher = normalizeCondition(item.condition)
-    allAttrs.forEach((attr) => {
+    allAttrs.forEach(attr => {
       if (matcher(attr.name)) {
         if (item.action === 'clone') {
           processClone(attr)
@@ -1880,7 +2037,7 @@ function processAliAddComponentRootView (el, options) {
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
-function getVirtualHostRoot (options, meta) {
+function getVirtualHostRoot(options, meta) {
   if (options.isComponent) {
     // 处理组件时
     if (mode === 'wx' && options.hasVirtualHost) {
@@ -1903,7 +2060,7 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
-function processShow (el, options, root) {
+function processShow(el, options, root) {
   // 开启 virtualhost 全部走 props 传递处理
   // 未开启 virtualhost 直接绑定 display:none 到节点上
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
@@ -1921,10 +2078,12 @@ function processShow (el, options, root) {
       if (show === '') {
         show = '{{false}}'
       }
-      addAttrs(el, [{
-        name: 'mpxShow',
-        value: show
-      }])
+      addAttrs(el, [
+        {
+          name: 'mpxShow',
+          value: show
+        }
+      ])
     } else {
       processShowStyle()
     }
@@ -1932,20 +2091,22 @@ function processShow (el, options, root) {
     processShowStyle()
   }
 
-  function processShowStyle () {
+  function processShowStyle() {
     if (show !== undefined) {
       const showExp = parseMustache(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
-      addAttrs(el, [{
-        name: 'style',
-        value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
-      }])
+      addAttrs(el, [
+        {
+          name: 'style',
+          value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+        }
+      ])
     }
   }
 }
 
-function processTemplate (el) {
+function processTemplate(el) {
   if (el.tag === 'template' && el.attrsMap.name) {
     el.isTemplate = true
     processingTemplate = true
@@ -1953,7 +2114,7 @@ function processTemplate (el) {
   }
 }
 
-function postProcessTemplate (el) {
+function postProcessTemplate(el) {
   if (el.isTemplate) {
     processingTemplate = false
     return true
@@ -1964,7 +2125,7 @@ const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,noMode')
 
 const wrapRE = /^\((.*)\)$/
 
-function processAtMode (el) {
+function processAtMode(el) {
   if (el.parent && el.parent._atModeStatus) {
     el._atModeStatus = el.parent._atModeStatus
   }
@@ -2018,7 +2179,9 @@ function processAtMode (el) {
               }
             } else {
               // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-              el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+              el.noTransAttrs
+                ? el.noTransAttrs.push(processedAttr)
+                : (el.noTransAttrs = [processedAttr])
             }
             // 命中mode，命中env，完成匹配，直接退出
             break
@@ -2038,10 +2201,10 @@ function processAtMode (el) {
 }
 
 // 去除重复的attrsList项，这些项可能由平台转换规则造成
-function processDuplicateAttrsList (el) {
+function processDuplicateAttrsList(el) {
   const attrsMap = el.attrsMap
   const attrsList = []
-  Object.keys(attrsMap).forEach((name) => {
+  Object.keys(attrsMap).forEach(name => {
     const value = attrsMap[name]
     attrsList.push({
       name,
@@ -2052,16 +2215,16 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (el, meta) {
+function processInjectWxs(el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
-    el.injectWxsProps.forEach((injectWxsProp) => {
+    el.injectWxsProps.forEach(injectWxsProp => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
       injectWxs(meta, injectWxsModuleName, injectWxsPath)
     })
   }
 }
 
-function processNoTransAttrs (el) {
+function processNoTransAttrs(el) {
   // 转换完成，把不需要处理的attr挂回去
   if (el.noTransAttrs) {
     addAttrs(el, el.noTransAttrs)
@@ -2069,14 +2232,14 @@ function processNoTransAttrs (el) {
   }
 }
 
-function processMpxTagName (el) {
+function processMpxTagName(el) {
   const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
   if (mpxTagName) {
     el.tag = mpxTagName
   }
 }
 
-function processElement (el, root, options, meta) {
+function processElement(el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2137,7 +2300,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta, options) {
+function closeElement(el, meta, options) {
   postProcessAtMode(el)
   if (mode === 'web') {
     postProcessWxs(el, meta)
@@ -2149,7 +2312,11 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+    if (
+      isComponentNode(el, options) &&
+      !options.hasVirtualHost &&
+      mode === 'ali'
+    ) {
       el = processAliAddComponentRootView(el, options)
     } else {
       el = postProcessComponentIs(el)
@@ -2159,26 +2326,26 @@ function closeElement (el, meta, options) {
   postProcessIf(el)
 }
 
-function postProcessAtMode (el) {
+function postProcessAtMode(el) {
   if (el._atModeStatus === 'mismatch') {
     removeNode(el, true)
   }
 }
 
 // 目前为了处理动态组件children中后续if无效的问题(#633)，仅进行节点对象本身的浅clone，没有对attrsList/attrsMap/exps/if/elseif/else/for等深层对象进行copy
-function cloneNode (el) {
+function cloneNode(el) {
   const clone = Object.assign({}, el)
   if (el.parent) clone.parent = null
   if (el.children) {
     clone.children = []
-    el.children.forEach((child) => {
+    el.children.forEach(child => {
       addChild(clone, cloneNode(child))
     })
   }
   return clone
 }
 
-function cloneAttrsList (attrsList) {
+function cloneAttrsList(attrsList) {
   return attrsList.map(({ name, value }) => {
     return {
       name,
@@ -2187,7 +2354,7 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el) {
+function postProcessComponentIs(el) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2202,12 +2369,16 @@ function postProcessComponentIs (el) {
     }
     el.components.forEach(function (component) {
       if (range.length > 0 && !range.includes(component)) return
-      let newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+      let newChild = createASTElement(
+        component,
+        cloneAttrsList(el.attrsList),
+        tempNode
+      )
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
         exp: `${el.is} === ${stringify(component)}`
       }
-      el.children.forEach((child) => {
+      el.children.forEach(child => {
         addChild(newChild, cloneNode(child))
       })
       newChild.exps = el.exps
@@ -2216,7 +2387,9 @@ function postProcessComponentIs (el) {
     })
 
     if (!el.parent) {
-      error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
+      error$1(
+        'Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!'
+      )
     } else {
       el = replaceNode(el, tempNode, true) || el
     }
@@ -2224,9 +2397,9 @@ function postProcessComponentIs (el) {
   return el
 }
 
-function stringifyAttr (val) {
+function stringifyAttr(val) {
   if (typeof val === 'string') {
-    const hasSingle = val.indexOf('\'') > -1
+    const hasSingle = val.indexOf("'") > -1
     const hasDouble = val.indexOf('"') > -1
     // 移除属性中换行
     val = val.replace(/\n/g, '')
@@ -2242,8 +2415,8 @@ function stringifyAttr (val) {
   }
 }
 
-function serialize (root) {
-  function walk (node) {
+function serialize(root) {
+  function walk(node) {
     let result = ''
     if (node) {
       if (node.type === 3) {
@@ -2288,7 +2461,7 @@ function serialize (root) {
   return walk(root)
 }
 
-function findPrevNode (node) {
+function findPrevNode(node) {
   let parent = node.parent
   if (parent) {
     let index = parent.children.indexOf(node)
@@ -2301,7 +2474,7 @@ function findPrevNode (node) {
   }
 }
 
-function replaceNode (node, newNode, reserveNode) {
+function replaceNode(node, newNode, reserveNode) {
   if (!reserveNode) deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
@@ -2314,7 +2487,7 @@ function replaceNode (node, newNode, reserveNode) {
   }
 }
 
-function removeNode (node, reserveNode) {
+function removeNode(node, reserveNode) {
   if (!reserveNode) deleteErrorInResultMap(node)
   let parent = node.parent
   if (parent) {
@@ -2326,53 +2499,65 @@ function removeNode (node, reserveNode) {
   }
 }
 
-function genIf (node) {
+function genIf(node) {
   node.ifProcessed = true
   return `if(${node.if.exp}){\n${genNode(node)}}\n`
 }
 
-function genElseif (node) {
+function genElseif(node) {
   node.elseifProcessed = true
   if (node.for) {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    error$1(
+      `wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`
+    )
     return
   }
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
     return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
   } else {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    error$1(
+      `wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`
+    )
   }
 }
 
-function genElse (node) {
+function genElse(node) {
   node.elseProcessed = true
   if (node.for) {
-    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    error$1(
+      `wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`
+    )
     return
   }
   let preNode = findPrevNode(node)
   if (preNode && (preNode.if || preNode.elseif)) {
     return `else{\n${genNode(node)}}\n`
   } else {
-    error$1(`wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    error$1(
+      `wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`
+    )
   }
 }
 
-function genExps (node) {
-  return `${node.exps.map(({ exp, isProps }) => {
-    return isProps ? `this._p(${exp});\n` : `${exp};\n`
-  }).join('')}`
+function genExps(node) {
+  return `${node.exps
+    .map(({ exp, isProps }) => {
+      return isProps ? `this._p(${exp});\n` : `${exp};\n`
+    })
+    .join('')}`
 }
 
-function genFor (node) {
+function genFor(node) {
   node.forProcessed = true
   let index = node.for.index || 'index'
   let item = node.for.item || 'item'
-  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(
+    node
+  )}});\n`
 }
 
-function genNode (node) {
+function genNode(node) {
   let exp = ''
   if (node) {
     if (node.type === 3) {

@@ -1,5 +1,5 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
-import { Options } from 'src/options'
+import { Options } from '../../options'
 import { Query } from '../../types/query'
 import { createDescriptor } from '../utils/descriptorCache'
 import { processJSON } from './json'

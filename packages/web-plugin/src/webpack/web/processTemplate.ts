@@ -1,5 +1,5 @@
 import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
-import { getOptions } from '../mpx'
+import mpx, { getOptions } from '../mpx'
 import templateTransform from '../../transfrom/template-helper'
 import { LoaderContext } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
@@ -25,6 +25,7 @@ export default function (
   let wxsModuleMap
   let genericsInfo
   let templateContent
+  let wxsContentMap
   let output = '/* template */\n'
   const app = ctorType === 'app'
 
@@ -59,16 +60,22 @@ export default function (
         )
       )
     }
-    ({ wxsModuleMap, genericsInfo, builtInComponentsMap, templateContent } =
-      templateTransform({
-        template,
-        options: getOptions(),
-        pluginContext: loaderContext,
-        jsonConfig,
-        app,
-        resource: resourcePath,
-        moduleId
-      }))
+    ({
+      wxsModuleMap,
+      genericsInfo,
+      builtInComponentsMap,
+      templateContent,
+      wxsContentMap
+    } = templateTransform({
+      template,
+      options: getOptions(),
+      pluginContext: loaderContext,
+      jsonConfig,
+      app,
+      resource: resourcePath,
+      moduleId
+    }))
+    Object.assign(mpx.wxsContentMap, wxsContentMap)
     template.content = templateContent
     output += `${genComponentTag(template)}\n\n`
   }

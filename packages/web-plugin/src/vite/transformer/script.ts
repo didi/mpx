@@ -1,7 +1,7 @@
 import { addQuery, genComponentTag, parseRequest } from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
 import { SourceMap } from 'rollup'
-import { Options } from 'src/options'
+import { Options } from '../../options'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { genImport } from '../../utils/genCode'

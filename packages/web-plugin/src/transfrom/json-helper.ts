@@ -12,7 +12,7 @@ import loaderUtils, {
 } from 'loader-utils'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
-import { Options } from 'src/options'
+import { Options } from '../options'
 
 export interface CreateJSONHelper {
   stringifyRequest: (r: string) => string

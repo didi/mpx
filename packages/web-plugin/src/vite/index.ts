@@ -1,6 +1,6 @@
 import { createFilter, Plugin, UserConfig } from 'vite'
 import createVuePlugin from '@vitejs/plugin-vue2'
-import { Options, processOptions } from 'src/options'
+import { Options, processOptions } from '../options'
 import { parseRequest } from '@mpxjs/compile-utils'
 import { stringifyObject } from '../utils/stringify'
 import handleHotUpdate from './handleHotUpdate'

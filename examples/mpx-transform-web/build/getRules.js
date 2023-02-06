@@ -3,6 +3,8 @@ const MpxWebpackPlugin = require('@mpxjs/web-plugin/webpack')
 // const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const { resolve, getConf } = require('./utils')
 
+console.log(MpxWebpackPlugin)
+
 const baseRules = [
   {
     test: /\.js$/,

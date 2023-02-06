@@ -1,6 +1,6 @@
 import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
-import { Options } from 'src/options'
+import { Options } from '../options'
 import { genImport } from '../utils/genCode'
 import { parseRequest, addQuery } from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../utils/stringify'

@@ -1,4 +1,4 @@
-import { MpxWithOptions } from 'src/mpx'
+import { MpxWithOptions } from '../mpx'
 import 'webpack'
 
 declare module 'webpack' {
