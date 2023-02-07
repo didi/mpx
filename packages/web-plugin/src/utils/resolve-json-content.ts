@@ -117,6 +117,7 @@ export default async function resolveJson(
   fsInfo?: any
 ): Promise<JsonConfig> {
   const { json } = compilerResult
+  console.log('file: resolve-json-content.ts:120 > json', json)
   const jsonContent = await getJSONContent(
     json,
     context,

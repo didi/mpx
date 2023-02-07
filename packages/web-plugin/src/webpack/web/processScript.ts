@@ -293,19 +293,20 @@ export default function (
       // 为了执行顺序正确，tabBarPagesMap在app逻辑执行完成后注入，保障小程序中app->page->component的js执行顺序
 
       let tabBarStr = stringify(jsonConfig.tabBar)
-      tabBarStr = tabBarStr.replace(
-        /"(iconPath|selectedIconPath)":"([^"]+)"/g,
-        function (matched, $1, $2) {
-          // vite 引用本地路径无法识别
-          if (isUrlRequest($2, projectRoot, getOptions().externals)) {
-            return `"${$1}":require(${stringifyRequest(
-              urlToRequest($2, projectRoot)
-            )})`
-          }
-          return matched
-        }
-      )
+      console.log('file: processScript.ts:296 > jsonConfig.tabBar', jsonConfig.tabBar)
       if (tabBarStr && tabBarPagesMap) {
+        tabBarStr = tabBarStr.replace(
+          /"(iconPath|selectedIconPath)":"([^"]+)"/g,
+          function (matched, $1, $2) {
+            // vite 引用本地路径无法识别
+            if (isUrlRequest($2, projectRoot, getOptions().externals)) {
+              return `"${$1}":require(${stringifyRequest(
+                urlToRequest($2, projectRoot)
+              )})`
+            }
+            return matched
+          }
+        )
         content.append(
           `  global.__tabBar = ${tabBarStr}
              Vue.observable(global.__tabBar)
