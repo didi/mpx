@@ -2,9 +2,15 @@ import {
   stringifyRequest as _stringifyRequest,
   urlToRequest
 } from 'loader-utils'
-import { addQuery, genComponentTag, createHelpers, isUrlRequest } from '@mpxjs/compile-utils'
+import {
+  addQuery,
+  genComponentTag,
+  createHelpers,
+  isUrlRequest
+} from '@mpxjs/compile-utils'
 import stringify, { shallowStringify } from '../../utils/stringify'
-import mpx, { getOptions, MpxWithOptions } from '../mpx'
+import mpx, { getOptions } from '../mpx'
+import { Options } from '../../options'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { genImport } from '../../utils/genCode'
 import MagicString from 'magic-string'
@@ -186,7 +192,7 @@ export default function (
           const requestObj: Record<string, string> = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
           i18nKeys.forEach(key => {
-            const i18nKey = `${key}Path` as keyof MpxWithOptions['i18n']
+            const i18nKey = `${key}Path` as keyof Options['i18n']
             if (i18nObj[i18nKey]) {
               requestObj[key] = stringifyRequest(i18nObj[i18nKey])
               delete i18nObj[i18nKey]
@@ -293,7 +299,10 @@ export default function (
       // 为了执行顺序正确，tabBarPagesMap在app逻辑执行完成后注入，保障小程序中app->page->component的js执行顺序
 
       let tabBarStr = stringify(jsonConfig.tabBar)
-      console.log('file: processScript.ts:296 > jsonConfig.tabBar', jsonConfig.tabBar)
+      console.log(
+        'file: processScript.ts:296 > jsonConfig.tabBar',
+        jsonConfig.tabBar
+      )
       if (tabBarStr && tabBarPagesMap) {
         tabBarStr = tabBarStr.replace(
           /"(iconPath|selectedIconPath)":"([^"]+)"/g,

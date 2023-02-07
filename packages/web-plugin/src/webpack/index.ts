@@ -22,7 +22,7 @@ import {
 } from '@mpxjs/compile-utils'
 import async from 'async'
 import { processOptions, Options } from '../options'
-import mpx,  { MpxWithOptions } from './mpx'
+import mpx,  { Mpx } from './mpx'
 import {
   NormalModule,
   DefinePlugin,
@@ -313,7 +313,7 @@ class MpxWebpackPlugin {
             }) => {
               const packageName = packageRoot || 'main'
               const resourceMap =
-                mpx[`${resourceType}sMap` as keyof MpxWithOptions]
+                mpx[`${resourceType}sMap` as keyof Mpx]
               const currentResourceMap = resourceMap.main
                 ? (resourceMap[packageName] = resourceMap[packageName] || {})
                 : resourceMap
