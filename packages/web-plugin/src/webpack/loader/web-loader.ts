@@ -168,7 +168,7 @@ new Vue({
               },
               callback => {
                 processJSON(
-                  parts.json,
+                  jsonConfig,
                   {
                     loaderContext
                   },

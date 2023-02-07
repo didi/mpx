@@ -1,11 +1,10 @@
-import { parse } from 'json5'
 import mpx, { getOptions } from '../mpx'
 import { jsonCompiler } from '../../transfrom/json-compiler'
 import { LoaderContext } from 'webpack'
-import { CompilerResult } from '@mpxjs/compiler'
+import { JsonConfig } from '../../types/json-config'
 
 export default async function (
-  json: CompilerResult['json'],
+  jsonConfig: JsonConfig,
   {
     loaderContext
   }: {
@@ -16,7 +15,6 @@ export default async function (
   const output = '/* json */\n'
   let localPagesMap = {}
   let localComponentsMap = {}
-  let jsonConfig = {}
   let tabBarMap = {}
 
   const context = loaderContext.context
@@ -29,15 +27,6 @@ export default async function (
       localComponentsMap,
       tabBarMap
     })
-  }
-
-  // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
-  try {
-    if (json?.content) {
-      jsonConfig = parse(json.content)
-    }
-  } catch (e) {
-    return callback(e as Error)
   }
 
   ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap } =

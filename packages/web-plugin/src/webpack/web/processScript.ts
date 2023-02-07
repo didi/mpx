@@ -297,12 +297,7 @@ export default function (
           })
       }
       // 为了执行顺序正确，tabBarPagesMap在app逻辑执行完成后注入，保障小程序中app->page->component的js执行顺序
-
       let tabBarStr = stringify(jsonConfig.tabBar)
-      console.log(
-        'file: processScript.ts:296 > jsonConfig.tabBar',
-        jsonConfig.tabBar
-      )
       if (tabBarStr && tabBarPagesMap) {
         tabBarStr = tabBarStr.replace(
           /"(iconPath|selectedIconPath)":"([^"]+)"/g,
