@@ -1,6 +1,10 @@
 import { createFilter, Plugin, transformWithEsbuild } from 'vite'
 import { parseRequest } from '@mpxjs/compile-utils'
 
+/**
+ * wxs文件支持
+ * @returns 
+ */
 export function createWxsPlugin(): Plugin {
   const filter = createFilter([/\.wxs$/])
   return {

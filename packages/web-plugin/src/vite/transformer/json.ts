@@ -3,6 +3,7 @@ import { Options } from '../../options'
 import { jsonCompiler } from '../../transfrom/json-compiler'
 import resolveJson from '../../utils/resolve-json-content'
 import { SFCDescriptor } from '../utils/descriptorCache'
+import mpx from '../mpx'
 
 export async function processJSON(
   descriptor: SFCDescriptor,
@@ -21,7 +22,8 @@ export async function processJSON(
       pluginContext,
       context: jsonConfig.path || descriptor.filename,
       options,
-      mode: 'vite'
+      mode: 'vite',
+      mpx
     })
     descriptor.localPagesMap = jsonResult.localPagesMap
     descriptor.localComponentsMap = jsonResult.localComponentsMap

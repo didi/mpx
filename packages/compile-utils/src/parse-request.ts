@@ -1,11 +1,20 @@
-import path  from 'path'
+import path from 'path'
 import { OptionObject, parseQuery } from 'loader-utils'
 const seen = new Map()
 
-function genQueryObj(result: { queryObj: OptionObject; resourceQuery: any }) {
+export interface Result {
+  resource: string
+  loaderString: string
+  resourcePath: string
+  resourceQuery: string
+  rawResourcePath: string
+  queryObj: OptionObject
+}
+
+function genQueryObj(result: Result) {
   // 避免外部修改queryObj影响缓存
   result.queryObj = parseQuery(result.resourceQuery || '?')
-  return result as any
+  return result
 }
 
 export function parseRequest(request: string) {
@@ -31,7 +40,7 @@ export function parseRequest(request: string) {
     const resourceBase = path.basename(resourcePath)
     resourcePath = path.join(
       resourceDir,
-      resourceBase.replace((queryObj.infix) as string, '')
+      resourceBase.replace(queryObj.infix as string, '')
     )
   }
   const result = {

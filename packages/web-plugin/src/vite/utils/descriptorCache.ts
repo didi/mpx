@@ -4,7 +4,7 @@ import slash from 'slash'
 import { Options } from '../../options'
 import { JsonTransfromResult } from '../../transfrom/json-compiler'
 import { TemplateTransformResult } from '../../transfrom/template-helper'
-import { Query } from '../../types/query'
+import { OptionObject } from 'loader-utils'
 import pathHash from '../../utils/pageHash'
 import { resolvedConfig } from '../config'
 
@@ -66,7 +66,7 @@ createComponent({})`
 export function createDescriptor(
   filename: string,
   code: string,
-  query: Query,
+  query: OptionObject,
   options: Options
 ): SFCDescriptor {
   const { projectRoot = '', mode = 'web', defs, env } = options
@@ -130,7 +130,7 @@ export function setPrevDescriptor(
 export function getDescriptor(
   filename: string,
   code?: string,
-  query?: Query,
+  query?: OptionObject,
   options?: Options,
   createIfNotFound = true
 ): SFCDescriptor | undefined {

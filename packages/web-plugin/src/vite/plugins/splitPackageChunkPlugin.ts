@@ -3,6 +3,10 @@ import { Plugin } from 'vite'
 import mpxGlobal from '../mpx'
 import { getDescriptor } from '../utils/descriptorCache'
 
+/**
+ * 将分包分离到额外的chunk里
+ * @returns 
+ */
 function createSplitPackageChunk() {
   const manualChunksOption: ManualChunksOption = (id: string) => {
     if(/plugin-vue2:normalizer/.test(id)){

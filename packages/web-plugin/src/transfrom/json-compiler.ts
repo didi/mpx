@@ -114,7 +114,7 @@ export const jsonCompiler = async function ({
           // mpx.pagesEntryMap[resourcePath] = importer
           localPagesMap[outputPath] = {
             resource,
-            async: queryObj.async || tarRoot
+            async: !!(queryObj.async) || !!(tarRoot)
           }
         }
       }
@@ -155,7 +155,7 @@ export const jsonCompiler = async function ({
               isComponent: true,
               outputPath
             }),
-            async: queryObj.async
+            async: !!(queryObj.async)
           }
         }
       }

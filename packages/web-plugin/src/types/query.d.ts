@@ -1,17 +1,33 @@
-export interface Query {
-  vue?: null
-  mpx?: null
-  app?: null
-  page?: null
-  component?: null
-  resolve?: null
-  src?: string
-  type?: 'script' | 'template' | 'style' | 'custom' | 'global' | 'main'
-  index?: string
-  lang?: string
-  raw?: string
-  componentId?: string
-  async?: null
-  root?: string
-  [key: string]: unknown
+import 'loader-utils'
+declare module 'loader-utils' {
+  export interface OptionObject {
+    vue?: null
+    mpx?: null
+    app?: null
+    page?: null
+    component?: null
+    resolve?: null
+    src?: string
+    type?:
+      | 'script'
+      | 'template'
+      | 'style'
+      | 'custom'
+      | 'global'
+      | 'main'
+      | 'globalDefine'
+    index?: string
+    lang?: string
+    raw?: string
+    componentId?: string
+    async?: boolean
+    root?: string
+    outputPath?: string
+    mpxStyleOptions?: string
+    isPage?: boolean
+    isComponent?: boolean
+    isApp?: boolean
+    mode?: string
+    packageRoot?: string
+  }
 }

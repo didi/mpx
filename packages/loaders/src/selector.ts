@@ -22,9 +22,9 @@ const selector: LoaderDefinition = function (content: string) {
     mode,
     env
   })
-  let part = parts[type]
+  let part = parts[type as string]
   if (Array.isArray(part)) {
-    part = part[index]
+    part = part[index as number]
   }
   if (!part) {
     let content = ''

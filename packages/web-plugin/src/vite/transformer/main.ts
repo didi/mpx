@@ -1,6 +1,6 @@
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { Options } from '../../options'
-import { Query } from '../../types/query'
+import { OptionObject } from 'loader-utils'
 import { createDescriptor } from '../utils/descriptorCache'
 import { processJSON } from './json'
 import { genScriptBlock, transformScript } from './script'
@@ -10,7 +10,7 @@ import { genTemplateBlock } from './template'
 export async function transformMain(
   code: string,
   filename: string,
-  query: Query,
+  query: OptionObject,
   options: Options,
   pluginContext: TransformPluginContext
 ): Promise<TransformResult | undefined> {

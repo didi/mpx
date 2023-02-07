@@ -10,7 +10,6 @@ import {
   renderAppHelpCode,
   renderI18nCode,
   renderMpxGlobalDefineCode,
-  renderPageRouteCode,
   renderTabBarPageCode,
   TAB_BAR_PAGE_HELPER_CODE
 } from './helper'
@@ -89,9 +88,7 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
         return renderI18nCode(options)
       }
       const { resourcePath: filename, queryObj: query } = parseRequest(id)
-      if (query.resolve !== undefined) {
-        return renderPageRouteCode(options, filename)
-      }
+      if (!filter(filename)) return
       if (query.type === 'globalDefine') {
         const descriptor = getDescriptor(filename)
         if (descriptor) {

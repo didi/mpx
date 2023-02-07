@@ -71,7 +71,7 @@ export default function (
           resourcePath,
           ctorType,
           entryName,
-          packageRoot
+          packageRoot!
         )
       )
     )
