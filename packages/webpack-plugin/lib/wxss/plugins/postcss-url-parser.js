@@ -406,7 +406,7 @@ const plugin = (options = {}) => {
             if (!importName) {
               importName = `___CSS_LOADER_URL_IMPORT_${urlToNameMap.size}___`
               urlToNameMap.set(newUrl, importName)
-              const finalUrl = addQuery(newUrl, {isStyle: true})
+              const finalUrl = addQuery(newUrl, { isStyle: true })
               options.imports.push({
                 type: 'url',
                 importName,
