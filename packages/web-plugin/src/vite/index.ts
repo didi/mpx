@@ -118,7 +118,8 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
             )
           }
         }
-        if (query.type === 'main') {
+        if (query.type === 'hot') {
+          // 来自于热更新的请求，转换新的代码并缓存vueSfc到descriptor
           await transformMain(code, filename, query, options, this)
           return 'export default {}'
         }

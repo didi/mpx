@@ -10,7 +10,7 @@ export default async function handleHotUpdate(ctx: HmrContext) {
   ctx.read = async function () {
     const { resourcePath: filename } = parseRequest(ctx.file)
     const id = addQuery(filename, {
-      type: 'main',
+      type: 'hot',
       vue: true,
       isPage: prevDescriptor?.isPage,
       app: prevDescriptor?.app,

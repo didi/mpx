@@ -16,6 +16,7 @@ declare module 'loader-utils' {
       | 'global'
       | 'main'
       | 'globalDefine'
+      | 'hot'
     index?: string
     lang?: string
     raw?: string
