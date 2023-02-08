@@ -8,6 +8,8 @@ const {
   WEBPACK_IGNORE_COMMENT_REGEXP
 } = require('../utils')
 
+const addQuery = require('../../utils/add-query')
+
 const isUrlFunc = /url/i
 const isImageSetFunc = /^(?:-webkit-)?image-set$/i
 const needParseDeclaration = /(?:url|(?:-webkit-)?image-set)\(/i
@@ -404,13 +406,13 @@ const plugin = (options = {}) => {
             if (!importName) {
               importName = `___CSS_LOADER_URL_IMPORT_${urlToNameMap.size}___`
               urlToNameMap.set(newUrl, importName)
-
+              const finalUrl = addQuery(newUrl, { isStyle: true })
               options.imports.push({
                 type: 'url',
                 importName,
                 url: options.resolver
-                  ? options.urlHandler(newUrl)
-                  : JSON.stringify(newUrl),
+                  ? options.urlHandler(finalUrl)
+                  : JSON.stringify(finalUrl),
                 index
               })
             }
