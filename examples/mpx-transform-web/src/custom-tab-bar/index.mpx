@@ -32,7 +32,7 @@
       currentTabId: 1,
       wrappedTabBarList: [{
         id: 1,
-        text: 'page1',
+        text: 'page14',
         url: '../pages/index'
       }, {
         id: 2,

@@ -2,7 +2,7 @@ import { TransformPluginContext } from 'rollup'
 import { Options } from '../../options'
 import { jsonCompiler } from '../../transfrom/json-compiler'
 import resolveJson from '../../utils/resolve-json-content'
-import { SFCDescriptor } from '../utils/descriptorCache'
+import { setDescriptor, SFCDescriptor } from '../utils/descriptorCache'
 import mpx from '../mpx'
 
 export async function processJSON(
@@ -16,6 +16,8 @@ export async function processJSON(
     pluginContext,
     options
   ))
+  // 记录jsonConfig的路径对应的descriptor
+  setDescriptor(jsonConfig.path, descriptor)
   try {
     const jsonResult = await jsonCompiler({
       jsonConfig,

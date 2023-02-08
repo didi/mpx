@@ -26,7 +26,7 @@ createPage({
     array: ['美国', '中国', '巴西', '日本']
   },
   onLoad () {
-    console.log('load index')
+    console.log('load index1111123')
   },
   onShow () {
     console.log('show index12455555511121312313123132')

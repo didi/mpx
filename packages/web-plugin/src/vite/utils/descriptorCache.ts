@@ -74,8 +74,8 @@ export function createDescriptor(
   const normalizedPath = slash(
     path.normalize(path.relative(projectRoot, filename))
   )
-  const isPage = query.isPage !== undefined
-  const isComponent = query.isComponent !== undefined
+  const isPage = !!query.isPage
+  const isComponent = !!query.isComponent
   const compilerResult = templateCompiler.parseComponent(code, {
     mode,
     defs,
@@ -112,7 +112,7 @@ export function createDescriptor(
   if (!descriptor.script) {
     descriptor.script = genDescriptorScript(descriptor)
   }
-  cache.set(filename, descriptor)
+  setDescriptor(filename, descriptor)
   return descriptor
 }
 

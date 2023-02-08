@@ -203,7 +203,7 @@ export const renderTabBarPageCode = async (
       if (tabBarId) {
         const varName = `__mpx_tabBar__${index}`
         const { queryObj: query } = parseRequest(tabBarId)
-        const async = query.async !== undefined
+        const async = !!query.async
         !async && tabBars.push(genImport(tabBarId, varName))
         tabBarPagesMap[tarbarName] = genComponentCode(
           varName,

@@ -4,7 +4,7 @@
   import { createApp } from '@mpxjs/core'
   // import Vconsole from 'vconsole'
   // const vconsole = new Vconsole()
-  mpx.use(apiProxy, { usePromise: true })
+  mpx.use(apiProxy, { usePromise: false })
   createApp({})
 </script>
 

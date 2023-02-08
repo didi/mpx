@@ -56,7 +56,7 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
     },
 
     handleHotUpdate(ctx) {
-      return handleHotUpdate(ctx)
+      return handleHotUpdate(ctx, options)
     },
 
     async resolveId(id) {
@@ -100,7 +100,7 @@ function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
     async transform(code, id) {
       const { queryObj: query, resourcePath: filename } = parseRequest(id)
       if (!filter(filename)) return
-      if (query.resolve !== undefined) return
+      if (!!query.resolve) return
       if (query.vue === undefined) {
         // mpx file => vue file
         return await transformMain(code, filename, query, options, this)

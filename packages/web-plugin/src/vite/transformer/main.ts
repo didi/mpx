@@ -31,7 +31,7 @@ export async function transformMain(
     // generate styles block, delay transform style
     const stylesBlock = await genStylesBlock(descriptor)
     const vueSfc = genVueSfc(templateBlock, scriptBlock, stylesBlock)
-    if (query.type === 'main') descriptor.vueSfc = vueSfc
+    if (query.type === 'hot') descriptor.vueSfc = vueSfc
     return {
       code: vueSfc,
       map: map

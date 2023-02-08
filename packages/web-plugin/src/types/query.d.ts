@@ -1,12 +1,12 @@
 import 'loader-utils'
 declare module 'loader-utils' {
   export interface OptionObject {
-    vue?: null
-    mpx?: null
-    app?: null
-    page?: null
-    component?: null
-    resolve?: null
+    vue?: boolean
+    mpx?: boolean
+    app?: boolean
+    page?: boolean
+    component?: boolean
+    resolve?: boolean
     src?: string
     type?:
       | 'script'

@@ -78,7 +78,9 @@ export async function getJSONContent(
         useJSONJS = rawResourcePath.endsWith(JSON_JS_EXT)
         const readFile = promisify(fs.readFile)
         jsonContent = await readFile(rawResourcePath, 'utf-8')
+        json.content = jsonContent
         resourcePath = rawResourcePath
+        pluginContext.addDependency(resolvedJsonPath.id)
       }
     }
     if (useJSONJS) {
@@ -115,7 +117,7 @@ export default async function resolveJson(
   pluginContext: TransformPluginContext,
   options: Options,
   fsInfo?: any
-): Promise<JsonConfig> {
+): Promise<JsonConfig & { path: string }> {
   const { json } = compilerResult
   const jsonContent = await getJSONContent(
     json,

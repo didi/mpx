@@ -16,19 +16,17 @@
     }
   ],
   "tabBar": {
-    "custom": true,
+    "custom": false,
     "color": "red",
-    "selectedColor": "blue",
-    "backgroundColor": "#fff",
+    "selectedColor": "black",
+    "backgroundColor": "white",
     "list": [{
       "pagePath": "pages/index",
-      "text": "page1",
+      "text": "page10",
      "iconPath": "./images/icon1.png"
-      // "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
     }, {
       "pagePath": "pages/wxs",
       "text": "page2",
-//      "iconPath": "./images/icon2.png"
       "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
     }]
   }

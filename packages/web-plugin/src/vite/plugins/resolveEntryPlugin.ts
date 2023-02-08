@@ -57,7 +57,7 @@ export function createResolveEntryPlugin(options: Options): Plugin {
       }
       const { resourcePath: filename, queryObj: query } = parseRequest(id)
       if (!filter(filename)) return
-      if (query.resolve !== undefined) {
+      if (!!query.resolve) {
         // 强制改raw
         return renderPageRouteCode(options, filename)
       }
