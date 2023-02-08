@@ -121,11 +121,12 @@ export default class MpxProxy {
       this.currentRenderTask = null
     }
     this.initApi()
-    this.callHook(BEFORECREATE)
   }
 
   created () {
     if (__mpx_mode__ !== 'web') {
+      // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
+      this.callHook(BEFORECREATE)
       setCurrentInstance(this)
       this.initProps()
       this.initSetup()
