@@ -20,14 +20,10 @@ dangerousKeys.split(',').forEach((key) => {
 })
 
 function dealRemove (path, replace) {
-  try {
-    if (replace) {
-      path.replaceWith(t.stringLiteral(''))
-    } else {
-      path.remove()
-    }
-  } catch (e) {
-    console.log(e)
+  if (replace) {
+    path.replaceWith(t.stringLiteral(''))
+  } else {
+    path.remove()
   }
 }
 
@@ -165,7 +161,6 @@ module.exports = {
               }
               last.collectPath = t.stringLiteral(keyPath)
 
-              const { currentBindings } = scopeBlock.get(currentBlock)
               let canDel = !inIfTest && !hasComputed && last.key !== 'property' && last.parentPath.key !== 'property'
               if (last.key === 'callee') {
                 if (last.node.property.name === '$t') { // i18n直接删除
@@ -225,6 +220,7 @@ module.exports = {
                 }
               }
 
+              const { currentBindings } = scopeBlock.get(currentBlock)
               if (currentBindings[keyPath]) {
                 if (canDel) {
                   dealRemove(last, replace)
