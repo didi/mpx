@@ -128,6 +128,10 @@ function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   }
 }
 
+export const vuePlugin = createVuePlugin({
+  include: /\.vue|\.mpx$/
+})
+
 export default function mpx(options: Partial<Options> = {}): Plugin[] {
   const baseOptions = processOptions({ ...options })
   const { mode = '', env = '', fileConditionRules } = baseOptions
@@ -161,9 +165,11 @@ export default function mpx(options: Partial<Options> = {}): Plugin[] {
       }
     }),
     // vue support for mpxjs/rumtime
-    createVuePlugin({
-      include: /\.vue|\.mpx$/
-    })
+    // 移除vue的热更新
+    {
+      ...vuePlugin,
+      handleHotUpdate: undefined
+    }
   ]
 
   return plugins
