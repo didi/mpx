@@ -26,7 +26,7 @@ import { transformStyle } from './transformer/style'
 import { getDescriptor } from './utils/descriptorCache'
 import { resolvedConfig } from './config'
 
-function createMpxPlugin(options: Options, userConfig?: UserConfig): Plugin {
+function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   const { include, exclude } = options
   const filter = createFilter(include, exclude)
 
@@ -146,7 +146,7 @@ export default function mpx(options: Partial<Options> = {}): Plugin[] {
     // wxs => js
     createWxsPlugin(),
     // mpx => vue
-    createMpxPlugin(baseOptions, {
+    createMpxWebPlugin(baseOptions, {
       optimizeDeps: {
         esbuildOptions: {
           plugins: [
