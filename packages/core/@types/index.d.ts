@@ -69,10 +69,6 @@ interface WatchField {
   [key: string]: WatchHandler | WatchOptWithHandler
 }
 
-interface ObserversDefs {
-  [expression: string]: (...fields: any[]) => any
-}
-
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
 type PropValueType<Def> = Def extends {
@@ -119,33 +115,18 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
-interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes> {
+interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption>{
   data?: D
   properties?: P
   computed?: C
   methods?: M
   mixins?: Mi
   watch?: WatchField
-  observers?: ObserversDefs
-  options?: Partial<{
-    addGlobalClass: boolean
-    multipleSlots: boolean
-    styleIsolation: string
-  }>
-
   setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: Context) => S
 
   pageShow?: () => void
 
   pageHide?: () => void
-
-  externalClasses?: string[]
-
-  lifetimes?: Partial<WechatMiniprogram.Component.Lifetimes>
-
-  pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes>
-
-  relations?: { [key: string]: WechatMiniprogram.Component.RelationOption }
 
   [index: string]: any
 }
@@ -621,6 +602,28 @@ export function useI18n<Options extends {
   options?: Options
 ): UseI18n
 
+// `<script setup>`
+type NotUndefined<T> = T extends undefined ? never : T
+
+type InferDefaults<T> = {
+  [K in keyof T]?: InferDefault<T, NotUndefined<T[K]>>
+}
+
+type InferDefault<P, T> = T extends
+  | null
+  | number
+  | string
+  | boolean
+  | symbol
+  | Array<any>
+  | Object
+  ? T | ((props: P) => T)
+  : (props: P) => T
+
+type PropsWithDefaults<Base, Defaults> = Base & {
+  [K in keyof Defaults]: K extends keyof Base ? NotUndefined<Base[K]> : never
+}
+
 // inner lifecycle
 export const BEFORECREATE: string
 export const CREATED: string
@@ -640,4 +643,5 @@ declare global {
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
+  const withDefaults: <Props, Defaults extends InferDefaults<Props>>(props: Props, defaults: Defaults) => PropsWithDefaults<Props, Defaults>
 }

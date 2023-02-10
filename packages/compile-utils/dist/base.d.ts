@@ -1,0 +1,18 @@
+export const hasProto: boolean;
+export function noop(): void;
+export function type(n: any): string;
+export function isString(str: any): boolean;
+export function isBoolean(bool: any): boolean;
+export function isNumber(num: any): boolean;
+export function isArray(arr: any): boolean;
+export function isFunction(fn: any): boolean;
+export function isObject(obj: any): boolean;
+export function isEmptyObject(obj: any): boolean;
+export function isDef(v: any): boolean;
+export function isNumberStr(str: any): boolean;
+export function isValidIdentifierStr(str: any): boolean;
+export function aliasReplace(options: {} | undefined, alias: any, target: any): {};
+export function dash2hump(value: any): any;
+export function hump2dash(value: any): any;
+export function def(obj: any, key: any, val: any, enumerable: any): void;
+export function hasChanged(value: any, oldValue: any): boolean;

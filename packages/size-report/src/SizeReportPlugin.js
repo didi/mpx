@@ -62,11 +62,13 @@ class SizeReportPlugin {
       // 简化identifier
       function getSuccinctIdentifier (module) {
         const identifier = module.readableIdentifier(compilation.requestShortener)
-        // 保留packageRoot信息
-        const end = identifier.match(/\?|!/)?.index
-        if (!end) return identifier
-        // 保留第一个?后的packageRoot信息，不存在就切割
-        return identifier.match(/^[^?!]*\?packageRoot=(\w+)/)?.[0] || identifier.substring(0, end)
+        let query = ''
+        const resource = module.resource || (module.rootModule && module.rootModule.resource)
+        if (resource) {
+          const { queryObj } = parseRequest(resource)
+          query = queryObj.packageRoot ? '?packageRoot=' + queryObj.packageRoot : ''
+        }
+        return identifier.split(/\?|!/)[0] + query
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -128,7 +130,7 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!relation?.target, children: new Set(), parents: new Set() })
+        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!(relation && relation.target), children: new Set(), parents: new Set() })
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
@@ -763,7 +765,7 @@ class SizeReportPlugin {
       }
 
       const redundanceSizeInfo = formatRedundanceReport()
-      if (moduleEntryGraph) reportData.moduleEntryGraph = moduleEntryGraph
+      if (Object.keys(moduleEntryGraph).length) reportData.moduleEntryGraph = moduleEntryGraph
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
       if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
@@ -780,6 +782,8 @@ class SizeReportPlugin {
       if (this.options.server.enable) {
         startServer(JSON.stringify(reportData), Object.assign({ logger }, this.options.server))
       }
+
+      this.options.callback && this.options.callback(reportData)
 
       logger.timeEnd('compute size')
     })
