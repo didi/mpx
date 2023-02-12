@@ -304,7 +304,7 @@ module.exports = function (json, options, rawCallback) {
       buildInfo.componentsMap[resourcePath] = componentsMap[resourcePath] = componentId
 
       localComponentsMap[name] = {
-        resource: addQuery(resource, { component: true, componentId }),
+        resource: addQuery(resource, { isComponent: true, componentId }),
         async: queryObj.async
       }
       callback()
