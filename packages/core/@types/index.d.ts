@@ -639,7 +639,7 @@ export const ONHIDE: string
 export const ONRESIZE: string
 
 declare global {
-  const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
+  const defineProps: (<T>(props?: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
