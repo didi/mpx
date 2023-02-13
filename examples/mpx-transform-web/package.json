@@ -22,12 +22,20 @@
     "@mpxjs/compile-utils": "workspace:*",
     "@mpxjs/compiler": "workspace:*",
     "@mpxjs/core": "workspace:*",
+    "@mpxjs/store": "workspace:*",
     "@mpxjs/loaders": "workspace:*",
     "@mpxjs/web-plugin": "workspace:*",
     "@mpxjs/webpack-plugin": "workspace:*",
     "mime": "^2.6.0",
-    "vue": "~2.7.0",
-    "vue-i18n": "^8.15.3"
+    "vue": "^2.7.10",
+    "vue-demi": "^0.13.11",
+    "vue-i18n": "^8.27.2",
+    "vue-i18n-bridge": "^9.2.2",
+    "@intlify/core-base": "9.2.2",
+    "@intlify/shared": "9.2.2",
+    "@intlify/vue-devtools": "9.2.2",
+    "@intlify/devtools-if": "9.2.2",
+    "@intlify/message-compiler": "9.2.2"
   },
   "browserslist": [
     "ios >= 9",
