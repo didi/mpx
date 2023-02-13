@@ -33,6 +33,9 @@
   "dependencies": {
     "@mpxjs/utils": "^2.8.15"
   },
+  "devDependencies": {
+    "@mpxjs/utils": "workspace:*"
+  },
   "peerDependencies": {
     "@mpxjs/core": "^2.8.0",
     "pinia": "^2.0.14",
