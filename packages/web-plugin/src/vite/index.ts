@@ -9,7 +9,6 @@ import {
   I18N_HELPER_CODE,
   renderAppHelpCode,
   renderI18nCode,
-  renderMpxGlobalDefineCode,
   renderTabBarPageCode,
   TAB_BAR_PAGE_HELPER_CODE
 } from './helper'
@@ -25,6 +24,7 @@ import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
 import { getDescriptor } from './utils/descriptorCache'
 import { resolvedConfig } from './config'
+import { createMpxOutSideJsPlugin } from './plugins/outsideJs'
 
 function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   const { include, exclude } = options
@@ -56,7 +56,7 @@ function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
     },
 
     handleHotUpdate(ctx) {
-      return handleHotUpdate(ctx, options)
+      return handleHotUpdate(ctx)
     },
 
     async resolveId(id) {
@@ -86,14 +86,6 @@ function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
       }
       if (id === I18N_HELPER_CODE) {
         return renderI18nCode(options)
-      }
-      const { resourcePath: filename, queryObj: query } = parseRequest(id)
-      if (!filter(filename)) return
-      if (query.type === 'globalDefine') {
-        const descriptor = getDescriptor(filename)
-        if (descriptor) {
-          return renderMpxGlobalDefineCode(options, descriptor)
-        }
       }
     },
 
@@ -128,10 +120,6 @@ function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   }
 }
 
-export const vuePlugin = createVuePlugin({
-  include: /\.vue|\.mpx$/
-})
-
 export default function mpx(options: Partial<Options> = {}): Plugin[] {
   const baseOptions = processOptions({ ...options })
   const { mode = '', env = '', fileConditionRules } = baseOptions
@@ -149,6 +137,8 @@ export default function mpx(options: Partial<Options> = {}): Plugin[] {
     createResolveEntryPlugin(baseOptions),
     // wxs => js
     createWxsPlugin(),
+    // 外联js/ts增加globalDefine
+    createMpxOutSideJsPlugin(),
     // mpx => vue
     createMpxWebPlugin(baseOptions, {
       optimizeDeps: {
@@ -165,11 +155,9 @@ export default function mpx(options: Partial<Options> = {}): Plugin[] {
       }
     }),
     // vue support for mpxjs/rumtime
-    // 移除vue的热更新
-    {
-      ...vuePlugin,
-      handleHotUpdate: undefined
-    }
+    createVuePlugin({
+      include: /\.vue|\.mpx$/
+    })
   ]
 
   return plugins

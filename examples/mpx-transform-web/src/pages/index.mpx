@@ -8,6 +8,7 @@
  <switch></switch>123
  <scroll-view></scroll-view>
  <input></input>
+ {{array}}
  <picker value="{{index}}" range="{{array}}">
     <view class="picker">
       当前选择：{{array[index]}}
@@ -18,18 +19,18 @@
 <script lang="js">
 import mpx, { createPage } from '@mpxjs/core'
 import swiperPage from '../packageA/pages/swiper.mpx?resolve'
-console.log('file: index.mpx:21 > swiperPage', swiperPage)
+console.log('file: index.mpx:21 > swiperPage2121221123123', swiperPage)
 createPage({
   data: {
     a: 1,
     index: 0,
-    array: ['美国', '中国', '巴西', '日本']
+    array: ['美国', '中国', '巴西', '日本1231']
   },
   onLoad () {
-    console.log('load index1111123')
+    console.log('load index111112312')
   },
   onShow () {
-    console.log('show index12455555511121312313123132')
+    // console.log('show index12455555511121312313123132')
     // console.log('test', swiperPage, mpx.i18n.locale)
   },
   methods: {
@@ -46,14 +47,14 @@ createPage({
 </script>
 <style scoped>
   .list {
-    background: blue;
+    background: red;
     height: 200rpx;
   }
 </style>
 <script type="application/json">
   {
     "usingComponents": {
-      "list": "../components/list"
+      "list": "../components/list2"
     }
   }
 </script>

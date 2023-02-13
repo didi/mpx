@@ -25,7 +25,7 @@ export async function transformMain(
       pluginContext
     )
     // transform script
-    const { code, map } = await transformScript(descriptor, options)
+    const { code, map } = await transformScript(descriptor, options, pluginContext)
     // generate script block
     const scriptBlock = await genScriptBlock(descriptor, code)
     // generate styles block, delay transform style

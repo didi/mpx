@@ -1,18 +1,19 @@
-import { addQuery, genComponentTag, parseRequest } from '@mpxjs/compile-utils'
+import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
-import { SourceMap } from 'rollup'
+import { SourceMap, TransformPluginContext } from 'rollup'
 import { Options } from 'src/options'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { genImport } from '../../utils/genCode'
 import omit from '../../utils/omit'
 import stringify, { shallowStringify } from '../../utils/stringify'
-import { SFCDescriptor } from '../utils/descriptorCache'
+import { setDescriptor, SFCDescriptor } from '../utils/descriptorCache'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
   TAB_BAR_PAGE_HELPER_CODE
 } from '../helper'
+import { resolvedConfig } from '../config'
 
 export const genComponentCode = (
   varName: string,
@@ -39,7 +40,8 @@ export const genComponentCode = (
  */
 export async function transformScript(
   descriptor: SFCDescriptor,
-  options: Options
+  options: Options,
+  pluginContext: TransformPluginContext
 ): Promise<{
   code: string
   map?: SourceMap
@@ -77,16 +79,13 @@ export async function transformScript(
 
   if (script.src) {
     s.prepend(`${genImport(script.src)}\n`)
+    const resolvedId = await pluginContext.resolve(script.src, filename)
+    if (resolvedId?.id) setDescriptor(resolvedId.id, descriptor)
   }
 
-  s.prepend(
-    `${genImport(
-      addQuery(descriptor.filename, {
-        vue: true,
-        type: 'globalDefine'
-      })
-    )}\n`
-  )
+  !resolvedConfig.isProduction &&
+    s.prepend(`global.currentResource = ${stringify(filename)}\n`)
+  s.prepend(`global.currentModuleId = ${stringify(descriptor.id)}\n`)
 
   // import page by page json config
   Object.keys(localPagesMap).forEach((pageName, index) => {
