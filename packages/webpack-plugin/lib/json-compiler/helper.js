@@ -16,6 +16,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const pathHash = mpx.pathHash
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
+  const enableAliRequireAsync = mpx.enableAliRequireAsync
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -53,7 +54,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (mode === 'wx') tarRoot = queryObj.root
+        if (mode === 'wx' || (mode === 'ali' && enableAliRequireAsync)) tarRoot = queryObj.root
       }
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
@@ -72,7 +73,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
               name = info.descriptionFileData.name.replace(/@/g, '')
             }
           }
-          let relative = path.relative(root, resourceName)
+          const relative = path.relative(root, resourceName)
           outputPath = path.join('components', name + pathHash(root), relative)
         } else {
           outputPath = getOutputPath(resourcePath, 'component')

@@ -6,7 +6,7 @@
 
 最终我们采用了一种基于依赖分析和动态添加entry的方式来进行实现，用户在Webpack配置中只需要配置一个入口文件app.mpx，loader在解析到json时会解析json中pages域和usingComponents域中声明的路径，通过动态添加entry的方式将这些文件添加到Webpack的构建系统当中（注意这里是添加entry而不是添加依赖，因为只有entry能生成独立的文件，满足小程序的离散化文件结构），并递归执行这个过程，直到整个项目中所有用到的.mpx文件都加入进来，在输出前，我们借助了CommonsChunkPlugin/SplitChunksPlugin的能力将复用的模块抽取到一个外部的bundle中，确保最终生成的包中不包含重复模块。我们提供了一个Webpack插件和一个.mpx文件对应的loader来实现上述操作，用户只需要将其添加到Webpack配置中就可以以打包web项目的方式正常打包小程序，没有任何的前置和后置操作，支持Webpack本身的完整生态。
  
-![Mpx编译构建机制流程示意图](https://dpubstatic.udache.com/static/dpubimg/ce6d470c-0a4c-486e-a2f5-ad225c289832.jpeg)
+![Mpx编译构建机制流程示意图](https://gift-static.hongyibo.com.cn/static/kfpub/3547/mpx-liucheng.002.jpeg)
 
 *Mpx编译构建机制流程示意图*
 

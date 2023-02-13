@@ -1,0 +1,43 @@
+{
+  "name": "@mpxjs/pinia",
+  "version": "2.8.15",
+  "description": "A pinia style store in miniprogram",
+  "types": "@types/index.d.ts",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/didi/mpx.git"
+  },
+  "files": [
+    "src",
+    "@types"
+  ],
+  "keywords": [
+    "mpx",
+    "pinia",
+    "store"
+  ],
+  "author": "donghongping",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "homepage": "https://github.com/didi/mpx#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "dependencies": {
+    "@mpxjs/utils": "^2.8.15"
+  },
+  "peerDependencies": {
+    "@mpxjs/core": "^2.8.0",
+    "pinia": "^2.0.14",
+    "vue": "^2.7.10",
+    "vue-demi": "^0.13.11"
+  },
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
+}

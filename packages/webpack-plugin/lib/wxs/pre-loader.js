@@ -22,54 +22,61 @@ module.exports = function (content) {
 
   const visitor = {}
 
-  if (module.wxs && mode === 'ali') {
-    let insertNodes = babylon.parse(
-      'var __mpx_args__ = [];\n' +
-      'for (var i = 0; i < arguments.length; i++) {\n' +
-      '  __mpx_args__[i] = arguments[i];\n' +
-      '}'
-    ).program.body
-    // todo Object.assign可能会覆盖，未来存在非预期的覆盖case时需要改进处理
-    Object.assign(visitor, {
-      Identifier (path) {
-        if (path.node.name === 'arguments') {
-          path.node.name = '__mpx_args__'
-          const targetPath = path.getFunctionParent().get('body')
-          if (!targetPath.inserted) {
-            let results = targetPath.unshiftContainer('body', insertNodes) || []
-            targetPath.inserted = true
-            results.forEach((item) => {
-              item.shouldStopTraverse = true
-            })
+  if (module.wxs) {
+    if (mode === 'ali') {
+      const insertNodes = babylon.parse(
+        'var __mpx_args__ = [];\n' +
+        'for (var i = 0; i < arguments.length; i++) {\n' +
+        '  __mpx_args__[i] = arguments[i];\n' +
+        '}'
+      ).program.body
+      // todo Object.assign可能会覆盖，未来存在非预期的覆盖case时需要改进处理
+      Object.assign(visitor, {
+        Identifier (path) {
+          if (path.node.name === 'arguments') {
+            path.node.name = '__mpx_args__'
+            const targetPath = path.getFunctionParent().get('body')
+            if (!targetPath.inserted) {
+              const results = targetPath.unshiftContainer('body', insertNodes) || []
+              targetPath.inserted = true
+              results.forEach((item) => {
+                item.shouldStopTraverse = true
+              })
+            }
+          }
+        },
+        ForStatement (path) {
+          if (path.shouldStopTraverse) {
+            path.stop()
+          }
+        },
+        // 处理vant-aliapp中export var bem = bem;这种不被acorn支持的2b语法
+        ExportNamedDeclaration (path) {
+          if (
+            path.node.declaration &&
+            path.node.declaration.declarations.length === 1 &&
+            path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
+          ) {
+            const name = path.node.declaration.declarations[0].id.name
+            path.replaceWith(t.exportNamedDeclaration(undefined, [t.exportSpecifier(t.identifier(name), t.identifier(name))]))
           }
         }
-      },
-      CallExpression (path) {
-        const callee = path.node.callee
-        if (t.isIdentifier(callee) && callee.name === 'getRegExp') {
-          const argPath = path.get('arguments')[0]
-          if (argPath.isStringLiteral()) {
-            argPath.replaceWith(t.stringLiteral(argPath.node.extra.raw.slice(1, -1)))
+      })
+    }
+
+    if (mode !== 'wx') {
+      Object.assign(visitor, {
+        CallExpression (path) {
+          const callee = path.node.callee
+          if (t.isIdentifier(callee) && callee.name === 'getRegExp') {
+            const argPath = path.get('arguments')[0]
+            if (argPath.isStringLiteral()) {
+              argPath.replaceWith(t.stringLiteral(argPath.node.extra.raw.slice(1, -1)))
+            }
           }
         }
-      },
-      ForStatement (path) {
-        if (path.shouldStopTraverse) {
-          path.stop()
-        }
-      },
-      // 处理vant-aliapp中export var bem = bem;这种不被acorn支持的2b语法
-      ExportNamedDeclaration (path) {
-        if (
-          path.node.declaration &&
-          path.node.declaration.declarations.length === 1 &&
-          path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
-        ) {
-          const name = path.node.declaration.declarations[0].id.name
-          path.replaceWith(t.exportNamedDeclaration(undefined, [t.exportSpecifier(t.identifier(name), t.identifier(name))]))
-        }
-      }
-    })
+      })
+    }
   }
 
   if (mode === 'dd') {

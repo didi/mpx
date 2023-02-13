@@ -18,15 +18,17 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 
 module.exports = function (content) {
   this.cacheable()
 
-  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
-  if (path.extname(this.resourcePath) === '.ts') {
-    this.loaderIndex -= 2
+  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
+  const pathExtname = path.extname(this.resourcePath)
+  if (!['.vue', '.mpx'].includes(pathExtname)) {
+    this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
 
@@ -65,6 +67,10 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
 
+  if (ctorType === 'app') {
+    const appName = getEntryName(this)
+    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+  }
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -87,7 +93,7 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+      getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
         callback()
@@ -106,7 +112,7 @@ module.exports = function (content) {
 
       if (parts.json && parts.json.content) {
         try {
-          let ret = JSON5.parse(parts.json.content)
+          const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -121,7 +127,6 @@ module.exports = function (content) {
           return callback(e)
         }
       }
-
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
@@ -220,11 +225,6 @@ module.exports = function (content) {
 
       if (issuer) {
         return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
-      }
-
-      if (ctorType === 'app') {
-        const appName = getEntryName(this)
-        this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
       // 注入模块id及资源路径
@@ -335,7 +335,8 @@ module.exports = function (content) {
           ...script.src
             ? { ...queryObj, resourcePath }
             : null,
-          ctorType
+          ctorType,
+          lang: script.lang || 'js'
         }
         output += getRequire('script', script, extraOptions) + '\n'
       }

@@ -19,7 +19,7 @@ module.exports = function (json, {
 }, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
-  let output = '/* json */\n'
+  const output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
   let tabBarStr
@@ -139,7 +139,7 @@ module.exports = function (json, {
                 mode,
                 env
               })
-              getJSONContent(parts.json || {}, loaderContext, (err, content) => {
+              getJSONContent(parts.json || {}, result, loaderContext, (err, content) => {
                 callback(err, result, content)
               })
             } else {
@@ -157,10 +157,10 @@ module.exports = function (json, {
             const context = path.dirname(result)
 
             if (content.pages) {
-              let tarRoot = queryObj.root
+              const tarRoot = queryObj.root
               if (tarRoot) {
                 delete queryObj.root
-                let subPackage = {
+                const subPackage = {
                   tarRoot,
                   pages: content.pages,
                   ...queryObj
@@ -239,8 +239,8 @@ module.exports = function (json, {
         emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
         return callback()
       }
-      let tarRoot = subPackage.tarRoot || subPackage.root || ''
-      let srcRoot = subPackage.srcRoot || subPackage.root || ''
+      const tarRoot = subPackage.tarRoot || subPackage.root || ''
+      const srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return callback()
       context = path.join(context, srcRoot)
       processPages(subPackage.pages, context, tarRoot, callback)
@@ -263,9 +263,7 @@ module.exports = function (json, {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
-          if (err === RESOLVE_IGNORED_ERR) {
-            return callback()
-          }
+          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
