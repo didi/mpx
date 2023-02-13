@@ -24,20 +24,15 @@
     "miniprogram-api-typings": "^3.0.2"
   },
   "devDependencies": {
-    "@mpxjs/api-proxy": "workspace:*"
+    "@mpxjs/utils": "workspace:*"
   },
   "peerDependencies": {
-<<<<<<< HEAD
-    "vue": "~2.6.10",
-    "vue-i18n": "^8.15.3"
-=======
     "@mpxjs/api-proxy": "^2.7.44",
     "@mpxjs/store": "^2.8.0",
     "vue": "^2.7.10",
     "vue-demi": "^0.13.11",
     "vue-i18n": "^8.27.2",
     "vue-i18n-bridge": "^9.2.2"
->>>>>>> c330d3938cc0c37843761df8b1f2deb9b6c618fc
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
