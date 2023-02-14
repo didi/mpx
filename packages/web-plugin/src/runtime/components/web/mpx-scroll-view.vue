@@ -1,6 +1,6 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import { processSize } from '../../utils'
+  import { processSize } from './util'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
   import ObserveDom from '@better-scroll/observe-dom'

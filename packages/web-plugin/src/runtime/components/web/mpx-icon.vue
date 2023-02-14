@@ -1,6 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
-  import { processSize } from '../../utils'
+  import { processSize } from './util'
 
   let defaultColor = {
     success: '#09BB07',
