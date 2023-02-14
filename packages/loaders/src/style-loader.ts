@@ -1,11 +1,7 @@
 import postcss from 'postcss'
 import { LoaderDefinition } from 'webpack'
 import { styleCompiler } from '@mpxjs/compiler'
-import {
-  loadPostcssConfig,
-  matchCondition,
-  parseRequest
-} from '@mpxjs/compile-utils'
+import { matchCondition, parseRequest } from '@mpxjs/compile-utils'
 import { ProxyPluginContext, proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } from './constants'
 
@@ -46,13 +42,8 @@ export const mpxStyleTransform = async function (
     }
 
     const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
-    loadPostcssConfig(
-      {
-        webpack: pluginContext,
-        defs
-      },
-      inlineConfig as any
-    )
+    styleCompiler
+      .loadPostcssConfig(pluginContext, inlineConfig as any)
       .then(config => {
         const plugins = config.plugins.concat(styleCompiler.trim())
         // ali平台下处理scoped和host选择器
@@ -93,21 +84,52 @@ export const mpxStyleTransform = async function (
             ...config.options
           })
           .then(result => {
-            if (result.messages) {
-              // ali环境添加全局样式抹平root差异
-              if (mode === 'ali' && isApp) {
-                result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
-              }
-              result.messages.forEach(({ type, file }) => {
-                if (type === 'dependency') {
-                  pluginContext.addDependency(file)
-                }
-              })
+            // ali环境添加全局样式抹平root差异
+            if (mode === 'ali' && isApp) {
+              result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
             }
-            const map = result.map && result.map.toJSON()
+            for (const warning of result.warnings()) {
+              pluginContext.warn(warning)
+            }
+            // todo 后续考虑直接使用postcss-loader来处理postcss
+            for (const message of result.messages) {
+              // eslint-disable-next-line default-case
+              switch (message.type) {
+                case 'dependency':
+                  pluginContext.addDependency(message.file)
+                  break
+
+                case 'build-dependency':
+                  pluginContext.addBuildDependency(message.file)
+                  break
+
+                case 'missing-dependency':
+                  pluginContext.addMissingDependency(message.file)
+                  break
+
+                case 'context-dependency':
+                  pluginContext.addContextDependency(message.file)
+                  break
+
+                case 'dir-dependency':
+                  pluginContext.addContextDependency(message.dir)
+                  break
+
+                case 'asset':
+                  if (message.content && message.file) {
+                    pluginContext.emitFile(
+                      message.file,
+                      message.content,
+                      message.sourceMap,
+                      message.info
+                    )
+                  }
+              }
+            }
+
             resolve({
               code: result.css,
-              map: map
+              map: result.map && result.map.toJSON()
             })
           })
       })
@@ -129,6 +151,7 @@ export default <LoaderDefinition>function mpxStyleLoader(css, map) {
     mpx: this.getMpx()
   })
     .then(res => {
+      // @ts-ignore
       cb(null, res.code, res.map)
     })
     .catch(cb)

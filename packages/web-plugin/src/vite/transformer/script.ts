@@ -194,25 +194,41 @@ export async function transformScript(
     )}]\n`
   )
 
+  /**
+   *  option,
+                                         ctorType,
+                                         firstPage,
+                                         outputPath,
+                                         pageConfig,
+                                         pagesMap,
+                                         componentsMap,
+                                         tabBarMap,
+                                         componentGenerics,
+                                         genericsInfo,
+                                         mixin,
+                                         hasApp,
+                                         Vue,
+                                         VueRouter
+   */
   s.append(
-    `export default processOption(
-      currentOption,
-      ${stringify(ctorType)},
-      ${stringify(Object.keys(localPagesMap)[0])},
-      ${stringify(componentId)},
-      ${stringify(
+    `export default processOption({
+      option: currentOption,
+      ctorType: ${stringify(ctorType)},
+      firstPage: ${stringify(Object.keys(localPagesMap)[0])},
+      outputPath: ${stringify(componentId)},
+      pageConfig: ${stringify(
         isPage
           ? omit(jsonConfig, ['usingComponents', 'style', 'singlePage'])
           : {}
       )},
-      ${shallowStringify(pagesMap)},
-      ${shallowStringify(componentsMap)},
-      ${stringify(tabBarMap)},
-      ${stringify(componentGenerics)},
-      ${stringify(genericsInfo)},
-      getWxsMixin(wxsModules),
-      ${app ? `Vue, VueRouter` : i18n ? 'i18n' : ''}
-    )\n`
+      pagesMap: ${shallowStringify(pagesMap)},
+      componentsMap: ${shallowStringify(componentsMap)},
+      tabBarMap: ${stringify(tabBarMap)},
+      componentGenerics: ${stringify(componentGenerics)},
+      genericsInfo: ${stringify(genericsInfo)},
+      mixin: getWxsMixin(wxsModules),
+      ...${app ? `{ Vue: Vue, VueRouter: VueRouter }` : i18n ? '{ i18n: i18n }' : '{  }'}
+    })\n`
   )
 
   // transform ts

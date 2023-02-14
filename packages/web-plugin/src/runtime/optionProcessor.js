@@ -1,7 +1,9 @@
 /* eslint-disable */
-import { inBrowser } from './utils'
+import { isBrowser, hasOwn } from './utils'
+import transRpxStyle from './transRpxStyle'
+import animation from './animation'
 
-export default function processOption (
+export default function processOption({
   option,
   ctorType,
   firstPage,
@@ -13,128 +15,27 @@ export default function processOption (
   componentGenerics,
   genericsInfo,
   mixin,
+  hasApp,
   Vue,
-  VueRouter,
-  i18n
-) {
+  VueRouter
+}) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
     }
 
-    Vue.directive('animation', (el, binding) => {
-      const newActions = binding && binding.value && binding.value.actions
-      if (el.actions === newActions) {
-        Promise.resolve().then(() => {
-          Object.assign(el.style, el.lastDynamicStyle)
-        })
-        return
-      }
-      el.actions = newActions
-      if (typeof el.setAnimation === 'function') {
-        el.removeEventListener('transitionend', el.setAnimation, false)
-        el.setAnimation = undefined
-      }
-      el.dynamicStyleQueue = []
-      el.lastDynamicStyle = undefined
-      if (Array.isArray(newActions) && newActions.length) {
-        newActions.forEach((item) => {
-          const property = []
-          const { animates, option } = item
-          // 存储动画需要改变的样式属性
-          const dynamicStyle = {
-            transform: ''
-          }
-          animates.forEach((itemAnimation) => {
-            switch (itemAnimation.type) {
-              case 'style':
-                const [key, value] = itemAnimation.args
-                dynamicStyle[key] = value
-                property.push(key)
-                break
-              default:
-                dynamicStyle.transform += `${itemAnimation.type}(${itemAnimation.args}) `
-                if (!property.includes('transform')) {
-                  property.push('transform')
-                }
-            }
-          })
-          Object.assign(dynamicStyle, {
-            transition: `${parseInt(option.duration)}ms ${option.timingFunction} ${parseInt(option.delay)}ms`,
-            transitionProperty: `${property}`,
-            transformOrigin: option.transformOrigin
-          })
-          el.dynamicStyleQueue.push(dynamicStyle)
-        })
-        el.setAnimation = function () {
-          if (!el.dynamicStyleQueue.length) {
-            el.removeEventListener('transitionend', el.setAnimation, false)
-            return
-          }
-          const dynamicStyle = el.dynamicStyleQueue.shift()
-          Object.assign(el.style, dynamicStyle)
-          el.lastDynamicStyle = dynamicStyle
-        }
-        // 首次动画属性设置
-        setTimeout(el.setAnimation, 0)
-        // 在transitionend事件内设置动画样式
-        el.addEventListener('transitionend', el.setAnimation, false)
-      }
-    })
+    Vue.directive('animation', animation)
 
-    Vue.filter('transRpxStyle', style => {
-      const defaultTransRpxFn = function (match, $1) {
-        const rpx2vwRatio = +(100 / 750).toFixed(8)
-        return '' + ($1 * rpx2vwRatio) + 'vw'
-      }
-      const transRpxFn = global.__mpxTransRpxFn || defaultTransRpxFn
-      const parsedStyleObj = {}
-      const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
-      const parseStyleText = (cssText) => {
-        const listDelimiter = /;(?![^(]*\))/g
-        const propertyDelimiter = /:(.+)/
-        if (typeof cssText === 'string') {
-          cssText.split(listDelimiter).forEach((item) => {
-            if (item) {
-              var tmp = item.split(propertyDelimiter)
-              tmp.length > 1 && (parsedStyleObj[tmp[0].trim()] = tmp[1].trim())
-            }
-          })
-        } else if (typeof cssText === 'object') {
-          if (Array.isArray(cssText)) {
-            cssText.forEach(cssItem => {
-              parseStyleText(cssItem)
-            })
-          } else {
-            Object.assign(parsedStyleObj, cssText)
-          }
-        }
-      }
-      const transRpxStyleFn = (val) => {
-        if (typeof val === 'string' && val.indexOf('rpx') > 0) {
-          return val.replace(rpxRegExpG, transRpxFn).replace(/"/g, '')
-        }
-        return val
-      }
-      if (style) {
-        style.forEach(item => {
-          parseStyleText(item)
-          for (let key in parsedStyleObj) {
-            parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
-          }
-        })
-      }
-      return parsedStyleObj
-    })
+    Vue.filter('transRpxStyle', transRpxStyle)
 
     const routes = []
 
     for (const pagePath in pagesMap) {
-      if (pagesMap.hasOwnProperty(pagePath)) {
+      if (hasOwn(pagesMap, pagePath)) {
         const page = pagesMap[pagePath]
         routes.push({
           path: '/' + pagePath,
@@ -189,7 +90,9 @@ export default function processOption (
               })
               return
             } else {
-              console.warn(`[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`)
+              console.warn(
+                `[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`
+              )
               return next({
                 path: firstPage,
                 replace: true
@@ -227,10 +130,17 @@ export default function processOption (
             global.__mpxRouter.needCache = insertItem
             break
           case 'back':
-            global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
+            global.__mpxRouter.needRemove = stack.splice(
+              stack.length - action.delta,
+              action.delta
+            )
             break
           case 'redirect':
-            global.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
+            global.__mpxRouter.needRemove = stack.splice(
+              stack.length - 1,
+              1,
+              insertItem
+            )
             global.__mpxRouter.needCache = insertItem
             break
           case 'switch':
@@ -243,7 +153,7 @@ export default function processOption (
             } else {
               // 将非tabBar页面remove
               let tabItem = null
-              global.__mpxRouter.needRemove = stack.filter((item) => {
+              global.__mpxRouter.needRemove = stack.filter(item => {
                 if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
                   return false
@@ -277,10 +187,14 @@ export default function processOption (
         next()
       })
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
-      if (inBrowser) {
+      if (isBrowser) {
         const errorHandler = function (args, fromVue) {
-          if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
-            global.__mpxAppCbs.error.forEach((cb) => {
+          if (
+            global.__mpxAppCbs &&
+            global.__mpxAppCbs.error &&
+            global.__mpxAppCbs.error.length
+          ) {
+            global.__mpxAppCbs.error.forEach(cb => {
               cb.apply(null, args)
             })
           } else if (fromVue) {
@@ -290,37 +204,38 @@ export default function processOption (
         Vue.config.errorHandler = (...args) => {
           return errorHandler(args, true)
         }
-        window.addEventListener('error', (event) => {
+        window.addEventListener('error', event => {
           return errorHandler([event.error, event])
         })
-        window.addEventListener('unhandledrejection', (event) => {
+        window.addEventListener('unhandledrejection', event => {
           return errorHandler([event.reason, event])
         })
         document.addEventListener('visibilitychange', function () {
-          const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
+          const vnode =
+            global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
-            const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+            const currentPage = vnode.tag.endsWith('mpx-tab-bar-container')
+              ? vnode.componentInstance.$refs.tabBarPage
+              : vnode.componentInstance
             if (document.hidden) {
               if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
-                global.__mpxAppCbs.hide.forEach((cb) => {
+                global.__mpxAppCbs.hide.forEach(cb => {
                   cb()
                 })
               }
               if (currentPage) {
                 currentPage.mpxPageStatus = 'hide'
-                currentPage.onHide && currentPage.onHide()
               }
             } else {
               if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
-                global.__mpxAppCbs.show.forEach((cb) => {
+                global.__mpxAppCbs.show.forEach(cb => {
                   // todo 实现app.onShow参数
-                  /* eslint-disable standard/no-callback-literal */
+                  /* eslint-disable node/no-callback-literal */
                   cb({})
                 })
               }
               if (currentPage) {
                 currentPage.mpxPageStatus = 'show'
-                currentPage.onShow && currentPage.onShow()
               }
             }
           }
@@ -330,13 +245,14 @@ export default function processOption (
       }
     }
 
-    if (i18n) {
-      option.i18n = i18n
+    // 注入pinia
+    if (global.__mpxPinia) {
+      option.pinia = global.__mpxPinia
     }
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}
@@ -348,9 +264,10 @@ export default function processOption (
     if (genericsInfo) {
       const genericHash = genericsInfo.hash
       global.__mpxGenericsMap[genericHash] = {}
-      Object.keys(genericsInfo.map).forEach((genericValue) => {
+      Object.keys(genericsInfo.map).forEach(genericValue => {
         if (componentsMap[genericValue]) {
-          global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+          global.__mpxGenericsMap[genericHash][genericValue] =
+            componentsMap[genericValue]
         } else {
           console.log(option)
           console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
@@ -362,7 +279,7 @@ registered in parent context!`)
     if (componentGenerics) {
       option.props = option.props || {}
       option.props.generichash = String
-      Object.keys(componentGenerics).forEach((genericName) => {
+      Object.keys(componentGenerics).forEach(genericName => {
         if (componentGenerics[genericName].default) {
           option.props[`generic${genericName}`] = {
             type: String,
@@ -375,7 +292,15 @@ registered in parent context!`)
     }
 
     if (ctorType === 'page') {
-      option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
+      option.__mpxPageConfig = Object.assign(
+        {},
+        global.__mpxPageConfig,
+        pageConfig
+      )
+    }
+    if (!hasApp) {
+      option.directives = { animation }
+      option.filters = { transRpxStyle }
     }
   }
 
@@ -388,24 +313,25 @@ registered in parent context!`)
   if (outputPath) {
     option.componentPath = '/' + outputPath
   }
-
   return option
 }
 
-export function getComponent (component, extendOptions) {
+export function getComponent(component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
   if (extendOptions) Object.assign(component, extendOptions)
   return component
 }
 
-export function getWxsMixin (wxsModules) {
-  if (!wxsModules) return {}
+export function getWxsMixin(wxsModules) {
+  if (!wxsModules || !Object.keys(wxsModules).length) return {}
   return {
-    created () {
-      Object.keys(wxsModules).forEach((key) => {
+    created() {
+      Object.keys(wxsModules).forEach(key => {
         if (key in this) {
-          console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)
+          console.error(
+            `[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`
+          )
         } else {
           this[key] = wxsModules[key]
         }

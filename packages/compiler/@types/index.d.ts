@@ -111,6 +111,7 @@ export const styleCompiler: {
   transSpecial: (...args: any[]) => load.ResultPlugin
   trim: (...args: any[]) => load.ResultPlugin
   vw: (...args: any[]) => load.ResultPlugin
+  loadPostcssConfig: (...args: any[]) => Promise<Record<string, any>>
 }
 
 export const templateCompiler: Compiler

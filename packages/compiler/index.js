@@ -5,10 +5,12 @@ const pluginCondStrip = require('./style-compiler/plugins/conditional-strip')
 const rpx = require('./style-compiler/plugins/rpx')
 const scopeId = require('./style-compiler/plugins/scope-id')
 const transSpecial = require('./style-compiler/plugins/trans-special')
+const loadPostcssConfig = require('./style-compiler/loadPostcssConfig')
 const trim = require('./style-compiler/plugins/trim')
 const vw = require('./style-compiler/plugins/vw')
 
 module.exports.styleCompiler = {
+  loadPostcssConfig,
   pluginCondStrip,
   rpx,
   scopeId,

@@ -1,20 +1,35 @@
+import path from 'path'
 import parser from '@mpxjs/compiler/template-compiler/parser'
-import { parseRequest } from '@mpxjs/compile-utils'
+import { parseRequest, tsWatchRunLoaderFilter } from '@mpxjs/compile-utils'
+
 import { LoaderDefinition } from 'webpack'
+
+interface Options {
+  mode?: string
+  env?: string
+}
 
 const selector: LoaderDefinition = function (content: string) {
   this.cacheable()
-  // @ts-ignore
-  const mpx = this.getMpx()
-  if (!mpx) {
+
+  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
+  const pathExtname = path.extname(this.resourcePath)
+  if (!['.vue', '.mpx'].includes(pathExtname)) {
+    this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
+
+  // 移除mpx访问依赖，支持 thread-loader
+  const { mode, env } = <Options>this.getOptions() || {}
+  if (!mode && !env) {
+    return content
+  }
+
   const { queryObj } = parseRequest(this.resource)
   const ctorType = queryObj.ctorType
   const type = queryObj.type
   const index = queryObj.index || 0
-  const mode = mpx.mode
-  const env = mpx.env
+
   const filePath = this.resourcePath
   const parts = parser(content, {
     filePath,

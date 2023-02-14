@@ -19,3 +19,4 @@ export * from "./stringify-loaders-resource"
 export * from "./stringify-query"
 export * from "./to-posix"
 export * from "./type"
+export * from './ts-loader-watch-run-loader-filter'
