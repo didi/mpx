@@ -9,5 +9,5 @@ export const genAsyncImport = (
   name?: string,
   callback?: string
 ): string => {
-  return `import(${importer})${name ? `.then((${name}) => ${callback})` : ''}`
+  return `import(${importer}).then((${name}) => ${callback})`
 }

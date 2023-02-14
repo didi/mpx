@@ -16,7 +16,7 @@ export function stringifyQuery(obj: any, useJSON?: boolean) {
           const val = obj[key]
 
           if (val === undefined) {
-            return
+            return val
           }
 
           if (val === true) {
@@ -24,6 +24,7 @@ export function stringifyQuery(obj: any, useJSON?: boolean) {
           }
 
           if (Array.isArray(val)) {
+
             const key2 = `${key}[]`
             const result: string[] = []
             val.slice().forEach(val2 => {
@@ -34,7 +35,6 @@ export function stringifyQuery(obj: any, useJSON?: boolean) {
             })
             return result.join('&')
           }
-
           return `${key}=${encodeURIComponent(val)}`
         })
         .filter(x => x)

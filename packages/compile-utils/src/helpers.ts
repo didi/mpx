@@ -2,6 +2,7 @@ import loaderUtils from 'loader-utils'
 import { addQuery, parseRequest } from './index'
 
 const selectorPath = '@mpxjs/loaders/dist/selector'
+const scriptSetupPath = '@mpxjs/compiler/script-setup-compiler/index'
 
 interface defaultLangType {
   template: 'wxml'
@@ -107,11 +108,12 @@ export function createHelpers(loaderContext: any) {
       )
     } else {
       const fakeRequest = getFakeRequest(type, part)
-      const request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(
+      let request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(
         rawRequest,
         options,
         true
       )}`
+      if (part.setup && type === 'script') request = scriptSetupPath + '!' + request
       return loaderUtils.stringifyRequest(
         loaderContext,
         `${fakeRequest}!=!${request}`

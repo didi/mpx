@@ -42,3 +42,5 @@ export function isEmptyObject (obj) {
   }
   return true
 }
+
+export const isBrowser = typeof window !== 'undefined'

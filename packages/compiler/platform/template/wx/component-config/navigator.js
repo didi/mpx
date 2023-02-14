@@ -44,7 +44,7 @@ module.exports = function ({ print }) {
             // 如果是个变量，报warning~
             aliPropLog(attr)
           } else {
-            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch', 'exit']
+            const supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch', 'exit']
             if (supportedList.indexOf(attr.value) === -1) {
               aliValueLogError(attr)
             }
@@ -58,14 +58,14 @@ module.exports = function ({ print }) {
             // 如果是个变量，报warning~
             ttPropLog(attr)
           } else {
-            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            const supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
             if (supportedList.indexOf(attr.value) === -1) {
               ttValueLogError(attr)
             }
           }
         },
         web (attr) {
-          let supportedList = ['navigate', 'redirect', 'navigateBack', 'reLaunch']
+          const supportedList = ['navigate', 'redirect', 'navigateBack', 'reLaunch']
           if (supportedList.indexOf(attr.value) === -1) {
             webValueLogError(attr)
           }
@@ -77,7 +77,7 @@ module.exports = function ({ print }) {
           if (isMustache(attr.value)) {
             qaPropLog(attr)
           } else {
-            let supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            const supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
             if (supportedList.indexOf(attr.value) === -1) {
               qaValueLogError(attr)
             }
@@ -102,9 +102,9 @@ module.exports = function ({ print }) {
         qa: qaEventLog,
         jd (eventName) {
           const eventMap = {
-            'success': 'success',
-            'fail': 'error',
-            'complete': 'complete'
+            success: 'success',
+            fail: 'error',
+            complete: 'complete'
           }
           return eventMap[eventName]
         }

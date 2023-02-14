@@ -3,22 +3,23 @@ import { isBrowser, hasOwn } from './utils'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
-export default function processOption({
-  option,
-  ctorType,
-  firstPage,
-  outputPath,
-  pageConfig,
-  pagesMap,
-  componentsMap,
-  tabBarMap,
-  componentGenerics,
-  genericsInfo,
-  mixin,
-  hasApp,
-  Vue,
-  VueRouter
-}) {
+export default function processOption ({
+                                         option,
+                                         ctorType,
+                                         firstPage,
+                                         outputPath,
+                                         pageConfig,
+                                         pagesMap,
+                                         componentsMap,
+                                         tabBarMap,
+                                         componentGenerics,
+                                         genericsInfo,
+                                         mixin,
+                                         hasApp,
+                                         Vue,
+                                         VueRouter
+                                       }
+) {
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (const componentName in componentsMap) {
@@ -90,9 +91,7 @@ export default function processOption({
               })
               return
             } else {
-              console.warn(
-                `[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`
-              )
+              console.warn(`[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`)
               return next({
                 path: firstPage,
                 replace: true
@@ -130,17 +129,10 @@ export default function processOption({
             global.__mpxRouter.needCache = insertItem
             break
           case 'back':
-            global.__mpxRouter.needRemove = stack.splice(
-              stack.length - action.delta,
-              action.delta
-            )
+            global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
             break
           case 'redirect':
-            global.__mpxRouter.needRemove = stack.splice(
-              stack.length - 1,
-              1,
-              insertItem
-            )
+            global.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
             global.__mpxRouter.needCache = insertItem
             break
           case 'switch':
@@ -153,7 +145,7 @@ export default function processOption({
             } else {
               // 将非tabBar页面remove
               let tabItem = null
-              global.__mpxRouter.needRemove = stack.filter(item => {
+              global.__mpxRouter.needRemove = stack.filter((item) => {
                 if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
                   return false
@@ -189,12 +181,8 @@ export default function processOption({
       // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
       if (isBrowser) {
         const errorHandler = function (args, fromVue) {
-          if (
-            global.__mpxAppCbs &&
-            global.__mpxAppCbs.error &&
-            global.__mpxAppCbs.error.length
-          ) {
-            global.__mpxAppCbs.error.forEach(cb => {
+          if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
+            global.__mpxAppCbs.error.forEach((cb) => {
               cb.apply(null, args)
             })
           } else if (fromVue) {
@@ -204,22 +192,19 @@ export default function processOption({
         Vue.config.errorHandler = (...args) => {
           return errorHandler(args, true)
         }
-        window.addEventListener('error', event => {
+        window.addEventListener('error', (event) => {
           return errorHandler([event.error, event])
         })
-        window.addEventListener('unhandledrejection', event => {
+        window.addEventListener('unhandledrejection', (event) => {
           return errorHandler([event.reason, event])
         })
         document.addEventListener('visibilitychange', function () {
-          const vnode =
-            global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
+          const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
           if (vnode && vnode.componentInstance) {
-            const currentPage = vnode.tag.endsWith('mpx-tab-bar-container')
-              ? vnode.componentInstance.$refs.tabBarPage
-              : vnode.componentInstance
+            const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
             if (document.hidden) {
               if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
-                global.__mpxAppCbs.hide.forEach(cb => {
+                global.__mpxAppCbs.hide.forEach((cb) => {
                   cb()
                 })
               }
@@ -228,7 +213,7 @@ export default function processOption({
               }
             } else {
               if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
-                global.__mpxAppCbs.show.forEach(cb => {
+                global.__mpxAppCbs.show.forEach((cb) => {
                   // todo 实现app.onShow参数
                   /* eslint-disable node/no-callback-literal */
                   cb({})
@@ -264,10 +249,9 @@ export default function processOption({
     if (genericsInfo) {
       const genericHash = genericsInfo.hash
       global.__mpxGenericsMap[genericHash] = {}
-      Object.keys(genericsInfo.map).forEach(genericValue => {
+      Object.keys(genericsInfo.map).forEach((genericValue) => {
         if (componentsMap[genericValue]) {
-          global.__mpxGenericsMap[genericHash][genericValue] =
-            componentsMap[genericValue]
+          global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
         } else {
           console.log(option)
           console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
@@ -279,7 +263,7 @@ registered in parent context!`)
     if (componentGenerics) {
       option.props = option.props || {}
       option.props.generichash = String
-      Object.keys(componentGenerics).forEach(genericName => {
+      Object.keys(componentGenerics).forEach((genericName) => {
         if (componentGenerics[genericName].default) {
           option.props[`generic${genericName}`] = {
             type: String,
@@ -292,11 +276,7 @@ registered in parent context!`)
     }
 
     if (ctorType === 'page') {
-      option.__mpxPageConfig = Object.assign(
-        {},
-        global.__mpxPageConfig,
-        pageConfig
-      )
+      option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     }
     if (!hasApp) {
       option.directives = { animation }
@@ -316,22 +296,20 @@ registered in parent context!`)
   return option
 }
 
-export function getComponent(component, extendOptions) {
+export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
   if (extendOptions) Object.assign(component, extendOptions)
   return component
 }
 
-export function getWxsMixin(wxsModules) {
-  if (!wxsModules || !Object.keys(wxsModules).length) return {}
+export function getWxsMixin (wxsModules) {
+  if (!wxsModules) return {}
   return {
-    created() {
-      Object.keys(wxsModules).forEach(key => {
+    created () {
+      Object.keys(wxsModules).forEach((key) => {
         if (key in this) {
-          console.error(
-            `[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`
-          )
+          console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)
         } else {
           this[key] = wxsModules[key]
         }
