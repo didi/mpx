@@ -1,12 +1,17 @@
 // log MPX i18n 因为是在node环境下引入文件 所以需要使用commonjs规范
-import cn from './cn'
-import en from './en'
-
+// import cn from './cn'
+// import en from './en'
+const en = require('./en')
+const cn = require('./cn')
 /**
  * 语言类型由端传来，key为lang，可能的值有：zh-CN, en-US, pt-BR, en-BR, zh-HK, zh-TW
  */
 
-export default {
+// export default {
+//   'zh-CN': cn,
+//   'en-US': en
+// }
+module.exports = {
   'zh-CN': cn,
   'en-US': en
 }

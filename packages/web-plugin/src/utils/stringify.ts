@@ -1,7 +1,7 @@
+import { hasOwn } from '@mpxjs/compile-utils'
 const stringify =  JSON.stringify.bind(JSON)
 
 export default stringify
-
 
 export function stringifyObject(
   obj?: Record<string, unknown>
@@ -16,10 +16,10 @@ export function stringifyObject(
 }
 
 
-export function shallowStringify(obj: Record<string, unknown>): string {
+export function shallowStringify(obj: Record<string, string>): string {
   const arr = []
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (hasOwn(obj, key)) {
       let value = obj[key]
       if (Array.isArray(value)) {
         value = `[${value.join(',')}]`

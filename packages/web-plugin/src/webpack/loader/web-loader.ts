@@ -18,7 +18,8 @@ import processScript from '../web/processScript'
 import processStyles from '../web/processStyles'
 import processTemplate from '../web/processTemplate'
 import pathHash from '../../utils/pageHash'
-import getOutputPath from '../../utils/get-output-path'
+import { tsWatchRunLoaderFilter }  from '@mpxjs/compile-utils'
+import getOutputPath  from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
 import resolveJson from '../../utils/resolve-json-content'
 
@@ -28,11 +29,13 @@ export default function (
 ): string | undefined {
   this.cacheable()
 
-  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
-  if (path.extname(this.resourcePath) === '.ts') {
-    this.loaderIndex -= 2
+  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
+  const pathExtname = path.extname(this.resourcePath)
+  if (!['.vue', '.mpx'].includes(pathExtname)) {
+    this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
+
   if (!mpx) {
     return content
   }
@@ -102,6 +105,7 @@ export default function (
     mode,
     env
   })
+
   let output = ''
   const callback = this.async()
 

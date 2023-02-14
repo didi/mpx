@@ -1,4 +1,5 @@
 const resolve = require('../build/utils').resolve
+const path = require('path')
 // 可以在此配置mpx webpack plugin
 // 配置项文档： https://www.mpxjs.cn/api/compile.html#mpxwebpackplugin-options
 module.exports = {
@@ -45,19 +46,20 @@ module.exports = {
   i18n: {
     locale: 'en-US',
     // messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理
-    messages: {
-      'en-US': {
-        message: {
-          title: 'test',
-          hello: '{msg} world'
-        }
-      },
-      'zh-CN': {
-        message: {
-          title: '中文',
-          hello: '{msg} 世界'
-        }
-      }
-    }
+    messagesPath: path.resolve(__dirname, '../src/i18n/index.js')
+    // messages: {
+    //   'en-US': {
+    //     message: {
+    //       title: 'test2344',
+    //       hello: '{msg} world'
+    //     }
+    //   },
+    //   'zh-CN': {
+    //     message: {
+    //       title: '中文',
+    //       hello: '{msg} 世界'
+    //     }
+    //   }
+    // }
   }
 }

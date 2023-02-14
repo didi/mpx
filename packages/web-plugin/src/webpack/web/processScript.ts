@@ -68,7 +68,7 @@ export default function (
     i18n,
     projectRoot,
     webConfig = {},
-    // appInfo,
+    appInfo,
     srcMode,
     minimize
   } = mpx
@@ -185,8 +185,9 @@ export default function (
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content.append(
-            `${genImport('vue-i18n', 'VueI18n')}
-            Vue.use(VueI18n)
+            `${ genImport('vue-i18n', 'VueI18n') }
+            import { createI18n } from 'vue-i18n-bridge'
+            Vue.use(VueI18n , { bridge: true })\n
             `
           )
           const requestObj: Record<string, string> = {}
@@ -202,29 +203,23 @@ export default function (
           Object.keys(requestObj).forEach(key => {
             content.append(`  i18nCfg.${key} = require(${requestObj[key]})\n`)
           })
-          content.append(`  const i18n = new VueI18n(i18nCfg)
-            i18n.mergeMessages = (newMessages) => {
-              Object.keys(newMessages).forEach((locale) => {
-                i18n.mergeLocaleMessage(locale, newMessages[locale])
-              })
-            }
+          content.append(`   i18nCfg.legacy = false\n`)
+          content.append(`   const i18n = createI18n(i18nCfg, VueI18n)
+            Vue.use(i18n)
             Mpx.i18n = i18n
             \n`)
         }
       }
-      // let hasApp = true
-      // if (!appInfo || !appInfo.name) {
-      //   hasApp = false
-      // }
+      let hasApp = true
+      if (!appInfo || !appInfo.name) {
+        hasApp = false
+      }
       // 注入wxs模块
       content.append('  const wxsModules = {}\n')
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach(module => {
           const src = urlToRequest(wxsModuleMap[module], projectRoot)
-          // const expression = `require(${ stringifyRequest(src) })`
-          content.append(
-            `  wxsModules.${module} = require(${stringifyRequest(src)})\n`
-          )
+          content.append(`  wxsModules.${ module } = require(${ stringifyRequest(src) })\n`)
         })
       }
       const pagesMap: Record<string, string> = {}
@@ -322,27 +317,23 @@ export default function (
 
       // 配置平台转换通过createFactory在core中convertor中定义和进行
       // 通过processOption进行组件注册和路由注入
-      content.append(`  export default processOption(
-        currentOption,
-        ${JSON.stringify(ctorType)},
-        ${JSON.stringify(Object.keys(localPagesMap)[0])},
-        ${JSON.stringify(outputPath)},
-        ${JSON.stringify(pageConfig)},
+      content.append(`  export default processOption({
+        option: currentOption,
+        ctorType: ${ JSON.stringify(ctorType) },
+        firstPage: ${ JSON.stringify(Object.keys(localPagesMap)[0]) },
+        outputPath: ${ JSON.stringify(outputPath) },
+        pageConfig: ${ JSON.stringify(pageConfig) },
         // @ts-ignore
-        ${shallowStringify(pagesMap)},
+        pagesMap: ${ shallowStringify(pagesMap) },
         // @ts-ignore
-        ${shallowStringify(componentsMap)},
-        ${JSON.stringify(tabBarMap)},
-        ${JSON.stringify(componentGenerics)},
-        ${JSON.stringify(genericsInfo)},
-        getWxsMixin(wxsModules)
-        ${
-          ctorType === 'app'
-            ? i18n
-              ? `,Vue,VueRouter,i18n`
-              : `,Vue, VueRouter`
-            : ''
-        })`)
+        componentsMap: ${ shallowStringify(componentsMap) },
+        tabBarMap: ${ JSON.stringify(tabBarMap) },
+        componentGenerics: ${ JSON.stringify(componentGenerics) },
+        genericsInfo: ${ JSON.stringify(genericsInfo) },
+        mixin: getWxsMixin(wxsModules),
+        hasApp: ${ hasApp }
+        ${ ctorType === 'app' ? `,Vue, VueRouter` : '' }
+      })`)
       return content.toString()
     }
   })

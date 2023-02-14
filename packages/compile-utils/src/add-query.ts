@@ -1,6 +1,7 @@
 import { parseRequest } from './parse-request'
 import { stringifyQuery } from './stringify-query'
 import { type as t } from './type'
+import { hasOwn } from './has-own'
 
 // 默认为非强行覆盖原query，如需强行覆盖传递force为true
 export function addQuery(
@@ -18,8 +19,8 @@ export function addQuery(
   if (force) {
     Object.assign(queryObj, data)
   } else {
-    Object.keys(data).forEach(key => {
-      if (!queryObj.hasOwnProperty(key)) {
+    Object.keys(data).forEach((key) => {
+      if (!hasOwn(queryObj, key)) {
         queryObj[key] = data[key]
       }
     })

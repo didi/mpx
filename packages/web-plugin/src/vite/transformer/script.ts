@@ -194,22 +194,6 @@ export async function transformScript(
     )}]\n`
   )
 
-  /**
-   *  option,
-                                         ctorType,
-                                         firstPage,
-                                         outputPath,
-                                         pageConfig,
-                                         pagesMap,
-                                         componentsMap,
-                                         tabBarMap,
-                                         componentGenerics,
-                                         genericsInfo,
-                                         mixin,
-                                         hasApp,
-                                         Vue,
-                                         VueRouter
-   */
   s.append(
     `export default processOption({
       option: currentOption,
@@ -228,7 +212,7 @@ export async function transformScript(
       genericsInfo: ${stringify(genericsInfo)},
       mixin: getWxsMixin(wxsModules),
       ...${app ? `{ Vue: Vue, VueRouter: VueRouter }` : i18n ? '{ i18n: i18n }' : '{  }'}
-    })\n`
+   })\n`
   )
 
   // transform ts

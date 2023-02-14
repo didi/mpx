@@ -2,7 +2,8 @@ export function isEmptyObject (obj: any) {
   if (!obj) {
     return true
   }
-  for (const _ in obj) {
+  // @ts-ignore
+  for (const key in obj) {
     return false
   }
   return true

@@ -1,0 +1,18 @@
+<template>
+  <view class="container list-class">
+   22343434344
+  </view>
+</template>
+
+<script lang="ts" src="../common/js/list.ts"></script>
+
+<style lang="stylus" scoped>
+  .container
+    color #fff
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

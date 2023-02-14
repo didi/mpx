@@ -44,6 +44,7 @@ const isProductionLikeMode = (options: {
 const warnings: Array<string | WebpackError> = []
 const errors: Array<string | WebpackError> = []
 
+
 class MpxWebpackPlugin {
   options: Options
 

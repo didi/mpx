@@ -1,5 +1,5 @@
 /* eslint-disable */
 const en = {
-  'page_title': 'test'
+  'page_title': 'i18n test==='
 }
-export default en
+module.exports = en
