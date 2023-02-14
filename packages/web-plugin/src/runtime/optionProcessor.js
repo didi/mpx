@@ -304,7 +304,7 @@ export function getComponent (component, extendOptions) {
 }
 
 export function getWxsMixin (wxsModules) {
-  if (!wxsModules) return {}
+  if (!wxsModules || !Object.keys(wxsModules).length) return {}
   return {
     created () {
       Object.keys(wxsModules).forEach((key) => {

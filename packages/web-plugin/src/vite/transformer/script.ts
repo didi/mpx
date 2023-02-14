@@ -211,7 +211,7 @@ export async function transformScript(
       componentGenerics: ${stringify(componentGenerics)},
       genericsInfo: ${stringify(genericsInfo)},
       mixin: getWxsMixin(wxsModules),
-      ${app ? `Vue, VueRouter` : i18n ? 'i18n' : ''}
+      ...${app ? `{ Vue: Vue, VueRouter: VueRouter }` : i18n ? '{ i18n: i18n }' : '{  }'}
    })\n`
   )
 
