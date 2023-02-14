@@ -36,9 +36,6 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "homepage": "https://github.com/didi/mpx#readme",
-  "devDependencies": {
-    "@mpxjs/core": "workspace:*"
-  },
   "dependencies": {
     "axios": "^0.21.1"
   },

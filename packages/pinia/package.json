@@ -31,9 +31,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@mpxjs/utils": "^2.8.15"
-  },
-  "devDependencies": {
     "@mpxjs/utils": "workspace:*"
   },
   "peerDependencies": {
