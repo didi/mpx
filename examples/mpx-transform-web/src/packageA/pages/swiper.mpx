@@ -1,5 +1,6 @@
 <template>
   <view class="viewport">
+    <view class="spring">1111</view>
     <swiper
       interval="{{1500}}"
       vertical="{{false}}"
@@ -25,12 +26,12 @@
 </template>
 
 <script>
-  import mpx,{ createPage } from '@mpxjs/core'
+  import mpx,{ createPage, implement } from '@mpxjs/core'
 
   if (__mpx_mode__ === 'web') {
     const processor = () => {
     }
-    mpx.implement('onShareAppMessage', { modes: ['web'], remove: true, processor })
+    implement('onShareAppMessage', { modes: ['web'], remove: true, processor })
   }
 
   createPage({
@@ -72,7 +73,7 @@
     /*padding-left: 10px*/
   }
   .spring {
-    min-height 100vh
+    font-size: 40rpx
     padding-bottom 40rpx
     overflow hidden
   }
