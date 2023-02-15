@@ -48,7 +48,7 @@ createPage({
 </script>
 <style scoped>
   .list {
-    background: blue;
+    background: red;
     height: 200rpx;
   }
 </style>

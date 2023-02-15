@@ -144,7 +144,7 @@ export async function transformScript(
   )
 
   if (i18n) {
-    s.prepend(`${genImport(I18N_HELPER_CODE, '{ i18n }')}\n`)
+    s.prepend(`${genImport(I18N_HELPER_CODE, '')}\n`)
   }
 
   if (app) {
@@ -211,7 +211,7 @@ export async function transformScript(
       componentGenerics: ${stringify(componentGenerics)},
       genericsInfo: ${stringify(genericsInfo)},
       mixin: getWxsMixin(wxsModules),
-      ...${app ? `{ Vue: Vue, VueRouter: VueRouter }` : i18n ? '{ i18n: i18n }' : '{  }'}
+      ...${app ? `{ Vue: Vue, VueRouter: VueRouter }` : '{}'}
    })\n`
   )
 

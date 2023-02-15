@@ -32,7 +32,6 @@ export const renderEntryCode = async (
     ${genImport(addQuery(importer, { app: true }), 'App')}
     ${genImport('@mpxjs/web-plugin/src/runtime/base.styl')}
     ${genImport('vue', 'Vue')}
-    ${options.i18n ? genImport(I18N_HELPER_CODE, '{ i18n }') : ''}
     ${genImport('vue-router', 'VueRouter')}
     ${genImport('@better-scroll/core', 'BScroll')}
     ${genImport('@better-scroll/pull-down', 'PullDown')}
@@ -43,7 +42,6 @@ export const renderEntryCode = async (
     global.BScroll = BScroll
     new Vue({
       el: ${options.webConfig?.el || '"#app"'},
-      ${options.i18n ? `i18n,` : ''}
       render: function(h){
         return h(App)
       }
@@ -55,10 +53,13 @@ export function renderI18nCode(options: Options): string {
   const content = []
   const { i18n } = options
   if (i18n) {
-    content.unshift(`import Vue from 'vue'`)
-    content.unshift(`import VueI18n from 'vue-i18n'`)
-    content.unshift(`import Mpx from '@mpxjs/core'`)
-    content.push(`Vue.use(VueI18n)`)
+    content.push(
+      genImport('vue', 'Vue'),
+      genImport('vue-i18n', 'VueI18n'),
+      genImport(`vue-i18n-bridge`, '{ createI18n }'),
+      genImport('@mpxjs/core', 'Mpx'),
+      `Vue.use(VueI18n, { bridge: true })`
+    )
     const i18nObj = { ...i18n }
     const requestObj: Record<string, string> = {}
     const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
@@ -77,15 +78,12 @@ export function renderI18nCode(options: Options): string {
       content.push(`i18nCfg.${key} = __mpx__i18n__${key}`)
     })
     content.push(
-      `const i18n = new VueI18n(i18nCfg)`,
-      `i18n.mergeMessages = (newMessages) => {
-        Object.keys(newMessages).forEach((locale) => {
-          i18n.mergeLocaleMessage(locale, newMessages[locale])
-        })
-      }`,
+      `i18nCfg.legacy = false`,
+      `const i18n = createI18n(i18nCfg, VueI18n)`,
+      `console.log(i18n, i18nCfg)`,
+      `Vue.use(i18n)`,
       `Mpx.i18n = i18n`
     )
-    content.push(`export { i18n } `)
   }
   return content.join('\n')
 }
