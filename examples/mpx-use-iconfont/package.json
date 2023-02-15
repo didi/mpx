@@ -58,7 +58,7 @@
     "@babel/core": "^7.10.4",
     "@babel/plugin-transform-runtime": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
-    "@babel/runtime-corejs3": "^7.10.4",
+    "@babel/runtime-corejs3": "^7.20.13",
     "@babel/eslint-parser": "^7.16.0",
     "babel-loader": "^8.1.0",
     "chalk": "^2.3.2",

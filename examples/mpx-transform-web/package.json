@@ -36,7 +36,8 @@
     "@intlify/shared": "9.2.2",
     "@intlify/vue-devtools": "9.2.2",
     "@intlify/devtools-if": "9.2.2",
-    "@intlify/message-compiler": "9.2.2"
+    "@intlify/message-compiler": "9.2.2",
+    "core-js-pure": "^3.28.0"
   },
   "browserslist": [
     "ios >= 9",
@@ -48,7 +49,7 @@
     "@babel/plugin-transform-runtime": "^7.10.4",
     "@babel/plugin-transform-typescript": "^7.16.1",
     "@babel/preset-env": "^7.10.4",
-    "@babel/runtime-corejs3": "^7.10.4",
+    "@babel/runtime-corejs3": "^7.20.13",
     "@better-scroll/core": "^2.2.1",
     "@better-scroll/movable": "^2.2.1",
     "@better-scroll/observe-dom": "^2.2.1",

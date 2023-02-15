@@ -7,7 +7,8 @@ module.exports = {
   mode: 'none',
   resolve: {
     extensions: ['.mpx', '.js', '.wxml', '.vue', '.ts'],
-    modules: ['node_modules']
+    modules: ['node_modules'],
+    symlinks: false
   },
   // cache: {
   //   type: 'filesystem',
