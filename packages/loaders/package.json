@@ -15,6 +15,11 @@
     "build": "rimraf ./dist && tsc"
   },
   "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
+    },
     "./*": {
       "types": "./dist/*",
       "require": "./dist/*",
@@ -39,7 +44,7 @@
     "@types/babel__traverse": "^7.18.3",
     "@types/loader-utils": "^2.0.3",
     "@types/mime": "^3.0.1",
-    "@mpxjs/webpack-plugin": "2.8.20",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@typescript-eslint/eslint-plugin": "^4.26.1",
     "@typescript-eslint/parser": "^4.26.1",
     "eslint": "^7.28.0",

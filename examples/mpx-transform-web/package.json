@@ -21,7 +21,7 @@
     "@mpxjs/api-proxy": "workspace:*",
     "@mpxjs/core": "workspace:*",
     "@mpxjs/web-plugin": "workspace:*",
-    "@mpxjs/webpack-plugin": "2.8.20",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@mpxjs/loaders": "workspace:*",
     "@mpxjs/store": "workspace:*",
     "mime": "^2.6.0",
