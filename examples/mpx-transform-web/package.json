@@ -24,7 +24,7 @@
     "@mpxjs/core": "workspace:*",
     "@mpxjs/loaders": "workspace:*",
     "@mpxjs/web-plugin": "workspace:*",
-    "@mpxjs/webpack-plugin": "workspace:*",
+    "@mpxjs/webpack-plugin": "2.8.20",
     "@mpxjs/store": "workspace:*",
     "@mpxjs/utils": "workspace:*",
     "mime": "^2.6.0",
