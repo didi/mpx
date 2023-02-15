@@ -14,6 +14,13 @@
     "dev": "tsc -w",
     "build": "rimraf ./dist && tsc"
   },
+  "exports": {
+    "./*": {
+      "types": "./dist/*",
+      "require": "./dist/*",
+      "import": "./dist/*"
+    }
+  },
   "dependencies": {
     "@babel/generator": "^7.16.0",
     "@babel/parser": "^7.16.2",
