@@ -40,6 +40,6 @@
     "axios": "^0.21.1"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.7.40"
+    "@mpxjs/core": "workspace:*"
   }
 }

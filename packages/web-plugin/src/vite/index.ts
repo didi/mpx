@@ -146,7 +146,7 @@ export default function mpx(options: Partial<Options> = {}): Plugin[] {
           plugins: [
             // prebuild for addExtensions
             esbuildCustomExtensionsPlugin({
-              include: /@mpxjs/,
+              include: /@mpxjs|api-proxy|core/,
               fileConditionRules,
               extensions: customExtensions
             })

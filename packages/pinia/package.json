@@ -30,11 +30,8 @@
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "dependencies": {
-    "@mpxjs/utils": "workspace:*"
-  },
   "peerDependencies": {
-    "@mpxjs/core": "^2.8.0",
+    "@mpxjs/core": "workspace:*",
     "pinia": "^2.0.14",
     "vue": "^2.7.10",
     "vue-demi": "^0.13.11"
