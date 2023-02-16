@@ -1,0 +1,103 @@
+<template>
+  <view class="count-down-time">
+    <text class="count-down-suffix">预约活动倒计时：</text>
+    <text class="count-down-day" wx:if="{{currentTimeMetadata.day}}">{{currentTimeMetadata.day}}</text>
+    <text class="count-down-separator" wx:if="{{currentTimeMetadata.day}}">天</text>
+    <text class="count-down-hour">{{currentTimeMetadata.hour}}</text>
+    <text class="count-down-separator">:</text>
+    <text class="count-down-minute">{{currentTimeMetadata.minute}}</text>
+    <text class="count-down-separator">:</text>
+    <text class="count-down-second">{{currentTimeMetadata.second}}</text>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  const SECONDSOFDAY = 24 * 60 * 60
+  const SECONDSOFHOUR = 60 * 60
+  const SECONDSOFMINUTE = 60
+  const HOURSOFDAY = 24
+
+  createComponent({
+    properties: {
+      remainingTime: {
+        type: Number,
+        value: 0
+      }
+    },
+    data () {
+      return {
+        currentRemainingTime: this.remainingTime, // 单位：秒
+        currentTimeMetadata: {}
+      }
+    },
+    lifetimes: {
+      attached () {
+        // 第一次进入页面先计算一次
+        this.computeTime()
+        this.timer = setInterval(() => {
+          this.computeTime()
+        }, 1000)
+      },
+      detached () {
+        this.clearTimer()
+      }
+    },
+    methods: {
+      padZero (value) {
+        return value < 10 ? `0${value}` : `${value}`
+      },
+      clearTimer () {
+        if (this.timer) {
+          clearInterval(this.timer)
+        }
+      },
+      computeTime () {
+        const currentRemainingTime = this.currentRemainingTime
+        if (currentRemainingTime <= 0) {
+          this.currentRemainingTime = 0
+          this.clearTimer()
+          this.triggerEvent('finish')
+        }
+        const day = parseInt(currentRemainingTime / SECONDSOFDAY, 10)
+        const hour = parseInt((currentRemainingTime / SECONDSOFHOUR) % HOURSOFDAY, 10)
+        const minute = parseInt((currentRemainingTime / SECONDSOFMINUTE) % SECONDSOFMINUTE, 10)
+        const second = parseInt(currentRemainingTime % SECONDSOFMINUTE, 10)
+        this.currentTimeMetadata = {
+          day,
+          hour: this.padZero(hour),
+          minute: this.padZero(minute),
+          second: this.padZero(second)
+        }
+        this.currentRemainingTime -= 1
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+  .count-down-time
+    display inline-block
+    .count-down-day,
+    .count-down-hour,
+    .count-down-minute,
+    .count-down-second,
+    .count-down-separator
+    .count-down-suffix
+      font-size vw(22)
+      font-weight normal
+      color #ffb558
+    .count-down-hour,
+    .count-down-minute,
+    .count-down-second
+      display inline-block
+      width vw(30)
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

@@ -1,0 +1,78 @@
+<template>
+  <view
+    class="more-rewards-component intersectionRootNode"
+    v-exposure@web="exposure"
+    wx:if="{{info.length}}"
+  >
+    <base-section title="更多奖励">
+      <view wx:if="{{info.length}}" class="more-rewards">
+        <gift-reward-card wx:for="{{info}}" text="{{item}}" index="{{index}}" wx:key="index" />
+      </view>
+      <common-button bindclicked="goRewardCenter" text="去奖励中心查看" />
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+  import { DRIVER_REWARD_CENTER_URL } from '../../common/js/constants'
+  import { universelPageJump } from '../../common/js/pageJump'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    data: {
+      intersectionEventId: 'wyc_main_venue_more_reward_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      info: {
+        type: Array,
+        value: []
+      }
+    },
+    computed: {
+      title () {
+        return this.info.head_title
+      }
+    },
+    methods: {
+      exposure () {
+        trackAggregateEvent(this.intersectionEventId)
+      },
+      goRewardCenter () {
+        trackAggregateEvent('wyc_sdmarketing_jrjlbutton_ck')
+        const ret = universelPageJump(DRIVER_REWARD_CENTER_URL)
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .more-rewards-component
+    // padding 50px 14px 15px
+    // background-color #fdedd5
+    // border 2px solid #fdcb7d
+    border-radius 10px
+    margin-top 29px
+    .today-rewards-subtitle
+      margin-bottom 12px
+      font-size 14px
+      color #B4593C
+      text-align center
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "gift-reward-card": "../cards/gift-reward",
+      "base-section": "./base",
+      "common-button": "../base/common-button"
+    }
+  }
+</script>

@@ -1,0 +1,816 @@
+<template>
+  <view
+    class="page-container"
+    wx:class="{{carType}}"
+    wx:show="{{initialized}}"
+  >
+    <!-- <page-background></page-background> -->
+    <view class="page-content">
+      <block wx:if="{{pageHeadImg}}">
+        <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{pageHeadImg}}" class="page-head-img"></image>
+        <img wx:else src="{{pageHeadImg}}" class="page-head-img" />
+      </block>
+      <!-- <comment-carousel class="paopao-comment" wx:if="{{commentData && commentData.length}}" dataArray="{{ commentData }}"></comment-carousel> -->
+      <image  class="page-title" src="{{pageTitleImg}}"></image>
+      <!-- <view wx:if="{{subTitle}}" class="page-sub-title">{{subTitle}}</view> -->
+      <!-- <view wx:if="{{isTargetRole}}" class="paopao-rule" bindtap="goToRule"></view> -->
+      <view class="switch-role" wx:if="{{__mpx_mode__ === 'wx'}}" bindtap="onLogout" />
+      <block wx:if="{{isTargetRole}}">
+        <!-- 跑跑预约礼 9.1 都只有这个模块 -->
+        <block wx:if="{{paopaoGrayTest}}">
+          <running-appointment-gift
+            wx:if="{{ paopaoInfo }}"
+            paopao-info="{{paopaoInfo}}"
+            car-type="{{carType}}"
+            dsi="{{dsi}}"
+            url-params="{{urlParams}}"
+            bind:signup="_joinOrCreatePaopao"
+            bind:shareH5="onShareH5"
+            bind:refusedFriends="onRefused"
+          />
+        </block>
+        <!-- 9.10之后既会有跑跑预约礼又会有主会场的活动 -->
+        <view class="unfinished-wrapper" wx:else>
+          <!-- 全部活动已结束 -->
+          <all-activity-end wx:if="{{allActivitiesEnd}}" />
+          <block wx:else>
+            <!-- 跑跑预约礼 -->
+            <!-- TODO 下掉跑跑 -->
+            <running-appointment-gift
+              wx:if="{{paopaoInfo && false}}"
+              paopao-info="{{paopaoInfo}}"
+              car-type="{{carType}}"
+              dsi="{{dsi}}"
+              url-params="{{urlParams}}"
+              bind:signup="_joinOrCreatePaopao"
+              bind:shareH5="onShareH5"
+              bind:refusedFriends="onRefused"
+            />
+            <!-- 原有的主会场页面 -->
+            <view class="original-sections">
+              <!-- 微信客服会话弹窗 -->
+              <custom-service-pop
+                wx:if="{{ __mpx_mode__ === 'wx' }}"
+                wx:ref="customServicePop"
+              />
+              <view class="original-sections-wrapper">
+                <!-- 春节服务费 -->
+                <spring-festival-section
+                  info="{{serviceFeeInfo}}"
+                  bind:customerService="openServicePopup"
+                />
+                <!-- 回归司机专属 -->
+                <special-reward
+                  wx:for="{{specialRewardInfo}}"
+                  wx:for-item="specialRewardItem"
+                  wx:key="index"
+                  info="{{specialRewardItem}}"
+                  index="{{index}}"
+                  bind:customerService="openServicePopup"
+                />
+                <!-- 流水加速卡板块 -->
+                <accelerate-reward
+                  wx:if="{{accelerateInfo.list}}"
+                  info="{{accelerateInfo}}"
+                  bind:customerService="openServicePopup"
+                  bindrefresh="refreshPage"
+                />
+                <!-- 冲单奖 -->
+                <receive-reward
+                  wx:if="{{rushInfo.list}}"
+                  rewardType="rush"
+                  info="{{rushInfo}}"
+                  bind:customerService="openServicePopup"
+                  bindrefresh="refreshPage"
+                />
+                <!-- 堵车无忧卡 -->
+                <receive-reward
+                  wx:if="{{trafficInfo.list}}"
+                  info="{{trafficInfo}}"
+                  bind:customerService="openServicePopup"
+                  bindrefresh="refreshPage"
+                />
+                <!-- 奖励预告板块 -->
+                <preparing-rewards-section bind:customerService="openServicePopup" wx:if="{{activityIsPreparing}}" info="{{prepareInfo}}" />
+                <!-- 今日奖励板块 -->
+                <today-rewards-section bind:customerService="openServicePopup" wx:else info="{{todayRewardsInfo}}" />
+                <!-- 更多奖励板块 -->
+                <more-reward-section bind:customerService="openServicePopup" info="{{moreRewardsInfo}}" />
+                <!-- 出行分通知板块 -->
+                <notifications-section info="{{notificationsInfo}}"/>
+                <!-- banner -->
+                <bottom-banner-section wx:if="{{bottomBanner.length > 0}}" list="{{bottomBanner}}" bind:customerService="openServicePopup"/>
+                <!-- 订单预测板块，小程序不需要展示该模块，因为 echarts 源码体积太大 -->
+                <predictable-orders-section wx:if="__mpx_mode__ === 'web'" info="{{predictableOrdersInfo}}" />
+                <!-- 收入预告板块 -->
+                <!-- <bottom-revenue-section 
+                  wx:if="{{activeStage === 3}}"
+                  bind:customerService="openServicePopup" /> -->
+                <image wx:if="{{pageBottomLogo}}" class="bottom-logo" src="{{pageBottomLogo}}"></image>
+              </view>
+            </view>
+          </block>
+        </view>
+      </block>
+      <!-- 角色不符合 -->
+      <block wx:else>
+        <invalid-role admittance="{{admittance}}" backupTip="{{info.backup_tip}}" />
+      </block>
+    </view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createPage } from '@mpxjs/core'
+  import { getFestivalCenter, joinOrCreatePaopao, getAreaInfo } from '../api'
+  import { hrefOrOpenWithWebview, parseQuery, buildUrl } from '../common/js/pageJump'
+  import { login, logout } from '../common/js/login'
+  import { getOpenId, showWechatModal } from '../common/js/wechat'
+  import { invokeShare, setTitle, handleCornerButton, getLocationInfo, aggregatePageShare, getSystemInfo } from '../common/js/bridge'
+  import { getProperty } from '../common/js/utils'
+  import { isWechatMiniprogram } from '../common/js/env'
+  import { CAR_TYPE, GRAY_TEST, SHARE_INFO, MINIPROGRAM_URL, AGGREGATE_SHARE_INFO, AGGREGATE_STATUS_MAP, STATUS_MAP, PaoPaoDchn } from '../common/js/constants'
+  import { setOmegaCommonParams, trackEvent, trackAggregateEvent, parseAxiosOmegaCommonParams, setAggregateCommonParams } from '../common/js/Omega'
+  const { globalData = {} } = getApp()
+  const sceneId = `${globalData.scene}` || ''
+
+  const shareBtnMap = {
+    pageBtn: 'wyc_mkt_ppyuyue_leader_main_share_btn_ck',
+    signupSuccessBtn: 'wyc_mkt_ppyuyue_leader_share_pop_btn_ck', // btn_type = 1
+    autoInviteBtn: 'wyc_mkt_ppyuyue_leader_share_pop_btn_ck', // btn_type = 2
+    'myInvitationBtn-true': 'wyc_mkt_ppyuyue_leader_myinvite_pop_share_ck', // 有邀请
+    'myInvitationBtn-false': 'wyc_mkt_ppyuyue_leader_myinvite_pop_share_ck' // 未邀请
+  }
+  const trackEventShare = (event) => {
+    const id = getProperty(event, 'target.id') || ''
+    const dataset = getProperty(event, 'target.dataset') || {}
+    const eventKey = shareBtnMap[id]
+    const params = {}
+    switch (id) {
+      case 'myInvitationBtn-true':
+        params.sw_type = 1
+        params.btn_title = '继续邀请'
+        break
+      case 'myInvitationBtn-false':
+        params.sw_type = 2
+        params.btn_title = '立即邀请'
+        break
+      case 'autoInviteBtn':
+        params.btn_type = 2
+        params.btn_title = dataset.title
+        params.btn_desc = dataset.desc
+        break
+      case 'signupSuccessBtn':
+        params.btn_type = 1
+        params.btn_title = dataset.title
+        params.btn_desc = dataset.desc
+        break
+      default:
+        break
+    }
+    eventKey && trackEvent(eventKey, params) // 点击
+    trackEvent('wyc_mkt_ppyuyue_leader_share_channel_pop_sw') // 分享弹窗的曝光
+  }
+  
+  let wechatShareConfig = {}
+
+  if (isWechatMiniprogram) {
+    wechatShareConfig = {
+      onShareAppMessage (event) {
+        let path
+        if (this.canShareAggregatePage) {
+          const params = this.aggregateUrlParams
+          path = buildUrl(MINIPROGRAM_URL, params)
+        } else {
+          trackEventShare(event)
+          const params = {
+            dsi: this.selfDsi,
+            ...this.shareUrlParams
+          }
+          path = buildUrl(MINIPROGRAM_URL, params)
+        }
+        // 跑跑预约礼蓄水期结束之前，都 follow 跑跑
+        let title = this.canShareAggregatePage ? this.aggregateShareInfo.mini_content : this.shareInfo.content
+        let imageUrl = this.canShareAggregatePage ? this.aggregateShareInfo.mini_img_url : SHARE_INFO.miniProgramImageUrl
+        console.log('wx 分享数据：', title, imageUrl, path)
+        return {
+          title,
+          imageUrl,
+          path
+        }
+      }
+    }
+  }
+
+  createPage({
+    ...wechatShareConfig,
+    data () {
+      return {
+        loaded: false,
+        initialized: false,
+        paopaoGrayTest: false, // 灰度测试，只渲染跑跑预约礼
+        info: {},
+        carType: CAR_TYPE.other, // CAR_TYPE.EXPRESS, // 默认快车身份
+        paopaoInfo: null,
+        dsi: '', // 链接上带有分享者的 dsi，可能不存在
+        firstLoad: true,
+        isRefused: false,
+        locationInfo: {},
+        urlParams: null,
+        admittance: true, // 是否准入
+        commentData: []
+      }
+    },
+    async onLoad (query) {
+      this.resolveUrlQuery(query)
+      // TODO 测试。。。
+      const ret = await this.doPrepareWorks()
+      // 拒绝登陆
+      if (ret === false) return
+      await this.refresh()
+      this.loaded = true
+    },
+    onShow () {
+      // 正在执行 onLoad，不需要再次调用refresh
+      if (!this.loaded) return
+      // 拒绝重新登陆
+      if (!this.hasLogged) return
+      this.refresh()
+    },
+    methods: {
+      resolveUrlQuery (params) {
+        const urlParams = this.urlParams = isWechatMiniprogram ? params : parseQuery()
+        // 获取页面是否存在其他分享者的 dsi
+        this.dsi = urlParams.dsi
+        this.dchn = urlParams.dchn || PaoPaoDchn
+        console.log('dchn ', this.dchn)
+        // 排查 share_uid 问题
+        if (this.dsi && !urlParams.share_uid) {
+          trackEvent('wyc_mkt_ppyuyue_follow_no_share_uid', {
+            status: 1
+          })
+        }
+        // const activityId = this.activityId = urlParams.activity_id
+        // 为了方便测试切换活动id TODO 后续去掉
+        // if (activityId) {
+        //   ajax.setCommonParams({
+        //     activity_id: activityId
+        //   })
+        // }
+      },
+      async doPrepareWorks () {
+        // 处理不同端右上角分享的问题
+        handleCornerButton()
+        // 处理登陆
+        this.hasLogged = await this.handleLogin()
+        // 拒绝登陆
+        if (!this.hasLogged) return false
+        // 处理 openid
+        await this.handleOpenId()
+      },
+      async handleLogin () {
+        let ret
+        try {
+          await login()
+          ret = true
+        } catch (error) {
+          ret = false
+          // 取消登陆
+          showWechatModal('您的登陆未成功~')
+        }
+        return ret
+      },
+      async handleOpenId () {
+        // 微信环境才有 openid
+        if (!isWechatMiniprogram) return
+        try {
+          const openId = await getOpenId()
+          setOmegaCommonParams({
+            open_id: openId
+          })
+          setAggregateCommonParams({
+            open_id: openId
+          })
+          this.ajaxCommonInfo = {
+            openId: openId,
+            openIdType: '1', // 1: 微信
+            sceneId: sceneId
+          }
+        } catch (error) {
+          // 不阻断正常交互，只是业务埋点没有openid而已
+        }
+      },
+      async handleLocationInfo () {
+        // 已经取到了位置信息
+        if (this.locationInfo.cityId) return
+        // 微信
+        if (isWechatMiniprogram) {
+          try {
+            // 地理位置授权成功
+            const res = await mpx.getLocation()
+            try {
+              // 经纬度转换成 cityId
+              const { cityId } = await getAreaInfo(res, {
+                noTicket: true
+              })
+              this.locationInfo = {
+                cityId,
+                lat: res.latitude,
+                lng: res.longitude
+              }
+            } catch (e) {
+              console.log(e)
+              showWechatModal('获取当前所在城市出现问题')
+            }
+          } catch (error) {
+            // 授权拒绝后，引导去授权
+            const settings = await mpx.getSetting()
+            !settings.authSetting['scope.userLocation'] && showWechatModal('需要获取您的定位，才可为您开启活动哦~').then((res) => {
+              if (res.confirm) {
+                mpx.openSetting() // 并不需要关心成功还是失败，因为关闭设置页面会触发 onShow
+              }
+            })
+          }
+        } else { // 司机部落或者车主端
+          this.locationInfo = await getLocationInfo()
+          this.ajaxCommonInfo = await getSystemInfo() || {}
+        }
+      },
+      async onLogout () {
+        // 销毁当前视图
+        this.initialized = false
+        try {
+          await logout()
+          // 必须马上将标志位设置位 false
+          // mpx-login 内部不管登陆失败还是成功都有 800ms 的延迟
+          this.hasLogged = false
+          // 拒绝重新登陆
+          this.hasLogged = await this.handleLogin()
+          // 因为在 800ms 之前就触发 onShow，内部逻辑被 this.hasLogged 阻拦了
+          // 所以需要再调用一次业务接口
+          this.refresh()
+        } catch (e) {
+          console.log(e)
+          this.showToast('退出账号失败，请重试')
+        }
+      },
+      async refresh () {
+        // 处理地理位置授权
+        await this.handleLocationInfo()
+        const cityId = this.locationInfo.cityId
+        // 有了 cityId 就可以取拉业务数据
+        if (cityId) {
+          this.firstLoad = true
+          this.paopaoInfo = null
+          setOmegaCommonParams({ city_id: cityId })
+          setAggregateCommonParams({ city_id: cityId })
+          return this._getFestivalCenter({ cityid: cityId, no_location_crash: 1 })
+        }
+      },
+      goToRule () {
+        // 跑跑预约礼 规则点击
+        trackEvent('wyc_mkt_ppyuyue_leader_main_rule_ck')
+        hrefOrOpenWithWebview('https://z.didi.cn/5BLVx')
+      },
+      _getFestivalCenter (data = {}) {
+        const params = {
+          dsi: this.dsi,
+          ...data
+        }
+        if (this.firstLoad) {
+          this.showLoading('加载中...')
+        }
+        getFestivalCenter(params).then((res) => {
+          if (this.firstLoad) {
+            this.firstLoad = false
+            this.hideLoading()
+          }
+          this.initialized = true
+          this.info = res || {}
+          const ifNormal = this.checkIfNotDriverAndInPaopaoActivity(res)
+          if (ifNormal) {
+            this.setupPaopaoData(res)
+            this.setupAggregateActivitiesData(res)
+            setTitle(this.isNewYearsDay ? '元宵活动会场' : '跑跑预约礼')
+            this.handleAggregatePageShare()
+          }
+        }).catch((err) => {
+          // 如果司机是未准入司机或者不是一个司机
+          if (err.errno === 10006) {
+            this.hideLoading()
+            this.initialized = true
+            this.setupAggregateActivitiesData({
+              car_type: CAR_TYPE.OTHER
+            })
+            this.admittance = false
+          } else {
+            this.commonErrToast(err)
+          }
+        })
+      },
+      checkIfNotDriverAndInPaopaoActivity (res) {
+        let paopaoActUserState = ''
+        try {
+          paopaoActUserState = res.toggle_driver_reward.activity.data.user_status
+        } catch (err) {
+          console.log("it's doesn't matter ...", err)
+        }
+        if (res.car_type === CAR_TYPE.NOT_DRIVER && paopaoActUserState !== STATUS_MAP.not_driver) {
+          this.carType = CAR_TYPE.NOT_DRIVER
+          return false
+        }
+        return true
+      },
+      setupAggregateActivitiesData (res = {}) { // 主会场数据
+        this.carType = res.car_type
+        this.handleAggregatePageshowOmega(this.carType)
+      },
+      handleAggregatePageshowOmega (carType) {
+        this.aggregateUrlParams = {
+          dchn: this.dchn,
+          channel_id: this.urlParams.channel_id/* ,
+          activity_id: this.activityId */
+        }
+        // 异常逻辑
+        if (carType === CAR_TYPE.OTHER) {
+          setAggregateCommonParams(this.aggregateUrlParams)
+          trackAggregateEvent('wyc_sdmarketing_fallback_mainpage_en')
+        } else {
+          setAggregateCommonParams({ ...this.aggregateUrlParams, active_stage: this.activeStage, uid: this.uid })
+          trackAggregateEvent('wyc_sdmarketing_mainpage_sw')
+        }
+      },
+      setupPaopaoData (res = {}) { // 跑跑预约礼数据
+        const { status, toggle_driver_reward, toggle_driver_reward_error_info } = res
+        this.paopaoGrayTest = status === GRAY_TEST
+        if (toggle_driver_reward && !toggle_driver_reward_error_info) {
+          this.paopaoInfo = toggle_driver_reward
+        } else if (toggle_driver_reward_error_info && this.isTargetRole) {
+          this.showToast(toggle_driver_reward_error_info.errmsg)
+        }
+        const { recommend } = toggle_driver_reward || {}
+        if (recommend && recommend.driver_comment_list) {
+          this.commentData = recommend.driver_comment_list
+        }
+        // 埋点
+        this.pageShowTrackEvent(this.paopaoInfo)
+      },
+      pageShowTrackEvent (data) {
+        if (!data) { return }
+        // 排查 share_uid 问题
+        if (this.dsi && !this.urlParams.share_uid) {
+          trackEvent('wyc_mkt_ppyuyue_follow_no_share_uid', {
+            status: 2
+          })
+        }
+        // 1 需要带在 url
+        this.partOmegaCommonParams = {
+          entrance_channel: this.urlParams.entrance_channel,
+          dchn: this.dchn,
+          share_level: this.urlParams.share_level || 1,
+          first_uid: this.urlParams.first_uid || this.uid,
+          share_uid: this.urlParams.share_uid
+        }
+        setOmegaCommonParams({
+          ...this.partOmegaCommonParams,
+          instance_id: this.dsi
+        })
+
+        parseAxiosOmegaCommonParams(data)
+        if (!this.isTargetRole) {
+          trackEvent('wyc_mkt_ppyuyue_toast_sw', {
+            reason_type: 1
+          })
+        } else if (AGGREGATE_STATUS_MAP.end === this.info.status) {
+          trackEvent('wyc_mkt_ppyuyue_toast_sw', {
+            reason_type: 3
+          })
+        }
+      },
+      handleAggregatePageShare () {
+        if (this.canShareAggregatePage) {
+          const shareInfo = {
+            ...this.aggregateShareInfo,
+            carType: this.carType,
+            dchn: this.dchn
+          }
+          aggregatePageShare(shareInfo, this.aggregateUrlParams)
+        }
+      },
+      _joinOrCreatePaopao (e = {}) {
+        const cb = e.detail
+        // 传 dsi，joinOrCreatePaopao 会请求 join 接口
+        let params = {
+          dsi: this.dsi
+        }
+        // 用户拒绝好友邀请，不需要传 dsi，joinOrCreatePaopao 会请求 create 接口
+        if (this.isRefused) {
+          params = {
+            dsi: undefined // 明确传 undefined，因为 url 上会带 dsi，会被 driver-biz-sdk 处理
+          }
+        }
+        if (this.locationInfo.lat) {
+          params.env = JSON.stringify({
+            latitude: this.locationInfo.lat + '',
+            longitude: this.locationInfo.lng + '',
+            ...this.ajaxCommonInfo
+          })
+        }
+        this.showLoading('正在预约...')
+        joinOrCreatePaopao(params).then((res) => {
+          this.hideLoading()
+          this.paopaoInfo = res
+          // 接受好友成功，执行回调
+          cb && cb()
+          // 点击同意并预约 接口返回成功
+          trackEvent('wyc_mkt_ppyuyue_authorization_detail_ck', {
+            btn_title: '同意并预约',
+            help_state: 0
+          })
+          // 埋点
+          this.pageShowTrackEvent(this.paopaoInfo)
+        }).catch(err => {
+          // 说明是接受好友请求失败，这里也认定为拒绝好友邀请
+          if (cb && typeof cb === 'function') {
+            this.onRefused()
+          }
+          this.commonErrToast(err)
+          // 点击同意并预约 接口返回失败
+          trackEvent('wyc_mkt_ppyuyue_authorization_detail_ck', {
+            btn_title: '同意并预约',
+            help_state: 1
+          })
+        })
+      },
+      onShareH5 () {
+        // 司机端和司机走这个分享，小程序会自动走 onShareAppMessage
+        const shareInfo = {
+          ...this.shareInfo,
+          // activity_id: this.activityId, // TODO 方便测试
+          carType: this.carType,
+          dchn: this.dchn
+        }
+        trackEvent('wyc_mkt_ppyuyue_leader_share_channel_pop_sw') // 分享弹窗的曝光
+        invokeShare(this.selfDsi, shareInfo, this.shareUrlParams)
+      },
+      refreshPage () {
+        this.refresh()
+      },
+      onRefused () {
+        this.isRefused = true
+      },
+      openServicePopup () {
+        const customServicePop = this.$refs.customServicePop
+        customServicePop && customServicePop.toggle()
+      }
+    },
+    computed: {
+      isTargetRole () {
+        console.log('carType ', this.carType, this.carType !== CAR_TYPE.OTHER)
+        const includeCarType = this.info.include_car_type || []
+        if (includeCarType.includes(this.carType)) {
+          return true
+        }
+        // 上面为元宵定制
+        if (this.carType === CAR_TYPE.OTHER) {
+          return false
+        } else if (this.carType === CAR_TYPE.NOT_DRIVER) {
+          if (this.paopaoUserStatus === STATUS_MAP.not_driver) {
+            return true
+          }
+          return false
+        }
+        return false
+      },
+      activityStatus () {
+        return this.info.status
+      },
+      activityIsPreparing () {
+        return AGGREGATE_STATUS_MAP.new_years_day_prepare === this.activityStatus
+      },
+      activityIsInProgress () {
+        return [AGGREGATE_STATUS_MAP.new_years_day_ing].includes(this.activityStatus)
+      },
+      notificationsInfo () {
+        return this.info.notice || {}
+      },
+      serviceFeeInfo () {
+        return this.info.service_fee || {}
+      },
+      specialRewardInfo () {
+        return this.info.special_reward || []
+      },
+      accelerateInfo () {
+        return this.info.reward_card || {}
+      },
+      prepareInfo () {
+        return this.info.prepare_acts || {}
+      },
+      todayRewardsInfo () {
+        return this.info.today_acts || {}
+      },
+      moreRewardsInfo () {
+        return this.info.ing_acts || []
+      },
+      trafficInfo () {
+        return this.info.traffic_card || {}
+      },
+      rushInfo () {
+        return this.info.task_order_rush || {}
+      },
+      // orderOderInfo () {
+      //   return this.info.order_order_reward || {}
+      // },
+      // teamInfo () {
+      //   return this.info.group_task || {}
+      // },
+      predictableOrdersInfo () {
+        return this.info.order_forecast || {}
+      },
+      bottomBanner () {
+        return this.info.banner || []
+      },
+      selfDsi () {
+        return getProperty(this.paopaoInfo, 'share.data.instance.dsi')
+      },
+      shareInfo () {
+        return getProperty(this.paopaoInfo, 'share.data.info')
+      },
+      aggregateShareInfo () {
+        return this.info.share_info || AGGREGATE_SHARE_INFO
+      },
+      uid () {
+        return getProperty(this.paopaoInfo, 'activity.data.uid')
+      },
+      shareUrlParams () {
+        const shareLevel = Number(this.partOmegaCommonParams.share_level) + 1
+        return {
+          ...this.partOmegaCommonParams,
+          share_level: shareLevel,
+          share_uid: this.uid // 分享时 始终为自己的
+        }
+      },
+      isNewYearsDay () {
+        return true
+        // 春节没有跑跑 写死
+        // return [AGGREGATE_STATUS_MAP.new_years_day_prepare, AGGREGATE_STATUS_MAP.new_years_day_ing, AGGREGATE_STATUS_MAP.new_years_day_end].includes(this.activityStatus)
+      },
+      activeStage () {
+        const activityStatus = this.activityStatus
+        if ([AGGREGATE_STATUS_MAP.new_years_day_prepare].includes(activityStatus)) {
+          return 1
+        } else if ([AGGREGATE_STATUS_MAP.new_years_day_ing].includes(activityStatus)) {
+          return 2
+        } else if ([AGGREGATE_STATUS_MAP.new_years_day_end, AGGREGATE_STATUS_MAP.end].includes(activityStatus)) {
+          return 3
+        }
+      },
+      canShareAggregatePage () {
+        const paopaoUserStatus = this.paopaoUserStatus
+        // 跑跑未报名或者报名了活动还未开始，不允许分享主会场页面
+        if ([STATUS_MAP.join_not_start, STATUS_MAP.not_join, STATUS_MAP.not_driver].includes(paopaoUserStatus)) return false
+        return true
+      },
+      paopaoUserStatus () {
+        return getProperty(this.paopaoInfo, 'activity.data.user_status')
+      },
+      allActivitiesEnd () {
+        const aggregateEnd = this.activityStatus === AGGREGATE_STATUS_MAP.end
+        if (this.paopaoUserStatus) {
+          return this.isPaopaoEnd && aggregateEnd
+        } else {
+          return aggregateEnd
+        }
+      },
+      paopaoActData () {
+        const paopaoInfo = this.paopaoInfo
+        if (paopaoInfo && paopaoInfo.activity && paopaoInfo.activity.data) {
+          return paopaoInfo.activity.data
+        }
+        return {}
+      },
+      subTitle () {
+        return this.paopaoActData.background_subtitle || ''
+      },
+      pageHeadImg () {
+        return this.paopaoActData.background_text_pic || ''
+      },
+      pageTitleImg () {
+        return this.info.title_img || 'https://dpubstatic.udache.com/static/dpubimg/e58478fe-be13-47f4-a742-2af7a113dad9.png'
+      },
+      pageBottomLogo () {
+        return this.info.bottom_logo
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../common/stylus/mixin.styl"
+  .page-container
+    position relative
+    min-height 100vh
+    background-color #db3d32
+    .page-content
+      position relative
+      z-index 1
+      padding-top vw(586)
+      padding-bottom 30px
+      box-sizing border-box
+      background url('https://dpubstatic.udache.com/static/dpubimg/b9c2fb5f-3ed5-4d8a-b043-cc89a5afd1b4.png') center 0 no-repeat
+      background-size contain
+    .page-head-img
+      position absolute
+      top 0
+      left 0
+      right 0
+      display block
+      width 100%
+      height vw(94)
+    .paopao-comment
+      position absolute
+      top vw(94)
+      left 0
+      width 100%
+    .page-title,
+    .page-sub-title
+      position absolute
+      z-index 1
+    .page-title
+      top vw(90)
+      left 50%
+      transform translateX(-50%)
+      width vw(669)
+      height vw(124)
+    .page-sub-title
+      top vw(248)
+      left 0
+      width 100%
+      padding 0 vw(40)
+      box-sizing border-box
+      color #ffb15d
+      text-align center
+      font-weight bold
+      font-size vw(32)
+    .paopao-rule
+      position absolute
+      right 0
+      width vw(134)
+      height vw(46)
+      box-sizing border-box
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/36a127b6-b03a-4587-a088-edbb6227c3df.png')
+      background-size cover
+    .paopao-rule
+      top vw(352)
+    .switch-role
+      position absolute
+      z-index 100
+      right 0
+      top vw(100)
+      width 21px
+      height 66px
+      background-image url('../assets/switch-role.png')
+      background-size cover
+    // .original-sections
+    //   margin-top vw(100)
+    .original-sections-wrapper
+      margin 0 vw(32) 0 vw(30)
+    .running-appointment-gift-component
+      margin-top vw(-28)
+    .bottom-logo
+      width vw(440)
+      height vw(212)
+      margin-left vw(34)
+      margin-top vw(30)
+</style>
+
+<script name="json">
+  let usingComponents = {
+    'invalid-role': '../components/activity-end/invalid-role',
+    'all-activity-end': '../components/activity-end/all-activity',
+    'notifications-section': '../components/sections/notifications',
+    'special-reward': '../components/sections/special-reward',
+    'accelerate-reward': '../components/sections/horizontal-reward/accelerate-reward',
+    'receive-reward': '../components/sections/horizontal-reward/receive-reward',
+    'more-reward-section': '../components/sections/more-reward',
+    'preparing-rewards-section': '../components/sections/preparing-rewards',
+    'today-rewards-section': '../components/sections/today-rewards',
+    'bottom-revenue-section': '../components/sections/bottom-revenue',
+    'bottom-banner-section': '../components/sections/bottom-banner',
+    'running-appointment-gift': '../components/paopao/running-appointment-gift/index',
+    'custom-service-pop': '../components/paopao/popups/custom-service',
+    // 'comment-carousel': '../components/paopao/comment-carousel',
+    // 'page-background': '../components/paopao/page-background',
+    'spring-festival-section': '../components/sections/spring-festival'
+  }
+  // web 需要渲染订单预测版块
+  if (__mpx_mode__ === 'web') {
+    usingComponents['predictable-orders-section'] = '../components/sections/predictable-orders'
+  }
+  module.exports = {
+    usingComponents,
+    navigationBarBackgroundColor: '#db3d32',
+    navigationBarTextStyle: 'white',
+    navigationBarTitleText: '元宵活动会场'
+  }
+</script>

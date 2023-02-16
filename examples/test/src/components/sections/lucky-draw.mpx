@@ -1,0 +1,74 @@
+<template>
+  <view class="lucky-draw-component" wx:if="{{ item.desc }}">
+    <base-section title="{{title}}">
+      <lucky-draw-card item="{{item}}" />
+      <view wx:class="{{ hasAccepted ? 'lucky-draw-accepted-btn' : '' }}" >
+        <common-button bindclicked="handleClick" text="{{text}}" />
+      </view>
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  const STATUS = {
+    NOT_ACCEPT: 1,
+    ACCEPTED: 2,
+    ING: 3
+  }
+  const STATUS_TEXTS_MAP = {
+    [STATUS.NOT_ACCEPT]: '领取任务',
+    [STATUS.ACCEPTED]: '已领取',
+    [STATUS.ING]: '去出车'
+  }
+
+  createComponent({
+    properties: {
+      item: {
+        type: Object,
+        value: {}
+      },
+      title: {
+        type: String,
+        value: ''
+      }
+    },
+    computed: {
+      // 已经领取任务
+      hasAccepted () {
+        return this.item.status === STATUS.ACCEPTED
+      },
+      text () {
+        return STATUS_TEXTS_MAP[this.item.status] || ''
+      }
+    },
+    methods: {
+      handleClick () {
+        // TODO
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .lucky-draw-component
+    // padding 50px 14px 15px
+    // background-color #fdedd5
+    // border 2px solid #fdcb7d
+    border-radius 10px
+    margin-top 29px
+    .lucky-draw-accepted-btn
+      opacity 0.5
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "lucky-draw-card": "../cards/lucky-task",
+      "base-section": "./base",
+      "common-button": "../base/common-button"
+    }
+  }
+</script>

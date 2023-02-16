@@ -1,0 +1,100 @@
+<template>
+  <view class="base-dialog-component" wx:show="{{appear}}" catchtouchmove="dummyTouchmove" @touchmove.prevent@web>
+    <view class="base-dialog-main">
+      <view class="base-dialog-head-image"></view>
+      <view wx:if="{{title}}" class="base-dialog-title">{{title}}</view>
+      <!-- catchtap 不好使 -->
+      <text class="base-dialog-close-btn" bindtap@wx="toggle(true)" @click.stop@web="toggle(true)"></text>
+      <slot />
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      title: {
+        type: String,
+        value: ''
+      },
+      refKey: String
+    },
+    data: {
+      appear: false
+    },
+    methods: {
+      dummyTouchmove () {},
+      toggle (isCloseBtn = false) {
+        const flag = this.appear
+        this.triggerEvent('emitBaseEvent', {
+          flag: flag,
+          refKey: this.refKey,
+          isCloseBtn: isCloseBtn
+        })
+        this.appear = !this.appear
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+  .base-dialog-component
+    position fixed
+    z-index 100
+    left 0
+    right 0
+    bottom 0
+    top 0
+    background-color rgba(0, 0, 0, 0.7)
+    .base-dialog-main
+      position absolute
+      bottom 0
+      width 100%
+      height 61.5%
+      bottom 0
+      background-color #E1513D
+    .base-dialog-head-image
+      width vw(750)
+      height vw(334)
+      min-height 143px // 解决iphone 142.5px造成的缝隙
+      position absolute
+      left 0
+      top 1px
+      transform translateY(-100%)
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/c918025c-7003-4d79-a1a0-4149112de6cf.png')
+      background-size cover
+      background-repeat no-repeat
+    .base-dialog-title
+      display inline-block
+      text-align center
+      position absolute
+      left 0
+      right 0
+      color #FFF7E1
+      font-size 16px
+      line-height 30px
+      font-weight bold
+      top vw(-75)
+      left vw(178)
+      background rgba(200,53,40,0.5)
+      border-radius 35px
+      width vw(394)
+    .base-dialog-close-btn
+      position absolute
+      right 20px
+      top vw(-330)
+      width 24px
+      height 24px
+      background-image url('../../../assets/btn-close.png')
+      background-size cover
+      expand-touch()
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

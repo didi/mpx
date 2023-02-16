@@ -1,0 +1,114 @@
+<template>
+  <view class="base-section-components">
+    <view class="base-section-components-border">
+      <view class="base-section-title {{showCountDown ? 'has-count-down' : ''}}">
+        <view class="section-title-text">{{title}}</view>
+        <count-down
+          wx:if="{{showCountDown}}"
+          prefix="剩余"
+          remainingTime="{{remainingTime}}"
+          bind:finish="countDownFinish"
+        />
+      </view>
+      <slot></slot>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    options: {
+      addGlobalClass: true,
+      styleIsolation: 'shared'
+    },
+    properties: {
+      title: {
+        type: String,
+        value: ''
+      },
+      remainingTime: {
+        type: Number,
+        value: undefined
+      }
+    },
+    computed: {
+      showCountDown () {
+        return !!this.remainingTime
+      }
+    },
+    methods: {
+      countDownFinish () {
+        this.triggerEvent('finish')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+@import "../../common/stylus/mixin.styl"
+.base-section-components
+  border-radius 10px
+  position relative
+  z-index 1
+  background-color #fdedd5
+  border 2px solid #fdcb7d
+  padding 2px
+  .base-section-components-border
+    padding 36px 11px 20px 12px
+    border-radius 8px
+    border 1px solid rgba(253, 203, 125, 0.8)
+  .base-section-title
+    position absolute
+    top -16px
+    left 50%
+    transform translateX(-50%)
+    display flex
+    width vw(451)
+    height vw(81)
+    background url('https://dpubstatic.udache.com/static/dpubimg/e65584d8-4e67-46c1-8494-22039e5a3c0a.png') center 0 no-repeat
+    background-size contain
+    flex-direction column
+    justify-content center
+    align-items center
+    &.has-count-down
+      font-size vw(28)
+      .section-title-text
+        margin-top vw(6)
+        line-height 1
+  .section-title-text
+    width 100%
+    font-size vw(28)
+    font-weight bold
+    color #ffefc0
+    text-align center
+  .count-down-component
+    margin-bottom 0
+    margin-top vw(4)
+    line-height 1
+    font-size 0
+    vertical-align top
+    .count-down-prefix,
+    .count-down-day2,
+    .count-down-hour2,
+    .count-down-minute2,
+    .count-down-second2,
+    .count-down-separator2
+      display inline-block
+      color #FFBB73
+      font-size vw(19)
+      line-height 1.21
+    .count-down-prefix,
+    .count-down-separator2
+      margin-right vw(4)
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "count-down": "../count-down/index"
+    }
+  }
+</script>

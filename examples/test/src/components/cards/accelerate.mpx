@@ -1,0 +1,285 @@
+<template>
+  <view class="accelerate-book-card-component" wx:class="{{statusClassName}}">
+    <view class="accelerate-book-card-badge"></view>
+    <view class="accelerate-book-card-title">{{item.title}}</view>
+    <view class="accelerate-book-card-main">
+      <view
+        class="accelerate-book-card-content"
+        wx:class="{{ ['accelerate-book-card-layout-' + durationTextList.length, (index >= 1 && index === durationTextList.length - 1) ? 'accelerate-book-card-content-last' : ''] }}"
+        wx:for-item="text"
+        wx:for="{{durationTextList}}"
+        wx:key="index"
+        >
+        <view class="accelerate-book-card-buffer">流水+<text class="accelerate-book-card-value">{{item.percent_text}}</text></view>
+        <view class="accelerate-book-card-desc">{{text}}</view>
+      </view>
+    </view>
+    <view class="accelerate-book-card-footer">
+      <view class="accelerate-book-card-footer-left">
+        <view class="accelerate-book-card-price-info" wx:if="{{!item.is_buy}}">
+          <text class="accelerate-book-card-price-symbol">￥</text>
+          <text class="accelerate-book-card-price-value">{{item.price_now}}</text>
+        </view>
+        <view class="accelerate-book-card-bought-info" wx:else>已购买</view>
+        <view wx:if="{{item.desc}}" class="accelerate-book-card-price-desc">{{item.desc}}</view>
+      </view>
+      <view class="accelerate-book-card-footer-right">
+        <count-down wx:if="{{ item.count_down_sec }}" prefix="剩余" bindfinish="shouldRefresh" remaining-time="{{item.count_down_sec}}" />
+        <view class="accelerate-book-card-btn" bindtap="goDetail()">{{btnText}}</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { universelPageJump, urlParse } from '../../common/js/pageJump'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+
+  const STATUS = {
+    BOUGHT: 'BOUGHT',
+    CAN_BUY: 'CAN_BUY',
+    CAN_NOT_BUY: 'CAN_NOT_BUY',
+    SOLD_OUT: 'SOLD_OUT'
+  }
+
+  const STATUS_CONFIG = {
+    CAN_BUY: {
+      className: 'can-buy',
+      text: '立即抢购'
+    },
+    CAN_NOT_BUY: {
+      className: 'can-not-buy',
+      text: '立即抢购' // 文案会被置灰
+    },
+    BOUGHT: {
+      className: 'bought',
+      text: '查看详情'
+    },
+    SOLD_OUT: {
+      className: 'sold-out',
+      text: '抢光啦'
+    }
+  }
+
+  createComponent({
+    properties: {
+      item: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      // 加速卡状态
+      status () {
+        const {
+          is_buy: isBuy,
+          stock,
+          can_buy: canBuy
+        } = this.item
+
+        if (isBuy) return STATUS.BOUGHT
+        else if (!canBuy) return STATUS.CAN_NOT_BUY
+        else if (stock <= 0) return STATUS.SOLD_OUT
+        return STATUS.CAN_BUY
+      },
+      statusClassName () {
+        return STATUS_CONFIG[this.status].className
+      },
+      btnText () {
+        return STATUS_CONFIG[this.status].text
+      },
+      durationTextList () {
+        return this.item.duration_text_list || []
+      }
+    },
+    methods: {
+      goDetail () {
+        // 不能购买或者卖光
+        if (this.status === STATUS.CAN_NOT_BUY || this.status === STATUS.SOLD_OUT) {
+          return
+        }
+
+        if (STATUS.CAN_BUY === this.status) {
+          const params = urlParse(this.item.jump_url) || {}
+          trackAggregateEvent('wyc_sdmarketing_buyaccecard_ck', {
+            card_id: params.card_id,
+            batch_id: params.batch_id
+          })
+        }
+
+        const ret = universelPageJump(this.item.jump_url, {
+          fromSource: 'driver-activities'
+        })
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      },
+      shouldRefresh () {
+        this.triggerEvent('refresh')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .accelerate-book-card-component
+    margin-top 10px
+    border-radius 10px
+    border 1px solid #F6ECDF
+    background-color #fff
+    position relative
+    &.can-buy,
+    &.bought,
+    &.sold-out
+      .accelerate-book-card-badge
+        background-image url('https://dpubstatic.udache.com/static/dpubimg/51daecf2-d112-4a8e-bf66-1c4c9d16a4e8.png')
+    &.can-buy
+      .accelerate-book-card-btn
+        background-image linear-gradient(-180deg, #FF7A34 0%, #F3412D 100%)
+        box-shadow 0 3px 8px 0 #E7998B
+        color #fff
+    &.bought
+      .accelerate-book-card-price-desc
+        color #D7501E
+      .accelerate-book-card-btn
+        border 1px solid #DA5E30
+        padding 7px 0 6px
+        color #D7501E
+        background-color transparent
+    &.can-not-buy,
+    &.sold-out
+      .accelerate-book-card-btn
+        background-image linear-gradient(90deg, #B2AFAD 1%, #C5C6CD 74%)
+        box-shadow 0 1px 3px 0 #ACACAC
+        color #fff
+    &.can-not-buy
+      .accelerate-book-card-main
+        opacity 0.53
+      .accelerate-book-card-badge
+        width 57px
+        height 57px
+        background-image url('https://dpubstatic.udache.com/static/dpubimg/7629ddc7-4fe6-41ac-8be3-52d5b153ec6b.png')
+      .accelerate-book-card-title,
+      .accelerate-book-card-price-symbol,
+      .accelerate-book-card-price-value,
+      .accelerate-book-card-main
+        color #804722 !important
+      .accelerate-book-card-footer
+        background-image radial-gradient(50% 92% at 50% 0, #FFFFFF 12%, #FDF9F5 46%, #F5DEC6 93%)
+    .accelerate-book-card-badge
+      position absolute
+      top 0
+      right 0
+      width 63px
+      height 63px
+      background-repeat no-repeat
+      background-size cover
+      background-position top right
+    .accelerate-book-card-title
+      padding 18px 15px 0
+      font-weight bold
+      font-size 15px
+      color #4B4B4D
+    .accelerate-book-card-main
+      margin-top 16px
+      padding 0 15px
+      display flex
+      justify-content space-between
+    .accelerate-book-card-content
+      position relative
+      color #804722
+      padding 12px
+      box-sizing border-box
+      box-shadow 0 0 5px 0 rgba(210,166,120,0.60)
+      bottom 0
+      flex-grow 1
+      border-radius 8px 8px 0px 0px
+    .accelerate-book-card-content-last
+      margin-left 15px
+    .accelerate-book-card-layout-2
+      background top 31px right 0/ 54px 39px url('https://dpubstatic.udache.com/static/dpubimg/4470f9f6-fb38-4fe5-892f-a7d6e417c488.png') no-repeat, center / 100% 100% linear-gradient(-28deg, #E9B17E 0%, #FBDEC1 64%, #FBDEC1 75%, #EDA15D 100%) no-repeat
+      display inline-block
+      width 130px
+      flex-basis 130px
+    .accelerate-book-card-layout-1
+      background: top 31px right 0/ 110px 39px url('https://dpubstatic.udache.com/static/dpubimg/6dc71486-997b-4e17-9eeb-1609e2430f0a.png') no-repeat, center / 100% 100% linear-gradient(-28deg, #E9B17E 0%, #FBDEC1 64%, #FBDEC1 75%, #EDA15D 100%) no-repeat
+      width 277px
+    .accelerate-book-card-buffer
+      font-weight bold
+      font-size 12px
+      line-height 15px
+    .accelerate-book-card-value
+      font-family dinum
+      font-size 15px
+    .accelerate-book-card-desc
+      font-weight bold
+      margin-top 4px
+      font-size 14px
+      color #804722
+    .accelerate-book-card-footer
+      position relative
+      z-index 1
+      padding 15px 15px 14px
+      min-height 75px
+      box-sizing border-box
+      display flex
+      align-items center
+      background-image radial-gradient(50% 92% at 50% 0, #FFFFFF 12%, #FDF9F5 46%, #F5DEC6 93%)
+      border-radius 0 0 10px 10px
+    .accelerate-book-card-footer-left
+      word-break break-all
+      flex 1
+    .accelerate-book-card-price-symbol
+      font-weight bold
+      font-size 14px
+      color #323233
+    .accelerate-book-card-price-value
+      font-family dinum
+      font-size 25px
+      color #323233
+    .accelerate-book-card-bought-info
+      font-weight bold
+      font-size 14px
+      color #D7501E
+      line-height 12px
+      position relative
+      padding-left 21px
+      &:after
+        content ''
+        position absolute
+        top -2px
+        left 0
+        width 16px
+        height 16px
+        background-image url('https://dpubstatic.udache.com/static/dpubimg/a5dc6e39-22ae-4175-8d13-74320e8d3bb7.png')
+        background-size cover
+    .accelerate-book-card-price-desc
+      margin-top 5px
+      font-size 12px
+      color #969699
+      font-weight normal
+    .accelerate-book-card-footer-right
+      text-align right
+      display flex
+      flex-direction column
+    .accelerate-book-card-btn
+      width 80px
+      padding 8px 0 7px
+      text-align center
+      border-radius 7px
+      font-weight bold
+      font-size 14px
+      line-height 15px
+      align-self flex-end
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "count-down": "../count-down/index"
+    }
+  }
+</script>

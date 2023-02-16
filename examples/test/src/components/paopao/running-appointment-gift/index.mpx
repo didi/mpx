@@ -1,0 +1,1060 @@
+<template>
+  <view class="running-appointment-gift-component">
+    <!-- 保存海报 -->
+    <save-poster
+      wx:if="{{posterUrl}}"
+      posterUrl="{{posterUrl}}"
+      bindsuccess="onSuccessSaving"
+    />
+    <view wx:if="{{showShareTip}}" class="paopao-strategy" bindtap="togglePopupOrDialog('strategyPopup')"></view>
+    <!-- 所有异常的页面展示 -->
+    <view wx:if="{{activityExceptionTexts.length}}">
+      <error-page-paopao texts="{{activityExceptionTexts}}" />
+    </view>
+    <view wx:else class="running-appointment-gift {{getBgClass}}">
+      <red-package-bg type="{{getBgClass}}"></red-package-bg>
+      <view wx:if="{{showSelfRewardTitle}}" class="running-appointment-gift-title">跑跑预约礼</view>
+      <view wx:if="{{showRewardContent}}" class="reward-content">
+        <view class="reward-box">
+          <view class="half-width-left {{!showRightReward ? 'reward-center' : ''}}">
+            <view class="reward reward-left">
+              <view class="reward-tip">{{rewardInfo.reward_tip_left}}</view>
+              <view class="reward-money"><text class="num">{{rewardInfo.personal_reward}}</text>元</view>
+              <view wx:if="{{status === statusMap.result}}" class="num-bottom-tip">
+                <text class="num-bottom-tip-text">{{rewardInfo.today_up_tip}}</text></view>
+            </view>
+          </view>
+          <view wx:if="{{showRightReward}}" class="half-width-right">
+            <view class="reward reward-right">
+              <view class="reward-tip">{{rewardInfo.reward_tip_right}}
+                <view
+                  class="reward-tip-tap"
+                  bindtap="togglePopupOrDialog('strategyPopup')"
+                ></view>
+              </view>
+              <view class="reward-money"><text class="num">{{rewardInfo.assist_reward}}</text>元</view>
+              <view wx:if="{{status === statusMap.result}}" class="num-bottom-tip">
+                <stacked-avatars type="small" list="{{ rewardInfo.follower_avatar }}" />
+                <text class="num-bottom-tip-text">共{{rewardInfo.follower_avatar_length}}名</text>
+                </view>
+            </view>
+          </view>
+        </view>
+        <rich-text wx:if="{{status !== statusMap.result}}" class="reward-ing-text" nodes="{{ formattedHTMLString }}"></rich-text>
+        <text wx:if="{{status === statusMap.result}}" class="reward-desc reward-desc-result">{{rewardInfo.result}}</text>
+        <text wx:else class="reward-desc">{{rewardInfo.reward_tip_bottom}}</text>
+      </view>
+      <block wx:else>
+        <progress-bar class="paopao-progress" progress-data="{{progressData}}" />
+        <rich-text class="tip-text" nodes="{{ formattedHTMLString }}"></rich-text>
+        <view class="participants-bar-wrap">
+          <participants-bar wx:if="{{activityInfo.main_task_overview}}" driver-overview="{{activityInfo.main_task_overview}}" />
+        </view>
+      </block>
+      <view class="bottom {{getBgClass}}">
+        <bottom-button
+          wx:if="{{status !== statusMap.result}}"
+          eventType="{{badgeClass.eventType}}"
+          text="{{activityInfo.button_desc}}"
+          badgeClass="{{badgeClass}}"
+          status="{{status}}"
+          actual="{{activityInfo.actual}}"
+          small="{{!!secondBtn}}"
+          bgImg="{{badgeClass.smallBgImg}}"
+          bind:btnClick="onMainButtonClick"
+        />
+        <bottom-button
+          wx:if="{{secondBtn}}"
+          eventType="{{secondBtn.eventType}}"
+          text="{{secondBtn.text}}"
+          badgeClass="{{secondBtn.badgeClass}}"
+          status="{{status}}"
+          actual="{{activityInfo.actual}}"
+          small="{{secondBtn.small}}"
+          bgImg="{{secondBtn.smallBgImg}}"
+          bind:btnClick="onMainButtonClick"
+        />
+        <view wx:if="{{activityInfo.timestamp}}" class="btn-bottom-desc">
+          <count-down remaining-time="{{activityInfo.timestamp}}" />
+        </view>
+        <view wx:elif="{{status === statusMap.not_join}}" class="checkbox-warp">
+          <authorization-text
+            wx:model="{{checkboxValue}}"
+            bind:updated="togglePopupOrDialog('agreementDialog')"
+          />
+        </view>
+        <view wx:else class="btn-bottom-desc">{{activityInfo.button_bottom_tip}}</view>
+      </view>
+      <view
+        wx:if="{{activityInfo.leader_rank_text}}"
+        class="ranking-tip"
+        bindtap="togglePopupOrDialog('myInvitationDialog', 4)"
+      >{{activityInfo.leader_rank_text}}</view>
+    </view>
+    <view>
+      <!-- 弹窗 -->
+      <!-- 协议 -->
+      <authorization-agreement
+        wx:if="{{status === statusMap.not_join && activityInfo.authorization_desc}}"
+        wx:ref="agreementDialog"
+        bind:agree="onAgreed"
+        text="{{activityInfo.authorization_desc}}"
+        bind:toggle="onToggle"
+      />
+      <!-- 预约成功 -->
+      <signup-success
+        wx:if="{{popInfo}}"
+        wx:ref="signupSuccessDialog"
+        bind:inviteSignUp="inviteSignUp"
+        popup-info="{{popInfo}}"
+        bind:toggle="onToggle"
+      />
+      <!-- 我的邀请 -->
+      <my-invitation
+        wx:if="{{showMyInvitationDialog}}"
+        bind:inviteSignUp="inviteSignUp"
+        bind:pullingUp="onPullingUp"
+        wx:ref="myInvitationDialog"
+        followers="{{followersInfoCache.followers}}"
+        texts="{{myInvitationTexts}}"
+        status="{{status}}"
+        bind:toggle="onToggle"
+        rank-list="{{activityInfo.rank_list}}"
+        my-ranking="{{activityInfo.leader_rank}}"
+        city-name="{{activityInfo.city_name}}"
+       />
+       <!-- 排行 -->
+       <!-- 预览海报 -->
+       <preview-poster
+        url="{{posterUrl}}"
+        wx:ref="previewPosterDialog"
+       />
+       <!-- 攻略 -->
+      <activity-strategy-popup
+        wx:if="{{activityInfo.strategy}}"
+        wx:ref="strategyPopup"
+        info="{{activityInfo.strategy}}"
+        bind:toggle="onToggle"
+      />
+      <!-- 预约之后 再次回到自己的页面 -->
+      <auto-invite-popup
+        wx:if="{{status === statusMap.join_not_start && popInfo}}"
+        bind:inviteSignUp="inviteSignUp"
+        wx:ref="autoInvitePopup"
+        popup-info="{{popInfo}}"
+        bind:toggle="onToggle"
+      />
+      <!-- 恭喜获得 -->
+      <receive-reward-popup
+        wx:if="{{status === statusMap.result && popInfo}}"
+        wx:ref="receiveRewardPopup"
+        popup-info="{{popInfo}}"
+        bind:toggle="onToggle"
+      />
+      <!-- 好友邀请 客态 -->
+      <receive-friend-invitation-popup
+        wx:if="{{canHelpOtherAndLaunchOwn}}"
+        wx:ref="receiveInvitationPopup"
+        bind:signUp="togglePopupOrDialog('agreementDialog')"
+        bind:refused="onRefused"
+        popup-info="{{popInfo}}"
+        bind:toggle="onToggle"
+        bind:updated="togglePopupOrDialog('agreementDialog')"
+      />
+      <!-- 客服会话 -->
+      <custom-service-pop
+        wx:ref="customServicePop"
+      />
+    </view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+  import { strToHtml, getProperty } from '../../../common/js/utils'
+  import { STATUS_MAP, DRIVER_HOME_PAGE, PAGE_SIZE, MainBtnEventTypeMap, PaoPaoDchn } from '../../../common/js/constants'
+  import { universelPageJump } from '../../../common/js/pageJump'
+  import { getPoster, getFriendsList } from '../../../api'
+  import { wxMessage } from '../../../common/js/wx'
+  import { isRainbow, isWechatMiniprogram } from '../../../common/js/env'
+  import { trackEvent } from '../../../common/js/Omega'
+  import groupPage from '../../../pages/group.mpx?resolve'
+
+  const refsMap = {
+    agreementDialog: 'agreementDialog',
+    signupSuccessDialog: 'signupSuccessDialog',
+    myInvitationDialog: 'myInvitationDialog',
+    // invitationRankDialog: 'invitationRankDialog',
+    strategyPopup: 'strategyPopup',
+    autoInvitePopup: 'autoInvitePopup',
+    receiveRewardPopup: 'receiveRewardPopup',
+    receiveInvitationPopup: 'receiveInvitationPopup'
+  }
+  /* 是否有按钮小手 */
+  const hasHandStatus = [STATUS_MAP.not_join, STATUS_MAP.join_not_start]
+  // const btnTipStatus = [
+  //   STATUS_MAP.work_self,
+  //   STATUS_MAP.ing_reward,
+  //   STATUS_MAP.ing_reward_friends
+  // ]
+  // const btnTipShareStatus = [STATUS_MAP.work, STATUS_MAP.share_work]
+  // 两行文案
+  const towRewardTip = [
+    STATUS_MAP.share_work,
+    STATUS_MAP.work,
+    STATUS_MAP.result,
+    STATUS_MAP.ing_reward_friends
+  ]
+  const rewardContentStatus = [
+    STATUS_MAP.share_work,
+    STATUS_MAP.work,
+    STATUS_MAP.work_self,
+    STATUS_MAP.result,
+    STATUS_MAP.ing_reward,
+    STATUS_MAP.ing_reward_friends
+  ]
+  // 活动阶段，1=助力报名期，2=出车期，3=活动结束
+  const activityStatus1 = [STATUS_MAP.not_join, STATUS_MAP.join_not_start]
+  const activityStatus2 = [
+    STATUS_MAP.share_work,
+    STATUS_MAP.work_self,
+    STATUS_MAP.work,
+    STATUS_MAP.ing_reward,
+    STATUS_MAP.ing_reward_friends
+  ]
+  // const activityStatus3 = [
+  //   STATUS_MAP.result,
+  //   STATUS_MAP.act_not_join,
+  //   STATUS_MAP.act_not_out,
+  //   STATUS_MAP.reward_cal
+  //   // STATUS_MAP.user_risk // 风控页面
+  // ]
+  // 跑跑预约卡片曝光
+  const pageEventIdMap = [
+    'wyc_mkt_ppyuyue_leader_main_appoint_sw',
+    'wyc_mkt_ppyuyue_leader_main_chuche_sw',
+    'wyc_mkt_ppyuyue_leader_main_result_sw'
+  ]
+  // 跑跑预约卡片曝光 type
+  const pageSWTypeMap = {
+    [STATUS_MAP.not_join]: 1,
+    [STATUS_MAP.join_not_start]: 2,
+    [STATUS_MAP.work]: 1,
+    [STATUS_MAP.ing_reward_friends]: 1,
+    [STATUS_MAP.work_self]: 2,
+    [STATUS_MAP.ing_reward]: 2,
+    [STATUS_MAP.share_work]: 3,
+    [STATUS_MAP.result]: -1, // 还需再判断， 1: 邀请到1名好友，2: 未邀请到1名
+    [STATUS_MAP.act_not_out]: 3,
+    [STATUS_MAP.act_not_join]: 4,
+    [STATUS_MAP.reward_cal]: -1,
+    [STATUS_MAP.reward_end]: 5,
+    [STATUS_MAP.reward_fail]: 6
+  }
+  
+  createComponent({
+    options: {
+      addGlobalClass: true,
+      styleIsolation: 'shared'
+    },
+    properties: {
+      paopaoInfo: {
+        type: Object,
+        value: {}
+      },
+      dsi: {
+        type: String,
+        value: ''
+      },
+      urlParams: Object
+    },
+    data: {
+      statusMap: STATUS_MAP,
+      checkboxValue: false,
+      isDidiDriver: !isRainbow,
+      isPullingUp: false,
+      followersInfoCache: {
+        followers: [],
+        pageNum: 1
+      }, // 缓存已有的邀请好友列表信息
+      posterUrl: ''
+    },
+    lifetimes: {
+      attached () {
+        this.updateFollowersInfoCache(this.followers)
+        this.$nextTick(() => {
+          this.tellUserCannotHelp()
+          if (this.canHelpOtherAndLaunchOwn) {
+            this.togglePopupOrDialog('receiveInvitationPopup')
+          } else if (this.status === STATUS_MAP.join_not_start) {
+            this.togglePopupOrDialog('autoInvitePopup')
+          } else if (this.status === STATUS_MAP.result) {
+            this.togglePopupOrDialog('receiveRewardPopup')
+          }
+        })
+      }
+    },
+    computed: {
+      canHelpOtherAndLaunchOwn () {
+        const otherDsi = this.dsi // 分享者的 dsi
+        const selfDsi = this.selfDsi // 自己的 dsi
+        // 为 true 表示帮好友助力并且发起自己的活动，展示接受好友弹窗
+        // 以上情况代表自己打开了别人的分享卡片，并且自己没有发起过团
+        return !!otherDsi && (otherDsi !== selfDsi) && this.status === STATUS_MAP.not_join
+      },
+      selfDsi () {
+        return getProperty(this.paopaoInfo, 'share.data.instance.dsi')
+      },
+      toastTitle () {
+        return getProperty(this.paopaoInfo, 'activity.data.toast_title') || {}
+      },
+      activityInfo () {
+        return getProperty(this.paopaoInfo, 'activity.data') || {}
+      },
+      followersCnt () {
+        return getProperty(this.paopaoInfo, 'activity.data.leader_rank.follower_cnt')
+      },
+      popInfo () {
+        return getProperty(this.paopaoInfo, 'pop.data.0') || null
+      },
+      followers () {
+        return getProperty(this.paopaoInfo, 'relation.data.groups.0.followers') || []
+      },
+      rewardInfo () {
+        return getProperty(this.paopaoInfo, 'reward.data') || {}
+      },
+      status () {
+        return this.activityInfo.user_status
+      },
+      showSelfRewardTitle () {
+        return rewardContentStatus.includes(this.status) && this.status !== STATUS_MAP.result
+      },
+      showRewardContent () {
+        return rewardContentStatus.includes(this.status)
+      },
+      progressData () {
+        const mainTaskProgress = this.activityInfo.main_task_progress || {}
+        const progressData = {
+          currentValue: Number(mainTaskProgress.current_value),
+          currentPercent: Number(mainTaskProgress.current_percent),
+          nextPercent: Number(mainTaskProgress.next_percent),
+          rewardsThreshold: [],
+          participantsThreshold: []
+        }
+        mainTaskProgress.all_rights.map(item => {
+          progressData.participantsThreshold.push(Number(item.number))
+          progressData.rewardsThreshold.push(Number(item.rate))
+        })
+        return progressData
+      },
+      myInvitationTexts () {
+        return {
+          title: this.activityInfo.invitation_title,
+          desc: this.activityInfo.invitation_desc
+        }
+      },
+      wxTemplates () {
+        return this.activityInfo.templates || []
+      },
+      formattedHTMLString () {
+        return strToHtml(this.activityInfo.activity_desc, '')
+      },
+      showRightReward () {
+        if (this.status === STATUS_MAP.result) {
+          return this.activityInfo.actual >= 1
+        }
+        return towRewardTip.includes(this.status)
+      },
+      getBgClass () {
+        let bgClass = ''
+        switch (this.status) {
+          case STATUS_MAP.join_not_start:
+            bgClass = 'share-friends'
+            break
+          case STATUS_MAP.share_work:
+          case STATUS_MAP.work_self:
+          case STATUS_MAP.work:
+          case STATUS_MAP.ing_reward:
+          case STATUS_MAP.ing_reward_friends:
+            bgClass = 'ing-reward'
+            break
+          case STATUS_MAP.result:
+            bgClass = 'result'
+            break
+        }
+        if (this.secondBtn) {
+          bgClass += ' with-two-btn'
+        }
+        return bgClass
+      },
+      bottomBtnClass () {
+        let classStr = ''
+        if (this.status === this.statusMap.result) {
+          classStr += ' result-desc'
+        }
+        return classStr
+      },
+      badgeClass () {
+        const rightBottom = hasHandStatus.includes(this.status) ? 'hand' : ''
+        let action = ''
+        switch (this.status) {
+          case STATUS_MAP.not_driver:
+            action = MainBtnEventTypeMap.register
+            break
+        }
+        return {
+          rightTopText: this.activityInfo.button_bubble || [],
+          rightBottom,
+          smallBgImg: 'https://dpubstatic.udache.com/static/dpubimg/hzDHIxyfaK/options_btn_paopao_1.png',
+          eventType: action // joinGroup，remindFriendsToJoin，remindFriendsToDrive，driveCar
+        }
+      },
+      secondBtn () {
+        const joinWechatText = this.activityInfo.driver_wechat_group_button
+        const btnText = this.activityInfo.invite_button_desc
+        if (btnText || joinWechatText) {
+          return {
+            small: true,
+            text: joinWechatText || btnText, // '喊好友出车'，'加入司机群'
+            badgeClass: {
+              textStyle: {
+                color: '#ffcc5e'
+              }
+            },
+            smallBgImg: 'https://dpubstatic.udache.com/static/dpubimg/La_uy08VQO/options_btn_paopao_2.png',
+            eventType: joinWechatText ? MainBtnEventTypeMap.joinGroup : MainBtnEventTypeMap.remindFriendsToDrive // joinGroup，remindFriendsToJoin，remindFriendsToDrive，driveCar
+          }
+        }
+        return undefined
+      },
+      activityExceptionTexts () {
+        let texts = []
+        const status = this.status
+        const { act_not_join, act_not_out, reward_cal, reward_fail, user_risk, reward_end, reward_risk, city_not_allow } = this.statusMap
+        if (reward_cal === status) {
+          texts = [
+            '奖励计算中',
+            '请稍后再来查看'
+          ]
+        } else if ([act_not_join, act_not_out].includes(status)) {
+          texts = ['请关注更多春节活动']
+          texts.unshift(status === act_not_join ? '当前未报名' : '本次跑跑预约礼未获得奖励')
+        } else if (status === reward_fail) {
+          texts = [
+            '很抱歉，计算奖励失败',
+            '可联系客服查询奖励'
+          ]
+        } else if (status === user_risk) {
+          texts = [
+            '活动预约失败',
+            '可更换账号重新尝试'
+          ]
+        } else if (status === reward_end) {
+          texts = [
+            '当前活动已结束'
+          ]
+        } else if (status === reward_risk) {
+          texts = [
+            '不符合奖励规则',
+            '详情请查看活动说明~'
+          ]
+        } else if (status === city_not_allow) {
+          texts = [
+            '本城市暂时未开放该活动'
+          ]
+        }
+        return texts
+      },
+      activeStage () {
+        if (activityStatus1.includes(this.status)) {
+          return 1
+        } else if (activityStatus2.includes(this.status)) {
+          return 2
+        } else {
+          return 3
+        }
+      },
+      showShareTip () {
+        if ([STATUS_MAP.join_not_start, STATUS_MAP.share_work].includes(this.status)) {
+          return true
+        }
+        return false
+      },
+      showMyInvitationDialog () {
+        const btnText = this.activityInfo.invite_button_desc
+        const leaderRankText = this.activityInfo.leader_rank_text
+        return btnText || leaderRankText
+      }
+    },
+    watch: {
+      paopaoInfo: {
+        handler () {
+          this.swTrackEvent()
+          this._getPoster()
+        },
+        immediate: true
+      },
+      followersCnt (pre, current) {
+        // 后台数据发生了变化
+        // 如果当前内存的助力者数量小于 PAGE_SIZE, 需要更新缓存
+        if (this.followersInfoCache.followers.length < PAGE_SIZE) {
+          this.updateFollowersInfoCache(this.followers)
+        } else { // 把锁打开，让用户让用户自己操作，请求更多数据
+          this.followersInfoCache.locked = false
+        }
+      }
+    },
+    methods: {
+      onRefused () {
+        this.triggerEvent('refusedFriends')
+      },
+      _getPoster () {
+        if (this.posterUrl) { return }
+        // 只有司机端才有海报，并且活动必须是参与了，处于蓄水期
+        if (this.status === this.statusMap.join_not_start && this.isDidiDriver && !isWechatMiniprogram) {
+          let shareLevel = this.urlParams.share_level || 1
+          const params = {
+            share_level: ++shareLevel,
+            first_uid: this.urlParams.first_uid || '' // 链接上有就带，如果没有让后端取请求者的
+          }
+          getPoster(params).then(res => {
+            this.posterUrl = res
+          })
+        }
+      },
+      async onPullingUp () {
+        // 所有的数据都请求回来了
+        if (this.followersInfoCache.locked) return
+        // 正在加载数据
+        if (this.isPullingUp) return
+        this.isPullingUp = true
+        const dsi = this.selfDsi
+        const pageNum = this.followersInfoCache.pageNum
+        const params = {
+          page: pageNum,
+          dsi,
+          size: PAGE_SIZE
+        }
+        try {
+          this.showLoading('正在获取好友列表...')
+          const res = await getFriendsList(params)
+          this.updateFollowersInfoCache(getProperty(res, 'data.groups.0.followers'), true)
+          this.isPullingUp = false
+          this.hideLoading()
+        } catch (error) {
+          this.isPullingUp = false
+          this.commonErrToast(error)
+        }
+      },
+      updateFollowersInfoCache (followers = [], onPullingUp = false) {
+        const originalFollowers = this.followersInfoCache.followers
+        const originalPageNum = this.followersInfoCache.pageNum
+        let locked
+        // 已经没有更多好友了
+        if (followers.length === 0 && onPullingUp) {
+          this.showToast('已获取当前您所有的好友了～')
+          locked = true
+        }
+        this.followersInfoCache = {
+          followers: this.mergeNotDuplicatedArray(originalFollowers.concat(followers)),
+          locked,
+          pageNum: originalPageNum + 1
+        }
+      },
+      mergeNotDuplicatedArray (arr) {
+        // 后端返回的分页可能存在重复数据
+        const hash = {}
+        let ret = []
+        for (let i = 0; i < arr.length; i++) {
+          const uniqueId = arr[i].follower_uid
+          if (!hash[uniqueId]) {
+            hash[uniqueId] = true
+            ret.push(arr[i])
+          }
+        }
+        return ret
+      },
+      swTrackEvent () {
+        let swType = pageSWTypeMap[this.status] || 0
+        if (swType === -1) {
+          swType = this.activityInfo.actual >= 1 ? 1 : 2
+        }
+        let eventKey = pageEventIdMap[this.activeStage - 1] || ''
+        let params = {
+          sw_type: swType
+        }
+        if (this.status === STATUS_MAP.user_risk) {
+          eventKey = 'wyc_mkt_ppyuyue_risk_sw'
+          params = {
+            sw_type: 1
+          }
+        } else if (this.status === STATUS_MAP.reward_risk) {
+          eventKey = 'wyc_mkt_ppyuyue_risk_sw'
+          params = {
+            sw_type: 2
+          }
+        } else if (this.toastTitle.status === 'already-join') { // 助力者已参与活动
+          eventKey = 'wyc_mkt_ppyuyue_toast_sw'
+          params = {
+            reason_type: 4
+          }
+        } else if (this.toastTitle.status === 'ing-not-join') { // 已过预约期
+          eventKey = 'wyc_mkt_ppyuyue_toast_sw'
+          params = {
+            reason_type: 2
+          }
+        } else if (this.status === STATUS_MAP.city_not_allow) { // 城市不允许参加
+          eventKey = 'wyc_mkt_ppyuyue_toast_sw'
+          params = {
+            reason_type: 5
+          }
+        }
+
+        eventKey && trackEvent(eventKey, params)
+        if (this.showRightReward) { // 出车期 || 结束 攻略曝光（曝光的前提是 邀请了2名）
+          let swType = 2
+          if (this.status === STATUS_MAP.result) {
+            swType = 3
+          }
+          this.swType = swType // 其他的攻略也需要
+          trackEvent('wyc_mkt_ppyuyue_leader_main_rank_invite_history_sw',
+            {
+              sw_type: swType
+            }
+          )
+        }
+      },
+      onSuccessSaving () {
+        const previewPosterDialog = this.$refs.previewPosterDialog
+        // 保存海报成功
+        previewPosterDialog && previewPosterDialog.toggle()
+      },
+      tellUserCannotHelp () {
+        const toastText = this.toastTitle.text
+        if (toastText) {
+          this.showToast(toastText)
+        }
+      },
+      onAgreed () { // 同意并预约
+        this.checkboxValue = true
+        const handler = function () {
+          this.triggerEvent('signup', () => {
+            this.togglePopupOrDialog('signupSuccessDialog')
+          })
+        }.bind(this)
+        if (__mpx_mode__ === 'wx') {
+          wxMessage(
+            this.wxTemplates,
+            {
+              complete: handler
+            }
+          )
+        } else {
+          handler()
+        }
+      },
+      inviteSignUp () { // 邀好友一起预约
+        this.triggerEvent('shareH5')
+      },
+      goToWork () { // 立即出车
+        if (universelPageJump(DRIVER_HOME_PAGE)) {
+          this.togglePopupOrDialog('customServicePop')
+        }
+      },
+      joinGroup () {
+        if (__mpx_mode__ === 'wx') {
+          wx.navigateTo({
+            url: groupPage
+          })
+        } else {
+          this.$router.push({
+            path: '/pages/group'
+          })
+        }
+      },
+      register () {
+        setTimeout(() => {
+          if (__mpx_mode__ === 'wx') {
+            mpx.navigateTo({
+              url: `/pages/index/index?appId=wx52d7846cd3f9fba9&usce_channel=24462&usce_sub_channel=128848`
+            })
+          } else {
+            window.location.href = `https://page.udache.com/driver-biz/driver-recruitment-v2/index.html?usce_channel=24448&usce_sub_channel=128847&dchn=${this.urlParams.dchn || PaoPaoDchn}`
+          }
+        }, 400)
+      },
+      onMainButtonClick (e) { // 按钮 的所有事件 集合
+        const eventName = e.detail
+        // goToWork, inviteSignUp
+        if (this[eventName]) {
+          this[eventName]()
+        } else {
+          this.togglePopupOrDialog(eventName)
+        }
+      },
+      togglePopupOrDialog (type, args) {
+        const refView = this.$refs[type]
+        refView && refView.toggle(args)
+        // 页面上的点击埋点
+        let eventKey
+        let params = {}
+        // 攻略 的点击 这个是出车和结束阶段的
+        if (type === refsMap.strategyPopup && this.showRightReward) {
+          eventKey = 'wyc_mkt_ppyuyue_leader_main_rank_invite_history_ck'
+          params = {
+            ck_type: 3,
+            sw_type: this.swType
+          }
+        }
+        eventKey && trackEvent(eventKey, params)
+      },
+      onToggle (e = {}) { // 所有弹窗的展现和关闭
+        const data = e.detail
+        const { refKey, flag, isCloseBtn } = data
+        const btnDesc = getProperty(this.popInfo, 'context.tip') || ''
+        const defaultAction = (eventKey, params = {}, closeEventKey = '') => {
+          let eventId
+          if (!flag) { // 打开弹窗
+            eventId = eventKey
+          } else if (isCloseBtn && closeEventKey) {
+            eventId = closeEventKey
+            params = {}
+          }
+          eventId && trackEvent(eventId, params)
+        }
+        const swTypeParams = {
+          sw_type: this.activeStage
+        }
+        const refsToggleMap = {
+          strategyPopup: { // 攻略
+            eventKey: 'wyc_mkt_ppyuyue_leader_main_reward_tip_sw',
+            params: swTypeParams,
+            actions () {
+              defaultAction(this.eventKey, this.params)
+            }
+          },
+          // invitationRankDialog: { // 排行
+          //   eventKey: 'wyc_mkt_ppyuyue_leader_rank_pop_sw',
+          //   closeEventKey: 'wyc_mkt_ppyuyue_leader_rank_pop_close_ck',
+          //   params: swTypeParams,
+          //   actions () {
+          //     defaultAction(this.eventKey, this.params, this.closeEventKey)
+          //   }
+          // },
+          myInvitationDialog: { // 我的邀请
+            eventKey: '', // 'wyc_mkt_ppyuyue_leader_myinvite_pop_sw',
+            closeEventKey: 'wyc_mkt_ppyuyue_rank_invite_close_ck',
+            params: {
+              sw_type: this.activeStage === 1 ? (this.activityInfo.actual ? 1 : 2) : this.activeStage === 2 ? 3 : ''
+            },
+            actions () {
+              defaultAction(this.eventKey, this.params, this.closeEventKey)
+            }
+          },
+          agreementDialog: { // 预约授权
+            eventKey: 'wyc_mkt_ppyuyue_authorization_detail_sw',
+            params: {},
+            actions () {
+              defaultAction(this.eventKey, this.params)
+            }
+          },
+          signupSuccessDialog: { // 预约成功
+            eventKey: 'wyc_mkt_ppyuyue_leader_share_pop_sw',
+            closeEventKey: 'wyc_mkt_ppyuyue_leader_share_pop_close_ck',
+            params: {
+              btn_type: 1
+            },
+            actions () {
+              defaultAction(this.eventKey, this.params, this.closeEventKey)
+            }
+          },
+          autoInvitePopup: { // 每次返回端内
+            eventKey: 'wyc_mkt_ppyuyue_leader_share_pop_sw',
+            closeEventKey: 'wyc_mkt_ppyuyue_leader_share_pop_close_ck',
+            params: {
+              btn_type: 2
+            },
+            actions () {
+              defaultAction(this.eventKey, {
+                ...this.params,
+                btn_desc: btnDesc
+              }, this.closeEventKey)
+            }
+          },
+          receiveRewardPopup: { // 恭喜获得
+            eventKey: 'wyc_mkt_ppyuyue_leader_share_pop_sw',
+            closeEventKey: 'wyc_mkt_ppyuyue_leader_share_pop_close_ck',
+            params: {
+              btn_type: 3
+            },
+            actions () {
+              defaultAction(this.eventKey, this.params, this.closeEventKey)
+            }
+          },
+          receiveInvitationPopup: { // 受邀弹窗
+            eventKey: 'wyc_mkt_ppyuyue_follower_main_pop_sw',
+            closeEventKey: 'wyc_mkt_ppyuyue_follower_main_pop_close_ck',
+            params: {},
+            actions () {
+              defaultAction(this.eventKey, this.params, this.closeEventKey)
+            }
+          }
+        }
+        const refInfo = refsToggleMap[refKey]
+        refInfo && refInfo.actions()
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+@import "../../../common/stylus/mixin.styl"
+
+.running-appointment-gift-component
+  position relative
+  .running-appointment-gift
+    position relative
+    margin 0 auto
+    width vw(702)
+    height vw(769)
+    border-top 1px solid transparent
+    &.ing-reward
+      width vw(702)
+      height vw(782)
+      .reward-content
+        margin-top vw(130)
+    &.result
+      height vw(769)
+      .reward-content
+        // margin-top vw(214)
+        margin-top vw(200)
+      .bottom
+        margin-top vw(50)
+      .num-bottom-tip
+        margin-top vw(18)
+        display flex
+        align-items center
+        justify-content flex-start
+        font-size 0px
+        color #d3825e
+        text-align center
+        .stacked-avatars-component
+          margin-right vw(7)
+        .stacked-avatar-item
+          border-color rgba(211, 130, 94, 0.5)
+          background-color #fff
+        .num-bottom-tip-text
+          display inline-block
+          line-height vw(20)
+          font-size vw(20)
+      .reward-content
+        .reward-ing-text
+          margin-top vw(61)
+          .hightlight
+            color #f24e22 !important
+        .reward-desc
+          &.reward-desc-result
+            margin-top vw(61)
+            font-size vw(18)
+            font-weight normal
+            color rgba(211,130,94,0.7)
+    .num-bottom-tip
+      display none
+    .paopao-progress
+      margin-top vw(192)
+    .tip-text
+      display block
+      padding-top vw(36)
+      width 100%
+      font-size vw(24)
+      font-weight bold
+      color #bf322c
+      text-align center
+      line-height vw(24)
+    .running-appointment-gift-title
+      position absolute
+      top vw(60)
+      left 50%
+      transform translateX(-50%)
+      color #d3825e
+      font-size vw(26)
+      &::before,
+      &::after
+        position absolute
+        top 50%
+        transform translateY(-50%)
+        display block
+        width vw(30)
+        height vw(1)
+        content ' '
+        background-color #d3825e
+      &::before
+        left vw(-45)
+      &::after
+        right vw(-45)
+    .reward-content
+      margin-top vw(153)
+      font-size 0
+      text-align center
+      .reward-box
+        padding 0 vw(100)
+      .half-width-left,
+      .half-width-right
+        display inline-block
+        width 50%
+        text-align left
+      .half-width-left
+        text-align right
+        &.reward-center
+          width 100%
+          text-align center
+          .reward-left
+            margin-right 0
+            text-align center
+          .reward-money
+            text-align center
+          .num-bottom-tip
+            justify-content center
+      .reward-left
+        margin-right vw(22)
+      .reward-right
+        margin-left vw(22)
+      .reward
+        display inline-block
+        text-align left
+      .reward-tip
+        position relative
+        display inline-block
+        font-size vw(20)
+        color #d3825e
+        text-align center
+        line-height vw(20)
+      .reward-tip-tap
+        width vw(20)
+        height vw(20)
+        position absolute
+        top 0
+        right vw(-26)
+        background-size contain
+        background-position center
+        background-repeat no-repeat
+        background-image url('https://dpubstatic.udache.com/static/dpubimg/27Tb_J9170/icon_question_paopao.png')
+      .reward-money
+        margin-top vw(21)
+        height vw(66)
+        font-size vw(26)
+        color #f24e22
+        text-align left
+        line-height vw(66)
+        .num
+          font-family dinum
+          font-size vw(66)
+          color #f24e22
+          text-align center
+          line-height vw(66)
+          margin-right vw(3)
+      .reward-ing-text,
+      .reward-desc
+        display inline-block
+        width 100%
+        padding 0 vw(100)
+        box-sizing border-box
+        text-align center
+        line-height vw(28)
+        color #d3825e
+      .reward-ing-text
+        margin-top vw(40)
+        font-size vw(22)
+      .reward-desc
+        margin-top vw(18)
+        font-size vw(16)
+        line-height vw(18)
+        &.reward-desc-result
+          width 100%
+          margin-top vw(31.7)
+          font-weight bold
+          font-size vw(18)
+  .bottom
+    position absolute
+    bottom vw(58)
+    width 100%
+    text-align center
+    &.ing-reward
+      bottom vw(93)
+      &.with-two-btn
+        bottom vw(62)
+    &.with-two-btn
+      bottom vw(44)
+  .btn-bottom-desc
+    font-size 12px
+    color #fa8d45
+    line-height vw(36)
+  .two-stacked-avatars
+    .stacked-avatar-item
+      width vw(34)
+      height vw(34)
+      background-color #ff8f67
+  .ranking-tip
+    position absolute
+    bottom vw(-50)
+    left 50%
+    transform translateX(-50%)
+    padding 0 vw(88) 0 vw(41)
+    border-radius vw(20)
+    background-color rgba(218,52,45,0.6)
+    text-align center
+    line-height vw(40)
+    color #fdc979
+    font-size vw(23)
+    white-space nowrap
+    &::after
+      position absolute
+      top vw(12)
+      right vw(47)
+      display block
+      content ' '
+      width vw(10)
+      height vw(17)
+      background url('https://dpubstatic.udache.com/static/dpubimg/YMsYhh-wMA/arrow_yellow_paopao.png') center center no-repeat
+      background-size vw(10) vw(17)
+.checkbox-warp
+  margin-top vw(18)
+.participants-bar-wrap
+  padding-top vw(12)
+  text-align center
+.paopao-strategy
+  position absolute
+  top -17px
+  right 0
+  width vw(134)
+  height vw(46)
+  box-sizing border-box
+  background-image url('https://dpubstatic.udache.com/static/dpubimg/4ec9c8be-d1d4-4b5a-a5f0-1025c77f34b6.png')
+  background-size cover
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "bottom-button": "../button/index",
+      "authorization-text": "../authorization-text/index",
+      "authorization-agreement": "../dialogs/authorization-agreement",
+      "progress-bar": "../progress-bar/index",
+      "participants-bar": "../participants-bar/index",
+      "signup-success": "../popups/signup-success",
+      "my-invitation": "../dialogs/my-invitation",
+      "activity-strategy-popup": "../popups/activity-strategy",
+      "auto-invite-popup": "../popups/auto-invite",
+      "receive-reward-popup": "../popups/receive-reward",
+      "receive-friend-invitation-popup": "../popups/receive-friend-invitation",
+      "stacked-avatars": "../avatars/stacked",
+      "custom-service-pop": "../popups/custom-service",
+      "error-page-paopao": "../../activity-end/error-page-paopao",
+      "save-poster": "../save-poster/index",
+      "preview-poster": "../dialogs/preview-poster",
+      "count-down": "./count-down",
+      "red-package-bg": "../page-background/red-package-bg.mpx"
+    }
+  }
+</script>

@@ -1,0 +1,274 @@
+<template>
+  <view class="progress-bar-component" wx:if="{{participantsThreshold.length >= 2}}">
+    <!--虚拟刻度-->
+    <view class="virtual-ticks">
+      <view class="virtual-tick-mark" wx:for="{{virtualTicks}}" wx:key="index" wx:style="{{item.style}}">
+        <view class="virtual-tick-top-mark"
+          wx:class="{{ {'first-child': item.isFirst, 'last-child': item.isLast } }}">
+          <with-unit item="{{item.topItem}}" />
+          <text wx:if="{{item.topItem.shouldDisplayAttractiveWord}}" class="virtual-tick-top-mark-attractive">升至</text>
+          <text wx:if="{{item.topItem.shouldDisplayAttractiveWord}}" class="virtual-tick-top-mark-icon-attractive"></text>
+        </view>
+        <view class="virtual-tick-bottom-mark" wx:class="{{ {'first-child': item.isFirst, 'last-child': item.isLast } }}">
+          <with-unit item="{{item.bottomItem}}" />
+        </view>
+      </view>
+    </view>
+    <!-- 轨槽-->
+    <view class="progress-bar-gutter" wx:style="{{gutterStyle}}">
+      <view class="progress-animate"></view>
+    </view>
+    <!-- 内部的圆形刻度，仅装饰用 -->
+    <view class="progress-bar-circle-btns">
+      <text class="progress-bar-circle" wx:for="{{circlesStyle}}" wx:key="index" wx:style="{{item}}"></text>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  const tenThousand = 10 * 1000
+  const tenMillion = 10 * 1000 * 1000
+  createComponent({
+    properties: {
+      progressData: {
+        type: Object,
+        value: {}
+      }
+    },
+    data: {
+    },
+    computed: {
+      currentValue () {
+        return this.progressData.currentValue || 0
+      },
+      currentPercent () {
+        return this.progressData.currentPercent || 0
+      },
+      nextPercent () {
+        return this.progressData.nextPercent || 0
+      },
+      rewardsThreshold () {
+        // 奖励流水的区间值，单位：百分比
+        return this.progressData.rewardsThreshold || []
+      },
+      participantsThreshold () {
+        // 参与人员的区间值，单位：万人
+        return this.progressData.participantsThreshold || []
+      },
+      virtualTicks () {
+        const step = this.step
+        const rewardsThreshold = this.rewardsThreshold
+        return this.participantsThreshold.map((value, index, arr) => {
+          const style = `left: ${index * step * 100}%`
+          return {
+            topItem: {
+              unit: '%',
+              highlight: rewardsThreshold[index] === this.nextPercent,
+              shouldDisplayAttractiveWord: rewardsThreshold[index] === this.nextPercent && this.currentPercent !== this.nextPercent,
+              value: rewardsThreshold[index]
+            },
+            isFirst: index === 0,
+            isLast: index === (arr.length - 1),
+            bottomItem: this.getNumUnit(value),
+            style
+          }
+        })
+      },
+      step () {
+        // 进度条应该均等分
+        return 1 / (this.participantsThreshold.length - 1)
+      },
+      gutterStyle () {
+        const ratio = this.caculateRatio(this.currentValue)
+        return `width:${ratio * 100}%;`
+      },
+      circlesStyle () {
+        const participantsThreshold = this.participantsThreshold
+        const step = this.step
+        return participantsThreshold.map((value, index) => {
+          let styleString = `left: ${step * index * 100}%;`
+          if (index === 0) {
+            styleString = `left: 3%;` // 向右偏移一点
+          }
+          if (index === (participantsThreshold.length - 1)) {
+            styleString = `left: 99%;` // 向左偏移一点
+          }
+          if (value <= this.currentValue) {
+            styleString += 'background-color: white;'
+          }
+          return styleString
+        })
+      }
+    },
+    methods: {
+      caculateRatio (value) {
+        const step = this.step
+        const participantsThreshold = this.participantsThreshold
+        const len = participantsThreshold.length
+        // 报名人数小于最小值(第一个值目前配置的是0人，所以不会走到这里面去)
+        if (value <= participantsThreshold[0]) {
+          return 0
+        }
+        // 报名人数已经超过最大值
+        if (value >= participantsThreshold[len - 1]) {
+          return 1
+        }
+        for (let i = 1; i < len; i++) {
+          if (value < participantsThreshold[i]) {
+            return (i - 1) * step + (value - participantsThreshold[i - 1]) / (participantsThreshold[i] - participantsThreshold[i - 1]) * step
+          } else if (value === participantsThreshold[i]) {
+            return i * step
+          }
+        }
+      },
+      getNumUnit (num) {
+        const bottomItem = {}
+        if (num < tenThousand) {
+          bottomItem.value = num
+          bottomItem.unit = '人'
+        } else if (num < tenMillion) {
+          bottomItem.value = num / tenThousand
+          bottomItem.unit = '万人'
+        } else {
+          bottomItem.value = num / tenMillion / 10
+          bottomItem.unit = '亿人'
+        }
+        return bottomItem
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+
+  .progress-bar-component
+    width 66%
+    height 13px
+    margin vw(192) auto 20px
+    // background-color #FFE3CC
+    box-shadow inset 0px 2px 5px 0px rgba(214, 60, 54, 0.4)
+    border-radius 6px
+    position relative
+    background-color #d63c36
+    padding-left 1px
+    padding-right 1px
+    box-sizing border-box
+    .progress-bar-gutter
+      position absolute
+      top 1px
+      left 0px
+      height 11px
+      position relative
+      background-image linear-gradient(180deg, #ffebba 20%, #febd5f 100%)
+      border-radius 6px
+      z-index 3
+      overflow hidden
+      &:after // 顶部还有一层抛光，显得更亮
+        content ''
+        position absolute
+        top 1px
+        left 1%
+        width 98%
+        height 5px
+        border-radius 3px
+        background-image linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.00) 100%)
+      .progress-animate
+        position absolute
+        top 0px
+        left -100%
+        width 200%
+        height 11px
+        -webkit-animation moveLeft 3s linear infinite
+        background-image url('../../../assets/scroll-bar.png')
+        background-position 0 0
+        background-size 276px 11px
+        background-repeat repeat
+    .progress-bar-circle-btns
+      position absolute
+      left 0
+      top 0
+      width 100%
+      height 100%
+      z-index 5
+    .virtual-ticks
+      position absolute
+      left 0
+      top 0
+      width 100%
+      height 100%
+    .virtual-tick-mark
+      position absolute
+      top 3px
+      width 5px
+      height 5px
+      background-color transparent
+      transform translateX(-3px)
+      z-index 10
+    .virtual-tick-top-mark
+      position absolute
+      transform translateX(-50%) translateY(-100%)
+      left 50%
+      top vw(-18)
+      &.first-child
+        left 0
+        transform translateX(0%) translateY(-100%)
+      &.last-child
+        transform translateX(-97%) translateY(-100%)
+    .virtual-tick-top-mark-attractive
+      position absolute
+      left -26px
+      bottom 1px
+      font-size 10px
+      line-height 20px
+      padding-left 8px
+      white-space nowrap
+      color #ffffff
+      writing-mode vertical-lr
+    .virtual-tick-top-mark-icon-attractive
+      width 10px
+      height 16px
+      position absolute
+      right -11px
+      bottom 3px
+      background-position left center
+      background-size contain
+      background-repeat no-repeat
+      background-image url('../../../assets/top-icon-white.png')
+    .virtual-tick-bottom-mark
+      position absolute
+      bottom vw(-24)
+      transform translateX(-50%) translateY(100%)
+      left 50%
+      &.first-child
+        left 0
+        transform translateX(0%) translateY(100%)
+      &.last-child
+        transform translateX(-98%) translateY(100%)
+    .progress-bar-circle
+      position absolute
+      top 3px
+      width 2px
+      height 6px
+      transform translateX(-3px)
+      // box-shadow inset 0px 2px 5px 0px rgba(248,142,92,0.67)
+      border-radius 2px
+      background-color rgba(0,0,0,0.3)
+
+  @keyframes moveLeft
+    0%
+      left: -100px;
+    100%
+      left: 0%
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "with-unit": "./with-unit"
+    }
+  }
+</script>

@@ -1,0 +1,53 @@
+<template>
+  <view class="single-avatar-component-box" wx:style="{{bgStyle}}">
+    <!-- <image wx:if="{{ __mpx_mode__ === 'wx' && url}}" src="{{url}}" class="single-avatar-component" />
+    <img wx:elif="{{ __mpx_mode__ === 'web' && url}}" src="{{url}}" class="single-avatar-component" /> -->
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      url: {
+        type: String,
+        value: ''
+      }
+    },
+    computed: {
+      bgStyle () {
+        return {
+          backgroundImage: `url(${this.url})`
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .single-avatar-component-box
+    border 1px solid #FFBE75
+    box-sizing border-box
+    display inline-block
+    width 100%
+    height 100%
+    border-radius 50%
+    background-image url('http://dpubstatic.udache.com/static/dpubimg/6687e67b-be5e-4926-9bd3-52a7f187ccf7.png')
+    background-position center
+    background-repeat no-repeat
+    background-size contain
+    // background-color
+  .single-avatar-component
+    box-sizing border-box
+    display inline-block
+    width 100%
+    height 100%
+    border-radius 50%
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

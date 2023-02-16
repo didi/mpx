@@ -1,0 +1,121 @@
+<template>
+  <view class="special-reward-back-driver intersectionRootNode" bind:tap="goRewardDetail" v-exposure@web="exposure">
+    <view class="special-reward-container">
+      <view wx:if="{{info.reward_text}}" class="special-reward-content">{{info.reward_text}}</view>
+      <view wx:if="{{info.time_text}}" class="special-reward-desc">{{info.time_text}}</view>
+    </view>
+    <view wx:if="{{info.title}}" class="special-reward-title">{{info.title}}</view>
+    <view class="special-reward-left-icon"></view>
+    <view class="special-reward-right-icon"></view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import { universelPageJump } from '../../common/js/pageJump'
+import { trackAggregateEvent } from '../../common/js/Omega'
+import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+createComponent({
+  mixins: [intersectionObserverMixin],
+  properties: {
+    info: {
+      type: Object,
+      value: {}
+    },
+    index: {
+      type: Number,
+      value: 0
+    }
+  },
+  data () {
+    return {
+      intersectionEventId: 'wyc_main_recommend_reward_sw' // 小程序模块出现在视口的埋点
+    }
+  },
+  computed: {
+    intersectionOmegaParams () {
+      return {
+        act_id: this.index
+      }
+    }
+  },
+  methods: {
+    goRewardDetail () {
+      trackAggregateEvent('wyc_main_recommend_reward_ck', this.intersectionOmegaParams)
+      const url = this.info.jump_url || ''
+      const ret = universelPageJump(url)
+      // 走客服会话逻辑
+      if (ret === true) {
+        this.triggerEvent('customerService')
+      }
+    },
+    exposure () {
+      trackAggregateEvent(this.intersectionEventId, this.intersectionOmegaParams)
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+@import "../../common/stylus/mixin.styl"
+.special-reward-back-driver
+  margin-top vw(38)
+  position relative
+  height vw(135)
+  padding 2px
+  background-color #FDEDD5
+  border-radius 40px
+  .special-reward-container
+    width 100%
+    height 100%
+    border-radius 8px
+    border 1px solid rgba(253, 203, 125, 0.8)
+    box-sizing border-box
+    border-radius 40px
+    color #B75E41
+  .special-reward-content
+    padding vw(50) vw(100) 0 vw(215)
+    font-weight bold
+    font-size vw(34)
+    line-height 1.206
+  .special-reward-desc
+    padding vw(4) vw(100) 0 vw(215)
+    font-size vw(20)
+  .special-reward-title
+    position absolute
+    top vw(-12)
+    left 50%
+    transform translateX(-50%)
+    width vw(409)
+    height vw(60)
+    line-height vw(60)
+    background url('https://dpubstatic.udache.com/static/dpubimg/TrJ0GOC6P9/square_special_title.png') center 0 no-repeat
+    background-size contain
+    font-size vw(28)
+    color #E03E1E
+    font-weight bold
+    text-align center
+  .special-reward-left-icon
+    position absolute
+    bottom 0
+    left vw(13)
+    width vw(191)
+    height vw(141)
+    background url('https://dpubstatic.udache.com/static/dpubimg/wBJICnMJ8t/square_rush.png') center center no-repeat
+    background-size contain
+  .special-reward-right-icon
+    position absolute
+    bottom vw(-4)
+    right vw(12)
+    width vw(129)
+    height vw(141)
+    background url('https://dpubstatic.udache.com/static/dpubimg/vBGYdJPNvt/square_special_get_icon.png') center center no-repeat
+    background-size contain
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

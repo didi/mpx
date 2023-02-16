@@ -1,0 +1,101 @@
+<template>
+  <view class="today-rewards-component intersectionRootNode" wx:if="{{list.length || supplyReward.title }}" v-exposure@web="exposure">
+    <base-section title="{{title}}">
+      <reward-order bindclicked="goRewardDetail(supplyReward)" info="{{supplyReward}}"></reward-order>
+      <view wx:for="{{list}}" wx:key="index" class="today-rewards-group" wx:class="{{ {'is-last': index === (list.length - 1)} }}">
+        <view class="today-rewards-subtitle">{{item.title}}</view>
+        <reward-card bindclicked="goRewardDetail(subItem)" wx:for="{{item.items}}" wx:for-item="subItem" wx:for-index="subIndex" item="{{subItem}}" wx:key="subIndex" />
+      </view>
+      <common-button bindclicked="goRewardCenter" text="去奖励中心查看" />
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { DRIVER_REWARD_CENTER_URL } from '../../common/js/constants'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import { universelPageJump } from '../../common/js/pageJump'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    data: {
+      intersectionEventId: 'wyc_sdmarketing_jrjl_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      title () {
+        return this.info.head_title
+      },
+      list () {
+        return this.info.list || []
+      },
+      supplyReward () {
+        return this.info.supply_reward || {}
+      }
+    },
+    methods: {
+      goRewardCenter () {
+        trackAggregateEvent('wyc_sdmarketing_jrjlbutton_ck')
+        const ret = universelPageJump(DRIVER_REWARD_CENTER_URL)
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      },
+      goRewardDetail (subItem) {
+        const url = subItem.jump_url || ''
+        const ret = universelPageJump(url)
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      },
+      exposure () {
+        trackAggregateEvent('wyc_sdmarketing_jrjl_sw')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .today-rewards-component
+    border-radius 10px
+    margin-top 29px
+    .today-rewards-subtitle
+      margin-bottom 12px
+      font-size 14px
+      color #B4593C
+      text-align center
+    .more-rewards
+      margin-bottom 15px
+    .more-rewards-sub-title
+      margin-bottom 12px
+      padding-top 15px
+      font-size 14px
+      color #B4593C
+      text-align center
+    .today-rewards-group
+      margin-bottom 25px
+      &.is-last
+        margin-bottom 0
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "reward-card": "../cards/reward",
+      "gift-reward-card": "../cards/gift-reward",
+      "base-section": "./base",
+      "common-button": "../base/common-button",
+      "reward-order": "../cards/reward-order"
+    }
+  }
+</script>

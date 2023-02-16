@@ -1,0 +1,287 @@
+<template>
+  <view class="horizontal-reward-item {{cardClass}}" bind:tap="clickItem">
+    <view class="h-reward-item-head">
+      <view class="h-reward-item-head-text">{{title[0]}}</view>
+      <!-- <view wx:if="{{isColumn}}" class="h-reward-item-head-desc">{{title[1]}}</view> -->
+    </view>
+    <view class="h-reward-item-body">
+      <view class="h-reward-item-content">
+        <view class="h-reward-item-desc">{{info.desc}}</view>
+        <rich-text class="h-reward-item-data" nodes="{{rewardDetail}}"></rich-text>
+      </view>
+      <view class="h-reward-item-control">
+        <view class="h-reward-item-control-btn {{btnDisabled ? 'disabled' : ''}}">
+          <view class="control-btn-content">
+            <view wx:if="{{info.prefix}}" class="control-btn-text-prefix">{{info.prefix}}</view>
+            <rich-text class="control-btn-text" nodes="{{btnText}}"></rich-text>
+          </view>
+        </view>
+        <view wx:if="{{size !== 'big'}}" class="h-reward-item-control-text">查看详情</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import { strToHtml } from '../../../common/js/utils'
+
+createComponent({
+  options: {
+    addGlobalClass: true,
+    styleIsolation: 'shared'
+  },
+  properties: {
+    info: {
+      type: Object,
+      value: {}
+    },
+    isColumn: { // 上下结构 / 左右结构
+      type: Boolean,
+      value: true
+    },
+    size: {
+      type: String,
+      value: '' // '': 默认大小 'big': 大号
+    },
+    isFirst: Boolean,
+    isLast: Boolean
+  },
+  computed: {
+    cardClass () {
+      let str = ''
+      if (!this.isColumn) {
+        str += 'item-content-left-right'
+      }
+      if (this.size === 'big') {
+        str += ' item-big-size'
+      }
+      if (this.isFirst) {
+        str += ' first-item'
+      }
+      if (this.isLast) {
+        str += ' last-item'
+      }
+      return str
+    },
+    title () {
+      const headTitle = this.info.head_title || []
+      const title = headTitle[0] || ''
+      const desc = headTitle[1] || ''
+      if (!this.isColumn) {
+        return [title + desc, '']
+      }
+      return [title, desc]
+    },
+    btnText () {
+      return strToHtml(this.info.button_text, '#fff')
+    },
+    rewardDetail () {
+      return strToHtml(this.info.reward_detail)
+    },
+    btnDisabled () {
+      const type = this.info.button_type
+      return type === 0 || type === 1
+    }
+  },
+  methods: {
+    clickItem () {
+      this.triggerEvent('clickItem', this.info)
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+@import "../../../common/stylus/mixin.styl"
+.horizontal-reward-item
+  margin-left vw(6)
+  display inline-block
+  width 100%
+  height vw(196)
+  border 1px solid rgba(255, 140, 89, 0.15)
+  box-sizing border-box
+  border-radius 7px
+  background-color #fff
+  overflow hidden
+  &.item-content-left-right
+    .h-reward-item-head
+      height vw(38)
+    .h-reward-item-body
+      margin-top vw(22)
+      display flex
+      justify-content space-around
+    .h-reward-item-desc
+      font-size vw(28)
+    .h-reward-item-data
+      padding-top vw(6)
+      font-size vw(34)
+      line-height 1.17
+      text-align left
+      .hightlight
+        font-size vw(70)
+    .h-reward-item-control
+      flex-direction column-reverse
+    .h-reward-item-control-btn
+      width vw(200)
+      height vw(56)
+      padding 0 12px
+    .control-btn-text
+      font-size vw(32)
+    .h-reward-item-control-text
+      margin vw(7) 0 vw(19)
+      font-size vw(20)
+  &.item-big-size
+    height vw(252)
+    .h-reward-item-head
+      height vw(60)
+    .h-reward-item-head-text
+      font-size vw(20)
+    .h-reward-item-head-desc
+      font-size vw(18)
+    .h-reward-item-body
+      margin-top vw(17)
+    .h-reward-item-desc
+      font-size vw(24)
+      font-weight normal
+    .h-reward-item-data
+      padding-top vw(2)
+      font-size vw(50)
+      line-height 1.16
+      font-family dinum
+      .hightlight
+        font-size vw(70)
+    .h-reward-item-control
+      margin-top vw(8)
+    .h-reward-item-control-btn
+      width vw(190)
+      height vw(46)
+    .control-btn-text
+      font-size vw(24)
+      .hightlight
+        line-height 1
+    .h-reward-item-control-text
+      display none
+    &.item-content-left-right
+      .h-reward-item-head
+        height vw(60)
+      .h-reward-item-body
+        margin-top vw(28)
+        display flex
+        justify-content space-around
+      .h-reward-item-desc
+        font-size vw(34)
+      .h-reward-item-data
+        padding-top vw(18)
+        font-size vw(70)
+        line-height 1
+        .hightlight
+          font-size vw(70)
+      .h-reward-item-control
+        margin-top 0
+        align-self flex-end
+      .h-reward-item-control-btn
+        width vw(200)
+        height vw(56)
+        padding 0 12px
+      .control-btn-text
+        font-size vw(34)
+        .hightlight
+          font-size vw(46)
+      .control-btn-text-prefix
+        font-size vw(28)
+  &.first-item
+    margin-left 0 !important
+  &.last-item
+    margin-right vw(18)
+.h-reward-item-head
+  display flex
+  width 100%
+  height vw(44)
+  box-sizing border-box
+  background-color #fde5bd
+  flex-direction column
+  justify-content center
+  align-items center
+  color #b75e41
+  text-align center
+.h-reward-item-head-text
+  font-weight bold
+  font-size vw(17)
+  line-height 1
+.h-reward-item-head-desc
+  margin-top vw(5)
+  font-size vw(15)
+  line-height 1
+.h-reward-item-body
+  margin-top vw(10)
+  text-align center
+.h-reward-item-desc
+  color #b75e41
+  font-size vw(18)
+  line-height 1
+  font-weight bold
+.h-reward-item-data
+  display block
+  padding-top vw(1)
+  color #ff7e33
+  font-size vw(28)
+  line-height 1
+  .hightlight
+    display inline-block
+    font-family dinum
+    font-size vw(38)
+    line-height 1.184
+.h-reward-item-control
+  margin-top vw(4)
+  display flex
+  flex-direction column
+  justify-content center
+  align-items center
+.h-reward-item-control-btn
+  display flex
+  width vw(136)
+  height vw(33)
+  border-radius 14px
+  background linear-gradient(90deg, #fda553 0%, #fb8844 100%)
+  justify-content center
+  align-items center
+  color #fff
+  font-size 0
+  font-weight bold
+  text-align center
+  &.disabled
+    background #BABABA
+  .control-btn-content
+    display flex
+    justify-content center
+    align-items baseline
+  .control-btn-text-prefix
+    display inline-block
+    font-size vw(23)
+  .control-btn-text
+    display inline-block
+    font-size vw(18)
+    vertical-align top
+    .hightlight
+      margin 0 vw(3)
+      display inline-block
+      font-family dinum
+      font-size vw(35)
+.h-reward-item-control-text
+  margin-top vw(9)
+  position relative
+  display inline-block
+  padding-right vw(14)
+  background url('https://dpubstatic.udache.com/static/dpubimg/tc9kARA5HU/square_icon_go_detail.png') right center no-repeat
+  background-size vw(8) vw(12)
+  color rgba(183,94,65,0.8)
+  font-size vw(14)
+  line-height 1
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

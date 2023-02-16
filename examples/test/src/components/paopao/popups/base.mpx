@@ -1,0 +1,132 @@
+<template>
+  <view class="base-popup-component" wx:show="{{appear}}" catchtouchmove="dummyTouchmove" @touchmove.prevent@web>
+    <view class="base-popup-main" wx:class="{{className}}">
+      <view class="base-popup-title">{{title}}</view>
+      <!-- catchtap 不好使 -->
+      <view class="base-popup-close" bindtap@wx="toggle(true)" @click.stop@web="toggle(true)"></view>
+      <slot />
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      title: {
+        type: String,
+        value: ''
+      },
+      type: {
+        type: String,
+        value: ''
+      },
+      refKey: String
+    },
+    data: {
+      appear: false,
+      animateClass: 'animate-class'
+    },
+    computed: {
+      className () {
+        return `${this.type} ${this.animateClass}`
+      }
+    },
+    methods: {
+      dummyTouchmove () {},
+      toggle (isCloseBtn = false) {
+        const flag = this.appear
+        this.triggerEvent('emitBaseEvent', {
+          flag: flag,
+          refKey: this.refKey,
+          isCloseBtn: isCloseBtn
+        })
+        this.appear = !this.appear
+        this.animateClass = 'animate-class'
+        if (isCloseBtn) {
+          this.animateClass = ''
+          this.triggerEvent('closed')
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+  .base-popup-component
+    z-index 100
+    position fixed
+    left 0
+    right 0
+    top 0
+    bottom 0
+    background-color rgba(0, 0, 0, 0.7)
+  .base-popup-main
+    position relative
+    width vw(750)
+    height vw(1010)
+    top 47%
+    left 50%
+    transform translate(-50%, -50%)
+    background-image url('https://dpubstatic.udache.com/static/dpubimg/113a243f-f25e-402f-9d33-715e453c8d93.png')
+    background-size cover
+    background-position center
+    &.animate-class
+      animation zoomIn 0.6s cubic-bezier(0.42, 0, 0.58, 1)
+    &.no-texture // 没有金钱，加速卡等纹理，高度要长一点
+      width vw(622)
+      height vw(1040)
+      // margin vw(80) vw(64)
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/63d3fe08-429b-4eb7-892d-a9e4691c339d.png')
+      .base-popup-title
+        top vw(137)
+      .base-popup-close
+        bottom vw(-65)
+  .base-popup-title
+    position absolute
+    top vw(282)
+    color #FFFCF5
+    font-size vw(30)
+    line-height vw(48)
+    text-align center
+    width 100%
+  .base-popup-close
+    width 24px
+    height 24px
+    position absolute
+    bottom vw(-50)
+    left 50%
+    transform translateX(-50%)
+    background-image url('../../../assets/btn-close.png')
+    background-size cover
+    expand-touch()
+  @keyframes zoomIn {
+    from {
+      opacity: 0
+      transform translate(-50%, -50%)
+    }
+    25% {
+      opacity: 0
+      transform: translate(-50%, -50%) scale3d(.2, .2, .2)
+    }
+    50% {
+      opacity: 1
+      transform: translate(-50%, -50%) scale3d(.3, .3, .3)
+    }
+    75% {
+      transform: translate(-50%, -50%) scale3d(1.1, 1.1, 1.1)
+    }
+    100% {
+      opacity: 1
+      transform: translate(-50%, -50%) scale3d(1, 1, 1)
+    }
+  }
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

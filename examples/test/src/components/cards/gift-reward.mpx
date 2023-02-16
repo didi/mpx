@@ -1,0 +1,78 @@
+<template>
+  <view class="gift-reward-component" wx:if="{{text}}">
+    <image wx:if="{{ __mpx_mode__ === 'wx'}}" src="{{iconUrl}}" class="gift-reward-icon" />
+    <img wx:elif="{{ __mpx_mode__ === 'web'}}" src="{{iconUrl}}" class="gift-reward-icon" />
+    <view class="gift-reward-content">{{text}}</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  // import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+  // import { trackAggregateEvent } from '../../common/js/Omega'
+
+  createComponent({
+    // mixins: [intersectionObserverMixin],
+    data: {
+      // intersectionEventId: 'wyc_main_venue_more_reward_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      index: {
+        type: Number,
+        value: 0
+      },
+      text: {
+        type: String,
+        value: ''
+      }
+    },
+    methods: {
+      // exposure () {
+      //   trackAggregateEvent('wyc_main_venue_more_reward_sw')
+      // }
+    },
+    computed: {
+      timeText () {
+        return `${this.item.time_text}`
+      },
+      iconUrl () {
+        const index = this.index % 3 // 每隔三张图重复使用
+        const images = [
+          'https://dpubstatic.udache.com/static/dpubimg/398a2e06-9b7e-4001-80f4-65a31b0af4e9.png',
+          'https://dpubstatic.udache.com/static/dpubimg/dbd1e88a-0cbb-4459-aad9-264ef220f8ef.png',
+          'https://dpubstatic.udache.com/static/dpubimg/d06508ef-15f9-44ae-bbdb-c581e5189e21.png'
+        ]
+        return images[index]
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .gift-reward-component
+    display flex
+    align-items center
+    color #b75e41
+    border-radius 7px
+    background-color #fff
+    margin-top 10px
+    // border 1px solid #ffe4c9
+    display flex
+    align-items center
+    .gift-reward-icon
+      width 63px
+      height 50px
+    .gift-reward-content
+      flex 1
+      padding 16px 15px 16px 4px
+      line-height 24px
+      color #B4593C
+      font-weight bold
+      font-size 17px
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

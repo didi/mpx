@@ -1,0 +1,152 @@
+<template>
+  <view class="traffic-component" catchtap="handleClick(3)">
+    <view class="traffic-main">
+      <image wx:if="{{ __mpx_mode__ === 'wx'}}" src="{{iconUrl}}" class="traffic-icon" />
+      <img wx:elif="{{ __mpx_mode__ === 'web'}}" src="{{iconUrl}}" class="traffic-icon" />
+      <view class="traffic-content">
+        <view class="traffic-title" wx:for="{{titles}}" wx:for-item="title" wx:key="index">{{title}}</view>
+        <view class="traffic-desc">{{item.desc}}</view>
+        <view class="traffic-duration">{{timeText}}</view>
+      </view>
+    </view>
+    <view class="traffic-footer">
+      <view class="traffic-detail" catchtap="handleClick(1)">查看详情</view>
+      <view class="traffic-btn" wx:class="{{btnClass}}" catchtap="handleClick(2)">{{btnText}}</view>
+    </view>
+    <view class="traffic-badge"></view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      item: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      timeText () {
+        return `${this.item.time_text}`
+      },
+      iconUrl () {
+        return 'https://dpubstatic.udache.com/static/dpubimg/8ad351fb-b85b-4b11-848d-7fdda1c2448b.png'
+      },
+      titles () {
+        return this.item.title || []
+      },
+      btnText () {
+        const status = this.item.status
+        const textMap = {
+          'not_enroll': '立即领取',
+          'enrolled': '已领取'
+        }
+        return textMap[status]
+      },
+      btnClass () {
+        return this.item.status === 'enrolled' ? 'enrolled' : ''
+      }
+    },
+    methods: {
+      handleClick (type) {
+        this.triggerEvent('clicked', {
+          type,
+          item: this.item
+        })
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../common/stylus/mixin.styl"
+  .traffic-component
+    padding 10px 5px
+    background #FFF3E7
+    border-radius 8px
+    box-sizing border-box
+    margin-bottom 10px
+    position relative
+    .traffic-badge
+      position absolute
+      right 0
+      top 0
+      width 62px
+      height 60px
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/d44e64f6-6db3-4dbc-b900-3cbc6aee2b83.png')
+      background-size cover
+    .traffic-main
+      display flex
+      align-items center
+    .traffic-icon
+      width vw(200)
+      height vw(160)
+      margin-right vw(30)
+    .traffic-content
+      flex 1
+    .traffic-title
+      font-size 16px
+      font-weight bold
+      line-height 23px
+      color #b4593c
+    .traffic-desc
+      font-size 12px
+      margin-top 2px
+      color #FF7E33
+    .traffic-duration
+      display inline-block
+      word-break break-all
+      margin 10px 0 0 -6px
+      padding 3px 6px
+      border-radius 10px
+      line-height 14px
+      font-size 12px
+      color #b4593c
+      background-color rgba(252,211,141,0.31)
+    .traffic-footer
+      margin 15px 20px 0
+      padding-top 10px
+      font-size 13px
+      border-top 1px dashed #ecd4c2
+      display flex
+      align-items center
+      color #b4593c
+    .traffic-detail
+      position relative
+      flex 1
+      &:after
+        content ''
+        position absolute
+        top 50%
+        transform translateY(-50%)
+        left 60px
+        width 5px
+        height 9px
+        background-image url('../../assets/icon-arrow@2x.png')
+        background-size cover
+    .traffic-btn
+      width 80px
+      height 30px
+      line-height 30px
+      background-image linear-gradient(-180deg, #FF7A34 0%, #F3412D 100%)
+      box-shadow 0 3px 8px 0 #E7998B
+      color #fff
+      font-size 14px
+      font-weight bold
+      border-radius 7px
+      text-align center
+      &.enrolled
+        opacity 0.5
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "count-down": "../count-down/index",
+      "common-button": "../base/common-button"
+    }
+  }
+</script>

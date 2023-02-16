@@ -1,0 +1,84 @@
+<template>
+  <view class="stacked-avatars-component {{type}}" wx:if="{{imgs.length}}">
+    <view
+      wx:for="{{imgs}}"
+      wx:key="index"
+      wx:style="{{ item }}"
+      class="stacked-avatar-item"
+    ></view>
+    <view wx:if="{{imgs && imgs.length > 3}}" class="stacked-avatar-has-more-tip">...</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  
+  createComponent({
+    options: {
+      addGlobalClass: true,
+      styleIsolation: 'shared'
+    },
+    properties: {
+      type: {
+        type: String,
+        value: ''
+      },
+      list: {
+        type: Array,
+        value: ['https://dpubstatic.udache.com/static/dpubimg/W-ri_D7Tzh/123.png', 'https://dpubstatic.udache.com/static/dpubimg/W-ri_D7Tzh/123.png']
+      }
+    },
+    computed: {
+      imgs () {
+        if (this.list && this.list.length) {
+          const list = this.list.slice(0, 7)
+          let bgImgs = []
+          list.map(item => {
+            bgImgs.push(`background-image: url(${item});`)
+          })
+          return bgImgs
+        }
+        return []
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+  .stacked-avatars-component
+    position relative
+    display inline-block
+    &.small
+      .stacked-avatar-item
+        width vw(20)
+        height vw(20)
+      .stacked-avatar-has-more-tip
+        transform translateY(vw(-6))
+    .stacked-avatar-item
+      margin-right vw(-4)
+      display inline-block
+      width vw(26)
+      height vw(26)
+      border-radius 50%
+      box-sizing border-box
+      background-color #ff8f67
+      background-size 100% 100%
+      background-repeat no-repeat
+      background-position center center
+    .stacked-avatar-has-more-tip
+      margin-left vw(4)
+      display inline-block
+      color #d3825e
+      font-size vw(20)
+      line-height vw(20)
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "single": "./single"
+    }
+  }
+</script>

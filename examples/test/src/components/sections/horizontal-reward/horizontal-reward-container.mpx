@@ -1,0 +1,131 @@
+<template>
+  <scroll-view
+    class="horizontal-reward-container {{blockClass}}"
+    wx:if="{{__mpx_mode__ === 'wx'}}"
+    scroll-x="{{true}}"
+  >
+    <horizontal-reward-item
+      wx:for="{{list}}"
+      wx:key="index"
+      info="{{item}}"
+      isColumn="{{itemIsColumnStyle}}"
+      isFirst="{{index === 0}}"
+      isLast="{{index === list.length - 1}}"
+      size="{{itemSize}}"
+      bind:clickItem="clickItem"
+    />
+  </scroll-view>
+  <view wx:else class="horizontal-reward-container web-env {{blockClass}}">
+    <horizontal-reward-item
+      wx:for="{{list}}"
+      wx:key="index"
+      info="{{item}}"
+      isColumn="{{itemIsColumnStyle}}"
+      isFirst="{{index === 0}}"
+      isLast="{{index === list.length - 1}}"
+      size="{{itemSize}}"
+      bind:clickItem="clickItem"
+    />
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  options: {
+    addGlobalClass: true,
+    styleIsolation: 'shared'
+  },
+  properties: {
+    list: {
+      type: Array,
+      value: []
+    },
+    sizeType: {
+      type: String,
+      value: 'size-normal' // size-normal | size-middle | size-big
+    }
+  },
+  data: {
+    scrollOptions: {
+      bounce: true
+    }
+  },
+  computed: {
+    blockClass () {
+      let str = ''
+      const list = this.list || []
+      if (list.length === 1 || list.length === 2) {
+        str = `with-${list.length}-child`
+      }
+      str += ` ${this.sizeType}`
+      return str
+    },
+    itemIsColumnStyle () {
+      return this.list.length > 1
+    },
+    itemSize () {
+      return this.sizeType === 'size-big' ? 'big' : ''
+    }
+  },
+  methods: {
+    clickItem (data) {
+      this.triggerEvent('clickItem', data && data.detail)
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+@import "../../../common/stylus/mixin.styl"
+.horizontal-reward-container
+  width 100%
+  height 100%
+  white-space nowrap
+  &.web-env
+    overflow-x auto
+  &.with-1-child
+    &.size-normal,
+    &.size-middle
+      .horizontal-reward-item
+        width vw(480)
+      .h-reward-item-head-text
+        font-size vw(20)
+    &.size-big
+      .horizontal-reward-item
+        width vw(624)
+      .h-reward-item-head-text
+        font-size vw(32)
+  &.with-2-child
+    &.size-normal,
+    &.size-middle
+      .horizontal-reward-item
+        margin-left vw(9)
+        width vw(240)
+    &.size-big
+      .horizontal-reward-item
+        margin-left vw(17)
+        width vw(303)
+  &.size-normal
+    .horizontal-reward-item
+      margin-left vw(4)
+      width vw(161)
+  &.size-middle
+    .horizontal-reward-item
+      margin-left vw(8)
+      width vw(171)
+  &.size-big
+    .horizontal-reward-item
+      margin-left vw(12)
+      width vw(221)
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "horizontal-reward-item": "./horizontal-reward-item"
+    }
+  }
+</script>

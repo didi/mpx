@@ -1,0 +1,114 @@
+<template>
+  <view class="red-package-bg {{type || ''}}">
+    <view class="img-appointment-lion-head">
+      <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{ lionHeadImg }}" class="inject-img"></image>
+      <img wx:else src="{{ lionHeadImg }}" class="inject-img" />
+    </view>
+    <view wx:show="{{!noLight}}" class="red-package-light-left">
+      <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{ lightImg }}" class="inject-img"></image>
+      <img wx:else src="{{ lightImg }}" class="inject-img" />
+    </view>
+    <view wx:show="{{!noLight}}" class="red-package-light-right">
+      <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{ lightImg }}" class="inject-img"></image>
+      <img wx:else src="{{ lightImg }}" class="inject-img" />
+    </view>
+    <view class="red-package-img"></view>
+    <image wx:if="{{ __mpx_mode__ === 'wx'}}" class="img-appointment-car" src="https://dpubstatic.udache.com/static/dpubimg/Rsq7LwBJh8/car_paopao.png"></image>
+    <img wx:elif="{{ __mpx_mode__ === 'web'}}" class="img-appointment-car" src="https://dpubstatic.udache.com/static/dpubimg/Rsq7LwBJh8/car_paopao.png" />
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import { ifApngSupport } from '../../../common/js/utils'
+
+createComponent({
+  properties: {
+    type: String
+  },
+  computed: {
+    noLight () {
+      return this.type === 'no-light'
+    }
+  },
+  data: {
+    lionHeadImg: 'https://dpubstatic.udache.com/static/dpubimg/ytpN3zU5aX/lion_head_paopao.png',
+    lightImg: 'https://dpubstatic.udache.com/static/dpubimg/eqClHBx-vq/bg_light_paopao.png'
+  },
+  attached () {
+    if (ifApngSupport()) {
+      this.lionHeadImg = 'https://dpubstatic.udache.com/static/dpubimg/a35d96c2-4d2a-40ad-a830-a4c3dfd84a86.png'
+      this.lightImg = 'https://dpubstatic.udache.com/static/dpubimg/5580b0f5-a0c9-4d69-a825-4524f726b4f4.png'
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+@import "../../../common/stylus/mixin.styl"
+.red-package-bg
+  position absolute
+  z-index -1
+  top 0
+  left 50%
+  transform translateX(-50%)
+  width 100%
+  height 100%
+  &.ing-reward
+    .red-package-img
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/ZeqvxJdFe2/bg_redpackage_with_button_opened_papao.png')
+  &.result
+    .red-package-img
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/i-NvRYdHfE/bg_redpackage_opened_papao.png')
+  &.join-group // 加入司机群
+    .red-package-img
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/ccfU3Xbsqy/bg_redpackage_no_title_papao.png')
+  .red-package-img
+    position absolute
+    z-index 0
+    top 0
+    left 0
+    display block
+    width 100%
+    height 100%
+    background url('https://dpubstatic.udache.com/static/dpubimg/dbyiUQ13mC/bg_redpackage_papao.png') center 0 no-repeat
+    background-size contain
+  .img-appointment-lion-head
+    position absolute
+    z-index -1
+    top vw(-168)
+    left 50%
+    transform translateX(-50%)
+    display block
+    width vw(400)
+    height vw(260)
+    .inject-img
+      display block
+      width 100%
+      height 100%
+  .img-appointment-car
+    position absolute
+    z-index 1
+    bottom vw(-20)
+    left vw(-25)
+    display block
+    width vw(199)
+    height vw(101)
+  .red-package-light-left
+    position absolute
+    top 0
+    left vw(-30)
+    transform rotateY(180deg)
+    width vw(136)
+    height vw(602)
+  .red-package-light-right
+    position absolute
+    top vw(99)
+    right vw(-9)
+    width vw(157)
+    height vw(557)
+  .inject-img
+    display block
+    width 100%
+    height 100%
+</style>

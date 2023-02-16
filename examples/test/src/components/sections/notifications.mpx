@@ -1,0 +1,73 @@
+<template>
+  <view class="notifications-component intersectionRootNode" wx:ref="instance" wx:if="{{list.length}}" v-exposure@web="exposure">
+    <base-section title="{{title}}">
+      <view wx:for="{{list}}" wx:key="index" class="notification-item">
+        <rich-text
+          class="notification-content"
+          nodes="{{item}}"
+        />
+      </view>
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+  import { strToHtml } from '../../common/js/utils'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    data: {
+      intersectionEventId: 'wyc_sdmarketing_cxf_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      title () {
+        return this.info.head_title || ''
+      },
+      list () {
+        const list = this.info.list || []
+        return list.map(title => strToHtml(title, '#ff7e33', 'font-weight:bold;padding-left:5px;'))
+      }
+    },
+    methods: {
+      exposure () {
+        trackAggregateEvent('wyc_sdmarketing_cxf_sw')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .notifications-component
+    margin-top 29px
+    border-radius 10px
+    .notification-item
+      display flex
+      align-items center
+      color #b75e41
+      padding 11px 16px
+      background-color #fff
+      border-radius: 7px
+      margin-top 10px
+    .notification-content
+      font-size 15px
+      line-height 18px
+      flex 1
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "base-section": "./base"
+    }
+  }
+</script>

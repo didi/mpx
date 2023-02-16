@@ -1,0 +1,214 @@
+<template>
+  <view class="number-scroll-animation">
+    <block wx:for="{{columns}}">
+      <view wx:if="{{item === '.'}}" wx:key="index" class="item-separator" ></view>
+      <view wx:else class="viewport" wx:key="index" wx:style="{{item.viewportStyle}}">
+        <view class="column-wrap" wx:style="{{item.columnStyle}}">
+          <view
+            wx:for="{{item.numList}}" 
+            wx:for-item="row"
+            wx:for-index="idx"
+            wx:key="idx" 
+            wx:style="{{item.numStyle}}"
+            class="item"
+          >{{row}}</view>
+        </view>
+      </view>
+    </block>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+const separator = '.'
+const CONFIG = {
+  during: 1, // :number 动画时间
+  height: 80, // :number 滚动行高 px
+  width: '24', // 组件整体宽度
+  cellWidth: 24,
+  ease: 'cubic-bezier(0.66, 0, 0.34, 1)', // 动画过渡效果
+  // color: '#EE5538', // 字体颜色
+  columnStyle: {} // 字体单元 覆盖样式
+}
+const COMPONENT_NAME = 'biz-number-animation'
+
+createComponent({
+  name: COMPONENT_NAME,
+  properties: {
+    value: {
+      type: [Number, String],
+      value: 0
+    },
+    options: {
+      type: Object,
+      value: {}
+    }
+  },
+  data () {
+    return {
+      columns: [0],
+      keys: [],
+      configData: JSON.parse(JSON.stringify(CONFIG)),
+      ab: 0
+    }
+  },
+  computed: {
+    animationNumStyle (index) {
+      return {
+        'transform': `translate3d(0, ${-this.keys[index] * this.configData.height}px, 0)`,
+        'transition-duration': `${this.configData.during}s`,
+        'transition-timing-function': `${this.configData.ease}`,
+        'transition-delay': '0.4s'
+      }
+    },
+    currentValue () {
+      return this.value
+    }
+  },
+  watch: {
+    value: {
+      handler (pre) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.setRange()
+            this.renderStyle()
+          }, 400)
+        })
+      },
+      immediate: true
+    }
+  },
+  attached () {
+    // this.$nextTick(() => {
+    //   setTimeout(() => {
+    //     this.setRange()
+    //     this.renderStyle()
+    //   }, 400)
+    // })
+  },
+  methods: {
+    setRange () {
+      let value = this.currentValue
+      this.valueArr = Number(value).toString().split('')
+      const columns = this.initColumn(value)
+      this.run(columns)
+    },
+    initColumn (n) {
+      const strNum = (n + '')
+      const numArr = strNum.split('')
+      let arr = []
+      let initArr = [] // 给初始值，修复 之滚动第一位的 bug
+      numArr.map((item, index) => {
+        if (item === separator) {
+          arr.push(separator)
+          initArr.push(separator)
+        } else {
+          const it = this.getInlineStyle(item, index)
+          arr.push(it)
+          initArr.push(0)
+        }
+      })
+      this.columns = initArr
+      return arr
+    },
+    getInlineStyle (item, index) {
+      let rows = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+      const numList = rows.slice(0, rows[+item + 1])
+      const keys = this.valueArr
+      const configData = this.configData
+      const viewportStyle = {
+        'height': `${configData.height}px`,
+        'line-height': `${configData.height}px`
+      }
+      const columnStyle = {
+        'transform': `translate3d(0, -${keys[index] * configData.height}px, 0)`,
+        'transition-duration': `${configData.during}s`,
+        'transition-timing-function': configData.ease
+      }
+      const numStyle = {
+        'height': `${configData.height}px`,
+        'line-height': `${configData.height}px`,
+        ...configData.columnStyle
+      }
+
+      return {
+        numList,
+        viewportStyle,
+        columnStyle,
+        numStyle
+      }
+    },
+    run (columns) {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.columns = columns
+        })
+      })
+    },
+    renderStyle () {
+      /**
+       * color,
+       * columnStyle,
+       * width,
+       * height,
+       * during,
+       * ease
+       */
+      let options = this.options
+      let configData = this.configData
+      Object.keys(options).map(i => {
+        let val = options[i]
+        switch (i) {
+          case 'during':
+          case 'height':
+          case 'cellWidth':
+            if (parseInt(val) || val === 0 || val === '0') {
+              configData[i] = val
+            }
+            break
+          default:
+            val && (configData[i] = val)
+            break
+        }
+      })
+      this.configData = configData
+    }
+  }
+})
+</script>
+<style lang='stylus'>
+@import "../../common/stylus/mixin.styl"
+.number-scroll-animation
+  /* width: 100% */
+  height: 100%
+  display: flex
+  justify-content: center
+  align-items flex-end
+.viewport
+  width: auto
+  overflow: hidden
+  font-size 100%
+.item-separator
+  width 6px
+  height 6px
+  background-color #EE5538
+  margin-bottom vw(10)
+  margin-right 5px
+  margin-left 5px
+.column-wrap
+  display inline-block
+  width: 100%
+  transform: translate3d(0, 0, 0)
+  transition: transform 10s cubic-bezier(0, 1, 0, 1)
+.item
+  font-family dinum
+  width: 100%
+  height: 100%
+  text-align: center
+</style>
+ 
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

@@ -1,0 +1,151 @@
+<template>
+  <view class="reward-card-component intersectionRootNode" catchtap="onClick" v-exposure@web="exposure">
+    <image wx:if="{{ __mpx_mode__ === 'wx'}}" src="{{iconUrl}}" class="reward-card-icon" />
+    <img wx:elif="{{ __mpx_mode__ === 'web'}}" src="{{iconUrl}}" class="reward-card-icon" />
+    <view class="reward-card-content">
+      <rich-text
+        class="reward-card-name"
+        wx:class="{{ { 'reward-card-second-name': index === 1 } }}"
+        nodes="{{item}}"
+        wx:for="{{titles}}"
+        wx:key="index"
+      />
+      <view wx:if="{{item.desc}}" class="reward-card-desc">{{item.desc}}</view>
+      <view wx:if="{{item.time_text}}" class="reward-card-duration">{{timeText}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { strToHtml } from '../../common/js/utils'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    properties: {
+      item: {
+        type: Object,
+        value: {}
+      }
+    },
+    methods: {
+      onClick () {
+        trackAggregateEvent(this.eventIdCombination.ck)
+        this.triggerEvent('clicked')
+      },
+      exposure () {
+        trackAggregateEvent(this.eventIdCombination.sw)
+      }
+    },
+    computed: {
+      titles () {
+        const titles = this.item.title || []
+        return titles.map(title => strToHtml(title))
+      },
+      timeText () {
+        return `${this.item.time_text}`
+      },
+      iconUrl () {
+        const type = this.item.type || 'order_rush'
+        const iconsMap = {
+          order_rush: 'https://dpubstatic.udache.com/static/dpubimg/1f51f6b0-f700-40f7-afc6-1a4935fa8084.png',
+          gua_fen: 'https://dpubstatic.udache.com/static/dpubimg/d36b2a62-a3bf-4d6f-8344-2644dc231d12.png',
+          reward_card: 'https://dpubstatic.udache.com/static/dpubimg/4b25ba8d-b909-400d-a4a0-532540b99693.png',
+          welfare: 'https://dpubstatic.udache.com/static/dpubimg/d36b2a62-a3bf-4d6f-8344-2644dc231d12.png',
+          traffic_card: 'https://dpubstatic.udache.com/static/dpubimg/8ad351fb-b85b-4b11-848d-7fdda1c2448b.png',
+          pangu: 'https://dpubstatic.udache.com/static/dpubimg/30e548f8-c920-4b4b-a33d-46d8af680bce.png'
+        }
+        return iconsMap[type] || 'https://dpubstatic.udache.com/static/dpubimg/1f51f6b0-f700-40f7-afc6-1a4935fa8084.png'
+      },
+      intersectionEventId () {
+        return this.eventIdCombination.sw // 小程序模块出现在视口的埋点
+      },
+      eventIdCombination () {
+        const type = this.item.type || 'order_rush'
+        const eventMap = {
+          order_rush: {
+            ck: 'wyc_main_venue_jrjl_chongdan_ck',
+            sw: 'wyc_main_venue_jrjl_chongdan_sw'
+          },
+          reward_card: {
+            ck: 'wyc_main_venue_jrjl_jsk_ck',
+            sw: 'wyc_main_venue_jrjl_jsk_sw'
+          },
+          traffic_card: {
+            ck: 'wyc_main_venue_jrjl_dck_ck',
+            sw: 'wyc_main_venue_jrjl_dck_sw'
+          },
+          welfare: {
+            ck: 'wyc_smarketing_scbd_ck',
+            sw: 'wyc_smarketing_scbd_sw'
+          }, // 时长保底
+          pangu: {
+            ck: 'wyc_main_venue_gaoefanbeijiang_ck',
+            sw: 'wyc_main_venue_gaoefanbeijiang_sw'
+          }, // 翻倍奖
+          gua_fen: {
+            ck: 'wyc_main_venue_guafenjiang_ck',
+            sw: 'wyc_main_venue_guafenjiang_sw'
+          } // 瓜分奖
+        }
+        const guard = eventMap[type] || {
+          ck: '',
+          sw: ''
+        }
+        return guard
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../common/stylus/mixin.styl"
+  @import "../../common/stylus/base.styl"
+  .reward-card-component
+    padding 15.5px 6px 12.5px
+    background #FFF
+    border-radius 8px
+    min-height 101px
+    box-sizing border-box
+    margin-bottom 13px
+    display flex
+    align-items center
+    border-1px(#F6D6B6, 7px)
+    .reward-card-icon
+      width vw(200)
+      height vw(160)
+      margin-right vw(22)
+    .reward-card-content
+      flex 1
+    .reward-card-name
+      font-size 17px
+      font-weight bold
+      line-height 20.5px
+      color #b75e41
+      &.reward-card-second-name
+        color #ff7e33
+        margin-top 2px
+    .reward-card-duration
+      display inline-block
+      word-break break-all
+      margin 4px 0 0 -6px
+      padding 4.5px 13px
+      border-radius 13px
+      line-height 14px
+      font-size 10px
+      color #b4593c
+      background-color rgba(252,211,141,0.31)
+    .reward-card-desc
+      font-size 17px
+      font-weight bold
+      color #ff7e33
+      line-height 23px
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

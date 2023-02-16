@@ -1,0 +1,528 @@
+<!-- 我的邀请弹窗 -->
+<template>
+  <base-dialog
+    wx:ref="myInvitation"
+    bind:emitBaseEvent="emitEvent"
+    refKey="{{refKey}}"
+  >
+    <view class="tabs">
+      <view
+        class="invitation-title tabs-title"
+        wx:class="{{ { 'active': showMyInvitation } }}"
+        bindtap@wx="switchTab"
+        @click.stop@web="switchTab"
+      >{{ title }}</view>
+      <view
+        wx:class="{{ { 'active': !showMyInvitation } }}"
+        class="rank-title tabs-title"
+        bindtap@wx="switchTab"
+        @click.stop@web="switchTab"
+      >{{ cityName }}邀请排行榜</view>
+    </view>
+    <view wx:show="{{ showMyInvitation }}" class="my-invitation-content" wx:class="{{getStatusClass}}">
+      <view class="my-invitation-tip">
+        <view class="my-invitation-tip-left">
+          <view class="my-invitation-tip-word">{{texts.title}}</view>
+          <view class="my-invitation-tip-word">{{texts.desc}}</view>
+        </view>
+        <view wx:if="{{ __mpx_mode__ === 'web' }}" class="my-invitation-tip-right" @click.stop="invite">{{btnText}}</view>
+        <button wx:else class="my-invitation-tip-right" open-type="share" id="myInvitationBtn-{{haveFollower}}">{{btnText}}</button>
+      </view>
+      <block wx:if="{{switcher}}">
+        <scroll-view wx:ref="scroll" wx:if="{{ normalisedList.length }}" bindscrolltolower="onPullingUp" scroll-y="{{true}}" scroll-options="{{ scrollOptions }}" class="my-invitation-list">
+          <view class="my-invitation-item" wx:for="{{normalisedList}}" wx:key="index">
+            <view class="my-invitation-item-avartar">
+              <single-avatar url="{{item.follower_logo}}"/>
+            </view>
+            <view class="my-invitation-item-content">
+              <view class="my-invitation-item-title">{{item.follower_user_name}}</view>
+              <rich-text class="my-invitation-item-desc" nodes="{{item.desc}}" />
+            </view>
+            <text
+              wx:if="{{item.personal.status}}"
+              bindtap="_trackEventBtnCk(2)"
+              class="my-invitation-item-btn"
+            >已通知</text>
+            <text
+              wx:else
+              bindtap="notify(index, item)"
+              class="my-invitation-item-btn not-call"
+            >喊他出车</text>
+          </view>
+        </scroll-view>
+        <view wx:else class="my-invitation-list">
+          <view class="my-invitation-no-data">
+            <no-data />
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view wx:show="{{ !showMyInvitation }}" class="invitation-rank-content">
+      <view class="invitation-rank-dummy-container">
+        <scroll-view scroll-y="{{true}}" wx:if="{{switcher}}" scroll-options="{{ { bounce: true } }}" class="invitation-rank-list">
+          <view class="invitation-rank-item" wx:for="{{normalisedRankList}}" wx:key="index">
+            <text class="invitation-rank-item-order" wx:class="{{item.classname}}">{{index > 2 ? index + 1 : '' }}</text>
+            <view class="invitation-rank-item-avatar"><single-avatar url="{{item.avatar}}" /></view>
+            <view class="invitation-rank-item-name" wx:class="{{ { 'transparent': item.is_fake } }}">{{item.name}}</view>
+            <view wx:if="{{!item.is_fake}}" class="invitation-rank-item-desc">已邀请{{item.follower_cnt}}人</view>
+          </view>
+          <view class="invitation-rank-list-placeholder"></view>
+        </scroll-view>
+        <view class="invitation-rank-fixed-mask">
+          <view class="invitation-rank-fixed-bar">
+            <view class="invitation-rank-fixed-item">
+              <text class="invitation-rank-fixed-item-desc">我的排名：</text>
+              <text class="invitation-rank-fixed-item-value">{{rankingDate.raking}}</text>
+            </view>
+            <view class="invitation-rank-fixed-item">
+              <text class="invitation-rank-fixed-item-desc">已邀：</text>
+              <text class="invitation-rank-fixed-item-value">{{rankingDate.follower_cnt}}</text>
+              <text class="invitation-rank-fixed-item-unit">人</text>
+            </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </base-dialog>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { noticeFriendsWork } from '../../../api'
+  import { STATUS_MAP } from '../../../common/js/constants'
+  import emitEvents from '../../../common/mixins/emitEvents'
+  import { trackEvent } from '../../../common/js/Omega'
+  
+  const STATUS2 = [
+    STATUS_MAP.share_work,
+    STATUS_MAP.work_self,
+    STATUS_MAP.work,
+    STATUS_MAP.ing_reward,
+    STATUS_MAP.ing_reward_friends
+  ]
+  
+  createComponent({
+    properties: {
+      followers: {
+        type: Array,
+        value: []
+      },
+      texts: {
+        type: Object
+      },
+      status: String,
+      // invitation
+      rankList: {
+        type: Array
+      },
+      myRanking: {
+        type: Object
+      },
+      cityName: {
+        type: String,
+        value: ''
+      }
+    },
+    mixins: [emitEvents],
+    data: {
+      isFetching: false,
+      switcher: false,
+      scrollOptions: {
+        bounce: true
+      },
+      refKey: 'myInvitationDialog',
+      // s
+      rankSwitcher: false,
+      // refKey: 'invitationRankDialog'
+      showMyInvitation: true
+
+    },
+    attached () {
+      this.trackEvent('wyc_mkt_ppyuyue_leader_main_rank_invite_history_sw')
+    },
+    computed: {
+      title () {
+        const length = this.normalisedList.length
+        return length ? `我的邀请（${length}人）` : '我的邀请'
+      },
+      normalisedList () {
+        return this.followers.map(item => {
+          return ({
+            ...item,
+            desc: this.strToHTML(item.personal.rate)
+          })
+        })
+      },
+      getStatusClass () {
+        return this.status === STATUS_MAP.join_not_start ? 'not-btn-status' : ''
+      },
+      btnText () {
+        return this.normalisedList.length ? '继续邀请' : '立即邀请'
+      },
+      haveFollower () {
+        return this.normalisedList.length >= 1
+      },
+      // s
+      rankingDate () {
+        return this.myRanking || {
+          raking: 0,
+          follower_cnt: 0
+        }
+      },
+      normalisedRankList () {
+        const maxLength = 30
+        const classnames = ['gold-medal', 'silver-medal', 'bronze-medal']
+        const list = (this.rankList || []).slice(0, maxLength)
+        const ret = list.map((item, index) => {
+          return ({
+            ...item,
+            classname: classnames[index] || ''
+          })
+        })
+        return ret
+      },
+      activeStage () {
+        let activeStage
+        const status = this.status
+        if (status === STATUS_MAP.join_not_start) {
+          activeStage = 1
+        } else if (STATUS2.includes(status)) {
+          activeStage = 2
+        } else {
+          activeStage = 3
+        }
+        return activeStage
+      }
+    },
+    methods: {
+      onPullingUp () {
+        this.triggerEvent('pullingUp')
+      },
+      strToHTML (str = '') {
+        return str.replace(/\{(.+?)\}/g, (match, $1) => {
+          return `<span style="color: #FF453C;">${$1}</span>`
+        })
+      },
+      switchTab () {
+        this.showMyInvitation = !this.showMyInvitation
+        // 切换的展现
+        this.onShowInvitationOrRankTrackEvent(1)
+      },
+      setStatus (index) {
+        this.followers[index].personal.status = 1
+      },
+      toggle (args) {
+        this.rankTextType = args
+        const dialog = this.$refs.myInvitation
+        dialog && dialog.toggle()
+        this.switcher = false // 务必保持为 false，因为触发 onShow 的时候重新计算 bs 的高度会出错
+        this.$nextTick(() => {
+          // 等到 dialog 的高度撑开的时候再渲染 better-scroll
+          this.switcher = true
+        })
+        this.onShowInvitationOrRankTrackEvent(2)
+      },
+      onShowInvitationOrRankTrackEvent (source) {
+        // args 区分出车期 喊好友出车 和 ranking-tip
+        const args = this.rankTextType
+        const length = this.normalisedList.length
+        const swType = this.activeStage === 1 ? (length ? 1 : 2) : this.activeStage === 2 ? (args ? 4 : 3) : ''
+        if (this.showMyInvitation) {
+          this.trackEvent('wyc_mkt_ppyuyue_leader_myinvite_pop_sw', {
+            sw_type: swType,
+            sw_source: source
+          })
+        } else {
+          this.trackEvent('wyc_mkt_ppyuyue_leader_rank_pop_sw', {
+            sw_source: source
+          })
+        }
+      },
+      invite () {
+        // h5 中拉起分享
+        this.triggerEvent('inviteSignUp')
+        let swType = this.normalisedList.length ? 1 : 2
+        trackEvent('wyc_mkt_ppyuyue_leader_myinvite_pop_share_ck', {
+          btn_title: this.btnText,
+          sw_type: swType
+        })
+      },
+      notify (index, item) {
+        console.log(1)
+        this._trackEventBtnCk(1)
+        if (this.isFetching) {
+          return
+        }
+        const params = {
+          uid: item.follower_uid
+        }
+        this.showLoading('正在通知好友出车...')
+        this.isFetching = true
+        noticeFriendsWork(params).then((res) => {
+          this.hideLoading()
+          this.setStatus(index)
+          this.isFetching = false
+        }).catch(err => {
+          this.isFetching = false
+          this.commonErrToast(err)
+        })
+      },
+      _trackEventBtnCk (val) { // 点击
+        trackEvent('wyc_mkt_ppyuyue_leader_myinvite_pop_invitechuche_ck', {
+          btn_valid: val
+        })
+      },
+      trackEvent (key, data = {}) {
+        const params = {
+          sw_type: this.activeStage
+        }
+        trackEvent(key, Object.assign(params, data))
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+
+  .tabs
+    display flex
+    align-items center
+    justify-content space-between
+    position absolute
+    top -38px
+    font-size 16px
+    letter-spacing 0
+    text-align center
+    color #9D382A
+    height 30px
+    padding 0 vw(47)
+    width 100%
+    box-sizing border-box
+    .active.tabs-title
+      color #FFF7E1
+      background rgba(200,53,40,0.5)
+      &.invitation-title
+        border-top-left-radius 30px
+        border-bottom-left-radius 30px
+      &.rank-title
+        border-top-right-radius 30px
+        border-bottom-right-radius 30px
+    .tabs-title
+      width vw(328)
+      height 30px
+      line-height 30px
+      text-align center
+      font-weight bold
+      font-size 16px
+      color rgba(157,56,42,0.8)
+  .my-invitation-content.not-btn-status
+    .my-invitation-item-btn
+      display none
+    .my-invitation-tip-word, .my-invitation-tip-right
+      display block
+    .my-invitation-list
+      top 15%
+  .my-invitation-tip
+    margin vw(16) 10px 0
+    background-color #E43930
+    display flex
+    align-items center
+    border-radius 10px
+    padding 9px 10px 9px 20px
+  .my-invitation-tip-left
+    flex 1
+  .my-invitation-tip-word
+    display inline
+    font-size 14px
+    font-weight bold
+    color #FFCFA2
+    line-height 20px
+  .my-invitation-tip-right
+    display none
+    background-color transparent
+    outline none
+    width 100px
+    height 40px
+    line-height 40px
+    font-size 16px
+    font-weight bold
+    color #943025
+    text-align center
+    background-image url('https://dpubstatic.udache.com/static/dpubimg/2c3f9e89-407d-4a99-bfdd-13b79afabae3.png')
+    background-size cover
+    &:after
+      border none
+  .my-invitation-list
+    position absolute
+    top 55px
+    left 10px
+    right 10px
+    bottom 0
+    border-radius 10px 10px 0 0
+    background-color #FFFBF1
+    width auto
+  .my-invitation-no-data
+    margin vw(160) auto 0
+  .my-invitation-item
+    display flex
+    align-items center
+    margin 0 vw(30)
+    border-bottom 1px solid #EBE4D3
+    padding 13px 0
+  .my-invitation-item-avartar
+    width vw(88)
+    height vw(88)
+    margin-right vw(24)
+  .my-invitation-item-content
+    flex 1
+  .my-invitation-item-title
+    font-size 16px
+    font-weight bold
+    line-height 22px
+    color #703419
+  .my-invitation-item-desc
+    font-size 14px
+    line-height 20px
+    color #C99768
+  .my-invitation-item-btn
+    width vw(140)
+    height vw(60)
+    line-height vw(60)
+    font-size 14px
+    color #FF8C87 
+    text-align center
+    border 1px solid #FF8C87
+    box-shadow inset 0px -3px 3px 0px rgba(255,247,236,0.47)
+    border-radius 10px
+    box-sizing border-box
+    &.not-call
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/1bd0b67f-daf8-4c96-a599-6a94c1bd37a0.png')
+      background-size cover
+      color #FFEFE2
+      font-weight bold
+      border none
+      box-shadow none
+  // 挑战列表
+  .invitation-rank-content
+    padding vw(33) vw(20) 0
+    height 100%
+    box-sizing border-box
+  .invitation-rank-dummy-container
+    position relative
+    width 100%
+    height 100%
+  .invitation-rank-list
+    position absolute
+    top 0
+    left 0
+    right 0
+    bottom 0
+    border-radius 10px 10px 0 0
+    background-color #FFFBF1
+  .invitation-rank-item
+    display flex
+    align-items center
+    margin 0 vw(20)
+    padding 14px 0
+    border-bottom 1px solid #EBE4D3
+    padding 13px 0
+  .invitation-rank-item-order
+    font-size 16px
+    line-height 20px
+    color #703419
+    text-align center
+    width 20px
+    height 20px
+    margin 0 20px 0 5px
+    &.gold-medal
+      background-image url('../../../assets/gold-medal.png')
+      background-size cover
+    &.silver-medal
+      background-image url('../../../assets/silver-medal.png')
+      background-size cover
+    &.bronze-medal
+      background-image url('../../../assets/bronze-medal.png')
+      background-size cover
+  .invitation-rank-item-avatar
+    display inline-block
+    width 32px
+    height 32px
+    margin-right 10px
+  .invitation-rank-item-name
+    font-size 16px
+    font-weight bold
+    color #703419
+    line-height 22px
+    &.transparent
+      opacity 0.5
+  .invitation-rank-item-desc
+    font-size 14px
+    line-height 20px
+    color #FF783C
+    flex 1
+    text-align right
+    padding-right vw(10)
+  .invitation-rank-list-placeholder
+    height vw(200)
+  .invitation-rank-fixed-mask
+    position absolute
+    left 0
+    right 0
+    bottom 0
+    height vw(200)
+    opacity 0.9
+    background-image linear-gradient(180deg, rgba(255,250,239,0.00) 0%, #FFFAEF 50%)
+    display flex
+    align-items center
+    justify-content center
+  .invitation-rank-fixed-bar
+    display flex
+    align-items center
+    position relative
+    width vw(653)
+    height vw(104)
+    background-image url('https://dpubstatic.udache.com/static/dpubimg/60112dde-6286-45f6-b9ce-207b3fe17a19.png')
+    background-size cover
+    &:after
+      content ''
+      position absolute
+      width 1px
+      height vw(48)
+      left vw(326)
+      top vw(28)
+      background-color #E9241A
+  .invitation-rank-fixed-item
+    width 50%
+    text-align center
+    font-size 0
+  .invitation-rank-fixed-item-desc
+    font-size 14px
+    line-height 20px
+    font-weight bold
+    color #FFF2D1
+  .invitation-rank-fixed-item-value
+    font-size 24px
+    line-height 20px
+    font-weight bold
+    color #FFF2D1
+    font-family dinum
+  .invitation-rank-fixed-item-unit
+    font-size 14px
+    font-weight bold
+    color #FFF2D1
+    margin-left 2px
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "base-dialog": "./base",
+      "single-avatar": "../avatars/single",
+      "no-data": "../no-data/no-invited-friends"
+    }
+  }
+</script>

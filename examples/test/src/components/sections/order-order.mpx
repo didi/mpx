@@ -1,0 +1,94 @@
+<template>
+  <view class="order-order-section-component intersectionRootNode" wx:if="{{ list.length }}" v-exposure@web="exposure">
+    <base-section title="{{info.head_title}}">
+      <view class="order-order-section-introduction">
+        <text class="order-order-section-title">{{info.title}}</text>
+        <text class="order-order-section-btn" bindtap="handleClick">查看详情</text>
+      </view>
+      <order-order-card wx:for="{{list}}" wx:key="index" item="{{item}}" />
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { universelPageJump } from '../../common/js/pageJump'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    data: {
+      intersectionEventId: 'wyc_main_venue_dandanjiang_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      list () {
+        return this.info.items || []
+      }
+    },
+    methods: {
+      handleClick () {
+        const ret = universelPageJump(this.info.jump_url)
+        trackAggregateEvent('wyc_main_venue_dandanjiang_ck', {
+          ck_type: 1
+        })
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      },
+      exposure () {
+        trackAggregateEvent('wyc_main_venue_dandanjiang_sw')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .order-order-section-component
+    // padding 50px 14px 15px
+    // background-color #fdedd5
+    // border 2px solid #fdcb7d
+    border-radius 10px
+    margin-top 29px
+    .order-order-section-introduction
+      display flex
+      align-items center
+      padding 0 0 15px
+    .order-order-section-title
+      font-size 15px
+      color #4B4B4D
+      font-weight bold
+      flex 1
+    .order-order-section-btn
+      font-size 14px
+      color #B4593C
+      position relative
+      padding-right 10px
+      &:after
+        content ''
+        position absolute
+        top 3px
+        right 0
+        width 5px
+        height 9px
+        background-image url('../../assets/icon-arrow@2x.png')
+        background-size cover
+
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "order-order-card": "../cards/order-order",
+      "base-section": "./base"
+    }
+  }
+</script>

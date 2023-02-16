@@ -1,0 +1,40 @@
+<template>
+  <block wx:if="{{show}}">
+    <image
+      class="el-img {{elClass}}"
+      wx:if="{{ __mpx_mode__ === 'wx' }}"
+      src="{{src}}"
+    ></image>
+    <img
+      class="el-img {{elClass}}"
+      wx:else src="{{src}}"
+    />
+  </block>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  name: 'el-img',
+  options: {
+    addGlobalClass: true,
+    styleIsolation: 'shared'
+  },
+  properties: {
+    src: {
+      type: String,
+      value: ''
+    },
+    elClass: {
+      type: String,
+      value: ''
+    }
+  },
+  computed: {
+    show () {
+      return !!this.src
+    }
+  }
+})
+</script>

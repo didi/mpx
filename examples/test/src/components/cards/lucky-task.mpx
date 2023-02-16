@@ -1,0 +1,92 @@
+<template>
+  <view class="lucky-task-component">
+    <view class="lucky-task-content">
+      <rich-text class="lucky-task-name" nodes="{{formattedHTMLString}}" />
+      <view wx:if="{{item.time_text}}" class="lucky-task-duration">{{timeText}}</view>
+    </view>
+    <view class="lucky-task-footer" bindtap="handleClick">查看详情</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { strToHtml } from '../../common/js/utils'
+  createComponent({
+    properties: {
+      item: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      formattedHTMLString () {
+        return strToHtml(this.item.desc)
+      },
+      timeText () {
+        return `${this.item.time_text}`
+      }
+    },
+    methods: {
+      handleClick () {
+        // TODO
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .lucky-task-component
+    padding 15px
+    background #FFF3E7
+    border-radius 8px
+    min-height 101px
+    box-sizing border-box
+    margin-bottom 10px
+    .lucky-task-content
+      min-height 70px
+      padding-left 120px
+      background-image url(https://dpubstatic.udache.com/static/dpubimg/f5d140a8-3ec9-4abd-89bb-4738b19aeb83.png)
+      background-size 100px 80px
+      background-repeat no-repeat
+      background-position left center
+    .lucky-task-name
+      font-size 16px
+      font-weight bold
+      line-height 23px
+      color #b4593c
+    .lucky-task-duration
+      display inline-block
+      word-break break-all
+      margin 6px 0 0 -6px
+      padding 3px 6px
+      border-radius 10px
+      line-height 14px
+      font-size 12px
+      color #b4593c
+      background-color rgba(252,211,141,0.31)
+    .lucky-task-footer
+      margin-top 15px
+      padding-top 12px
+      font-size 13px
+      border-top 1px dashed #ecd4c2
+      position relative
+      color #b4593c
+      &:after
+        content ''
+        position absolute
+        top 13px
+        right 0
+        width 5px
+        height 9px
+        background-image url('../../assets/icon-arrow@2x.png')
+        background-size cover
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "count-down": "../count-down/index"
+    }
+  }
+</script>

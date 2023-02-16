@@ -1,0 +1,77 @@
+<template>
+  <view class="battle-component" wx:if="{{title}}">
+    <view class="battle-component-left">
+      <view class="battle-component-title">{{title}}</view>
+      <view wx:if="{{desc}}" class="battle-component-desc">{{desc}}</view>
+      <view class="battle-component-href">点击查看</view>
+    </view>
+    <img wx:if="{{ __mpx_mode__ === 'web' }}" class="battle-component-icon" src="{{info.image_url}}" />
+    <image wx:else class="battle-component-icon" src="{{info.image_url}}" />
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      title () {
+        const texts = this.info.text || []
+        return texts[0] || ''
+      },
+      desc () {
+        const texts = this.info.text || []
+        return texts[1] || ''
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .battle-component
+    background-color #fff
+    margin-top 29px
+    padding 20px
+    border-radius 10px
+    display flex
+    .battle-component-left
+      flex 1
+    .battle-component-title
+      font-weight bold
+      font-size 17px
+      color #323233
+    .battle-component-desc
+      font-size 13px
+      margin-top 7px
+      color #7d7d80
+    .battle-component-href
+      margin-top 11px
+      font-size 13px
+      font-weight bold
+      color #ff6416
+      position relative
+      &:after
+        content ''
+        position absolute
+        left 55px
+        top 1px
+        width 12px
+        height 12px
+        background-image url('../../assets/icon-check@3x.png')
+        background-size cover
+    .battle-component-icon
+      width 62px
+      height 62px
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

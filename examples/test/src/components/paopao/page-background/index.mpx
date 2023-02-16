@@ -1,0 +1,109 @@
+<template>
+  <view class="page-background {{type || ''}}">
+    <view class="container-bg-middle">
+      <view class="container-bg-middle-bottom"></view>
+    </view>
+    <view class="fireworks-left-container">
+      <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{ fireworksImg1 }}" class="inject-img"></image>
+      <img wx:else src="{{ fireworksImg1 }}" class="inject-img" />
+    </view>
+    <view class="fireworks-middle-container">
+      <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{ fireworksImg2 }}" class="inject-img"></image>
+      <img wx:else src="{{ fireworksImg2 }}" class="inject-img" />
+    </view>
+    <view class="fireworks-right-container">
+      <image wx:if="{{ __mpx_mode__ === 'wx' }}" src="{{ fireworksImg3 }}" class="inject-img"></image>
+      <img wx:else src="{{ fireworksImg3 }}" class="inject-img" />
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { ifApngSupport } from '../../../common/js/utils'
+
+  createComponent({
+    options: {
+      addGlobalClass: true,
+      styleIsolation: 'shared'
+    },
+    properties: {
+      type: String
+    },
+    data: {
+      fireworksImg1: 'https://dpubstatic.udache.com/static/dpubimg/RUeYCv_oqb/fireworks_paopao_1.png',
+      fireworksImg2: 'https://dpubstatic.udache.com/static/dpubimg/-7PR7o2aS8/fireworks_paopao_2.png',
+      fireworksImg3: 'https://dpubstatic.udache.com/static/dpubimg/S-EwdEbxXJ/fireworks_paopao_3.png'
+    },
+    attached () {
+      if (ifApngSupport()) {
+        const fireworksImgApng = 'https://dpubstatic.udache.com/static/dpubimg/4cdfd31f-cf2c-4aea-a835-c60eac6b2846.png'
+        this.fireworksImg1 = fireworksImgApng
+        this.fireworksImg2 = fireworksImgApng
+        this.fireworksImg3 = fireworksImgApng
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+@import "../../../common/stylus/mixin.styl"
+.page-background
+  position absolute
+  z-index 0
+  top 0
+  left 0
+  width 100%
+  min-height 100vh
+  padding-top vw(480)
+  box-sizing border-box
+  background url('https://dpubstatic.udache.com/static/dpubimg/c9CH8Sq41F/bg_paopao_1.png') center 0 no-repeat
+  background-size contain
+  background-color #db3d32
+  &.no-light
+    background-image url('https://dpubstatic.udache.com/static/dpubimg/wZXepoMeKr/bg_paopao_1_no_light.png')
+    .container-bg-middle
+      background-image url('https://dpubstatic.udache.com/static/dpubimg/-iPy0SegeL/bg_paopao_2_no_light.png')
+    .container-bg-middle-bottom
+      display none
+  .container-bg-middle
+    position absolute
+    z-index 0
+    top vw(480)
+    left 0
+    width 100%
+    padding-top vw(524)
+    background url('https://dpubstatic.udache.com/static/dpubimg/m8fi_OWXGE/bg_paopao_2.png') center 0 no-repeat
+    background-size contain
+  .container-bg-middle-bottom
+    display block
+    width 100%
+    height vw(420)
+    background url('https://dpubstatic.udache.com/static/dpubimg/1r1iIO9AFR/bg_paopao_3.png') center 0 no-repeat
+    background-size contain
+  .inject-img
+    display block
+    width 100%
+    height 100%
+  .fireworks-left-container,
+  .fireworks-middle-container,
+  .fireworks-right-container
+    position absolute
+    width vw(167)
+    height vw(360)
+  .fireworks-left-container
+    top vw(139)
+    left 0
+    width vw(91)
+    height vw(244)
+  .fireworks-middle-container
+    top vw(286)
+    right vw(219)
+    width vw(78)
+    height vw(152)
+  .fireworks-right-container
+    top vw(0)
+    right vw(44)
+    width vw(169)
+    height vw(330)
+</style>

@@ -1,0 +1,69 @@
+<template>
+  <view class="traffic-section-component intersectionRootNode" wx:if="{{ list.length }}" v-exposure@web="exposure">
+    <base-section title="{{info.head_title}}">
+      <traffic-card wx:for="{{list}}" wx:key="index" item="{{item}}" bindclicked="handleClick" />
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { universelPageJump } from '../../common/js/pageJump'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    data: {
+      intersectionEventId: 'wyc_main_venue_ducheka_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      list () {
+        return this.info.list || []
+      }
+    },
+    methods: {
+      exposure () {
+        trackAggregateEvent('wyc_main_venue_ducheka_sw')
+      },
+      handleClick (e) {
+        const detail = (e && e.detail) || {}
+        const item = detail.item || {}
+        const type = detail.type
+        const ret = universelPageJump(item.jump_url || '')
+        trackAggregateEvent('wyc_main_venue_ducheka_ck', {
+          ck_type: type
+        })
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .traffic-section-component
+    // padding 50px 14px 15px
+    // background-color #fdedd5
+    // border 2px solid #fdcb7d
+    border-radius 10px
+    margin-top 29px
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "traffic-card": "../cards/traffic",
+      "base-section": "./base"
+    }
+  }
+</script>

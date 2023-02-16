@@ -1,0 +1,121 @@
+<!-- 组件只会在 web 的情况下编译 -->
+<template>
+  <view wx:class="chart-component">
+    <v-chart class="chart" option="{{option}}" />
+    <view wx:if="{{showLegend}}" class="chart-legend-container">
+      <view class="chart-legend-item" wx:for="{{legends}}" wx:key="index">
+        <view class="chart-legend-item-block" wx:class="{{item.colorClassname}}"></view>
+        <view class="chart-legend-item-text">{{item.txt}}</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { use } from 'echarts/core'
+  import { createComponent } from '@mpxjs/core'
+  import { CanvasRenderer } from 'echarts/renderers'
+  import { LineChart, BarChart } from 'echarts/charts'
+  import { GridComponent, VisualMapPiecewiseComponent, MarkLineComponent, MarkPointComponent, LegendComponent, GraphicComponent } from 'echarts/components'
+  import VChart from 'vue-echarts'
+
+  import getLineConfig from './lineConfig'
+  import getBarConfig from './barConfig'
+
+  use([
+    CanvasRenderer,
+    LineChart,
+    BarChart,
+    GridComponent,
+    VisualMapPiecewiseComponent,
+    MarkLineComponent,
+    MarkPointComponent,
+    LegendComponent,
+    GraphicComponent
+  ])
+
+  createComponent({
+    components: {
+      VChart
+    },
+    data () {
+      return {
+        legends: [
+          {
+            colorClassname: 'is-orange-block',
+            txt: '爆单时段'
+          }, {
+            colorClassname: 'is-blue-block',
+            txt: '普通时段'
+          }
+        ]
+      }
+    },
+    properties: {
+      data: {
+        type: Array,
+        default () { // 只会在 web 的情况下编译，用 vue 的语法
+          return []
+        }
+      },
+      type: {
+        type: String,
+        default: 'bar'
+      },
+      area: {
+        type: Number,
+        default: -1
+      },
+      average: {
+        type: Number,
+        default: 0
+      }
+    },
+    computed: {
+      option () {
+        return this.type === 'bar' ? getBarConfig(this.data, this.average, this.area === -1 ? '全国' : '本市')
+          : getLineConfig(this.data, this.average, this.area === -1 ? '全国' : '本市')
+      },
+      showLegend () {
+        return this.type !== 'bar'
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .chart-component
+    padding 10px 7px 22px
+    .chart
+      height 145px
+    .chart-legend-container
+      margin-top 16px
+      justify-content flex-end
+      display flex
+    .chart-legend-item
+      &:last-child
+        margin-left 20px
+    .chart-legend-item-block
+      display inline-block
+      margin-right 4px
+      width 15px
+      height 5px
+      background-color #EA5E1E
+      border-radius 2.5px
+      vertical-align middle
+      &.is-orange-block
+        background-color #EA5E1E
+      &.is-blue-block
+        background-color #4A90E2
+    .chart-legend-item-text
+      display inline-block
+      font-size 12px
+      color #4B4B4D
+      text-align right
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

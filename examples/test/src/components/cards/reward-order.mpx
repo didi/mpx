@@ -1,0 +1,125 @@
+<template>
+  <view
+    class="reward-order-card-component intersectionRootNode"
+    catchtap="onClick"
+    v-exposure@web="exposure"
+    wx:if="{{info.title}}"
+  >
+    <view class="header-info">
+      <view class="title">{{ info.title }}</view>
+      <view class="sub-title">{{ info.sub_title }}</view>
+      <view class="arrow-right"></view>
+    </view>
+    <view class="desc-box">
+      <rich-text class="desc" nodes="{{desc}}"></rich-text>
+    </view>
+    <view class="time">{{ info.time_text }}</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { strToHtml } from '../../common/js/utils'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    data () {
+      return {
+        intersectionEventId: 'wyc_main_shiduandandanjiang_sw' // 小程序模块出现在视口的埋点
+      }
+    },
+    methods: {
+      onClick () {
+        trackAggregateEvent('wyc_main_shiduandandanjiang_ck')
+        this.triggerEvent('clicked')
+      },
+      exposure () {
+        trackAggregateEvent(this.intersectionEventId)
+      }
+    },
+    computed: {
+      desc () {
+        const desc = this.info.desc || ''
+        return strToHtml(desc, '#ff7e33', 'font-size:35px;font-family:dinum;padding:0 4px 3px;')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../common/stylus/mixin.styl"
+  @import "../../common/stylus/base.styl"
+  .reward-order-card-component
+    background-color #fff
+    border-radius 8px
+    overflow hidden
+    padding-bottom vw(36)
+    margin-bottom 13px
+    border-1px(#f6d6b6, 7px)
+    .header-info
+      display flex
+      align-items center
+      width 100%
+      height vw(64)
+      background-color #ffdbad
+      .title
+        height vw(64)
+        background-color #fb8844
+        color #ffefc0
+        font-weight bold
+        padding 0 vw(38) vw(37)
+        position relative
+        box-sizing border-box
+        line-height vw(64)
+        &:after
+          content ''
+          position absolute
+          right 0px
+          top 0
+          width 0
+          height 0
+          border-bottom vw(64) solid #ffdbad
+          border-left 10px solid #fb8844
+          border-right 0px solid #ffdbad
+      .sub-title
+        font-size 12px
+        color #b75e41
+        padding 0 6px
+        margin-right vw(35)
+      .arrow-right
+        width vw(12)
+        height vw(24)
+        background url('https://dpubstatic.udache.com/static/dpubimg/697e1544-2a5f-4e58-9c1c-9a28839a6517.png') center no-repeat
+        background-size contain
+    .desc-box
+      padding-left vw(38)
+      margin-top vw(28)
+      margin-bottom vw(22)
+      box-sizing border-box
+    .desc
+      font-size 17px
+      color #b75e41
+    .time
+      margin-left vw(38)
+      display inline-block
+      padding 5.5px 16.5px
+      font-size 10px
+      line-height 1
+      color #b75e41
+      background-color #fdedd5
+      border-radius 11.5px
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

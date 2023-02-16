@@ -1,0 +1,43 @@
+<template>
+  <view class="go-reward-center-component" bindtap="goRewardCenter">
+    去奖励中心逛逛
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { DRIVER_REWARD_CENTER_URL } from '../../common/js/constants'
+  import { universelPageJump } from '../../common/js/pageJump'
+
+  createComponent({
+    data: {},
+    methods: {
+      goRewardCenter () {
+        const ret = universelPageJump(DRIVER_REWARD_CENTER_URL)
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .go-reward-center-component
+    display inline-block
+    width 177px
+    height 40px
+    background-image url('https://dpubstatic.udache.com/static/dpubimg/c5d4a577-e20f-47b0-b7d5-9b921a41e702.png')
+    background-size cover
+    font-size 17px
+    line-height 40px
+    font-weight bold
+    color #943025
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

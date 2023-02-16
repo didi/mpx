@@ -1,0 +1,107 @@
+<template>
+  <view class="custom-service-popup-component" wx:show="{{appear}}" catchtouchmove="dummyTouchmove" @touchmove.prevent@web>
+    <view class="custom-service-popup-main">
+      <view class="custom-service-popup-content">
+        <view class="custom-service-popup-tip">请前往“滴滴车主APP”操作</view>
+        <view class="custom-service-popup-descs">
+          <view class="custom-service-popup-desc" wx:for="{{texts}}" wx:key="index">{{item}}</view>
+        </view>
+      </view>
+      <view
+        class="custom-service-popup-close"
+        bindtap="toggle"
+      ></view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    data: {
+      appear: false,
+      texts: ['请前往“滴滴车主APP”打开', '主会场页面进行操作']
+    },
+    methods: {
+      dummyTouchmove () {},
+      toggle () {
+        this.appear = !this.appear
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../../common/stylus/mixin.styl"
+  .custom-service-popup-component
+    z-index 100
+    position fixed
+    left 0
+    right 0
+    top 0
+    bottom 0
+    background-color rgba(0, 0, 0, 0.7)
+  .custom-service-popup-main
+    position absolute
+    top 47%
+    left 50%
+    width vw(560)
+    height vw(750)
+    transform translate(-50%, -50%)
+    background-image url('https://dpubstatic.udache.com/static/dpubimg/fc844e5b-a6ba-4949-9030-2910a0d2126a.png')
+    background-size contain
+    background-repeat no-repeat
+  .custom-service-popup-content
+    position absolute
+    bottom 0
+    left 0
+    right 0
+    height vw(320)
+    text-align center
+    background-color white
+    border-radius 0 0 10px 10px
+  .custom-service-popup-tip
+    font-size vw(34)
+    line-height vw(48)
+    color #111
+    font-weight bold
+    margin-top vw(32)
+  .custom-service-popup-descs
+    margin-top vw(16)
+  .custom-service-popup-desc
+    font-size 14px
+    line-height vw(40)
+    color #666
+  .custom-service-popup-btn
+    width 190px
+    height 40px
+    margin-top 12px
+    font-size 16px
+    line-height 40px
+    font-weight bold
+    text-align center
+    color #fff
+    border-radius 26px
+    background-color #FF7F41
+    outline none
+    &:after // 去除小程序样式
+      content ''
+      border none
+  .custom-service-popup-close
+    width 24px
+    height 24px
+    position absolute
+    bottom vw(-86)
+    left 50%
+    transform translateX(-50%)
+    background-image url('../../../assets/btn-close.png')
+    background-size cover
+    expand-touch()
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

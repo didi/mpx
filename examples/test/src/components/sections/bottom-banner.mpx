@@ -1,0 +1,119 @@
+<template>
+  <view class="bottom-banner-component intersectionRootNode" wx:if="{{list}}" v-exposure@web="exposure">
+    <view class="bottom-banner-component-border">
+      <swiper
+        class="swiper-box"
+        indicator-dots="{{indicatorDots}}"
+        autoplay="{{autoplay}}"
+        interval="{{interval}}"
+        duration="{{duration}}"
+        circular="{{true}}"
+        bindchange="swiperChange"
+      >
+        <block wx:for="{{list}}" wx:key="*this">
+          <swiper-item class="swiper-item">
+            <image
+              class="swiper-item-img"
+              src='{{item.img_url}}'
+              bindtap="goRewardDetail(item)"
+            ></image>
+          </swiper-item>
+        </block>
+      </swiper>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { universelPageJump } from '../../common/js/pageJump'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+  const hasReportMap = []
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    properties: {
+      list: {
+        type: Array,
+        value: []
+      }
+    },
+    data () {
+      return {
+        indicatorDots: true,
+        vertical: false,
+        autoplay: false,
+        interval: 2000,
+        duration: 500,
+        currentIndex: -1,
+        intersectionEventId: 'wyc_main_banner_item_sw' // 小程序模块出现在视口的埋点
+      }
+    },
+    computed: {
+      intersectionOmegaParams () {
+        hasReportMap.push(this.currentIndex)
+        return {
+          act_id: this.currentIndex
+        }
+      }
+    },
+    methods: {
+      goRewardDetail (subItem) {
+        console.log('subItem ', subItem)
+        trackAggregateEvent('wyc_main_banner_item_ck', {
+          act_id: this.currentIndex
+        })
+        const url = subItem.jump_url || ''
+        const ret = universelPageJump(url)
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      },
+      exposure () {
+        this.triggered = true
+        trackAggregateEvent(this.intersectionEventId, this.intersectionOmegaParams)
+      },
+      swiperChange (e) {
+        const index = e.detail.current
+        this.currentIndex = index
+        if (!this.triggered) return // mixins exposure
+        if (!hasReportMap.includes(index)) {
+          trackAggregateEvent(this.intersectionEventId, this.intersectionOmegaParams)
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+@import "../../common/stylus/mixin.styl"
+
+  .bottom-banner-component
+    margin-top 20px
+    margin-bottom 20px
+    background-color #fdedd5
+    border 2px solid #fdcb7d
+    padding 2px
+    border-radius 10px
+    overflow hidden
+    .bottom-banner-component-border
+      border 1px solid #fdcb7d
+      padding 1px
+      border-radius 8px
+    .swiper-box
+      height vw(280)
+      width 100%
+      border-radius 6px
+      overflow hidden
+    .swiper-item-img
+      width 100%
+      height 100%
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

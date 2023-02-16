@@ -1,0 +1,205 @@
+<template>
+  <view class="page-join-group">
+    <page-background></page-background>
+    <view class="join-group-content">
+      <image class="page-title" src="https://dpubstatic.udache.com/static/dpubimg/-Lnf3bVezr/page_title_join_group_paopao.png"></image>
+      <view class="content-container">
+        <red-package-bg type="join-group"></red-package-bg>
+        <view wx:if="{{qrImg}}" class="qr-container">
+          <image class="qr-img" wx:if="{{__mpx_mode__ === 'wx'}}" src="{{qrImg}}"></image>
+          <img class="qr-img" wx:else src="{{qrImg}}" />
+        </view>
+        <view wx:if="{{qrImg === ''}}" class="no-qr-code">很抱歉，当前入群人数太多啦请稍后重试</view>
+        <view class="join-group-btn" bind:tap="saveQrCode">保存二维码图片</view>
+        <view class="join-group-benefit"></view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { saveImage } from '../common/js/bridge'
+import { getCommunityQrCode } from '../api'
+import { trackEvent } from '../common/js/Omega'
+
+createPage({
+  data: {
+    isSaving: false,
+    qrImg: undefined
+  },
+  onLoad () {
+    this.getCommunityQrCode()
+    trackEvent('wyc_mkt_ppyuyue_leader_main_group_sw')
+  },
+  methods: {
+    getCommunityQrCode () {
+      getCommunityQrCode().then(res => {
+        this.qrImg = res.qrcode || ''
+      }).catch(err => {
+        console.log(err)
+        this.qrImg = ''
+      })
+    },
+    saveQrCode () {
+      if (this.isSaving) return
+      trackEvent('wyc_mkt_ppyuyue_leader_main_group_qr_ck')
+      this.isSaving = true
+      if (__mpx_mode__ === 'wx') {
+        this.downloadImage(this.qrImg)
+      } else {
+        saveImage(this.qrImg, (res) => {
+          this.isSaving = false
+          const errno = Number(res.errno)
+          const texts = [
+            '保存成功',
+            '参数错误',
+            '存储权限获取失败',
+            '图片格式错误',
+            '保存图片失败'
+          ]
+          this.showToast(texts[errno])
+          if (errno === 0) {
+            this.triggerEvent('success')
+          }
+        })
+      }
+    },
+    downloadImage (imgUrl) {
+      const _this = this
+      wx.getSetting({ // 获取相册授权
+        success (res) {
+          if (!res.authSetting['scope.writePhotosAlbum']) {
+            wx.authorize({ // 授权
+              scope: 'scope.writePhotosAlbum',
+              success (resq) {
+                _this.saveImg(imgUrl)
+              },
+              fail (err) {
+                console.log('fail', err)
+                _this.openSetting()
+              }
+            })
+          } else { // 用户已经授权过了
+            _this.saveImg(imgUrl)
+          }
+        }
+      })
+    },
+    openSetting () {
+      wx.showModal({
+        title: '提示',
+        content: '是否前往设置页面开启相册授权？',
+        cancelText: '否',
+        confirmText: '是',
+        success (res) {
+          if (res.confirm) {
+            wx.openSetting({
+              success () {
+                // console.log(res.authSetting)
+              }
+            })
+          }
+        }
+      })
+    },
+    // 保存图片到本地
+    saveImg (imgUrl) {
+      const _this = this
+      wx.downloadFile({
+        url: imgUrl,
+        success: function (res) {
+          // 图片保存到本地
+          wx.saveImageToPhotosAlbum({
+            filePath: res.tempFilePath,
+            success: function (data) {
+              _this.triggerEvent('success')
+            }
+          })
+        }
+      })
+    }
+  }
+})
+</script>
+
+<style lang="stylus">
+@import "../common/stylus/mixin.styl"
+.page-join-group
+  position relative
+  min-height 100vh
+  background-color #db3d32
+  .page-background
+    top vw(-88)
+  .join-group-content
+    position relative
+    z-index 1
+    padding-top vw(382)
+    padding-bottom 30px
+    box-sizing border-box
+  .page-title
+    position absolute
+    z-index 1
+    top vw(61)
+    left 50%
+    transform translateX(-50%)
+    width vw(671)
+    height vw(122)
+  .content-container
+    position relative
+    margin 0 auto
+    width vw(702)
+    height vw(769)
+    border-top 1px solid transparent
+  .no-qr-code
+    margin vw(182) auto vw(250)
+    width vw(362)
+    text-align center
+    line-height vw(32)
+    font-size vw(28)
+    color #fdeac7
+  .qr-container
+    margin vw(80) auto 0
+    width vw(288)
+    height vw(291)
+    padding vw(14)
+    box-sizing border-box
+    border 3px solid #ffd899
+    border-radius 14px
+    overflow hidden
+    background-color #fff
+  .qr-img
+    display block
+    width 100%
+    height 100%
+  .join-group-btn
+    margin vw(126) auto 0
+    width vw(461)
+    height vw(101)
+    background url('https://dpubstatic.udache.com/static/dpubimg/hzDHIxyfaK/options_btn_paopao_1.png') center 0 no-repeat
+    background-size contain
+    text-align center
+    line-height vw(76)
+    color #c12515
+    font-size vw(34)
+    font-weight bold
+  .join-group-benefit
+    margin 0 auto
+    width vw(442)
+    height vw(121)
+    background url('https://dpubstatic.udache.com/static/dpubimg/QVU0TuATw3/join_group_benefit_paopao.png') center 0 no-repeat
+    background-size contain
+</style>
+
+<script name="json">
+  let usingComponents = {
+    'page-background': '../components/paopao/page-background',
+    'red-package-bg': '../components/paopao/page-background/red-package-bg.mpx'
+  }
+  module.exports = {
+    usingComponents,
+    navigationBarBackgroundColor: '#db3d32',
+    navigationBarTextStyle: 'white',
+    navigationBarTitleText: '跑跑预约礼'
+  }
+</script>

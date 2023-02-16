@@ -1,0 +1,111 @@
+<template>
+  <view class="team-section-component intersectionRootNode" wx:if="{{ info.head_title }}" v-exposure@web="exposure">
+    <base-section title="{{info.head_title}}">
+      <view class="team-card">
+        <image wx:if="{{ __mpx_mode__ === 'wx'}}" src="{{iconUrl}}" class="team-card-icon" />
+        <img wx:elif="{{ __mpx_mode__ === 'web'}}" src="{{iconUrl}}" class="team-card-icon" />
+        <view class="team-card-content">
+          <view class="team-card-title" wx:for="{{titles}}" wx:key="index">{{item}}</view>
+          <view class="team-card-duration">{{info.time_text}}</view>
+        </view>
+      </view>
+      <view>
+        <common-button bindclicked="handleClick" text="{{text}}" />
+      </view>
+    </base-section>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  import { universelPageJump } from '../../common/js/pageJump'
+  import { trackAggregateEvent } from '../../common/js/Omega'
+  import intersectionObserverMixin from '../../common/mixins/intersectionObserver'
+
+  createComponent({
+    mixins: [intersectionObserverMixin],
+    data: {
+      intersectionEventId: 'wyc_gqmarketing_mainpage_team_sw' // 小程序模块出现在视口的埋点
+    },
+    properties: {
+      info: {
+        type: Object,
+        value: {}
+      }
+    },
+    computed: {
+      text () {
+        return '立即组队'
+      },
+      iconUrl () {
+        return 'https://dpubstatic.udache.com/static/dpubimg/6b634b07-2062-4cf7-9374-7007524d3d15.png'
+      },
+      titles () {
+        return this.info.text || []
+      }
+    },
+    methods: {
+      handleClick (type) {
+        trackAggregateEvent('wyc_gqmarketing_mainpage_team_ck')
+        const ret = universelPageJump(this.info.jump_url)
+        // 走客服会话逻辑
+        if (ret === true) {
+          this.triggerEvent('customerService')
+        }
+      },
+      exposure () {
+        trackAggregateEvent('wyc_gqmarketing_mainpage_team_sw')
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  @import "../../common/stylus/mixin.styl"
+  .team-section-component
+    // padding 50px 14px 15px
+    // background-color #fdedd5
+    // border 2px solid #fdcb7d
+    border-radius 10px
+    margin-top 29px
+    .team-card
+      padding 10px 5px
+      background #FFF3E7
+      border-radius 8px
+      box-sizing border-box
+      margin-bottom 10px
+      position relative
+      display flex
+      align-items center
+    .team-card-icon
+      width vw(200)
+      height vw(160)
+      margin-right vw(30)
+    .team-card-content
+      flex 1
+    .team-card-title
+      font-size 16px
+      font-weight bold
+      line-height 23px
+      color #b4593c
+    .team-card-duration
+      display inline-block
+      word-break break-all
+      margin 10px 0 0 -6px
+      padding 3px 6px
+      border-radius 10px
+      line-height 14px
+      font-size 12px
+      color #b4593c
+      background-color rgba(252,211,141,0.31)
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "base-section": "./base",
+      "common-button": "../base/common-button"
+    }
+  }
+</script>
