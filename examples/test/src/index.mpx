@@ -1,9 +1,0 @@
-<script name="json">
-// 提供给宿主小程序的 pages 页面配置
-module.exports = {
-  pages: [
-    './pages/index',
-    './pages/group'
-  ]
-}
-</script>

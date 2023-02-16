@@ -1,9 +1,0 @@
-.DS_Store
-node_modules/
-npm-debug.log
-.idea/
-deploy/
-output/
-dist/
-.vscode/
-module-APNG/node_modules/
