@@ -1,4 +1,4 @@
-module.exports = function (el, binding) {
+export default function (el, binding) {
   const newActions = binding && binding.value && binding.value.actions
   if (el.actions === newActions) {
     Promise.resolve().then(() => {

@@ -1,4 +1,4 @@
-module.exports = function (style) {
+export default function (style) {
   const defaultTransRpxFn = function (match, $1) {
     const rpx2vwRatio = +(100 / 750).toFixed(8)
     return '' + ($1 * rpx2vwRatio) + 'vw'

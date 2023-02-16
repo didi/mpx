@@ -4,6 +4,9 @@ import { defineConfig, splitVendorChunkPlugin } from 'vite'
 // import legacy from '@vitejs/plugin-legacy'
 
 export default defineConfig({
+  optimizeDeps:{
+    include: ['@mpxjs/api-proxy', '@mpxjs/core']
+  },
   plugins: [
     mpx({
       env: 'didi',
@@ -49,7 +52,6 @@ export default defineConfig({
     // legacy()
   ],
   resolve: {
-    preserveSymlinks: true, // for dev linked packages
     alias: {
       '@': path.resolve('.')
     },

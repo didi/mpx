@@ -123,7 +123,7 @@ export default async function resolveJson(
     json,
     context,
     proxyPluginContext(pluginContext),
-    options,
+    options.defs,
     fsInfo || fs
   )
   const jsonResult = json5.parse(jsonContent.content)
