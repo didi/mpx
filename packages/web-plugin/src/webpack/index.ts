@@ -34,7 +34,7 @@ import {
 } from 'webpack'
 import getOutputPath from '../utils/get-output-path'
 
-const styleCompilerPath = require.resolve('@mpxjs/loaders/dist/style-loader.js')
+const styleCompilerPath = require.resolve('@mpxjs/loaders/style-loader.js')
 const isProductionLikeMode = (options: {
   mode?: 'production' | 'development' | 'none' | undefined
 }) => {
@@ -43,7 +43,6 @@ const isProductionLikeMode = (options: {
 
 const warnings: Array<string | WebpackError> = []
 const errors: Array<string | WebpackError> = []
-
 
 class MpxWebpackPlugin {
   options: Options
@@ -87,21 +86,21 @@ class MpxWebpackPlugin {
   }
   static wxsPreLoader(options = {}) {
     return {
-      loader: '@mpxjs/loaders/dist/pre-loader',
+      loader: '@mpxjs/loaders/pre-loader',
       options
     }
   }
 
   static urlLoader(options = {}) {
     return {
-      loader: '@mpxjs/loaders/dist/url-loader',
+      loader: '@mpxjs/loaders/url-loader',
       options
     }
   }
 
   static fileLoader(options = {}) {
     return {
-      loader: '@mpxjs/loaders/dist/file-loader',
+      loader: '@mpxjs/loaders/file-loader',
       options
     }
   }
@@ -636,7 +635,7 @@ class MpxWebpackPlugin {
             const { queryObj, resource } = parseRequest(request)
             if (queryObj.resolve) {
               // 此处的query用于将资源引用的当前包信息传递给resolveDependency
-              const resolveLoaderPath = '@mpxjs/loaders/dist/resolve-loader'
+              const resolveLoaderPath = '@mpxjs/loaders/resolve-loader'
               data.request = `!!${resolveLoaderPath}!${resource}`
             }
           }
