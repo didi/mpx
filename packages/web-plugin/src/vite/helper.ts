@@ -80,7 +80,6 @@ export function renderI18nCode(options: Options): string {
     content.push(
       `i18nCfg.legacy = false`,
       `const i18n = createI18n(i18nCfg, VueI18n)`,
-      `console.log(i18n, i18nCfg)`,
       `Vue.use(i18n)`,
       `Mpx.i18n = i18n`
     )
