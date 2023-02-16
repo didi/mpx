@@ -3,7 +3,7 @@ import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { Options } from '../../options'
 import { SFCDescriptor } from '../utils/descriptorCache'
-import templateTransform from '../../transfrom/template-helper'
+import templateTransform from '../../transfrom/template-compiler'
 
 /**
  * transform mpx template to vue template

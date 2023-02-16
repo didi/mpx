@@ -1,6 +1,6 @@
 import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
 import mpx, { getOptions } from '../mpx'
-import templateTransform from '../../transfrom/template-helper'
+import templateTransform from '../../transfrom/template-compiler'
 import { LoaderContext } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
 import { CompilerResult } from '@mpxjs/compiler'

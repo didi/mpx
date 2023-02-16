@@ -17,7 +17,7 @@ import MagicString from 'magic-string'
 import { LoaderContext } from 'webpack'
 import { JsonConfig } from '../../types/json-config'
 import { JsonTransfromResult } from '../../transfrom/json-compiler'
-import { TemplateTransformResult } from '../../transfrom/template-helper'
+import { TemplateTransformResult } from '../../transfrom/template-compiler'
 import { CompilerResult } from '@mpxjs/compiler'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
