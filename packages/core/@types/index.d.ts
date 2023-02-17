@@ -223,7 +223,7 @@ export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMi
 
 type MixinType = 'app' | 'page' | 'component'
 
-export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): Mpx
 
 // export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
