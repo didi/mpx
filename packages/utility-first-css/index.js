@@ -7,6 +7,7 @@ const import_style = require('windicss/utils/style')
 const import_utils3 = require('@antfu/utils')
 const regexHtmlTag = /<(\w[\w-]*)([\S\s]*?)\/?>/mg
 const regexClassSplitter = /[\s'"`{}]/g
+// eslint-disable-next-line
 const regexClassCheck1 = /^!?[a-z\d@<>.+-](?:\([\w,.%#\(\)+-]*\)|[\w:/\\,%#\[\].$-])*$/
 const regexAttributifyItem = /(?:\s|^)([\w+:_/-]+)\s?=\s?(['"{])((?:\\\2|\\\\|\n|\r|.)*?)(?:\2|\})/gm
 const regexClassCheck2 = /[a-z].*[\w)\]]$/
@@ -31,15 +32,17 @@ const CSSFILEEXTMAP = {
   wx: 'wxss',
   ali: 'acss'
 }
+
 const FILESPLIT = path.sep
+
 function validClassName(i) {
   return regexClassChecks.every((r) => i.length > 2 && i.match(r))
 }
 
 function include(set, v) {
-    for (const i of v) {
-      set.add(i)
-    }
+  for (const i of v) {
+    set.add(i)
+  }
 }
 
 function DefaultExtractor(code) {
@@ -62,13 +65,15 @@ function DefaultExtractor(code) {
         return Array.from(i[2].matchAll(regexAttributifyItem) || []).forEach((match) => {
           let name = match[1]
           const [full, , , value] = match
-          name = name.replace(/^(:|v-bind:)/, "")
-          if (attributesBlocklist.includes(name))
+          name = name.replace(/^(:|v-bind:)/, '')
+          if (attributesBlocklist.includes(name)) {
             return
+          }
           attributes.names.push(name)
           attributes.values.push(value)
-          if (match.index != null)
+          if (match.index != null) {
             attrRanges.push([match.index, match.index + full.length])
+          }
         })
       })
       return attributes
@@ -191,14 +196,14 @@ function buildPendingStyles(dir) {
   }
 }
 
-function generateCSS(layer,dir) {
+function generateCSS(layer, dir) {
   buildPendingStyles(dir)
-  return buildLayerCss(layer,dir)
+  return buildLayerCss(layer, dir)
 }
 
 function getCommonClass(){
-  const allClasses = Object.keys(classesPending).reduce((acc, cur) => acc.concat(Array.from(classesPending[cur])),[])
-  const classTimes = allClasses.reduce((acc, c) => {acc[c] ? acc[c]++ : acc[c] = 1; return acc},{})
+  const allClasses = Object.keys(classesPending).reduce((acc, cur) => acc.concat(Array.from(classesPending[cur])), [])
+  const classTimes = allClasses.reduce((acc, c) => {acc[c] ? acc[c]++ : acc[c] = 1; return acc}, {})
   const commonClass = Object.keys(classTimes).filter(c => classTimes[c] >= 2)
   const classArray = {}
   Object.keys(classesPending).forEach(key => {
@@ -211,7 +216,7 @@ function getCommonClass(){
   classesPending = Object.keys(classArray).reduce((acc, k) => {
     acc[k] = new Set(classArray[k])
     return acc
-  },{})
+  }, {})
 }
 
 function relativeFilePath(a, b) {
@@ -222,7 +227,7 @@ function getDirs(defaultSubpackages) {
   let dirs = []
   if (windiConfig?.extract?.include) {
     windiConfig?.extract?.include.forEach(item => {
-      item.replace(/subpackage\/(\w+)/g,(str,$1) => {
+      item.replace(/subpackage\/(\w+)/g, (str, $1) => {
         if ($1) {
           dirs.push($1)
         }
@@ -279,19 +284,18 @@ function emitCode(dirs, compilation, outputPath) {
     const commonWritePath = `${FILESPLIT}${OUTPUTCSSFILENAME}.${fileType}`
     let importStr = ''
     if (commonDir.includes(dir) && dir !== MAINDIR) {
-      importStr =  `@import '${relativeSymbol}${commonWritePath}';\n`
+      importStr = `@import '${relativeSymbol}${commonWritePath}';\n`
     }
     const writePath = dir === MAINDIR ? `.${commonWritePath}` : `${dir}${commonWritePath}`
     compilation.emitAsset(writePath, new RawSource(importStr + cssData))
   })
-
-  Object.keys(compilation.assets).map(file => {
+  Object.keys(compilation.assets).forEach(file => {
     const fileNameArr = file.split(FILESPLIT)
     const fileDirName = fileNameArr[0]
     if (/\.?ml$/i.test(file) && dirs.includes(fileDirName)) { 
       let cssFile = fileNameArr.splice(0, fileNameArr.length-1).join(FILESPLIT) 
       const dirPath = dirs.filter(dir => fileDirName === dir)[0]
-      const importFile = relativeFilePath(cssFile , dirPath)
+      const importFile = relativeFilePath(cssFile, dirPath)
       const commonWritePath = `${FILESPLIT}${OUTPUTCSSFILENAME}.${CSSFILEEXTMAP[compilation.__mpx__.mode]}`
       cssFile = cssFile + commonWritePath
       compilation.emitAsset(cssFile, new RawSource(`@import '${importFile}${commonWritePath}';\n`))
