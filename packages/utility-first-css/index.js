@@ -35,17 +35,17 @@ const CSSFILEEXTMAP = {
 
 const FILESPLIT = path.sep
 
-function validClassName(i) {
+function validClassName (i) {
   return regexClassChecks.every((r) => i.length > 2 && i.match(r))
 }
 
-function include(set, v) {
+function include (set, v) {
   for (const i of v) {
     set.add(i)
   }
 }
 
-function DefaultExtractor(code) {
+function DefaultExtractor (code) {
   const tags = Array.from(code.matchAll(regexHtmlTag))
   const tagNames = tags.map((i) => i[1])
   return {
@@ -81,50 +81,54 @@ function DefaultExtractor(code) {
   }
 }
 
-function applyExtractors(code) {
+function applyExtractors (code) {
   const results = [DefaultExtractor].map((extractor) => extractor(code))
   const attributesNames = results.flatMap((v) => {
-  let _a, _b
-  return (_b = (_a = v.attributes) == null ? void 0 : _a.names) != null ? _b : []
+    let _a, _b
+    // eslint-disable-next-line
+    return (_b = (_a = v.attributes) == null ? void 0 : _a.names) != null ? _b : []
   })
   const attributesValues = results.flatMap((v) => {
   let _a, _b
+  // eslint-disable-next-line
   return (_b = (_a = v.attributes) == null ? void 0 : _a.values) != null ? _b : []
   })
   return {
     tags: (0, import_utils3.uniq)(results.flatMap((v) => {
-        let _a
-        return (_a = v.tags) != null ? _a : []
+      let _a
+      return (_a = v.tags) != null ? _a : []
     })),
     ids: (0, import_utils3.uniq)(results.flatMap((v) => {
-        let _a
-        return (_a = v.ids) != null ? _a : []
+      let _a
+      return (_a = v.ids) != null ? _a : []
     })),
     classes: (0, import_utils3.uniq)(results.flatMap((v) => {
-        let _a
-        return (_a = v.classes) != null ? _a : []
+      let _a
+      return (_a = v.classes) != null ? _a : []
     })),
     attributes: attributesNames.length || attributesValues.length ? {
-        names: attributesNames,
-        values: attributesValues
+      names: attributesNames,
+      values: attributesValues
+      // eslint-disable-next-line
     } : void 0
   }
 }
 
-function addClasses(classes, dir) {
+function addClasses (classes, dir) {
   if (!classesGenerated[dir] || !classesPending[dir]) {
     classesGenerated[dir] = new Set()
     classesPending[dir] = new Set()
   }
   classes.forEach((i) => {
-    if (!i || classesGenerated[dir].has(i) || classesPending[dir].has(i))
-    return
+    if (!i || classesGenerated[dir].has(i) || classesPending[dir].has(i)) {
+      return
+    }
     classesPending[dir].add(i)
   })
   return classesPending
 }
 
-function extractFileLoader(code, dir) {
+function extractFileLoader (code, dir) {
   const extractResult = applyExtractors(code)
   if (windiConfig.attributify) {
     const extractedAttrs = extractResult.attributes
@@ -185,8 +189,9 @@ function buildPendingStyles(dir) {
     if (attributes.length) {
       const attributesObject = {}
       attributes.filter((i) => i[0] && i[1]).forEach(([name2, value]) => {
-        if (!attributesObject[name2])
+        if (!attributesObject[name2]) {
           attributesObject[name2] = []
+        }
         attributesObject[name2].push(...String(value).split(regexClassSplitter).filter(Boolean))
       })
       const attributifyStyle = processor.attributify(attributesObject)
