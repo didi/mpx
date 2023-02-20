@@ -108,11 +108,13 @@ function applyExtractors (code) {
       const _a = v.classes
       return _a != null ? _a : []
     })),
-    attributes: (attributesNames.length || attributesValues.length) ? {
-      names: attributesNames,
-      values: attributesValues
-      // eslint-disable-next-line
-    } : void 0
+    attributes: (attributesNames.length || attributesValues.length)
+            ? {
+              names: attributesNames,
+              values: attributesValues
+              // eslint-disable-next-line
+            }
+            : void 0
   }
 }
 
