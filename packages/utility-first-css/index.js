@@ -169,7 +169,6 @@ function buildPendingStyles(dir) {
       }
     }
   }
-  // if (windiConfigMap[dir].attributify) {
   if (windiConfig.attributify) {
     if (attributes.length) {
       const attributesObject = {};
