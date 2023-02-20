@@ -1,9 +1,9 @@
 const path = require('path')
-const windicss = require('windicss')
+const Windicss = require('windicss')
 const hash = require('hash-sum')
 const windiConfigPath = path.join(process.cwd(), './windi.config.js')
 const windiConfig = require(windiConfigPath)
-const import_style = require('windicss/utils/style')
+const Import_style = require('windicss/utils/style')
 const import_utils3 = require('@antfu/utils')
 const regexHtmlTag = /<(\w[\w-]*)([\S\s]*?)\/?>/mg
 const regexClassSplitter = /[\s'"`{}]/g
@@ -50,9 +50,11 @@ function DefaultExtractor (code) {
   const tagNames = tags.map((i) => i[1])
   return {
     tags: tagNames,
+
     get classes() {
       return code.split(regexClassSplitter).filter(validClassName)
     },
+
     get attributes() {
       const attrRanges = []
       const attributes = {
@@ -89,9 +91,9 @@ function applyExtractors (code) {
     return (_b = (_a = v.attributes) == null ? void 0 : _a.names) != null ? _b : []
   })
   const attributesValues = results.flatMap((v) => {
-  let _a, _b
-  // eslint-disable-next-line
-  return (_b = (_a = v.attributes) == null ? void 0 : _a.values) != null ? _b : []
+    let _a, _b
+    // eslint-disable-next-line
+    return (_b = (_a = v.attributes) == null ? void 0 : _a.values) != null ? _b : []
   })
   return {
     tags: (0, import_utils3.uniq)(results.flatMap((v) => {
@@ -103,8 +105,8 @@ function applyExtractors (code) {
       return (_a = v.ids) != null ? _a : []
     })),
     classes: (0, import_utils3.uniq)(results.flatMap((v) => {
-      let _a
-      return (_a = v.classes) != null ? _a : []
+      let _a = v.classes
+      return _a != null ? _a : []
     })),
     attributes: attributesNames.length || attributesValues.length ? {
       names: attributesNames,
@@ -132,26 +134,28 @@ function extractFileLoader (code, dir) {
   const extractResult = applyExtractors(code)
   if (windiConfig.attributify) {
     const extractedAttrs = extractResult.attributes
+    // eslint-disable-next-line
     if (extractedAttrs == null ? void 0 : extractedAttrs.names.length) {
       extractedAttrs.names.forEach((name2, i) => {
         attributes.push([name2, extractedAttrs.values[i]])
       })
     }
+    // eslint-disable-next-line
     return addClasses((extractedAttrs == null ? void 0 : extractedAttrs.classes) || extractResult.classes || [], dir)
   } else {
     return addClasses(extractResult.classes || [], dir)
   }
 }
 
-function buildLayerCss(layer,dir) {
+function buildLayerCss(layer, dir) {
   let _a
-  const style = new import_style.StyleSheet(Array.from(layerStylesMap[dir].values()).flatMap((i) => i).filter((i) => i.meta.type === layer))
+  const style = new Import_style.StyleSheet(Array.from(layerStylesMap[dir].values()).flatMap((i) => i).filter((i) => i.meta.type === layer))
   style.prefixer = (_a = windiConfig.prefixer) != null ? _a : true
   return `${style.build()}`
 }
 
 function buildPendingStyles(dir) {
-  const processor = new windicss(windiConfig)
+  const processor = new Windicss(windiConfig)
   if (!classesPending[dir]) {
     classesPending[dir] = new Set()
   }
@@ -170,6 +174,7 @@ function buildPendingStyles(dir) {
     const changedLayers = /* @__PURE__ */ new Set()
     styles.forEach((i) => changedLayers.add(i.meta.type))
     if (replace) {
+      // eslint-disable-next-line
       (_a = layerStylesMap[dir].get(filepath)) == null ? void 0 : _a.forEach((i) => changedLayers.add(i.meta.type))
       layerStylesMap[dir].set(filepath, styles)
     } else {
@@ -180,6 +185,7 @@ function buildPendingStyles(dir) {
       const layer = layers[name2]
       if (layer) {
         layer.timestamp = timestamp
+        // eslint-disable-next-line
         layer.cssCache = void 0
       }
     }
@@ -206,18 +212,21 @@ function generateCSS(layer, dir) {
   return buildLayerCss(layer, dir)
 }
 
-function getCommonClass(){
+function getCommonClass() {
   const allClasses = Object.keys(classesPending).reduce((acc, cur) => acc.concat(Array.from(classesPending[cur])), [])
   const classTimes = allClasses.reduce((acc, c) => {acc[c] ? acc[c]++ : acc[c] = 1; return acc}, {})
   const commonClass = Object.keys(classTimes).filter(c => classTimes[c] >= 2)
   const classArray = {}
+
   Object.keys(classesPending).forEach(key => {
     classArray[key] = Array.from(classesPending[key]).filter(c => !commonClass.includes(c))
     if (Array.from(classesPending[key]).length !== classArray[key].length) {
       commonDir.push(key)
     }
   })
+
   commonClass.length && (classArray[MAINDIR] = commonClass)
+
   classesPending = Object.keys(classArray).reduce((acc, k) => {
     acc[k] = new Set(classArray[k])
     return acc
@@ -298,8 +307,10 @@ function emitCode(dirs, compilation, outputPath) {
     const fileNameArr = file.split(FILESPLIT)
     const fileDirName = fileNameArr[0]
     if (/\.?ml$/i.test(file) && dirs.includes(fileDirName)) { 
-      let cssFile = fileNameArr.splice(0, fileNameArr.length-1).join(FILESPLIT) 
+      let cssFile = fileNameArr.splice(0, fileNameArr.length - 1).join(FILESPLIT)
+      
       const dirPath = dirs.filter(dir => fileDirName === dir)[0]
+
       const importFile = relativeFilePath(cssFile, dirPath)
       const commonWritePath = `${FILESPLIT}${OUTPUTCSSFILENAME}.${CSSFILEEXTMAP[compilation.__mpx__.mode]}`
       cssFile = cssFile + commonWritePath
