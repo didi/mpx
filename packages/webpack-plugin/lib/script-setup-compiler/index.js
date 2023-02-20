@@ -95,13 +95,19 @@ function compileScriptSetup (
     node,
     end
   ) {
-    throw new Error(
-      `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n${formatCodeFrame(
-        content,
-        node.start + startOffset,
-        end
-      )}`
-    )
+    if (node) {
+      throw new Error(
+        `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n${formatCodeFrame(
+          content,
+          node.start + startOffset,
+          end
+        )}`
+      )
+    } else {
+      throw new Error(
+        `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n`
+      )
+    }
   }
 
   function registerUserImport (
@@ -322,7 +328,7 @@ function compileScriptSetup (
           } }`
       } else {
         return `${key}: { type: ${propRuntimeTypes.type}${
-          defaultString ? `, ${defaultString}` : null
+          defaultString ? `, ${defaultString}` : ''
           } }`
       }
     }).join(',\n    ')}
@@ -598,6 +604,11 @@ function compileScriptSetup (
         runtimeOptions += `\n ${node.key.name}: ${declCode},`
       }
     }
+  }
+
+  // 添加defineExpose强制配置校验
+  if (!hasDefineExposeCall) {
+    error('Mpx script setup must define the variables for return using defineExpose, see details: https://mpxjs.cn/guide/composition-api/composition-api.html#defineexpose')
   }
 
   // import {createComponent} from '@mpxjs/core' 添加是否已有import判断

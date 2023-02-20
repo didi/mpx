@@ -47,7 +47,7 @@ export default function mergeOptions (options = {}, type, needConvert) {
 
 export function getMixin (mixin = {}) {
   // 用于ts反向推导mixin类型
-  return mixin.mixins ? extractMixins({}, mixin, true) : mixin
+  return mixin
 }
 
 function extractMixins (mergeOptions, options, needConvert) {
@@ -214,7 +214,7 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (/^(data|dataFn)$/.test(key)) {
       mergeDataFn(parent, child, key)
-    } else if (/^(computed|properties|props|methods|proto|options|relations)$/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto|options|relations|initData)$/.test(key)) {
       mergeShallowObj(parent, child, key)
     } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
       mergeToArray(parent, child, key)

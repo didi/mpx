@@ -74,8 +74,14 @@ function filterOptions (options, type) {
     if (builtInKeysMap[key]) {
       return
     }
-    if (key === 'properties' || key === 'props') {
-      newOptions.props = Object.assign({}, options.props, options.properties)
+    if (key === 'data' || key === 'initData') {
+      if (!hasOwn(newOptions, 'data')) {
+        newOptions.data = Object.assign({}, options.initData, options.data)
+      }
+    } else if (key === 'properties' || key === 'props') {
+      if (!hasOwn(newOptions, 'props')) {
+        newOptions.props = Object.assign({}, options.props, options.properties)
+      }
     } else if (key === 'methods' && type === 'page') {
       Object.assign(newOptions, options[key])
     } else {
