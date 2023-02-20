@@ -129,24 +129,6 @@ module.exports = function (content) {
       }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
-          const request = addQuery(this.resource, { isApp: true })
-          const el = mpx.webConfig.el || '#app'
-          output += `
-      import App from ${stringifyRequest(request)}
-      import Vue from 'vue'
-      new Vue({
-        el: '${el}',
-        render: function(h){
-          return h(App)
-        }
-      })\n
-      `
-          // 直接结束loader进入parse
-          this.loaderIndex = -1
-          return callback(null, output)
-        }
-
         // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
         const cacheContent = mpx.vueContentCache.get(filePath)
         if (cacheContent) return callback(null, cacheContent)
@@ -208,7 +190,8 @@ module.exports = function (content) {
               genericsInfo: templateRes.genericsInfo,
               wxsModuleMap: templateRes.wxsModuleMap,
               localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
+              localPagesMap: jsonRes.localPagesMap,
+              mpx
             }, callback)
           }
         ], (err, scriptRes) => {
