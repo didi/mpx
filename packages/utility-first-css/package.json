@@ -1,0 +1,23 @@
+{
+    "name": "@mpxjs/utility-first-css",
+    "version": "2.8.15",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+ssh://git@github.com/didi/mpx.git"
+    },
+    "author": "lxjjjjjj",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/didi/mpx/issues"
+    },
+    "homepage": "https://github.com/didi/mpx#readme",
+    "dependencies": {
+      "windicss": "^3.5.4"
+    }
+  }
+  
