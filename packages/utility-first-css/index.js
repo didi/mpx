@@ -51,11 +51,11 @@ function DefaultExtractor (code) {
   return {
     tags: tagNames,
 
-    get classes() {
+    get classes () {
       return code.split(regexClassSplitter).filter(validClassName)
     },
 
-    get attributes() {
+    get attributes () {
       const attrRanges = []
       const attributes = {
         names: [],
@@ -105,10 +105,11 @@ function applyExtractors (code) {
       return (_a = v.ids) != null ? _a : []
     })),
     classes: (0, import_utils3.uniq)(results.flatMap((v) => {
-      let _a = v.classes
+      const _a = v.classes
       return _a != null ? _a : []
     })),
-    attributes: attributesNames.length || attributesValues.length ? {
+    attributes: attributesNames.length || attributesValues.length 
+    ? {
       names: attributesNames,
       values: attributesValues
       // eslint-disable-next-line
@@ -147,14 +148,14 @@ function extractFileLoader (code, dir) {
   }
 }
 
-function buildLayerCss(layer, dir) {
+function buildLayerCss (layer, dir) {
   let _a
   const style = new Import_style.StyleSheet(Array.from(layerStylesMap[dir].values()).flatMap((i) => i).filter((i) => i.meta.type === layer))
   style.prefixer = (_a = windiConfig.prefixer) != null ? _a : true
   return `${style.build()}`
 }
 
-function buildPendingStyles(dir) {
+function buildPendingStyles (dir) {
   const processor = new Windicss(windiConfig)
   if (!classesPending[dir]) {
     classesPending[dir] = new Set()
@@ -168,7 +169,7 @@ function buildPendingStyles(dir) {
     }
   }
 
-  function updateLayers(styles, filepath, dir, replace = true) {
+  function updateLayers (styles, filepath, dir, replace = true) {
     let _a
     const timestamp = +Date.now()
     const changedLayers = /* @__PURE__ */ new Set()
@@ -207,12 +208,12 @@ function buildPendingStyles(dir) {
   }
 }
 
-function generateCSS(layer, dir) {
+function generateCSS (layer, dir) {
   buildPendingStyles(dir)
   return buildLayerCss(layer, dir)
 }
 
-function getCommonClass() {
+function getCommonClass () {
   const allClasses = Object.keys(classesPending).reduce((acc, cur) => acc.concat(Array.from(classesPending[cur])), [])
   const classTimes = allClasses.reduce((acc, c) => {acc[c] ? acc[c]++ : acc[c] = 1; return acc}, {})
   const commonClass = Object.keys(classTimes).filter(c => classTimes[c] >= 2)
@@ -233,11 +234,11 @@ function getCommonClass() {
   }, {})
 }
 
-function relativeFilePath(a, b) {
+function relativeFilePath (a, b) {
   return path.relative(a, b)
 }
 
-function getDirs(defaultSubpackages) {
+function getDirs (defaultSubpackages) {
   let dirs = []
   if (windiConfig?.extract?.include) {
     windiConfig?.extract?.include.forEach(item => {
@@ -253,7 +254,7 @@ function getDirs(defaultSubpackages) {
   return dirs
 }
 
-function scanCode(dirs, compilation) {
+function scanCode (dirs, compilation) {
   const mainfiles = compilation.__mpx__.componentsMap.main && Object.values(compilation.__mpx__.componentsMap.main).map(file => path.dirname(file))
   const cache = compilation.getCache ? compilation.getCache('MpxAtomicClassWebpackPlugin') : compilation.cache
   return Promise.all(Object.keys(compilation.assets).map(async name => {
@@ -290,7 +291,7 @@ function scanCode(dirs, compilation) {
   }))
 }
 
-function emitCode(dirs, compilation, outputPath) {
+function emitCode (dirs, compilation, outputPath) {
   dirs.forEach(dir => {
     const cssData = generateCSS('utilities', dir)
     const fileType = CSSFILEEXTMAP[compilation.__mpx__.mode]
@@ -308,7 +309,7 @@ function emitCode(dirs, compilation, outputPath) {
     const fileDirName = fileNameArr[0]
     if (/\.?ml$/i.test(file) && dirs.includes(fileDirName)) { 
       let cssFile = fileNameArr.splice(0, fileNameArr.length - 1).join(FILESPLIT)
-      
+
       const dirPath = dirs.filter(dir => fileDirName === dir)[0]
 
       const importFile = relativeFilePath(cssFile, dirPath)
