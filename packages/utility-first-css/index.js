@@ -110,9 +110,9 @@ function applyExtractors (code) {
     })),
     attributes: (attributesNames.length || attributesValues.length)
       ? {
-        names: attributesNames,
-        values: attributesValues
-      } // eslint-disable-next-line
+          names: attributesNames,
+          values: attributesValues
+        } // eslint-disable-next-line
       : void 0
   }
 }
