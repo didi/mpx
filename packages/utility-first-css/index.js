@@ -109,11 +109,11 @@ function applyExtractors (code) {
       return _a != null ? _a : []
     })),
     attributes: (attributesNames.length || attributesValues.length)
-            ? {
-              names: attributesNames,
-              values: attributesValues
-            } // eslint-disable-next-line
-            : void 0
+      ? {
+        names: attributesNames,
+        values: attributesValues
+      } // eslint-disable-next-line
+      : void 0
   }
 }
 
