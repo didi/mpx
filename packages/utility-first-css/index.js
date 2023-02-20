@@ -108,8 +108,7 @@ function applyExtractors (code) {
       const _a = v.classes
       return _a != null ? _a : []
     })),
-    attributes: attributesNames.length || attributesValues.length 
-    ? {
+    attributes: (attributesNames.length || attributesValues.length) ? {
       names: attributesNames,
       values: attributesValues
       // eslint-disable-next-line
@@ -215,7 +214,7 @@ function generateCSS (layer, dir) {
 
 function getCommonClass () {
   const allClasses = Object.keys(classesPending).reduce((acc, cur) => acc.concat(Array.from(classesPending[cur])), [])
-  const classTimes = allClasses.reduce((acc, c) => {acc[c] ? acc[c]++ : acc[c] = 1; return acc}, {})
+  const classTimes = allClasses.reduce((acc, c) => { acc[c] ? acc[c]++ : acc[c] = 1; return acc }, {})
   const commonClass = Object.keys(classTimes).filter(c => classTimes[c] >= 2)
   const classArray = {}
 
@@ -272,7 +271,7 @@ function scanCode (dirs, compilation) {
         return extractFileLoader(content, MAINDIR)
       }
     }
-    
+
     if (/\.?ml$/i.test(name) && dirs.includes(dir)) {
       const content = compilation.assets[name].source()
       if (!layerStylesMap[dir]) {
@@ -307,7 +306,7 @@ function emitCode (dirs, compilation, outputPath) {
   Object.keys(compilation.assets).forEach(file => {
     const fileNameArr = file.split(FILESPLIT)
     const fileDirName = fileNameArr[0]
-    if (/\.?ml$/i.test(file) && dirs.includes(fileDirName)) { 
+    if (/\.?ml$/i.test(file) && dirs.includes(fileDirName)) {
       let cssFile = fileNameArr.splice(0, fileNameArr.length - 1).join(FILESPLIT)
 
       const dirPath = dirs.filter(dir => fileDirName === dir)[0]
@@ -320,7 +319,7 @@ function emitCode (dirs, compilation, outputPath) {
   })
 }
 class MpxAtomicClassWebpackPlugin {
-  apply(compiler) {
+  apply (compiler) {
     compiler.hooks.emit.tap('MpxAtomicClassWebpackPlugin', async (compilation) => {
       const dirs = getDirs(compilation.__mpx__.componentsMap)
       await scanCode(dirs, compilation)
@@ -329,5 +328,5 @@ class MpxAtomicClassWebpackPlugin {
     })
   }
 }
-  
+
 module.exports = MpxAtomicClassWebpackPlugin
