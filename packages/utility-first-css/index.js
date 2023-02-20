@@ -1,78 +1,81 @@
 const path = require('path')
-let windicss = require('windicss')
+const windicss = require('windicss')
 const hash = require('hash-sum')
 const windiConfigPath = path.join(process.cwd(), './windi.config.js')
 const windiConfig = require(windiConfigPath)
-let import_style = require('windicss/utils/style')
-let import_utils3 = require('@antfu/utils')
+const import_style = require('windicss/utils/style')
+const import_utils3 = require('@antfu/utils')
 const regexHtmlTag = /<(\w[\w-]*)([\S\s]*?)\/?>/mg
-let regexClassSplitter = /[\s'"`{}]/g
-let regexClassCheck1 = /^!?[a-z\d@<>.+-](?:\([\w,.%#\(\)+-]*\)|[\w:/\\,%#\[\].$-])*$/
-let regexAttributifyItem = /(?:\s|^)([\w+:_/-]+)\s?=\s?(['"{])((?:\\\2|\\\\|\n|\r|.)*?)(?:\2|\})/gm
-let regexClassCheck2 = /[a-z].*[\w)\]]$/
-let regexClassChecks = [
+const regexClassSplitter = /[\s'"`{}]/g
+const regexClassCheck1 = /^!?[a-z\d@<>.+-](?:\([\w,.%#\(\)+-]*\)|[\w:/\\,%#\[\].$-])*$/
+const regexAttributifyItem = /(?:\s|^)([\w+:_/-]+)\s?=\s?(['"{])((?:\\\2|\\\\|\n|\r|.)*?)(?:\2|\})/gm
+const regexClassCheck2 = /[a-z].*[\w)\]]$/
+const regexClassChecks = [
   regexClassCheck1,
   regexClassCheck2
 ]
-const { RawSource } = require("webpack-sources")
+const { RawSource } = require('webpack-sources')
 let classesPending = /* @__PURE__ */ {}
 const classesGenerated = /* @__PURE__ */ {}
 const layerStylesMap = /* @__PURE__ */ {}
 const layers = {
-    base: {},
-    utilities: {},
-    components: {}
-  }
+  base: {},
+  utilities: {},
+  components: {}
+}
 const commonDir = []
 const attributes = []
 const OUTPUTCSSFILENAME = 'index'
 const MAINDIR = 'main'
 const CSSFILEEXTMAP = {
-  'wx': 'wxss',
-  'ali': 'acss'
+  wx: 'wxss',
+  ali: 'acss'
 }
 const FILESPLIT = path.sep
 function validClassName(i) {
-    return regexClassChecks.every((r) => i.length > 2 && i.match(r))
+  return regexClassChecks.every((r) => i.length > 2 && i.match(r))
 }
 
 function include(set, v) {
-    for (const i of v)
+    for (const i of v) {
       set.add(i)
-}
-function DefaultExtractor(code) {
-    const tags = Array.from(code.matchAll(regexHtmlTag))
-    const tagNames = tags.map((i) => i[1])
-    return {
-      tags: tagNames,
-      get classes() {
-        return code.split(regexClassSplitter).filter(validClassName)
-      },
-      get attributes() {
-        const attrRanges = []
-        const attributes = {
-          names: [],
-          values: []
-        }
-        const attributesBlocklist = ["class", "className"]
-        const tagsBlocklist = ["meta", "script", "style", "link"]
-        tags.filter((i) => !tagsBlocklist.includes(i[1])).forEach((i) => {
-          return Array.from(i[2].matchAll(regexAttributifyItem) || []).forEach((match) => {
-            let name = match[1]
-            const [full, , , value] = match
-            name = name.replace(/^(:|v-bind:)/, "")
-            if (attributesBlocklist.includes(name))
-              return
-            attributes.names.push(name)
-            attributes.values.push(value)
-            if (match.index != null)
-              attrRanges.push([match.index, match.index + full.length])
-          })
-        })
-        return attributes
-      }
     }
 }
+
+function DefaultExtractor(code) {
+  const tags = Array.from(code.matchAll(regexHtmlTag))
+  const tagNames = tags.map((i) => i[1])
+  return {
+    tags: tagNames,
+    get classes() {
+      return code.split(regexClassSplitter).filter(validClassName)
+    },
+    get attributes() {
+      const attrRanges = []
+      const attributes = {
+        names: [],
+        values: []
+      }
+      const attributesBlocklist = ['class', 'className']
+      const tagsBlocklist = ['meta', 'script', 'style', 'link']
+      tags.filter((i) => !tagsBlocklist.includes(i[1])).forEach((i) => {
+        return Array.from(i[2].matchAll(regexAttributifyItem) || []).forEach((match) => {
+          let name = match[1]
+          const [full, , , value] = match
+          name = name.replace(/^(:|v-bind:)/, "")
+          if (attributesBlocklist.includes(name))
+            return
+          attributes.names.push(name)
+          attributes.values.push(value)
+          if (match.index != null)
+            attrRanges.push([match.index, match.index + full.length])
+        })
+      })
+      return attributes
+    }
+  }
+}
+
 function applyExtractors(code) {
   const results = [DefaultExtractor].map((extractor) => extractor(code))
   const attributesNames = results.flatMap((v) => {
@@ -102,21 +105,23 @@ function applyExtractors(code) {
     } : void 0
   }
 }
+
 function addClasses(classes, dir) {
-  if(!classesGenerated[dir] || !classesPending[dir]){
+  if (!classesGenerated[dir] || !classesPending[dir]) {
     classesGenerated[dir] = new Set()
     classesPending[dir] = new Set()
   }
   classes.forEach((i) => {
-      if (!i || classesGenerated[dir].has(i) || classesPending[dir].has(i))
-      return
-      classesPending[dir].add(i)
+    if (!i || classesGenerated[dir].has(i) || classesPending[dir].has(i))
+    return
+    classesPending[dir].add(i)
   })
   return classesPending
 }
+
 function extractFileLoader(code, dir) {
   const extractResult = applyExtractors(code)
-  if(windiConfig.attributify) {
+  if (windiConfig.attributify) {
     const extractedAttrs = extractResult.attributes
     if (extractedAttrs == null ? void 0 : extractedAttrs.names.length) {
       extractedAttrs.names.forEach((name2, i) => {
@@ -128,25 +133,28 @@ function extractFileLoader(code, dir) {
     return addClasses(extractResult.classes || [], dir)
   }
 }
+
 function buildLayerCss(layer,dir) {
-    let _a
-    const style = new import_style.StyleSheet(Array.from(layerStylesMap[dir].values()).flatMap((i) => i).filter((i) => i.meta.type === layer))
-    style.prefixer = (_a = windiConfig.prefixer) != null ? _a : true
-    return `${style.build()}`
+  let _a
+  const style = new import_style.StyleSheet(Array.from(layerStylesMap[dir].values()).flatMap((i) => i).filter((i) => i.meta.type === layer))
+  style.prefixer = (_a = windiConfig.prefixer) != null ? _a : true
+  return `${style.build()}`
 }
+
 function buildPendingStyles(dir) {
   const processor = new windicss(windiConfig)
-  if(!classesPending[dir]){
+  if (!classesPending[dir]) {
     classesPending[dir] = new Set()
   }
   if (classesPending[dir].size) {
-    const result = processor.interpret(Array.from(classesPending[dir]).join(" "))
+    const result = processor.interpret(Array.from(classesPending[dir]).join(' '))
     if (result.success.length) {
-      updateLayers(result.styleSheet.children, "__classes", dir, false)
+      updateLayers(result.styleSheet.children, '__classes', dir, false)
       include(classesGenerated[dir], result.success)
       classesPending[dir].clear()
     }
   }
+
   function updateLayers(styles, filepath, dir, replace = true) {
     let _a
     const timestamp = +Date.now()
@@ -167,6 +175,7 @@ function buildPendingStyles(dir) {
       }
     }
   }
+
   if (windiConfig.attributify) {
     if (attributes.length) {
       const attributesObject = {}
@@ -176,32 +185,35 @@ function buildPendingStyles(dir) {
         attributesObject[name2].push(...String(value).split(regexClassSplitter).filter(Boolean))
       })
       const attributifyStyle = processor.attributify(attributesObject)
-      updateLayers(attributifyStyle.styleSheet.children, "__attributify", dir, false)
+      updateLayers(attributifyStyle.styleSheet.children, '__attributify', dir, false)
       attributes.length = 0
     }
   }
 }
+
 function generateCSS(layer,dir) {
   buildPendingStyles(dir)
   return buildLayerCss(layer,dir)
 }
+
 function getCommonClass(){
-  const allClasses = Object.keys(classesPending).reduce((acc , cur)=> acc.concat(Array.from(classesPending[cur])),[])
-  const classTimes = allClasses.reduce((acc, c)=> {acc[c] ? acc[c]++ : acc[c] = 1; return acc},{})
-  const commonClass = Object.keys(classTimes).filter(c=> classTimes[c] >= 2)
-  let classArray = {}
+  const allClasses = Object.keys(classesPending).reduce((acc, cur) => acc.concat(Array.from(classesPending[cur])),[])
+  const classTimes = allClasses.reduce((acc, c) => {acc[c] ? acc[c]++ : acc[c] = 1; return acc},{})
+  const commonClass = Object.keys(classTimes).filter(c => classTimes[c] >= 2)
+  const classArray = {}
   Object.keys(classesPending).forEach(key => {
     classArray[key] = Array.from(classesPending[key]).filter(c => !commonClass.includes(c))
-    if(Array.from(classesPending[key]).length !== classArray[key].length){
+    if (Array.from(classesPending[key]).length !== classArray[key].length) {
       commonDir.push(key)
     }
   })
   commonClass.length && (classArray[MAINDIR] = commonClass)
-  classesPending = Object.keys(classArray).reduce((acc,k) =>{
+  classesPending = Object.keys(classArray).reduce((acc, k) => {
     acc[k] = new Set(classArray[k])
     return acc
   },{})
 }
+
 function relativeFilePath(a, b) {
   return path.relative(a, b)
 }
@@ -211,7 +223,9 @@ function getDirs(defaultSubpackages) {
   if (windiConfig?.extract?.include) {
     windiConfig?.extract?.include.forEach(item => {
       item.replace(/subpackage\/(\w+)/g,(str,$1) => {
-        if($1) dirs.push($1)
+        if ($1) {
+          dirs.push($1)
+        }
       })
     })
   } else {
@@ -225,7 +239,7 @@ function scanCode(dirs, compilation) {
   const cache = compilation.getCache ? compilation.getCache('MpxAtomicClassWebpackPlugin') : compilation.cache
   return Promise.all(Object.keys(compilation.assets).map(async name => {
     const dir = name.split(FILESPLIT)[0]
-    if(mainfiles.includes(path.dirname(name)) && /\.?ml$/i.test(name)){
+    if (mainfiles.includes(path.dirname(name)) && /\.?ml$/i.test(name)) {
       const content = compilation.assets[name].source()
       layerStylesMap[MAINDIR] = new Map()
       const etag = hash(content)
@@ -241,7 +255,9 @@ function scanCode(dirs, compilation) {
     
     if (/\.?ml$/i.test(name) && dirs.includes(dir)) {
       const content = compilation.assets[name].source()
-      if(!layerStylesMap[dir]) layerStylesMap[dir] = new Map()
+      if (!layerStylesMap[dir]) {
+        layerStylesMap[dir] = new Map()
+      }
       const etag = hash(content)
       let traversedInfo = etag && await cache.getPromise(name, etag)
       if (!traversedInfo) {
@@ -254,6 +270,7 @@ function scanCode(dirs, compilation) {
     }
   }))
 }
+
 function emitCode(dirs, compilation, outputPath) {
   dirs.forEach(dir => {
     const cssData = generateCSS('utilities', dir)
@@ -261,7 +278,7 @@ function emitCode(dirs, compilation, outputPath) {
     const relativeSymbol = relativeFilePath(outputPath + FILESPLIT + dir, outputPath)
     const commonWritePath = `${FILESPLIT}${OUTPUTCSSFILENAME}.${fileType}`
     let importStr = ''
-    if(commonDir.includes(dir) && dir !== MAINDIR){
+    if (commonDir.includes(dir) && dir !== MAINDIR) {
       importStr =  `@import '${relativeSymbol}${commonWritePath}';\n`
     }
     const writePath = dir === MAINDIR ? `.${commonWritePath}` : `${dir}${commonWritePath}`
@@ -282,14 +299,14 @@ function emitCode(dirs, compilation, outputPath) {
   })
 }
 class MpxAtomicClassWebpackPlugin {
-    apply(compiler) {
-      compiler.hooks.emit.tap('MpxAtomicClassWebpackPlugin', async (compilation) => {
-        const dirs = getDirs(compilation.__mpx__.componentsMap)
-        await scanCode(dirs, compilation)
-        getCommonClass()
-        emitCode(dirs, compilation, compiler.outputPath)
-      })
-    }
+  apply(compiler) {
+    compiler.hooks.emit.tap('MpxAtomicClassWebpackPlugin', async (compilation) => {
+      const dirs = getDirs(compilation.__mpx__.componentsMap)
+      await scanCode(dirs, compilation)
+      getCommonClass()
+      emitCode(dirs, compilation, compiler.outputPath)
+    })
   }
+}
   
-module.exports = MpxAtomicClassWebpackPlugin;
+module.exports = MpxAtomicClassWebpackPlugin
