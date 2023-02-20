@@ -112,8 +112,7 @@ function applyExtractors (code) {
             ? {
               names: attributesNames,
               values: attributesValues
-              // eslint-disable-next-line
-            }
+            } // eslint-disable-next-line
             : void 0
   }
 }
