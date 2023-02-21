@@ -328,7 +328,7 @@ function compileScriptSetup (
           } }`
       } else {
         return `${key}: { type: ${propRuntimeTypes.type}${
-          defaultString ? `, ${defaultString}` : null
+          defaultString ? `, ${defaultString}` : ''
           } }`
       }
     }).join(',\n    ')}

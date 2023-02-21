@@ -223,7 +223,7 @@ export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMi
 
 type MixinType = 'app' | 'page' | 'component'
 
-export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): Mpx
 
 // export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -267,8 +267,7 @@ export interface Mpx {
   injectMixins: typeof injectMixins
   toPureObject: typeof toPureObject
   observable: typeof observable
-
-  // watch: typeof watch
+  watch: typeof watch
 
   use (plugin: Plugin, ...rest: any[]): Mpx
 
@@ -436,14 +435,14 @@ type StringObj = {
 
 interface UseI18n {
   id: number
-  locale: string
+  locale: WritableComputedRef<string>
   fallbackLocale: string
   readonly messages: StringObj
   readonly isGlobal: boolean
   inheritLocale: boolean
   fallbackRoot: boolean
 
-  t: typeof t | typeof tc
+  t: typeof t & typeof tc
 
   te: typeof te
 
@@ -639,7 +638,7 @@ export const ONHIDE: string
 export const ONRESIZE: string
 
 declare global {
-  const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
+  const defineProps: (<T>(props: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context

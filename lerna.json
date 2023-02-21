@@ -4,5 +4,5 @@
   ],
   "useWorkspaces": "true",
   "npmClient": "pnpm",
-  "version": "2.8.20"
+  "version": "2.8.21"
 }
