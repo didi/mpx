@@ -2,6 +2,7 @@ const babylon = require('@babel/parser')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
+const { MultiNode, clearCache } = require('../utils/multi-node.js')
 
 const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -27,6 +28,23 @@ function dealRemove (path, replace) {
   }
 }
 
+function flashBack (node, vars = {}) {
+  const { data, child } = node
+  const { bindings } = data
+  for (let i = 0; i < child.length; i++) {
+    flashBack(child[i], Object.assign({}, vars, bindings)) // 后序遍历
+  }
+
+  Object.keys(bindings).forEach(key => {
+    if (vars[key]) {
+      const { canDel, replace, path } = bindings[key]
+      if (canDel) {
+        dealRemove(path, replace)
+      }
+    }
+  })
+}
+
 module.exports = {
   transform (code, {
     needCollect = false,
@@ -44,9 +62,24 @@ module.exports = {
     let inConditional = false
     // block 作用域
     const scopeBlock = new Map()
+    // 纪录每个作用域下的变量，以便回溯删除
+    let blockTree = null
     let currentBlock = null
 
     const bindThisVisitor = {
+      Program: {
+        enter (path) {
+          currentBlock = path
+          blockTree = new MultiNode({
+            path,
+            bindings: {}
+          }, [])
+        },
+        exit (path) {
+          flashBack(blockTree.get(path))
+          clearCache()
+        }
+      },
       // 标记收集props数据
       CallExpression: {
         enter (path) {
@@ -74,21 +107,31 @@ module.exports = {
       },
       BlockStatement: {
         enter (path) {
-          inIfTest && (inIfTest = false) // [if (name) name2] 场景会有异常，name2会被判定在if条件判断里面
+          inIfTest && (inIfTest = false) // `if (name) name2` 场景会有异常，name2会被判定在if条件判断里面
+
           const currentBindings = {}
-          if (currentBlock) {
-            const { currentBindings: pBindings } = scopeBlock.get(currentBlock)
-            Object.assign(currentBindings, pBindings)
-          }
+          const { currentBindings: pBindings } = scopeBlock.get(currentBlock) || {}
+          Object.assign(currentBindings, pBindings)
           scopeBlock.set(path, {
             parent: currentBlock,
-            currentBindings
+            currentBindings,
+            realBindings: {}
           })
+
+          const sub = blockTree.get(currentBlock)
+          sub.add(new MultiNode({
+            path,
+            bindings: {}
+          }, []))
+
           currentBlock = path
         },
         exit (path) {
-          const { parent } = scopeBlock.get(path)
+          const { parent, realBindings } = scopeBlock.get(path)
           currentBlock = parent
+
+          const node = blockTree.get(path)
+          node.data.bindings = realBindings
         }
       },
       ConditionalExpression: {
@@ -220,7 +263,7 @@ module.exports = {
                 }
               }
 
-              const { currentBindings } = scopeBlock.get(currentBlock)
+              const { currentBindings, realBindings } = scopeBlock.get(currentBlock)
               if (currentBindings[keyPath]) {
                 if (canDel) {
                   dealRemove(last, replace)
@@ -244,6 +287,11 @@ module.exports = {
                   replace,
                   current: currentBlock
                 }
+              }
+              realBindings[keyPath] = {
+                path: last,
+                canDel,
+                replace
               }
             }
           }

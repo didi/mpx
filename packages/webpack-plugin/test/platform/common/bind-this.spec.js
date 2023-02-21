@@ -205,20 +205,19 @@ describe('render function simplify should correct', function () {
     expect(res).toMatchSnapshot(output)
   })
 
-  // 回溯 目前没处理
   it('should backtrack variable deletion is correct', function () {
     const input = `
     global.currentInject = {
       render: function () {
-        aName;
-        if (aName) {};
-
-        if ( random) {
-          bName
-        } else {
-          bName
+        a
+        {
+          c
+          {
+            b
+           }
+          b
         }
-        bName
+        b
       }
     }
     `
@@ -226,17 +225,16 @@ describe('render function simplify should correct', function () {
     const output = `
     global.currentInject = {
       render: function () {
-        this._c("aName", this.aName);
+        this._c("a", this.a);
 
-        if (this._c("aName", this.aName)) {}
-    
-        if (this._c("random", this.random)) {
-          this._c("bName", this.bName);
-        } else {
-          this._c("bName", this.bName);
+        {
+          this._c("c", this.c);
+      
+          {}
         }
-    
-        this._c("bName", this.bName);
+      
+        this._c("b", this.b);
+
       }
     };`
     expect(res).toMatchSnapshot(output)
