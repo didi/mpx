@@ -1,5 +1,5 @@
 {
-  "name": "mpx-subpackage-demo",
+  "name": "mpx-useuilib-demo",
   "version": "1.0.0",
   "description": "A mpx project",
   "main": "index.js",
@@ -19,21 +19,21 @@
   "author": "sky-admin <546485299@qq.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.7.28",
-    "@mpxjs/core": "^2.7.33",
+    "@mpxjs/api-proxy": "workspace:*",
+    "@mpxjs/core": "workspace:*",
     "html-webpack-plugin": "^5.5.0",
     "iview-weapp": "^2.0.0",
     "vant": "^2.12.47",
     "vant-weapp": "^0.5.14",
-    "vue": "^2.6.10"
+    "vue": "~2.6.10"
   },
   "devDependencies": {
     "@babel/core": "7.12.10",
     "@babel/eslint-parser": "7.16.0",
     "@babel/plugin-transform-runtime": "7.12.10",
     "@babel/preset-env": "7.12.11",
-    "@babel/runtime-corejs3": "7.12.5",
-    "@mpxjs/webpack-plugin": "^2.7.33",
+    "@babel/runtime-corejs3": "7.20.13",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-jest": "^25.3.0",

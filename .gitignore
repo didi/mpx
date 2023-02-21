@@ -8,5 +8,6 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 .DS_Store
-docs-vuepress/.vuepress/dist
+docs-vuepress/docs/.vuepress/dist
 elevate/
+.yarn/

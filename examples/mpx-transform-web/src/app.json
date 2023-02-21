@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "./pages/wxs?async=app_pages2",
+    "./pages/index",
+    "./pages/index2?async=app_pages1"
+  ],
+  "packages": ["./packages/index"],
+  "subpackages": [
+    {
+      "root": "packageA",
+      "pages": [
+        "./pages/picker",
+        "./pages/swiper"
+      ],
+      "independent": true
+    }
+  ],
+  "tabBar": {
+    "custom": false,
+    "color": "red",
+    "selectedColor": "black",
+    "backgroundColor": "white",
+    "list": [{
+      "pagePath": "pages/index",
+      "text": "page10",
+     "iconPath": "./images/icon1.png"
+    }, {
+      "pagePath": "pages/wxs",
+      "text": "page2",
+      "iconPath": "https://ut-static.udache.com/webx/mini-pics/pZ0qkcV-yweUQ644F5pVp.png"
+    }]
+  }
+}
