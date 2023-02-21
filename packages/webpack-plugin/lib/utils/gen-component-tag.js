@@ -39,6 +39,8 @@ function genComponentTag (part, processor = {}) {
     } else {
       result += '/>'
     }
+  } else {
+    return `${content}`
   }
   return result
 }

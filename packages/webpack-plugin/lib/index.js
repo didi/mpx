@@ -1418,6 +1418,7 @@ try {
         }
 
         if (mpx.mode === 'web') {
+          const entryReg = RegExp(/app.mpx/)
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
@@ -1447,6 +1448,14 @@ try {
                 options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
               })
             }
+          }
+          if (createData.request.match(entryReg)) {
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              if (currentLoader.includes('vue-loader/lib/index')) {
+                loaders.splice(index, 1)
+              }
+            })
           }
         }
 

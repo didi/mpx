@@ -92,7 +92,7 @@ module.exports = function (script, {
   } else {
     script = { tag: 'script' }
   }
-  output += genComponentTag(script, {
+  output += genComponentTag(ctorType === 'app' ? '' : script, {
     attrs (script) {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
@@ -260,12 +260,12 @@ module.exports = function (script, {
     ${JSON.stringify(componentGenerics)},
     ${JSON.stringify(genericsInfo)},
     getWxsMixin(wxsModules),
-    ${JSON.stringify(mpx)},
     ${hasApp}`
       if (ctorType === 'app') {
         content += `,
     Vue,
-    VueRouter`
+    VueRouter,
+    ${JSON.stringify(mpx)}`
       }
       content += '\n  )\n'
       return content

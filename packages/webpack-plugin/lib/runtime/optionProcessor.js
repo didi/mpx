@@ -15,10 +15,10 @@ export default function processOption (
   componentGenerics,
   genericsInfo,
   mixin,
-  mpx,
   hasApp,
   Vue,
-  VueRouter
+  VueRouter,
+  mpx
 ) {
   processCommonOption({ option, mixin, outputPath })
   if (isServerRendering()) {
@@ -34,7 +34,9 @@ export default function processOption (
               })
             }
           })
-          global.__mpxRouter.push(context.url)
+          if (app.onSSRAppCreated) {
+            app.onSSRAppCreated({ pinia: option.pinia, router: option.router, app, context })
+          }
           global.__mpxRouter.onReady(() => {
             resolve(app)
           }, reject)
