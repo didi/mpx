@@ -43,6 +43,13 @@ export default {
       return this.$refs["mpx-input"]
     }
   },
+  watch: {
+    value: function(newVal, oldVal) {
+      if(this.originRef && newVal !== this.originRef.value){
+        this.originRef.value = newVal;
+      }
+    }
+  },
   render() {
     let inputType = "";
     if (this.password) {
@@ -62,7 +69,6 @@ export default {
 
     const data = {
       class: "mpx-input",
-      value: this.value,
       focus: this.focus,
       ref: "mpx-input",
       placeholder: this.placeholder,
@@ -72,7 +78,6 @@ export default {
       ...getInnerListeners(this),
     };
     return h("input", data, []);
-    // return '123'
   },
   data() {
     return {};
@@ -83,7 +88,7 @@ export default {
   methods: {},
 };
 </script>
-<style lang="stylus">
+<style lang="stylus" scoped>
   .mpx-input
     cursor auto
     width 100%
