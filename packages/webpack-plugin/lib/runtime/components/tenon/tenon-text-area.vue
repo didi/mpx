@@ -33,10 +33,23 @@ export default {
     },
   },
 
+  computed: {
+    originRef() {
+      return this.$refs["mpx-textarea"]
+    }
+  },
+  watch: {
+    value: function(newVal, oldVal) {
+      if(this.originRef && newVal !== this.originRef.value){
+        this.originRef.value = newVal;
+      }
+    }
+  },
+
   render() {
     const data = {
       class: "mpx-textarea",
-      value: this.value,
+      ref: "mpx-input",
       focus: this.focus,
       placeholder: this.placeholder,
       maxLength: this.maxLength,
