@@ -30,15 +30,14 @@ class DynamicEntryDependency extends NullDependency {
 
   collectDynamicRequest (mpx) {
     if (!this.packageRoot) return
-    const curValue = mpx.dynamicEntryInfo[this.packageRoot] || {}
-    mpx.dynamicEntryInfo[this.packageRoot] = {
-      // 记录当前是否注册页面分包
-      hasPage: curValue.hasPage || this.entryType === 'page',
-      // 记录异步引用的资源
-      entries: curValue.entries || []
+    const curValue = mpx.dynamicEntryInfo[this.packageRoot] = mpx.dynamicEntryInfo[this.packageRoot] || {
+      hasPage: false,
+      entries: []
     }
-    if (this.entryType !== 'page') {
-      mpx.dynamicEntryInfo[this.packageRoot].entries.push(this.request)
+    if (this.entryType === 'page') {
+      curValue.hasPage = true
+    } else {
+      curValue.entries.push(this.request)
     }
   }
 
