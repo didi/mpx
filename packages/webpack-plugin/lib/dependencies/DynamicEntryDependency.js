@@ -28,10 +28,24 @@ class DynamicEntryDependency extends NullDependency {
     return toPosix([request, entryType, outputPath, packageRoot, relativePath, context, ...range].join('|'))
   }
 
+  collectDynamicRequest (mpx) {
+    if (!this.packageRoot) return
+    const curValue = mpx.dynamicEntryInfo[this.packageRoot] || {}
+    mpx.dynamicEntryInfo[this.packageRoot] = {
+      // 记录当前是否注册页面分包
+      hasPage: curValue.hasPage || this.entryType === 'page',
+      // 记录异步引用的资源
+      entries: curValue.entries || []
+    }
+    if (this.entryType !== 'page') {
+      mpx.dynamicEntryInfo[this.packageRoot].entries.push(this.request)
+    }
+  }
+
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
     let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
-
+    this.collectDynamicRequest(mpx)
     async.waterfall([
       (callback) => {
         if (context && resolver) {
