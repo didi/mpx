@@ -29,14 +29,15 @@ class DynamicEntryDependency extends NullDependency {
   }
 
   collectDynamicRequest (mpx) {
-    // 收集一次组件分包异步component + require async = export两种方式
     if (!this.packageRoot) return
-    if (this.entryType !== 'page' && !mpx.dynamicPackageMap[this.packageRoot]) {
-      mpx.dynamicPackageMap[this.packageRoot] = this.request
-    }
-    // 收集非主包的分包
+    // 收集非主包的页面分包
     if (this.entryType === 'page') {
-      mpx.registerPackRoot[this.packageRoot] = true
+      mpx.dynamicPackInfo[this.packageRoot] = true
+    }
+    // 收集一次组件分包异步component + require async = export两种方式, 如果已经注册了page分包直接不统计
+    if (this.entryType !== 'page' && mpx.dynamicPackInfo[this.packageRoot] !== true) {
+      !mpx.dynamicPackInfo[this.packageRoot] && (mpx.dynamicPackInfo[this.packageRoot] = [])
+      mpx.dynamicPackInfo[this.packageRoot].push(this.request)
     }
   }
 
