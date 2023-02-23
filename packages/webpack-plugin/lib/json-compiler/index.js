@@ -13,8 +13,10 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const RecordRawContentDependency = require('../dependencies/RecordRawContentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
+const { RawSource } = require('webpack').sources
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -98,14 +100,7 @@ module.exports = function (content) {
                 if (err) return callback(err)
                 if (!this._compilation) return callback()
                 const targetPath = path.relative(context, file)
-                this._compilation.assets[targetPath] = {
-                  size: function size () {
-                    return stats.size
-                  },
-                  source: function source () {
-                    return content
-                  }
-                }
+                this._module.addPresentationalDependency(new RecordRawContentDependency(targetPath, new RawSource(content)))
                 callback()
               })
             }

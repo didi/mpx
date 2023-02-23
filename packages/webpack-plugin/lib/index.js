@@ -37,6 +37,7 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
+const RecordRawContentDependency = require('./dependencies/RecordRawContentDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
@@ -505,6 +506,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+
+      compilation.dependencyFactories.set(RecordRawContentDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordRawContentDependency, new RecordRawContentDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -566,6 +570,7 @@ class MpxWebpackPlugin {
           // 输出web专用配置
           webConfig: this.options.webConfig,
           vueContentCache: new Map(),
+          rawContent: new Map(),
           tabBarMap: {},
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
@@ -1193,6 +1198,10 @@ class MpxWebpackPlugin {
           const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
           const filename = this.options.generateBuildMap.filename || 'outputMap.json'
           compilation.assets[filename] = new RawSource(outputMap)
+        }
+
+        for (let [path, rawSource] of mpx.rawContent) {
+          compilation.assets[path] = rawSource
         }
 
         const {
