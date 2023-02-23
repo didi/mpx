@@ -40,7 +40,7 @@ mixins|支持|支持|支持|支持|支持
 packages|支持|支持|支持|支持|部分支持，无法分包
 
 
-## 跨平台编译
+## 跨平台输出小程序
 
 自2.0版本开始，mpx开始支持跨小程序平台编译，不同于常规跨平台框架重新定义一套DSL的方式，mpx支持基于现有平台的源码编译为其他已支持平台的目标代码。跨平台编译能力依赖于mpx的多平台支持，目前mpx已经支持将微信小程序跨平台编译为支付宝、百度、qq和头条小程序。
 
@@ -60,6 +60,30 @@ new MpxwebpackPlugin({
 })
 ```
 
+::: tip @mpxjs/cli@3.x 版本配置如下
+
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
+    }
+  }
+})
+```
+
+通过在 `npm script` 当中定义 `targets` 来设置mpx编译的目标平台
+
+```javascript
+// 项目 package.json
+{
+  "script": {
+    "build:cross": "mpx-cli-service build:mp --targets=wx,ali"
+  }
+}
+```
+:::
 ### 跨平台差异抹平
 
 为了实现小程序的跨平台编译，我们在编译和运行时做了很多工作以抹平小程序开发中各个方面的跨平台差异
@@ -130,13 +154,13 @@ Mpx支持小程序跨平台后，多个平台的小程序里都有webview组件�
 
 提供的API如下：`navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage, getLoadError`
 
-### 跨平台条件编译
+## 跨平台条件编译
 
 Mpx跨平台编译的原则在于，`能转则转，转不了则报错提示`，对于无法抹平差异的部分，我们提供了完善的跨平台条件编译机制便于用户处理因平台差异而无法相互转换的部分，也能够用于实现具有平台差异性的业务逻辑。
 
 mpx中我们支持了三种维度的条件编译，分别是文件维度，区块维度和代码维度，其中，文件维度和区块维度主要用于处理一些大块的平台差异性逻辑，而代码维度主要用于处理一些局部简单的平台差异。
 
-#### 文件维度条件编译
+### 文件维度条件编译
 
 文件维度条件编译简单的来说就是文件为维度进行跨平台差异代码的编写，例如在微信->支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，这时你可以在相同的位置新建一个map.ali.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的mode来加载对应模块，当mode为ali时，会优先加载map.ali.mpx，反之则会加载map.mpx。
 
@@ -156,7 +180,24 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
   }
 ```
 
-#### 区块维度条件编译
+:::tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  configureWebpack() {
+    return {
+      resolve: {
+        alias: {
+          'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+        }
+      }
+    }
+  }
+})
+```
+:::
+
+### 区块维度条件编译
 
 在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`属性定义该区块的目标平台即可，示例如下：
 
@@ -173,7 +214,7 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
 </template>
 ```
 
-#### 代码维度条件编译
+### 代码维度条件编译
 
 如果只有局部的代码存在跨平台差异，mpx同样支持在代码内使用if/else进行局部条件编译，用户可以在js代码和template插值中访问`__mpx_mode__`获取当前编译mode，进行平台差异逻辑编写，js代码中使用示例如下。
 
@@ -214,35 +255,32 @@ module.exports = {
 样式的条件编译：
 ```css
 /*
-  @mpx-if (
-      __mpx_mode__ === 'wx' ||
-      __mpx_mode__ === 'qq'
-  )
+  @mpx-if (__mpx_env__ === 'someEvn')
 */
   /* @mpx-if (__mpx_mode__ === 'wx') */
-  wx {
+  .backColor {
     background: green;
   }
   /*
     @mpx-elif (__mpx_mode__ === 'qq')
   */
-  qq {
+  .backColor {
     background: black;
   }
   /* @mpx-endif */
 
   /* @mpx-if (__mpx_mode__ === 'swan') */
-  swan {
+  .backColor {
     background: cyan;
   }
   /* @mpx-endif */
-  always {
-    background: white;
+  .textSize {
+    font-size: 18px;
   }
 /*
   @mpx-else
 */
-other {
+.backColor {
   /* @mpx-if (__mpx_mode__ === 'swan') */
   background: blue;
   /* @mpx-else */
@@ -254,7 +292,7 @@ other {
 */
 ```
 
-#### 属性维度条件编译
+### 属性维度条件编译
 
 属性维度条件编译允许用户在组件上使用 `@` 和 `|` 符号来指定某个节点或属性只在某些平台下有效。
 
@@ -323,6 +361,22 @@ new MpxWebpackPlugin({
   env: 'didi'
 })
 ```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```javascript
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx   
+      plugin: {
+        env: "didi" // env为mpx编译的目标环境，需自定义
+      }
+    }
+  }
+})
+```
+:::
 
 #### 文件维度条件编译
 
@@ -416,7 +470,7 @@ env 属性维度的编译同样支持对整个节点或者节点标签名进行�
 
 ### 使用方法
 
-使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run watch:web:serve`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
+使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run build:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
 ### 支持范围
 目前对输出web的通用能力支持已经非常完备，下列表格中显示了当前版本中已支持的能力范围

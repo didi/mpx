@@ -7,7 +7,7 @@ import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptio
 import { error } from '@mpxjs/utils'
 
 export default function createFactory (type) {
-  return (options, { isNative, customCtor, customCtorType } = {}) => {
+  return (options = {}, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor

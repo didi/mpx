@@ -30,7 +30,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 2. 在VSCode中打开一个 .js/.ts/.tsx 后缀的文件，使用 `Shift+Command+P` 唤出 VSCode 命令行，输入 `TypeScript` ，选择 `Select TypeScript Version`，选择使用工作区版本，将版本切换至 4.1.3 及以上版本。
 
-<img src="../../assets/images/select-ts-version.png" style="border-radius: 6px"/>
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/select-ts-version.png" style="border-radius: 6px"/>
 
 3. 在 VSCode 编辑器中安装 mpx 插件，来支持在.mpx单文件中编写 ts 时的代码提示和实时报错等优秀体验。
 

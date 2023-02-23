@@ -46,7 +46,7 @@ function parseNode (atRule, key, options) {
   // Nodes do not exists - `@import url('http://') :root {}`
   if (atRule.nodes) {
     const error = new Error(
-      "It looks like you didn't end your @import statement correctly. Child nodes are attached to it."
+      'It looks like you didn\'t end your @import statement correctly. Child nodes are attached to it.'
     )
 
     error.node = atRule
@@ -215,7 +215,7 @@ const plugin = (options = {}) => {
               options.loaderContext.emitError(
                 new Error(
                   atRule.error(
-                    "'@import' rules are not allowed here and will not be processed"
+                    '\'@import\' rules are not allowed here and will not be processed'
                   ).message
                 )
               )
@@ -223,7 +223,7 @@ const plugin = (options = {}) => {
               return
             }
 
-            const { isSupportDataURL, isSupportAbsoluteURL } = options
+            const { isSupportDataURL, isSupportAbsoluteURL, externals, root } = options
 
             let parsedAtRule
 
@@ -231,7 +231,8 @@ const plugin = (options = {}) => {
               parsedAtRule = parseNode(atRule, 'params', {
                 isSupportAbsoluteURL,
                 isSupportDataURL,
-                externals: options.externals
+                externals,
+                root
               })
             } catch (error) {
               result.warn(error.message, { node: error.node })
