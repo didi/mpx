@@ -1,14 +1,19 @@
+import {
+  addQuery,
+  genImport,
+  isUrlRequest,
+  parseRequest,
+  shallowStringify,
+  stringify
+} from '@mpxjs/compile-utils'
 import { PluginContext } from 'rollup'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_PATH } from '../constants'
 import { Options } from '../options'
-import { genImport } from '../utils/genCode'
-import { parseRequest, addQuery, isUrlRequest } from '@mpxjs/compile-utils'
-import stringify, { shallowStringify } from '../utils/stringify'
-import { SFCDescriptor } from './utils/descriptorCache'
+import { TabBarItem } from '@mpxjs/compiler'
+import { resolvedConfig } from './config'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
-import { resolvedConfig } from './config'
-import { TabBarItem } from '../types/json-config'
+import { SFCDescriptor } from './utils/descriptorCache'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'

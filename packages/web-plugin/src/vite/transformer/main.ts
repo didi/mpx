@@ -1,6 +1,6 @@
+import { OptionObject } from 'loader-utils'
 import { TransformPluginContext, TransformResult } from 'rollup'
 import { Options } from '../../options'
-import { OptionObject } from 'loader-utils'
 import { createDescriptor } from '../utils/descriptorCache'
 import { processJSON } from './json'
 import { genScriptBlock, transformScript } from './script'

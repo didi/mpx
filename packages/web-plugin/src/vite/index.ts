@@ -1,8 +1,8 @@
-import { createFilter, Plugin, UserConfig } from 'vite'
+import { parseRequest, stringify, stringifyObject } from '@mpxjs/compile-utils'
 import createVuePlugin from '@vitejs/plugin-vue2'
+import { createFilter, Plugin, UserConfig } from 'vite'
 import { Options, processOptions } from '../options'
-import { parseRequest } from '@mpxjs/compile-utils'
-import { stringifyObject } from '../utils/stringify'
+import { resolvedConfig } from './config'
 import handleHotUpdate from './handleHotUpdate'
 import {
   APP_HELPER_CODE,
@@ -17,14 +17,13 @@ import {
   customExtensionsPlugin,
   esbuildCustomExtensionsPlugin
 } from './plugins/addExtensionsPlugin'
+import { createMpxOutSideJsPlugin } from './plugins/outsideJs'
 import { createResolveEntryPlugin } from './plugins/resolveEntryPlugin'
 import { createSplitPackageChunkPlugin } from './plugins/splitPackageChunkPlugin'
 import { createWxsPlugin } from './plugins/wxsPlugin'
 import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
 import { getDescriptor } from './utils/descriptorCache'
-import { resolvedConfig } from './config'
-import { createMpxOutSideJsPlugin } from './plugins/outsideJs'
 
 function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   const { include, exclude } = options
@@ -38,7 +37,7 @@ function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
         ...userConfig,
         define: {
           global: 'globalThis', // polyfill node global
-          'process.env.NODE_ENV': JSON.stringify(
+          'process.env.NODE_ENV': stringify(
             resolvedConfig.isProduction ? '"production"' : '"development"'
           ),
           ...userConfig?.define,

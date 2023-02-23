@@ -1,7 +1,7 @@
-import mpx, { getOptions } from '../mpx'
-import { jsonCompiler } from '../../transfrom/json-compiler'
 import { LoaderContext } from 'webpack'
-import { JsonConfig } from '../../types/json-config'
+import { jsonProcess } from '../../processor/json-process'
+import { JsonConfig } from '@mpxjs/compiler'
+import mpx, { getOptions } from '../mpx'
 
 export default async function (
   jsonConfig: JsonConfig,
@@ -30,7 +30,7 @@ export default async function (
   }
 
   ({ jsonConfig, localPagesMap, localComponentsMap, tabBarMap } =
-    await jsonCompiler({
+    await jsonProcess({
       jsonConfig,
       pluginContext: loaderContext,
       context,

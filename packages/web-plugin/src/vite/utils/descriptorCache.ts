@@ -2,10 +2,10 @@ import { CompilerResult, templateCompiler } from '@mpxjs/compiler'
 import path from 'path'
 import slash from 'slash'
 import { Options } from '../../options'
-import { JsonTransfromResult } from '../../transfrom/json-compiler'
-import { TemplateTransformResult } from '../../transfrom/template-compiler'
+import { JsonProcessResult } from '../../processor/json-process'
+import { TemplateProcessResult } from '../../processor/template-process'
 import { OptionObject } from 'loader-utils'
-import pathHash from '../../utils/pageHash'
+import pathHash from '../../utils/pathHash'
 import { resolvedConfig } from '../config'
 
 const cache = new Map<string, SFCDescriptor>()
@@ -13,8 +13,8 @@ const prevCache = new Map<string, SFCDescriptor | undefined>()
 
 export interface SFCDescriptor
   extends CompilerResult,
-    Omit<TemplateTransformResult, 'templateContent'>,
-    JsonTransfromResult {
+    Omit<TemplateProcessResult, 'templateContent'>,
+    JsonProcessResult {
   id: string
   filename: string
   app: boolean
@@ -76,7 +76,7 @@ export function createDescriptor(
   )
   const isPage = !!query.isPage
   const isComponent = !!query.isComponent
-  const compilerResult = templateCompiler.parseComponent(code, {
+  const compilerResult = templateCompiler.compiler.parseComponent(code, {
     mode,
     defs,
     env,

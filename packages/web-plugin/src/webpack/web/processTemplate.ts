@@ -1,9 +1,9 @@
 import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
-import mpx, { getOptions } from '../mpx'
-import templateTransform from '../../transfrom/template-compiler'
-import { LoaderContext } from 'webpack'
-import { JsonConfig } from '../../types/json-config'
 import { CompilerResult } from '@mpxjs/compiler'
+import { LoaderContext } from 'webpack'
+import { templateProcess } from '../../processor/template-process'
+import { JsonConfig } from '@mpxjs/compiler'
+import mpx, { getOptions } from '../mpx'
 
 export default function (
   template: CompilerResult['template'],
@@ -66,7 +66,7 @@ export default function (
       builtInComponentsMap,
       templateContent,
       wxsContentMap
-    } = templateTransform({
+    } = templateProcess({
       template,
       options: getOptions(),
       pluginContext: loaderContext,

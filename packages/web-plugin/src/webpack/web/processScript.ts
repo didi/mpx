@@ -1,24 +1,25 @@
 import {
+  addQuery,
+  createHelpers,
+  genComponentTag,
+  genImport,
+  isUrlRequest,
+  shallowStringify,
+  stringify
+} from '@mpxjs/compile-utils'
+import { CompilerResult } from '@mpxjs/compiler'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
+import {
   stringifyRequest as _stringifyRequest,
   urlToRequest
 } from 'loader-utils'
-import {
-  addQuery,
-  genComponentTag,
-  createHelpers,
-  isUrlRequest
-} from '@mpxjs/compile-utils'
-import stringify, { shallowStringify } from '../../utils/stringify'
-import mpx, { getOptions } from '../mpx'
-import { Options } from '../../options'
-import { proxyPluginContext } from '@mpxjs/plugin-proxy'
-import { genImport } from '../../utils/genCode'
 import MagicString from 'magic-string'
 import { LoaderContext } from 'webpack'
-import { JsonConfig } from '../../types/json-config'
-import { JsonTransfromResult } from '../../transfrom/json-compiler'
-import { TemplateTransformResult } from '../../transfrom/template-compiler'
-import { CompilerResult } from '@mpxjs/compiler'
+import { Options } from '../../options'
+import { JsonProcessResult } from '../../processor/json-process'
+import { TemplateProcessResult } from '../../processor/template-process'
+import { JsonConfig } from '@mpxjs/compiler'
+import mpx, { getOptions } from '../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
 const tabBarContainerPath =
@@ -54,24 +55,17 @@ export default function (
     ctorType: string
     outputPath: string
     componentGenerics: JsonConfig['componentGenerics']
-    tabBarMap: JsonTransfromResult['tabBarMap']
+    tabBarMap: JsonProcessResult['tabBarMap']
     jsonConfig: JsonConfig
-    builtInComponentsMap: TemplateTransformResult['builtInComponentsMap']
-    genericsInfo: TemplateTransformResult['genericsInfo']
-    wxsModuleMap: TemplateTransformResult['wxsModuleMap']
-    localComponentsMap: JsonTransfromResult['localPagesMap']
-    localPagesMap: JsonTransfromResult['localPagesMap']
+    builtInComponentsMap: TemplateProcessResult['builtInComponentsMap']
+    genericsInfo: TemplateProcessResult['genericsInfo']
+    wxsModuleMap: TemplateProcessResult['wxsModuleMap']
+    localComponentsMap: JsonProcessResult['localPagesMap']
+    localPagesMap: JsonProcessResult['localPagesMap']
   },
   callback: (err?: Error | null, result?: any) => void
 ) {
-  const {
-    i18n,
-    projectRoot,
-    webConfig = {},
-    appInfo,
-    srcMode,
-    minimize
-  } = mpx
+  const { i18n, projectRoot, webConfig = {}, appInfo, srcMode, minimize } = mpx
 
   const mpxPluginContext = proxyPluginContext(loaderContext)
   const { getRequire } = createHelpers(loaderContext)
@@ -111,7 +105,7 @@ export default function (
         tabBarPagesMap[pagePath] = genComponentCode(
           resource,
           { async },
-          { __mpxPageRoute: JSON.stringify(pagePath) }
+          { __mpxPageRoute: stringify(pagePath) }
         )
       } else {
         mpxPluginContext.warn(
@@ -175,17 +169,17 @@ export default function (
             return page || { route: item.path.slice(1) }
           })
         }
-        global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+        global.__networkTimeout = ${stringify(jsonConfig.networkTimeout)}
         global.__mpxGenericsMap = {}
         global.__mpxOptionsMap = {}
-        global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-        global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+        global.__style = ${stringify(jsonConfig.style || 'v1')}
+        global.__mpxPageConfig = ${stringify(jsonConfig.window)}
         global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
         )
         if (i18n) {
           const i18nObj = Object.assign({}, i18n)
           content.append(
-            `${ genImport('vue-i18n', 'VueI18n') }
+            `${genImport('vue-i18n', 'VueI18n')}
             import { createI18n } from 'vue-i18n-bridge'
             Vue.use(VueI18n , { bridge: true })\n
             `
@@ -199,7 +193,7 @@ export default function (
               delete i18nObj[i18nKey]
             }
           })
-          content.append(`  const i18nCfg = ${JSON.stringify(i18nObj)}\n`)
+          content.append(`  const i18nCfg = ${stringify(i18nObj)}\n`)
           Object.keys(requestObj).forEach(key => {
             content.append(`  i18nCfg.${key} = require(${requestObj[key]})\n`)
           })
@@ -219,7 +213,9 @@ export default function (
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach(module => {
           const src = urlToRequest(wxsModuleMap[module], projectRoot)
-          content.append(`  wxsModules.${ module } = require(${ stringifyRequest(src) })\n`)
+          content.append(
+            `  wxsModules.${module} = require(${stringifyRequest(src)})\n`
+          )
         })
       }
       const pagesMap: Record<string, string> = {}
@@ -235,7 +231,7 @@ export default function (
           },
           isTabBar
             ? { __mpxBuiltIn: true }
-            : { __mpxPageRoute: JSON.stringify(pagePath) }
+            : { __mpxPageRoute: stringify(pagePath) }
         )
       })
       Object.keys(localComponentsMap).forEach(componentName => {
@@ -253,13 +249,13 @@ export default function (
         )
       })
       content.append(
-        `  global.currentModuleId = ${JSON.stringify(moduleId)}\n
-           global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n
+        `  global.currentModuleId = ${stringify(moduleId)}\n
+           global.currentSrcMode = ${stringify(scriptSrcMode)}\n
         `
       )
       if (!isProduction) {
         content.append(
-          `  global.currentResource = ${JSON.stringify(
+          `  global.currentResource = ${stringify(
             loaderContext.resourcePath
           )}\n`
         )
@@ -271,9 +267,7 @@ export default function (
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content.append(
         `  ${getRequire('script', script, extraOptions)}\n
-        const currentOption = global.__mpxOptionsMap[${JSON.stringify(
-          moduleId
-        )}]\n
+        const currentOption = global.__mpxOptionsMap[${stringify(moduleId)}]\n
         `
       )
       // 获取pageConfig
@@ -319,20 +313,20 @@ export default function (
       // 通过processOption进行组件注册和路由注入
       content.append(`  export default processOption({
         option: currentOption,
-        ctorType: ${ JSON.stringify(ctorType) },
-        firstPage: ${ JSON.stringify(Object.keys(localPagesMap)[0]) },
-        outputPath: ${ JSON.stringify(outputPath) },
-        pageConfig: ${ JSON.stringify(pageConfig) },
+        ctorType: ${stringify(ctorType)},
+        firstPage: ${stringify(Object.keys(localPagesMap)[0])},
+        outputPath: ${stringify(outputPath)},
+        pageConfig: ${stringify(pageConfig)},
         // @ts-ignore
-        pagesMap: ${ shallowStringify(pagesMap) },
+        pagesMap: ${shallowStringify(pagesMap)},
         // @ts-ignore
-        componentsMap: ${ shallowStringify(componentsMap) },
-        tabBarMap: ${ JSON.stringify(tabBarMap) },
-        componentGenerics: ${ JSON.stringify(componentGenerics) },
-        genericsInfo: ${ JSON.stringify(genericsInfo) },
+        componentsMap: ${shallowStringify(componentsMap)},
+        tabBarMap: ${stringify(tabBarMap)},
+        componentGenerics: ${stringify(componentGenerics)},
+        genericsInfo: ${stringify(genericsInfo)},
         mixin: getWxsMixin(wxsModules),
-        hasApp: ${ hasApp }
-        ${ ctorType === 'app' ? `,Vue, VueRouter` : '' }
+        hasApp: ${hasApp}
+        ${ctorType === 'app' ? `,Vue, VueRouter` : ''}
       })`)
       return content.toString()
     }

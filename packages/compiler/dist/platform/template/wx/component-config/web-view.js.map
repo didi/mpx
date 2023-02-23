@@ -1,0 +1,1 @@
+{"version":3,"file":"web-view.js","sourceRoot":"","sources":["../../../../../src/platform/template/wx/component-config/web-view.ts"],"names":[],"mappings":";;AAAA,MAAM,QAAQ,GAAG,UAAU,CAAA;AAE3B;IACE,OAAO;QACL,IAAI,EAAE,QAAQ;QACd,GAAG,CAAE,GAAG,EAAE,EAAE,EAAE,EAAE;YACd,EAAE,CAAC,SAAS,GAAG,IAAI,CAAA;YACnB,OAAO,cAAc,CAAA;QACvB,CAAC;KACF,CAAA;AACH,CAAC;AARD,4BAQC"}

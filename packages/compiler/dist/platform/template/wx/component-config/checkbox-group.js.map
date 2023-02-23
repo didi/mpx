@@ -1,0 +1,1 @@
+{"version":3,"file":"checkbox-group.js","sourceRoot":"","sources":["../../../../../src/platform/template/wx/component-config/checkbox-group.ts"],"names":[],"mappings":";;AAAA,MAAM,QAAQ,GAAG,gBAAgB,CAAA;AAEjC;IACE,OAAO;QACL,IAAI,EAAE,QAAQ;QACd,GAAG,CAAE,GAAG,EAAE,EAAE,EAAE,EAAE;YACd,EAAE,CAAC,SAAS,GAAG,IAAI,CAAA;YACnB,OAAO,oBAAoB,CAAA;QAC7B,CAAC;KACF,CAAA;AACH,CAAC;AARD,4BAQC"}

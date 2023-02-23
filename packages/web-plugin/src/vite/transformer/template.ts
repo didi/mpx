@@ -3,7 +3,7 @@ import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { Options } from '../../options'
 import { SFCDescriptor } from '../utils/descriptorCache'
-import templateTransform from '../../transfrom/template-compiler'
+import { templateProcess } from '../../processor/template-process'
 
 /**
  * transform mpx template to vue template
@@ -32,7 +32,7 @@ export async function transformTemplate(
       genericsInfo,
       builtInComponentsMap,
       templateContent
-    } = templateTransform({
+    } = templateProcess({
       template,
       options,
       pluginContext,

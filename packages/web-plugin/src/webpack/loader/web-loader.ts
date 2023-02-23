@@ -1,4 +1,4 @@
-import parser from '@mpxjs/compiler/template-compiler/parser'
+import { templateCompiler } from '@mpxjs/compiler'
 import {
   addQuery,
   matchCondition,
@@ -17,11 +17,11 @@ import processJSON from '../web/processJSON'
 import processScript from '../web/processScript'
 import processStyles from '../web/processStyles'
 import processTemplate from '../web/processTemplate'
-import pathHash from '../../utils/pageHash'
-import { tsWatchRunLoaderFilter }  from '@mpxjs/compile-utils'
-import getOutputPath  from '../../utils/get-output-path'
+import pathHash from '../../utils/pathHash'
+import { tsWatchRunLoaderFilter } from '@mpxjs/compile-utils'
+import getOutputPath from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
-import resolveJson from '../../utils/resolve-json-content'
+import {jsonCompiler} from '@mpxjs/compiler'
 
 export default function (
   this: LoaderContext<null>,
@@ -99,7 +99,7 @@ export default function (
       : 'm' + ((pathHash && pathHash(filePath)) || '')
 
   // 将mpx文件 分成四部分
-  const parts = parser(content, {
+  const parts = templateCompiler.parser(content, {
     filePath,
     needMap: this.sourceMap,
     mode,
@@ -109,7 +109,7 @@ export default function (
   let output = ''
   const callback = this.async()
 
-  resolveJson(
+  jsonCompiler.parse(
     parts,
     loaderContext.context,
     loaderContext,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { isEmptyObject } from './util'
 const isTouchDevice = document && ('ontouchstart' in document.documentElement)
 
@@ -150,9 +151,7 @@ export function getCustomEvent (type, detail = {}, target = null) {
   }
 }
 
-function noop () {
-
-}
+function noop () {}
 
 export default function getInnerListeners (context, options = {}) {
   let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options

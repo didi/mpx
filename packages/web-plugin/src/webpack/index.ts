@@ -1,38 +1,39 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 'use strict'
 
-import ResolveDependency from '@mpxjs/webpack-plugin/lib/dependencies/ResolveDependency'
-import InjectDependency from '@mpxjs/webpack-plugin/lib/dependencies/InjectDependency'
-import CommonJsVariableDependency from '@mpxjs/webpack-plugin/lib/dependencies/CommonJsVariableDependency'
-import ReplaceDependency from '@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency'
-import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
-import RecordVueContentDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency'
-import NullFactory from 'webpack/lib/NullFactory'
-import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
-import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
-import FileSystemInfo from 'webpack/lib/FileSystemInfo'
-import AddModePlugin from '@mpxjs/webpack-plugin/lib/resolver/AddModePlugin'
-import AddEnvPlugin from '@mpxjs/webpack-plugin/lib/resolver/AddEnvPlugin'
 import {
-  stringifyLoadersAndResource,
-  parseRequest,
-  matchCondition,
   addQuery,
+  matchCondition,
+  parseRequest,
+  stringify,
+  stringifyLoadersAndResource,
   toPosix
 } from '@mpxjs/compile-utils'
+import CommonJsVariableDependency from '@mpxjs/webpack-plugin/lib/dependencies/CommonJsVariableDependency'
+import InjectDependency from '@mpxjs/webpack-plugin/lib/dependencies/InjectDependency'
+import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
+import RecordVueContentDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency'
+import ReplaceDependency from '@mpxjs/webpack-plugin/lib/dependencies/ReplaceDependency'
+import ResolveDependency from '@mpxjs/webpack-plugin/lib/dependencies/ResolveDependency'
+import AddEnvPlugin from '@mpxjs/webpack-plugin/lib/resolver/AddEnvPlugin'
+import AddModePlugin from '@mpxjs/webpack-plugin/lib/resolver/AddModePlugin'
 import async from 'async'
-import { processOptions, Options } from '../options'
-import mpx,  { Mpx } from './mpx'
 import {
-  NormalModule,
-  DefinePlugin,
-  ExternalsPlugin,
   Compiler,
+  DefinePlugin,
   Dependency,
+  ExternalsPlugin,
   Module,
+  NormalModule,
   WebpackError
 } from 'webpack'
+import harmonySpecifierTag from 'webpack/lib/dependencies/HarmonyImportDependencyParserPlugin'
+import FileSystemInfo from 'webpack/lib/FileSystemInfo'
+import FlagEntryExportAsUsedPlugin from 'webpack/lib/FlagEntryExportAsUsedPlugin'
+import NullFactory from 'webpack/lib/NullFactory'
+import { Options, processOptions } from '../options'
 import getOutputPath from '../utils/get-output-path'
+import mpx, { Mpx } from './mpx'
 
 const styleCompilerPath = require.resolve('@mpxjs/loaders/style-loader.js')
 const isProductionLikeMode = (options: {
@@ -184,12 +185,12 @@ class MpxWebpackPlugin {
 
     const defsOpt: { [k: string]: any } = {
       __mpx_wxs__: DefinePlugin.runtimeValue(({ module }) => {
-        return JSON.stringify(!!module.wxs)
+        return stringify(!!module.wxs)
       })
     }
 
     Object.keys(defs).forEach(key => {
-      defsOpt[key] = JSON.stringify(defs[key])
+      defsOpt[key] = stringify(defs[key])
     })
     // define mode & defs
     new DefinePlugin(defsOpt).apply(compiler)
@@ -312,8 +313,7 @@ class MpxWebpackPlugin {
               error: (error?: Error | string) => void
             }) => {
               const packageName = packageRoot || 'main'
-              const resourceMap =
-                mpx[`${resourceType}sMap` as keyof Mpx]
+              const resourceMap = mpx[`${resourceType}sMap` as keyof Mpx]
               const currentResourceMap = resourceMap.main
                 ? (resourceMap[packageName] = resourceMap[packageName] || {})
                 : resourceMap
@@ -510,7 +510,7 @@ class MpxWebpackPlugin {
               const type = target.name
               const name = type === 'wx' ? 'mpx' : 'createFactory'
               const replaceContent =
-                type === 'wx' ? 'mpx' : `createFactory(${JSON.stringify(type)})`
+                type === 'wx' ? 'mpx' : `createFactory(${stringify(type)})`
 
               const dep = new ReplaceDependency(replaceContent, target.range)
               current.addPresentationalDependency(dep)
@@ -594,8 +594,8 @@ class MpxWebpackPlugin {
               const srcModeString = `__mpx_src_mode_${srcMode}__`
               const dep = new InjectDependency({
                 content: args.length
-                  ? `, ${JSON.stringify(srcModeString)}`
-                  : JSON.stringify(srcModeString),
+                  ? `, ${stringify(srcModeString)}`
+                  : stringify(srcModeString),
                 index: expr.end - 1
               })
               parser.state.current.addPresentationalDependency(dep)

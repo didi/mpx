@@ -1,8 +1,7 @@
-import { createFilter, Plugin } from 'vite'
-import { parseRequest } from '@mpxjs/compile-utils'
+import { parseRequest, stringify } from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
+import { createFilter, Plugin } from 'vite'
 import { resolvedConfig } from '../config'
-import stringify from '../../utils/stringify'
 import { getDescriptor } from '../utils/descriptorCache'
 
 /**

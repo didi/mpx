@@ -1,4 +1,4 @@
-import { genComponentTag } from '@mpxjs/compile-utils'
+import { genComponentTag, stringify } from '@mpxjs/compile-utils'
 
 export default function (
   styles: Array<{ content: string; tag: string; attrs: Record<string, any> }>,
@@ -12,7 +12,7 @@ export default function (
         attrs(style: { attrs: Record<string, string | boolean> }) {
           const attrs = Object.assign({}, style.attrs)
           if (options.autoScope) attrs.scoped = true
-          attrs.mpxStyleOptions = JSON.stringify({
+          attrs.mpxStyleOptions = stringify({
             // scoped: !!options.autoScope,
             // query中包含module字符串会被新版vue-cli中的默认rules当做css-module处理
             mid: options.moduleId

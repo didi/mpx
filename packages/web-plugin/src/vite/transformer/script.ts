@@ -1,19 +1,23 @@
-import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
+import {
+  genComponentTag,
+  genImport,
+  omit,
+  parseRequest,
+  shallowStringify,
+  stringify
+} from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
 import { SourceMap, TransformPluginContext } from 'rollup'
 import { Options } from 'src/options'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
-import { genImport } from '../../utils/genCode'
-import omit from '../../utils/omit'
-import stringify, { shallowStringify } from '../../utils/stringify'
-import { setDescriptor, SFCDescriptor } from '../utils/descriptorCache'
+import { resolvedConfig } from '../config'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
   TAB_BAR_PAGE_HELPER_CODE
 } from '../helper'
-import { resolvedConfig } from '../config'
+import { setDescriptor, SFCDescriptor } from '../utils/descriptorCache'
 
 export const genComponentCode = (
   varName: string,

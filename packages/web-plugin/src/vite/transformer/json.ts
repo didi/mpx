@@ -1,23 +1,24 @@
 import { TransformPluginContext } from 'rollup'
 import { Options } from '../../options'
-import { jsonCompiler } from '../../transfrom/json-compiler'
-import resolveJson from '../../utils/resolve-json-content'
-import { SFCDescriptor } from '../utils/descriptorCache'
+import { jsonProcess } from '../../processor/json-process'
+import { jsonCompiler } from '@mpxjs/compiler'
 import mpx from '../mpx'
+import { SFCDescriptor } from '../utils/descriptorCache'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 
 export async function processJSON(
   descriptor: SFCDescriptor,
   options: Options,
   pluginContext: TransformPluginContext
 ): Promise<void> {
-  const jsonConfig = (descriptor.jsonConfig = await resolveJson(
+  const jsonConfig = (descriptor.jsonConfig = await jsonCompiler.parse(
     descriptor,
     descriptor.filename,
-    pluginContext,
+    proxyPluginContext(pluginContext),
     options
   ))
   try {
-    const jsonResult = await jsonCompiler({
+    const jsonResult = await jsonProcess({
       jsonConfig,
       pluginContext,
       context: jsonConfig.path || descriptor.filename,
