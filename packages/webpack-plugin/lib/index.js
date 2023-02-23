@@ -453,7 +453,7 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, ()=> {
+      processSubpackagesEntriesMap(compilation, () => {
         const checkRegisterPack = () => {
           for (const packRoot in mpx.dynamicPackInfo) {
             if (packRoot && mpx.dynamicPackInfo[packRoot] !== true) {
