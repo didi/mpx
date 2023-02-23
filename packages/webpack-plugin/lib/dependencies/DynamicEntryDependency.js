@@ -32,7 +32,7 @@ class DynamicEntryDependency extends NullDependency {
     if (!this.packageRoot) return
     const curValue = mpx.dynamicEntryInfo[this.packageRoot] || {}
     mpx.dynamicEntryInfo[this.packageRoot] = {
-       // 记录当前是否注册页面分包
+      // 记录当前是否注册页面分包
       hasPage: curValue.hasPage || this.entryType === 'page',
       // 记录异步引用的资源
       entries: curValue.entries || []
