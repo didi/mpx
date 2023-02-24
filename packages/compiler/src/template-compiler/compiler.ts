@@ -2571,6 +2571,18 @@ function genNode(node) {
   return exp
 }
 
+const compiler = {
+  parseComponent,
+  parse,
+  serialize,
+  genNode,
+  makeAttrsMap,
+  stringifyAttr,
+  parseMustache,
+  stringifyWithResolveComputed,
+  addAttrs
+}
+
 export {
   parseComponent,
   parse,
@@ -2582,3 +2594,5 @@ export {
   stringifyWithResolveComputed,
   addAttrs
 }
+
+export default compiler

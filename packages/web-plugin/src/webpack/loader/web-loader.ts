@@ -22,6 +22,7 @@ import { tsWatchRunLoaderFilter } from '@mpxjs/compile-utils'
 import getOutputPath from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
 import {jsonCompiler} from '@mpxjs/compiler'
+import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 
 export default function (
   this: LoaderContext<null>,
@@ -112,7 +113,7 @@ export default function (
   jsonCompiler.parse(
     parts,
     loaderContext.context,
-    loaderContext,
+    proxyPluginContext(loaderContext),
     getOptions(),
     loaderContext._compilation?.inputFileSystem
   ).then(jsonConfig => {

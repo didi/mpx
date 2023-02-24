@@ -1,6 +1,6 @@
 import LruCache from 'lru-cache'
 import hash from 'hash-sum'
-import compiler from './compiler'
+import templateCompiler from './index'
 import { SourceMapGenerator } from 'source-map'
 
 const splitRE = /\r?\n/g
@@ -14,7 +14,7 @@ export default (content: string, { filePath, needMap, mode, env }: any) => {
 
   let output = cache.get(cacheKey)
   if (output) return JSON.parse(output)
-  output = compiler.parseComponent(content, {
+  output = templateCompiler.compiler.parseComponent(content, {
     mode,
     filePath,
     pad: 'line',

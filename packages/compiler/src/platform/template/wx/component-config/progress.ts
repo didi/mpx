@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'progress'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -33,7 +35,7 @@ export default function ({ print }) {
             activeColor: 'active-color',
             backgroundColor: 'background-color'
           }
-          obj.name = propsMap[obj.name]
+          obj.name = propsMap[obj.name as keyof typeof propsMap]
           return obj
         },
         tt (obj) {
@@ -41,7 +43,7 @@ export default function ({ print }) {
             activeColor: 'active-color',
             backgroundColor: 'background-color'
           }
-          obj.name = propsMap[obj.name]
+          obj.name = propsMap[obj.name as keyof typeof propsMap]
           return obj
         }
       },

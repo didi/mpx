@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'swiper'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
@@ -55,7 +57,7 @@ export default function ({ print }) {
             change: 'change',
             animationfinish: 'animationEnd'
           }
-          return eventMap[eventName]
+          return eventMap[eventName as keyof typeof eventMap]
         }
       },
       {

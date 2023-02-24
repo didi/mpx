@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { parse } from 'json5'
 import { normalize, isValidIdentifierStr } from '@mpxjs/compile-utils'
 import runRules from '../../run-rules'

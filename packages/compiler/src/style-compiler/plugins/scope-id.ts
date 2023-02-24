@@ -1,13 +1,15 @@
 import selectorParser from 'postcss-selector-parser'
+import { Plugin } from 'postcss'
 // scope-id
 
-export default ({ id }) => {
-  return {
+export default ({ id }: { id: string }) => {
+  return <Plugin>{
     postcssPlugin: 'scope-id',
-    Once: (root) => {
+    Once: root => {
       const keyframes = Object.create(null)
 
-      root.each(function rewriteSelector (node) {
+      root.each(function rewriteSelector(node) {
+        // @ts-ignore
         if (!node.selector) {
           // handle media queries
           if (node.type === 'atrule') {
@@ -20,9 +22,10 @@ export default ({ id }) => {
           }
           return
         }
+        // @ts-ignore
         node.selector = selectorParser(selectors => {
           selectors.each(selector => {
-            let node = null
+            let node: any = null
             selector.each(n => {
               // ">>>" combinator
               if (n.type === 'combinator' && n.value === '>>>') {
@@ -45,10 +48,14 @@ export default ({ id }) => {
             })
             // 对于page selector不添加scope id
             if (node && node.type === 'tag' && node.value === 'page') return
-            selector.insertAfter(node, selectorParser.className({
-              value: id
-            }))
+            selector.insertAfter(
+              node,
+              selectorParser.className({
+                value: id
+              })
+            )
           })
+          // @ts-ignore
         }).processSync(node.selector)
       })
 
@@ -60,13 +67,15 @@ export default ({ id }) => {
         root.walkDecls(decl => {
           // individual animation-name declaration
           if (/-?animation-name$/.test(decl.prop)) {
-            decl.value = decl.value.split(',')
+            decl.value = decl.value
+              .split(',')
               .map(v => keyframes[v.trim()] || v.trim())
               .join(',')
           }
           // shorthand
           if (/-?animation$/.test(decl.prop)) {
-            decl.value = decl.value.split(',')
+            decl.value = decl.value
+              .split(',')
               .map(v => {
                 const vals = v.trim().split(/\s+/)
                 const i = vals.findIndex(val => keyframes[val])

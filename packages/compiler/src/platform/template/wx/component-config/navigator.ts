@@ -1,30 +1,87 @@
 import { isMustache } from '@mpxjs/compile-utils'
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'navigator'
 
 // 微信支持的属性及其值
-const wxSupportPropsValue = {
-  'open-type': ['navigate', 'redirect', 'switchTab', 'reLaunch', 'navigateBack', 'exit']
+const wxSupportPropsValue: {
+  [key: string]: any
+} = {
+  'open-type': [
+    'navigate',
+    'redirect',
+    'switchTab',
+    'reLaunch',
+    'navigateBack',
+    'exit'
+  ]
 }
-
-export default function ({ print }) {
-  const aliValueLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value' })
+export default <DefineConfig>function ({ print }) {
+  const aliValueLogError = print({
+    platform: 'ali',
+    tag: TAG_NAME,
+    isError: true,
+    type: 'value'
+  })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
-  const aliPropLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true })
-  const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
-  const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
-  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
-  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const aliPropLogError = print({
+    platform: 'ali',
+    tag: TAG_NAME,
+    isError: true
+  })
+  const aliEventLog = print({
+    platform: 'ali',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
+  const ttValueLogError = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: true,
+    type: 'value'
+  })
+  const ttPropLog = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: false
+  })
+  const ttEventLog = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
-  const webValueLogError = print({ platform: 'web', tag: TAG_NAME, isError: true, type: 'value' })
-  const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
-  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const webValueLogError = print({
+    platform: 'web',
+    tag: TAG_NAME,
+    isError: true,
+    type: 'value'
+  })
+  const wxPropValueLog = print({
+    platform: 'wx',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'value'
+  })
+  const qaEventLog = print({
+    platform: 'qa',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const qaValueLogError = print({ platform: 'qa', tag: TAG_NAME, isError: true, type: 'value' })
+  const qaValueLogError = print({
+    platform: 'qa',
+    tag: TAG_NAME,
+    isError: true,
+    type: 'value'
+  })
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web(tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-navigator'
     },
@@ -36,48 +93,81 @@ export default function ({ print }) {
       },
       {
         test: 'open-type',
-        ali (attr) {
-          if (wxSupportPropsValue[attr.name] && wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
+        ali(attr) {
+          if (
+            wxSupportPropsValue[attr.name] &&
+            wxSupportPropsValue[attr.name].indexOf(attr.value) === -1
+          ) {
             wxPropValueLog({ name: attr.name, value: attr.value })
           }
           if (isMustache(attr.value)) {
             // 如果是个变量，报warning~
             aliPropLog(attr)
           } else {
-            const supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch', 'exit']
+            const supportedList = [
+              'navigate',
+              'redirect',
+              'switchTab',
+              'navigateBack',
+              'reLaunch',
+              'exit'
+            ]
             if (supportedList.indexOf(attr.value) === -1) {
               aliValueLogError(attr)
             }
           }
         },
-        tt (attr) {
-          if (wxSupportPropsValue[attr.name] && wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
+        tt(attr) {
+          if (
+            wxSupportPropsValue[attr.name] &&
+            wxSupportPropsValue[attr.name].indexOf(attr.value) === -1
+          ) {
             wxPropValueLog({ name: attr.name, value: attr.value })
           }
           if (isMustache(attr.value)) {
             // 如果是个变量，报warning~
             ttPropLog(attr)
           } else {
-            const supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            const supportedList = [
+              'navigate',
+              'redirect',
+              'switchTab',
+              'navigateBack',
+              'reLaunch'
+            ]
             if (supportedList.indexOf(attr.value) === -1) {
               ttValueLogError(attr)
             }
           }
         },
-        web (attr) {
-          const supportedList = ['navigate', 'redirect', 'navigateBack', 'reLaunch']
+        web(attr) {
+          const supportedList = [
+            'navigate',
+            'redirect',
+            'navigateBack',
+            'reLaunch'
+          ]
           if (supportedList.indexOf(attr.value) === -1) {
             webValueLogError(attr)
           }
         },
-        qa (attr) {
-          if (wxSupportPropsValue[attr.name] && wxSupportPropsValue[attr.name].indexOf(attr.value) === -1) {
+        qa(attr) {
+          if (
+            wxSupportPropsValue[attr.name] &&
+            wxSupportPropsValue[attr.name].indexOf(attr.value) === -1
+          ) {
             wxPropValueLog({ name: attr.name, value: attr.value })
           }
           if (isMustache(attr.value)) {
             qaPropLog(attr)
           } else {
-            const supportedList = ['navigate', 'redirect', 'switchTab', 'navigateBack', 'reLaunch']
+            const supportedList = [
+              'navigate',
+              'redirect',
+              'switchTab',
+              'navigateBack',
+              'reLaunch'
+            ]
             if (supportedList.indexOf(attr.value) === -1) {
               qaValueLogError(attr)
             }
@@ -100,13 +190,13 @@ export default function ({ print }) {
         tt: ttEventLog,
         web: webEventLog,
         qa: qaEventLog,
-        jd (eventName) {
+        jd(eventName) {
           const eventMap = {
             success: 'success',
             fail: 'error',
             complete: 'complete'
           }
-          return eventMap[eventName]
+          return eventMap[eventName as keyof typeof eventMap]
         }
       }
     ]

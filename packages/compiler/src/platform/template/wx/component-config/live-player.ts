@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'live-player'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })

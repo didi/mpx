@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'textarea'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })

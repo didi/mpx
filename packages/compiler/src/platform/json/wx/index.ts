@@ -1,3 +1,4 @@
+// @ts-nocheck
 import runRules from '../../run-rules'
 import normalizeTest from '../normalize-test'
 import changeKey from '../change-key'

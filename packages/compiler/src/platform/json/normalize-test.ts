@@ -1,8 +1,8 @@
 import { hasOwn } from '@mpxjs/compile-utils'
 
-export default function normalizeTest (test) {
+export default function normalizeTest (test: string) {
   if (test) {
-    return (input, meta) => {
+    return (input: Record<string, any>, meta: Record<string, any>) => {
       const pathArr = test.split('|')
       meta.paths = []
       let result = false

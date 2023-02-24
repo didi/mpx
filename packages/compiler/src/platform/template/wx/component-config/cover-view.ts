@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'cover-view'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type } from '@mpxjs/compile-utils'
 
 function defaultNormalizeTest (rawTest, context) {

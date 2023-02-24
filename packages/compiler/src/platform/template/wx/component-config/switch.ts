@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'switch'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
 

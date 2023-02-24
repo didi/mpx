@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { TransformPluginContext } from 'rollup'
 import { LoaderDefinition } from 'webpack'
 
@@ -66,7 +67,7 @@ export function proxyPluginContext(
       addBuildDependency: function () {},
       addMissingDependency: function () {},
       addContextDependency:  function () {},
-      emitFile: pluginContext.emitFile.bind(pluginContext),
+      emitFile: pluginContext.emitFile.bind(pluginContext)
     }
   }
 }

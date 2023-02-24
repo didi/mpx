@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'cover-image'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,

@@ -1,7 +1,8 @@
 import { capitalToHyphen } from '@mpxjs/compile-utils'
+import { DefineConfig } from '.'
 
-export default function () {
-  function convertTagName (name) {
+export default <DefineConfig>function () {
+  function convertTagName (name: string) {
     return capitalToHyphen(name)
   }
 

@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'map'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'event' })
   const aliPropValueWarningLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value-attr-uniform' })
@@ -45,7 +47,7 @@ export default function ({ print }) {
             'include-points': 'includePoints',
             'show-location': 'showLocation'
           }
-          return propsMap[name]
+          return propsMap[name as keyof typeof propsMap]
         }
       },
       {
@@ -71,7 +73,7 @@ export default function ({ print }) {
             controltap: 'controlTap',
             regionchange: 'regionChange'
           }
-          return eventMap[eventName]
+          return eventMap[eventName as keyof typeof eventMap]
         }
       },
       {

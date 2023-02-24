@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'wxs'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   return {
     // 匹配标签名，可传递正则
     test: TAG_NAME,

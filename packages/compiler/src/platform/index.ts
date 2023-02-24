@@ -1,3 +1,4 @@
+// @ts-nocheck
 import runRules from './run-rules'
 import wxTemplate from './template/wx'
 import wxJson from './json/wx'

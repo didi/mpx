@@ -1,6 +1,7 @@
+import { Plugin } from 'postcss'
 
-export default (opts) => {
-  return {
+export default () => {
+  return <Plugin>{
     postcssPlugin: 'trim',
     Once: (root) => {
       root.walk(({ type, raws }) => {

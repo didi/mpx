@@ -1,3 +1,4 @@
+import { Plugin } from 'postcss'
 /**
  * 按平台条件编译CSS，用法如下：
  * @type {postcss.Plugin<any>}
@@ -42,38 +43,49 @@
 //     @mpx-endif
 //     */
 // `
-export default (options = {}) => {
+export default (
+  options = {
+    defs: {}
+  }
+) => {
   const { defs } = options
 
   const defKeys = Object.keys(defs)
   const defValues = defKeys.map((key) => {
+    // @ts-ignore
     return defs[key]
   })
 
-  function evalExp (exp) {
+  function evalExp(exp: string) {
     /* eslint-disable no-new-func */
     const f = new Function(...defKeys, `return ${exp};`)
     return f(...defValues)
   }
 
-  function isIfStart (content) {
+  function isIfStart(content: string) {
     return /@mpx-if/.test(content)
   }
 
-  function isElseIf (content) {
+  function isElseIf(content: string) {
     return /@mpx-elif/.test(content)
   }
 
-  function isElse (content) {
+  function isElse(content: string) {
     return /@mpx-else/.test(content)
   }
 
-  function isEndIf (content) {
+  function isEndIf(content: string) {
     return /@mpx-endif/.test(content)
   }
 
-  function parseCondition (regex, content) {
-    const exp = regex.exec(content)[1].trim()
+  function parseCondition(
+    regex: RegExp,
+    content: string
+  ): {
+    shouldRemove: boolean
+    children: any[]
+  } {
+    const exp = regex.exec(content)![1].trim()
     const shouldRemove = !evalExp(exp)
     return {
       shouldRemove,
@@ -81,19 +93,19 @@ export default (options = {}) => {
     }
   }
 
-  function parseIf (content) {
+  function parseIf(content: string) {
     return parseCondition(/@mpx-if[^(]*?\(([\s\S]*)\)/, content)
   }
 
-  function parseElseIf (content) {
+  function parseElseIf(content: string) {
     return parseCondition(/@mpx-elif[^(]*?\(([\s\S]*)\)/, content)
   }
 
-  return {
+  return <Plugin>{
     postcssPlugin: 'conditional-strip',
-    Once (root) {
-      const condsStacks = []
-      const currentConds = []
+    Once(root) {
+      const condsStacks: any[] = []
+      const currentConds: any[] = []
       let curDepth = -1
 
       root.walk(node => {
@@ -127,7 +139,10 @@ export default (options = {}) => {
             isKeyword = true
             const curConds = condsStacks[curDepth]
             const cond = {
-              shouldRemove: !(curConds.if.shouldRemove && (!curConds.elif || curConds.elif.shouldRemove)),
+              shouldRemove: !(
+                curConds.if.shouldRemove &&
+                (!curConds.elif || curConds.elif.shouldRemove)
+              ),
               children: [node]
             }
             const parentCond = currentConds[curDepth - 1]
@@ -140,7 +155,7 @@ export default (options = {}) => {
             isKeyword = true
             const curConds = condsStacks.pop()
             Object.keys(curConds).forEach(k => {
-              curConds[k].children.forEach(node => {
+              curConds[k].children.forEach((node: any) => {
                 node.remove()
               })
             })

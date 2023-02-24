@@ -1,10 +1,11 @@
 import { parseMustache } from '../../../../template-compiler/compiler'
 import { normalize } from '@mpxjs/compile-utils'
+import { DefineConfig, PropsTransformer } from '.'
 
 const TAG_NAME = 'component'
 
 /** is 属性格式化为中划线(-)连接 */
-const formatPropIs = (obj, data) => {
+const formatPropIs: PropsTransformer = (obj, data) => {
   const parsed = parseMustache(obj.value)
   let value = parsed.result
   if (parsed.hasBinding) value = value.slice(1, -1)
@@ -26,20 +27,19 @@ const formatPropIs = (obj, data) => {
   }
 }
 
-export default function () {
+export default <DefineConfig>function () {
   return {
     test: TAG_NAME,
     props: [
       {
         test: 'is',
-        ali (obj, data) {
+        ali(obj, data) {
           return formatPropIs(obj, data)
         },
-        swan (obj, data) {
+        swan(obj, data) {
           return formatPropIs(obj, data)
         }
       }
     ]
   }
 }
-

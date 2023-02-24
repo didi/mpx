@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'checkbox'
 
-export default function () {
+export default <DefineConfig>function () {
   return {
     test: TAG_NAME,
     web (tag, { el }) {

@@ -1,3 +1,5 @@
+import { DefineConfigs } from "."
+
 // 支付宝小程序不支持的标签集合
 const ALI_UNSUPPORTED_TAG_NAME_ARR = ['live-pusher', 'live-player', 'audio', 'functional-page-navigator', 'editor']
 // 百度小程序不支持的标签集合
@@ -11,11 +13,7 @@ const JD_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher',
 // 快应用不支持的标签集合
 const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image']
 
-/**
- * @param {function(object): function} print
- * @return {array}
- */
-export default function ({ print }) {
+export default <DefineConfigs>function ({ print }) {
   const aliUnsupportedTagError = print({ platform: 'ali', isError: true, type: 'tag' })
   const baiduUnsupportedTagError = print({ platform: 'baidu', isError: true, type: 'tag' })
   const qqUnsupportedTagError = print({ platform: 'qq', isError: true, type: 'tag' })

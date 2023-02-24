@@ -1,4 +1,5 @@
 import { isMustache } from '@mpxjs/compile-utils'
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'button'
 
@@ -7,7 +8,7 @@ const wxSupportPropsValue = {
   'open-type': ['contact', 'share', 'getPhoneNumber', 'getUserInfo', 'launchApp', 'openSetting', 'feedback']
 }
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliValueLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'value' })
   const aliValueLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value' })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
@@ -73,7 +74,7 @@ export default function ({ print }) {
         },
         swan ({ name, value }) {
           const supportList = ['contact', 'share', 'getUserInfo', 'getPhoneNumber', 'openSetting', 'chooseAddress', 'chooseInvoiceTitle', 'login']
-          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+          if (name === 'open-type' && wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {
@@ -85,7 +86,7 @@ export default function ({ print }) {
         },
         qq ({ name, value }) {
           const supportList = ['share', 'getUserInfo', 'getPhoneNumber', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
-          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+          if (name === 'open-type' && wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {
@@ -96,7 +97,7 @@ export default function ({ print }) {
           }
         },
         tt ({ name, value }) {
-          if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
+          if (name === 'open-type' && wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {

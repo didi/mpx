@@ -1,31 +1,69 @@
 import { isMustache } from '@mpxjs/compile-utils'
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'camera'
 
-export default function ({ print }) {
-  const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
-  const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
-  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
-  const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
-  const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-  const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
+export default <DefineConfig>function ({ print }) {
+  const ttValueLogError = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: true,
+    type: 'value'
+  })
+  const ttEventLog = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: false
+  })
+  const ttPropLog = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: false
+  })
+  const baiduValueLogError = print({
+    platform: 'baidu',
+    tag: TAG_NAME,
+    isError: true,
+    type: 'value'
+  })
+  const baiduEventLog = print({
+    platform: 'baidu',
+    tag: TAG_NAME,
+    isError: false
+  })
+  const qqValueLog = print({
+    platform: 'qq',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'value'
+  })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
-  const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
+  const qqEventLog = print({
+    platform: 'qq',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaEventLog = print({
+    platform: 'qa',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   return {
     test: TAG_NAME,
     props: [
       {
         test: 'mode',
-        swan ({ name, value }) {
+        swan({ name, value }) {
           // 百度只有相机模式，也就是微信的mode=normal
           if (value !== 'normal') {
             baiduValueLogError({ name, value })
           }
           return false
         },
-        tt ({ name, value }) {
+        tt({ name, value }) {
           if (value !== 'normal') {
             ttValueLogError({ name, value })
           }
@@ -35,7 +73,7 @@ export default function ({ print }) {
       },
       {
         test: 'flash',
-        qq ({ name, value }) {
+        qq({ name, value }) {
           const supportList = ['auto', 'on', 'off']
           if (isMustache(value) || supportList.indexOf(value) === -1) {
             // 如果是个变量，或者是不支持的属性值，报warning
@@ -50,19 +88,19 @@ export default function ({ print }) {
       },
       {
         test: /^(frame-size|device-position)$/,
-        qa (prop) {
+        qa(prop) {
           const propsMap = {
             'device-position': 'deviceposition',
             'frame-size': 'framesize'
           }
-          prop.name = propsMap[prop.name]
+          prop.name = propsMap[prop.name as keyof typeof propsMap]
           if (prop.name === 'framesize') {
             const valueMap = {
               small: 'low',
               medium: 'medium',
               large: 'high'
             }
-            prop.value = valueMap[prop.value]
+            prop.value = valueMap[prop.value as keyof typeof valueMap]
           }
           return prop
         }

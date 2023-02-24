@@ -40,42 +40,90 @@ import webView from './web-view'
 import wxs from './wxs'
 import component from './component'
 
-export default function getComponentConfigs ({ warn, error }) {
-  /**
-   * universal print for detail component warn or error
-   * @param {object} config
-   *  @param {string} config.platform
-   *  @param {string} config.tag
-   *  @param {string} config.type 可填tag/property/value/event
-   * @return {function(*): Function}
-   */
-  const print = ({ platform, tag, type = 'property', isError = false }) => (arg) => {
-    if (type === 'tag') {
-      error(`<${arg}> is not supported in ${platform} environment!`)
-      return
+interface Attr {
+  name: string
+  value: any
+}
+
+type Test = string | RegExp
+
+export type PropsTransformer = (attr: Attr, params: { el: any }) => any
+export type EventTransformer = (event: string, params: { el: any }) => any
+export type TagTransformer = (tag: string, params: { el: any }) => any
+export type PrintLog = (tag?: Attr | string) => void
+export interface Config {
+  test?: Test
+  supportedModes?: string[]
+  [key: string]:
+    | Config['props']
+    | Config['event']
+    | Config['test']
+    | TagTransformer
+    | string[]
+  props?: {
+    [key: string]: PropsTransformer | string | undefined | RegExp
+    test?: Test
+  }[]
+  event?: {
+    [key: string]: EventTransformer | string | undefined | RegExp
+    test?: Test
+  }[]
+}
+
+export type Print = (params: {
+  platform: any
+  tag?: any
+  type?: string | undefined
+  isError?: boolean | undefined
+}) => PrintLog
+
+export type DefineConfig = (params: { print: Print }) => Config
+export type DefineConfigs = (params: { print: Print }) => Config[]
+
+export default function getComponentConfigs({
+  warn,
+  error
+}: {
+  warn: any
+  error: any
+}) {
+  const print: Print =
+    ({ platform, tag, type = 'property', isError = false }) =>
+    arg => {
+      if (type === 'tag') {
+        error(`<${arg}> is not supported in ${platform} environment!`)
+        return
+      }
+      let msg
+      switch (type) {
+        case 'event':
+          msg = `<${tag}> does not support [bind${arg}] event in ${platform} environment!`
+          break
+        case 'property':
+          msg = `<${tag}> does not support [${
+            arg && (arg as Attr).name
+          }] property in ${platform} environment!`
+          break
+        case 'value':
+          msg = `<${tag}>'s property '${
+            arg && (arg as Attr).name
+          }' does not support '[${
+            arg && (arg as Attr).value
+          }]' value in ${platform} environment!`
+          break
+        case 'tagRequiredProps':
+          msg = `<${tag}> should have '${arg}' attr in ali environment!`
+          break
+        case 'value-attr-uniform':
+          msg = `The internal attribute name of the <${tag}>'s attribute '${
+            arg && (arg as Attr).value
+          }' is not supported in the ali environment, Please check!`
+          break
+        default:
+          msg = `<${tag}>'s transform has some error happened!`
+      }
+      isError ? error(msg) : warn(msg)
     }
-    let msg
-    switch (type) {
-      case 'event':
-        msg = `<${tag}> does not support [bind${arg}] event in ${platform} environment!`
-        break
-      case 'property':
-        msg = `<${tag}> does not support [${arg && arg.name}] property in ${platform} environment!`
-        break
-      case 'value':
-        msg = `<${tag}>'s property '${arg && arg.name}' does not support '[${arg && arg.value}]' value in ${platform} environment!`
-        break
-      case 'tagRequiredProps':
-        msg = `<${tag}> should have '${arg}' attr in ali environment!`
-        break
-      case 'value-attr-uniform':
-        msg = `The internal attribute name of the <${tag}>'s attribute '${arg && arg.value}' is not supported in the ali environment, Please check!`
-        break
-      default:
-        msg = `<${tag}>'s transform has some error happened!`
-    }
-    isError ? error(msg) : warn(msg)
-  }
 
   // 转换规则只需以微信为基准配置微信和支付宝的差异部分，比如微信和支付宝都支持但是写法不一致，或者微信支持而支付宝不支持的部分(抛出错误或警告)
   return [
@@ -110,15 +158,15 @@ export default function getComponentConfigs ({ warn, error }) {
     map({ print }),
     canvas({ print }),
     wxs({ print }),
-    template(),
-    block(),
-    icon(),
+    template({ print }),
+    block({ print }),
+    icon({ print }),
     webView({ print }),
     video({ print }),
     camera({ print }),
     livePlayer({ print }),
     livePusher({ print }),
     HyphenTagName({ print }),
-    component()
+    component({ print })
   ]
 }

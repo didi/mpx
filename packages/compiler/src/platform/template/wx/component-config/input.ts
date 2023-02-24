@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'input'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -40,13 +42,13 @@ export default function ({ print }) {
       {
         test: 'type',
         web (prop) {
-          let { name, value } = prop
+          let { value } = prop
           if (value === 'idcard' || value === 'digit') {
             webValueLog(prop)
             value = 'text'
           }
           return {
-            name,
+            name: prop.name,
             value
           }
         }

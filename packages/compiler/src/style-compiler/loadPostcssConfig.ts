@@ -2,8 +2,8 @@ import load from 'postcss-load-config'
 
 export default function loadPostcssConfig(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  context,
-  inlineConfig
+  context: any,
+  inlineConfig: any
 ){
 
   if (inlineConfig.ignoreConfigFile) {
@@ -18,7 +18,7 @@ export default function loadPostcssConfig(
   const ctx = {
     webpack: context,
     defs: inlineConfig.defs || {}
-  }
+  } as any
 
   return load(ctx, config?.path, {
     loaders: { '.json': (_, content) => JSON.parse(content) }

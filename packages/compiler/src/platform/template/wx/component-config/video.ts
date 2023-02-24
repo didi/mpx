@@ -1,19 +1,53 @@
+import { DefineConfig } from '.'
 const TAG_NAME = 'video'
 
-export default function ({ print }) {
-  const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-  const baiduEventLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
+export default <DefineConfig>function ({ print }) {
+  const baiduPropLog = print({
+    platform: 'baidu',
+    tag: TAG_NAME,
+    isError: false
+  })
+  const baiduEventLogError = print({
+    platform: 'baidu',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
-  const qqEventLogError = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
-  const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
-  const ttEventLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
+  const qqEventLogError = print({
+    platform: 'qq',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
+  const ttPropLog = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: false
+  })
+  const ttEventLogError = print({
+    platform: 'bytedance',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
-  const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
+  const aliEventLogError = print({
+    platform: 'ali',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaEventLogError = print({
+    platform: 'qa',
+    tag: TAG_NAME,
+    isError: false,
+    type: 'event'
+  })
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web(tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-video'
     },
@@ -28,11 +62,11 @@ export default function ({ print }) {
       },
       {
         test: /^(vslide-gesture)$/,
-        qq (obj) {
+        qq(obj) {
           const propsMap = {
             'vslide-gesture': 'page-gesture'
           }
-          obj.name = propsMap[obj.name]
+          obj.name = propsMap[obj.name as keyof typeof propsMap]
           return obj
         }
       },
@@ -41,7 +75,6 @@ export default function ({ print }) {
         qq: qqPropLog
       },
       {
-
         test: /^(duration|danmu-list|danmu-btn|enable-danmu|muted|initial-time|page-gesture|direction|show-progress|show-center-play-btn|enable-progress-gesture|show-mute-btn|title|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-screen-lock-button|show-snapshot-button)$/,
         tt: ttPropLog
       },
@@ -53,14 +86,14 @@ export default function ({ print }) {
     event: [
       {
         test: /^(timeupdate|fullscreenchange|waiting|loadedmetadata)$/,
-        ali (evtName) {
+        ali(evtName) {
           const eventMap = {
             timeupdate: 'timeUpdate',
             fullscreenchange: 'fullScreenChange',
             waiting: 'loading',
             loadedmetadata: 'renderStart'
           }
-          return eventMap[evtName]
+          return eventMap[evtName as keyof typeof eventMap]
         }
       },
       {

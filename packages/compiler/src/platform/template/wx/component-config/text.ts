@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'text'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })

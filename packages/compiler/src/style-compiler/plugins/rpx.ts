@@ -1,8 +1,14 @@
+import { ChildNode, Declaration, Plugin } from 'postcss'
+
 const pxRegExp = /\b(\d+(\.\d+)?)px\b/
 const pxRegExpG = /\b(\d+(\.\d+)?)px\b/g
 // rpx
-export default (options = {}) => {
-  return {
+export default (options: {
+  mode?: any
+  designWidth?: number
+  comment?: string
+} = {}) => {
+  return <Plugin>{
     postcssPlugin: 'rpx',
     Once (root) {
       const mode = options.mode || 'only'
@@ -10,7 +16,7 @@ export default (options = {}) => {
       const baseWidth = 750
       const designWidth = options.designWidth || 750
       const ratio = +(baseWidth / designWidth).toFixed(2)
-      function isIgnoreComment (node) {
+      function isIgnoreComment (node?: ChildNode) {
         const result = node && node.type === 'comment' && node.text.trim() === (options.comment || defaultIgnoreComment)
         if (result) {
           node.remove()
@@ -18,7 +24,7 @@ export default (options = {}) => {
         return result
       }
 
-      function transRpx (declaration) {
+      function transRpx (declaration: Declaration) {
         if (pxRegExp.test(declaration.value)) {
           declaration.value = declaration.value.replace(pxRegExpG, function (match, $1) {
             if ($1 === '0') return $1

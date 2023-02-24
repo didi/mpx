@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'slider'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
@@ -24,7 +26,7 @@ export default function ({ print }) {
             'block-size': 'handle-size',
             'block-color': 'handle-color'
           }
-          obj.name = propsMap[obj.name]
+          obj.name = propsMap[obj.name as keyof typeof propsMap]
           return obj
         }
       },
@@ -35,7 +37,7 @@ export default function ({ print }) {
             color: 'backgroundColor',
             'selected-color': 'activeColor'
           }
-          obj.name = propsMap[obj.name]
+          obj.name = propsMap[obj.name as keyof typeof propsMap]
           return obj
         }
       },
@@ -46,7 +48,7 @@ export default function ({ print }) {
             activeColor: 'active-color',
             backgroundColor: 'background-color'
           }
-          obj.name = propsMap[obj.name]
+          obj.name = propsMap[obj.name as keyof typeof propsMap]
           return obj
         }
       }

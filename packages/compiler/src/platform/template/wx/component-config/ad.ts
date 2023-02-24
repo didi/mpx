@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'ad'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const ttValueWarningLog = print({ platform: 'bytedance', type: 'value', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const baiduValueWarningLog = print({ platform: 'baidu', type: 'value', tag: TAG_NAME, isError: false })

@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'view'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
 
@@ -51,7 +53,7 @@ export default function ({ print }) {
             animationiteration: 'animationIteration',
             animationend: 'animationEnd'
           }
-          return eventMap[eventName]
+          return eventMap[eventName as keyof typeof eventMap]
         },
         qa: qaEventLogError
       }

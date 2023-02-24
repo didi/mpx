@@ -1,4 +1,4 @@
-
+// @ts-nocheck
 import MagicString from 'magic-string'
 import * as babylon from '@babel/parser'
 import traverse from '@babel/traverse'

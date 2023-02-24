@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'movable-view'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   return {

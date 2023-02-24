@@ -1,5 +1,5 @@
 import path from 'path'
-import parser from '@mpxjs/compiler/template-compiler/parser'
+import { templateCompiler } from '@mpxjs/compiler'
 import { parseRequest, tsWatchRunLoaderFilter } from '@mpxjs/compile-utils'
 
 import { LoaderDefinition } from 'webpack'
@@ -31,7 +31,7 @@ const selector: LoaderDefinition = function (content: string) {
   const index = queryObj.index || 0
 
   const filePath = this.resourcePath
-  const parts = parser(content, {
+  const parts = templateCompiler.parser(content, {
     filePath,
     needMap: this.sourceMap,
     mode,

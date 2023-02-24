@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'canvas'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
@@ -41,7 +43,7 @@ export default function ({ print }) {
             touchcancel: 'touchCancel',
             longtap: 'longTap'
           }
-          return eventMap[eventName]
+          return eventMap[eventName as keyof typeof eventMap]
         }
       },
       {

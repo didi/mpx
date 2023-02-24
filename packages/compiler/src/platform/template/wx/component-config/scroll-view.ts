@@ -1,6 +1,8 @@
+import { DefineConfig } from "."
+
 const TAG_NAME = 'scroll-view'
 
-export default function ({ print }) {
+export default <DefineConfig>function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const baiduEventLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
@@ -50,7 +52,7 @@ export default function ({ print }) {
             scrolltolower: 'scrollToLower',
             scroll: 'scroll'
           }
-          return eventMap[eventName]
+          return eventMap[eventName as keyof typeof eventMap]
         }
       },
       {
