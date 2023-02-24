@@ -1,4 +1,5 @@
 const bindThis = require('../../../lib/template-compiler/bind-this').transform
+const { trim } = require('../../../lib/utils/string')
 
 describe('render function simplify should correct', function () {
   it('should Normal Scope Deletion is correct', function () {
@@ -68,7 +69,7 @@ describe('render function simplify should correct', function () {
         }
       };
     `
-    expect(res).toMatchSnapshot(output)
+    expect(trim(res)).toEqual(trim(output))
   })
 
   it('should condition judgment is correct', function () {
@@ -93,7 +94,6 @@ describe('render function simplify should correct', function () {
       }
     `
     const res = bindThis(input, { needCollect: true }).code
-    console.log(res)
     const output = `
       global.currentInject = {
         render: function () {

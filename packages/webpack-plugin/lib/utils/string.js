@@ -23,8 +23,13 @@ function capitalToHyphen (v) {
   return ret
 }
 
+function trim (str) {
+  return str.replace(/ /g, '').replace(/\n/g, '')
+}
+
 module.exports = {
   isCapital,
   isMustache,
-  capitalToHyphen
+  capitalToHyphen,
+  trim
 }

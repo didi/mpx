@@ -190,7 +190,6 @@ module.exports = {
     // 纪录每个作用域下的变量，以便回溯删除
     let blockTree = null
     let currentBlock = null
-    let scopeBindings = null
 
     const collectVisitor = {
       Program: {
@@ -222,26 +221,17 @@ module.exports = {
       BlockStatement: {
         enter (path) {
           inIfTest && (inIfTest = false)
+
           const scope = blockTree.get(currentBlock)
           scope.add(new MultiNode(currentBlock, {
             path,
             bindings: {}
           }, []))
-          currentBlock = path // 纪录当前block
-          scopeBindings = {} // 纪录当前block存在哪些变量
+          currentBlock = path
         },
         exit (path) {
           const scope = blockTree.get(path)
-          scope.data.bindings = scopeBindings
-
-          const parent = blockTree.get(scope.parent)
-          if (parent) {
-            currentBlock = parent.parent
-            scopeBindings = parent.data.bindings
-          } else {
-            currentBlock = null
-            scopeBindings = {}
-          }
+          currentBlock = scope.parent
         }
       },
       Identifier (path) {
@@ -267,13 +257,15 @@ module.exports = {
                 }
               }
 
-              scopeBindings[keyPath] = scopeBindings[keyPath] || []
-              scopeBindings[keyPath].push({
+              const current = blockTree.get(currentBlock)
+              const target = current.data.bindings[keyPath] || []
+              target.push({
                 path,
                 canDel,
                 inIfTest,
                 conditional: position
               })
+              current.data.bindings[keyPath] = target
             }
           }
         }
@@ -308,10 +300,15 @@ module.exports = {
       },
       BlockStatement: {
         enter (path) {
-          // const a = blockTree.get(path)
-          // console.log('a')
+          const scope = blockTree.get(path)
+          const { data } = blockTree.get(scope.parent)
+          scope.data.pBindings = Object.assign({}, data.bindings, data.pBindings)
+          currentBlock = path
         },
-        exit () {}
+        exit (path) {
+          const scope = blockTree.get(path)
+          currentBlock = scope.parent
+        }
       },
       Identifier (path) {
         if(path.judge) {
@@ -328,15 +325,38 @@ module.exports = {
               last.collectPath = t.stringLiteral(path.keyPath)
 
               if (path.canDel) {
-                const { path: lastPath, realDel, replace } = checkIdentifierDel(last, {
-                  hasDangerous
-                })
-                if (realDel) {
-                  dealRemove(lastPath, replace)
+                const keyPath =  path.keyPath
+                const { data } = blockTree.get(currentBlock)
+                const { bindings, pBindings } = data
+                const currentBlockVars = bindings[keyPath]
+
+                const doDelete = () => {
+                  const { conditional } = currentBlockVars.find(item => item.path === path) // todo 使用Map？
+                  const { path: lastPath, realDel, replace } = checkIdentifierDel(last, {
+                    hasDangerous,
+                    conditional
+                  })
+                  if (realDel) {
+                    dealRemove(lastPath, replace)
+                  }
+                }
+
+                if (pBindings[keyPath]) {
+                  doDelete()
+                } else {
+                  if (currentBlockVars.length > 1) {
+                    const index = currentBlockVars.findIndex(item => item.inIfTest || item.conditional === 'test') // 判断是否存在不能删除的元素
+                    if (index === -1 ) {
+                      if (currentBlockVars[0].path !== path) {
+                        doDelete()
+                      }
+                    } else {
+                      doDelete()
+                    }
+                  }
                 }
               }
 
-              // 清理属性
               delete path.canDel
               delete path.keyPath
             }
