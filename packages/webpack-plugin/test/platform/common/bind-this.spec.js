@@ -89,27 +89,38 @@ describe('render function simplify should correct', function () {
           if ([name4].length) {}
           
           name5;
-          name5 ? 'a' : 'b'; // 字符串 a 和 b 会被tenser
+          name5 ? 'a' : 'b';
+          a;
+          b;
+          name5 ? a : b
         }
-      }
+      };
     `
     const res = bindThis(input, { needCollect: true }).code
     const output = `
       global.currentInject = {
         render: function () {
           if (this._c("name1", this.name1)) {}
-  
+
           if (this._c("name2", this.name2)) {}
-  
+        
           if (this._c("name3", this.name3) ? 'big' : 'small') {}
-          
+        
+          if (this._c("name2", this.name2) ? this._c("name3", this.name3) : 'small') {}
+        
           if ([this._c("name4", this.name4)].length) {}
-          
-          this._c("name5", this.name5) ? 'a' : 'b'; // 字符串 a 和 b 会被tenser
+        
+          this._c("name5", this.name5) ? 'a' : 'b';
+        
+          this._c("a", this.a);
+        
+          this._c("b", this.b);
+        
+          this._c("name5", this.name5) ? "" : "";
         }
-      }
+      };
     `
-    expect(res).toMatchSnapshot(output)
+    expect(trim(res)).toEqual(trim(output))
   })
 
   it('should expression is correct', function () {
@@ -129,8 +140,6 @@ describe('render function simplify should correct', function () {
           name4['length']
           !name4.length;
           
-          $t('xxx');
-          this._p($t('xxx'));
           name5;
           this._p(name5);
           
@@ -202,7 +211,7 @@ describe('render function simplify should correct', function () {
         }
       }
     `
-    expect(res).toMatchSnapshot(output)
+    expect(trim(res)).toEqual(trim(output))
   })
 
   it('should backtrack variable deletion is correct', function () {
@@ -237,7 +246,7 @@ describe('render function simplify should correct', function () {
 
       }
     };`
-    expect(res).toMatchSnapshot(output)
+    expect(trim(res)).toEqual(trim(output))
   })
 
   it('should variable literal is correct', function () {
@@ -258,12 +267,12 @@ describe('render function simplify should correct', function () {
     global.currentInject = {
       render: function () {
         if (this._c("a.b", this.a['b'])) {}
-  
+
         this._c("a", this.a)[this._c("c", this.c)];
         this._c("a.b", this.a.b)[this._c("c.d", this.c.d)];
       }
-    }`
-    expect(res).toMatchSnapshot(output)
+    };`
+    expect(trim(res)).toEqual(trim(output))
   })
 
   it('should object is correct', function () {
@@ -304,10 +313,13 @@ describe('render function simplify should correct', function () {
     
         ({
           open: true,
-          str: 'str'
+          str: 'str',
+          name: ""
         });
   
-        ({});
+        ({
+          name: ""
+        });
     
         if (this._c("bName", this.bName)) {}
     
@@ -319,8 +331,8 @@ describe('render function simplify should correct', function () {
           name: this._c("bName", this.bName)
         }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
       }
-    }`
-    expect(res).toMatchSnapshot(output)
+    };`
+    expect(trim(res)).toEqual(trim(output))
   })
 
   it('should operation is correct', function () {
@@ -334,7 +346,7 @@ describe('render function simplify should correct', function () {
         if (c) {}
         ({ active: !c })
       }
-    }`
+    };`
     const res = bindThis(input, { needCollect: true }).code
     const output = `
     global.currentInject = {
@@ -349,7 +361,31 @@ describe('render function simplify should correct', function () {
           active: ""
         });
       }
-    }`
-    expect(res).toMatchSnapshot(output)
+    };`
+    expect(trim(res)).toEqual(trim(output))
+  })
+
+  it('should Keep the options in the ternary operation', function () {
+    const input = `
+    global.currentInject = {
+      render: function () {
+        if (a ? b : c) {}
+        a;
+        b;
+        c;
+      }
+    };`
+    const res = bindThis(input, { needCollect: true }).code
+    const output = `
+    global.currentInject = {
+      render: function () {
+        if (this._c("a", this.a) ? this._c("b", this.b) : this._c("c", this.c)) {}
+
+        this._c("b", this.b);
+      
+        this._c("c", this.c);
+      }
+    };`
+    expect(trim(res)).toEqual(trim(output))
   })
 })

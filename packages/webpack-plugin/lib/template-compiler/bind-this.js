@@ -79,7 +79,7 @@ function calPropName (path, replaced) {
 }
 
 // 校验是否真实可删
-function checkIdentifierDel(last, opts) {
+function checkIdentifierDel (last, opts) {
   const { hasDangerous, conditional } = opts
   let realDel = true
   let replace = false
@@ -239,7 +239,7 @@ module.exports = {
           path.judge = true
           if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
             if (needCollect) {
-              const { last, keyPath, hasComputed  } = calPropName(path)
+              const { last, keyPath, hasComputed } = calPropName(path)
 
               let canDel = !inIfTest &&
                 !hasComputed &&
@@ -311,7 +311,7 @@ module.exports = {
         }
       },
       Identifier (path) {
-        if(path.judge) {
+        if (path.judge) {
           if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
             // bind this
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
@@ -325,7 +325,7 @@ module.exports = {
               last.collectPath = t.stringLiteral(path.keyPath)
 
               if (path.canDel) {
-                const keyPath =  path.keyPath
+                const keyPath = path.keyPath
                 const { data } = blockTree.get(currentBlock)
                 const { bindings, pBindings } = data
                 const currentBlockVars = bindings[keyPath]
@@ -345,7 +345,8 @@ module.exports = {
                   doDelete()
                 } else {
                   if (currentBlockVars.length > 1) {
-                    const index = currentBlockVars.findIndex(item => item.inIfTest || item.conditional === 'test') // 判断是否存在不能删除的元素
+                    const index = currentBlockVars.findIndex(item => !item.canDel || item.inIfTest || item.conditional === 'test') // 判断是否存在不能删除的元素
+
                     if (index === -1 ) {
                       if (currentBlockVars[0].path !== path) {
                         doDelete()
