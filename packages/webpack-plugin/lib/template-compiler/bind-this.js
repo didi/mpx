@@ -20,29 +20,155 @@ dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
 
-function dealRemove (path, replace) {
-  if (replace) {
+// 判断 Identifier 是否需要处理
+function judgeIdentifierName (path) {
+  return !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
+    !(t.isFunction(path.parent) && path.listKey === 'params') &&
+    !(t.isMethod(path.parent) && path.parentKey === 'key' && !path.parent.computed) &&
+    !(t.isProperty(path.parent) && path.parentKey === 'key' && !path.parent.computed) &&
+    !(t.isMemberExpression(path.parent) && path.parentKey === 'property' && !path.parent.computed) &&
+    !t.isArrayPattern(path.parent) &&
+    !t.isObjectPattern(path.parent) &&
+    !hash[path.node.name]
+}
+
+// 计算访问路径
+function calPropName (path, replaced) {
+  let current = path.parentPath
+  let last = path
+  let keyPath = replaced
+    ? '' + path.node.property.name
+    : '' + path.node.name
+
+  let hasComputed = false
+  let hasDangerous = false
+
+  while (current.isMemberExpression() && last.parentKey !== 'property') {
+    if (current.node.computed) {
+      if (t.isLiteral(current.node.property)) {
+        if (t.isStringLiteral(current.node.property)) {
+          if (dangerousKeyMap[current.node.property.value]) {
+            hasDangerous = true
+            break
+          }
+          keyPath += `.${current.node.property.value}`
+        } else {
+          keyPath += `[${current.node.property.value}]`
+        }
+      } else {
+        hasComputed = true
+        break
+      }
+    } else {
+      if (dangerousKeyMap[current.node.property.name]) {
+        hasDangerous = true
+        break
+      }
+      keyPath += `.${current.node.property.name}`
+    }
+    last = current
+    current = current.parentPath
+  }
+
+  return {
+    last,
+    keyPath,
+    hasComputed,
+    hasDangerous
+  }
+}
+
+// 校验是否真实可删
+function checkIdentifierDel(last, opts) {
+  const { hasDangerous, conditional } = opts
+  let realDel = true
+  let replace = false
+
+  if (last.key === 'callee') {
+    if (last.node.property.name === '$t') { // i18n直接删除
+      if (t.isCallExpression(last.parent)) {
+        last = last.parentPath
+      }
+      return {
+        path: last.parentPath,
+        realDel
+      }
+    } else {
+      return {
+        realDel: false
+      }
+    }
+  }
+
+  // 'object' 的判断，要在 'argument' 之前,为了处理 !a.length 之类的语句
+  if (last.key === 'object' && hasDangerous) { // a.length
+    last = last.parentPath
+  }
+  if (last.key === 'argument') {
+    last = last.parentPath
+    while (t.isUnaryExpression(last) && last.key === 'argument') { // !!a
+      last = last.parentPath
+    }
+  }
+
+  if (last.listKey === 'arguments' && last.key === 0 &&
+    t.isCallExpression(last.parent)
+  ) {
+    const p = last.parent
+    const name = p.callee.name || (p.callee.property && p.callee.property.name)
+    if (name === '_i') { // wx:for
+      realDel = false
+    } else if (name && (name === '_p' || hash[name])) { // this._p() || Number(a)
+      last = last.parentPath
+    } else {
+      realDel = false
+    }
+  }
+
+  if (conditional === 'test') {
+    realDel = false
+  } else if (['consequent', 'alternate'].includes(conditional)) {
+    replace = true
+  }
+
+  if (t.isBinaryExpression(last.container) || // a + b
+    t.isLogicalExpression(last.container) || // a && !b
+    (last.key === 'value' && t.isObjectProperty(last.container)) // ({ key: a && !b })
+  ) {
+    replace = true
+  }
+
+  return {
+    path: last,
+    realDel,
+    replace
+  }
+}
+
+function checkInConditional (last) {
+  let cur = last
+  let position = ''
+  while (cur) {
+    const { key } = cur
+    if (key === 'test') {
+      position = key
+      break
+    }
+    if (key === 'consequent' || key === 'alternate') {
+      position = key
+      break
+    }
+    cur = cur.parentPath
+  }
+  return position
+}
+
+function dealRemove (path, isReplace) {
+  if (isReplace) {
     path.replaceWith(t.stringLiteral(''))
   } else {
     path.remove()
   }
-}
-
-function flashBack (node, vars = {}) {
-  const { data, child } = node
-  const { bindings } = data
-  for (let i = 0; i < child.length; i++) {
-    flashBack(child[i], Object.assign({}, vars, bindings)) // 后序遍历
-  }
-
-  Object.keys(bindings).forEach(key => {
-    if (vars[key]) {
-      const { canDel, replace, path } = bindings[key]
-      if (canDel) {
-        dealRemove(path, replace)
-      }
-    }
-  })
 }
 
 module.exports = {
@@ -58,28 +184,103 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
+
     let inIfTest = false // if条件判断
     let inConditional = false
-    // block 作用域
-    const scopeBlock = new Map()
     // 纪录每个作用域下的变量，以便回溯删除
     let blockTree = null
     let currentBlock = null
+    let scopeBindings = null
 
-    const bindThisVisitor = {
+    const collectVisitor = {
       Program: {
         enter (path) {
-          currentBlock = path
-          blockTree = new MultiNode({
+          blockTree = new MultiNode(null, {
             path,
             bindings: {}
           }, [])
-        },
-        exit (path) {
-          flashBack(blockTree.get(path))
-          clearCache()
+          currentBlock = path
         }
       },
+      IfStatement: {
+        enter (path) {
+          inIfTest = true
+          const consequent = path.get('consequent')
+          if (!t.isBlockStatement(consequent)) { // 避免出现 if (a) name 之类的语句
+            consequent.replaceWith(t.blockStatement([consequent]))
+          }
+        }
+      },
+      ConditionalExpression: {
+        enter () {
+          inConditional = true
+        },
+        exit () {
+          inConditional = false
+        }
+      },
+      BlockStatement: {
+        enter (path) {
+          inIfTest && (inIfTest = false)
+          const scope = blockTree.get(currentBlock)
+          scope.add(new MultiNode(currentBlock, {
+            path,
+            bindings: {}
+          }, []))
+          currentBlock = path // 纪录当前block
+          scopeBindings = {} // 纪录当前block存在哪些变量
+        },
+        exit (path) {
+          const scope = blockTree.get(path)
+          scope.data.bindings = scopeBindings
+
+          const parent = blockTree.get(scope.parent)
+          if (parent) {
+            currentBlock = parent.parent
+            scopeBindings = parent.data.bindings
+          } else {
+            currentBlock = null
+            scopeBindings = {}
+          }
+        }
+      },
+      Identifier (path) {
+        if (judgeIdentifierName(path)) {
+          path.judge = true
+          if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
+            if (needCollect) {
+              const { last, keyPath, hasComputed  } = calPropName(path)
+
+              let canDel = !inIfTest &&
+                !hasComputed &&
+                last.key !== 'property' &&
+                last.parentPath.key !== 'property'
+
+              path.canDel = canDel
+              path.keyPath = keyPath
+
+              let position = ''
+              if (inConditional) {
+                position = checkInConditional(last)
+                if (inIfTest && position !== 'test') {
+                  return // if (a ? b : c) // 变量 b 和 c 不收集
+                }
+              }
+
+              scopeBindings[keyPath] = scopeBindings[keyPath] || []
+              scopeBindings[keyPath].push({
+                path,
+                canDel,
+                inIfTest,
+                conditional: position
+              })
+            }
+          }
+        }
+      }
+    }
+
+    const bindThisVisitor = {
       // 标记收集props数据
       CallExpression: {
         enter (path) {
@@ -107,59 +308,13 @@ module.exports = {
       },
       BlockStatement: {
         enter (path) {
-          inIfTest && (inIfTest = false) // `if (name) name2` 场景会有异常，name2会被判定在if条件判断里面
-
-          const currentBindings = {}
-          const { currentBindings: pBindings } = scopeBlock.get(currentBlock) || {}
-          Object.assign(currentBindings, pBindings)
-          scopeBlock.set(path, {
-            parent: currentBlock,
-            currentBindings,
-            realBindings: {}
-          })
-
-          const sub = blockTree.get(currentBlock)
-          sub.add(new MultiNode({
-            path,
-            bindings: {}
-          }, []))
-
-          currentBlock = path
+          // const a = blockTree.get(path)
+          // console.log('a')
         },
-        exit (path) {
-          const { parent, realBindings } = scopeBlock.get(path)
-          currentBlock = parent
-
-          const node = blockTree.get(path)
-          node.data.bindings = realBindings
-        }
-      },
-      ConditionalExpression: {
-        enter () {
-          inConditional = true
-        },
-        exit () {
-          inConditional = false
-        }
-      },
-      IfStatement: {
-        enter () {
-          inIfTest = true
-        }
+        exit () {}
       },
       Identifier (path) {
-        if (
-          !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
-          !(t.isFunction(path.parent) && path.listKey === 'params') &&
-          !(t.isMethod(path.parent) && path.parentKey === 'key' && !path.parent.computed) &&
-          !(t.isProperty(path.parent) && path.parentKey === 'key' && !path.parent.computed) &&
-          !(t.isMemberExpression(path.parent) && path.parentKey === 'property' && !path.parent.computed) &&
-          !t.isArrayPattern(path.parent) &&
-          !t.isObjectPattern(path.parent) &&
-          !hash[path.node.name]
-        ) {
-          let current
-          let last
+        if(path.judge) {
           if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
             // bind this
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
@@ -168,133 +323,25 @@ module.exports = {
               propKeys.push(path.node.property.name)
             }
 
-            if (needCollect) {
-              // 找到访问路径
-              current = path.parentPath
-              last = path
-              let keyPath = '' + path.node.property.name
-              let hasComputed = false
-              let replace = false
-              let hasDangerous = false
-              while (current.isMemberExpression() && last.parentKey !== 'property') {
-                if (current.node.computed) {
-                  if (t.isLiteral(current.node.property)) {
-                    if (t.isStringLiteral(current.node.property)) {
-                      if (dangerousKeyMap[current.node.property.value]) {
-                        hasDangerous = true
-                        break
-                      }
-                      keyPath += `.${current.node.property.value}`
-                    } else {
-                      keyPath += `[${current.node.property.value}]`
-                    }
-                  } else {
-                    hasComputed = true
-                    break
-                  }
-                } else {
-                  if (dangerousKeyMap[current.node.property.name]) {
-                    hasDangerous = true
-                    break
-                  }
-                  keyPath += `.${current.node.property.name}`
-                }
-                last = current
-                current = current.parentPath
-              }
-              last.collectPath = t.stringLiteral(keyPath)
+            if (path.keyPath) {
+              const { last, hasDangerous } = calPropName(path, true)
+              last.collectPath = t.stringLiteral(path.keyPath)
 
-              let canDel = !inIfTest && !hasComputed && last.key !== 'property' && last.parentPath.key !== 'property'
-              if (last.key === 'callee') {
-                if (last.node.property.name === '$t') { // i18n直接删除
-                  if (t.isCallExpression(last.parent)) {
-                    last = last.parentPath
-                  }
-                  dealRemove(last.parentPath)
-                  return
-                } else {
-                  canDel && (canDel = false)
-                }
-              }
-              if (canDel) {
-                // 'object' 的判断，要在 'argument' 之前,为了处理 !a.length 之类的语句
-                if (last.key === 'object' && hasDangerous) { // a.length
-                  last = last.parentPath
-                }
-                if (last.key === 'argument') {
-                  last = last.parentPath
-                  while (t.isUnaryExpression(last) && last.key === 'argument') { // !!a
-                    last = last.parentPath
-                  }
-                }
-                if (last.listKey === 'arguments' && last.key === 0 &&
-                  t.isCallExpression(last.parent)
-                ) {
-                  const p = last.parent
-                  const name = p.callee.name || (p.callee.property && p.callee.property.name)
-                  if (name === '_i') { // wx:for
-                    canDel = false
-                  } else if (name && (name === '_p' || hash[name])) { // this._p() || Number(a)
-                    last = last.parentPath
-                  } else {
-                    canDel = false
-                  }
-                }
-                if (inConditional) {
-                  let cur = last
-                  while (cur) { // (a & !b[key]) ? c : 'd'
-                    const { key } = cur
-                    if (key === 'test') {
-                      canDel = false
-                      break
-                    }
-                    if (key === 'consequent' || key === 'alternate') {
-                      replace = true
-                      break
-                    }
-                    cur = cur.parentPath
-                  }
-                }
-                if (t.isBinaryExpression(last.container) || // a + b
-                  t.isLogicalExpression(last.container) || // a && !b
-                  (last.key === 'value' && t.isObjectProperty(last.container)) // ({ key: a && !b })
-                ) {
-                  replace = true
+              if (path.canDel) {
+                const { path: lastPath, realDel, replace } = checkIdentifierDel(last, {
+                  hasDangerous
+                })
+                if (realDel) {
+                  dealRemove(lastPath, replace)
                 }
               }
 
-              const { currentBindings, realBindings } = scopeBlock.get(currentBlock)
-              if (currentBindings[keyPath]) {
-                if (canDel) {
-                  dealRemove(last, replace)
-                } else {
-                  // 当前变量不能被删除则删除前一个变量 & 更新节点为当前节点
-                  const { canDel: preCanDel, path: prePath, replace: preReplace, current: preCurrent } = currentBindings[keyPath]
-                  if (preCanDel && preCurrent === currentBlock) { // 当前作用域不能删除父级作用域的变量
-                    dealRemove(prePath, preReplace)
-                  }
-                  currentBindings[keyPath] = {
-                    path: last,
-                    canDel,
-                    replace,
-                    current: currentBlock
-                  }
-                }
-              } else {
-                currentBindings[keyPath] = {
-                  path: last,
-                  canDel,
-                  replace,
-                  current: currentBlock
-                }
-              }
-              realBindings[keyPath] = {
-                path: last,
-                canDel,
-                replace
-              }
+              // 清理属性
+              delete path.canDel
+              delete path.keyPath
             }
           }
+          delete path.judge
         }
       },
       MemberExpression: {
@@ -307,7 +354,10 @@ module.exports = {
       }
     }
 
+    traverse(ast, collectVisitor)
     traverse(ast, bindThisVisitor)
+
+    clearCache()
 
     return {
       code: generate(ast).code,

@@ -2,7 +2,8 @@
 const cache = new Map()
 
 class MultiNode {
-  constructor (data, child = []) {
+  constructor (parent, data, child = []) {
+    this.parent = parent
     this.data = data
     this.child = child
   }
