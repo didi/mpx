@@ -4,7 +4,6 @@ import * as babylon from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
 import formatCodeFrame from '@babel/code-frame'
-import { parseRequest } from '@mpxjs/compile-utils'
 
 // Special compiler macros
 const DEFINE_PROPS = 'defineProps'
@@ -1162,14 +1161,4 @@ function getCtor (ctorType) {
   return ctor
 }
 
-export default function (content) {
-  const { queryObj } = parseRequest(this.resource)
-  const { ctorType, lang } = queryObj
-  const filePath = this.resourcePath
-  const { content: callbackContent } = compileScriptSetup({
-    content,
-    lang
-  }, ctorType, filePath)
-
-  this.callback(null, callbackContent)
-}
+export default compileScriptSetup

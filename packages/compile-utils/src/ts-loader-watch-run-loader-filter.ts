@@ -1,6 +1,6 @@
 import set from './set'
 const selectorPath = '@mpxjs/loaders/selector.js'
-const scriptSetupPath = '@mpxjs/compiler/script-setup-compiler/index.js'
+const scriptSetupPath = '@mpxjs/loaders/script-setup.js'
 const webMpxLoaderPath ='@mpxjs/web-plugin/webpack/loader/web-loader.js'
 const mpxLoaderPath ='@mpxjs/webpack-plugin/lib/loader.js'
 const tsLoaderWatchRunFilterLoaders = new Set([

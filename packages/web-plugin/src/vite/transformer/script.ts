@@ -6,6 +6,7 @@ import {
   shallowStringify,
   stringify
 } from '@mpxjs/compile-utils'
+import { scriptSetupCompiler } from '@mpxjs/compiler'
 import MagicString from 'magic-string'
 import { SourceMap, TransformPluginContext } from 'rollup'
 import { Options } from 'src/options'
@@ -71,6 +72,16 @@ export async function transformScript(
       code: ''
     }
   }
+
+  if (script.setup) {
+    const res = scriptSetupCompiler(
+      script,
+      descriptor.app ? 'app' : descriptor.isPage ? 'page' : '',
+      descriptor.filename
+    )
+    script.content = res.content
+  }
+
   const s = new MagicString(script.content)
   const ctorType = app ? 'app' : isPage ? 'page' : 'component'
 
@@ -255,8 +266,11 @@ export async function genScriptBlock(
   return {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     output: genComponentTag(descriptor.script!, {
-      attrs() {
-        return {}
+      attrs(script: { attrs: { src?: string; setup?: boolean } }) {
+        const attrs = Object.assign({}, script.attrs)
+        delete attrs.src
+        delete attrs.setup
+        return attrs
       },
       content() {
         return code

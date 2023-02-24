@@ -17,45 +17,43 @@
   </picker>
 </template>
 
-<script lang="js">
-import mpx, { createPage } from '@mpxjs/core'
+<script setup>
+import mpx, { onLoad, onShow, reactive, ref } from '@mpxjs/core'
 import swiperPage from '../packageA/pages/swiper.mpx?resolve'
 console.log('file: index.mpx:21 > swiperPage', swiperPage)
-createPage({
-  data: {
-    a: 1,
-    index: 0,
-    array: ['美国', '中国', '巴西', '日本']
-  },
-  onLoad () {
-    console.log('load index1111123')
-  },
-  onShow () {
-    console.log('show index12455555511121312313123132')
-    // console.log('test', swiperPage, mpx.i18n.locale)
-  },
-  methods: {
-    reload () {
-      window.location.reload()
-    },
-    jumpPage () {
-      mpx.navigateTo({
-        url: swiperPage
-      })
-    }
-  }
+const a = ref(1)
+const index = ref(0)
+const array = ref(['美国', '中国', '巴西', '日本'])
+onLoad(() => {
+  console.log('load index1111123')
 })
+onShow(() => {
+  console.log('show index12455555511121312313123132')
+})
+const reload = () => window.location.reload()
+const jumpPage = () =>
+  mpx.navigateTo({
+    url: swiperPage
+  })
+
+  defineExpose({
+    a,
+    index,
+    array,
+    reload,
+    jumpPage
+  })
 </script>
 <style scoped>
-  .list {
-    background: blue;
-    height: 200rpx;
-  }
+.list {
+  background: blue;
+  height: 200rpx;
+}
 </style>
 <script type="application/json">
-  {
-    "usingComponents": {
-      "list": "../components/list"
-    }
+{
+  "usingComponents": {
+    "list": "../components/list"
   }
+}
 </script>

@@ -26,6 +26,7 @@ export interface Template extends SFCBlock {
 export interface Script extends SFCBlock {
   tag: 'script'
   type: 'script'
+  setup?: boolean
   mode?: Mode
 }
 
@@ -102,12 +103,12 @@ interface Compiler {
     }
   ): ParseResult
   serialize(root: ParseHtmlNode): string
-  addAttrs(root: ParseHtmlNode, options: any[]): void,
+  addAttrs(root: ParseHtmlNode, options: any[]): void
   parseMustache(...args: any[]): any
 }
 
 interface TemplateCompiler {
-  compiler: Compiler,
+  compiler: Compiler
   parser: typeof parser
 }
 

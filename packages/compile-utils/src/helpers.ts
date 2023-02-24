@@ -2,7 +2,7 @@ import loaderUtils from 'loader-utils'
 import { addQuery, parseRequest } from './index'
 
 const selectorPath = '@mpxjs/loaders/selector'
-const scriptSetupPath = '@mpxjs/compiler/script-setup-compiler/index'
+const scriptSetupPath = '@mpxjs/loaders/script-setup'
 
 interface defaultLangType {
   template: 'wxml'

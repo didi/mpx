@@ -21,7 +21,7 @@ import pathHash from '../../utils/pathHash'
 import { tsWatchRunLoaderFilter } from '@mpxjs/compile-utils'
 import getOutputPath from '../../utils/get-output-path'
 import { Dependency } from 'webpack'
-import {jsonCompiler} from '@mpxjs/compiler'
+import { jsonCompiler } from '@mpxjs/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 
 export default function (
@@ -110,22 +110,24 @@ export default function (
   let output = ''
   const callback = this.async()
 
-  jsonCompiler.parse(
-    parts,
-    loaderContext.context,
-    proxyPluginContext(loaderContext),
-    getOptions(),
-    loaderContext._compilation?.inputFileSystem
-  ).then(jsonConfig => {
-    let componentGenerics = {}
-    if (jsonConfig.componentGenerics) {
-      componentGenerics = Object.assign({}, jsonConfig.componentGenerics)
-    }
-    // 处理mode为web时输出vue格式文件
-    if (ctorType === 'app' && !queryObj.isApp) {
-      const request = addQuery(this.resource, { isApp: true })
-      const el = (mpx.webConfig && mpx.webConfig.el) || '#app'
-      output += `
+  jsonCompiler
+    .parse(
+      parts,
+      loaderContext.context,
+      proxyPluginContext(loaderContext),
+      getOptions(),
+      loaderContext._compilation?.inputFileSystem
+    )
+    .then(jsonConfig => {
+      let componentGenerics = {}
+      if (jsonConfig.componentGenerics) {
+        componentGenerics = Object.assign({}, jsonConfig.componentGenerics)
+      }
+      // 处理mode为web时输出vue格式文件
+      if (ctorType === 'app' && !queryObj.isApp) {
+        const request = addQuery(this.resource, { isApp: true })
+        const el = (mpx.webConfig && mpx.webConfig.el) || '#app'
+        output += `
 import App from ${stringifyRequest(request)}
 import Vue from 'vue'
 new Vue({
@@ -135,101 +137,101 @@ new Vue({
   }
 })\n
 `
-      // 直接结束loader进入parse
-      this.loaderIndex = -1
-      return callback(null, output)
-    }
-    // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-    const cacheContent =
-      mpx.vueContentCache && mpx.vueContentCache.get(filePath)
-    if (cacheContent) return callback(null, cacheContent)
-    return async.waterfall(
-      [
-        (callback: (err?: Error | null, result?: any) => void) => {
-          async.parallel(
-            [
-              callback => {
-                processTemplate(
-                  parts.template,
-                  {
-                    loaderContext,
-                    moduleId,
-                    ctorType,
-                    jsonConfig
-                  },
-                  callback
-                )
-              },
-              callback => {
-                processStyles(
-                  parts.styles,
-                  {
-                    ctorType,
-                    autoScope,
-                    moduleId
-                  },
-                  callback
-                )
-              },
-              callback => {
-                processJSON(
-                  jsonConfig,
-                  {
-                    loaderContext
-                  },
-                  callback
-                )
-              }
-            ],
-            (err, res) => {
-              callback(err, res)
-            }
-          )
-        },
-        (
-          [templateRes, stylesRes, jsonRes]: any,
-          callback: (err?: Error | null, result?: any) => void
-        ) => {
-          output += templateRes.output
-          output += stylesRes.output
-          output += jsonRes.output
-          if (
-            ctorType === 'app' &&
-            jsonRes.jsonConfig.window &&
-            jsonRes.jsonConfig.window.navigationBarTitleText
-          ) {
-            mpx.appTitle = jsonRes.jsonConfig.window.navigationBarTitleText
-          }
-
-          processScript(
-            parts.script!,
-            {
-              loaderContext,
-              ctorType,
-              moduleId,
-              componentGenerics,
-              jsonConfig: jsonRes.jsonConfig,
-              outputPath: queryObj.outputPath || '',
-              tabBarMap: jsonRes.tabBarMap,
-              builtInComponentsMap: templateRes.builtInComponentsMap,
-              genericsInfo: templateRes.genericsInfo,
-              wxsModuleMap: templateRes.wxsModuleMap,
-              localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
-            },
-            callback
-          )
-        }
-      ],
-      (err, scriptRes: any) => {
-        if (err) return callback(err)
-        output += scriptRes.output
-        this._module &&
-          this._module.addPresentationalDependency(
-            <Dependency>new RecordVueContentDependency(filePath, output)
-          )
-        callback(null, output)
+        // 直接结束loader进入parse
+        this.loaderIndex = -1
+        return callback(null, output)
       }
-    )
-  })
+      // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
+      const cacheContent =
+        mpx.vueContentCache && mpx.vueContentCache.get(filePath)
+      if (cacheContent) return callback(null, cacheContent)
+      return async.waterfall(
+        [
+          (callback: (err?: Error | null, result?: any) => void) => {
+            async.parallel(
+              [
+                callback => {
+                  processTemplate(
+                    parts.template,
+                    {
+                      loaderContext,
+                      moduleId,
+                      ctorType,
+                      jsonConfig
+                    },
+                    callback
+                  )
+                },
+                callback => {
+                  processStyles(
+                    parts.styles,
+                    {
+                      ctorType,
+                      autoScope,
+                      moduleId
+                    },
+                    callback
+                  )
+                },
+                callback => {
+                  processJSON(
+                    jsonConfig,
+                    {
+                      loaderContext
+                    },
+                    callback
+                  )
+                }
+              ],
+              (err, res) => {
+                callback(err, res)
+              }
+            )
+          },
+          (
+            [templateRes, stylesRes, jsonRes]: any,
+            callback: (err?: Error | null, result?: any) => void
+          ) => {
+            output += templateRes.output
+            output += stylesRes.output
+            output += jsonRes.output
+            if (
+              ctorType === 'app' &&
+              jsonRes.jsonConfig.window &&
+              jsonRes.jsonConfig.window.navigationBarTitleText
+            ) {
+              mpx.appTitle = jsonRes.jsonConfig.window.navigationBarTitleText
+            }
+
+            processScript(
+              parts.script!,
+              {
+                loaderContext,
+                ctorType,
+                moduleId,
+                componentGenerics,
+                jsonConfig: jsonRes.jsonConfig,
+                outputPath: queryObj.outputPath || '',
+                tabBarMap: jsonRes.tabBarMap,
+                builtInComponentsMap: templateRes.builtInComponentsMap,
+                genericsInfo: templateRes.genericsInfo,
+                wxsModuleMap: templateRes.wxsModuleMap,
+                localComponentsMap: jsonRes.localComponentsMap,
+                localPagesMap: jsonRes.localPagesMap
+              },
+              callback
+            )
+          }
+        ],
+        (err, scriptRes: any) => {
+          if (err) return callback(err)
+          output += scriptRes.output
+          this._module &&
+            this._module.addPresentationalDependency(
+              <Dependency>new RecordVueContentDependency(filePath, output)
+            )
+          callback(null, output)
+        }
+      )
+    })
 }
