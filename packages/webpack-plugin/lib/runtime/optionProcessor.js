@@ -30,7 +30,7 @@ export default function processOption (
             ...option,
             render: (h) => {
               return h({
-                template: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+                template: '<div id="app"><div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div></div>'
               })
             }
           })
@@ -48,18 +48,22 @@ export default function processOption (
   } else {
     if (ctorType === 'app') {
       processAppOption({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
-      new Vue({
+      const app = new Vue({
         ...option,
         render: (h) => {
           return h({
-            template: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+            template: '<div id="app"><div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div></div>'
           })
         }
-      }).$mount(mpx.webConfig.el || '#app')
-      return {}
+      })
+      global.__mpxPinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+      global.__mpxRouter.onReady(() => {
+        app.$mount('#app')
+      })
+    } else {
+      processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
+      return option
     }
-    processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
-    return option
   }
 }
 
@@ -298,7 +302,6 @@ function processComponentOption ({ componentsMap, genericsInfo, componentGeneric
       if (componentsMap[genericValue]) {
         global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
       } else {
-        console.log(option)
         console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
 registered in parent context!`)
       }
