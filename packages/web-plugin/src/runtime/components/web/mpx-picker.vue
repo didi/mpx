@@ -37,7 +37,7 @@
   import BScroll from '@better-scroll/core'
   import Wheel from '@better-scroll/wheel'
   import { type } from './util'
-  import { getCustomEvent } from './getInnerListeners'
+  import { getCustomEvent } from './get-inner-listeners'
 
   const startYear = 1900
   const modeOptions = {

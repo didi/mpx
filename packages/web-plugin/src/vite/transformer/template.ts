@@ -2,7 +2,7 @@ import { genComponentTag } from '@mpxjs/compile-utils'
 import { TransformPluginContext } from 'rollup'
 import { TransformResult } from 'vite'
 import { Options } from '../../options'
-import { SFCDescriptor } from '../utils/descriptorCache'
+import { SFCDescriptor } from '../utils/descriptor-cache'
 import { templateProcess } from '../../processor/template-process'
 
 /**

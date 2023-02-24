@@ -21,7 +21,7 @@ import { TemplateProcessResult } from '../../processor/template-process'
 import { JsonConfig } from '@mpxjs/compiler'
 import mpx, { getOptions } from '../mpx'
 
-const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/optionProcessor'
+const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/option-processor'
 const tabBarContainerPath =
   '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar-container.vue'
 const tabBarPath =

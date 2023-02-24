@@ -13,7 +13,7 @@ import { LoaderContext } from 'webpack'
 import { Options } from '../options'
 import { JsonConfig, jsonCompiler } from '@mpxjs/compiler'
 import getOutputPath from '../utils/get-output-path'
-import { createDescriptor } from '../vite/utils/descriptorCache'
+import { createDescriptor } from '../vite/utils/descriptor-cache'
 import { Mpx } from '../webpack/mpx'
 import createJSONHelper from './json-helper'
 

@@ -2,7 +2,7 @@
   import getInnerListeners, {
     extendEvent,
     getCustomEvent
-  } from './getInnerListeners'
+  } from './get-inner-listeners'
 
   export default {
     name: 'mpx-input',

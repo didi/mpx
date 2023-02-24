@@ -19,7 +19,7 @@
 </template>
 
 <script type="text/ecmascript-6">
-  import {getCustomEvent} from './getInnerListeners'
+  import {getCustomEvent} from './get-inner-listeners'
 
   function travelSlot(slot, effect) {
     let index = 0

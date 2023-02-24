@@ -1,6 +1,6 @@
 import path from 'path'
 import { Options } from '../options'
-import pathHash from './pathHash'
+import pathHash from './path-hash'
 
 export default function getOutputPath(
   resourcePath:string,

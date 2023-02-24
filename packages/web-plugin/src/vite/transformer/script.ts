@@ -18,7 +18,7 @@ import {
   I18N_HELPER_CODE,
   TAB_BAR_PAGE_HELPER_CODE
 } from '../helper'
-import { setDescriptor, SFCDescriptor } from '../utils/descriptorCache'
+import { setDescriptor, SFCDescriptor } from '../utils/descriptor-cache'
 
 export const genComponentCode = (
   varName: string,

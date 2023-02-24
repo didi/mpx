@@ -3,7 +3,7 @@
 </template>
 
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './get-inner-listeners'
   import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
 
   const eventLoad = 'load'

@@ -3,7 +3,7 @@ import { Options } from '../../options'
 import { jsonProcess } from '../../processor/json-process'
 import { jsonCompiler } from '@mpxjs/compiler'
 import mpx from '../mpx'
-import { SFCDescriptor } from '../utils/descriptorCache'
+import { SFCDescriptor } from '../utils/descriptor-cache'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 
 export async function processJSON(

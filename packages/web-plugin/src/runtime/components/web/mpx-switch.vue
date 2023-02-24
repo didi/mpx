@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { extendEvent, getCustomEvent } from './getInnerListeners'
+  import getInnerListeners, { extendEvent, getCustomEvent } from './get-inner-listeners'
 
   export default {
     name: 'mpx-switch',

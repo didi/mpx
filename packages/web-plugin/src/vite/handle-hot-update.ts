@@ -1,6 +1,6 @@
 import { addQuery } from '@mpxjs/compile-utils'
 import { HmrContext } from 'vite'
-import { getDescriptor, setPrevDescriptor } from './utils/descriptorCache'
+import { getDescriptor, setPrevDescriptor } from './utils/descriptor-cache'
 
 export default async function handleHotUpdate(ctx: HmrContext) {
   const prevDescriptor = getDescriptor(ctx.file)

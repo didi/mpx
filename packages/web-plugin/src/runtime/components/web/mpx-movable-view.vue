@@ -7,7 +7,7 @@
 </template>
 
 <script type="text/ecmascript-6">
-  import {getCustomEvent} from './getInnerListeners'
+  import {getCustomEvent} from './get-inner-listeners'
   import BScroll from '@better-scroll/core'
   import Movable from '@better-scroll/movable'
   import Zoom from '@better-scroll/zoom'

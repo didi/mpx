@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from './getInnerListeners'
+  import getInnerListeners from './get-inner-listeners'
   // 获取当前小程序样式版本配置
   const styleVersion = global.__style || ''
   const sizeClassMap = {

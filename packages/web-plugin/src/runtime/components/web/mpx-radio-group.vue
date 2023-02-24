@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './get-inner-listeners'
 
   function travelSlot (slot, effect) {
     if (slot) {

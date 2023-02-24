@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { extendEvent } from './getInnerListeners'
+  import getInnerListeners, { extendEvent } from './get-inner-listeners'
 
   export default {
     name: 'mpx-image',

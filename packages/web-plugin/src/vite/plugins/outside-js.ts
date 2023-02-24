@@ -2,7 +2,7 @@ import { parseRequest, stringify } from '@mpxjs/compile-utils'
 import MagicString from 'magic-string'
 import { createFilter, Plugin } from 'vite'
 import { resolvedConfig } from '../config'
-import { getDescriptor } from '../utils/descriptorCache'
+import { getDescriptor } from '../utils/descriptor-cache'
 
 /**
  * 给外联的js加上global配置

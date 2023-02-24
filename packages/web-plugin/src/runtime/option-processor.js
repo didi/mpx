@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { isBrowser, hasOwn } from './utils'
-import transRpxStyle from './transRpxStyle'
+import transRpxStyle from './trans-rpxStyle'
 import animation from './animation'
 
 export default function processOption ({

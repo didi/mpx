@@ -13,7 +13,7 @@ import { TabBarItem } from '@mpxjs/compiler'
 import { resolvedConfig } from './config'
 import mpxGlobal from './mpx'
 import { genComponentCode } from './transformer/script'
-import { SFCDescriptor } from './utils/descriptorCache'
+import { SFCDescriptor } from './utils/descriptor-cache'
 
 export const ENTRY_HELPER_CODE = '\0/vite/mpx-entry-helper'
 export const APP_HELPER_CODE = '\0/vite/mpx-app-helper'

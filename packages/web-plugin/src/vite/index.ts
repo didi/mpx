@@ -3,7 +3,7 @@ import createVuePlugin from '@vitejs/plugin-vue2'
 import { createFilter, Plugin, UserConfig } from 'vite'
 import { Options, processOptions } from '../options'
 import { resolvedConfig } from './config'
-import handleHotUpdate from './handleHotUpdate'
+import handleHotUpdate from './handle-hot-update'
 import {
   APP_HELPER_CODE,
   I18N_HELPER_CODE,
@@ -16,14 +16,14 @@ import mpxGlobal from './mpx'
 import {
   customExtensionsPlugin,
   esbuildCustomExtensionsPlugin
-} from './plugins/addExtensionsPlugin'
-import { createMpxOutSideJsPlugin } from './plugins/outsideJs'
-import { createResolveEntryPlugin } from './plugins/resolveEntryPlugin'
-import { createSplitPackageChunkPlugin } from './plugins/splitPackageChunkPlugin'
-import { createWxsPlugin } from './plugins/wxsPlugin'
+} from './plugins/add-extensions-plugin'
+import { createMpxOutSideJsPlugin } from './plugins/outside-js'
+import { createResolveEntryPlugin } from './plugins/resolve-entry-plugin'
+import { createSplitPackageChunkPlugin } from './plugins/split-package-chunk-plugin'
+import { createWxsPlugin } from './plugins/wxs-plugin'
 import { transformMain } from './transformer/main'
 import { transformStyle } from './transformer/style'
-import { getDescriptor } from './utils/descriptorCache'
+import { getDescriptor } from './utils/descriptor-cache'
 
 function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   const { include, exclude } = options

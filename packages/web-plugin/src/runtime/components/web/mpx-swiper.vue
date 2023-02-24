@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './get-inner-listeners'
   import BScroll from '@better-scroll/core'
   import Slide from '@better-scroll/slide'
   import throttle from 'lodash-es/throttle'

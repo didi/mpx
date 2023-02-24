@@ -14,7 +14,7 @@
 </template>
 
 <script>
-  import { inheritEvent, extendEvent } from './getInnerListeners'
+  import { inheritEvent, extendEvent } from './get-inner-listeners'
 
   export default {
     name: 'mpx-video',

@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners from './getInnerListeners'
+  import getInnerListeners from './get-inner-listeners'
 
   export default {
     name: 'mpx-radio',

@@ -1,7 +1,7 @@
 import { ManualChunksOption } from 'rollup'
 import { Plugin } from 'vite'
 import mpxGlobal from '../mpx'
-import { getDescriptor } from '../utils/descriptorCache'
+import { getDescriptor } from '../utils/descriptor-cache'
 
 /**
  * 将分包分离到额外的chunk里

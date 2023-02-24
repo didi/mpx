@@ -1,6 +1,6 @@
 <script>
-import { parse, htmlTranStr } from './filterTag.js'
-import getInnerListeners from './getInnerListeners'
+import { parse, htmlTranStr } from './filter-tag.js'
+import getInnerListeners from './get-inner-listeners'
 export default {
   name: 'mpx-rich-text',
   props: {

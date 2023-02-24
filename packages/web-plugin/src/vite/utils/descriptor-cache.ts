@@ -5,7 +5,7 @@ import { Options } from '../../options'
 import { JsonProcessResult } from '../../processor/json-process'
 import { TemplateProcessResult } from '../../processor/template-process'
 import { OptionObject } from 'loader-utils'
-import pathHash from '../../utils/pathHash'
+import pathHash from '../../utils/path-hash'
 import { resolvedConfig } from '../config'
 
 const cache = new Map<string, SFCDescriptor>()
