@@ -11,9 +11,8 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "node scripts/tsc.js",
-    "build": "rimraf ./dist && tsc && npm run post-build",
-    "post-build": "node scripts/postbuild.js executive"
+    "dev": "tsc -w",
+    "build": "rimraf ./dist && tsc"
   },
   "files": [
     "dist"

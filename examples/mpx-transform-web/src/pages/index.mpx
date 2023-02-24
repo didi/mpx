@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import mpx, { onLoad, onShow, reactive, ref } from '@mpxjs/core'
+import mpx, { onLoad, onShow, reactive, ref, onMounted } from '@mpxjs/core'
 import swiperPage from '../packageA/pages/swiper.mpx?resolve'
 console.log('file: index.mpx:21 > swiperPage', swiperPage)
 const a = ref(1)
@@ -29,6 +29,9 @@ onLoad(() => {
 })
 onShow(() => {
   console.log('show index12455555511121312313123132')
+})
+onMounted(() => {
+  console.log('mounted')
 })
 const reload = () => window.location.reload()
 const jumpPage = () =>
