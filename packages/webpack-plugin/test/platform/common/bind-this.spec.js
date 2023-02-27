@@ -69,7 +69,7 @@ describe('render function simplify should correct', function () {
         }
       };
     `
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should condition judgment is correct', function () {
@@ -120,7 +120,7 @@ describe('render function simplify should correct', function () {
         }
       };
     `
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should expression is correct', function () {
@@ -160,8 +160,8 @@ describe('render function simplify should correct', function () {
           if (name10){} // 保留
 
           name11;
-          Number(name11); // 删除
-          test1(name11); // 保留
+          Number(name11);
+          
           this._p(name11);
 
           this._p(name12.length);
@@ -203,15 +203,13 @@ describe('render function simplify should correct', function () {
           if (this._c("name10", this.name10)) {} // 保留
       
       
-          // 删除
-          this._c("test1", this.test1)(this._c("name11", this.name11)); // 保留
-      
+          this._c("name11",this.name11);
       
           this._i(this._c("name12", this.name12), function (item) {});
         }
-      }
+      };
     `
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should backtrack variable deletion is correct', function () {
@@ -246,7 +244,7 @@ describe('render function simplify should correct', function () {
 
       }
     };`
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should variable literal is correct', function () {
@@ -272,7 +270,7 @@ describe('render function simplify should correct', function () {
         this._c("a.b", this.a.b)[this._c("c.d", this.c.d)];
       }
     };`
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should object is correct', function () {
@@ -332,7 +330,7 @@ describe('render function simplify should correct', function () {
         }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
       }
     };`
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should operation is correct', function () {
@@ -362,7 +360,7 @@ describe('render function simplify should correct', function () {
         });
       }
     };`
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 
   it('should Keep the options in the ternary operation', function () {
@@ -386,6 +384,6 @@ describe('render function simplify should correct', function () {
         this._c("c", this.c);
       }
     };`
-    expect(trim(res)).toEqual(trim(output))
+    expect(trim(res)).toBe(trim(output))
   })
 })

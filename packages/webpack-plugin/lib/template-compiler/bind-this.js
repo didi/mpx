@@ -93,10 +93,6 @@ function checkIdentifierDel (last, opts) {
         path: last.parentPath,
         realDel
       }
-    } else {
-      return {
-        realDel: false
-      }
     }
   }
 
@@ -236,34 +232,49 @@ module.exports = {
       },
       Identifier (path) {
         if (judgeIdentifierName(path)) {
-          path.judge = true
           if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
-            if (needCollect) {
-              const { last, keyPath, hasComputed } = calPropName(path)
+            path.judge = true
 
+            if (needCollect) {
+              const { last, keyPath, hasComputed, hasDangerous } = calPropName(path)
+              path.keyPath = keyPath
+              if (last !== path) {
+                path.lastPath = last
+              }
+
+              let replace = false
+              let position = ''
               let canDel = !inIfTest &&
                 !hasComputed &&
                 last.key !== 'property' &&
                 last.parentPath.key !== 'property'
 
-              path.canDel = canDel
-              path.keyPath = keyPath
-
-              let position = ''
               if (inConditional) {
                 position = checkInConditional(last)
                 if (inIfTest && position !== 'test') {
                   return // if (a ? b : c) // 变量 b 和 c 不收集
                 }
+                if (position === 'test') {
+                  canDel = false
+                }
               }
+              if (canDel) {
+                const { path: deletePath, realDel, replace: canReplace } = checkIdentifierDel(last, {
+                  hasDangerous,
+                  conditional: position
+                })
+                canDel = realDel
+                replace = canReplace
+                path.deleteLastPath = deletePath
+              }
+              path.canDel = canDel
+              path.replace = replace
 
               const current = blockTree.get(currentBlock)
               const target = current.data.bindings[keyPath] || []
               target.push({
                 path,
-                canDel,
-                inIfTest,
-                conditional: position
+                canDel
               })
               current.data.bindings[keyPath] = target
             }
@@ -312,55 +323,49 @@ module.exports = {
       },
       Identifier (path) {
         if (path.judge) {
-          if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
-            // bind this
-            path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+          // bind this
+          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
-            if (isProps) {
-              propKeys.push(path.node.property.name)
-            }
+          if (isProps) {
+            propKeys.push(path.node.property.name)
+          }
 
-            if (path.keyPath) {
-              const { last, hasDangerous } = calPropName(path, true)
-              last.collectPath = t.stringLiteral(path.keyPath)
+          if (path.keyPath) {
+            const keyPath = path.keyPath
+            const last = path.lastPath || path
+            last.collectPath = t.stringLiteral(keyPath)
 
-              if (path.canDel) {
-                const keyPath = path.keyPath
-                const { data } = blockTree.get(currentBlock)
-                const { bindings, pBindings } = data
-                const currentBlockVars = bindings[keyPath]
+            if (path.canDel) {
+              const { data } = blockTree.get(currentBlock)
+              const { bindings, pBindings } = data
+              const currentBlockVars = bindings[keyPath]
 
-                const doDelete = () => {
-                  const { conditional } = currentBlockVars.find(item => item.path === path) // todo 使用Map？
-                  const { path: lastPath, realDel, replace } = checkIdentifierDel(last, {
-                    hasDangerous,
-                    conditional
-                  })
-                  if (realDel) {
-                    dealRemove(lastPath, replace)
-                  }
-                }
+              const doDelete = () => {
+                dealRemove(path.deleteLastPath, path.replace)
+                delete path.deleteLastPath
+                delete path.replace
+              }
 
-                if (pBindings[keyPath]) {
-                  doDelete()
-                } else {
-                  if (currentBlockVars.length > 1) {
-                    const index = currentBlockVars.findIndex(item => !item.canDel || item.inIfTest || item.conditional === 'test') // 判断是否存在不能删除的元素
+              if (pBindings[keyPath]) {
+                doDelete()
+              } else {
+                if (currentBlockVars.length > 1) {
+                  const index = currentBlockVars.findIndex(item => !item.canDel)
 
-                    if (index === -1 ) {
-                      if (currentBlockVars[0].path !== path) {
-                        doDelete()
-                      }
-                    } else {
+                  if (index === -1) {
+                    if (currentBlockVars[0].path !== path) {
                       doDelete()
                     }
+                  } else {
+                    doDelete()
                   }
                 }
               }
-
-              delete path.canDel
-              delete path.keyPath
             }
+
+            delete path.keyPath
+            delete path.canDel
+            delete path.lastPath
           }
           delete path.judge
         }
