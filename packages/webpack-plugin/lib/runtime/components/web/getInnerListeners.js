@@ -1,4 +1,4 @@
-import { isEmptyObject } from '../../utils'
+import { isEmptyObject, isServerRendering } from '../../utils'
 
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
@@ -155,34 +155,37 @@ function noop () {
 }
 
 export default function getInnerListeners (context, options = {}) {
-  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
-  const listeners = Object.assign({}, context.$listeners)
-  defaultListeners.forEach((key) => {
-    if (!listeners[key]) listeners[key] = noop
-  })
-  const mergeBeforeOptions = {
-    before: true
-  }
-  const mergeAfterOptions = {
-    before: false
-  }
+  if (!isServerRendering()) {
+    let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
+    const listeners = Object.assign({}, context.$listeners)
+    defaultListeners.forEach((key) => {
+      if (!listeners[key]) listeners[key] = noop
+    })
+    const mergeBeforeOptions = {
+      before: true
+    }
+    const mergeAfterOptions = {
+      before: false
+    }
 
-  if (mergeBefore.listeners) {
-    mergeBeforeOptions.force = mergeBefore.force
-    mergeBefore = mergeBefore.listeners
-  }
+    if (mergeBefore.listeners) {
+      mergeBeforeOptions.force = mergeBefore.force
+      mergeBefore = mergeBefore.listeners
+    }
 
-  if (mergeAfter.listeners) {
-    mergeAfterOptions.force = mergeAfter.force
-    mergeAfter = mergeAfter.listeners
-  }
+    if (mergeAfter.listeners) {
+      mergeAfterOptions.force = mergeAfter.force
+      mergeAfter = mergeAfter.listeners
+    }
 
-  processModel(listeners, context)
-  processTap(listeners, context)
-  mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
-  mergeListeners(listeners, mergeAfter, mergeAfterOptions)
-  ignoredListeners.forEach((key) => {
-    delete listeners[key]
-  })
-  return listeners
+    processModel(listeners, context)
+    processTap(listeners, context)
+    mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
+    mergeListeners(listeners, mergeAfter, mergeAfterOptions)
+    ignoredListeners.forEach((key) => {
+      delete listeners[key]
+    })
+    return listeners
+  }
+  return {}
 }

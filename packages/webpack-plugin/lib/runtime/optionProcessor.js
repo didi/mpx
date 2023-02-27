@@ -29,9 +29,17 @@ export default function processOption (
           const app = new Vue({
             ...option,
             render: (h) => {
-              return h({
-                template: '<div id="app"><div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div></div>'
-              })
+              return h ('div', { attrs: { id: 'app' }, }, [
+                h('div', { attrs: { class: 'app' } }, [
+                  h('mpx-keep-alive', {}, [
+                    h('router-view', {
+                      attrs: {
+                        class: 'page'
+                      }
+                    })
+                  ])
+                ])
+              ])
             }
           })
           if (app.onSSRAppCreated) {
@@ -51,9 +59,17 @@ export default function processOption (
       const app = new Vue({
         ...option,
         render: (h) => {
-          return h({
-            template: '<div id="app"><div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div></div>'
-          })
+          return h ('div', { attrs: { id: 'app' }, }, [
+            h('div', { attrs: { class: 'app' } }, [
+              h('mpx-keep-alive', {}, [
+                h('router-view', {
+                  attrs: {
+                    class: 'page'
+                  }
+                })
+              ])
+            ])
+          ])
         }
       })
       global.__mpxPinia.state.value = JSON.parse(window.__INITIAL_STATE__)
