@@ -107,7 +107,7 @@ Mpx npm构建的优势主要有两点：1. 按需构建；2. 支持分包
 
 * 原生小程序的构建中，所有的 npm 模块都会输出到主包中，Mpx 在编译中，还会进行分包处理，对组件和静态资源，根据用户的分包配置，串行对主包和各个分包进行构建，标记出每个组件及静态资源的归属，根据小程序资源访问策略将其输出到主包或者分包中。
 
-所以使用 Mpx 框架开发小程序，可以享受最舒适最自然最好用的 npm 机制，详细原理介绍请移步[Mpx编译构建原理]()
+所以使用 Mpx 框架开发小程序，可以享受最舒适最自然最好用的 npm 机制，详细原理介绍请移步[Mpx编译构建原理](../understand/compile.md)
 
 ## 兼容原生小程序路径规范
 
@@ -128,6 +128,21 @@ new MpxWebpackPlugin({
   resolveMode: 'webpack'
 })
 ```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+         resolveMode: 'webpack'
+      }
+    }
+  }
+})
+```
+:::
 在 MpxWebpackPlugin 插件中设置 resolveMode 项，默认值为 webpack，可选值有 webpack/native，推荐使用 webpack 模式，更舒服一些，配置项为 webpack 时，json 中的 pages/usingComponents 等需要写相对路径，但是也可以直接写 npm 包路径。例如：
 ```js
 {
@@ -157,3 +172,20 @@ new MpxWebpackPlugin({
   }
 }
 ```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        resolveMode: 'native',
+        // 当resolveMode为native时可通过该字段指定项目根目录
+        projectRoot: path.resolve(__dirname, '../src')
+      }
+    }
+  }
+})
+```
+:::

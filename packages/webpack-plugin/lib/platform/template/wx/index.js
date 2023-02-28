@@ -188,7 +188,7 @@ module.exports = function getSpec ({ warn, error }) {
                 modelValuePathArr = modelValuePath.split('.')
               }
             }
-            let modelValue = match[1].trim()
+            const modelValue = match[1].trim()
             return [
               {
                 name: ':' + modelProp,
@@ -272,9 +272,9 @@ module.exports = function getSpec ({ warn, error }) {
           if (el.isStyleParsed) {
             return false
           }
-          let styleBinding = []
+          const styleBinding = []
           el.isStyleParsed = true
-          el.attrsList.map((item, index) => {
+          el.attrsList.forEach((item) => {
             const parsed = parseMustache(item.value)
             if (item.name === 'style') {
               if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
@@ -396,10 +396,42 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
+        swan ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'swan' })
+        },
+        qq ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'qq' })
+        },
         jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const eventName = match[2]
           runRules(eventRules, eventName, { mode: 'jd' })
+        },
+        // tt ({ name, value }, { eventRules }) {
+        //   const match = this.test.exec(name)
+        //   const prefix = match[1]
+        //   const eventName = match[2]
+        //   const modifierStr = match[3] || ''
+        //   const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+        //   return {
+        //     // 字节将所有事件转为小写
+        //     name: prefix + rEventName.toLowerCase() + modifierStr,
+        //     value
+        //   }
+        // },
+        tt ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'tt' })
+        },
+        dd ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const eventName = match[2]
+          runRules(eventRules, eventName, { mode: 'dd' })
         },
         web ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)
@@ -440,7 +472,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: /^aria-(role|label)$/,
         ali () {
-          warn(`Ali environment does not support aria-role|label props!`)
+          warn('Ali environment does not support aria-role|label props!')
         }
       }
     ],
@@ -449,8 +481,8 @@ module.exports = function getSpec ({ warn, error }) {
         {
           ali (prefix) {
             const prefixMap = {
-              'bind': 'on',
-              'catch': 'catch'
+              bind: 'on',
+              catch: 'catch'
             }
             if (!prefixMap[prefix]) {
               error(`Ali environment does not support [${prefix}] event handling!`)
@@ -493,13 +525,13 @@ module.exports = function getSpec ({ warn, error }) {
           test: /^(touchstart|touchmove|touchcancel|touchend|tap|longpress|longtap|transitionend|animationstart|animationiteration|animationend|touchforcechange)$/,
           ali (eventName) {
             const eventMap = {
-              'touchstart': 'touchStart',
-              'touchmove': 'touchMove',
-              'touchend': 'touchEnd',
-              'touchcancel': 'touchCancel',
-              'tap': 'tap',
-              'longtap': 'longTap',
-              'longpress': 'longTap'
+              touchstart: 'touchStart',
+              touchmove: 'touchMove',
+              touchend: 'touchEnd',
+              touchcancel: 'touchCancel',
+              tap: 'tap',
+              longtap: 'longTap',
+              longpress: 'longTap'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]

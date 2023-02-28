@@ -1,13 +1,19 @@
-import { BEFORECREATE, CREATED, DESTROYED, MOUNTED, UPDATED, BEFOREMOUNT } from '../../../core/innerLifecycle'
+import {
+  CREATED,
+  UNMOUNTED,
+  MOUNTED,
+  ONSHOW,
+  ONHIDE,
+  ONLOAD
+} from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
+  'onLogin',
   'onLaunch',
   'onShow',
   'onHide',
   'onError',
-  'onPageNotFound',
-  'onUnhandledRejection',
-  'onThemeChange'
+  'onPageNotFound'
 ]
 
 const PAGE_HOOKS = [
@@ -19,33 +25,29 @@ const PAGE_HOOKS = [
   'onUnload',
   'onPullDownRefresh',
   'onReachBottom',
-  'onShareAppMessage',
   'onPageScroll',
+  'onShareAppMessage',
   'onTabItemTap',
+  'onURLQueryChange',
   'onResize'
 ]
 
 const COMPONENT_HOOKS = [
-  'beforeCreate',
   'created',
   'attached',
   'ready',
-  'moved',
   'detached',
-  'updated',
   'pageShow',
-  'pageHide',
-  'definitionFilter'
+  'pageHide'
 ]
 
 export const lifecycleProxyMap = {
-  [BEFORECREATE]: ['beforeCreate'],
-  // 为提升性能统一把onInit和onLoad都代理到CREATED中，由onInit触发
-  [CREATED]: ['onInit', 'created', 'attached', 'onLoad'],
-  [UPDATED]: ['updated'],
-  [BEFOREMOUNT]: ['beforeMount'],
+  [CREATED]: ['onInit', 'created', 'attached'],
   [MOUNTED]: ['ready', 'onReady'],
-  [DESTROYED]: ['detached', 'onUnload']
+  [UNMOUNTED]: ['detached', 'onUnload'],
+  [ONSHOW]: ['pageShow', 'onShow'],
+  [ONHIDE]: ['pageHide', 'onHide'],
+  [ONLOAD]: ['onLoad']
 }
 
 export const LIFECYCLE = {

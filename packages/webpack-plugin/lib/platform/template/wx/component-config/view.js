@@ -50,10 +50,10 @@ module.exports = function ({ print }) {
         //
         ali (eventName) {
           const eventMap = {
-            'transitionend': 'transitionEnd',
-            'animationstart': 'animationStart',
-            'animationiteration': 'animationIteration',
-            'animationend': 'animationEnd'
+            transitionend: 'transitionEnd',
+            animationstart: 'animationStart',
+            animationiteration: 'animationIteration',
+            animationend: 'animationEnd'
           }
           return eventMap[eventName]
         },

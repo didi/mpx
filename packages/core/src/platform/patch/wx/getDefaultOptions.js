@@ -1,8 +1,7 @@
-import { hasOwn } from '../../../helper/utils'
-import MPXProxy from '../../../core/proxy'
+import { hasOwn } from '@mpxjs/utils'
+import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { queueWatcher } from '../../../observer/scheduler'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -24,15 +23,10 @@ function transformProperties (properties) {
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
-    newFiled.observer = function (value, oldValue) {
+    newFiled.observer = function (value) {
       if (this.__mpxProxy) {
         this[key] = value
-        queueWatcher(() => {
-          // 只有当当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务结束后触发updated
-          if (this.__mpxProxy.curRenderTask && this.__mpxProxy.curRenderTask.state === 'finished') {
-            this.__mpxProxy.updated()
-          }
-        })
+        this.__mpxProxy.propsUpdated()
       }
     }
     newProps[key] = newFiled
@@ -41,27 +35,27 @@ function transformProperties (properties) {
 }
 
 function transformApiForProxy (context, currentInject) {
-  const rawSetData = context.setData.bind(context)
+  const rawSetData = context.setData
   Object.defineProperties(context, {
     setData: {
       get () {
         return function (data, callback) {
-          return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+          return context.__mpxProxy.forceUpdate(data, { sync: true }, callback)
         }
       },
       configurable: true
     },
-    __getInitialData: {
+    __getProps: {
       get () {
         return (options) => {
-          const data = {}
-          const validData = Object.assign({}, options.data, options.properties, options.props)
-          for (const key in context.data) {
-            if (hasOwn(context.data, key) && hasOwn(validData, key)) {
-              data[key] = context.data[key]
+          const props = {}
+          const validProps = Object.assign({}, options.properties, options.props)
+          Object.keys(context.data).forEach((key) => {
+            if (hasOwn(validProps, key)) {
+              props[key] = context.data[key]
             }
-          }
-          return data
+          })
+          return props
         }
       },
       configurable: false
@@ -73,13 +67,27 @@ function transformApiForProxy (context, currentInject) {
       configurable: false
     }
   })
+
+  // // 抹平处理tt不支持驼峰事件名的问题
+  // if (__mpx_mode__ === 'tt') {
+  //   const rawTriggerEvent = context.triggerEvent
+  //   Object.defineProperty(context, 'triggerEvent', {
+  //     get () {
+  //       return function (eventName, eventDetail) {
+  //         return rawTriggerEvent.call(this, eventName.toLowerCase(), eventDetail)
+  //       }
+  //     },
+  //     configurable: true
+  //   })
+  // }
+
   // 绑定注入的render
   if (currentInject) {
     if (currentInject.render) {
       Object.defineProperties(context, {
         __injectedRender: {
           get () {
-            return currentInject.render.bind(context)
+            return currentInject.render
           },
           configurable: false
         }
@@ -104,8 +112,14 @@ export function filterOptions (options) {
     if (builtInKeysMap[key]) {
       return
     }
-    if (key === 'properties' || key === 'props') {
-      newOptions.properties = transformProperties(Object.assign({}, options.properties, options.props))
+    if (key === 'data' || key === 'initData') {
+      if (!hasOwn(newOptions, 'data')) {
+        newOptions.data = Object.assign({}, options.initData, options.data)
+      }
+    } else if (key === 'properties' || key === 'props') {
+      if (!hasOwn(newOptions, 'properties')) {
+        newOptions.properties = transformProperties(Object.assign({}, options.props, options.properties))
+      }
     } else if (key === 'methods' && options.__pageCtor__) {
       // 构造器为Page时抽取所有methods方法到顶层
       Object.assign(newOptions, options[key])
@@ -116,17 +130,16 @@ export function filterOptions (options) {
   return newOptions
 }
 
-export function initProxy (context, rawOptions, currentInject, params) {
+export function initProxy (context, rawOptions, currentInject) {
   if (!context.__mpxProxy) {
     // 提供代理对象需要的api
     transformApiForProxy(context, currentInject)
-    // 缓存options
-    context.$rawOptions = rawOptions
     // 创建proxy对象
-    context.__mpxProxy = new MPXProxy(rawOptions, context)
-    context.__mpxProxy.created(params)
-  } else if (context.__mpxProxy.isDestroyed()) {
-    context.__mpxProxy.reCreated(params)
+    context.__mpxProxy = new MpxProxy(rawOptions, context)
+    context.__mpxProxy.created()
+  } else if (context.__mpxProxy.isUnmounted()) {
+    context.__mpxProxy = new MpxProxy(rawOptions, context, true)
+    context.__mpxProxy.created()
   }
 }
 
@@ -139,14 +152,14 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
     hookNames[2] = 'onUnload'
   }
   const rootMixins = [{
-    [hookNames[0]] (...params) {
-      initProxy(this, rawOptions, currentInject, params)
+    [hookNames[0]] () {
+      initProxy(this, rawOptions, currentInject)
     },
     [hookNames[1]] () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
     [hookNames[2]] () {
-      if (this.__mpxProxy) this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins

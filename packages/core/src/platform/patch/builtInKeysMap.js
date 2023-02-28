@@ -1,10 +1,10 @@
 import { INNER_LIFECYCLES } from '../../core/innerLifecycle'
-import { makeMap } from '../../helper/utils'
+import { makeMap } from '@mpxjs/utils'
 
-let bulitInKeys
+let builtInKeys
 
 if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
-  bulitInKeys = [
+  builtInKeys = [
     'proto',
     'mixins',
     'mpxCustomKeysForBlend',
@@ -15,7 +15,8 @@ if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
     '__pageCtor__'
   ]
 } else {
-  bulitInKeys = [
+  builtInKeys = [
+    'setup',
     'dataFn',
     'proto',
     'mixins',
@@ -30,4 +31,4 @@ if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
   ]
 }
 
-export default makeMap(bulitInKeys.concat(INNER_LIFECYCLES))
+export default makeMap(builtInKeys.concat(INNER_LIFECYCLES))

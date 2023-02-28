@@ -4,7 +4,7 @@ import * as webLifecycle from '../platform/patch/web/lifecycle'
 import * as tenonLifecycle from '../platform/patch/tenon/lifecycle'
 import * as swanLifecycle from '../platform/patch/swan/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { error } from '../helper/log'
+import { error } from '@mpxjs/utils'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
 import wxToTenonRule from './wxToTenon'
@@ -65,7 +65,7 @@ const rulesMap = {
 }
 
 export function getConvertRule (convertMode) {
-  let rule = rulesMap[convertMode]
+  const rule = rulesMap[convertMode]
   if (!rule || !rule.lifecycle) {
     error(`Absence of convert rule for ${convertMode}, please check.`)
   } else {

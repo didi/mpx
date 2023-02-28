@@ -1,20 +1,36 @@
-import { setByPath, collectDataset } from '../../helper/utils'
-import { error } from '../../helper/log'
-import EXPORT_MPX from '../../index'
+import { setByPath, error, hasOwn } from '@mpxjs/utils'
+import Mpx from '../../index'
+
+const datasetReg = /^data-(.+)$/
+
+function collectDataset (props) {
+  const dataset = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
+}
 
 export default function proxyEventMixin () {
   const methods = {
     __invoke ($event) {
-      if (typeof EXPORT_MPX.config.proxyEventHandler === 'function') {
+      if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {
-          EXPORT_MPX.config.proxyEventHandler($event)
+          Mpx.config.proxyEventHandler($event)
         } catch (e) {
         }
       }
+      const location = this.__mpxProxy.options.mpxFileResource
       const type = $event.type
       const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
-        throw new Error('Event object must have [type] property!')
+        error('Event object must have [type] property!', location)
+        return
       }
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
@@ -25,7 +41,8 @@ export default function proxyEventMixin () {
       }
       const target = $event.currentTarget || $event.target
       if (!target) {
-        throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
+        error(`[${type}] event object must have [currentTarget/target] property!`, location)
+        return
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
@@ -36,24 +53,25 @@ export default function proxyEventMixin () {
           $event = $event.detail.data
         }
         if (callbackName) {
-          const params = item.length > 1 ? item.slice(1).map(item => {
-            // 暂不支持$event.xxx的写法
-            // if (/^\$event/.test(item)) {
-            //   this.__mpxTempEvent = $event
-            //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-            //   // 删除临时变量
-            //   delete this.__mpxTempEvent
-            //   return value
-            if (item === '__mpx_event__') {
-              return $event
-            } else {
-              return item
-            }
-          }) : [$event]
+          const params = item.length > 1
+            ? item.slice(1).map(item => {
+              // 暂不支持$event.xxx的写法
+              // if (/^\$event/.test(item)) {
+              //   this.__mpxTempEvent = $event
+              //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
+              //   // 删除临时变量
+              //   delete this.__mpxTempEvent
+              //   return value
+              if (item === '__mpx_event__') {
+                return $event
+              } else {
+                return item
+              }
+            })
+            : [$event]
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
-            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
             error(`Instance property [${callbackName}] is not function, please check.`, location)
           }
         }
@@ -70,13 +88,10 @@ export default function proxyEventMixin () {
     }
   }
   if (__mpx_mode__ === 'ali') {
-    const getHandler = (eventName, props) => {
-      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-      return props && (props['on' + handlerName] || props['catch' + handlerName])
-    }
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
-        const handler = getHandler(eventName, this.props)
+        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
@@ -95,31 +110,6 @@ export default function proxyEventMixin () {
             },
             detail: eventDetail
           }
-          handler.call(this, eventObj)
-        }
-      },
-      __proxyEvent (e) {
-        const type = e.type
-        const handler = getHandler(type, this.props)
-
-        if (handler && typeof handler === 'function') {
-          const dataset = collectDataset(this.props)
-          const id = this.props.id || ''
-          const targetData = Object.assign({}, e.target || {}, {
-            id,
-            dataset
-          })
-
-          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
-            id,
-            dataset
-          })
-
-          const eventObj = Object.assign({}, e, {
-            target: targetData,
-            currentTarget: currentTargetData
-          })
-
           handler.call(this, eventObj)
         }
       }

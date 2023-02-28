@@ -117,7 +117,7 @@ module.exports = function (content) {
       getJSONContent({
         src: typeResourceMap.json,
         useJSONJS
-      }, this, callback)
+      }, null, this, callback)
     }, (content, callback) => {
       let json
       try {
@@ -197,7 +197,7 @@ module.exports = function (content) {
         output += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
       }
 
-      for (let type in typeResourceMap) {
+      for (const type in typeResourceMap) {
         output += `/* ${type} */\n${getRequireByType(type)}\n\n`
       }
 
