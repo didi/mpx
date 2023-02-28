@@ -36,7 +36,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const rootMixins = [{
     [hookNames[0]] (...params) {
       if (!this.__mpxProxy) {
-        initProxy(this, rawOptions, currentInject, params) // todo 确认参数是否需要
+        initProxy(this, rawOptions, currentInject, params)
       }
     },
     [hookNames[1]] () {

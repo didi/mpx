@@ -49,7 +49,7 @@ export default {
   render() {
     const data = {
       class: "mpx-textarea",
-      ref: "mpx-input",
+      ref: "mpx-textarea",
       focus: this.focus,
       placeholder: this.placeholder,
       maxLength: this.maxLength,

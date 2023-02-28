@@ -239,7 +239,7 @@ module.exports = function getSpec ({ warn, error }) {
               },
               {
                 name: 'mpxModelEventId',
-                value: Math.random().toString(36).substr(3, 8)
+                value: Math.random().toString(36).slice(3, 11)
               },
               {
                 name: '@mpxModel',
