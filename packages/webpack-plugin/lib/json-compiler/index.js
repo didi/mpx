@@ -142,9 +142,6 @@ module.exports = function (content) {
       if (!json.usingComponents) {
         json.usingComponents = {}
       }
-      if (!json.component && mode === 'swan') {
-        json.component = true
-      }
     }
   } else if (componentsMap[resourcePath]) {
     // component

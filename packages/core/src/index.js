@@ -128,7 +128,7 @@ const Mpx = factory()
 
 Mpx.config = {
   useStrictDiff: false,
-  ignoreRenderError: false,
+  ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
   errorHandler: null,

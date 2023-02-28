@@ -1,6 +1,5 @@
 import { error, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
-import { CREATED } from '../core/innerLifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as swanLifecycle from '../platform/patch/swan/lifecycle'
@@ -34,10 +33,7 @@ export default {
   lifecycle2: mergeLifecycle(swanLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: true,
-  // wx输出swan时额外将onLoad代理到CREATED
-  lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
-    [CREATED]: ['created', 'attached', 'onLoad']
-  }),
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options, type) {
     if (options.behaviors) {
       options.behaviors.forEach((behavior, idx) => {

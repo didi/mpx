@@ -9,7 +9,6 @@ import {
   isDev
 } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
-import { CREATED } from '../core/innerLifecycle'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage']
@@ -35,12 +34,8 @@ export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
   lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
   pageMode: 'blend',
-  // support传递为true以将methods外层的方法函数合入methods中
   support: true,
-  // wx输出web时额外将onLoad代理到CREATED
-  lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
-    [CREATED]: ['created', 'attached', 'onLoad']
-  }),
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options) {
     const props = Object.assign({}, options.properties, options.props)
     if (props) {

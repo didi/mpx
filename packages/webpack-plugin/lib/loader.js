@@ -296,7 +296,8 @@ module.exports = function (content) {
       // 注入构造函数
       let ctor = 'App'
       if (ctorType === 'page') {
-        if (mpx.forceUsePageCtor || mode === 'ali') {
+        // swan也默认使用Page构造器
+        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
           ctor = 'Page'
         } else {
           ctor = 'Component'
