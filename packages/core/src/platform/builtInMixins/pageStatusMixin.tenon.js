@@ -22,7 +22,7 @@ export default function pageStatusMixin (mixinType) {
   // components
   return {
     [CREATED] () {
-      let pageInstance = global.__currentPageInstance
+      const pageInstance = global.__currentPageInstance
       if (!pageInstance) return
       this.$watch(
         () => pageInstance.mpxPageStatus,

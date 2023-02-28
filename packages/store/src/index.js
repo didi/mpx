@@ -217,6 +217,7 @@ class Store {
       proxy(this.getters, this.__depsGetters)
     }
   }
+
   /**
    * 替换state，tenon环境中使用
    */
@@ -225,6 +226,7 @@ class Store {
     Object.assign(this.state, state)
     // this.resetStoreVM()
   }
+
   _withCommit (fn) {
     fn()
   }

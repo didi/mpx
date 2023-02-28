@@ -14,6 +14,7 @@
   "devDependencies": {
     "@babel/core": "^7.8.7",
     "@babel/eslint-parser": "^7.18.9",
+    "@babel/preset-env": "^7.20.2",
     "@docsearch/css": "^3.0.0",
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",

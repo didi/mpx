@@ -4,7 +4,7 @@ import '../../../common/stylus/Toast.styl'
 import { getClassStyle } from '@hummer/tenon-vue'
 
 function createDom (Element, attrs = {}, children = []) {
-  let dom = new Element()
+  const dom = new Element()
   Object.keys(attrs).forEach(k => Reflect.set(dom, k, attrs[k]))
   children.length && children.forEach(child => dom.appendChild(child))
   return dom

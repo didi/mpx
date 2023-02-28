@@ -1,5 +1,7 @@
 // import { inBrowser } from '../utils/env'
 
+import { hasOwn } from './utils'
+
 export default function processOption (
   option,
   ctorType,
@@ -19,7 +21,7 @@ export default function processOption (
   if (ctorType === 'app') {
     // 对于app中的组件需要全局注册
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         Vue.component(componentName, component)
       }
@@ -299,7 +301,7 @@ export default function processOption (
   } else {
     // 局部注册页面和组件中依赖的组件
     for (const componentName in componentsMap) {
-      if (componentsMap.hasOwnProperty(componentName)) {
+      if (hasOwn(componentsMap, componentName)) {
         const component = componentsMap[componentName]
         if (!option.components) {
           option.components = {}

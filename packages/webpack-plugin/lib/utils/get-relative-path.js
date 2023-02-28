@@ -5,8 +5,8 @@ function getRelativePath (source, target) {
 
   source = source && source.replace(/\/[^/]*$/, '') // get dirname
   // check if source or target is root path
-  let sourceArr = source.split('/').filter((item, index) => index !== 0 && !!item)
-  let targetArr = target.split('/').filter((item, index) => index !== 0 && !!item)
+  const sourceArr = source.split('/').filter((item, index) => index !== 0 && !!item)
+  const targetArr = target.split('/').filter((item, index) => index !== 0 && !!item)
   let i = 0
   while (sourceArr[i] === targetArr[i] && i < sourceArr.length && i < targetArr.length) {
     i++

@@ -3,7 +3,7 @@ import '../../../common/stylus/Modal.styl'
 import { getClassStyle } from '@hummer/tenon-vue'
 
 // 汉字为两个字符，字母/数字为一个字符
-let _getLength = t => {
+const _getLength = t => {
   let len = 0
   for (let i = 0; i < t.length; i++) {
     if (t.charCodeAt(i) > 127 || t.charCodeAt(i) === 94) {
@@ -15,7 +15,7 @@ let _getLength = t => {
   return len
 }
 function createDom (Element, attrs = {}, children = []) {
-  let dom = new Element()
+  const dom = new Element()
   Object.keys(attrs).forEach(k => Reflect.set(dom, k, attrs[k]))
   children.length && children.forEach(child => dom.appendChild(child))
   return dom
@@ -37,6 +37,7 @@ export default class Modal extends ToPromise {
     }
     this.hideTimer = null
   }
+
   show (options = {}) {
     if (options.confirmText && _getLength(options.confirmText) > 8) {
       // eslint-disable-next-line
@@ -139,6 +140,7 @@ export default class Modal extends ToPromise {
     this.dialog.custom(this.box)
     return this.toPromiseInitPromise()
   }
+
   hide () {
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)

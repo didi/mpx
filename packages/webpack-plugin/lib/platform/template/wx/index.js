@@ -227,7 +227,7 @@ module.exports = function getSpec ({ warn, error }) {
                 modelValuePathArr = modelValuePath.split('.')
               }
             }
-            let modelValue = match[1].trim()
+            const modelValue = match[1].trim()
             return [
               {
                 name: ':' + modelProp,

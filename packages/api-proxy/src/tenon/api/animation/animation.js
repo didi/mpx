@@ -5,6 +5,7 @@ class Animation {
     this._propMaps = {}
     this._options = options
   }
+
   // 处理size
   _processSize (size) {
     if (typeof size === 'number') {
@@ -20,21 +21,25 @@ class Animation {
       value: value
     }
   }
+
   // 不支持
   right (value) {
     warn('不支持right方法')
     return this
   }
+
   // 不支持
   left (value) {
     warn('不支持left方法')
     return this
   }
+
   // 不支持
   top (value) {
     warn('不支持top方法')
     return this
   }
+
   // 不支持
   bottom (value) {
     warn('不支持bottom方法')
@@ -60,21 +65,25 @@ class Animation {
     this._collectData('backgroundColor', color)
     return this
   }
+
   // 不支持
   matrix (...value) {
     warn('不支持matrix方法')
     return this
   }
+
   // 不支持
   matrix3d (...value) {
     warn('不支持matrix3d方法')
     return this
   }
+
   // 不支持
   rotate (...value) {
     warn('不支持rotate方法')
     return this
   }
+
   // 不支持
   rotate3d (...value) {
     warn('不支持rotate3d方法')
@@ -95,12 +104,14 @@ class Animation {
     this._collectData('rotationZ', `${parseFloat(value)}deg`)
     return this
   }
+
   scale (...value) {
     const [x, y = x] = value
     this._collectData('scaleX', x)
     this._collectData('scaleY', y)
     return this
   }
+
   // 不支持
   scale3d (...value) {
     warn('不支持scale3d方法')
@@ -116,21 +127,25 @@ class Animation {
     this._collectData('scaleY', value)
     return this
   }
+
   // 不支持
   scaleZ (value) {
     warn('不支持scaleZ方法')
     return this
   }
+
   // 不支持
   skew (...value) {
     warn('不支持skew方法')
     return this
   }
+
   // 不支持
   skewX (value) {
     warn('不支持skewX方法')
     return this
   }
+
   // 不支持
   skewY (value) {
     warn('不支持skewY方法')
@@ -145,6 +160,7 @@ class Animation {
     })
     return this
   }
+
   // 不支持
   translate3d (...value) {
     warn('不支持translate3d方法')
@@ -160,6 +176,7 @@ class Animation {
     this._collectData('position', { x: `${parseFloat(value)}hm`, y: 0 })
     return this
   }
+
   // 不支持
   translateZ (value) {
     warn('不支持tranlateZ方法')
@@ -190,7 +207,7 @@ class Animation {
     this._actions.length = 0
     // 一个action就是一个step
     const steps = actions.map((v) => {
-      let styles = {}
+      const styles = {}
       v.animates.forEach(animate => {
         styles[animate.type] = animate.value
       })

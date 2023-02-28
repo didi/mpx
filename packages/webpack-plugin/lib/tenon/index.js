@@ -15,7 +15,6 @@ module.exports = function ({
   queryObj,
   autoScope,
   componentsMap,
-  vueContentCache,
   moduleId,
   callback
 }) {
@@ -30,7 +29,7 @@ module.exports = function ({
   const projectRoot = mpx.projectRoot
 
   let output = ''
-  let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+  const usingComponents = [].concat(Object.keys(mpx.usingComponents))
 
   return async.waterfall([
     (callback) => {
@@ -99,7 +98,7 @@ module.exports = function ({
   ], (err, scriptRes) => {
     if (err) return callback(err)
     output += scriptRes.output
-    vueContentCache.set(filePath, output)
+    mpx.vueContentCache.set(filePath, output)
     callback(null, output)
   })
 }

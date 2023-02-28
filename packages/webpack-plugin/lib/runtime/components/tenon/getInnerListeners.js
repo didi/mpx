@@ -1,4 +1,4 @@
-import { isEmptyObject } from './util'
+import { isEmptyObject } from '../../utils'
 
 const tapEvents = [
   'onTouchstart',
@@ -38,12 +38,9 @@ function createTouch (context, hasLongTap, __mpxTapInfo) {
           break
         case 2:
           context.$emit('touchmove', e)
-          const tapDetailInfo = __mpxTapInfo.detail || {}
-          const currentPageX = e.position.x
-          const currentPageY = e.position.y
           if (
-            Math.abs(currentPageX - tapDetailInfo.x) > 1 ||
-            Math.abs(currentPageY - tapDetailInfo.y) > 1
+            Math.abs(e.position.x - __mpxTapInfo.detail.x) > 1 ||
+            Math.abs(e.position.y - __mpxTapInfo.detail.y) > 1
           ) {
             __mpxTapInfo.startTimer &&
               clearTimeout(__mpxTapInfo.startTimer)
@@ -91,9 +88,9 @@ function processModel (listeners, context) {
   if (modelEvent && modelEventId) {
     // 对于modelEvent，内部获得时间后向外部转发，触发外部listener的同时转发为mpxModel事件
 
-    const listener = listeners['onInput']
+    const listener = listeners.onInput
 
-    listeners['onInput'] = function (e) {
+    listeners.onInput = function (e) {
       Hummer.notifyCenter.triggerEvent(modelEventId, {
         detail: e
       })
@@ -136,17 +133,17 @@ function mergeListeners (listeners, otherListeners, options = {}, context, __mpx
     let rawListener
     if (tapEvents.includes(key)) {
       // 判断onTouch是否存在 若存在 则直接处理
-      rawListener = listeners['onTouch']
+      rawListener = listeners.onTouch
 
       if (!rawListener && !options.force) {
         return
       } else if (!rawListener && options.force) {
         // 创建一个touh事件 并赋值
-        listeners['onTouch'] = createTouch(context, listenerMap.onLongtap, __mpxTapInfo).onTouch
-        rawListener = listeners['onTouch']
+        listeners.onTouch = createTouch(context, listenerMap.onLongtap, __mpxTapInfo).onTouch
+        rawListener = listeners.onTouch
       }
       // 事件处理 onTouchstart 1 onTouchmove 2 onTouchend 3 onTouchcancel 4
-      listeners['onTouch'] = function (e) {
+      listeners.onTouch = function (e) {
         // const thatKey = key
         let timer = null
         if (key === 'onLongtap') {
@@ -218,7 +215,7 @@ function processTouchAndLtap (listeners, context, __mpxTapInfo) {
     }
   })
   if (isEmptyObject(listenerMap)) return
-  let events = createTouch(context, listenerMap.onLongtap, __mpxTapInfo)
+  const events = createTouch(context, listenerMap.onLongtap, __mpxTapInfo)
   mergeListeners(
     listeners,
     events,
@@ -266,8 +263,8 @@ export function getCustomEvent (type, detail = {}, target = null) {
 function noop () {}
 
 function getListeners (context) {
-  let attrs = context.$attrs
-  let listeners = {}
+  const attrs = context.$attrs
+  const listeners = {}
   Object.keys(attrs).forEach((v) => {
     if (/^on[A-Z]/.test(v)) {
       listeners[v] = attrs[v]
@@ -283,7 +280,7 @@ export default function getInnerListeners (context, options = {}) {
     defaultListeners = [],
     ignoredListeners = []
   } = options
-  let __mpxTapInfo = {}
+  const __mpxTapInfo = {}
   // 从attrs里面拿到以on开头的所有绑定的事件
   const listeners = Object.assign({}, getListeners(context))
   defaultListeners.forEach((key) => {

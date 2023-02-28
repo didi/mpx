@@ -23,7 +23,7 @@ module.exports = function (json, options, rawCallback) {
   const localComponentsMap = {}
   const buildInfo = loaderContext._module.buildInfo
 
-  let output = '/* json */\n'
+  const output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
   let tabBarStr
@@ -151,10 +151,10 @@ module.exports = function (json, options, rawCallback) {
             const context = path.dirname(result)
 
             if (content.pages) {
-              let tarRoot = queryObj.root
+              const tarRoot = queryObj.root
               if (tarRoot) {
                 delete queryObj.root
-                let subPackage = {
+                const subPackage = {
                   tarRoot,
                   pages: content.pages,
                   ...queryObj
@@ -257,8 +257,8 @@ module.exports = function (json, options, rawCallback) {
 
   const processSubPackage = (subPackage, context, callback) => {
     if (subPackage) {
-      let tarRoot = subPackage.tarRoot || subPackage.root || ''
-      let srcRoot = subPackage.srcRoot || subPackage.root || ''
+      const tarRoot = subPackage.tarRoot || subPackage.root || ''
+      const srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return callback()
       processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
     } else {

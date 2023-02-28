@@ -6,11 +6,12 @@ const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const createJSONHelper = require('../json-compiler/helper')
 const async = require('async')
+const hasOwn = require('../utils/has-own')
 
 function shallowStringify (obj) {
-  let arr = []
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
+  const arr = []
+  for (const key in obj) {
+    if (hasOwn(obj, key)) {
       let value = obj[key]
       if (Array.isArray(value)) {
         value = `[${value.join(',')}]`
@@ -162,7 +163,7 @@ module.exports = function (script, options, callback) {
       //     content += `  wxsModules.${module} = ${expression}\n`
       //   })
       // }
-      let firstPage = ''
+      const firstPage = ''
       const pagesMap = {}
       const componentsMap = {}
 
@@ -191,7 +192,7 @@ module.exports = function (script, options, callback) {
         ? `require(${stringifyRequest(script.src)})\n`
         : (script.content + '\n') + '\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.currentOption\n`
+      content += '  const currentOption = global.currentOption\n'
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -235,7 +236,7 @@ module.exports = function (script, options, callback) {
       // i18n`
       //     }
       //   }
-      content += `\n  )\n__dynamic_page_slot__\n`
+      content += '\n  )\n__dynamic_page_slot__\n'
       return content
     }
   })

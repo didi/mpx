@@ -1,6 +1,6 @@
 <script>
-import getInnerListeners, { getCustomEvent } from "./getInnerListeners";
-import { processSize } from "./util";
+import getInnerListeners from "./getInnerListeners";
+import { processSize } from '../../utils';
 import { h } from "@hummer/tenon-vue";
 export default {
   name: "mpx-scroll-view",
