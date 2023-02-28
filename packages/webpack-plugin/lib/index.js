@@ -59,6 +59,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
+require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -167,6 +168,7 @@ class MpxWebpackPlugin {
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.retryRequireAsync = options.retryRequireAsync || false
+    options.enableAliRequireAsync = options.enableAliRequireAsync || false
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -575,6 +577,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
+          enableAliRequireAsync: this.options.enableAliRequireAsync,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -985,7 +988,7 @@ class MpxWebpackPlugin {
               // 删除root query
               request = addQuery(request, {}, false, ['root'])
               // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.mode === 'wx') {
+              if (mpx.mode === 'wx' || (mpx.mode === 'ali' && mpx.enableAliRequireAsync)) {
                 const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range, {
                   isRequireAsync: true,
                   retryRequireAsync: !!this.options.retryRequireAsync
