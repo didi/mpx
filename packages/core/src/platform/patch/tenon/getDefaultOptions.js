@@ -2,7 +2,7 @@ import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import MPXProxy from '../../../core/proxy'
 import { diffAndCloneA } from '@mpxjs/utils'
-import { UPDATED } from '../../../core/innerLifecycle'
+import { UPDATED, CREATED, MOUNTED, UNMOUNTED } from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -29,7 +29,7 @@ function initProxy (context, rawOptions) {
   context.$rawOptions = rawOptions
   // 创建proxy对象
   context.__mpxProxy = new MPXProxy(rawOptions, context)
-  context.__mpxProxy.created(Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
+  context.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
@@ -41,13 +41,13 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       }
     },
     [hookNames[1]] () {
-      this.__mpxProxy && this.__mpxProxy.mounted(Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
+      this.__mpxProxy && this.__mpxProxy.callHook(MOUNTED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
     },
     updated () {
       this.__mpxProxy && this.__mpxProxy.callHook(UPDATED)
     },
     [hookNames[2]] () {
-      this.__mpxProxy && this.__mpxProxy.unmounted()
+      this.__mpxProxy && this.__mpxProxy.callHook(UNMOUNTED)
     }
   }]
   // 为了在builtMixin中可以使用某些rootMixin实现的特性（如数据响应等），此处builtInMixin在rootMixin之后执行，但是当builtInMixin使用存在对应内建生命周期的目标平台声明周期写法时，可能会出现用户生命周期比builtInMixin中的生命周期先执行的情况，为了避免这种情况发生，builtInMixin应该尽可能使用内建生命周期来编写
