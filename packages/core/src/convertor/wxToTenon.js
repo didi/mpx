@@ -2,9 +2,9 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as tenonLifecycle from '../platform/patch/tenon/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { error } from '../helper/log'
-import { isObject, diffAndCloneA, hasOwn } from '../helper/utils'
+import { isObject, diffAndCloneA, hasOwn } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
-import { CREATED, DESTROYED } from '../core/innerLifecycle'
+import { CREATED, UNMOUNTED } from '../core/innerLifecycle'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const unsupported = [
@@ -50,7 +50,7 @@ export default {
   // wx输出tenon时额外将onLoad代理到CREATED
   lifecycleProxyMap: Object.assign({}, wxLifecycle.lifecycleProxyMap, {
     [CREATED]: ['created', 'attached', 'onLoad'],
-    [DESTROYED]: ['destroyed', 'detached', 'onUnload', 'unmounted']
+    [UNMOUNTED]: ['destroyed', 'detached', 'onUnload', 'unmounted']
   }),
   convert (options) {
     const props = Object.assign({}, options.properties, options.props)

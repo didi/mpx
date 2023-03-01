@@ -29,6 +29,7 @@ module.exports = function (script, options, callback) {
   const localPagesMap = options.localPagesMap
   const srcMode = options.srcMode
   const loaderContext = options.loaderContext
+  const moduleId = options.moduleId
   const isProduction = options.isProduction
   const componentId = options.componentId
   // const i18n = options.i18n
@@ -163,7 +164,7 @@ module.exports = function (script, options, callback) {
       //     content += `  wxsModules.${module} = ${expression}\n`
       //   })
       // }
-      const firstPage = ''
+      let firstPage = ''
       const pagesMap = {}
       const componentsMap = {}
 
@@ -182,7 +183,7 @@ module.exports = function (script, options, callback) {
         const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
         componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
       })
-
+      content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
       if (!isProduction) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
@@ -192,7 +193,7 @@ module.exports = function (script, options, callback) {
         ? `require(${stringifyRequest(script.src)})\n`
         : (script.content + '\n') + '\n'
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += '  const currentOption = global.currentOption\n'
+      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -236,7 +237,7 @@ module.exports = function (script, options, callback) {
       // i18n`
       //     }
       //   }
-      content += '\n  )\n__dynamic_page_slot__\n'
+      content += `\n  )\n__dynamic_page_slot__\n`
       return content
     }
   })

@@ -1,4 +1,4 @@
-import { setByPath } from '../../helper/utils'
+import { setByPath } from '@mpxjs/utils'
 
 export default function proxyEventMixin () {
   const methods = {

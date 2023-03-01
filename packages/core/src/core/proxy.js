@@ -102,7 +102,7 @@ export default class MpxProxy {
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
     // 收集setup中动态注册的hooks，小程序与web环境都需要
     this.hooks = {}
-    if (__mpx_mode__ !== 'web' || __mpx_mode__ !== 'tenon') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
@@ -124,7 +124,7 @@ export default class MpxProxy {
   }
 
   created () {
-    if (__mpx_mode__ !== 'web' || __mpx_mode__ !== 'tenon') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       // web和tenon中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
@@ -139,7 +139,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web' || __mpx_mode__ !== 'tenon') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       this.initRender()
     }
 
@@ -210,7 +210,7 @@ export default class MpxProxy {
     }
     // 挂载$rawOptions
     this.target.$rawOptions = this.options
-    if (__mpx_mode__ !== 'web' || __mpx_mode__ !== 'tenon') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
       // 挂载$watch
       this.target.$watch = this.watch.bind(this)
       // 强制执行render

@@ -1,7 +1,7 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import MPXProxy from '../../../core/proxy'
-import { diffAndCloneA } from '../../../helper/utils'
+import { diffAndCloneA } from '@mpxjs/utils'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -46,7 +46,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.__mpxProxy && this.__mpxProxy.updated()
     },
     [hookNames[2]] () {
-      this.__mpxProxy && this.__mpxProxy.destroyed()
+      this.__mpxProxy && this.__mpxProxy.unmounted()
     }
   }]
   // 为了在builtMixin中可以使用某些rootMixin实现的特性（如数据响应等），此处builtInMixin在rootMixin之后执行，但是当builtInMixin使用存在对应内建生命周期的目标平台声明周期写法时，可能会出现用户生命周期比builtInMixin中的生命周期先执行的情况，为了避免这种情况发生，builtInMixin应该尽可能使用内建生命周期来编写
