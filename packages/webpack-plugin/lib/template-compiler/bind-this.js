@@ -112,9 +112,7 @@ function checkIdentifierDel (last, opts) {
   ) {
     const p = last.parent
     const name = p.callee.name || (p.callee.property && p.callee.property.name)
-    if (name === '_i') { // wx:for
-      realDel = false
-    } else if (name && (name === '_p' || hash[name])) { // this._p() || Number(a)
+    if (name && (name === '_p' || hash[name])) { // this._p() || Number(a)
       last = last.parentPath
     } else {
       realDel = false
