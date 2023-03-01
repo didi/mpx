@@ -34,18 +34,23 @@ onMounted(() => {
   console.log('mounted')
 })
 const reload = () => window.location.reload()
-const jumpPage = () =>
+const jumpPage = () => {
   mpx.navigateTo({
     url: swiperPage
   })
+}
 
-  defineExpose({
-    a,
-    index,
-    array,
-    reload,
-    jumpPage
-  })
+console.log(123)
+
+defineExpose({
+  a,
+  index,
+  array,
+  reload,
+  jumpPage
+})
+
+console.log(456)
 </script>
 <style scoped>
 .list {

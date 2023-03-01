@@ -621,7 +621,11 @@ function compileScriptSetup (
   _s.appendRight(endOffset, '})')
 
   return {
-    content: _s.toString()
+    content: _s.toString(),
+    map: _s.generateMap({
+      file: filePath + '.map',
+      source: filePath
+    })
   }
 }
 

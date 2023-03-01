@@ -10,6 +10,7 @@ import { scriptSetupCompiler } from '@mpxjs/compiler'
 import MagicString from 'magic-string'
 import { SourceMap, TransformPluginContext } from 'rollup'
 import { Options } from 'src/options'
+import remapping, { SourceMapInput } from '@ampproject/remapping'
 import { transformWithEsbuild } from 'vite'
 import { OPTION_PROCESSOR_PATH, TAB_BAR_CONTAINER_PATH } from '../../constants'
 import { resolvedConfig } from '../config'
@@ -73,6 +74,13 @@ export async function transformScript(
     }
   }
 
+  const mappings: SourceMapInput[] = []
+  const ctorType = app ? 'app' : isPage ? 'page' : 'component'
+  const { i18n } = options
+  const componentGenerics = jsonConfig.componentGenerics
+  const pagesMap: Record<string, string> = {}
+  const componentsMap: Record<string, string> = {}
+
   if (script.setup) {
     const res = scriptSetupCompiler(
       script,
@@ -80,17 +88,10 @@ export async function transformScript(
       descriptor.filename
     )
     script.content = res.content
+    mappings.push(res.map as SourceMapInput)
   }
 
   const s = new MagicString(script.content)
-  const ctorType = app ? 'app' : isPage ? 'page' : 'component'
-
-  const { i18n } = options
-
-  const componentGenerics = jsonConfig.componentGenerics
-
-  const pagesMap: Record<string, string> = {}
-  const componentsMap: Record<string, string> = {}
 
   if (script.src) {
     s.prepend(`${genImport(script.src)}\n`)
@@ -231,7 +232,7 @@ export async function transformScript(
   )
 
   // transform ts
-  if (script?.attrs.lang === 'ts' && !script.src) {
+  if (script?.attrs.lang === 'ts' && !script.src && !script.setup) {
     const result = transformWithEsbuild(
       s.toString(),
       filename,
@@ -244,12 +245,21 @@ export async function transformScript(
     return result
   }
 
+  let index = 0
   return {
     code: s.toString(),
-    map: s.generateMap({
-      file: filename + '.map',
-      source: filename
-    })
+    map: remapping(
+      [
+        s.generateMap({
+          file: filename + '.map',
+          source: filename
+        }) as SourceMapInput
+      ],
+      () => {
+        return mappings[index++] || null
+      },
+      true
+    ) as SourceMap
   }
 }
 

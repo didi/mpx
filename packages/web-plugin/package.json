@@ -5,18 +5,16 @@
   "keywords": [
     "mpx"
   ],
-  "author": "donghongping",
-  "license": "Apache",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/*"
-      ]
-    }
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "license": "Apache",
+  "author": "donghongping",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -40,54 +38,27 @@
       "import": "./dist/webpack.js"
     }
   },
-  "scripts": {
-    "dev": "node scripts/tsc.js",
-    "build": "rimraf ./dist && tsc && npm run post-build",
-    "post-build": "node scripts/postbuild.js executive"
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
   },
   "files": [
     "dist",
     "src/runtime"
   ],
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:didi/mpx.git"
-  },
-  "homepage": "https://didi.github.io/mpx/",
-  "bugs": {
-    "url": "https://github.com/didi/mpx/issues"
-  },
-  "devDependencies": {
-    "@types/async": "^2.4.2",
-    "@types/babel-traverse": "^6.25.4",
-    "@types/babel-types": "^7.0.4",
-    "@types/debug": "^4.1.7",
-    "@types/hash-sum": "^1.0.0",
-    "@types/loader-utils": "^2.0.3",
-    "@types/lodash": "^4.14.191",
-    "@types/lodash-es": "^4.17.6",
-    "@types/lru-cache": "^7.10.10",
-    "@types/node": "^16.11.6",
-    "@types/qs": "^6.9.7",
-    "@typescript-eslint/eslint-plugin": "^4.26.1",
-    "@typescript-eslint/parser": "^4.26.1",
-    "@mpxjs/webpack-plugin": "workspace:*",
-    "esbuild": "^0.16.17",
-    "eslint": "^7.28.0",
-    "eslint-plugin-import": "^2.23.4",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "eslint-plugin-tsdoc": "^0.2.14",
-    "fast-glob": "^3.2.12",
-    "rollup": "^3.0.0",
-    "typescript": "^4.3.2",
-    "vite": "^4.0.0",
-    "webpack": "^5.48.0"
+  "scripts": {
+    "build": "rimraf ./dist && tsc && npm run post-build",
+    "dev": "node scripts/tsc.js",
+    "post-build": "node scripts/postbuild.js executive"
   },
   "dependencies": {
+    "@ampproject/remapping": "^2.2.0",
     "@babel/generator": "^7.16.0",
     "@babel/types": "^7.16.0",
     "@better-scroll/core": "^2.5.0",
@@ -97,8 +68,8 @@
     "@better-scroll/slide": "^2.5.0",
     "@better-scroll/wheel": "^2.5.0",
     "@better-scroll/zoom": "^2.5.0",
-    "@mpxjs/compiler": "workspace:*",
     "@mpxjs/compile-utils": "workspace:*",
+    "@mpxjs/compiler": "workspace:*",
     "@mpxjs/loaders": "workspace:*",
     "@mpxjs/plugin-proxy": "workspace:*",
     "@vitejs/plugin-vue2": "^2.0.0",
@@ -119,6 +90,33 @@
     "source-list-map": "^2.0.0",
     "vue": "^2.7.0"
   },
+  "devDependencies": {
+    "@mpxjs/webpack-plugin": "workspace:*",
+    "@types/async": "^2.4.2",
+    "@types/babel-traverse": "^6.25.4",
+    "@types/babel-types": "^7.0.4",
+    "@types/debug": "^4.1.7",
+    "@types/hash-sum": "^1.0.0",
+    "@types/loader-utils": "^2.0.3",
+    "@types/lodash": "^4.14.191",
+    "@types/lodash-es": "^4.17.6",
+    "@types/lru-cache": "^7.10.10",
+    "@types/node": "^16.11.6",
+    "@types/qs": "^6.9.7",
+    "@typescript-eslint/eslint-plugin": "^4.26.1",
+    "@typescript-eslint/parser": "^4.26.1",
+    "esbuild": "^0.16.17",
+    "eslint": "^7.28.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-tsdoc": "^0.2.14",
+    "fast-glob": "^3.2.12",
+    "rollup": "^3.0.0",
+    "typescript": "^4.3.2",
+    "vite": "^4.0.0",
+    "webpack": "^5.48.0"
+  },
   "peerDependencies": {
     "@mpxjs/webpack-plugin": "2.8.20",
     "esbuild": "^0.16.17",
@@ -128,5 +126,8 @@
   },
   "engines": {
     "node": ">=14.14.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
   }
 }
