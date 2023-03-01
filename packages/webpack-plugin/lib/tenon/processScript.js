@@ -164,7 +164,7 @@ module.exports = function (script, options, callback) {
       //     content += `  wxsModules.${module} = ${expression}\n`
       //   })
       // }
-      let firstPage = ''
+      const firstPage = ''
       const pagesMap = {}
       const componentsMap = {}
 
@@ -237,7 +237,7 @@ module.exports = function (script, options, callback) {
       // i18n`
       //     }
       //   }
-      content += `\n  )\n__dynamic_page_slot__\n`
+      content += '\n  )\n__dynamic_page_slot__\n'
       return content
     }
   })
