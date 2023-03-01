@@ -118,7 +118,7 @@ function factory () {
   Object.assign(Mpx, APIs)
   Object.assign(Mpx.prototype, InstanceAPIs)
   // 输出web时在mpx上挂载Vue对象
-  if (__mpx_mode__ === 'web') {
+  if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
     Mpx.__vue = Vue
   }
   return Mpx

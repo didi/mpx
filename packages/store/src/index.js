@@ -1,6 +1,5 @@
 import Mpx, { reactive, computed } from '@mpxjs/core'
-import Vue from '../vue'
-import createHummerPlugin from '../platform/builtInPlugins/hummerStorePlugin'
+import createHummerPlugin from './builtInPlugins/hummerStorePlugin'
 import {
   getByPath,
   warn,
@@ -155,7 +154,7 @@ class Store {
   registerModule (module) {
     const state = module.state || {}
     const reactiveModule = __mpx_mode__ === 'tenon'
-      ? Vue.reactive({ state })
+      ? Mpx.__vue.reactive({ state })
       : { state }
     if (module.getters) {
       reactiveModule.getters = transformGetters(module.getters, reactiveModule, this)

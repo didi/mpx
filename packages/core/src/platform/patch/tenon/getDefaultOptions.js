@@ -2,6 +2,7 @@ import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import MPXProxy from '../../../core/proxy'
 import { diffAndCloneA } from '@mpxjs/utils'
+import { UPDATED } from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -43,7 +44,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       this.__mpxProxy && this.__mpxProxy.mounted(Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
     },
     updated () {
-      this.__mpxProxy && this.__mpxProxy.updated()
+      this.__mpxProxy && this.__mpxProxy.callHook(UPDATED)
     },
     [hookNames[2]] () {
       this.__mpxProxy && this.__mpxProxy.unmounted()
