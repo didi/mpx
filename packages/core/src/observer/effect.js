@@ -69,7 +69,8 @@ export class ReactiveEffect {
   // same as trigger
   update () {
     // avoid dead cycle
-    if (Dep.target === this) return
+    // sometimes may be not dead cycle, depend on scheduler to avoid it.
+    // if (Dep.target === this) return
     if (this.pausedState !== PausedState.resumed) {
       this.pausedState = PausedState.dirty
     } else {
