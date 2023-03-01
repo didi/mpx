@@ -84,18 +84,6 @@ function checkIdentifierDel (last, opts) {
   let realDel = true
   let replace = false
 
-  if (last.key === 'callee') {
-    if (last.node.property.name === '$t') { // i18n直接删除
-      if (t.isCallExpression(last.parent)) {
-        last = last.parentPath
-      }
-      return {
-        path: last.parentPath,
-        realDel
-      }
-    }
-  }
-
   // 'object' 的判断，要在 'argument' 之前,为了处理 !a.length 之类的语句
   if (last.key === 'object' && hasDangerous) { // a.length
     last = last.parentPath
