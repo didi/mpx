@@ -20,70 +20,34 @@ export default function processOption (
   VueRouter,
   mpx
 ) {
-  processCommonOption({ option, mixin, outputPath })
-  if (isServerRendering()) {
-    if (ctorType === 'app') {
+  if (ctorType === 'app') {
+    if (isServerRendering()) {
       return context => {
         return new Promise((resolve, reject) => {
-          processAppOption({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
-          const app = new Vue({
-            ...option,
-            render: (h) => {
-              return h ('div', { attrs: { id: 'app' }, }, [
-                h('div', { attrs: { class: 'app' } }, [
-                  h('mpx-keep-alive', {}, [
-                    h('router-view', {
-                      attrs: {
-                        class: 'page'
-                      }
-                    })
-                  ])
-                ])
-              ])
-            }
-          })
+          const { app, router, pinia } = processApp({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
           if (app.onSSRAppCreated) {
-            app.onSSRAppCreated({ pinia: option.pinia, router: option.router, app, context })
+            app.onSSRAppCreated({ pinia, router, app, context })
           }
-          global.__mpxRouter.onReady(() => {
+          router.onReady(() => {
             resolve(app)
           }, reject)
         })
       }
     }
-    processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
-    return option
+    const { app, pinia, router } = processApp({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
+    pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+    router.onReady(() => {
+      app.$mount('#app')
+    })
+    return
   } else {
-    if (ctorType === 'app') {
-      processAppOption({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
-      const app = new Vue({
-        ...option,
-        render: (h) => {
-          return h ('div', { attrs: { id: 'app' }, }, [
-            h('div', { attrs: { class: 'app' } }, [
-              h('mpx-keep-alive', {}, [
-                h('router-view', {
-                  attrs: {
-                    class: 'page'
-                  }
-                })
-              ])
-            ])
-          ])
-        }
-      })
-      global.__mpxPinia.state.value = JSON.parse(window.__INITIAL_STATE__)
-      global.__mpxRouter.onReady(() => {
-        app.$mount('#app')
-      })
-    } else {
-      processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
-      return option
-    }
+    processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
   }
+  processCommonOption({ option, mixin, outputPath })
+  return option
 }
 
-function processAppOption ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option }) {
+function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option }) {
 // 对于app中的组件需要全局注册
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
@@ -297,6 +261,26 @@ function processAppOption ({ componentsMap, Vue, pagesMap, firstPage, VueRouter,
   if (global.__mpxPinia) {
     option.pinia = global.__mpxPinia
   }
+
+  const app = new Vue({
+    ...option,
+    render: (h) => {
+      return h('div', { attrs: { id: 'app' }, }, [
+        h('div', { class: { 'app': true } }, [
+          h('mpx-keep-alive', [h('router-view', {
+            class: {
+              'page': true
+            }
+          })])
+        ])
+      ])
+    }
+  })
+  return {
+    app,
+    pinia: option.pinia,
+    router: option.router
+  }
 }
 
 function processComponentOption ({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig }) {
@@ -368,7 +352,7 @@ export function getComponent (component, extendOptions) {
 }
 
 export function getWxsMixin (wxsModules) {
-  if (!wxsModules) return {}
+  if (!wxsModules || !Object.keys(wxsModules).length) return {}
   return {
     created () {
       Object.keys(wxsModules).forEach((key) => {
