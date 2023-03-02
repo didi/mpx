@@ -88,8 +88,7 @@ function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
 
-function noop () {
-}
+function noop () {}
 
 function makeMap (arr) {
   return arr.reduce((obj, item) => {

@@ -31,8 +31,10 @@ module.exports = {
     getCurrentPages: 'readonly'
   },
   rules: {
-    '@typescript-eslint/no-var-requires': 0,
     '@typescript-eslint/ban-ts-comment': 0,
+    '@typescript-eslint/no-empty-function': 0,
+    '@typescript-eslint/no-this-alias': 0,
+    '@typescript-eslint/no-var-requires': 0,
     '@typescript-eslint/explicit-module-boundary-types': 0,
     'no-cond-assign': 0,
     camelcase: 0
