@@ -1,7 +1,7 @@
 import { DefineConfig } from '.'
 const TAG_NAME = 'picker'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliPropLogError = print({
     platform: 'ali',
     tag: TAG_NAME,
@@ -28,14 +28,14 @@ export default <DefineConfig>function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
-    web(tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-picker'
     },
     props: [
       {
         test: 'mode',
-        ali(attr) {
+        ali (attr) {
           if (attr.value !== 'selector') {
             aliPropLogError(attr)
           }

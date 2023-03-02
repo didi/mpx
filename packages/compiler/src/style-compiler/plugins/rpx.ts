@@ -26,7 +26,7 @@ export default (options: {
 
       function transRpx (declaration: Declaration) {
         if (pxRegExp.test(declaration.value)) {
-          declaration.value = declaration.value.replace(pxRegExpG, function (match, $1) {
+          declaration.value = declaration.value.replace(pxRegExpG, function (_match, $1) {
             if ($1 === '0') return $1
             return `${$1 * ratio}rpx`
           })

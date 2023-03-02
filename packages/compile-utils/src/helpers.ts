@@ -1,8 +1,8 @@
 import loaderUtils from 'loader-utils'
 import { addQuery, parseRequest } from './index'
 
-const selectorPath = '@mpxjs/loaders/selector'
-const scriptSetupPath = '@mpxjs/loaders/script-setup'
+const selectorPath = '@mpxjs/loaders/selector-loader'
+const scriptSetupPath = '@mpxjs/loaders/script-setup-loader'
 
 interface defaultLangType {
   template: 'wxml'
@@ -30,13 +30,13 @@ const defaultLang: defaultLangType = {
   wxs: 'wxs'
 }
 
-export function createHelpers(loaderContext: any) {
+export function createHelpers (loaderContext: any) {
   const rawRequest = loaderUtils.getRemainingRequest(loaderContext)
   const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
   // @ts-ignore
   const { mode, env } = loaderContext.getMpx() || {}
 
-  function getRequire(
+  function getRequire (
     type: string,
     part: Record<string, any>,
     extraOptions: Record<string, any>,
@@ -45,7 +45,7 @@ export function createHelpers(loaderContext: any) {
     return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
   }
 
-  function getImport(
+  function getImport (
     type: string,
     part: Record<string, any>,
     extraOptions: Record<string, any>,
@@ -59,7 +59,7 @@ export function createHelpers(loaderContext: any) {
     )
   }
 
-  function getNamedExports(
+  function getNamedExports (
     type: string,
     part: Record<string, any>,
     extraOptions: Record<string, any>,
@@ -68,14 +68,14 @@ export function createHelpers(loaderContext: any) {
     return 'export * from ' + getRequestString(type, part, extraOptions, index)
   }
 
-  function getFakeRequest(type: string, part: Record<string, any>) {
+  function getFakeRequest (type: string, part: Record<string, any>) {
     const lang = part.lang || defaultLang[type] || type
     const options = { ...queryObj }
     if (lang === 'json') options.asScript = true
     return addQuery(`${resourcePath}.${lang}`, options)
   }
 
-  function getRequestString(
+  function getRequestString (
     type: string,
     part: Record<string, any>,
     extraOptions: Record<string, any>,

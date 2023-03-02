@@ -4,7 +4,7 @@ import { type as t } from './type'
 import { hasOwn } from './has-own'
 
 // 默认为非强行覆盖原query，如需强行覆盖传递force为true
-export function addQuery(
+export function addQuery (
   request: any,
   data: any = {},
   force?: any,

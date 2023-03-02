@@ -17,7 +17,7 @@ export interface CustomExtensionsOptions {
  * @param extendsion - string
  * @returns path/to/index.extendsion.js
  */
-function genExtensionsFilePath(filename: string, extendsion: string): string {
+function genExtensionsFilePath (filename: string, extendsion: string): string {
   const parseResult = path.parse(filename)
   return path.format({
     ...parseResult,
@@ -53,13 +53,13 @@ export function esbuildCustomExtensionsPlugin(
  * @param options - options
  * @returns vite plugin options
  */
-export function customExtensionsPlugin(
+export function customExtensionsPlugin (
   options: CustomExtensionsOptions
 ): Plugin {
   const filter = createFilter(options.include)
   return {
     name: 'vite:mpx-custom-estensions',
-    async load(id) {
+    async load (id) {
       if (!filter(id) || !matchCondition(id, options.fileConditionRules)) return
       const { resourcePath: filename, queryObj: query } = parseRequest(id)
       if (query.vue) return

@@ -4,7 +4,7 @@ import { toPosix, parseRequest } from '@mpxjs/compile-utils'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import { Dependency, LoaderDefinition } from 'webpack'
 
-const loader:LoaderDefinition = function (content:string, prevOptions?: any) {
+const fileLoader:LoaderDefinition = function (content:string, prevOptions?: any) {
   // @ts-ignore
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
@@ -30,7 +30,7 @@ const loader:LoaderDefinition = function (content:string, prevOptions?: any) {
     const { resourcePath, queryObj } = parseRequest(this.resource)
     const packageRoot = queryObj.packageRoot || ''
     url = outputPath = toPosix(path.join(packageRoot, outputPath))
-    this._module && this._module.addPresentationalDependency(<Dependency>new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
+    this._module && this._module.addPresentationalDependency(<Dependency> new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
@@ -56,4 +56,4 @@ const loader:LoaderDefinition = function (content:string, prevOptions?: any) {
 // 设置 raw，获取二进制数据
 module.exports.raw = true
 
-export default loader
+export default fileLoader

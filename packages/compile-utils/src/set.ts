@@ -1,6 +1,6 @@
-export type SetType = Set<ItemType>
-export type  FnType = (item:  ItemType) => unknown
 export type ItemType = string | Record<string, unknown>
+export type SetType = Set<ItemType>
+export type FnType = (item: ItemType) => unknown
 
 export default {
   every (set: SetType, fn: FnType) {

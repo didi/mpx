@@ -7,7 +7,7 @@ import { genScriptBlock, transformScript } from './script'
 import { genStylesBlock } from './style'
 import { genTemplateBlock } from './template'
 
-export async function transformMain(
+export async function transformMain (
   code: string,
   filename: string,
   query: OptionObject,
@@ -39,6 +39,6 @@ export async function transformMain(
   }
 }
 
-function genVueSfc(...args: { output: string }[]) {
+function genVueSfc (...args: { output: string }[]) {
   return args.map(v => v.output).join()
 }

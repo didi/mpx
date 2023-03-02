@@ -17,7 +17,7 @@ import mpx from '../mpx'
  * @param options - ResolvedOptions
  * @param pluginContext - TransformPluginContext
  */
-export async function transformStyle(
+export async function transformStyle (
   code: string,
   filename: string,
   descriptor: SFCDescriptor,
@@ -42,7 +42,7 @@ export async function transformStyle(
  * @param descriptor - SFCDescriptor
  * @returns <style>descriptor.style</style>
  */
-export function genStylesBlock(descriptor: SFCDescriptor): { output: string } {
+export function genStylesBlock (descriptor: SFCDescriptor): { output: string } {
   const { styles } = descriptor
   return { output: styles.map(style => genComponentTag(style)).join('\n') }
 }

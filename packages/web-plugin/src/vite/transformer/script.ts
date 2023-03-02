@@ -44,7 +44,7 @@ export const genComponentCode = (
  * @param pluginContext - TransformPluginContext
  * @returns script content
  */
-export async function transformScript(
+export async function transformScript (
   descriptor: SFCDescriptor,
   options: Options,
   pluginContext: TransformPluginContext
@@ -173,7 +173,7 @@ export async function transformScript(
   }
 
   // after source code
-  s.append(`\nconst wxsModules = {}\n`)
+  s.append('\nconst wxsModules = {}\n')
 
   if (wxsModuleMap) {
     const wxsModuleKeys = Object.keys(wxsModuleMap)
@@ -269,20 +269,20 @@ export async function transformScript(
  * @param options - ResolvedOptions
  * @param pluginContext - TransformPluginContext
  */
-export async function genScriptBlock(
+export async function genScriptBlock (
   descriptor: SFCDescriptor,
   code: string
 ): Promise<{ output: string }> {
   return {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     output: genComponentTag(descriptor.script!, {
-      attrs(script: { attrs: { src?: string; setup?: boolean } }) {
+      attrs (script: { attrs: { src?: string; setup?: boolean } }) {
         const attrs = Object.assign({}, script.attrs)
         delete attrs.src
         delete attrs.setup
         return attrs
       },
-      content() {
+      content () {
         return code
       }
     })

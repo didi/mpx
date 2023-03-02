@@ -5,7 +5,7 @@ type LoaderContextResolveCallback = Parameters<
   LoaderContext<null>['resolve']
 >[2]
 // todo 提供不记录dependency的resolve方法，非必要的情况下不记录dependency，提升缓存利用率
-export function resolve(
+export function resolve (
   context: string,
   request: string,
   loaderContext: LoaderContext<null>,

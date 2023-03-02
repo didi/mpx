@@ -1,8 +1,8 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'swiper-item'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
@@ -11,7 +11,7 @@ export default <DefineConfig>function ({ print }) {
 
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-swiper-item'
     },

@@ -69,7 +69,7 @@ const externalsMap: Record<string, RegExp> = {
 
 export let optionKeys: (keyof Options)[] = []
 
-export function processOptions(rawOptions: Partial<Options>): Options {
+export function processOptions (rawOptions: Partial<Options>): Options {
   rawOptions.include = rawOptions.include || [/\.mpx$/]
   rawOptions.exclude = rawOptions.exclude || []
   rawOptions.mode = rawOptions.mode || 'web'

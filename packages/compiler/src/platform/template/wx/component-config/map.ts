@@ -1,8 +1,8 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'map'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLogError = print({ platform: 'ali', tag: TAG_NAME, isError: true, type: 'event' })
   const aliPropValueWarningLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'value-attr-uniform' })
@@ -42,7 +42,7 @@ export default <DefineConfig>function ({ print }) {
       },
       {
         test: /^(include-points|show-location)$/,
-        jd ({ name, value }) {
+        jd ({ name }) {
           const propsMap = {
             'include-points': 'includePoints',
             'show-location': 'showLocation'

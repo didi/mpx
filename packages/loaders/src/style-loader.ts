@@ -2,7 +2,7 @@ import { LoaderDefinition } from 'webpack'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { styleCompiler } from '@mpxjs/compiler'
 
-export default <LoaderDefinition>function mpxStyleLoader(css, map) {
+export default <LoaderDefinition> function mpxStyleLoader (css, map) {
   this.cacheable()
   const cb = this.async()
   styleCompiler.transform(css, proxyPluginContext(this), {

@@ -21,4 +21,3 @@ export const stringifyLoadersAndResource = (loaders: any, resource: string) => {
   }
   return str + resource
 }
-

@@ -2,7 +2,7 @@ import hash from 'hash-sum'
 import path from 'path'
 import { Options } from '../options'
 
-export default function pathHash(
+export default function pathHash (
   resourcePath: string,
   options?: Options
 ): string {

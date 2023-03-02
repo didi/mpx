@@ -2,7 +2,7 @@ import path from 'path'
 import { Options } from '../options'
 import pathHash from './path-hash'
 
-export default function getOutputPath(
+export default function getOutputPath (
   resourcePath:string,
   type: string,
   options: Options,

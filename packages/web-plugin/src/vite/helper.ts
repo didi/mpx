@@ -21,7 +21,7 @@ export const I18N_HELPER_CODE = '\0/vite/mpx-i18n-helper'
 export const TAB_BAR_PAGE_HELPER_CODE = '\0/vite/mpx-tab-bar-page-helper'
 
 export const renderPageRouteCode = (
-  options: Options,
+  _options: Options,
   importer: string
 ): string => {
   return `export default ${stringify(
@@ -54,16 +54,16 @@ export const renderEntryCode = async (
   `
 }
 
-export function renderI18nCode(options: Options): string {
+export function renderI18nCode (options: Options): string {
   const content = []
   const { i18n } = options
   if (i18n) {
     content.push(
       genImport('vue', 'Vue'),
       genImport('vue-i18n', 'VueI18n'),
-      genImport(`vue-i18n-bridge`, '{ createI18n }'),
+      genImport('vue-i18n-bridge', '{ createI18n }'),
       genImport('@mpxjs/core', 'Mpx'),
-      `Vue.use(VueI18n, { bridge: true })`
+      'Vue.use(VueI18n, { bridge: true })'
     )
     const i18nObj = { ...i18n }
     const requestObj: Record<string, string> = {}
@@ -83,10 +83,10 @@ export function renderI18nCode(options: Options): string {
       content.push(`i18nCfg.${key} = __mpx__i18n__${key}`)
     })
     content.push(
-      `i18nCfg.legacy = false`,
-      `const i18n = createI18n(i18nCfg, VueI18n)`,
-      `Vue.use(i18n)`,
-      `Mpx.i18n = i18n`
+      'i18nCfg.legacy = false',
+      'const i18n = createI18n(i18nCfg, VueI18n)',
+      'Vue.use(i18n)',
+      'Mpx.i18n = i18n'
     )
   }
   return content.join('\n')
@@ -97,7 +97,7 @@ export function renderI18nCode(options: Options): string {
  * @param descriptor - SFCDescriptor
  * @returns
  */
-export async function renderAppHelpCode(
+export async function renderAppHelpCode (
   options: Options,
   descriptor: SFCDescriptor,
   pluginContext: PluginContext
@@ -110,7 +110,7 @@ export async function renderAppHelpCode(
   const list = tabBar.list || []
   const newList = []
   const needReplaceName: string[] = []
-  async function resolveTabBarItemIcon(
+  async function resolveTabBarItemIcon (
     item: TabBarItem,
     key: 'iconPath' | 'selectedIconPath'
   ) {
@@ -147,7 +147,7 @@ export async function renderAppHelpCode(
     `global.__mpxPageConfig = ${stringify(jsonConfig.window || {})}`,
     `global.__tabBar = ${tabBarStr}`,
     `global.currentSrcMode = "${options.srcMode}"`,
-    `global.getApp = function(){ return {} }`,
+    'global.getApp = function(){ return {} }',
     `global.getCurrentPages = function(){
       if(!global.__mpxRouter) return []
       // @ts-ignore
@@ -160,7 +160,7 @@ export async function renderAppHelpCode(
         return page || { route: item.path.slice(1) }
       })
     }`,
-    `global.__mpxGenericsMap = {}`
+    'global.__mpxGenericsMap = {}'
   )
   return content.join('\n')
 }
@@ -173,7 +173,7 @@ export async function renderAppHelpCode(
  * @returns
  */
 export const renderTabBarPageCode = async (
-  options: Options,
+  _options: Options,
   descriptor: SFCDescriptor,
   pluginContext: PluginContext
 ): Promise<string> => {
@@ -229,7 +229,7 @@ export const renderTabBarPageCode = async (
     genImport('vue', 'Vue'),
     genImport(OPTION_PROCESSOR_PATH, 'processOption, { getComponent }'),
     tabBars.join('\n'),
-    `global.__tabBar && Vue.observable(global.__tabBar)`,
+    'global.__tabBar && Vue.observable(global.__tabBar)',
     tabBarPagesMap &&
       `// @ts-ignore
       global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}`

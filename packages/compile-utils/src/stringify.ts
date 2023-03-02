@@ -3,7 +3,7 @@ const stringify = JSON.stringify.bind(JSON)
 
 export { stringify }
 
-export function stringifyObject(
+export function stringifyObject (
   obj?: Record<string, unknown>
 ): Record<string, string> {
   const result: Record<string, string> = {}
@@ -15,7 +15,7 @@ export function stringifyObject(
   return result
 }
 
-export function shallowStringify(obj: Record<string, string>): string {
+export function shallowStringify (obj: Record<string, string>): string {
   const arr = []
   for (const key in obj) {
     if (hasOwn(obj, key)) {

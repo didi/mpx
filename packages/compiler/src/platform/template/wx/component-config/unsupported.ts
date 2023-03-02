@@ -1,4 +1,4 @@
-import { DefineConfigs } from "."
+import { DefineConfigs } from '.'
 
 // 支付宝小程序不支持的标签集合
 const ALI_UNSUPPORTED_TAG_NAME_ARR = ['live-pusher', 'live-player', 'audio', 'functional-page-navigator', 'editor']

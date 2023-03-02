@@ -3,7 +3,7 @@ import { parseRequest } from '@mpxjs/compile-utils'
 import { LoaderDefinition } from 'webpack'
 import { scriptSetupCompiler } from '@mpxjs/compiler'
 
-export default <LoaderDefinition>function (content) {
+export default <LoaderDefinition> function scriptSetupLoader (content) {
   const { queryObj } = parseRequest(this.resource)
   const { ctorType, lang } = queryObj
   const filePath = this.resourcePath

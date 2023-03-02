@@ -7,7 +7,7 @@ import {
   shallowStringify,
   stringify
 } from '@mpxjs/compile-utils'
-import { CompilerResult } from '@mpxjs/compiler'
+import { CompilerResult, JsonConfig } from '@mpxjs/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import {
   stringifyRequest as _stringifyRequest,
@@ -18,16 +18,13 @@ import { LoaderContext } from 'webpack'
 import { Options } from '../../options'
 import { JsonProcessResult } from '../../processor/json-process'
 import { TemplateProcessResult } from '../../processor/template-process'
-import { JsonConfig } from '@mpxjs/compiler'
 import mpx, { getOptions } from '../mpx'
 
 const optionProcessorPath = '@mpxjs/web-plugin/src/runtime/option-processor'
-const tabBarContainerPath =
-  '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar-container.vue'
-const tabBarPath =
-  '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar.vue'
+const tabBarContainerPath = '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar-container.vue'
+const tabBarPath = '@mpxjs/web-plugin/src/runtime/components/web/mpx-tab-bar.vue'
 
-function getAsyncChunkName(chunkName: boolean | string) {
+function getAsyncChunkName (chunkName: boolean | string) {
   if (chunkName && typeof chunkName !== 'boolean') {
     return `/* webpackChunkName: "${chunkName}" */`
   }
@@ -134,7 +131,7 @@ export default function (
   }
   // @ts-ignore
   output += genComponentTag(script, {
-    attrs(script: { attrs: { src?: string; setup?: boolean } }) {
+    attrs (script: { attrs: { src?: string; setup?: boolean } }) {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
       delete attrs.src
@@ -197,7 +194,7 @@ export default function (
           Object.keys(requestObj).forEach(key => {
             content.append(`  i18nCfg.${key} = require(${requestObj[key]})\n`)
           })
-          content.append(`   i18nCfg.legacy = false\n`)
+          content.append('   i18nCfg.legacy = false\n')
           content.append(`   const i18n = createI18n(i18nCfg, VueI18n)
             Vue.use(i18n)
             Mpx.i18n = i18n
@@ -326,7 +323,7 @@ export default function (
         genericsInfo: ${stringify(genericsInfo)},
         mixin: getWxsMixin(wxsModules),
         hasApp: ${hasApp}
-        ${ctorType === 'app' ? `,Vue, VueRouter` : ''}
+        ${ctorType === 'app' ? ',Vue, VueRouter' : ''}
       })`)
       return content.toString()
     }

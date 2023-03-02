@@ -24,7 +24,7 @@ export interface ProxyPluginContext {
  * @param rollupOptions
  * @returns
  */
-export function proxyPluginContext(
+export function proxyPluginContext (
   pluginContext: TransformPluginContext | ThisParameterType<LoaderDefinition>,
   rollupOptions?: {
     moduleId: string
@@ -45,7 +45,7 @@ export function proxyPluginContext(
       addDependency: pluginContext.addDependency.bind(pluginContext),
       addBuildDependency: pluginContext.addBuildDependency.bind(pluginContext),
       addMissingDependency: pluginContext.addMissingDependency.bind(pluginContext),
-      addContextDependency:  pluginContext.addContextDependency.bind(pluginContext),
+      addContextDependency: pluginContext.addContextDependency.bind(pluginContext),
       cacheable: pluginContext.cacheable.bind(pluginContext),
       async: pluginContext.async.bind(pluginContext),
       resource: pluginContext.resource,
@@ -66,7 +66,7 @@ export function proxyPluginContext(
       sourceMap: rollupOptions?.sourceMap,
       addBuildDependency: function () {},
       addMissingDependency: function () {},
-      addContextDependency:  function () {},
+      addContextDependency: function () {},
       emitFile: pluginContext.emitFile.bind(pluginContext)
     }
   }

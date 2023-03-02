@@ -1,7 +1,7 @@
 import { DefineConfig } from '.'
 const TAG_NAME = 'video'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const baiduPropLog = print({
     platform: 'baidu',
     tag: TAG_NAME,
@@ -47,7 +47,7 @@ export default <DefineConfig>function ({ print }) {
   })
   return {
     test: TAG_NAME,
-    web(tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-video'
     },

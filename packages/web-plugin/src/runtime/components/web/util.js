@@ -37,7 +37,8 @@ export function isEmptyObject (obj) {
   if (!obj) {
     return true
   }
-  for (let key in obj) {
+  // eslint-disable-next-line no-unreachable-loop
+  for (const key in obj) {
     return false
   }
   return true

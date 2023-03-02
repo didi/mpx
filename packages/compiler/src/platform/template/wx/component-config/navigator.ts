@@ -16,7 +16,7 @@ const wxSupportPropsValue: {
     'exit'
   ]
 }
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliValueLogError = print({
     platform: 'ali',
     tag: TAG_NAME,
@@ -81,7 +81,7 @@ export default <DefineConfig>function ({ print }) {
   })
   return {
     test: TAG_NAME,
-    web(tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-navigator'
     },

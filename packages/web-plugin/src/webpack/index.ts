@@ -48,7 +48,7 @@ const errors: Array<string | WebpackError> = []
 class MpxWebpackPlugin {
   options: Options
 
-  constructor(options: Partial<Options>) {
+  constructor (options: Partial<Options>) {
     options = options || {}
     this.options = processOptions(options)
     // Hack for buildDependencies
@@ -67,14 +67,16 @@ class MpxWebpackPlugin {
           if (
             result &&
             typeof options.hackResolveBuildDependencies === 'function'
-          )
+          ){
             options.hackResolveBuildDependencies(result)
+          }
           return rawCallback(err, result)
         }
       )
     }
   }
-  static loader(options: { [k: string]: unknown }) {
+
+  static loader (options: { [k: string]: unknown }) {
     if (options.transRpx) {
       warnings.push(
         'Mpx loader option [transRpx] is deprecated now, please use mpx webpack plugin config [transRpxRules] instead!'
@@ -85,28 +87,29 @@ class MpxWebpackPlugin {
       options
     }
   }
-  static wxsPreLoader(options = {}) {
+
+  static wxsPreLoader (options = {}) {
     return {
       loader: '@mpxjs/loaders/pre-loader',
       options
     }
   }
 
-  static urlLoader(options = {}) {
+  static urlLoader (options = {}) {
     return {
       loader: '@mpxjs/loaders/url-loader',
       options
     }
   }
 
-  static fileLoader(options = {}) {
+  static fileLoader (options = {}) {
     return {
       loader: '@mpxjs/loaders/file-loader',
       options
     }
   }
 
-  runModeRules(data: { [k: string]: any }) {
+  runModeRules (data: { [k: string]: any }) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
     if (queryObj.mode) {
       return
@@ -122,7 +125,7 @@ class MpxWebpackPlugin {
     }
   }
 
-  apply(compiler: { [k: string]: unknown } & Compiler) {
+  apply (compiler: { [k: string]: unknown } & Compiler) {
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -216,29 +219,29 @@ class MpxWebpackPlugin {
         )
         compilation.dependencyFactories.set(
           <DepConstructor>ResolveDependency,
-          <ModuleFactory>new NullFactory()
+          <ModuleFactory> new NullFactory()
         )
         compilation.dependencyTemplates.set(
           <DepConstructor>ResolveDependency,
-          <DependencyTemplate>new ResolveDependency.Template()
+          <DependencyTemplate> new ResolveDependency.Template()
         )
 
         compilation.dependencyFactories.set(
           <DepConstructor>InjectDependency,
-          <ModuleFactory>new NullFactory()
+          <ModuleFactory> new NullFactory()
         )
         compilation.dependencyTemplates.set(
           <DepConstructor>InjectDependency,
-          <DependencyTemplate>new InjectDependency.Template()
+          <DependencyTemplate> new InjectDependency.Template()
         )
 
         compilation.dependencyFactories.set(
           <DepConstructor>ReplaceDependency,
-          <ModuleFactory>new NullFactory()
+          <ModuleFactory> new NullFactory()
         )
         compilation.dependencyTemplates.set(
           <DepConstructor>ReplaceDependency,
-          <DependencyTemplate>new ReplaceDependency.Template()
+          <DependencyTemplate> new ReplaceDependency.Template()
         )
         compilation.dependencyFactories.set(
           <DepConstructor>CommonJsVariableDependency,
@@ -246,23 +249,23 @@ class MpxWebpackPlugin {
         )
         compilation.dependencyTemplates.set(
           <DepConstructor>CommonJsVariableDependency,
-          <DependencyTemplate>new CommonJsVariableDependency.Template()
+          <DependencyTemplate> new CommonJsVariableDependency.Template()
         )
         compilation.dependencyFactories.set(
           <DepConstructor>RecordResourceMapDependency,
-          <ModuleFactory>new NullFactory()
+          <ModuleFactory> new NullFactory()
         )
         compilation.dependencyTemplates.set(
           <DepConstructor>RecordResourceMapDependency,
-          <DependencyTemplate>new RecordResourceMapDependency.Template()
+          <DependencyTemplate> new RecordResourceMapDependency.Template()
         )
         compilation.dependencyFactories.set(
           <DepConstructor>RecordVueContentDependency,
-          <ModuleFactory>new NullFactory()
+          <ModuleFactory> new NullFactory()
         )
         compilation.dependencyTemplates.set(
           <DepConstructor>RecordVueContentDependency,
-          <DependencyTemplate>new RecordVueContentDependency.Template()
+          <DependencyTemplate> new RecordVueContentDependency.Template()
         )
       }
     )
@@ -504,8 +507,9 @@ class MpxWebpackPlugin {
                 resourcePath.indexOf('@mpxjs') !== -1 ||
                 !target ||
                 mode === srcMode
-              )
+              ) {
                 return
+              }
 
               const type = target.name
               const name = type === 'wx' ? 'mpx' : 'createFactory'
@@ -588,8 +592,9 @@ class MpxWebpackPlugin {
                 (name !== 'mpx' && name !== 'wx') ||
                 (name === 'wx' &&
                   !matchCondition(resourcePath, this.options.transMpxRules))
-              )
+              ){
                 return
+              }
 
               const srcModeString = `__mpx_src_mode_${srcMode}__`
               const dep = new InjectDependency({

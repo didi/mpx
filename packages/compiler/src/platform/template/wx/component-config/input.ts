@@ -1,8 +1,8 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'input'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -18,7 +18,7 @@ export default <DefineConfig>function ({ print }) {
 
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-input'
     },
@@ -55,7 +55,7 @@ export default <DefineConfig>function ({ print }) {
       },
       {
         test: /^(password|auto-focus|focus|cursor|selection-start|selection-end|use-built-in)$/,
-        web (prop, { el }) {
+        web (_prop, { el }) {
           el.isBuiltIn = true
         }
       },

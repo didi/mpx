@@ -27,7 +27,7 @@ export type MpxWithOptions = Mpx & Options
 
 const mpx: MpxWithOptions = {} as MpxWithOptions
 
-export function getOptions(): Options {
+export function getOptions (): Options {
   return pick(mpx, optionKeys)
 }
 

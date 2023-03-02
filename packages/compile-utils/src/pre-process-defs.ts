@@ -7,9 +7,9 @@
  * @param {object} defs 待处理的常量
  * @returns {object} 处理完毕的常量对象
  */
-function preProcessDefs(defs: any) {
+function preProcessDefs (defs: any) {
   const newDefs: any = {}
-  Object.keys(defs).map(key => {
+  Object.keys(defs).forEach(key => {
     if (typeof key === 'string' && key.indexOf('.') !== -1) {
       key.split('.').reduce((prev: any, curr, index, arr) => {
         if (index === arr.length - 1) {

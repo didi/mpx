@@ -1,19 +1,19 @@
-const ts = require('typescript');
+const ts = require('typescript')
 const run = require('./postbuild')
 
 const formatHost = {
   getCanonicalFileName: (path) => path,
   getCurrentDirectory: ts.sys.getCurrentDirectory,
-  getNewLine: () => ts.sys.newLine,
-};
+  getNewLine: () => ts.sys.newLine
+}
 
-function watchMain() {
-  const configPath = ts.findConfigFile(/*searchPath*/ './', ts.sys.fileExists, 'tsconfig.json');
+function watchMain () {
+  const configPath = ts.findConfigFile(/* searchPath */ './', ts.sys.fileExists, 'tsconfig.json')
   if (!configPath) {
-    throw new Error("Could not find a valid 'tsconfig.json'.");
+    throw new Error("Could not find a valid 'tsconfig.json'.")
   }
 
-  const createProgram = ts.createSemanticDiagnosticsBuilderProgram;
+  const createProgram = ts.createSemanticDiagnosticsBuilderProgram
 
   const host = ts.createWatchCompilerHost(
     configPath,
@@ -22,33 +22,32 @@ function watchMain() {
     createProgram,
     reportDiagnostic,
     reportWatchStatusChanged
-  );
+  )
 
-  const origCreateProgram = host.createProgram;
+  const origCreateProgram = host.createProgram
   host.createProgram = (rootNames, options, host, oldProgram) => {
-    return origCreateProgram(rootNames, options, host, oldProgram);
-  };
-  const origPostProgramCreate = host.afterProgramCreate;
+    return origCreateProgram(rootNames, options, host, oldProgram)
+  }
+  const origPostProgramCreate = host.afterProgramCreate
 
   host.afterProgramCreate = (program) => {
-    origPostProgramCreate(program);
+    origPostProgramCreate(program)
     run()
-  };
+  }
 
-  ts.createWatchProgram(host);
+  ts.createWatchProgram(host)
 }
 
-function reportDiagnostic(diagnostic) {
-  console.error(ts.flattenDiagnosticMessageText(diagnostic.messageText, formatHost.getNewLine()));
+function reportDiagnostic (diagnostic) {
+  console.error(ts.flattenDiagnosticMessageText(diagnostic.messageText, formatHost.getNewLine()))
 }
 
-function reportWatchStatusChanged(diagnostic) {
-  let message = ts.formatDiagnostic(diagnostic, formatHost);
+function reportWatchStatusChanged (diagnostic) {
+  let message = ts.formatDiagnostic(diagnostic, formatHost)
   if (message.indexOf('TS6194') > 0) {
-    message = message.replace(/message\sTS[0-9]{4}:(.+)(\s+)$/, '$1');
+    message = message.replace(/message\sTS[0-9]{4}:(.+)(\s+)$/, '$1')
     console.log(message)
   }
 }
 
-
-watchMain();
+watchMain()

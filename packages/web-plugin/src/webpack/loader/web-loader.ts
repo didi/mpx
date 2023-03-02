@@ -1,16 +1,16 @@
-import { templateCompiler } from '@mpxjs/compiler'
+import { templateCompiler, jsonCompiler } from '@mpxjs/compiler'
 import {
   addQuery,
   matchCondition,
   parseRequest,
-  getEntryName
+  getEntryName,
+  tsWatchRunLoaderFilter
 } from '@mpxjs/compile-utils'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import RecordVueContentDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency'
 import async from 'async'
 import loaderUtils from 'loader-utils'
 import path from 'path'
-import { LoaderContext } from 'webpack'
 import { MPX_APP_MODULE_ID } from '../../constants'
 import mpx, { getOptions } from '../mpx'
 import processJSON from '../web/process-json'
@@ -18,10 +18,8 @@ import processScript from '../web/process-script'
 import processStyles from '../web/process-styles'
 import processTemplate from '../web/process-template'
 import pathHash from '../../utils/path-hash'
-import { tsWatchRunLoaderFilter } from '@mpxjs/compile-utils'
 import getOutputPath from '../../utils/get-output-path'
-import { Dependency } from 'webpack'
-import { jsonCompiler } from '@mpxjs/compiler'
+import { Dependency, LoaderContext } from 'webpack'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 
 export default function (
@@ -91,13 +89,9 @@ export default function (
   }
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const loaderContext: any = this
-  const stringifyRequest = (r: string) =>
-    loaderUtils.stringifyRequest(loaderContext, r)
+  const stringifyRequest = (r: string) => loaderUtils.stringifyRequest(loaderContext, r)
   const filePath = this.resourcePath
-  const moduleId =
-    ctorType === 'app'
-      ? MPX_APP_MODULE_ID
-      : 'm' + ((pathHash && pathHash(filePath)) || '')
+  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + ((pathHash && pathHash(filePath)) || '')
 
   // 将mpx文件 分成四部分
   const parts = templateCompiler.parser(content, {
@@ -142,8 +136,7 @@ new Vue({
         return callback(null, output)
       }
       // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-      const cacheContent =
-        mpx.vueContentCache && mpx.vueContentCache.get(filePath)
+      const cacheContent = mpx.vueContentCache && mpx.vueContentCache.get(filePath)
       if (cacheContent) return callback(null, cacheContent)
       return async.waterfall(
         [
@@ -228,7 +221,7 @@ new Vue({
           output += scriptRes.output
           this._module &&
             this._module.addPresentationalDependency(
-              <Dependency>new RecordVueContentDependency(filePath, output)
+              <Dependency> new RecordVueContentDependency(filePath, output)
             )
           callback(null, output)
         }

@@ -34,7 +34,7 @@ export default <DefineConfig>function ({ print }) {
 
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-button'
     },
@@ -136,7 +136,7 @@ export default <DefineConfig>function ({ print }) {
       },
       {
         test: /^(size|type|plain|loading|form-type|hover-class|hover-stop-propagation|hover-start-time|hover-stay-time|use-built-in)$/,
-        web (prop, { el }) {
+        web (_prop, { el }) {
           // todo 这部分能力基于内部封装实现
           el.isBuiltIn = true
         }

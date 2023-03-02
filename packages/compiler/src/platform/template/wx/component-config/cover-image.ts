@@ -1,12 +1,12 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'cover-image'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web (_tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-image'
     },
@@ -16,7 +16,7 @@ export default <DefineConfig>function ({ print }) {
     props: [
       {
         test: 'use-built-in',
-        web (prop, { el }) {
+        web (_prop, { el }) {
           el.isBuiltIn = true
         }
       }

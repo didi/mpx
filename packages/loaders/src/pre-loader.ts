@@ -112,7 +112,7 @@ const preLoader: LoaderDefinition = function (content) {
   if (!module?.wxs) {
     visitor = {
       ...visitor,
-      MemberExpression(path) {
+      MemberExpression (path) {
         const property = path.node.property as any
         if (
           (property.name === 'constructor' ||
@@ -123,7 +123,7 @@ const preLoader: LoaderDefinition = function (content) {
           path.skip()
         }
       },
-      CallExpression(path) {
+      CallExpression (path) {
         const callee = path.node.callee
         const args = path.node.arguments
         const transMap: Record<string, string> = {

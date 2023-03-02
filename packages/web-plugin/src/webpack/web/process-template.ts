@@ -1,8 +1,7 @@
 import { genComponentTag, parseRequest } from '@mpxjs/compile-utils'
-import { CompilerResult } from '@mpxjs/compiler'
+import { CompilerResult, JsonConfig } from '@mpxjs/compiler'
 import { LoaderContext } from 'webpack'
 import { templateProcess } from '../../processor/template-process'
-import { JsonConfig } from '@mpxjs/compiler'
 import mpx, { getOptions } from '../mpx'
 
 export default function (

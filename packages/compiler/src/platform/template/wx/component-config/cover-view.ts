@@ -1,14 +1,14 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'cover-view'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web (_tag, { el }) {
       if (el.hasEvent) {
         el.isBuiltIn = true
       }
@@ -34,7 +34,7 @@ export default <DefineConfig>function ({ print }) {
       },
       {
         test: 'use-built-in',
-        web (prop, { el }) {
+        web (_prop, { el }) {
           el.isBuiltIn = true
         }
       }

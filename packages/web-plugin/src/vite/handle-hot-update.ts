@@ -2,7 +2,7 @@ import { addQuery } from '@mpxjs/compile-utils'
 import { HmrContext } from 'vite'
 import { getDescriptor, setPrevDescriptor } from './utils/descriptor-cache'
 
-export default async function handleHotUpdate(ctx: HmrContext) {
+export default async function handleHotUpdate (ctx: HmrContext) {
   const prevDescriptor = getDescriptor(ctx.file)
   if (!prevDescriptor) return
   // 有descriptor缓存的是mpx文件或者外联json文件
@@ -24,5 +24,4 @@ export default async function handleHotUpdate(ctx: HmrContext) {
     // 给vue热更新返回转换后的代码，让其对比
     return descriptor?.vueSfc || ''
   }
-
 }

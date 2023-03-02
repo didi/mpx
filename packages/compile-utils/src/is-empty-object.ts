@@ -3,6 +3,7 @@ export function isEmptyObject (obj: any) {
     return true
   }
   // @ts-ignore
+  // eslint-disable-next-line no-unreachable-loop
   for (const key in obj) {
     return false
   }

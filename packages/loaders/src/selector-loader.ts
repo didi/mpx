@@ -9,7 +9,7 @@ interface Options {
   env?: string
 }
 
-const selector: LoaderDefinition = function (content: string) {
+const selectorLoader: LoaderDefinition = function (content: string) {
   this.cacheable()
 
   // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
@@ -20,7 +20,7 @@ const selector: LoaderDefinition = function (content: string) {
   }
 
   // 移除mpx访问依赖，支持 thread-loader
-  const { mode, env } = <Options>this.getOptions() || {}
+  const { mode, env } = <Options> this.getOptions() || {}
   if (!mode && !env) {
     return content
   }
@@ -66,4 +66,4 @@ const selector: LoaderDefinition = function (content: string) {
   this.callback(null, part.content, part.map)
 }
 
-export default selector
+export default selectorLoader

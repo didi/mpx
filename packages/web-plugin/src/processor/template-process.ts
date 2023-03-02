@@ -1,10 +1,9 @@
 import { addQuery } from '@mpxjs/compile-utils'
-import { ParseHtmlNode, templateCompiler } from '@mpxjs/compiler'
+import { ParseHtmlNode, templateCompiler, JsonConfig } from '@mpxjs/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
 import { Options } from '../options'
-import { JsonConfig } from '@mpxjs/compiler'
 
 const calculateRootEleChild = (arr: ParseHtmlNode[]) => {
   if (!arr) return 0
@@ -37,7 +36,7 @@ export type TemplateProcessResult = {
   }
 }
 
-export function templateProcess({
+export function templateProcess ({
   template,
   options,
   pluginContext,

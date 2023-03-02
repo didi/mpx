@@ -5,7 +5,7 @@ export default {
     })
   },
   dash2hump (value : string) {
-    return value.replace(/-([a-z])/g, function (match, p1) {
+    return value.replace(/-([a-z])/g, function (_match, p1) {
       return p1.toUpperCase()
     })
   }

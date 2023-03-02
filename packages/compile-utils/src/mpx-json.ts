@@ -1,7 +1,7 @@
 import path from 'path'
 
 // 将JS生成JSON
-function compileMPXJSON({ source, defs, filePath }: any) {
+function compileMPXJSON ({ source, defs, filePath }: any) {
   const defKeys = Object.keys(defs)
   const defValues = defKeys.map(key => {
     return defs[key]
@@ -41,7 +41,7 @@ function compileMPXJSON({ source, defs, filePath }: any) {
   return m.exports
 }
 
-function compileMPXJSONText(opts: any) {
+function compileMPXJSONText (opts: any) {
   return JSON.stringify(compileMPXJSON(opts), null, 2)
 }
 

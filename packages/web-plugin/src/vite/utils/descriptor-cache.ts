@@ -8,9 +8,6 @@ import { OptionObject } from 'loader-utils'
 import pathHash from '../../utils/path-hash'
 import { resolvedConfig } from '../config'
 
-const cache = new Map<string, SFCDescriptor>()
-const prevCache = new Map<string, SFCDescriptor | undefined>()
-
 export interface SFCDescriptor
   extends CompilerResult,
     Omit<TemplateProcessResult, 'templateContent'>,
@@ -23,7 +20,10 @@ export interface SFCDescriptor
   vueSfc?: string
 }
 
-function genDescriptorTemplate() {
+const cache = new Map<string, SFCDescriptor>()
+const prevCache = new Map<string, SFCDescriptor | undefined>()
+
+function genDescriptorTemplate () {
   const template: SFCDescriptor['template'] = {
     tag: 'template',
     type: 'template',
@@ -36,7 +36,7 @@ function genDescriptorTemplate() {
   return template
 }
 
-function genDescriptorScript(descriptor: SFCDescriptor) {
+function genDescriptorScript (descriptor: SFCDescriptor) {
   const script: SFCDescriptor['script'] = {
     tag: 'script',
     type: 'script',
@@ -63,7 +63,7 @@ createComponent({})`
   return script
 }
 
-export function createDescriptor(
+export function createDescriptor (
   filename: string,
   code: string,
   query: OptionObject,
@@ -116,18 +116,18 @@ export function createDescriptor(
   return descriptor
 }
 
-export function getPrevDescriptor(filename: string): SFCDescriptor | undefined {
+export function getPrevDescriptor (filename: string): SFCDescriptor | undefined {
   return prevCache.get(filename)
 }
 
-export function setPrevDescriptor(
+export function setPrevDescriptor (
   filename: string,
   entry: SFCDescriptor
 ): void {
   prevCache.set(filename, entry)
 }
 
-export function getDescriptor(
+export function getDescriptor (
   filename: string,
   code?: string,
   query?: OptionObject,
@@ -142,6 +142,6 @@ export function getDescriptor(
   }
 }
 
-export function setDescriptor(filename: string, entry: SFCDescriptor): void {
+export function setDescriptor (filename: string, entry: SFCDescriptor): void {
   cache.set(filename, entry)
 }

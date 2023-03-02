@@ -6,7 +6,7 @@ import mpx from '../mpx'
 import { SFCDescriptor } from '../utils/descriptor-cache'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 
-export async function processJSON(
+export async function processJSON (
   descriptor: SFCDescriptor,
   options: Options,
   pluginContext: TransformPluginContext

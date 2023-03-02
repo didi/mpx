@@ -9,12 +9,12 @@ import mpxGlobal from '../mpx'
  * @param options - Options
  * @returns
  */
-export function createResolveEntryPlugin(options: Options): Plugin {
+export function createResolveEntryPlugin (options: Options): Plugin {
   const filter = createFilter([/\.mpx$/])
   return {
     name: 'vite:mpx-resolve-entry',
     enforce: 'pre',
-    async resolveId(source, importer, options) {
+    async resolveId (source, importer, options) {
       const { queryObj: query, resourcePath: filename } = parseRequest(source)
       if (!filter(filename)) return
       if (
@@ -43,7 +43,7 @@ export function createResolveEntryPlugin(options: Options): Plugin {
           skipSelf: true,
           ...options
         })
-        if(resolution){
+        if (resolution) {
           // 跳过vue-plugin
           return addQuery(resolution.id, {
             raw: true
@@ -51,7 +51,7 @@ export function createResolveEntryPlugin(options: Options): Plugin {
         }
       }
     },
-    load(id) {
+    load (id) {
       if (id === ENTRY_HELPER_CODE && mpxGlobal.entry) {
         return renderEntryCode(mpxGlobal.entry, options)
       }

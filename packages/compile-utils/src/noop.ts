@@ -1,4 +1,2 @@
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const NOOP = () => {
-  return
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export const NOOP = () => {}

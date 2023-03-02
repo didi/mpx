@@ -1,6 +1,6 @@
 import { type as t } from './type'
 
-function stringifyAttr(val: string) {
+function stringifyAttr (val: string) {
   if (typeof val === 'string') {
     const hasSingle = val.indexOf("'") > -1
     const hasDouble = val.indexOf('"') > -1
@@ -18,7 +18,7 @@ function stringifyAttr(val: string) {
   }
 }
 
-function stringifyAttrs(attrs: { [x: string]: any }) {
+function stringifyAttrs (attrs: { [x: string]: any }) {
   let result = ''
   Object.keys(attrs).forEach(function (name) {
     result += ' ' + name
@@ -30,7 +30,7 @@ function stringifyAttrs(attrs: { [x: string]: any }) {
   return result
 }
 
-export function genComponentTag(
+export function genComponentTag (
   part: { content: string; tag: string; attrs: any },
   processor: any = {}
 ) {

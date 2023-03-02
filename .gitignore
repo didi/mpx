@@ -11,3 +11,4 @@ yarn.lock
 docs-vuepress/docs/.vuepress/dist
 elevate/
 .yarn/
+packages/**/dist/

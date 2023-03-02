@@ -13,7 +13,7 @@ export default (options: {
 
       const transRpxFn = options.transRpxFn && typeof options.transRpxFn === 'function'
         ? options.transRpxFn
-        : function (match: any, $1: any) {
+        : function (_match: any, $1: any) {
           if ($1 === '0') return $1
           return `${$1 * rpx2vwRatio}vw`
         }

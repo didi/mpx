@@ -11,13 +11,13 @@ export interface Result {
   queryObj: OptionObject
 }
 
-function genQueryObj(result: Result) {
+function genQueryObj (result: Result) {
   // 避免外部修改queryObj影响缓存
   result.queryObj = parseQuery(result.resourceQuery || '?')
   return result
 }
 
-export function parseRequest(request: string) {
+export function parseRequest (request: string) {
   if (seen.has(request)) {
     return genQueryObj(seen.get(request))
   }

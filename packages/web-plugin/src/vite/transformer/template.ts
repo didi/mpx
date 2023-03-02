@@ -14,7 +14,7 @@ import { templateProcess } from '../../processor/template-process'
  * @param pluginContext - TransformPluginContext
  */
 
-export async function transformTemplate(
+export async function transformTemplate (
   descriptor: SFCDescriptor,
   options: Options,
   pluginContext?: TransformPluginContext
@@ -58,7 +58,7 @@ export async function transformTemplate(
  * @param descriptor - SFCDescriptor
  * @returns <template>descriptor.template.content</template>
  */
-export async function genTemplateBlock(
+export async function genTemplateBlock (
   descriptor: SFCDescriptor,
   options: Options,
   pluginContext?: TransformPluginContext

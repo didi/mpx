@@ -14,7 +14,7 @@ export interface Options {
 
 const getOptions = loaderUtils.getOptions
 
-const urlLoader: LoaderDefinition = function urlLoader(
+const urlLoader: LoaderDefinition = function urlLoader (
   src: string | Buffer
 ): string {
   let transBase64 = false

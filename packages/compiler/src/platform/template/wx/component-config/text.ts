@@ -1,8 +1,8 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'text'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
@@ -11,7 +11,7 @@ export default <DefineConfig>function ({ print }) {
 
   return {
     test: TAG_NAME,
-    web (tag, { el }) {
+    web (_tag, { el }) {
       if (el.hasEvent) {
         el.isBuiltIn = true
       }
@@ -35,7 +35,7 @@ export default <DefineConfig>function ({ print }) {
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,
-        web (prop, { el }) {
+        web (_prop, { el }) {
           el.isBuiltIn = true
         },
         qa: qaPropLog

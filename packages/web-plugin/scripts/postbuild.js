@@ -1,12 +1,12 @@
 const fs = require('fs').promises
-const path= require('path')
+const path = require('path')
 const fg = require('fast-glob')
 
-async function run() {
+async function run () {
   // fix cjs exports
   const files = await fg('*.js', {
     absolute: true,
-    cwd: path.resolve(__dirname, '../dist'),
+    cwd: path.resolve(__dirname, '../dist')
   })
   for (const file of files) {
     let code = await fs.readFile(file, 'utf8')
@@ -15,7 +15,7 @@ async function run() {
   }
 }
 
-if(process.argv.find(item => item === 'executive')) {
+if (process.argv.find(item => item === 'executive')) {
   run()
 }
 

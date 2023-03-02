@@ -8,11 +8,11 @@ import { getDescriptor } from '../utils/descriptor-cache'
  * 给外联的js加上global配置
  * @returns
  */
-export function createMpxOutSideJsPlugin(): Plugin {
+export function createMpxOutSideJsPlugin (): Plugin {
   const filter = createFilter([/\.(js|ts)$/])
   return {
     name: 'vite:mpx-outside-js',
-    async transform(code, id) {
+    async transform (code, id) {
       const { resourcePath: filename } = parseRequest(id)
       if (!filter(filename)) return
       const descriptor = getDescriptor(filename)

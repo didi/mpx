@@ -1,8 +1,8 @@
-import { DefineConfig } from "."
+import { DefineConfig } from '.'
 
 const TAG_NAME = 'view'
 
-export default <DefineConfig>function ({ print }) {
+export default <DefineConfig> function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
 
@@ -13,7 +13,7 @@ export default <DefineConfig>function ({ print }) {
     // ali () {
     //   return 'a:view'
     // },
-    web (tag, { el }) {
+    web (_tag, { el }) {
       if (el.hasEvent) {
         el.isBuiltIn = true
       }
@@ -23,7 +23,7 @@ export default <DefineConfig>function ({ print }) {
         return 'div'
       }
     },
-    qa (tag) {
+    qa () {
       return 'div'
     },
     // 组件属性中的差异部分
@@ -31,7 +31,7 @@ export default <DefineConfig>function ({ print }) {
       {
         test: /^(hover-(class|stop-propagation|start-time|stay-time)|use-built-in)$/,
         // 当遇到微信支持而支付宝不支持的特性时，转换函数可以只抛出错误或警告而不返回值
-        web (prop, { el }) {
+        web (_prop, { el }) {
           el.isBuiltIn = true
         },
         qa: qaPropLog

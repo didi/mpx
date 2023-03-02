@@ -3,7 +3,6 @@ import {
   parseRequest,
   resolveModuleContext
 } from '@mpxjs/compile-utils'
-import { templateCompiler } from '@mpxjs/compiler'
 import { proxyPluginContext } from '@mpxjs/plugin-proxy'
 import RecordResourceMapDependency from '@mpxjs/webpack-plugin/lib/dependencies/RecordResourceMapDependency'
 import fs from 'fs'
@@ -11,7 +10,7 @@ import { dirname, extname, join } from 'path'
 import { PluginContext } from 'rollup'
 import { LoaderContext } from 'webpack'
 import { Options } from '../options'
-import { JsonConfig, jsonCompiler } from '@mpxjs/compiler'
+import { JsonConfig, jsonCompiler, templateCompiler } from '@mpxjs/compiler'
 import getOutputPath from '../utils/get-output-path'
 import { createDescriptor } from '../vite/utils/descriptor-cache'
 import { Mpx } from '../webpack/mpx'
@@ -144,7 +143,7 @@ export const jsonProcess = async function ({
                   ''
                 )
               )
-            mpx && (mpx.componentsMap['main'][resourcePath] = outputPath)
+            mpx && (mpx.componentsMap.main[resourcePath] = outputPath)
           } else {
             mpx && (mpx.componentsMap[resourcePath] = outputPath)
           }
@@ -168,8 +167,9 @@ export const jsonProcess = async function ({
       const genericsComponents: Record<string, string> = {}
       Object.keys(generics).forEach(name => {
         const generic = generics[name]
-        if (generic.default)
+        if (generic.default) {
           genericsComponents[`${name}default`] = generic.default
+        }
       })
       await processComponents(genericsComponents, context)
     }

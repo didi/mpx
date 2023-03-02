@@ -119,7 +119,7 @@ function createMpxWebPlugin(options: Options, userConfig?: UserConfig): Plugin {
   }
 }
 
-export default function mpx(options: Partial<Options> = {}): Plugin[] {
+export default function mpx (options: Partial<Options> = {}): Plugin[] {
   const baseOptions = processOptions({ ...options })
   const { mode = '', env = '', fileConditionRules } = baseOptions
   const customExtensions = [mode, env, env && `${mode}.${env}`].filter(Boolean)

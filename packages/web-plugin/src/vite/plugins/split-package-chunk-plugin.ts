@@ -5,11 +5,11 @@ import { getDescriptor } from '../utils/descriptor-cache'
 
 /**
  * 将分包分离到额外的chunk里
- * @returns 
+ * @returns
  */
-function createSplitPackageChunk() {
+function createSplitPackageChunk () {
   const manualChunksOption: ManualChunksOption = (id: string) => {
-    if(/plugin-vue2:normalizer/.test(id)){
+    if (/plugin-vue2:normalizer/.test(id)) {
       // 强制将normalizer分到vendor里去，否则会引起TDZ
       return 'vendor'
     }
@@ -29,10 +29,10 @@ function createSplitPackageChunk() {
   return manualChunksOption
 }
 
-export function createSplitPackageChunkPlugin(): Plugin {
+export function createSplitPackageChunkPlugin (): Plugin {
   return {
     name: 'vite:mpx-split-package-chunk',
-    config(config) {
+    config (config) {
       const output = config?.build?.rollupOptions?.output
       if (output) {
         const outputs = Array.isArray(output) ? output : [output]

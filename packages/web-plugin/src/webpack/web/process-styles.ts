@@ -9,7 +9,7 @@ export default function (
   if (styles.length) {
     styles.forEach(style => {
       output += genComponentTag(style, {
-        attrs(style: { attrs: Record<string, string | boolean> }) {
+        attrs (style: { attrs: Record<string, string | boolean> }) {
           const attrs = Object.assign({}, style.attrs)
           if (options.autoScope) attrs.scoped = true
           attrs.mpxStyleOptions = stringify({
