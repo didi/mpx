@@ -1,0 +1,19 @@
+<template>
+  <view class="container list-class">
+    <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
+    <view>by list2</view>
+  </view>
+</template>
+
+<script lang="ts" src="../common/js/list2.ts"></script>
+
+<style lang="stylus" scoped>
+  .container
+    color #fff
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

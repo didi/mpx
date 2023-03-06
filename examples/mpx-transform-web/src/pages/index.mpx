@@ -1,0 +1,67 @@
+<template>
+  <view bindtap="reload">__UNPLUGIN__1111</view>
+  <text wx:if="{{a === 1}}" bindtap="jumpPage">test24</text>
+  <view>{{$t('page_title')}}</view>
+  <button wx:if="{{a === 1}}" bindtap="jumpPage">跳转到swiper</button>
+  <view>{{$t('message.title')}}</view>
+<!--  <image wx:src="{{img}}"></image>-->
+<!--  <text wx:elseif="{{a === 2}}">w22223</text>-->
+ <list list-class="list"></list>
+ <switch></switch>123
+ <scroll-view></scroll-view>
+ <input></input>
+ <picker value="{{index}}" range="{{array}}">
+    <view class="picker">
+      当前选择：{{array[index]}}
+    </view>
+  </picker>
+</template>
+
+<script setup>
+import mpx, { onLoad, onShow, reactive, ref, onMounted } from '@mpxjs/core'
+import swiperPage from '../packageA/pages/swiper.mpx?resolve'
+console.log('file: index.mpx:21 > swiperPage', swiperPage)
+const a = ref(1)
+const index = ref(0)
+const array = ref(['美国', '中国', '巴西', '日本'])
+onLoad(() => {
+  console.log('load index1111123')
+})
+onShow(() => {
+  console.log('show index12455555511121312313123132')
+})
+onMounted(() => {
+  console.log('mounted')
+})
+const reload = () => window.location.reload()
+const jumpPage = () => {
+  mpx.navigateTo({
+    url: swiperPage
+  })
+}
+
+console.log(123)
+
+defineExpose({
+  a,
+  index,
+  array,
+  reload,
+  jumpPage
+})
+
+console.log(456)
+</script>
+<style scoped>
+.list {
+  background: blue;
+  height: 200rpx;
+}
+</style>
+<script type="application/json">
+{
+  "usingComponents": {
+    "list": "../components/list"
+  }
+}
+</script>

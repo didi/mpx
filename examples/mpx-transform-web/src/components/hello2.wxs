@@ -1,0 +1,10 @@
+var foo = "'hello world' from hello.wxs2"
+var bar = function (d) {
+  return d
+}
+console.log(123)
+module.exports = {
+  FOO: foo,
+  bar: bar
+}
+module.exports.msg = 'some msg'

@@ -1,0 +1,227 @@
+<template>
+  <view class="tabbar-container">
+    <view
+      class="tabbar-wrapper"
+      wx:style="z-index: {{ zIndex }}">
+
+      <view
+        wx:for="{{ wrappedTabBarList }}"
+        wx:key="index"
+        class="tabbar-item"
+        bindtap="switchTab(item)">
+
+        <view class="wrapper" id="{{ item.id }}">
+          <block wx:if="{{ currentTabId === item.id }}">
+            <view wx:class="icon-box {{ item.text_active ? '' : 'no-text'}}">
+            </view>
+            <view class="item-text active" wx:if="{{item.text_active}}" wx:style="{{'color: ' + item.text_active_color}}">{{ item.text_active }}</view>
+          </block>
+
+          <block wx:else>
+            <view class="item-text" wx:if="{{item.text}}" wx:style="{{'color: ' + item.text_color}}">{{ item.text }}</view>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+  createComponent({
+    properties: {
+      zIndex: {
+        type: Number,
+        value: 99
+      }
+    },
+    data: {
+      currentTabId: 1,
+      wrappedTabBarList: [{
+        id: 1,
+        text_active: 'page1',
+        text_active_color: 'pink',
+        icon_active: true,
+        url: '../pages/index'
+      }, {
+        id: 2,
+        text_active: 'page2',
+        text_active_color: 'pink',
+        icon_active: true,
+        url: '../pages/wxs'
+      }]
+    },
+    computed: {
+    },
+    pageLifetimes: {
+      show() {
+        if (typeof this.getTabBar === 'function' &&
+          this.getTabBar()) {
+          console.log(1111, this.getTabBar())
+        }
+      }
+    },
+    attached () {
+      console.log('tab-bar/index')
+    },
+    methods: {
+      switchTab (item) {
+        mpx.switchTab({
+          url: item.url
+        })
+      }
+    }
+  })
+</script>
+
+<style lang="stylus" scoped>
+  .tabbar-wrapper
+    position fixed
+    bottom 0
+    left 0
+    display flex
+    align-items center
+    justify-content space-between
+    width 100%
+    height 64px
+    background #fff
+    box-shadow 0px -10px 60px rgba(0, 0, 0, .08)
+    z-index 99
+    &.iPhoneX-wrapper
+      height 50px
+      padding-bottom 34px
+
+    .tabbar-item
+      flex 1
+      display flex
+      flex-direction column
+      align-items center
+      font-size 28px
+
+      .tip-wrapper
+        position fixed
+        left 50%
+        transform translateX(-50%)
+        width 678rpx
+        height 250rpx
+
+        .tip-image
+          position absolute
+          top 0
+          left 0
+          width 678rpx
+          height 240rpx
+
+        .tip-icon
+          position absolute
+          top 206rpx
+          left 50%
+          transform translateX(-50%)
+          width 20rpx
+          height 12rpx
+
+        .tip-button
+          position absolute
+          top 50%
+          right 32rpx
+          margin-top -32rpx
+          width 180rpx
+          height 64rpx
+          line-height 64rpx
+          text-align center
+          opacity 0.95
+          background #FFF
+          background-image linear-gradient(180deg, #FFFFFF 27%, #FFF2ED 84%, #FFF9F9 100%)
+          box-shadow 0px 10px 8px 0px rgba(254, 94, 31, 0.46)
+          border-radius 18px
+          font-family PingFang SC
+          font-size 28rpx
+          color #FF5E29
+
+      .wrapper
+        position relative
+        display flex
+        align-items center
+        flex-direction column
+
+        // 角标样式
+        .corner-marker
+          display flex
+          justify-content center
+          align-items center
+          position absolute
+          top 4px
+          right -8px
+          transform translateY(-50%)
+          min-width 7px
+          height 7px
+
+          &.flat
+            padding 0 3px
+
+          &.circle
+            padding 0 2px
+
+          &.red-point
+            text-align center
+            background-color #FF4340
+            border 1px solid #fff
+            border-radius 50%
+
+          &.type2 // 文字
+            min-width 10px
+            height 14px
+            border-radius 14px
+
+          &.type4 // 数字
+            min-width 10px
+            height 14px
+            white-space nowrap
+            border-radius 14px
+
+            .text
+              padding 0 2px
+              transform scale(0.9)
+
+          .text
+            display inline-block
+            line-height 1
+            font-family DINAlternate-Bold
+            font-size 10px
+            color #fff
+
+          .icon
+            position absolute
+            top -3px
+            right -15px
+            width: 30px
+            height: 15px
+
+      .icon-box
+        position relative
+        width 28px
+        height 28px
+        display flex
+        align-items center
+        justify-content center
+        &.no-text // 没有文字时, icon会放大
+          .item-icon
+            width 40px
+            height 40px
+            flex-shrink 0
+            &.active
+              width: 42px
+              height: 42px
+
+        .item-icon
+          width: 28px
+          height: 28px
+
+      .item-text
+        line-height 1
+        padding-top: 4px
+        &.active
+          font-family PingFangSC-Semibold
+
+</style>
+

@@ -1,0 +1,37 @@
+<template>
+  <view>index2</view>
+</template>
+
+<script lang="ts">
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      a: 1
+    },
+    onLoad () {
+      console.log('onload index2')
+    },
+    onShow () {
+      console.log('onShow index2')
+    },
+    methods: {
+      reload () {
+        window.location.reload()
+      }
+    }
+  })
+</script>
+<style scoped>
+  .list {
+    background: red;
+    height: 200rpx;
+  }
+</style>
+<script type="application/json">
+  {
+    "usingComponents": {
+      "list": "../components/list.mpx"
+    }
+  }
+</script>

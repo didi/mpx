@@ -1,0 +1,21 @@
+<script lang="ts">
+  import mpx from '@mpxjs/core'
+  import apiProxy from '@mpxjs/api-proxy'
+  import { createApp } from '@mpxjs/core'
+  // import Vconsole from 'vconsole'
+  // const vconsole = new Vconsole()
+  mpx.use(apiProxy, { usePromise: false })
+  createApp({})
+</script>
+
+<style>
+  /*此处编写全局样式*/
+  body {
+    box-sizing: border-box;
+    color: #333999;
+  }
+</style>
+
+<script type="application/json" src="./app.json">
+
+</script>

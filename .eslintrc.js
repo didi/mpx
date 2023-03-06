@@ -1,11 +1,15 @@
 module.exports = {
   root: true,
-  parser: '@babel/eslint-parser',
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module'
   },
-  extends: 'standard',
+  extends: [
+    'plugin:@typescript-eslint/recommended',
+    'standard'
+  ],
   plugins: [
+    '@typescript-eslint',
     'html',
     'jest'
   ],
@@ -27,10 +31,18 @@ module.exports = {
     getCurrentPages: 'readonly'
   },
   rules: {
+    '@typescript-eslint/ban-ts-comment': 0,
+    '@typescript-eslint/no-empty-function': 0,
+    '@typescript-eslint/no-this-alias': 0,
+    '@typescript-eslint/no-var-requires': 0,
+    '@typescript-eslint/explicit-module-boundary-types': 0,
     'no-cond-assign': 0,
     camelcase: 0
   },
   env: {
-    'jest/globals': true
+    'jest/globals': true,
+    es6: true,
+    browser: true,
+    node: true
   }
 }

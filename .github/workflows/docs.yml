@@ -22,6 +22,7 @@ jobs:
       - name: generate docs file
         if: env.GIT_DIFF
         run: |
+          cd docs-vueporess
           npm i
           npm run docs:build
 

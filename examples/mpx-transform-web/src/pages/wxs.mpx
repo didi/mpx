@@ -1,0 +1,51 @@
+<template>
+  <view class="p-container-h">
+    <wxs module="foo">
+      var some_msg1 = "=====";
+      module.exports = {
+      msg : some_msg1,
+      }
+    </wxs>
+    <view>wxs1: {{foo.msg}} </view>
+    <wxs src="../components/hello.wxs" module="hello"/>
+    <view>wxs2: {{hello.FOO}} </view>
+  </view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+  createPage({
+    data: {},
+    ready () {
+      console.log('进入wxs页面')
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+      "custom-tab-bar": "../custom-tab-bar/index"
+    }
+  }
+</script>
+
+
+<style lang="stylus" scoped>
+  page
+    height 100%
+  .app
+    height: auto
+  .p-container-h
+    width: 100%
+    background pink
+    /*overflow: hidden;*/
+    .scroll-container
+      width: 100%
+      height: 500px
+    /*height: 100%*/
+    .item
+      width: 100%
+      height: 250px
+</style>
+
