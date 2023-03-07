@@ -20,34 +20,12 @@ export default function processOption (
   VueRouter,
   mpx
 ) {
-  if (ctorType === 'app') {
-    if (isServerRendering()) {
-      return context => {
-        return new Promise((resolve, reject) => {
-          const { app, router, pinia } = processApp({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
-          if (app.onSSRAppCreated) {
-            app.onSSRAppCreated({ pinia, router, app, context })
-          }
-          router.onReady(() => {
-            resolve(app)
-          }, reject)
-        })
-      }
-    }
-    const { app, pinia, router } = processApp({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
-    pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
-    router.onReady(() => {
-      app.$mount('#app')
-    })
-    return
-  } else {
-    processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
-  }
+  processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
   processCommonOption({ option, mixin, outputPath })
   return option
 }
 
-function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option }) {
+function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option, App }) {
 // 对于app中的组件需要全局注册
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
@@ -261,20 +239,9 @@ function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, optio
   if (global.__mpxPinia) {
     option.pinia = global.__mpxPinia
   }
-
   const app = new Vue({
     ...option,
-    render: (h) => {
-      return h('div', { attrs: { id: 'app' }, }, [
-        h('div', { class: { 'app': true } }, [
-          h('mpx-keep-alive', [h('router-view', {
-            class: {
-              'page': true
-            }
-          })])
-        ])
-      ])
-    }
+    render: (h) => h(App)
   })
   return {
     app,
@@ -364,4 +331,41 @@ export function getWxsMixin (wxsModules) {
       })
     }
   }
+}
+
+export function procssApp (option,
+                           ctorType,
+                           firstPage,
+                           outputPath,
+                           pageConfig,
+                           pagesMap,
+                           componentsMap,
+                           tabBarMap,
+                           componentGenerics,
+                           genericsInfo,
+                           mixin,
+                           hasApp,
+                           App,
+                           Vue,
+                           VueRouter,
+                           mpx) {
+  if (isServerRendering()) {
+    return context => {
+      return new Promise((resolve, reject) => {
+        const { app, router, pinia } = processApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
+        if (app.onSSRAppCreated) {
+          app.onSSRAppCreated({ pinia, router, app, context })
+        }
+        router.onReady(() => {
+          resolve(app)
+        }, reject)
+      })
+    }
+  }
+  const { app, pinia, router } = processApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
+  pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+  router.onReady(() => {
+    app.$mount('#app')
+  })
+  return
 }

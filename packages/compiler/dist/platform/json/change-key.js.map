@@ -1,0 +1,1 @@
+{"version":3,"file":"change-key.js","sourceRoot":"","sources":["../../../src/platform/json/change-key.ts"],"names":[],"mappings":";;AAAA,SAAwB,SAAS,CAAE,KAA0B,EAAE,MAAc,EAAE,SAAiB;IAC9F,MAAM,KAAK,GAAG,KAAK,CAAC,MAAM,CAAC,CAAA;IAC3B,OAAO,KAAK,CAAC,MAAM,CAAC,CAAA;IACpB,KAAK,CAAC,SAAS,CAAC,GAAG,KAAK,CAAA;IACxB,OAAO,KAAK,CAAA;AACd,CAAC;AALD,4BAKC"}

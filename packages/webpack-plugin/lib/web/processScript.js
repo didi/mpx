@@ -45,7 +45,8 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap,
   localPagesMap,
-  mpx
+  isApp,
+  request
 }, callback) {
   const {
     i18n,
@@ -55,7 +56,6 @@ module.exports = function (script, {
   } = loaderContext.getMpx()
   const { getRequire } = createHelpers(loaderContext)
   const tabBar = jsonConfig.tabBar
-
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
       new Error('[script processor][' + loaderContext.resource + ']: ' + msg)
@@ -92,7 +92,7 @@ module.exports = function (script, {
   } else {
     script = { tag: 'script' }
   }
-  output += genComponentTag(ctorType === 'app' ? '' : script, {
+  output += genComponentTag(ctorType === 'app' && !isApp ? '' : script, {
     attrs (script) {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
@@ -102,13 +102,17 @@ module.exports = function (script, {
       return attrs
     },
     content (script) {
-      let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import processOption, { getComponent, getWxsMixin, procssApp } from ${stringifyRequest(optionProcessorPath)}\n`
       // add import
       if (ctorType === 'app') {
+        console.log(isApp)
+      }
+      if (ctorType === 'app' && !isApp) {
         content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
   import Vue from 'vue'
   import VueRouter from 'vue-router'
   import Mpx from '@mpxjs/core'
+  import App from ${stringifyRequest(request)}
   Vue.use(VueRouter)
   global.getApp = function(){}
   global.getCurrentPages = function(){
@@ -246,7 +250,30 @@ module.exports = function (script, {
       }
       // 配置平台转换通过createFactory在core中convertor中定义和进行
       // 通过processOption进行组件注册和路由注入
-      content += `  export default processOption(
+      if (ctorType === 'app' && !isApp) {
+        content += `export default procssApp(
+    currentOption,
+    ${JSON.stringify(ctorType)},
+    ${JSON.stringify(firstPage)},
+    ${JSON.stringify(outputPath)},
+    ${JSON.stringify(pageConfig)},
+    // @ts-ignore
+    ${shallowStringify(pagesMap)},
+    // @ts-ignore
+    ${shallowStringify(componentsMap)},
+    ${JSON.stringify(tabBarMap)},
+    ${JSON.stringify(componentGenerics)},
+    ${JSON.stringify(genericsInfo)},
+    getWxsMixin(wxsModules),
+    ${hasApp},
+    App`
+        if (ctorType === 'app'  && !isApp ) {
+          content += `,
+    Vue,
+    VueRouter`
+        }
+      } else {
+        content += `  export default processOption(
     currentOption,
     ${JSON.stringify(ctorType)},
     ${JSON.stringify(firstPage)},
@@ -261,11 +288,11 @@ module.exports = function (script, {
     ${JSON.stringify(genericsInfo)},
     getWxsMixin(wxsModules),
     ${hasApp}`
-      if (ctorType === 'app') {
-        content += `,
+        if (ctorType === 'app'  && !isApp) {
+          content += `,
     Vue,
-    VueRouter,
-    ${JSON.stringify(mpx)}`
+    VueRouter`
+        }
       }
       content += '\n  )\n'
       return content
