@@ -3,7 +3,7 @@ import mergeOptions from '../../../core/mergeOptions'
 import { diffAndCloneA, hasOwn } from '@mpxjs/utils'
 import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
-import { BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED } from '../../../core/innerLifecycle'
+import { BEFORECREATE, BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED } from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -30,8 +30,10 @@ function filterOptions (options) {
 function initProxy (context, rawOptions) {
   if (!context.__mpxProxy) {
     context.__mpxProxy = new MpxProxy(rawOptions, context)
+    context.__mpxProxy.callHook(BEFORECREATE)
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
+    context.__mpxProxy.callHook(BEFORECREATE)
   }
 }
 

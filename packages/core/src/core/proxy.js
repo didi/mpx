@@ -121,11 +121,12 @@ export default class MpxProxy {
       this.currentRenderTask = null
     }
     this.initApi()
-    this.callHook(BEFORECREATE)
   }
 
   created () {
     if (__mpx_mode__ !== 'web') {
+      // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
+      this.callHook(BEFORECREATE)
       setCurrentInstance(this)
       this.initProps()
       this.initSetup()
@@ -506,7 +507,7 @@ export default class MpxProxy {
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
-    this.effect = new ReactiveEffect(() => {
+    const effect = this.effect = new ReactiveEffect(() => {
       if (this.target.__injectedRender) {
         try {
           return this.target.__injectedRender()
@@ -519,8 +520,10 @@ export default class MpxProxy {
       }
     }, () => queueJob(update), this.scope)
 
-    const update = this.effect.run.bind(this.effect)
+    const update = this.update = this.effect.run.bind(this.effect)
     update.id = this.uid
+    // render effect允许自触发
+    effect.allowRecurse = update.allowRecurse = true
     update()
   }
 
