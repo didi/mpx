@@ -15,6 +15,15 @@ import { observe, set, del } from './observer/index'
 import { watch as watchWithVm } from './observer/watch'
 import implement from './core/implement'
 
+export {
+  BEFORECREATE,
+  CREATED,
+  BEFOREMOUNT,
+  MOUNTED,
+  UPDATED,
+  DESTROYED
+} from './core/innerLifecycle'
+
 export function createApp (config, ...rest) {
   const mpx = new EXPORT_MPX()
   platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
