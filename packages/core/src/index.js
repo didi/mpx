@@ -20,7 +20,10 @@ export {
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
+  BEFOREUPDATE,
   UPDATED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
   DESTROYED
 } from './core/innerLifecycle'
 

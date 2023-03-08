@@ -28,7 +28,10 @@ import {
   CREATED,
   BEFOREMOUNT,
   MOUNTED,
+  BEFOREUPDATE,
   UPDATED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
@@ -124,15 +127,18 @@ export default class MPXProxy {
 
   updated () {
     if (this.isMounted()) {
+      this.callUserHook(BEFOREUPDATE)
       this.callUserHook(UPDATED)
     }
   }
 
   destroyed () {
+    this.callUserHook(BEFOREUNMOUNT)
     this.state = DESTROYED
     if (__mpx_mode__ !== 'web') {
       this.clearWatchers()
     }
+    this.callUserHook(UNMOUNTED)
     this.callUserHook(DESTROYED)
   }
 
@@ -427,6 +433,7 @@ export default class MPXProxy {
      */
     let callback = cb
     if (this.isMounted()) {
+      this.callUserHook(BEFOREUPDATE)
       callback = () => {
         getRenderCallBack(this)()
         cb && cb()
