@@ -1,4 +1,4 @@
-import { CREATED } from '../../core/innerLifecycle'
+import { CREATED, ONSHOW, ONHIDE } from '../../core/innerLifecycle'
 
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
@@ -8,11 +8,11 @@ export default function pageStatusMixin (mixinType) {
       },
       onShow () {
         this.mpxPageStatus = 'show'
-        this.onShow && this.onShow()
+        this.__mpxProxy.callHook(ONSHOW)
       },
       onHide () {
         this.mpxPageStatus = 'hide'
-        this.onHide && this.onHide()
+        this.__mpxProxy.callHook(ONHIDE)
       },
       onBack () {
         this.onBack && this.onBack()
