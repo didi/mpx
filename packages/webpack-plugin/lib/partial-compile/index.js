@@ -35,7 +35,7 @@ class MpxPartialCompilePlugin {
                 }
                 if (this.options.custom) {
                   // 如果有自定义兜底路径的需求
-                  let customResourcePath = this.options.custom(obj.path)
+                  const customResourcePath = this.options.custom(obj.path)
                   if (customResourcePath) {
                     aliasResourcePath = customResourcePath
                   }
