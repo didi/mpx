@@ -23,8 +23,8 @@ export {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
-  UNMOUNTED,
-  DESTROYED
+  DESTROYED,
+  DESTROYED as UNMOUNTED
 } from './core/innerLifecycle'
 
 export function createApp (config, ...rest) {

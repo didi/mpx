@@ -31,7 +31,6 @@ import {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
-  UNMOUNTED,
   DESTROYED
 } from './innerLifecycle'
 import { warn, error } from '../helper/log'
@@ -138,7 +137,6 @@ export default class MPXProxy {
     if (__mpx_mode__ !== 'web') {
       this.clearWatchers()
     }
-    this.callUserHook(UNMOUNTED)
     this.callUserHook(DESTROYED)
   }
 
