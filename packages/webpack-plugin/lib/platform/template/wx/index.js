@@ -4,7 +4,7 @@ const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const templateCompiler = require('../../../template-compiler/compiler')
-const parseMustache = templateCompiler.parseMustache
+const parseMustacheWithContext = templateCompiler.parseMustacheWithContext
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 const normalize = require('../../../utils/normalize')
 
@@ -17,7 +17,7 @@ module.exports = function getSpec ({ warn, error }) {
     postProps: [
       {
         web ({ name, value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-' + name : ':' + name,
@@ -34,7 +34,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:for',
         swan (obj, data) {
           const attrsMap = data.el.attrsMap
-          const parsed = parseMustache(obj.value)
+          const parsed = parseMustacheWithContext(obj.value)
           let listName = parsed.result
           const el = data.el
 
@@ -48,7 +48,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
 
           if (keyName) {
-            const parsed = parseMustache(keyName)
+            const parsed = parseMustacheWithContext(keyName)
             if (parsed.hasBinding) {
               // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
             } else if (keyName === '*this') {
@@ -78,7 +78,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -191,15 +191,15 @@ module.exports = function getSpec ({ warn, error }) {
           const styleBinding = []
           el.isStyleParsed = true
           el.attrsList.forEach((item) => {
-            const parsed = parseMustache(item.value)
+            const parsed = parseMustacheWithContext(item.value)
             if (item.name === 'style') {
               if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parseMustache(item.value).result)
+                styleBinding.push(parseMustacheWithContext(item.value).result)
               } else {
                 styleBinding.push(JSON.stringify(item.value))
               }
             } else if (item.name === 'wx:style') {
-              styleBinding.push(parseMustache(item.value).result)
+              styleBinding.push(parseMustacheWithContext(item.value).result)
             }
           })
           return {
@@ -212,7 +212,7 @@ module.exports = function getSpec ({ warn, error }) {
         // 样式类名绑定
         test: /^wx:(class)$/,
         web ({ value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           return {
             name: ':class',
             value: parsed.result
@@ -266,7 +266,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }

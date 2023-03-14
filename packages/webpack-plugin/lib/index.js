@@ -454,17 +454,17 @@ class MpxWebpackPlugin {
       stage: -1000
     }, (compilation, callback) => {
       processSubpackagesEntriesMap(compilation, () => {
-        const checkRegisterPack = () => {
-          for (const packRoot in mpx.dynamicEntryInfo) {
-            const entryMap = mpx.dynamicEntryInfo[packRoot]
-            if (!entryMap.hasPage) {
+        const checkDynamicEntryInfo = () => {
+          for (const packageName in mpx.dynamicEntryInfo) {
+            const entryMap = mpx.dynamicEntryInfo[packageName]
+            if (packageName !== 'main' && !entryMap.hasPage) {
               // 引用未注册分包的所有资源
-              const strRequest = entryMap.entries.join(',')
-              compilation.errors.push(new Error(`资源${strRequest}目标是打入${packRoot}分包, 但是app.json中并未声明${packRoot}分包`))
+              const resources = entryMap.entries.map(info => info.resource).join(',')
+              compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
             }
           }
         }
-        checkRegisterPack()
+        checkDynamicEntryInfo()
         callback()
       })
     })
@@ -550,7 +550,7 @@ class MpxWebpackPlugin {
           subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
-          // 动态记录注册的分包与注册页面映射
+          // 记录动态添加入口的分包信息
           dynamicEntryInfo: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
@@ -593,13 +593,27 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableAliRequireAsync: this.options.enableAliRequireAsync,
+          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
+            const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
+              hasPage: false,
+              entries: []
+            }
+
+            if (entryType === 'page') curInfo.hasPage = true
+
+            curInfo.entries.push({
+              entryType,
+              resource,
+              filename
+            })
+          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
             }
             return hash(resourcePath)
           },
-          addEntry (request, name, callback) {
+          addEntry: (request, name, callback) => {
             const dep = EntryPlugin.createDependency(request, { name })
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep

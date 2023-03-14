@@ -28,23 +28,10 @@ class DynamicEntryDependency extends NullDependency {
     return toPosix([request, entryType, outputPath, packageRoot, relativePath, context, ...range].join('|'))
   }
 
-  collectDynamicRequest (mpx) {
-    if (!this.packageRoot) return
-    const curValue = mpx.dynamicEntryInfo[this.packageRoot] = mpx.dynamicEntryInfo[this.packageRoot] || {
-      hasPage: false,
-      entries: []
-    }
-    if (this.entryType === 'page') {
-      curValue.hasPage = true
-    } else {
-      curValue.entries.push(this.request)
-    }
-  }
-
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
     let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
-    this.collectDynamicRequest(mpx)
+
     async.waterfall([
       (callback) => {
         if (context && resolver) {
@@ -56,12 +43,13 @@ class DynamicEntryDependency extends NullDependency {
         }
       },
       (resource, callback) => {
+        const { resourcePath } = parseRequest(resource)
+
         if (!outputPath) {
-          const { resourcePath } = parseRequest(resource)
           outputPath = mpx.getOutputPath(resourcePath, entryType)
         }
 
-        const { packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
+        const { packageName, packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
           resource,
           outputPath,
           resourceType: entryType,
@@ -87,6 +75,13 @@ class DynamicEntryDependency extends NullDependency {
         }
 
         const key = [resource, filename].join('|')
+
+        mpx.collectDynamicEntryInfo({
+          resource,
+          packageName,
+          filename,
+          entryType
+        })
 
         if (alreadyOutputted) {
           const addEntryPromise = mpx.addEntryPromiseMap.get(key)

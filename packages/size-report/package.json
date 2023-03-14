@@ -22,7 +22,7 @@
     "bundle",
     "analyzer"
   ],
-  "author": "xuegan@didiglobal.com",
+  "author": "xuegan",
   "license": "ISC",
   "dependencies": {
     "ejs": "^3.1.6",

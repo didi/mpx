@@ -48,7 +48,10 @@ class SizeReportPlugin {
       stage: 1000
     }, async (compilation) => {
       const { moduleGraph, chunkGraph, __mpx__: mpx } = compilation
-      if (!mpx) return
+      if (!mpx) {
+        compilation.errors.push(new Error(`@mpxjs/size-report需要与@mpxjs/webpack-plugin配合使用，请检查!`))
+        return
+      }
 
       const logger = compilation.getLogger('SizeReportPlugin')
       const cache = compilation.getCache('SizeReportPlugin')
@@ -130,7 +133,11 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!(relation && relation.target), children: new Set(), parents: new Set() })
+        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, {
+          target: !!(relation && relation.target),
+          children: new Set(),
+          parents: new Set()
+        })
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
@@ -220,12 +227,12 @@ class SizeReportPlugin {
         })
       }
 
-      const subpackages = Object.keys(mpx.componentsMap)
-      delete subpackages.main
+      const packages = Object.keys(mpx.dynamicEntryInfo)
 
       function getPackageName (fileName) {
         fileName = toPosix(fileName)
-        for (const packageName of subpackages) {
+        for (const packageName of packages) {
+          if (packageName === 'main') continue
           if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
@@ -360,6 +367,7 @@ class SizeReportPlugin {
             }
           }
         }
+
         divideEquallySize(sharedModulesGroupsSet, fillInfo.size)
         divideEquallySize(customGroupSharedModulesGroupsSet, fillInfo.size)
       }
