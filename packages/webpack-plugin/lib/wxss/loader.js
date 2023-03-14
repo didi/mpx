@@ -234,18 +234,18 @@ module.exports = async function loader (content, map, meta) {
     imports.unshift({
       type: 'api_import',
       importName: '___CSS_LOADER_API_IMPORT___',
-      url: stringifyRequest(this, require.resolve('./runtime/api'))
+      url: stringifyRequest(this, '!!' + require.resolve('./runtime/api'))
     })
 
     if (options.sourceMap) {
       imports.unshift({
         importName: '___CSS_LOADER_API_SOURCEMAP_IMPORT___',
-        url: stringifyRequest(this, require.resolve('./runtime/sourceMaps'))
+        url: stringifyRequest(this, '!!' + require.resolve('./runtime/sourceMaps'))
       })
     } else {
       imports.unshift({
         importName: '___CSS_LOADER_API_NO_SOURCEMAP_IMPORT___',
-        url: stringifyRequest(this, require.resolve('./runtime/noSourceMaps'))
+        url: stringifyRequest(this, '!!' + require.resolve('./runtime/noSourceMaps'))
       })
     }
   }
