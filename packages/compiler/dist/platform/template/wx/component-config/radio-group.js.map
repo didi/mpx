@@ -1,1 +1,0 @@
-{"version":3,"file":"radio-group.js","sourceRoot":"","sources":["../../../../../src/platform/template/wx/component-config/radio-group.ts"],"names":[],"mappings":";;AAEA,MAAM,QAAQ,GAAG,aAAa,CAAA;AAE9B,mBAA8B;IAC5B,OAAO;QACL,IAAI,EAAE,QAAQ;QACd,GAAG,CAAE,IAAI,EAAE,EAAE,EAAE,EAAE;YACf,EAAE,CAAC,SAAS,GAAG,IAAI,CAAA;YACnB,OAAO,iBAAiB,CAAA;QAC1B,CAAC;KACF,CAAA;AACH,CAAC,EAAA"}

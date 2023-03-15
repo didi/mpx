@@ -1,1 +1,0 @@
-{"version":3,"file":"icon.js","sourceRoot":"","sources":["../../../../../src/platform/template/wx/component-config/icon.ts"],"names":[],"mappings":";;AAEA,MAAM,QAAQ,GAAG,MAAM,CAAA;AAEvB,mBAA8B;IAC5B,OAAO;QACL,IAAI,EAAE,QAAQ;QACd,GAAG,CAAE,IAAI,EAAE,EAAE,EAAE,EAAE;YACf,EAAE,CAAC,SAAS,GAAG,IAAI,CAAA;YACnB,OAAO,UAAU,CAAA;QACnB,CAAC;KACF,CAAA;AACH,CAAC,EAAA"}

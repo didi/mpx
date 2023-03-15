@@ -1,1 +1,0 @@
-{"version":3,"file":"movable-area.js","sourceRoot":"","sources":["../../../../../src/platform/template/wx/component-config/movable-area.ts"],"names":[],"mappings":";;AAEA,MAAM,QAAQ,GAAG,cAAc,CAAA;AAE/B,mBAA8B;IAC5B,OAAO;QACL,IAAI,EAAE,QAAQ;QACd,GAAG,CAAE,IAAI,EAAE,EAAE,EAAE,EAAE;YACf,EAAE,CAAC,SAAS,GAAG,IAAI,CAAA;YACnB,OAAO,kBAAkB,CAAA;QAC3B,CAAC;KACF,CAAA;AACH,CAAC,EAAA"}
