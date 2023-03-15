@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp } from '@mpxjs/utils'
+import { makeMap, spreadProp, isServerRendering } from '@mpxjs/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import Mpx from '../index'
 
@@ -49,12 +49,14 @@ export default function createApp (option, config = {}) {
           hide: [],
           error: []
         }
-        if (this.$options.onShow) {
-          this.$options.onShow.call(this, options)
-          global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
-        }
-        if (this.$options.onHide) {
-          global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+        if (!isServerRendering()) {
+          if (this.$options.onShow) {
+            this.$options.onShow.call(this, options)
+            global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
+          }
+          if (this.$options.onHide) {
+            global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+          }
         }
         if (this.$options.onError) {
           global.__mpxAppCbs.error.push(this.$options.onError.bind(this))

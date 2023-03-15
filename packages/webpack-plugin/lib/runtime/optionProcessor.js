@@ -3,29 +3,102 @@ import { hasOwn, isServerRendering } from './utils'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
-export default function processOption (
-  option,
-  ctorType,
-  firstPage,
-  outputPath,
-  pageConfig,
-  pagesMap,
-  componentsMap,
-  tabBarMap,
-  componentGenerics,
-  genericsInfo,
-  mixin,
-  hasApp,
-  Vue,
-  VueRouter,
-  mpx
+export default function processComponentOption ({
+                                                  option,
+                                                  ctorType,
+                                                  outputPath,
+                                                  pageConfig,
+                                                  componentsMap,
+                                                  componentGenerics,
+                                                  genericsInfo,
+                                                  mixin,
+                                                  hasApp
+                                                }
 ) {
-  processComponentOption({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig })
-  processCommonOption({ option, mixin, outputPath })
+  // 局部注册页面和组件中依赖的组件
+  for (const componentName in componentsMap) {
+    if (hasOwn(componentsMap, componentName)) {
+      const component = componentsMap[componentName]
+      if (!option.components) {
+        option.components = {}
+      }
+      option.components[componentName] = component
+    }
+  }
+
+  if (genericsInfo) {
+    const genericHash = genericsInfo.hash
+    global.__mpxGenericsMap[genericHash] = {}
+    Object.keys(genericsInfo.map).forEach((genericValue) => {
+      if (componentsMap[genericValue]) {
+        global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+      } else {
+        console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
+registered in parent context!`)
+      }
+    })
+  }
+
+  if (componentGenerics) {
+    option.props = option.props || {}
+    option.props.generichash = String
+    Object.keys(componentGenerics).forEach((genericName) => {
+      if (componentGenerics[genericName].default) {
+        option.props[`generic${genericName}`] = {
+          type: String,
+          default: `${genericName}default`
+        }
+      } else {
+        option.props[`generic${genericName}`] = String
+      }
+    })
+  }
+
+  if (ctorType === 'page') {
+    option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
+  }
+
+  if (!hasApp) {
+    option.directives = { animation }
+    option.filters = { transRpxStyle }
+  }
+
+  if (option.mixins) {
+    option.mixins.push(mixin)
+  } else {
+    option.mixins = [mixin]
+  }
+
+  if (outputPath) {
+    option.componentPath = '/' + outputPath
+  }
+
   return option
 }
 
-function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option, App }) {
+export function getComponent (component, extendOptions) {
+  component = component.__esModule ? component.default : component
+  // eslint-disable-next-line
+  if (extendOptions) Object.assign(component, extendOptions)
+  return component
+}
+
+export function getWxsMixin (wxsModules) {
+  if (!wxsModules || !Object.keys(wxsModules).length) return {}
+  return {
+    created () {
+      Object.keys(wxsModules).forEach((key) => {
+        if (key in this) {
+          console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)
+        } else {
+          this[key] = wxsModules[key]
+        }
+      })
+    }
+  }
+}
+
+function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option, App, tabBarMap }) {
 // 对于app中的组件需要全局注册
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
@@ -60,7 +133,8 @@ function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, optio
     const webRouteConfig = global.__mpx.config.webRouteConfig
     global.__mpxRouter = option.router = new VueRouter({
       ...webRouteConfig,
-      routes: routes
+      routes: routes,
+      mode: 'history'
     })
     global.__mpxRouter.stack = []
     global.__mpxRouter.needCache = null
@@ -245,114 +319,24 @@ function processApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, optio
   })
   return {
     app,
-    pinia: option.pinia,
-    router: option.router
+    ...option,
   }
 }
 
-function processComponentOption ({ componentsMap, genericsInfo, componentGenerics, ctorType, hasApp, option, pageConfig }) {
-  // 局部注册页面和组件中依赖的组件
-  for (const componentName in componentsMap) {
-    if (hasOwn(componentsMap, componentName)) {
-      const component = componentsMap[componentName]
-      if (!option.components) {
-        option.components = {}
-      }
-      option.components[componentName] = component
-    }
-  }
-
-  if (genericsInfo) {
-    const genericHash = genericsInfo.hash
-    global.__mpxGenericsMap[genericHash] = {}
-    Object.keys(genericsInfo.map).forEach((genericValue) => {
-      if (componentsMap[genericValue]) {
-        global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
-      } else {
-        console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
-registered in parent context!`)
-      }
-    })
-  }
-
-  if (componentGenerics) {
-    option.props = option.props || {}
-    option.props.generichash = String
-    Object.keys(componentGenerics).forEach((genericName) => {
-      if (componentGenerics[genericName].default) {
-        option.props[`generic${genericName}`] = {
-          type: String,
-          default: `${genericName}default`
-        }
-      } else {
-        option.props[`generic${genericName}`] = String
-      }
-    })
-  }
-
-  if (ctorType === 'page') {
-    option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
-  }
-  if (!hasApp) {
-    option.directives = { animation }
-    option.filters = { transRpxStyle }
-  }
-}
-
-function processCommonOption ({ option, mixin, outputPath }) {
-  if (option.mixins) {
-    option.mixins.push(mixin)
-  } else {
-    option.mixins = [mixin]
-  }
-
-  if (outputPath) {
-    option.componentPath = '/' + outputPath
-  }
-}
-
-export function getComponent (component, extendOptions) {
-  component = component.__esModule ? component.default : component
-  // eslint-disable-next-line
-  if (extendOptions) Object.assign(component, extendOptions)
-  return component
-}
-
-export function getWxsMixin (wxsModules) {
-  if (!wxsModules || !Object.keys(wxsModules).length) return {}
-  return {
-    created () {
-      Object.keys(wxsModules).forEach((key) => {
-        if (key in this) {
-          console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)
-        } else {
-          this[key] = wxsModules[key]
-        }
-      })
-    }
-  }
-}
-
-export function procssApp (option,
-                           ctorType,
-                           firstPage,
-                           outputPath,
-                           pageConfig,
-                           pagesMap,
-                           componentsMap,
-                           tabBarMap,
-                           componentGenerics,
-                           genericsInfo,
-                           mixin,
-                           hasApp,
-                           App,
-                           Vue,
-                           VueRouter,
-                           mpx) {
+export function processAppOption ({
+                                    firstPage,
+                                    pagesMap,
+                                    componentsMap,
+                                    App,
+                                    Vue,
+                                    option,
+                                    VueRouter,
+                                    tabBarMap
+                                  }) {
   if (isServerRendering()) {
     return context => {
       return new Promise((resolve, reject) => {
-        const { app, router, pinia } = processApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
+        const { app, router, pinia } = createApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option, tabBarMap })
         if (app.onSSRAppCreated) {
           app.onSSRAppCreated({ pinia, router, app, context })
         }
@@ -362,10 +346,11 @@ export function procssApp (option,
       })
     }
   }
-  const { app, pinia, router } = processApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option })
-  pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+  const { app, pinia, router } = createApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option, tabBarMap })
+  if (pinia) {
+    pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+  }
   router.onReady(() => {
     app.$mount('#app')
   })
-  return
 }
