@@ -48,6 +48,10 @@ module.exports = function (template, {
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
+    template = {
+      tag: 'template',
+      content: '<div id="app"><div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div></div>'
+    }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
     }
@@ -63,6 +67,9 @@ module.exports = function (template, {
     }
 
     output += genComponentTag(template, (template) => {
+      if (ctorType === 'app') {
+        return template.content
+      }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
         const { root, meta } = templateCompiler.parse(template.content, {
