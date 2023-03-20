@@ -27,10 +27,9 @@ export const isServerRendering = () => {
   let _isServer
   if (!isBrowser && typeof global !== 'undefined') {
     _isServer =
-      global['process'] && global['process'].env.VUE_ENV === 'server'
+      global.process && global.process.env.VUE_ENV === 'server'
   } else {
     _isServer = false
   }
   return _isServer
 }
-

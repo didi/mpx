@@ -46,14 +46,13 @@ export function hasOwn (obj, key) {
   return hasOwnProperty.call(obj, key)
 }
 
-
 export const isBrowser = typeof window !== 'undefined'
 
 export const isServerRendering = () => {
   let _isServer
   if (!isBrowser && typeof global !== 'undefined') {
     _isServer =
-      global['process'] && global['process'].env.VUE_ENV === 'server'
+      global.process && global.process.env.VUE_ENV === 'server'
   } else {
     _isServer = false
   }

@@ -17,7 +17,6 @@ module.exports = function (script, {
   localPagesMap,
   resource
 }) {
-
   const { i18n, webConfig, useSSR } = loaderContext.getMpx()
 
   const { pagesMap, firstPage, globalTabBar } = buildPagesMap({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr })

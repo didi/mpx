@@ -56,7 +56,7 @@ module.exports = function (script, {
       }
 
       // 获取组件集合
-      const componentsMap = buildComponentsMap({localComponentsMap, builtInComponentsMap, loaderContext})
+      const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext })
 
       // 获取pageConfig
       const pageConfig = {}
@@ -73,7 +73,7 @@ module.exports = function (script, {
           })
       }
 
-      content += buildGlobalParams({moduleId, scriptSrcMode, loaderContext, isProduction})
+      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
       content += getCurrentOption({ ctorType, script, isMain: false, loaderContext, moduleId })
       content += `  export default processComponentOption({
     option: currentOption,

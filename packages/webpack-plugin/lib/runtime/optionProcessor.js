@@ -3,18 +3,7 @@ import { hasOwn, isServerRendering } from './utils'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
-export default function processComponentOption ({
-                                                  option,
-                                                  ctorType,
-                                                  outputPath,
-                                                  pageConfig,
-                                                  componentsMap,
-                                                  componentGenerics,
-                                                  genericsInfo,
-                                                  mixin,
-                                                  hasApp
-                                                }
-) {
+export default function processComponentOption ({ option, ctorType, outputPath, pageConfig, componentsMap, componentGenerics, genericsInfo, mixin, hasApp }) {
   // 局部注册页面和组件中依赖的组件
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
@@ -322,18 +311,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option
   }
 }
 
-export function processAppOption ({
-                                    firstPage,
-                                    pagesMap,
-                                    componentsMap,
-                                    App,
-                                    Vue,
-                                    option,
-                                    VueRouter,
-                                    tabBarMap,
-                                    webConfig,
-                                    useSSR
-                                  }) {
+export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, option, VueRouter, tabBarMap, webConfig, useSSR }) {
   if (isServerRendering()) {
     return context => {
       return new Promise((resolve, reject) => {

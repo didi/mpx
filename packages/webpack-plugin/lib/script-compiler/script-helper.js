@@ -115,7 +115,7 @@ function getCurrentOption ({ ctorType, script, isMain, loaderContext, moduleId }
   let content = '  /** script content **/\n'
   const extraOptions = { ctorType, lang: script.lang || 'js' }
   if (ctorType === 'app' && !isMain) {
-    content += `  const currentOption = {}\n`
+    content += ' const currentOption = {}\n'
   } else {
     const { getRequire } = createHelpers(loaderContext)
     content += `  ${getRequire('script', script, extraOptions)}\n`

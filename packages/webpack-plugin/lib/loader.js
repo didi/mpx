@@ -20,8 +20,7 @@ const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDepen
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
-const processMainScript  =  require('./web/processMainScript')
-
+const processMainScript = require('./web/processMainScript')
 module.exports = function (content) {
   this.cacheable()
 
@@ -50,8 +49,6 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const useSSR = mpx.useSSR
-  const webConfig = mpx.webConfig || {}
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
     // page
@@ -142,9 +139,9 @@ module.exports = function (content) {
               outputPath: queryObj.outputPath || '',
               localComponentsMap: jsonRes.localComponentsMap,
               tabBar: jsonRes.jsonObj.tabBar,
-              tabBarMap:jsonRes.tabBarMap,
-              tabBarStr:jsonRes.tabBarStr,
-              localPagesMap:jsonRes.localPagesMap,
+              tabBarMap: jsonRes.tabBarMap,
+              tabBarStr: jsonRes.tabBarStr,
+              localPagesMap: jsonRes.localPagesMap,
               resource: this.resource
             })
             this.loaderIndex = -1
