@@ -128,6 +128,7 @@ module.exports = function (content) {
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
           return processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, (error, jsonRes) => {
+            if (error) return callback(error)
             const output = processMainScript(parts.script, {
               loaderContext,
               ctorType,

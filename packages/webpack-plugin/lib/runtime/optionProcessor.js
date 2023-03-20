@@ -307,7 +307,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option
   })
   return {
     app,
-    ...option,
+    ...option
   }
 }
 
