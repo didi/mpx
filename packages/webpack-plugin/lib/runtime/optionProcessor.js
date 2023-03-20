@@ -133,8 +133,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option
     const webRouteConfig = global.__mpx.config.webRouteConfig
     global.__mpxRouter = option.router = new VueRouter({
       ...webRouteConfig,
-      routes: routes,
-      mode: 'history'
+      routes: routes
     })
     global.__mpxRouter.stack = []
     global.__mpxRouter.needCache = null
