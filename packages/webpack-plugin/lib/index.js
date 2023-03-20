@@ -169,6 +169,7 @@ class MpxWebpackPlugin {
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
+    options.useSSR = options.useSSR || false
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -578,6 +579,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableAliRequireAsync: this.options.enableAliRequireAsync,
+          useSSR: this.options.useSSR,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1418,7 +1420,6 @@ try {
         }
 
         if (mpx.mode === 'web') {
-          const mpxReg = RegExp(/app.mpx/)
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
@@ -1448,14 +1449,6 @@ try {
                 options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
               })
             }
-          }
-          if (createData.request.match(mpxReg) && !Object.keys(queryObj).length) {
-            loaders.forEach((loader, index) => {
-              const currentLoader = toPosix(loader.loader)
-              if (currentLoader.includes('vue-loader/lib/index')) {
-                loaders.splice(index, 1)
-              }
-            })
           }
         }
 

@@ -52,7 +52,8 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-
+  const useSSR = mpx.useSSR
+  const webConfig = mpx.webConfig || {}
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
     // page
@@ -139,7 +140,9 @@ module.exports = function (content) {
               srcMode,
               moduleId,
               isProduction,
+              componentGenerics,
               jsonConfig: jsonRes.jsonObj,
+              outputPath: queryObj.outputPath || '',
               localComponentsMap: jsonRes.localComponentsMap,
               tabBar: jsonRes.jsonObj.tabBar,
               tabBarMap:jsonRes.tabBarMap,

@@ -331,7 +331,9 @@ export function processAppOption ({
                                     Vue,
                                     option,
                                     VueRouter,
-                                    tabBarMap
+                                    tabBarMap,
+                                    webConfig,
+                                    useSSR
                                   }) {
   if (isServerRendering()) {
     return context => {
@@ -347,10 +349,10 @@ export function processAppOption ({
     }
   }
   const { app, pinia, router } = createApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option, tabBarMap })
-  if (pinia) {
+  if (pinia && useSSR) {
     pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
   }
   router.onReady(() => {
-    app.$mount('#app')
+    app.$mount(webConfig.el || '#app')
   })
 }

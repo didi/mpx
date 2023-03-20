@@ -18,7 +18,7 @@ module.exports = function (script, {
   resource
 }) {
 
-  const { i18n, webConfig } = loaderContext.getMpx()
+  const { i18n, webConfig, useSSR } = loaderContext.getMpx()
 
   const { pagesMap, firstPage, globalTabBar } = buildPagesMap({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr })
 
@@ -49,7 +49,9 @@ module.exports = function (script, {
                         pagesMap: ${shallowStringify(pagesMap)},
                         componentsMap: ${shallowStringify(componentsMap)},
                         Vue,
-                        VueRouter
+                        VueRouter,
+                        webConfig: ${JSON.stringify(webConfig)},
+                        useSSR: ${useSSR}
                     })`
 
   return output
