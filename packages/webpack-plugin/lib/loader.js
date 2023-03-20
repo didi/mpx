@@ -22,8 +22,6 @@ const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const processMainScript  =  require('./web/processMainScript')
 
-
-
 module.exports = function (content) {
   this.cacheable()
 
@@ -130,7 +128,6 @@ module.exports = function (content) {
         }
       }
       // 处理mode为web时输出vue格式文件
-      const request = this.resource
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
           return processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, (error, jsonRes) => {

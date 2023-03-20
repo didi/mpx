@@ -2,7 +2,7 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, getCurrentOption, buildGlobalParams, shallowStringify } = require('./scriptHelper')
+const { buildComponentsMap, getCurrentOption, buildGlobalParams, shallowStringify } = require('../script-compiler/script-helper')
 
 module.exports = function (script, {
   loaderContext,

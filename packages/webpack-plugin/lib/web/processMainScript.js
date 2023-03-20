@@ -1,7 +1,7 @@
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, buildPagesMap, getCurrentOption, buildGlobalParams, shallowStringify, stringifyRequest, buildI18n } = require('./scriptHelper')
+const { buildComponentsMap, buildPagesMap, getCurrentOption, buildGlobalParams, shallowStringify, stringifyRequest, buildI18n } = require('../script-compiler/script-helper')
 
 module.exports = function (script, {
   loaderContext,
