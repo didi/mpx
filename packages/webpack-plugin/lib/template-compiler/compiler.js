@@ -1200,7 +1200,7 @@ function parseMustacheWithContext (raw = '') {
 }
 
 
-function parseMustache (raw = '', expHandler = exp => exp) {
+function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => str) {
   let replaced = false
   if (tagRE.test(raw)) {
     const ret = []
@@ -1209,19 +1209,24 @@ function parseMustache (raw = '', expHandler = exp => exp) {
     while (match = tagREG.exec(raw)) {
       const pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
-        ret.push(stringify(pre))
+        const pre2 = strHandler(pre)
+        if (pre2 !== pre) replaced = true
+        ret.push(stringify(pre2))
       }
 
-      const exp = expHandler(match[1])
+      const exp = match[1]
+      const exp2 = expHandler(exp)
 
-      if (exp !== match[1]) replaced = true
+      if (exp2 !== exp) replaced = true
 
-      ret.push(`(${exp.trim()})`)
+      ret.push(`(${exp2.trim()})`)
       lastLastIndex = tagREG.lastIndex
     }
     const post = raw.substring(lastLastIndex)
     if (post) {
-      ret.push(stringify(post))
+      const post2 = strHandler(post)
+      if (post2 !== post) replaced = true
+      ret.push(stringify(post2))
     }
     let result
     if (ret.length === 1) {
@@ -1236,10 +1241,12 @@ function parseMustache (raw = '', expHandler = exp => exp) {
       replaced
     }
   }
+  const raw2 = strHandler(raw)
+  if (raw2 !== raw) replaced = true
   return {
-    result: stringify(raw),
+    result: stringify(raw2),
     hasBinding: false,
-    val: raw,
+    val: raw2,
     replaced
   }
 }
@@ -1423,9 +1430,9 @@ function processAttrs (el, options) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
       const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
-    }
-    if (parsed.replaced) {
-      modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
+      if (parsed.replaced) {
+        modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
+      }
     }
   })
 }
@@ -1602,15 +1609,14 @@ function processClass (el, meta) {
   let staticClass = getAndRemoveAttr(el, type).val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
-    // const staticClassExp = parseMustacheWithContext(staticClass).result
+    const staticClassExp = parseMustacheWithContext(staticClass).result
     const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      // 变更staticClass合并形式便于原子类parse
-      value: staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}`
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {

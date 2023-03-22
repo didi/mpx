@@ -1,43 +1,31 @@
 const { Processor } = require('windicss/lib')
 const { HTMLParser } = require('windicss/utils/parser')
-const { ReplaceSource, RawSource, ConcatSource } = require('webpack').sources
-const config = require('@mpxjs/webpack-plugin/lib/config')
+const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr } = require('./parser')
+const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
+const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
+const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const path = require('path')
+const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
 
 function normalizeOptions (options) {
+  // todo
   options.windiFile = options.windiFile || 'styles/windi'
   options.minify = options.minify || false
+  options.config = options.config || ''
+  options.configFiles = options.configFiles || []
+  options.root = options.root || process.cwd()
   return options
 }
 
-const mpEscapeMap = {
-  '(': '_pl_',
-  ')': '_pr_',
-  '[': '_bl_',
-  ']': '_br_',
-  '#': '_h_',
-  '!': '_i_',
-  '/': '_s_',
-  '.': '_d_',
-  ':': '_c_',
-  '2c': '_2c_',
-  '%': '_p_',
-  '\'': '_q_',
-  '"': '_dq_',
-  '+': '_a_'
+function validateConfig (config, error) {
+  // todo
+  if (config.attributify) {
+    error('小程序环境下无法使用attributify模式，该配置将被忽略！')
+  }
+  return config
 
-}
-
-const escapeReg = /\\(2c|.)/g
-
-function mpEscape (str) {
-  return str.replace(escapeReg, (_, p1) => {
-    if (mpEscapeMap[p1]) return mpEscapeMap[p1]
-    // unknown escape
-    return '_u_'
-  })
 }
 
 function getCommonClassesMap (classesMaps) {
@@ -60,29 +48,75 @@ function getCommonClassesMap (classesMaps) {
 class MpxWindicssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
-    this.processor = new Processor()
   }
 
-  generateStyle (classesMap) {
+  generateStyle (processor, classesMap, tagsMap) {
     const classes = Object.keys(classesMap).join(' ')
-    const styleSheet = this.processor.interpret(classes).styleSheet
+    const tags = Object.keys(tagsMap).map(i => `<${i}/>`).join(' ')
+
+    let styleSheet = processor.interpret(classes).styleSheet
+    if (tags) {
+      styleSheet = processor.preflight(tags).extend(styleSheet)
+    }
     styleSheet.children.forEach((style) => {
       if (style.selector) {
         style.selector = mpEscape(style.selector)
       }
     })
-    return styleSheet.build(this.options.minify)
+    return styleSheet.sort().combine().build(this.options.minify)
+  }
+
+  loadConfig (compilation, error) {
+    let { root, configFiles } = this.options
+    const { error: err, config, filepath } = loadConfiguration(this.options)
+    if (err) error(err)
+    if (filepath) compilation.fileDependencies.add(filepath)
+
+
+    configFiles = configFiles || defaultConfigureFiles
+    configFiles.forEach((filename) => {
+      const tryPath = path.resolve(root, filename)
+      if (tryPath !== filepath) compilation.missingDependencies.add(tryPath)
+    })
+
+    validateConfig(config, error)
+
+    return config
+  }
+
+  getSafeListClasses (processor) {
+    let safelist = processor.config('safelist')
+    let classes = []
+    if (typeof safelist === 'string') {
+      classes = safelist.split(/\s/).filter(i => i)
+    }
+    if (Array.isArray(safelist)) {
+      for (const item of safelist) {
+        if (typeof item === 'string') {
+          classes.push(item)
+        } else if (Array.isArray(item)) {
+          classes = classes.concat(item)
+        }
+      }
+    }
+    return classes
   }
 
   apply (compiler) {
     compiler.hooks.thisCompilation.tap('MpxWindicssPlugin', (compilation) => {
-      compilation.hooks.processAssets.tap({
+      compilation.hooks.processAssets.tapPromise({
         name: 'MpxWindicssPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
-      }, (assets) => {
+      }, async (assets) => {
         const { __mpx__: mpx } = compilation
+        const error = (msg) => {
+          compilation.errors.push(new Error(msg))
+        }
+        const warn = (msg) => {
+          compilation.warnings.push(new Error(msg))
+        }
         if (!mpx) {
-          compilation.errors.push(new Error(`@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!`))
+          error(`@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!`)
           return
         }
 
@@ -91,7 +125,11 @@ class MpxWindicssPlugin {
         // 输出web时暂不处理
         if (mode === 'web') return
 
-        const { template: templateExt, styles: styleExt } = config[mode].typeExtMap
+        const config = this.loadConfig(compilation, error)
+
+        const processor = new Processor(config)
+
+        const { template: templateExt, styles: styleExt } = mpxConfig[mode].typeExtMap
 
         const packages = Object.keys(dynamicEntryInfo)
 
@@ -107,75 +145,113 @@ class MpxWindicssPlugin {
         const packageClassesMaps = {
           main: {}
         }
-
         const mainClassesMap = packageClassesMaps.main
+
+        // config中的safelist视为主包classes
+        const safeListClasses = this.getSafeListClasses(processor)
+
+        safeListClasses.forEach((className) => {
+          mainClassesMap[className] = true
+        })
+
+        const tagsMap = {}
+        const cssEscape = processor.e
+        const transformAlias = buildAliasTransformer(config.alias)
+        const transformClasses = (source, classNameHandler = c => c) => {
+          // pre process
+          source = transformAlias(source)
+          source = transformGroups(source)
+          const content = source.source()
+          // escape & fill classesMap
+          return content.trim().split(/\s+/).map(classNameHandler).join(' ')
+        }
 
         Object.entries(assets).forEach(([filename, source]) => {
           if (!filename.endsWith(templateExt)) return
 
-          const resultSource = new ReplaceSource(source)
+          source = getReplaceSource(source)
 
           const content = source.source()
-
-          const parser = new HTMLParser(content)
 
           const packageName = getPackageName(filename)
 
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
 
-          const temp = parser.parseClasses()
-          temp.forEach(({ start, end, result }) => {
-            const escaped = mpEscape(this.processor.e(result))
-            resultSource.replace(start, end, escaped)
+          const classNameHandler = (className) => {
+            if (packageName === 'main') {
+              mainClassesMap[className] = true
+            } else if (!mainClassesMap[className]) {
+              currentClassesMap[className] = true
+            }
+            return mpEscape(cssEscape(className))
+          }
 
-            result.split(/\s+/).forEach((item) => {
-              if (packageName === 'main') {
-                mainClassesMap[item] = true
-              } else if (!mainClassesMap[item]) {
-                currentClassesMap[item] = true
-              }
-            })
+          parseClasses(content).forEach(({ result, start, end }) => {
+            let { replaced, val } = parseMustache(result, (exp) => {
+              const expSource = getReplaceSource(exp)
+              parseStrings(exp).forEach(({ result, start, end }) => {
+                result = transformClasses(result, classNameHandler)
+                expSource.replace(start, end, result)
+              })
+              return expSource.source()
+            }, (str) => transformClasses(str, classNameHandler))
+
+
+            if (replaced) {
+              val = stringifyAttr(val)
+              source.replace(start - 1, end + 1, val)
+            }
           })
 
-          assets[filename] = resultSource
+          if (config.preflight) {
+            parseTags(content).forEach((tagName) => {
+              tagsMap[tagName] = true
+            })
+          }
+
+          assets[filename] = source
         })
 
         delete packageClassesMaps.main
         const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps))
         Object.assign(mainClassesMap, commonClassesMap)
 
-        const windiFileContent = this.generateStyle(mainClassesMap)
-        const windiFile = this.options.windiFile + styleExt
+        // 生成主包windi.css
+        const windiFileContent = this.generateStyle(processor, mainClassesMap, tagsMap)
+        if (windiFileContent) {
+          const windiFile = this.options.windiFile + styleExt
+          if (assets[windiFile]) error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
+          assets[windiFile] = getRawSource(windiFileContent)
+
+          const appFile = appInfo.name + styleExt
+          let relativePath = toPosix(path.relative(path.dirname(appFile), windiFile))
+          relativePath = fixRelative(relativePath, mode)
+          const appStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
+          appStyleSource.add(assets[appFile] || '')
+          assets[appFile] = appStyleSource
+        }
 
 
-        // 处理主包
-        if (assets[windiFile]) compilation.errors.push(new Error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`))
-        assets[windiFile] = new RawSource(windiFileContent)
-
-        const appFile = appInfo.name + styleExt
-        let relativePath = toPosix(path.relative(path.dirname(appFile), windiFile))
-        relativePath = fixRelative(relativePath, mode)
-        const appStyleSource = new ConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-        appStyleSource.add(assets[appFile] || '')
-        assets[appFile] = appStyleSource
-
+        // 生成分包windi.css
         Object.entries(packageClassesMaps).forEach(([packageRoot, classesMap]) => {
-          const windiFileContent = this.generateStyle(classesMap)
-          const windiFile = toPosix(path.join(packageRoot, this.options.windiFile + styleExt))
+          const windiFileContent = this.generateStyle(processor, classesMap)
+          if (windiFileContent) {
+            const windiFile = toPosix(path.join(packageRoot, this.options.windiFile + styleExt))
 
-          if (assets[windiFile]) compilation.errors.push(new Error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`))
-          assets[windiFile] = new RawSource(windiFileContent)
+            if (assets[windiFile]) error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
+            assets[windiFile] = getRawSource(windiFileContent)
 
-          dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
-            if (entryType === 'page') {
-              const pageFile = filename + styleExt
-              let relativePath = toPosix(path.relative(path.dirname(pageFile), windiFile))
-              relativePath = fixRelative(relativePath, mode)
-              const pageStyleSource = new ConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-              pageStyleSource.add(assets[appFile] || '')
-              assets[pageFile] = pageStyleSource
-            }
-          })
+            dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
+              if (entryType === 'page') {
+                const pageFile = filename + styleExt
+                let relativePath = toPosix(path.relative(path.dirname(pageFile), windiFile))
+                relativePath = fixRelative(relativePath, mode)
+                const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
+                pageStyleSource.add(assets[pageFile] || '')
+                assets[pageFile] = pageStyleSource
+              }
+            })
+          }
         })
       })
     })
