@@ -1,5 +1,6 @@
 const path = require('path')
 const JSON5 = require('json5')
+const fs = require('fs')
 const parseRequest = require('./utils/parse-request')
 const config = require('./config')
 const createHelpers = require('./helpers')
@@ -8,6 +9,11 @@ const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
 const fixUsingComponent = require('./utils/fix-using-component')
 const { JSON_JS_EXT } = require('./utils/const')
+const processTemplate = require('./web/processTemplate')
+const processStyles = require('./web/processStyles')
+const processJSON = require('./web/processJSON')
+const processScript = require('./web/processScript')
+const RecordVueContentDependency = require("./dependencies/RecordVueContentDependency")
 
 module.exports = function (content) {
   this.cacheable()
@@ -49,6 +55,9 @@ module.exports = function (content) {
   const hasScoped = (queryObj.scoped || autoScope) && mode === 'ali'
   const hasComment = false
   const isNative = true
+  const parts = {}
+  let ctorType = 'component'
+
 
   const checkFileExists = (extName, callback) => {
     this.resolve(parsed.dir, resourceName + extName, callback)
@@ -112,6 +121,100 @@ module.exports = function (content) {
           callback()
         })
       }, callback)
+    },
+    (callback) => {
+      if (mode === 'web') {
+        async.forEachOf(typeExtMap, (ext, key, callback) => {
+          // 检测到jsonjs或cssLang时跳过对应类型文件检测
+          if (typeResourceMap[key]) {
+            fs.readFile(typeResourceMap[key], (err, content) => {
+              if (err) return callback(err)
+              parts[key] = {
+                content: content.toString('utf-8'),
+                tag: key,
+                attrs: {}
+              }
+              callback()
+            })
+          } else {
+            callback()
+          }
+        }, callback)
+      } else {
+        callback()
+      }
+    },
+    (callback) => {
+      if (mode === 'web') {
+        async.waterfall([
+          (callback) => {
+            async.parallel([
+              (callback) => {
+                processTemplate(parts.template, {
+                  loaderContext,
+                  hasScoped,
+                  hasComment,
+                  isNative,
+                  srcMode,
+                  moduleId,
+                  ctorType,
+                  usingComponents: [],
+                  componentGenerics: {}
+                }, callback)
+              },
+              (callback) => {
+                processStyles(parts.styles, {
+                  ctorType,
+                  autoScope,
+                  moduleId
+                }, callback)
+              },
+              (callback) => {
+                processJSON(parts.json, {
+                  loaderContext,
+                  pagesMap,
+                  componentsMap
+                }, callback)
+              }
+            ], (err, res) => {
+              callback(err, res)
+            })
+          },
+          ([templateRes, stylesRes, jsonRes], callback) => {
+            output += templateRes.output
+            output += stylesRes.output
+            output += jsonRes.output
+            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
+              mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
+            }
+
+            processScript(parts.script, {
+              loaderContext,
+              ctorType,
+              srcMode,
+              moduleId,
+              isProduction,
+              componentGenerics,
+              jsonConfig: jsonRes.jsonObj,
+              outputPath: queryObj.outputPath || '',
+              tabBarMap: jsonRes.tabBarMap,
+              tabBarStr: jsonRes.tabBarStr,
+              builtInComponentsMap: templateRes.builtInComponentsMap,
+              genericsInfo: templateRes.genericsInfo,
+              wxsModuleMap: templateRes.wxsModuleMap,
+              localComponentsMap: jsonRes.localComponentsMap,
+              localPagesMap: jsonRes.localPagesMap
+            }, callback)
+          }
+        ], (err, scriptRes) => {
+          if (err) return callback(err)
+          output += scriptRes.output
+          this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
+          callback(null, output)
+        })
+      } else {
+        callback()
+      }
     },
     (callback) => {
       getJSONContent({

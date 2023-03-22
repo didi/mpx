@@ -79,7 +79,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      if (ext === '.js' && mode !== 'web') {
+      if (ext === '.js') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
 
