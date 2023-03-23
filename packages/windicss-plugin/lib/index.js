@@ -1,5 +1,4 @@
 const { Processor } = require('windicss/lib')
-const { HTMLParser } = require('windicss/utils/parser')
 const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr } = require('./parser')
 const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
@@ -13,14 +12,13 @@ function normalizeOptions (options) {
   // todo
   options.windiFile = options.windiFile || 'styles/windi'
   options.minify = options.minify || false
-  options.config = options.config || ''
-  options.configFiles = options.configFiles || []
+  // options.config = options.config
+  // options.configFiles = options.configFiles
   options.root = options.root || process.cwd()
   return options
 }
 
 function validateConfig (config, error) {
-  // todo
   if (config.attributify) {
     error('小程序环境下无法使用attributify模式，该配置将被忽略！')
   }
@@ -67,21 +65,20 @@ class MpxWindicssPlugin {
   }
 
   loadConfig (compilation, error) {
-    let { root, configFiles } = this.options
-    const { error: err, config, filepath } = loadConfiguration(this.options)
+    let { root, config, configFiles = defaultConfigureFiles } = this.options
+    const { error: err, config: resolved, filepath } = loadConfiguration(this.options)
     if (err) error(err)
     if (filepath) compilation.fileDependencies.add(filepath)
 
+    if (!config) {
+      for (const file of configFiles) {
+        const tryPath = path.resolve(root, file)
+        if (tryPath === filepath) break
+        compilation.missingDependencies.add(tryPath)
+      }
+    }
 
-    configFiles = configFiles || defaultConfigureFiles
-    configFiles.forEach((filename) => {
-      const tryPath = path.resolve(root, filename)
-      if (tryPath !== filepath) compilation.missingDependencies.add(tryPath)
-    })
-
-    validateConfig(config, error)
-
-    return config
+    return validateConfig(resolved, error)
   }
 
   getSafeListClasses (processor) {

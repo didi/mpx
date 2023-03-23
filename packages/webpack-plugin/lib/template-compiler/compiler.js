@@ -1207,33 +1207,37 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
     let lastLastIndex = 0
     let match
     while (match = tagREG.exec(raw)) {
-      const pre = raw.substring(lastLastIndex, match.index)
+      const pre = raw.substring(lastLastIndex, match.index).trim()
       if (pre) {
         const pre2 = strHandler(pre)
         if (pre2 !== pre) replaced = true
-        ret.push(stringify(pre2))
+        if (pre2) ret.push(stringify(pre2))
       }
 
-      const exp = match[1]
-      const exp2 = expHandler(exp)
+      const exp = match[1].trim()
+      if (exp) {
+        const exp2 = expHandler(exp)
+        if (exp2 !== exp) replaced = true
+        if (exp2) ret.push(`(${exp2})`)
+      }
 
-      if (exp2 !== exp) replaced = true
-
-      ret.push(`(${exp2.trim()})`)
       lastLastIndex = tagREG.lastIndex
     }
-    const post = raw.substring(lastLastIndex)
+
+    const post = raw.substring(lastLastIndex).trim()
     if (post) {
       const post2 = strHandler(post)
       if (post2 !== post) replaced = true
-      ret.push(stringify(post2))
+      if (post2) ret.push(stringify(post2))
     }
+
     let result
     if (ret.length === 1) {
       result = ret[0]
     } else {
       result = `(${ret.join('+')})`
     }
+
     return {
       result,
       hasBinding: true,
@@ -1241,8 +1245,11 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
       replaced
     }
   }
+
+  raw = raw.trim()
   const raw2 = strHandler(raw)
   if (raw2 !== raw) replaced = true
+
   return {
     result: stringify(raw2),
     hasBinding: false,
