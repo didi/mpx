@@ -132,7 +132,7 @@ module.exports = function (script, {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
   import { createI18n } from 'vue-i18n-bridge'
-  
+
   Vue.use(VueI18n , { bridge: true })\n`
           const requestObj = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
@@ -221,7 +221,7 @@ module.exports = function (script, {
       content += `  ${getRequire('script', script, extraOptions)}\n`
 
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n console.log('in this currentOption read')\n`
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {

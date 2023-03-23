@@ -57,7 +57,7 @@ module.exports = function (content) {
   const isNative = true
   const parts = {}
   let ctorType = 'component'
-
+  let output = ''
 
   const checkFileExists = (extName, callback) => {
     this.resolve(parsed.dir, resourceName + extName, callback)
@@ -145,8 +145,40 @@ module.exports = function (content) {
       }
     },
     (callback) => {
+      getJSONContent({
+        src: typeResourceMap.json,
+        useJSONJS
+      }, null, this, callback)
+    }, (content, callback) => {
+      let json
+      try {
+        json = JSON5.parse(content)
+      } catch (e) {
+        return callback(e)
+      }
+      let usingComponents = Object.keys(mpx.usingComponents)
+      if (json.usingComponents) {
+        fixUsingComponent(json.usingComponents, mode)
+        usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
+      }
+
+      // 注入构造函数
+      let ctor = 'App'
+      let ctorType = 'app'
+      if (pagesMap[resourcePath]) {
+        ctorType = 'page'
+        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
+          ctor = 'Page'
+        } else {
+          ctor = 'Component'
+        }
+      } else if (componentsMap[resourcePath]) {
+        ctor = 'Component'
+        ctorType = 'component'
+      }
+
       if (mode === 'web') {
-        async.waterfall([
+        return async.waterfall([
           (callback) => {
             async.parallel([
               (callback) => {
@@ -194,7 +226,7 @@ module.exports = function (content) {
               srcMode,
               moduleId,
               isProduction,
-              componentGenerics,
+              componentGenerics: {},
               jsonConfig: jsonRes.jsonObj,
               outputPath: queryObj.outputPath || '',
               tabBarMap: jsonRes.tabBarMap,
@@ -212,27 +244,8 @@ module.exports = function (content) {
           this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
           callback(null, output)
         })
-      } else {
-        callback()
       }
-    },
-    (callback) => {
-      getJSONContent({
-        src: typeResourceMap.json,
-        useJSONJS
-      }, null, this, callback)
-    }, (content, callback) => {
-      let json
-      try {
-        json = JSON5.parse(content)
-      } catch (e) {
-        return callback(e)
-      }
-      let usingComponents = Object.keys(mpx.usingComponents)
-      if (json.usingComponents) {
-        fixUsingComponent(json.usingComponents, mode)
-        usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
-      }
+
       const {
         getRequire
       } = createHelpers(loaderContext)
@@ -271,25 +284,11 @@ module.exports = function (content) {
       }
 
       // 注入模块id及资源路径
-      let output = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      output = `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
 
-      // 注入构造函数
-      let ctor = 'App'
-      let ctorType = 'app'
-      if (pagesMap[resourcePath]) {
-        ctorType = 'page'
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (componentsMap[resourcePath]) {
-        ctor = 'Component'
-        ctorType = 'component'
-      }
       output += `global.currentCtor = ${ctor}\n`
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
