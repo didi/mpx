@@ -12,7 +12,7 @@ const escapeMap = {
   '/': '_s_',
   '.': '_d_',
   ':': '_c_',
-  '2c': '_2c_',
+  '2c ': '_2c_',
   '%': '_p_',
   '\'': '_q_',
   '"': '_dq_',
@@ -20,7 +20,7 @@ const escapeMap = {
 
 }
 
-const escapedReg = /\\(2c|.)/g
+const escapedReg = /\\(2c |.)/g
 
 function mpEscape (str) {
   return str.replace(escapedReg, (_, p1) => {

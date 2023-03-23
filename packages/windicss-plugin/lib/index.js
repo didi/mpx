@@ -48,7 +48,7 @@ class MpxWindicssPlugin {
     this.options = normalizeOptions(options)
   }
 
-  generateStyle (processor, classesMap, tagsMap) {
+  generateStyle (processor, classesMap = {}, tagsMap = {}) {
     const classes = Object.keys(classesMap).join(' ')
     const tags = Object.keys(tagsMap).map(i => `<${i}/>`).join(' ')
 
