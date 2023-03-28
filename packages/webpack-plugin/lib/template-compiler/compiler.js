@@ -1207,7 +1207,7 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
     let lastLastIndex = 0
     let match
     while (match = tagREG.exec(raw)) {
-      const pre = raw.substring(lastLastIndex, match.index).trim()
+      const pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
         const pre2 = strHandler(pre)
         if (pre2 !== pre) replaced = true
@@ -1224,7 +1224,7 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
       lastLastIndex = tagREG.lastIndex
     }
 
-    const post = raw.substring(lastLastIndex).trim()
+    const post = raw.substring(lastLastIndex)
     if (post) {
       const post2 = strHandler(post)
       if (post2 !== post) replaced = true
@@ -1246,7 +1246,6 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
     }
   }
 
-  raw = raw.trim()
   const raw2 = strHandler(raw)
   if (raw2 !== raw) replaced = true
 

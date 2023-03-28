@@ -68,7 +68,11 @@ class MpxWindicssPlugin {
     let { root, config, configFiles = defaultConfigureFiles } = this.options
     const { error: err, config: resolved, filepath } = loadConfiguration(this.options)
     if (err) error(err)
-    if (filepath) compilation.fileDependencies.add(filepath)
+    if (filepath) {
+      compilation.fileDependencies.add(filepath)
+      // fix jiti require cache for watch
+      delete require.cache[filepath]
+    }
 
     if (!config) {
       for (const file of configFiles) {
@@ -160,7 +164,7 @@ class MpxWindicssPlugin {
           source = transformGroups(source)
           const content = source.source()
           // escape & fill classesMap
-          return content.trim().split(/\s+/).map(classNameHandler).join(' ')
+          return content.split(/\s+/).map(classNameHandler).join(' ')
         }
 
         Object.entries(assets).forEach(([filename, source]) => {
@@ -175,6 +179,7 @@ class MpxWindicssPlugin {
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
 
           const classNameHandler = (className) => {
+            if(!className) return className
             if (packageName === 'main') {
               mainClassesMap[className] = true
             } else if (!mainClassesMap[className]) {

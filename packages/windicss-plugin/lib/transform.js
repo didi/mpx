@@ -16,11 +16,11 @@ const escapeMap = {
   '%': '_p_',
   '\'': '_q_',
   '"': '_dq_',
-  '+': '_a_'
-
+  '+': '_a_',
+  '$': '_si_'
 }
 
-const escapedReg = /\\(2c |.)/g
+const escapedReg = /\\(2c\s|.)/g
 
 function mpEscape (str) {
   return str.replace(escapedReg, (_, p1) => {
@@ -42,14 +42,15 @@ function buildAliasTransformer (alias) {
   const regexText = `\\*(?:${keys})(?<=[^w-])`
   const regex = new RegExp(regexText, 'g')
   return function transformAlias (source) {
+    // todo test
     source = getReplaceSource(source)
     let content = source.source()
     let match
     regex.lastIndex = 0
     while (match = regex.exec(content)) {
       const start = match.index
-      const end = start + match[0].length
-      const name = content.slice(start + 1, end)
+      const end = start + match[0].length - 1
+      const name = content.slice(start + 1, end + 1)
       const replacement = alias[name]
       source.replace(start, end, replacement)
     }
@@ -66,7 +67,7 @@ function transformGroups (source) {
   groupReg.lastIndex = 0
   while (match = groupReg.exec(content)) {
     const start = match.index
-    const end = start + match[0].length
+    const end = start + match[0].length - 1
     const a = match[1]
     const b = match[2]
     const replacement = b.split(/\s+/g).filter(Boolean).map((i) => i.replace(/^(!?)(.*)/, `$1${a}:$2`)).join(' ')
