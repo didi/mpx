@@ -598,9 +598,7 @@ class MpxWebpackPlugin {
               hasPage: false,
               entries: []
             }
-
             if (entryType === 'page') curInfo.hasPage = true
-
             curInfo.entries.push({
               entryType,
               resource,
