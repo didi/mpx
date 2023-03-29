@@ -105,10 +105,10 @@ export class ReactiveEffect {
     this.pausedState = PausedState.paused
   }
 
-  resume () {
+  resume (ignoreDirty = false) {
     const lastPausedState = this.pausedState
     this.pausedState = PausedState.resumed
-    if (lastPausedState === PausedState.dirty) {
+    if (!ignoreDirty && lastPausedState === PausedState.dirty) {
       this.scheduler ? this.scheduler() : this.run()
     }
   }
