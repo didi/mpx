@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/windicss-base",
-  "version": "2.8.27",
+  "version": "2.8.28-beta.0",
   "description": "mpx windicss base preset",
   "main": "lib/index.js",
   "directories": {
