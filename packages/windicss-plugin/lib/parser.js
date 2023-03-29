@@ -50,5 +50,5 @@ module.exports = {
   parseStrings,
   parseTags,
   parseMustache,
-  stringifyAttr,
+  stringifyAttr
 }

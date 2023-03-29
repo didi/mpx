@@ -13,9 +13,9 @@ module.exports = {
       '6xl': ['140.625rpx', { lineHeight: '1' }],
       '7xl': ['168.75rpx', { lineHeight: '1' }],
       '8xl': ['225rpx', { lineHeight: '1' }],
-      '9xl': ['300rpx', { lineHeight: '1' }],
+      '9xl': ['300rpx', { lineHeight: '1' }]
       // nxl -> [n rem, lineHeight: 1]
-    },
+    }
   }
 
 }

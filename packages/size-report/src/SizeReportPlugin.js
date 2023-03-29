@@ -49,7 +49,7 @@ class SizeReportPlugin {
     }, async (compilation) => {
       const { moduleGraph, chunkGraph, __mpx__: mpx } = compilation
       if (!mpx) {
-        compilation.errors.push(new Error(`@mpxjs/size-report需要与@mpxjs/webpack-plugin配合使用，请检查!`))
+        compilation.errors.push(new Error('@mpxjs/size-report需要与@mpxjs/webpack-plugin配合使用，请检查!'))
         return
       }
 
@@ -133,11 +133,13 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, {
-          target: !!(relation && relation.target),
-          children: new Set(),
-          parents: new Set()
-        })
+        if (!moduleEntryGraphMap.has(moduleId)) {
+          moduleEntryGraphMap.set(moduleId, {
+            target: !!(relation && relation.target),
+            children: new Set(),
+            parents: new Set()
+          })
+        }
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {

@@ -1199,7 +1199,6 @@ function parseMustacheWithContext (raw = '') {
   })
 }
 
-
 function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => str) {
   let replaced = false
   if (tagRE.test(raw)) {

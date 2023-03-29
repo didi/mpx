@@ -17,7 +17,7 @@ const escapeMap = {
   '\'': '_q_',
   '"': '_dq_',
   '+': '_a_',
-  '$': '_si_'
+  $: '_si_'
 }
 
 const escapedReg = /\\(2c\s|.)/g
@@ -43,7 +43,7 @@ function buildAliasTransformer (alias) {
   const regex = new RegExp(regexText, 'g')
   return function transformAlias (source) {
     source = getReplaceSource(source)
-    let content = source.original().source()
+    const content = source.original().source()
     let match
     regex.lastIndex = 0
     while (match = regex.exec(content)) {
@@ -61,7 +61,7 @@ const groupReg = /([!\w+-<@][\w+:_/-]*?\w):\(((?:[!\w\s:/\\,%#.$-]|\[.*?\])*?)\)
 
 function transformGroups (source) {
   source = getReplaceSource(source)
-  let content = source.original().source()
+  const content = source.original().source()
   let match
   groupReg.lastIndex = 0
   while (match = groupReg.exec(content)) {
@@ -80,5 +80,3 @@ module.exports = {
   mpEscape,
   buildAliasTransformer
 }
-
-

@@ -23,7 +23,6 @@ function validateConfig (config, error) {
     error('小程序环境下无法使用attributify模式，该配置将被忽略！')
   }
   return config
-
 }
 
 function getCommonClassesMap (classesMaps) {
@@ -65,7 +64,7 @@ class MpxWindicssPlugin {
   }
 
   loadConfig (compilation, error) {
-    let { root, config, configFiles = defaultConfigureFiles } = this.options
+    const { root, config, configFiles = defaultConfigureFiles } = this.options
     const { error: err, config: resolved, filepath } = loadConfiguration(this.options)
     if (err) error(err)
     if (filepath) {
@@ -86,7 +85,7 @@ class MpxWindicssPlugin {
   }
 
   getSafeListClasses (processor) {
-    let safelist = processor.config('safelist')
+    const safelist = processor.config('safelist')
     let classes = []
     if (typeof safelist === 'string') {
       classes = safelist.split(/\s/).filter(i => i)
@@ -113,11 +112,11 @@ class MpxWindicssPlugin {
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
         }
-        const warn = (msg) => {
-          compilation.warnings.push(new Error(msg))
-        }
+        // const warn = (msg) => {
+        //   compilation.warnings.push(new Error(msg))
+        // }
         if (!mpx) {
-          error(`@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!`)
+          error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!')
           return
         }
 
@@ -179,7 +178,7 @@ class MpxWindicssPlugin {
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
 
           const classNameHandler = (className) => {
-            if(!className) return className
+            if (!className) return className
             if (packageName === 'main') {
               mainClassesMap[className] = true
             } else if (!mainClassesMap[className]) {
@@ -197,7 +196,6 @@ class MpxWindicssPlugin {
               })
               return expSource.source()
             }, (str) => transformClasses(str, classNameHandler))
-
 
             if (replaced) {
               val = stringifyAttr(val)
@@ -232,7 +230,6 @@ class MpxWindicssPlugin {
           appStyleSource.add(assets[appFile] || '')
           assets[appFile] = appStyleSource
         }
-
 
         // 生成分包windi.css
         Object.entries(packageClassesMaps).forEach(([packageRoot, classesMap]) => {
