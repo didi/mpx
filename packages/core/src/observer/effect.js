@@ -10,6 +10,7 @@ export class ReactiveEffect {
   newDeps = []
   depIds = new Set()
   newDepIds = new Set()
+  allowRecurse = false
 
   constructor (
     fn,
@@ -69,11 +70,12 @@ export class ReactiveEffect {
   // same as trigger
   update () {
     // avoid dead cycle
-    if (Dep.target === this) return
-    if (this.pausedState !== PausedState.resumed) {
-      this.pausedState = PausedState.dirty
-    } else {
-      this.scheduler ? this.scheduler() : this.run()
+    if (Dep.target !== this || this.allowRecurse) {
+      if (this.pausedState !== PausedState.resumed) {
+        this.pausedState = PausedState.dirty
+      } else {
+        this.scheduler ? this.scheduler() : this.run()
+      }
     }
   }
 
@@ -103,10 +105,10 @@ export class ReactiveEffect {
     this.pausedState = PausedState.paused
   }
 
-  resume () {
+  resume (ignoreDirty = false) {
     const lastPausedState = this.pausedState
     this.pausedState = PausedState.resumed
-    if (lastPausedState === PausedState.dirty) {
+    if (!ignoreDirty && lastPausedState === PausedState.dirty) {
       this.scheduler ? this.scheduler() : this.run()
     }
   }

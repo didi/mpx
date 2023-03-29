@@ -3,24 +3,15 @@ const mime = require('mime')
 const parseRequest = require('./utils/parse-request')
 const getOptions = loaderUtils.getOptions
 
-function isStyleRequest (request) {
-  const { loaderString, queryObj } = parseRequest(request)
-  if (queryObj.type === 'styles') return true
-  if (/(css-loader|wxss\/loader)/.test(loaderString)) return true
-  return false
-}
-
 module.exports = function (src) {
   let transBase64 = false
   const options = Object.assign({}, getOptions(this))
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mimetype = options.mimetype || mime.getType(resourcePath)
-  const moduleGraph = this._compilation.moduleGraph
-  const issuer = moduleGraph.getIssuer(this._module)
   const publicPathScope = options.publicPathScope === 'all' ? 'all' : 'styleOnly'
   const limit = options.limit
   const useLocal = !limit || src.length < limit || queryObj.useLocal
-  const isStyle = (issuer && issuer.request && isStyleRequest(issuer.request)) || queryObj.isStyle
+  const isStyle = queryObj.isStyle
 
   if (isStyle) {
     if (options.publicPath) {

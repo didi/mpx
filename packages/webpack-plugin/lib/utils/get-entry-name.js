@@ -4,7 +4,7 @@ module.exports = function (loaderContext) {
   let entryName = ''
   for (const [name, { dependencies }] of loaderContext._compilation.entries) {
     const entryModule = moduleGraph.getModule(dependencies[0])
-    if (entryModule.resource === loaderContext.resource) {
+    if (entryModule && entryModule.resource === loaderContext.resource) {
       entryName = name
       break
     }
