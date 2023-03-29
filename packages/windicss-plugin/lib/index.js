@@ -172,7 +172,7 @@ class MpxWindicssPlugin {
 
           source = getReplaceSource(source)
 
-          const content = source.source()
+          const content = source.original().source()
 
           const packageName = getPackageName(filename)
 

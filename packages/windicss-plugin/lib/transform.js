@@ -42,9 +42,8 @@ function buildAliasTransformer (alias) {
   const regexText = `\\*(?:${keys})(?<=[^w-])`
   const regex = new RegExp(regexText, 'g')
   return function transformAlias (source) {
-    // todo test
     source = getReplaceSource(source)
-    let content = source.source()
+    let content = source.original().source()
     let match
     regex.lastIndex = 0
     while (match = regex.exec(content)) {
@@ -62,7 +61,7 @@ const groupReg = /([!\w+-<@][\w+:_/-]*?\w):\(((?:[!\w\s:/\\,%#.$-]|\[.*?\])*?)\)
 
 function transformGroups (source) {
   source = getReplaceSource(source)
-  let content = source.source()
+  let content = source.original().source()
   let match
   groupReg.lastIndex = 0
   while (match = groupReg.exec(content)) {

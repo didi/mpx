@@ -14,9 +14,7 @@ function parseClasses (content) {
     output.push({
       result: value,
       start,
-      end,
-      startChar: content.charAt(start),
-      endChar: content.charAt(end)
+      end
     })
   }
 
@@ -36,9 +34,7 @@ function parseStrings (content) {
     output.push({
       result: value,
       start,
-      end,
-      startChar: content.charAt(start),
-      endChar: content.charAt(end)
+      end
     })
   }
   return output
