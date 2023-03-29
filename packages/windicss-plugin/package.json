@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/windicss-plugin",
-  "version": "2.8.25",
+  "version": "2.8.26",
   "description": "mpx windicss webpack plugin",
   "main": "lib/index.js",
   "directories": {
