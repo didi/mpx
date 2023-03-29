@@ -115,6 +115,7 @@ class MpxWindicssPlugin {
         // const warn = (msg) => {
         //   compilation.warnings.push(new Error(msg))
         // }
+
         if (!mpx) {
           error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!')
           return

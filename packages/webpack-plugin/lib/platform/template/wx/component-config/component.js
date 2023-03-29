@@ -1,11 +1,10 @@
-const templateCompiler = require('../../../../template-compiler/compiler')
-const parseMustacheWithContext = templateCompiler.parseMustacheWithContext
+const { parseMustache } = require('../../../../template-compiler/compiler')
 const normalize = require('../../../../utils/normalize')
 const TAG_NAME = 'component'
 
 /** is 属性格式化为中划线(-)连接 */
 const formatPropIs = (obj, data) => {
-  const parsed = parseMustacheWithContext(obj.value)
+  const parsed = parseMustache(obj.value)
   let value = parsed.result
   if (parsed.hasBinding) value = value.slice(1, -1)
   const el = data.el

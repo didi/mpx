@@ -3,9 +3,7 @@ const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const templateCompiler = require('../../../template-compiler/compiler')
-const parseMustacheWithContext = templateCompiler.parseMustacheWithContext
-const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
+const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
@@ -20,7 +18,7 @@ module.exports = function getSpec ({ warn, error }) {
           const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             return {
-              name: name === 'animation' ? 'v-' + name : ':' + name,
+              name: name === 'animation' ? 'v-animation' : ':' + name,
               value: parsed.result
             }
           }
