@@ -93,18 +93,49 @@ function isDef (v) {
   return v !== undefined && v !== null
 }
 
+var escapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '}': '_cr_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  '\'': '_q_',
+  '"': '_dq_',
+  '+': '_a_',
+  '$': '_si_'
+}
+
+var escapeReg = genRegExp('[()[]{}#!/.:,%\'"+$]', 'g')
+
+function mpEscape (str) {
+  return str.replace(escapeReg, function (match) {
+    if (escapeMap[match]) return escapeMap[match]
+    // unknown escaped
+    return '_u_'
+  })
+}
+
+
 function stringifyDynamicClass (value) {
-  if (!value) return ''
   if (isArray(value)) {
-    return stringifyArray(value)
+    value = stringifyArray(value)
+  } else if (isObject(value)) {
+    value = stringifyObject(value)
   }
-  if (isObject(value)) {
-    return stringifyObject(value)
-  }
+
   if (typeof value === 'string') {
-    return value
+    return mpEscape(value)
+  } else {
+    return ''
   }
-  return ''
 }
 
 function stringifyArray (value) {
