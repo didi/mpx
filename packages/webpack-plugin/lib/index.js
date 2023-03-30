@@ -524,6 +524,7 @@ class MpxWebpackPlugin {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
       const moduleGraph = compilation.moduleGraph
+      
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {

@@ -99,6 +99,7 @@ export default function getRefsMixin () {
       createSelectorQuery (...args) {
         const selectorQuery = envObj.createSelectorQuery(...args)
         const cbs = []
+
         proxyMethods.forEach((name) => {
           const originalMethod = selectorQuery[name]
           selectorQuery[name] = function (cb = noop) {
