@@ -29,6 +29,7 @@
     "windicss": "^3.5.6"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "^2.8.0"
+    "@mpxjs/webpack-plugin": "^2.8.0",
+    "webpack": "^5.48.0"
   }
 }
