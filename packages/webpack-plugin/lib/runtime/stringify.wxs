@@ -24,8 +24,9 @@ function objectKeys (obj) {
         var shift = false
         for (var i = 1; i < objStr.length - 1; i++) {
           var item = objStr[i]
+          var lastItem = objStr[i - 1]
           if (inKey) {
-            if (item === ':') {
+            if (item === ':' && lastItem === '"') {
               keys.push(key.slice(1, -1))
               key = ''
               inKey = false
@@ -99,7 +100,6 @@ var escapeMap = {
   '[': '_bl_',
   ']': '_br_',
   '{': '_cl_',
-  '}': '_cr_',
   '#': '_h_',
   '!': '_i_',
   '/': '_s_',
@@ -107,17 +107,22 @@ var escapeMap = {
   ':': '_c_',
   ',': '_2c_',
   '%': '_p_',
-  '\'': '_q_',
+  // wxs can not use '\'' as key
+  // wxs环境中'\''!=="'"，此文件不能格式化，否则会导致程序错误
+  "'": '_q_',
+  // wxs can not use '"' as key
   '"': '_dq_',
   '+': '_a_',
   '$': '_si_'
 }
 
-var escapeReg = genRegExp('[()[]{}#!/.:,%\'"+$]', 'g')
+var escapeReg = genRegExp('[()[\]{}#!/.:,%\'"+$]', 'g')
 
 function mpEscape (str) {
   return str.replace(escapeReg, function (match) {
     if (escapeMap[match]) return escapeMap[match]
+    // fix wxs can not use '}' as key
+    if (match === '}') return '_cr_'
     // unknown escaped
     return '_u_'
   })

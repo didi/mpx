@@ -25,7 +25,8 @@
   "author": "donghongping",
   "license": "Apache-2.0",
   "dependencies": {
-    "windicss": "^3.5.6"
+    "windicss": "^3.5.6",
+    "@windicss/config": "^1.8.10"
   },
   "peerDependencies": {
     "@mpxjs/webpack-plugin": "^2.8.0"

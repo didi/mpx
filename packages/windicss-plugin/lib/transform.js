@@ -17,7 +17,7 @@ const escapeMap = {
   '\'': '_q_',
   '"': '_dq_',
   '+': '_a_',
-  '$': '_si_'
+  $: '_si_'
 }
 
 const escapedReg = /\\(2c\s|.)/g
