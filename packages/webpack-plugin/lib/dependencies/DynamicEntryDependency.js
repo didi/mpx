@@ -76,13 +76,6 @@ class DynamicEntryDependency extends NullDependency {
 
         const key = [resource, filename].join('|')
 
-        mpx.collectDynamicEntryInfo({
-          resource,
-          packageName,
-          filename,
-          entryType
-        })
-
         if (alreadyOutputted) {
           const addEntryPromise = mpx.addEntryPromiseMap.get(key)
           if (addEntryPromise) {
@@ -111,6 +104,12 @@ class DynamicEntryDependency extends NullDependency {
             .catch(err => callback(err))
 
           mpx.addEntryPromiseMap.set(key, addEntryPromise)
+          mpx.collectDynamicEntryInfo({
+            resource,
+            packageName,
+            filename,
+            entryType
+          })
         }
       }
     ], callback)

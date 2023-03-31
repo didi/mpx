@@ -15,6 +15,7 @@ function normalizeOptions (options) {
   // options.config = options.config
   // options.configFiles = options.configFiles
   options.root = options.root || process.cwd()
+  options.styleIsolation = options.styleIsolation || 'isolated'
   return options
 }
 
@@ -217,20 +218,33 @@ class MpxWindicssPlugin {
         const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps))
         Object.assign(mainClassesMap, commonClassesMap)
 
+        const styleIsolation = this.options.styleIsolation
+
         // 生成主包windi.css
         const windiFileContent = this.generateStyle(processor, mainClassesMap, tagsMap)
+        const mainWindiFile = this.options.windiFile + styleExt
+
         if (windiFileContent) {
-          const windiFile = this.options.windiFile + styleExt
+          const windiFile = mainWindiFile
           if (assets[windiFile]) error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
           assets[windiFile] = getRawSource(windiFileContent)
-
-          const appFile = appInfo.name + styleExt
-          let relativePath = toPosix(path.relative(path.dirname(appFile), windiFile))
+          const appStyleFile = appInfo.name + styleExt
+          let relativePath = toPosix(path.relative(path.dirname(appStyleFile), windiFile))
           relativePath = fixRelative(relativePath, mode)
           const appStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-          appStyleSource.add(assets[appFile] || '')
-          assets[appFile] = appStyleSource
+          appStyleSource.add(assets[appStyleFile] || '')
+          assets[appStyleFile] = appStyleSource
         }
+
+        dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
+          if (styleIsolation === 'isolated' && entryType === 'component') {
+            const componentStyleFile = filename + styleExt
+            const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
+            const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+            componentStyleSource.add(assets[componentStyleFile] || '')
+            assets[componentStyleFile] = componentStyleSource
+          }
+        })
 
         // 生成分包windi.css
         Object.entries(packageClassesMaps).forEach(([packageRoot, classesMap]) => {
@@ -243,12 +257,22 @@ class MpxWindicssPlugin {
 
             dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
               if (entryType === 'page') {
-                const pageFile = filename + styleExt
-                let relativePath = toPosix(path.relative(path.dirname(pageFile), windiFile))
+                const pageStyleFile = filename + styleExt
+                let relativePath = toPosix(path.relative(path.dirname(pageStyleFile), windiFile))
                 relativePath = fixRelative(relativePath, mode)
                 const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-                pageStyleSource.add(assets[pageFile] || '')
-                assets[pageFile] = pageStyleSource
+                pageStyleSource.add(assets[pageStyleFile] || '')
+                assets[pageStyleFile] = pageStyleSource
+              }
+
+              if (styleIsolation === 'isolated' && entryType === 'component') {
+                const componentStyleFile = filename + styleExt
+                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
+                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), windiFile)), mode)
+                const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+                componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
+                componentStyleSource.add(assets[componentStyleFile] || '')
+                assets[componentStyleFile] = componentStyleSource
               }
             })
           }
