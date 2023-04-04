@@ -1,5 +1,5 @@
 const { Processor } = require('windicss/lib')
-const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr } = require('./parser')
+const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
 const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
@@ -135,11 +135,11 @@ class MpxWindicssPlugin {
 
         const packages = Object.keys(dynamicEntryInfo)
 
-        function getPackageName (fileName) {
-          fileName = toPosix(fileName)
+        function getPackageName (file) {
+          file = toPosix(file)
           for (const packageName of packages) {
             if (packageName === 'main') continue
-            if (fileName.startsWith(packageName + '/')) return packageName
+            if (file.startsWith(packageName + '/')) return packageName
           }
           return 'main'
         }
@@ -156,6 +156,8 @@ class MpxWindicssPlugin {
           mainClassesMap[className] = true
         })
 
+        const commentConfigMap = {}
+
         const tagsMap = {}
         const cssEscape = processor.e
         const transformAlias = buildAliasTransformer(config.alias)
@@ -168,16 +170,28 @@ class MpxWindicssPlugin {
           return content.split(/\s+/).map(classNameHandler).join(' ')
         }
 
-        Object.entries(assets).forEach(([filename, source]) => {
-          if (!filename.endsWith(templateExt)) return
+        Object.entries(assets).forEach(([file, source]) => {
+          if (!file.endsWith(templateExt)) return
 
           source = getReplaceSource(source)
 
           const content = source.original().source()
 
-          const packageName = getPackageName(filename)
+          const packageName = getPackageName(file)
+
+          const filename = file.slice(0, -templateExt.length)
 
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
+
+          const commentConfig = {}
+
+          // process comments
+          parseComments(content).forEach(({ result, start, end }) => {
+            Object.assign(commentConfig, parseCommentConfig(result))
+            source.replace(start, end, '')
+          })
+
+          commentConfigMap[filename] = commentConfig
 
           const classNameHandler = (className) => {
             if (!className) return className
@@ -189,6 +203,7 @@ class MpxWindicssPlugin {
             return mpEscape(cssEscape(className))
           }
 
+          // process classes
           parseClasses(content).forEach(({ result, start, end }) => {
             let { replaced, val } = parseMustache(result, (exp) => {
               const expSource = getReplaceSource(exp)
@@ -206,19 +221,18 @@ class MpxWindicssPlugin {
           })
 
           if (config.preflight) {
+            // process preflight
             parseTags(content).forEach((tagName) => {
               tagsMap[tagName] = true
             })
           }
 
-          assets[filename] = source
+          assets[file] = source
         })
 
         delete packageClassesMaps.main
         const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps))
         Object.assign(mainClassesMap, commonClassesMap)
-
-        const styleIsolation = this.options.styleIsolation
 
         // 生成主包windi.css
         const windiFileContent = this.generateStyle(processor, mainClassesMap, tagsMap)
@@ -237,6 +251,8 @@ class MpxWindicssPlugin {
         }
 
         dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
+          const commentConfig = commentConfigMap[filename] || {}
+          const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
           if (styleIsolation === 'isolated' && entryType === 'component') {
             const componentStyleFile = filename + styleExt
             const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
@@ -265,6 +281,8 @@ class MpxWindicssPlugin {
                 assets[pageStyleFile] = pageStyleSource
               }
 
+              const commentConfig = commentConfigMap[filename] || {}
+              const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
               if (styleIsolation === 'isolated' && entryType === 'component') {
                 const componentStyleFile = filename + styleExt
                 const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)

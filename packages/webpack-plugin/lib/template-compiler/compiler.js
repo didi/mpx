@@ -762,7 +762,7 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      if (options.hasComment) {
+      if (options.hasComment || /mpx_config_/.test(text)) {
         currentParent.children.push({
           type: 3,
           text: text,

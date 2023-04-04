@@ -21,6 +21,41 @@ function parseClasses (content) {
   return output
 }
 
+function parseComments (content) {
+  const output = []
+  if (!content) return output
+  const regex = /<!--(?:.|\n|\r)+?-->/gm
+  let match
+  while (match = regex.exec(content)) {
+    const raw = match[0]
+    const value = raw.slice(4, -3)
+    const start = match.index
+    const end = start + raw.length - 1
+    output.push({
+      result: value,
+      start,
+      end
+    })
+  }
+  return output
+}
+
+function parseCommentConfig (content) {
+  const result = {}
+  const regex = /mpx_config_(.+?)\s*:(.+)/
+  content.split(/\n|\r/).forEach((item) => {
+    const match = regex.exec(item)
+    const key = match[1]
+    const raw = match[2]
+    try {
+      const value = JSON.parse(raw.replace(/'/g, '"'))
+      result[key] = value
+    } catch (e) {
+    }
+  })
+  return result
+}
+
 function parseStrings (content) {
   const output = []
   if (!content) return output
@@ -49,6 +84,8 @@ module.exports = {
   parseClasses,
   parseStrings,
   parseTags,
+  parseComments,
+  parseCommentConfig,
   parseMustache,
   stringifyAttr
 }
