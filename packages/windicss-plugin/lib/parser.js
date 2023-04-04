@@ -45,12 +45,14 @@ function parseCommentConfig (content) {
   const regex = /mpx_config_(.+?)\s*:(.+)/
   content.split(/\n|\r/).forEach((item) => {
     const match = regex.exec(item)
-    const key = match[1]
-    const raw = match[2]
-    try {
-      const value = JSON.parse(raw.replace(/'/g, '"'))
-      result[key] = value
-    } catch (e) {
+    if (match) {
+      const key = match[1]
+      const raw = match[2]
+      try {
+        const value = JSON.parse(raw.replace(/'/g, '"'))
+        result[key] = value
+      } catch (e) {
+      }
     }
   })
   return result
