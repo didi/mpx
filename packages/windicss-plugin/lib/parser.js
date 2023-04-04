@@ -42,6 +42,7 @@ function parseComments (content) {
 
 function parseCommentConfig (content) {
   const result = {}
+  if (!content) return result
   const regex = /mpx_config_(.+?)\s*:(.+)/
   content.split(/\n|\r/).forEach((item) => {
     const match = regex.exec(item)
