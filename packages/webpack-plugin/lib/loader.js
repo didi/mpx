@@ -67,7 +67,7 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
 
-  if (ctorType === 'app') {
+  if (ctorType === 'app' && !queryObj.isApp) {
     const appName = getEntryName(this)
     this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
