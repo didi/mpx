@@ -73,9 +73,9 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
   }
 
   getContent (dep) {
-    const { resolved = '', compilation } = dep
-    const publicPath = compilation.outputOptions.publicPath || ''
-    return JSON.stringify(publicPath + resolved)
+    const { resolved = '' } = dep
+    // ?resolve 必定返回绝对路径
+    return JSON.stringify('/' + resolved)
   }
 }
 

@@ -453,7 +453,20 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, callback)
+      processSubpackagesEntriesMap(compilation, () => {
+        const checkRegisterPack = () => {
+          for (const packRoot in mpx.dynamicEntryInfo) {
+            const entryMap = mpx.dynamicEntryInfo[packRoot]
+            if (!entryMap.hasPage) {
+              // 引用未注册分包的所有资源
+              const strRequest = entryMap.entries.join(',')
+              compilation.errors.push(new Error(`资源${strRequest}目标是打入${packRoot}分包, 但是app.json中并未声明${packRoot}分包`))
+            }
+          }
+        }
+        checkRegisterPack()
+        callback()
+      })
     })
 
     compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
@@ -511,6 +524,7 @@ class MpxWebpackPlugin {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
       const moduleGraph = compilation.moduleGraph
+
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
@@ -537,6 +551,8 @@ class MpxWebpackPlugin {
           subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
+          // 动态记录注册的分包与注册页面映射
+          dynamicEntryInfo: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
           // 记录与asset相关联的modules，用于体积分析
@@ -1497,7 +1513,7 @@ try {
       })
     }
 
-    compiler.hooks.done.tapPromise('MpxWebpackPlugin', async () => {
+    compiler.hooks.done.tapPromise('MpxWebpackPlugin', async (stats) => {
       const cache = compiler.getCache('MpxWebpackPlugin')
       const cacheIsValid = await cache.getPromise('cacheIsValid', null)
       if (!cacheIsValid) {
