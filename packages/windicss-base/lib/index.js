@@ -33,7 +33,7 @@ module.exports = {
       64: '600rpx',
       72: '675rpx',
       80: '750rpx',
-      96: '900rpx',
+      96: '900rpx'
     },
     borderRadius: {
       DEFAULT: '9.375rpx',
@@ -42,11 +42,11 @@ module.exports = {
       lg: '18.75rpx',
       xl: '28.125rpx',
       '2xl': '37.5rpx',
-      '3xl': '56.25rpx',
+      '3xl': '56.25rpx'
     },
     columns: {
       '3xs': '600rpx',
-      '2xs': '675rpx',
+      '2xs': '675rpx'
     },
     fontSize: {
       xs: ['28.125rpx', { lineHeight: '37.5rpx' }],
@@ -61,7 +61,7 @@ module.exports = {
       '6xl': ['140.625rpx', { lineHeight: '1' }],
       '7xl': ['168.75rpx', { lineHeight: '1' }],
       '8xl': ['225rpx', { lineHeight: '1' }],
-      '9xl': ['300rpx', { lineHeight: '1' }],
+      '9xl': ['300rpx', { lineHeight: '1' }]
     },
     lineHeight: {
       3: '.2812.5rpx',
@@ -71,7 +71,7 @@ module.exports = {
       7: '65.625rpx',
       8: '75rpx',
       9: '84.375rpx',
-      10: '93.75rpx',
+      10: '93.75rpx'
     },
     textIndent: {
       DEFAULT: '56.25rpx',
@@ -81,7 +81,7 @@ module.exports = {
       lg: '75rpx',
       xl: '93.75rpx',
       '2xl': '112.5rpx',
-      '3xl': '150rpx',
-    },
+      '3xl': '150rpx'
+    }
   }
 }
