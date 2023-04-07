@@ -524,6 +524,7 @@ class MpxWebpackPlugin {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
       const moduleGraph = compilation.moduleGraph
+
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
@@ -774,9 +775,8 @@ class MpxWebpackPlugin {
         async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
           dep.mpxAction(module, compilation, callback)
         }, (err) => {
-          rawProcessModuleDependencies.call(compilation, module, (innerErr) => {
-            return callback(err || innerErr)
-          })
+          if (err) compilation.errors.push(err)
+          rawProcessModuleDependencies.call(compilation, module, callback)
         })
       }
 
