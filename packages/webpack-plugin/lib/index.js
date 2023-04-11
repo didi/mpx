@@ -1050,6 +1050,22 @@ class MpxWebpackPlugin {
               }))
             }
           }
+          if (/@intlify\/message-compiler/.test(parser.state.module.resource)) {
+            const bodyExpression = expr.consequent.body[0].expression
+            if (bodyExpression && bodyExpression.callee && bodyExpression.callee.type === 'MemberExpression') {
+              if (bodyExpression.callee.object.name === 'generator' && bodyExpression.callee.property.name === 'push') {
+                const callee = bodyExpression && bodyExpression.arguments[0] && bodyExpression.arguments[0].callee
+                if (callee && callee.object && callee.object.value === 'const { ') {
+                  const current = parser.state.current
+                  current.addPresentationalDependency(new InjectDependency({
+                    /* eslint-disable no-template-curly-in-string */
+                    content: 'var generatorCode = generator.context().code; generator.context().code = generatorCode.slice(0, generatorCode.indexOf("const {"));generator.push(helpers.map(function (s){ return "var _" + s + "=ctx." + s }).join(\';\'))',
+                    index: bodyExpression.range[1] + 1
+                  }))
+                }
+              }
+            }
+          }
         })
 
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
@@ -1069,6 +1085,15 @@ class MpxWebpackPlugin {
           if (/regenerator/.test(parser.state.module.resource)) {
             if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
               current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
+            }
+          }
+        })
+
+        parser.hooks.expressionConditionalOperator.tap('MpxWebpackPlugin', (expr) => {
+          if (/@intlify\/message-compiler/.test(parser.state.module.resource)) {
+            if (expr.test && expr.test && expr.test.left && expr.test.left.name === 'mode' && expr.test.right.value === 'normal') {
+              const current = parser.state.current
+              current.addPresentationalDependency(new ReplaceDependency('"function(ctx){"', expr.alternate.range))
             }
           }
         })
