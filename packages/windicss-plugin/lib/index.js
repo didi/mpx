@@ -7,6 +7,7 @@ const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const path = require('path')
 const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
+const minimatch = require('minimatch')
 
 function normalizeOptions (options) {
   // todo
@@ -16,6 +17,8 @@ function normalizeOptions (options) {
   // options.configFiles = options.configFiles
   options.root = options.root || process.cwd()
   options.styleIsolation = options.styleIsolation || 'isolated'
+  options.minCount = options.minCount || 2
+  options.scan = options.scan || {}
   return options
 }
 
@@ -26,17 +29,21 @@ function validateConfig (config, error) {
   return config
 }
 
-function getCommonClassesMap (classesMaps) {
+function getCommonClassesMap (classesMaps, minCount) {
   const commonClassesMap = {}
-
   const allClassesMap = classesMaps.reduce((acc, cur) => Object.assign(acc, cur), {})
 
   Object.keys(allClassesMap).forEach((item) => {
-    if (classesMaps.every((classesMap) => classesMap[item])) {
-      commonClassesMap[item] = true
-      classesMaps.forEach((classesMap) => {
-        delete classesMap[item]
-      })
+    let count = 0
+    for (const classesMap of classesMaps) {
+      if (classesMap[item]) count++
+      if (count >= minCount) {
+        commonClassesMap[item] = true
+        classesMaps.forEach((classesMap) => {
+          delete classesMap[item]
+        })
+        break
+      }
     }
   })
 
@@ -170,8 +177,20 @@ class MpxWindicssPlugin {
           return content.split(/\s+/).map(classNameHandler).join(' ')
         }
 
+        const filterFile = (file) => {
+          if (!file.endsWith(templateExt)) return false
+          const { include = [], exclude = [] } = this.options.scan
+          for (const pattern of exclude) {
+            if (minimatch(file, pattern)) return false
+          }
+          for (const pattern of include) {
+            if (!minimatch(file, pattern)) return false
+          }
+          return true
+        }
+
         Object.entries(assets).forEach(([file, source]) => {
-          if (!file.endsWith(templateExt)) return
+          if (!filterFile(file)) return
 
           source = getReplaceSource(source)
 
@@ -231,69 +250,77 @@ class MpxWindicssPlugin {
         })
 
         delete packageClassesMaps.main
-        const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps))
+        const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps), this.options.minCount)
         Object.assign(mainClassesMap, commonClassesMap)
 
         // 生成主包windi.css
-        const windiFileContent = this.generateStyle(processor, mainClassesMap, tagsMap)
-        const mainWindiFile = this.options.windiFile + styleExt
-
-        if (windiFileContent) {
-          const windiFile = mainWindiFile
-          if (assets[windiFile]) error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
-          assets[windiFile] = getRawSource(windiFileContent)
-          const appStyleFile = appInfo.name + styleExt
-          let relativePath = toPosix(path.relative(path.dirname(appStyleFile), windiFile))
-          relativePath = fixRelative(relativePath, mode)
-          const appStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-          appStyleSource.add(assets[appStyleFile] || '')
-          assets[appStyleFile] = appStyleSource
+        let mainWindiFile
+        const mainWindiFileContent = this.generateStyle(processor, mainClassesMap, tagsMap)
+        if (mainWindiFileContent) {
+          mainWindiFile = this.options.windiFile + styleExt
+          if (assets[mainWindiFile]) error(`${mainWindiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
+          assets[mainWindiFile] = getRawSource(mainWindiFileContent)
         }
 
-        dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
-          const commentConfig = commentConfigMap[filename] || {}
-          const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
-          if (styleIsolation === 'isolated' && entryType === 'component') {
-            const componentStyleFile = filename + styleExt
-            const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
-            const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-            componentStyleSource.add(assets[componentStyleFile] || '')
-            assets[componentStyleFile] = componentStyleSource
-          }
-        })
+        if (mainWindiFile) {
+          const appStyleFile = appInfo.name + styleExt
+          const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainWindiFile)), mode)
+          const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+          appStyleSource.add(assets[appStyleFile] || '')
+          assets[appStyleFile] = appStyleSource
+
+          dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
+            const commentConfig = commentConfigMap[filename] || {}
+            const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
+            if (styleIsolation === 'isolated' && entryType === 'component') {
+              const componentStyleFile = filename + styleExt
+              const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
+              const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+              componentStyleSource.add(assets[componentStyleFile] || '')
+              assets[componentStyleFile] = componentStyleSource
+            }
+          })
+        }
 
         // 生成分包windi.css
         Object.entries(packageClassesMaps).forEach(([packageRoot, classesMap]) => {
+          let windiFile
           const windiFileContent = this.generateStyle(processor, classesMap)
           if (windiFileContent) {
-            const windiFile = toPosix(path.join(packageRoot, this.options.windiFile + styleExt))
-
+            windiFile = toPosix(path.join(packageRoot, this.options.windiFile + styleExt))
             if (assets[windiFile]) error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
             assets[windiFile] = getRawSource(windiFileContent)
-
-            dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
-              if (entryType === 'page') {
-                const pageStyleFile = filename + styleExt
-                let relativePath = toPosix(path.relative(path.dirname(pageStyleFile), windiFile))
-                relativePath = fixRelative(relativePath, mode)
-                const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-                pageStyleSource.add(assets[pageStyleFile] || '')
-                assets[pageStyleFile] = pageStyleSource
-              }
-
-              const commentConfig = commentConfigMap[filename] || {}
-              const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
-              if (styleIsolation === 'isolated' && entryType === 'component') {
-                const componentStyleFile = filename + styleExt
-                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
-                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), windiFile)), mode)
-                const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-                componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
-                componentStyleSource.add(assets[componentStyleFile] || '')
-                assets[componentStyleFile] = componentStyleSource
-              }
-            })
           }
+
+          dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
+            if (windiFile && entryType === 'page') {
+              const pageStyleFile = filename + styleExt
+              const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), windiFile)), mode)
+              const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
+              pageStyleSource.add(assets[pageStyleFile] || '')
+              assets[pageStyleFile] = pageStyleSource
+            }
+
+            const commentConfig = commentConfigMap[filename] || {}
+            const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
+            if (styleIsolation === 'isolated' && entryType === 'component') {
+              const componentStyleFile = filename + styleExt
+              const componentStyleSource = getConcatSource('')
+
+              if (mainWindiFile) {
+                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
+                componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
+              }
+
+              if (windiFile) {
+                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), windiFile)), mode)
+                componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
+              }
+
+              componentStyleSource.add(assets[componentStyleFile] || '')
+              assets[componentStyleFile] = componentStyleSource
+            }
+          })
         })
       })
     })
