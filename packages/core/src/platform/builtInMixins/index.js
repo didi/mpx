@@ -10,6 +10,7 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
+import setDataMixin from './setDataMixin'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
@@ -24,7 +25,8 @@ export default function getBuiltInMixins (options, type) {
       getTabBarMixin(type),
       pageRouteMixin(type),
       // 由于relation可能是通过mixin注入的，不能通过当前的用户options中是否存在relations来简单判断是否注入该项mixin
-      relationsMixin(type)
+      relationsMixin(type),
+      setDataMixin(type)
     ]
   } else {
     // 此为差异抹平类mixins，原生模式下也需要注入也抹平平台差异
