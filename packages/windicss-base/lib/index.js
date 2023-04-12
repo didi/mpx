@@ -1,3 +1,17 @@
+const tShirtScale = {
+  xs: '750rpx',
+  sm: '900rpx',
+  md: '1050rpx',
+  lg: '1200rpx',
+  xl: '1350rpx',
+  '2xl': '1575rpx',
+  '3xl': '1800rpx',
+  '4xl': '2100rpx',
+  '5xl': '2400rpx',
+  '6xl': '2700rpx',
+  '7xl': '3000rpx'
+}
+
 module.exports = {
   theme: {
     spacing: {
@@ -45,6 +59,7 @@ module.exports = {
       '3xl': '56.25rpx'
     },
     columns: {
+      ...tShirtScale,
       '3xs': '600rpx',
       '2xs': '675rpx'
     },
@@ -62,6 +77,21 @@ module.exports = {
       '7xl': ['168.75rpx', { lineHeight: '1' }],
       '8xl': ['225rpx', { lineHeight: '1' }],
       '9xl': ['300rpx', { lineHeight: '1' }]
+    },
+    height: {
+      ...tShirtScale
+    },
+    maxHeight: {
+      ...tShirtScale
+    },
+    maxWidth: {
+      ...tShirtScale
+    },
+    perspective: {
+      ...tShirtScale
+    },
+    width: {
+      ...tShirtScale
     },
     lineHeight: {
       3: '.2812.5rpx',
