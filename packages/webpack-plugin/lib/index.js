@@ -765,9 +765,8 @@ class MpxWebpackPlugin {
         async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
           dep.mpxAction(module, compilation, callback)
         }, (err) => {
-          rawProcessModuleDependencies.call(compilation, module, (innerErr) => {
-            return callback(err || innerErr)
-          })
+          if (err) compilation.errors.push(err)
+          rawProcessModuleDependencies.call(compilation, module, callback)
         })
       }
 
