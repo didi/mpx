@@ -20,6 +20,7 @@ module.exports = function (raw) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
+  const renderReduce = mpx.renderReduce
   const usingComponents = queryObj.usingComponents || []
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
@@ -97,6 +98,7 @@ global.currentInject = {
   try {
     bindResult = bindThis(rawCode, {
       needCollect: true,
+      renderReduce: matchCondition(resourcePath, renderReduce),
       ignoreMap: meta.wxsModuleMap
     })
   } catch (e) {

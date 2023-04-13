@@ -156,6 +156,7 @@ function dealRemove (path, isReplace) {
 module.exports = {
   transform (code, {
     needCollect = false,
+    renderReduce = false,
     ignoreMap = {}
   } = {}) {
     const ast = babylon.parse(code, {
@@ -219,7 +220,7 @@ module.exports = {
       Identifier (path) {
         if (judgeIdentifierName(path)) {
           if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
-            path.judge = true
+            path.isIdentity = true
 
             if (needCollect) {
               const { last, keyPath, hasComputed, hasDangerous } = calPropName(path)
@@ -233,7 +234,8 @@ module.exports = {
               let canDel = !inIfTest &&
                 !hasComputed &&
                 last.key !== 'property' &&
-                last.parentPath.key !== 'property'
+                last.parentPath.key !== 'property' &&
+                !renderReduce
 
               if (inConditional) {
                 position = checkInConditional(last)
@@ -249,9 +251,9 @@ module.exports = {
                   hasDangerous,
                   conditional: position
                 })
+                path.deleteLastPath = deletePath
                 canDel = realDel
                 replace = canReplace
-                path.deleteLastPath = deletePath
               }
               path.canDel = canDel
               path.replace = replace
@@ -308,7 +310,7 @@ module.exports = {
         }
       },
       Identifier (path) {
-        if (path.judge) {
+        if (path.isIdentity) {
           // bind this
           path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
 
@@ -353,7 +355,7 @@ module.exports = {
             delete path.canDel
             delete path.lastPath
           }
-          delete path.judge
+          delete path.isIdentity
         }
       },
       MemberExpression: {
