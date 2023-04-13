@@ -55,13 +55,13 @@ class MpxWindicssPlugin {
     this.options = normalizeOptions(options)
   }
 
-  generateStyle (processor, classesMap = {}, tagsMap = {}) {
+  generateStyle (processor, classesMap = {}, preflightOptions = {}) {
     const classes = Object.keys(classesMap).join(' ')
-    const tags = Object.keys(tagsMap).map(i => `<${i}/>`).join(' ')
 
     let styleSheet = processor.interpret(classes).styleSheet
-    if (tags) {
-      styleSheet = processor.preflight(tags).extend(styleSheet)
+    if (preflightOptions.enablePreflight) {
+      const { html, includeAll, includeBase, includeGlobal, includePlugin } = preflightOptions
+      styleSheet = processor.preflight(includeAll ? null : html, includeBase, includeGlobal, includePlugin).extend(styleSheet)
     }
     styleSheet.children.forEach((style) => {
       if (style.selector) {
@@ -189,6 +189,26 @@ class MpxWindicssPlugin {
           return true
         }
 
+        const enablePreflight = !!config.preflight
+
+        const preflightOptions = Object.assign(
+          {
+            includeBase: true,
+            includeGlobal: false,
+            includePlugin: true,
+            enableAll: false,
+            includeAll: false,
+            safelist: [],
+            blocklist: [],
+            alias: {}
+          },
+          typeof config.preflight === 'boolean' ? {} : config.preflight
+        )
+
+        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
+        preflightOptions.enablePreflight = enablePreflight
+        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
+
         Object.entries(assets).forEach(([file, source]) => {
           if (!filterFile(file)) return
 
@@ -239,9 +259,12 @@ class MpxWindicssPlugin {
             }
           })
 
-          if (config.preflight) {
+          if (enablePreflight) {
+            const { blocklist, alias } = preflightOptions
             // process preflight
             parseTags(content).forEach((tagName) => {
+              tagName = alias[tagName] || tagName
+              if (blocklist.has(tagName)) return
               tagsMap[tagName] = true
             })
           }
@@ -253,9 +276,11 @@ class MpxWindicssPlugin {
         const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps), this.options.minCount)
         Object.assign(mainClassesMap, commonClassesMap)
 
+        if (enablePreflight) preflightOptions.html = Object.keys(tagsMap).map(i => `<${i}/>`).join(' ')
+
         // 生成主包windi.css
         let mainWindiFile
-        const mainWindiFileContent = this.generateStyle(processor, mainClassesMap, tagsMap)
+        const mainWindiFileContent = this.generateStyle(processor, mainClassesMap, preflightOptions)
         if (mainWindiFileContent) {
           mainWindiFile = this.options.windiFile + styleExt
           if (assets[mainWindiFile]) error(`${mainWindiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
