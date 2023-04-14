@@ -5,6 +5,7 @@ const normalize = require('../utils/normalize')
 const builtInLoaderPath = normalize.lib('built-in-loader')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const createJSONHelper = require('../json-compiler/helper')
+const createHelpers = require('../helpers')
 const async = require('async')
 const hasOwn = require('../utils/has-own')
 
@@ -88,6 +89,8 @@ module.exports = function (script, options, callback) {
     emitWarning,
     emitError
   })
+
+  const { getRequire } = createHelpers(loaderContext)
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   // let tabBarPagesMap = {}
@@ -188,10 +191,14 @@ module.exports = function (script, options, callback) {
       if (!isProduction) {
         content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
       }
-      // 为了正确获取currentSrcMode便于运行时进行转换，对于src引入的组件script采用require方式引入(由于webpack会将import的执行顺序上升至最顶)，这意味着对于src引入脚本中的named export将不会生效，不过鉴于mpx和小程序中本身也没有在组件script中声明export的用法，所以应该没有影响
-      content += script.src
-        ? `require(${stringifyRequest(script.src)})\n`
-        : (script.content + '\n') + '\n'
+      // 传递ctorType以补全js内容
+      const extraOptions = {
+        ctorType,
+        lang: script.lang || 'js'
+      }
+      // 使用 require 引入 script
+      content += `  ${getRequire('script', script, extraOptions)}\n`
+
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
       content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
       // 获取pageConfig
