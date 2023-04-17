@@ -1096,7 +1096,7 @@ class MpxWebpackPlugin {
                   '      var result = arr[i].match(pattern)\n' +
                   '      var left = result[1]\n' +
                   '      var right = result[2]\n' +
-                  '      str += "var" + right + " = ctx." + left + ";"\n' +
+                  '      str += "var" + right + " = ctx." + left\n' +
                   '    }\n' +
                   '    return str\n' +
                   '  })\n' +
