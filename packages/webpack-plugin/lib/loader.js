@@ -69,7 +69,7 @@ module.exports = function (content) {
 
   if (ctorType === 'app') {
     const appName = getEntryName(this)
-    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+    if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
