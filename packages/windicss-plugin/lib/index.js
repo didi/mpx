@@ -92,8 +92,7 @@ class MpxWindicssPlugin {
     return validateConfig(resolved, error)
   }
 
-  getSafeListClasses (processor) {
-    const safelist = processor.config('safelist')
+  getSafeListClasses (safelist) {
     let classes = []
     if (typeof safelist === 'string') {
       classes = safelist.split(/\s/).filter(i => i)
@@ -157,7 +156,7 @@ class MpxWindicssPlugin {
         const mainClassesMap = packageClassesMaps.main
 
         // config中的safelist视为主包classes
-        const safeListClasses = this.getSafeListClasses(processor)
+        const safeListClasses = this.getSafeListClasses(processor.config('safelist'))
 
         safeListClasses.forEach((className) => {
           mainClassesMap[className] = true
@@ -222,16 +221,6 @@ class MpxWindicssPlugin {
 
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
 
-          const commentConfig = {}
-
-          // process comments
-          parseComments(content).forEach(({ result, start, end }) => {
-            Object.assign(commentConfig, parseCommentConfig(result))
-            source.replace(start, end, '')
-          })
-
-          commentConfigMap[filename] = commentConfig
-
           const classNameHandler = (className) => {
             if (!className) return className
             if (packageName === 'main') {
@@ -241,6 +230,22 @@ class MpxWindicssPlugin {
             }
             return mpEscape(cssEscape(className))
           }
+
+          const commentConfig = {}
+
+          // process comments
+          parseComments(content).forEach(({ result, start, end }) => {
+            Object.assign(commentConfig, parseCommentConfig(result))
+            source.replace(start, end, '')
+          })
+
+          if (commentConfig.safelist) {
+            this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
+              classNameHandler(className)
+            })
+          }
+
+          commentConfigMap[filename] = commentConfig
 
           // process classes
           parseClasses(content).forEach(({ result, start, end }) => {
