@@ -1050,22 +1050,6 @@ class MpxWebpackPlugin {
               }))
             }
           }
-          if (/@intlify\/message-compiler/.test(parser.state.module.resource)) {
-            const bodyExpression = expr.consequent.body[0].expression
-            if (bodyExpression && bodyExpression.callee && bodyExpression.callee.type === 'MemberExpression') {
-              if (bodyExpression.callee.object.name === 'generator' && bodyExpression.callee.property.name === 'push') {
-                const callee = bodyExpression && bodyExpression.arguments[0] && bodyExpression.arguments[0].callee
-                if (callee && callee.object && callee.object.value === 'const { ') {
-                  const current = parser.state.current
-                  current.addPresentationalDependency(new InjectDependency({
-                    /* eslint-disable no-template-curly-in-string */
-                    content: 'var generatorCode = generator.context().code; generator.context().code = generatorCode.slice(0, generatorCode.indexOf("const {"));generator.push(helpers.map(function (s){ return "var _" + s + "=ctx." + s }).join(\';\'))',
-                    index: bodyExpression.range[1] + 1
-                  }))
-                }
-              }
-            }
-          }
         })
 
         parser.hooks.evaluate.for('CallExpression').tap('MpxWebpackPlugin', (expr) => {
@@ -1089,11 +1073,40 @@ class MpxWebpackPlugin {
           }
         })
 
-        parser.hooks.expressionConditionalOperator.tap('MpxWebpackPlugin', (expr) => {
-          if (/@intlify\/message-compiler/.test(parser.state.module.resource)) {
-            if (expr.test && expr.test && expr.test.left && expr.test.left.name === 'mode' && expr.test.right.value === 'normal') {
+        parser.hooks.evaluate.for('NewExpression').tap('MpxWebpackPlugin', (expression) => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource)) {
+            if (expression.callee.name === 'Function') {
+              const name = expression.arguments[0] && expression.arguments[0].arguments[0] && expression.arguments[0].arguments[0].name
               const current = parser.state.current
-              current.addPresentationalDependency(new ReplaceDependency('"function(ctx){"', expr.alternate.range))
+              current.addPresentationalDependency(new ReplaceDependency(`new Function('return ' + _mpxCodeTransForm(${name}))`, expression.range))
+            }
+          }
+        });
+        parser.hooks.statement.tap('MpxWebpackPlugin', (statement) => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource) && statement.type === 'FunctionDeclaration') {
+            if (statement.id.name === 'compileToFunction') {
+              const current = parser.state.current
+              current.addPresentationalDependency(new InjectDependency({
+                content: 'function _mpxCodeTransForm (code) {\n' +
+                  '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
+                  '    var arr = $1.split(", ")\n' +
+                  '    var str = ""\n' +
+                  '    var pattern = /(.*):(.*)/\n' +
+                  '    for (var i = 0; i < arr.length; i++) {\n' +
+                  '      var result = arr[i].match(pattern)\n' +
+                  '      var left = result[1]\n' +
+                  '      var right = result[2]\n' +
+                  '      str += "var" + right + " = ctx." + left + ";"\n' +
+                  '    }\n' +
+                  '    return str\n' +
+                  '  })\n' +
+                  '  code = code.replace(/\\(ctx\\) =>/g, function (match, $1) {\n' +
+                  '    return "function (ctx)"\n' +
+                  '  })\n' +
+                  '  return code\n' +
+                  '}',
+                index: statement.body.start + 1
+              }))
             }
           }
         })
