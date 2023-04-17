@@ -1,4 +1,4 @@
-import { CREATED, BEFORECREATE, BEFOREMOUNT, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
+import { CREATED, BEFORECREATE, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
 import { noop, error, getEnvObj } from '@mpxjs/utils'
 
 const envObj = getEnvObj()
@@ -38,9 +38,6 @@ export default function getRefsMixin () {
       this.$asyncRefs = {}
       this.__refCacheMap = new Map()
       this.__asyncRefCacheMap = new Map()
-    },
-    [BEFOREMOUNT] () {
-      // 避免在create/attached阶段获取未初始化完成的子组件实例，初始化refs时机延后至beforeMount
       this.__getRefs()
     },
     [BEFOREUPDATE] () {
@@ -102,6 +99,7 @@ export default function getRefsMixin () {
       createSelectorQuery (...args) {
         const selectorQuery = envObj.createSelectorQuery(...args)
         const cbs = []
+
         proxyMethods.forEach((name) => {
           const originalMethod = selectorQuery[name]
           selectorQuery[name] = function (cb = noop) {
