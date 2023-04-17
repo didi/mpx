@@ -1081,7 +1081,7 @@ class MpxWebpackPlugin {
               current.addPresentationalDependency(new ReplaceDependency(`new Function('return ' + _mpxCodeTransForm(${name}))`, expression.range))
             }
           }
-        });
+        })
         parser.hooks.statement.tap('MpxWebpackPlugin', (statement) => {
           if (/@intlify\/core-base/.test(parser.state.module.resource) && statement.type === 'FunctionDeclaration') {
             if (statement.id.name === 'compileToFunction') {
