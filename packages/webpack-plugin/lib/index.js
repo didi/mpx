@@ -1076,38 +1076,42 @@ class MpxWebpackPlugin {
         parser.hooks.evaluate.for('NewExpression').tap('MpxWebpackPlugin', (expression) => {
           if (/@intlify\/core-base/.test(parser.state.module.resource)) {
             if (expression.callee.name === 'Function') {
-              const name = expression.arguments[0] && expression.arguments[0].arguments[0] && expression.arguments[0].arguments[0].name
               const current = parser.state.current
-              current.addPresentationalDependency(new ReplaceDependency(`new Function('return ' + _mpxCodeTransForm(${name}))`, expression.range))
+              current.addPresentationalDependency(new InjectDependency({
+                content: '_mpxCodeTransForm(',
+                index: expression.arguments[0].start
+              }))
+              current.addPresentationalDependency(new InjectDependency({
+                content: ')',
+                index: expression.arguments[0].end
+              }))
             }
           }
         })
-        parser.hooks.statement.tap('MpxWebpackPlugin', (statement) => {
-          if (/@intlify\/core-base/.test(parser.state.module.resource) && statement.type === 'FunctionDeclaration') {
-            if (statement.id.name === 'compileToFunction') {
-              const current = parser.state.current
-              current.addPresentationalDependency(new InjectDependency({
-                content: 'function _mpxCodeTransForm (code) {\n' +
-                  '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
-                  '    var arr = $1.split(", ")\n' +
-                  '    var str = ""\n' +
-                  '    var pattern = /(.*):(.*)/\n' +
-                  '    for (var i = 0; i < arr.length; i++) {\n' +
-                  '      var result = arr[i].match(pattern)\n' +
-                  '      var left = result[1]\n' +
-                  '      var right = result[2]\n' +
-                  '      str += "var" + right + " = ctx." + left\n' +
-                  '    }\n' +
-                  '    return str\n' +
-                  '  })\n' +
-                  '  code = code.replace(/\\(ctx\\) =>/g, function (match, $1) {\n' +
-                  '    return "function (ctx)"\n' +
-                  '  })\n' +
-                  '  return code\n' +
-                  '}',
-                index: statement.body.start + 1
-              }))
-            }
+        parser.hooks.program.tap('MpxWebpackPlugin', ast => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource)) {
+            const current = parser.state.current
+            current.addPresentationalDependency(new InjectDependency({
+              content: 'function _mpxCodeTransForm (code) {\n' +
+                '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
+                '    var arr = $1.split(", ")\n' +
+                '    var str = ""\n' +
+                '    var pattern = /(.*):(.*)/\n' +
+                '    for (var i = 0; i < arr.length; i++) {\n' +
+                '      var result = arr[i].match(pattern)\n' +
+                '      var left = result[1]\n' +
+                '      var right = result[2]\n' +
+                '      str += "var" + right + " = ctx." + left\n' +
+                '    }\n' +
+                '    return str\n' +
+                '  })\n' +
+                '  code = code.replace(/\\(ctx\\) =>/g, function (match, $1) {\n' +
+                '    return "function (ctx)"\n' +
+                '  })\n' +
+                '  return code\n' +
+                '}',
+              index: ast.start
+            }))
           }
         })
 
