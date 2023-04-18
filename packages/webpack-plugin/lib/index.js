@@ -1110,7 +1110,7 @@ class MpxWebpackPlugin {
                 '  })\n' +
                 '  return code\n' +
                 '}',
-              index: ast.start
+              index: ast.end
             }))
           }
         })
