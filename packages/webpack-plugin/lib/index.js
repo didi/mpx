@@ -1088,6 +1088,7 @@ class MpxWebpackPlugin {
             }
           }
         })
+
         parser.hooks.program.tap('MpxWebpackPlugin', ast => {
           if (/@intlify\/core-base/.test(parser.state.module.resource)) {
             const current = parser.state.current
