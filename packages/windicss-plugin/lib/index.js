@@ -1,4 +1,5 @@
 const { Processor } = require('windicss/lib')
+const windiParser = require("windicss/utils/parser");
 const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
 const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
@@ -175,42 +176,16 @@ class MpxWindicssPlugin {
           // escape & fill classesMap
           return content.split(/\s+/).map(classNameHandler).join(' ')
         }
-
-        const filterFile = (file) => {
-          if (!file.endsWith(templateExt)) return false
-          const { include = [], exclude = [] } = this.options.scan
-          for (const pattern of exclude) {
-            if (minimatch(file, pattern)) return false
-          }
-          for (const pattern of include) {
-            if (!minimatch(file, pattern)) return false
-          }
-          return true
+        // transform directives like @apply @variants @screen @layer theme()
+        const transformCSS = (file, source) => {
+          source = getReplaceSource(source)
+          const content = source.original().source()
+          const style = new windiParser.CSSParser(content, processor).parse();
+          const transformed = style.build();
+          source.replace(0, content.length - 1, transformed)
+          assets[file] = source
         }
-
-        const enablePreflight = !!config.preflight
-
-        const preflightOptions = Object.assign(
-          {
-            includeBase: true,
-            includeGlobal: false,
-            includePlugin: true,
-            enableAll: false,
-            includeAll: false,
-            safelist: [],
-            blocklist: [],
-            alias: {}
-          },
-          typeof config.preflight === 'boolean' ? {} : config.preflight
-        )
-
-        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
-        preflightOptions.enablePreflight = enablePreflight
-        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
-
-        Object.entries(assets).forEach(([file, source]) => {
-          if (!filterFile(file)) return
-
+        const transformTemplate = (file, source) => {
           source = getReplaceSource(source)
 
           const content = source.original().source()
@@ -275,6 +250,42 @@ class MpxWindicssPlugin {
           }
 
           assets[file] = source
+        }
+        const filterFile = (file) => {
+          const { include = [], exclude = [] } = this.options.scan
+          for (const pattern of exclude) {
+            if (minimatch(file, pattern)) return false
+          }
+          for (const pattern of include) {
+            if (!minimatch(file, pattern)) return false
+          }
+          return true
+        }
+
+        const enablePreflight = !!config.preflight
+
+        const preflightOptions = Object.assign(
+          {
+            includeBase: true,
+            includeGlobal: false,
+            includePlugin: true,
+            enableAll: false,
+            includeAll: false,
+            safelist: [],
+            blocklist: [],
+            alias: {}
+          },
+          typeof config.preflight === 'boolean' ? {} : config.preflight
+        )
+
+        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
+        preflightOptions.enablePreflight = enablePreflight
+        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
+
+        Object.entries(assets).forEach(([file, source]) => {
+          if (!filterFile(file)) return
+          if (file.endsWith(styleExt)) return transformCSS(file, source)
+          if (file.endsWith(templateExt)) return transformTemplate(file, source)
         })
 
         delete packageClassesMaps.main
