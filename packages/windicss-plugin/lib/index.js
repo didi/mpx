@@ -1,5 +1,5 @@
 const { Processor } = require('windicss/lib')
-const windiParser = require("windicss/utils/parser");
+const windiParser = require('windicss/utils/parser')
 const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
 const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
@@ -180,8 +180,8 @@ class MpxWindicssPlugin {
         const transformCSS = (file, source) => {
           source = getReplaceSource(source)
           const content = source.original().source()
-          const style = new windiParser.CSSParser(content, processor).parse();
-          const transformed = style.build();
+          const style = new windiParser.CSSParser(content, processor).parse()
+          const transformed = style.build()
           source.replace(0, content.length - 1, transformed)
           assets[file] = source
         }
