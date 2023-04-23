@@ -99,11 +99,11 @@ function getProcessType () {
 
 function parseUrl (url) {
   const query = {}
-  const arr = url.match(new RegExp('[\?\&][^\?\&]+=[^\?\&]+', 'g')) || [] /* eslint-disable-line no-useless-escape */
+  const arr = url.match(/[?&][^?&]+=[^?&]+/g) || []
   arr.forEach(function (item) {
-    let entry = item.substring(1).split('=')
-    let key = decodeURIComponent(entry[0])
-    let val = decodeURIComponent(entry[1])
+    const entry = item.substring(1).split('=')
+    const key = decodeURIComponent(entry[0])
+    const val = decodeURIComponent(entry[1])
     query[key] = val
   })
 

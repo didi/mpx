@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.7.62",
+  "version": "2.8.31",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -20,13 +20,13 @@
     "@babel/parser": "^7.16.2",
     "@babel/traverse": "^7.16.0",
     "@babel/types": "^7.16.0",
-    "@better-scroll/core": "^2.2.1",
-    "@better-scroll/movable": "^2.2.1",
-    "@better-scroll/observe-dom": "^2.2.1",
-    "@better-scroll/pull-down": "^2.2.1",
-    "@better-scroll/slide": "^2.2.1",
-    "@better-scroll/wheel": "^2.2.1",
-    "@better-scroll/zoom": "^2.2.1",
+    "@better-scroll/core": "^2.5.1",
+    "@better-scroll/movable": "^2.5.1",
+    "@better-scroll/observe-dom": "^2.5.1",
+    "@better-scroll/pull-down": "^2.5.1",
+    "@better-scroll/slide": "^2.5.1",
+    "@better-scroll/wheel": "^2.5.1",
+    "@better-scroll/zoom": "^2.5.1",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
     "consolidate": "^0.15.1",
@@ -44,6 +44,7 @@
     "lodash": "^4.17.15",
     "lodash.camelcase": "^4.3.0",
     "lru-cache": "^4.1.2",
+    "magic-string": "^0.26.2",
     "mime": "^2.2.2",
     "object-assign": "^4.1.1",
     "postcss": "^8.4.5",
@@ -60,7 +61,8 @@
     "webpack": "^5.48.0"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -79,5 +81,6 @@
   },
   "engines": {
     "node": ">=14.14.0"
-  }
+  },
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

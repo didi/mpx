@@ -9,14 +9,14 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   }
 
   const rootMixin = {
-    [hookNames[0]] (...params) {
-      initProxy(this, rawOptions, currentInject, params)
+    [hookNames[0]] () {
+      initProxy(this, rawOptions, currentInject)
     },
     [hookNames[1]] () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
     [hookNames[2]] () {
-      if (this.__mpxProxy) this.__mpxProxy.destroyed()
+      if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }
 

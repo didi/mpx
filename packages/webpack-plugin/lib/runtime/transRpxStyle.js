@@ -12,7 +12,7 @@ module.exports = function (style) {
     if (typeof cssText === 'string') {
       cssText.split(listDelimiter).forEach((item) => {
         if (item) {
-          var tmp = item.split(propertyDelimiter)
+          const tmp = item.split(propertyDelimiter)
           tmp.length > 1 && (parsedStyleObj[tmp[0].trim()] = tmp[1].trim())
         }
       })
@@ -35,7 +35,7 @@ module.exports = function (style) {
   if (style) {
     style.forEach(item => {
       parseStyleText(item)
-      for (let key in parsedStyleObj) {
+      for (const key in parsedStyleObj) {
         parsedStyleObj[key] = transRpxStyleFn(parsedStyleObj[key])
       }
     })

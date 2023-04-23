@@ -1,0 +1,35 @@
+{
+  "name": "@mpxjs/store",
+  "version": "2.8.15",
+  "description": "A store for mpx framework",
+  "main": "src/index.js",
+  "types": "@types/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/didi/mpx.git"
+  },
+  "keywords": [
+    "mpx",
+    "store"
+  ],
+  "author": "donghongping",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "homepage": "https://github.com/didi/mpx#readme",
+  "dependencies": {
+    "@mpxjs/utils": "^2.8.15"
+  },
+  "peerDependencies": {
+    "@mpxjs/core": "^2.8.0"
+  },
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
+}

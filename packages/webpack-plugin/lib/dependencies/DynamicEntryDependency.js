@@ -28,10 +28,23 @@ class DynamicEntryDependency extends NullDependency {
     return toPosix([request, entryType, outputPath, packageRoot, relativePath, context, ...range].join('|'))
   }
 
+  collectDynamicRequest (mpx) {
+    if (!this.packageRoot) return
+    const curValue = mpx.dynamicEntryInfo[this.packageRoot] = mpx.dynamicEntryInfo[this.packageRoot] || {
+      hasPage: false,
+      entries: []
+    }
+    if (this.entryType === 'page') {
+      curValue.hasPage = true
+    } else {
+      curValue.entries.push(this.request)
+    }
+  }
+
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
     let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
-
+    this.collectDynamicRequest(mpx)
     async.waterfall([
       (callback) => {
         if (context && resolver) {
@@ -184,7 +197,8 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
       replaceContent = JSON.stringify(true)
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
-        const relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
+        let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
+        if (!relativePath.startsWith('.')) relativePath = './' + relativePath
         replaceContent = JSON.stringify(relativePath)
         if (extraOptions.retryRequireAsync) {
           replaceContent += `).catch(function (e) {

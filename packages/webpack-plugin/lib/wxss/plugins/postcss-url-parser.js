@@ -298,10 +298,12 @@ const plugin = (options = {}) => {
 
       return {
         Declaration (declaration) {
-          const { isSupportDataURL, isSupportAbsoluteURL } = options
+          const { isSupportDataURL, isSupportAbsoluteURL, externals, root } = options
           const parsedURL = parseDeclaration(declaration, 'value', result, {
             isSupportDataURL,
-            isSupportAbsoluteURL
+            isSupportAbsoluteURL,
+            externals,
+            root
           })
 
           if (!parsedURL) {

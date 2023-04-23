@@ -14,9 +14,9 @@ function compileAndParse (input, { srcMode, mode, env } = { srcMode: 'wx', mode:
     warn: warnFn,
     error: errorFn,
     defs: {
-      '__mpx_mode__': mode,
-      '__mpx_src_mode__': srcMode,
-      '__mpx_env__': env
+      __mpx_mode__: mode,
+      __mpx_src_mode__: srcMode,
+      __mpx_env__: env
     },
     proxyComponentEventsRules: []
   })

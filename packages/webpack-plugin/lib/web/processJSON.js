@@ -19,7 +19,7 @@ module.exports = function (json, {
 }, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
-  let output = '/* json */\n'
+  const output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
   let tabBarStr
@@ -157,10 +157,10 @@ module.exports = function (json, {
             const context = path.dirname(result)
 
             if (content.pages) {
-              let tarRoot = queryObj.root
+              const tarRoot = queryObj.root
               if (tarRoot) {
                 delete queryObj.root
-                let subPackage = {
+                const subPackage = {
                   tarRoot,
                   pages: content.pages,
                   ...queryObj
@@ -239,8 +239,8 @@ module.exports = function (json, {
         emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
         return callback()
       }
-      let tarRoot = subPackage.tarRoot || subPackage.root || ''
-      let srcRoot = subPackage.srcRoot || subPackage.root || ''
+      const tarRoot = subPackage.tarRoot || subPackage.root || ''
+      const srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return callback()
       context = path.join(context, srcRoot)
       processPages(subPackage.pages, context, tarRoot, callback)
