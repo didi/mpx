@@ -178,9 +178,8 @@ class MpxWindicssPlugin {
         }
         // transform directives like @apply @variants @screen @layer theme()
         const processStyle = (file) => {
-          const content = assets[file].source();
-          if (!content || content.length <= 0 || !cssRequiresTransform(content))
-          return
+          const content = assets[file].source()
+          if (!content || content.length <= 0 || !cssRequiresTransform(content)) return
           const style = new windiParser.CSSParser(content, processor).parse()
           const output = style.build()
           if (!output || output.length <= 0) {
