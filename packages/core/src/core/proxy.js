@@ -410,6 +410,7 @@ export default class MpxProxy {
             }
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
+              if (!this.miniRenderData[tarKey]) this.miniRenderData[tarKey] = {}
               // setByPath 更新miniRenderData中的子数据
               doGetByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
