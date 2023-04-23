@@ -1,7 +1,7 @@
 const { Processor } = require('windicss/lib')
 const windiParser = require('windicss/utils/parser')
 const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
-const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
+const { buildAliasTransformer, transformGroups, mpEscape, cssRequiresTransform } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
@@ -177,15 +177,18 @@ class MpxWindicssPlugin {
           return content.split(/\s+/).map(classNameHandler).join(' ')
         }
         // transform directives like @apply @variants @screen @layer theme()
-        const transformCSS = (file, source) => {
-          source = getReplaceSource(source)
-          const content = source.original().source()
+        const processStyle = (file, source) => {
+          const content = source.source()
+          if (!content || content.length <= 0 || !cssRequiresTransform(content)) return
           const style = new windiParser.CSSParser(content, processor).parse()
-          const transformed = style.build()
-          source.replace(0, content.length - 1, transformed)
-          assets[file] = source
+          const output = style.build()
+          if (!output || output.length <= 0) {
+            error(`${file} 解析style错误,检查样式文件输入!`)
+            return
+          }
+          assets[file] = getRawSource(output)
         }
-        const transformTemplate = (file, source) => {
+        const processTemplate = (file, source) => {
           source = getReplaceSource(source)
 
           const content = source.original().source()
@@ -284,8 +287,8 @@ class MpxWindicssPlugin {
 
         Object.entries(assets).forEach(([file, source]) => {
           if (!filterFile(file)) return
-          if (file.endsWith(styleExt)) return transformCSS(file, source)
-          if (file.endsWith(templateExt)) return transformTemplate(file, source)
+          if (file.endsWith(styleExt)) return processStyle(file, source)
+          if (file.endsWith(templateExt)) return processTemplate(file, source)
         })
 
         delete packageClassesMaps.main

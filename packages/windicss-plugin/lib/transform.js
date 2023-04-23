@@ -75,7 +75,15 @@ function transformGroups (source) {
   return source
 }
 
+const hasDirectiveTest = /@(apply|variants|screen|layer)\s/
+const hasThemeFunctionTest = /theme\(.*?\)/
+
+function cssRequiresTransform (source) {
+  return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source)
+}
+
 module.exports = {
+  cssRequiresTransform,
   transformGroups,
   mpEscape,
   buildAliasTransformer
