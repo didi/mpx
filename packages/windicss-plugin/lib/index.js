@@ -11,7 +11,6 @@ const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
 const minimatch = require('minimatch')
 
 function normalizeOptions (options) {
-  // todo
   options.windiFile = options.windiFile || 'styles/windi'
   options.minify = options.minify || false
   // options.config = options.config
@@ -20,6 +19,8 @@ function normalizeOptions (options) {
   options.styleIsolation = options.styleIsolation || 'isolated'
   options.minCount = options.minCount || 2
   options.scan = options.scan || {}
+  options.transformCSS = options.transformCSS || true
+  options.transformGroups = options.transformGroups || true
   return options
 }
 
@@ -171,7 +172,9 @@ class MpxWindicssPlugin {
         const transformClasses = (source, classNameHandler = c => c) => {
           // pre process
           source = transformAlias(source)
-          source = transformGroups(source)
+          if (this.options.transformGroups) {
+            source = transformGroups(source)
+          }
           const content = source.source()
           // escape & fill classesMap
           return content.split(/\s+/).map(classNameHandler).join(' ')
@@ -287,7 +290,7 @@ class MpxWindicssPlugin {
 
         Object.entries(assets).forEach(([file, source]) => {
           if (!filterFile(file)) return
-          if (file.endsWith(styleExt)) return processStyle(file, source)
+          if (this.options.transformCSS && file.endsWith(styleExt)) return processStyle(file, source)
           if (file.endsWith(templateExt)) return processTemplate(file, source)
         })
 
