@@ -67,7 +67,7 @@ export function forEach (obj, fn) {
       fn(obj[i], i, obj)
     }
   } else {
-    for (const key in obj) {
+    for (let key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         fn(obj[key], key, obj)
       }
@@ -219,7 +219,7 @@ function attrMatch (test = {}, input = {}) {
   let result = true
   for (const key in test) {
     // value 值为 true 时 key 存在即命中匹配
-    if (hasOwn(test, key) && hasOwn(input, key)) {
+    if (test.hasOwnProperty(key) && input.hasOwnProperty(key)) {
       if (test[key] === true) continue
       // value 如果不是字符串需要进行序列化之后再匹配
       const testValue = isString(test[key]) ? test[key] : JSON.stringify(test[key])
@@ -350,7 +350,7 @@ export function compareParams (params, cacheParams, ignoreParamKeys = []) {
   }
   // ignoreParamKeys 类型应为字符串&字符串数组 否则 ignoreParamKeys = [] 不考虑 ignoreParamKeys
   if (!(isString(ignoreParamKeys) || isArray(ignoreParamKeys))) {
-    console.error('compareParams: ignoreParamKeys 不合法, ignoreParamKeys 只支持字符串和数组类型，请检查！！！')
+    console.error(`compareParams: ignoreParamKeys 不合法, ignoreParamKeys 只支持字符串和数组类型，请检查！！！`)
     ignoreParamKeys = []
   } else if (isString(ignoreParamKeys)) {
     // ignoreParamKeys 字符串数组化
@@ -379,10 +379,4 @@ export function compareParams (params, cacheParams, ignoreParamKeys = []) {
       return params[key] === cacheParams[key]
     }
   })
-}
-
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-export function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
 }

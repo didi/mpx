@@ -11,7 +11,7 @@ module.exports = (options = {}) => {
       const designWidth = options.designWidth || 750
       const ratio = +(baseWidth / designWidth).toFixed(2)
       function isIgnoreComment (node) {
-        const result = node && node.type === 'comment' && node.text.trim() === (options.comment || defaultIgnoreComment)
+        let result = node && node.type === 'comment' && node.text.trim() === (options.comment || defaultIgnoreComment)
         if (result) {
           node.remove()
         }

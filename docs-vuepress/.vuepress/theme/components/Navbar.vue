@@ -17,8 +17,8 @@
       </a>
       <div class="row">
         <div class="header__line" v-if="!smallMode"></div>
-        <nav :class="['nav']" v-for="(item, index) in list" :key="index">
-          <a class="nav-link" :href="item.link" :target="item.target" :class="[selectedNavIndex === index? 'router-link-active': '']">
+        <nav class="nav" v-for="(item, index) in list" :key="index">
+          <a class="nav-link" :href="item.link">
             {{item.title}}
             <img v-if="smallMode" width="16" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/y_icon_jinru.png" alt="arrow">
           </a>
@@ -47,13 +47,12 @@ export default {
     return {
       smallMode: false,
       isSidebarOpen: false,
-      selectedNavIndex: null,
       list: [
         { title: '指南', link: '/guide/basic/start.html' },
-        { title: 'API', link: '/api/' },
+        { title: 'API', link: '/api/config.html' },
         { title: '文章', link: '/articles/' },
-        { title: '更新记录', link: 'https://github.com/didi/mpx/releases', target: '_blank'},
-        { title: 'GitHub', link: 'https://github.com/didi/mpx', target: '_blank'}
+        { title: '更新记录', link: 'https://github.com/didi/mpx/releases' },
+        { title: 'GitHub', link: 'https://github.com/didi/mpx' }
       ]
     }
   },
@@ -86,12 +85,6 @@ export default {
     window.addEventListener('resize', handleLinksWrapWidth, false)
     this.$router.afterEach(() => {
       this.isSidebarOpen = false
-    })
-    const currentPath = this.$route.path
-    this.list.forEach((item, index) => {
-      if (item.link === currentPath && !item.link.includes('https://')) {
-        this.selectedNavIndex = index
-      }
     })
   },
   methods: {
@@ -168,12 +161,6 @@ export default {
   align-items: center;
   width: 100%;
   justify-content: space-between;
-}
-
-a.router-link-active {
-  color: #3eaf7c;
-  border-bottom: 2px solid #46bd87;
-  margin-bottom: -2px;
 }
 
 .banner {

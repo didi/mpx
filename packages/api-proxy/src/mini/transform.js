@@ -1,7 +1,6 @@
 import { error, getEnvObj, genFromMap, makeMap } from '../common/js'
 import getWxToAliApi from './platform/wxToAli'
 import getWxToQqApi from './platform/wxToQq'
-import getWxToTtApi from './platform/wxToTt'
 
 const fromMap = genFromMap()
 
@@ -15,19 +14,17 @@ function transformApi (options) {
   const to = options.to
   const fromTo = joinName(from, to)
   const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
-  const wxToQqApi = getWxToQqApi()
-  const wxToTtApi = getWxToTtApi()
+  const wxToQqApi = getWxToQqApi({ optimize: options.optimize })
   const platformMap = {
-    wx_ali: wxToAliApi,
-    wx_qq: wxToQqApi,
-    wx_tt: wxToTtApi
+    'wx_ali': wxToAliApi,
+    'wx_qq': wxToQqApi
   }
   const needProxy = Object.create(null)
   const excludeMap = makeMap(options.exclude)
-  const platformApi = platformMap[fromTo] || {}
-  Object.keys(envObj).concat(Object.keys(platformApi)).forEach((key) => {
+  const transedApi = platformMap[fromTo] || {}
+  Object.keys(envObj).concat(Object.keys(transedApi)).forEach((key) => {
     if (!excludeMap[key]) {
-      needProxy[key] = envObj[key] || platformApi[key]
+      needProxy[key] = envObj[key] || transedApi[key]
     }
   })
   const result = Object.create(null)

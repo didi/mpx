@@ -30,16 +30,16 @@ module.exports = function ({ print }) {
         test: /^(activeColor|backgroundColor)$/,
         ali (obj) {
           const propsMap = {
-            activeColor: 'active-color',
-            backgroundColor: 'background-color'
+            'activeColor': 'active-color',
+            'backgroundColor': 'background-color'
           }
           obj.name = propsMap[obj.name]
           return obj
         },
         tt (obj) {
           const propsMap = {
-            activeColor: 'active-color',
-            backgroundColor: 'background-color'
+            'activeColor': 'active-color',
+            'backgroundColor': 'background-color'
           }
           obj.name = propsMap[obj.name]
           return obj

@@ -55,10 +55,10 @@ module.exports = function ({ print }) {
         test: /^(timeupdate|fullscreenchange|waiting|loadedmetadata)$/,
         ali (evtName) {
           const eventMap = {
-            timeupdate: 'timeUpdate',
-            fullscreenchange: 'fullScreenChange',
-            waiting: 'loading',
-            loadedmetadata: 'renderStart'
+            'timeupdate': 'timeUpdate',
+            'fullscreenchange': 'fullScreenChange',
+            'waiting': 'loading',
+            'loadedmetadata': 'renderStart'
           }
           return eventMap[evtName]
         }

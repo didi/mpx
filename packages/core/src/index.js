@@ -1,24 +1,19 @@
+import * as platform from './platform'
+import createStore, {
+  createStoreWithThis,
+  createStateWithThis,
+  createGettersWithThis,
+  createMutationsWithThis,
+  createActionsWithThis
+} from './core/createStore'
+import { injectMixins } from './core/injectMixins'
+import { extend, diffAndCloneA, makeMap, merge, hasOwn } from './helper/utils'
+import { getMixin } from './core/mergeOptions'
+import { error } from './helper/log'
 import Vue from './vue'
-import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
-import { APIs, InstanceAPIs } from './platform/export/api'
-
-import { createI18n } from './platform/builtInMixins/i18nMixin'
-
-export * from './platform/export/index'
-
-export * from '@mpxjs/store'
-
-export { implement } from './core/implement'
-
-export {
-  createApp,
-  createPage,
-  createComponent
-} from './platform/index'
-
-export {
-  nextTick
-} from './observer/scheduler'
+import { observe, set, del } from './observer/index'
+import { watch as watchWithVm } from './observer/watch'
+import implement from './core/implement'
 
 export {
   BEFORECREATE,
@@ -28,35 +23,34 @@ export {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
-  UNMOUNTED,
-  ONLOAD,
-  ONSHOW,
-  ONHIDE,
-  ONRESIZE
+  DESTROYED,
+  DESTROYED as UNMOUNTED
 } from './core/innerLifecycle'
 
-export {
-  onBeforeMount,
-  onMounted,
-  onBeforeUpdate,
-  onUpdated,
-  onBeforeUnmount,
-  onUnmounted,
-  onLoad,
-  onShow,
-  onHide,
-  onResize,
-  onPullDownRefresh,
-  onReachBottom,
-  onShareAppMessage,
-  onShareTimeline,
-  onAddToFavorites,
-  onPageScroll,
-  onTabItemTap,
-  onSaveExitState
-} from './core/proxy'
+export function createApp (config, ...rest) {
+  const mpx = new EXPORT_MPX()
+  platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
+}
 
-export { getMixin } from './core/mergeOptions'
+export function createPage (config, ...rest) {
+  const mpx = new EXPORT_MPX()
+  platform.createPage(Object.assign({ proto: mpx.proto }, config), ...rest)
+}
+
+export function createComponent (config, ...rest) {
+  const mpx = new EXPORT_MPX()
+  platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
+}
+
+export {
+  createStore,
+  createStoreWithThis,
+  createStateWithThis,
+  createGettersWithThis,
+  createMutationsWithThis,
+  createActionsWithThis,
+  getMixin
+}
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -91,59 +85,151 @@ function use (plugin, options = {}) {
   }
 
   const args = [options]
-  const proxyMpx = factory()
-  const rawProps = Object.getOwnPropertyNames(proxyMpx)
-  const rawPrototypeProps = Object.getOwnPropertyNames(proxyMpx.prototype)
-  args.unshift(proxyMpx)
+  const proxyMPX = factory()
+  const rawProps = Object.getOwnPropertyNames(proxyMPX)
+  const rawPrototypeProps = Object.getOwnPropertyNames(proxyMPX.prototype)
+  args.unshift(proxyMPX)
   // 传入真正的mpx对象供插件访问
-  args.push(Mpx)
+  args.push(EXPORT_MPX)
   if (typeof plugin.install === 'function') {
     plugin.install.apply(plugin, args)
   } else if (typeof plugin === 'function') {
     plugin.apply(null, args)
   }
-  extendProps(Mpx, proxyMpx, rawProps, options)
-  extendProps(Mpx.prototype, proxyMpx.prototype, rawPrototypeProps, options)
+  extendProps(EXPORT_MPX, proxyMPX, rawProps, options)
+  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
   return this
 }
 
-APIs.use = use
+let APIs = {}
+
+// 实例属性
+let InstanceAPIs = {}
+
+let observable
+let watch
+
+if (__mpx_mode__ === 'web') {
+  const vm = new Vue()
+  observable = Vue.observable.bind(Vue)
+  watch = vm.$watch.bind(vm)
+  const set = Vue.set.bind(Vue)
+  const del = Vue.delete.bind(Vue)
+  APIs = {
+    createApp,
+    createPage,
+    createComponent,
+    createStore,
+    createStoreWithThis,
+    mixin: injectMixins,
+    injectMixins,
+    toPureObject,
+    observable,
+    watch,
+    use,
+    set,
+    delete: del,
+    getMixin,
+    implement
+  }
+} else {
+  observable = function (obj) {
+    observe(obj)
+    return obj
+  }
+
+  const vm = {}
+  watch = function (expOrFn, cb, options) {
+    return watchWithVm(vm, expOrFn, cb, options)
+  }
+
+  APIs = {
+    createApp,
+    createPage,
+    createComponent,
+    createStore,
+    createStoreWithThis,
+    mixin: injectMixins,
+    injectMixins,
+    toPureObject,
+    observable,
+    watch,
+    use,
+    set,
+    delete: del,
+    getMixin,
+    implement
+  }
+
+  InstanceAPIs = {
+    $set: set,
+    $delete: del
+  }
+}
+
+export { watch, observable }
 
 function factory () {
   // 作为原型挂载属性的中间层
-  function Mpx () {
+  function MPX () {
+    this.proto = extend({}, this)
   }
 
-  Object.assign(Mpx, APIs)
-  Object.assign(Mpx.prototype, InstanceAPIs)
+  Object.assign(MPX, APIs)
+  Object.assign(MPX.prototype, InstanceAPIs)
   // 输出web时在mpx上挂载Vue对象
   if (__mpx_mode__ === 'web') {
-    Mpx.__vue = Vue
+    MPX.__vue = Vue
   }
-  return Mpx
+  return MPX
 }
 
-const Mpx = factory()
+const EXPORT_MPX = factory()
 
-Mpx.config = {
+EXPORT_MPX.config = {
   useStrictDiff: false,
   ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
-  errorHandler: null,
+  hookErrorHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
-  forceFlushSync: false,
+  forceRunWatcherSync: false,
   webRouteConfig: {}
 }
 
-global.__mpx = Mpx
+global.__mpx = EXPORT_MPX
 
 if (__mpx_mode__ !== 'web') {
   if (global.i18n) {
-    Mpx.i18n = createI18n(global.i18n)
+    observe(global.i18n)
+    // 挂载翻译方法
+    if (global.i18nMethods) {
+      Object.keys(global.i18nMethods).forEach((methodName) => {
+        if (/^__/.test(methodName)) return
+        global.i18n[methodName] = (...args) => {
+          // tap i18n.version
+          args.unshift((global.i18n.version, global.i18n.locale))
+          return global.i18nMethods[methodName].apply(this, args)
+        }
+      })
+
+      if (global.i18nMethods.__getMessages) {
+        const messages = global.i18nMethods.__getMessages()
+        global.i18n.mergeMessages = (newMessages) => {
+          merge(messages, newMessages)
+          global.i18n.version++
+        }
+        global.i18n.mergeLocaleMessage = (locale, message) => {
+          messages[locale] = messages[locale] || {}
+          merge(messages[locale], message)
+          global.i18n.version++
+        }
+      }
+    }
+    EXPORT_MPX.i18n = global.i18n
   }
 }
 
-export default Mpx
+export default EXPORT_MPX

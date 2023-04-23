@@ -21,7 +21,7 @@ export default function install (target) {
   })
 }
 export function getProxy () {
-  const apiProxy = {}
+  let apiProxy = {}
   install(apiProxy)
   return apiProxy
 }

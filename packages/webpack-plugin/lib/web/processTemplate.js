@@ -109,7 +109,7 @@ module.exports = function (template, {
           wxsModuleMap = meta.wxsModuleMap
         }
         if (meta.wxsContentMap) {
-          for (const module in meta.wxsContentMap) {
+          for (let module in meta.wxsContentMap) {
             wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }

@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 import Vue from 'vue'
 
 function setTabBarStyle (options = {}) {
@@ -9,7 +9,7 @@ function setTabBarStyle (options = {}) {
       rejected = { errMsg: 'setTabBarStyle:fail custom Tabbar' }
     } else {
       'color|selectedColor|backgroundColor|borderStyle'.split('|').forEach((key) => {
-        if (hasOwn(options, key)) {
+        if (options.hasOwnProperty(key)) {
           Vue.set(tabBar, key, options[key])
         }
       })
@@ -37,7 +37,7 @@ function setTabBarItem (options = {}) {
       const item = tabBar.list[options.index]
       if (item) {
         'text|iconPath|selectedIconPath'.split('|').forEach((key) => {
-          if (hasOwn(options, key)) {
+          if (options.hasOwnProperty(key)) {
             Vue.set(item, key, options[key])
           }
         })

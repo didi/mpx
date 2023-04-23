@@ -1,4 +1,4 @@
-import { isObject } from '@mpxjs/utils'
+import { isObject } from '../../helper/utils'
 
 export default function renderHelperMixin () {
   return {

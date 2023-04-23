@@ -1,4 +1,4 @@
-import { remove } from '@mpxjs/utils'
+import { remove } from '../helper/utils'
 
 let uid = 0
 

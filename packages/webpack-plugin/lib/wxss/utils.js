@@ -317,7 +317,7 @@ function escapeLocalIdent (localident) {
   // TODO simplify in the next major release
   return escape(
     localident
-    // For `[hash]` placeholder
+      // For `[hash]` placeholder
       .replace(/^((-?[0-9])|--)/, '_$1')
       .replace(filenameReservedRegex, '-')
       .replace(reControlChars, '-')
@@ -389,7 +389,7 @@ function defaultGetLocalIdent (
     hash.update(Buffer.from(options.content, 'utf8'))
 
     localIdentHash = (localIdentHash + hash.digest(hashDigest))
-    // Remove all leading digits
+      // Remove all leading digits
       .replace(/^\d+/, '')
       // Replace all slashes with underscores (same as in base64url)
       .replace(/\//g, '_')
@@ -652,13 +652,13 @@ function getModulesOptions (rawOptions, exportType, loaderContext) {
   if (needNamedExport) {
     if (rawOptions.esModule === false) {
       throw new Error(
-        'The \'exportType\' option with the \'css-style-sheet\' or \'string\' value requires the \'esModules\' option to be enabled'
+        "The 'exportType' option with the 'css-style-sheet' or 'string' value requires the 'esModules' option to be enabled"
       )
     }
 
     if (modulesOptions.namedExport === false) {
       throw new Error(
-        'The \'exportType\' option with the \'css-style-sheet\' or \'string\' value requires the \'modules.namedExport\' option to be enabled'
+        "The 'exportType' option with the 'css-style-sheet' or 'string' value requires the 'modules.namedExport' option to be enabled"
       )
     }
   }
@@ -666,7 +666,7 @@ function getModulesOptions (rawOptions, exportType, loaderContext) {
   if (modulesOptions.namedExport === true) {
     if (rawOptions.esModule === false) {
       throw new Error(
-        'The \'modules.namedExport\' option requires the \'esModules\' option to be enabled'
+        "The 'modules.namedExport' option requires the 'esModules' option to be enabled"
       )
     }
 
@@ -896,18 +896,18 @@ function getPreRequester ({ loaders, loaderIndex }) {
       return cache[number]
     }
 
-    if (typeof number === 'number') {
+    if (number === false) {
+      cache[number] = ''
+    } else {
       const loadersRequest = loaders
         .slice(
           loaderIndex,
-          loaderIndex + 1 + number
+          loaderIndex + 1 + (typeof number !== 'number' ? 0 : number + 1) // 与css-loader 不同，需要增加 1，因为 css 文件会经过 style-compiler loader 进行处理。
         )
         .map((x) => x.request)
         .join('!')
 
       cache[number] = `-!${loadersRequest}!`
-    } else {
-      cache[number] = ''
     }
 
     return cache[number]
@@ -924,7 +924,7 @@ function getImportCode (imports, options) {
       if (icss && options.modules.namedExport) {
         code += `import ${
           options.modules.exportOnlyLocals ? '' : `${importName}, `
-          }* as ${importName}_NAMED___ from ${url};\n`
+        }* as ${importName}_NAMED___ from ${url};\n`
       } else {
         code +=
           type === 'url'
@@ -1039,7 +1039,7 @@ function getModuleCode (
     options.sourceMap
       ? '___CSS_LOADER_API_SOURCEMAP_IMPORT___'
       : '___CSS_LOADER_API_NO_SOURCEMAP_IMPORT___'
-    });\n`
+  });\n`
 
   for (const item of api) {
     const { url, layer, supports, media, dedupe } = item
@@ -1066,10 +1066,10 @@ function getModuleCode (
       code = code.replace(new RegExp(replacementName, 'g'), () =>
         options.modules.namedExport
           ? `" + ${importName}_NAMED___[${JSON.stringify(
-          getValidLocalName(
-            localName,
-            options.modules.exportLocalsConvention
-          )
+            getValidLocalName(
+              localName,
+              options.modules.exportLocalsConvention
+            )
           )}] + "`
           : `" + ${importName}.locals[${JSON.stringify(localName)}] + "`
       )
@@ -1121,7 +1121,7 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
           localsCode += `export var ${name} = ${JSON.stringify(value)};\n`
         } else {
           if (localsCode) {
-            localsCode += ',\n'
+            localsCode += `,\n`
           }
 
           localsCode += `\t${JSON.stringify(name)}: ${JSON.stringify(value)}`
@@ -1172,7 +1172,7 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
         ? localsCode
         : `${
           options.esModule ? 'export default' : 'module.exports ='
-          } {\n${localsCode}\n};\n`
+        } {\n${localsCode}\n};\n`
 
       return code
     }
@@ -1181,7 +1181,7 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
       ? localsCode
       : `___CSS_LOADER_EXPORT___.locals = {${
         localsCode ? `\n${localsCode}\n` : ''
-        }};\n`
+      }};\n`
   }
 
   const isCSSStyleSheetExport = options.exportType === 'css-style-sheet'
@@ -1201,7 +1201,6 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
     case 'css-style-sheet':
       finalExport = '___CSS_LOADER_STYLE_SHEET___'
       break
-    /* eslint-disable default-case-last */
     default:
     case 'array':
       finalExport = '___CSS_LOADER_EXPORT___'
@@ -1210,7 +1209,9 @@ function getExportCode (exports, replacements, icssPluginUsed, options) {
 
   code += `${
     options.esModule ? 'export default ' : 'module.exports ='
-    } ${finalExport};\n`
+  } ${finalExport};\n`
+
+  code += ``
 
   return code
 }

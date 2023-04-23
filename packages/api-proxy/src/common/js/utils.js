@@ -12,17 +12,12 @@
  *  d: 4 // 增加 d
  * })
  */
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
-}
 
 function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   let opts = {}
 
   Object.keys(options).forEach(key => {
-    const myKey = hasOwn(updateOrRemoveOpt, key) ? updateOrRemoveOpt[key] : key
+    let myKey = updateOrRemoveOpt.hasOwnProperty(key) ? updateOrRemoveOpt[key] : key
     if (myKey !== '') {
       opts[myKey] = options[key]
     }
@@ -36,7 +31,6 @@ function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
 /**
  * @param {Object} opts 原参数
  * @param {Function} getOptions 获取 success 回调修改后的参数
- * @param {Object} thisObj this对象
  */
 const handleSuccess = (opts, getOptions = noop, thisObj) => {
   if (!opts.success) {
@@ -98,7 +92,7 @@ function makeMap (arr) {
   }, {})
 }
 
-const isBrowser = typeof window !== 'undefined'
+const inBrowser = typeof window !== 'undefined'
 
 export {
   changeOpts,
@@ -109,6 +103,5 @@ export {
   warn,
   noop,
   makeMap,
-  isBrowser,
-  hasOwn
+  inBrowser
 }

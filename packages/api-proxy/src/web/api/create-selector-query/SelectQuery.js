@@ -167,7 +167,6 @@ class SelectQuery {
     })
     this._queueCb.push(callback)
   }
-
   _isEl (selector) {
     if (Array.isArray(selector)) return this._isEl(selector[0])
     return selector && selector.nodeType === 1

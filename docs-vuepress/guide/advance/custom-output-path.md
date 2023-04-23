@@ -70,26 +70,4 @@ new MpxWebpackPlugin({
   },
 })
 ```
-::: tip @mpxjs/cli@3.x 版本配置如下
-```js
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      plugin: {
-         customOutputPath: (type, name, hash, ext) => {
-          // type: 资源类型(page | component | static)
-          // name: 资源原有文件名
-          // hash: 8位长度的hash串
-          // ext: 文件后缀(.js｜ .wxml | .json 等)
-
-          // 输出示例： pages/testax34dde3/index.js
-          return path.join(type + 's', name + hash, 'index' + ext)
-        }
-      }
-    }
-  }
-})
-```
-:::
 基于上方示例，你可以根据需要进行路径定制化，例如缩短hash、使用012代替文件名等各种自定义路径

@@ -28,6 +28,6 @@ module.exports = function (raw) {
     }
   })
 
-  output += 'module.exports = JSON.stringify(json, null, 2);\n'
+  output += `module.exports = JSON.stringify(json, null, 2);\n`
   return output
 }

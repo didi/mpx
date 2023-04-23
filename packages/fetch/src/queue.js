@@ -19,7 +19,7 @@ export default class RequestQueue {
     if (!Array.isArray(rules)) {
       rules = [rules]
     }
-    for (const rule of rules) {
+    for (let rule of rules) {
       this.lowPriorityWhiteList.indexOf(rule) === -1 && this.lowPriorityWhiteList.push(rule)
     }
   }
@@ -66,7 +66,7 @@ export default class RequestQueue {
   }
 
   delWorkQueue (work) {
-    const index = this.workingList.indexOf(work)
+    let index = this.workingList.indexOf(work)
     if (index !== -1) {
       this.workingList.splice(index, 1)
     }
@@ -82,7 +82,7 @@ export default class RequestQueue {
 
   workingRequest () {
     while (this.workingList.length < this.limit && this.workList.length) {
-      const work = this.workList.shift()
+      let work = this.workList.shift()
       this.workingList.push(work)
       this.run(work)
     }
@@ -90,7 +90,7 @@ export default class RequestQueue {
     const buffer = parseInt((this.limit - this.workingList.length) * this.ratio, 10) || 1
     const limit = this.limit - buffer
     while (this.workingList.length < limit && this.lowWorkList.length) {
-      const work = this.lowWorkList.shift()
+      let work = this.lowWorkList.shift()
       this.workingList.push(work)
       this.run(work)
     }

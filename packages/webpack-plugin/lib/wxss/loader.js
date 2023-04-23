@@ -33,7 +33,7 @@ const {
 const createHelpers = require('../helpers')
 
 module.exports = async function loader (content, map, meta) {
-  const rawOptions = this.getOptions(schema)
+  let rawOptions = this.getOptions(schema)
   const plugins = []
   const callback = this.async()
 
@@ -45,7 +45,8 @@ module.exports = async function loader (content, map, meta) {
   let options
 
   try {
-    options = normalizeOptions(Object.assign({}, rawOptions, { sourceMap }), this)
+    options = normalizeOptions(rawOptions, this)
+    options = Object.assign({}, options, { sourceMap, root, externals })
   } catch (error) {
     callback(error)
 
@@ -59,7 +60,7 @@ module.exports = async function loader (content, map, meta) {
     plugins.push(...getModulesPlugins(options, this))
   }
 
-  const importPluginImports = []
+  let importPluginImports = []
   const importPluginApi = []
 
   let isSupportAbsoluteURL = false
@@ -77,26 +78,22 @@ module.exports = async function loader (content, map, meta) {
     options.esModule && Boolean('fsStartTime' in this._compiler)
 
   if (shouldUseImportPlugin(options)) {
-    const { getRequestString } = createHelpers(this)
     plugins.push(
       importParser({
         isSupportAbsoluteURL: false,
         isSupportDataURL: false,
-        externals,
-        root,
         isCSSStyleSheet: options.exportType === 'css-style-sheet',
         loaderContext: this,
         imports: importPluginImports,
         api: importPluginApi,
         filter: options.import.filter,
-        urlHandler: (url) => {
-          url = combineRequests(getPreRequester(this)(options.importLoaders), url)
-          return getRequestString('styles', { src: url }, {
-            isStatic: true,
-            issuerResource: this.resource,
-            fromImport: true
-          })
-        }
+        urlHandler: (url) =>
+          stringifyRequest(
+            this,
+            combineRequests(getPreRequester(this)(options.importLoaders), url)
+          ),
+        externals: options.externals,
+        root: options.root
       })
     )
   }
@@ -110,8 +107,6 @@ module.exports = async function loader (content, map, meta) {
       urlParser({
         isSupportAbsoluteURL,
         isSupportDataURL,
-        externals,
-        root,
         imports: urlPluginImports,
         replacements,
         context: this.context,
@@ -188,10 +183,10 @@ module.exports = async function loader (content, map, meta) {
       to: resourcePath,
       map: options.sourceMap
         ? {
-            prev: map ? normalizeSourceMap(map, resourcePath) : null,
-            inline: false,
-            annotation: false
-          }
+          prev: map ? normalizeSourceMap(map, resourcePath) : null,
+          inline: false,
+          annotation: false
+        }
         : false
     })
   } catch (error) {
@@ -209,6 +204,22 @@ module.exports = async function loader (content, map, meta) {
   for (const warning of result.warnings()) {
     this.emitWarning(new Warning(warning))
   }
+
+  const { getRequestString } = createHelpers(this)
+
+  // 符合css后缀名的文件经过mpx处理后会带上相应的后缀防止 WebPack 的默认解析规则，后续 require/import 相应路径时，导出的不是一段 css 代码了，事实上是一个文件路径。
+  importPluginImports = importPluginImports.map((importItem, index) => {
+    const splittedUrl = importItem.url.slice(1, -1)
+    const requestString = getRequestString('styles', { src: splittedUrl }, {
+      isStatic: true,
+      issuerResource: this.resource,
+      fromImport: true
+    }, index)
+    return {
+      ...importItem,
+      url: requestString
+    }
+  })
 
   const imports = []
     .concat(icssPluginImports.sort(sort))

@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  parser: '@babel/eslint-parser',
+  parser: 'babel-eslint',
   parserOptions: {
     sourceType: 'module'
   },
@@ -28,7 +28,7 @@ module.exports = {
   },
   rules: {
     'no-cond-assign': 0,
-    camelcase: 0
+    'camelcase': ['error', { 'allow': ['__mpx_mode__', '__mpx_env__', '__swan_exports_map__'] }]
   },
   env: {
     'jest/globals': true

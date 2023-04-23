@@ -1,3 +1,0 @@
-<template>
-  <text><slot></slot></text>
-</template>

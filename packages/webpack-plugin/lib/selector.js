@@ -1,11 +1,10 @@
-const path = require('path')
 const parseComponent = require('./parser')
 const parseRequest = require('./utils/parse-request')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
+const path = require('path')
 
 module.exports = function (content) {
   this.cacheable()
-  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
   const pathExtname = path.extname(this.resourcePath)
   if (!['.vue', '.mpx'].includes(pathExtname)) {
     this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)

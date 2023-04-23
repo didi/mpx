@@ -1,8 +1,8 @@
-import { isBrowser } from '../../../common/js/utils'
+import { inBrowser } from '../../../common/js/utils'
 
 const callbacks = []
 
-if (isBrowser) {
+if (inBrowser) {
   window.addEventListener('resize', () => {
     const result = {
       size: {

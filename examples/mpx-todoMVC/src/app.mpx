@@ -1,8 +1,7 @@
 <script type="application/json">
   {
     "pages": [
-      "./pages/index",
-      "./pages/composition"
+      "./pages/index"
     ],
     "window": {
       "backgroundTextStyle": "light",

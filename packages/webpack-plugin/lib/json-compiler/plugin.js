@@ -57,7 +57,7 @@ module.exports = function (source) {
     if (err) return nativeCallback(err)
     let output = `var pluginEntry = ${JSON.stringify(pluginEntry, null, 2)};\n`
     if (processOutput) output = processOutput(output)
-    output += 'module.exports = JSON.stringify(pluginEntry, null, 2);\n'
+    output += `module.exports = JSON.stringify(pluginEntry, null, 2);\n`
     nativeCallback(null, output)
   }
 
@@ -105,10 +105,9 @@ module.exports = function (source) {
         const item = publicPages[key]
         reversedMap[item] = key
       })
-      pages = pages.reduce((target, page, index) => {
+      pages = pages.reduce((page, target, index) => {
         const key = reversedMap[page] || `__private_page_${index}__`
         target[key] = page
-        return target
       }, {})
     }
 

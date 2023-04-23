@@ -50,7 +50,7 @@ CommonJsVariableDependency.Template = class CommonJsVariableDependencyTemplate e
     }
   ) {
     const importedModule = moduleGraph.getModule(dep)
-    const requireExpr = runtimeTemplate.moduleExports({
+    let requireExpr = runtimeTemplate.moduleExports({
       module: importedModule,
       chunkGraph,
       request: dep.request,

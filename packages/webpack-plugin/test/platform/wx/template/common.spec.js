@@ -22,9 +22,9 @@ describe('common spec case', function () {
   })
 
   it('should optimize key of for in swan', function () {
-    const input1 = '<view wx:for="{{list}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>'
-    const input2 = '<view wx:for="strings" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>'
-    const input3 = '<view wx:for="{{8}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>'
+    const input1 = `<view wx:for="{{list}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>`
+    const input2 = `<view wx:for="strings" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>`
+    const input3 = `<view wx:for="{{8}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>`
     const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'swan' })
     const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'swan' })
     const output3 = compileAndParse(input3, { srcMode: 'wx', mode: 'swan' })

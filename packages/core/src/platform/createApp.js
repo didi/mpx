@@ -1,9 +1,9 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp } from '@mpxjs/utils'
+import { makeMap, spreadProp } from '../helper/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
-import Mpx from '../index'
+import EXPORT_MPX from '../index'
 
 const webAppHooksMap = makeMap(webLifecycle.LIFECYCLE.APP_HOOKS)
 
@@ -26,14 +26,14 @@ export default function createApp (option, config = {}) {
   // 在App中挂载mpx对象供周边工具访问，如e2e测试
   const builtInMixins = [{
     getMpx () {
-      return Mpx
+      return EXPORT_MPX
     }
   }]
   const appData = {}
   if (__mpx_mode__ === 'web') {
     builtInMixins.push({
       created () {
-        Object.assign(this, Mpx.prototype)
+        Object.assign(this, option.proto)
         Object.assign(this, appData)
         const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
         const options = {
@@ -64,12 +64,11 @@ export default function createApp (option, config = {}) {
   } else {
     builtInMixins.push({
       onLaunch () {
-        Object.assign(this, Mpx.prototype)
+        Object.assign(this, option.proto)
       }
     })
   }
-  // app选项目前不需要进行转换
-  const { rawOptions } = transferOptions(option, 'app', false)
+  const { rawOptions } = transferOptions(option, 'app')
   rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 

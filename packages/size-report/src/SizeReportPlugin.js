@@ -59,25 +59,12 @@ class SizeReportPlugin {
         return './' + toPosix(path.relative(mpx.projectRoot, resourcePath))
       }
 
-      // 简化identifier
-      function getSuccinctIdentifier (module) {
-        const identifier = module.readableIdentifier(compilation.requestShortener)
-        let query = ''
-        const resource = module.resource || (module.rootModule && module.rootModule.resource)
-        if (resource) {
-          const { queryObj } = parseRequest(resource)
-          query = queryObj.packageRoot ? '?packageRoot=' + queryObj.packageRoot : ''
-        }
-        return identifier.split(/\?|!/)[0] + query
-      }
-
       function walkEntry (entryModule, sideEffect) {
         const modulesSet = new Set()
-        const sourceStack = [entryModule]
 
         function walk (module) {
-          sideEffect && sideEffect(module, entryModule, [...sourceStack])
           if (modulesSet.has(module)) return
+          sideEffect && sideEffect(module, entryModule)
           modulesSet.add(module)
           for (const connection of moduleGraph.getOutgoingConnections(module)) {
             const d = connection.dependency
@@ -92,9 +79,7 @@ class SizeReportPlugin {
             const state = connection.getActiveState(/* runtime */)
             // We skip inactive connections
             if (state === false) continue
-            sourceStack.push(m)
             walk(m)
-            sourceStack.pop()
           }
         }
 
@@ -107,7 +92,7 @@ class SizeReportPlugin {
 
       const reportRedundance = this.options.reportRedundance
 
-      const needEntryPathRules = this.options.needEntryPathRules || {}
+      const showEntrysPackages = this.options.showEntrysPackages || []
 
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
@@ -123,28 +108,8 @@ class SizeReportPlugin {
       }
 
       const reportGroupsWithNoEntryRules = reportGroups.filter((reportGroup) => {
-        return !!reportGroup.noEntryRules
+        return reportGroup.hasOwnProperty('noEntryRules')
       })
-
-      const moduleEntryGraphMap = new Map() // Map<moduleId, {target: boolean, children: Set<moduleId>, parents: Set<moduleId>}> 存放模块引用关系
-
-      function addModuleEntryGraph (moduleId, relation) {
-        if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!(relation && relation.target), children: new Set(), parents: new Set() })
-        const value = moduleEntryGraphMap.get(moduleId)
-
-        if (Array.isArray(relation.children)) {
-          for (let i = 0; i < relation.children.length; i++) {
-            value.children.add(relation.children[0])
-          }
-        }
-
-        if (Array.isArray(relation.parents)) {
-          for (let i = 0; i < relation.parents.length; i++) {
-            value.parents.add(relation.parents[0])
-          }
-        }
-      }
 
       const moduleEntriesMap = new Map()
 
@@ -166,32 +131,8 @@ class SizeReportPlugin {
         entryModules = concat(entryModules, new Set(chunkGraph.getChunkEntryModulesIterable(chunk)))
       })
 
-      const modulesMapById = {}
-
-      compilation.modules.forEach(module => {
-        const id = chunkGraph.getModuleId(module)
-        modulesMapById[id] = module
-        const resource = module.resource || (module.rootModule && module.rootModule.resource)
-        if (resource && matchCondition(parseRequest(resource).resourcePath, needEntryPathRules)) {
-          addModuleEntryGraph(id, { target: true })
-        }
-      })
-
       for (const entryModule of entryModules) {
-        walkEntry(entryModule, (module, entryModule, stack) => {
-          const id = chunkGraph.getModuleId(module)
-          if (moduleEntryGraphMap.has(id)) {
-            // 将stack中所有节点加入moduleEntryGraphMap中并且记录其节点关系
-            if (stack.length > 1) {
-              for (let i = 0, len = stack.length; i < len; i++) {
-                addModuleEntryGraph(chunkGraph.getModuleId(stack[i]),
-                  {
-                    children: stack[i + 1] && [chunkGraph.getModuleId(stack[i + 1])],
-                    parents: stack[i - 1] && [chunkGraph.getModuleId(stack[i - 1])]
-                  })
-              }
-            }
-          }
+        walkEntry(entryModule, (module, entryModule) => {
           setModuleEntries(module, entryModule)
         })
         reportGroups.forEach((reportGroup) => {
@@ -225,7 +166,7 @@ class SizeReportPlugin {
 
       function getPackageName (fileName) {
         fileName = toPosix(fileName)
-        for (const packageName of subpackages) {
+        for (let packageName of subpackages) {
           if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
@@ -415,7 +356,7 @@ class SizeReportPlugin {
               // 有些contextModule可忽略
               if (!module.resource && !module.rootModule) return
 
-              const parsed = parseRequest(module.resource || module.rootModule.resource)
+              let parsed = parseRequest(module.resource || module.rootModule.resource)
               // 处理为相对路径以减少体积
               parsed.resourcePath = getRelativePathToProject(parsed.resourcePath)
               if (parsed.queryObj && parsed.queryObj.resolve) return
@@ -437,7 +378,7 @@ class SizeReportPlugin {
 
       function formatAllSize (toFormatData) {
         if (Array.isArray(toFormatData) || Object.prototype.toString.call(toFormatData) === '[object Object]') {
-          for (const key in toFormatData) {
+          for (let key in toFormatData) {
             if (Array.isArray(toFormatData[key]) || Object.prototype.toString.call(toFormatData[key]) === '[object Object]') formatAllSize(toFormatData[key])
             if (typeof toFormatData[key] === 'number') toFormatData[key] = formatSize(toFormatData[key])
           }
@@ -447,7 +388,7 @@ class SizeReportPlugin {
 
       function formatRedundanceReport () {
         const formatedReport = []
-        for (const resourcePath in resourcePathMap) {
+        for (let resourcePath in resourcePathMap) {
           const redundantSize = resourcePathMap[resourcePath].redundantSize
           const sizeInfoItem = {
             resourcePath,
@@ -489,8 +430,15 @@ class SizeReportPlugin {
         packagesSizeInfo[packageName] += size
       }
 
+      const modulesMapById = {}
+
+      compilation.modules.forEach(module => {
+        const id = chunkGraph.getModuleId(module)
+        modulesMapById[id] = module
+      })
+
       // Generate original size info
-      for (const name in compilation.assets) {
+      for (let name in compilation.assets) {
         const packageName = getPackageName(name)
         const assetModules = mpx.assetsModulesMap.get(name)
         const assetInfo = compilation.assetsInfo.get(name)
@@ -499,6 +447,7 @@ class SizeReportPlugin {
           const noEntryModules = new Set()
           const size = compilation.assets[name].size()
           const identifierSet = new Set()
+          const entryModulePathMap = new Map()
 
           let identifier = ''
 
@@ -506,11 +455,13 @@ class SizeReportPlugin {
             // 循环 modules，存储到 entryModules 和 noEntryModules 中
             const _entryModules = getModuleEntries(module)
             const _noEntryModules = getModuleEntries(module, true)
+            const entryModulePathSet = new Set()
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
                 if (resource) {
                   entryModules.add(entryModule)
+                  entryModulePathSet.add(getRelativePathToProject(parseRequest(resource).resourcePath))
                 }
               })
             }
@@ -519,8 +470,9 @@ class SizeReportPlugin {
                 noEntryModules.add(noEntryModule)
               })
             }
-            const moduleIdentifier = getSuccinctIdentifier(module)
+            const moduleIdentifier = module.readableIdentifier(compilation.requestShortener)
             identifierSet.add(moduleIdentifier)
+            entryModulePathMap.set(moduleIdentifier, entryModulePathSet)
             if (!identifier) identifier = moduleIdentifier
           })
 
@@ -545,6 +497,9 @@ class SizeReportPlugin {
             modules: mapToArr(identifierSet, (identifier) => {
               const retModule = {
                 identifier
+              }
+              if (showEntrysPackages.includes(packageName)) {
+                retModule.entryModulePaths = [...entryModulePathMap.get(identifier)]
               }
               return retModule
             })
@@ -585,13 +540,21 @@ class SizeReportPlugin {
           fillPackagesSizeInfo(packageName, size)
           sizeSummary.chunkSize += size
           sizeSummary.totalSize += size
-          for (const id in parsedLocations) {
+          for (let id in parsedLocations) {
             const module = modulesMapById[id]
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))
-            const identifier = getSuccinctIdentifier(module)
+            const identifier = module.readableIdentifier(compilation.requestShortener)
             const entryModules = getModuleEntries(module)
             const noEntryModules = getModuleEntries(module, true)
+            const entryModulePathSet = new Set()
+
+            entryModules.forEach((module) => {
+              const resource = module.resource || (module.rootModule && module.rootModule.resource)
+              if (resource) {
+                entryModulePathSet.add(getRelativePathToProject(parseRequest(resource).resourcePath))
+              }
+            })
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
               identifier,
@@ -606,14 +569,9 @@ class SizeReportPlugin {
               identifier,
               size: moduleSize
             }
-
-            // 将被联合的模块中所有的子模块identifier输出
-            if (identifier.endsWith(' modules') && module.modules) {
-              moduleData.modules = [...module.modules].map(module => ({
-                identifier: getSuccinctIdentifier(module)
-              }))
+            if (showEntrysPackages.includes(packageName)) {
+              moduleData.entryModulePaths = [...entryModulePathSet]
             }
-
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
@@ -748,24 +706,11 @@ class SizeReportPlugin {
         packagesSizeInfo[packageName] = formatSize(packagesSizeInfo[packageName])
       }
 
-      const moduleEntryGraph = [...moduleEntryGraphMap.entries()].reduce((obj, [id, value]) => {
-        if (value.parents.size || value.children.size) {
-          obj[id] = {
-            target: !!value.target,
-            parents: [...value.parents],
-            children: [...value.children],
-            identifier: getSuccinctIdentifier((modulesMapById[id]))
-          }
-        }
-        return obj
-      }, {})
-
       const reportData = {
         sizeSummary
       }
 
       const redundanceSizeInfo = formatRedundanceReport()
-      if (Object.keys(moduleEntryGraph).length) reportData.moduleEntryGraph = moduleEntryGraph
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
       if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
@@ -782,8 +727,6 @@ class SizeReportPlugin {
       if (this.options.server.enable) {
         startServer(JSON.stringify(reportData), Object.assign({ logger }, this.options.server))
       }
-
-      this.options.callback && this.options.callback(reportData)
 
       logger.timeEnd('compute size')
     })

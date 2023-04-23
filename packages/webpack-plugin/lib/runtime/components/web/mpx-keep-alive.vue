@@ -1,5 +1,5 @@
 <script>
-  import { isBrowser } from '../../env'
+  import { inBrowser } from '../../../utils/env'
 
   function isDef (v) {
     return v !== undefined && v !== null
@@ -41,7 +41,7 @@
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
-      if (!isBrowser) {
+      if (!inBrowser) {
         return vnode || (slot && slot[0])
       }
       const vnodeKey = getVnodeKey(vnode)

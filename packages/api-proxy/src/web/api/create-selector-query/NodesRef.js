@@ -47,7 +47,6 @@ class NodesRef {
     )
     return this._selectorQuery
   }
-
   // 获取Node节点实例
   node (callback) {
     this._selectorQuery._push(

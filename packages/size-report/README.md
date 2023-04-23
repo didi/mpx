@@ -79,18 +79,14 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
           }
         }
       ],
-      // 配置模块引用链路记录规则，符合规则的模块的引用关系会输出在moduleEntryGraph中
-      needEntryPathRules: {
-        include: [
-          'src/components/tools.js'
-        ]
-      }
       // 是否收集页面维度体积详情，默认 false
       reportPages: true,
       // 是否收集资源维度体积详情，默认 false
       reportAssets: true,
       // 是否收集冗余资源，默认 false
-      reportRedundance: true
+      reportRedundance: true,
+      // 展示某些分包资源的引用来源信息，默认为 []
+      showEntrysPackages: ['main']
     })
 
   ]
@@ -176,30 +172,7 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
           "package3": "4.12KiB"
         }
       }
-    ],
-    // 模块引用关系图
-    "moduleEntryGraph": {
-      "8": {
-        // 是否为目标模块
-        "target":false,
-        "parents":[],
-        "children":[9, 12],
-        "identifier":"src/app.mpx"
-      },
-
-      "9": {
-        "target":true,
-        "parents":[8, 12],
-        "children":[],
-        "identifier":"src/components/tools.js"
-      },
-      "12": {
-        "target":false,
-        "parents":[8],
-        "children":[9],
-        "identifier":"src/components/index.mpx"
-      }
-    }
+    ]
 }
 ```
 与此同时，如果你开启了本地可视化平台服务，可以直接通过可视化平台查看项目体积构成。默认开启自动打开平台网页或者手动打开后，整体页面展示如下图：

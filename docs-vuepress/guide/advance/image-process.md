@@ -32,21 +32,6 @@ const webpackConfig = {
   }
 }
 ```
-::: tip @mpxjs/cli 3.x 版本配置如下
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      urlLoader: {
-        name: 'img/[name][hash].[ext]'
-      }
-    }
-  }
-})
-```
-:::
 ```css
 <style>
   .logo {
@@ -72,25 +57,6 @@ const webpackConfig = {
 }
 ```
 
-::: tip @mpxjs/cli 3.x 版本配置如下
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      urlLoader: {
-        name: 'img/[name][hash].[ext]',
-        // CDN 地址
-        publicPath: 'http://a.com/',
-        limit: '1024' // Base64 的最大长度，超过则走 CDN 
-      }
-    }
-  }
-})
-```
-:::
-
 ## CDN 图像资源输出本地目录，用户自行批量上传到CDN服务器
 ```js
 // webpack.config.js 配置
@@ -109,27 +75,6 @@ const webpackConfig = {
   }
 }
 ```
-
-::: tip @mpxjs/cli 3.x 版本配置如下
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      urlLoader: {
-        name: 'img/[name][hash].[ext]',
-        publicPath: 'http://a.com',
-        limit: 100,
-        publicPathScope: 'styleOnly',
-        outputPathCDN: './cdnImages'
-      }
-    }
-  }
-})
-```
-:::
-
 > 备注:  
 > 图像默认编译后会输出到 img 目录下, 当设置 outputPathCDN 后，输出的本地图像地址为 outputPathCDN + img/图像.png  
 > CND 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img  
@@ -152,25 +97,6 @@ const webpackConfig = {
   }
 }
 ```
-::: tip @mpxjs/cli 3.x 版本配置如下
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      urlLoader: {
-        name: 'img/[name][hash].[ext]',
-        // CDN 地址
-        publicPath: 'http://a.com/',
-        limit: '1024' // Base64 的最大长度，超过则走 CDN,
-        fallback: 'file-loader' // 默认走 file-loader
-      }
-    }
-  }
-})
-```
-:::
 ```css
 /*不走 Base64 的情况下*/
 <style>

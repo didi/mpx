@@ -3,7 +3,7 @@ import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import * as swanLifecycle from '../platform/patch/swan/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { error } from '@mpxjs/utils'
+import { error } from '../helper/log'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
 import wxToSwanRule from './wxToSwan'
@@ -59,7 +59,7 @@ const rulesMap = {
 }
 
 export function getConvertRule (convertMode) {
-  const rule = rulesMap[convertMode]
+  let rule = rulesMap[convertMode]
   if (!rule || !rule.lifecycle) {
     error(`Absence of convert rule for ${convertMode}, please check.`)
   } else {

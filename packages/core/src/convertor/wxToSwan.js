@@ -1,4 +1,4 @@
-import { error, isDev } from '@mpxjs/utils'
+import { error } from '../helper/log'
 import { implemented } from '../core/implement'
 import { mergeLifecycle } from './mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
@@ -19,7 +19,7 @@ function notSupportTip (options) {
   unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
-        isDev && convertErrorDesc(key)
+        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
         delete options[key]
       } else if (implemented[key].remove) {
         delete options[key]

@@ -1,4 +1,4 @@
-export default function showMixin (mixinType) {
+export default function pageStatusMixin (mixinType) {
   if (mixinType === 'component') {
     if (__mpx_mode__ === 'ali') {
       return {

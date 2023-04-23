@@ -1,12 +1,12 @@
 <template>
   <div class="swiper-container">
     <div class="swiper-button">
-      <img :class="leftButtonDisabled" class="swiper-img" @click="handlePrev" src="https://dpubstatic.udache.com/static/dpubimg/0cgzDC8Apn/anli_icon_left.png" width="50" height="50" alt="left" loading="lazy" />
+      <img :class="prevCls" class="swiper-img" @click="handlePrev" src="https://dpubstatic.udache.com/static/dpubimg/0cgzDC8Apn/anli_icon_left.png" width="50" height="50" alt="left" loading="lazy" />
     </div>
     <div class="swiper" ref="wrapper">
       <div
         ref="list"
-        :class="['swiper-list', current === index ? 'active' : '']"
+        class="swiper-list"
         v-for="(item, index) in dataList"
         :key="index"
         @click="handleClick(index)"
@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="swiper-button">
-      <img :class="rightButtonDisabled" class="swiper-img" @click="handleNext" src="https://dpubstatic.udache.com/static/dpubimg/QhD6ulEP7k/anli_icon_right.png" width="50" height="50" alt="right" loading="lazy" />
+      <img :class="nextCls" class="swiper-img" @click="handleNext" src="https://dpubstatic.udache.com/static/dpubimg/QhD6ulEP7k/anli_icon_right.png" width="50" height="50" alt="right" loading="lazy" />
     </div>
   </div>
 </template>
@@ -40,6 +40,8 @@ export default {
       resut: [],
       allWidth: 0,
       timer: 0,
+      prevCls: 'swiper-disable',
+      nextCls: ''
     }
   },
   mounted () {
@@ -62,12 +64,18 @@ export default {
       this.handleClick(0)
     })
   },
-  computed:{
-    leftButtonDisabled(){
-      return this.current === 0 ? 'swiper-disable':''
-    },
-     rightButtonDisabled(){
-      return this.current === this.dataList.length-1 ? 'swiper-disable':''
+  watch: {
+    current (newVal) {
+      if (newVal === 0) {
+        this.prevCls = 'swiper-disable'
+      } else {
+        this.prevCls = ''
+      }
+      if (newVal === this.dataList.length - 1) {
+        this.nextCls = 'swiper-disable'
+      } else {
+        this.nextCls = ''
+      }
     }
   },
   methods: {
@@ -85,6 +93,14 @@ export default {
     },
     handleClick (index) {
       this.current = index
+      const list = this.$refs.list
+      if (!list.length) return
+      list.forEach(item => {
+        item.style.transition = 'none'
+        item.style.transform = 'scale(1)'
+      })
+      list[index].style.transition = 'transform 0.3s'
+      list[index].style.transform = 'scale(1.5)'
       this.$emit('change', index)
     },
     handleEnd () {
@@ -172,10 +188,6 @@ export default {
     border-radius 10px
     margin-top 20px
     position relative
-    transition: none 0s ease 0s; transform: scale(1);
-  .swiper-list.active
-    transition: transform 0.3s
-    transform:scale(1.5)
   .swiper-item
     width 136px
     height 136px

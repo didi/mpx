@@ -5,7 +5,7 @@ function stringifyAttrs (attrs) {
   let result = ''
   Object.keys(attrs).forEach(function (name) {
     result += ' ' + name
-    const value = attrs[name]
+    let value = attrs[name]
     if (value != null && value !== true) {
       result += '=' + stringifyAttr(value)
     }

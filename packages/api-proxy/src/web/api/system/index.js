@@ -19,7 +19,7 @@ function getSystemInfoSync () {
   let brand = ''
   let system = ''
 
-  for (const item of phones.entries()) {
+  for (let item of phones.entries()) {
     if (item[1].test(ua)) {
       brand = item[0]
       break

@@ -12,9 +12,9 @@ module.exports = function parseRequest (request) {
   if (seen.has(request)) {
     return genQueryObj(seen.get(request))
   }
-  const elements = request.split('!')
-  const resource = elements.pop()
-  const loaderString = elements.join('!')
+  let elements = request.split('!')
+  let resource = elements.pop()
+  let loaderString = elements.join('!')
   let resourcePath = resource
   let resourceQuery = ''
   const queryIndex = resource.indexOf('?')

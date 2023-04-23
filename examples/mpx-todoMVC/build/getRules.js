@@ -4,16 +4,6 @@ const { resolve, getConf } = require('./utils')
 
 const baseRules = [
   {
-    test: /\.mpx\.js$/,
-    use: {
-      loader: 'babel-loader',
-      options: {
-        // 发包后替换path
-        plugins: [resolve('../../packages/babel-plugin-inject-page-event-function')]
-      }
-    }
-  },
-  {
     test: /\.js$/,
     loader: 'babel-loader',
     include: [resolve('src'), resolve('node_modules/@mpxjs')]

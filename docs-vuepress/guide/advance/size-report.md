@@ -95,22 +95,6 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
 
 }
 ```
-::: tip @mpxjs/cli@3.x 版本配置如下
-```javascript
-// vue.config.js
-const MpxSizeReportPlugin = require('@mpxjs/size-report')
-module.exports = defineConfig({
-  configureWebpack() {
-    return {
-      plugins: [
-        new MpxSizeReportPlugin(...)
-      ]
-    }
-  }
-})
-```
-:::
-
 参考上述示例进行配置后，构建代码后，dist 目录下会产出 report.json 文件，里边是项目的具体体积信息，关于输入 json 的简单示例如下：
 
 ```html
@@ -188,19 +172,19 @@ module.exports = defineConfig({
 ```
 与此同时，如果你开启了本地可视化平台服务，可以直接通过可视化平台查看项目体积构成。默认开启自动打开平台网页或者手动打开后，整体页面展示如下图：
 
-[![size-report](https://gift-static.hongyibo.com.cn/static/kfpub/3547/feat1.png)](https://mpxjs.cn)
+[![size-report](https://dpubstatic.udache.com/static/dpubimg/vdRKQMLGgu/feat1.png)](https://mpxjs.cn)
 
 
 可视化平台中包含三部分功能，第一个体积分析如上图所示，主要是展示整体项目的体积总览，以及 group 体积列表和分包体积列表。
 
 第二个功能是体积详情模块，在该模块中，可以最小颗粒度的查看包体积构成，通过 table 表格的层层展开可看到每个 group 中包含的分包，点击分包可看到该分包包含的静态资源和 js 模块详细列表，同时聚合模式可将分散的模块整合为具体的npm包名，方便宏观查看。此外为了方便用户定向查看某个特定资源的分布情况，列表上方可进行资源路径/名称搜索，该搜索支持模糊匹配，搜索结果为该资源在项目中 group 和 分包的分布情况。
 
-[![size-report](https://gift-static.hongyibo.com.cn/static/kfpub/3547/feat2.png)](https://mpxjs.cn)
+[![size-report](https://dpubstatic.udache.com/static/dpubimg/wjX1hnWgO8/feat2.png)](https://mpxjs.cn)
 
 
 第三个功能为体积对比功能，这里主要进行项目不同版本之间的体积大小变化比较，体积对比依赖插件生成的json文件，通过该功能，可具体的分析出包体积具体增大的group，分包，以及模块，给包体积优化提供定向目标。
 
-[![size-report](https://gift-static.hongyibo.com.cn/static/kfpub/3547/feat3.png)](https://mpxjs.cn)
+[![size-report](https://dpubstatic.udache.com/static/dpubimg/uYblHN4w7n/feat3.png)](https://mpxjs.cn)
 
 
 ## 业务实践

@@ -46,9 +46,9 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
 
 ## 跨分包 Store 引用
 在 Mpx 中如果想要跨分包异步引用 Store 代码，分为三个步骤
-- 页面或父组件在 `created` 钩子加载异步 Store
+- 页面或父组件在 beforeCreate 钩子加载异步 Store
 - 异步 Store 加载完成后再渲染使用异步 Store 的组件
-- 子组件在框架内部生命周期 `BEFORECREATE` 钩子中动态注入 computed 和 methods
+- 子组件在 beforeCreate 钩子中动态注入 computed 和 methods
 ```html
 <!--pages/index/index.mpx-->
 <template>
@@ -61,7 +61,7 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
     data: {
       showStoreList: false
     },
-    created () {
+    beforeCreate () {
       require.async('../subpackages/sub2/store?root=sub2').then(store => {
         getApp().asyncStore.sub2 = store.default
         // 当异步 Store 加载完成后再渲染使用异步 Store 的组件
@@ -73,10 +73,10 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
 
 <!-- 子组件:store-list -->
 <script>
-  import { createComponent, BEFORECREATE } from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
   createComponent({
-    // 在 BEFORECREATE 钩子中动态注入 options
-    [BEFORECREATE] () {
+    // 在 beforeCreate 钩子中动态注入 options
+    beforeCreate () {
       // 获取异步 Store实例
       const subStore = getApp().asyncStore.sub2
       // computed 中 mapState、mapGetters 替换为 mapStateToInstance、mapGettersToInstance，最后一个参数必须传当前 component 实例 this

@@ -65,11 +65,11 @@ module.exports = function ({ print }) {
         test: /^(tap|markertap|callouttap|controltap|regionchange|)$/,
         ali (eventName) {
           const eventMap = {
-            tap: 'tap',
-            markertap: 'markerTap',
-            callouttap: 'calloutTap',
-            controltap: 'controlTap',
-            regionchange: 'regionChange'
+            'tap': 'tap',
+            'markertap': 'markerTap',
+            'callouttap': 'calloutTap',
+            'controltap': 'controlTap',
+            'regionchange': 'regionChange'
           }
           return eventMap[eventName]
         }

@@ -40,7 +40,7 @@ proxy.navigateTo({
 
 ## example
 
-### 普通形式
+#### 普通形式
 
 ```js
 import mpx from '@mpxjs/core'
@@ -61,7 +61,7 @@ mpx.showModal({
 })
 ```
 
-### 使用promise形式
+#### 使用promise形式
 
 > 开启usePromise时所有的异步api将返回promise，但是小程序中存在一些异步api本身的返回值是具有意义的，如uploadFile会返回一个uploadTask对象用于后续监听上传进度或者取消上传，在对api进行promise化之后我们会将原始的返回值挂载到promise.__returned属性上，便于开发者访问使用
 

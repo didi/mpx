@@ -18,7 +18,7 @@ module.exports = class PackageEntryPlugin {
     const target = resolver.ensureHook(this.target)
     resolver.getHook(this.source).tapAsync('PackageEntryPlugin', (request, resolveContext, callback) => {
       if (request.miniprogram) return callback()
-      const { path: resourcePath, descriptionFileData, descriptionFileRoot } = request
+      let { path: resourcePath, descriptionFileData, descriptionFileRoot } = request
       if (request.miniprogram || !descriptionFileData) return callback()
 
       let { name, miniprogram } = descriptionFileData

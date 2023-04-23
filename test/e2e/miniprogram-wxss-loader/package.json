@@ -41,7 +41,7 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.16",
-    "@mpxjs/webpack-plugin": "^2.7.55",
+    "@mpxjs/webpack-plugin": "^2.7.2",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",

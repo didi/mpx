@@ -1,11 +1,4 @@
-import { error } from '@mpxjs/utils'
-
-const BEHAVIORS_MAP = [
-  'wx://form-field',
-  'wx://form-field-group',
-  'wx://form-field-button',
-  'wx://component-export'
-]
+import { error } from '../helper/log'
 
 const BEHAVIORS_MAP = [
   'wx://form-field',

@@ -1,9 +1,7 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { diffAndCloneA, hasOwn } from '@mpxjs/utils'
-import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
-import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
-import { BEFORECREATE, BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED } from '../../../core/innerLifecycle'
+import MPXProxy from '../../../core/proxy'
+import { diffAndCloneA } from '../../../helper/utils'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -12,13 +10,11 @@ function filterOptions (options) {
       return
     }
     if (key === 'data' || key === 'dataFn') {
-      if (!hasOwn(newOptions, 'data')) {
-        newOptions.data = function mergeFn () {
-          return Object.assign(
-            diffAndCloneA(options.data || {}).clone,
-            options.dataFn && options.dataFn.call(this)
-          )
-        }
+      newOptions.data = function mergeFn () {
+        return Object.assign(
+          diffAndCloneA(options.data || {}).clone,
+          options.dataFn && options.dataFn.call(this)
+        )
       }
     } else {
       newOptions[key] = options[key]
@@ -27,58 +23,34 @@ function filterOptions (options) {
   return newOptions
 }
 
-function initProxy (context, rawOptions) {
+function initProxy (context, rawOptions, params) {
   if (!context.__mpxProxy) {
-    context.__mpxProxy = new MpxProxy(rawOptions, context)
-    context.__mpxProxy.callHook(BEFORECREATE)
-  } else if (context.__mpxProxy.isUnmounted()) {
-    context.__mpxProxy = new MpxProxy(rawOptions, context, true)
-    context.__mpxProxy.callHook(BEFORECREATE)
+    // 缓存options
+    context.$rawOptions = rawOptions
+    // 创建proxy对象
+    context.__mpxProxy = new MPXProxy(rawOptions, context)
+    context.__mpxProxy.created(params)
+  } else if (context.__mpxProxy.isDestroyed()) {
+    context.__mpxProxy.reCreated(params)
   }
 }
 
 export function getDefaultOptions (type, { rawOptions = {} }) {
-  const rawSetup = rawOptions.setup
-  if (rawSetup) {
-    rawOptions.setup = (props) => {
-      const instance = getCurrentVueInstance().proxy
-      initProxy(instance, rawOptions)
-      setCurrentInstance(instance.__mpxProxy)
-      const newContext = {
-        triggerEvent: instance.triggerEvent.bind(instance),
-        refs: instance.$refs,
-        forceUpdate: instance.$forceUpdate.bind(instance),
-        selectComponent: instance.selectComponent.bind(instance),
-        selectAllComponents: instance.selectAllComponents.bind(instance),
-        createSelectorQuery: instance.createSelectorQuery.bind(instance),
-        createIntersectionObserver: instance.createIntersectionObserver.bind(instance)
-      }
-      const setupRes = rawSetup(props, newContext)
-      unsetCurrentInstance(instance.__mpxProxy)
-      return setupRes
-    }
-  }
   const rootMixins = [{
-    beforeCreate () {
-      initProxy(this, rawOptions)
-    },
     created () {
-      if (this.__mpxProxy) this.__mpxProxy.created()
+      const query = (global.__mpxRouter && global.__mpxRouter.currentRoute && global.__mpxRouter.currentRoute.query) || {}
+      initProxy(this, rawOptions, [query])
+      // web中单独触发onLoad
+      this.onLoad && this.onLoad(query)
     },
     mounted () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
     },
-    beforeUpdate () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(BEFOREUPDATE)
-    },
     updated () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(UPDATED)
-    },
-    beforeDestroy () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(BEFOREUNMOUNT)
+      if (this.__mpxProxy) this.__mpxProxy.updated()
     },
     destroyed () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(UNMOUNTED)
+      if (this.__mpxProxy) this.__mpxProxy.destroyed()
     }
   }]
   // 为了在builtMixin中可以使用某些rootMixin实现的特性（如数据响应等），此处builtInMixin在rootMixin之后执行，但是当builtInMixin使用存在对应内建生命周期的目标平台声明周期写法时，可能会出现用户生命周期比builtInMixin中的生命周期先执行的情况，为了避免这种情况发生，builtInMixin应该尽可能使用内建生命周期来编写

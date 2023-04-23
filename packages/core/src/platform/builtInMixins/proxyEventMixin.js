@@ -1,36 +1,20 @@
-import { setByPath, error, hasOwn } from '@mpxjs/utils'
-import Mpx from '../../index'
-
-const datasetReg = /^data-(.+)$/
-
-function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
-}
+import { setByPath, collectDataset } from '../../helper/utils'
+import { error } from '../../helper/log'
+import EXPORT_MPX from '../../index'
 
 export default function proxyEventMixin () {
   const methods = {
     __invoke ($event) {
-      if (typeof Mpx.config.proxyEventHandler === 'function') {
+      if (typeof EXPORT_MPX.config.proxyEventHandler === 'function') {
         try {
-          Mpx.config.proxyEventHandler($event)
+          EXPORT_MPX.config.proxyEventHandler($event)
         } catch (e) {
         }
       }
-      const location = this.__mpxProxy.options.mpxFileResource
       const type = $event.type
       const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
-        error('Event object must have [type] property!', location)
-        return
+        throw new Error('Event object must have [type] property!')
       }
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
@@ -41,8 +25,7 @@ export default function proxyEventMixin () {
       }
       const target = $event.currentTarget || $event.target
       if (!target) {
-        error(`[${type}] event object must have [currentTarget/target] property!`, location)
-        return
+        throw new Error(`[${type}] event object must have [currentTarget/target] property!`)
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
@@ -53,25 +36,24 @@ export default function proxyEventMixin () {
           $event = $event.detail.data
         }
         if (callbackName) {
-          const params = item.length > 1
-            ? item.slice(1).map(item => {
-              // 暂不支持$event.xxx的写法
-              // if (/^\$event/.test(item)) {
-              //   this.__mpxTempEvent = $event
-              //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-              //   // 删除临时变量
-              //   delete this.__mpxTempEvent
-              //   return value
-              if (item === '__mpx_event__') {
-                return $event
-              } else {
-                return item
-              }
-            })
-            : [$event]
+          const params = item.length > 1 ? item.slice(1).map(item => {
+            // 暂不支持$event.xxx的写法
+            // if (/^\$event/.test(item)) {
+            //   this.__mpxTempEvent = $event
+            //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
+            //   // 删除临时变量
+            //   delete this.__mpxTempEvent
+            //   return value
+            if (item === '__mpx_event__') {
+              return $event
+            } else {
+              return item
+            }
+          }) : [$event]
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
+            const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
             error(`Instance property [${callbackName}] is not function, please check.`, location)
           }
         }

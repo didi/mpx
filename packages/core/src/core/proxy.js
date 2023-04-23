@@ -1,33 +1,28 @@
-import { reactive } from '../observer/reactive'
-import { ReactiveEffect } from '../observer/effect'
-import { effectScope } from '../platform/export/index'
+import { observe } from '../observer/index'
+import Watcher from '../observer/watcher'
 import { watch } from '../observer/watch'
-import { computed } from '../observer/computed'
-import { queueJob, nextTick } from '../observer/scheduler'
-import Mpx from '../index'
+import { initComputed } from '../observer/computed'
+import { queueWatcher } from '../observer/scheduler'
+import EXPORT_MPX from '../index'
 import {
   noop,
-  type,
-  isFunction,
-  isObject,
+  proxy,
   isEmptyObject,
   isPlainObject,
-  doGetByPath,
-  getByPath,
-  setByPath,
-  diffAndCloneA,
-  hasOwn,
-  proxy,
-  makeMap,
-  isString,
-  aIsSubPathOfB,
-  mergeData,
   processUndefined,
+  setByPath,
+  getByPath,
+  asyncLock,
+  diffAndCloneA,
+  preProcessRenderData,
+  mergeData,
+  aIsSubPathOfB,
   getFirstKey,
-  callWithErrorHandling,
-  warn,
-  error
-} from '@mpxjs/utils'
+  makeMap,
+  hasOwn
+} from '../helper/utils'
+import _getByPath from '../helper/getByPath'
+import { getRenderCallBack } from '../platform/patch'
 import {
   BEFORECREATE,
   CREATED,
@@ -36,123 +31,83 @@ import {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
-  UNMOUNTED,
-  ONLOAD,
-  ONSHOW,
-  ONHIDE,
-  ONRESIZE
+  DESTROYED
 } from './innerLifecycle'
+import { warn, error } from '../helper/log'
 
 let uid = 0
 
-class RenderTask {
-  resolved = false
-
-  constructor (instance) {
-    instance.currentRenderTask = this
-    this.promise = new Promise((resolve) => {
-      this.resolve = resolve
-    }).then(() => {
-      this.resolved = true
-    })
-  }
-}
-
-/**
- * process renderData, remove sub node if visit parent node already
- * @param {Object} renderData
- * @return {Object} processedRenderData
- */
-function preProcessRenderData (renderData) {
-  // method for get key path array
-  const processKeyPathMap = (keyPathMap) => {
-    const keyPath = Object.keys(keyPathMap)
-    return keyPath.filter((keyA) => {
-      return keyPath.every((keyB) => {
-        if (keyA.startsWith(keyB) && keyA !== keyB) {
-          const nextChar = keyA[keyB.length]
-          if (nextChar === '.' || nextChar === '[') {
-            return false
-          }
-        }
-        return true
-      })
-    })
-  }
-
-  const processedRenderData = {}
-  const renderDataFinalKey = processKeyPathMap(renderData)
-  Object.keys(renderData).forEach(item => {
-    if (renderDataFinalKey.indexOf(item) > -1) {
-      processedRenderData[item] = renderData[item]
-    }
-  })
-  return processedRenderData
-}
-
-export default class MpxProxy {
-  constructor (options, target, reCreated) {
+export default class MPXProxy {
+  constructor (options, target) {
     this.target = target
-    this.reCreated = reCreated
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    // beforeCreate -> created -> mounted -> unmounted
+    // beforeCreate -> created -> mounted -> destroyed
     this.state = BEFORECREATE
-    this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
-    // 收集setup中动态注册的hooks，小程序与web环境都需要
-    this.hooks = {}
+    this.lockTask = asyncLock()
+    this.ignoreProxyMap = makeMap(EXPORT_MPX.config.ignoreProxyWhiteList)
     if (__mpx_mode__ !== 'web') {
-      this.scope = effectScope(true)
-      // props响应式数据代理
-      this.props = {}
-      // data响应式数据代理
-      this.data = {}
-      // 非props key
-      this.localKeysMap = {}
-      // 渲染函数中收集的数据
-      this.renderData = {}
-      // 最小渲染数据
+      this._watchers = []
+      this._namedWatchers = {}
+      this._computedWatchers = {}
+      this._watcher = null
+      this.localKeysMap = {} // 非props key
+      this.renderData = {} // 渲染函数中收集的数据
       this.miniRenderData = {}
-      // 强制更新的数据
-      this.forceUpdateData = {}
-      // 下次是否需要强制更新全部渲染数据
-      this.forceUpdateAll = false
-      this.currentRenderTask = null
+      this.forceUpdateData = {} // 强制更新的数据
+      this.forceUpdateAll = false // 下次是否需要强制更新全部渲染数据
+      this.curRenderTask = null
     }
-    this.initApi()
   }
 
-  created () {
+  created (params) {
+    this.initApi()
+    this.callUserHook(BEFORECREATE)
     if (__mpx_mode__ !== 'web') {
-      // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
-      this.callHook(BEFORECREATE)
-      setCurrentInstance(this)
-      this.initProps()
-      this.initSetup()
-      this.initData()
-      this.initComputed()
-      this.initWatch()
-      unsetCurrentInstance()
+      this.initState()
     }
-
     this.state = CREATED
-    this.callHook(CREATED)
-
+    this.callUserHook(CREATED, params)
     if (__mpx_mode__ !== 'web') {
       this.initRender()
     }
-
-    if (this.reCreated) {
-      nextTick(this.mounted.bind(this))
-    }
   }
 
-  createRenderTask (isEmptyRender) {
-    if ((!this.isMounted() && this.currentRenderTask) || (this.isMounted() && isEmptyRender)) {
+  reCreated (params) {
+    const options = this.options
+    this.state = BEFORECREATE
+    this.callUserHook(BEFORECREATE)
+    if (__mpx_mode__ !== 'web') {
+      this.initComputed(options.computed, true)
+      this.initWatch(options.watch)
+    }
+    this.state = CREATED
+    this.callUserHook(CREATED, params)
+    if (__mpx_mode__ !== 'web') {
+      this.initRender()
+    }
+    this.nextTick(() => {
+      this.mounted()
+    })
+  }
+
+  renderTaskExecutor (isEmptyRender) {
+    if ((!this.isMounted() && this.curRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
     }
-    return new RenderTask(this)
+    this.curRenderTask = {
+      state: 'pending'
+    }
+    const promise = new Promise(resolve => {
+      this.curRenderTask.resolve = (res) => {
+        this.curRenderTask.state = 'finished'
+        resolve(res)
+      }
+    })
+    this.curRenderTask.promise = promise
+    // isMounted之前基于mounted触发，isMounted之后基于setData回调触发
+    return this.isMounted() && this.curRenderTask.resolve
   }
 
   isMounted () {
@@ -163,134 +118,133 @@ export default class MpxProxy {
     if (this.state === CREATED) {
       this.state = MOUNTED
       // 用于处理refs等前置工作
-      this.callHook(BEFOREMOUNT)
-      this.callHook(MOUNTED)
-      this.currentRenderTask && this.currentRenderTask.resolve()
+      this.callUserHook(BEFOREMOUNT)
+      this.callUserHook(MOUNTED)
+      this.curRenderTask && this.curRenderTask.resolve()
     }
   }
 
-  propsUpdated () {
-    const updateJob = this.updateJob || (this.updateJob = () => {
-      // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated
-      if (this.currentRenderTask?.resolved && this.isMounted()) {
-        this.callHook(BEFOREUPDATE)
-        this.callHook(UPDATED)
-      }
-    })
-    nextTick(updateJob)
-  }
-
-  unmounted () {
-    this.callHook(BEFOREUNMOUNT)
-    this.scope?.stop()
-    if (this.update) this.update.active = false
-    this.callHook(UNMOUNTED)
-    this.state = UNMOUNTED
-  }
-
-  isUnmounted () {
-    return this.state === UNMOUNTED
-  }
-
-  createProxyConflictHandler (owner) {
-    return (key) => {
-      if (this.ignoreProxyMap[key]) {
-        !this.reCreated && error(`The ${owner} key [${key}] is a reserved keyword of miniprogram, please check and rename it.`, this.options.mpxFileResource)
-        return false
-      }
-      !this.reCreated && error(`The ${owner} key [${key}] exist in the current instance already, please check and rename it.`, this.options.mpxFileResource)
+  updated () {
+    if (this.isMounted()) {
+      this.callUserHook(BEFOREUPDATE)
+      this.callUserHook(UPDATED)
     }
+  }
+
+  destroyed () {
+    this.callUserHook(BEFOREUNMOUNT)
+    this.state = DESTROYED
+    if (__mpx_mode__ !== 'web') {
+      this.clearWatchers()
+    }
+    this.callUserHook(DESTROYED)
+  }
+
+  isDestroyed () {
+    return this.state === DESTROYED
   }
 
   initApi () {
     // 挂载扩展属性到实例上
-    proxy(this.target, Mpx.prototype, undefined, true, this.createProxyConflictHandler('mpx.prototype'))
+    proxy(this.target, this.options.proto, Object.keys(this.options.proto), true, (key) => {
+      if (this.ignoreProxyMap[key]) {
+        error(`The key [${key}] of mpx.prototype is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+        return false
+      }
+      error(`The key [${key}] of mpx.prototype exist in the component/page instance already, please check your plugins!`, this.options.mpxFileResource)
+    })
     // 挂载混合模式下createPage中的自定义属性，模拟原生Page构造器的表现
     if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
-      proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, false, this.createProxyConflictHandler('page options'))
+      proxy(this.target, this.options, this.options.mpxCustomKeysForBlend, undefined, (key) => {
+        if (this.ignoreProxyMap[key]) {
+          error(`The key [${key}] of page options is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+          return false
+        }
+        error(`The key [${key}] of page options exist in the page instance already, please check your page options!`, this.options.mpxFileResource)
+      })
     }
-    // 挂载$rawOptions
-    this.target.$rawOptions = this.options
     if (__mpx_mode__ !== 'web') {
       // 挂载$watch
-      this.target.$watch = this.watch.bind(this)
+      this.target.$watch = (...rest) => this.watch(...rest)
       // 强制执行render
-      this.target.$forceUpdate = this.forceUpdate.bind(this)
-      this.target.$nextTick = nextTick
-    }
-  }
-
-  initProps () {
-    this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-    reactive(this.props)
-    proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
-  }
-
-  initSetup () {
-    const setup = this.options.setup
-    if (setup) {
-      const setupResult = callWithErrorHandling(setup, this, 'setup function', [
-        this.props,
-        {
-          triggerEvent: this.target.triggerEvent.bind(this.target),
-          refs: this.target.$refs,
-          asyncRefs: this.target.$asyncRefs,
-          forceUpdate: this.forceUpdate.bind(this),
-          selectComponent: this.target.selectComponent.bind(this.target),
-          selectAllComponents: this.target.selectAllComponents.bind(this.target),
-          createSelectorQuery: this.target.createSelectorQuery.bind(this.target),
-          createIntersectionObserver: this.target.createIntersectionObserver.bind(this.target)
-        }
-      ])
-      if (!isObject(setupResult)) {
-        error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
-        return
+      this.target.$forceUpdate = (...rest) => this.forceUpdate(...rest)
+      this.target.$nextTick = fn => this.nextTick(fn)
+      this.target.$getPausableWatchers = () => this._watchers.filter(item => item.pausable)
+      this.target.$getWatcherByName = (name) => {
+        if (!this._namedWatchers) return null
+        return this._namedWatchers[name] || null
       }
-      proxy(this.target, setupResult, undefined, false, this.createProxyConflictHandler('setup result'))
-      this.collectLocalKeys(setupResult, (key, val) => !isFunction(val))
+      this.target.$getRenderWatcher = () => this._watcher
     }
   }
 
-  initData () {
-    const data = this.options.data
-    const dataFn = this.options.dataFn
+  initState () {
+    const options = this.options
+    const proxyedKeys = this.initData(options.data, options.dataFn)
+    const proxyedKeysMap = makeMap(proxyedKeys)
+    this.initComputed(options.computed)
+    // target的数据访问代理到将proxy的data
+    proxy(this.target, this.data, undefined, undefined, (key) => {
+      if (this.ignoreProxyMap[key]) {
+        error(`The data/props/computed key [${key}] is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+        return false
+      }
+      if (!proxyedKeysMap[key]) error(`The data/props/computed key [${key}] exist in the component/page instance already, please check and rename it!`, this.options.mpxFileResource)
+    })
+    this.initWatch(options.watch)
+  }
+
+  initComputed (computedOpt, reInit) {
+    if (computedOpt) {
+      if (reInit) {
+        // target传递null以跳过computed挂载，仅重新初始化watchers
+        initComputed(this, null, computedOpt)
+      } else {
+        this.collectLocalKeys(computedOpt)
+        initComputed(this, this.data, computedOpt)
+      }
+    }
+  }
+
+  // 构建响应式data
+  initData (data, dataFn) {
+    let proxyedKeys = []
+    // 获取包含data/props在内的初始数据，包含初始原生微信转换支付宝时合并props进入data的逻辑
+    const initialData = this.target.__getInitialData(this.options) || {}
     // 之所以没有直接使用initialData，而是通过对原始dataOpt进行深clone获取初始数据对象，主要是为了避免小程序自身序列化时错误地转换数据对象，比如将promise转为普通object
     this.data = diffAndCloneA(data || {}).clone
-    // 执行dataFn
-    if (isFunction(dataFn)) {
-      Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
-    }
-    reactive(this.data)
-    proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
-    this.collectLocalKeys(this.data)
-  }
-
-  initComputed () {
-    const computedOpt = this.options.computed
-    if (computedOpt) {
-      const computedObj = {}
-      Object.entries(computedOpt).forEach(([key, opt]) => {
-        const get = isFunction(opt)
-          ? opt.bind(this.target)
-          : isFunction(opt.get)
-            ? opt.get.bind(this.target)
-            : noop
-
-        const set = !isFunction(opt) && isFunction(opt.set)
-          ? opt.set.bind(this.target)
-          : () => warn(`Write operation failed: computed property "${key}" is readonly.`, this.options.mpxFileResource)
-
-        computedObj[key] = computed({ get, set })
+    if (dataFn) {
+      proxyedKeys = Object.keys(initialData)
+      // 预先将initialData代理到this.target中，便于data函数访问
+      proxy(this.target, initialData, proxyedKeys, undefined, (key) => {
+        if (this.ignoreProxyMap[key]) {
+          error(`The props/data key [${key}] is a reserved keyword of miniprogram, please check and rename it!`, this.options.mpxFileResource)
+          return false
+        }
+        error(`The props/data key [${key}] exist in the component instance already, please check and rename it!`, this.options.mpxFileResource)
       })
-      this.collectLocalKeys(computedObj)
-      proxy(this.target, computedObj, undefined, false, this.createProxyConflictHandler('computed'))
+      Object.assign(this.data, dataFn.call(this.target))
     }
+    // 此时data中不包括props数据
+    this.collectLocalKeys(this.data)
+    // 将props数据合并到data中
+    Object.keys(initialData).forEach((key) => {
+      if (!hasOwn(this.data, key)) {
+        // 除了data函数返回的数据外深拷贝切断引用关系，避免后续watch由于小程序内部对data赋值重复触发watch
+        this.data[key] = diffAndCloneA(initialData[key]).clone
+      }
+    })
+    // mpxCid 解决支付宝环境selector为全局问题
+    this.data.mpxCid = this.uid
+    this.localKeysMap.mpxCid = true
+    observe(this.data, true)
+    return proxyedKeys
   }
 
-  initWatch () {
-    const watch = this.options.watch
+  initWatch (watch) {
     if (watch) {
-      Object.entries(watch).forEach(([key, handler]) => {
+      for (const key in watch) {
+        const handler = watch[key]
         if (Array.isArray(handler)) {
           for (let i = 0; i < handler.length; i++) {
             this.watch(key, handler[i])
@@ -298,66 +252,55 @@ export default class MpxProxy {
         } else {
           this.watch(key, handler)
         }
+      }
+    }
+  }
+
+  collectLocalKeys (data) {
+    for (let key in data) {
+      if (hasOwn(data, key)) {
+        this.localKeysMap[key] = true
+      }
+    }
+  }
+
+  nextTick (fn) {
+    if (typeof fn === 'function') {
+      queueWatcher(() => {
+        this.curRenderTask ? this.curRenderTask.promise.then(fn) : fn()
       })
     }
   }
 
-  watch (source, cb, options) {
-    const target = this.target
-    const getter = isString(source)
-      ? () => getByPath(target, source)
-      : source.bind(target)
-
-    if (isObject(cb)) {
-      options = cb
-      cb = cb.handler
+  callUserHook (hookName, params) {
+    const hook = this.options[hookName] || this.target[hookName]
+    if (typeof hook === 'function') {
+      try {
+        hook.apply(this.target, params)
+      } catch (e) {
+        if (typeof EXPORT_MPX.config.hookErrorHandler === 'function') {
+          EXPORT_MPX.config.hookErrorHandler(e, this.target, hookName)
+        } else {
+          throw e
+        }
+      }
     }
-
-    if (isString(cb) && target[cb]) {
-      cb = target[cb]
-    }
-
-    cb = cb || noop
-
-    const cur = currentInstance
-    setCurrentInstance(this)
-
-    const res = watch(getter, cb.bind(target), options)
-
-    if (cur) setCurrentInstance(cur)
-    else unsetCurrentInstance()
-
-    return res
   }
 
-  collectLocalKeys (data, filter = () => true) {
-    Object.keys(data).filter((key) => filter(key, data[key])).forEach((key) => {
-      this.localKeysMap[key] = true
-    })
+  watch (expOrFn, cb, options) {
+    return watch(this, expOrFn, cb, options)
   }
 
-  callHook (hookName, params, hooksOnly) {
-    const hook = this.options[hookName]
-    const hooks = this.hooks[hookName] || []
-    let result
-    if (isFunction(hook) && !hooksOnly) {
-      result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+  clearWatchers () {
+    let i = this._watchers.length
+    while (i--) {
+      this._watchers[i].teardown()
     }
-    hooks.forEach((hook) => {
-      result = params ? hook(...params) : hook()
-    })
-    return result
-  }
-
-  hasHook (hookName) {
-    return !!(this.options[hookName] || this.hooks[hookName])
+    this._watchers.length = 0
   }
 
   render () {
-    const renderData = {}
-    Object.keys(this.localKeysMap).forEach((key) => {
-      renderData[key] = this.target[key]
-    })
+    const renderData = this.data
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
@@ -376,7 +319,7 @@ export default class MpxProxy {
 
   processRenderDataWithStrictDiff (renderData) {
     const result = {}
-    for (const key in renderData) {
+    for (let key in renderData) {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
@@ -390,7 +333,7 @@ export default class MpxProxy {
           clone = localClone
           if (diff) {
             this.miniRenderData[key] = clone
-            if (diffData && Mpx.config.useStrictDiff) {
+            if (diffData && EXPORT_MPX.config.useStrictDiff) {
               this.processRenderDataWithDiffData(result, key, diffData)
             } else {
               result[key] = clone
@@ -410,14 +353,13 @@ export default class MpxProxy {
             }
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
-              if (!this.miniRenderData[tarKey]) this.miniRenderData[tarKey] = {}
               // setByPath 更新miniRenderData中的子数据
-              doGetByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
+              _getByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
                   const { clone, diff, diffData } = diffAndCloneA(data, current[subKey])
                   if (diff) {
                     current[subKey] = clone
-                    if (diffData && Mpx.config.useStrictDiff) {
+                    if (diffData && EXPORT_MPX.config.useStrictDiff) {
                       this.processRenderDataWithDiffData(result, key, diffData)
                     } else {
                       result[key] = clone
@@ -439,7 +381,7 @@ export default class MpxProxy {
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
               if (diff) {
-                if (diffData && Mpx.config.useStrictDiff) {
+                if (diffData && EXPORT_MPX.config.useStrictDiff) {
                   this.processRenderDataWithDiffData(result, key, diffData)
                 } else {
                   result[key] = clone
@@ -470,7 +412,7 @@ export default class MpxProxy {
     }
 
     const isEmpty = isEmptyObject(data) && isEmptyObject(this.forceUpdateData)
-    const renderTask = this.createRenderTask(isEmpty)
+    const resolve = this.renderTaskExecutor(isEmpty)
 
     if (isEmpty) {
       cb && cb()
@@ -484,146 +426,89 @@ export default class MpxProxy {
       this.forceUpdateAll = false
     }
 
+    /**
+     * mounted之后才接收回调来触发updated钩子，换言之mounted之前修改数据是不会触发updated的
+     */
     let callback = cb
-    // mounted之后才会触发BEFOREUPDATE/UPDATED
     if (this.isMounted()) {
-      this.callHook(BEFOREUPDATE)
+      this.callUserHook(BEFOREUPDATE)
       callback = () => {
+        getRenderCallBack(this)()
         cb && cb()
-        this.callHook(UPDATED)
-        renderTask && renderTask.resolve()
+        resolve && resolve()
       }
     }
-
     data = processUndefined(data)
-    if (typeof Mpx.config.setDataHandler === 'function') {
+    if (typeof EXPORT_MPX.config.setDataHandler === 'function') {
       try {
-        Mpx.config.setDataHandler(data, this.target)
+        EXPORT_MPX.config.setDataHandler(data, this.target)
       } catch (e) {
       }
     }
-
     this.target.__render(data, callback)
   }
 
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
-    const effect = this.effect = new ReactiveEffect(() => {
-      if (this.target.__injectedRender) {
+    if (this.target.__injectedRender) {
+      this._watcher = new Watcher(this, () => {
         try {
           return this.target.__injectedRender()
         } catch (e) {
-          warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
+          warn(`Failed to execute render function, degrade to full-set-data mode.`, this.options.mpxFileResource, e)
           this.render()
         }
-      } else {
+      }, noop, { pausable: true })
+    } else {
+      this._watcher = new Watcher(this, () => {
         this.render()
-      }
-    }, () => queueJob(update), this.scope)
-
-    const update = this.update = this.effect.run.bind(this.effect)
-    update.id = this.uid
-    // render effect允许自触发
-    effect.allowRecurse = update.allowRecurse = true
-    update()
+      }, noop, { pausable: true })
+    }
   }
 
   forceUpdate (data, options, callback) {
-    if (this.isUnmounted()) return
-    if (isFunction(data)) {
+    if (typeof data === 'function') {
       callback = data
       data = undefined
     }
 
     options = options || {}
 
-    if (isFunction(options)) {
+    if (typeof options === 'function') {
       callback = options
       options = {}
     }
 
     if (isPlainObject(data)) {
-      Object.keys(data).forEach(key => {
-        if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
-          warn(`ForceUpdate data includes a props key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
-        }
-        setByPath(this.target, key, data[key])
-      })
       this.forceUpdateData = data
+      Object.keys(this.forceUpdateData).forEach(key => {
+        if (!this.options.__nativeRender__ && !this.localKeysMap[getFirstKey(key)]) {
+          warn(`ForceUpdate data includes a props/computed key [${key}], which may yield a unexpected result.`, this.options.mpxFileResource)
+        }
+        setByPath(this.data, key, this.forceUpdateData[key])
+      })
     } else {
       this.forceUpdateAll = true
     }
 
-    if (this.effect) {
-      options.sync ? this.effect.run() : this.effect.update()
-    } else {
-      if (this.forceUpdateAll) {
-        Object.keys(this.localKeysMap).forEach((key) => {
-          this.forceUpdateData[key] = diffAndCloneA(this.target[key]).clone
-        })
-      }
-      options.sync ? this.doRender() : queueJob(this.doRender.bind(this))
-    }
-
     if (callback) {
       callback = callback.bind(this.target)
-      const doCallback = () => {
-        if (this.currentRenderTask?.resolved === false) {
-          this.currentRenderTask.promise.then(callback)
-        } else {
-          callback()
-        }
+      this.nextTick(callback)
+    }
+    if (this._watcher) {
+      this._watcher.update(options.sync)
+    } else {
+      if (this.forceUpdateAll) {
+        Object.keys(this.data).forEach((key) => {
+          if (this.localKeysMap[key]) {
+            this.forceUpdateData[key] = diffAndCloneA(this.data[key]).clone
+          }
+        })
       }
-      options.sync ? doCallback() : nextTick(doCallback)
+      options.sync ? this.doRender() : queueWatcher(() => {
+        this.doRender()
+      })
     }
   }
 }
-
-export let currentInstance = null
-
-export const getCurrentInstance = () => currentInstance?.target
-
-export const setCurrentInstance = (instance) => {
-  currentInstance = instance
-  instance?.scope?.on()
-}
-
-export const unsetCurrentInstance = () => {
-  currentInstance?.scope?.off()
-  currentInstance = null
-}
-
-export const injectHook = (hookName, hook, instance = currentInstance) => {
-  if (instance) {
-    const wrappedHook = (...args) => {
-      if (instance.isUnmounted()) return
-      setCurrentInstance(instance)
-      const res = callWithErrorHandling(hook, instance, `${hookName} hook`, args)
-      unsetCurrentInstance()
-      return res
-    }
-    if (isFunction(hook)) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
-  }
-}
-
-export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
-// 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
-export const onBeforeMount = createHook(BEFOREMOUNT)
-export const onMounted = createHook(MOUNTED)
-export const onBeforeUpdate = createHook(BEFOREUPDATE)
-export const onUpdated = createHook(UPDATED)
-export const onBeforeUnmount = createHook(BEFOREUNMOUNT)
-export const onUnmounted = createHook(UNMOUNTED)
-export const onLoad = createHook(ONLOAD)
-export const onShow = createHook(ONSHOW)
-export const onHide = createHook(ONHIDE)
-export const onResize = createHook(ONRESIZE)
-export const onPullDownRefresh = createHook('__onPullDownRefresh__')
-export const onReachBottom = createHook('__onReachBottom__')
-export const onShareAppMessage = createHook('__onShareAppMessage__')
-export const onShareTimeline = createHook('__onShareTimeline__')
-export const onAddToFavorites = createHook('__onAddToFavorites__')
-export const onPageScroll = createHook('__onPageScroll__')
-export const onTabItemTap = createHook('__onTabItemTap__')
-export const onSaveExitState = createHook('__onSaveExitState__')

@@ -3,18 +3,18 @@ const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
 
-const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
+let names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
   'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
   'require,global'
 
-const hash = {}
+let hash = {}
 names.split(',').forEach(function (name) {
   hash[name] = true
 })
 
-const dangerousKeys = 'length,size,prototype'
-const dangerousKeyMap = {}
+let dangerousKeys = 'length,size,prototype'
+let dangerousKeyMap = {}
 dangerousKeys.split(',').forEach((key) => {
   dangerousKeyMap[key] = true
 })
@@ -33,7 +33,7 @@ module.exports = {
     const propKeys = []
     let isProps = false
 
-    const bindThisVisitor = {
+    let bindThisVisitor = {
       // 标记收集props数据
       CallExpression: {
         enter (path) {

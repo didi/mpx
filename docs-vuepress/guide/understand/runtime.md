@@ -10,6 +10,6 @@
 * 将组件的静态模板编译为可执行的render函数，通过render函数收集模板数据依赖，只有当render函数中的依赖数据发生变化时才会触发小程序组件的setData，同时通过一个异步队列确保一个tick中最多只会进行一次setData，这个机制和Vue中的render机制非常类似，大大降低了setData的调用频次；
 * 将模板编译render函数的过程中，我们还记录输出了模板中使用的数据路径，在每次需要setData时会根据这些数据路径与上一次的数据进行diff，仅将发生变化的数据通过数据路径的方式进行setData，这样确保了每次setData传输的数据量最低，同时避免了不必要的setData操作，进一步降低了setData的频次。
 
-![Mpx数据响应机制流程示意图](https://gift-static.hongyibo.com.cn/static/kfpub/3547/runtime.jpeg)
+![Mpx数据响应机制流程示意图](https://dpubstatic.udache.com/static/dpubimg/4cb54489-b99d-4560-97aa-68f756730131.jpeg)
 
 *Mpx数据响应机制流程示意图*

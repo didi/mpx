@@ -1,12 +1,4 @@
-import {
-  CREATED,
-  UNMOUNTED,
-  MOUNTED,
-  ONHIDE,
-  ONSHOW,
-  ONLOAD,
-  UPDATED
-} from '../../../core/innerLifecycle'
+import { BEFORECREATE, BEFOREMOUNT, CREATED, DESTROYED, MOUNTED, UPDATED } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
   'onLaunch',
@@ -14,8 +6,7 @@ const APP_HOOKS = [
   'onHide',
   'onError',
   'onShareAppMessage',
-  'onUnhandledRejection',
-  'onPageNotFound'
+  'onUnhandledRejection'
 ]
 
 const PAGE_HOOKS = [
@@ -24,13 +15,14 @@ const PAGE_HOOKS = [
   'onShow',
   'onHide',
   'onUnload',
+  'onPullDownRefresh',
+  'onReachBottom',
   'onShareAppMessage',
+  'onPageScroll',
   'onTitleClick',
   'onOptionMenuClick',
-  'onPullDownRefresh',
-  'onTabItemTap',
-  'onPageScroll',
-  'onReachBottom'
+  'onUpdated',
+  'onBeforeCreate'
 ]
 
 const COMPONENT_HOOKS = [
@@ -39,19 +31,19 @@ const COMPONENT_HOOKS = [
   'didMount',
   'didUpdate',
   'didUnmount',
-  'onError',
+  'updated',
+  'beforeCreate',
   'pageShow',
   'pageHide'
 ]
 
 export const lifecycleProxyMap = {
+  [BEFORECREATE]: ['beforeCreate'],
   [CREATED]: ['onInit'],
-  [UPDATED]: ['didUpdate'],
+  [UPDATED]: ['didUpdate', 'updated'],
+  [BEFOREMOUNT]: ['beforeMount'],
   [MOUNTED]: ['didMount', 'onReady'],
-  [UNMOUNTED]: ['didUnmount', 'onUnload'],
-  [ONSHOW]: ['pageShow', 'onShow'],
-  [ONHIDE]: ['pageHide', 'onHide'],
-  [ONLOAD]: ['onLoad']
+  [DESTROYED]: ['didUnmount', 'onUnload']
 }
 
 export const LIFECYCLE = {

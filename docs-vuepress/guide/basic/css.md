@@ -172,6 +172,7 @@ cssnanoConfig = {
 如果你想要使用 cssnano advanced 预设，则需要在 wxssLoader 中传入配置开启
 
 ```js
+
 {
   test: /\.(wxss|acss|css|qss|ttss|jxss|ddss)$/,
   use: [

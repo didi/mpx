@@ -41,7 +41,7 @@
 
 &ensp;&ensp;与其他语言插件无异，提供相应代码的高亮，因为Mpx分为四个模块，所以每个模块都有相应的语法高亮，还包括注释快捷键，也区分了相应模块，比如`<template>`中使用的是html的高亮，且注释是`<!-- -->`,而`<script>`中就是`js`的高亮，注释是`//`
 
-![image](https://gift-static.hongyibo.com.cn/static/kfpub/3547/codelight.jpeg)
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-0.png)
 
 #### emmet
 
@@ -61,25 +61,22 @@
 
 我们可以像编写 html 一样，只要输入对应的单词就会出现对应的标签，比如输入的是 view ，然后按下 tab 键，即可输入 `<view></view>` 标签。
 
-<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi1_v2.png" width="500" alt="图片名称" />
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi1.png" width="500" alt="图片名称" />
 
 组件指令提示
 
 指令的提示类似于 vue 文件一样，只要输入对应的指令前缀就会出现对应的完整指令，比如输入的是 wx ，然后按下 tab 键，就可以输入 wx:if="" 指令。
-
-<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi2_v2.png" width="500" alt="图片名称" />
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi2.png" width="500" alt="图片名称" />
 
 组件属性提示
 
 微信小程序的每个组件都有一些属性选项，在编写组件的时候输入前缀就会出现完整的属性，并且包含了属性的说明和属性的类型。
-
-<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi3_v2.png" width="500" alt="图片名称" />
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi3.png" width="500" alt="图片名称" />
 
 组件事件提示
 
 给组件绑定事件，也是只需要输入事件的前缀，就会出现完整的事件列表，然后按下 tab 键，即可输入 bindtap="" 类似的事件。
-
-<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi4_v2.png" width="500" alt="图片名称" />
+<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/tishi4.png" width="500" alt="图片名称" />
 
 #### 跳转定义
 
@@ -109,7 +106,7 @@
 
 `<json>`模块同tempalte，用到了一个eslint插件`eslint-plugin-jsonc`来检测json的部分
 
-![image](https://gift-static.hongyibo.com.cn/static/kfpub/3547/vscodeseting.png)
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/6168/QQ20210728-202133@2x.png)
 
 部分二可参照此[链接](https://github.com/mpx-ecology/vscode-mpx/issues/35)配置
 
@@ -117,11 +114,11 @@
 
 支持代码格式化 JavaScript  (ts)· JSON · CSS (less/scss/stylus) · WXML，通过鼠标右键选择代码格式化文档。
 
-<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/format_v2.png" width="500" alt="图片名称" />
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/3547/format.png)
 
 默认每个区块都是调用 Prettier 这个库来完成格式化的，当然也可以在设置中切换成使用其他库。
 
-<img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/format2_v3.png" width="500" alt="图片名称" />
+![image](https://gift-static.hongyibo.com.cn/static/kfpub/3547/format2.png)
 
 如果切换成 none 将会禁用格式化。
 

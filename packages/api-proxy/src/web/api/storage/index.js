@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 
 function setStorage (options = {}) {
   const { key, data, success, fail, complete } = options
@@ -43,7 +43,7 @@ function getStorage (options = {}) {
 }
 
 function getStorageSync (key) {
-  const res = getItem(key)
+  let res = getItem(key)
   if (res.result) return res.data
 
   return ''
@@ -53,10 +53,9 @@ function getItem (key) {
   let item
   try {
     item = JSON.parse(window.localStorage.getItem(key))
-  } catch (e) {
-  }
+  } catch (e) {}
 
-  if (item && typeof item === 'object' && hasOwn(item, 'data')) {
+  if (item && typeof item === 'object' && item.hasOwnProperty('data')) {
     return { result: true, data: item.data }
   } else {
     return { result: false }

@@ -8,11 +8,11 @@ import { isString, isArray, isFunction, isObject, isNotEmptyArray, type, doTest 
  */
 export function doValidate (rules, config, url, greedy) {
   // 错误的result length不为0的时候 不发送请求
-  const errorResult = []
+  let errorResult = []
   // warning的result length不为0的时候 也会发送请求 只是一个warning
-  const warningResult = []
-  const ruleBackUp = Object.assign({}, rules)
-  for (const key in config) {
+  let warningResult = []
+  let ruleBackUp = Object.assign({}, rules)
+  for (let key in config) {
     // 没添加校验规则但是参数里有这个属性但是无需校验所有参数
     if (!ruleBackUp[key] && typeof greedy !== 'undefined' && !greedy) {
       continue
@@ -44,8 +44,8 @@ export function doValidate (rules, config, url, greedy) {
         break
       // 一般属性校验
       default:
+        let typeMatched
         try {
-          let typeMatched
           if (isArray(ruleBackUp[key].type)) {
             const vType = ruleBackUp[key].type.map((item) => {
               return item.toLowerCase()
@@ -93,8 +93,8 @@ export function validate (options, config) {
         result = doValidate(validator, Object.assign({}, config.params, config.data), test.path, greedy)
       } else {
         if (isPostMethod) {
-          const dataRes = doValidate(validator.data, config.data, test.path, greedy)
-          const paramsRes = doValidate(validator.params, config.params, test.path, greedy)
+          let dataRes = doValidate(validator.data, config.data, test.path, greedy)
+          let paramsRes = doValidate(validator.params, config.params, test.path, greedy)
           result = {
             valid: dataRes.valid && paramsRes.valid,
             message: dataRes.message.concat(paramsRes.message),
@@ -107,7 +107,6 @@ export function validate (options, config) {
       }
       return true
     }
-    return false
   })
   return result
 }

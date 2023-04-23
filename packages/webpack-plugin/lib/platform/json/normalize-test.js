@@ -1,5 +1,3 @@
-const hasOwn = require('../../utils/has-own')
-
 module.exports = function normalizeTest (test) {
   if (test) {
     return (input, meta) => {
@@ -7,7 +5,7 @@ module.exports = function normalizeTest (test) {
       meta.paths = []
       let result = false
       for (let i = 0; i < pathArr.length; i++) {
-        if (hasOwn(input, pathArr[i])) {
+        if (input.hasOwnProperty(pathArr[i])) {
           meta.paths.push(pathArr[i])
           result = true
         }

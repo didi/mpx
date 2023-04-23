@@ -1,10 +1,6 @@
 const runRules = require('../../run-rules')
 const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
-const normalize = require('../../../utils/normalize')
-
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
 module.exports = function getSpec ({ warn, error }) {
   function print (mode, path, isError) {
@@ -38,30 +34,6 @@ module.exports = function getSpec ({ warn, error }) {
   function addGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
-    }
-    return input
-  }
-
-  // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
-  function aliComponentPlaceholderFallback (input) {
-    const componentPlaceholder = input.componentPlaceholder
-    const usingComponents = input.usingComponents || (input.usingComponents = {})
-    for (const cph in componentPlaceholder) {
-      const cur = componentPlaceholder[cph]
-      const placeholderCompMatched = cur.match(/^(?:view|text)$/g)
-      if (!Array.isArray(placeholderCompMatched)) continue
-      let compName, compPath
-      switch (placeholderCompMatched[0]) {
-        case 'view':
-          compName = 'mpx-view'
-          compPath = mpxViewPath
-          break
-        case 'text':
-          compName = 'mpx-text'
-          compPath = mpxTextPath
-      }
-      usingComponents[compName] = compPath
-      componentPlaceholder[cph] = compName
     }
     return input
   }
@@ -128,10 +100,6 @@ module.exports = function getSpec ({ warn, error }) {
         jd: deletePath()
       },
       {
-        test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback
-      },
-      {
         ali: addGlobalComponents,
         swan: addGlobalComponents,
         qq: addGlobalComponents,
@@ -143,10 +111,6 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'componentGenerics',
         ali: deletePath(true)
-      },
-      {
-        test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback
       },
       {
         ali: addGlobalComponents,

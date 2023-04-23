@@ -1,6 +1,6 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import { processSize } from '../../utils'
+  import { processSize } from './util'
 
   export default {
     name: 'mpx-progress',

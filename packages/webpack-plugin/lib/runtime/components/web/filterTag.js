@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/ // useless escape
-const ncname = '[a-zA-Z_][\\w\\-\\.]*'
+const ncname = `[a-zA-Z_][\\w\\-\\.]*`
 const qname = `((?:${ncname}\\:)?${ncname})`
 const startTagOpen = new RegExp(`^<${qname}`)
 const startTagClose = /^\s*(\/?)>/
@@ -208,7 +208,7 @@ function parseHTML (html, options) {
 }
 
 export function parse (template) {
-  const nodes = []
+  let nodes = []
   const stack = []
   let root
   function pushChild (currentParent, child) {
@@ -220,7 +220,7 @@ export function parse (template) {
   }
   parseHTML(template, {
     start (tag, attrs, unary) {
-      const element = createASTElement(tag, attrs, currentParent)
+      let element = createASTElement(tag, attrs, currentParent)
       if (!unary && !stack.length) {
         root = element
       }
@@ -232,9 +232,9 @@ export function parse (template) {
       }
       attrs.forEach(attr => {
         if (invalidAttributeRE.test(attr.name)) {
-          console.warn('Invalid dynamic argument expression: attribute names cannot contain ' +
-            'spaces, quotes, <, >, / or =.', {
-            start: attr.start + attr.name.indexOf('['),
+          console.warn(`Invalid dynamic argument expression: attribute names cannot contain ` +
+            `spaces, quotes, <, >, / or =.`, {
+            start: attr.start + attr.name.indexOf(`[`),
             end: attr.start + attr.name.length
           })
         }

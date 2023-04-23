@@ -234,8 +234,7 @@ function getModulesLocations (node) {
       ? node.callee.object.arguments[0].value // `0` for simple array
       : 0
     const modulesNodes = isOptimizedArray // The modules reside in the `concat()` function call arguments
-      ? node.arguments[0].elements
-      : node.elements
+      ? node.arguments[0].elements : node.elements
     return modulesNodes.reduce((result, moduleNode, i) => {
       if (moduleNode) {
         result[i + minId] = getModuleLocation(moduleNode)

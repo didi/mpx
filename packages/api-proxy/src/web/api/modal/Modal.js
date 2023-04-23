@@ -2,7 +2,7 @@ import { ToPromise, webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
-const _getLength = (t) => {
+let _getLength = (t) => {
   let len = 0
   for (let i = 0; i < t.length; i++) {
     if (t.charCodeAt(i) > 127 || t.charCodeAt(i) === 94) {
@@ -72,7 +72,6 @@ export default class Modal extends ToPromise {
     this.cancelBtn = cancelBtn
     this.confirmBtn = confirmBtn
   }
-
   show (options = {}) {
     if (options.confirmText && _getLength(options.confirmText) > 8) {
       // eslint-disable-next-line
@@ -127,7 +126,6 @@ export default class Modal extends ToPromise {
 
     return this.toPromiseInitPromise()
   }
-
   hide () {
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)

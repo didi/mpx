@@ -26,7 +26,7 @@ describe('test toast', () => {
     const icon = toast.lastChild.firstChild
     const title = toast.lastChild.lastChild
     expect(success.mock.calls.length).toBe(1)
-    expect(success.mock.calls[0][0].errMsg).toBe('showToast:ok')
+    expect(success.mock.calls[0][0]['errMsg']).toBe('showToast:ok')
     expect(complete.mock.calls.length).toBe(1)
 
     // default duration is 1500ms
@@ -121,7 +121,7 @@ describe('test toast', () => {
     const toast = document.body.lastChild
     expect(toast).toHaveAttribute('class', expect.not.stringContaining('show'))
     expect(success.mock.calls.length).toBe(1)
-    expect(success.mock.calls[0][0].errMsg).toBe('hideToast:ok')
+    expect(success.mock.calls[0][0]['errMsg']).toBe('hideToast:ok')
     expect(complete.mock.calls.length).toBe(1)
   })
 

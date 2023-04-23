@@ -58,9 +58,9 @@ module.exports = function ({ print }) {
           prop.name = propsMap[prop.name]
           if (prop.name === 'framesize') {
             const valueMap = {
-              small: 'low',
-              medium: 'medium',
-              large: 'high'
+              'small': 'low',
+              'medium': 'medium',
+              'large': 'high'
             }
             prop.value = valueMap[prop.value]
           }

@@ -1,7 +1,7 @@
 function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
   function request () {
     return new Promise((resolve, reject) => {
-      const sc = document.createElement('script')
+      let sc = document.createElement('script')
       sc.type = 'text/javascript'
       sc.async = 'async'
 

@@ -8,10 +8,17 @@ npm i -g @mpxjs/cli
 
 ## 创建工程
 
+* 在已有文件夹内创建mpx工程：
+
+```shell
+# 当前文件夹名就是你的项目名
+mpx init .
+```
+
 * 在当前目录中创建工程目录
 
 ```shell
-mpx create <project-name>
+mpx init <project-name>
 ```
 
 `插件项目`由于微信限制必须填写插件的`AppID`，`普通项目`无强制要求。
@@ -22,7 +29,7 @@ mpx create <project-name>
 
 ```shell
 npm install
-npm run serve
+npm run watch
 ```
 
 ## 小程序编译
@@ -52,7 +59,7 @@ cd mpx-demo
 npm i
 
 # 进行开发
-npm run serve
+npm run watch
 ```
 
 ![开启服务](images/start-start.png)

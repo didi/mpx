@@ -69,7 +69,7 @@ module.exports = function (content) {
 
   if (ctorType === 'app') {
     const appName = getEntryName(this)
-    if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
@@ -112,7 +112,7 @@ module.exports = function (content) {
 
       if (parts.json && parts.json.content) {
         try {
-          const ret = JSON5.parse(parts.json.content)
+          let ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
             fixUsingComponent(ret.usingComponents, mode)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
@@ -127,6 +127,7 @@ module.exports = function (content) {
           return callback(e)
         }
       }
+
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
@@ -335,8 +336,7 @@ module.exports = function (content) {
           ...script.src
             ? { ...queryObj, resourcePath }
             : null,
-          ctorType,
-          lang: script.lang || 'js'
+          ctorType
         }
         output += getRequire('script', script, extraOptions) + '\n'
       }
