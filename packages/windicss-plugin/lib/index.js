@@ -177,8 +177,8 @@ class MpxWindicssPlugin {
           return content.split(/\s+/).map(classNameHandler).join(' ')
         }
         // transform directives like @apply @variants @screen @layer theme()
-        const processStyle = (file) => {
-          const content = assets[file].source()
+        const processStyle = (file, source) => {
+          const content = source.source()
           if (!content || content.length <= 0 || !cssRequiresTransform(content)) return
           const style = new windiParser.CSSParser(content, processor).parse()
           const output = style.build()
@@ -287,7 +287,7 @@ class MpxWindicssPlugin {
 
         Object.entries(assets).forEach(([file, source]) => {
           if (!filterFile(file)) return
-          if (file.endsWith(styleExt)) return processStyle(file)
+          if (file.endsWith(styleExt)) return processStyle(file, source)
           if (file.endsWith(templateExt)) return processTemplate(file, source)
         })
 
