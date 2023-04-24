@@ -134,7 +134,6 @@ class MpxWindicssPlugin {
           loader: transAppLoader
         }]
       })
-      // 需要解析safelist吗？
       // 后续似乎不需要处理了，先return
       return
     }
