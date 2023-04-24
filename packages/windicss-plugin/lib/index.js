@@ -123,7 +123,7 @@ class MpxWindicssPlugin {
       // web直接用插件
       const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
       if (!hasPlugin(compiler, WindiCSSWebpackPlugin)) {
-        compiler.options.plugins.push(new WindiCSSWebpackPlugin(this.options))
+        compiler.options.plugins.push(new WindiCSSWebpackPlugin())
       }
       // 给app注入windicss模块
       compiler.options.module.rules.push({
