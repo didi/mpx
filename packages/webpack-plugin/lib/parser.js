@@ -1,8 +1,8 @@
-const cache = require('lru-cache')(100)
+const Lrucache = require('lru-cache')
 const hash = require('hash-sum')
 const compiler = require('./template-compiler/compiler')
 const SourceMapGenerator = require('source-map').SourceMapGenerator
-
+const cache = new Lrucache(100)
 const splitRE = /\r?\n/g
 const emptyRE = /^(?:\/\/)?\s*$/
 

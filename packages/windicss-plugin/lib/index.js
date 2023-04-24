@@ -9,6 +9,9 @@ const path = require('path')
 const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
 const minimatch = require('minimatch')
 
+const loadersPath = path.resolve(__dirname, './loader')
+const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
+const PluginName = 'MpxWindicssPlugin'
 function normalizeOptions (options) {
   // todo
   options.windiFile = options.windiFile || 'styles/windi'
@@ -50,6 +53,10 @@ function getCommonClassesMap (classesMaps, minCount) {
   return commonClassesMap
 }
 
+function hasPlugin (compiler, curPlugin) {
+  const plugins = compiler.options.plugins
+  return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
+}
 class MpxWindicssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
@@ -110,9 +117,28 @@ class MpxWindicssPlugin {
   }
 
   apply (compiler) {
-    compiler.hooks.thisCompilation.tap('MpxWindicssPlugin', (compilation) => {
+    if (process.env.MPX_CLI_MODE === 'web') {
+      // web直接用插件
+      const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
+      if (!hasPlugin(compiler, WindiCSSWebpackPlugin)) {
+        compiler.options.plugins.push(new WindiCSSWebpackPlugin(this.options))
+      }
+      // 给app注入windicss模块
+      compiler.options.module.rules.push({
+        test: /\.js$/,
+        resourceQuery: /isApp/,
+        enforce: 'post',
+        use: [{
+          loader: transAppLoader
+        }]
+      })
+      // 需要解析safelist吗？
+      // 后续似乎不需要处理了，先return
+      return
+    }
+    compiler.hooks.thisCompilation.tap(PluginName, (compilation) => {
       compilation.hooks.processAssets.tapPromise({
-        name: 'MpxWindicssPlugin',
+        name: PluginName,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
         const { __mpx__: mpx } = compilation
@@ -129,12 +155,9 @@ class MpxWindicssPlugin {
         }
 
         const { mode, dynamicEntryInfo, appInfo } = mpx
-
-        // 输出web时暂不处理
         if (mode === 'web') return
 
         const config = this.loadConfig(compilation, error)
-
         const processor = new Processor(config)
 
         const { template: templateExt, styles: styleExt } = mpxConfig[mode].typeExtMap
