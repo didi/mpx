@@ -1404,7 +1404,7 @@ module.exports = defineConfig({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
-### renderReduce
+### renderOptimizeRules
 
 - **详细**: render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积
 
@@ -1416,7 +1416,7 @@ module.exports = defineConfig({
 
 ```js
 new MpxWebpackPlugin({
-  renderReduce: {
+  renderOptimizeRules: {
     include: [
       resolve('src')
     ],
