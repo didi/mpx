@@ -1,6 +1,7 @@
 const { Processor } = require('windicss/lib')
+const windiParser = require('windicss/utils/parser')
 const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
-const { buildAliasTransformer, transformGroups, mpEscape } = require('./transform')
+const { buildAliasTransformer, transformGroups, mpEscape, cssRequiresTransform } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
@@ -13,7 +14,6 @@ const loadersPath = path.resolve(__dirname, './loader')
 const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
 const PluginName = 'MpxWindicssPlugin'
 function normalizeOptions (options) {
-  // todo
   options.windiFile = options.windiFile || 'styles/windi'
   options.minify = options.minify || false
   // options.config = options.config
@@ -22,6 +22,8 @@ function normalizeOptions (options) {
   options.styleIsolation = options.styleIsolation || 'isolated'
   options.minCount = options.minCount || 2
   options.scan = options.scan || {}
+  options.transformCSS = options.transformCSS || true
+  options.transformGroups = options.transformGroups || true
   return options
 }
 
@@ -193,47 +195,26 @@ class MpxWindicssPlugin {
         const transformClasses = (source, classNameHandler = c => c) => {
           // pre process
           source = transformAlias(source)
-          source = transformGroups(source)
+          if (this.options.transformGroups) {
+            source = transformGroups(source)
+          }
           const content = source.source()
           // escape & fill classesMap
           return content.split(/\s+/).map(classNameHandler).join(' ')
         }
-
-        const filterFile = (file) => {
-          if (!file.endsWith(templateExt)) return false
-          const { include = [], exclude = [] } = this.options.scan
-          for (const pattern of exclude) {
-            if (minimatch(file, pattern)) return false
+        // transform directives like @apply @variants @screen @layer theme()
+        const processStyle = (file, source) => {
+          const content = source.source()
+          if (!content || !cssRequiresTransform(content)) return
+          const style = new windiParser.CSSParser(content, processor).parse()
+          const output = style.build()
+          if (!output || output.length <= 0) {
+            error(`${file} 解析style错误,检查样式文件输入!`)
+            return
           }
-          for (const pattern of include) {
-            if (!minimatch(file, pattern)) return false
-          }
-          return true
+          assets[file] = getRawSource(output)
         }
-
-        const enablePreflight = !!config.preflight
-
-        const preflightOptions = Object.assign(
-          {
-            includeBase: true,
-            includeGlobal: false,
-            includePlugin: true,
-            enableAll: false,
-            includeAll: false,
-            safelist: [],
-            blocklist: [],
-            alias: {}
-          },
-          typeof config.preflight === 'boolean' ? {} : config.preflight
-        )
-
-        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
-        preflightOptions.enablePreflight = enablePreflight
-        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
-
-        Object.entries(assets).forEach(([file, source]) => {
-          if (!filterFile(file)) return
-
+        const processTemplate = (file, source) => {
           source = getReplaceSource(source)
 
           const content = source.original().source()
@@ -298,6 +279,42 @@ class MpxWindicssPlugin {
           }
 
           assets[file] = source
+        }
+        const filterFile = (file) => {
+          const { include = [], exclude = [] } = this.options.scan
+          for (const pattern of exclude) {
+            if (minimatch(file, pattern)) return false
+          }
+          for (const pattern of include) {
+            if (!minimatch(file, pattern)) return false
+          }
+          return true
+        }
+
+        const enablePreflight = !!config.preflight
+
+        const preflightOptions = Object.assign(
+          {
+            includeBase: true,
+            includeGlobal: false,
+            includePlugin: true,
+            enableAll: false,
+            includeAll: false,
+            safelist: [],
+            blocklist: [],
+            alias: {}
+          },
+          typeof config.preflight === 'boolean' ? {} : config.preflight
+        )
+
+        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
+        preflightOptions.enablePreflight = enablePreflight
+        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
+
+        Object.entries(assets).forEach(([file, source]) => {
+          if (!filterFile(file)) return
+          if (this.options.transformCSS && file.endsWith(styleExt)) return processStyle(file, source)
+          if (file.endsWith(templateExt)) return processTemplate(file, source)
         })
 
         delete packageClassesMaps.main
