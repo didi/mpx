@@ -20,6 +20,7 @@ const RecordVueContentDependency = require('./dependencies/RecordVueContentDepen
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
+const resolve = require('./utils/resolve')
 const path = require('path')
 
 module.exports = function (content) {
@@ -33,6 +34,7 @@ module.exports = function (content) {
   }
 
   const mpx = this.getMpx()
+  const context = this.context
   if (!mpx) {
     return content
   }
@@ -46,6 +48,7 @@ module.exports = function (content) {
   const mode = mpx.mode
   const env = mpx.env
   const i18n = mpx.i18n
+  const usingComponentsModuleId = mpx.usingComponentsModuleId
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -96,7 +99,19 @@ module.exports = function (content) {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        callback()
+        if (ctorType !== 'app') {
+          const prettyJson = JSON.parse(content)
+          const components = prettyJson.usingComponents || {}
+          usingComponentsModuleId[filePath] = {}
+          async.eachOf(components, (component, name, callback) => {
+            resolve(context, component, loaderContext, (err, resource, info) => {
+              usingComponentsModuleId[filePath][name] = mpx.pathHash(resource)
+              callback()
+            })
+          }, callback)
+        } else {
+          callback()
+        }
       })
     },
     (callback) => {

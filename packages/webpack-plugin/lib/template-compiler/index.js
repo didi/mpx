@@ -21,6 +21,8 @@ module.exports = function (raw) {
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
   const usingComponents = queryObj.usingComponents || []
+  const usingComponentsModuleId = mpx.usingComponentsModuleId || {}
+  const currentInsUsingComponentsModuleId = usingComponentsModuleId[resourcePath]
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
@@ -55,6 +57,7 @@ module.exports = function (raw) {
     externalClasses,
     hasScoped,
     moduleId,
+    currentInsUsingComponentsModuleId,
     // 这里需传递resourcePath和wxsContentMap保持一致
     filePath: resourcePath,
     i18n,
