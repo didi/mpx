@@ -19,7 +19,6 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
 const resolve = require('./utils/resolve')
 const path = require('path')
 
@@ -117,8 +116,10 @@ module.exports = function (content) {
               fixUsingComponent(ret.usingComponents, mode)
               usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
               async.eachOf(ret.usingComponents, (component, name, callback) => {
-                resolve(context, component, loaderContext, (err, resource, info) => {
-                  // hash 生成不能直接使用resource，使用 parse-request 方法
+                resolve(context, component, loaderContext, (err, resource) => {
+                  if (err) {
+                    return callback(err)
+                  }
                   const { rawResourcePath } = parseRequest(resource)
                   const moduleId = mpx.getModuleId(rawResourcePath, ctorType)
                   if (ctorType === 'app') {
