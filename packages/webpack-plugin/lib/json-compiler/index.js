@@ -197,6 +197,23 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
+  // 校验异步组件占位符
+  // 1. 写了异步组件但是不写 componentPlaceholder
+  // 2. 写了 componentPlaceholder， 但是这个占位符是个无效的自定义组件
+  const { usingComponents, componentPlaceholder = {} } = json
+  if (usingComponents) {
+    for (const compName in usingComponents) {
+      const compPath = usingComponents[compName]
+      const compPlaceholder = componentPlaceholder[compName]
+      if (!/\?root=/g.test(compPath)) continue
+      if (/^(view|text)$/g.test(compPlaceholder)) continue
+      if (!usingComponents[compPlaceholder]) {
+        const errMsg = `An async-component must be with a componentPlaceholder，but "${compName}": "${compPath}" has an incorrect componentPlaceholder：${compPlaceholder}! \n\r`
+        this.emitError(new Error(errMsg))
+      }
+    }
+  }
+
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
