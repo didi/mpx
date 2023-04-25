@@ -14,19 +14,39 @@ const loadersPath = path.resolve(__dirname, './loader')
 const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
 const PluginName = 'MpxWindicssPlugin'
 function normalizeOptions (options) {
-  options.windiFile = options.windiFile || 'styles/windi'
-  options.minify = options.minify || false
-  // options.config = options.config
-  // options.configFiles = options.configFiles
-  options.root = options.root || process.cwd()
-  options.styleIsolation = options.styleIsolation || 'isolated'
-  options.minCount = options.minCount || 2
-  options.scan = options.scan || {}
-  options.transformCSS = options.transformCSS || true
-  options.transformGroups = options.transformGroups || true
-  return options
+  let { 
+    // 小程序特有的配置
+    windiFile = 'styles/windi',
+    minify = false,
+    styleIsolation = 'isolated',
+    minCount = 2,
+    scan = {},
+    // 公共的配置
+    root = process.cwd(),
+    transformCSS = true,
+    transformGroups = true,
+    webOptions = {},
+    ...rest
+  } = options
+  // web配置，剔除小程序的配置，防影响
+  webOptions = {
+    root, transformCSS, transformGroups,
+    ...rest,
+    ...webOptions
+  }
+  return {
+    windiFile,
+    minify,
+    root,
+    styleIsolation,
+    minCount,
+    scan,
+    transformCSS,
+    transformGroups,
+    webOptions,
+    ...rest
+  }
 }
-
 function validateConfig (config, error) {
   if (config.attributify) {
     error('小程序环境下无法使用attributify模式，该配置将被忽略！')
@@ -123,7 +143,7 @@ class MpxWindicssPlugin {
       // web直接用插件
       const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
       if (!hasPlugin(compiler, WindiCSSWebpackPlugin)) {
-        compiler.options.plugins.push(new WindiCSSWebpackPlugin())
+        compiler.options.plugins.push(new WindiCSSWebpackPlugin(this.options.webOptions))
       }
       // 给app注入windicss模块
       compiler.options.module.rules.push({
@@ -131,7 +151,10 @@ class MpxWindicssPlugin {
         resourceQuery: /isApp/,
         enforce: 'post',
         use: [{
-          loader: transAppLoader
+          loader: transAppLoader,
+          options: {
+            virtualModulePath: this.options.webOptions.virtualModulePath || ''
+          }
         }]
       })
       // 后续似乎不需要处理了，先return
