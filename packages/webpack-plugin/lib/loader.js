@@ -18,15 +18,17 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 
 module.exports = function (content) {
   this.cacheable()
 
-  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的vue-loader返回内容
-  if (path.extname(this.resourcePath) === '.ts') {
-    this.loaderIndex -= 2
+  // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
+  const pathExtname = path.extname(this.resourcePath)
+  if (!['.vue', '.mpx'].includes(pathExtname)) {
+    this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
 
@@ -67,7 +69,7 @@ module.exports = function (content) {
 
   if (ctorType === 'app') {
     const appName = getEntryName(this)
-    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+    if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)

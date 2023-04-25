@@ -98,14 +98,7 @@ module.exports = function (content) {
                 if (err) return callback(err)
                 if (!this._compilation) return callback()
                 const targetPath = path.relative(context, file)
-                this._compilation.assets[targetPath] = {
-                  size: function size () {
-                    return stats.size
-                  },
-                  source: function source () {
-                    return content
-                  }
-                }
+                this.emitFile(targetPath, content)
                 callback()
               })
             }

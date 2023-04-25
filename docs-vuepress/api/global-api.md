@@ -360,7 +360,7 @@ Mpx 在运行时自身有着一套内建生命周期，当开发者想使用内�
 import {createComponent, BEFORECREATE} from "@mpxjs/core"
 
 createComponent({
-  BEFORECREATE() {
+  [BEFORECREATE]() {
       console.log('beforecreate trigger')
   }
 })
@@ -377,7 +377,7 @@ createComponent({
 import {createComponent, CREATED} from "@mpxjs/core"
 
 createComponent({
-  CREATED() {
+  [CREATED]() {
       console.log('beforecreate trigger')
   }
 })
