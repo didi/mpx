@@ -1,3 +1,4 @@
+const JSON5 = require('json5')
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 const parseRequest = require('../utils/parse-request')
@@ -21,13 +22,12 @@ module.exports = function (raw) {
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
   const usingComponents = queryObj.usingComponents || []
-  const usingComponentsModuleId = mpx.usingComponentsModuleId || {}
-  const currentInsUsingComponentsModuleId = usingComponentsModuleId[resourcePath]
+  const usingComponentsModuleId = JSON5.parse(queryObj.usingComponentsModuleId) || {}
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
-  const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
+  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath)
 
   const warn = (msg) => {
     this.emitWarning(
@@ -57,7 +57,7 @@ module.exports = function (raw) {
     externalClasses,
     hasScoped,
     moduleId,
-    currentInsUsingComponentsModuleId,
+    usingComponentsModuleId,
     // 这里需传递resourcePath和wxsContentMap保持一致
     filePath: resourcePath,
     i18n,

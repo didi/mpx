@@ -78,7 +78,7 @@ module.exports = function (content) {
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+  const moduleId = mpx.getModuleId(filePath, ctorType)
 
   const parts = parseComponent(content, {
     filePath,
@@ -93,22 +93,48 @@ module.exports = function (content) {
 
   let output = ''
   const callback = this.async()
+  let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+  let componentPlaceholder = []
+  let componentGenerics = {}
+  let currentUsingComponentsModuleId = {}
 
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        if (ctorType !== 'app') {
-          const prettyJson = JSON.parse(content)
-          const components = prettyJson.usingComponents || {}
-          usingComponentsModuleId[filePath] = {}
-          async.eachOf(components, (component, name, callback) => {
-            resolve(context, component, loaderContext, (err, resource, info) => {
-              usingComponentsModuleId[filePath][name] = mpx.pathHash(resource)
-              callback()
-            })
-          }, callback)
+
+        if (parts.json.content) {
+          try {
+            const ret = JSON5.parse(parts.json.content)
+            if (ret.componentPlaceholder) {
+              componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
+            }
+            if (ret.componentGenerics) {
+              componentGenerics = Object.assign({}, ret.componentGenerics)
+            }
+            if (ret.usingComponents) {
+              fixUsingComponent(ret.usingComponents, mode)
+              usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+              async.eachOf(ret.usingComponents, (component, name, callback) => {
+                resolve(context, component, loaderContext, (err, resource, info) => {
+                  // hash 生成不能直接使用resource，使用 parse-request 方法
+                  const { rawResourcePath } = parseRequest(resource)
+                  const moduleId = mpx.getModuleId(rawResourcePath, ctorType)
+                  if (ctorType === 'app') {
+                    usingComponentsModuleId[name] = moduleId
+                  } else {
+                    currentUsingComponentsModuleId[name] = moduleId
+                  }
+                  callback()
+                })
+              }, callback)
+            } else {
+              return callback()
+            }
+          } catch (e) {
+            return callback(e)
+          }
         } else {
           callback()
         }
@@ -120,28 +146,7 @@ module.exports = function (content) {
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
-      let componentPlaceholder = []
-
-      let componentGenerics = {}
-
-      if (parts.json && parts.json.content) {
-        try {
-          const ret = JSON5.parse(parts.json.content)
-          if (ret.usingComponents) {
-            fixUsingComponent(ret.usingComponents, mode)
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-          }
-          if (ret.componentPlaceholder) {
-            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-          }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
-        } catch (e) {
-          return callback(e)
-        }
-      }
+      currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, usingComponentsModuleId)
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
@@ -299,6 +304,7 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
+          usingComponentsModuleId: JSON5.stringify(currentUsingComponentsModuleId),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开

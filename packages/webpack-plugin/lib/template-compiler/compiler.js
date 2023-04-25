@@ -1787,7 +1787,7 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^slot$/, action: 'move' }
   ]
   const tagName = el.tag
-  const moduleId = options.currentInsUsingComponentsModuleId[tagName]
+  const moduleId = options.usingComponentsModuleId[tagName]
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${moduleId}` }
   ]

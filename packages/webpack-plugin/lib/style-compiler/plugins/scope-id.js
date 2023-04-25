@@ -45,6 +45,7 @@ module.exports = ({ id }) => {
             })
             // 对于page selector不添加scope id
             if (node && node.type === 'tag' && node.value === 'page') return
+            if (!node) return
             selector.insertAfter(node, selectorParser.className({
               value: id
             }))
