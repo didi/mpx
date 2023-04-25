@@ -14,7 +14,7 @@ const loadersPath = path.resolve(__dirname, './loader')
 const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
 const PluginName = 'MpxWindicssPlugin'
 function normalizeOptions (options) {
-  let { 
+  let {
     // 小程序特有的配置
     windiFile = 'styles/windi',
     minify = false,
@@ -30,7 +30,9 @@ function normalizeOptions (options) {
   } = options
   // web配置，剔除小程序的配置，防影响
   webOptions = {
-    root, transformCSS, transformGroups,
+    root,
+    transformCSS,
+    transformGroups,
     ...rest,
     ...webOptions
   }
