@@ -127,26 +127,32 @@ module.exports = function (content) {
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
-          return processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, (error, jsonRes) => {
-            if (error) return callback(error)
-            const output = processMainScript(parts.script, {
-              loaderContext,
-              ctorType,
-              srcMode,
-              moduleId,
-              isProduction,
-              componentGenerics,
-              jsonConfig: jsonRes.jsonObj,
-              outputPath: queryObj.outputPath || '',
-              localComponentsMap: jsonRes.localComponentsMap,
-              tabBar: jsonRes.jsonObj.tabBar,
-              tabBarMap: jsonRes.tabBarMap,
-              tabBarStr: jsonRes.tabBarStr,
-              localPagesMap: jsonRes.localPagesMap,
-              resource: this.resource
-            })
+          return async.waterfall([
+            (callback) => {
+              processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, callback)
+            },
+            (jsonRes, callback) => {
+              processMainScript(parts.script, {
+                loaderContext,
+                ctorType,
+                srcMode,
+                moduleId,
+                isProduction,
+                componentGenerics,
+                jsonConfig: jsonRes.jsonObj,
+                outputPath: queryObj.outputPath || '',
+                localComponentsMap: jsonRes.localComponentsMap,
+                tabBar: jsonRes.jsonObj.tabBar,
+                tabBarMap: jsonRes.tabBarMap,
+                tabBarStr: jsonRes.tabBarStr,
+                localPagesMap: jsonRes.localPagesMap,
+                resource: this.resource
+              }, callback)
+            }
+          ], (err, scriptRes) => {
+            if (err) return callback(err)
             this.loaderIndex = -1
-            return callback(null, output)
+            return callback(null, scriptRes.output)
           })
         }
         // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent

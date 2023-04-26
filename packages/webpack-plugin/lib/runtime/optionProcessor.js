@@ -307,29 +307,41 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option
   })
   return {
     app,
-    ...option
+    ...option,
   }
 }
 
 export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, option, VueRouter, tabBarMap, webConfig, useSSR }) {
   if (isServerRendering()) {
     return context => {
-      return new Promise((resolve, reject) => {
-        const { app, router, pinia } = createApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option, tabBarMap })
-        if (app.onSSRAppCreated) {
-          app.onSSRAppCreated({ pinia, router, app, context })
-        }
-        router.onReady(() => {
-          resolve(app)
-        }, reject)
+      const { app, router, pinia } = createApp({
+        App,
+        componentsMap,
+        Vue,
+        pagesMap,
+        firstPage,
+        VueRouter,
+        option,
+        tabBarMap
       })
+      if (app.onSSRAppCreated) {
+        return app.onSSRAppCreated({ pinia, router, app, context })
+      }
     }
-  }
-  const { app, pinia, router } = createApp({ App, componentsMap, Vue, pagesMap, firstPage, VueRouter, option, tabBarMap })
-  if (pinia && useSSR) {
-    pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
-  }
-  router.onReady(() => {
+  } else {
+    const { app, pinia } = createApp({
+      App,
+      componentsMap,
+      Vue,
+      pagesMap,
+      firstPage,
+      VueRouter,
+      option,
+      tabBarMap
+    })
+    if (pinia && window.__INITIAL_STATE__) {
+      pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+    }
     app.$mount(webConfig.el || '#app')
-  })
+  }
 }

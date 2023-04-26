@@ -1,7 +1,7 @@
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, buildPagesMap, getCurrentOption, buildGlobalParams, shallowStringify, stringifyRequest, buildI18n } = require('../script-compiler/script-helper')
+const { buildComponentsMap, buildPagesMap, getCurrentOption, buildGlobalParams, shallowStringify, stringifyRequest, buildI18n } = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -16,7 +16,7 @@ module.exports = function (script, {
   tabBarStr,
   localPagesMap,
   resource
-}) {
+}, callback) {
   const { i18n, webConfig, useSSR } = loaderContext.getMpx()
 
   const { pagesMap, firstPage, globalTabBar } = buildPagesMap({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr })
@@ -53,5 +53,7 @@ module.exports = function (script, {
                         useSSR: ${useSSR}
                     })`
 
-  return output
+  callback(null, {
+    output
+  })
 }

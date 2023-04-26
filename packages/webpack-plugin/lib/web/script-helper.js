@@ -129,27 +129,27 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
   let content = ''
   if (isMain) {
     content += `global.getApp = function(){}
-  global.getCurrentPages = function () {
-    if (!global.__mpxRouter) return []
-    // @ts-ignore
-    return global.__mpxRouter.stack.map(item => {
-      let page
-      const vnode = item.vnode
-      if (vnode && vnode.componentInstance) {
-        page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-      }
-      return page || { route: item.path.slice(1) }
-    })
-  }
-  global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  global.__mpxGenericsMap = {}
-  global.__mpxOptionsMap = {}
-  global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
-  }
-  if (globalTabBar) {
-    content += globalTabBar
+      global.getCurrentPages = function () {
+      if (!global.__mpxRouter) return []
+      // @ts-ignore
+      return global.__mpxRouter.stack.map(item => {
+        let page
+        const vnode = item.vnode
+        if (vnode && vnode.componentInstance) {
+          page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+        }
+        return page || { route: item.path.slice(1) }
+      })
+    }
+    global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+    global.__mpxGenericsMap = {}
+    global.__mpxOptionsMap = {}
+    global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+    global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+    global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+    if (globalTabBar) {
+      content += globalTabBar
+    }
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
