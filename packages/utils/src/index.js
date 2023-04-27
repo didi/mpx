@@ -68,6 +68,5 @@ export {
 export {
   getEnvObj,
   isBrowser,
-  isDev,
-  isServerRendering
+  isDev
 } from './env'

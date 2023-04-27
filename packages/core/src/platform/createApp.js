@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, isServerRendering } from '@mpxjs/utils'
+import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import Mpx from '../index'
 
@@ -49,7 +49,7 @@ export default function createApp (option, config = {}) {
           hide: [],
           error: []
         }
-        if (!isServerRendering()) {
+        if (isBrowser) {
           if (this.$options.onShow) {
             this.$options.onShow.call(this, options)
             global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))

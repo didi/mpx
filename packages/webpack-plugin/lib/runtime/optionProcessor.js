@@ -1,5 +1,5 @@
+import { hasOwn } from './utils'
 import { isBrowser } from './env'
-import { hasOwn, isServerRendering } from './utils'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
@@ -312,7 +312,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option
 }
 
 export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, option, VueRouter, tabBarMap, webConfig, useSSR }) {
-  if (isServerRendering()) {
+  if (!isBrowser) {
     return context => {
       const { app, router, pinia } = createApp({
         App,

@@ -1,4 +1,5 @@
-import { isEmptyObject, isServerRendering } from '../../utils'
+import { isEmptyObject } from '../../utils'
+import { isBrowser } from '../../env'
 
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
@@ -155,7 +156,7 @@ function noop () {
 }
 
 export default function getInnerListeners (context, options = {}) {
-  if (!isServerRendering()) {
+  if (isBrowser) {
     let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
     const listeners = Object.assign({}, context.$listeners)
     defaultListeners.forEach((key) => {
