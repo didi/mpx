@@ -169,12 +169,6 @@ export default class MpxProxy {
       this.currentRenderTask && this.currentRenderTask.resolve()
     }
   }
-
-  serverPrefetch () {
-    this.state = SERVERPREFETCH
-    this.callHook(SERVERPREFETCH)
-  }
-
   propsUpdated () {
     const updateJob = this.updateJob || (this.updateJob = () => {
       // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated

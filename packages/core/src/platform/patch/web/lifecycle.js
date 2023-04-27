@@ -9,8 +9,7 @@ const COMPONENT_HOOKS = [
   'deactivated',
   'beforeDestroy',
   'destroyed',
-  'errorCaptured',
-  'serverPrefetch'
+  'errorCaptured'
 ]
 
 const PAGE_HOOKS = [
