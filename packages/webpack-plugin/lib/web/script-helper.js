@@ -111,17 +111,11 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   }
 }
 
-function getCurrentOption ({ ctorType, script, isMain, loaderContext, moduleId }) {
+function getRequireScript ({ ctorType, script, loaderContext }) {
   let content = '  /** script content **/\n'
   const extraOptions = { ctorType, lang: script.lang || 'js' }
-  if (ctorType === 'app' && !isMain) {
-    content += ' const currentOption = {}\n'
-  } else {
-    const { getRequire } = createHelpers(loaderContext)
-    content += `  ${getRequire('script', script, extraOptions)}\n`
-    // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-    content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
-  }
+  const { getRequire } = createHelpers(loaderContext)
+  content += `  ${getRequire('script', script, extraOptions)}\n`
   return content
 }
 
@@ -187,7 +181,7 @@ function buildI18n ({ i18n, loaderContext }) {
 module.exports = {
   buildPagesMap,
   buildComponentsMap,
-  getCurrentOption,
+  getRequireScript,
   buildGlobalParams,
   shallowStringify,
   getAsyncChunkName,

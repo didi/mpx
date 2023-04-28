@@ -2,7 +2,7 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, getCurrentOption, buildGlobalParams, shallowStringify } = require('./script-helper')
+const { buildComponentsMap, getRequireScript, buildGlobalParams, shallowStringify } = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -74,9 +74,9 @@ module.exports = function (script, {
       }
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
-      content += getCurrentOption({ ctorType, script, isMain: false, loaderContext, moduleId })
+      content += getRequireScript({ ctorType, script, loaderContext })
       content += `  export default processComponentOption({
-    option: currentOption,
+    option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
     outputPath: ${JSON.stringify(outputPath)},
     pageConfig: ${JSON.stringify(pageConfig)},

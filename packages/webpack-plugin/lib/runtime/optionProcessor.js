@@ -87,8 +87,9 @@ export function getWxsMixin (wxsModules) {
   }
 }
 
-function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option, App, tabBarMap }) {
-// 对于app中的组件需要全局注册
+function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, tabBarMap }) {
+  let option = {}
+  // 对于app中的组件需要全局注册
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
       const component = componentsMap[componentName]
@@ -307,11 +308,11 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, option
   })
   return {
     app,
-    ...option,
+    ...option
   }
 }
 
-export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, option, VueRouter, tabBarMap, webConfig, useSSR }) {
+export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, webConfig }) {
   if (!isBrowser) {
     return context => {
       const { app, router, pinia } = createApp({
@@ -321,11 +322,20 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
         pagesMap,
         firstPage,
         VueRouter,
-        option,
         tabBarMap
       })
       if (app.onSSRAppCreated) {
         return app.onSSRAppCreated({ pinia, router, app, context })
+      } else {
+        return new Promise((resolve, reject) => {
+          router.push(context.url)
+          router.onReady(() => {
+            context.rendered = () => {
+              context.state = JSON.stringify(pinia.state.value)
+            }
+            resolve(app)
+          }, reject)
+        })
       }
     }
   } else {
@@ -336,7 +346,6 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
       pagesMap,
       firstPage,
       VueRouter,
-      option,
       tabBarMap
     })
     if (pinia && window.__INITIAL_STATE__) {

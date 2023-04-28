@@ -38,7 +38,8 @@ const APP_HOOKS = [
   'onError',
   'onPageNotFound',
   'onUnhandledRejection',
-  'onThemeChange'
+  'onThemeChange',
+  'onSSRAppCreated'
 ]
 
 export const LIFECYCLE = {

@@ -17,7 +17,7 @@ module.exports = function (script, {
   localPagesMap,
   resource
 }, callback) {
-  const { i18n, webConfig, useSSR } = loaderContext.getMpx()
+  const { i18n, webConfig } = loaderContext.getMpx()
 
   const { pagesMap, firstPage, globalTabBar } = buildPagesMap({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr })
 
@@ -39,9 +39,7 @@ module.exports = function (script, {
   }
 
   output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, jsonConfig, webConfig, isMain: true, globalTabBar })
-  output += getCurrentOption({ ctorType, script, isMain: true, loaderContext, moduleId })
   output += `export default processAppOption({
-                        option: currentOption,
                         App,
                         tabBarMap: ${JSON.stringify(tabBarMap)},
                         firstPage: ${JSON.stringify(firstPage)},
@@ -49,8 +47,7 @@ module.exports = function (script, {
                         componentsMap: ${shallowStringify(componentsMap)},
                         Vue,
                         VueRouter,
-                        webConfig: ${JSON.stringify(webConfig)},
-                        useSSR: ${useSSR}
+                        webConfig: ${JSON.stringify(webConfig)}
                     })`
 
   callback(null, {
