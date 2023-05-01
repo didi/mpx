@@ -484,6 +484,8 @@ export function reactive<T extends object> (target: T): Reactive<T>
 
 export function isReactive (value: unknown): boolean
 
+export function markRaw<T extends object>(value: T): T
+
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
 export function computed<T> (
