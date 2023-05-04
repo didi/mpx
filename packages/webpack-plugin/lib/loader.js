@@ -103,7 +103,7 @@ module.exports = function (content) {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
 
-        if (parts.json.content) {
+        if (parts.json && parts.json.content) {
           try {
             const ret = JSON5.parse(parts.json.content)
             if (ret.componentPlaceholder) {
