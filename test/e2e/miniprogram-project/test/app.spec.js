@@ -3,6 +3,7 @@ const json5 = require('json5')
 const path = require('path')
 
 const readFileSyncInDist = (filePath, options) => {
+  console.log('readFileSyncInDist filePath', filePath)
   const realPath = path.join(path.resolve(), filePath)
   return fs.readFileSync(realPath, options)
 }
