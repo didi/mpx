@@ -20,6 +20,7 @@ const RecordVueContentDependency = require('./dependencies/RecordVueContentDepen
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const resolve = require('./utils/resolve')
+const isUrlRequest = require('./utils/is-url-request')
 const path = require('path')
 
 module.exports = function (content) {
@@ -116,6 +117,16 @@ module.exports = function (content) {
               fixUsingComponent(ret.usingComponents, mode)
               usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
               async.eachOf(ret.usingComponents, (component, name, callback) => {
+                if (!isUrlRequest(component)) {
+                  const { queryObj } = parseRequest(component)
+                  if (!queryObj.moduleId) return callback()
+                  if (ctorType === 'app') {
+                    usingComponentsModuleId[name] = queryObj.moduleId
+                  } else {
+                    currentUsingComponentsModuleId[name] = queryObj.moduleId
+                  }
+                  return callback()
+                }
                 resolve(context, component, loaderContext, (err, resource) => {
                   if (err) {
                     return callback(err)

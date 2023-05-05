@@ -41,7 +41,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   }
 
   const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '' }, callback) => {
-    if (!isUrlRequest(component)) return callback(null, component)
+    if (!isUrlRequest(component)) {
+      const { rawResourcePath } = parseRequest(component)
+      return callback(null, rawResourcePath)
+    }
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
