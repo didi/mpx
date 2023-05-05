@@ -48,7 +48,7 @@ module.exports = function (content) {
   const mode = mpx.mode
   const env = mpx.env
   const i18n = mpx.i18n
-  const usingComponentsModuleId = mpx.usingComponentsModuleId
+  const usingComponentsModuleId = mpx.globalComponentsModuleId
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -93,7 +93,7 @@ module.exports = function (content) {
 
   let output = ''
   const callback = this.async()
-  let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+  let usingComponents = [].concat(Object.keys(mpx.globalComponents))
   let componentPlaceholder = []
   let componentGenerics = {}
   let currentUsingComponentsModuleId = {}
@@ -118,12 +118,11 @@ module.exports = function (content) {
               usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
               async.eachOf(ret.usingComponents, (component, name, callback) => {
                 if (!isUrlRequest(component)) {
-                  const { queryObj } = parseRequest(component)
-                  if (!queryObj.moduleId) return callback()
+                  const moduleId = mpx.getModuleId(component, ctorType)
                   if (ctorType === 'app') {
-                    usingComponentsModuleId[name] = queryObj.moduleId
+                    usingComponentsModuleId[name] = moduleId
                   } else {
-                    currentUsingComponentsModuleId[name] = queryObj.moduleId
+                    currentUsingComponentsModuleId[name] = moduleId
                   }
                   return callback()
                 }

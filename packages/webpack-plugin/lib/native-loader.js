@@ -125,7 +125,7 @@ module.exports = function (content) {
       } catch (e) {
         return callback(e)
       }
-      let usingComponents = Object.keys(mpx.usingComponents)
+      let usingComponents = Object.keys(mpx.globalComponents)
       if (json.usingComponents) {
         fixUsingComponent(json.usingComponents, mode)
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
