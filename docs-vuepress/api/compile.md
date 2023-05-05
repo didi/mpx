@@ -1404,6 +1404,56 @@ module.exports = defineConfig({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
+### customComponentModuleId
+
+- **详细**：
+
+Mpx 框架 webpack-plugin 也提供了 customComponentModuleId 方法可以让用户自定义组件id(moduleId)，
+我们用组件id来实现了输出支付宝小程序的样式隔离功能。 
+
+当小程序中引用某个插件中的自定义组件(注意此插件需为Mpx框架开发)，在父级组件或页面中，无法准确获取该自定义组件的 moduleId，
+会导致输出支付宝小程序开启样式隔离时，组件指定它所在节点的默认样式功能不可用，若想在输出支付宝小程序时使用:host选择器，则需要使用该方法。
+
+当然除了上述场景之外，开发者也可以自定义控制组件id。
+
+需要注意的是，该方法需要具有**稳定性和唯一性**，即同样的输入不管什么时候执行都要有同样的返回以及不同的的输入一定会得到不同的输出。
+
+- **类型**：`Function`
+
+- **示例**：
+```js
+// 
+new MpxWebpackPlugin({
+  customComponentModuleId: (resourcePath) => {
+    // resourcePath: 组件资源路径
+    if (resourcePath === 'plugin://myPlugin/list') {
+      return 'plugin-list-1'
+    }
+    return null
+  }
+})
+```
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        customComponentModuleId: (resourcePath) => {
+          // resourcePath: 组件资源路径
+          if (resourcePath === 'plugin://myPlugin/list') {
+            return 'plugin-list-1'
+          }
+          return null
+        }
+      }
+    }
+  }
+})
+```
+
+
 ## MpxWebpackPlugin static methods
 
 `MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
