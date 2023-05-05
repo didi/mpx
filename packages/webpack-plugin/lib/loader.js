@@ -69,8 +69,9 @@ module.exports = function (content) {
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
+  const isApp = ctorType === 'app'
 
-  if (ctorType === 'app') {
+  if (isApp) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
@@ -78,7 +79,7 @@ module.exports = function (content) {
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = mpx.getModuleId(filePath, ctorType)
+  const moduleId = mpx.getModuleId(filePath, isApp)
 
   const parts = parseComponent(content, {
     filePath,
@@ -118,8 +119,8 @@ module.exports = function (content) {
               usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
               async.eachOf(ret.usingComponents, (component, name, callback) => {
                 if (!isUrlRequest(component)) {
-                  const moduleId = mpx.getModuleId(component, ctorType)
-                  if (ctorType === 'app') {
+                  const moduleId = mpx.getModuleId(component, isApp)
+                  if (isApp) {
                     usingComponentsModuleId[name] = moduleId
                   } else {
                     currentUsingComponentsModuleId[name] = moduleId
@@ -132,7 +133,7 @@ module.exports = function (content) {
                   }
                   const { rawResourcePath } = parseRequest(resource)
                   const moduleId = mpx.getModuleId(rawResourcePath, ctorType)
-                  if (ctorType === 'app') {
+                  if (isApp) {
                     usingComponentsModuleId[name] = moduleId
                   } else {
                     currentUsingComponentsModuleId[name] = moduleId
@@ -160,7 +161,7 @@ module.exports = function (content) {
       currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, usingComponentsModuleId)
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
+        if (isApp && !queryObj.isApp) {
           const request = addQuery(this.resource, { isApp: true })
           const el = mpx.webConfig.el || '#app'
           output += `
@@ -220,7 +221,7 @@ module.exports = function (content) {
             output += templateRes.output
             output += stylesRes.output
             output += jsonRes.output
-            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
+            if (isApp && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
               mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
             }
 
@@ -265,7 +266,7 @@ module.exports = function (content) {
       }
 
       // 为app注入i18n
-      if (i18n && ctorType === 'app') {
+      if (i18n && isApp) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
@@ -344,7 +345,7 @@ module.exports = function (content) {
         })
       }
 
-      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
+      if (parts.styles.filter(style => !style.src).length === 0 && isApp && mode === 'ali') {
         output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 

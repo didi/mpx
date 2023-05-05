@@ -601,8 +601,8 @@ class MpxWebpackPlugin {
             }
             return hash(resourcePath)
           },
-          getModuleId: (filePath, ctorType) => {
-            return ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+          getModuleId: (filePath, isApp = false) => {
+            return isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
           },
           addEntry (request, name, callback) {
             const dep = EntryPlugin.createDependency(request, { name })
