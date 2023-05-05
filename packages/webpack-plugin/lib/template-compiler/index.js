@@ -1,4 +1,3 @@
-const JSON5 = require('json5')
 const compiler = require('./compiler')
 const bindThis = require('./bind-this').transform
 const parseRequest = require('../utils/parse-request')

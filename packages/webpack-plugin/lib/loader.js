@@ -78,7 +78,7 @@ module.exports = function (content) {
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = mpx.getModuleId(filePath, isApp)
+  const moduleId = mpx.getModuleId(resourcePath, isApp)
 
   const parts = parseComponent(content, {
     filePath,
