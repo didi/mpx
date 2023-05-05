@@ -48,7 +48,6 @@ module.exports = function (content) {
   const mode = mpx.mode
   const env = mpx.env
   const i18n = mpx.i18n
-  const usingComponentsModuleId = mpx.globalComponentsModuleId
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
@@ -94,71 +93,84 @@ module.exports = function (content) {
 
   let output = ''
   const callback = this.async()
-  let usingComponents = [].concat(Object.keys(mpx.globalComponents))
-  let componentPlaceholder = []
-  let componentGenerics = {}
-  let currentUsingComponentsModuleId = {}
 
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-
-        if (parts.json && parts.json.content) {
-          try {
-            const ret = JSON5.parse(parts.json.content)
-            if (ret.componentPlaceholder) {
-              componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-            }
-            if (ret.componentGenerics) {
-              componentGenerics = Object.assign({}, ret.componentGenerics)
-            }
-            if (ret.usingComponents) {
-              fixUsingComponent(ret.usingComponents, mode)
-              usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-              async.eachOf(ret.usingComponents, (component, name, callback) => {
-                if (!isUrlRequest(component)) {
-                  const moduleId = mpx.getModuleId(component, isApp)
-                  if (isApp) {
-                    usingComponentsModuleId[name] = moduleId
-                  } else {
-                    currentUsingComponentsModuleId[name] = moduleId
-                  }
-                  return callback()
-                }
-                resolve(context, component, loaderContext, (err, resource) => {
-                  if (err) {
-                    return callback(err)
-                  }
-                  const { rawResourcePath } = parseRequest(resource)
-                  const moduleId = mpx.getModuleId(rawResourcePath, ctorType)
-                  if (isApp) {
-                    usingComponentsModuleId[name] = moduleId
-                  } else {
-                    currentUsingComponentsModuleId[name] = moduleId
-                  }
-                  callback()
-                })
-              }, callback)
-            } else {
-              return callback()
-            }
-          } catch (e) {
-            return callback(e)
-          }
-        } else {
-          callback()
-        }
+        callback(null, content)
       })
     },
-    (callback) => {
+    (jsonContent, callback) => {
+      if (!jsonContent) return callback(null, {})
+      let componentPlaceholder = []
+      let componentGenerics = {}
+      let currentUsingComponentsModuleId = {}
+      let usingComponents = [].concat(Object.keys(mpx.globalComponents))
+      const finalCallback = (err) => {
+        currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, mpx.globalComponentsModuleId)
+        callback(err, {
+          componentPlaceholder,
+          componentGenerics,
+          currentUsingComponentsModuleId,
+          usingComponents
+        })
+      }
+      try {
+        const ret = JSON5.parse(parts.json.content)
+        if (ret.componentPlaceholder) {
+          componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
+        }
+        if (ret.componentGenerics) {
+          componentGenerics = Object.assign({}, ret.componentGenerics)
+        }
+        if (ret.usingComponents) {
+          fixUsingComponent(ret.usingComponents, mode)
+          usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          async.eachOf(ret.usingComponents, (component, name, callback) => {
+            if (!isUrlRequest(component)) {
+              const moduleId = mpx.getModuleId(component, isApp)
+              if (isApp) {
+                mpx.globalComponentsModuleId[name] = moduleId
+              } else {
+                currentUsingComponentsModuleId[name] = moduleId
+              }
+              return callback()
+            }
+            resolve(context, component, loaderContext, (err, resource) => {
+              if (err) return callback(err)
+              const { rawResourcePath } = parseRequest(resource)
+              const moduleId = mpx.getModuleId(rawResourcePath, isApp)
+              if (isApp) {
+                mpx.globalComponentsModuleId[name] = moduleId
+              } else {
+                currentUsingComponentsModuleId[name] = moduleId
+              }
+              callback()
+            })
+          }, (err) => {
+            finalCallback(err)
+          })
+        } else {
+          finalCallback(null)
+        }
+      } catch (err) {
+        finalCallback(err)
+      }
+    },
+    (componentCorrelation, callback) => {
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        currentUsingComponentsModuleId,
+        usingComponents
+      } = componentCorrelation
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, usingComponentsModuleId)
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (isApp && !queryObj.isApp) {
