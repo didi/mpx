@@ -162,6 +162,7 @@ class MpxWebpackPlugin {
       include: () => true
     }
     options.customOutputPath = options.customOutputPath || null
+    options.customComponentModuleId = options.customComponentModuleId || null
     options.nativeConfig = Object.assign({
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
@@ -602,6 +603,11 @@ class MpxWebpackPlugin {
             return hash(resourcePath)
           },
           getModuleId: (filePath, isApp = false) => {
+            const customComponentModuleId = this.options.customComponentModuleId
+            if (typeof customComponentModuleId === 'function') {
+              const customModuleId = customComponentModuleId(filePath, isApp)
+              if (customModuleId) return customModuleId
+            }
             return isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
           },
           addEntry (request, name, callback) {

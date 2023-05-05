@@ -316,7 +316,7 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
-          usingComponentsModuleId: JSON5.stringify(currentUsingComponentsModuleId),
+          usingComponentsModuleId: currentUsingComponentsModuleId,
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
