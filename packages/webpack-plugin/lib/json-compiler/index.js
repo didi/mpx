@@ -5,7 +5,6 @@ const parseComponent = require('../parser')
 const config = require('../config')
 const parseRequest = require('../utils/parse-request')
 const evalJSONJS = require('../utils/eval-json-js')
-const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const getJSONContent = require('../utils/get-json-content')
@@ -143,9 +142,18 @@ module.exports = function (content) {
     }
   }
 
-  if (json.usingComponents) {
-    // todo 迁移到rulesRunner中进行
-    fixUsingComponent(json.usingComponents, mode, emitWarning)
+  // 校验异步组件占位符 componentPlaceholder 不为空
+  const { usingComponents, componentPlaceholder = {} } = json
+  if (usingComponents) {
+    for (const compName in usingComponents) {
+      const compPath = usingComponents[compName]
+      if (!/\?root=/g.test(compPath)) continue
+      const compPlaceholder = componentPlaceholder[compName]
+      if (!compPlaceholder) {
+        const errMsg = `An async-component must be with a componentPlaceholder，but "${compName}": "${compPath}" has an incorrect componentPlaceholder：${compPlaceholder}! \n\r`
+        this.emitError(new Error(errMsg))
+      }
+    }
   }
 
   // 快应用补全json配置，必填项
@@ -188,23 +196,6 @@ module.exports = function (content) {
 
   if (rulesRunner) {
     rulesRunner(json)
-  }
-
-  // 校验异步组件占位符
-  // 1. 写了异步组件但是不写 componentPlaceholder
-  // 2. 写了 componentPlaceholder， 但是这个占位符是个无效的自定义组件
-  const { usingComponents, componentPlaceholder = {} } = json
-  if (usingComponents) {
-    for (const compName in usingComponents) {
-      const compPath = usingComponents[compName]
-      const compPlaceholder = componentPlaceholder[compName]
-      if (!/\?root=/g.test(compPath)) continue
-      if (/^(view|text)$/g.test(compPlaceholder)) continue
-      if (!usingComponents[compPlaceholder]) {
-        const errMsg = `An async-component must be with a componentPlaceholder，but "${compName}": "${compPath}" has an incorrect componentPlaceholder：${compPlaceholder}! \n\r`
-        this.emitError(new Error(errMsg))
-      }
-    }
   }
 
   const processComponents = (components, context, callback) => {

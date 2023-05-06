@@ -2,6 +2,7 @@ const runRules = require('../../run-rules')
 const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
+const { capitalToHyphen } = require('../../../utils/string')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -35,15 +36,20 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * @desc 在app.mpx里配置usingComponents作为全局组件
    */
-  function addGlobalComponents (input, { globalComponents }) {
+  function addGlobalComponents (input, { globalComponents, mode }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
+    }
+    if (['ali', 'swan'].includes(mode)) {
+      input = componentNameCapitalToHyphen('usingComponents')(input)
     }
     return input
   }
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
   function aliComponentPlaceholderFallback (input) {
+    // 处理 驼峰转连字符
+    input = componentNameCapitalToHyphen('componentPlaceholder')(input)
     const componentPlaceholder = input.componentPlaceholder
     const usingComponents = input.usingComponents || (input.usingComponents = {})
     for (const cph in componentPlaceholder) {
@@ -64,6 +70,34 @@ module.exports = function getSpec ({ warn, error }) {
       componentPlaceholder[cph] = compName
     }
     return input
+  }
+
+  // 处理 ali swan 的组件名大写字母转连字符：WordExample/wordExample -> word-example
+  function componentNameCapitalToHyphen (type) {
+    return function (input) {
+      // 百度和支付宝不支持大写组件标签名，统一转成带“-”和小写的形式。百度自带标签不会有带大写的情况
+      // 后续可能需要考虑这些平台支持 componentGenerics 后的转换 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/generics.html
+      const obj = input[type]
+      if (obj) {
+        Object.keys(obj).forEach(k => {
+          const newK = capitalToHyphen(k)
+          if (newK !== k) {
+            if (obj[newK]) {
+              warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
+            } else {
+              obj[newK] = obj[k]
+              delete obj[k]
+            }
+          }
+        })
+      }
+      return input
+    }
+  }
+
+  const placeholderHandlersOfAliSwan = {
+    ali: aliComponentPlaceholderFallback,
+    swan: componentNameCapitalToHyphen('componentPlaceholder')
   }
 
   const spec = {
@@ -129,7 +163,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback
+        ...placeholderHandlersOfAliSwan
       },
       {
         ali: addGlobalComponents,
@@ -146,7 +180,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback
+        ...placeholderHandlersOfAliSwan
       },
       {
         ali: addGlobalComponents,
