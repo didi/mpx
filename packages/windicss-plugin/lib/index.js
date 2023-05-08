@@ -9,20 +9,50 @@ const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const path = require('path')
 const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
 const minimatch = require('minimatch')
-
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const loadersPath = path.resolve(__dirname, './loader')
+const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
+const PluginName = 'MpxWindicssPlugin'
 function normalizeOptions (options) {
-  options.windiFile = options.windiFile || 'styles/windi'
-  // options.config = options.config
-  // options.configFiles = options.configFiles
-  options.root = options.root || process.cwd()
-  options.styleIsolation = options.styleIsolation || 'isolated'
-  options.minCount = options.minCount || 2
-  options.scan = options.scan || {}
-  options.transformCSS = options.transformCSS || true
-  options.transformGroups = options.transformGroups || true
-  return options
+  let {
+    // 小程序特有的配置
+    windiFile = 'styles/windi',
+    styleIsolation = 'isolated',
+    minCount = 2,
+    scan = {},
+    // 公共的配置
+    root = process.cwd(),
+    transformCSS = true,
+    transformGroups = true,
+    webOptions = {},
+    configFiles,
+    config,
+    ...rest
+  } = options
+  // web配置，剔除小程序的配置，防影响
+  webOptions = {
+    root,
+    transformCSS,
+    transformGroups,
+    configFiles,
+    config,
+    ...rest,
+    ...webOptions
+  }
+  return {
+    windiFile,
+    root,
+    styleIsolation,
+    minCount,
+    scan,
+    transformCSS,
+    transformGroups,
+    webOptions,
+    configFiles,
+    config,
+    ...rest
+  }
 }
-
 function validateConfig (config, error) {
   if (config.attributify) {
     error('小程序环境下无法使用attributify模式，该配置将被忽略！')
@@ -51,6 +81,10 @@ function getCommonClassesMap (classesMaps, minCount) {
   return commonClassesMap
 }
 
+function getPlugin (compiler, curPlugin) {
+  const plugins = compiler.options.plugins
+  return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
+}
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
@@ -115,11 +149,38 @@ class MpxWindicssPlugin {
   }
 
   apply (compiler) {
+    const mpxPluginInstance = getPlugin(compiler, MpxWebpackPlugin)
+    if (!mpxPluginInstance) {
+      const logger = compiler.getInfrastructureLogger(PluginName)
+      logger.error(new Error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!'))
+      return
+    }
+    const { mode } = mpxPluginInstance.options
     this.options.minify = isProductionLikeMode(compiler.options)
-
-    compiler.hooks.thisCompilation.tap('MpxWindicssPlugin', (compilation) => {
+    if (mode === 'web') {
+      // web直接用插件
+      const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
+      if (!getPlugin(compiler, WindiCSSWebpackPlugin)) {
+        compiler.options.plugins.push(new WindiCSSWebpackPlugin(this.options.webOptions))
+      }
+      // 给app注入windicss模块
+      compiler.options.module.rules.push({
+        test: /\.js$/,
+        resourceQuery: /isApp/,
+        enforce: 'post',
+        use: [{
+          loader: transAppLoader,
+          options: {
+            virtualModulePath: this.options.webOptions.virtualModulePath || ''
+          }
+        }]
+      })
+      // 后续似乎不需要处理了，先return
+      return
+    }
+    compiler.hooks.thisCompilation.tap(PluginName, (compilation) => {
       compilation.hooks.processAssets.tapPromise({
-        name: 'MpxWindicssPlugin',
+        name: PluginName,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
         const { __mpx__: mpx } = compilation
@@ -130,18 +191,10 @@ class MpxWindicssPlugin {
         //   compilation.warnings.push(new Error(msg))
         // }
 
-        if (!mpx) {
-          error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!')
-          return
-        }
-
         const { mode, dynamicEntryInfo, appInfo } = mpx
-
-        // 输出web时暂不处理
         if (mode === 'web') return
 
         const config = this.loadConfig(compilation, error)
-
         const processor = new Processor(config)
 
         const { template: templateExt, styles: styleExt } = mpxConfig[mode].typeExtMap
