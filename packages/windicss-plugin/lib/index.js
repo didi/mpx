@@ -149,14 +149,14 @@ class MpxWindicssPlugin {
   }
 
   apply (compiler) {
-    this.options.minify = isProductionLikeMode(compiler.options)
-    const mpxWebpackPlugin = getPlugin(compiler, MpxWebpackPlugin)
-    if (!mpxWebpackPlugin) {
+    const mpxPluginInstance = getPlugin(compiler, MpxWebpackPlugin)
+    if (!mpxPluginInstance) {
       const logger = compiler.getInfrastructureLogger(PluginName)
       logger.error(new Error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!'))
       return
     }
-    const { mode } = mpxWebpackPlugin.options
+    const { mode } = mpxPluginInstance.options
+    this.options.minify = isProductionLikeMode(compiler.options)
     if (mode === 'web') {
       // web直接用插件
       const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
