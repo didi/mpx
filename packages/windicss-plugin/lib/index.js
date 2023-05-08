@@ -17,7 +17,6 @@ function normalizeOptions (options) {
   let {
     // 小程序特有的配置
     windiFile = 'styles/windi',
-    minify = false,
     styleIsolation = 'isolated',
     minCount = 2,
     scan = {},
@@ -42,7 +41,6 @@ function normalizeOptions (options) {
   }
   return {
     windiFile,
-    minify,
     root,
     styleIsolation,
     minCount,
@@ -87,6 +85,10 @@ function getPlugin (compiler, curPlugin) {
   const plugins = compiler.options.plugins
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
+const isProductionLikeMode = options => {
+  return options.mode === 'production' || !options.mode
+}
+
 class MpxWindicssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
@@ -147,6 +149,7 @@ class MpxWindicssPlugin {
   }
 
   apply (compiler) {
+    this.options.minify = isProductionLikeMode(compiler.options)
     const mpxWebpackPlugin = getPlugin(compiler, MpxWebpackPlugin)
     if (!mpxWebpackPlugin) {
       const logger = compiler.getInfrastructureLogger(PluginName)
