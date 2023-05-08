@@ -9,7 +9,7 @@ const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const path = require('path')
 const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
 const minimatch = require('minimatch')
-
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const loadersPath = path.resolve(__dirname, './loader')
 const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
 const PluginName = 'MpxWindicssPlugin'
@@ -26,6 +26,8 @@ function normalizeOptions (options) {
     transformCSS = true,
     transformGroups = true,
     webOptions = {},
+    configFiles,
+    config,
     ...rest
   } = options
   // web配置，剔除小程序的配置，防影响
@@ -33,6 +35,8 @@ function normalizeOptions (options) {
     root,
     transformCSS,
     transformGroups,
+    configFiles,
+    config,
     ...rest,
     ...webOptions
   }
@@ -46,6 +50,8 @@ function normalizeOptions (options) {
     transformCSS,
     transformGroups,
     webOptions,
+    configFiles,
+    config,
     ...rest
   }
 }
@@ -77,7 +83,7 @@ function getCommonClassesMap (classesMaps, minCount) {
   return commonClassesMap
 }
 
-function hasPlugin (compiler, curPlugin) {
+function getPlugin (compiler, curPlugin) {
   const plugins = compiler.options.plugins
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
@@ -141,10 +147,17 @@ class MpxWindicssPlugin {
   }
 
   apply (compiler) {
-    if (process.env.MPX_CLI_MODE === 'web') {
+    const mpxWebpackPlugin = getPlugin(compiler, MpxWebpackPlugin)
+    if (!mpxWebpackPlugin) {
+      const logger = compiler.getInfrastructureLogger(PluginName)
+      logger.error(new Error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!'))
+      return
+    }
+    const { mode } = mpxWebpackPlugin.options
+    if (mode === 'web') {
       // web直接用插件
       const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
-      if (!hasPlugin(compiler, WindiCSSWebpackPlugin)) {
+      if (!getPlugin(compiler, WindiCSSWebpackPlugin)) {
         compiler.options.plugins.push(new WindiCSSWebpackPlugin(this.options.webOptions))
       }
       // 给app注入windicss模块
@@ -174,11 +187,6 @@ class MpxWindicssPlugin {
         // const warn = (msg) => {
         //   compilation.warnings.push(new Error(msg))
         // }
-
-        if (!mpx) {
-          error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!')
-          return
-        }
 
         const { mode, dynamicEntryInfo, appInfo } = mpx
         if (mode === 'web') return
