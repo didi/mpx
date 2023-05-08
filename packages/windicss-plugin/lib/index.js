@@ -12,7 +12,6 @@ const minimatch = require('minimatch')
 
 function normalizeOptions (options) {
   options.windiFile = options.windiFile || 'styles/windi'
-  options.minify = options.minify || false
   // options.config = options.config
   // options.configFiles = options.configFiles
   options.root = options.root || process.cwd()
@@ -50,6 +49,10 @@ function getCommonClassesMap (classesMaps, minCount) {
   })
 
   return commonClassesMap
+}
+
+const isProductionLikeMode = options => {
+  return options.mode === 'production' || !options.mode
 }
 
 class MpxWindicssPlugin {
@@ -112,6 +115,8 @@ class MpxWindicssPlugin {
   }
 
   apply (compiler) {
+    this.options.minify = isProductionLikeMode(compiler.options)
+
     compiler.hooks.thisCompilation.tap('MpxWindicssPlugin', (compilation) => {
       compilation.hooks.processAssets.tapPromise({
         name: 'MpxWindicssPlugin',
