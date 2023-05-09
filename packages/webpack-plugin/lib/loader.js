@@ -99,7 +99,7 @@ module.exports = function (content) {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        callback(null, content)
+        callback(null, content || {})
       })
     },
     (jsonContent, callback) => {
@@ -118,7 +118,7 @@ module.exports = function (content) {
         })
       }
       try {
-        const ret = JSON5.parse(parts.json.content)
+        const ret = JSON5.parse(jsonContent)
         if (ret.componentPlaceholder) {
           componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
         }
