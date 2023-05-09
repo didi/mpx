@@ -6,8 +6,9 @@ const createHelpers = require('./helpers')
 const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
-const fixUsingComponent = require('./utils/fix-using-component')
+// const fixUsingComponent = require('./utils/fix-using-component')
 const { JSON_JS_EXT } = require('./utils/const')
+const getRulesRunner = require('./platform')
 
 module.exports = function (content) {
   this.cacheable()
@@ -89,6 +90,18 @@ module.exports = function (content) {
     })
   }
 
+  const emitWarning = (msg) => {
+    this.emitWarning(
+      new Error('[native-loader][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[native-loader][' + this.resource + ']: ' + msg)
+    )
+  }
+
   // 先读取json获取usingComponents信息
   async.waterfall([
     (callback) => {
@@ -125,9 +138,28 @@ module.exports = function (content) {
       } catch (e) {
         return callback(e)
       }
+      const rulesRunnerOptions = {
+        mode,
+        mpx,
+        srcMode,
+        type: 'json',
+        waterfall: true,
+        warn: emitWarning,
+        error: emitError
+      }
+      if (!isApp) {
+        rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+        // polyfill global usingComponents
+        // todo 传入rulesRunner中进行按平台转换
+        rulesRunnerOptions.data = {
+          globalComponents: mpx.usingComponents
+        }
+      }
       let usingComponents = Object.keys(mpx.usingComponents)
       if (json.usingComponents) {
-        fixUsingComponent(json.usingComponents, mode)
+        // fixUsingComponent(json.usingComponents, mode)
+        const rulesRunner = getRulesRunner(rulesRunnerOptions)
+        if (rulesRunner) rulesRunner(json)
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
       }
       const {

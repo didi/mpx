@@ -150,8 +150,8 @@ module.exports = function (content) {
       if (!/\?root=/g.test(compPath)) continue
       const compPlaceholder = componentPlaceholder[compName]
       if (!compPlaceholder) {
-        const errMsg = `An async-component must be with a componentPlaceholder，but "${compName}": "${compPath}" has an incorrect componentPlaceholder：${compPlaceholder}! \n\r`
-        this.emitError(new Error(errMsg))
+        const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
+        emitError(errMsg)
       }
     }
   }
@@ -185,17 +185,19 @@ module.exports = function (content) {
     rulesRunnerOptions.data = {
       globalComponents: mpx.usingComponents
     }
-  } else {
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
-    }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
 
   if (rulesRunner) {
     rulesRunner(json)
+  }
+
+  if (isApp) {
+    // 保存全局注册组件
+    if (json.usingComponents) {
+      this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
+    }
   }
 
   const processComponents = (components, context, callback) => {

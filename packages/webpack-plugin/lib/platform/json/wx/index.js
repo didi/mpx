@@ -36,12 +36,12 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * @desc 在app.mpx里配置usingComponents作为全局组件
    */
+  // L180 1. 保存全局组件放到 runRules 后，校验放前面
+  // native-loader/loaer.js 116 执行 runRules fixUsingComponents ，参考 json-compiler 创建 ruleRunner
+
   function addGlobalComponents (input, { globalComponents, mode }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
-    }
-    if (['ali', 'swan'].includes(mode)) {
-      input = componentNameCapitalToHyphen('usingComponents')(input)
     }
     return input
   }
@@ -79,15 +79,27 @@ module.exports = function getSpec ({ warn, error }) {
       // 后续可能需要考虑这些平台支持 componentGenerics 后的转换 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/generics.html
       const obj = input[type]
       if (obj) {
-        Object.keys(obj).forEach(k => {
-          const newK = capitalToHyphen(k)
-          if (newK !== k) {
+        Object.entries(obj).forEach(([k, v]) => {
+          const keyNeed = /[A-Z]/g.test(k)
+          const valueNeed = /A-Z/g.test(v)
+
+          let newK
+          let newV
+
+          if (keyNeed) {
+            newK = capitalToHyphen(k)
             if (obj[newK]) {
               warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
             } else {
-              obj[newK] = obj[k]
+              obj[newK] = newV || v
               delete obj[k]
             }
+          }
+
+          // componentPlaceholder 的 value 也需要变更
+          if (type === 'componentPlaceholder' && valueNeed) {
+            newV = capitalToHyphen(v)
+            obj[newK || k] = newV
           }
         })
       }
@@ -95,9 +107,9 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
-  const placeholderHandlersOfAliSwan = {
-    ali: aliComponentPlaceholderFallback,
-    swan: componentNameCapitalToHyphen('componentPlaceholder')
+  const ruleOfUsingComponentCapitalToHyphen = {
+    ali: componentNameCapitalToHyphen('usingComponents'),
+    swan: componentNameCapitalToHyphen('usingComponents')
   }
 
   const spec = {
@@ -163,7 +175,8 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'componentPlaceholder',
-        ...placeholderHandlersOfAliSwan
+        ali: aliComponentPlaceholderFallback,
+        swan: deletePath()
       },
       {
         ali: addGlobalComponents,
@@ -171,7 +184,8 @@ module.exports = function getSpec ({ warn, error }) {
         qq: addGlobalComponents,
         tt: addGlobalComponents,
         jd: addGlobalComponents
-      }
+      },
+      ruleOfUsingComponentCapitalToHyphen
     ],
     component: [
       {
@@ -180,14 +194,16 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'componentPlaceholder',
-        ...placeholderHandlersOfAliSwan
+        ali: aliComponentPlaceholderFallback,
+        swan: deletePath()
       },
       {
         ali: addGlobalComponents,
         swan: addGlobalComponents,
         qq: addGlobalComponents,
         tt: addGlobalComponents
-      }
+      },
+      ruleOfUsingComponentCapitalToHyphen
     ],
     tabBar: {
       list: [
