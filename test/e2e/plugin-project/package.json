@@ -7,6 +7,7 @@
     "watch": "node ./build/build.js -w",
     "watch:prod": "node ./build/build.js -w -p",
     "build": "node ./build/build.js -p",
+    "build:ali": "npm run build --mode=ali",
     "build:dev": "node ./build/build.js",
     "copyPlugin": "sh ./copyWebpackPlugin.sh",
     "watch:cross": "npm run watch --modes=wx,ali,web",
