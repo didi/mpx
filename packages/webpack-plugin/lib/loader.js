@@ -34,7 +34,6 @@ module.exports = function (content) {
   }
 
   const mpx = this.getMpx()
-  const context = this.context
   if (!mpx) {
     return content
   }
@@ -99,7 +98,7 @@ module.exports = function (content) {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        callback(null, content || {})
+        callback(null, content || '{}')
       })
     },
     (jsonContent, callback) => {
@@ -138,7 +137,7 @@ module.exports = function (content) {
               }
               return callback()
             }
-            resolve(context, component, loaderContext, (err, resource) => {
+            resolve(this.context, component, loaderContext, (err, resource) => {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
