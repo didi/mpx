@@ -12,7 +12,7 @@ const minimatch = require('minimatch')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const loadersPath = path.resolve(__dirname, './loaders')
 const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
-const PluginName = 'MpxWindicssPlugin'
+const PLUGIN_NAME = 'MpxWindicssPlugin'
 
 function normalizeOptions (options) {
   let {
@@ -43,6 +43,8 @@ function normalizeOptions (options) {
     ...rest,
     ...webOptions
   }
+  // virtualModulePath暂不支持配置
+  webOptions.virtualModulePath = ''
   return {
     windiFile,
     root,
@@ -157,7 +159,7 @@ class MpxWindicssPlugin {
   apply (compiler) {
     const mpxPluginInstance = getPlugin(compiler, MpxWebpackPlugin)
     if (!mpxPluginInstance) {
-      const logger = compiler.getInfrastructureLogger(PluginName)
+      const logger = compiler.getInfrastructureLogger(PLUGIN_NAME)
       logger.error(new Error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!'))
       return
     }
@@ -174,19 +176,22 @@ class MpxWindicssPlugin {
         test: /\.js$/,
         resourceQuery: /isApp/,
         enforce: 'post',
-        use: [{
-          loader: transAppLoader,
-          options: {
-            virtualModulePath: this.options.webOptions.virtualModulePath || ''
-          }
-        }]
+        use: [transAppLoader]
       })
-      // 后续似乎不需要处理了，先return
+
+      compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
+        for (const dep of compilation.fileDependencies) {
+          if (/virtual:windi-?(.*?)\.css/.test(dep)) {
+            // 移除虚拟模块产生的fileDeps避免初始watch执行两次
+            compilation.fileDependencies.delete(dep)
+          }
+        }
+      })
       return
     }
-    compiler.hooks.thisCompilation.tap(PluginName, (compilation) => {
+    compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
       compilation.hooks.processAssets.tapPromise({
-        name: PluginName,
+        name: PLUGIN_NAME,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
         const { __mpx__: mpx } = compilation
@@ -197,8 +202,7 @@ class MpxWindicssPlugin {
           compilation.warnings.push(new Error(msg))
         }
 
-        const { mode, dynamicEntryInfo, appInfo } = mpx
-        if (mode === 'web') return
+        const { dynamicEntryInfo, appInfo } = mpx
 
         const config = this.loadConfig(compilation, error)
         const processor = new Processor(config)
