@@ -10,9 +10,10 @@ const path = require('path')
 const { loadConfiguration, defaultConfigureFiles } = require('@windicss/config')
 const minimatch = require('minimatch')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const loadersPath = path.resolve(__dirname, './loader')
+const loadersPath = path.resolve(__dirname, './loaders')
 const transAppLoader = path.resolve(loadersPath, 'windicss-app.js')
 const PluginName = 'MpxWindicssPlugin'
+
 function normalizeOptions (options) {
   let {
     // 小程序特有的配置
@@ -22,20 +23,23 @@ function normalizeOptions (options) {
     scan = {},
     // 公共的配置
     root = process.cwd(),
+    config,
+    configFiles,
     transformCSS = true,
     transformGroups = true,
     webOptions = {},
-    configFiles,
-    config,
     ...rest
   } = options
   // web配置，剔除小程序的配置，防影响
   webOptions = {
     root,
+    config,
+    configFiles,
     transformCSS,
     transformGroups,
-    configFiles,
-    config,
+    scan: {
+      include: ['src/**/*']
+    },
     ...rest,
     ...webOptions
   }
@@ -53,6 +57,7 @@ function normalizeOptions (options) {
     ...rest
   }
 }
+
 function validateConfig (config, error) {
   if (config.attributify) {
     error('小程序环境下无法使用attributify模式，该配置将被忽略！')
@@ -85,6 +90,7 @@ function getPlugin (compiler, curPlugin) {
   const plugins = compiler.options.plugins
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
+
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
@@ -187,9 +193,9 @@ class MpxWindicssPlugin {
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
         }
-        // const warn = (msg) => {
-        //   compilation.warnings.push(new Error(msg))
-        // }
+        const warn = (msg) => {
+          compilation.warnings.push(new Error(msg))
+        }
 
         const { mode, dynamicEntryInfo, appInfo } = mpx
         if (mode === 'web') return
@@ -244,7 +250,7 @@ class MpxWindicssPlugin {
           const style = new windiParser.CSSParser(content, processor).parse()
           const output = style.build()
           if (!output || output.length <= 0) {
-            error(`${file} 解析style错误,检查样式文件输入!`)
+            error(`${file} 解析style错误，请检查样式文件输入！`)
             return
           }
           assets[file] = getRawSource(output)
@@ -327,6 +333,10 @@ class MpxWindicssPlugin {
         }
 
         const enablePreflight = !!config.preflight
+
+        if (enablePreflight) {
+          warn('由于底层实现的差异，开启enablePreflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！')
+        }
 
         const preflightOptions = Object.assign(
           {
