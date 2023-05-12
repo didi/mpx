@@ -88,7 +88,7 @@ export function getWxsMixin (wxsModules) {
 }
 
 function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, tabBarMap }) {
-  let option = {}
+  const option = {}
   // 对于app中的组件需要全局注册
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
@@ -348,7 +348,7 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
       VueRouter,
       tabBarMap
     })
-    if (pinia && window.__INITIAL_STATE__) {
+    if (window.__INITIAL_STATE__) {
       pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
     }
     app.$mount(webConfig.el || '#app')

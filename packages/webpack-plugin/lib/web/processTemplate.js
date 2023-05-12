@@ -39,8 +39,7 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    webConfig,
-    useSSR
+    webConfig
     // autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
@@ -50,10 +49,10 @@ module.exports = function (template, {
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
-    const idName = webConfig.el?.match(/#(.*)/)?.[1] || 'app'
-    const content = useSSR
-      ? `<div id="${idName}"><div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div></div>`
-      : '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+    const { el, useSSR } = webConfig
+    const templateContent = '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+    const idName = el?.match(/#(.*)/)?.[1] || 'app'
+    const content = useSSR ? `<div id="${idName}">${templateContent}</div>` : templateContent
     template = {
       tag: 'template',
       content

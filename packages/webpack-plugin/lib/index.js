@@ -169,7 +169,6 @@ class MpxWebpackPlugin {
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
-    options.useSSR = options.useSSR || false
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -594,7 +593,6 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableAliRequireAsync: this.options.enableAliRequireAsync,
-          useSSR: this.options.useSSR,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
