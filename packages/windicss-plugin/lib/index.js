@@ -26,16 +26,23 @@ function normalizeOptions (options) {
     transformGroups = true,
     webOptions = {},
     configFiles,
-    config,
+    config = {},
     ...rest
   } = options
   // web配置，剔除小程序的配置，防影响
+  // 禁用preflight
+  config.preflight = false
   webOptions = {
     root,
     transformCSS,
     transformGroups,
     configFiles,
-    config,
+    config: Object({
+      extract: {
+        include: ['src/**/*.{mpx, vue, html, mdx, pug, jsx, tsx}'],
+        exclude: ['node_modules', '.git', '.next']
+      }
+    }, config),
     ...rest,
     ...webOptions
   }
@@ -373,7 +380,6 @@ class MpxWindicssPlugin {
           const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
           appStyleSource.add(assets[appStyleFile] || '')
           assets[appStyleFile] = appStyleSource
-
           dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
             const commentConfig = commentConfigMap[filename] || {}
             const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
