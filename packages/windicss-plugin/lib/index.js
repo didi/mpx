@@ -172,9 +172,12 @@ class MpxWindicssPlugin {
       }
       // 给app注入windicss模块
       compiler.options.module.rules.push({
-        test: /\.js$/,
-        resourceQuery: /isApp/,
-        enforce: 'post',
+        test: /\.mpx$/,
+        resourceQuery: {
+          and: [/isApp/],
+          not: [/type=.*/]
+        },
+        enforce: 'pre',
         use: [{
           loader: transAppLoader,
           options: {
