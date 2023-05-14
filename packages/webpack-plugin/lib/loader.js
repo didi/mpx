@@ -130,9 +130,7 @@ module.exports = function (content) {
           async.eachOf(ret.usingComponents, (component, name, callback) => {
             if (!isUrlRequest(component)) {
               const moduleId = mpx.getModuleId(component, isApp)
-              if (isApp) {
-                mpx.globalComponentsModuleId[name] = moduleId
-              } else {
+              if (!isApp) {
                 currentUsingComponentsModuleId[name] = moduleId
               }
               return callback()
@@ -141,9 +139,7 @@ module.exports = function (content) {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
-              if (isApp) {
-                mpx.globalComponentsModuleId[name] = moduleId
-              } else {
+              if (!isApp) {
                 currentUsingComponentsModuleId[name] = moduleId
               }
               callback()
