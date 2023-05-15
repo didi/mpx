@@ -12,12 +12,11 @@ const tsLoaderWatchRunFilterLoaders = new Set([
 ])
 
 module.exports = (loaders, loaderIndex) => {
-  for (let len = loaders.length; len > 0; --len) {
-    const currentLoader = loaders[len - 1]
+  for (let i = loaderIndex; i >= 0; i--) {
+    const currentLoader = loaders[i]
     if (!has(tsLoaderWatchRunFilterLoaders, filterLoaderPath => currentLoader.path.endsWith(filterLoaderPath))) {
-      break
+      return i
     }
-    loaderIndex--
   }
   return loaderIndex
 }
