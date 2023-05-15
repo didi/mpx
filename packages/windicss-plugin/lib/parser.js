@@ -1,5 +1,4 @@
 const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/template-compiler/compiler')
-
 function parseClasses (content) {
   const output = []
   if (!content) return output

@@ -173,12 +173,11 @@ class MpxWindicssPlugin {
       }
       // 给app注入windicss模块
       compiler.options.module.rules.push({
-        test: /\.js$/,
+        test: /\.mpx$/,
         resourceQuery: /isApp/,
-        enforce: 'post',
+        enforce: 'pre',
         use: [transAppLoader]
       })
-
       compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
         for (const dep of compilation.fileDependencies) {
           if (/virtual:windi-?(.*?)\.css/.test(dep)) {
@@ -387,7 +386,6 @@ class MpxWindicssPlugin {
           const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
           appStyleSource.add(assets[appStyleFile] || '')
           assets[appStyleFile] = appStyleSource
-
           dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
             const commentConfig = commentConfigMap[filename] || {}
             const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
