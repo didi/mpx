@@ -31,8 +31,6 @@ function normalizeOptions (options) {
     ...rest
   } = options
   // web配置，剔除小程序的配置，防影响
-  // 禁用preflight
-  config.preflight = false
   webOptions = {
     root,
     config,
