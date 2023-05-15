@@ -18,7 +18,7 @@ class RecordGlobalComponentsDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const { usingComponents, rawUsingComponents, context } = this
-    const resolver = compilation.resolverFactory.get("normal", module.resolveOptions)
+    const resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     Object.keys(usingComponents).forEach((key) => {
       const request = usingComponents[key]
       const rawRequest = rawUsingComponents[key]
@@ -26,7 +26,8 @@ class RecordGlobalComponentsDependency extends NullDependency {
         const moduleId = mpx.getModuleId(rawRequest, false)
         mpx.globalComponentsModuleId[key] = moduleId
       } else {
-        resolver.resolve({}, this.context, rawRequest, {}, (err, resource, info) => {
+        resolver.resolve({}, this.context, rawRequest, {}, (err, resource) => {
+          if (err) return
           const moduleId = mpx.getModuleId(resource, false)
           mpx.globalComponentsModuleId[key] = moduleId
         })
