@@ -145,7 +145,6 @@ module.exports = function (content) {
         try {
           const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
-            // fixUsingComponent(ret.usingComponents, mode)
             const rulesRunner = getRulesRunner(rulesRunnerOptions)
             if (rulesRunner) rulesRunner(ret)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
