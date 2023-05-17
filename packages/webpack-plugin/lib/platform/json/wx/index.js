@@ -36,8 +36,6 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * @desc 在app.mpx里配置usingComponents作为全局组件
    */
-  // L180 1. 保存全局组件放到 runRules 后，校验放前面
-  // native-loader/loaer.js 116 执行 runRules fixUsingComponents ，参考 json-compiler 创建 ruleRunner
 
   function addGlobalComponents (input, { globalComponents, mode }) {
     if (globalComponents) {
@@ -96,7 +94,7 @@ module.exports = function getSpec ({ warn, error }) {
             }
           }
 
-          // componentPlaceholder 的 value 也需要变更
+          // componentPlaceholder 的 value 也需要转换
           if (type === 'componentPlaceholder' && valueNeed) {
             newV = capitalToHyphen(v)
             obj[newK || k] = newV

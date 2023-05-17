@@ -157,7 +157,6 @@ module.exports = function (content) {
       }
       let usingComponents = Object.keys(mpx.usingComponents)
       if (json.usingComponents) {
-        // fixUsingComponent(json.usingComponents, mode)
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
         if (rulesRunner) rulesRunner(json)
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
