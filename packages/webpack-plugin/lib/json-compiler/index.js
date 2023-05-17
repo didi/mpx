@@ -193,11 +193,9 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
-  if (isApp) {
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
-    }
+  if (isApp && json.usingComponents) {
+    // 在 rulesRunner 运行后保存全局注册组件
+    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
   }
 
   const processComponents = (components, context, callback) => {
