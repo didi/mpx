@@ -1,8 +1,10 @@
 const { Processor } = require('windicss/lib')
+const { Style, Property, StyleSheet } = require('windicss/utils/style')
 const windiParser = require('windicss/utils/parser')
 const { parseClasses, parseStrings, parseTags, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
 const { buildAliasTransformer, transformGroups, mpEscape, cssRequiresTransform } = require('./transform')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
+const platformPreflightsMap = require('./platform')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
@@ -16,46 +18,49 @@ const PLUGIN_NAME = 'MpxWindicssPlugin'
 
 function normalizeOptions (options) {
   let {
-    // 小程序特有的配置
-    windiFile = 'styles/windi',
-    styleIsolation = 'isolated',
-    minCount = 2,
-    scan = {},
-    // 公共的配置
+    // 公共配置
     root = process.cwd(),
     config,
     configFiles,
     transformCSS = true,
     transformGroups = true,
+    preflight = false,
+    // 小程序专属配置
+    scan = {},
+    windiFile = 'styles/windi',
+    styleIsolation = 'isolated',
+    minCount = 2,
+    // web专属配置
     webOptions = {},
     ...rest
   } = options
-  // web配置，剔除小程序的配置，防影响
+
   webOptions = {
     root,
     config,
     configFiles,
     transformCSS,
     transformGroups,
+    preflight,
     scan: {
       include: ['src/**/*']
     },
     ...rest,
     ...webOptions
   }
-  // virtualModulePath暂不支持配置
-  webOptions.virtualModulePath = ''
+
   return {
-    windiFile,
     root,
-    styleIsolation,
-    minCount,
-    scan,
+    config,
+    configFiles,
     transformCSS,
     transformGroups,
+    preflight,
+    scan,
+    windiFile,
+    styleIsolation,
+    minCount,
     webOptions,
-    configFiles,
-    config,
     ...rest
   }
 }
@@ -93,7 +98,26 @@ function getPlugin (compiler, curPlugin) {
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
 
-const isProductionLikeMode = options => {
+function createGlobalPreflightStyle (processor, selector, properties = {}) {
+  const style = new Style(selector)
+
+  Object.entries(properties).forEach(([key, value]) => {
+    style.add(Array.isArray(value)
+      ? value.map(function (v) {
+        return new Property(key, v)
+      })
+      : new Property(key, typeof value === 'function'
+        ? value(function (path, defaultValue) {
+          return processor.theme(path, defaultValue)
+        })
+        : value))
+  })
+
+  style.updateMeta('base', 'preflight', 0, 1, true)
+  return style
+}
+
+function isProductionLikeMode (options) {
   return options.mode === 'production' || !options.mode
 }
 
@@ -102,20 +126,36 @@ class MpxWindicssPlugin {
     this.options = normalizeOptions(options)
   }
 
-  generateStyle (processor, classesMap = {}, preflightOptions = {}) {
-    const classes = Object.keys(classesMap).join(' ')
+  generateStyle (processor, classesMap, isMain) {
+    const classes = Object.keys(classesMap || {}).join(' ')
+    const { preflightOptions, minify, mode } = this
 
-    let styleSheet = processor.interpret(classes).styleSheet
-    if (preflightOptions.enablePreflight) {
-      const { html, includeAll, includeBase, includeGlobal, includePlugin } = preflightOptions
-      styleSheet = processor.preflight(includeAll ? null : html, includeBase, includeGlobal, includePlugin).extend(styleSheet)
-    }
+    const styleSheet = processor.interpret(classes).styleSheet
+
     styleSheet.children.forEach((style) => {
       if (style.selector) {
         style.selector = mpEscape(style.selector)
       }
     })
-    return styleSheet.sort().combine().build(this.options.minify)
+
+    if (isMain) {
+      if (preflightOptions && preflightOptions.enablePreflight) {
+        const { html, includeAll, includeBase, includeGlobal, includePlugin } = preflightOptions
+        styleSheet.extend(processor.preflight(includeAll ? null : html, includeBase, includeGlobal, includePlugin))
+      }
+
+      const platformPreflights = platformPreflightsMap[mode] || []
+
+      if (platformPreflights) {
+        const platformStyleSheet = new StyleSheet()
+        platformPreflights.forEach((p) => {
+          platformStyleSheet.add(createGlobalPreflightStyle(processor, p.selector ? p.selector : p.keys.join(', '), p.properties))
+        })
+        styleSheet.extend(platformStyleSheet)
+      }
+    }
+
+    return styleSheet.combine().sort().build(minify)
   }
 
   loadConfig (compilation, error) {
@@ -163,8 +203,8 @@ class MpxWindicssPlugin {
       logger.error(new Error('@mpxjs/windicss-plugin需要与@mpxjs/webpack-plugin配合使用，请检查!'))
       return
     }
-    const { mode } = mpxPluginInstance.options
-    this.options.minify = isProductionLikeMode(compiler.options)
+    const mode = this.mode = mpxPluginInstance.options.mode
+    this.minify = isProductionLikeMode(compiler.options)
     if (mode === 'web') {
       // web直接用插件
       const WindiCSSWebpackPlugin = require('windicss-webpack-plugin')
@@ -235,7 +275,35 @@ class MpxWindicssPlugin {
 
         const tagsMap = {}
         const cssEscape = processor.e
+
+        const preflight = this.options.preflight
+        const enablePreflight = config.preflight !== false && Boolean(preflight)
+
+        if (enablePreflight) {
+          warn('由于底层实现的差异，开启preflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！')
+        }
+
+        const preflightOptions = this.preflightOptions = Object.assign(
+          {
+            includeBase: true,
+            includeGlobal: false,
+            includePlugin: true,
+            enableAll: false,
+            includeAll: false,
+            safelist: [],
+            blocklist: [],
+            alias: {}
+          },
+          typeof config.preflight === 'boolean' ? {} : config.preflight,
+          typeof preflight === 'boolean' ? {} : preflight
+        )
+
+        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
+        preflightOptions.enablePreflight = enablePreflight
+        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
+
         const transformAlias = buildAliasTransformer(config.alias)
+
         const transformClasses = (source, classNameHandler = c => c) => {
           // pre process
           source = transformAlias(source)
@@ -258,6 +326,7 @@ class MpxWindicssPlugin {
           }
           assets[file] = getRawSource(output)
         }
+
         const processTemplate = (file, source) => {
           source = getReplaceSource(source)
 
@@ -324,6 +393,7 @@ class MpxWindicssPlugin {
 
           assets[file] = source
         }
+
         const filterFile = (file) => {
           const { include = [], exclude = [] } = this.options.scan
           for (const pattern of exclude) {
@@ -334,30 +404,6 @@ class MpxWindicssPlugin {
           }
           return true
         }
-
-        const enablePreflight = !!config.preflight
-
-        if (enablePreflight) {
-          warn('由于底层实现的差异，开启enablePreflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！')
-        }
-
-        const preflightOptions = Object.assign(
-          {
-            includeBase: true,
-            includeGlobal: false,
-            includePlugin: true,
-            enableAll: false,
-            includeAll: false,
-            safelist: [],
-            blocklist: [],
-            alias: {}
-          },
-          typeof config.preflight === 'boolean' ? {} : config.preflight
-        )
-
-        preflightOptions.includeAll = preflightOptions.includeAll || preflightOptions.enableAll
-        preflightOptions.enablePreflight = enablePreflight
-        preflightOptions.blocklist = new Set(preflightOptions.blocklist)
 
         Object.entries(assets).forEach(([file, source]) => {
           if (!filterFile(file)) return
@@ -373,7 +419,7 @@ class MpxWindicssPlugin {
 
         // 生成主包windi.css
         let mainWindiFile
-        const mainWindiFileContent = this.generateStyle(processor, mainClassesMap, preflightOptions)
+        const mainWindiFileContent = this.generateStyle(processor, mainClassesMap, true)
         if (mainWindiFileContent) {
           mainWindiFile = this.options.windiFile + styleExt
           if (assets[mainWindiFile]) error(`${mainWindiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
