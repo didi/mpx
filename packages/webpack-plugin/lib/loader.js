@@ -138,7 +138,6 @@ module.exports = function (content) {
                 srcMode,
                 moduleId,
                 isProduction,
-                componentGenerics,
                 jsonConfig: jsonRes.jsonObj,
                 outputPath: queryObj.outputPath || '',
                 localComponentsMap: jsonRes.localComponentsMap,
