@@ -132,6 +132,7 @@ module.exports = function (script, {
           const i18nObj = Object.assign({}, i18n)
           content += `  import VueI18n from 'vue-i18n'
   import { createI18n } from 'vue-i18n-bridge'
+
   Vue.use(VueI18n , { bridge: true })\n`
           const requestObj = {}
           const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
