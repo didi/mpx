@@ -2,6 +2,57 @@ const bindThis = require('../../../lib/template-compiler/bind-this').transform
 const { trim } = require('../../../lib/utils/string')
 
 describe('render function simplify should correct', function () {
+  it('should normal delete is correct', function () {
+    const input = `
+    global.currentInject = {
+      render: function () {
+        a;
+        if (a) {}
+
+        b;
+        c;
+        a ? b : c
+
+        a && b;
+
+        d;
+        e;
+        if (a ? d : e) {}
+        
+        obj1;
+        obj1.a;
+        
+        obj2;
+        obj2.a.b;
+      }
+    }
+    `
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
+    const output = `
+      global.currentInject = {
+        render: function () {
+          if (this._c("a", this.a)) {}
+      
+          this._c("c", this.c);
+      
+          this._c("a", this.a) ? "" : "";
+          this._c("a", this.a) && this._c("b", this.b);
+      
+          this._c("d", this.d);
+      
+          this._c("e", this.e);
+      
+          if (this._c("a", this.a) ? this._c("d", this.d) : this._c("e", this.e)) {}
+      
+          this._c("obj1", this.obj1);
+      
+          this._c("obj2", this.obj2);
+        }
+      };
+    `
+    expect(trim(res)).toBe(trim(output))
+  })
+
   it('should Normal Scope Deletion is correct', function () {
     const input = `
     global.currentInject = {
@@ -39,7 +90,7 @@ describe('render function simplify should correct', function () {
       }
     }
     `
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
       global.currentInject = {
         render: function () {
@@ -96,7 +147,7 @@ describe('render function simplify should correct', function () {
         }
       };
     `
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
       global.currentInject = {
         render: function () {
@@ -150,14 +201,13 @@ describe('render function simplify should correct', function () {
           name8;
           name9;
           ({ key: name8 && !name9 });
-          
-          // 跨block
+
           this._p(name10);
           if (xxx) {
             this._p(name10);
-            if (name10){} // 保留，不会删除外层 name10
+            if (name10){}
           }
-          if (name10){} // 保留
+          if (name10){}
 
           name11;
           Number(name11);
@@ -170,7 +220,7 @@ describe('render function simplify should correct', function () {
         }
       }
     `
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
       global.currentInject = {
         render: function () {
@@ -193,14 +243,14 @@ describe('render function simplify should correct', function () {
       
           ({
             key: "" && ""
-          }); // 跨block
+          });
       
           if (this._c("xxx", this.xxx)) {
-            if (this._c("name10", this.name10)) {} // 保留，不会删除外层 name10
+            if (this._c("name10", this.name10)) {}
       
           }
       
-          if (this._c("name10", this.name10)) {} // 保留
+          if (this._c("name10", this.name10)) {}
       
       
           this._c("name11",this.name11);
@@ -228,7 +278,7 @@ describe('render function simplify should correct', function () {
       }
     }
     `
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
     global.currentInject = {
       render: function () {
@@ -248,7 +298,6 @@ describe('render function simplify should correct', function () {
   })
 
   it('should variable literal is correct', function () {
-    // 字面量删除 & 回溯删除前一个
     const input = `
     global.currentInject = {
       render: function () {
@@ -260,7 +309,7 @@ describe('render function simplify should correct', function () {
         a.b[c.d];
       }
     }`
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
     global.currentInject = {
       render: function () {
@@ -296,7 +345,7 @@ describe('render function simplify should correct', function () {
         Object.keys({ name: bName }).length ? bName1 : bName2
       }
     }`
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
     global.currentInject = {
       render: function () {
@@ -345,12 +394,12 @@ describe('render function simplify should correct', function () {
         ({ active: !c })
       }
     };`
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
     global.currentInject = {
       render: function () {
         if (this._c("a", this.a) || this._c("b", this.b)) {
-          "" || "";
+          this._c("a", this.a) || this._c("b", this.b);
         }
     
         if (this._c("c", this.c)) {}
@@ -373,7 +422,7 @@ describe('render function simplify should correct', function () {
         c;
       }
     };`
-    const res = bindThis(input, { needCollect: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
     global.currentInject = {
       render: function () {
