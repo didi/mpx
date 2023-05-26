@@ -190,13 +190,13 @@
           trailing: false
         }))
         this.bs.on('scrollEnd', () => {
-          if (this.bs.minScrollX - this.lastX < this._upperThreshold && this.bs.movingDirectionX === 1) {
+          if (this.bs.minScrollX  - this.lastX < this._upperThreshold && this.bs.movingDirectionX === -1) {
             this.dispatchScrollTo('left')
           }
           if (this.bs.minScrollY - this.lastY < this._upperThreshold && this.bs.movingDirectionY === -1) {
             this.dispatchScrollTo('top')
           }
-          if (this.lastX - this.bs.maxScrollX < this._lowerThreshold &&  this.bs.movingDirectionX === -1) {
+          if (this.lastX - this.bs.maxScrollX < this._lowerThreshold &&  this.bs.movingDirectionX === 1) {
             this.dispatchScrollTo('right')
           }
           if (this.lastY - this.bs.maxScrollY < this._lowerThreshold && this.bs.movingDirectionY === 1) {
