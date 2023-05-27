@@ -198,6 +198,7 @@ describe('render function simplify should correct', function () {
           name7;
           name6 + name7;
           
+          
           name8;
           name9;
           ({ key: name8 && !name9 });
@@ -231,18 +232,10 @@ describe('render function simplify should correct', function () {
       
           this._c("name5", this.name5);
       
-          this._c("name6", this.name6);
-      
-          this._c("name7", this.name7);
-      
-          "" + "";
-      
-          this._c("name8", this.name8);
-      
-          this._c("name9", this.name9);
+          this._c("name6", this.name6) + this._c("name7", this.name7);
       
           ({
-            key: "" && ""
+            key: this._c("name8",this.name8)&&!this._c("name9",this.name9)
           });
       
           if (this._c("xxx", this.xxx)) {

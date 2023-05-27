@@ -78,8 +78,13 @@ function checkDelAndGetPath (path, condition) {
   let delPath = condition || cur
   while (cur) {
     const { key, computed, node, container } = cur
-    if (key === 'property' || computed || t.isLogicalExpression(container)) return { canDel: false }
-    if (node.computed && !t.isStringLiteral(node.property)) return { canDel: false }
+    if (
+      computed ||
+      key === 'property' ||
+      t.isLogicalExpression(container) ||
+      (node.computed && !t.isStringLiteral(node.property)) ||
+      (t.isBinaryExpression(container) && t.isIdentifier(container.left) && t.isIdentifier(container.right))
+    ) return { canDel: false }
 
     if (t.isIfStatement(container)) {
       if (key === 'test') {
@@ -96,19 +101,22 @@ function checkDelAndGetPath (path, condition) {
     }
 
     if (cur.key === 'argument') {
-      delPath = cur
       while (t.isUnaryExpression(cur.parent) && cur.key === 'argument') {
         cur = cur.parentPath
         delPath = cur
       }
+      continue
     }
 
     if (cur.listKey === 'arguments' && cur.key === 0 && t.isCallExpression(cur.parent)) {
-      const p = cur.parent
-      const name = p.callee.name
+      const callee = cur.parent.callee
+      const name = callee.name || (callee.property && callee.property.name)
       if (name && hash[name]) { // Number(a)
         cur = cur.parentPath
         delPath = cur
+        continue
+      } else if (name === '_i') {
+        return { canDel: false }
       }
     }
 
@@ -141,16 +149,12 @@ function checkKeys (keys, key) {
 }
 
 function dealRemove (path) {
+  const removeParent = path.key === 'expression' && t.isExpressionStatement(path.parentPath)
+
+  if (removeParent) return dealRemove(path.parentPath)
+
   try {
-    t.validate(
-      (t.isIdentifier(path) && t.isExpressionStatement(path.parent)
-        || t.isMemberExpression(path) && path.node.object && path.node.property)
-        || t.isUnaryExpression(path)
-        ? path
-        : path.parentPath,
-      path.key,
-      null
-    )
+    t.validate(path, path.key, null)
     path.remove()
   } catch (e) {
     path.replaceWith(t.stringLiteral(''))
