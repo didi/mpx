@@ -33,7 +33,7 @@ function judgeIdentifierName (path) {
 }
 
 // 计算访问路径
-function calPropName (path, ) {
+function calPropName (path) {
   let current = path.parentPath
   let last = path
   let keyPath = '' + path.node.name

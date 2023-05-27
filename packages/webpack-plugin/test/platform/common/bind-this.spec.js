@@ -199,6 +199,8 @@ describe('render function simplify should correct', function () {
           name6 + name7;
           name6 + '123';
           '123' + name7;
+          '123' + name7 + name6;
+          name6 + '123' + name7 + name6;
           
           
           name8;
@@ -235,6 +237,8 @@ describe('render function simplify should correct', function () {
           this._c("name5", this.name5);
       
           this._c("name6", this.name6) + this._c("name7", this.name7);
+          '123';
+          '123';
           '123';
           '123';
       
@@ -413,6 +417,9 @@ describe('render function simplify should correct', function () {
     const input = `
     global.currentInject = {
       render: function () {
+        a;
+        b;
+        c;
         if (a ? b : c) {}
         a;
         b;
@@ -423,11 +430,11 @@ describe('render function simplify should correct', function () {
     const output = `
     global.currentInject = {
       render: function () {
-        if (this._c("a", this.a) ? this._c("b", this.b) : this._c("c", this.c)) {}
-
         this._c("b", this.b);
       
         this._c("c", this.c);
+        
+        if (this._c("a", this.a) ? this._c("b", this.b) : this._c("c", this.c)) {}
       }
     };`
     expect(trim(res)).toBe(trim(output))
