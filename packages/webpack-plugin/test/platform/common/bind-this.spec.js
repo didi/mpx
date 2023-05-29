@@ -35,7 +35,7 @@ describe('render function simplify should correct', function () {
       
           this._c("c", this.c);
       
-          this._c("a", this.a) ? "" : "";
+          this._c("a", this.a) ? this._c("b", this.b) : this._c("c", this.c);
           this._c("a", this.a) && this._c("b", this.b);
       
           this._c("d", this.d);
@@ -167,7 +167,7 @@ describe('render function simplify should correct', function () {
         
           this._c("b", this.b);
         
-          this._c("name5", this.name5) ? "" : "";
+          this._c("name5", this.name5) ? this._c("a", this.a) : this._c("b", this.b);
         }
       };
     `

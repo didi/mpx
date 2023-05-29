@@ -81,24 +81,13 @@ function checkDelAndGetPath (path, condition) {
     if (
       computed ||
       key === 'property' ||
-      t.isLogicalExpression(container) ||
       (node.computed && !t.isStringLiteral(node.property)) ||
-      (t.isBinaryExpression(container) && t.isIdentifier(container.left) && t.isIdentifier(container.right))
+      t.isLogicalExpression(container) ||
+      (t.isBinaryExpression(container) && t.isIdentifier(container.left) && t.isIdentifier(container.right)) ||
+      (t.isIfStatement(container) && key === 'test')
     ) return { canDel: false }
 
-    if (t.isIfStatement(container)) {
-      if (key === 'test') {
-        return condition ? { ignore: true } : { canDel: false }
-      }
-    }
-
-    if (t.isConditionalExpression(container)) {
-      if (key === 'test') {
-        return { canDel: false }
-      } else {
-        return checkDelAndGetPath(cur.parentPath, cur) // if (a ? b : c) {} b、c 不收集
-      }
-    }
+    if (t.isConditionalExpression(container)) return key === 'test' ? { canDel: false } : { ignore: true }
 
     if (cur.key === 'argument') {
       while (t.isUnaryExpression(cur.parent) && cur.key === 'argument') {
