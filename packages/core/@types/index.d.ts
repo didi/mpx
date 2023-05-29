@@ -128,6 +128,8 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, 
 
   pageHide?: () => void
 
+  initData?: Record<string, any>
+
   [index: string]: any
 }
 
@@ -483,6 +485,8 @@ export function triggerRef (ref: Ref): void
 export function reactive<T extends object> (target: T): Reactive<T>
 
 export function isReactive (value: unknown): boolean
+
+export function markRaw<T extends object>(value: T): T
 
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 

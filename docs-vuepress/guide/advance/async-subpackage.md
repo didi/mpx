@@ -30,13 +30,12 @@
 ## 跨分包 JS 代码引用
 >一个分包中的代码引用其它分包的代码时，为了不让下载阻塞代码运行，我们需要异步获取引用的结果
 
-在 Mpx 中跨分包异步引用 JS 代码时，**需要在引用的 JS 路径后拼接 JS 模块所在的分包名**，示例如下：
+在 Mpx 中跨分包异步引用 JS 代码时，**需要在引用的 JS 路径后拼接 JS 模块所在的分包名**，此外由于 **require** 不能传入多个参数的限制，在Mpx中无法使用回调函数的
+风格跨分包 JS 代码引用，只能使用 Promise 风格。
+
+示例如下：
 ```js
 // subPackageA/index.js
-// 使用回调函数风格的调用
-require('../subPackageB/utils.js?root=subPackageB', utils => {
-  console.log(utils.whoami) // Wechat MiniProgram
-})
 // 或者使用 Promise 风格的调用
 require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
   pkg.getPackageName() // 'common'

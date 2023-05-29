@@ -1084,6 +1084,49 @@ class MpxWebpackPlugin {
           }
         })
 
+        parser.hooks.evaluate.for('NewExpression').tap('MpxWebpackPlugin', (expression) => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource)) {
+            if (expression.callee.name === 'Function') {
+              const current = parser.state.current
+              current.addPresentationalDependency(new InjectDependency({
+                content: '_mpxCodeTransForm(',
+                index: expression.arguments[0].start
+              }))
+              current.addPresentationalDependency(new InjectDependency({
+                content: ')',
+                index: expression.arguments[0].end
+              }))
+            }
+          }
+        })
+
+        parser.hooks.program.tap('MpxWebpackPlugin', ast => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource)) {
+            const current = parser.state.current
+            current.addPresentationalDependency(new InjectDependency({
+              content: 'function _mpxCodeTransForm (code) {\n' +
+                '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
+                '    var arr = $1.split(", ")\n' +
+                '    var str = ""\n' +
+                '    var pattern = /(.*):(.*)/\n' +
+                '    for (var i = 0; i < arr.length; i++) {\n' +
+                '      var result = arr[i].match(pattern)\n' +
+                '      var left = result[1]\n' +
+                '      var right = result[2]\n' +
+                '      str += "var" + right + " = ctx." + left\n' +
+                '    }\n' +
+                '    return str\n' +
+                '  })\n' +
+                '  code = code.replace(/\\(ctx\\) =>/g, function (match, $1) {\n' +
+                '    return "function (ctx)"\n' +
+                '  })\n' +
+                '  return code\n' +
+                '}',
+              index: ast.end
+            }))
+          }
+        })
+
         // 处理跨平台转换
         if (mpx.srcMode !== mpx.mode) {
           // 处理跨平台全局对象转换

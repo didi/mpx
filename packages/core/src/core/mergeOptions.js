@@ -132,8 +132,11 @@ function extractObservers (options) {
         },
         deep: true,
         // 延迟触发首次回调，处理转换支付宝时在observer中查询组件的行为，如vant/picker中，如不考虑该特殊情形可用immediate代替
-        immediateAsync: true
+        // immediateAsync: true
+        // 为了数据响应的标准化，不再提供immediateAsync选项，之前处理vant等原生组件跨平台转换遇到的问题推荐使用条件编译patch进行处理
+        immediate: true
       })
+
     }
   })
   if (observers) {
@@ -174,7 +177,9 @@ function extractObservers (options) {
             }
           },
           deep,
-          immediateAsync: watchProp
+          // immediateAsync: watchProp
+          // 为了数据响应的标准化，不再提供immediateAsync选项，之前处理vant等原生组件跨平台转换遇到的问题推荐使用条件编译patch进行处理
+          immediate: watchProp
         })
       }
     })

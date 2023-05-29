@@ -152,7 +152,8 @@ module.exports = function getSpec ({ warn, error }) {
         ali: addGlobalComponents,
         swan: addGlobalComponents,
         qq: addGlobalComponents,
-        tt: addGlobalComponents
+        tt: addGlobalComponents,
+        jd: addGlobalComponents
       }
     ],
     tabBar: {
