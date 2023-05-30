@@ -1,14 +1,8 @@
-import { webHandleSuccess, webHandleFail, isTabBarPage } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
 import { EventChannel } from '../event-channel'
-import { isBrowser } from '@mpxjs/utils/src'
-
-function throwErrorMessage (info) {
-  console.warn(`[Mpx runtime warn]: Dangerous operation, ${info}, It may cause some problems, please use this method with caution`)
-}
-
 function redirectTo (options = {}) {
   if (!isBrowser) {
-    throwErrorMessage('redirectTo method is running in non browser environments')
+    throwSSRWarning('redirectTo method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {
@@ -40,7 +34,7 @@ function redirectTo (options = {}) {
 
 function navigateTo (options = {}) {
   if (!isBrowser) {
-    throwErrorMessage('navigateTo method is running in non browser environments')
+    throwSSRWarning('navigateTo method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {
@@ -79,7 +73,7 @@ function navigateTo (options = {}) {
 
 function navigateBack (options = {}) {
   if (!isBrowser) {
-    throwErrorMessage('navigateBack method is running in non browser environments')
+    throwSSRWarning('navigateBack method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {
@@ -99,7 +93,7 @@ let reLaunchCount = 0
 
 function reLaunch (options = {}) {
   if (!isBrowser) {
-    throwErrorMessage('reLaunch method is running in non browser environments')
+    throwSSRWarning('reLaunch method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {
@@ -145,7 +139,7 @@ function reLaunch (options = {}) {
 
 function switchTab (options = {}) {
   if (!isBrowser) {
-    throwErrorMessage('switchTab method is running in non browser environments')
+    throwSSRWarning('switchTab method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {

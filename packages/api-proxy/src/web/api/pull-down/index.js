@@ -1,9 +1,8 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
-import { isBrowser } from '@mpxjs/utils'
+import { webHandleSuccess, webHandleFail, throwSSRWarning, isBrowser } from '../../../common/js'
 
 function stopPullDownRefresh (options = {}) {
   if (!isBrowser) {
-    console.warn('[Mpx runtime warn]: Dangerous operation, stopPullDownRefresh is running in non browser environments, It may cause some problems, please use this method with caution')
+    throwSSRWarning('stopPullDownRefresh method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {
@@ -36,7 +35,7 @@ function stopPullDownRefresh (options = {}) {
 
 function startPullDownRefresh (options = {}) {
   if (!isBrowser) {
-    console.warn('[Mpx runtime warn]: Dangerous operation, startPullDownRefresh is running in non browser environments, It may cause some problems, please use this method with caution')
+    throwSSRWarning('startPullDownRefresh method is running in non browser environments')
   }
   const router = global.__mpxRouter
   if (router) {

@@ -79,6 +79,9 @@ export default function createApp (option, config = {}) {
     global.__mpxOptionsMap = global.__mpxOptionsMap || {}
     global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     global.getApp = function () {
+      if (!isBrowser) {
+        console.warn('[Mpx runtime warn]: Dangerous operation, global.getApp method is running in non browser environments')
+      }
       return appData
     }
   } else {
