@@ -1,7 +1,15 @@
 import { webHandleSuccess, webHandleFail, isTabBarPage } from '../../../common/js'
 import { EventChannel } from '../event-channel'
+import { isBrowser } from '@mpxjs/utils/src'
+
+function throwErrorMessage (info) {
+  console.warn(`[Mpx runtime warn]: Dangerous operation, ${info}, It may cause some problems, please use this method with caution`)
+}
 
 function redirectTo (options = {}) {
+  if (!isBrowser) {
+    throwErrorMessage('redirectTo method is running in non browser environments')
+  }
   const router = global.__mpxRouter
   if (router) {
     if (isTabBarPage(options.url, router)) {
@@ -31,6 +39,9 @@ function redirectTo (options = {}) {
 }
 
 function navigateTo (options = {}) {
+  if (!isBrowser) {
+    throwErrorMessage('navigateTo method is running in non browser environments')
+  }
   const router = global.__mpxRouter
   if (router) {
     if (isTabBarPage(options.url, router)) {
@@ -67,6 +78,9 @@ function navigateTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
+  if (!isBrowser) {
+    throwErrorMessage('navigateBack method is running in non browser environments')
+  }
   const router = global.__mpxRouter
   if (router) {
     const delta = options.delta || 1
@@ -84,6 +98,9 @@ function navigateBack (options = {}) {
 let reLaunchCount = 0
 
 function reLaunch (options = {}) {
+  if (!isBrowser) {
+    throwErrorMessage('reLaunch method is running in non browser environments')
+  }
   const router = global.__mpxRouter
   if (router) {
     if (reLaunchCount === 0 && router.currentRoute.query.reLaunchCount) reLaunchCount = router.currentRoute.query.reLaunchCount
@@ -127,6 +144,9 @@ function reLaunch (options = {}) {
 }
 
 function switchTab (options = {}) {
+  if (!isBrowser) {
+    throwErrorMessage('switchTab method is running in non browser environments')
+  }
   const router = global.__mpxRouter
   if (router) {
     const toRoute = router.match(options.url, router.history.current)

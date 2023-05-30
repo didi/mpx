@@ -123,7 +123,10 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
   let content = ''
   if (isMain) {
     content += `global.getApp = function(){}
-      global.getCurrentPages = function () {
+    global.getCurrentPages = function () {
+      if (!(typeof window !== 'undefined')) {
+        console.warn('[Mpx runtime warn]: Dangerous operation, global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
+      }
       if (!global.__mpxRouter) return []
       // @ts-ignore
       return global.__mpxRouter.stack.map(item => {

@@ -298,10 +298,15 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     }
   }
 
-  // 注入pinia
-  if (global.__mpxPinia) {
+  if (App.onAppInit) {
+    Object.assign(option, App.onAppInit() || {})
+  }
+
+  if (isBrowser && global.__mpxPinia) {
+    // 注入pinia
     option.pinia = global.__mpxPinia
   }
+
   const app = new Vue({
     ...option,
     render: (h) => h(App)

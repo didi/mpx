@@ -20,7 +20,7 @@ export default function proxyEventMixin () {
         setByPath(this, expr, value)
       },
       getOpenerEventChannel () {
-        const router = global.__mpxRouter
+        const router = this.$root.$options && this.$root.$options.router
         const eventChannel = router && router.__mpxAction && router.__mpxAction.eventChannel
         return eventChannel
       }
