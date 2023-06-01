@@ -64,6 +64,9 @@ export default function createApp (option, config = {}) {
       }
     })
   } else {
+    if (option.onAppInit) {
+      option.onAppInit()
+    }
     builtInMixins.push({
       onLaunch () {
         Object.assign(this, Mpx.prototype)
@@ -80,7 +83,7 @@ export default function createApp (option, config = {}) {
     global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     global.getApp = function () {
       if (!isBrowser) {
-        console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments\n')
+        console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
       }
       return appData
     }

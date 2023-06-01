@@ -320,7 +320,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
 export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, webConfig }) {
   if (!isBrowser) {
     return context => {
-      const { app, router, pinia } = createApp({
+      const { app, router, pinia = {} } = createApp({
         App,
         componentsMap,
         Vue,
@@ -336,7 +336,7 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
           router.push(context.url)
           router.onReady(() => {
             context.rendered = () => {
-              context.state = JSON.stringify(pinia.state.value)
+              context.state = JSON.stringify((pinia.state && pinia.state.value) || {})
             }
             resolve(app)
           }, reject)
