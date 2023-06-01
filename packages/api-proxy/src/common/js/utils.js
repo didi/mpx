@@ -101,7 +101,7 @@ function makeMap (arr) {
 const isBrowser = typeof window !== 'undefined'
 
 function throwSSRWarning (info) {
-  console.warn(`[Mpx runtime warn]: Dangerous operation, ${info}, It may cause some problems, please use this method with caution`)
+  console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution\n`)
 }
 export {
   changeOpts,
