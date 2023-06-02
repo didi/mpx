@@ -1786,8 +1786,10 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
+  const tagName = el.tag
+  const moduleId = options.usingComponentsModuleId[tagName]
   const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${moduleId}` }
   ]
   const newElAttrs = []
   const allAttrs = cloneAttrsList(el.attrsList)

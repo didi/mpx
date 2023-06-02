@@ -175,7 +175,7 @@ module.exports = function (content) {
     // polyfill global usingComponents
     // todo 传入rulesRunner中进行按平台转换
     rulesRunnerOptions.data = {
-      globalComponents: mpx.usingComponents
+      globalComponents: mpx.globalComponents
     }
   } else {
     // 保存全局注册组件

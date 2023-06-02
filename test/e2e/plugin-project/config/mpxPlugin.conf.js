@@ -14,9 +14,9 @@ module.exports = {
   writeMode: 'changed',
 
   // 是否需要对样式加scope，因为只有ali平台没有样式隔离，只对ali平台生效，提供include和exclude，和webpack的rules规则相同
-  // autoScopeRules: {
-  //   include: [resolve('src')]
-  // },
+  autoScopeRules: {
+    include: [resolve('src')]
+  },
 
   // 批量指定文件mode，用法如下，指定平台，提供include/exclude指定文件，即include的文件会默认被认为是该平台的，include/exclude的规则和webpack的rules的相同
   modeRules: {
