@@ -1,0 +1,21 @@
+{
+  "devDependencies": {
+    "@antfu/eslint-config": "^0.39.3",
+    "eslint": "^8.41.0"
+  },
+  "name": "@mpxjs/unocss-base",
+  "description": "mpx unocss base preset",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "build": "node ./build/transRem.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@unocss/preset-uno": "^0.52.7"
+  }
+}

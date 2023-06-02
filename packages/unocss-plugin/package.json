@@ -1,0 +1,24 @@
+{
+  "name": "@mpxjs/unocss-plugin",
+  "version": "1.0.0",
+  "description": "mpx的unocss的webpack的plugin",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "@unocss/webpack": "^0.52.4",
+    "@mpxjs/webpack-plugin": "2.8.28-beta.3",
+    "webpack": "^5.83.1"
+  },
+  "dependencies": {
+    "minimatch": "^9.0.1",
+    "unocss": "^0.52.0"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^0.39.3",
+    "eslint": "^8.41.0"
+  }
+}
