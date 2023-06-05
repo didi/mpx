@@ -5,6 +5,7 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
+  import { isBrowser } from '../../env'
 
   const eventLoad = 'load'
   const eventError = 'error'
@@ -44,14 +45,16 @@
       }
     },
     created () {
-      setTimeout(() => {
-        if (!this.Loaded) {
-          const loadData = {
-            src: this.src
+      if (isBrowser) {
+        setTimeout(() => {
+          if (!this.Loaded) {
+            const loadData = {
+              src: this.src
+            }
+            this.$emit(eventError, getCustomEvent(eventError, loadData))
           }
-          this.$emit(eventError, getCustomEvent(eventError, loadData))
-        }
-      }, 1000)
+        }, 1000)
+      }
     },
     mounted () {
       this.mpxIframe = this.$refs.mpxIframe
