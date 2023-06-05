@@ -329,8 +329,8 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
         VueRouter,
         tabBarMap
       })
-      if (app.onSSRAppCreated) {
-        return app.onSSRAppCreated({ pinia, router, app, context })
+      if (App.onSSRAppCreated) {
+        return App.onSSRAppCreated({ pinia, router, app, context })
       } else {
         return new Promise((resolve, reject) => {
           router.push(context.url)
