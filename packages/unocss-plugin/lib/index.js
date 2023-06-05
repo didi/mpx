@@ -1,4 +1,4 @@
-const path = require('node:path')
+const path = require('path')
 const minimatch = require('minimatch')
 const unoConfig = require('@unocss/config')
 const core = require('@unocss/core')
@@ -33,7 +33,7 @@ function filterFile(file, scan) {
 function normalizeOptions(options) {
   let {
     // 小程序特有的配置
-    windiFile = 'styles/uno',
+    unoFile = 'styles/uno',
     styleIsolation = 'isolated',
     minCount = 2,
     scan = {},
@@ -62,7 +62,7 @@ function normalizeOptions(options) {
   // virtualModulePath暂不支持配置
   webOptions.virtualModulePath = ''
   return {
-    windiFile,
+    unoFile,
     root,
     styleIsolation,
     minCount,
@@ -115,7 +115,6 @@ function createContext(root, defaults = {}) {
   return {
     getConfig,
     uno,
-    rawConfig,
   }
 }
 
@@ -131,10 +130,10 @@ function getPlugin(compiler, curPlugin) {
 class MpxUnocssPlugin {
   constructor(options = {}) {
     this.options = normalizeOptions(options)
+    this._cache = {}
   }
 
-  async generateStyle(uno, classesMap = {}, preflightOptions = {}) {
-    const classes = Object.keys(classesMap)
+  async generateStyle(uno, classes = [], preflightOptions = {}) {
     const tokens = new Set(classes)
     const result = await uno.generate(tokens, preflightOptions)
     let css = result.css
@@ -181,7 +180,7 @@ class MpxUnocssPlugin {
       const UnoCSSWebpackPlugin = require('@unocss/webpack').default
       if (!getPlugin(compiler, UnoCSSWebpackPlugin))
         compiler.options.plugins.push(new UnoCSSWebpackPlugin(this.options.webOptions))
-      // 给app注入windicss模块
+      // 给app注入unocss模块
       compiler.options.module.rules.push({
         test: /\.mpx$/,
         resourceQuery: /isApp/,
@@ -320,6 +319,7 @@ class MpxUnocssPlugin {
 
           assets[file] = source
         }
+
         await Promise.all(Object.entries(assets).map(([file, source]) => {
           if (!filterFile(file, this.options.scan))
             return Promise.resolve()
@@ -332,19 +332,22 @@ class MpxUnocssPlugin {
         delete packageClassesMaps.main
         const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps), this.options.minCount)
         Object.assign(mainClassesMap, commonClassesMap)
-        // 生成主包windi.css
-        let mainWindiFile
-        const mainWindiFileContent = await this.generateStyle(uno, mainClassesMap, { ...preflightOptions, preflights: true })
-        if (mainWindiFileContent) {
-          mainWindiFile = this.options.windiFile + styleExt
-          if (assets[mainWindiFile])
-            error(`${mainWindiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
-          assets[mainWindiFile] = getRawSource(mainWindiFileContent)
+        // 生成主包uno.css
+        let mainUnoFile
+        const mainClasses = Object.keys(mainClassesMap)
+        const cacheKey = mainClasses.toString()
+        const mainUnoFileContent = this._cache[cacheKey] ? this._cache[cacheKey] : await this.generateStyle(uno, mainClasses, { ...preflightOptions, preflights: true })
+        if (mainUnoFileContent) {
+          mainUnoFile = this.options.unoFile + styleExt
+          if (assets[mainUnoFile])
+            error(`${mainUnoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`)
+          assets[mainUnoFile] = getRawSource(mainUnoFileContent)
+          this._cache[cacheKey] = mainUnoFileContent
         }
 
-        if (mainWindiFile) {
+        if (mainUnoFile) {
           const appStyleFile = appInfo.name + styleExt
-          const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainWindiFile)), mode)
+          const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainUnoFile)), mode)
 
           const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
           appStyleSource.add(assets[appStyleFile] || '')
@@ -354,28 +357,31 @@ class MpxUnocssPlugin {
             const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
             if (styleIsolation === 'isolated' && entryType === 'component') {
               const componentStyleFile = filename + styleExt
-              const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
+              const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
               const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
               componentStyleSource.add(assets[componentStyleFile] || '')
               assets[componentStyleFile] = componentStyleSource
             }
           })
         }
-        // 生成分包windi.css
+        // 生成分包uno.css
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
-          let windiFile
-          const windiFileContent = await this.generateStyle(uno, classesMap, preflightOptions)
-          if (windiFileContent) {
-            windiFile = toPosix(path.join(packageRoot, this.options.windiFile + styleExt))
-            if (assets[windiFile])
-              error(`${windiFile}当前已存在于[compilation.assets]中，请修改[options.windiFile]配置以规避冲突！`)
-            assets[windiFile] = getRawSource(windiFileContent)
+          let unoFile
+          const classes = Object.keys(classesMap)
+          const cacheKey = classes.toString()
+          const unoFileContent = this._cache[cacheKey] ? this._cache[cacheKey] : await this.generateStyle(uno, classes, preflightOptions)
+          if (unoFileContent) {
+            unoFile = toPosix(path.join(packageRoot, this.options.unoFile + styleExt))
+            if (assets[unoFile])
+              error(`${unoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`)
+            assets[unoFile] = getRawSource(unoFileContent)
+            this._cache[cacheKey] = unoFileContent
           }
 
           dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
-            if (windiFile && entryType === 'page') {
+            if (unoFile && entryType === 'page') {
               const pageStyleFile = filename + styleExt
-              const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), windiFile)), mode)
+              const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), unoFile)), mode)
               const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
               pageStyleSource.add(assets[pageStyleFile] || '')
               assets[pageStyleFile] = pageStyleSource
@@ -387,13 +393,13 @@ class MpxUnocssPlugin {
               const componentStyleFile = filename + styleExt
               const componentStyleSource = getConcatSource('')
 
-              if (mainWindiFile) {
-                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainWindiFile)), mode)
+              if (mainUnoFile) {
+                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
                 componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
               }
 
-              if (windiFile) {
-                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), windiFile)), mode)
+              if (unoFile) {
+                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), unoFile)), mode)
                 componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
               }
 
