@@ -128,6 +128,8 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, 
 
   pageHide?: () => void
 
+  initData?: Record<string, any>
+
   [index: string]: any
 }
 
