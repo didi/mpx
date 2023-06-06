@@ -136,10 +136,10 @@ module.exports = function (content) {
         if (!isApp) {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
           // polyfill global usingComponents
-          // todo 传入rulesRunner中进行按平台转换
-          rulesRunnerOptions.data = {
-            globalComponents: mpx.usingComponents
-          }
+          // 预读json时无需注入polyfill全局组件
+          // rulesRunnerOptions.data = {
+          //   globalComponents: mpx.usingComponents
+          // }
         }
 
         try {

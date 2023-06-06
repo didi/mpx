@@ -105,105 +105,126 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
-  const ruleOfUsingComponentCapitalToHyphen = {
-    ali: componentNameCapitalToHyphen('usingComponents'),
-    swan: componentNameCapitalToHyphen('usingComponents')
+  const componentRules = [
+    {
+      test: 'componentGenerics',
+      ali: deletePath(true)
+    },
+    {
+      test: 'componentPlaceholder',
+      ali: aliComponentPlaceholderFallback,
+      swan: deletePath(),
+      tt: deletePath(),
+      jd: deletePath()
+    },
+    {
+      test: 'usingComponents',
+      ali: componentNameCapitalToHyphen('usingComponents'),
+      swan: componentNameCapitalToHyphen('usingComponents')
+    },
+    {
+      // todo ali 2.0已支持全局组件，待移除
+      ali: addGlobalComponents,
+      swan: addGlobalComponents,
+      qq: addGlobalComponents,
+      tt: addGlobalComponents,
+      jd: addGlobalComponents
+    }
+  ]
+
+  const windowRules = [
+    {
+      test: 'navigationBarTitleText',
+      ali (input) {
+        return changeKey(input, this.test, 'defaultTitle')
+      }
+    },
+    {
+      test: 'enablePullDownRefresh',
+      ali (input) {
+        input = changeKey(input, this.test, 'pullRefresh')
+        if (input.pullRefresh) {
+          input.allowsBounceVertical = 'YES'
+        }
+        return input
+      },
+      jd: deletePath()
+    },
+    {
+      test: 'navigationBarBackgroundColor',
+      ali (input) {
+        return changeKey(input, this.test, 'titleBarColor')
+      }
+    },
+    {
+      test: 'disableSwipeBack',
+      ali: deletePath(),
+      qq: deletePath(),
+      jd: deletePath(),
+      swan: deletePath()
+    },
+    {
+      test: 'onReachBottomDistance',
+      qq: deletePath(),
+      jd: deletePath()
+    },
+    {
+      test: 'disableScroll',
+      ali: deletePath(),
+      qq: deletePath(),
+      jd: deletePath()
+    },
+    {
+      test: 'backgroundColorTop|backgroundColorBottom',
+      ali: deletePath(),
+      swan: deletePath()
+    },
+    {
+      test: 'navigationBarTextStyle|navigationStyle|backgroundTextStyle',
+      ali: deletePath()
+    },
+    {
+      test: 'pageOrientation',
+      ali: deletePath(),
+      swan: deletePath(),
+      tt: deletePath(),
+      jd: deletePath()
+    }
+  ]
+
+  const getTabBarRule = () => (input, { mode }) => {
+    input.tabBar = runRules(spec.tabBar, input.tabBar, {
+      mode,
+      normalizeTest,
+      waterfall: true,
+      data: {
+        pathArr: ['tabBar']
+      }
+    })
+    return input
+  }
+
+  const getWindowRule = () => (input, { mode }) => {
+    input.window = runRules(spec.window, input.window, {
+      mode,
+      normalizeTest,
+      waterfall: true,
+      data: {
+        pathArr: ['window']
+      }
+    })
+    return input
   }
 
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd'],
     normalizeTest,
     page: [
-      {
-        test: 'navigationBarTitleText',
-        ali (input) {
-          return changeKey(input, this.test, 'defaultTitle')
-        }
-      },
-      {
-        test: 'enablePullDownRefresh',
-        ali (input) {
-          input = changeKey(input, this.test, 'pullRefresh')
-          if (input.pullRefresh) {
-            input.allowsBounceVertical = 'YES'
-          }
-          return input
-        },
-        jd: deletePath()
-      },
-      {
-        test: 'navigationBarBackgroundColor',
-        ali (input) {
-          return changeKey(input, this.test, 'titleBarColor')
-        }
-      },
-      {
-        test: 'disableSwipeBack',
-        ali: deletePath(),
-        qq: deletePath(),
-        jd: deletePath(),
-        swan: deletePath()
-      },
-      {
-        test: 'onReachBottomDistance',
-        qq: deletePath(),
-        jd: deletePath()
-      },
-      {
-        test: 'disableScroll',
-        ali: deletePath(),
-        qq: deletePath(),
-        jd: deletePath()
-      },
-      {
-        test: 'backgroundColorTop|backgroundColorBottom',
-        ali: deletePath(),
-        swan: deletePath()
-      },
-      {
-        test: 'navigationBarTextStyle|navigationStyle|backgroundTextStyle',
-        ali: deletePath()
-      },
-      {
-        test: 'pageOrientation',
-        ali: deletePath(),
-        swan: deletePath(),
-        tt: deletePath(),
-        jd: deletePath()
-      },
-      {
-        test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback,
-        swan: deletePath()
-      },
-      {
-        ali: addGlobalComponents,
-        swan: addGlobalComponents,
-        qq: addGlobalComponents,
-        tt: addGlobalComponents,
-        jd: addGlobalComponents
-      },
-      ruleOfUsingComponentCapitalToHyphen
+      ...windowRules,
+      ...componentRules
     ],
-    component: [
-      {
-        test: 'componentGenerics',
-        ali: deletePath(true)
-      },
-      {
-        test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback,
-        swan: deletePath()
-      },
-      {
-        ali: addGlobalComponents,
-        swan: addGlobalComponents,
-        qq: addGlobalComponents,
-        tt: addGlobalComponents,
-        jd: addGlobalComponents
-      },
-      ruleOfUsingComponentCapitalToHyphen
-    ],
+    component: componentRules,
+    window: windowRules,
     tabBar: {
       list: [
         {
@@ -299,6 +320,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
+        // todo ali 2.0已支持全局组件，待移除
         ali: deletePath({ noLog: true }),
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
@@ -337,114 +359,19 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'tabBar',
-        ali (input) {
-          input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            mode: 'ali',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['tabBar']
-            }
-          })
-        },
-        qq (input) {
-          input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            mode: 'qq',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['tabBar']
-            }
-          })
-        },
-        swan (input) {
-          input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            mode: 'swan',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['tabBar']
-            }
-          })
-        },
-        tt (input) {
-          input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            mode: 'tt',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['tabBar']
-            }
-          })
-        },
-        jd (input) {
-          input.tabBar = runRules(spec.tabBar, input.tabBar, {
-            mode: 'jd',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['tabBar']
-            }
-          })
-        }
+        ali: getTabBarRule(),
+        qq: getTabBarRule(),
+        swan: getTabBarRule(),
+        tt: getTabBarRule(),
+        jd: getTabBarRule()
       },
       {
         test: 'window',
-        ali (input) {
-          input.window = runRules(spec.page, input.window, {
-            mode: 'ali',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['window']
-            }
-          })
-          return input
-        },
-        qq (input) {
-          input.window = runRules(spec.page, input.window, {
-            mode: 'qq',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['window']
-            }
-          })
-          return input
-        },
-        swan (input) {
-          input.window = runRules(spec.page, input.window, {
-            mode: 'swan',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['window']
-            }
-          })
-          return input
-        },
-        tt (input) {
-          input.window = runRules(spec.page, input.window, {
-            mode: 'tt',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['window']
-            }
-          })
-          return input
-        },
-        jd (input) {
-          input.window = runRules(spec.page, input.window, {
-            mode: 'jd',
-            normalizeTest,
-            waterfall: true,
-            data: {
-              pathArr: ['window']
-            }
-          })
-          return input
-        }
+        ali: getWindowRule(),
+        qq: getWindowRule(),
+        swan: getWindowRule(),
+        tt: getWindowRule(),
+        jd: getWindowRule()
       }
     ]
   }
