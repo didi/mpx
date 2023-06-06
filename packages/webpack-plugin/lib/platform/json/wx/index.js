@@ -2,6 +2,7 @@ const runRules = require('../../run-rules')
 const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
+const { capitalToHyphen } = require('../../../utils/string')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -35,7 +36,8 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * @desc 在app.mpx里配置usingComponents作为全局组件
    */
-  function addGlobalComponents (input, { globalComponents }) {
+
+  function addGlobalComponents (input, { globalComponents, mode }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
     }
@@ -44,6 +46,8 @@ module.exports = function getSpec ({ warn, error }) {
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
   function aliComponentPlaceholderFallback (input) {
+    // 处理 驼峰转连字符
+    input = componentNameCapitalToHyphen('componentPlaceholder')(input)
     const componentPlaceholder = input.componentPlaceholder
     const usingComponents = input.usingComponents || (input.usingComponents = {})
     for (const cph in componentPlaceholder) {
@@ -64,6 +68,46 @@ module.exports = function getSpec ({ warn, error }) {
       componentPlaceholder[cph] = compName
     }
     return input
+  }
+
+  // 处理 ali swan 的组件名大写字母转连字符：WordExample/wordExample -> word-example
+  function componentNameCapitalToHyphen (type) {
+    return function (input) {
+      // 百度和支付宝不支持大写组件标签名，统一转成带“-”和小写的形式。百度自带标签不会有带大写的情况
+      // 后续可能需要考虑这些平台支持 componentGenerics 后的转换 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/generics.html
+      const obj = input[type]
+      if (obj) {
+        Object.entries(obj).forEach(([k, v]) => {
+          const keyNeed = /[A-Z]/g.test(k)
+          const valueNeed = /A-Z/g.test(v)
+
+          let newK
+          let newV
+
+          if (keyNeed) {
+            newK = capitalToHyphen(k)
+            if (obj[newK]) {
+              warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
+            } else {
+              obj[newK] = newV || v
+              delete obj[k]
+            }
+          }
+
+          // componentPlaceholder 的 value 也需要转换
+          if (type === 'componentPlaceholder' && valueNeed) {
+            newV = capitalToHyphen(v)
+            obj[newK || k] = newV
+          }
+        })
+      }
+      return input
+    }
+  }
+
+  const ruleOfUsingComponentCapitalToHyphen = {
+    ali: componentNameCapitalToHyphen('usingComponents'),
+    swan: componentNameCapitalToHyphen('usingComponents')
   }
 
   const spec = {
@@ -129,7 +173,8 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback
+        ali: aliComponentPlaceholderFallback,
+        swan: deletePath()
       },
       {
         ali: addGlobalComponents,
@@ -137,7 +182,8 @@ module.exports = function getSpec ({ warn, error }) {
         qq: addGlobalComponents,
         tt: addGlobalComponents,
         jd: addGlobalComponents
-      }
+      },
+      ruleOfUsingComponentCapitalToHyphen
     ],
     component: [
       {
@@ -146,7 +192,8 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'componentPlaceholder',
-        ali: aliComponentPlaceholderFallback
+        ali: aliComponentPlaceholderFallback,
+        swan: deletePath()
       },
       {
         ali: addGlobalComponents,
@@ -154,7 +201,8 @@ module.exports = function getSpec ({ warn, error }) {
         qq: addGlobalComponents,
         tt: addGlobalComponents,
         jd: addGlobalComponents
-      }
+      },
+      ruleOfUsingComponentCapitalToHyphen
     ],
     tabBar: {
       list: [
