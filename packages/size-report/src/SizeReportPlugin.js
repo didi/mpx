@@ -651,7 +651,7 @@ class SizeReportPlugin {
         const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
-          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
         }
 
         if (packagesThreshold && sizeInfo) {
@@ -660,7 +660,7 @@ class SizeReportPlugin {
             const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
             if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
               const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
-              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），请检查！`)
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
             }
           }
         }
