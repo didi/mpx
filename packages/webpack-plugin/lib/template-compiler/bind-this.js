@@ -73,9 +73,9 @@ function calPropName (path) {
   }
 }
 
-function checkDelAndGetPath (path, condition) {
+function checkDelAndGetPath (path) {
   let cur = path
-  let delPath = condition || cur
+  let delPath = cur
   while (cur) {
     const { key, computed, node, container } = cur
     if (
@@ -89,7 +89,7 @@ function checkDelAndGetPath (path, condition) {
 
     if (t.isConditionalExpression(container)) return key === 'test' ? { canDel: false } : { ignore: true }
 
-    if (cur.key === 'argument') {
+    if (t.isUnaryExpression(cur.parent) && cur.key === 'argument') {
       while (t.isUnaryExpression(cur.parent) && cur.key === 'argument') {
         cur = cur.parentPath
         delPath = cur
@@ -138,9 +138,10 @@ function checkKeys (keys, key) {
 }
 
 function dealRemove (path) {
-  const removeParent = path.key === 'expression' && t.isExpressionStatement(path.parentPath)
 
-  if (removeParent) return dealRemove(path.parentPath)
+  while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
+    path = path.parentPath
+  }
 
   try {
     t.validate(path, path.key, null)
