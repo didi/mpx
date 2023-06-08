@@ -35,11 +35,11 @@ describe('json should transform component json correct', function () {
     const input = {
       component: true,
       usingComponents: {
-        'myList': './list?root=otherPack',
-        'simpleList': './simpleList'
+        myList: './list?root=otherPack',
+        simpleList: './simpleList'
       },
-      componentPlaceholder:{
-        'myList': 'simpleList'
+      componentPlaceholder: {
+        myList: 'simpleList'
       }
     }
     const output = compileJson(input, {
@@ -52,7 +52,7 @@ describe('json should transform component json correct', function () {
         'my-list': './list?root=otherPack',
         'simple-list': './simpleList'
       },
-      componentPlaceholder:{
+      componentPlaceholder: {
         'my-list': 'simple-list'
       }
     })

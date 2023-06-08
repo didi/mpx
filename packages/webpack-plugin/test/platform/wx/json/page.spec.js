@@ -8,19 +8,19 @@ describe('json should transform page json correct', function () {
 
   it('should trans page json to ali correct', function () {
     const input = {
-      'navigationBarBackgroundColor': '#ffffff',
-      'navigationBarTextStyle': 'black',
-      'navigationBarTitleText': '接口功能演示',
-      'backgroundColor': '#eeeeee',
-      'backgroundTextStyle': 'light'
+      navigationBarBackgroundColor: '#ffffff',
+      navigationBarTextStyle: 'black',
+      navigationBarTitleText: '接口功能演示',
+      backgroundColor: '#eeeeee',
+      backgroundTextStyle: 'light'
     }
     const output = compileJson(input, {
       type: 'page'
     })
     expect(output).toEqual({
-      'titleBarColor': '#ffffff',
-      'defaultTitle': '接口功能演示',
-      'backgroundColor': '#eeeeee'
+      titleBarColor: '#ffffff',
+      defaultTitle: '接口功能演示',
+      backgroundColor: '#eeeeee'
     })
     expect(warnFn).toHaveBeenCalled()
   })
@@ -51,11 +51,11 @@ describe('json should transform page json correct', function () {
   it('should trans hump-style component\'s name to dashed-style when trans to ali', function () {
     const input = {
       usingComponents: {
-        'myList': './list?root=otherPack',
-        'simpleList': './simpleList'
+        myList: './list?root=otherPack',
+        simpleList: './simpleList'
       },
-      componentPlaceholder:{
-        'myList': 'simpleList'
+      componentPlaceholder: {
+        myList: 'simpleList'
       }
     }
     const output = compileJson(input, {
@@ -67,11 +67,10 @@ describe('json should transform page json correct', function () {
         'my-list': './list?root=otherPack',
         'simple-list': './simpleList'
       },
-      componentPlaceholder:{
+      componentPlaceholder: {
         'my-list': 'simple-list'
       }
     })
     expect(warnFn).not.toHaveBeenCalled()
   })
-
 })

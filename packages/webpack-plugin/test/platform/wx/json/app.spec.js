@@ -46,20 +46,20 @@ describe('json should transform app json correct', function () {
 
   it('should trans window to ali correct', function () {
     const input = {
-      'window': {
-        'navigationBarBackgroundColor': '#ffffff',
-        'navigationBarTextStyle': 'black',
-        'navigationBarTitleText': '接口功能演示',
-        'backgroundColor': '#eeeeee',
-        'backgroundTextStyle': 'light'
+      window: {
+        navigationBarBackgroundColor: '#ffffff',
+        navigationBarTextStyle: 'black',
+        navigationBarTitleText: '接口功能演示',
+        backgroundColor: '#eeeeee',
+        backgroundTextStyle: 'light'
       }
     }
     const output = compileJson(input)
     expect(output).toEqual({
-      'window': {
-        'titleBarColor': '#ffffff',
-        'defaultTitle': '接口功能演示',
-        'backgroundColor': '#eeeeee'
+      window: {
+        titleBarColor: '#ffffff',
+        defaultTitle: '接口功能演示',
+        backgroundColor: '#eeeeee'
       }
     })
     expect(warnFn).toHaveBeenCalled()
