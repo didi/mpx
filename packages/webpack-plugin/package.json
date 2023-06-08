@@ -73,7 +73,7 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "jest"
   },
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",

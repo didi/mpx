@@ -171,7 +171,6 @@ module.exports = function (content) {
 
   const rulesRunnerOptions = {
     mode,
-    mpx,
     srcMode,
     type: 'json',
     waterfall: true,
