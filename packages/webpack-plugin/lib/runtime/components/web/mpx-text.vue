@@ -58,7 +58,7 @@
           newSlots.push(createElement('mpx-text', {
             on: componentOptions.listeners,
             props:componentOptions.propsData
-          }, item.children || (item.componentOptions && item.componentOptions.children)))
+          }, item.children || componentOptions.children))
         }
       })
       if (this.selectable) {
