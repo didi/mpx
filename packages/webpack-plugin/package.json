@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.8.32",
+  "version": "2.8.33",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -73,7 +73,7 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "jest"
   },
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",

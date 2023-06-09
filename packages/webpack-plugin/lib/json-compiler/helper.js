@@ -94,7 +94,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       aliasPath = page.path
       page = page.src
     }
-    if (!isUrlRequest(page)) return callback(null, page)
+    if (!isUrlRequest(page)) return callback(null, page, { key: page })
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
