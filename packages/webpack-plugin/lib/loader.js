@@ -126,7 +126,6 @@ module.exports = function (content) {
       if (parts.json && parts.json.content) {
         const rulesRunnerOptions = {
           mode,
-          mpx,
           srcMode,
           type: 'json',
           waterfall: true,

@@ -37,7 +37,7 @@ module.exports = function getSpec ({ warn, error }) {
    * @desc 在app.mpx里配置usingComponents作为全局组件
    */
 
-  function addGlobalComponents (input, { globalComponents, mode }) {
+  function addGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
     }
@@ -79,7 +79,7 @@ module.exports = function getSpec ({ warn, error }) {
       if (obj) {
         Object.entries(obj).forEach(([k, v]) => {
           const keyNeed = /[A-Z]/g.test(k)
-          const valueNeed = /A-Z/g.test(v)
+          const valueNeed = /[A-Z]/g.test(v)
 
           let newK
           let newV
@@ -89,7 +89,7 @@ module.exports = function getSpec ({ warn, error }) {
             if (obj[newK]) {
               warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
             } else {
-              obj[newK] = newV || v
+              obj[newK] = v
               delete obj[k]
             }
           }
