@@ -17,32 +17,30 @@ const escapeMap = {
   '\'': '_q_',
   '"': '_dq_',
   '+': '_a_',
-  '$': '_si_',
+  $: '_si_'
 }
 
 const escapedReg = /\\(2c\s|.)/g
 
-function mpEscape(str) {
+function mpEscape (str) {
   return str.replace(escapedReg, (_, p1) => {
-    if (escapeMap[p1])
-      return escapeMap[p1]
+    if (escapeMap[p1]) { return escapeMap[p1] }
     // unknown escaped
     return '_u_'
   })
 }
 
-function escapeKey(str) {
+function escapeKey (str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function buildAliasTransformer(alias) {
-  if (!alias || !Object.keys(alias).length)
-    return s => getReplaceSource(s)
+function buildAliasTransformer (alias) {
+  if (!alias || !Object.keys(alias).length) { return s => getReplaceSource(s) }
 
   const keys = Object.keys(alias).sort((a, b) => b.length - a.length).map(i => escapeKey(i)).join('|')
   const regexText = `\\*(?:${keys})(?<=[^w-])`
   const regex = new RegExp(regexText, 'g')
-  return function transformAlias(source) {
+  return function transformAlias (source) {
     source = getReplaceSource(source)
     const content = source.original().source()
     let match
@@ -60,7 +58,7 @@ function buildAliasTransformer(alias) {
 
 const groupReg = /([!\w+-<@][\w+:_/-]*?\w):\(((?:[!\w\s:/\\,%#.$-]|\[.*?\])*?)\)/gm
 
-function transformGroups(source) {
+function transformGroups (source) {
   source = getReplaceSource(source)
   const content = source.original().source()
   let match
@@ -79,7 +77,7 @@ function transformGroups(source) {
 const hasDirectiveTest = /@(apply|screen|layer)\s/
 const hasThemeFunctionTest = /theme\(.*?\)/
 
-function cssRequiresTransform(source) {
+function cssRequiresTransform (source) {
   return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source)
 }
 
@@ -87,5 +85,5 @@ module.exports = {
   cssRequiresTransform,
   transformGroups,
   mpEscape,
-  buildAliasTransformer,
+  buildAliasTransformer
 }

@@ -1,15 +1,15 @@
 const tShirtScale = {
-  'xs': '750rpx',
-  'sm': '900rpx',
-  'md': '1050rpx',
-  'lg': '1200rpx',
-  'xl': '1350rpx',
+  xs: '750rpx',
+  sm: '900rpx',
+  md: '1050rpx',
+  lg: '1200rpx',
+  xl: '1350rpx',
   '2xl': '1575rpx',
   '3xl': '1800rpx',
   '4xl': '2100rpx',
   '5xl': '2400rpx',
   '6xl': '2700rpx',
-  '7xl': '3000rpx',
+  '7xl': '3000rpx'
 }
 
 export default {
@@ -46,28 +46,28 @@ export default {
     64: '600rpx',
     72: '675rpx',
     80: '750rpx',
-    96: '900rpx',
+    96: '900rpx'
   },
   borderRadius: {
-    'DEFAULT': '9.375rpx',
-    'sm': '4.6875rpx',
-    'md': '14.0625rpx',
-    'lg': '18.75rpx',
-    'xl': '28.125rpx',
+    DEFAULT: '9.375rpx',
+    sm: '4.6875rpx',
+    md: '14.0625rpx',
+    lg: '18.75rpx',
+    xl: '28.125rpx',
     '2xl': '37.5rpx',
-    '3xl': '56.25rpx',
+    '3xl': '56.25rpx'
   },
   columns: {
     ...tShirtScale,
     '3xs': '600rpx',
-    '2xs': '675rpx',
+    '2xs': '675rpx'
   },
   fontSize: {
-    'xs': ['28.125rpx', { lineHeight: '37.5rpx' }],
-    'sm': ['32.8125rpx', { lineHeight: '46.875rpx' }],
-    'base': ['37.5rpx', { lineHeight: '56.25rpx' }],
-    'lg': ['42.1875rpx', { lineHeight: '65.625rpx' }],
-    'xl': ['46.875rpx', { lineHeight: '65.625rpx' }],
+    xs: ['28.125rpx', { lineHeight: '37.5rpx' }],
+    sm: ['32.8125rpx', { lineHeight: '46.875rpx' }],
+    base: ['37.5rpx', { lineHeight: '56.25rpx' }],
+    lg: ['42.1875rpx', { lineHeight: '65.625rpx' }],
+    xl: ['46.875rpx', { lineHeight: '65.625rpx' }],
     '2xl': ['56.25rpx', { lineHeight: '75rpx' }],
     '3xl': ['70.3125rpx', { lineHeight: '84.375rpx' }],
     '4xl': ['84.375rpx', { lineHeight: '93.75rpx' }],
@@ -75,22 +75,22 @@ export default {
     '6xl': ['140.625rpx', { lineHeight: '1' }],
     '7xl': ['168.75rpx', { lineHeight: '1' }],
     '8xl': ['225rpx', { lineHeight: '1' }],
-    '9xl': ['300rpx', { lineHeight: '1' }],
+    '9xl': ['300rpx', { lineHeight: '1' }]
   },
   height: {
-    ...tShirtScale,
+    ...tShirtScale
   },
   maxHeight: {
-    ...tShirtScale,
+    ...tShirtScale
   },
   maxWidth: {
-    ...tShirtScale,
+    ...tShirtScale
   },
   perspective: {
-    ...tShirtScale,
+    ...tShirtScale
   },
   width: {
-    ...tShirtScale,
+    ...tShirtScale
   },
   lineHeight: {
     3: '.2812.5rpx',
@@ -100,16 +100,16 @@ export default {
     7: '65.625rpx',
     8: '75rpx',
     9: '84.375rpx',
-    10: '93.75rpx',
+    10: '93.75rpx'
   },
   textIndent: {
-    'DEFAULT': '56.25rpx',
-    'xs': '18.75rpx',
-    'sm': '37.5rpx',
-    'md': '56.25rpx',
-    'lg': '75rpx',
-    'xl': '93.75rpx',
+    DEFAULT: '56.25rpx',
+    xs: '18.75rpx',
+    sm: '37.5rpx',
+    md: '56.25rpx',
+    lg: '75rpx',
+    xl: '93.75rpx',
     '2xl': '112.5rpx',
-    '3xl': '150rpx',
-  },
+    '3xl': '150rpx'
+  }
 }

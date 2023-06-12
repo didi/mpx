@@ -15,22 +15,20 @@ const transAppLoader = path.resolve(loadersPath, 'unocss-app.js')
 
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
-function filterFile(file, scan) {
+function filterFile (file, scan) {
   const { include = [], exclude = [] } = scan
   for (const pattern of exclude) {
-    if (minimatch(file, pattern))
-      return false
+    if (minimatch(file, pattern)) { return false }
   }
 
   for (const pattern of include) {
-    if (!minimatch(file, pattern))
-      return false
+    if (!minimatch(file, pattern)) { return false }
   }
 
   return true
 }
 
-function normalizeOptions(options) {
+function normalizeOptions (options) {
   let {
     // 小程序特有的配置
     unoFile = 'styles/uno',
@@ -54,10 +52,10 @@ function normalizeOptions(options) {
     transformCSS,
     transformGroups,
     scan: {
-      include: ['src/**/*'],
+      include: ['src/**/*']
     },
     ...rest,
-    ...webOptions,
+    ...webOptions
   }
   // virtualModulePath暂不支持配置
   webOptions.virtualModulePath = ''
@@ -72,19 +70,18 @@ function normalizeOptions(options) {
     webOptions,
     configFiles,
     config,
-    ...rest,
+    ...rest
   }
 }
 
-function getCommonClassesMap(classesMaps, minCount) {
+function getCommonClassesMap (classesMaps, minCount) {
   const commonClassesMap = {}
   const allClassesMap = classesMaps.reduce((acc, cur) => Object.assign(acc, cur), {})
 
   Object.keys(allClassesMap).forEach((item) => {
     let count = 0
     for (const classesMap of classesMaps) {
-      if (classesMap[item])
-        count++
+      if (classesMap[item]) { count++ }
       if (count >= minCount) {
         commonClassesMap[item] = true
         classesMaps.forEach((classesMap) => {
@@ -98,72 +95,66 @@ function getCommonClassesMap(classesMaps, minCount) {
   return commonClassesMap
 }
 
-function createContext(root, defaults = {}) {
+function createContext (root, defaults = {}) {
   let rawConfig = {}
   const uno = core.createGenerator(rawConfig, defaults)
 
-  async function loadConfig() {
+  async function loadConfig () {
     const result = await unoConfig.loadConfig(root, {}, [], {})
     rawConfig = result.config
     uno.setConfig(rawConfig)
     return result
   }
-  async function getConfig() {
+  async function getConfig () {
     await loadConfig()
     return rawConfig
   }
   return {
     getConfig,
-    uno,
+    uno
   }
 }
 
-function isProductionLikeMode(options) {
+function isProductionLikeMode (options) {
   return options.mode === 'production' || !options.mode
 }
 
-function getPlugin(compiler, curPlugin) {
+function getPlugin (compiler, curPlugin) {
   const plugins = compiler.options.plugins
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
 
 class MpxUnocssPlugin {
-  constructor(options = {}) {
+  constructor (options = {}) {
     this.options = normalizeOptions(options)
     this._cache = {}
   }
 
-  async generateStyle(uno, classes = [], preflightOptions = {}) {
+  async generateStyle (uno, classes = [], preflightOptions = {}) {
     const tokens = new Set(classes)
     const result = await uno.generate(tokens, preflightOptions)
     let css = result.css
     classes.forEach((item) => {
       const selector = core.e(item)
       const mpClass = mpEscape(selector)
-      if (mpClass !== selector)
-        css = css.replace(selector, mpClass)
+      if (mpClass !== selector) { css = css.replace(selector, mpClass) }
     })
     return css
   }
 
-  getSafeListClasses(safelist) {
+  getSafeListClasses (safelist) {
     let classes = []
-    if (typeof safelist === 'string')
-      classes = safelist.split(/\s/).filter(i => i)
+    if (typeof safelist === 'string') { classes = safelist.split(/\s/).filter(i => i) }
 
     if (Array.isArray(safelist)) {
       for (const item of safelist) {
-        if (typeof item === 'string')
-          classes.push(item)
-
-        else if (Array.isArray(item))
-          classes = classes.concat(item)
+        if (typeof item === 'string') { classes.push(item) } else if (Array.isArray(item)) { classes = classes.concat(item) }
       }
     }
     return classes
   }
 
-  apply(compiler) {
+  apply (compiler) {
     const ctx = createContext(this.options.root)
     const { uno, getConfig } = ctx
     this.minify = isProductionLikeMode(compiler.options)
@@ -178,14 +169,13 @@ class MpxUnocssPlugin {
     const mode = this.mode = mpxPluginInstance.options.mode
     if (mode === 'web') {
       const UnoCSSWebpackPlugin = require('@unocss/webpack').default
-      if (!getPlugin(compiler, UnoCSSWebpackPlugin))
-        compiler.options.plugins.push(new UnoCSSWebpackPlugin(this.options.webOptions))
+      if (!getPlugin(compiler, UnoCSSWebpackPlugin)) { compiler.options.plugins.push(new UnoCSSWebpackPlugin(this.options.webOptions)) }
       // 给app注入unocss模块
       compiler.options.module.rules.push({
         test: /\.mpx$/,
         resourceQuery: /isApp/,
         enforce: 'pre',
-        use: [transAppLoader],
+        use: [transAppLoader]
       })
       compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
         for (const dep of compilation.fileDependencies) {
@@ -200,7 +190,7 @@ class MpxUnocssPlugin {
     compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
-        stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+        stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
         const { __mpx__: mpx } = compilation
         const error = (msg) => {
@@ -213,28 +203,24 @@ class MpxUnocssPlugin {
 
         const enablePreflight = config.preflight !== false && Boolean(this.options.preflight)
 
-        if (enablePreflight)
-          warn('由于底层实现的差异，开启preflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！')
+        if (enablePreflight) { warn('由于底层实现的差异，开启preflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！') }
 
         const preflightOptions = { preflights: false, safelist: false, minify: this.minify }
         const { mode, dynamicEntryInfo, appInfo } = mpx
         // 包相关
         const packages = Object.keys(dynamicEntryInfo)
-        function getPackageName(file) {
+        function getPackageName (file) {
           file = toPosix(file)
           for (const packageName of packages) {
-            if (packageName === 'main')
-              continue
-            if (file.startsWith(`${packageName}/`))
-              return packageName
+            if (packageName === 'main') { continue }
+            if (file.startsWith(`${packageName}/`)) { return packageName }
           }
           return 'main'
         }
         // 处理wxss
         const processStyle = async (file, source) => {
           const content = source.source()
-          if (!content || !cssRequiresTransform(content))
-            return
+          if (!content || !cssRequiresTransform(content)) { return }
           const unores = await uno.generate(content, preflightOptions)
           const output = unores.css
           if (!output || output.length <= 0) {
@@ -246,7 +232,7 @@ class MpxUnocssPlugin {
         // 处理wxml
         const { template: templateExt, styles: styleExt } = mpxConfig[mode].typeExtMap
         const packageClassesMaps = {
-          main: {},
+          main: {}
         }
         const commentConfigMap = {}
 
@@ -262,8 +248,7 @@ class MpxUnocssPlugin {
         const transformClasses = (source, classNameHandler = c => c) => {
           // pre process
           source = transformAlias(source)
-          if (this.options.transformGroups)
-            source = transformGroups(source)
+          if (this.options.transformGroups) { source = transformGroups(source) }
           const content = source.source()
           // escape & fill classesMap
           return content.split(/\s+/).map(classNameHandler).join(' ')
@@ -280,13 +265,8 @@ class MpxUnocssPlugin {
           // process classes
 
           const classNameHandler = (className) => {
-            if (!className)
-              return className
-            if (packageName === 'main')
-              mainClassesMap[className] = true
-
-            else if (!mainClassesMap[className])
-              currentClassesMap[className] = true
+            if (!className) { return className }
+            if (packageName === 'main') { mainClassesMap[className] = true } else if (!mainClassesMap[className]) { currentClassesMap[className] = true }
             return mpEscape(cssEscape(className))
           }
           parseClasses(content).forEach(({ result, start, end }) => {
@@ -321,12 +301,9 @@ class MpxUnocssPlugin {
         }
 
         await Promise.all(Object.entries(assets).map(([file, source]) => {
-          if (!filterFile(file, this.options.scan))
-            return Promise.resolve()
-          if (this.options.transformCSS && file.endsWith(styleExt))
-            return processStyle(file, source)
-          if (file.endsWith(templateExt))
-            return processTemplate(file, source)
+          if (!filterFile(file, this.options.scan)) { return Promise.resolve() }
+          if (this.options.transformCSS && file.endsWith(styleExt)) { return processStyle(file, source) }
+          if (file.endsWith(templateExt)) { return processTemplate(file, source) }
           return Promise.resolve()
         }))
         delete packageClassesMaps.main
@@ -339,8 +316,7 @@ class MpxUnocssPlugin {
         const mainUnoFileContent = this._cache[cacheKey] ? this._cache[cacheKey] : await this.generateStyle(uno, mainClasses, { ...preflightOptions, preflights: true })
         if (mainUnoFileContent) {
           mainUnoFile = this.options.unoFile + styleExt
-          if (assets[mainUnoFile])
-            error(`${mainUnoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`)
+          if (assets[mainUnoFile]) { error(`${mainUnoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`) }
           assets[mainUnoFile] = getRawSource(mainUnoFileContent)
           this._cache[cacheKey] = mainUnoFileContent
         }
@@ -372,8 +348,7 @@ class MpxUnocssPlugin {
           const unoFileContent = this._cache[cacheKey] ? this._cache[cacheKey] : await this.generateStyle(uno, classes, preflightOptions)
           if (unoFileContent) {
             unoFile = toPosix(path.join(packageRoot, this.options.unoFile + styleExt))
-            if (assets[unoFile])
-              error(`${unoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`)
+            if (assets[unoFile]) { error(`${unoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`) }
             assets[unoFile] = getRawSource(unoFileContent)
             this._cache[cacheKey] = unoFileContent
           }

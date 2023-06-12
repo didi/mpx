@@ -1,9 +1,8 @@
 const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/template-compiler/compiler')
 
-function parseClasses(content) {
+function parseClasses (content) {
   const output = []
-  if (!content)
-    return output
+  if (!content) { return output }
   const regex = /class\s*=\s*"[^"]+"|class\s*=\s*'[^']+'/igm
   let match
   while (match = regex.exec(content)) {
@@ -15,17 +14,16 @@ function parseClasses(content) {
     output.push({
       result: value,
       start,
-      end,
+      end
     })
   }
 
   return output
 }
 
-function parseComments(content) {
+function parseComments (content) {
   const output = []
-  if (!content)
-    return output
+  if (!content) { return output }
   const regex = /<!--(?:.|\n|\r)+?-->/gm
   let match
   while (match = regex.exec(content)) {
@@ -36,16 +34,15 @@ function parseComments(content) {
     output.push({
       result: value,
       start,
-      end,
+      end
     })
   }
   return output
 }
 
-function parseCommentConfig(content) {
+function parseCommentConfig (content) {
   const result = {}
-  if (!content)
-    return result
+  if (!content) { return result }
   const regex = /mpx_config_(.+?)\s*:(.+)/
   content.split(/\n|\r/).forEach((item) => {
     const match = regex.exec(item)
@@ -55,18 +52,16 @@ function parseCommentConfig(content) {
       try {
         const value = JSON.parse(raw.replace(/'/g, '"'))
         result[key] = value
-      }
-      catch (e) {
+      } catch (e) {
       }
     }
   })
   return result
 }
 
-function parseStrings(content) {
+function parseStrings (content) {
   const output = []
-  if (!content)
-    return output
+  if (!content) { return output }
   const regex = /'[^']+'|"[^"]+"/gm
   let match
   while (match = regex.exec(content)) {
@@ -77,7 +72,7 @@ function parseStrings(content) {
     output.push({
       result: value,
       start,
-      end,
+      end
     })
   }
   return output
@@ -89,5 +84,5 @@ module.exports = {
   parseComments,
   parseCommentConfig,
   parseMustache,
-  stringifyAttr,
+  stringifyAttr
 }
