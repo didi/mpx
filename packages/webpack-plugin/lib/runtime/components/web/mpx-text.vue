@@ -54,11 +54,11 @@
             }
           }))
         } else {
-          const componentOptions = item.componentOptions && item.componentOptions || {}
-          newSlots.push(createElement('mpx-text', {
+          const componentOptions = item.componentOptions && item.componentOptions
+          newSlots.push(componentOptions ? createElement('mpx-text', {
             on: componentOptions.listeners,
             props:componentOptions.propsData
-          }, item.children || componentOptions.children))
+          }, componentOptions.children) : createElement('span', item.children))
         }
       })
       if (this.selectable) {
