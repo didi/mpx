@@ -16,9 +16,5 @@
   "dependencies": {
     "minimatch": "^9.0.1",
     "unocss": "^0.52.0"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "^0.39.3",
-    "eslint": "^8.41.0"
   }
 }
