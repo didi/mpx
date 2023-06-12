@@ -42,7 +42,7 @@ const processWatchOptionsCompat = (options) => {
 }
 
 export function watch (source, cb, options = {}) {
-  let { immediate, deep, flush, immediateAsync } = processWatchOptionsCompat(options)
+  let { immediate, deep, flush } = processWatchOptionsCompat(options)
   const instance = currentInstance
   let getter
   let isMultiSource = false
@@ -139,8 +139,6 @@ export function watch (source, cb, options = {}) {
   if (cb) {
     if (immediate) {
       job()
-    } else if (immediateAsync) {
-      queuePreFlushCb(job)
     } else {
       oldValue = effect.run()
     }

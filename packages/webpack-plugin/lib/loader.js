@@ -4,7 +4,6 @@ const createHelpers = require('./helpers')
 const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
-const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
 const async = require('async')
 const processJSON = require('./web/processJSON')
@@ -21,6 +20,7 @@ const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDepen
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
+const getRulesRunner = require('./platform')
 
 module.exports = function (content) {
   this.cacheable()
@@ -50,6 +50,19 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+
+  const emitWarning = (msg) => {
+    this.emitWarning(
+      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+    )
+  }
 
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
@@ -111,10 +124,28 @@ module.exports = function (content) {
       let componentGenerics = {}
 
       if (parts.json && parts.json.content) {
+        const rulesRunnerOptions = {
+          mode,
+          srcMode,
+          type: 'json',
+          waterfall: true,
+          warn: emitWarning,
+          error: emitError
+        }
+        if (!isApp) {
+          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+          // polyfill global usingComponents
+          // 预读json时无需注入polyfill全局组件
+          // rulesRunnerOptions.data = {
+          //   globalComponents: mpx.usingComponents
+          // }
+        }
+
         try {
           const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
-            fixUsingComponent(ret.usingComponents, mode)
+            const rulesRunner = getRulesRunner(rulesRunnerOptions)
+            if (rulesRunner) rulesRunner(ret)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           }
           if (ret.componentPlaceholder) {
