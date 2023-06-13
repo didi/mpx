@@ -66,7 +66,7 @@ export default function processOption (
 
         // 处理人为操作
         if (!action) {
-          if (stack.length > 1 && (stack[stack.length - 2].path === to.path || (tabBarMap[stack[stack.length - 2].path.slice(1)] && tabBarMap[to.path.slice(1)]))) {
+          if (stack.length > 1 && stack[stack.length - 2].path === to.path) {
             action = {
               type: 'back',
               delta: 1
@@ -147,6 +147,7 @@ export default function processOption (
               global.__mpxRouter.needRemove = stack.filter((item) => {
                 if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
+                  tabItem.path = to.path
                   return false
                 }
                 return true
