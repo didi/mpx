@@ -2,7 +2,6 @@ const bindThis = require('../../../lib/template-compiler/bind-this').transform
 const { trim } = require('../../../lib/utils/string')
 
 describe('render function simplify should correct', function () {
-
   it('should normal delete is correct', function () {
     const input = `
     global.currentInject = {

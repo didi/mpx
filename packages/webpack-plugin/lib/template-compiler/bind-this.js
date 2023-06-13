@@ -138,7 +138,6 @@ function checkKeys (keys, key) {
 }
 
 function dealRemove (path) {
-
   while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
     path = path.parentPath
   }
