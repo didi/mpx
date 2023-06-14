@@ -54,7 +54,7 @@
             }
           }))
         } else {
-          const componentOptions = item.componentOptions && item.componentOptions
+          const componentOptions = item.componentOptions
           newSlots.push(componentOptions ? createElement('mpx-text', {
             on: componentOptions.listeners,
             props:componentOptions.propsData
