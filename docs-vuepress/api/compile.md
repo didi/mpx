@@ -1420,12 +1420,14 @@ new MpxWebpackPlugin({
     include: [
       resolve('src')
     ],
+    /*
     include: [
       (pageResourcePath) => pageResourcePath.includes('pages')
     ],
     include: [
       () => true
     ]
+    */
   }
 })
 ```

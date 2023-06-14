@@ -21,7 +21,7 @@ dangerousKeys.split(',').forEach((key) => {
 })
 
 // 判断 Identifier 是否需要处理
-function judgeIdentifierName (path) {
+function checkBindThis (path) {
   return !(t.isDeclaration(path.parent) && path.parentKey === 'id') &&
     !(t.isFunction(path.parent) && path.listKey === 'params') &&
     !(t.isMethod(path.parent) && path.parentKey === 'key' && !path.parent.computed) &&
@@ -74,65 +74,79 @@ function calPropName (path) {
 }
 
 function checkDelAndGetPath (path) {
-  let cur = path
-  let delPath = cur
-  while (cur) {
-    const { key, computed, node, container } = cur
+  let current = path
+  let delPath = current
+  let propsPath = null
+  let isPros = false
+
+  // case: !!name
+  while (t.isUnaryExpression(current.parent) && current.key === 'argument') {
+    current = current.parentPath
+    delPath = current
+  }
+
+  // case: Number(a); this._p(a); this.test(this._p(a))
+  while (current) {
+    if (t.isBlockStatement(current)) break // block 即可退出循环
+
+    const { listKey, parent } = current
+    if (listKey === 'arguments' && t.isCallExpression(parent)) {
+      const args = parent.arguments
+      if (args.length === 1) {
+        const callee = parent.callee
+        const name = callee.property && callee.property.name // 确认是否要考虑 this['_p'](a)
+        if (name === '_p') { // 收集props
+          isPros = true
+        }
+        propsPath = parent
+        current = current.parentPath
+        continue
+      }
+    }
+    current = current.parentPath
+  }
+
+  while (current) {
+    if (t.isBlockStatement(current)) break
+
+    const { key, computed, node, container } = current
     if (
       computed ||
       key === 'property' ||
       (node.computed && !t.isStringLiteral(node.property)) ||
       t.isLogicalExpression(container) ||
-      (t.isBinaryExpression(container) && t.isIdentifier(container.left) && t.isIdentifier(container.right)) ||
       (t.isIfStatement(container) && key === 'test')
-    ) return { canDel: false }
+    ) return result({ canDel: false })
 
-    if (t.isConditionalExpression(container)) return key === 'test' ? { canDel: false } : { ignore: true }
+    if (t.isConditionalExpression(container)) return result(key === 'test' ? { canDel: false } : { ignore: true })
 
-    if (t.isUnaryExpression(cur.parent) && cur.key === 'argument') {
-      while (t.isUnaryExpression(cur.parent) && cur.key === 'argument') {
-        cur = cur.parentPath
-        delPath = cur
-      }
-      continue
-    }
+    if (t.isBinaryExpression(container)) return result({ replace: true }) // TODO 确认 a + b 删除报错类型
 
-    if (cur.listKey === 'arguments' && cur.key === 0 && t.isCallExpression(cur.parent)) {
-      const callee = cur.parent.callee
-      const name = callee.name || (callee.property && callee.property.name)
-      if (name && hash[name]) { // Number(a)
-        cur = cur.parentPath
-        delPath = cur
-        continue
-      } else if (name === '_i') {
-        return { canDel: false }
-      }
-    }
-
-    cur = cur.parentPath
+    current = current.parentPath
   }
 
-  return {
+  function result(obj) {
+    return Object.assign({
+      isPros,
+      propsPath
+    }, obj)
+  }
+
+  return result({
     canDel: true,
     delPath
-  }
+  })
 }
 
-function checkKeys (keys, key) {
+function checkPrefix (keys, key) {
   if (keys.length === 0) return false
 
   const temp = key.split('.')
   if (temp.length === 1) return false
 
-  const map = new Map()
-  keys.forEach(k => {
-    map.set(k, 1)
+  keys.forEach(str => {
+    if (key.startsWith(str)) return true
   })
-
-  while (temp.length) {
-    temp.pop()
-    if (map.get(temp.join('.'))) return true
-  }
 
   return false
 }
@@ -163,7 +177,6 @@ module.exports = {
     })
 
     const propKeys = []
-    let isProps = false
 
     // 纪录每个作用域下的变量，以便回溯删除
     let blockTree = null
@@ -193,61 +206,38 @@ module.exports = {
           currentBlock = scope.parent
         }
       },
-      // 标记收集props数据
-      CallExpression: {
-        enter (path) {
-          const callee = path.node.callee
-          if (
-            t.isMemberExpression(callee) &&
-            t.isThisExpression(callee.object) &&
-            (callee.property.name === '_p' || callee.property.value === '_p')
-          ) {
-            isProps = true
-            path.isProps = true
-          }
-        },
-        exit (path) {
-          if (path.isProps) {
-            // 移除无意义的__props调用
-            const arg = path.node.arguments[0] // this._p里的参数可能被删除，比如 this._p($t('xxx'))
-            if (arg) {
-              path.replaceWith(arg)
-            }
-            isProps = false
-            delete path.isProps
-          }
-        }
-      },
       Identifier (path) {
-        if (judgeIdentifierName(path)) {
-          if (!path.scope.hasBinding(path.node.name) && !ignoreMap[path.node.name]) {
-            path.isIdentity = true
+        if (
+          checkBindThis(path) &&
+          !path.scope.hasBinding(path.node.name) &&
+          !ignoreMap[path.node.name]
+        ) {
+          path.shouldBindThis = true
 
-            if (needCollect) {
-              if (isProps) {
-                propKeys.push(path.node.name)
-              }
+          if (needCollect) {
+            const { last, keyPath, hasDangerous } = calPropName(path)
+            path.keyPath = keyPath
+            path.lastPath = last
 
-              const { last, keyPath, hasDangerous } = calPropName(path)
-              path.keyPath = keyPath
-              path.lastPath = last
+            if (!renderReduce) return
 
-              if (!renderReduce) return
-
-              const { canDel, delPath, ignore } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
-              if (ignore) return
-
-              path.canDel = canDel
-              path.deleteLastPath = delPath
-
-              const current = blockTree.get(currentBlock)
-              const target = current.data.bindings[keyPath] || []
-              target.push({
-                path,
-                canDel
-              })
-              current.data.bindings[keyPath] = target
+            const { isPros, propsPath, ignore, canDel, delPath, replace } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
+            if (isPros) {
+              propKeys.push(path.node.name)
+              propsPath.replaceWith(propsPath.arguments[0])
             }
+            if (ignore) return
+
+            path.canDel = canDel
+            path.deleteLastPath = delPath
+
+            const current = blockTree.get(currentBlock)
+            const target = current.data.bindings[keyPath] || []
+            target.push({
+              path,
+              canDel
+            })
+            current.data.bindings[keyPath] = target
           }
         }
       }
@@ -267,8 +257,8 @@ module.exports = {
         }
       },
       Identifier (path) {
-        if (path.isIdentity) {
-          delete path.isIdentity
+        if (path.shouldBindThis) {
+          delete path.shouldBindThis
 
           if (path.keyPath) {
             const keyPath = path.keyPath
@@ -289,14 +279,14 @@ module.exports = {
                 delete path.deleteLastPath
               }
 
-              if (checkKeys(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
+              if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
                 doDelete()
                 return
               } else {
                 const currentBlockVars = bindings[keyPath]
                 if (currentBlockVars.length > 1) {
                   const index = currentBlockVars.findIndex(item => !item.canDel)
-                  if (index !== -1 || currentBlockVars[0].path !== path) {
+                  if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量或不是第一个可删除变量，即可删除该变量
                     doDelete()
                     return
                   }
