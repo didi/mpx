@@ -187,7 +187,7 @@ describe('render function simplify should correct', function () {
           name3;
           name3[name2];
           
-          name44 && name4.length;
+          name4 && name4.length;
           name4['length']
           !name4.length;
           
@@ -206,6 +206,7 @@ describe('render function simplify should correct', function () {
           name8;
           name9;
           ({ key: name8 && !name9 });
+          ({ key: name9 });
 
           this._p(name10);
           if (xxx) {
@@ -232,18 +233,25 @@ describe('render function simplify should correct', function () {
           this._c("name", this.name);
 
           this._c("name3", this.name3)[this._c("name2", this.name2)];
-          this._c("name44", this.name44) && this._c("name4", this.name4).length;
+          this._c("name4", this.name4) && this._c("name4", this.name4).length;
       
           this._c("name5", this.name5);
+
+          this._c("name6", this.name6);
       
-          this._c("name6", this.name6) + this._c("name7", this.name7);
-          '123';
-          '123';
-          '123';
-          '123';
+          this._c("name7", this.name7);
+      
+          "" + "";
+          "" + '123';
+          '123' + "";
+          '123' + "" + "";
+          "" + '123' + "" + "";
       
           ({
             key: this._c("name8",this.name8)&&!this._c("name9",this.name9)
+          });
+          ({
+            key: ""
           });
       
           if (this._c("xxx", this.xxx)) {
@@ -354,7 +362,7 @@ describe('render function simplify should correct', function () {
   
         ({
           tap: [["handler", true, 123]],
-          click: [["handler"]]
+          click: [["handler", ""]]
         });
     
         this._c("aName", this.aName);

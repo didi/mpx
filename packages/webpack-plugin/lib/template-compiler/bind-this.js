@@ -98,6 +98,8 @@ function checkDelAndGetPath (path) {
         current = current.parentPath
         replacePath = current
         continue
+      } else {
+        return result({ canDel: false })
       }
     }
     current = current.parentPath
@@ -116,7 +118,10 @@ function checkDelAndGetPath (path) {
 
     if (t.isConditionalExpression(container)) return result(key === 'test' ? { canDel: false } : { ignore: true })
 
-    if (t.isBinaryExpression(container)) return result({ canDel: true, replace: true })
+    if (
+      t.isBinaryExpression(container) ||
+      (key === 'value' && t.isObjectProperty(container)) // ({ name: a })
+    ) return result({ canDel: true, replace: true })
 
     current = current.parentPath
   }
@@ -138,9 +143,10 @@ function checkPrefix (keys, key) {
   const temp = key.split('.')
   if (temp.length === 1) return false
 
-  keys.forEach(str => {
+  for (let i = 0; i < keys.length; i++) {
+    const str = keys[i]
     if (key.startsWith(str)) return true
-  })
+  }
   return false
 }
 
@@ -183,29 +189,21 @@ module.exports = {
         enter (path) {
           bindingsMap.set(path, {
             parent: null,
-            bindings: {},
-            pBindings: {}
+            bindings: {}
           })
           currentBlock = path
         }
       },
       BlockStatement: {
         enter (path) { // 收集作用域下所有变量(keyPath)
-          const parent = bindingsMap.get(currentBlock)
           bindingsMap.set(path, {
-            parent,
-            bindings: {},
-            pBindings: {}
+            parent: currentBlock,
+            bindings: {}
           })
           currentBlock = path
         },
         exit (path) {
-          const scope = bindingsMap.get(path)
-          const parentScope = bindingsMap.get(scope.parent)
-          if (parentScope) {
-            scope.pBindings = Object.assign({}, parentScope.bindings, parentScope.pBindings)
-          }
-          currentBlock = scope.parent
+          currentBlock = bindingsMap.get(path).parent
         }
       },
       Identifier (path) {
@@ -254,6 +252,9 @@ module.exports = {
     const bindThisVisitor = {
       BlockStatement: {
         enter (path) {
+          const scope = bindingsMap.get(path)
+          const parentScope = bindingsMap.get(scope.parent)
+          scope.pBindings = Object.assign({}, parentScope.bindings, parentScope.pBindings)
           currentBlock = path
         },
         exit (path) {
