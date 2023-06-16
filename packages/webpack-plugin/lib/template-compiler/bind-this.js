@@ -2,7 +2,6 @@ const babylon = require('@babel/parser')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
-// const { MultiNode, clearCache } = require('../utils/multi-node.js')
 
 const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -87,7 +86,7 @@ function checkDelAndGetPath (path) {
   }
 
   // case: Number(a); this._p(a); this._p(wxs.test(a))
-  while (!t.isBlockStatement(current)) {// block 即可退出循环
+  while (!t.isBlockStatement(current)) { // block 即可退出循环
     const { listKey, parent } = current
     if (listKey === 'arguments' && t.isCallExpression(parent)) {
       const args = parent.arguments
@@ -122,7 +121,7 @@ function checkDelAndGetPath (path) {
     current = current.parentPath
   }
 
-  function result(obj) {
+  function result (obj) {
     return Object.assign({
       isPros,
       delPath,
