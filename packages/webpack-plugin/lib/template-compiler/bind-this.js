@@ -75,9 +75,10 @@ function calPropName (path) {
 
 function checkDelAndGetPath (path) {
   let current = path
-  let delPath = current
-  let propsPath = null
-  let isPros = false
+  let delPath = path
+  let isPros = false // 只用于收集 propKeys
+  let replacePath = null
+  let replaceArg = null
 
   // case: !!name
   while (t.isUnaryExpression(current.parent) && current.key === 'argument') {
@@ -86,9 +87,7 @@ function checkDelAndGetPath (path) {
   }
 
   // case: Number(a); this._p(a); this._p(wxs.test(a))
-  while (current) {
-    if (t.isBlockStatement(current)) break // block 即可退出循环
-
+  while (!t.isBlockStatement(current)) {// block 即可退出循环
     const { listKey, parent } = current
     if (listKey === 'arguments' && t.isCallExpression(parent)) {
       const args = parent.arguments
@@ -96,17 +95,17 @@ function checkDelAndGetPath (path) {
         const callee = parent.callee
         const name = callee.property && callee.property.name // 确认是否要考虑 this['_p'](a)
         if (name === '_p') isPros = true // 收集props
+        if (!replaceArg) replaceArg = args
         current = current.parentPath
-        propsPath = current
+        replacePath = current
         continue
       }
     }
     current = current.parentPath
   }
 
-  while (current) {
-    if (t.isBlockStatement(current)) break
-
+  current = path // 需要从头开始校验 case: this._p((a + b) || (c && d))
+  while (!t.isBlockStatement(current)) {
     const { key, computed, node, container } = current
     if (
       computed || // a[b] => a
@@ -118,7 +117,7 @@ function checkDelAndGetPath (path) {
 
     if (t.isConditionalExpression(container)) return result(key === 'test' ? { canDel: false } : { ignore: true })
 
-    if (t.isBinaryExpression(container)) return result({ replace: true }) // TODO 确认 a + b 删除报错类型
+    if (t.isBinaryExpression(container)) return result({ canDel: true, replace: true })
 
     current = current.parentPath
   }
@@ -126,14 +125,13 @@ function checkDelAndGetPath (path) {
   function result(obj) {
     return Object.assign({
       isPros,
-      propsPath
+      delPath,
+      replacePath,
+      replaceArg
     }, obj)
   }
 
-  return result({
-    canDel: true,
-    delPath
-  })
+  return result({ canDel: true })
 }
 
 function checkPrefix (keys, key) {
@@ -148,20 +146,19 @@ function checkPrefix (keys, key) {
 }
 
 function dealRemove (path, replace) {
-  if (replace) { // TODO 优化，看是否可以挪到下面
-    path.replaceWith(t.stringLiteral(''))
-    return
-  }
-
   while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
     path = path.parentPath
   }
 
   try {
-    t.validate(path, path.key, null)
-    path.remove()
+    if (replace) {
+      path.replaceWith(t.stringLiteral(''))
+    } else {
+      t.validate(path, path.key, null)
+      path.remove()
+    }
   } catch (e) {
-    path.replaceWith(t.stringLiteral(''))
+    console.error(e)
   }
 }
 
@@ -206,7 +203,9 @@ module.exports = {
         exit (path) {
           const scope = bindingsMap.get(path)
           const parentScope = bindingsMap.get(scope.parent)
-          scope.pBindings = Object.assign({}, parentScope.bindings, parentScope.pBindings)
+          if (parentScope) {
+            scope.pBindings = Object.assign({}, parentScope.bindings, parentScope.pBindings)
+          }
           currentBlock = scope.parent
         }
       },
@@ -223,11 +222,17 @@ module.exports = {
 
           if (!renderReduce) return
 
-          const {isPros, propsPath, ignore, delPath, canDel, replace} = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
-          if (isPros) {
-            propKeys.push(path.node.name)
-            propsPath.isPros = true
-          }
+          const {
+            isPros,
+            replacePath,
+            replaceArg,
+            ignore,
+            delPath,
+            canDel,
+            replace
+          } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
+          if (isPros) propKeys.push(path.node.name)
+          if (replacePath) replacePath.replaceArg = replaceArg
           if (ignore) return
 
           delPath.delInfo = {
@@ -239,7 +244,7 @@ module.exports = {
           const { bindings } = bindingsMap.get(currentBlock)
           const target = bindings[keyPath] || []
           target.push({
-            path,
+            path: delPath,
             canDel
           })
           bindings[keyPath] = target
@@ -257,12 +262,6 @@ module.exports = {
         }
       },
       enter (path) {
-        // replace _p
-        if (path.isPros) {
-          path.replaceWith(path.node.arguments[0])
-          delete path.isPros
-        }
-
         // 删除重复变量
         if (path.delInfo) {
           const { keyPath, canDel, replace } = path.delInfo
@@ -273,16 +272,16 @@ module.exports = {
             const { bindings, pBindings } = data
             const allBindings = Object.assign({}, pBindings, bindings)
 
-            // 优先判断前缀，在判断全等
+            // 优先判断前缀，再判断全等
             if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
-              dealRemove(path)
+              dealRemove(path, replace)
               return
             } else {
               const currentBlockVars = bindings[keyPath]
               if (currentBlockVars.length > 1) {
                 const index = currentBlockVars.findIndex(item => !item.canDel)
                 if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
-                  dealRemove(path)
+                  dealRemove(path, replace)
                   return
                 }
               }
@@ -290,50 +289,31 @@ module.exports = {
           }
         }
 
+        // bind this a => this.a
         if (path.keyPath) {
-          // bind this
-          path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+          const { name, value } = path.node || {}
+          if (path.node && (name || value)) { // 确保path没有被删除 且 没有被替换成字符串
+            path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+          }
+          delete path.keyPath
         }
       },
-      Identifier (path) {
-        return
-        if (path.keyPath) {
-          const keyPath = path.keyPath
-
-          delete path.keyPath
-
-          if (path.canDel || path.replace) {
-            delete path.canDel
-            const { data } = blockTree.get(currentBlock)
-            const { bindings, pBindings } = data
-            const allBindings = Object.assign({}, pBindings, bindings)
-
-            const doDelete = () => {
-              dealRemove(path.deleteLastPath, path.replace)
-              delete path.deleteLastPath
-            }
-
-            if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
-              doDelete()
-              return
-            } else {
-              const currentBlockVars = bindings[keyPath]
-              if (currentBlockVars.length > 1) {
-                const index = currentBlockVars.findIndex(item => !item.canDel)
-                if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量或不是第一个可删除变量，即可删除该变量
-                  doDelete()
-                  return
-                }
-              }
-            }
-          }
-
+      exit (path) {
+        // replace必须放在exit，因为如果在enter阶段做，可能会把挂载到path的delInfo、keyPath给删掉
+        if (path.replaceArg) {
+          const arg = path.replaceArg[0]
+          arg ? path.replaceWith(arg) : dealRemove(path)
+          delete path.replaceArg
         }
       },
       MemberExpression: {
         exit (path) {
           if (path.collectPath) {
-            path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
+            const { name, value } = path.node || {}
+            if (path.node) {
+            // if (path.node && (name || value)) {
+              path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
+            }
             delete path.collectPath
           }
         }
