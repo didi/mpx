@@ -110,7 +110,7 @@ function checkDelAndGetPath (path) {
     if (
       computed || // a[b] => a
       key === 'property' || // a[b] => b
-      (node.computed && !t.isStringLiteral(node.property)) || // a.b[c] => a.b TODO 注释补全
+      (node.computed && !t.isStringLiteral(node.property)) ||
       t.isLogicalExpression(container) ||
       (t.isIfStatement(container) && key === 'test')
     ) return result({ canDel: false })
@@ -309,11 +309,7 @@ module.exports = {
       MemberExpression: {
         exit (path) {
           if (path.collectPath) {
-            const { name, value } = path.node || {}
-            if (path.node) {
-            // if (path.node && (name || value)) {
-              path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
-            }
+            path.node && path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
             delete path.collectPath
           }
         }
