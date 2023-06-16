@@ -23,6 +23,19 @@ export function setForceTrigger (val) {
   isForceTrigger = val
 }
 
+let shouldTrack = true
+const trackStack = []
+
+export function pauseTracking () {
+  trackStack.push(shouldTrack)
+  shouldTrack = false
+}
+
+export function resetTracking () {
+  const last = trackStack.pop()
+  shouldTrack = last === undefined ? true : last
+}
+
 /**
  * Observer class that are attached to each observed
  * object. Once attached, the observer converts target
@@ -126,7 +139,7 @@ export function defineReactive (obj, key, val, shallow) {
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
-      if (Dep.target) {
+      if (shouldTrack && Dep.target) {
         dep.depend()
         if (childOb) {
           childOb.dep.depend()
