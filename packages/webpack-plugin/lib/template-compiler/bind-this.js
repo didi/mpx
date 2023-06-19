@@ -99,10 +99,19 @@ function checkDelAndGetPath (path) {
       const args = current.node.arguments || current.parent.arguments // Number(a) || this._p(a)
       if (args.length === 1) {
         const name = callee.name || (callee.property && callee.property.name) // Number(a) || this._p(a)
-        if (name === '_p') isPros = true // 收集props
-        if (!replaceArg) replaceArg = args // 保留第一个出现的参数 this._p(wxs.test(a)) => 把a保留
+        if (!replaceArg) replaceArg = args // 保留第一个出现的参数 this._p(wxs.test(a)) => 把a保存下来，避免在replace时再次查找args
+        if (name === '_p') {
+          isPros = true // 收集props
+          // replacePath = current
+        }
+        if (current.key === 'object' && t.isMemberExpression(current.parent)) { // Number(a).length
+          replacePath = current.parentPath
+          // delPath = current.parentPath
+        } else {
+          replacePath = current
+          // delPath = current
+        }
         current = current.parentPath
-        replacePath = current
         continue
       } else {
         canDel = false
@@ -131,7 +140,7 @@ function checkDelAndGetPath (path) {
 
     if (
       t.isBinaryExpression(container) ||
-      (key === 'value' && t.isObjectProperty(container)) // ({ name: a })
+      (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a }) and ({ name: a && !b })
     ) {
       canDel = true
       replace = true
@@ -141,7 +150,7 @@ function checkDelAndGetPath (path) {
   }
 
   // 不可删除时，
-  if (!canDel && !isPros && replaceArg) { // Object.keys(a) ? b : c; this._p(Object.keys(a))
+  if (!canDel && !isPros && replaceArg) { // Object.keys(a) ? b : c; Object.keys(a)不可删除; this._p(Object.keys(a)) 可删除
     replacePath = null
     replaceArg = null
   }

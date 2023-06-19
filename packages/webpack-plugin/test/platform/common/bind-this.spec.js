@@ -53,6 +53,88 @@ describe('render function simplify should correct', function () {
     expect(trim(res)).toBe(trim(output))
   })
 
+  it('test', function () {
+    const input = `
+    global.currentInject = {
+      render: function () {
+        if (bName) {} // 1
+        this._p(bName) // 2
+        this._p(wxs.test(bName)) // 3
+        this._p(wxs.test(bName + cName)) // 4
+        Number(bName + cName) // 5
+        this._p(Number(bName + cName)) // 6
+        Object.keys({ name: bName }).length // 7
+
+        this._p(Object.keys({ name: bName })) // 8
+
+        this._p(Object.keys(bName)) // 9
+
+        if (bName) {} // 10
+        this._p(bName) // 11
+        this._p(wxs.test(bName + cName)) // 12
+        this._p(wxs.test(bName + cName)) // 13
+        Object.keys({ name: bName }).length // 14
+        
+        
+        if (Object.keys({ name: bName }).length) {} // 15
+
+        Object.keys({ name: bName }).length ? bName1 : bName2 // 16
+
+        this._p(Object.keys({ name: bName }).length ? bName1 : bName2) // 17
+      }
+    }
+    `
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
+    const output = `
+      global.currentInject = {
+        render: function () {
+          if (this._c("bName", this.bName)) {} // 1
+
+          // 3
+          "" + this._c("cName", this.cName); // 4
+        
+          "" + ""; // 5
+        
+          "" + ""; // 6
+        
+          ({
+            name: ""
+          }); // 7
+        
+          ({
+            name: ""
+          }); // 8
+        
+          // 9
+          if (this._c("bName", this.bName)) {} // 10
+
+          // 11
+          "" + ""; // 12
+        
+          "" + ""; // 13
+        
+          ({
+            name: ""
+          }); // 14
+          
+          if (Object.keys({
+            name: this._c("bName", this.bName)
+          }).length) {} // 15
+        
+        
+          Object.keys({
+            name: this._c("bName", this.bName)
+          }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2); // 16
+        
+          Object.keys({
+            name: this._c("bName", this.bName)
+          }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2); // 17
+        }
+      };
+    `
+    expect(trim(res)).toBe(trim(output))
+  })
+
   it('should Normal Scope Deletion is correct', function () {
     const input = `
     global.currentInject = {
@@ -280,7 +362,14 @@ describe('render function simplify should correct', function () {
           c
           {
             b
-           }
+          }
+          aa // 分割线
+          {
+            a
+            b
+            c
+            d
+          }
           b
         }
         b
@@ -297,6 +386,13 @@ describe('render function simplify should correct', function () {
           this._c("c", this.c);
       
           {}
+      
+          this._c("aa", this.aa); // 分割线
+      
+      
+          {
+            this._c("d", this.d);
+          }
         }
       
         this._c("b", this.b);
@@ -350,8 +446,22 @@ describe('render function simplify should correct', function () {
           name: bName
         });
         if (bName) {}
+        this._p(bName)
+        this._p(wxs.test(bName))
+        this._p(wxs.test(bName + cName))
+        Number(bName + cName)
+        this._p(Number(bName + cName))
+        Object.keys({ name: bName }).length
+        
         if (Object.keys({ name: bName }).length) {}
+        
         Object.keys({ name: bName }).length ? bName1 : bName2
+        
+        this._p(Object.keys({ name: bName }).length ? bName1 : bName2)
+        
+        this._p(Object.keys({ name: bName }))
+        
+        this._p(Object.keys(bName))
       }
     }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
@@ -379,6 +489,14 @@ describe('render function simplify should correct', function () {
     
         if (this._c("bName", this.bName)) {}
     
+        "" + this._c("cName", this.cName);
+        "" + "";
+        "" + "";
+      
+        ({
+          name: ""
+        });
+      
         if (Object.keys({
           name: this._c("bName", this.bName)
         }).length) {}
@@ -386,6 +504,12 @@ describe('render function simplify should correct', function () {
         Object.keys({
           name: this._c("bName", this.bName)
         }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
+        Object.keys({
+          name: this._c("bName", this.bName)
+        }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
+        ({
+          name: ""
+        });
       }
     };`
     expect(trim(res)).toBe(trim(output))
