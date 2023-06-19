@@ -78,6 +78,9 @@ function checkDelAndGetPath (path) {
   let isPros = false // 只用于收集 propKeys
   let replacePath = null
   let replaceArg = null
+  let canDel = true
+  let ignore = false
+  let replace = false
 
   // case: !!name
   while (t.isUnaryExpression(current.parent) && current.key === 'argument') {
@@ -85,28 +88,31 @@ function checkDelAndGetPath (path) {
     delPath = current
   }
 
-  // case: Number(a); this._p(a); this._p(wxs.test(a))
-  while (!t.isBlockStatement(current)) { // block 即可退出循环
-    const { listKey, parent } = current
-    if (listKey === 'arguments' && t.isCallExpression(parent)) {
-      const args = parent.arguments
+  // wxs.test() wxs.test 不可删除
+  if (current.key === 'callee' && t.isCallExpression(current.parent)) {
+    canDel = false
+  }
+
+  while (!t.isBlockStatement(current)) {
+    if (t.isCallExpression(current)) { // 处理case: Number(a); this._p(a); this._p(wxs.test(a))
+      const callee = current.node.callee
+      const args = current.node.arguments || current.parent.arguments // Number(a) || this._p(a)
       if (args.length === 1) {
-        const callee = parent.callee
-        const name = callee.property && callee.property.name // 确认是否要考虑 this['_p'](a)
+        const name = callee.name || (callee.property && callee.property.name) // Number(a) || this._p(a)
         if (name === '_p') isPros = true // 收集props
-        if (!replaceArg) replaceArg = args
+        if (!replaceArg) replaceArg = args // 保留第一个出现的参数 this._p(wxs.test(a)) => 把a保留
         current = current.parentPath
         replacePath = current
         continue
       } else {
-        return result({ canDel: false })
+        canDel = false
+        break
       }
     }
-    current = current.parentPath
-  }
 
-  current = path // 需要从头开始校验 case: this._p((a + b) || (c && d))
-  while (!t.isBlockStatement(current)) {
+    // 如果是this._p()，则可退出循环
+    if (isPros) break
+
     const { key, computed, node, container } = current
     if (
       computed || // a[b] => a
@@ -114,28 +120,40 @@ function checkDelAndGetPath (path) {
       (node.computed && !t.isStringLiteral(node.property)) ||
       t.isLogicalExpression(container) ||
       (t.isIfStatement(container) && key === 'test')
-    ) return result({ canDel: false })
+    ) {
+      canDel = false
+    }
 
-    if (t.isConditionalExpression(container)) return result(key === 'test' ? { canDel: false } : { ignore: true })
+    if (t.isConditionalExpression(container)) {
+      if (key === 'test') canDel = false
+      else ignore = true
+    }
 
     if (
       t.isBinaryExpression(container) ||
       (key === 'value' && t.isObjectProperty(container)) // ({ name: a })
-    ) return result({ canDel: true, replace: true })
+    ) {
+      canDel = true
+      replace = true
+    }
 
     current = current.parentPath
   }
 
-  function result (obj) {
-    return Object.assign({
-      isPros,
-      delPath,
-      replacePath,
-      replaceArg
-    }, obj)
+  // 不可删除时，
+  if (!canDel && !isPros && replaceArg) { // Object.keys(a) ? b : c; this._p(Object.keys(a))
+    replacePath = null
+    replaceArg = null
   }
-
-  return result({ canDel: true })
+  return {
+    isPros,
+    delPath,
+    replacePath,
+    replaceArg,
+    canDel,
+    ignore,
+    replace
+  }
 }
 
 function checkPrefix (keys, key) {
@@ -185,15 +203,6 @@ module.exports = {
     const propKeys = []
 
     const collectVisitor = {
-      Program: {
-        enter (path) {
-          bindingsMap.set(path, {
-            parent: null,
-            bindings: {}
-          })
-          currentBlock = path
-        }
-      },
       BlockStatement: {
         enter (path) { // 收集作用域下所有变量(keyPath)
           bindingsMap.set(path, {
@@ -229,7 +238,7 @@ module.exports = {
             replace
           } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
           if (isPros) propKeys.push(path.node.name)
-          if (replacePath) replacePath.replaceArg = replaceArg
+          if (replacePath && replaceArg) replacePath.replaceArg = replaceArg
           if (ignore) return
 
           delPath.delInfo = {
@@ -254,7 +263,7 @@ module.exports = {
         enter (path) {
           const scope = bindingsMap.get(path)
           const parentScope = bindingsMap.get(scope.parent)
-          scope.pBindings = Object.assign({}, parentScope.bindings, parentScope.pBindings)
+          scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
           currentBlock = path
         },
         exit (path) {
