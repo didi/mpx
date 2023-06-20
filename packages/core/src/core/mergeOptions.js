@@ -331,6 +331,8 @@ function composeHooks (target, includes) {
 
 function proxyHooks (options) {
   const lifecycleProxyMap = convertRule.lifecycleProxyMap
+  // 转换原生时优先使用nativeLifecycleProxyMap
+  if (options.__nativeRender__) Object.assign(lifecycleProxyMap, convertRule.nativeLifecycleProxyMap)
   lifecycleProxyMap && Object.keys(lifecycleProxyMap).forEach(key => {
     const newHooks = (options[key] || []).slice()
     const proxyArr = lifecycleProxyMap[key]

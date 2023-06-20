@@ -43,6 +43,7 @@ export default {
   pageMode: 'blend',
   support: false,
   lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
+  nativeLifecycleProxyMap: wxLifecycle.nativeLifecycleProxyMap,
   convert (options) {
     const props = Object.assign({}, options.properties, options.props)
     if (props) {

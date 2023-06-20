@@ -1,5 +1,5 @@
-import { reactive, pauseTracking, resetTracking } from '../observer/reactive'
-import { ReactiveEffect } from '../observer/effect'
+import { reactive } from '../observer/reactive'
+import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
 import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
