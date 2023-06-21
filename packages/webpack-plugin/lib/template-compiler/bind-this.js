@@ -149,7 +149,7 @@ function checkDelAndGetPath (path) {
     current = current.parentPath
   }
 
-  // 不可删除时，
+  // 不可删除时，要把method相关路径清空，避免被删除；但是外层如果是_p，则需要删除
   if (!canDel && !isPros && replaceArg) { // Object.keys(a) ? b : c; Object.keys(a)不可删除; this._p(Object.keys(a)) 可删除
     replacePath = null
     replaceArg = null
@@ -307,7 +307,7 @@ module.exports = {
           }
         }
 
-        // bind this a => this.a
+        // bind this 将 a 转换成 this.a
         if (path.keyPath) {
           const { name, value } = path.node || {}
           if (path.node && (name || value)) { // 确保path没有被删除 且 没有被替换成字符串
