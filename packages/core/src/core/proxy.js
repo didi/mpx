@@ -1,9 +1,9 @@
 import { reactive } from '../observer/reactive'
-import { ReactiveEffect } from '../observer/effect'
+import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
 import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, nextTick } from '../observer/scheduler'
+import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
 import Mpx from '../index'
 import {
   noop,
@@ -119,6 +119,7 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
+      this.propsUpdatedFlag = false
     }
     this.initApi()
   }
@@ -170,7 +171,9 @@ export default class MpxProxy {
   }
 
   propsUpdated () {
+    this.propsUpdatedFlag = true
     const updateJob = this.updateJob || (this.updateJob = () => {
+      this.propsUpdatedFlag = false
       // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated
       if (this.currentRenderTask?.resolved && this.isMounted()) {
         this.callHook(BEFOREUPDATE)
@@ -477,6 +480,7 @@ export default class MpxProxy {
       return
     }
 
+    pauseTracking()
     // 使用forceUpdateData后清空
     if (!isEmptyObject(this.forceUpdateData)) {
       data = mergeData({}, data, this.forceUpdateData)
@@ -504,12 +508,30 @@ export default class MpxProxy {
     }
 
     this.target.__render(data, callback)
+    resetTracking()
+  }
+
+  toggleRecurse (allowed) {
+    if (this.effect && this.update) this.effect.allowRecurse = this.update.allowRecurse = allowed
+  }
+
+  updatePreRender () {
+    this.toggleRecurse(false)
+    pauseTracking()
+    flushPreFlushCbs(undefined, this.update)
+    resetTracking()
+    this.toggleRecurse(true)
   }
 
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
     const effect = this.effect = new ReactiveEffect(() => {
+      // pre render for props update
+      if (this.propsUpdatedFlag) {
+        this.updatePreRender()
+      }
+
       if (this.target.__injectedRender) {
         try {
           return this.target.__injectedRender()
@@ -522,10 +544,10 @@ export default class MpxProxy {
       }
     }, () => queueJob(update), this.scope)
 
-    const update = this.update = this.effect.run.bind(this.effect)
+    const update = this.update = effect.run.bind(effect)
     update.id = this.uid
     // render effect允许自触发
-    effect.allowRecurse = update.allowRecurse = true
+    this.toggleRecurse(true)
     update()
   }
 
