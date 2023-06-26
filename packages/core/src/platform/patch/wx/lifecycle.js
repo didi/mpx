@@ -55,12 +55,6 @@ export const lifecycleProxyMap = {
   [ONLOAD]: ['onLoad']
 }
 
-// 模拟实现原生微信下observer在created后执行的行为
-export const nativeLifecycleProxyMap = {
-  [BEFORECREATE]: ['created'],
-  [CREATED]: ['attached']
-}
-
 export const LIFECYCLE = {
   APP_HOOKS,
   PAGE_HOOKS,
