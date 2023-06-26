@@ -54,11 +54,7 @@
             }
           }))
         } else {
-          const componentOptions = item.componentOptions
-          newSlots.push(componentOptions ? createElement('mpx-text', {
-            on: componentOptions.listeners,
-            props:componentOptions.propsData
-          }, componentOptions.children) : createElement('span', item.children))
+          newSlots.push(item)
         }
       })
       if (this.selectable) {
