@@ -47,7 +47,7 @@ function mergeListeners (listeners, otherListeners, options = {}) {
 function processTap (listeners, context) {
   const listenerMap = {}
   const tapEvents = ['tap', 'longpress', 'longtap']
-  const isTouchDevice = document && ('ontouchstart' in document.documentElement)
+  const isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
   tapEvents.forEach((eventName) => {
     if (listeners[eventName]) {
       listenerMap[eventName] = true
@@ -156,37 +156,34 @@ function noop () {
 }
 
 export default function getInnerListeners (context, options = {}) {
-  if (isBrowser) {
-    let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
-    const listeners = Object.assign({}, context.$listeners)
-    defaultListeners.forEach((key) => {
-      if (!listeners[key]) listeners[key] = noop
-    })
-    const mergeBeforeOptions = {
-      before: true
-    }
-    const mergeAfterOptions = {
-      before: false
-    }
-
-    if (mergeBefore.listeners) {
-      mergeBeforeOptions.force = mergeBefore.force
-      mergeBefore = mergeBefore.listeners
-    }
-
-    if (mergeAfter.listeners) {
-      mergeAfterOptions.force = mergeAfter.force
-      mergeAfter = mergeAfter.listeners
-    }
-
-    processModel(listeners, context)
-    processTap(listeners, context)
-    mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
-    mergeListeners(listeners, mergeAfter, mergeAfterOptions)
-    ignoredListeners.forEach((key) => {
-      delete listeners[key]
-    })
-    return listeners
+  let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
+  const listeners = Object.assign({}, context.$listeners)
+  defaultListeners.forEach((key) => {
+    if (!listeners[key]) listeners[key] = noop
+  })
+  const mergeBeforeOptions = {
+    before: true
   }
-  return {}
+  const mergeAfterOptions = {
+    before: false
+  }
+
+  if (mergeBefore.listeners) {
+    mergeBeforeOptions.force = mergeBefore.force
+    mergeBefore = mergeBefore.listeners
+  }
+
+  if (mergeAfter.listeners) {
+    mergeAfterOptions.force = mergeAfter.force
+    mergeAfter = mergeAfter.listeners
+  }
+
+  processModel(listeners, context)
+  processTap(listeners, context)
+  mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
+  mergeListeners(listeners, mergeAfter, mergeAfterOptions)
+  ignoredListeners.forEach((key) => {
+    delete listeners[key]
+  })
+  return listeners
 }

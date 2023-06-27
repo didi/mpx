@@ -35,7 +35,7 @@ export default function createApp (option, config = {}) {
       created () {
         Object.assign(this, Mpx.prototype)
         Object.assign(this, appData)
-        const current = (this.$root.$options && this.$root.$options.router && this.$root.$options.router.currentRoute) || {}
+        const current = this.$root.$options?.router?.currentRoute || {}
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,

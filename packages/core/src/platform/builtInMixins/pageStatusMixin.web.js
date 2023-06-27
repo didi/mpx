@@ -63,8 +63,7 @@ export default function pageStatusMixin (mixinType) {
       },
       created () {
         // onLoad应该在用户声明周期CREATED后再执行，故此处使用原生created声明周期来触发onLoad
-        const rootOptions = this.$root.$options
-        const query = (rootOptions && rootOptions.router && rootOptions.currentRoute && rootOptions.currentRoute.query) || {}
+        const query = this.$root.$options?.router?.currentRoute?.query || {}
         this.__mpxProxy.callHook(ONLOAD, [query])
       }
     })
