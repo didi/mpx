@@ -57,9 +57,9 @@ export default function createApp (option, config = {}) {
           if (this.$options.onHide) {
             global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
           }
-        }
-        if (this.$options.onError) {
-          global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+          if (this.$options.onError) {
+            global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+          }
         }
       }
     })
