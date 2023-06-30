@@ -1,4 +1,4 @@
-import { isBrowser } from '@mpxjs/utils'
+import { isBrowser } from '../../../common/js'
 global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
