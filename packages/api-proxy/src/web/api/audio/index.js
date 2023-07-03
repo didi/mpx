@@ -1,4 +1,9 @@
+import { isBrowser, throwSSRWarning } from '../../../common/js'
 export const createInnerAudioContext = () => {
+  if (!isBrowser) {
+    throwSSRWarning('createInnerAudioContext API is running in non browser environments')
+    return {}
+  }
   // eslint-disable-next-line no-undef
   const audio = new Audio()
   const __audio = {}

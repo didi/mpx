@@ -1,6 +1,10 @@
-import { webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, hasOwn, isBrowser, throwSSRWarning } from '../../../common/js'
 
 function setStorage (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('setStorage API is running in non browser environments')
+    return Promise.reject(new Error('setStorage API can only be used in the browser environment'))
+  }
   const { key, data, success, fail, complete } = options
 
   try {
@@ -17,6 +21,10 @@ function setStorage (options = {}) {
 }
 
 function setStorageSync (key = '', data) {
+  if (!isBrowser) {
+    throwSSRWarning('setStorageSync API is running in non browser environments')
+    return
+  }
   let obj = {}
 
   if (typeof data === 'symbol') {
@@ -28,6 +36,10 @@ function setStorageSync (key = '', data) {
 }
 
 function getStorage (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('getStorage API is running in non browser environments')
+    return Promise.reject(new Error('getStorage API can only be used in the browser environment'))
+  }
   const { key, success, fail, complete } = options
   const { result, data } = getItem(key)
 
@@ -43,6 +55,10 @@ function getStorage (options = {}) {
 }
 
 function getStorageSync (key) {
+  if (!isBrowser) {
+    throwSSRWarning('getStorageSync API is running in non browser environments')
+    return ''
+  }
   const res = getItem(key)
   if (res.result) return res.data
 
@@ -64,6 +80,10 @@ function getItem (key) {
 }
 
 function getStorageInfo (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('getStorageInfo API is running in non browser environments')
+    return Promise.reject(new Error('getStorageInfo API can only be used in the browser environment'))
+  }
   const { success, fail, complete } = options
 
   try {
@@ -80,6 +100,10 @@ function getStorageInfo (options = {}) {
 }
 
 function getStorageInfoSync () {
+  if (!isBrowser) {
+    throwSSRWarning('getStorageInfoSync API is running in non browser environments')
+    return {}
+  }
   return {
     keys: Object.keys(window.localStorage),
     limitSize: null,
@@ -88,6 +112,10 @@ function getStorageInfoSync () {
 }
 
 function removeStorage (options = { key: '' }) {
+  if (!isBrowser) {
+    throwSSRWarning('removeStorage API is running in non browser environments')
+    return Promise.reject(new Error('removeStorage API can only be used in the browser environment'))
+  }
   const { key, success, fail, complete } = options
 
   try {
@@ -104,10 +132,18 @@ function removeStorage (options = { key: '' }) {
 }
 
 function removeStorageSync (key) {
+  if (!isBrowser) {
+    throwSSRWarning('getStorageInfoSync API is running in non browser environments')
+    return
+  }
   window.localStorage.removeItem(key)
 }
 
 function clearStorage (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('clearStorage API is running in non browser environments')
+    return Promise.reject(new Error('getStorageInfoSync API can only be used in the browser environment'))
+  }
   const { success, fail, complete } = options
 
   try {
@@ -124,6 +160,10 @@ function clearStorage (options = {}) {
 }
 
 function clearStorageSync () {
+  if (!isBrowser) {
+    throwSSRWarning('clearStorageSync API is running in non browser environments')
+    return
+  }
   window.localStorage.clear()
 }
 

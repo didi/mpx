@@ -2,7 +2,8 @@ import { webHandleSuccess, webHandleFail, throwSSRWarning, isBrowser } from '../
 
 function stopPullDownRefresh (options = {}) {
   if (!isBrowser) {
-    throwSSRWarning('stopPullDownRefresh method is running in non browser environments')
+    throwSSRWarning('stopPullDownRefresh API is running in non browser environments')
+    return Promise.reject(new Error('stopPullDownRefresh API can only be used in the browser environment'))
   }
   const router = global.__mpxRouter
   if (router) {
@@ -35,7 +36,8 @@ function stopPullDownRefresh (options = {}) {
 
 function startPullDownRefresh (options = {}) {
   if (!isBrowser) {
-    throwSSRWarning('startPullDownRefresh method is running in non browser environments')
+    throwSSRWarning('startPullDownRefresh API is running in non browser environments')
+    return Promise.reject(new Error('startPullDownRefresh API can only be used in the browser environment'))
   }
   const router = global.__mpxRouter
   if (router) {
