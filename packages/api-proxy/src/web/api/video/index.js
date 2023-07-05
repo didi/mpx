@@ -4,7 +4,7 @@ const allowPlaybackRate = [0.5, 0.8, 1.0, 1.25, 1.5, 2.0]
 export const createVideoContext = (id, context) => {
   if (!isBrowser) {
     throwSSRWarning('createVideoContext API is running in non browser environments')
-    return {}
+    return
   }
   if (!id) {
     throw new Error('id为必传参数')

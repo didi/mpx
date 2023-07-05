@@ -6,7 +6,7 @@ let toast = null
 function showToast (options = { title: '' }) {
   if (!isBrowser) {
     throwSSRWarning('showToast API is running in non browser environments')
-    return Promise.reject(new Error('showToast API can only be used in the browser environment'))
+    return
   }
   if (!toast) { toast = new Toast() }
   return toast.show(options, 'toast')
@@ -20,7 +20,7 @@ function hideToast (options = {}) {
 function showLoading (options = { title: '' }) {
   if (!isBrowser) {
     throwSSRWarning('showLoading API is running in non browser environments')
-    return Promise.reject(new Error('showLoading API can only be used in the browser environment'))
+    return
   }
   if (!toast) { toast = new Toast() }
   return toast.show(Object.assign({

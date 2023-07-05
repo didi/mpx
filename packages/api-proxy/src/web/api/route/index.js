@@ -3,7 +3,7 @@ import { EventChannel } from '../event-channel'
 function redirectTo (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('redirectTo API is running in non browser environments')
-    return Promise.reject(new Error('redirectTo API can only be used in the browser environment'))
+    return
   }
   const router = global.__mpxRouter
   if (router) {
@@ -36,7 +36,7 @@ function redirectTo (options = {}) {
 function navigateTo (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('navigateTo API is running in non browser environments')
-    return Promise.reject(new Error('navigateTo API can only be used in the browser environment'))
+    return
   }
   const router = global.__mpxRouter
   if (router) {
@@ -76,7 +76,7 @@ function navigateTo (options = {}) {
 function navigateBack (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('navigateBack API is running in non browser environments')
-    return Promise.reject(new Error('navigateBack API can only be used in the browser environment'))
+    return
   }
   const router = global.__mpxRouter
   if (router) {
@@ -97,7 +97,7 @@ let reLaunchCount = 0
 function reLaunch (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('reLaunch API is running in non browser environments')
-    return Promise.reject(new Error('reLaunch API can only be used in the browser environment'))
+    return
   }
   const router = global.__mpxRouter
   if (router) {
@@ -144,7 +144,7 @@ function reLaunch (options = {}) {
 function switchTab (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('switchTab API is running in non browser environments')
-    return Promise.reject(new Error('switchTab API can only be used in the browser environment'))
+    return
   }
   const router = global.__mpxRouter
   if (router) {

@@ -4,7 +4,7 @@ import { isBrowser, throwSSRWarning } from '../../../common/js'
 function createSelectorQuery () {
   if (!isBrowser) {
     throwSSRWarning('createSelectorQuery API is running in non browser environments')
-    return {}
+    return
   }
   return new SelectQuery()
 }

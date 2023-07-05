@@ -3,7 +3,7 @@ import { webHandleSuccess, webHandleFail, hasOwn, isBrowser, throwSSRWarning } f
 function setStorage (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('setStorage API is running in non browser environments')
-    return Promise.reject(new Error('setStorage API can only be used in the browser environment'))
+    return
   }
   const { key, data, success, fail, complete } = options
 
@@ -38,7 +38,7 @@ function setStorageSync (key = '', data) {
 function getStorage (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('getStorage API is running in non browser environments')
-    return Promise.reject(new Error('getStorage API can only be used in the browser environment'))
+    return
   }
   const { key, success, fail, complete } = options
   const { result, data } = getItem(key)
@@ -57,7 +57,7 @@ function getStorage (options = {}) {
 function getStorageSync (key) {
   if (!isBrowser) {
     throwSSRWarning('getStorageSync API is running in non browser environments')
-    return ''
+    return
   }
   const res = getItem(key)
   if (res.result) return res.data
@@ -82,7 +82,7 @@ function getItem (key) {
 function getStorageInfo (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('getStorageInfo API is running in non browser environments')
-    return Promise.reject(new Error('getStorageInfo API can only be used in the browser environment'))
+    return
   }
   const { success, fail, complete } = options
 
@@ -102,7 +102,7 @@ function getStorageInfo (options = {}) {
 function getStorageInfoSync () {
   if (!isBrowser) {
     throwSSRWarning('getStorageInfoSync API is running in non browser environments')
-    return {}
+    return
   }
   return {
     keys: Object.keys(window.localStorage),
@@ -114,7 +114,7 @@ function getStorageInfoSync () {
 function removeStorage (options = { key: '' }) {
   if (!isBrowser) {
     throwSSRWarning('removeStorage API is running in non browser environments')
-    return Promise.reject(new Error('removeStorage API can only be used in the browser environment'))
+    return
   }
   const { key, success, fail, complete } = options
 
@@ -142,7 +142,7 @@ function removeStorageSync (key) {
 function clearStorage (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('clearStorage API is running in non browser environments')
-    return Promise.reject(new Error('getStorageInfoSync API can only be used in the browser environment'))
+    return
   }
   const { success, fail, complete } = options
 

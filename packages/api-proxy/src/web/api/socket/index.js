@@ -4,7 +4,7 @@ import SocketTask from './SocketTask'
 function connectSocket (options = { url: '' }) {
   if (!isBrowser) {
     throwSSRWarning('connectSocket API is running in non browser environments')
-    return {}
+    return
   }
   const { url, protocols, success, fail, complete } = options
 
