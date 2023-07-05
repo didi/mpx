@@ -11,6 +11,9 @@ export function createPinia () {
   const state = scope.run(() => ref({}))
   const _p = []
   const pinia = markRaw({
+    install () {
+      console.warn('pinia no longer needs to be installed via mpx.use in version 2.9')
+    },
     use (plugin) {
       _p.push(plugin)
       return this
