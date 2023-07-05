@@ -84,6 +84,7 @@ export default function createApp (option, config = {}) {
     global.getApp = function () {
       if (!isBrowser) {
         console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
+        return
       }
       return appData
     }
