@@ -231,9 +231,9 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 
 提供 微信群 / QQ群 两种交流方式
 
-#### 添加MPX入群客服等待受邀入群
+#### 添加MPX入群小助手等待受邀入群
 
-![微信](https://dpubstatic.udache.com/static/dpubimg/82e2e776-71e8-4ca5-8878-33b0d5020b6d.jpg)
+![微信](https://dpubstatic.udache.com/static/dpubimg/6DN0ebkbjgI2P9QjJr8jr_WechatIMG3.jpeg)
 
 
 #### 扫码进入QQ群

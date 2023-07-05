@@ -5,7 +5,6 @@ const parseComponent = require('../parser')
 const config = require('../config')
 const parseRequest = require('../utils/parse-request')
 const evalJSONJS = require('../utils/eval-json-js')
-const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const getJSONContent = require('../utils/get-json-content')
@@ -143,9 +142,18 @@ module.exports = function (content) {
     }
   }
 
-  if (json.usingComponents) {
-    // todo 迁移到rulesRunner中进行
-    fixUsingComponent(json.usingComponents, mode, emitWarning)
+  // 校验异步组件占位符 componentPlaceholder 不为空
+  const { usingComponents, componentPlaceholder = {} } = json
+  if (usingComponents) {
+    for (const compName in usingComponents) {
+      const compPath = usingComponents[compName]
+      if (!/\?root=/g.test(compPath)) continue
+      const compPlaceholder = componentPlaceholder[compName]
+      if (!compPlaceholder) {
+        const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
+        emitError(errMsg)
+      }
+    }
   }
 
   // 快应用补全json配置，必填项
@@ -163,7 +171,6 @@ module.exports = function (content) {
 
   const rulesRunnerOptions = {
     mode,
-    mpx,
     srcMode,
     type: 'json',
     waterfall: true,
@@ -173,14 +180,8 @@ module.exports = function (content) {
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
     // polyfill global usingComponents
-    // todo 传入rulesRunner中进行按平台转换
     rulesRunnerOptions.data = {
       globalComponents: mpx.usingComponents
-    }
-  } else {
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
     }
   }
 
@@ -188,6 +189,11 @@ module.exports = function (content) {
 
   if (rulesRunner) {
     rulesRunner(json)
+  }
+
+  if (isApp && json.usingComponents) {
+    // 在 rulesRunner 运行后保存全局注册组件
+    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
   }
 
   const processComponents = (components, context, callback) => {

@@ -6,8 +6,10 @@ const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
 
-function randomIdent () {
-  return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
+let count = 0
+
+function countIdent () {
+  return `__HTMLLINK__${count++}__`
 }
 
 module.exports = function (content) {
@@ -57,7 +59,7 @@ module.exports = function (content) {
 
     let ident
     do {
-      ident = randomIdent()
+      ident = countIdent()
     } while (data[ident])
     data[ident] = link
     const x = content.pop()
@@ -71,7 +73,7 @@ module.exports = function (content) {
 
   const exportsString = 'module.exports = '
 
-  return exportsString + content.replace(/xxxHTMLLINKxxx[0-9.]+xxx/g, (match) => {
+  return exportsString + content.replace(/__HTMLLINK__\d+__/g, (match) => {
     if (!data[match]) return match
 
     const link = data[match]

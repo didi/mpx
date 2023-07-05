@@ -3,7 +3,6 @@ const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
-const fixUsingComponent = require('./utils/fix-using-component')
 const addQuery = require('./utils/add-query')
 const async = require('async')
 const processJSON = require('./web/processJSON')
@@ -21,6 +20,8 @@ const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filte
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
+const getRulesRunner = require('./platform')
+
 module.exports = function (content) {
   this.cacheable()
 
@@ -49,6 +50,20 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+
+  const emitWarning = (msg) => {
+    this.emitWarning(
+      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+    )
+  }
+
+  const emitError = (msg) => {
+    this.emitError(
+      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+    )
+  }
+
   let ctorType = 'app'
   if (pagesMap[resourcePath]) {
     // page
@@ -67,7 +82,7 @@ module.exports = function (content) {
 
   if (ctorType === 'app') {
     const appName = getEntryName(this)
-    this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+    if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -108,10 +123,28 @@ module.exports = function (content) {
       let componentGenerics = {}
 
       if (parts.json && parts.json.content) {
+        const rulesRunnerOptions = {
+          mode,
+          srcMode,
+          type: 'json',
+          waterfall: true,
+          warn: emitWarning,
+          error: emitError
+        }
+        if (!isApp) {
+          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+          // polyfill global usingComponents
+          // 预读json时无需注入polyfill全局组件
+          // rulesRunnerOptions.data = {
+          //   globalComponents: mpx.usingComponents
+          // }
+        }
+
         try {
           const ret = JSON5.parse(parts.json.content)
           if (ret.usingComponents) {
-            fixUsingComponent(ret.usingComponents, mode)
+            const rulesRunner = getRulesRunner(rulesRunnerOptions)
+            if (rulesRunner) rulesRunner(ret)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           }
           if (ret.componentPlaceholder) {

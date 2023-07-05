@@ -17,6 +17,7 @@ let postFlushIndex = 0
 
 const resolvedPromise = Promise.resolve()
 let currentFlushPromise = null
+let currentPreFlushParentJob = null
 
 const RECURSION_LIMIT = 100
 
@@ -68,9 +69,9 @@ export function queueJob (job) {
   // if the job is a watch() callback, the search will start with a +1 index to
   // allow it recursively trigger itself - it is the user's responsibility to
   // ensure it doesn't end up in an infinite loop.
-  if (
-    !queue.length ||
-    !queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)
+  if ((!queue.length ||
+    !queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)) &&
+    job !== currentPreFlushParentJob
   ) {
     if (job.id == null) {
       queue.push(job)
@@ -92,8 +93,9 @@ function queueFlush () {
   }
 }
 
-export function flushPreFlushCbs (seen) {
+export function flushPreFlushCbs (seen, parentJob = null) {
   if (pendingPreFlushCbs.length) {
+    currentPreFlushParentJob = parentJob
     activePreFlushCbs = [...new Set(pendingPreFlushCbs)]
     pendingPreFlushCbs.length = 0
     if (isDev) seen = seen || new Map()
@@ -107,8 +109,9 @@ export function flushPreFlushCbs (seen) {
     }
     activePreFlushCbs = null
     preFlushIndex = 0
+    currentPreFlushParentJob = null
     // recursively flush until it drains
-    flushPreFlushCbs(seen)
+    flushPreFlushCbs(seen, parentJob)
   }
 }
 

@@ -432,9 +432,9 @@ class MpxWebpackPlugin {
           mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
           mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
           async.each(deps, (dep, callback) => {
-            dep.addEntry(compilation, (err, { resultPath }) => {
+            dep.addEntry(compilation, (err, result) => {
               if (err) return callback(err)
-              dep.resultPath = mpx.replacePathMap[dep.key] = resultPath
+              dep.resultPath = mpx.replacePathMap[dep.key] = result.resultPath
               callback()
             })
           }, callback)
@@ -453,7 +453,8 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, () => {
+      processSubpackagesEntriesMap(compilation, (err) => {
+        if (err) return callback(err)
         const checkRegisterPack = () => {
           for (const packRoot in mpx.dynamicEntryInfo) {
             const entryMap = mpx.dynamicEntryInfo[packRoot]
@@ -524,6 +525,7 @@ class MpxWebpackPlugin {
       compilation.warnings = compilation.warnings.concat(warnings)
       compilation.errors = compilation.errors.concat(errors)
       const moduleGraph = compilation.moduleGraph
+
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
@@ -762,9 +764,8 @@ class MpxWebpackPlugin {
         async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
           dep.mpxAction(module, compilation, callback)
         }, (err) => {
-          rawProcessModuleDependencies.call(compilation, module, (innerErr) => {
-            return callback(err || innerErr)
-          })
+          if (err) compilation.errors.push(err)
+          rawProcessModuleDependencies.call(compilation, module, callback)
         })
       }
 
@@ -1070,6 +1071,49 @@ class MpxWebpackPlugin {
             if (callee.name === 'Function' && arg0 && arg0.value === 'r' && arg1 && arg1.value === 'regeneratorRuntime = r') {
               current.addPresentationalDependency(new ReplaceDependency('(function () {})', expr.range))
             }
+          }
+        })
+
+        parser.hooks.evaluate.for('NewExpression').tap('MpxWebpackPlugin', (expression) => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource)) {
+            if (expression.callee.name === 'Function') {
+              const current = parser.state.current
+              current.addPresentationalDependency(new InjectDependency({
+                content: '_mpxCodeTransForm(',
+                index: expression.arguments[0].start
+              }))
+              current.addPresentationalDependency(new InjectDependency({
+                content: ')',
+                index: expression.arguments[0].end
+              }))
+            }
+          }
+        })
+
+        parser.hooks.program.tap('MpxWebpackPlugin', ast => {
+          if (/@intlify\/core-base/.test(parser.state.module.resource)) {
+            const current = parser.state.current
+            current.addPresentationalDependency(new InjectDependency({
+              content: 'function _mpxCodeTransForm (code) {\n' +
+                '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
+                '    var arr = $1.split(", ")\n' +
+                '    var str = ""\n' +
+                '    var pattern = /(.*):(.*)/\n' +
+                '    for (var i = 0; i < arr.length; i++) {\n' +
+                '      var result = arr[i].match(pattern)\n' +
+                '      var left = result[1]\n' +
+                '      var right = result[2]\n' +
+                '      str += "var" + right + " = ctx." + left\n' +
+                '    }\n' +
+                '    return str\n' +
+                '  })\n' +
+                '  code = code.replace(/\\(ctx\\) =>/g, function (match, $1) {\n' +
+                '    return "function (ctx)"\n' +
+                '  })\n' +
+                '  return code\n' +
+                '}',
+              index: ast.end
+            }))
           }
         })
 

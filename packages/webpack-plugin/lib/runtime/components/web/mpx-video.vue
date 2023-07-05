@@ -2,13 +2,13 @@
   <video
     ref="_mpx_video_ref"
     :class="classList"
-    webkit-playsinline="true" playsinline="true" x5-playsinline="true"
     :src="src"
     :controls="showControlsTool"
     :autoplay="autoplay"
     :loop="loop"
     :muted="mutedCopy"
     :poster="poster"
+    v-bind="playsinlineAttr"
   >
   </video>
 </template>
@@ -123,6 +123,20 @@
       showScreenLockButton: {
         type: Boolean,
         default: false
+      },
+      playsinline: {
+        type: Boolean,
+        default: true
+      }
+    },
+    computed: {
+      playsinlineAttr () {
+        if (!this.playsinline) return {}
+        return {
+          'webkit-playsinline': true,
+          'playsinline': true,
+          'x5-playsinline': true
+        }
       }
     },
     data () {

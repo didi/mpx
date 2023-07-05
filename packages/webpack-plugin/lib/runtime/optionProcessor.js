@@ -216,6 +216,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             global.__mpxRouter.needRemove = stack.filter((item) => {
               if (tabBarMap[item.path.slice(1)]) {
                 tabItem = item
+                tabItem.path = to.path
                 return false
               }
               return true

@@ -1,0 +1,9 @@
+{
+  "transform": {
+    "^.+\\.(js|jsx)?$": "babel-jest"
+  },
+  "testEnvironment": "jsdom",
+  "moduleNameMapper": {
+    "\\.(css|styl)$": "identity-obj-proxy"
+  }
+}

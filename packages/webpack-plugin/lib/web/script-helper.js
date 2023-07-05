@@ -150,6 +150,7 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+  content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
   if (!isProduction) {
     content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
   }
