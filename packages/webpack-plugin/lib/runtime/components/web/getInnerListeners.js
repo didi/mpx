@@ -142,10 +142,21 @@ export function inheritEvent (type, oe, detail = {}) {
 }
 
 export function getCustomEvent (type, detail = {}, target = null) {
+  const targetInfo = {}
+  const targetEl = target?.$el
+  if (targetEl) {
+    Object.assign(targetInfo, {
+      id: targetEl.id || '',
+      dataset: targetEl.dataset || {},
+      offsetTop: targetEl.offsetTop || 0,
+      offsetLeft: targetEl.offsetLeft || 0
+    })
+  }
   return {
     type,
     detail,
-    target,
+    target: targetInfo,
+    currentTarget: targetInfo,
     timeStamp: new Date().valueOf()
   }
 }
