@@ -520,8 +520,8 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
-      compilation.warnings = compilation.warnings.concat(warnings)
-      compilation.errors = compilation.errors.concat(errors)
+      compilation.warnings.push(...warnings)
+      compilation.errors.push(...errors)
       const moduleGraph = compilation.moduleGraph
 
       if (!compilation.__mpx__) {
@@ -771,10 +771,14 @@ class MpxWebpackPlugin {
       const rawProcessModuleDependencies = compilation.processModuleDependencies
       compilation.processModuleDependencies = (module, callback) => {
         const presentationalDependencies = module.presentationalDependencies || []
+        const errors = []
         async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
-          dep.mpxAction(module, compilation, callback)
-        }, (err) => {
-          if (err) compilation.errors.push(err)
+          dep.mpxAction(module, compilation, (err) => {
+            if (err) errors.push(err)
+            callback()
+          })
+        }, () => {
+          compilation.errors.push(...errors)
           rawProcessModuleDependencies.call(compilation, module, callback)
         })
       }
@@ -860,16 +864,17 @@ class MpxWebpackPlugin {
       }
 
       // hack process https://github.com/webpack/webpack/issues/16045
-      const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
-
-      compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
-        const rawCallback = callback
-        callback = (err) => {
-          if (err) return rawCallback(err)
-          return rawCallback(null, module)
-        }
-        return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
-      }
+      // no need anymore
+      // const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
+      //
+      // compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
+      //   const rawCallback = callback
+      //   callback = (err) => {
+      //     if (err) return rawCallback(err)
+      //     return rawCallback(null, module)
+      //   }
+      //   return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
+      // }
 
       const rawEmitAsset = compilation.emitAsset
 
