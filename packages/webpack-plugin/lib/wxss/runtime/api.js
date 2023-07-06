@@ -2,15 +2,15 @@
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
 */
-module.exports = (cssWithMappingToString) => {
+module.exports = function (cssWithMappingToString) {
   const list = []
 
   // return the list of modules as css string
   list.toString = function toString () {
-    return this.map((item) => {
-      let content = ''
+    return this.map(function (item) {
+      var content = ''
 
-      const needLayer = typeof item[5] !== 'undefined'
+      var needLayer = typeof item[5] !== 'undefined'
 
       if (item[4]) {
         content += `@supports (${item[4]}) {`
@@ -48,11 +48,11 @@ module.exports = (cssWithMappingToString) => {
       modules = [[null, modules, undefined]]
     }
 
-    const alreadyImportedModules = {}
+    var alreadyImportedModules = {}
 
     if (dedupe) {
       for (let k = 0; k < this.length; k++) {
-        const id = this[k][0]
+        var id = this[k][0]
 
         if (id != null) {
           alreadyImportedModules[id] = true
@@ -60,8 +60,8 @@ module.exports = (cssWithMappingToString) => {
       }
     }
 
-    for (let k = 0; k < modules.length; k++) {
-      const item = [].concat(modules[k])
+    for (var k = 0; k < modules.length; k++) {
+      var item = [].concat(modules[k])
 
       if (dedupe && alreadyImportedModules[item[0]]) {
         continue
