@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { extendEvent } from './getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
 
   export default {
     name: 'mpx-image',
@@ -32,31 +32,14 @@
       }
     },
     mounted () {
-      const el = this.$el || {}
-      const targetInfo = {
-        id: el?.id || '',
-        dataset: el?.dataset || {},
-        offsetTop: el?.offsetTop || 0,
-        offsetLeft: el?.offsetLeft || 0,
+      this.image.onload = () => {
+        this.$emit('load', getCustomEvent('load', {
+          width: this.image.width,
+          height: this.image.height
+        }, this))
       }
-      this.image.onload = (e) => {
-        extendEvent(e, {
-          detail: {
-            width: this.image.width,
-            height: this.image.height
-          },
-          target: targetInfo,
-          currentTarget: targetInfo
-        })
-
-        this.$emit('load', e)
-      }
-      this.image.onerror = (e) => {
-        extendEvent(e, {
-          target: targetInfo,
-          currentTarget: targetInfo
-        })
-        this.$emit('error', e)
+      this.image.onerror = () => {
+        this.$emit('error', getCustomEvent('error', {}, this))
       }
     },
     render (createElement) {
