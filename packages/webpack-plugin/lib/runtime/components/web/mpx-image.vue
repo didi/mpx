@@ -22,19 +22,6 @@
     },
     beforeCreate () {
       this.image = new Image()
-      this.image.onload = (e) => {
-        extendEvent(e, {
-          detail: {
-            width: this.image.width,
-            height: this.image.height
-          }
-        })
-
-        this.$emit('load', e)
-      }
-      this.image.onerror = (e) => {
-        this.$emit('error', e)
-      }
     },
     watch: {
       src: {
@@ -42,6 +29,34 @@
           if (src) this.image.src = src
         },
         immediate: true
+      }
+    },
+    mounted () {
+      const el = this.$el || {}
+      const targetInfo = {
+        id: el?.id || '',
+        dataset: el?.dataset || {},
+        offsetTop: el?.offsetTop || 0,
+        offsetLeft: el?.offsetLeft || 0,
+      }
+      this.image.onload = (e) => {
+        extendEvent(e, {
+          detail: {
+            width: this.image.width,
+            height: this.image.height
+          },
+          target: targetInfo,
+          currentTarget: targetInfo
+        })
+
+        this.$emit('load', e)
+      }
+      this.image.onerror = (e) => {
+        extendEvent(e, {
+          target: targetInfo,
+          currentTarget: targetInfo
+        })
+        this.$emit('error', e)
       }
     },
     render (createElement) {

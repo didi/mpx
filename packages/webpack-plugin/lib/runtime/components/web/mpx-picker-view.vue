@@ -97,13 +97,13 @@
       },
       notifyChange() {
         const value = this.getValue()
-        this.$emit('change', getCustomEvent('change', {value}))
+        this.$emit('change', getCustomEvent('change', {value}, this))
       },
       notifyPickstart(value) {
-        this.$emit('pickstart', getCustomEvent('pickstart', {value}))
+        this.$emit('pickstart', getCustomEvent('pickstart', {value}, this))
       },
       notifyPickend(value) {
-        this.$emit('pickend', getCustomEvent('pickend', {value}))
+        this.$emit('pickend', getCustomEvent('pickend', {value}, this))
       }
     }
   }

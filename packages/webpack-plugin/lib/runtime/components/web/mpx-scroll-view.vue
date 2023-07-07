@@ -124,7 +124,7 @@
       refresherTriggered: {
         handler (val) {
           if (!val) {
-            this.$emit('refresherrestore')
+            this.$emit('refresherrestore', getCustomEvent('refresherrestore', {}, this))
             this.isLoading = false
             this.isAutoPullDown = true
             this.bs && this.bs.finishPullDown()
@@ -182,7 +182,7 @@
             scrollHeight: this.bs.scrollerHeight,
             deltaX,
             deltaY
-          }))
+          }, this))
           if (this.bs.minScrollX - x < this._upperThreshold && deltaX > 0) {
             this.dispatchScrollTo('left')
           }
@@ -212,7 +212,7 @@
               this.$emit('dragstart', getCustomEvent('dragstart', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
-              }))
+              }, this))
             }
             if (this.refresherEnabled) {
               this.isAutoPullDown = false
@@ -223,13 +223,13 @@
               this.$emit('dragging', getCustomEvent('dragging', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
-              }))
+              }, this))
             }
             if (this.refresherEnabled) {
               if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
                 this.isAutoPullDown = false
                 this.isLoading = false
-                this.$emit('refresherpulling')
+                this.$emit('refresherpulling', getCustomEvent('refresherpulling', {}, this))
               }
             }
           })
@@ -238,7 +238,7 @@
               this.$emit('dragend', getCustomEvent('dragend', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
-              }))
+              }, this))
             }
           })
           if (this.refresherEnabled) {
@@ -248,12 +248,12 @@
                 this.isLoading = true
                 if (this.bs.y < this.refresherThreshold) {
                   this.isAutoPullDown = true
-                  this.$emit('refresherabort')
+                  this.$emit('refresherabort', getCustomEvent('refresherabort', {}, this))
                 }
               }
             })
             this.bs.on('pullingDown', () => {
-              this.$emit('refresherrefresh')
+              this.$emit('refresherrefresh', getCustomEvent('refresherrefresh', {}, this))
             })
           }
         }
@@ -312,7 +312,7 @@
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, { direction }))
+        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
       }, 200, {
         leading: true,
         trailing: false

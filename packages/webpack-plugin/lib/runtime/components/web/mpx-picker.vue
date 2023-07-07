@@ -270,7 +270,7 @@
       },
       _cancel () {
         this.hide()
-        this.$emit('cancel', getCustomEvent('cancel'), this)
+        this.$emit('cancel', getCustomEvent('cancel', {}, this))
       },
       _isMoving () {
         return this.wheels.some((wheel) => {
