@@ -22,16 +22,6 @@
     },
     beforeCreate () {
       this.image = new Image()
-    },
-    watch: {
-      src: {
-        handler (src) {
-          if (src) this.image.src = src
-        },
-        immediate: true
-      }
-    },
-    mounted () {
       this.image.onload = () => {
         this.$emit('load', getCustomEvent('load', {
           width: this.image.width,
@@ -42,13 +32,21 @@
         this.$emit('error', getCustomEvent('error', {}, this))
       }
     },
+    watch: {
+      src: {
+        handler (src) {
+          if (src) this.image.src = src
+        },
+        immediate: true
+      }
+    },
     render (createElement) {
       if (this.mode === 'widthFix' || this.mode === 'heightFix') {
         let style
         if (this.mode === 'widthFix') {
-           style = {
-             height: 'auto'
-           }
+          style = {
+            height: 'auto'
+          }
         } else {
           style = {
             width: 'auto'
