@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp } from '@mpxjs/utils'
+import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import Mpx from '../index'
 
@@ -35,7 +35,7 @@ export default function createApp (option, config = {}) {
       created () {
         Object.assign(this, Mpx.prototype)
         Object.assign(this, appData)
-        const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
+        const current = this.$root.$options?.router?.currentRoute || {}
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,
@@ -49,19 +49,24 @@ export default function createApp (option, config = {}) {
           hide: [],
           error: []
         }
-        if (this.$options.onShow) {
-          this.$options.onShow.call(this, options)
-          global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
-        }
-        if (this.$options.onHide) {
-          global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
-        }
-        if (this.$options.onError) {
-          global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+        if (isBrowser) {
+          if (this.$options.onShow) {
+            this.$options.onShow.call(this, options)
+            global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
+          }
+          if (this.$options.onHide) {
+            global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+          }
+          if (this.$options.onError) {
+            global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+          }
         }
       }
     })
   } else {
+    if (option.onAppInit) {
+      option.onAppInit()
+    }
     builtInMixins.push({
       onLaunch () {
         Object.assign(this, Mpx.prototype)
@@ -77,6 +82,10 @@ export default function createApp (option, config = {}) {
     global.__mpxOptionsMap = global.__mpxOptionsMap || {}
     global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     global.getApp = function () {
+      if (!isBrowser) {
+        console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
+        return
+      }
       return appData
     }
   } else {

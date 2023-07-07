@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners, { extendEvent } from './getInnerListeners'
+  import { isBrowser } from '../../env'
 
   export default {
     name: 'mpx-image',
@@ -21,25 +22,27 @@
       }
     },
     beforeCreate () {
-      this.image = new Image()
-      this.image.onload = (e) => {
-        extendEvent(e, {
-          detail: {
-            width: this.image.width,
-            height: this.image.height
-          }
-        })
+      if (isBrowser) {
+        this.image = new Image()
+        this.image.onload = (e) => {
+          extendEvent(e, {
+            detail: {
+              width: this.image.width,
+              height: this.image.height
+            }
+          })
 
-        this.$emit('load', e)
-      }
-      this.image.onerror = (e) => {
-        this.$emit('error', e)
+          this.$emit('load', e)
+        }
+        this.image.onerror = (e) => {
+          this.$emit('error', e)
+        }
       }
     },
     watch: {
       src: {
         handler (src) {
-          if (src) this.image.src = src
+          if (src && this.image) this.image.src = src
         },
         immediate: true
       }

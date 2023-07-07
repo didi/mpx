@@ -1,7 +1,6 @@
 const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
-const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
@@ -20,6 +19,7 @@ const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDepen
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
+const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
 
 module.exports = function (content) {
@@ -85,7 +85,6 @@ module.exports = function (content) {
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
   const loaderContext = this
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
   const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
@@ -161,23 +160,33 @@ module.exports = function (content) {
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
-          const request = addQuery(this.resource, { isApp: true })
-          const el = mpx.webConfig.el || '#app'
-          output += `
-      import App from ${stringifyRequest(request)}
-      import Vue from 'vue'
-      new Vue({
-        el: '${el}',
-        render: function(h){
-          return h(App)
+          return async.waterfall([
+            (callback) => {
+              processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, callback)
+            },
+            (jsonRes, callback) => {
+              processMainScript(parts.script, {
+                loaderContext,
+                ctorType,
+                srcMode,
+                moduleId,
+                isProduction,
+                jsonConfig: jsonRes.jsonObj,
+                outputPath: queryObj.outputPath || '',
+                localComponentsMap: jsonRes.localComponentsMap,
+                tabBar: jsonRes.jsonObj.tabBar,
+                tabBarMap: jsonRes.tabBarMap,
+                tabBarStr: jsonRes.tabBarStr,
+                localPagesMap: jsonRes.localPagesMap,
+                resource: this.resource
+              }, callback)
+            }
+          ], (err, scriptRes) => {
+            if (err) return callback(err)
+            this.loaderIndex = -1
+            return callback(null, scriptRes.output)
+          })
         }
-      })\n
-      `
-          // 直接结束loader进入parse
-          this.loaderIndex = -1
-          return callback(null, output)
-        }
-
         // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
         const cacheContent = mpx.vueContentCache.get(filePath)
         if (cacheContent) return callback(null, cacheContent)
@@ -233,13 +242,10 @@ module.exports = function (content) {
               componentGenerics,
               jsonConfig: jsonRes.jsonObj,
               outputPath: queryObj.outputPath || '',
-              tabBarMap: jsonRes.tabBarMap,
-              tabBarStr: jsonRes.tabBarStr,
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               wxsModuleMap: templateRes.wxsModuleMap,
-              localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
+              localComponentsMap: jsonRes.localComponentsMap
             }, callback)
           }
         ], (err, scriptRes) => {
@@ -249,7 +255,6 @@ module.exports = function (content) {
           callback(null, output)
         })
       }
-
       const moduleGraph = this._compilation.moduleGraph
 
       const issuer = moduleGraph.getIssuer(this._module)
