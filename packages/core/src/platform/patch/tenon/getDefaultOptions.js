@@ -29,12 +29,11 @@ function initProxy (context, rawOptions) {
   // 缓存options
   context.$rawOptions = rawOptions
   // 创建proxy对象
-  context.__mpxProxy = new MPXProxy(rawOptions, context)
+  context.__mpxProxy = new MpxProxy(rawOptions, context)
   context.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
