@@ -432,9 +432,9 @@ class MpxWebpackPlugin {
           mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
           mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
           async.each(deps, (dep, callback) => {
-            dep.addEntry(compilation, (err, { resultPath }) => {
+            dep.addEntry(compilation, (err, result) => {
               if (err) return callback(err)
-              dep.resultPath = mpx.replacePathMap[dep.key] = resultPath
+              dep.resultPath = mpx.replacePathMap[dep.key] = result.resultPath
               callback()
             })
           }, callback)
@@ -453,7 +453,8 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, () => {
+      processSubpackagesEntriesMap(compilation, (err) => {
+        if (err) return callback(err)
         const checkRegisterPack = () => {
           for (const packRoot in mpx.dynamicEntryInfo) {
             const entryMap = mpx.dynamicEntryInfo[packRoot]
