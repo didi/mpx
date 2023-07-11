@@ -34,7 +34,6 @@ function initProxy (context, rawOptions) {
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
-
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
