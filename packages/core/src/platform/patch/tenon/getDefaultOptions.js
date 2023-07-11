@@ -1,6 +1,7 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import MPXProxy from '../../../core/proxy'
+import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
+import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 import { diffAndCloneA } from '@mpxjs/utils'
 import { UPDATED, CREATED, MOUNTED, UNMOUNTED } from '../../../core/innerLifecycle'
 
@@ -33,6 +34,28 @@ function initProxy (context, rawOptions) {
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
+
+  const rawSetup = rawOptions.setup
+  if (rawSetup) {
+    rawOptions.setup = (props) => {
+      const instance = getCurrentVueInstance().proxy
+      initProxy(instance, rawOptions)
+      setCurrentInstance(instance.__mpxProxy)
+      const newContext = {
+        triggerEvent: instance.triggerEvent.bind(instance),
+        refs: instance.$refs,
+        forceUpdate: instance.$forceUpdate.bind(instance),
+        selectComponent: instance.selectComponent.bind(instance),
+        selectAllComponents: instance.selectAllComponents.bind(instance),
+        createSelectorQuery: instance.createSelectorQuery.bind(instance),
+        createIntersectionObserver: instance.createIntersectionObserver.bind(instance)
+      }
+      const setupRes = rawSetup(props, newContext)
+      unsetCurrentInstance(instance.__mpxProxy)
+      return setupRes
+    }
+  }
+
   const hookNames = type === 'page' ? ['onLoad', 'onReady', 'onUnload'] : ['created', 'mounted', 'unmounted']
   const rootMixins = [{
     [hookNames[0]] (...params) {
