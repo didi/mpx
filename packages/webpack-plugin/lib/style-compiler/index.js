@@ -30,7 +30,7 @@ module.exports = function (css, map) {
 
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
   loadPostcssConfig(this, inlineConfig).then(config => {
-    const plugins = config.plugins.concat(trim)
+    const plugins = [trim] // init with trim plugin
     const options = Object.assign(
       {
         to: this.resourcePath,
@@ -78,6 +78,8 @@ module.exports = function (css, map) {
         prev: map
       }
     }
+
+    plugins.push(...config.plugins) // push user config plugins
 
     return postcss(plugins)
       .process(css, options)
