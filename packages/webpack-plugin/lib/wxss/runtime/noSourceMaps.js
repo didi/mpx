@@ -1,1 +1,3 @@
-module.exports = (i) => i[1]
+module.exports = function (i) {
+  return i[1]
+}
