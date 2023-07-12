@@ -7,10 +7,15 @@ const { JSON_JS_EXT } = require('../utils/const')
 
 module.exports = class AddEnvPlugin {
   constructor (source, env, fileConditionRules, target) {
-    this.source = source
-    this.target = target
+    this.source =    source
+    this.target =    target
     this.env = env
-    this.fileConditionRules = fileConditionRules
+
+
+    this.fileConditionRules =       fileConditionRules
+
+
+
   }
 
   apply (resolver) {
