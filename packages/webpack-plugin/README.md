@@ -1,6 +1,7 @@
 # `mpx-webpack-plugin`
 
 > a webpack plugin for mpx compile
+> test
 
 ## Usage
 
