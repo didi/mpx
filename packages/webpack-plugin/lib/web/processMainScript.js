@@ -37,7 +37,6 @@ module.exports = function (script, {
   if (i18n) {
     output += buildI18n({ i18n, loaderContext })
   }
-
   output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, jsonConfig, webConfig, isMain: true, globalTabBar })
   output += `export default processAppOption({
                         App,
@@ -47,7 +46,9 @@ module.exports = function (script, {
                         componentsMap: ${shallowStringify(componentsMap)},
                         Vue,
                         VueRouter,
-                        webConfig: ${JSON.stringify(webConfig)}
+                        webConfig: ${JSON.stringify(webConfig)},
+                        i18n: i18nPageConfig,
+                        Mpx
                     })`
 
   callback(null, {

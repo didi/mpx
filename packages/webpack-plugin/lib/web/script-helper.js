@@ -172,15 +172,19 @@ function buildI18n ({ i18n, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
+  i18nContent += `  const i18nPageConfig = {}\n`
   i18nContent += `  const i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
     i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += '  i18nCfg.legacy = false\n'
-  i18nContent += `  const i18n = createI18n(i18nCfg, VueI18n)
-                        Vue.use(i18n)
-                        Mpx.i18n = i18n\n`
+  i18nContent += '  i18nPageConfig.i18nCfg = i18nCfg\n'
+  i18nContent += '  i18nPageConfig.createI18n = createI18n\n'
+  i18nContent += '  i18nPageConfig.VueI18n = VueI18n\n'
   return i18nContent
+  // i18nContent += `  const i18n = createI18n(i18nCfg, VueI18n)
+  //                       Vue.use(i18n)
+  //                       Mpx.i18n = i18n\n`
 }
 
 module.exports = {
