@@ -647,11 +647,15 @@ class SizeReportPlugin {
 
       function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
         const sizeThreshold = normalizeThreshold(threshold.size || threshold)
+        const preWarningThreshold = normalizeThreshold(threshold.preWarningSize || threshold)
         const packagesThreshold = threshold.packages
         const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
           compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
+        }
+        if (preWarningThreshold && size && size > preWarningThreshold) {
+          compilation.warnings.push(`${prefix}的总体积（${size}B）超过设定预警阈值（${preWarningThreshold}B），共${(size - preWarningThreshold) / 1024}kb，请注意！`)
         }
 
         if (packagesThreshold && sizeInfo) {
