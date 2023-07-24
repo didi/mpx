@@ -6,10 +6,7 @@ const TIPS_NAME = '支付宝环境 mpx'
 // canvas api 用
 const CANVAS_MAP = {}
 
-// optimize case avoid call api multi times with getSystemInfoSync
-let systemInfo
-
-const getWxToAliApi = ({ optimize = false }) => {
+const getWxToAliApi = () => {
   return {
     /**
      * 基础
@@ -34,10 +31,6 @@ const getWxToAliApi = ({ optimize = false }) => {
     },
 
     getSystemInfoSync () {
-      if (optimize) {
-        if (systemInfo) return systemInfo
-      }
-
       const res = ALI_OBJ.getSystemInfoSync() || {}
 
       res.system = `${res.platform} ${res.system}`
@@ -47,8 +40,6 @@ const getWxToAliApi = ({ optimize = false }) => {
       if (!res.windowHeight) {
         res.windowHeight = Math.floor(res.screenHeight * res.windowWidth / res.screenWidth) - 50
       }
-
-      if (optimize) systemInfo = res
 
       return res
     },
