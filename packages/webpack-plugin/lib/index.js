@@ -169,6 +169,7 @@ class MpxWebpackPlugin {
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
+    options.enableRequireAsync = options.mode === 'wx' || (options.mode === 'ali' && options.enableAliRequireAsync)
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -594,7 +595,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          enableAliRequireAsync: this.options.enableAliRequireAsync,
+          enableRequireAsync: this.options.enableRequireAsync,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1003,8 +1004,8 @@ class MpxWebpackPlugin {
             if (queryObj.root) {
               // 删除root query
               request = addQuery(request, {}, false, ['root'])
-              // 目前仅wx支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.mode === 'wx' || (mpx.mode === 'ali' && mpx.enableAliRequireAsync)) {
+              // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              if (mpx.enableRequireAsync) {
                 const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range, {
                   isRequireAsync: true,
                   retryRequireAsync: !!this.options.retryRequireAsync
