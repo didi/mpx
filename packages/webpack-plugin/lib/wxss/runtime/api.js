@@ -3,7 +3,7 @@
   Author Tobias Koppers @sokra
 */
 module.exports = function (cssWithMappingToString) {
-  const list = []
+  var list = []
 
   // return the list of modules as css string
   list.toString = function toString () {
@@ -13,15 +13,15 @@ module.exports = function (cssWithMappingToString) {
       var needLayer = typeof item[5] !== 'undefined'
 
       if (item[4]) {
-        content += `@supports (${item[4]}) {`
+        content += '@supports (' + item[4] + ') {'
       }
 
       if (item[2]) {
-        content += `@media ${item[2]} {`
+        content += '@media ' + item[2] + '{'
       }
 
       if (needLayer) {
-        content += `@layer${item[5].length > 0 ? ` ${item[5]}` : ''} {`
+        content += '@layer' + (item[5].length > 0 ? item[5] : '') + '{'
       }
 
       content += cssWithMappingToString(item)
@@ -71,9 +71,7 @@ module.exports = function (cssWithMappingToString) {
         if (typeof item[5] === 'undefined') {
           item[5] = layer
         } else {
-          item[1] = `@layer${item[5].length > 0 ? ` ${item[5]}` : ''} {${
-            item[1]
-          }}`
+          item[1] = '@layer' + (item[5].length > 0 ? item[5] : '') + '{' + item[1] + '}'
           item[5] = layer
         }
       }
@@ -82,16 +80,16 @@ module.exports = function (cssWithMappingToString) {
         if (!item[2]) {
           item[2] = media
         } else {
-          item[1] = `@media ${item[2]} {${item[1]}}`
+          item[1] = '@media' + item[2] + item[1]
           item[2] = media
         }
       }
 
       if (supports) {
         if (!item[4]) {
-          item[4] = `${supports}`
+          item[4] = String(supports)
         } else {
-          item[1] = `@supports (${item[4]}) {${item[1]}}`
+          item[1] = '@supports (' + item[4] + ')' + '{' + item[1] + '}'
           item[4] = supports
         }
       }
