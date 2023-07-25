@@ -1,10 +1,17 @@
 import * as allApi from './web/api'
+import promisify from './mini/promisify'
 import { genFromMap } from './common/js'
 
-export default function install (target) {
+export default function install (target, options = {}) {
+  const {
+    usePromise = false, // 是否转为 promise 格式
+    whiteList = [], // 强制变成 promise 格式的 api
+    blackList = [] // 强制不变成 promise 格式的 api
+  } = options
   const fromMap = genFromMap()
-
-  Object.keys(allApi).forEach(api => {
+  const promisedApi = usePromise ? promisify(allApi, whiteList, blackList) : {}
+  const finalApi = Object.assign({}, allApi, promisedApi)
+  Object.keys(finalApi).forEach(api => {
     target[api] = function (...args) {
       if (args.length > 0) {
         const from = args.pop()
@@ -13,7 +20,7 @@ export default function install (target) {
         }
       }
 
-      return allApi[api].apply(target, args)
+      return finalApi[api].apply(target, args)
     }
   })
 }

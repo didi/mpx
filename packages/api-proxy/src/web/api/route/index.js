@@ -13,23 +13,19 @@ function redirectTo (options = {}) {
       return Promise.reject(res)
     }
     router.__mpxAction = { type: 'redirect' }
-    return new Promise((resolve, reject) => {
-      router.replace(
-        {
-          path: options.url
-        },
-        () => {
-          const res = { errMsg: 'redirectTo:ok' }
-          webHandleSuccess(res, options.success, options.complete)
-          resolve(res)
-        },
-        err => {
-          const res = { errMsg: `redirectTo:fail ${err}` }
-          webHandleFail(res, options.fail, options.complete)
-          reject(res)
-        }
-      )
-    })
+    router.replace(
+      {
+        path: options.url
+      },
+      () => {
+        const res = { errMsg: 'redirectTo:ok' }
+        webHandleSuccess(res, options.success, options.complete)
+      },
+      err => {
+        const res = { errMsg: `redirectTo:fail ${err}` }
+        webHandleFail(res, options.fail, options.complete)
+      }
+    )
   }
 }
 
@@ -53,23 +49,19 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    return new Promise((resolve, reject) => {
-      router.push(
-        {
-          path: options.url
-        },
-        () => {
-          const res = { errMsg: 'navigateTo:ok', eventChannel }
-          webHandleSuccess(res, options.success, options.complete)
-          resolve(res)
-        },
-        err => {
-          const res = { errMsg: err }
-          webHandleFail(res, options.fail, options.complete)
-          reject(res)
-        }
-      )
-    })
+    router.push(
+      {
+        path: options.url
+      },
+      () => {
+        const res = { errMsg: 'navigateTo:ok', eventChannel }
+        webHandleSuccess(res, options.success, options.complete)
+      },
+      err => {
+        const res = { errMsg: err }
+        webHandleFail(res, options.fail, options.complete)
+      }
+    )
   }
 }
 
@@ -88,7 +80,6 @@ function navigateBack (options = {}) {
     router.go(-delta)
     const res = { errMsg: 'navigateBack:ok' }
     webHandleSuccess(res, options.success, options.complete)
-    return Promise.resolve(res)
   }
 }
 
@@ -114,30 +105,25 @@ function reLaunch (options = {}) {
       router.go(-delta)
     } else {
       router.__mpxAction.replaced = true
-      return new Promise((resolve, reject) => {
-        router.replace(
-          {
-            path: options.url,
-            query: {
-              reLaunchCount
-            }
-          },
-          () => {
-            const res = { errMsg: 'reLaunch:ok' }
-            webHandleSuccess(res, options.success, options.complete)
-            resolve(res)
-          },
-          err => {
-            const res = { errMsg: err }
-            webHandleFail(res, options.fail, options.complete)
-            !options.fail && reject(res)
+      router.replace(
+        {
+          path: options.url,
+          query: {
+            reLaunchCount
           }
-        )
-      })
+        },
+        () => {
+          const res = { errMsg: 'reLaunch:ok' }
+          webHandleSuccess(res, options.success, options.complete)
+        },
+        err => {
+          const res = { errMsg: err }
+          webHandleFail(res, options.fail, options.complete)
+        }
+      )
     }
     const res = { errMsg: 'reLaunch:ok' }
     webHandleSuccess(res, options.success, options.complete)
-    return Promise.resolve(res)
   }
 }
 
@@ -166,28 +152,23 @@ function switchTab (options = {}) {
         router.go(-delta)
       } else {
         router.__mpxAction.replaced = true
-        return new Promise((resolve, reject) => {
-          router.replace(
-            {
-              path: options.url
-            },
-            () => {
-              const res = { errMsg: 'switchTab:ok' }
-              webHandleSuccess(res, options.success, options.complete)
-              resolve(res)
-            },
-            err => {
-              const res = { errMsg: err }
-              webHandleFail(res, options.fail, options.complete)
-              !options.fail && reject(res)
-            }
-          )
-        })
+        router.replace(
+          {
+            path: options.url
+          },
+          () => {
+            const res = { errMsg: 'switchTab:ok' }
+            webHandleSuccess(res, options.success, options.complete)
+          },
+          err => {
+            const res = { errMsg: err }
+            webHandleFail(res, options.fail, options.complete)
+          }
+        )
       }
     }
     const res = { errMsg: 'switchTab:ok' }
     webHandleSuccess(res, options.success, options.complete)
-    return Promise.resolve(res)
   }
 }
 

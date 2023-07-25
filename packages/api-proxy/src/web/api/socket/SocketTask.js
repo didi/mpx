@@ -46,13 +46,9 @@ class SocketTask {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
       webHandleSuccess(res, success, complete)
-      return Promise.resolve(res)
     } else {
       const res = { errMsg: 'sendSocketMessage:fail' }
       webHandleFail(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
     }
   }
 
@@ -66,13 +62,9 @@ class SocketTask {
       this._socket.close()
       const res = { errMsg: 'closeSocket:ok' }
       webHandleSuccess(res, success, complete)
-      return Promise.resolve(res)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
       webHandleFail(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
     }
   }
 

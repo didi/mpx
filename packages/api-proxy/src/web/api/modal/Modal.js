@@ -1,4 +1,4 @@
-import { ToPromise, webHandleSuccess } from '../../../common/js'
+import { webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -13,9 +13,8 @@ const _getLength = (t) => {
   }
   return len
 }
-export default class Modal extends ToPromise {
+export default class Modal {
   constructor () {
-    super()
     this.defaultOpts = {
       title: '',
       content: '',
@@ -110,7 +109,6 @@ export default class Modal extends ToPromise {
         confirm: false
       }
       webHandleSuccess(result, opts.success, opts.complete)
-      this.toPromiseResolve(result)
     }
     this.confirmBtn.onclick = () => {
       this.hide()
@@ -120,12 +118,9 @@ export default class Modal extends ToPromise {
         confirm: true
       }
       webHandleSuccess(result, opts.success, opts.complete)
-      this.toPromiseResolve(result)
     }
 
     this.modal.classList.add('show')
-
-    return this.toPromiseInitPromise()
   }
 
   hide () {

@@ -21,6 +21,7 @@ const blackList = [
   'createSelectorQuery',
   'createIntersectionObserver',
   'hideKeyboard',
+  // todo 小程序支持 promise 风格调用
   'stopPullDownRefresh',
   'createWorker',
   'pageScrollTo',
