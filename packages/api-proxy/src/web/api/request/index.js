@@ -47,7 +47,7 @@ function request (options = { url: '' }) {
     delete rOptions.data
   }
 
-  const promise = axios(rOptions).then(res => {
+  axios(rOptions).then(res => {
     let data = res.data
     if (responseType === 'text' && dataType === 'json') {
       try {
@@ -70,9 +70,7 @@ function request (options = { url: '' }) {
       return Promise.reject(res)
     }
   })
-
-  promise.__returned = requestTask
-  return promise
+  return requestTask
 }
 
 export {
