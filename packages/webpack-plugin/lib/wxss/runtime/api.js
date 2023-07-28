@@ -51,7 +51,7 @@ module.exports = function (cssWithMappingToString) {
     var alreadyImportedModules = {}
 
     if (dedupe) {
-      for (let k = 0; k < this.length; k++) {
+      for (var k = 0; k < this.length; k++) {
         var id = this[k][0]
 
         if (id != null) {
