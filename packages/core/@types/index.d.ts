@@ -8,7 +8,7 @@
 /// <reference path="./node.d.ts" />
 
 // @ts-ignore
-import type { GetComputedType } from '@mpxjs/store'
+import { GetComputedType } from '@mpxjs/store'
 
 // @ts-ignore
 export * from '@mpxjs/store'
@@ -592,7 +592,7 @@ export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabI
 export function onSaveExitState (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends MpxComponentIns> (): T
+export function getCurrentInstance<T extends MpxComponentIns & WechatMiniprogram.Component.Instance<{}, {}, {}>> (): T
 
 // I18n
 export function useI18n<Options extends {
