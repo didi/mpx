@@ -2,6 +2,7 @@
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
 */
+/* eslint no-var: off */
 module.exports = function (cssWithMappingToString) {
   var list = []
 
@@ -60,8 +61,8 @@ module.exports = function (cssWithMappingToString) {
       }
     }
 
-    for (var k = 0; k < modules.length; k++) {
-      var item = [].concat(modules[k])
+    for (var k1 = 0; k1 < modules.length; k1++) {
+      var item = [].concat(modules[k1])
 
       if (dedupe && alreadyImportedModules[item[0]]) {
         continue

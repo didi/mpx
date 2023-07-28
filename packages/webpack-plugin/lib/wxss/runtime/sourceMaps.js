@@ -1,3 +1,4 @@
+/* eslint no-var: off */
 module.exports = function (item) {
   var content = item[1]
   var cssMapping = item[3]
