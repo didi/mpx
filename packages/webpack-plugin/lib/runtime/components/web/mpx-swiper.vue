@@ -145,7 +145,7 @@
           current: this.currentIndex,
           currentItemId: this.itemIds[this.currentIndex] || '',
           source: this.changeSource
-        }))
+        }, this))
       })
 
       this.bs.on('scrollEnd', () => {
@@ -153,13 +153,13 @@
           current: this.currentIndex,
           currentItemId: this.itemIds[this.currentIndex] || '',
           source: this.changeSource
-        }))
+        }, this))
       })
       this.bs.on('scroll', throttle(({ x, y }) => {
         this.$emit('transition', getCustomEvent('transition', {
           dx: this.lastX - x,
           dy: this.lastY - y
-        }))
+        }, this))
       }, 30, {
         leading: true,
         trailing: false

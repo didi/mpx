@@ -1,5 +1,5 @@
 <script>
-  import getInnerListeners, { extendEvent } from './getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
 
   export default {
     name: 'mpx-image',
@@ -22,18 +22,14 @@
     },
     beforeCreate () {
       this.image = new Image()
-      this.image.onload = (e) => {
-        extendEvent(e, {
-          detail: {
-            width: this.image.width,
-            height: this.image.height
-          }
-        })
-
-        this.$emit('load', e)
+      this.image.onload = () => {
+        this.$emit('load', getCustomEvent('load', {
+          width: this.image.width,
+          height: this.image.height
+        }, this))
       }
-      this.image.onerror = (e) => {
-        this.$emit('error', e)
+      this.image.onerror = () => {
+        this.$emit('error', getCustomEvent('error', {}, this))
       }
     },
     watch: {
@@ -48,9 +44,9 @@
       if (this.mode === 'widthFix' || this.mode === 'heightFix') {
         let style
         if (this.mode === 'widthFix') {
-           style = {
-             height: 'auto'
-           }
+          style = {
+            height: 'auto'
+          }
         } else {
           style = {
             width: 'auto'

@@ -143,15 +143,17 @@ module.exports = function (content) {
   }
 
   // 校验异步组件占位符 componentPlaceholder 不为空
-  const { usingComponents, componentPlaceholder = {} } = json
-  if (usingComponents) {
-    for (const compName in usingComponents) {
-      const compPath = usingComponents[compName]
-      if (!/\?root=/g.test(compPath)) continue
-      const compPlaceholder = componentPlaceholder[compName]
-      if (!compPlaceholder) {
-        const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
-        emitError(errMsg)
+  if (mpx.enableRequireAsync) {
+    const { usingComponents, componentPlaceholder = {} } = json
+    if (usingComponents) {
+      for (const compName in usingComponents) {
+        const compPath = usingComponents[compName]
+        if (!/\?root=/g.test(compPath)) continue
+        const compPlaceholder = componentPlaceholder[compName]
+        if (!compPlaceholder) {
+          const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
+          emitError(errMsg)
+        }
       }
     }
   }
