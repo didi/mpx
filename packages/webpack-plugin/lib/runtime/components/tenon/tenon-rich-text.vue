@@ -9,10 +9,15 @@ export default {
       value: {}
     }
   },
+  computed: {
+    originRef() {
+      return this.$refs["mpx-richtext"]
+    }
+  },
   render () {
-
     const data = {
       richText: this.richText,
+      ref: "mpx-richtext",
       ...getInnerListeners(this)
     }
     return h('text', data)

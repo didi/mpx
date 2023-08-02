@@ -263,6 +263,12 @@ module.exports = function getSpec ({ warn, error }) {
             name: 'ref',
             value: `__mpx_ref_${value}__`
           }
+        },
+        tenon ({ value }) {
+          return {
+            name: 'ref',
+            value: `${value}`
+          }
         }
       },
       {

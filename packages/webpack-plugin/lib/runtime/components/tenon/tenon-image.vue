@@ -38,10 +38,16 @@ export default {
     }
     return h("image", {
       class: "mpx-image",
+      ref: "mpx-image",
       src: this.src,
       resize,
       ...getInnerListeners(this)
     });
+  },
+  computed: {
+    originRef() {
+      return this.$refs["mpx-image"]
+    }
   },
   data() {
     return {};

@@ -64,6 +64,9 @@ export default (function(){
       },
     },
     computed: {
+      originRef() {
+        return this.$refs["mpx-button"]
+      },
       className() {
         if (this.hoverClass && this.hoverClass !== "none" && this.hover) {
           return this.hoverClass;
@@ -109,6 +112,7 @@ export default (function(){
       };
       const data = {
         class: ["mpx-button", ...this.classNameList],
+        ref: "mpx-button",
         ...domProps,
         ...getInnerListeners(this, {
           mergeAfter,

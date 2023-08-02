@@ -22,6 +22,11 @@ export default {
       default: "#04BE02",
     },
   },
+  computed: {
+    originRef() {
+      return this.$refs["switch"]
+    }
+  },
   watch: {
     checked(newVal) {
       this.switchChecked = newVal;
