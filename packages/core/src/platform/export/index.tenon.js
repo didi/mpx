@@ -2,7 +2,7 @@ import {
   effectScope as vueEffectScope,
   getCurrentScope as getCurrentVueScope,
   onScopeDispose
-} from 'vue'
+} from '@hummer/tenon-vue'
 
 export {
   // watch
@@ -30,7 +30,7 @@ export {
   computed,
   // instance
   getCurrentInstance
-} from 'vue'
+} from '@hummer/tenon-vue'
 
 const noop = () => {
 }

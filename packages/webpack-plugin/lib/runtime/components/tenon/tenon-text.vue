@@ -39,10 +39,16 @@ export default {
       "text",
       {
         class: classNames,
+        ref: "mpx-text",
         ...getInnerListeners(this),
       },
       text
     );
+  },
+  computed: {
+    originRef() {
+      return this.$refs["mpx-text"]
+    }
   },
   data() {
     return {};

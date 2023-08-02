@@ -32,7 +32,6 @@ export default {
       default: -1,
     },
   },
-
   computed: {
     originRef() {
       return this.$refs["mpx-textarea"]

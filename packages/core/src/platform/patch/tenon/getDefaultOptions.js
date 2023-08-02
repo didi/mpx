@@ -2,7 +2,7 @@ import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
-import { diffAndCloneA } from '@mpxjs/utils'
+import { diffAndCloneA, warn } from '@mpxjs/utils'
 import { UPDATED, CREATED, MOUNTED, UNMOUNTED } from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
@@ -37,17 +37,30 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
-      const instance = getCurrentVueInstance().proxy
+      const { proxy: instance } = getCurrentVueInstance()
       initProxy(instance, rawOptions)
       setCurrentInstance(instance.__mpxProxy)
       const newContext = {
-        triggerEvent: instance.triggerEvent.bind(instance),
-        refs: instance.$refs,
+        triggerEvent: (eventName, eventDetail) => {
+          return instance.$emit(eventName, {
+            type: eventName,
+            detail: eventDetail
+          })
+        },
+        get refs () { return instance.$refs },
         forceUpdate: instance.$forceUpdate.bind(instance),
-        selectComponent: instance.selectComponent.bind(instance),
-        selectAllComponents: instance.selectAllComponents.bind(instance),
-        createSelectorQuery: instance.createSelectorQuery.bind(instance),
-        createIntersectionObserver: instance.createIntersectionObserver.bind(instance)
+        selectComponent: () => {
+          warn('selectComponent is not supported in Tenon')
+        },
+        selectAllComponents: () => {
+          warn('selectAllComponents is not supported in Tenon')
+        },
+        createSelectorQuery: () => {
+          warn('createSelectorQuery is not supported in Tenon')
+        },
+        createIntersectionObserver: () => {
+          warn('createIntersectionObserver is not supported in Tenon')
+        }
       }
       const setupRes = rawSetup(props, newContext)
       unsetCurrentInstance(instance.__mpxProxy)

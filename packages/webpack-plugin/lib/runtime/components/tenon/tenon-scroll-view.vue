@@ -72,6 +72,9 @@ export default {
     return {};
   },
   computed: {
+    originRef() {
+      return this.$refs["scroll"]
+    },
     _scrollTop() {
       // return 1
       return processSize(this.scrollTop);
