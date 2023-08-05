@@ -35,6 +35,15 @@ class ResolveDependency extends NullDependency {
     return pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
   }
 
+  isPartialCompileFilteredPage(resource) {
+    const { compilation } = this
+    if (!compilation) return ''
+    const mpx = compilation.__mpx__
+    const { partialCompileFilteredPagesMap } = mpx
+    const { resourcePath } = parseRequest(resource)
+    return partialCompileFilteredPagesMap[resourcePath]
+  }
+
   // resolved可能会动态变更，需用此更新hash
   updateHash (hash, context) {
     this.resolved = this.getResolved()
@@ -42,7 +51,9 @@ class ResolveDependency extends NullDependency {
     if (this.resolved) {
       hash.update(this.resolved)
     } else {
-      compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+      if (!this.isPartialCompileFilteredPage(resource)) {
+        compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+      }
     }
     super.updateHash(hash, context)
   }

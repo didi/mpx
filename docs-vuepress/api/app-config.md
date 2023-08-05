@@ -175,7 +175,7 @@ mpx.config.errorHandler = function (errmsg, location, error) {
 Mpx 框架运行时报错捕获感知处理函数。
 
 * Mpx 框架生命周期执行错误；
-* Mpx 中的 computed、watch 等响应性执行报错；
-* Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，属性类型不对；
+* Mpx 中的 computed、watch 等内置方法执行报错；
+* Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
 
 同时被捕获的错误会通过 console.error 输出。
