@@ -395,10 +395,8 @@ class MpxWebpackPlugin {
               stage: -100
             }, (obj, resolverContext, callback) => {
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
-                mpx? mpx.partialCompileFilteredPagesMap[obj.path] = true : null
+                if (mpx) mpx.partialCompileFilteredPagesMap[obj.path] = true
                 obj.path = false
-
-                console.log('mpx', mpx)
               }
               callback(null, obj)
             })

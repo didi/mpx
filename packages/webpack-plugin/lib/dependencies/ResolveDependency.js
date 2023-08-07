@@ -35,7 +35,7 @@ class ResolveDependency extends NullDependency {
     return pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
   }
 
-  isPartialCompileFilteredPage(resource) {
+  isPartialCompileFilteredPage (resource) {
     const { compilation } = this
     if (!compilation) return ''
     const mpx = compilation.__mpx__
