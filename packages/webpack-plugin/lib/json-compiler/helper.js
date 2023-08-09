@@ -6,6 +6,7 @@ const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
+const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
@@ -101,7 +102,15 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     // 增加 page 标识
     page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
-      if (err) return callback(err)
+      if (err) {
+        if (err === RESOLVE_IGNORED_ERR && tarRoot) {
+          const defaultPage = require.resolve('./default-page.mpx') + `?resourcePath=${context}/${tarRoot}/pages/index.mpx`
+          resource = defaultPage
+          aliasPath = ''
+        } else {
+          return callback(err)
+        }
+      }
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
       let outputPath
