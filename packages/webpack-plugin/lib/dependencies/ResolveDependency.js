@@ -22,7 +22,7 @@ class ResolveDependency extends NullDependency {
   }
 
   getResolved () {
-    const { resource, packageName, compilation } = this
+    const { resource, packageName, compilation, issuerResource } = this
     if (!compilation) return ''
     const mpx = compilation.__mpx__
     if (!mpx) return ''
@@ -32,29 +32,27 @@ class ResolveDependency extends NullDependency {
     const mainComponentsMap = componentsMap.main
     const currentStaticResourcesMap = staticResourcesMap[packageName]
     const mainStaticResourcesMap = staticResourcesMap.main
-    return pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
+    const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
+    if (!resolveResult) {
+      if (!this.isPartialCompileFilteredPage(resourcePath)) {
+        compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+      }
+    }
+    return resolveResult
   }
 
-  isPartialCompileFilteredPage (resource) {
+  isPartialCompileFilteredPage (resourcePath) {
     const { compilation } = this
     if (!compilation) return ''
     const mpx = compilation.__mpx__
     const { partialCompileFilteredPagesMap } = mpx
-    const { resourcePath } = parseRequest(resource)
     return partialCompileFilteredPagesMap[resourcePath]
   }
 
   // resolved可能会动态变更，需用此更新hash
   updateHash (hash, context) {
     this.resolved = this.getResolved()
-    const { resource, issuerResource, compilation } = this
-    if (this.resolved) {
-      hash.update(this.resolved)
-    } else {
-      if (!this.isPartialCompileFilteredPage(resource)) {
-        compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
-      }
-    }
+    hash.update(this.resolved)
     super.updateHash(hash, context)
   }
 

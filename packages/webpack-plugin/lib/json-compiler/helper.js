@@ -103,13 +103,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
       if (err) {
-        if (err === RESOLVE_IGNORED_ERR && tarRoot) {
-          const defaultPage = require.resolve('./default-page.mpx') + `?resourcePath=${context}/${tarRoot}/pages/index.mpx`
-          resource = defaultPage
-          aliasPath = ''
-        } else {
-          return callback(err)
-        }
+        return callback(err)
       }
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
@@ -133,7 +127,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const key = [resourcePath, outputPath, tarRoot].join('|')
       callback(null, entry, {
         isFirst,
-        key
+        key,
+        resource
       })
     })
   }

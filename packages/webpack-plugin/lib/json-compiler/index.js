@@ -221,14 +221,22 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-
+    const defaultPagePath = require.resolve('./default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
         async.each(pages, (page, callback) => {
-          processPage(page, context, tarRoot, (err, entry, { isFirst, key } = {}) => {
+          let beforePageResource = null
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key, resource } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
             if (pageKeySet.has(key)) return callback()
+            if (resource.startsWith(defaultPagePath)) {
+              if (beforePageResource || pages.indexOf(page) !== pages.length) {
+                return callback()
+              }
+            }
+            beforePageResource = resource
             pageKeySet.add(key)
+
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
