@@ -6,7 +6,6 @@ const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()

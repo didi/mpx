@@ -398,7 +398,7 @@ class MpxWebpackPlugin {
                 if (mpx) mpx.partialCompileFilteredPagesMap[obj.path] = true
                 const { resourcePath } = parseRequest(obj.path)
                 obj.path = require.resolve('./json-compiler/default-page.mpx')
-                const infix = obj.query? '&' : '?'
+                const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${resourcePath}`
               }
               callback(null, obj)
