@@ -250,11 +250,11 @@ module.exports = function (content) {
         }, () => {
           if (tarRoot && subPackagesCfg) {
             if (!subPackagesCfg[tarRoot].pages.length) {
-              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+              pagesCache[0] && subPackagesCfg[tarRoot].pages.push(pagesCache[0])
             }
           } else {
             if (!localPages.length) {
-              localPages.push(pagesCache[0])
+              pagesCache[0] && localPages.push(pagesCache[0])
             }
           }
           callback()

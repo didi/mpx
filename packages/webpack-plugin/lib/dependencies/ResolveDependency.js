@@ -35,7 +35,7 @@ class ResolveDependency extends NullDependency {
     const mainStaticResourcesMap = staticResourcesMap.main
     const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
     if (!resolveResult) {
-      if (matchCondition(resourcePath, partialCompile)) {
+      if (!partialCompile || matchCondition(resourcePath, partialCompile)) {
         compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
       }
     }
