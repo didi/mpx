@@ -6,7 +6,7 @@ import {
 
 import {
   hasOwn,
-  isValidArrayIndex,
+  isValidArrayIndex
 } from '@mpxjs/utils'
 
 export {
@@ -42,7 +42,7 @@ export function set (target, key, val) {
     return val
   }
   target[key] = val
-    return val
+  return val
 }
 
 export function del (target, key) {
