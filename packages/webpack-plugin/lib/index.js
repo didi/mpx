@@ -383,8 +383,8 @@ class MpxWebpackPlugin {
     if (this.options.partialCompile) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
-        const query = obj.query || '?'
-        return parseQuery(query).isPage
+        const query = parseQuery(obj.query || '?')
+        return query.isPage && !query.type
       }
       // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
       compiler.resolverFactory.hooks.resolver.intercept({
@@ -394,12 +394,13 @@ class MpxWebpackPlugin {
               name: 'MpxPartialCompilePlugin',
               stage: -100
             }, (obj, resolverContext, callback) => {
+              if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
+                return callback(null, obj)
+              }
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
-                if (mpx) mpx.partialCompileFilteredPagesMap[obj.path] = true
-                const { resourcePath } = parseRequest(obj.path)
-                obj.path = require.resolve('./json-compiler/default-page.mpx')
                 const infix = obj.query ? '&' : '?'
-                obj.query += `${infix}resourcePath=${resourcePath}`
+                obj.query += `${infix}resourcePath=${obj.path}`
+                obj.path = require.resolve('./json-compiler/default-page.mpx')
               }
               callback(null, obj)
             })
@@ -620,7 +621,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
-          partialCompileFilteredPagesMap: {},
+          partialCompile: this.options.partialCompile,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))

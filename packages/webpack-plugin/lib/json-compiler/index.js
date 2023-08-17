@@ -224,17 +224,15 @@ module.exports = function (content) {
     const defaultPagePath = require.resolve('./default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
+        const pagesCache = []
         async.each(pages, (page, callback) => {
-          let beforePageResource = null
           processPage(page, context, tarRoot, (err, entry, { isFirst, key, resource } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
             if (pageKeySet.has(key)) return callback()
             if (resource.startsWith(defaultPagePath)) {
-              if (beforePageResource || pages.indexOf(page) !== pages.length) {
-                return callback()
-              }
+              pagesCache.push(entry)
+              return callback()
             }
-            beforePageResource = resource
             pageKeySet.add(key)
 
             if (tarRoot && subPackagesCfg) {
@@ -249,7 +247,18 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, callback)
+        }, () => {
+          if (tarRoot && subPackagesCfg) {
+            if (!subPackagesCfg[tarRoot].pages.length) {
+              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+            }
+          } else {
+            if (!localPages.length) {
+              localPages.push(pagesCache[0])
+            }
+          }
+          callback()
+        })
       } else {
         callback()
       }
@@ -585,10 +594,12 @@ module.exports = function (content) {
       for (const root in subPackagesCfg) {
         const subPackageCfg = subPackagesCfg[root]
         // 分包不存在 pages，输出 subPackages 字段会报错
-        if (!json.subPackages) {
-          json.subPackages = []
+        if (subPackageCfg.pages.length) {
+          if (!json.subPackages) {
+            json.subPackages = []
+          }
+          json.subPackages.push(subPackageCfg)
         }
-        json.subPackages.push(subPackageCfg)
       }
       const processOutput = (output) => {
         output = processDynamicEntry(output)

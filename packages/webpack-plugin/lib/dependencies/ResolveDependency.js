@@ -1,6 +1,7 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
+const { matchCondition } = require('../utils/match-condition')
 
 class ResolveDependency extends NullDependency {
   constructor (resource, packageName, issuerResource, range) {
@@ -26,7 +27,7 @@ class ResolveDependency extends NullDependency {
     if (!compilation) return ''
     const mpx = compilation.__mpx__
     if (!mpx) return ''
-    const { pagesMap, componentsMap, staticResourcesMap } = mpx
+    const { pagesMap, componentsMap, staticResourcesMap, partialCompile } = mpx
     const { resourcePath } = parseRequest(resource)
     const currentComponentsMap = componentsMap[packageName]
     const mainComponentsMap = componentsMap.main
@@ -34,19 +35,11 @@ class ResolveDependency extends NullDependency {
     const mainStaticResourcesMap = staticResourcesMap.main
     const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
     if (!resolveResult) {
-      if (!this.isPartialCompileFilteredPage(resourcePath)) {
+      if (matchCondition(resourcePath, partialCompile)) {
         compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
       }
     }
     return resolveResult
-  }
-
-  isPartialCompileFilteredPage (resourcePath) {
-    const { compilation } = this
-    if (!compilation) return ''
-    const mpx = compilation.__mpx__
-    const { partialCompileFilteredPagesMap } = mpx
-    return partialCompileFilteredPagesMap[resourcePath]
   }
 
   // resolved可能会动态变更，需用此更新hash
