@@ -4,6 +4,11 @@ import {
   onScopeDispose
 } from '@hummer/tenon-vue'
 
+import {
+  hasOwn,
+  isValidArrayIndex,
+} from '@mpxjs/utils'
+
 export {
   // watch
   watchEffect,
@@ -14,8 +19,6 @@ export {
   reactive,
   isReactive,
   shallowReactive,
-  set,
-  del,
   markRaw,
   // ref
   ref,
@@ -31,6 +34,27 @@ export {
   // instance
   getCurrentInstance
 } from '@hummer/tenon-vue'
+
+export function set (target, key, val) {
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    target.length = Math.max(target.length, key)
+    target.splice(key, 1, val)
+    return val
+  }
+  target[key] = val
+    return val
+}
+
+export function del (target, key) {
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    target.splice(key, 1)
+    return
+  }
+  if (!hasOwn(target, key)) {
+    return
+  }
+  delete target[key]
+}
 
 const noop = () => {
 }
