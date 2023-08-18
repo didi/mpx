@@ -101,7 +101,9 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     // 增加 page 标识
     page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
-      if (err) return callback(err)
+      if (err) {
+        return callback(err)
+      }
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
       let outputPath
@@ -124,7 +126,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const key = [resourcePath, outputPath, tarRoot].join('|')
       callback(null, entry, {
         isFirst,
-        key
+        key,
+        resource
       })
     })
   }

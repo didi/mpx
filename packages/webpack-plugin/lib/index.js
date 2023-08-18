@@ -38,7 +38,6 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
-const PartialCompilePlugin = require('./partial-compile/index')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
@@ -55,6 +54,7 @@ const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
+const { parseQuery } = require('loader-utils')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
@@ -381,7 +381,33 @@ class MpxWebpackPlugin {
     let mpx
 
     if (this.options.partialCompile) {
-      new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
+      function isResolvingPage (obj) {
+        // valid query should start with '?'
+        const query = parseQuery(obj.query || '?')
+        return query.isPage && !query.type
+      }
+      // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
+      compiler.resolverFactory.hooks.resolver.intercept({
+        factory: (type, hook) => {
+          hook.tap('MpxPartialCompilePlugin', (resolver) => {
+            resolver.hooks.result.tapAsync({
+              name: 'MpxPartialCompilePlugin',
+              stage: -100
+            }, (obj, resolverContext, callback) => {
+              if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
+                return callback(null, obj)
+              }
+              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
+                const infix = obj.query ? '&' : '?'
+                obj.query += `${infix}resourcePath=${obj.path}`
+                obj.path = require.resolve('./json-compiler/default-page.mpx')
+              }
+              callback(null, obj)
+            })
+          })
+          return hook
+        }
+      })
     }
 
     const getPackageCacheGroup = packageName => {
@@ -595,6 +621,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          partialCompile: this.options.partialCompile,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))

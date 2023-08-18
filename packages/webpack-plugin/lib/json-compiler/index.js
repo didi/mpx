@@ -221,14 +221,20 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-
+    const defaultPagePath = require.resolve('./default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
+        const pagesCache = []
         async.each(pages, (page, callback) => {
-          processPage(page, context, tarRoot, (err, entry, { isFirst, key } = {}) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key, resource } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
             if (pageKeySet.has(key)) return callback()
+            if (resource.startsWith(defaultPagePath)) {
+              pagesCache.push(entry)
+              return callback()
+            }
             pageKeySet.add(key)
+
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -241,7 +247,18 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, callback)
+        }, () => {
+          if (tarRoot && subPackagesCfg) {
+            if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
+              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+            }
+          } else {
+            if (!localPages.length && pagesCache[0]) {
+              localPages.push(pagesCache[0])
+            }
+          }
+          callback()
+        })
       } else {
         callback()
       }
