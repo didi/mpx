@@ -249,12 +249,12 @@ module.exports = function (content) {
           })
         }, () => {
           if (tarRoot && subPackagesCfg) {
-            if (!subPackagesCfg[tarRoot].pages.length) {
-              pagesCache[0] && subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+            if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
+              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
             }
           } else {
-            if (!localPages.length) {
-              pagesCache[0] && localPages.push(pagesCache[0])
+            if (!localPages.length && pagesCache[0]) {
+              localPages.push(pagesCache[0])
             }
           }
           callback()
