@@ -410,7 +410,7 @@ class MpxWebpackPlugin {
               if (isResolvingComponent(obj)) {
                 this.options.asyncComponentsConfig.forEach(item => {
                   if (matchCondition(obj.path, item)) {
-                    obj.query += `${infix}root=${item.root}&placholder=${item.placeholder}`
+                    obj.query += `${infix}root=${item.root}&placeholder=${item.placeholder}`
                   }
                 })
               }

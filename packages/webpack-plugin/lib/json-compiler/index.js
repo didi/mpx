@@ -201,13 +201,22 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry) => {
+        processComponent(component, context, { relativePath }, (err, entry, placeholder) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
+          if (placeholder) {
+            if (json.componentPlaceholder) {
+              (!json.componentPlaceholder[name])? json.componentPlaceholder[name] = placeholder: null
+            } else {
+              json.componentPlaceholder = {
+                [name]: placeholder
+              }
+            }
+          }
           callback()
         })
       }, callback)
