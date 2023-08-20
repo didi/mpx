@@ -56,7 +56,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 目前只有微信支持分包异步化
         if (enableRequireAsync) {
           tarRoot = queryObj.root
-          queryObj.placeholder? placeholder = queryObj.placeholder: null
+          if (queryObj.placeholder) placeholder = queryObj.placeholder
         }
       }
       const parsed = path.parse(resourcePath)
