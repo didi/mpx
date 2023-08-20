@@ -167,6 +167,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.asyncComponentsConfig = options.asyncComponentsConfig || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     this.options = options
@@ -380,11 +381,15 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompile) {
+    if (this.options.partialCompile || this.options.asyncComponentsConfig) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
         return query.isPage && !query.type
+      }
+      function isResolvingComponent (obj) {
+        const query = parseQuery(obj.query || '?')
+        return query.isComponent && !query.type
       }
       // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
       compiler.resolverFactory.hooks.resolver.intercept({
@@ -397,10 +402,17 @@ class MpxWebpackPlugin {
               if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
                 return callback(null, obj)
               }
+              const infix = obj.query ? '&' : '?'
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
-                const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
                 obj.path = require.resolve('./json-compiler/default-page.mpx')
+              }
+              if (isResolvingComponent(obj)) {
+                this.options.asyncComponentsConfig.forEach(item => {
+                  if (matchCondition(obj.path, item)) {
+                    obj.query += `${infix}root=${item.root}&placholder=${item.placeholder}`
+                  }
+                })
               }
               callback(null, obj)
             })

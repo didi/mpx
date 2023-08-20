@@ -45,7 +45,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
-
+    component = addQuery(component, { isComponent: true })
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
