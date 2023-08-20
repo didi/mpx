@@ -210,7 +210,7 @@ module.exports = function (content) {
           components[name] = entry
           if (placeholder) {
             if (json.componentPlaceholder) {
-              (!json.componentPlaceholder[name])? json.componentPlaceholder[name] = placeholder: null
+              if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = placeholder
             } else {
               json.componentPlaceholder = {
                 [name]: placeholder
