@@ -84,7 +84,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry)
+      callback(null, entry, { resourcePath })
     })
   }
 

@@ -103,6 +103,16 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.getRuntimeModules) {
+      Object.defineProperties(context, {
+        __getRuntimeModules: {
+          get () {
+            return currentInject.getRuntimeModules
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import { setByPath, error, hasOwn } from '@mpxjs/utils'
 import Mpx from '../../index'
+import contextMap from '../../vnode/context'
 
 const datasetReg = /^data-(.+)$/
 
@@ -14,6 +15,11 @@ function collectDataset (props) {
     }
   }
   return dataset
+}
+
+function logCallbackNotFound (context, callbackName) {
+  const location = context.__mpxProxy && context.__mpxProxy.options.mpxFileResource
+  error(`Instance property [${callbackName}] is not function, please check.`, location)
 }
 
 export default function proxyEventMixin () {
@@ -46,6 +52,9 @@ export default function proxyEventMixin () {
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
+      // 如果有 mpxuid 说明是运行时组件，那么需要设置对应的上下文
+      const rootRuntimeContext = contextMap.get(target.dataset.mpxuid)
+      const context = rootRuntimeContext || this
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
@@ -69,10 +78,10 @@ export default function proxyEventMixin () {
               }
             })
             : [$event]
-          if (typeof this[callbackName] === 'function') {
-            returnedValue = this[callbackName].apply(this, params)
+          if (typeof context[callbackName] === 'function') {
+            returnedValue = context[callbackName].apply(context, params)
           } else {
-            error(`Instance property [${callbackName}] is not function, please check.`, location)
+            logCallbackNotFound(context, callbackName)
           }
         }
       })

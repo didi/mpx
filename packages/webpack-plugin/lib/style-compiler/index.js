@@ -1,14 +1,16 @@
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, DYNAMIC_STYLE } = require('../utils/const')
 const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
+const cssArrayList = require('./plugins/css-array-list')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
+const checkIsRuntimeMode = require('../utils/check-is-runtime')
 
 module.exports = function (css, map) {
   this.cacheable()
@@ -22,6 +24,7 @@ module.exports = function (css, map) {
   const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
+  const runtimeCompile = checkIsRuntimeMode(resourcePath)
 
   const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {
@@ -81,6 +84,11 @@ module.exports = function (css, map) {
 
     plugins.push(...config.plugins) // push user config plugins
 
+    const cssList = []
+    if (runtimeCompile) {
+      plugins.push(cssArrayList(cssList))
+    }
+
     return postcss(plugins)
       .process(css, options)
       .then(result => {
@@ -122,6 +130,14 @@ module.exports = function (css, map) {
                 this.emitFile(message.file, message.content, message.sourceMap, message.info)
               }
           }
+        }
+
+        if (runtimeCompile) {
+          this.emitFile(DYNAMIC_STYLE, '', undefined, {
+            skipEmit: true,
+            extractedDynamicAsset: JSON.stringify(cssList)
+          })
+          return cb(null, '')
         }
 
         const map = result.map && result.map.toJSON()

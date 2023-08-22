@@ -42,6 +42,7 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
+import contextMap from '../vnode/context'
 
 let uid = 0
 
@@ -125,6 +126,8 @@ export default class MpxProxy {
   }
 
   created () {
+    // 缓存上下文，在 destoryed 阶段删除
+    contextMap.set(this.uid, this.target)
     if (__mpx_mode__ !== 'web') {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
@@ -184,6 +187,8 @@ export default class MpxProxy {
   }
 
   unmounted () {
+    // 页面/组件销毁清除上下文的缓存
+    contextMap.remove(this.uid)
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
@@ -364,7 +369,10 @@ export default class MpxProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData () {
+  renderWithData (vnode) {
+    if (vnode) {
+      return this.doRenderWithVNode(vnode)
+    }
     const renderData = preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
@@ -461,6 +469,25 @@ export default class MpxProxy {
       }
     }
     return result
+  }
+
+  doRenderWithVNode (vnode) {
+    if (!this._vnode) {
+      this.target.__render({ r: vnode })
+    } else {
+      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      if (!isEmptyObject(diffPath)) {
+        // 构造 diffPath 数据
+        diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
+          const key = 'r' + curVal
+          preVal[key] = diffPath[curVal]
+          return preVal
+        }, {})
+        this.target.__render(diffPath)
+      }
+    }
+    // 缓存本地的 vnode 用以下一次 diff
+    this._vnode = vnode
   }
 
   doRender (data, cb) {

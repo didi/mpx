@@ -5,6 +5,7 @@ const loaderUtils = require('loader-utils')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
+const checkIsRuntimeMode = require('./utils/check-is-runtime')
 const async = require('async')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
@@ -17,6 +18,8 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
+const RecordModuleTemplateDependency = require('./dependencies/RecordModuleTemplateDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
@@ -84,6 +87,11 @@ module.exports = function (content) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
+
+  if (checkIsRuntimeMode(this.resource)) {
+    this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
+  }
+
   const loaderContext = this
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
@@ -98,7 +106,8 @@ module.exports = function (content) {
   })
 
   const {
-    getRequire
+    getRequire,
+    getRequestString
   } = createHelpers(loaderContext)
 
   let output = ''
@@ -322,7 +331,8 @@ module.exports = function (content) {
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
-        output += getRequire('template', template, extraOptions) + '\n'
+        // output += getRequire('template', template, extraOptions) + '\n'
+        this._module.addPresentationalDependency(new RecordModuleTemplateDependency(moduleId, getRequestString('template', template, extraOptions).slice(1, -1)))
       }
 
       // styles
@@ -351,7 +361,16 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
+      const extraOptions = {
+        moduleId
+      }
+      if (json.src) {
+        Object.assign(extraOptions, {
+          ...queryObj,
+          resourcePath
+        })
+      }
+      output += getRequire('json', json, extraOptions) + '\n'
 
       // script
       output += '/* script */\n'

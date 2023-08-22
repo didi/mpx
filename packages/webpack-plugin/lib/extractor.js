@@ -5,7 +5,9 @@ const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
 const addQuery = require('./utils/add-query')
 const normalize = require('./utils/normalize')
-const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE } = require('./utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE, DYNAMIC_TEMPLATE, DYNAMIC_STYLE, DYNAMIC, BLOCK_TEMPLATE, BLOCK_STYLES, BLOCK_JSON } = require('./utils/const')
+const checkIsRuntimeMode = require('./utils/check-is-runtime')
+const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
 
 module.exports = content => content
 
@@ -19,6 +21,16 @@ module.exports.pitch = async function (remainingRequest) {
   const issuerResource = queryObj.issuerResource
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
+
+  const processRuntimeMode = (usingComponents) => {
+    const moduleGraph = this._compilation.moduleGraph
+    const issuer = moduleGraph.getIssuer(this._module)
+    if (checkIsRuntimeMode(this.resourcePath) || checkIsRuntimeMode(issuer.resource)) {
+      usingComponents.element = resolveMpxCustomElementPath(packageName)
+    }
+  }
 
   if (needBabel) {
     // 创建js request应用babel
@@ -49,6 +61,19 @@ module.exports.pitch = async function (remainingRequest) {
   }
 
   let content = await this.importModule(`!!${request}`)
+
+  // 使用运行时渲染的 page / component 会动态注入 mpx-custom-element
+  if (type === BLOCK_JSON) {
+    try {
+      content = JSON.parse(content)
+      if (!content.usingComponents) content.usingComponents = {}
+      processRuntimeMode(content.usingComponents)
+      content = JSON.stringify(content, null, 2)
+    } catch (e) {
+      this.emitError(e)
+    }
+  }
+
   // 处理wxss-loader的返回
   if (Array.isArray(content)) {
     content = content.map((item) => {
@@ -83,11 +108,35 @@ module.exports.pitch = async function (remainingRequest) {
     resultSource = assetInfo.extractedResultSource
   }
 
+  let dynamicType = ''
+
+  if (type === BLOCK_TEMPLATE) {
+    dynamicType = DYNAMIC_TEMPLATE
+  }
+  if (type === BLOCK_STYLES) {
+    dynamicType = DYNAMIC_STYLE
+  }
+
+  if (dynamicType && buildInfo.assetsInfo?.get(dynamicType)) {
+    const dynamicAsset = buildInfo.assetsInfo.get(dynamicType).extractedDynamicAsset
+    this.emitFile(DYNAMIC, '', undefined, {
+      skipEmit: true,
+      extractedInfo: {
+        content: dynamicAsset,
+        dynamic: true,
+        type,
+        moduleId,
+        resourcePath,
+        index: 0
+      }
+    })
+  }
+
   if (isStatic) {
     switch (type) {
       // styles为static就两种情况，一种是.mpx中使用src引用样式，第二种为css-loader中处理@import
       // 为了支持持久化缓存，.mpx中使用src引用样式对issueFile asset产生的副作用迁移到ExtractDependency中处理
-      case 'styles':
+      case BLOCK_STYLES:
         if (issuerResource) {
           const issuerFile = mpx.getExtractedFile(issuerResource)
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
@@ -106,10 +155,10 @@ module.exports.pitch = async function (remainingRequest) {
           }
         }
         break
-      case 'template':
+      case BLOCK_TEMPLATE:
         resultSource += `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};\n`
         break
-      case 'json':
+      case BLOCK_JSON:
         // 目前json为static时只有处理theme.json一种情况，该情况下返回的路径只能为不带有./或../开头的相对路径，否则微信小程序预览构建会报错，issue#622
         resultSource += `module.exports = ${JSON.stringify(file)};\n`
         break

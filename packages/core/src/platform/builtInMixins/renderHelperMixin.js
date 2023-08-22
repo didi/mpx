@@ -1,4 +1,6 @@
 import { isObject } from '@mpxjs/utils'
+import genVnodeTree from '../../vnode/render'
+import staticMap from '../../vnode/staticMap'
 
 export default function renderHelperMixin () {
   return {
@@ -25,8 +27,13 @@ export default function renderHelperMixin () {
         this.__mpxProxy.renderData[key] = value
         return value
       },
-      _r () {
-        this.__mpxProxy.renderWithData()
+      _r (vnode) {
+        this.__mpxProxy.renderWithData(vnode)
+      },
+      _g (moduleId) {
+        const { template = {}, styles = [] } = staticMap[moduleId]
+        const vnodeTree = genVnodeTree(template, [this], styles)
+        return vnodeTree
       }
     }
   }
