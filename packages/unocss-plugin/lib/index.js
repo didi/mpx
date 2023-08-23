@@ -107,6 +107,8 @@ function createContext (root, defaults = {}) {
     if (result.sources.length) {
       result.sources.forEach((item) => {
         compilation.fileDependencies.add(item)
+        // fix jiti require cache for watch
+        delete require.cache[item]
       })
     }
     return result
