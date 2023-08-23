@@ -194,12 +194,12 @@ module.exports = function getSpec ({ warn, error }) {
             const parsed = parseMustache(item.value)
             if (item.name === 'style') {
               if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parseMustache(item.value).result)
+                styleBinding.push(parsed.result)
               } else {
                 styleBinding.push(JSON.stringify(item.value))
               }
             } else if (item.name === 'wx:style') {
-              styleBinding.push(parseMustache(item.value).result)
+              styleBinding.push(parsed.result)
             }
           })
           return {
