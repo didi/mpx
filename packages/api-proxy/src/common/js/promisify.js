@@ -97,4 +97,6 @@ function promisify (listObj, whiteList, customBlackList) {
   return result
 }
 
-export default promisify
+export {
+  promisify
+}

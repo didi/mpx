@@ -1,5 +1,5 @@
 import transformApi from './mini/transform'
-import promisify from './common/js/promisify'
+import { promisify } from './common/js'
 
 export default function install (target, options = {}) {
   const {

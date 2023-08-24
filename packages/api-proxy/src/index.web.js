@@ -1,6 +1,5 @@
 import * as transedApi from './web/api'
-import promisify from './common/js/promisify'
-import { genFromMap } from './common/js'
+import { promisify, genFromMap } from './common/js'
 
 export default function install (target, options = {}) {
   const {
