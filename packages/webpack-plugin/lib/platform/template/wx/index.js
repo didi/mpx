@@ -191,7 +191,7 @@ module.exports = function getSpec ({ warn, error }) {
           const styleBinding = []
           el.isStyleParsed = true
           // 不过滤的话每一个属性都要 parse
-          el.attrsList.filter(item => /^(style|wx:style)$/.test(item.name)).forEach((item) => {
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
             const parsed = parseMustache(item.value)
             if (item.name === 'wx:style') {
               styleBinding.push(parsed.result)
