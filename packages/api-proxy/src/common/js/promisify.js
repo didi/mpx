@@ -1,4 +1,4 @@
-import { genFromMap, getEnvObj, noop } from '../common/js'
+import { genFromMap, getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()
 
