@@ -289,6 +289,7 @@ class SizeReportPlugin {
         const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
         Object.assign(reportGroup, entrySet, {
           selfSize: 0,
+          ignoreSelfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
           sharedSizeInfo: {},
@@ -321,6 +322,9 @@ class SizeReportPlugin {
               })
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (reportGroup.ignoreSubpackage && reportGroup.ignoreSubpackage.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(noEntryModules, (noEntryModule) => {
               return reportGroup.noEntryModules.has(noEntryModule)
@@ -335,6 +339,9 @@ class SizeReportPlugin {
               return reportGroup.selfEntryModules.has(entryModule)
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (reportGroup.ignoreSubpackage && reportGroup.ignoreSubpackage.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
@@ -671,12 +678,30 @@ class SizeReportPlugin {
       }
 
       if (this.options.threshold) {
-        checkThreshold(this.options.threshold, sizeSummary.totalSize, packagesSizeInfo)
+        let ignoreSubpackages = []
+        let fitlerIgnoreTotalSize = sizeSummary.totalSize
+        reportGroups.forEach(group => {
+          if (group.ignoreSubpackage) {
+            ignoreSubpackages = ignoreSubpackages.concat(group.ignoreSubpackage)
+          }
+        })
+        ignoreSubpackages = [...new Set(ignoreSubpackages)]
+        ignoreSubpackages.forEach(ignoreName => {
+          if (packagesSizeInfo[ignoreName]) {
+            fitlerIgnoreTotalSize -= packagesSizeInfo[ignoreName]
+          }
+        })
+
+        checkThreshold(this.options.threshold, fitlerIgnoreTotalSize, packagesSizeInfo)
       }
 
       reportGroups.forEach((reportGroup) => {
         if (reportGroup.threshold) {
-          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+          let groupSelfSize = reportGroup.selfSize
+          if (reportGroup.ignoreSelfSize) {
+            groupSelfSize -= reportGroup.ignoreSelfSize
+          }
+          checkThreshold(reportGroup.threshold, groupSelfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
         }
       })
 
