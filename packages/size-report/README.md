@@ -76,7 +76,9 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
           // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
           noEntryModules: {
             include: 'src/lib/sdk.js'
-          }
+          },
+          // group 阈值校验时忽略该分包体积，总包体积校验时也会忽略该分包体积
+          ignoreSubpackage: ['new-homepage']
         }
       ],
       // 配置模块引用链路记录规则，符合规则的模块的引用关系会输出在moduleEntryGraph中
