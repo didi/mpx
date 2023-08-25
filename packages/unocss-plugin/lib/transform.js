@@ -1,3 +1,5 @@
+const MagicString = require('magic-string')
+const transformerDirectives = require('@unocss/transformer-directives').default
 const { getReplaceSource } = require('./source')
 
 const escapeMap = {
@@ -81,9 +83,26 @@ function cssRequiresTransform (source) {
   return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source)
 }
 
+async function applyTransformers(
+  ctx,
+  original,
+  id,
+) {
+  if (original.includes(IGNORE_COMMENT))
+    return original
+
+  let code = original
+  const s = new MagicString(code)
+  await transformerDirectives().transform(s, id, ctx)
+  if (s.hasChanged())
+    code = s.toString()
+  return code
+}
+
 module.exports = {
   cssRequiresTransform,
   transformGroups,
   mpEscape,
+  applyTransformers,
   buildAliasTransformer
 }

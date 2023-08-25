@@ -8,7 +8,8 @@ const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const { parseClasses, parseStrings, parseMustache, stringifyAttr, parseComments, parseCommentConfig } = require('./parser')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
-const { buildAliasTransformer, transformGroups, mpEscape, cssRequiresTransform } = require('./transform')
+const { applyTransformers, buildAliasTransformer, transformGroups, mpEscape, cssRequiresTransform } = require('./transform')
+const platformPreflightsMap = require('./platform')
 
 const loadersPath = path.resolve(__dirname, './loaders')
 const transAppLoader = path.resolve(loadersPath, 'unocss-app.js')
@@ -102,7 +103,6 @@ function createContext (root, defaults = {}) {
   async function loadConfig (compilation) {
     const result = await unoConfig.loadConfig(root, {}, [], {})
     rawConfig = result.config
-    uno.setConfig(rawConfig)
 
     if (result.sources.length) {
       result.sources.forEach((item) => {
@@ -113,8 +113,11 @@ function createContext (root, defaults = {}) {
     }
     return result
   }
-  async function getConfig (compilation) {
+  async function getConfig (compilation, mode) {
     await loadConfig(compilation)
+    const platformPreflights = platformPreflightsMap[mode] || {}
+    Object.assign(rawConfig, platformPreflights)
+    uno.setConfig(rawConfig)
     return rawConfig
   }
   return {
@@ -207,14 +210,14 @@ class MpxUnocssPlugin {
         const warn = (msg) => {
           compilation.warnings.push(new Error(msg))
         }
-        const config = await getConfig(compilation)
+        const { mode, dynamicEntryInfo, appInfo } = mpx
+        const config = await getConfig(compilation, mode)
 
         const enablePreflight = config.preflight !== false && Boolean(this.options.preflight)
 
         if (enablePreflight) { warn('由于底层实现的差异，开启preflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！') }
 
         const preflightOptions = { preflights: false, safelist: false, minify: this.minify }
-        const { mode, dynamicEntryInfo, appInfo } = mpx
         // 包相关
         const packages = Object.keys(dynamicEntryInfo)
         function getPackageName (file) {
