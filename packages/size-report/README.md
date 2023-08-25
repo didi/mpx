@@ -43,6 +43,8 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
         port: 0, // 本地服务端口，非必填，默认 0(随机端口)
         host: '127.0.0.1', // 本地服务host，非必填
       },
+      // group 阈值校验时忽略该分包体积，总包体积校验时也会忽略该分包体积
+      ignoreSubpackages: ['new-homepage'],
       // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
       filename: '../report.json',
       // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
@@ -76,9 +78,7 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
           // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
           noEntryModules: {
             include: 'src/lib/sdk.js'
-          },
-          // group 阈值校验时忽略该分包体积，总包体积校验时也会忽略该分包体积
-          ignoreSubpackage: ['new-homepage']
+          }
         }
       ],
       // 配置模块引用链路记录规则，符合规则的模块的引用关系会输出在moduleEntryGraph中
@@ -86,7 +86,7 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
         include: [
           'src/components/tools.js'
         ]
-      }
+      },
       // 是否收集页面维度体积详情，默认 false
       reportPages: true,
       // 是否收集资源维度体积详情，默认 false

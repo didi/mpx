@@ -109,6 +109,8 @@ class SizeReportPlugin {
 
       const needEntryPathRules = this.options.needEntryPathRules || {}
 
+      const ignoreSubpackages = this.options.ignoreSubpackages
+
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
           reportGroups.push({
@@ -322,7 +324,7 @@ class SizeReportPlugin {
               })
             })) {
               reportGroup.selfSize += fillInfo.size
-              if (reportGroup.ignoreSubpackage && reportGroup.ignoreSubpackage.includes(packageName)) {
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
                 reportGroup.ignoreSelfSize += fillInfo.size
               }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
@@ -339,7 +341,7 @@ class SizeReportPlugin {
               return reportGroup.selfEntryModules.has(entryModule)
             })) {
               reportGroup.selfSize += fillInfo.size
-              if (reportGroup.ignoreSubpackage && reportGroup.ignoreSubpackage.includes(packageName)) {
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
                 reportGroup.ignoreSelfSize += fillInfo.size
               }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
@@ -678,21 +680,15 @@ class SizeReportPlugin {
       }
 
       if (this.options.threshold) {
-        let ignoreSubpackages = []
-        let fitlerIgnoreTotalSize = sizeSummary.totalSize
-        reportGroups.forEach(group => {
-          if (group.ignoreSubpackage) {
-            ignoreSubpackages = ignoreSubpackages.concat(group.ignoreSubpackage)
-          }
-        })
-        ignoreSubpackages = [...new Set(ignoreSubpackages)]
-        ignoreSubpackages.forEach(ignoreName => {
-          if (packagesSizeInfo[ignoreName]) {
-            fitlerIgnoreTotalSize -= packagesSizeInfo[ignoreName]
-          }
-        })
-
-        checkThreshold(this.options.threshold, fitlerIgnoreTotalSize, packagesSizeInfo)
+        let filterIgnoreTotalSize = sizeSummary.totalSize
+        if (ignoreSubpackages) {
+          ignoreSubpackages.forEach(ignoreName => {
+            if (packagesSizeInfo[ignoreName]) {
+              filterIgnoreTotalSize -= packagesSizeInfo[ignoreName]
+            }
+          })
+        }
+        checkThreshold(this.options.threshold, filterIgnoreTotalSize, packagesSizeInfo)
       }
 
       reportGroups.forEach((reportGroup) => {
