@@ -116,8 +116,13 @@ function createContext (root, defaults = {}) {
   async function getConfig (compilation, mode) {
     await loadConfig(compilation)
     const platformPreflights = platformPreflightsMap[mode] || {}
-    Object.assign(rawConfig, platformPreflights)
-    uno.setConfig(rawConfig)
+    uno.setConfig({
+      ...rawConfig,
+      preflights: [
+        ...rawConfig.preflights,
+        ...platformPreflights.preflights
+      ]
+    })
     return rawConfig
   }
   return {
@@ -232,8 +237,7 @@ class MpxUnocssPlugin {
         const processStyle = async (file, source) => {
           const content = source.source()
           if (!content || !cssRequiresTransform(content)) { return }
-          const unores = await uno.generate(content, preflightOptions)
-          const output = unores.css
+          const output = await applyTransformers(ctx, content, file)
           if (!output || output.length <= 0) {
             error(`${file} 解析style错误,检查样式文件输入!`)
             return

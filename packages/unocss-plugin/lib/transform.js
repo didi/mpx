@@ -2,6 +2,8 @@ const MagicString = require('magic-string')
 const transformerDirectives = require('@unocss/transformer-directives').default
 const { getReplaceSource } = require('./source')
 
+const IGNORE_COMMENT = '@unocss-ignore'
+
 const escapeMap = {
   '(': '_pl_',
   ')': '_pr_',
@@ -83,19 +85,21 @@ function cssRequiresTransform (source) {
   return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source)
 }
 
-async function applyTransformers(
+async function applyTransformers (
   ctx,
   original,
-  id,
+  id
 ) {
-  if (original.includes(IGNORE_COMMENT))
+  if (original.includes(IGNORE_COMMENT)) {
     return original
+  }
 
   let code = original
   const s = new MagicString(code)
   await transformerDirectives().transform(s, id, ctx)
-  if (s.hasChanged())
+  if (s.hasChanged()) {
     code = s.toString()
+  }
   return code
 }
 
