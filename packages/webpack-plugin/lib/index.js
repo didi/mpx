@@ -1035,7 +1035,7 @@ class MpxWebpackPlugin {
             let request = expr.arguments[0].value
             const range = expr.arguments[0].range
             const context = parser.state.module.context
-            const { queryObj } = parseRequest(request)
+            const { queryObj, resourcePath } = parseRequest(request)
             if (!queryObj.root && mpx.asyncComponentsConfig) {
               mpx.asyncComponentsConfig.forEach(item => {
                 if (matchCondition(resourcePath, item)) {
