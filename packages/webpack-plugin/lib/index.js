@@ -381,15 +381,11 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompile || this.options.asyncComponentsConfig) {
+    if (this.options.partialCompile) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
         return query.isPage && !query.type
-      }
-      function isResolvingComponent (obj) {
-        const query = parseQuery(obj.query || '?')
-        return query.isComponent && !query.type
       }
       // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
       compiler.resolverFactory.hooks.resolver.intercept({
@@ -407,13 +403,13 @@ class MpxWebpackPlugin {
                 obj.query += `${infix}resourcePath=${obj.path}`
                 obj.path = require.resolve('./json-compiler/default-page.mpx')
               }
-              if (isResolvingComponent(obj)) {
-                this.options.asyncComponentsConfig.forEach(item => {
-                  if (matchCondition(obj.path, item)) {
-                    obj.query += `${infix}root=${item.root}&placeholder=${item.placeholder}`
-                  }
-                })
-              }
+              // if (isResolvingComponent(obj)) {
+              //   this.options.asyncComponentsConfig.forEach(item => {
+              //     if (matchCondition(obj.path, item)) {
+              //       obj.query += `${infix}root=${item.root}&placeholder=${item.placeholder}`
+              //     }
+              //   })
+              // }
               callback(null, obj)
             })
           })
@@ -634,6 +630,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
+          asyncComponentsConfig: this.options.asyncComponentsConfig,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1039,6 +1036,13 @@ class MpxWebpackPlugin {
             const range = expr.arguments[0].range
             const context = parser.state.module.context
             const { queryObj } = parseRequest(request)
+            if (!queryObj.root && mpx.asyncComponentsConfig) {
+              mpx.asyncComponentsConfig.forEach(item => {
+                if (matchCondition(resourcePath, item)) {
+                  queryObj.root = item.root
+                }
+              })
+            }
             if (queryObj.root) {
               // 删除root query
               request = addQuery(request, {}, false, ['root'])

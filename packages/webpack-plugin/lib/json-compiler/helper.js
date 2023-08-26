@@ -6,6 +6,7 @@ const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
+const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
@@ -17,6 +18,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
   const enableRequireAsync = mpx.enableRequireAsync
+  const asyncComponentsConfig = mpx.asyncComponentsConfig
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -49,14 +51,19 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
-      let placeholder = null
+      if (!queryObj.root && asyncComponentsConfig) {
+        asyncComponentsConfig.forEach(item => {
+          if (matchCondition(resourcePath, item)) {
+            queryObj.root = item.root
+          }
+        })
+      }
       if (queryObj.root) {
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
         if (enableRequireAsync) {
           tarRoot = queryObj.root
-          if (queryObj.placeholder) placeholder = queryObj.placeholder
         }
       }
       const parsed = path.parse(resourcePath)
@@ -87,7 +94,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry, placeholder)
+      callback(null, entry, tarRoot)
     })
   }
 

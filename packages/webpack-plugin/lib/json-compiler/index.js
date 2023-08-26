@@ -142,22 +142,6 @@ module.exports = function (content) {
     }
   }
 
-  // 校验异步组件占位符 componentPlaceholder 不为空
-  if (mpx.enableRequireAsync) {
-    const { usingComponents, componentPlaceholder = {} } = json
-    if (usingComponents) {
-      for (const compName in usingComponents) {
-        const compPath = usingComponents[compName]
-        if (!/\?root=/g.test(compPath)) continue
-        const compPlaceholder = componentPlaceholder[compName]
-        if (!compPlaceholder) {
-          const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
-          emitError(errMsg)
-        }
-      }
-    }
-  }
-
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
@@ -201,20 +185,17 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, placeholder) => {
+        processComponent(component, context, { relativePath }, (err, entry, root) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          if (placeholder) {
-            if (json.componentPlaceholder) {
-              if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = placeholder
-            } else {
-              json.componentPlaceholder = {
-                [name]: placeholder
-              }
+          if (root) {
+            if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
+              const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+              emitError(errMsg)
             }
           }
           callback()
