@@ -250,6 +250,7 @@ module.exports = defineConfig({
 })
 ```
 :::
+
 ### externalClasses
 
 - **类型**：`Array<string>`
@@ -488,6 +489,7 @@ module.exports = defineConfig({
 })
 ```
 :::
+
 ### autoSplit
 
 - **类型**：`boolean`
@@ -1126,8 +1128,6 @@ module.exports = defineConfig({
 ```
 :::
 
-
-
 ### i18n
 
 ```js
@@ -1402,6 +1402,55 @@ module.exports = defineConfig({
 
 :::warning
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
+:::
+
+### asyncComponentsConfig
+
+- **类型**：`Array<object>【{ include: string | RegExp | Function | Array<string | RegExp | Function>, root: string }】`
+  * include: 同 webpack include 规则
+  * root: 匹配规则的组件或js模块的输出分包名
+
+- **详细**：异步分包场景下批量设置组件或 js 模块的异步分包，提升资源异步分包输出的灵活性。
+
+- **示例**：
+
+```js
+// include 可以是正则、字符串、函数、数组
+new MpxWebpackPlugin({
+  asyncComponentsConfig: [
+    {
+      include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
+      root: 'sub1'
+    }
+  ]
+})
+```
+
+::: tip @mpxjs/cli@3.x 版本配置如下
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        // include 可以是正则、字符串、函数、数组
+        partialCompile: [
+          {
+            include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
+            root: 'sub1'
+          }
+        ]
+      }
+    }
+  }
+})
+```
+:::
+
+:::warning
+* 该配置匹配的组件，若使用方在引用路径已设置?root，则以引用路径中的?root为最高优先级
+* 本功能默认不会增加componentPlaceholder配置，开启异步分包的组件开发者务必配置componentPlaceholder
+* 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
 ## MpxWebpackPlugin static methods
