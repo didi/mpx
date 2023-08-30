@@ -54,7 +54,7 @@ module.exports = function (content) {
     this.resolve(parsed.dir, resourceName + extName, callback)
   }
 
-  function checkCSSLangFiles (callback) {
+  function checkCSSLangFiles(callback) {
     const langs = mpx.nativeConfig.cssLangs || ['less', 'stylus', 'scss', 'sass']
     const results = []
     async.eachOf(langs, function (lang, i, callback) {
@@ -79,7 +79,7 @@ module.exports = function (content) {
     })
   }
 
-  function checkJSONJSFile (callback) {
+  function checkJSONJSFile(callback) {
     checkFileExists(JSON_JS_EXT, (err, result) => {
       if (!err && result) {
         typeResourceMap.json = result
@@ -137,6 +137,7 @@ module.exports = function (content) {
       } catch (e) {
         return callback(e)
       }
+      let usingComponents = Object.keys(mpx.usingComponents)
       const rulesRunnerOptions = {
         mode,
         srcMode,
@@ -147,16 +148,10 @@ module.exports = function (content) {
       }
       if (!isApp) {
         rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        // polyfill global usingComponents
-        // 预读json时无需注入polyfill全局组件
-        // rulesRunnerOptions.data = {
-        //   globalComponents: mpx.usingComponents
-        // }
       }
-      let usingComponents = Object.keys(mpx.usingComponents)
+      const rulesRunner = getRulesRunner(rulesRunnerOptions)
+      if (rulesRunner) rulesRunner(json)
       if (json.usingComponents) {
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        if (rulesRunner) rulesRunner(json)
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
       }
       const {

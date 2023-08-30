@@ -8,7 +8,7 @@ const checkbox = require('./checkbox')
 const coverImage = require('./cover-image')
 const coverView = require('./cover-view')
 const form = require('./form')
-const HyphenTagName = require('./hypen-tag-name')
+const hyphenTagName = require('./hypen-tag-name')
 const icon = require('./icon')
 const image = require('./image')
 const input = require('./input')
@@ -118,7 +118,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     camera({ print }),
     livePlayer({ print }),
     livePusher({ print }),
-    HyphenTagName({ print }),
+    hyphenTagName({ print }),
     component()
   ]
 }
