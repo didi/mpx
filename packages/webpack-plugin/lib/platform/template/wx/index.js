@@ -190,16 +190,16 @@ module.exports = function getSpec ({ warn, error }) {
           }
           const styleBinding = []
           el.isStyleParsed = true
-          el.attrsList.forEach((item) => {
+          // 不过滤的话每一个属性都要 parse
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
             const parsed = parseMustache(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parseMustache(item.value).result)
-              } else {
-                styleBinding.push(JSON.stringify(item.value))
-              }
-            } else if (item.name === 'wx:style') {
-              styleBinding.push(parseMustache(item.value).result)
+            if (item.name === 'wx:style') {
+              styleBinding.push(parsed.result)
+            // item.name === 'style'
+            } else if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
+              styleBinding.push(parsed.result)
+            } else {
+              styleBinding.push(JSON.stringify(item.value))
             }
           })
           return {
