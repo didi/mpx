@@ -7,13 +7,13 @@ const { capitalToHyphen } = require('../../../utils/string')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
-module.exports = function getSpec({ warn, error }) {
-  function print(mode, path, isError) {
+module.exports = function getSpec ({ warn, error }) {
+  function print (mode, path, isError) {
     const msg = `Json path <${path}> is not supported in ${mode} environment!`
     isError ? error(msg) : warn(msg)
   }
 
-  function deletePath(opts) {
+  function deletePath (opts) {
     let isError = opts
     let shouldLog = true
     if (typeof opts === 'object') {
@@ -37,7 +37,7 @@ module.exports = function getSpec({ warn, error }) {
    * @desc 在app.mpx里配置usingComponents作为全局组件
    */
 
-  function addGlobalComponents(input, { globalComponents }) {
+  function addGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       input.usingComponents = Object.assign({}, globalComponents, input.usingComponents)
     }
@@ -45,7 +45,7 @@ module.exports = function getSpec({ warn, error }) {
   }
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
-  function aliComponentPlaceholderFallback(input) {
+  function aliComponentPlaceholderFallback (input) {
     // 处理 驼峰转连字符
     input = componentNameCapitalToHyphen('componentPlaceholder')(input)
     const componentPlaceholder = input.componentPlaceholder
@@ -70,7 +70,7 @@ module.exports = function getSpec({ warn, error }) {
     return input
   }
 
-  function fillGlobalComponents(input, { globalComponents }) {
+  function fillGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       Object.assign(globalComponents, input.usingComponents)
     }
@@ -78,7 +78,7 @@ module.exports = function getSpec({ warn, error }) {
   }
 
   // 处理 ali swan 的组件名大写字母转连字符：WordExample/wordExample -> word-example
-  function componentNameCapitalToHyphen(type) {
+  function componentNameCapitalToHyphen (type) {
     return function (input) {
       // 百度和支付宝不支持大写组件标签名，统一转成带“-”和小写的形式。百度自带标签不会有带大写的情况
       // 后续可能需要考虑这些平台支持 componentGenerics 后的转换 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/generics.html
@@ -142,13 +142,13 @@ module.exports = function getSpec({ warn, error }) {
   const windowRules = [
     {
       test: 'navigationBarTitleText',
-      ali(input) {
+      ali (input) {
         return changeKey(input, this.test, 'defaultTitle')
       }
     },
     {
       test: 'enablePullDownRefresh',
-      ali(input) {
+      ali (input) {
         input = changeKey(input, this.test, 'pullRefresh')
         if (input.pullRefresh) {
           input.allowsBounceVertical = 'YES'
@@ -159,7 +159,7 @@ module.exports = function getSpec({ warn, error }) {
     },
     {
       test: 'navigationBarBackgroundColor',
-      ali(input) {
+      ali (input) {
         return changeKey(input, this.test, 'titleBarColor')
       }
     },
@@ -236,19 +236,19 @@ module.exports = function getSpec({ warn, error }) {
       list: [
         {
           test: 'text',
-          ali(input) {
+          ali (input) {
             return changeKey(input, this.test, 'name')
           }
         },
         {
           test: 'iconPath',
-          ali(input) {
+          ali (input) {
             return changeKey(input, this.test, 'icon')
           }
         },
         {
           test: 'selectedIconPath',
-          ali(input) {
+          ali (input) {
             return changeKey(input, this.test, 'activeIcon')
           }
         }
@@ -256,13 +256,13 @@ module.exports = function getSpec({ warn, error }) {
       rules: [
         {
           test: 'color',
-          ali(input) {
+          ali (input) {
             return changeKey(input, this.test, 'textColor')
           }
         },
         {
           test: 'list',
-          ali(input) {
+          ali (input) {
             const value = input.list
             delete input.list
             input.items = value.map(item => {

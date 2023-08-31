@@ -54,7 +54,7 @@ module.exports = function (content) {
     this.resolve(parsed.dir, resourceName + extName, callback)
   }
 
-  function checkCSSLangFiles(callback) {
+  function checkCSSLangFiles (callback) {
     const langs = mpx.nativeConfig.cssLangs || ['less', 'stylus', 'scss', 'sass']
     const results = []
     async.eachOf(langs, function (lang, i, callback) {
@@ -79,7 +79,7 @@ module.exports = function (content) {
     })
   }
 
-  function checkJSONJSFile(callback) {
+  function checkJSONJSFile (callback) {
     checkFileExists(JSON_JS_EXT, (err, result) => {
       if (!err && result) {
         typeResourceMap.json = result

@@ -14,7 +14,6 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const isEmptyObject = require('../utils/is-empty-object')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
