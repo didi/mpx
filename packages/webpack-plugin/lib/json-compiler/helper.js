@@ -51,10 +51,12 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
-      if (!queryObj.root && asyncComponentsConfig) {
+      let placeholder = null
+      if (!queryObj.root && asyncComponentsConfig && enableRequireAsync) {
         asyncComponentsConfig.forEach(item => {
           if (matchCondition(resourcePath, item)) {
             queryObj.root = item.root
+            queryObj.placeholder = item.placeholder
           }
         })
       }
@@ -64,6 +66,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 目前只有微信支持分包异步化
         if (enableRequireAsync) {
           tarRoot = queryObj.root
+          placeholder = queryObj.placeholder
         }
       }
       const parsed = path.parse(resourcePath)
@@ -94,7 +97,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry, tarRoot)
+      callback(null, entry, tarRoot, placeholder)
     })
   }
 

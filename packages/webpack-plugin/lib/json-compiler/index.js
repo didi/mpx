@@ -185,7 +185,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, root) => {
+        processComponent(component, context, { relativePath }, (err, entry, root, placeholder) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -193,7 +193,15 @@ module.exports = function (content) {
           if (err) return callback(err)
           components[name] = entry
           if (root) {
-            if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
+            if (placeholder) {
+              if (json.componentPlaceholder) {
+                if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = placeholder
+              } else {
+                json.componentPlaceholder = {
+                  [name]: placeholder
+                }
+              }
+            } else if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
               const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
               emitError(errMsg)
             }
