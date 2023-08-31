@@ -1409,6 +1409,7 @@ module.exports = defineConfig({
 - **类型**：`Array<object>【{ include: string | RegExp | Function | Array<string | RegExp | Function>, root: string }】`
   * include: 同 webpack include 规则
   * root: 匹配规则的组件或js模块的输出分包名
+  * placeholder: 匹配规则的组件所配置的componentPlaceholder，暂时只支持配置原生组件，若想要配置自定义组件需去组件 json block 中配置
 
 - **详细**：异步分包场景下批量设置组件或 js 模块的异步分包，提升资源异步分包输出的灵活性。
 
@@ -1420,7 +1421,8 @@ new MpxWebpackPlugin({
   asyncComponentsConfig: [
     {
       include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
-      root: 'sub1'
+      root: 'sub1',
+      placeholder: 'view'
     }
   ]
 })
@@ -1434,10 +1436,11 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         // include 可以是正则、字符串、函数、数组
-        partialCompile: [
+        asyncComponentsConfig: [
           {
             include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
-            root: 'sub1'
+            root: 'sub1',
+            placeholder: 'view'
           }
         ]
       }
@@ -1448,7 +1451,7 @@ module.exports = defineConfig({
 :::
 
 :::warning
-* 该配置匹配的组件，若使用方在引用路径已设置?root，则以引用路径中的?root为最高优先级
+* 该配置匹配的组件，若使用方在引用路径已设置?root或componentPlaceholder，则以引用路径中的?root或componentPlaceholder为最高优先级
 * 本功能默认不会增加componentPlaceholder配置，开启异步分包的组件开发者务必配置componentPlaceholder
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
