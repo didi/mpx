@@ -149,13 +149,7 @@ class MpxUnocssPlugin {
   async generateStyle (uno, classes = [], preflightOptions = {}) {
     const tokens = new Set(classes)
     const result = await uno.generate(tokens, preflightOptions)
-    let css = result.css
-    classes.forEach((item) => {
-      const selector = core.e(item)
-      const mpClass = mpEscape(selector)
-      if (mpClass !== selector) { css = css.replace(selector, mpClass) }
-    })
-    return css
+    return mpEscape(result.css)
   }
 
   getSafeListClasses (safelist) {
