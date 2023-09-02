@@ -1404,7 +1404,7 @@ module.exports = defineConfig({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
-### asyncComponentsConfig
+### asyncSubpackageRules
 
 - **类型**：`Array<object>【{ include: string | RegExp | Function | Array<string | RegExp | Function>, root: string }】`
   * include: 同 webpack include 规则
@@ -1418,7 +1418,7 @@ module.exports = defineConfig({
 ```js
 // include 可以是正则、字符串、函数、数组
 new MpxWebpackPlugin({
-  asyncComponentsConfig: [
+  asyncSubpackageRules: [
     {
       include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
       root: 'sub1',
@@ -1436,7 +1436,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         // include 可以是正则、字符串、函数、数组
-        asyncComponentsConfig: [
+        asyncSubpackageRules: [
           {
             include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
             root: 'sub1',

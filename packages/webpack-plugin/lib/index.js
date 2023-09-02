@@ -167,7 +167,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    options.asyncComponentsConfig = options.asyncComponentsConfig || null
+    options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     this.options = options
@@ -398,18 +398,11 @@ class MpxWebpackPlugin {
               if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
                 return callback(null, obj)
               }
-              const infix = obj.query ? '&' : '?'
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
+                const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
                 obj.path = require.resolve('./json-compiler/default-page.mpx')
               }
-              // if (isResolvingComponent(obj)) {
-              //   this.options.asyncComponentsConfig.forEach(item => {
-              //     if (matchCondition(obj.path, item)) {
-              //       obj.query += `${infix}root=${item.root}&placeholder=${item.placeholder}`
-              //     }
-              //   })
-              // }
               callback(null, obj)
             })
           })
@@ -630,7 +623,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
-          asyncComponentsConfig: this.options.asyncComponentsConfig,
+          asyncSubpackageRules: this.options.asyncSubpackageRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1036,19 +1029,20 @@ class MpxWebpackPlugin {
             const range = expr.arguments[0].range
             const context = parser.state.module.context
             const { queryObj, resourcePath } = parseRequest(request)
-            if (!queryObj.root && mpx.asyncComponentsConfig) {
-              mpx.asyncComponentsConfig.forEach(item => {
+            let tarRoot = queryObj.root
+            if (!queryObj.root && mpx.asyncSubpackageRules) {
+              mpx.asyncSubpackageRules.forEach(item => {
                 if (matchCondition(resourcePath, item)) {
-                  queryObj.root = item.root
+                  tarRoot = item.root
                 }
               })
             }
-            if (queryObj.root) {
+            if (tarRoot) {
               // 删除root query
               request = addQuery(request, {}, false, ['root'])
               // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.enableRequireAsync) {
-                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range, {
+                const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
                   isRequireAsync: true,
                   retryRequireAsync: !!this.options.retryRequireAsync
                 })

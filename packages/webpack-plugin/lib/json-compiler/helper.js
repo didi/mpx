@@ -18,7 +18,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
   const enableRequireAsync = mpx.enableRequireAsync
-  const asyncComponentsConfig = mpx.asyncComponentsConfig
+  const asyncSubpackageRules = mpx.asyncSubpackageRules
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -47,28 +47,26 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
-    component = addQuery(component, { isComponent: true })
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
       let placeholder = null
-      if (!queryObj.root && asyncComponentsConfig && enableRequireAsync) {
-        asyncComponentsConfig.forEach(item => {
-          if (matchCondition(resourcePath, item)) {
-            queryObj.root = item.root
-            queryObj.placeholder = item.placeholder
-          }
-        })
-      }
       if (queryObj.root) {
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
         if (enableRequireAsync) {
           tarRoot = queryObj.root
-          placeholder = queryObj.placeholder
         }
+      } else if (!queryObj.root && asyncSubpackageRules && enableRequireAsync) {
+        asyncSubpackageRules.forEach(item => {
+          if (matchCondition(resourcePath, item)) {
+            tarRoot = item.root
+            placeholder = item.placeholder
+          }
+        })
       }
+
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
