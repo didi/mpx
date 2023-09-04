@@ -1,7 +1,7 @@
-import { presetUno } from '@unocss/preset-uno'
-import theme from './theme'
+const { presetUno } = require('@unocss/preset-uno')
+const theme = require('./theme')
 
-export function presetBase (options = { preflight: false }) {
+module.exports = function presetMpx (options = { preflight: false }) {
   const uno = presetUno(options)
   return {
     ...uno,
