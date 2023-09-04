@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/unocss-plugin",
-  "version": "1.0.0",
+  "version": "2.8.28-beta.9",
   "description": "mpx的unocss的webpack的plugin",
   "main": "lib/index.js",
   "scripts": {
@@ -9,8 +9,8 @@
   "author": "",
   "license": "ISC",
   "peerDependencies": {
-    "@unocss/webpack": "^0.52.4",
     "@mpxjs/webpack-plugin": "2.8.28-beta.3",
+    "@unocss/webpack": "^0.52.4",
     "webpack": "^5.83.1"
   },
   "dependencies": {
