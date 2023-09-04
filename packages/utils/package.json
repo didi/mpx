@@ -15,7 +15,7 @@
     "toolkit"
   ],
   "author": "donghongping",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },

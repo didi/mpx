@@ -7,7 +7,7 @@
     "mpx"
   ],
   "author": "donghongping",
-  "license": "Apache",
+  "license": "Apache-2.0",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
   "directories": {

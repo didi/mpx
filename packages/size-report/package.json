@@ -23,7 +23,7 @@
     "analyzer"
   ],
   "author": "xuegan",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "ejs": "^3.1.6",
     "express": "^4.17.1",
