@@ -15,7 +15,7 @@ export default function pageStatusMixin (mixinType) {
         this.__mpxProxy.callHook(ONHIDE)
       },
       onBack () {
-        this.onBack && this.onBack()
+        return this.onBack && this.onBack()
       }
     }
   }
