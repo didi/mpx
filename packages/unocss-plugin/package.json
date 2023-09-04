@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/unocss-plugin",
-  "version": "2.8.28-beta.9",
+  "version": "2.8.28-beta.10",
   "description": "mpx的unocss的webpack的plugin",
   "main": "lib/index.js",
   "scripts": {
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@unocss/transformer-directives": "^0.55.2",
+    "@unocss/webpack": "^0.52.4",
     "magic-string": "^0.30.3",
     "minimatch": "^9.0.1",
-    "unocss": "^0.52.0",
-    "@unocss/webpack": "^0.52.4"
+    "unocss": "^0.52.0"
   }
 }
