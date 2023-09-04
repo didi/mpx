@@ -10,13 +10,17 @@
   "license": "ISC",
   "peerDependencies": {
     "@mpxjs/webpack-plugin": "2.8.28-beta.3",
-    "@unocss/webpack": "^0.52.4",
     "webpack": "^5.83.1"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "dependencies": {
     "@unocss/transformer-directives": "^0.55.2",
     "magic-string": "^0.30.3",
     "minimatch": "^9.0.1",
-    "unocss": "^0.52.0"
+    "unocss": "^0.52.0",
+    "@unocss/webpack": "^0.52.4"
   }
 }
