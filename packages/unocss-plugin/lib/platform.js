@@ -4,7 +4,10 @@ module.exports = {
     {
       getCSS: () => `
           button {
-            height: 'initial'
+            height: initial;
+            border-radius: 5px;
+            box-sizing: border-box;
+            cursor: pointer;
           }
         `
     }
