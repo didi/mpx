@@ -1406,10 +1406,21 @@ module.exports = defineConfig({
 
 ### asyncSubpackageRules
 
-- **类型**：`Array<object>【{ include: string | RegExp | Function | Array<string | RegExp | Function>, root: string }】`
+- **类型**：
+ ```ts
+type Condition = string | Function | RegExp
+
+interface AsyncSubpackageRules {
+  include: Condition | Array<Condition>
+  exclude?: Condition | Array<Condition>
+  root: string
+  placeholder: string | { name?: string, resource: string}
+}
+```
   * include: 同 webpack include 规则
+  * exclude: 同 webpack exclude 规则
   * root: 匹配规则的组件或js模块的输出分包名
-  * placeholder: 匹配规则的组件所配置的componentPlaceholder，暂时只支持配置原生组件，若想要配置自定义组件需去组件 json block 中配置
+  * placeholder: 匹配规则的组件所配置的componentPlaceholder，可支持配置原生组件和自定义组件，原生组件可直接以string类型配置，自定义组件需要配置对象，name 需设置为 **custom**, resource为自定义组件的绝对路径
 
 - **详细**：异步分包场景下批量设置组件或 js 模块的异步分包，提升资源异步分包输出的灵活性。
 
@@ -1423,6 +1434,19 @@ new MpxWebpackPlugin({
       include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
       root: 'sub1',
       placeholder: 'view'
+    }
+  ]
+})
+// 若配置自定义组件
+new MpxWebpackPlugin({
+  asyncSubpackageRules: [
+    {
+      include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
+      root: 'sub1',
+      placeholder: {
+        name: 'custom',
+        resource: '/user/xxxx/index.mpx' // 自定义组件的绝对路径
+      }
     }
   ]
 })
