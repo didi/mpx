@@ -126,12 +126,11 @@ function getPlugin (compiler, curPlugin) {
 class MpxUnocssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
-    this._cache = {}
   }
 
-  async generateStyle (uno, classes = [], preflightOptions = {}) {
+  async generateStyle (uno, classes = [], options = {}) {
     const tokens = new Set(classes)
-    const result = await uno.generate(tokens, preflightOptions)
+    const result = await uno.generate(tokens, options)
     return mpEscape(result.css)
   }
 
@@ -162,13 +161,13 @@ class MpxUnocssPlugin {
       delete require.cache[item]
     })
 
-    const platformPreflights = platformPreflightsMap[mode] || {}
+    const platformPreflights = platformPreflightsMap[mode] || []
 
     return core.createGenerator({
       ...resolved,
       preflights: [
-        ...resolved.preflights,
-        ...platformPreflights.preflights
+        ...(resolved.preflights || []),
+        ...platformPreflights
       ]
     })
   }
@@ -214,20 +213,14 @@ class MpxUnocssPlugin {
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
         }
-        const warn = (msg) => {
-          compilation.warnings.push(new Error(msg))
-        }
+        // const warn = (msg) => {
+        //   compilation.warnings.push(new Error(msg))
+        // }
         const { mode, dynamicEntryInfo, appInfo } = mpx
-        const uno = this.createContext(compilation, mode)
+        const uno = await this.createContext(compilation, mode)
         const config = uno.config
 
-        const enablePreflight = config.preflight !== false && Boolean(this.options.preflight)
-
-        if (enablePreflight) {
-          warn('由于底层实现的差异，开启preflight可能导致输出web与输出小程序存在样式差异，如需输出web请关闭该配置！')
-        }
-
-        const preflightOptions = { preflights: false, safelist: false, minify: this.minify }
+        const generateOptions = { preflights: false, safelist: false, minify: this.minify }
         // 包相关
         const packages = Object.keys(dynamicEntryInfo)
 
@@ -352,20 +345,16 @@ class MpxUnocssPlugin {
         // 生成主包uno.css
         let mainUnoFile
         const mainClasses = Object.keys(mainClassesMap)
-        const cacheKey = mainClasses.toString()
-        const mainUnoFileContent = this._cache[cacheKey]
-          ? this._cache[cacheKey]
-          : await this.generateStyle(uno, mainClasses, {
-            ...preflightOptions,
-            preflights: true
-          })
+        const mainUnoFileContent = await this.generateStyle(uno, mainClasses, {
+          ...generateOptions,
+          preflights: true
+        })
         if (mainUnoFileContent) {
           mainUnoFile = this.options.unoFile + styleExt
           if (assets[mainUnoFile]) {
             error(`${mainUnoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`)
           }
           assets[mainUnoFile] = getRawSource(mainUnoFileContent)
-          this._cache[cacheKey] = mainUnoFileContent
         }
 
         if (mainUnoFile) {
@@ -391,15 +380,13 @@ class MpxUnocssPlugin {
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
           let unoFile
           const classes = Object.keys(classesMap)
-          const cacheKey = classes.toString()
-          const unoFileContent = this._cache[cacheKey] ? this._cache[cacheKey] : await this.generateStyle(uno, classes, preflightOptions)
+          const unoFileContent = await this.generateStyle(uno, classes, generateOptions)
           if (unoFileContent) {
             unoFile = toPosix(path.join(packageRoot, this.options.unoFile + styleExt))
             if (assets[unoFile]) {
               error(`${unoFile}当前已存在于[compilation.assets]中，请修改[options.unoFile]配置以规避冲突！`)
             }
             assets[unoFile] = getRawSource(unoFileContent)
-            this._cache[cacheKey] = unoFileContent
           }
 
           dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
