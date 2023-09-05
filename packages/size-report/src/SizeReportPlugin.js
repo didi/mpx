@@ -109,6 +109,8 @@ class SizeReportPlugin {
 
       const needEntryPathRules = this.options.needEntryPathRules || {}
 
+      const ignoreSubpackages = this.options.ignoreSubpackages
+
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
           reportGroups.push({
@@ -289,6 +291,7 @@ class SizeReportPlugin {
         const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
         Object.assign(reportGroup, entrySet, {
           selfSize: 0,
+          ignoreSelfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
           sharedSizeInfo: {},
@@ -321,6 +324,9 @@ class SizeReportPlugin {
               })
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(noEntryModules, (noEntryModule) => {
               return reportGroup.noEntryModules.has(noEntryModule)
@@ -335,6 +341,9 @@ class SizeReportPlugin {
               return reportGroup.selfEntryModules.has(entryModule)
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
@@ -647,11 +656,15 @@ class SizeReportPlugin {
 
       function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
         const sizeThreshold = normalizeThreshold(threshold.size || threshold)
+        const preWarningThreshold = normalizeThreshold(threshold.preWarningSize || threshold)
         const packagesThreshold = threshold.packages
         const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
           compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
+        }
+        if (preWarningThreshold && size && size > preWarningThreshold) {
+          compilation.warnings.push(`${prefix}的总体积（${size}B）超过设定预警阈值（${preWarningThreshold}B），共${(size - preWarningThreshold) / 1024}kb，请注意！`)
         }
 
         if (packagesThreshold && sizeInfo) {
@@ -667,12 +680,24 @@ class SizeReportPlugin {
       }
 
       if (this.options.threshold) {
-        checkThreshold(this.options.threshold, sizeSummary.totalSize, packagesSizeInfo)
+        let filterIgnoreTotalSize = sizeSummary.totalSize
+        if (ignoreSubpackages) {
+          ignoreSubpackages.forEach(ignoreName => {
+            if (packagesSizeInfo[ignoreName]) {
+              filterIgnoreTotalSize -= packagesSizeInfo[ignoreName]
+            }
+          })
+        }
+        checkThreshold(this.options.threshold, filterIgnoreTotalSize, packagesSizeInfo)
       }
 
       reportGroups.forEach((reportGroup) => {
         if (reportGroup.threshold) {
-          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+          let groupSelfSize = reportGroup.selfSize
+          if (reportGroup.ignoreSelfSize) {
+            groupSelfSize -= reportGroup.ignoreSelfSize
+          }
+          checkThreshold(reportGroup.threshold, groupSelfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
         }
       })
 

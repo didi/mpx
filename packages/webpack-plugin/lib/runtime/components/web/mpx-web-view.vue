@@ -49,7 +49,7 @@
           const loadData = {
             src: this.src
           }
-          this.$emit(eventError, getCustomEvent(eventError, loadData))
+          this.$emit(eventError, getCustomEvent(eventError, loadData, this))
         }
       }, 1000)
       this.mpxIframe = this.$refs.mpxIframe
@@ -92,7 +92,7 @@
             const loadData = {
               src: this.src
             }
-            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData))
+            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData, this))
         }
       })
     },
@@ -108,7 +108,7 @@
         type: 'message',
         data: this.messageList
       }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
     destroyed () {
       if (!this.isPostMessage) {
@@ -118,7 +118,7 @@
         type: 'message',
         data: this.messageList
       }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     }
   }
 </script>

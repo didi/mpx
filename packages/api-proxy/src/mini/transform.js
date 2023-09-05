@@ -14,7 +14,7 @@ function transformApi (options) {
   const from = options.from
   const to = options.to
   const fromTo = joinName(from, to)
-  const wxToAliApi = getWxToAliApi({ optimize: options.optimize })
+  const wxToAliApi = getWxToAliApi()
   const wxToQqApi = getWxToQqApi()
   const wxToTtApi = getWxToTtApi()
   const platformMap = {

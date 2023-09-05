@@ -143,15 +143,17 @@ module.exports = function (content) {
   }
 
   // 校验异步组件占位符 componentPlaceholder 不为空
-  const { usingComponents, componentPlaceholder = {} } = json
-  if (usingComponents) {
-    for (const compName in usingComponents) {
-      const compPath = usingComponents[compName]
-      if (!/\?root=/g.test(compPath)) continue
-      const compPlaceholder = componentPlaceholder[compName]
-      if (!compPlaceholder) {
-        const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
-        emitError(errMsg)
+  if (mpx.enableRequireAsync) {
+    const { usingComponents, componentPlaceholder = {} } = json
+    if (usingComponents) {
+      for (const compName in usingComponents) {
+        const compPath = usingComponents[compName]
+        if (!/\?root=/g.test(compPath)) continue
+        const compPlaceholder = componentPlaceholder[compName]
+        if (!compPlaceholder) {
+          const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
+          emitError(errMsg)
+        }
       }
     }
   }
@@ -175,14 +177,14 @@ module.exports = function (content) {
     type: 'json',
     waterfall: true,
     warn: emitWarning,
-    error: emitError
+    error: emitError,
+    data: {
+      // polyfill global usingComponents & record globalComponents
+      globalComponents: mpx.usingComponents
+    }
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-    // polyfill global usingComponents
-    rulesRunnerOptions.data = {
-      globalComponents: mpx.usingComponents
-    }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -191,9 +193,12 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
-  if (isApp && json.usingComponents) {
+  if (isApp) {
+    Object.assign(mpx.usingComponents, json.usingComponents)
     // 在 rulesRunner 运行后保存全局注册组件
-    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
+    // todo 其余地方在使用mpx.usingComponents时存在缓存问题，要规避该问题需要在所有使用mpx.usingComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
+    // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
+    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
   }
 
   const processComponents = (components, context, callback) => {
@@ -219,14 +224,20 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-
+    const defaultPagePath = require.resolve('./default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
+        const pagesCache = []
         async.each(pages, (page, callback) => {
-          processPage(page, context, tarRoot, (err, entry, { isFirst, key } = {}) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key, resource } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
             if (pageKeySet.has(key)) return callback()
+            if (resource.startsWith(defaultPagePath)) {
+              pagesCache.push(entry)
+              return callback()
+            }
             pageKeySet.add(key)
+
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -239,7 +250,18 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, callback)
+        }, () => {
+          if (tarRoot && subPackagesCfg) {
+            if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
+              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+            }
+          } else {
+            if (!localPages.length && pagesCache[0]) {
+              localPages.push(pagesCache[0])
+            }
+          }
+          callback()
+        })
       } else {
         callback()
       }

@@ -179,7 +179,7 @@
               x: this.roundFun(position.x) ? this.roundFun(position.x) : 0,
               y: this.roundFun(position.y) ? this.roundFun(position.y) : 0,
               source: this.source
-            }))
+            }, this))
           }
           this.lastestX = this.roundFun(position.x)
           this.lastestY = this.roundFun(position.y)
@@ -215,7 +215,7 @@
               this.touchEvent = 'vtouchmove'
             }
           }
-          this.$emit(this.touchEvent)
+          this.$emit(this.touchEvent, getCustomEvent(this.touchEvent, {}, this))
           this.isFirstTouch = false
         })
         if (this.inertia) { // movable-view是否带有惯性
@@ -233,7 +233,7 @@
               x: this.roundFun(this.bs.x),
               y: this.roundFun(this.bs.y),
               scale: this.roundFun(scale)
-            }))
+            }, this))
             this.lastestScale = this.roundFun(scale)
           })
           this.bs.on('zoomEnd', ({ scale }) => {
