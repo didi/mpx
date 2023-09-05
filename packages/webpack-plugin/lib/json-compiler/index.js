@@ -203,20 +203,20 @@ module.exports = function (content) {
                   }
                 }
               }
-              function normalizePlaceholder(placeholder) {
+              function normalizePlaceholder (placeholder) {
                 if (typeof placeholder === 'string') {
-                  placeholder =  {
+                  placeholder = {
                     resource: placeholder
                   }
                 }
                 if (!placeholder.resource) {
-                  emitError(`The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect`)
+                  emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
                 }
                 return placeholder
               }
               placeholder = normalizePlaceholder(placeholder)
               if (placeholder.name === 'custom') {
-                processComponent(placeholder.resource, context, { relativePath },(err, entry) => {
+                processComponent(placeholder.resource, context, { relativePath }, (err, entry) => {
                   if (err) return callback(err)
                   fillInComponentPlaceholder(entry)
                   callback()
