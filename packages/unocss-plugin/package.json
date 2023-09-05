@@ -17,10 +17,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@unocss/transformer-directives": "^0.55.2",
-    "@unocss/webpack": "^0.52.4",
     "magic-string": "^0.30.3",
     "minimatch": "^9.0.1",
-    "unocss": "^0.52.0"
+    "unocss": "^0.52.1",
+    "@unocss/webpack": "^0.52.1",
+    "@unocss/transformer-directives": "^0.52.1",
+    "@unocss/transformer-variant-group": "^0.52.1"
   }
 }

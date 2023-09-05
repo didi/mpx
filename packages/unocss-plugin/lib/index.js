@@ -58,24 +58,17 @@ function normalizeOptions (options) {
     configFiles,
     transformCSS = true,
     transformGroups = true,
-    webOptions = {},
-    ...rest
+    webOptions = {}
   } = options
   // web配置，剔除小程序的配置，防影响
   webOptions = {
-    root,
-    config,
-    configFiles,
-    transformCSS,
-    transformGroups,
-    scan: {
-      include: ['src/**/*']
-    },
-    ...rest,
+    include: [
+      'src/**/*',
+      ...(scan.include || [])
+    ],
+    exclude: scan.exclude || [],
     ...webOptions
   }
-  // virtualModulePath暂不支持配置
-  webOptions.virtualModulePath = ''
   return {
     unoFile,
     root,
@@ -86,8 +79,7 @@ function normalizeOptions (options) {
     transformGroups,
     webOptions,
     configFiles,
-    config,
-    ...rest
+    config
   }
 }
 
@@ -184,8 +176,23 @@ class MpxUnocssPlugin {
     const mode = this.mode = mpxPluginInstance.options.mode
     if (mode === 'web') {
       const UnoCSSWebpackPlugin = require('@unocss/webpack').default
+      const transformerDirectives = require('@unocss/transformer-directives').default
+      const transformerVariantGroup = require('@unocss/transformer-variant-group')
+      const { webOptions, scan, transformGroups, transformCSS } = this.options
+
       if (!getPlugin(compiler, UnoCSSWebpackPlugin)) {
-        compiler.options.plugins.push(new UnoCSSWebpackPlugin(this.options.webOptions))
+        compiler.options.plugins.push(new UnoCSSWebpackPlugin({
+          include: [
+            'src/**/*',
+            ...(scan.include || [])
+          ],
+          exclude: scan.exclude || [],
+          transformers: [
+            ...transformGroups ? [transformerVariantGroup()] : [],
+            ...transformCSS ? [transformerDirectives()] : []
+          ],
+          ...webOptions
+        }))
       }
       // 给app注入unocss模块
       compiler.options.module.rules.push({
