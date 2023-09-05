@@ -194,19 +194,45 @@ module.exports = function (content) {
           components[name] = entry
           if (root) {
             if (placeholder) {
-              if (json.componentPlaceholder) {
-                if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = placeholder
-              } else {
-                json.componentPlaceholder = {
-                  [name]: placeholder
+              function fillInComponentPlaceholder (resource) {
+                if (json.componentPlaceholder) {
+                  if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = resource
+                } else {
+                  json.componentPlaceholder = {
+                    [name]: resource
+                  }
                 }
+              }
+              function normalizePlaceholder(placeholder) {
+                if (typeof placeholder === 'string') {
+                  placeholder =  {
+                    resource: placeholder
+                  }
+                }
+                if (!placeholder.resource) {
+                  emitError(`The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect`)
+                }
+                return placeholder
+              }
+              placeholder = normalizePlaceholder(placeholder)
+              if (placeholder.name === 'custom') {
+                processComponent(placeholder.resource, context, { relativePath },(err, entry) => {
+                  if (err) return callback(err)
+                  fillInComponentPlaceholder(entry)
+                  callback()
+                })
+              } else {
+                fillInComponentPlaceholder(placeholder.resource)
+                callback()
               }
             } else if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
               const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
               emitError(errMsg)
+              callback()
             }
+          } else {
+            callback()
           }
-          callback()
         })
       }, callback)
     } else {
