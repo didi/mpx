@@ -16,7 +16,7 @@
     "store"
   ],
   "author": "donghongping",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.8.15"
+    "@mpxjs/utils": "^2.8.28-beta.11"
   },
   "peerDependencies": {
     "@mpxjs/core": "^2.8.0"

@@ -106,7 +106,6 @@ if (program.watch) {
 }
 
 function callback (err, stats) {
-  console.log('error ====', err)
   if (err) {
     process.exitCode = 1
     return console.error(err)
