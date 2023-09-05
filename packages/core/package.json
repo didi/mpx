@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.8.28-beta.9",
+  "version": "2.8.28-beta.11",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -19,7 +19,7 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "^2.8.15",
+    "@mpxjs/utils": "^2.8.28-beta.11",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.0.2"
   },
