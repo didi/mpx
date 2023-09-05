@@ -216,7 +216,7 @@ module.exports = function (content) {
                     name: placeholder
                   }
                 }
-                if (!placeholder.resource) {
+                if (!placeholder.name) {
                   emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
                 }
                 return placeholder

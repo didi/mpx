@@ -1414,13 +1414,13 @@ interface AsyncSubpackageRules {
   include: Condition | Array<Condition>
   exclude?: Condition | Array<Condition>
   root: string
-  placeholder: string | { name?: string, resource: string}
+  placeholder: string | { name: string, resource?: string}
 }
 ```
   * include: 同 webpack include 规则
   * exclude: 同 webpack exclude 规则
   * root: 匹配规则的组件或js模块的输出分包名
-  * placeholder: 匹配规则的组件所配置的componentPlaceholder，可支持配置原生组件和自定义组件，原生组件可直接以string类型配置，自定义组件需要配置对象，name 需设置为 **custom**, resource为自定义组件的绝对路径
+  * placeholder: 匹配规则的组件所配置的componentPlaceholder，可支持配置原生组件和自定义组件，原生组件可直接以string类型配置，自定义组件需要配置对象，name 为该自定义组件名, resource 为自定义组件的路径，路径可为绝对路径和相对于项目目录的相对路径
 
 - **详细**：异步分包场景下批量设置组件或 js 模块的异步分包，提升资源异步分包输出的灵活性。
 
@@ -1444,8 +1444,8 @@ new MpxWebpackPlugin({
       include: '/project/pages', // 文件路径包含 '/project/pages' 的组件或者 require.async 异步引用的js 模块都会被打包至sub1分包
       root: 'sub1',
       placeholder: {
-        name: 'custom',
-        resource: '/user/xxxx/index.mpx' // 自定义组件的绝对路径
+        name: 'other-placeholder',
+        resource: '/user/xxxx/other.mpx' // 自定义组件的绝对路径
       }
     }
   ]
@@ -1476,7 +1476,7 @@ module.exports = defineConfig({
 
 :::warning
 * 该配置匹配的组件，若使用方在引用路径已设置?root或componentPlaceholder，则以引用路径中的?root或componentPlaceholder为最高优先级
-* 本功能默认不会增加componentPlaceholder配置，开启异步分包的组件开发者务必配置componentPlaceholder
+* 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
