@@ -59,12 +59,13 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           tarRoot = queryObj.root
         }
       } else if (!queryObj.root && asyncSubpackageRules && enableRequireAsync) {
-        asyncSubpackageRules.forEach(item => {
+        for (const item of asyncSubpackageRules) {
           if (matchCondition(resourcePath, item)) {
             tarRoot = item.root
             placeholder = item.placeholder
+            break
           }
-        })
+        }
       }
 
       const parsed = path.parse(resourcePath)

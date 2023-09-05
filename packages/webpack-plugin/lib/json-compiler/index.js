@@ -38,6 +38,7 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
+  const projectRoot = mpx.projectRoot
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -194,19 +195,25 @@ module.exports = function (content) {
           components[name] = entry
           if (root) {
             if (placeholder) {
-              function fillInComponentPlaceholder (resource) {
+              function fillInComponentPlaceholder (placeholderName, resource) {
+                if (resource) {
+                  // 自定义组件
+                  if (!json.usingComponents[placeholderName]) {
+                    json.usingComponents[placeholderName] = resource
+                  }
+                }
                 if (json.componentPlaceholder) {
-                  if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = resource
+                  if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = placeholderName
                 } else {
                   json.componentPlaceholder = {
-                    [name]: resource
+                    [name]: placeholderName
                   }
                 }
               }
               function normalizePlaceholder (placeholder) {
                 if (typeof placeholder === 'string') {
                   placeholder = {
-                    resource: placeholder
+                    name: placeholder
                   }
                 }
                 if (!placeholder.resource) {
@@ -215,14 +222,14 @@ module.exports = function (content) {
                 return placeholder
               }
               placeholder = normalizePlaceholder(placeholder)
-              if (placeholder.name === 'custom') {
-                processComponent(placeholder.resource, context, { relativePath }, (err, entry) => {
+              if (placeholder.resource) {
+                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
                   if (err) return callback(err)
-                  fillInComponentPlaceholder(entry)
+                  fillInComponentPlaceholder(placeholder.name, entry)
                   callback()
                 })
               } else {
-                fillInComponentPlaceholder(placeholder.resource)
+                fillInComponentPlaceholder(placeholder.name)
                 callback()
               }
             } else if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {

@@ -1030,16 +1030,17 @@ class MpxWebpackPlugin {
             const context = parser.state.module.context
             const { queryObj, resourcePath } = parseRequest(request)
             let tarRoot = queryObj.root
-            if (!queryObj.root && mpx.asyncSubpackageRules) {
-              mpx.asyncSubpackageRules.forEach(item => {
+            if (!tarRoot && mpx.asyncSubpackageRules) {
+              for (const item of mpx.asyncSubpackageRules) {
                 if (matchCondition(resourcePath, item)) {
                   tarRoot = item.root
+                  break
                 }
-              })
+              }
             }
             if (tarRoot) {
               // 删除root query
-              request = addQuery(request, {}, false, ['root'])
+              if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.enableRequireAsync) {
                 const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
