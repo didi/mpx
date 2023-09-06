@@ -56,6 +56,25 @@ module.exports = function (content) {
     )
   }
 
+  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
+    const componentPlaceholder = json.componentPlaceholder || {}
+    if (componentPlaceholder[name]) return
+    componentPlaceholder[name] = placeholder
+    json.componentPlaceholder = componentPlaceholder
+    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
+  }
+  const normalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      placeholder = {
+        name: placeholder
+      }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    return placeholder
+  }
+
   const {
     isUrlRequest,
     urlToRequest,
@@ -195,46 +214,22 @@ module.exports = function (content) {
           components[name] = entry
           if (root) {
             if (placeholder) {
-              function fillInComponentPlaceholder (placeholderName, resource) {
-                if (resource) {
-                  // 自定义组件
-                  if (!json.usingComponents[placeholderName]) {
-                    json.usingComponents[placeholderName] = resource
-                  }
-                }
-                if (json.componentPlaceholder) {
-                  if (!json.componentPlaceholder[name]) json.componentPlaceholder[name] = placeholderName
-                } else {
-                  json.componentPlaceholder = {
-                    [name]: placeholderName
-                  }
-                }
-              }
-              function normalizePlaceholder (placeholder) {
-                if (typeof placeholder === 'string') {
-                  placeholder = {
-                    name: placeholder
-                  }
-                }
-                if (!placeholder.name) {
-                  emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
-                }
-                return placeholder
-              }
               placeholder = normalizePlaceholder(placeholder)
               if (placeholder.resource) {
                 processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
                   if (err) return callback(err)
-                  fillInComponentPlaceholder(placeholder.name, entry)
+                  fillInComponentPlaceholder(name, placeholder.name, entry)
                   callback()
                 })
               } else {
-                fillInComponentPlaceholder(placeholder.name)
+                fillInComponentPlaceholder(name, placeholder.name)
                 callback()
               }
-            } else if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
-              const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
-              emitError(errMsg)
+            } else {
+              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
+                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+                emitError(errMsg)
+              }
               callback()
             }
           } else {
