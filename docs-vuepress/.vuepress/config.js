@@ -135,6 +135,7 @@ module.exports = {
       description: '深度性能优化的增强型小程序开发框架'
     },
   },
+  shouldPrefetch: () => false,
   plugins: {
     '@vuepress/pwa': {
       serviceWorker: true,

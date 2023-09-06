@@ -143,18 +143,12 @@ module.exports = function (content) {
         }
         if (!isApp) {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-          // polyfill global usingComponents
-          // 预读json时无需注入polyfill全局组件
-          // rulesRunnerOptions.data = {
-          //   globalComponents: mpx.usingComponents
-          // }
         }
-
+        const rulesRunner = getRulesRunner(rulesRunnerOptions)
         try {
           const ret = JSON5.parse(parts.json.content)
+          if (rulesRunner) rulesRunner(ret)
           if (ret.usingComponents) {
-            const rulesRunner = getRulesRunner(rulesRunnerOptions)
-            if (rulesRunner) rulesRunner(ret)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
 
             for (const name in ret.usingComponents) {

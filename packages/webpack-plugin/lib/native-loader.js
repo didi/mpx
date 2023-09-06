@@ -137,6 +137,7 @@ module.exports = function (content) {
       } catch (e) {
         return callback(e)
       }
+      let usingComponents = Object.keys(mpx.usingComponents)
       const rulesRunnerOptions = {
         mode,
         srcMode,
@@ -147,16 +148,10 @@ module.exports = function (content) {
       }
       if (!isApp) {
         rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        // polyfill global usingComponents
-        // 预读json时无需注入polyfill全局组件
-        // rulesRunnerOptions.data = {
-        //   globalComponents: mpx.usingComponents
-        // }
       }
-      let usingComponents = Object.keys(mpx.usingComponents)
+      const rulesRunner = getRulesRunner(rulesRunnerOptions)
+      if (rulesRunner) rulesRunner(json)
       if (json.usingComponents) {
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        if (rulesRunner) rulesRunner(json)
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
       }
       const {
