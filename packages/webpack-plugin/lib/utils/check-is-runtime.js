@@ -1,7 +1,7 @@
 const path = require('path')
 
-const RUNTIME_EXT = '.runtime.mpx'
+const RUNTIME_EXT_REG = /\.runtime(\.mpx)?/
 
 module.exports = function checkIsRuntimeMode (resource = '') {
-  return path.basename(resource).includes(RUNTIME_EXT)
+  return RUNTIME_EXT_REG.test(path.basename(resource))
 }

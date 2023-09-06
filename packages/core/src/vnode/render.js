@@ -1,4 +1,7 @@
 import cssSelect from './css-select'
+// todo: stringify wxs 模块只能放到逻辑层执行，主要还是因为生成 vdom tree 需要根据 class 去做匹配，需要看下这个代码从哪引入
+import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
+import Interpreter from './interpreter'
 
 export default function genVnodeTree (vnodeAst, contextScope, cssList) {
   // 引用的 vnodeAst 浅复制，解除引用
@@ -33,20 +36,24 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     } else {
       parent.children.push(newChild)
     }
-    // newChild.parent = parent
+  }
+
+  function createEmptyNode () {
+    return _c('block')
   }
 
   function genVnodeTree (node) {
     if (node.type === 1) {
-      if (node.for && !node.forProcessed) {
+      // wxs 模块不需要动态渲染
+      if (node.tag === 'wxs') {
+        return createEmptyNode()
+      } else if (node.for && !node.forProcessed) {
         return genFor(node)
       } else if (node.if && !node.ifProcessed) {
         return genIf(node)
       } else {
         const data = genData(node)
         const children = genChildren(node)
-        // todo aliasTag 优化
-        // return _c(node.tag, data, children);
         return _c(node.aliasTag || node.tag, data, children)
       }
     } else if (node.type === 3) {
@@ -54,62 +61,16 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     }
   }
 
-  function getExpressionValue (exps) {
-    let scopeValue = null
-    // 单值的情况，基础类型
-    if (exps.length === 1 && exps[0].value) {
-      scopeValue = exps[0].value
-      return scopeValue
-    }
-    for (let i = 0; i < exps.length; i++) {
-      // exps 第一个 identifier 默认为根数据，后续字段的查找都在这个根数据之下
-      if (i === 0) {
-        scopeValue = getScopeValue(exps[0].name)
-        continue
-      }
-      if (Array.isArray(exps[i])) {
-        const identifierValue = getExpressionValue(exps[i])
-        scopeValue = scopeValue[identifierValue]
-      } else {
-        const identifierKey = exps[i].name || exps[i].value
-        scopeValue = scopeValue[identifierKey]
-      }
-    }
-    return scopeValue
-  }
-
-  function getScopeValue (identifier) {
-    let scopeLength = contextScope.length
-    let value = null
-    while (scopeLength--) {
-      const scope = contextScope[scopeLength]
-      if (identifier in scope) {
-        value = scope[identifier]
-        break
-      }
+  function evalExps (exps) {
+    const interpreter = new Interpreter(contextScope)
+    // 消除引用关系
+    let value
+    try {
+      value = interpreter.eval(JSON.parse(JSON.stringify(exps)))
+    } catch (e) {
+      console.warn(e)
     }
     return value
-  }
-
-  const tagREG = /\{\{((?:.|\n|\r)+?)\}\}(?!})/g
-  function getTextValue (exps = [], str = '') {
-    const expsMap = {}
-    exps.forEach(({ rawExp, exps }) => {
-      const value = getExpressionValue(exps)
-      expsMap[rawExp] = value
-    })
-
-    str = str.replace(tagREG, function (matcher) {
-      // 去除 {{}} 做字符串匹配
-      const expression = matcher.slice(2, -2).trim()
-      // todo 一些边界case处理，拿不到值的情况
-      if (expsMap[expression]) {
-        return expsMap[expression]
-      }
-      return ''
-    })
-
-    return str
   }
 
   function _c (tag, data = {}, children = []) {
@@ -121,7 +82,8 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
       return tag
     }
 
-    children = simpleNormalizeChildren(children)
+    // 处理 for 循环产生的数组，同时清除空节点
+    children = simpleNormalizeChildren(children).filter(node => !!node.nodeType)
 
     return {
       // tagName: tag,
@@ -140,28 +102,33 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
       uid
     }
     node.attrsList.forEach((attr) => {
-      if (attr.helper && (attr.name === 'class' || attr.name === 'style')) {
-        // todo 引入辅助函数处理 class/style，合并形式
-        const value = attr.__exps__.reduce((preVal, curExpression) => {
-          preVal.push(getExpressionValue(curExpression))
-          return preVal
-        }, [])
+      if (attr.name === 'class' || attr.name === 'style') {
+        // class/style 的表达式为数组形式，class/style的计算过程需要放到逻辑层，主要是因为有逻辑匹配的过程去生成 vnodeTree
+        const helper = attr.name === 'class' ? stringify.stringifyClass : stringify.stringifyStyle
+        let value = ''
+        if (attr.__exps) {
+          const valueArr = attr.__exps.reduce((preVal, curExpression) => {
+            preVal.push(evalExps(curExpression))
+            return preVal
+          }, [])
+          value = helper(...valueArr)
+        } else {
+          value = attr.value
+        }
         res[attr.name] = value
       } else if (attr.name === 'data-eventconfigs') {
         const eventMap = {}
-        attr.__exps__?.forEach(({ eventName, exps }) => {
-          eventMap[eventName] = exps.reduce((preVal, curVal) => {
-            preVal.push(curVal.map(v => getExpressionValue(v)))
-            return preVal
-          }, [])
+        attr.__exps?.forEach(({ eventName, exps }) => {
+          eventMap[eventName] = exps.map(exp => evalExps(exp))
         })
         res.dataEventconfigs = eventMap
       } else {
-        res[attr.name] = attr.__exps__
-          ? getExpressionValue(attr.__exps__)
+        res[attr.name] = attr.__exps
+          ? evalExps(attr.__exps)
           : attr.value
       }
     })
+
     return res
   }
 
@@ -192,7 +159,7 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     return {
       // tagName: "#text",
       nodeType: '#text',
-      content: getTextValue(node.__exps__, node.text)
+      content: node.__exps ? evalExps(node.__exps) : node.text
     }
   }
 
@@ -205,23 +172,24 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
       [itemKey]: null,
       [indexKey]: null
     }
-
     const forExp = node.for
-
     const res = []
 
-    getExpressionValue(forExp.__exps__).forEach(function (item, index) {
-      // item、index 模板当中如果没申明，需要给到默认值
-      scope[itemKey] = item
-      scope[indexKey] = index
+    const forValue = evalExps(forExp.__exps)
+    if (Array.isArray(forValue)) {
+      forValue.forEach((item, index) => {
+        // item、index 模板当中如果没申明，需要给到默认值
+        scope[itemKey] = item
+        scope[indexKey] = index
 
-      contextScope.push(scope)
+        contextScope.push(scope)
 
-      // 针对 for 循环避免每次都操作的同一个 node 导致数据的污染的问题
-      res.push(genVnodeTree(cloneNode(node)))
+        // 针对 for 循环避免每次都操作的同一个 node 导致数据的污染的问题
+        res.push(genVnodeTree(cloneNode(node)))
 
-      contextScope.pop()
-    })
+        contextScope.pop()
+      })
+    }
 
     return res
   }
@@ -245,8 +213,7 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
         break
       }
       // 非 else 节点
-      const identifierValue = getExpressionValue(condition.__exps__)
-      // console.log(condition.__exps__, identifierValue)
+      const identifierValue = evalExps(condition.__exps)
       if (identifierValue) {
         res = genVnodeTree(condition.block === 'self' ? node : condition.block)
         break
@@ -254,18 +221,6 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     }
     return res
   }
-
-  // function genIfConditions(conditions, node) {
-  //   if (!conditions.length) {
-  //     return {} // 返回一个空节点
-  //   }
-
-  //   const condition = conditions.shift()
-  //   if (condition.exp) {
-  //   } else {
-  //     return genVnodeTree(condition.block)
-  //   }
-  // }
 
   function genVnodeWithStaticCss (vnodeTree) {
     cssList.forEach((item) => {

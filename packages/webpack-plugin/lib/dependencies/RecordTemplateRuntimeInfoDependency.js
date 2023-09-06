@@ -2,7 +2,7 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordTemplateRuntimeInfoDependency extends NullDependency {
-  constructor (packageName, resourcePath, { resourceHashNameMap, runtimeComponents, normalComponents, internalComponents } = {}) {
+  constructor (packageName, resourcePath, { resourceHashNameMap, runtimeComponents, normalComponents, internalComponents, wxs } = {}) {
     super()
     this.packageName = packageName
     this.resourcePath = resourcePath
@@ -10,6 +10,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     this.runtimeComponents = runtimeComponents
     this.normalComponents = normalComponents
     this.internalComponents = internalComponents
+    this.wxs = wxs
   }
 
   get type () {
@@ -23,14 +24,22 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
         resourceHashNameMap: {},
         internalComponents: {},
         normalComponents: {},
-        runtimeComponents: {}
+        runtimeComponents: {},
+        wxs: new Set()
       }
     }
 
     this.mergeResourceHashNameMap(mpx)
     this.mergeComponentAttrs(mpx)
+    this.mergeWxs(mpx)
 
     return callback()
+  }
+
+  mergeWxs (mpx) {
+    if (this.wxs.length) {
+      this.wxs.forEach(item => mpx.runtimeInfo[this.packageName].wxs.add(item))
+    }
   }
 
   mergeComponentAttrs (mpx) {

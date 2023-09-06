@@ -1,11 +1,5 @@
 const path = require('path')
-const normalize = require('../utils/normalize')
 const async = require('async')
-const parseRequest = require('../utils/parse-request')
-const { MPX_PROCESSED_FLAG } = require('../utils/const')
-const addQuery = require('../utils/add-query')
-const loader = normalize.lib('runtime-render/loader')
-const stringifyLoadersAndResource = require('../utils/stringify-loaders-resource')
 const toPosix = require('../utils/to-posix')
 
 const MPX_CUSTOM_ELEMENT = 'mpx-custom-element'
@@ -35,7 +29,7 @@ module.exports = class RuntimeRenderPlugin {
     compiler.hooks.thisCompilation.tap({
       name: 'RuntimeRenderPlugin',
       stage: 1000
-    }, (compilation, { normalModuleFactory }) => {
+    }, (compilation) => {
       if (compilation.__mpx__) {
         const mpx = compilation.__mpx__
 
@@ -43,51 +37,6 @@ module.exports = class RuntimeRenderPlugin {
         mpx.usingRuntimePackages = new Set()
         // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
         mpx.runtimeInfo = {}
-        // 记录每个 page/component 依赖的组件相关信息，供 template-compiler 消费使用
-        mpx.componentDependencyInfo = {}
-
-        mpx.getComponentDependencyInfo = function (resourcePath) {
-          // 使用全局组件初始化
-          const runtimeComponents = [].concat(Object.keys(mpx.usingComponents))
-          if (mpx.componentDependencyInfo[resourcePath]) {
-            const componentInfo = mpx.componentDependencyInfo[resourcePath]
-            runtimeComponents.push(...Object.keys(componentInfo).filter(c => componentInfo[c].isRuntimeComponent))
-            return {
-              componentDependencyInfo: componentInfo,
-              runtimeComponents
-            }
-          }
-          return {
-            componentDependencyInfo: {},
-            runtimeComponents
-          }
-        }
-
-        // 一期暂时不需要使用
-        // 注入到 mpx-custom-element-*.json 里面的组件路径
-        mpx.getPackageInjectedComponentsMap = function (packageName = 'main') {
-          const res = {}
-          const componentsMap = Object.values(mpx.componentsMap).reduce((preVal, curVal) => Object.assign(preVal, curVal), {})
-          const resourceHashNameMap = mpx.runtimeInfo[packageName] && mpx.runtimeInfo[packageName].resourceHashNameMap
-          if (resourceHashNameMap) {
-            const outputPath = compilation.outputOptions.publicPath || ''
-            for (const path in resourceHashNameMap) {
-              const hashName = resourceHashNameMap[path]
-              if (hashName && componentsMap[path]) {
-                res[hashName] = outputPath + componentsMap[path]
-              }
-            }
-          }
-
-          return res
-        }
-
-        // 一期暂时不需要使用
-        // 注入到 mpx-custom-element-*.wxss 里面的引用路径
-        mpx.getPackageInjectedWxss = function (packageName = 'main') {
-          return Object.values(mpx.getPackageInjectedComponentsMap(packageName))
-            .map(resultPath => `@import '${resultPath}.wxss';\n`).join('')
-        }
 
         mpx.hooks.finishSubpackagesMake.tapAsync('MpxCustomElementEntry', (compilation, callback) => {
           if (mpx.usingRuntimePackages.size === 0) {
@@ -100,24 +49,6 @@ module.exports = class RuntimeRenderPlugin {
           async.parallel(tasks, () => {
             callback()
           })
-        })
-
-        normalModuleFactory.hooks.afterResolve.tap({
-          name: 'MpxRuntimeRender',
-          stage: compilation.PROCESS_ASSETS_STAGE_OPTIMIZE
-        }, (resolveData) => {
-          const { createData } = resolveData
-          const { queryObj } = parseRequest(createData.request)
-          // 只对 mpxCustomElement 做拦截处理
-          if (queryObj.mpx && queryObj.extract && queryObj.mpxCustomElement && queryObj.mpxCustomElement !== MPX_PROCESSED_FLAG) {
-            // 重新构造 loaders 数组
-            createData.loaders = [{
-              loader: loader
-            }]
-
-            createData.resource = addQuery(createData.resource, { mpxCustomElement: MPX_PROCESSED_FLAG }, true)
-            createData.request = stringifyLoadersAndResource(createData.loaders, createData.resource)
-          }
         })
       }
     })

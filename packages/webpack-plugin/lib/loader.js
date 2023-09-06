@@ -19,7 +19,6 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
-const RecordModuleTemplateDependency = require('./dependencies/RecordModuleTemplateDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
@@ -54,6 +53,7 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const isRuntimeMode = checkIsRuntimeMode(resourcePath)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -88,7 +88,7 @@ module.exports = function (content) {
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
 
-  if (checkIsRuntimeMode(this.resource)) {
+  if (isRuntimeMode) {
     this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
   }
 
@@ -106,8 +106,7 @@ module.exports = function (content) {
   })
 
   const {
-    getRequire,
-    getRequestString
+    getRequire
   } = createHelpers(loaderContext)
 
   let output = ''
@@ -129,6 +128,7 @@ module.exports = function (content) {
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       let componentPlaceholder = []
+      const runtimeComponents = []
 
       let componentGenerics = {}
 
@@ -156,6 +156,12 @@ module.exports = function (content) {
             const rulesRunner = getRulesRunner(rulesRunnerOptions)
             if (rulesRunner) rulesRunner(ret)
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+
+            for (const name in ret.usingComponents) {
+              if (checkIsRuntimeMode(ret.usingComponents[name])) {
+                runtimeComponents.push(name)
+              }
+            }
           }
           if (ret.componentPlaceholder) {
             componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
@@ -324,15 +330,15 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
-          componentPlaceholder
+          componentPlaceholder,
+          runtimeComponents
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
-        // output += getRequire('template', template, extraOptions) + '\n'
-        this._module.addPresentationalDependency(new RecordModuleTemplateDependency(moduleId, getRequestString('template', template, extraOptions).slice(1, -1)))
+        output += getRequire('template', template, extraOptions) + '\n'
       }
 
       // styles

@@ -12,10 +12,11 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
-const RecordComponentInfoDependency = require('../dependencies/RecordComponentInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const checkIsRuntimeMode = require('../utils/check-is-runtime')
+const isEmptyObject = require('../utils/is-empty-object')
+const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -40,7 +41,6 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const moduleId = queryObj.moduleId
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -145,6 +145,19 @@ module.exports = function (content) {
     }
   }
 
+  const injectMpxCustomElement = () => {
+    if (!json.usingComponents) {
+      json.usingComponents = {}
+    }
+    json.usingComponents.element = resolveMpxCustomElementPath(packageName)
+  }
+
+  if (queryObj.mpxCustomElement) {
+    injectMpxCustomElement()
+    callback()
+    return
+  }
+
   // 校验异步组件占位符 componentPlaceholder 不为空
   if (mpx.enableRequireAsync) {
     const { usingComponents, componentPlaceholder = {} } = json
@@ -201,43 +214,46 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
   }
 
-  const processModuleTemplate = (callback) => {
-    if (mpx.moduleTemplate[moduleId]) {
-      const requestString = mpx.moduleTemplate[moduleId]
-      let usingComponents = Object.keys(mpx.usingComponents)
-      if (json.usingComponents) {
-        usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
-      }
-      this.emitFile(resourcePath, '', undefined, {
-        skipEmit: true,
-        extractedResultSource: 'require("' + addQuery(requestString, { usingComponents }) + '")'
-      })
+  const runtimeComponentMap = {}
+
+  const collectRuntimeComponents = (name, componentPath) => {
+    if (!isApp && checkIsRuntimeMode(componentPath)) {
+      const moduleId = 'm' + mpx.pathHash(componentPath)
+      runtimeComponentMap[name] = moduleId
     }
-    callback()
   }
 
-  const collectRuntimeInfo = (name, componentPath) => {
-    if (!isApp) {
-      const isRuntimeComponent = checkIsRuntimeMode(componentPath)
-      const moduleId = 'm' + mpx.pathHash(componentPath)
-      this._module && this._module.addPresentationalDependency(new RecordComponentInfoDependency(resourcePath, name, isRuntimeComponent, moduleId, componentPath))
+  const injectRuntimeComponents2Script = () => {
+    if (!isEmptyObject(runtimeComponentMap)) {
+      const resultSource = `
+        global.currentInject.getRuntimeModules = function () {
+          return ${JSON.stringify(runtimeComponentMap)}
+        }
+      `
+      this.emitFile(resourcePath, '', undefined, {
+        skipEmit: true,
+        extractedResultSource: resultSource
+      })
     }
   }
 
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { resourcePath }) => {
+        processComponent(component, context, { relativePath }, (err, entry, { resourcePath = '' }) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          collectRuntimeInfo(name, resourcePath)
+          collectRuntimeComponents(name, resourcePath)
           callback()
         })
-      }, callback)
+      }, () => {
+        injectRuntimeComponents2Script()
+        callback()
+      })
     } else {
       callback()
     }
@@ -668,7 +684,10 @@ module.exports = function (content) {
         processGenerics(json.componentGenerics, this.context, callback)
       },
       (callback) => {
-        processModuleTemplate(callback)
+        if (checkIsRuntimeMode(resourcePath)) {
+          injectMpxCustomElement()
+        }
+        callback()
       }
     ], (err) => {
       callback(err, processDynamicEntry)

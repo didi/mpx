@@ -38,9 +38,7 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
-const RecordModuleTemplateDependency = require('./dependencies/RecordModuleTemplateDependency')
 const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
-const RecordComponentInfoDependency = require('./dependencies/RecordComponentInfoDependency')
 const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const RuntimeRenderPlugin = require('./runtime-render/plugin')
@@ -556,12 +554,6 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RuntimeRenderPackageDependency, new NullFactory())
       compilation.dependencyTemplates.set(RuntimeRenderPackageDependency, new RuntimeRenderPackageDependency.Template())
 
-      compilation.dependencyFactories.set(RecordModuleTemplateDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordModuleTemplateDependency, new RecordModuleTemplateDependency.Template())
-
-      compilation.dependencyFactories.set(RecordComponentInfoDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordComponentInfoDependency, new RecordComponentInfoDependency.Template())
-
       compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
     })
@@ -803,8 +795,7 @@ class MpxWebpackPlugin {
           },
           hooks: {
             finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
-          },
-          moduleTemplate: {}
+          }
         }
       }
 
@@ -1015,6 +1006,7 @@ class MpxWebpackPlugin {
 
         if (!isEmptyObject(dynamicAssets)) {
           const dynamicSource = new RawSource(JSON.stringify(dynamicAssets))
+          // todo 暂时写死输出到一个静态文件，后续看是否通过分包拆分
           compilation.emitAsset('dynamic.json', dynamicSource)
         }
 

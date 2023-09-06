@@ -2053,7 +2053,7 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
-  processRuntime(el, options, meta)
+  processRuntime(el, options)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2145,22 +2145,11 @@ function postProcessRuntime (el, options, meta) {
   if (RUNTIME_FILTER_NODES.includes(el.tag)) {
     return
   }
-  const isCustomComponent = isComponentNode(el, options) || false
+  const isCustomComponent = isComponentNode(el, options)
 
-  // 非运行时组件/页面当中使用了运行时组件，
+  // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
   if (!options.runtimeCompile && el.isRuntimeComponent) {
-    const tag = el.tag
-    const { moduleId } = (options.componentDependencyInfo && options.componentDependencyInfo[tag]) || {}
-    if (!meta.runtimeModules) {
-      meta.runtimeModules = []
-    }
-    if (!meta.runtimeModules.find(module => module.id === moduleId)) {
-      meta.runtimeModules.push({
-        id: moduleId,
-        rawTag: tag
-      })
-    }
-    addIfBlock(el, moduleId)
+    addIfBlock(el, '__mpxDynamicLoaded')
   }
 
   // 运行时的组件收集节点信息
@@ -2170,9 +2159,11 @@ function postProcessRuntime (el, options, meta) {
         resourceHashNameMap: {},
         internalComponents: {},
         runtimeComponents: {},
-        normalComponents: {}
+        normalComponents: {},
+        wxs: {}
       }
     }
+
     // 按需收集节点属性信息，存储到 meta 后到外层处理
     setBaseWxml(el, isCustomComponent, meta)
   }

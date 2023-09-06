@@ -7,6 +7,7 @@ const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
+const { unRecursiveTemplate } = require('../runtime-render/wx-template')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -31,7 +32,7 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
   const runtimeCompile = checkIsRuntimeMode(resourcePath)
-  const { componentDependencyInfo, runtimeComponents } = mpx.getComponentDependencyInfo(resourcePath)
+  const runtimeComponents = queryObj.runtimeComponents || []
   const moduleIdString = JSON.stringify(moduleId)
 
   const warn = (msg) => {
@@ -46,10 +47,15 @@ module.exports = function (raw) {
     )
   }
 
+  if (queryObj.mpxCustomElement) {
+    let result = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
+    result += unRecursiveTemplate.buildTemplate(mpx.runtimeInfo[packageName])
+    return result
+  }
+
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
-    componentDependencyInfo,
     runtimeComponents,
     runtimeCompile,
     usingComponents,
@@ -75,6 +81,9 @@ module.exports = function (raw) {
   })
 
   if (meta.runtimeInfo || runtimeCompile) {
+    // if (meta.wxsModuleMap) {
+    //   meta.runtimeInfo.wxs = Object.keys(meta.wxsModuleMap)
+    // }
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
     // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
@@ -157,13 +166,6 @@ global.currentInject.injectComputed = {
     resultSource += `
 global.currentInject.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
-};\n`
-  }
-
-  if (meta.runtimeModules) {
-    resultSource += `
-global.currentInject.getRuntimeModules = function () {
-  return ${JSON.stringify(meta.runtimeModules)};
 };\n`
   }
 

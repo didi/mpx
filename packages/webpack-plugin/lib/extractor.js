@@ -6,8 +6,6 @@ const fixRelative = require('./utils/fix-relative')
 const addQuery = require('./utils/add-query')
 const normalize = require('./utils/normalize')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE, DYNAMIC_TEMPLATE, DYNAMIC_STYLE, DYNAMIC, BLOCK_TEMPLATE, BLOCK_STYLES, BLOCK_JSON } = require('./utils/const')
-const checkIsRuntimeMode = require('./utils/check-is-runtime')
-const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
 
 module.exports = content => content
 
@@ -21,16 +19,7 @@ module.exports.pitch = async function (remainingRequest) {
   const issuerResource = queryObj.issuerResource
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
-
-  const processRuntimeMode = (usingComponents) => {
-    const moduleGraph = this._compilation.moduleGraph
-    const issuer = moduleGraph.getIssuer(this._module)
-    if (checkIsRuntimeMode(this.resourcePath) || checkIsRuntimeMode(issuer.resource)) {
-      usingComponents.element = resolveMpxCustomElementPath(packageName)
-    }
-  }
 
   if (needBabel) {
     // 创建js request应用babel
@@ -61,18 +50,6 @@ module.exports.pitch = async function (remainingRequest) {
   }
 
   let content = await this.importModule(`!!${request}`)
-
-  // 使用运行时渲染的 page / component 会动态注入 mpx-custom-element
-  if (type === BLOCK_JSON) {
-    try {
-      content = JSON.parse(content)
-      if (!content.usingComponents) content.usingComponents = {}
-      processRuntimeMode(content.usingComponents)
-      content = JSON.stringify(content, null, 2)
-    } catch (e) {
-      this.emitError(e)
-    }
-  }
 
   // 处理wxss-loader的返回
   if (Array.isArray(content)) {

@@ -1,6 +1,6 @@
 const { getAndRemoveAttr, parseMustache, findPrevNode, removeNode } = require('./compiler')
-const parseRuntimeExps = require('./parse-runtime-expression')
 const allConfigs = require('../config')
+const parseExps = require('./parse-exps')
 
 function processIf (vnode, config) {
   delete vnode.ifProcessed
@@ -15,7 +15,7 @@ function processIf (vnode, config) {
     addIfCondition(vnode, {
       exp: parsedExp,
       block: 'self',
-      __exps__: parseRuntimeExps(parsedExp).exps
+      __exps: parseExps(parsedExp)
     })
   } else if (vnode.elseif || vnode.else) {
     const directive = vnode.elseif ? config.directive.elseif : config.directive.else
@@ -25,7 +25,7 @@ function processIf (vnode, config) {
     addIfCondition(vnode, {
       exp: `'${vnode._if}'`,
       block: 'self',
-      __exps__: parseRuntimeExps(`'${vnode._if}'`).exps
+      __exps: parseExps(`'${vnode._if}'`)
     })
   }
 
@@ -50,7 +50,7 @@ function processIfConditions (el) {
     addIfCondition(prev, {
       exp: el.elseif ? el.elseif.exp : '',
       block: el,
-      __exps__: el.elseif ? parseRuntimeExps(el.elseif.exp).exps : ''
+      __exps: el.elseif ? parseExps(el.elseif.exp) : ''
     })
   }
   removeNode(el)
@@ -58,7 +58,7 @@ function processIfConditions (el) {
 
 function processFor (vnode) {
   if (vnode.for) {
-    vnode.for.__exps__ = parseRuntimeExps(vnode.for.exp).exps
+    vnode.for.__exps = parseExps(vnode.for.exp)
 
     delete vnode.for.raw
     delete vnode.for.exp
@@ -76,7 +76,14 @@ function processAttrsMap (vnode, config) {
     } else if (attr.name === 'data-eventconfigs') {
       processBindEvent(attr)
     } else {
-      getAttrExps(attr)
+      const exps = getAttrExps(attr)
+      if (exps) {
+        attr.__exps = exps
+      }
+    }
+
+    if (attr.__exps) {
+      delete attr.value
     }
   })
 
@@ -86,31 +93,37 @@ function processAttrsMap (vnode, config) {
 function processClass (attr) {
   const { staticClassExp = '', dynamicClassExp = '' } = attr
   if (staticClassExp || dynamicClassExp) {
-    attr.__exps__ = [parseRuntimeExps(staticClassExp).exps, parseRuntimeExps(dynamicClassExp).exps]
+    attr.__exps = [parseExps(staticClassExp), parseExps(dynamicClassExp)]
 
     delete attr.staticClassExp
     delete attr.dynamicClassExp
   } else {
-    getAttrExps(attr)
+    const exps = getAttrExps(attr)
+    if (exps) {
+      attr.__exps = [exps]
+    }
   }
 }
 
 function processStyle (attr) {
   const { staticStyleExp = '', dynamicStyleExp = '' } = attr
   if (staticStyleExp || dynamicStyleExp) {
-    attr.__exps__ = [parseRuntimeExps(staticStyleExp).exps, parseRuntimeExps(dynamicStyleExp).exps]
+    attr.__exps = [parseExps(staticStyleExp), parseExps(dynamicStyleExp)]
 
     delete attr.staticStyleExp
     delete attr.dynamicStyleExp
   } else {
-    getAttrExps(attr)
+    const exps = getAttrExps(attr)
+    if (exps) {
+      attr.__exps = [exps]
+    }
   }
 }
 
 function getAttrExps (attr) {
   const parsed = parseMustache(attr.value)
-  if (parsed.hasBinding && !attr.__exps__) {
-    attr.__exps__ = parseRuntimeExps(parsed.result).exps
+  if (parsed.hasBinding && !attr.__exps) {
+    return parseExps(parsed.result)
   }
 }
 
@@ -125,13 +138,13 @@ function processBindEvent (attr) {
       }
 
       configs.forEach((item) => {
-        eventExp.exps.push(parseRuntimeExps(item).exps)
+        eventExp.exps.push(parseExps(item))
       })
 
       exps.push(eventExp)
     }
 
-    attr.__exps__ = exps
+    attr.__exps = exps
 
     delete attr.eventConfigMap
   }
@@ -143,13 +156,7 @@ function processText (vnode) {
     // todo 全局 defs 静态数的处理?
     const parsed = parseMustache(vnode.text)
     if (parsed.hasBinding) {
-      vnode.__exps__ = parsed.exps.map(exp => {
-        exp = exp.trim()
-        return {
-          rawExp: exp,
-          exps: parseRuntimeExps(exp).exps
-        }
-      })
+      vnode.__exps = parseExps(parsed.result)
     }
 
     delete vnode.exps
