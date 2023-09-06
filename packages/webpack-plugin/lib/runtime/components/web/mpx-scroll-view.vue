@@ -260,7 +260,7 @@
         if (!id) return
         id = id.replace(/^(?!#)/, '#') // 没有 # 的 id 补上 #，有 # 的忽略
         if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
-        this.bs.scrollToElement(id, duration)
+        this.bs?.scrollToElement(id, duration)
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper

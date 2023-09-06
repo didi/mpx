@@ -21,15 +21,6 @@ module.exports = function ({ print }) {
     },
     props: [
       {
-        test: /^(scroll-x|scroll-y|scroll-with-animation|enable-flex|enhanced|refresher-enabled|refresher-triggered)$/,
-        web ({ name, value = 'true' }) { // value is undefined, value is true. eg: <scroll-view scroll-x>
-          return {
-            name: `:${name}`, // make props binding
-            value
-          }
-        }
-      },
-      {
         test: /^(enable-flex|scroll-anchorin|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleratio)$/,
         ali: aliPropLog,
         tt: ttPropLog,
