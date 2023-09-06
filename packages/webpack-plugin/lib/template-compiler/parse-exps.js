@@ -1,3 +1,4 @@
+// todo 待讨论 parser + interpreter 的部分是否需要单独抽个 package 出去
 const acorn = require('acorn')
 const walk = require('acorn-walk')
 
@@ -41,7 +42,7 @@ base.ConditionalExpression = (node, st, c, s) => {
 const visitor = walk.make({
   Program (node, st, c, s) {
     const bodyStack = []
-    // todo 可以去掉
+    // todo 后续优化可以去掉
     s.push(1, bodyStack, node.sourceType)
     for (let i = 0, list = node.body; i < list.length; i += 1) {
       const stmt = list[i]
@@ -51,7 +52,7 @@ const visitor = walk.make({
   },
   ExpressionStatement (node, st, c, s) {
     const expressionStack = []
-    // todo 也可以去掉?
+    // todo 后续优化可以去掉
     s.push(40, expressionStack)
     c(node.expression, st, null, expressionStack)
   },
