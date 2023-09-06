@@ -258,7 +258,7 @@
       },
       scrollToView (id, duration = 0) {
         if (!id) return
-        id = id.replace(/^(?!#)/, '#') // 没有 # 的 id 补上 #，有 # 的忽略
+        id = '#' + id
         if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
         this.bs?.scrollToElement(id, duration)
       },
