@@ -70,6 +70,13 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
+  function fillGlobalComponents (input, { globalComponents }) {
+    if (globalComponents) {
+      Object.assign(globalComponents, input.usingComponents)
+    }
+    return input
+  }
+
   // 处理 ali swan 的组件名大写字母转连字符：WordExample/wordExample -> word-example
   function componentNameCapitalToHyphen (type) {
     return function (input) {
@@ -317,6 +324,20 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath(true),
         tt: deletePath(),
         jd: deletePath(true)
+      },
+      {
+        test: 'usingComponents',
+        ali: componentNameCapitalToHyphen('usingComponents'),
+        swan: componentNameCapitalToHyphen('usingComponents')
+      },
+      {
+        test: 'usingComponents',
+        // todo ali 2.0已支持全局组件，待移除
+        ali: fillGlobalComponents,
+        qq: fillGlobalComponents,
+        swan: fillGlobalComponents,
+        tt: fillGlobalComponents,
+        jd: fillGlobalComponents
       },
       {
         test: 'usingComponents',
