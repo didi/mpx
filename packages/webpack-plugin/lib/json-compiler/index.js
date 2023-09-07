@@ -38,6 +38,7 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
+  const projectRoot = mpx.projectRoot
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -53,6 +54,25 @@ module.exports = function (content) {
     this.emitError(
       new Error('[json compiler][' + this.resource + ']: ' + msg)
     )
+  }
+
+  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
+    const componentPlaceholder = json.componentPlaceholder || {}
+    if (componentPlaceholder[name]) return
+    componentPlaceholder[name] = placeholder
+    json.componentPlaceholder = componentPlaceholder
+    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
+  }
+  const normalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      placeholder = {
+        name: placeholder
+      }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    return placeholder
   }
 
   const {
@@ -142,22 +162,6 @@ module.exports = function (content) {
     }
   }
 
-  // 校验异步组件占位符 componentPlaceholder 不为空
-  if (mpx.enableRequireAsync) {
-    const { usingComponents, componentPlaceholder = {} } = json
-    if (usingComponents) {
-      for (const compName in usingComponents) {
-        const compPath = usingComponents[compName]
-        if (!/\?root=/g.test(compPath)) continue
-        const compPlaceholder = componentPlaceholder[compName]
-        if (!compPlaceholder) {
-          const errMsg = `componentPlaceholder of "${compName}" doesn't exist! \n\r`
-          emitError(errMsg)
-        }
-      }
-    }
-  }
-
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
@@ -204,14 +208,36 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry) => {
+        processComponent(component, context, { relativePath }, (err, entry, root, placeholder) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          callback()
+          if (root) {
+            if (placeholder) {
+              placeholder = normalizePlaceholder(placeholder)
+              if (placeholder.resource) {
+                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
+                  if (err) return callback(err)
+                  fillInComponentPlaceholder(name, placeholder.name, entry)
+                  callback()
+                })
+              } else {
+                fillInComponentPlaceholder(name, placeholder.name)
+                callback()
+              }
+            } else {
+              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
+                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+                emitError(errMsg)
+              }
+              callback()
+            }
+          } else {
+            callback()
+          }
         })
       }, callback)
     } else {
