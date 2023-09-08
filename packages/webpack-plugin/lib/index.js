@@ -171,6 +171,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     this.options = options
@@ -633,6 +634,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
+          asyncSubpackageRules: this.options.asyncSubpackageRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1055,13 +1057,22 @@ class MpxWebpackPlugin {
             let request = expr.arguments[0].value
             const range = expr.arguments[0].range
             const context = parser.state.module.context
-            const { queryObj } = parseRequest(request)
-            if (queryObj.root) {
+            const { queryObj, resourcePath } = parseRequest(request)
+            let tarRoot = queryObj.root
+            if (!tarRoot && mpx.asyncSubpackageRules) {
+              for (const item of mpx.asyncSubpackageRules) {
+                if (matchCondition(resourcePath, item)) {
+                  tarRoot = item.root
+                  break
+                }
+              }
+            }
+            if (tarRoot) {
               // 删除root query
-              request = addQuery(request, {}, false, ['root'])
+              if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.enableRequireAsync) {
-                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range, {
+                const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
                   isRequireAsync: true,
                   retryRequireAsync: !!this.options.retryRequireAsync
                 })

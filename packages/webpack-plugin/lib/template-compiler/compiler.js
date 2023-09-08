@@ -1167,7 +1167,6 @@ function wrapMustache (val) {
 
 function parseMustache (raw = '') {
   let replaced = false
-  const exps = []
   if (tagRE.test(raw)) {
     const ret = []
     let lastLastIndex = 0
@@ -1178,7 +1177,6 @@ function parseMustache (raw = '') {
         ret.push(stringify(pre))
       }
       let exp = match[1]
-      exps.push(exp)
 
       // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
       const defKeys = Object.keys(defs || {})
@@ -1227,16 +1225,14 @@ function parseMustache (raw = '') {
       result,
       hasBinding: true,
       val: replaced ? `{{${result}}}` : raw,
-      replaced,
-      exps
+      replaced
     }
   }
   return {
     result: stringify(raw),
     hasBinding: false,
     val: raw,
-    replaced,
-    exps
+    replaced
   }
 }
 
