@@ -7,7 +7,6 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "node ./build/transRem.js"
   },
   "author": "",
   "license": "Apache-2.0",
