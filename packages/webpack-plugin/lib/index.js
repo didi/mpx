@@ -170,6 +170,14 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
+    if (options.mode !== 'web') {
+      let fallthroughEventAttrsRules = []
+      const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
+      if (fallthroughEventAttrsRulesRaw) {
+        fallthroughEventAttrsRules = Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]
+      }
+      options.fallthroughEventAttrsRules = fallthroughEventAttrsRules
+    }
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -624,6 +632,7 @@ class MpxWebpackPlugin {
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           asyncSubpackageRules: this.options.asyncSubpackageRules,
+          fallthroughEventAttrsRules: this.options.fallthroughEventAttrsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
