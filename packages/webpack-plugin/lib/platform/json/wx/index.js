@@ -3,6 +3,8 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
+const type = require('../../../utils/type')
+const hasOwn = require('../../../utils/has-own')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -31,6 +33,18 @@ module.exports = function getSpec ({ warn, error }) {
       })
       return input
     }
+  }
+
+  function checkAliComponentGenericsValue (input, { mode }) {
+    const componentGenerics = input.componentGenerics
+    for (let tag in componentGenerics) {
+      const value = componentGenerics[tag]
+      if (type(value) === 'Boolean' || type(value) === 'Object' && !hasOwn(value, 'default')) {
+        warn(`在 ${mode} 环境当中 componentGenerics ${tag} 必须配置默认自定义组件`)
+        break
+      }
+    }
+    return input
   }
 
   /**
@@ -115,7 +129,7 @@ module.exports = function getSpec ({ warn, error }) {
   const componentRules = [
     {
       test: 'componentGenerics',
-      ali: deletePath(true)
+      ali: checkAliComponentGenericsValue
     },
     {
       test: 'componentPlaceholder',
@@ -289,7 +303,6 @@ module.exports = function getSpec ({ warn, error }) {
         },
         {
           test: 'custom',
-          ali: deletePath(),
           swan: deletePath(),
           tt: deletePath(),
           jd: deletePath()

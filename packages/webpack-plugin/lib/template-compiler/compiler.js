@@ -1655,37 +1655,6 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function processAliExternalClassesHack (el, options) {
-  const isComponent = isComponentNode(el, options)
-  // 处理组件externalClass多层传递
-  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
-  classLikeAttrNames.forEach((classLikeAttrName) => {
-    let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
-    if (classLikeAttrValue) {
-      options.externalClasses.forEach((className) => {
-        const reg = new RegExp('\\b' + className + '\\b', 'g')
-        const replacement = dash2hump(className)
-        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
-      })
-      addAttrs(el, [{
-        name: classLikeAttrName,
-        value: classLikeAttrValue
-      }])
-    }
-  })
-
-  if (options.hasScoped && isComponent) {
-    options.externalClasses.forEach((className) => {
-      const externalClass = getAndRemoveAttr(el, className).val
-      if (externalClass) {
-        addAttrs(el, [{
-          name: className,
-          value: `${externalClass} ${options.moduleId}`
-        }])
-      }
-    })
-  }
-}
 
 // externalClasses只能模拟静态传递
 function processWebExternalClassesHack (el, options) {
@@ -1748,17 +1717,17 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
-function processScoped (el, options) {
-  if (options.hasScoped && isRealNode(el)) {
-    const moduleId = options.moduleId
-    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
-    const staticClass = getAndRemoveAttr(el, 'class').val
-    addAttrs(el, [{
-      name: 'class',
-      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
-    }])
-  }
-}
+// function processScoped (el, options) {
+//   if (options.hasScoped && isRealNode(el)) {
+//     const moduleId = options.moduleId
+//     const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
+//     const staticClass = getAndRemoveAttr(el, 'class').val
+//     addAttrs(el, [{
+//       name: 'class',
+//       value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+//     }])
+//   }
+// }
 
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
@@ -2054,8 +2023,6 @@ function processElement (el, root, options, meta) {
 
   processInjectWxs(el, meta)
 
-  const transAli = mode === 'ali' && srcMode === 'wx'
-
   if (mode === 'web') {
     // 收集内建组件
     processBuiltInComponents(el, meta)
@@ -2068,14 +2035,6 @@ function processElement (el, root, options, meta) {
 
   const pass = isNative || processTemplate(el) || processingTemplate
 
-  // 仅ali平台需要scoped模拟样式隔离
-  if (mode === 'ali') {
-    processScoped(el, options)
-  }
-
-  if (transAli) {
-    processAliExternalClassesHack(el, options)
-  }
 
   processIf(el)
   processFor(el)

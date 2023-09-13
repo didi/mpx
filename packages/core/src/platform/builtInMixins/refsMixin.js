@@ -124,25 +124,11 @@ export default function getRefsMixin () {
       createIntersectionObserver (...args) {
         return envObj.createIntersectionObserver(...args)
       },
-      selectComponent (selector, all) {
-        const children = this.__children__ || []
-        const result = []
-        for (const child of children) {
-          if (child.identifiers.indexOf(selector) > -1) {
-            result.push(child.component)
-            if (!all) {
-              break
-            }
-          }
-        }
-        if (selector.lastIndexOf('.') > 0) {
-          const location = this.__mpxProxy.options.mpxFileResource
-          error('The selectComponent or selectAllComponents only supports the single selector, a composed selector is not supported.', location)
-        }
-        return all ? result : result[0]
+      selectComponent (selector) {
+        return this.$selectComponent(selector)
       },
       selectAllComponents (selector) {
-        return this.selectComponent(selector, true)
+        return this.$selectAllComponents(selector)
       },
       __updateRef (destroyed) {
         this.triggerEvent && this.triggerEvent('updateRef', {

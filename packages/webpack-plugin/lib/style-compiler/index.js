@@ -39,11 +39,8 @@ module.exports = function (css, map) {
       },
       config.options
     )
-    // ali平台下处理scoped和host选择器
+    // ali平台下处理host选择器
     if (mode === 'ali') {
-      if (queryObj.scoped) {
-        plugins.push(scopeId({ id }))
-      }
       plugins.push(transSpecial({ id }))
     }
 

@@ -14,6 +14,7 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
+const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -159,6 +160,14 @@ module.exports = function (content) {
     // component
     if (json.component !== true) {
       json.component = true
+    }
+  }
+  
+  // wx 转 ali 默认开启样式隔离
+  const transAli = mode === 'ali' && srcMode === 'wx'
+  if (transAli && !isApp) {
+    if (!json.styleIsolation) {
+      json.styleIsolation = 'apply-shared'
     }
   }
 
@@ -522,14 +531,22 @@ module.exports = function (content) {
     }
 
     const processCustomTabBar = (tabBar, context, callback) => {
-      if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err, entry) => {
+      if (tabBar && tabBar.custom || tabBar.customize) {
+        const outputCustomKey = config[mode].tabBar.customKey
+        const srcCustomKey = tabBar.custom ? 'custom' : 'customize'
+        const srcPath = resolveTabBarPath(srcCustomKey)
+        const outputPath = resolveTabBarPath(outputCustomKey)
+
+        processComponent(`./${srcPath}`, context, { outputPath }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
-            delete tabBar.custom
+            delete tabBar[outputCustomKey]
             return callback()
           }
           if (err) return callback(err)
-          tabBar.custom = entry // hack for javascript parser call hook.
+          if (transAli) {
+            delete tabBar.custom
+          }
+          tabBar[outputCustomKey] = entry // hack for javascript parser call hook.
           callback()
         })
       } else {

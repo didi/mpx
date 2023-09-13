@@ -303,7 +303,7 @@ module.exports = function (content) {
           ...template.src
             ? { ...queryObj, resourcePath }
             : null,
-          hasScoped,
+          hasScoped, // todo ali 提供了样式隔离的能力，应该可以删除这个配置，统一走平台的样式隔离配置？
           hasComment,
           isNative,
           moduleId,

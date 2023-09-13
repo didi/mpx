@@ -5,6 +5,7 @@ const addQuery = require('../utils/add-query')
 const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
+const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 
 class DynamicEntryDependency extends NullDependency {
   constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range, extraOptions = {}) {
@@ -192,7 +193,7 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
 
     let replaceContent = ''
 
-    if (outputPath === 'custom-tab-bar/index') {
+    if (outputPath === resolveTabBarPath('custom') || outputPath === resolveTabBarPath('customize')) {
       // replace with true for custom-tab-bar
       replaceContent = JSON.stringify(true)
     } else if (resultPath) {
