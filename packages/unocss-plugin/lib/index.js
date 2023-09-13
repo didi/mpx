@@ -201,14 +201,6 @@ class MpxUnocssPlugin {
         enforce: 'pre',
         use: [transAppLoader]
       })
-      compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
-        for (const dep of compilation.fileDependencies) {
-          if (/^(?:virtual:)?uno(?::(.+))?\.css(\?.*)?$/.test(dep)) {
-            // 移除虚拟模块产生的fileDeps避免初始watch执行两次
-            compilation.fileDependencies.delete(dep)
-          }
-        }
-      })
       return
     }
     compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
