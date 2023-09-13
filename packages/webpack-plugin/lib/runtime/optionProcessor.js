@@ -3,7 +3,17 @@ import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
-export default function processComponentOption ({ option, ctorType, outputPath, pageConfig, componentsMap, componentGenerics, genericsInfo, mixin, hasApp }) {
+export default function processComponentOption ({
+                                                  option,
+                                                  ctorType,
+                                                  outputPath,
+                                                  pageConfig,
+                                                  componentsMap,
+                                                  componentGenerics,
+                                                  genericsInfo,
+                                                  mixin,
+                                                  hasApp
+                                                }) {
   // 局部注册页面和组件中依赖的组件
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
@@ -128,6 +138,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     global.__mpxRouter.stack = []
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
+    global.__mpxRouter.eventChannelMap = {}
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
       let action = global.__mpxRouter.__mpxAction
@@ -166,24 +177,15 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             })
           }
         } else {
-          let methods = ''
-          switch (action.type) {
-            case 'to':
-              methods = 'navigateTo'
-              break
-            case 'redirect':
-              methods = 'redirectTo'
-              break
-            case 'back':
-              methods = 'navigateBack'
-              break
-            case 'reLaunch':
-              methods = 'reLaunch'
-              break
-            default:
-              methods = 'navigateTo'
+          const typeMethodMap = {
+            to: 'navigateTo',
+            redirect: 'redirectTo',
+            back: 'navigateBack',
+            switch: 'switchTab',
+            reLaunch: 'reLaunch'
           }
-          throw new Error(`${methods}:fail page "${to.path}" is not found`)
+          const method = typeMethodMap[action.type]
+          throw new Error(`${method}:fail page "${to.path}" is not found`)
         }
       }
 
@@ -195,6 +197,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         case 'to':
           stack.push(insertItem)
           global.__mpxRouter.needCache = insertItem
+          if (action.eventChannel) global.__mpxRouter.eventChannelMap[to.path.slice(1)] = action.eventChannel
           break
         case 'back':
           global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
