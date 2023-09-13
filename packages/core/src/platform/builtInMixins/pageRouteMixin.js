@@ -14,4 +14,10 @@ export default function pageRouteMixin (mixinType) {
       }
     }
   }
+  return {
+    methods: {
+      getOpenerEventChannel () {
+      }
+    }
+  }
 }
