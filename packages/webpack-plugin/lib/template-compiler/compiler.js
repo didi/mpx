@@ -674,7 +674,7 @@ function parse (template, options) {
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
-    root = currentParent = getVirtualHostRoot(options, meta)
+    root = currentParent = getTempNode()
     stack.push(root)
   }
 
@@ -1806,30 +1806,6 @@ function processAliAddComponentRootView (el, options) {
   return componentWrapView
 }
 
-// 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
-function getVirtualHostRoot (options, meta) {
-  if (options.isComponent) {
-    // 处理组件时
-    if (mode === 'wx' && options.hasVirtualHost) {
-      // wx组件注入virtualHost配置
-      !meta.options && (meta.options = {})
-      meta.options.virtualHost = true
-    }
-    // if (mode === 'ali' && !options.hasVirtualHost) {
-    //   // ali组件根节点实体化
-    //   let rootView = createASTElement('view', [
-    //     {
-    //       name: 'class',
-    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-    //     }
-    //   ])
-    //   processElement(rootView, rootView, options, meta)
-    //   return rootView
-    // }
-  }
-  return getTempNode()
-}
-
 function processShow (el, options, root) {
   // 开启 virtualhost 全部走 props 传递处理
   // 未开启 virtualhost 直接绑定 display:none 到节点上
@@ -1837,6 +1813,7 @@ function processShow (el, options, root) {
   if (mode === 'swan') show = wrapMustache(show)
 
   if (options.hasVirtualHost) {
+    // 给虚拟组件添加 {{ mpxShow }}
     if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
         show = `{{${parseMustache(show).result}&&mpxShow}}`
@@ -1844,20 +1821,19 @@ function processShow (el, options, root) {
         show = '{{mpxShow}}'
       }
     }
-    if (isComponentNode(el, options) && show !== undefined) {
-      if (show === '') {
-        show = '{{false}}'
-      }
-      addAttrs(el, [{
-        name: 'mpxShow',
-        value: show
-      }])
-    } else {
-      processShowStyle()
-    }
-  } else {
-    processShowStyle()
   }
+
+  if (isComponentNode(el, options) && show !== undefined) {
+    if (show === '') {
+      show = '{{false}}'
+    }
+    addAttrs(el, [{
+      name: 'mpxShow',
+      value: show
+    }])
+  }
+
+  processShowStyle()
 
   function processShowStyle () {
     if (show !== undefined) {
@@ -2066,11 +2042,7 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
-      el = processAliAddComponentRootView(el, options)
-    } else {
-      el = postProcessComponentIs(el)
-    }
+    el = postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)

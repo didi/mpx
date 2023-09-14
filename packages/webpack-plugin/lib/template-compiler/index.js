@@ -26,6 +26,7 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
+  const hasVirtualHost = matchCondition(resourcePath, mpx.autoVirtualHostRules)
 
   const warn = (msg) => {
     this.emitWarning(
@@ -61,7 +62,7 @@ module.exports = function (raw) {
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
+    hasVirtualHost
   })
 
   if (meta.wxsContentMap) {
@@ -83,8 +84,19 @@ module.exports = function (raw) {
     return result
   }
 
+  const injectOptionsCode = (() => {
+    if (mode === 'wx' && hasVirtualHost) {
+      // 微信小程序 hasVirtualHost 默认是 false，所以只需要为 true 时添加配置
+      return `injectOptions: { virtualHost: ${hasVirtualHost} },`
+    } else if (mode === 'ali' && !hasVirtualHost) {
+      // 支付宝小程序 hasVirtualHost 默认是 true，所以只需要为 false 时添加配置
+      return `injectOptions: { virtualHost: ${hasVirtualHost} },`
+    }
+  })()
+
   const rawCode = `
 global.currentInject = {
+  ${injectOptionsCode}
   moduleId: ${JSON.stringify(moduleId)},
   render: function () {
     ${compiler.genNode(ast)}
