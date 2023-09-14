@@ -64,8 +64,11 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
         },
         {
           name: 'pageGroup',
-          // 每个分组中可分别配置阈值，如果不配置则表示
-          threshold: '500KB',
+          // 每个分组中可分别配置阈值，如果不配置则表示没任何限制
+          threshold: {
+            size: '500KB',
+            preWarningSize: true// 可选项，开启分组体积阈值预警，会以warning的形式在每次构建后输出当前分组的剩余体积
+          },
           entryRules: {
             include: ['src/pages/index', 'src/pages/user']
           }
