@@ -1180,56 +1180,56 @@ class MpxWebpackPlugin {
           }
 
           // 为跨平台api调用注入srcMode参数指导api运行时转换
-          const apiBlackListMap = [
-            'createApp',
-            'createPage',
-            'createComponent',
-            'createStore',
-            'createStoreWithThis',
-            'mixin',
-            'injectMixins',
-            'toPureObject',
-            'observable',
-            'watch',
-            'use',
-            'set',
-            'remove',
-            'delete',
-            'setConvertRule',
-            'getMixin',
-            'getComputed',
-            'implement'
-          ].reduce((map, api) => {
-            map[api] = true
-            return map
-          }, {})
-
-          const injectSrcModeForTransApi = (expr, members) => {
-            // members为空数组时，callee并不是memberExpression
-            if (!members.length) return
-            const callee = expr.callee
-            const args = expr.arguments
-            const name = callee.object.name
-            const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-            const localSrcMode = queryObj.mode
-            const globalSrcMode = mpx.srcMode
-            const srcMode = localSrcMode || globalSrcMode
-
-            if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
-
-            const srcModeString = `__mpx_src_mode_${srcMode}__`
-            const dep = new InjectDependency({
-              content: args.length
-                ? `, ${JSON.stringify(srcModeString)}`
-                : JSON.stringify(srcModeString),
-              index: expr.end - 1
-            })
-            parser.state.current.addPresentationalDependency(dep)
-          }
-
-          parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+          // const apiBlackListMap = [
+          //   'createApp',
+          //   'createPage',
+          //   'createComponent',
+          //   'createStore',
+          //   'createStoreWithThis',
+          //   'mixin',
+          //   'injectMixins',
+          //   'toPureObject',
+          //   'observable',
+          //   'watch',
+          //   'use',
+          //   'set',
+          //   'remove',
+          //   'delete',
+          //   'setConvertRule',
+          //   'getMixin',
+          //   'getComputed',
+          //   'implement'
+          // ].reduce((map, api) => {
+          //   map[api] = true
+          //   return map
+          // }, {})
+          //
+          // const injectSrcModeForTransApi = (expr, members) => {
+          //   // members为空数组时，callee并不是memberExpression
+          //   if (!members.length) return
+          //   const callee = expr.callee
+          //   const args = expr.arguments
+          //   const name = callee.object.name
+          //   const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
+          //   const localSrcMode = queryObj.mode
+          //   const globalSrcMode = mpx.srcMode
+          //   const srcMode = localSrcMode || globalSrcMode
+          //
+          //   if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
+          //
+          //   const srcModeString = `__mpx_src_mode_${srcMode}__`
+          //   const dep = new InjectDependency({
+          //     content: args.length
+          //       ? `, ${JSON.stringify(srcModeString)}`
+          //       : JSON.stringify(srcModeString),
+          //     index: expr.end - 1
+          //   })
+          //   parser.state.current.addPresentationalDependency(dep)
+          // }
+          //
+          // parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+          // parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
+          // parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
       }
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)
