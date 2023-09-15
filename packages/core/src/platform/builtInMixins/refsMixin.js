@@ -83,6 +83,10 @@ export default function getRefsMixin () {
           mpxCid: this.__mpxProxy.uid
         }
       },
+      [BEFORECREATE] () {
+        this._originCreateSelectorQuery = this.createSelectorQuery
+        this.createSelectorQuery = this._createSelectorQuery
+      },
       [CREATED] () {
         this.__updateRef()
       },
@@ -95,9 +99,8 @@ export default function getRefsMixin () {
     const proxyMethods = ['boundingClientRect', 'scrollOffset']
 
     Object.assign(refsMixin.methods, {
-      // todo 支付宝基础库升级至2.7.4以上可去除
-      createSelectorQuery (...args) {
-        const selectorQuery = envObj.createSelectorQuery(...args)
+      _createSelectorQuery (...args) {
+        const selectorQuery = this._originCreateSelectorQuery.call(this, ...args)
         const cbs = []
 
         proxyMethods.forEach((name) => {
@@ -118,6 +121,11 @@ export default function getRefsMixin () {
           }
           return originalExec.call(this, cb)
         }
+
+        selectorQuery.in = function () {
+          return this
+        }
+
         return selectorQuery
       },
       // todo 支付宝基础库升级至2.7.4以上可去除

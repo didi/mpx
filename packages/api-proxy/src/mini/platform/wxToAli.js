@@ -615,7 +615,6 @@ const getWxToAliApi = () => {
      * WXML
      */
 
-    // todo 支付宝基础库升级至2.7.4以上可去除
     createSelectorQuery (options = {}) {
       const selectorQuery = ALI_OBJ.createSelectorQuery(options)
       const proxyMethods = ['boundingClientRect', 'scrollOffset']
@@ -639,8 +638,12 @@ const getWxToAliApi = () => {
         return originalExec.call(this, cb)
       }
 
-      selectorQuery.in = function () {
-        return this
+      selectorQuery.in = function (_this) {
+        if (typeof _this !== 'object' || typeof _this.createSelectorQuery !== 'function') {
+          throw new Error('in 方法中，传入的 this 参数不是组件实例')
+        }
+
+        return _this.createSelectorQuery(options)
       }
 
       return selectorQuery
