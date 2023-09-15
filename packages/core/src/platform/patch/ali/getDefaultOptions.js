@@ -1,7 +1,7 @@
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { isFunction, error, diffAndCloneA, hasOwn } from '@mpxjs/utils'
+import { isFunction, error, diffAndCloneA, hasOwn, getRelativePath } from '@mpxjs/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -104,6 +104,22 @@ function initProxy (context, rawOptions, currentInject) {
   }
 }
 
+function handleRelations(rawOptions) {
+  if (!rawOptions.relations) return
+  const keys = Object.keys(rawOptions.relations)
+  if (!keys.length) return
+
+  rawOptions.options.relations = true
+  keys.forEach(key => {
+    const content = rawOptions.relations[key]
+    const currentResource = '/' + global.currentInject.injectComponentPath
+    const relativePath = getRelativePath(currentResource, key)
+    rawOptions.relations[relativePath] = content
+    rawOptions.options.currentResource = currentResource
+    delete rawOptions.relations[key]
+  })
+}
+
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
@@ -158,5 +174,6 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
+  handleRelations(rawOptions)
   return filterOptions(rawOptions, type)
 }

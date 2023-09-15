@@ -97,6 +97,7 @@ module.exports = function (raw) {
   const rawCode = `
 global.currentInject = {
   ${injectOptionsCode}
+  injectComponentPath: ${JSON.stringify(componentsMap[this.resourcePath])},
   moduleId: ${JSON.stringify(moduleId)},
   render: function () {
     ${compiler.genNode(ast)}

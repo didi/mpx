@@ -192,10 +192,24 @@ function aIsSubPathOfB (a, b) {
   }
 }
 
+function getRelativePath(absolutePath1, absolutePath2) {
+  const parts1 = absolutePath1.split('/')
+  const parts2 = absolutePath2.split('/')
+  while (parts1.length > 0 && parts2.length > 0 && parts1[0] === parts2[0]) {
+    parts1.shift()
+    parts2.shift()
+  }
+  const navigateUp = new Array(parts1.length - 1).fill('..')
+  const relativePath = navigateUp.concat(parts2).join('/')
+
+  return relativePath
+}
+
 export {
   getByPath,
   setByPath,
   doGetByPath,
   getFirstKey,
-  aIsSubPathOfB
+  aIsSubPathOfB,
+  getRelativePath
 }
