@@ -4,7 +4,7 @@
 
 <script>
   import { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
+  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy'
 
   const eventLoad = 'load'
   const eventError = 'error'

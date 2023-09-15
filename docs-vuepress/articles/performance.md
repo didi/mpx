@@ -114,7 +114,7 @@ mpx ≈ chameleon ≈ uniapp ≈ native ≈ wepy2 > taro next ≈ kbone ≈ mpvu
 
 更新耗时的计算方式是从数据操作事件触发开始到对应的setData回调完成的耗时
 
-> mpvue中使用了当前时间戳(new Date)作为超时依据对setData进行了超时时间为50ms的节流操作，该方式存在严重问题，当vue内单次渲染同步流程执行耗时超过50ms时，后续组件patch触发的setData会突破这个节流限制，以50ms每次的频率对setData进行高频无效调用。在该性能测试demo中，当优惠券数量超过500时，界面就会完全卡死。为了顺利跑完整个测试流程，我对该问题进行了简单修复，使用setTimeout重写了节流部分，确保在vue单次渲染流程同步执行完毕后才会调用setData发送合并数据，之后mpvue的所有性能测试都是基于这个patch版本来进行的，该patch版本存放在https://github.com/hiyuki/mp-framework-benchmark/blob/master/frameworks/mpvue/runtime/patch/index.js
+> mpvue中使用了当前时间戳(new Date)作为超时依据对setData进行了超时时间为50ms的节流操作，该方式存在严重问题，当vue内单次渲染同步流程执行耗时超过50ms时，后续组件patch触发的setData会突破这个节流限制，以50ms每次的频率对setData进行高频无效调用。在该性能测试demo中，当优惠券数量超过500时，界面就会完全卡死。为了顺利跑完整个测试流程，我对该问题进行了简单修复，使用setTimeout重写了节流部分，确保在vue单次渲染流程同步执行完毕后才会调用setData发送合并数据，之后mpvue的所有性能测试都是基于这个patch版本来进行的，该patch版本存放在https://github.com/hiyuki/mp-framework-benchmark/blob/master/frameworks/mpvue/runtime/patch/index.web.js
 
 > 理论上来讲native的性能在进行优化的前提下一定是所有框架的天花板，但是在日常业务开发中我们可能无法对每一次setData都进行优化，以下性能测试中所有的native数据均采用修改数据后全量发送的形式来实现。
 

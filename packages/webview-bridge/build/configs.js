@@ -13,13 +13,13 @@ const resolve = _path => path.resolve(__dirname, '../', _path)
 
 const configs = {
   umdDev: {
-    input: resolve('src/index.js'),
+    input: resolve('src/index.web.js'),
     file: resolve('dist/webviewbridge.js'),
     format: 'umd',
     env: 'development'
   },
   umdProd: {
-    input: resolve('src/index.js'),
+    input: resolve('src/index.web.js'),
     file: resolve('dist/webviewbridge.min.js'),
     fileName: resolve('../../examples/mpx-webview/H5/webviewbridge.min.js'),
     format: 'umd',

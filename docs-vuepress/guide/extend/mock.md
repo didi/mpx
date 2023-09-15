@@ -10,10 +10,10 @@ npm i @mpxjs/mock
 
 ## 使用说明
 
-新建 mock 文件目录及文件(例如：`src/mock/index.js` )：
+新建 mock 文件目录及文件(例如：`src/mock/index.web.js` )：
 
 ```js
-// src/mock/index.js
+// src/mock/index.web.js
 import mock from "@mpxjs/mock";
 mock([
   {
@@ -52,7 +52,7 @@ mock([
 > 由于 mock 为全局自动代理，执行`@mpxjs/mock`所暴露的方法之后会立即拦截小程序的原生请求，如果需要根据不同环境变量等去控制是否使用 mock 数据，可以参考如下方法：
 
 ```js
-// src/mock/index.js
+// src/mock/index.web.js
 import mock from "@mpxjs/mock";
 export default () => mock([
   {

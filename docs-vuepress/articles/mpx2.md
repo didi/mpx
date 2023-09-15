@@ -248,7 +248,7 @@ module.exports = {
 当 compiler 对 template 模板解析完后，template-compiler 接下来就开始处理 wxs 模块相关的内容：
 
 ```javascript
-// template-compiler/index.js
+// template-compiler/index.web.js
 
 module.exports = function (raw) {
   ...
@@ -346,7 +346,7 @@ require("!!../../node_modules/@mpxjs/webpack-plugin/lib/extractor?type=template&
 首先来看下 json block 的处理流程：`list.mpx -> json-compiler -> extractor`。第一个阶段 list.mpx 文件经由 json-compiler 的处理流程在前面的章节已经讲过，主要就是分析依赖增加动态入口的编译过程。当所有的依赖分析完后，调用 json-compiler loader 的异步回调函数：
 
 ```javascript
-// lib/json-compiler/index.js
+// lib/json-compiler/index.web.js
 
 module.exports = function (content) {
 

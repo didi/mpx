@@ -18,7 +18,7 @@ Mpx 脚手架 `@mpxjs/cli` 作为 Mpx 生态当中比较重要的一部分，是
 -- mpx-project
  |-- src // 项目源码
  |-- config // 项目配置文件
-   |-- index.js // 配置入口文件
+   |-- index.web.js // 配置入口文件
    |-- mpxLoader.conf.js // mpx-loader 配置
    |-- mpxPlugin.conf.js // mpx webpack-plugin 配置
    |-- user.conf.js // 用户的 prompts 选择信息

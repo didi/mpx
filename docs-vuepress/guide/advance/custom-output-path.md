@@ -65,7 +65,7 @@ new MpxWebpackPlugin({
     // hash: 8位长度的hash串
     // ext: 文件后缀(.js｜ .wxml | .json 等)
 
-    // 输出示例： pages/testax34dde3/index.js
+    // 输出示例： pages/testax34dde3/index.web.js
     return path.join(type + 's', name + hash, 'index' + ext)
   },
 })
@@ -83,7 +83,7 @@ module.exports = defineConfig({
           // hash: 8位长度的hash串
           // ext: 文件后缀(.js｜ .wxml | .json 等)
 
-          // 输出示例： pages/testax34dde3/index.js
+          // 输出示例： pages/testax34dde3/index.web.js
           return path.join(type + 's', name + hash, 'index' + ext)
         }
       }

@@ -29,7 +29,6 @@ function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   })
 
   opts = Object.assign({}, opts, extraOpt)
-
   return opts
 }
 
@@ -77,6 +76,8 @@ function getEnvObj () {
       return qa
     case 'dd':
       return dd
+    case 'web':
+      return {}
   }
 }
 
@@ -86,6 +87,11 @@ function warn (msg) {
 
 function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
+}
+function envError (method) {
+  return () => {
+    console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+  }
 }
 
 function noop () {
@@ -106,6 +112,7 @@ export {
   genFromMap,
   getEnvObj,
   error,
+  envError,
   warn,
   noop,
   makeMap,

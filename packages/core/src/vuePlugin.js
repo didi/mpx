@@ -1,5 +1,5 @@
 import { walkChildren, parseSelector, error } from '@mpxjs/utils'
-import * as webApi from '@mpxjs/api-proxy/src/web/api'
+import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 
 export default function install (Vue) {
   Vue.prototype.triggerEvent = function (eventName, eventDetail) {
@@ -23,9 +23,9 @@ export default function install (Vue) {
     return this.selectComponent(selector, true)
   }
   Vue.prototype.createSelectorQuery = function () {
-    return webApi.createSelectorQuery().in(this)
+    return createSelectorQuery().in(this)
   }
   Vue.prototype.createIntersectionObserver = function (component, options) {
-    return webApi.createIntersectionObserver(component, options)
+    return createIntersectionObserver(component, options)
   }
 }

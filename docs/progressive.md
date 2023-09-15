@@ -42,14 +42,14 @@ mpx并不一定要求用户一定要一次性用上框架的所有东西。
   |-- npm-a-wx-component // npm安装
   |   --package.json
   |   --src
-  |     --index.js
+  |     --index.web.js
   |     --index.json
   |     --index.wxss
   |     --index.wxml
   |-- npm-b-wx-component // npm安装
   |   --package.json
   |   --src
-  |     --index.js
+  |     --index.web.js
   |     --index.json
   |     --index.wxss
   |     --index.wxml
@@ -57,7 +57,7 @@ mpx并不一定要求用户一定要一次性用上框架的所有东西。
   │-- container.mpx 
   │-- com-a.mpx 
   |-- src-wx-component // 手动拷贝
-  |  --index.js
+  |  --index.web.js
   |  --index.json
   |  --index.wxss
   |  --index.wxml
@@ -168,7 +168,7 @@ module.exports = merge(baseWebpackConfig, {
 module.exports = {
   entry: {
     app: resolveSrc('app.mpx'),
-    index: resolveSrc('index.js') // 导出的入口文件，若没有可不写
+    index: resolveSrc('index.web.js') // 导出的入口文件，若没有可不写
   },
   output: {
     libraryTarget: 'commonjs2',

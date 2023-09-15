@@ -1,5 +1,5 @@
-import install from '../../src/index.web'
-import * as allApi from '../../src/web/api/index'
+import install from '../../src/index'
+import * as allApi from '../../src/platform/api'
 
 const obj = Object.create(null)
 
