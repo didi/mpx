@@ -128,10 +128,6 @@ export default function getRefsMixin () {
 
         return selectorQuery
       },
-      // todo 支付宝基础库升级至2.7.4以上可去除
-      createIntersectionObserver (...args) {
-        return envObj.createIntersectionObserver(...args)
-      },
       selectComponent (selector) {
         return this.$selectComponent(selector)
       },
