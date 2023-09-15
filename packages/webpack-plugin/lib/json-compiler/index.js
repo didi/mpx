@@ -531,7 +531,7 @@ module.exports = function (content) {
     }
 
     const processCustomTabBar = (tabBar, context, callback) => {
-      if (tabBar && tabBar.custom || tabBar.customize) {
+      if (tabBar && (tabBar.custom || tabBar.customize)) {
         const outputCustomKey = config[mode].tabBar.customKey
         const srcCustomKey = tabBar.custom ? 'custom' : 'customize'
         const srcPath = resolveTabBarPath(srcCustomKey)
