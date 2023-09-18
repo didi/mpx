@@ -159,7 +159,7 @@ export default function processOption (
               return next({
                 path: action.path,
                 query: {
-                  reLaunchCount: action.reLaunchCount
+                  routeCount: action.routeCount
                 },
                 replace: true
               })
