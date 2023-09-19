@@ -1469,8 +1469,8 @@ try {
       })
 
       const typeLoaderProcessInfo = {
-        styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
-        template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
+        styles: ['node_modules/css-loader', wxssLoaderPath, styleCompilerPath],
+        template: ['node_modules/html-loader', wxmlLoaderPath, templateCompilerPath]
       }
 
       // 应用过rules后，注入mpx相关资源编译loader
@@ -1533,15 +1533,15 @@ try {
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
-          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
+          const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
-            if (currentLoader.includes('css-loader') && cssLoaderIndex === -1) {
+            if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
               cssLoaderIndex = index
-            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
+            } else if (currentLoader.includes('node_modules/vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
             } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
               mpxStyleLoaderIndex = index

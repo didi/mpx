@@ -219,7 +219,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             // 将非tabBar页面remove
             let tabItem = null
             global.__mpxRouter.needRemove = stack.filter((item) => {
-              if (tabBarMap[item.path.slice(1)]) {
+              if (tabBarMap[item.path.slice(1)] && !tabItem) {
                 tabItem = item
                 tabItem.path = to.path
                 return false
@@ -240,7 +240,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             return next({
               path: action.path,
               query: {
-                reLaunchCount: action.reLaunchCount
+                routeCount: action.routeCount
               },
               replace: true
             })
