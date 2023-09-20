@@ -37,9 +37,9 @@ module.exports = function getSpec ({ warn, error }) {
 
   function checkAliComponentGenericsValue (input, { mode }) {
     const componentGenerics = input.componentGenerics
-    for (let tag in componentGenerics) {
+    for (const tag in componentGenerics) {
       const value = componentGenerics[tag]
-      if (type(value) === 'Boolean' || type(value) === 'Object' && !hasOwn(value, 'default')) {
+      if (type(value) === 'Boolean' || (type(value) === 'Object' && !hasOwn(value, 'default'))) {
         warn(`在 ${mode} 环境当中 componentGenerics ${tag} 必须配置默认自定义组件`)
         break
       }

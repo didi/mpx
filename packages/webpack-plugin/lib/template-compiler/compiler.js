@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -1655,7 +1655,6 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-
 // externalClasses只能模拟静态传递
 function processWebExternalClassesHack (el, options) {
   const staticClass = getAndRemoveAttr(el, 'class').val
@@ -1716,18 +1715,6 @@ function processWebExternalClassesHack (el, options) {
     })
   }
 }
-
-// function processScoped (el, options) {
-//   if (options.hasScoped && isRealNode(el)) {
-//     const moduleId = options.moduleId
-//     const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
-//     const staticClass = getAndRemoveAttr(el, 'class').val
-//     addAttrs(el, [{
-//       name: 'class',
-//       value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
-//     }])
-//   }
-// }
 
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
@@ -2010,7 +1997,6 @@ function processElement (el, root, options, meta) {
   }
 
   const pass = isNative || processTemplate(el) || processingTemplate
-
 
   processIf(el)
   processFor(el)

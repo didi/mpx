@@ -192,7 +192,7 @@ function aIsSubPathOfB (a, b) {
   }
 }
 
-function getRelativePath(absolutePath1, absolutePath2) {
+function getRelativePath (absolutePath1, absolutePath2) {
   const parts1 = absolutePath1.split('/')
   const parts2 = absolutePath2.split('/')
   while (parts1.length > 0 && parts2.length > 0 && parts1[0] === parts2[0]) {

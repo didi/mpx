@@ -322,14 +322,12 @@ module.exports = function (content) {
       output += '/* styles */\n'
       if (parts.styles.length) {
         parts.styles.forEach((style, i) => {
-          const scoped = style.scoped || autoScope
           const extraOptions = {
             // style src会被特殊处理为全局复用样式，不添加resourcePath，添加isStatic及issuerFile
             ...style.src
               ? { ...queryObj, isStatic: true, issuerResource: addQuery(this.resource, { type: 'styles' }, true) }
               : null,
-            moduleId,
-            scoped
+            moduleId
           }
           // require style
           output += getRequire('styles', style, extraOptions, i) + '\n'

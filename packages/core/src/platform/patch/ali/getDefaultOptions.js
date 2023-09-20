@@ -104,7 +104,7 @@ function initProxy (context, rawOptions, currentInject) {
   }
 }
 
-function handleRelations(rawOptions) {
+function handleRelations (rawOptions) {
   if (!rawOptions.relations) return
   const keys = Object.keys(rawOptions.relations)
   if (!keys.length) return

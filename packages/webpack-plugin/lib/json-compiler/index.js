@@ -162,7 +162,7 @@ module.exports = function (content) {
       json.component = true
     }
   }
-  
+
   // wx 转 ali 默认开启样式隔离
   const transAli = mode === 'ali' && srcMode === 'wx'
   if (transAli && !isApp) {

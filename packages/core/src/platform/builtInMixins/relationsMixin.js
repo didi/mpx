@@ -9,12 +9,12 @@ const relationTypeMap = {
 export default function relationsMixin (mixinType) {
   if (__mpx_mode__ === 'ali' && mixinType === 'component') {
     return {
-      [BEFORECREATE]() {
+      [BEFORECREATE] () {
         this._originGetRelationNodes = this.getRelationNodes
         this.getRelationNodes = this._getRelationNodes
       },
       methods: {
-        _getRelationNodes(path) {
+        _getRelationNodes (path) {
           const currentResource = this.$rawOptions.options.currentResource
           const relativePath = getRelativePath(currentResource, path)
           return this._originGetRelationNodes(relativePath)
