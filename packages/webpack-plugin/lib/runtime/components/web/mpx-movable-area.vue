@@ -32,7 +32,7 @@
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
     .mpx-movable-area-container
-        position: absolute
+        position: relative
         .mpx-movable-scroll-wrapper
             position: absolute
             top: 0
