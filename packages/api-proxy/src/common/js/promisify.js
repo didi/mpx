@@ -1,4 +1,4 @@
-import { genFromMap, getEnvObj, noop } from '../common/js'
+import { genFromMap, getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()
 
@@ -21,6 +21,7 @@ const blackList = [
   'createSelectorQuery',
   'createIntersectionObserver',
   'hideKeyboard',
+  // todo 小程序支持 promise 风格调用
   'stopPullDownRefresh',
   'createWorker',
   'pageScrollTo',
@@ -96,4 +97,6 @@ function promisify (listObj, whiteList, customBlackList) {
   return result
 }
 
-export default promisify
+export {
+  promisify
+}
