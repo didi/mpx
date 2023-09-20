@@ -132,11 +132,13 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, {
-          target: !!(relation && relation.target),
-          children: new Set(),
-          parents: new Set()
-        })
+        if (!moduleEntryGraphMap.has(moduleId)) {
+          moduleEntryGraphMap.set(moduleId, {
+            target: !!(relation && relation.target),
+            children: new Set(),
+            parents: new Set()
+          })
+        }
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
