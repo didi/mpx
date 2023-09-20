@@ -1,9 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW } = require('../utils/const')
 const normalize = require('../utils/normalize')
-const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -1729,69 +1727,6 @@ function processBuiltInComponents (el, meta) {
       meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
     }
   }
-}
-
-function processAliAddComponentRootView (el, options) {
-  const processAttrsConditions = [
-    { condition: /^(on|catch)Tap$/, action: 'clone' },
-    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
-    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
-    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
-    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
-    { condition: /^(on|catch)LongTap$/, action: 'clone' },
-    { condition: /^data-/, action: 'clone' },
-    { condition: /^style$/, action: 'move' },
-    { condition: /^slot$/, action: 'move' }
-  ]
-  const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
-  ]
-  const newElAttrs = []
-  const allAttrs = cloneAttrsList(el.attrsList)
-
-  function processClone (attr) {
-    newElAttrs.push(attr)
-  }
-
-  function processMove (attr) {
-    getAndRemoveAttr(el, attr.name)
-    newElAttrs.push(attr)
-  }
-
-  function processAppendRules (el) {
-    processAppendAttrsRules.forEach((rule) => {
-      const getNeedAppendAttrValue = el.attrsMap[rule.name]
-      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
-      newElAttrs.push({
-        name: rule.name,
-        value
-      })
-    })
-  }
-
-  processAttrsConditions.forEach(item => {
-    const matcher = normalizeCondition(item.condition)
-    allAttrs.forEach((attr) => {
-      if (matcher(attr.name)) {
-        if (item.action === 'clone') {
-          processClone(attr)
-        } else if (item.action === 'move') {
-          processMove(attr)
-        }
-      }
-    })
-  })
-
-  processAppendRules(el)
-  const componentWrapView = createASTElement('view', newElAttrs)
-  moveBaseDirective(componentWrapView, el)
-  if (el.is && el.components) {
-    el = postProcessComponentIs(el)
-  }
-
-  replaceNode(el, componentWrapView, true)
-  addChild(componentWrapView, el)
-  return componentWrapView
 }
 
 function processShow (el, options, root) {

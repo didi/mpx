@@ -100,7 +100,7 @@ export default function getRefsMixin () {
 
     Object.assign(refsMixin.methods, {
       _createSelectorQuery (...args) {
-        const selectorQuery = this._originCreateSelectorQuery.call(this, ...args)
+        const selectorQuery = this._originCreateSelectorQuery(...args)
         const cbs = []
 
         proxyMethods.forEach((name) => {
