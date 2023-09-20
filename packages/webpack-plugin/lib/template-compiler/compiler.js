@@ -878,6 +878,7 @@ function moveBaseDirective (target, from, isDelete = true) {
 }
 
 function stringify (str) {
+  if (mode === 'web') str = str.replace(/'/g, '"')
   return JSON.stringify(str)
 }
 
@@ -988,7 +989,7 @@ function parseFuncStr2 (str) {
       if (subIndex) {
         const index1 = ret.index + subIndex
         const index2 = index1 + 6
-        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+        args = args.substring(0, index1) + stringify(eventIdentifier) + args.substring(index2)
       }
     }
     return {
@@ -1016,7 +1017,7 @@ function stringifyWithResolveComputed (modelValue) {
       computedStack.push(char)
       if (computedStack.length === 1) {
         fragment += '.'
-        result.push(JSON.stringify(fragment))
+        result.push(stringify(fragment))
         fragment = ''
         continue
       }
@@ -1033,7 +1034,7 @@ function stringifyWithResolveComputed (modelValue) {
     fragment += char
   }
   if (fragment !== '') {
-    result.push(JSON.stringify(fragment))
+    result.push(stringify(fragment))
   }
   return result.join('+')
 }
@@ -1664,7 +1665,7 @@ function processWebExternalClassesHack (el, options) {
     options.externalClasses.forEach((className) => {
       const index = classNames.indexOf(className)
       if (index > -1) {
-        replacements.push(`$attrs[${JSON.stringify(className)}]`)
+        replacements.push(`$attrs[${stringify(className)}]`)
         classNames.splice(index, 1)
       }
     })
@@ -1698,13 +1699,13 @@ function processWebExternalClassesHack (el, options) {
         options.externalClasses.forEach((className) => {
           const index = classNames.indexOf(className)
           if (index > -1) {
-            replacements.push(`$attrs[${JSON.stringify(className)}]`)
+            replacements.push(`$attrs[${stringify(className)}]`)
             classNames.splice(index, 1)
           }
         })
 
         if (classNames.length) {
-          replacements.unshift(JSON.stringify(classNames.join(' ')))
+          replacements.unshift(stringify(classNames.join(' ')))
         }
 
         addAttrs(el, [{
