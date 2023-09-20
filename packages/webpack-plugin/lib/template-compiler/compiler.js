@@ -1907,7 +1907,7 @@ function getVirtualHostRoot (options, meta) {
       !meta.options && (meta.options = {})
       meta.options.virtualHost = true
     }
-    if (mode === 'ali' && !options.hasVirtualHost) {
+    if ((mode === 'ali' && !options.hasVirtualHost) || mode === 'web') {
       // ali组件根节点实体化
       let rootView = createASTElement('view', [
         {
@@ -2124,6 +2124,8 @@ function processElement (el, root, options, meta) {
     processIfForWeb(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
+    // processAliStyleClassHack(el, options, root)
+    processAliEventHack(el, options, root)
     return
   }
 

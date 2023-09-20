@@ -38,7 +38,8 @@ module.exports = function (template, {
     wxsContentMap,
     decodeHTMLText,
     externalClasses,
-    checkUsingComponents
+    checkUsingComponents,
+    fallthroughEventAttrsRules
     // autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
@@ -101,7 +102,8 @@ module.exports = function (template, {
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
           globalComponents: [],
           // web模式下实现抽象组件
-          componentGenerics
+          componentGenerics,
+          fallthroughEventAttrsRules
           // todo 后续输出web也基于autoVirtualHostRules决定是否添加root wrapper
           // hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
         })

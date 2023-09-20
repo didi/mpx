@@ -170,7 +170,7 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
-    if (options.mode !== 'web') {
+    if (options.mode) {
       let fallthroughEventAttrsRules = []
       const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
       if (fallthroughEventAttrsRulesRaw) {
