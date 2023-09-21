@@ -31,6 +31,7 @@ function initProxy (context, rawOptions) {
     context.$rawOptions = rawOptions
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
+    // todo 待问题修复后需要还原
     // context.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
   }
 }
@@ -76,6 +77,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject, params)
       }
+      // todo 待问题修复后需要移除，目前逻辑是已经创建实例的情况下依旧会重复执行
       this.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
     },
     [hookNames[1]] () {
