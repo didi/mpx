@@ -26,14 +26,13 @@ function filterOptions (options) {
 }
 
 function initProxy (context, rawOptions) {
-  if(!context.__mpxProxy) {
+  if (!context.__mpxProxy) {
     // 缓存options
     context.$rawOptions = rawOptions
     // 创建proxy对象
     context.__mpxProxy = new MpxProxy(rawOptions, context)
     // context.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
   }
-
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
