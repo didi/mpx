@@ -1,0 +1,43 @@
+{
+  "name": "@mpxjs/reactivity",
+  "version": "1.0.0",
+  "description": "@mpxjs/reactivity",
+  "main": "index.js",
+  "module": "dist/index.esm-bundler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "reactivity",
+    "proxy"
+  ],
+  "files": [
+    "index.js",
+    "dist"
+  ],
+  "buildOptions": {
+    "name": "reactivity",
+    "formats": [
+      "esm-bundler",
+      "cjs"
+    ]
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.[t|j]sx?$": "babel-jest"
+    }
+  },
+  "author": "Luobinf",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:didi/mpx.git"
+  },
+  "homepage": "https://didi.github.io/mpx/",
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "dependencies": {
+    "@mpxjs/utils": "^2.8.15"
+  }
+}

@@ -3,6 +3,7 @@
   "description": "mpx monorepo",
   "private": true,
   "scripts": {
+    "build": "node scripts/build.js",
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
@@ -16,6 +17,8 @@
     "@babel/eslint-parser": "^7.18.9",
     "@docsearch/css": "^3.0.0",
     "@docsearch/js": "^3.0.0",
+    "@rollup/plugin-commonjs": "^25.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
     "@vuepress/plugin-back-to-top": "^1.8.2",
@@ -30,6 +33,7 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.2.0",
     "lerna": "^3.4.3",
+    "rollup": "^3.29.2",
     "typescript": "^4.1.3",
     "vuepress": "^1.9.7"
   }

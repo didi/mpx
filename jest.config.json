@@ -7,5 +7,11 @@
   },
   "testEnvironment": "jsdom",
   "testMatch": ["**/packages/**/?(*.)+(spec|test).[jt]s?(x)"],
-  "testPathIgnorePatterns": ["dist", "node_modules"]
+  "testPathIgnorePatterns": ["dist", "node_modules"],
+  "transformIgnorePatterns": ["node_modules/(?!(@mpxjs/*)/)"],
+  "globals": {
+    "__mpx_mode__": "wx",
+    "wx": {
+    }
+  }
 }
