@@ -26,11 +26,14 @@ function filterOptions (options) {
 }
 
 function initProxy (context, rawOptions) {
-  // 缓存options
-  context.$rawOptions = rawOptions
-  // 创建proxy对象
-  context.__mpxProxy = new MpxProxy(rawOptions, context)
-  context.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
+  if(!context.__mpxProxy) {
+    // 缓存options
+    context.$rawOptions = rawOptions
+    // 创建proxy对象
+    context.__mpxProxy = new MpxProxy(rawOptions, context)
+    // context.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
+  }
+
 }
 
 export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
@@ -74,6 +77,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
       if (!this.__mpxProxy) {
         initProxy(this, rawOptions, currentInject, params)
       }
+      this.__mpxProxy.callHook(CREATED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
     },
     [hookNames[1]] () {
       this.__mpxProxy && this.__mpxProxy.callHook(MOUNTED, Hummer.pageInfo && Hummer.pageInfo.params && [Hummer.pageInfo.params])
