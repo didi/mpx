@@ -1843,7 +1843,7 @@ function processAliEventHack (el, options, root) {
     return
   }
   const { fallthroughEventAttrsRules } = options
-  let fallThroughEvents = ['onTap']
+  let fallThroughEvents = ['bindtap']
   // 判断当前文件是否在范围中
   const filePath = options.filePath
   for (let item of fallthroughEventAttrsRules) {
@@ -1871,7 +1871,7 @@ function processAliEventHack (el, options, root) {
   })
 }
 
-function processAliStyleClassHack (el, options, root) {
+function processStyleClassHack (el, options, root) {
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
     const processor = ({ name, value, typeName }) => {
@@ -1915,6 +1915,13 @@ function getVirtualHostRoot (options, meta) {
           value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
         }
       ])
+      const transAli = mode === 'ali' && srcMode === 'wx'
+      const transWeb = mode === 'web' && srcMode === 'web'
+      if (transAli || transWeb) {
+        processStyleClassHack(rootView, options, rootView)
+        processAliEventHack(rootView, options, rootView)
+      }
+      // 添加时间处理
       processElement(rootView, rootView, options, meta)
       return rootView
     }
@@ -2124,8 +2131,6 @@ function processElement (el, root, options, meta) {
     processIfForWeb(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
-    // processAliStyleClassHack(el, options, root)
-    processAliEventHack(el, options, root)
     return
   }
 
@@ -2148,12 +2153,6 @@ function processElement (el, root, options, meta) {
     processClass(el, meta)
     processStyle(el, meta)
     processShow(el, options, root)
-  }
-
-  // 当mode为ali不管是不是跨平台都需要进行此处理，以保障ali当中的refs相关增强能力正常运行
-  if (transAli) {
-    processAliStyleClassHack(el, options, root)
-    processAliEventHack(el, options, root)
   }
 
   if (!pass) {
