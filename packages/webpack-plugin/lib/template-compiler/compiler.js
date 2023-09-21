@@ -1774,7 +1774,7 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processEventHack (el, options, root) {
+function processRootViewEventHack (el, options, root) {
   // 只处理组件根节点
   if (!(options.isComponent && el === root && isRealNode(el))) {
     return
@@ -1808,12 +1808,16 @@ function processEventHack (el, options, root) {
   })
 }
 
-function processStyleClassHack (el, options, root) {
+function processRootViewStyleClassHack (el, options, root) {
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
     const processor = ({ name, value, typeName }) => {
       const sep = name === 'style' ? ';' : ' '
       value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
+      if (mode === 'web') {
+        name = ':' + name
+        value = parseMustache(value).result
+      }
       return [name, value]
     }
 
@@ -1855,8 +1859,8 @@ function getVirtualHostRoot (options, meta) {
       const transAli = mode === 'ali' && srcMode === 'wx'
       const transWeb = mode === 'web' && srcMode === 'web'
       if (transAli || transWeb) {
-        processStyleClassHack(rootView, options, rootView)
-        processEventHack(rootView, options, rootView)
+        processRootViewStyleClassHack(rootView, options, rootView)
+        processRootViewEventHack(rootView, options, rootView)
       }
       // 添加时间处理
       processElement(rootView, rootView, options, meta)
