@@ -2,7 +2,6 @@ import { webHandleSuccess } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   const { title, success, complete } = options
-  console.log(title, '~~~~~')
   if (document.title !== title) {
     document.title = title
   }

@@ -6,7 +6,6 @@ function makePhoneCall (options = {}) {
   const opts = changeOpts(options, {
     phoneNumber: 'number'
   })
-  console.log(opts)
   ALI_OBJ.makePhoneCall(opts)
 }
 

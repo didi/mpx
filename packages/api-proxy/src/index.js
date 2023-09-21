@@ -1,6 +1,3 @@
-import install, { getProxy } from './platform'
-export * from './platform/api'
-export {
-  getProxy
-}
+import install from './install'
+export * from './platform'
 export default install

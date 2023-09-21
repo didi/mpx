@@ -1,77 +1,106 @@
-import transformApi from '../mini/transform'
-import * as platformApi from './api'
-import promisify from '../mini/promisify'
+// showActionSheet
+export * from './api/action-sheet'
 
-export default function install (target, options = {}) {
-  const {
-    usePromise = false, // 是否转为 promise 格式
-    whiteList = [], // 强制变成 promise 格式的 api
-    blackList = [], // 强制不变成 promise 格式的 api
-    platform = {},
-    exclude = ['shareImageMessage'], // 强制不进行代理的api，临时fix微信分享朋友圈白屏
-    custom = {}, // 自定义转化规则
-    fallbackMap = {} // 对于不支持的API，允许配置一个映射表，接管不存在的API
-  } = options
+// addPhoneContact
+export * from './api/add-phone-contact'
 
-  let { from = '', to = '' } = platform
-  /* eslint-disable camelcase, no-undef */
-  if (typeof __mpx_src_mode__ !== 'undefined') {
-    if (from && from !== __mpx_src_mode__) {
-      console.warn && console.warn('the platform from field inconsistent with the current environment value\n')
-    }
-    from = `__mpx_src_mode_${__mpx_src_mode__}__`
-  } else {
-    if (!from) {
-      from = 'wx'
-      console.warn && console.warn('the platform from field is empty, wx will be used by default\n')
-    }
-    from = `__mpx_src_mode_${from}__`
-  }
+// createAnimation
+export * from './api/animation'
 
-  if (typeof __mpx_mode__ !== 'undefined') {
-    to = __mpx_mode__
-  } else if (!to) {
-    console.warn && console.warn('the platform to field is empty, ali will be used by default\n')
-    to = 'wx'
-  }
-  /* eslint-enable */
+// onAppShow, onAppHide, offAppShow, offAppHide, onError, offError
+export * from './api/app'
 
-  const transedApi = transformApi({
-    exclude,
-    from,
-    to,
-    custom,
-    platformApi
-  })
+// createInnerAudioContext
+export * from './api/audio'
 
-  const promisedApi = usePromise ? promisify(transedApi, whiteList, blackList) : {}
-  const allApi = Object.assign({}, transedApi, promisedApi)
+// base64ToArrayBuffer, arrayBufferToBase64
+export * from './api/base'
 
-  Object.keys(allApi).forEach(api => {
-    try {
-      if (typeof allApi[api] !== 'function') {
-        target[api] = allApi[api]
-        return
-      }
+// closeBLEConnection, createBLEConnection, onBLEConnectionStateChange
+export * from './api/ble-connection'
 
-      target[api] = (...args) => {
-        return allApi[api].apply(target, args)
-      }
-    } catch (e) {
-    } // 支付宝不支持重写 call 方法
-  })
+// createCanvasContext, canvasToTempFilePath, canvasGetImageData
+export * from './api/canvas'
 
-  // Fallback Map option
-  Object.keys(fallbackMap)
-    .forEach(k => {
-      if (!target[k]) {
-        target[k] = fallbackMap[k]
-      }
-    })
-}
+// checkSession
+export * from './api/check-session'
 
-export function getProxy (options = {}) {
-  const apiProxy = {}
-  install(apiProxy, options)
-  return apiProxy
-}
+// setClipboardData, getClipboardData
+export * from './api/clipboard-data'
+
+// createIntersectionObserver
+export * from './api/create-intersection-observer'
+
+// createSelectorQuery
+export * from './api/create-selector-query'
+
+// getNetworkType, onNetworkStatusChange, offNetworkStatusChange
+export * from './api/device/network'
+
+// downloadFile, uploadFile
+export * from './api/file'
+
+// getUserInfo
+export * from './api/get-user-info'
+
+// previewImage, compressImage
+export * from './api/image'
+
+// login
+export * from './api/login'
+
+// makePhoneCall
+export * from './api/make-phone-call'
+
+// showModal
+export * from './api/modal'
+
+// nextTick
+export * from './api/next-tick'
+
+// pageScrollTo
+export * from './api/page-scroll-to'
+
+// stopPullDownRefresh
+export * from './api/pull-down'
+
+// request
+export * from './api/request'
+
+// requestPayment
+export * from './api/request-payment'
+
+// redirectTo, navigateTo, navigateBack, reLaunch, switchTab
+export * from './api/route'
+
+// scanCode
+export * from './api/scan-code'
+
+// setScreenBrightness, getScreenBrightness
+export * from './api/screen-brightness'
+
+// setNavigationBarTitle, setNavigationBarColor
+export * from './api/set-navigation-bar'
+
+// connectSocket
+export * from './api/socket'
+
+// setStorage, setStorageSync, getStorage, getStorageSync
+// getStorageInfo, getStorageInfoSync, removeStorage, removeStorageSync
+// clearStorage, clearStorageSync
+export * from './api/storage'
+
+// getSystemInfo, getSystemInfoSync
+export * from './api/system'
+
+// setTabBarItem, setTabBarStyle, showTabBar, hideTabBar
+export * from './api/tab-bar'
+
+// showToast, hideToast, showLoading, hideLoading
+export * from './api/toast'
+
+// createVideoContext
+export * from './api/video'
+
+// onWindowResize, offWindowResize
+export * from './api/window'

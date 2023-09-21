@@ -1,9 +1,9 @@
-import { getEnvObj, handleSuccess } from '../../../common/js'
+import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
 
 const ALI_OBJ = getEnvObj()
 
 function setNavigationBarTitle (options = {}) {
-  handleSuccess(opts, res => {
+  handleSuccess(options, res => {
     return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
   })
   if (ALI_OBJ.canIUse('setNavigationBarTitle')) {
