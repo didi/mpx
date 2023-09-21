@@ -3,7 +3,7 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
-const { normalizeCondition } = require('../utils/match-condition')
+const { matchCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -1774,70 +1774,7 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-// function processAliAddComponentRootView (el, options) {
-//   const processAttrsConditions = [
-//     { condition: /^(on|catch)Tap$/, action: 'clone' },
-//     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
-//     { condition: /^(on|catch)TouchMove$/, action: 'clone' },
-//     { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
-//     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
-//     { condition: /^(on|catch)LongTap$/, action: 'clone' },
-//     { condition: /^data-/, action: 'clone' },
-//     { condition: /^style$/, action: 'move' },
-//     { condition: /^slot$/, action: 'move' }
-//   ]
-//   const processAppendAttrsRules = [
-//     { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
-//   ]
-//   const newElAttrs = []
-//   const allAttrs = cloneAttrsList(el.attrsList)
-//
-//   function processClone (attr) {
-//     newElAttrs.push(attr)
-//   }
-//
-//   function processMove (attr) {
-//     getAndRemoveAttr(el, attr.name)
-//     newElAttrs.push(attr)
-//   }
-//
-//   function processAppendRules (el) {
-//     processAppendAttrsRules.forEach((rule) => {
-//       const getNeedAppendAttrValue = el.attrsMap[rule.name]
-//       const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
-//       newElAttrs.push({
-//         name: rule.name,
-//         value
-//       })
-//     })
-//   }
-//
-//   processAttrsConditions.forEach(item => {
-//     const matcher = normalizeCondition(item.condition)
-//     allAttrs.forEach((attr) => {
-//       if (matcher(attr.name)) {
-//         if (item.action === 'clone') {
-//           processClone(attr)
-//         } else if (item.action === 'move') {
-//           processMove(attr)
-//         }
-//       }
-//     })
-//   })
-//
-//   processAppendRules(el)
-//   const componentWrapView = createASTElement('view', newElAttrs)
-//   moveBaseDirective(componentWrapView, el)
-//   if (el.is && el.components) {
-//     el = postProcessComponentIs(el)
-//   }
-//
-//   replaceNode(el, componentWrapView, true)
-//   addChild(componentWrapView, el)
-//   return componentWrapView
-// }
-
-function processAliEventHack (el, options, root) {
+function processEventHack (el, options, root) {
   // 只处理组件根节点
   if (!(options.isComponent && el === root && isRealNode(el))) {
     return
@@ -1846,7 +1783,7 @@ function processAliEventHack (el, options, root) {
   let fallThroughEvents = ['bindtap']
   // 判断当前文件是否在范围中
   const filePath = options.filePath
-  for (let item of fallthroughEventAttrsRules) {
+  for (const item of fallthroughEventAttrsRules) {
     const {
       include,
       exclude
@@ -1875,15 +1812,15 @@ function processStyleClassHack (el, options, root) {
   // 处理组件根节点
   if (options.isComponent && el === root && isRealNode(el)) {
     const processor = ({ name, value, typeName }) => {
-      let sep = name === 'style' ? ';' : ' '
+      const sep = name === 'style' ? ';' : ' '
       value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [ name, value ]
+      return [name, value]
     }
 
     ['style', 'class'].forEach((type) => {
-      let exp = getAndRemoveAttr(el, type).val
-      let typeName = type === 'class' ? 'className' : type
-      let [newName, newValue] = processor({
+      const exp = getAndRemoveAttr(el, type).val
+      const typeName = type === 'class' ? 'className' : type
+      const [newName, newValue] = processor({
         name: type,
         value: exp,
         typeName
@@ -1909,7 +1846,7 @@ function getVirtualHostRoot (options, meta) {
     }
     if ((mode === 'ali' && !options.hasVirtualHost) || mode === 'web') {
       // ali组件根节点实体化
-      let rootView = createASTElement('view', [
+      const rootView = createASTElement('view', [
         {
           name: 'class',
           value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
@@ -1919,7 +1856,7 @@ function getVirtualHostRoot (options, meta) {
       const transWeb = mode === 'web' && srcMode === 'web'
       if (transAli || transWeb) {
         processStyleClassHack(rootView, options, rootView)
-        processAliEventHack(rootView, options, rootView)
+        processEventHack(rootView, options, rootView)
       }
       // 添加时间处理
       processElement(rootView, rootView, options, meta)
