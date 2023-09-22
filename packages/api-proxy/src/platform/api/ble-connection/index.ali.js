@@ -1,4 +1,4 @@
-import {changeOpts, error, getEnvObj, handleSuccess} from '../../../common/js'
+import { getEnvObj } from '../../../common/js'
 
 const ALI_OBJ = getEnvObj()
 

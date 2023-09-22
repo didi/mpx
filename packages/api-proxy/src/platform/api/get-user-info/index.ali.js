@@ -1,4 +1,4 @@
-import {changeOpts, error, getEnvObj, handleSuccess, warn} from '../../../common/js'
+import { getEnvObj, warn } from '../../../common/js'
 
 const ALI_OBJ = getEnvObj()
 const TIPS_NAME = '支付宝环境 mpx'

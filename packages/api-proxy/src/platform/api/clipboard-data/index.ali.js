@@ -9,7 +9,7 @@ function setClipboardData (options = {}) {
   handleSuccess(opts, res => {
     return changeOpts(res, {
       success: ''
-    },{
+    }, {
       errMsg: 'setClipboardData:ok'
     })
   })

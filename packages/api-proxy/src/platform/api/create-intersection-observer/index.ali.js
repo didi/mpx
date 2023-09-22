@@ -1,4 +1,4 @@
-import { changeOpts, getEnvObj, noop } from '../../../common/js'
+import { getEnvObj } from '../../../common/js'
 const ALI_OBJ = getEnvObj()
 
 function createIntersectionObserver (component, options = {}) {

@@ -5,7 +5,7 @@ export default function install (target, options = {}) {
   const {
     usePromise = false, // 是否转为 promise 格式
     whiteList = [], // 强制变成 promise 格式的 api
-    blackList = [], // 强制不变成 promise 格式的 api
+    blackList = [] // 强制不变成 promise 格式的 api
   } = options
 
   let transedApi = {}
