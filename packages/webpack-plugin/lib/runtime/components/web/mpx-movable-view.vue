@@ -121,6 +121,13 @@
           newVal = 0.5
         }
         this.bs.zoomTo(newVal, 'center', 'center')
+      },
+      disabled (newVal) {
+        if (newVal) {
+          this.bs && this.bs.disable()
+        } else {
+          this.bs && this.bs.enable()
+        }
       }
     },
     mounted () {
@@ -312,7 +319,9 @@
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
-  .mpx-movable-scroll-content {
+  .mpx-movable-scroll-content
     position: absolute
-  }
+    .mpx-movable-scroll-item
+      width: 100%
+      height: 100%
 </style>
