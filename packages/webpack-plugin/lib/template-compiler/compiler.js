@@ -1780,6 +1780,7 @@ function processRootViewEventHack (el, options, root) {
     return
   }
   const { fallthroughEventAttrsRules } = options
+  // TODO: 设置可透传的事件可选列表
   let fallThroughEvents = ['bindtap']
   // 判断当前文件是否在范围中
   const filePath = options.filePath
@@ -1848,7 +1849,7 @@ function getVirtualHostRoot (options, meta) {
       !meta.options && (meta.options = {})
       meta.options.virtualHost = true
     }
-    if ((mode === 'ali' && !options.hasVirtualHost) || mode === 'web') {
+    if ((mode === 'ali' || mode === 'web') && !options.hasVirtualHost) {
       // ali组件根节点实体化
       const rootView = createASTElement('view', [
         {
