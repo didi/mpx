@@ -13,5 +13,6 @@
     "__mpx_mode__": "wx",
     "wx": {
     }
-  }
+  },
+  "setupFiles": ["./setupFile.js"]
 }
