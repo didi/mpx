@@ -1,10 +1,9 @@
 module.exports = (loaders, loaderIndex) => {
-  for (let len = loaders.length; len > 0; --len) {
-    const currentLoader = loaders[len - 1]
-    if (currentLoader.path.endsWith('ts-loader/dist/stringify-loader.js')) {
-      break
+  for (let i = loaderIndex; i >= 0; i--) {
+    const currentLoader = loaders[i]
+    if (currentLoader.path.endsWith('node_modules/ts-loader/dist/stringify-loader.js')) {
+      return i
     }
-    loaderIndex--
   }
   return loaderIndex
 }

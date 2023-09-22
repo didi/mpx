@@ -167,6 +167,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     this.options = options
@@ -622,6 +623,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
+          asyncSubpackageRules: this.options.asyncSubpackageRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1026,13 +1028,22 @@ class MpxWebpackPlugin {
             let request = expr.arguments[0].value
             const range = expr.arguments[0].range
             const context = parser.state.module.context
-            const { queryObj } = parseRequest(request)
-            if (queryObj.root) {
+            const { queryObj, resourcePath } = parseRequest(request)
+            let tarRoot = queryObj.root
+            if (!tarRoot && mpx.asyncSubpackageRules) {
+              for (const item of mpx.asyncSubpackageRules) {
+                if (matchCondition(resourcePath, item)) {
+                  tarRoot = item.root
+                  break
+                }
+              }
+            }
+            if (tarRoot) {
               // 删除root query
-              request = addQuery(request, {}, false, ['root'])
+              if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.enableRequireAsync) {
-                const dep = new DynamicEntryDependency(request, 'export', '', queryObj.root, '', context, range, {
+                const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
                   isRequireAsync: true,
                   retryRequireAsync: !!this.options.retryRequireAsync
                 })
@@ -1442,8 +1453,8 @@ try {
       })
 
       const typeLoaderProcessInfo = {
-        styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
-        template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
+        styles: ['node_modules/css-loader', wxssLoaderPath, styleCompilerPath],
+        template: ['node_modules/html-loader', wxmlLoaderPath, templateCompilerPath]
       }
 
       // 应用过rules后，注入mpx相关资源编译loader
@@ -1506,15 +1517,15 @@ try {
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
-          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
+          const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
-            if (currentLoader.includes('css-loader') && cssLoaderIndex === -1) {
+            if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
               cssLoaderIndex = index
-            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
+            } else if (currentLoader.includes('node_modules/vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
             } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
               mpxStyleLoaderIndex = index
