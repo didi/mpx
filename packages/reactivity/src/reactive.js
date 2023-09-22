@@ -43,6 +43,11 @@ function createReactiveObject (target, baseHandlers, proxyMap) {
   if (!isObject(target)) {
     return target
   }
+  if (
+    target[ReactiveFlags.RAW]
+  ) {
+    return target
+  }
   // target already has corresponding Proxy
   const existingProxy = proxyMap.get(target)
   if (existingProxy) {

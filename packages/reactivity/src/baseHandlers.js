@@ -1,4 +1,5 @@
-import { ReactiveFlags } from './reactive'
+import { isObject } from '@mpxjs/utils'
+import { reactive, ReactiveFlags, reactiveMap } from './reactive'
 
 class BaseReactiveHandler {
   constructor (_isReadonly = false, _shallow = false) {
@@ -11,9 +12,15 @@ class BaseReactiveHandler {
 
     if (key === ReactiveFlags.IS_REACTIVE) {
       return !isReadonly
+    } else if (key === ReactiveFlags.RAW && receiver === reactiveMap.get(target)) {
+      return target
     }
 
     const res = target[key]
+
+    if (isObject(res)) {
+      return reactive(res)
+    }
 
     return res
   }
@@ -25,7 +32,8 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 
   set (target, key, value, receiver) {
-    target[key] = value
+    const result = Reflect.set(target, key, value, receiver)
+    return result
   }
 
   has (target, key) {
@@ -35,6 +43,11 @@ class MutableReactiveHandler extends BaseReactiveHandler {
 
   ownKeys (target) {
     const result = Reflect.ownKeys(target)
+    return result
+  }
+
+  deleteProperty (target, key) {
+    const result = Reflect.deleteProperty(target, key)
     return result
   }
 }
