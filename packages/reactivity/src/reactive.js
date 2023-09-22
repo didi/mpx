@@ -43,6 +43,7 @@ function createReactiveObject (target, baseHandlers, proxyMap) {
   if (!isObject(target)) {
     return target
   }
+  // when target is already a Proxy, return it
   if (
     target[ReactiveFlags.RAW]
   ) {
@@ -69,4 +70,9 @@ export function isReactive (value) {
 
 export function isReadonly (value) {
   return !!(value && value[ReactiveFlags.IS_READONLY])
+}
+
+export function toRaw(observed) {
+  const raw = observed && observed[ReactiveFlags.RAW]
+  return raw ? toRaw(raw) : observed
 }

@@ -1,5 +1,5 @@
 import { isObject } from '@mpxjs/utils'
-import { reactive, ReactiveFlags, reactiveMap } from './reactive'
+import { reactive, ReactiveFlags, reactiveMap, toRaw } from './reactive'
 
 class BaseReactiveHandler {
   constructor (_isReadonly = false, _shallow = false) {
@@ -16,7 +16,7 @@ class BaseReactiveHandler {
       return target
     }
 
-    const res = target[key]
+    const res = Reflect.get(target, key, receiver)
 
     if (isObject(res)) {
       return reactive(res)
@@ -32,6 +32,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 
   set (target, key, value, receiver) {
+    value = toRaw(value)
     const result = Reflect.set(target, key, value, receiver)
     return result
   }

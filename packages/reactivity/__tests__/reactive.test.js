@@ -60,7 +60,7 @@ describe('test reactivity/reactive', () => {
     const observed = reactive(origin)
     const raw = {}
     observed.foo = raw
-    // observed.foo 由于被 reactive 了，因此与不等于 raw
+    // observed.foo 由于被 reactive 了，observed.foo 的值为代理后的对象，因此不等于 raw
     expect(observed.foo).not.toBe(raw)
     expect(isReactive(observed.foo)).toBe(true)
   })
@@ -70,5 +70,22 @@ describe('test reactivity/reactive', () => {
     const observed = reactive(original)
     const observed2 = reactive(observed)
     expect(observed2).toBe(observed)
+  })
+
+  test('observing the same value multiple times should return same Proxy', () => {
+    const original = { foo: 1 }
+    const observed = reactive(original)
+    const observed2 = reactive(original)
+    expect(observed2).toBe(observed)
+  })
+
+  test('should not pollute original object with Proxies', () => {
+    const original = { foo: 1 }
+    const original2 = { bar: 2 }
+    const observed = reactive(original)
+    const observed2 = reactive(original2)
+    observed.bar = observed2
+    expect(observed.bar).toBe(observed2)
+    expect(original.bar).toBe(original2)
   })
 })
