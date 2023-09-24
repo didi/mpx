@@ -24,7 +24,7 @@ function capitalToHyphen (v) {
 }
 
 function trim (str) {
-  return str.replace(/ /g, '').replace(/\n/g, '')
+  return str.replace(/\s+/g, '')
 }
 
 module.exports = {

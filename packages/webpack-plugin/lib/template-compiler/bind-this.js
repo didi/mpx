@@ -75,71 +75,64 @@ function calPropName (path) {
 function checkDelAndGetPath (path) {
   let current = path
   let delPath = path
-  let isPros = false // 只用于收集 propKeys
-  let replacePath = null
-  let replaceArg = null
   let canDel = true
   let ignore = false
   let replace = false
 
-  // case: !!name
-  while (t.isUnaryExpression(current.parent) && current.key === 'argument') {
-    current = current.parentPath
-    delPath = current
-  }
-
-  // wxs.test() wxs.test 不可删除
-  if (current.key === 'callee' && t.isCallExpression(current.parent)) {
-    canDel = false
-  }
-
-  while (!t.isBlockStatement(current)) {
-    if (t.isCallExpression(current)) { // 处理case: Number(a); this._p(a); this._p(wxs.test(a))
-      const callee = current.node.callee
-      const args = current.node.arguments || current.parent.arguments // Number(a) || this._p(a)
-      if (args.length === 1) {
-        const name = callee.name || (callee.property && callee.property.name) // Number(a) || this._p(a)
-        if (!replaceArg) replaceArg = args // 保留第一个出现的参数 this._p(wxs.test(a)) => 把a保存下来，避免在replace时再次查找args
-        if (name === '_p') {
-          isPros = true // 收集props
-          // replacePath = current
-        }
-        if (current.key === 'object' && t.isMemberExpression(current.parent)) { // Number(a).length
-          replacePath = current.parentPath
-          // delPath = current.parentPath
-        } else {
-          replacePath = current
-          // delPath = current
-        }
-        current = current.parentPath
-        continue
-      } else {
-        canDel = false
-        break
-      }
+  // 确定删除路径
+  let tempPath = current
+  while (!t.isBlockStatement(tempPath)) {
+    // case: !!a
+    while (t.isUnaryExpression(tempPath.parent) && tempPath.key === 'argument') {
+      tempPath = tempPath.parentPath
+      delPath = tempPath
     }
 
-    // 如果是this._p()，则可退出循环
-    if (isPros) break
+    // 遇到复杂表达式，则直接停止，避免同一个path挂载多个delInfo
+    if (t.isBinaryExpression(tempPath.container) ||
+      t.isLogicalExpression(tempPath.container) ||
+      t.isObjectProperty(tempPath.container)) {
+      break
+    }
 
-    const { key, computed, node, container } = current
+    if (t.isCallExpression(tempPath)) {
+      // case: String(a) || this._p(a)
+      const args = tempPath.node.arguments || tempPath.parent.arguments || []
+      if (args.length === 1) {
+        delPath = tempPath
+      }
+    }
+    // case: String(a).length
+    if (tempPath.type === 'MemberExpression' && t.isCallExpression(tempPath.node.object)) {
+      delPath = tempPath
+    }
+
+    tempPath = tempPath.parentPath
+  }
+
+  // 确定是否可删除
+  while (!t.isBlockStatement(current)) {
+    const { key, listKey, computed, node, container } = current
     if (
       computed || // a[b] => a
       key === 'property' || // a[b] => b
-      (node.computed && !t.isStringLiteral(node.property)) ||
-      t.isLogicalExpression(container) ||
-      (t.isIfStatement(container) && key === 'test')
+      (node.computed && !t.isStringLiteral(node.property)) || // a['b']
+      t.isLogicalExpression(container) || // a && b
+      (t.isIfStatement(container) && key === 'test') || // if (a) {}
+      (key === 0 && container.length > 1 && listKey === 'arguments') // this._i(a, function() {})
     ) {
       canDel = false
+      break
     }
 
     if (t.isConditionalExpression(container)) {
       if (key === 'test') canDel = false
       else ignore = true
+      break
     }
 
     if (
-      t.isBinaryExpression(container) ||
+      t.isBinaryExpression(container) || // 运算 a + b
       (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a }) and ({ name: a && !b })
     ) {
       canDel = true
@@ -149,16 +142,8 @@ function checkDelAndGetPath (path) {
     current = current.parentPath
   }
 
-  // 不可删除时，要把method相关路径清空，避免被删除；但是外层如果是_p，则需要删除
-  if (!canDel && !isPros && replaceArg) { // Object.keys(a) ? b : c; Object.keys(a)不可删除; this._p(Object.keys(a)) 可删除
-    replacePath = null
-    replaceArg = null
-  }
   return {
-    isPros,
     delPath,
-    replacePath,
-    replaceArg,
     canDel,
     ignore,
     replace
@@ -210,6 +195,7 @@ module.exports = {
     const bindingsMap = new Map()
 
     const propKeys = []
+    let isProps = false
 
     const collectVisitor = {
       BlockStatement: {
@@ -237,17 +223,7 @@ module.exports = {
 
           if (!renderReduce) return
 
-          const {
-            isPros,
-            replacePath,
-            replaceArg,
-            ignore,
-            delPath,
-            canDel,
-            replace
-          } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
-          if (isPros) propKeys.push(path.node.name)
-          if (replacePath && replaceArg) replacePath.replaceArg = replaceArg
+          const { delPath, canDel, ignore, replace } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
           if (ignore) return
 
           delPath.delInfo = {
@@ -277,6 +253,34 @@ module.exports = {
         },
         exit (path) {
           currentBlock = bindingsMap.get(path).parent
+        }
+      },
+      // 标记收集props数据
+      CallExpression: {
+        enter (path) {
+          const callee = path.node.callee
+          if (
+            t.isMemberExpression(callee) &&
+            t.isThisExpression(callee.object) &&
+            (callee.property.name === '_p' || callee.property.value === '_p')
+          ) {
+            isProps = true
+            path.isProps = true
+          }
+        },
+        exit (path) {
+          if (path.isProps) {
+            // 移除无意义的__props调用
+            const args = path.node.arguments[0]
+            if (args) {
+              path.replaceWith(args)
+            } else {
+              // 查找可删除路径时，有可能查不多_p就结束了，类似: this._p(String(a + b))，所以遇到没有参数的场景，很可能就是依据被删除了
+              path.remove()
+            }
+            isProps = false
+            delete path.isProps
+          }
         }
       },
       enter (path) {
@@ -309,19 +313,14 @@ module.exports = {
 
         // bind this 将 a 转换成 this.a
         if (path.keyPath) {
-          const { name, value } = path.node || {}
-          if (path.node && (name || value)) { // 确保path没有被删除 且 没有被替换成字符串
+          const { name } = path.node || {}
+          if (isProps) {
+            propKeys.push(name)
+          }
+          if (name) { // 确保path没有被删除 且 没有被替换成字符串
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
           }
           delete path.keyPath
-        }
-      },
-      exit (path) {
-        // replace必须放在exit，因为如果在enter阶段做，可能会把挂载到path的delInfo、keyPath给删掉
-        if (path.replaceArg) {
-          const arg = path.replaceArg[0]
-          arg ? path.replaceWith(arg) : dealRemove(path)
-          delete path.replaceArg
         }
       },
       MemberExpression: {

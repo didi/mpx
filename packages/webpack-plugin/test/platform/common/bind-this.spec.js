@@ -53,7 +53,7 @@ describe('render function simplify should correct', function () {
     expect(trim(res)).toBe(trim(output))
   })
 
-  it('test', function () {
+  it('wxs check', function () {
     const input = `
     global.currentInject = {
       render: function () {
@@ -71,6 +71,7 @@ describe('render function simplify should correct', function () {
 
         if (bName) {} // 10
         this._p(bName) // 11
+        wxs.test(bName); // 删除wxs.test
         this._p(wxs.test(bName + cName)) // 12
         this._p(wxs.test(bName + cName)) // 13
         Object.keys({ name: bName }).length // 14
@@ -84,38 +85,37 @@ describe('render function simplify should correct', function () {
       }
     }
     `
-    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
+    const res = bindThis(input, { needCollect: true, renderReduce: true, ignoreMap: { wxs: true } }).code
     const output = `
       global.currentInject = {
         render: function () {
           if (this._c("bName", this.bName)) {} // 1
 
           // 3
-          "" + this._c("cName", this.cName); // 4
+          wxs.test("" + this._c("cName", this.cName)); // 4
         
-          "" + ""; // 5
+          Number("" + "");// 5
         
-          "" + ""; // 6
+          Number("" + ""); // 6
         
-          ({
+          Object.keys({
             name: ""
-          }); // 7
+          }).length; // 7
         
-          ({
+          Object.keys({
             name: ""
           }); // 8
         
           // 9
           if (this._c("bName", this.bName)) {} // 10
-
-          // 11
-          "" + ""; // 12
+          // 删除wxs.test
+          wxs.test("" + ""); // 12
         
-          "" + ""; // 13
+          wxs.test("" + ""); // 13
         
-          ({
+          Object.keys({
             name: ""
-          }); // 14
+          }).length; // 14
           
           if (Object.keys({
             name: this._c("bName", this.bName)
@@ -447,8 +447,6 @@ describe('render function simplify should correct', function () {
         });
         if (bName) {}
         this._p(bName)
-        this._p(wxs.test(bName))
-        this._p(wxs.test(bName + cName))
         Number(bName + cName)
         this._p(Number(bName + cName))
         Object.keys({ name: bName }).length
@@ -469,45 +467,42 @@ describe('render function simplify should correct', function () {
     global.currentInject = {
       render: function () {
         this._c("handlerName", this.handlerName);
-  
+
         ({
           tap: [["handler", true, 123]],
           click: [["handler", ""]]
         });
-    
+      
         this._c("aName", this.aName);
-    
+      
         ({
           open: true,
           str: 'str',
           name: ""
         });
-  
         ({
           name: ""
         });
-    
-        if (this._c("bName", this.bName)) {}
-    
-        "" + this._c("cName", this.cName);
-        "" + "";
-        "" + "";
       
-        ({
+        if (this._c("bName", this.bName)) {}
+      
+        Number("" + this._c("cName", this.cName));
+        Number("" + "");
+        Object.keys({
           name: ""
-        });
+        }).length;
       
         if (Object.keys({
           name: this._c("bName", this.bName)
         }).length) {}
-        
+      
         Object.keys({
           name: this._c("bName", this.bName)
         }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
         Object.keys({
           name: this._c("bName", this.bName)
         }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
-        ({
+        Object.keys({
           name: ""
         });
       }
