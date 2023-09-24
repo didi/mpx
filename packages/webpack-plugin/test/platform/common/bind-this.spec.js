@@ -108,6 +108,7 @@ describe('render function simplify should correct', function () {
         
           // 9
           if (this._c("bName", this.bName)) {} // 10
+          // 11
           // 删除wxs.test
           wxs.test("" + ""); // 12
         
