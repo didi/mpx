@@ -1,6 +1,6 @@
 // These tag configs are shared between compiler-dom and runtime-dom, so they
 // must be extracted in shared to avoid creating a dependency between the two.
-function makeMap(str) {
+function makeMap (str) {
   const map = Object.create(null)
   const list = str.split(',')
   for (let i = 0; i < list.length; i++) {
