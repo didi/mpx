@@ -9,6 +9,7 @@ const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
+const checkComponentName = require('../utils/check-component-name')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
@@ -267,6 +268,9 @@ module.exports = function (json, {
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+          if (checkComponentName(name)) {
+            emitWarning(new Error(`The current component name [${name}] conflicts with the native component name of the miniprogram`))
+          }
           localComponentsMap[name] = {
             resource: addQuery(resource, {
               isComponent: true,
