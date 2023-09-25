@@ -7,6 +7,9 @@ const templateCompiler = require('../../../template-compiler/compiler')
 const parseMustache = templateCompiler.parseMustache
 const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
 const normalize = require('../../../utils/normalize')
+const {
+  isOriginTag
+} = require('../../domTagConfig')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -460,6 +463,20 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
+  const htmlTagRule = {
+    test: (input, { el = {} }) => {
+      return !el.isBuiltIn && isOriginTag(input)
+    },
+    // 处理原生tag
+    web (tag, data = {}) {
+      // @see packages/webpack-plugin/lib/platform/json/wx/index.js webHTMLTagProcesser
+      const newTag = `mpx-com-${tag}`
+      const usingComponents = data.usingComponents || []
+      // 存在同名组件，则返回新tag
+      if (usingComponents.includes(newTag)) return newTag
+      return tag
+    }
+  }
+  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat(htmlTagRule, {}), spec)
   return spec
 }

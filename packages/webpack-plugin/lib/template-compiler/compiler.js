@@ -653,6 +653,9 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    data: {
+      usingComponents: options.usingComponents
+    },
     warn: _warn,
     error: _error
   })
