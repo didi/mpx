@@ -84,7 +84,6 @@ export default class Toast {
 
     const errMsg = type === 'loading' ? 'showLoading:ok' : 'showToast:ok'
     webHandleSuccess({ errMsg }, opts.success, opts.complete)
-    return Promise.resolve({ errMsg })
   }
 
   hide (options = {}, type) {
@@ -100,6 +99,5 @@ export default class Toast {
     }
 
     this.hideTimer = setTimeout(() => { this.toast.classList.remove('show') }, duration)
-    return Promise.resolve({ errMsg })
   }
 }

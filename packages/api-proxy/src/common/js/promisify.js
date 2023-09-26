@@ -28,7 +28,8 @@ const blackList = [
   'getMenuButtonBoundingClientRect',
   'reportMonitor',
   'createOffscreenCanvas',
-  'reportEvent'
+  'reportEvent',
+  'connectSocket'
 ]
 
 function getMapFromList (list) {

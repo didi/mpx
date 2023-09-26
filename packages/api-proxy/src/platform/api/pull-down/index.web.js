@@ -16,17 +16,13 @@ function stopPullDownRefresh (options = {}) {
         }
       }
     }
-    return new Promise((resolve, reject) => {
-      if (err) {
-        const res = { errMsg: `stopPullDownRefresh:fail ${err}` }
-        webHandleFail(res, options.fail, options.complete)
-        reject(res)
-      } else {
-        const res = { errMsg: 'stopPullDownRefresh:ok' }
-        webHandleSuccess(res, options.success, options.complete)
-        resolve(res)
-      }
-    })
+    if (err) {
+      const res = { errMsg: `stopPullDownRefresh:fail ${err}` }
+      webHandleFail(res, options.fail, options.complete)
+    } else {
+      const res = { errMsg: 'stopPullDownRefresh:ok' }
+      webHandleSuccess(res, options.success, options.complete)
+    }
   }
 }
 
@@ -46,17 +42,13 @@ function startPullDownRefresh (options = {}) {
         }
       }
     }
-    return new Promise((resolve, reject) => {
-      if (err) {
-        const res = { errMsg: `startPullDownRefresh:fail ${err}` }
-        webHandleFail(res, options.fail, options.complete)
-        reject(res)
-      } else {
-        const res = { errMsg: 'startPullDownRefresh:ok' }
-        webHandleSuccess(res, options.success, options.complete)
-        resolve(res)
-      }
-    })
+    if (err) {
+      const res = { errMsg: `startPullDownRefresh:fail ${err}` }
+      webHandleFail(res, options.fail, options.complete)
+    } else {
+      const res = { errMsg: 'startPullDownRefresh:ok' }
+      webHandleSuccess(res, options.success, options.complete)
+    }
   }
 }
 

@@ -8,11 +8,9 @@ function setStorage (options = {}) {
 
     const res = { errMsg: 'setStorage:ok' }
     webHandleSuccess(res, success, complete)
-    return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `setStorage:fail ${err}` }
     webHandleFail(res, fail, complete)
-    return Promise.reject(res)
   }
 }
 
@@ -34,11 +32,9 @@ function getStorage (options = {}) {
   if (result) {
     const res = { errMsg: 'getStorage:ok', data: data }
     webHandleSuccess(res, success, complete)
-    return Promise.resolve(res)
   } else {
     const res = { errMsg: 'getStorage:fail', data: null }
     webHandleFail(res, fail, complete)
-    return Promise.reject(res)
   }
 }
 
@@ -71,11 +67,9 @@ function getStorageInfo (options = {}) {
 
     const res = Object.assign({}, { errMsg: 'getStorageInfo:ok' }, info)
     webHandleSuccess(res, success, complete)
-    return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `getStorageInfo:fail ${err}` }
     webHandleFail(res, fail, complete)
-    return Promise.reject(res)
   }
 }
 
@@ -95,11 +89,9 @@ function removeStorage (options = { key: '' }) {
 
     const res = { errMsg: 'removeStorage:ok' }
     webHandleSuccess(res, success, complete)
-    return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `removeStorage:fail ${err}` }
     webHandleFail(res, fail, complete)
-    return Promise.reject(res)
   }
 }
 
@@ -115,11 +107,9 @@ function clearStorage (options = {}) {
 
     const res = { errMsg: 'clearStorage:ok' }
     webHandleSuccess(res, success, complete)
-    return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `clearStorage:fail ${err}` }
     webHandleFail(res, fail, complete)
-    return Promise.reject(res)
   }
 }
 

@@ -28,7 +28,6 @@ export default function install (target, options = {}) {
         target[api] = allApi[api]
         return
       }
-
       target[api] = (...args) => {
         return allApi[api].apply(target, args)
       }

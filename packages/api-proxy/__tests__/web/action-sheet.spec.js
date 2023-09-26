@@ -1,15 +1,21 @@
 import '@testing-library/jest-dom/extend-expect'
 import {
   showActionSheet
-} from '../../src/web/api/action-sheet/index'
+} from '../../src/platform/api/action-sheet/index.web'
+import mpx from '../../../core/src/index'
+import apiProxy from '../../src/index'
+mpx.use(apiProxy, {
+  usePromise: true
+})
 
-function manualPromise (promise, execResolve, execReject) {
-  return new Promise((resolve, reject) => {
-    promise().then(res => resolve(res)).catch(err => reject(err))
-    execResolve && execResolve()
-    execReject && execReject()
-  })
-}
+// function manualPromise (promise, execResolve, execReject) {
+//   return new Promise((resolve, reject) => {
+//     console.log(promise(), '&&&')
+//     promise().then(res => resolve(res)).catch(err => reject(err))
+//     execResolve && execResolve()
+//     execReject && execReject()
+//   })
+// }
 
 describe('test toast', () => {
   afterAll(() => {
@@ -93,17 +99,15 @@ describe('test toast', () => {
       list.childNodes[2].click()
     }
 
-    return manualPromise(() => {
-      return showActionSheet({
-        itemList: ['A', 'B', 'C']
+    mpx.showActionSheet({
+      itemList: ['A', 'B', 'C']
+    }).then(res => {
+      expect(res).toEqual({
+        errMsg: 'showActionSheet:ok',
+        tapIndex: 2
       })
-    }, execResolve)
-      .then(res => {
-        expect(res).toEqual({
-          errMsg: 'showActionSheet:ok',
-          tapIndex: 2
-        })
-      })
+      execResolve()
+    })
   })
 
   test('should exec promise catch', () => {
@@ -113,15 +117,15 @@ describe('test toast', () => {
       cancelBtn.click()
     }
 
-    return manualPromise(() => {
-      return showActionSheet({
-        itemList: ['A', 'B', 'C']
+    // return manualPromise(() => {
+    mpx.showActionSheet({
+      itemList: ['A', 'B', 'C']
+    }).catch(err => {
+      expect(err).toEqual({
+        errMsg: 'showActionSheet:fail cancel'
       })
-    }, null, execReject)
-      .catch(err => {
-        expect(err).toEqual({
-          errMsg: 'showActionSheet:fail cancel'
-        })
-      })
+      execReject()
+    })
+    // }, null, execReject)
   })
 })

@@ -8,8 +8,12 @@ import {
   removeStorage,
   clearStorage,
   clearStorageSync
-} from '../../src/web/api/storage'
-
+} from '../../src/platform/api/storage/index.web'
+import mpx from '../../../core/src/index'
+import apiProxy from '../../src/index'
+mpx.use(apiProxy, {
+  usePromise: true
+})
 const storageKey = 'storage key'
 const storageValue = 'storage value'
 const storageSyncKey = 'storage sync key'
@@ -47,7 +51,7 @@ describe('test storage', () => {
   })
 
   test('setStorage promise then', () => {
-    setStorage({
+    mpx.setStorage({
       key: storageSyncKey,
       data: storageSyncValue
     }).then(res => {
@@ -74,7 +78,7 @@ describe('test storage', () => {
   })
 
   test('getStorage promise then', () => {
-    getStorage({
+    mpx.getStorage({
       key: storageSyncKey
     }).then(res => {
       expect(res.data).toEqual(storageSyncValue)
@@ -99,7 +103,7 @@ describe('test storage', () => {
   })
 
   test('getStorageInfo promise then', () => {
-    getStorageInfo().then(res => {
+    mpx.getStorageInfo().then(res => {
       expect(res.keys).toEqual([storageKey, storageSyncKey])
     })
   })
@@ -123,7 +127,7 @@ describe('test storage', () => {
   })
 
   test('removeStorage promise then', () => {
-    removeStorage({
+    mpx.removeStorage({
       key: storageKey
     }).then(res => {
       expect(res).toEqual({ errMsg: 'removeStorage:ok' })

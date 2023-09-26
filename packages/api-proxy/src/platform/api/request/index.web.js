@@ -41,13 +41,11 @@ function request (options = { url: '' }) {
     timeout,
     cancelToken: source.token
   }
-
   if (method === 'GET') {
     rOptions.params = rOptions.data || {}
     delete rOptions.data
   }
-
-  const promise = axios(rOptions).then(res => {
+  axios(rOptions).then(res => {
     let data = res.data
     if (responseType === 'text' && dataType === 'json') {
       try {
@@ -71,8 +69,7 @@ function request (options = { url: '' }) {
     }
   })
 
-  promise.__returned = requestTask
-  return promise
+  return requestTask
 }
 
 export {

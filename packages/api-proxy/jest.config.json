@@ -3,7 +3,14 @@
     "^.+\\.(js|jsx)?$": "babel-jest"
   },
   "testEnvironment": "jsdom",
+  "rootDir": "../",
   "moduleNameMapper": {
-    "\\.(css|styl)$": "identity-obj-proxy"
-  }
+    "\\.(css|styl)$": "identity-obj-proxy",
+    "^@mpxjs/(.*)$": "<rootDir>/$1"
+  },
+  "globals": {
+    "__mpx_mode__": "web",
+    "__mpx_env__": "web"
+  },
+  "resolver": "./api-proxy/api-proxy-resolver.js"
 }

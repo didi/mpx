@@ -1,9 +1,8 @@
-import { ToPromise, webHandleSuccess, webHandleFail } from '../../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
 import '../../../common/stylus/ActionSheet.styl'
 
-export default class ActionSheet extends ToPromise {
+export default class ActionSheet {
   constructor () {
-    super()
     this.defaultOpts = {
       itemList: [],
       itemColor: '#000000',
@@ -64,7 +63,6 @@ export default class ActionSheet extends ToPromise {
           tapIndex: index
         }
         webHandleSuccess(res, opts.success, opts.complete)
-        this.toPromiseResolve(res)
       }
       list.appendChild(sheet)
     })
@@ -77,13 +75,11 @@ export default class ActionSheet extends ToPromise {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
       webHandleFail(err, opts.fail, opts.complete)
-      !opts.fail && this.toPromiseReject(err)
     }
 
     this.box.classList.add('show')
     this.actionSheet.classList.add('show')
 
-    return this.toPromiseInitPromise()
   }
 
   hide () {

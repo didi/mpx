@@ -69,7 +69,6 @@ function getSystemInfo (options = {}) {
   const info = getSystemInfoSync()
   const res = Object.assign({ errMsg: 'getSystemInfo:ok' }, info)
   webHandleSuccess(res, options.success, options.complete)
-  return Promise.resolve(res)
 }
 
 export {

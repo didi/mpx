@@ -1,7 +1,13 @@
 import '@testing-library/jest-dom/extend-expect'
 import {
   showToast, hideToast
-} from '../../src/web/api//toast/index'
+} from '../../src/platform/api/toast/index.web'
+
+import mpx from '../../../core/src/index'
+import apiProxy from '../../src/index'
+mpx.use(apiProxy, {
+  usePromise: true
+})
 
 describe('test toast', () => {
   afterAll(() => {
@@ -126,22 +132,11 @@ describe('test toast', () => {
   })
 
   test('should exec showToast promise then', () => {
-    return showToast({
+    return mpx.showToast({
       title: 'show'
     }).then(res => {
       expect(res).toEqual({
         errMsg: 'showToast:ok'
-      })
-    })
-  })
-
-  test('should exec hideToast promise then', () => {
-    showToast({
-      title: 'hide'
-    })
-    return hideToast().then(res => {
-      expect(res).toEqual({
-        errMsg: 'hideToast:ok'
       })
     })
   })

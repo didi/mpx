@@ -21,10 +21,8 @@ function setTabBarStyle (options = {}) {
 
   if (resolved) {
     webHandleSuccess(resolved, options.success, options.complete)
-    return Promise.resolve(resolved)
   }
   webHandleFail(rejected, options.fail, options.complete)
-  return Promise.reject(rejected)
 }
 
 function setTabBarItem (options = {}) {
@@ -52,10 +50,8 @@ function setTabBarItem (options = {}) {
 
   if (resolved) {
     webHandleSuccess(resolved, options.success, options.complete)
-    return Promise.resolve(resolved)
   }
   webHandleFail(rejected, options.fail, options.complete)
-  return Promise.reject(rejected)
 }
 
 function showTabBar (options = {}) {
@@ -70,10 +66,8 @@ function showTabBar (options = {}) {
 
   if (resolved) {
     webHandleSuccess(resolved, options.success, options.complete)
-    return Promise.resolve(resolved)
   }
   webHandleFail(rejected, options.fail, options.complete)
-  return Promise.reject(rejected)
 }
 
 function hideTabBar (options = {}) {
@@ -88,10 +82,8 @@ function hideTabBar (options = {}) {
 
   if (resolved) {
     webHandleSuccess(resolved, options.success, options.complete)
-    return Promise.resolve(resolved)
   }
   webHandleFail(rejected, options.fail, options.complete)
-  return Promise.reject(rejected)
 }
 
 export {

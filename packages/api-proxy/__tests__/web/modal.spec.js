@@ -2,15 +2,21 @@ import '@testing-library/jest-dom/extend-expect'
 
 import {
   showModal
-} from '../../src/web/api/modal'
+} from '../../src/platform/api/modal/index.web'
 
-function manualPromise (promise, execResolve, execReject) {
-  return new Promise((resolve, reject) => {
-    promise().then(res => resolve(res)).catch(err => reject(err))
-    execResolve && execResolve()
-    execReject && execReject()
-  })
-}
+import mpx from '../../../core/src/index'
+import apiProxy from '../../src/index'
+mpx.use(apiProxy, {
+  usePromise: true
+})
+
+// function manualPromise (promise, execResolve, execReject) {
+//   return new Promise((resolve, reject) => {
+//     promise().then(res => resolve(res)).catch(err => reject(err))
+//     execResolve && execResolve()
+//     execReject && execReject()
+//   })
+// }
 
 describe('test modal', () => {
   afterAll(() => {
@@ -79,17 +85,17 @@ describe('test modal', () => {
       confirmBtn.click()
     }
 
-    return manualPromise(() => {
-      return showModal({
-        title: 'promise'
+    // return manualPromise(() => {
+    mpx.showModal({
+      title: 'promise'
+    }).then(res => {
+      expect(res).toEqual({
+        errMsg: 'showModal:ok',
+        cancel: false,
+        confirm: true
       })
-    }, execResolve)
-      .then(res => {
-        expect(res).toEqual({
-          errMsg: 'showModal:ok',
-          cancel: false,
-          confirm: true
-        })
-      })
+      execResolve()
+    })
+    // }, execResolve)
   })
 })

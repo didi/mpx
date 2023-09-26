@@ -56,7 +56,7 @@ class SocketTask {
     }
   }
 
-  close (options) {
+  close (options = {}) {
     const { code = 1000, reason = '', success, fail, complete } = options
     this._closeData = {
       code,
