@@ -79,7 +79,6 @@ export default class ActionSheet {
 
     this.box.classList.add('show')
     this.actionSheet.classList.add('show')
-
   }
 
   hide () {
