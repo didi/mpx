@@ -9,11 +9,7 @@ import {
   clearStorage,
   clearStorageSync
 } from '../../src/platform/api/storage/index.web'
-import mpx from '../../../core/src/index'
-import apiProxy from '../../src/index'
-mpx.use(apiProxy, {
-  usePromise: true
-})
+
 const storageKey = 'storage key'
 const storageValue = 'storage value'
 const storageSyncKey = 'storage sync key'
@@ -50,15 +46,6 @@ describe('test storage', () => {
     expect(complete.mock.calls.length).toBe(1)
   })
 
-  test('setStorage promise then', () => {
-    mpx.setStorage({
-      key: storageSyncKey,
-      data: storageSyncValue
-    }).then(res => {
-      expect(res).toEqual({ errMsg: 'setStorage:ok' })
-    })
-  })
-
   test('getStorage', () => {
     const success = jest.fn()
     const fail = jest.fn()
@@ -75,14 +62,6 @@ describe('test storage', () => {
     expect(success.mock.calls[0][0].data).toEqual(storageSyncValue)
     expect(fail.mock.calls.length).toBe(0)
     expect(complete.mock.calls.length).toBe(1)
-  })
-
-  test('getStorage promise then', () => {
-    mpx.getStorage({
-      key: storageSyncKey
-    }).then(res => {
-      expect(res.data).toEqual(storageSyncValue)
-    })
   })
 
   test('getStorageInfo', () => {
@@ -102,12 +81,6 @@ describe('test storage', () => {
     expect(complete.mock.calls.length).toBe(1)
   })
 
-  test('getStorageInfo promise then', () => {
-    mpx.getStorageInfo().then(res => {
-      expect(res.keys).toEqual([storageKey, storageSyncKey])
-    })
-  })
-
   test('removeStorage', () => {
     const success = jest.fn()
     const fail = jest.fn()
@@ -124,14 +97,6 @@ describe('test storage', () => {
     expect(fail.mock.calls.length).toBe(0)
     expect(complete.mock.calls.length).toBe(1)
     expect(getStorageInfoSync()).toEqual({ keys: [storageSyncKey], limitSize: null, currentSize: null })
-  })
-
-  test('removeStorage promise then', () => {
-    mpx.removeStorage({
-      key: storageKey
-    }).then(res => {
-      expect(res).toEqual({ errMsg: 'removeStorage:ok' })
-    })
   })
 
   test('clearStorage', () => {

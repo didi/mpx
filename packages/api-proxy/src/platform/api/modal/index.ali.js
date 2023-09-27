@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function showModal (options = {}) {
   let opts
@@ -15,7 +13,7 @@ function showModal (options = {}) {
       return changeOpts(res, undefined, { cancel: !res.confirm })
     })
 
-    ALI_OBJ.confirm(opts)
+    my.confirm(opts)
   } else {
     opts = changeOpts(options, {
       confirmText: 'buttonText'
@@ -25,7 +23,7 @@ function showModal (options = {}) {
       return changeOpts(res, undefined, { cancel: false, confirm: true })
     })
 
-    ALI_OBJ.alert(opts)
+    my.alert(opts)
   }
 }
 

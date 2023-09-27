@@ -1,9 +1,7 @@
-import { getEnvObj, noop } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { noop } from '../../../common/js'
 
 function createSelectorQuery (options = {}) {
-  const selectorQuery = ALI_OBJ.createSelectorQuery(options)
+  const selectorQuery = my.createSelectorQuery(options)
   const proxyMethods = ['boundingClientRect', 'scrollOffset']
   const cbs = []
   proxyMethods.forEach((name) => {

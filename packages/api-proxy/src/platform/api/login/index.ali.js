@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function login (options = {}) {
   const opts = changeOpts(options)
@@ -9,7 +7,7 @@ function login (options = {}) {
     return changeOpts(res, { authCode: 'code' }, { errMsg: 'login:ok' })
   })
 
-  ALI_OBJ.getAuthCode(opts)
+  my.getAuthCode(opts)
 }
 
 export {

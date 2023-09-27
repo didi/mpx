@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function downloadFile (options = {}) {
   const opts = changeOpts(options)
@@ -9,13 +7,13 @@ function downloadFile (options = {}) {
     return changeOpts(res, { apFilePath: 'tempFilePath' })
   })
 
-  return ALI_OBJ.downloadFile(opts)
+  return my.downloadFile(opts)
 }
 
 function uploadFile (options = {}) {
   const opts = changeOpts(options, { name: 'fileName' })
 
-  return ALI_OBJ.uploadFile(opts)
+  return my.uploadFile(opts)
 }
 
 function saveFile (options = {}) {
@@ -27,7 +25,7 @@ function saveFile (options = {}) {
     return changeOpts(res, { apFilePath: 'savedFilePath' })
   })
 
-  ALI_OBJ.saveFile(opts)
+  my.saveFile(opts)
 }
 
 export {

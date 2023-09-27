@@ -7,8 +7,7 @@
   },
   "testEnvironment": "jsdom",
   "testMatch": [
-    "**/packages/core/**/?(*.)+(spec|test).[jt]s?(x)",
-    "**/packages/webpack-plugin/**/?(*.)+(spec|test).[jt]s?(x)"
+    "**/packages/**/?(*.)+(spec|test).[jt]s?(x)"
   ],
   "testPathIgnorePatterns": ["dist", "node_modules"]
 }

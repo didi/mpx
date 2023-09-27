@@ -1,24 +1,22 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   handleSuccess(options, res => {
     return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
   })
-  if (ALI_OBJ.canIUse('setNavigationBarTitle')) {
-    ALI_OBJ.setNavigationBarTitle(options)
+  if (my.canIUse('setNavigationBarTitle')) {
+    my.setNavigationBarTitle(options)
     return
   }
-  ALI_OBJ.setNavigationBar(options)
+  my.setNavigationBar(options)
 }
 
 function setNavigationBarColor (options = {}) {
-  if (ALI_OBJ.canIUse('setNavigationBarColor')) {
-    ALI_OBJ.setNavigationBarColor(options)
+  if (my.canIUse('setNavigationBarColor')) {
+    my.setNavigationBarColor(options)
     return
   }
-  ALI_OBJ.setNavigationBar(options)
+  my.setNavigationBar(options)
 }
 
 export {

@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function canvasToTempFilePath (options = {}) {
   handleSuccess(options, res => {
@@ -10,7 +8,7 @@ function canvasToTempFilePath (options = {}) {
     )
   })
 
-  ALI_OBJ.canvasToTempFilePath(options)
+  my.canvasToTempFilePath(options)
 }
 
 export {

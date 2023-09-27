@@ -1,5 +1,4 @@
-import { changeOpts, getEnvObj, noop } from '../../../common/js'
-const ALI_OBJ = getEnvObj()
+import { changeOpts, noop } from '../../../common/js'
 function showActionSheet (options = {}) {
   const opts = changeOpts(options, {
     itemList: 'items'
@@ -21,7 +20,7 @@ function showActionSheet (options = {}) {
     }
   }
 
-  ALI_OBJ.showActionSheet(opts)
+  my.showActionSheet(opts)
 }
 
 export {

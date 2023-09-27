@@ -1,8 +1,5 @@
-import { getEnvObj } from '../../../common/js'
-const ALI_OBJ = getEnvObj()
-
 function createIntersectionObserver (component, options = {}) {
-  return ALI_OBJ.createIntersectionObserver(options)
+  return my.createIntersectionObserver(options)
 }
 
 export {

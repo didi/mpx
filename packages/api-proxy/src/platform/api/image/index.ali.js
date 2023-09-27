@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function previewImage (options = {}) {
   const opts = changeOpts(options)
@@ -10,7 +8,7 @@ function previewImage (options = {}) {
     opts.current = idx !== -1 ? idx : 0
   }
 
-  ALI_OBJ.previewImage(opts)
+  my.previewImage(opts)
 }
 
 function compressImage (options = {}) {
@@ -29,7 +27,7 @@ function compressImage (options = {}) {
     )
   })
 
-  ALI_OBJ.compressImage(opts)
+  my.compressImage(opts)
 }
 
 export {

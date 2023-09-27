@@ -1,12 +1,10 @@
-import { changeOpts, getEnvObj } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts } from '../../../common/js'
 
 function makePhoneCall (options = {}) {
   const opts = changeOpts(options, {
     phoneNumber: 'number'
   })
-  ALI_OBJ.makePhoneCall(opts)
+  my.makePhoneCall(opts)
 }
 
 export {

@@ -1,13 +1,11 @@
-import { changeOpts, getEnvObj } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts } from '../../../common/js'
 
 function addPhoneContact (options = {}) {
   const opts = changeOpts(options, {
     weChatNumber: 'alipayAccount'
   })
 
-  ALI_OBJ.addPhoneContact(opts)
+  my.addPhoneContact(opts)
 }
 
 export {

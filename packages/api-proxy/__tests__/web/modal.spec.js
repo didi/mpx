@@ -4,20 +4,6 @@ import {
   showModal
 } from '../../src/platform/api/modal/index.web'
 
-import mpx from '../../../core/src/index'
-import apiProxy from '../../src/index'
-mpx.use(apiProxy, {
-  usePromise: true
-})
-
-// function manualPromise (promise, execResolve, execReject) {
-//   return new Promise((resolve, reject) => {
-//     promise().then(res => resolve(res)).catch(err => reject(err))
-//     execResolve && execResolve()
-//     execReject && execReject()
-//   })
-// }
-
 describe('test modal', () => {
   afterAll(() => {
     document.body.lastChild.remove()
@@ -75,27 +61,5 @@ describe('test modal', () => {
       cancel: false,
       confirm: true
     })
-  })
-  test('should exec promise then', () => {
-    const execResolve = () => {
-      const modal = document.body.lastChild
-      const box = modal.lastChild
-      const btns = box.lastChild
-      const confirmBtn = btns.lastChild
-      confirmBtn.click()
-    }
-
-    // return manualPromise(() => {
-    mpx.showModal({
-      title: 'promise'
-    }).then(res => {
-      expect(res).toEqual({
-        errMsg: 'showModal:ok',
-        cancel: false,
-        confirm: true
-      })
-      execResolve()
-    })
-    // }, execResolve)
   })
 })

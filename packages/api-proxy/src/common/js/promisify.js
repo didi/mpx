@@ -29,7 +29,8 @@ const blackList = [
   'reportMonitor',
   'createOffscreenCanvas',
   'reportEvent',
-  'connectSocket'
+  'connectSocket',
+  'base64ToArrayBuffer'
 ]
 
 function getMapFromList (list) {
@@ -97,4 +98,4 @@ function promisify (listObj, whiteList, customBlackList) {
   return result
 }
 
-export { promisify }
+export default promisify

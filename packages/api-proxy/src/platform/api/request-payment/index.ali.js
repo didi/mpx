@@ -1,6 +1,5 @@
-import { changeOpts, error, getEnvObj, noop } from '../../../common/js'
+import { changeOpts, error, noop } from '../../../common/js'
 
-const ALI_OBJ = getEnvObj()
 const TIPS_NAME = '支付宝环境 mpx'
 
 function requestPayment (options = {}) {
@@ -38,7 +37,7 @@ function requestPayment (options = {}) {
     }
   }
 
-  ALI_OBJ.tradePay(opts)
+  my.tradePay(opts)
 }
 
 export {

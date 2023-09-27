@@ -1,5 +1,6 @@
 import * as platformApi from './platform'
-import { getEnvObj, promisify } from './common/js'
+import { getEnvObj } from './common/js'
+import promisify from './common/js/promisify'
 
 export default function install (target, options = {}) {
   const {

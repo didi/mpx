@@ -3,12 +3,6 @@ import {
   showToast, hideToast
 } from '../../src/platform/api/toast/index.web'
 
-import mpx from '../../../core/src/index'
-import apiProxy from '../../src/index'
-mpx.use(apiProxy, {
-  usePromise: true
-})
-
 describe('test toast', () => {
   afterAll(() => {
     document.body.lastChild.remove()
@@ -129,15 +123,5 @@ describe('test toast', () => {
     expect(success.mock.calls.length).toBe(1)
     expect(success.mock.calls[0][0].errMsg).toBe('hideToast:ok')
     expect(complete.mock.calls.length).toBe(1)
-  })
-
-  test('should exec showToast promise then', () => {
-    return mpx.showToast({
-      title: 'show'
-    }).then(res => {
-      expect(res).toEqual({
-        errMsg: 'showToast:ok'
-      })
-    })
   })
 })

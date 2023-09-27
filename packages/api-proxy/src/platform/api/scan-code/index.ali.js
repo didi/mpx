@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function scanCode (options = {}) {
   const opts = changeOpts(options, {
@@ -11,7 +9,7 @@ function scanCode (options = {}) {
     return changeOpts(res, { code: 'result' })
   })
 
-  ALI_OBJ.scan(opts)
+  my.scan(opts)
 }
 
 export {

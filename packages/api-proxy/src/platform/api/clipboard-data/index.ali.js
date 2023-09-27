@@ -1,6 +1,4 @@
-import { changeOpts, getEnvObj, handleSuccess } from '../../../common/js'
-
-const ALI_OBJ = getEnvObj()
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function setClipboardData (options = {}) {
   const opts = changeOpts(options, {
@@ -13,7 +11,7 @@ function setClipboardData (options = {}) {
       errMsg: 'setClipboardData:ok'
     })
   })
-  ALI_OBJ.setClipboard(opts)
+  my.setClipboard(opts)
 }
 
 function getClipboardData (options = {}) {
@@ -23,7 +21,7 @@ function getClipboardData (options = {}) {
     return changeOpts(res, { text: 'data' })
   })
 
-  ALI_OBJ.getClipboard(opts)
+  my.getClipboard(opts)
 }
 
 export {

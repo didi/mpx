@@ -2,19 +2,9 @@ import { getEnvObj, envError } from '../../../common/js'
 
 const ENV_OBJ = getEnvObj()
 
-function base64ToArrayBuffer (base64) {
-  if (!ENV_OBJ.base64ToArrayBuffer) {
-    return envError('base64ToArrayBuffer')()
-  }
-  return ENV_OBJ.base64ToArrayBuffer(base64)
-}
+const base64ToArrayBuffer = ENV_OBJ.base64ToArrayBuffer || envError('base64ToArrayBuffer')
 
-function arrayBufferToBase64 (arrayBuffer) {
-  if (!ENV_OBJ.arrayBufferToBase64) {
-    return envError('arrayBufferToBase64')()
-  }
-  return ENV_OBJ.arrayBufferToBase64(arrayBuffer)
-}
+const arrayBufferToBase64 = ENV_OBJ.arrayBufferToBase64 || envError('arrayBufferToBase64')
 
 export {
   base64ToArrayBuffer,
