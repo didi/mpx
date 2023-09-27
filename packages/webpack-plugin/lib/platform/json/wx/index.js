@@ -3,7 +3,7 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
-const { isOriginTag } = require('../../domTagConfig')
+const { isOriginTag } = require('../../../utils/dom-tag-config')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
