@@ -200,7 +200,6 @@ module.exports = function (content) {
               },
               (callback) => {
                 processJSON(parts.json, {
-                  ctorType,
                   loaderContext,
                   pagesMap,
                   componentsMap

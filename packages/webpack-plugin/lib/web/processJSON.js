@@ -15,7 +15,6 @@ const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDe
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 
 module.exports = function (json, {
-  ctorType,
   loaderContext,
   pagesMap,
   componentsMap
@@ -79,6 +78,9 @@ module.exports = function (json, {
     })
   }
 
+  const { resourcePath } = parseRequest(loaderContext.resource)
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+
   if (!json) {
     return callback()
   }
@@ -99,12 +101,16 @@ module.exports = function (json, {
       }
     }
 
+    if (!isApp) {
+      rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+    }
+
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
 
     if (rulesRunner) {
       rulesRunner(jsonObj)
     }
-    if (ctorType === 'app') {
+    if (isApp) {
       // 收集全局组件
       Object.assign(mpx.usingComponents, jsonObj.usingComponents)
       // 在 rulesRunner 运行后保存全局注册组件
