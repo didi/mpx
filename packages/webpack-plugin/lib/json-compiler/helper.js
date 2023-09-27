@@ -6,6 +6,7 @@ const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
+const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
@@ -17,6 +18,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
   const enableRequireAsync = mpx.enableRequireAsync
+  const asyncSubpackageRules = mpx.asyncSubpackageRules
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -45,17 +47,27 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
-
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
-
+      let placeholder = null
       if (queryObj.root) {
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (enableRequireAsync) tarRoot = queryObj.root
+        if (enableRequireAsync) {
+          tarRoot = queryObj.root
+        }
+      } else if (!queryObj.root && asyncSubpackageRules && enableRequireAsync) {
+        for (const item of asyncSubpackageRules) {
+          if (matchCondition(resourcePath, item)) {
+            tarRoot = item.root
+            placeholder = item.placeholder
+            break
+          }
+        }
       }
+
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
@@ -84,7 +96,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry)
+      callback(null, entry, tarRoot, placeholder)
     })
   }
 
@@ -101,7 +113,9 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     // 增加 page 标识
     page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
-      if (err) return callback(err)
+      if (err) {
+        return callback(err)
+      }
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
       let outputPath
@@ -124,7 +138,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const key = [resourcePath, outputPath, tarRoot].join('|')
       callback(null, entry, {
         isFirst,
-        key
+        key,
+        resource
       })
     })
   }

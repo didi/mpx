@@ -190,17 +190,10 @@ module.exports = function getSpec ({ warn, error }) {
           }
           const styleBinding = []
           el.isStyleParsed = true
-          el.attrsList.forEach((item) => {
+          // 不过滤的话每一个属性都要 parse
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
             const parsed = parseMustache(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parseMustache(item.value).result)
-              } else {
-                styleBinding.push(JSON.stringify(item.value))
-              }
-            } else if (item.name === 'wx:style') {
-              styleBinding.push(parseMustache(item.value).result)
-            }
+            styleBinding.push(parsed.result)
           })
           return {
             name: ':style',
@@ -295,18 +288,39 @@ module.exports = function getSpec ({ warn, error }) {
         },
         swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'swan' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         qq ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'qq' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'jd' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         // tt ({ name, value }, { eventRules }) {
         //   const match = this.test.exec(name)
@@ -322,15 +336,33 @@ module.exports = function getSpec ({ warn, error }) {
         // },
         tt ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'tt' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         dd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'dd' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         web ({ name, value }, { eventRules, el }) {
+          if (parseMustache(value).hasBinding) {
+            error('Web environment does not support mustache binding in event props!')
+            return
+          }
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]

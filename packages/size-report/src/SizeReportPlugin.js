@@ -109,6 +109,8 @@ class SizeReportPlugin {
 
       const needEntryPathRules = this.options.needEntryPathRules || {}
 
+      const ignoreSubpackages = this.options.ignoreSubpackages
+
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
           reportGroups.push({
@@ -130,7 +132,13 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!(relation && relation.target), children: new Set(), parents: new Set() })
+        if (!moduleEntryGraphMap.has(moduleId)) {
+          moduleEntryGraphMap.set(moduleId, {
+            target: !!(relation && relation.target),
+            children: new Set(),
+            parents: new Set()
+          })
+        }
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
@@ -289,6 +297,7 @@ class SizeReportPlugin {
         const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
         Object.assign(reportGroup, entrySet, {
           selfSize: 0,
+          ignoreSelfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
           sharedSizeInfo: {},
@@ -321,6 +330,9 @@ class SizeReportPlugin {
               })
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(noEntryModules, (noEntryModule) => {
               return reportGroup.noEntryModules.has(noEntryModule)
@@ -335,6 +347,9 @@ class SizeReportPlugin {
               return reportGroup.selfEntryModules.has(entryModule)
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
@@ -360,6 +375,7 @@ class SizeReportPlugin {
             }
           }
         }
+
         divideEquallySize(sharedModulesGroupsSet, fillInfo.size)
         divideEquallySize(customGroupSharedModulesGroupsSet, fillInfo.size)
       }
@@ -481,7 +497,8 @@ class SizeReportPlugin {
         totalSize: 0,
         staticSize: 0,
         chunkSize: 0,
-        copySize: 0
+        copySize: 0,
+        webpackTemplateSize: 0
       }
 
       function fillPackagesSizeInfo (packageName, size) {
@@ -579,7 +596,6 @@ class SizeReportPlugin {
             packageName,
             size,
             modules: []
-            // webpackTemplateSize: 0
           }
           assetsSizeInfo.assets.push(chunkAssetInfo)
           fillPackagesSizeInfo(packageName, size)
@@ -617,8 +633,7 @@ class SizeReportPlugin {
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
-
-          // chunkAssetInfo.webpackTemplateSize = size
+          sizeSummary.webpackTemplateSize += size
           // filter sourcemap
         } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
@@ -647,15 +662,15 @@ class SizeReportPlugin {
 
       function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
         const sizeThreshold = normalizeThreshold(threshold.size || threshold)
-        const preWarningThreshold = normalizeThreshold(threshold.preWarningSize || threshold)
+        const preWarningSize = threshold.preWarningSize
         const packagesThreshold = threshold.packages
         const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
           compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
         }
-        if (preWarningThreshold && size && size > preWarningThreshold) {
-          compilation.warnings.push(`${prefix}的总体积（${size}B）超过设定预警阈值（${preWarningThreshold}B），共${(size - preWarningThreshold) / 1024}kb，请注意！`)
+        if (preWarningSize && size && size < sizeThreshold) {
+          compilation.warnings.push(`当前${prefix}的总体积 ${size / 1024}kb，${prefix}的体积阈值为${sizeThreshold / 1024}kb, 共剩余${(sizeThreshold - size) / 1024}kb，请注意！`)
         }
 
         if (packagesThreshold && sizeInfo) {
@@ -671,12 +686,24 @@ class SizeReportPlugin {
       }
 
       if (this.options.threshold) {
-        checkThreshold(this.options.threshold, sizeSummary.totalSize, packagesSizeInfo)
+        let filterIgnoreTotalSize = sizeSummary.totalSize
+        if (ignoreSubpackages) {
+          ignoreSubpackages.forEach(ignoreName => {
+            if (packagesSizeInfo[ignoreName]) {
+              filterIgnoreTotalSize -= packagesSizeInfo[ignoreName]
+            }
+          })
+        }
+        checkThreshold(this.options.threshold, filterIgnoreTotalSize, packagesSizeInfo)
       }
 
       reportGroups.forEach((reportGroup) => {
         if (reportGroup.threshold) {
-          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+          let groupSelfSize = reportGroup.selfSize
+          if (reportGroup.ignoreSelfSize) {
+            groupSelfSize -= reportGroup.ignoreSelfSize
+          }
+          checkThreshold(reportGroup.threshold, groupSelfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
         }
       })
 
@@ -744,7 +771,7 @@ class SizeReportPlugin {
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
       })
-      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
+      'totalSize|staticSize|chunkSize|copySize|webpackTemplateSize'.split('|').forEach((key) => {
         sizeSummary[key] = formatSize(sizeSummary[key])
       })
 

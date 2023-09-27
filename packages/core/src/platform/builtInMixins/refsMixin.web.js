@@ -8,7 +8,7 @@ function getEl (ref) {
 
 function processRefs (refs) {
   Object.keys(refs).forEach((key) => {
-    const matched = /^__mpx_ref_([^_]+)__$/.exec(key)
+    const matched = /^__mpx_ref_(.+)__$/.exec(key)
     const rKey = matched && matched[1]
     if (rKey) {
       const ref = refs[key]

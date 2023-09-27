@@ -155,3 +155,27 @@ mpx.config.webRouteConfig = {
   mode: 'history'
 }
 ```
+
+## errorHandler
+- **类型**： `Function`
+
+- **默认值**：`null`
+
+- **用法**：
+
+```js
+mpx.config.errorHandler = function (errmsg, location, error) {
+  // errmsg: 框架内部运行报错的报错归类信息，例如当执行一个watch方法报错时，会是 "Unhandled error occurs during execution of watch callback!"
+  // location: 具体报错的代码路径，可选项，不一定存在
+  // error: 具体的错误堆栈，可选项，不一定存在
+  // handle error
+}
+```
+
+Mpx 框架运行时报错捕获感知处理函数。
+
+* Mpx 框架生命周期执行错误；
+* Mpx 中的 computed、watch 等内置方法执行报错；
+* Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
+
+同时被捕获的错误会通过 console.error 输出。
