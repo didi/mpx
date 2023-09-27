@@ -1,6 +1,6 @@
 # 使用原子类
 
-原子类(utility-first CSS)是近几年流行起来的一种全新的样式编写方式，在前端开发社区内取得了良好的口碑，越来越多的主流网站也基于原子类进行开发，我们耳熟能详的有[Github](https://github.com/)，[OpenAI](https://openai.com/)，[Netflix](https://top10.netflix.com/)和[NASA官网](https://www.jpl.nasa.gov/)等。使用原子类离不开原子类框架的支持，常用的原子类框架有 [Tailwindcss](https://tailwindcss.com/)、[Windicss](https://windicss.org/) 和 [Unocss](https://unocss.dev/) 等，而在 **Mpx2.9** 以后，我们在框架中内置了基于 windicss 的原子类支持，让小程序开发也能使用原子类。对项目进行简单配置开启原子类支持后，用户就可以在 Mpx 页面/组件模板中直接使用一些预定义的基础样式类，诸如flex，pt-4，text-center 和 rotate-90 等，对样式进行组合定义，下面是一个简单示例：
+原子类(utility-first CSS)是近几年流行起来的一种全新的样式编写方式，在前端开发社区内取得了良好的口碑，越来越多的主流网站也基于原子类进行开发，我们耳熟能详的有[Github](https://github.com/)，[OpenAI](https://openai.com/)，[Netflix](https://top10.netflix.com/)和[NASA官网](https://www.jpl.nasa.gov/)等。使用原子类离不开原子类框架的支持，常用的原子类框架有 [Tailwindcss](https://tailwindcss.com/)、[Windicss](https://windicss.org/) 和 [Unocss](https://unocss.dev/) 等，而在 **Mpx2.9** 以后，我们在框架中内置了基于 unocss 的原子类支持，让小程序开发也能使用原子类。对项目进行简单配置开启原子类支持后，用户就可以在 Mpx 页面/组件模板中直接使用一些预定义的基础样式类，诸如flex，pt-4，text-center 和 rotate-90 等，对样式进行组合定义，下面是一个简单示例：
 
 ```html
 <view class="container">
@@ -42,21 +42,23 @@
 
 ## 原子类环境配置
 
-如果你想在新项目中使用原子类，可以使用最新版本的 `@mpxjs/cli` 创建项目，在 prompt 中选择使用原子类，就可以在新创建的项目模版中直接使用 windicss 的原子类，关于可使用的工具类可参考 windicss 官方文档及本指南下方的[windicss 工具类支持范围](#windicss-工具类支持范围)。
+如果你想在新项目中使用原子类，可以使用最新版本的 `@mpxjs/cli` 创建项目，在 prompt 中选择使用原子类，就可以在新创建的项目模版中直接使用 unocss 的原子类，关于可使用的工具类可参考 [unocss 交互示例](https://unocss.dev/interactive/) 及本指南下方的[工具类支持范围](#工具类支持范围)。
 
-> 与 web 中使用 windicss 不同，在 Mpx 中使用 windicss 不需要显式引入虚拟模块 `import 'windi.css'` 来承载生成的样式内容，这是由于在 Mpx 中，我们充分考虑到小程序分包架构的特殊性和主包体积的重要性，结合 Mpx 强大的分包构建能力，对生成的原子工具类的使用情况进行分析，将其自动注入到合适的主包或者分包中，来达到全局体积分配的最优（在没有内容冗余的情况下尽可能输出到分包）。
+> 与 web 中使用 unocss 不同，在 Mpx 中使用 unocss 不需要显式引入虚拟模块 `import 'uno.css'` 来承载生成的样式内容，这是由于在 Mpx 中，我们充分考虑到小程序分包架构的特殊性和主包体积的重要性，结合 Mpx 强大的分包构建能力，对生成的原子工具类的使用情况进行分析，将其自动注入到合适的主包或者分包中，来达到全局体积分配的最优（在没有内容冗余的情况下尽可能输出到分包）。
 
-如果是旧的项目迁移，对于使用 `@mpxjs/cli@3.0` 之后创建的项目，可以
+对于使用 `@mpxjs/cli@3.0` 新版脚手架创建的项目，可以
+
+对于使用旧版脚手架创建的项目，可以通过修改项目模板
 
 
 
-## windicss 功能支持范围
+## 功能支持范围
 
-## windicss 工具类支持范围
+## 工具类支持范围
 
 ## 小程序原子类使用注意点
 
-## 关于 windicss 不再更新
+## 为什么使用unocss
 
 
 
