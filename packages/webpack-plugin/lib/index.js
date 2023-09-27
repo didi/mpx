@@ -1315,6 +1315,8 @@ class MpxWebpackPlugin {
           chunkLoadingGlobal
         } = compilation.outputOptions
 
+        const chunkLoadingGlobalStr = JSON.stringify(chunkLoadingGlobal)
+
         function getTargetFile (file) {
           let targetFile = file
           const queryStringIdx = targetFile.indexOf('?')
@@ -1352,15 +1354,15 @@ class MpxWebpackPlugin {
                   // 在rootChunk中挂载jsonpCallback
                   source.add('// process ali subpackages runtime in root chunk\n' +
                     'var context = (function() { return this })() || Function("return this")();\n')
-                  source.add(`context.${chunkLoadingGlobal} = ${globalObject}.${chunkLoadingGlobal} = require("${relativePath}");\n`)
+                  source.add(`context[${chunkLoadingGlobalStr}] = ${globalObject}[${chunkLoadingGlobalStr}] = require("${relativePath}");\n`)
                 } else {
                   // 其余chunk中通过context全局传递runtime
                   source.add('// process ali subpackages runtime in other chunk\n' +
                     'var context = (function() { return this })() || Function("return this")();\n')
-                  source.add(`${globalObject}.${chunkLoadingGlobal} = context.${chunkLoadingGlobal};\n`)
+                  source.add(`${globalObject}[${chunkLoadingGlobalStr}] = context[${chunkLoadingGlobalStr}];\n`)
                 }
               } else {
-                source.add(`${globalObject}.${chunkLoadingGlobal} = require("${relativePath}");\n`)
+                source.add(`${globalObject}[${chunkLoadingGlobalStr}] = require("${relativePath}");\n`)
               }
             } else {
               source.add(`require("${relativePath}");\n`)
@@ -1415,7 +1417,7 @@ try {
 }\n`)
             }
             source.add(originalSource)
-            source.add(`\nmodule.exports = ${globalObject}.${chunkLoadingGlobal};\n`)
+            source.add(`\nmodule.exports = ${globalObject}[${chunkLoadingGlobalStr}];\n`)
           } else {
             source.add(originalSource)
           }
