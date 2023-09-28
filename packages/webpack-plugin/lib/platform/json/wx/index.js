@@ -70,6 +70,19 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
+  // 校验输出支付宝 componentGenerics 配置的正确性
+  function aliComponentGenericsValidate (input) {
+    const componentGenerics = input.componentGenerics
+    if (componentGenerics && typeof componentGenerics === 'object') {
+      Object.keys(componentGenerics).forEach(key => {
+        if (!componentGenerics[key].default) {
+          error(`Ali environment componentGenerics need to specify a default custom component! please check the configuration of component ${key}`)
+        }
+      })
+    }
+    return input
+  }
+
   function fillGlobalComponents (input, { globalComponents }) {
     if (globalComponents) {
       Object.assign(globalComponents, input.usingComponents)
@@ -115,7 +128,7 @@ module.exports = function getSpec ({ warn, error }) {
   const componentRules = [
     {
       test: 'componentGenerics',
-      ali: deletePath(true)
+      ali: aliComponentGenericsValidate
     },
     {
       test: 'componentPlaceholder',
