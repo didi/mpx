@@ -53,6 +53,21 @@ const isUnaryTag = makeMap(
   'link,meta,param,source,track,wbr'
 )
 
+// https://developers.weixin.qq.com/miniprogram/dev/component/
+// 以后可能在框架中原生支持这些标签，所以需要进行判断
+const isNativeMiniTag = makeMap(
+  'cover-image,cover-view,match-media,movable-area,movable-view,' +
+  'page-container,root-portal,scroll-view,swiper,swiper-item,view,' +
+  'icon,progress,rich-text,text,button,checkbox,checkbox-group,editor,' +
+  'form,input,keyboard-accessory,label,picker,picker-view,' +
+  'picker-view-column,radio,radio-group,slider,switch,textarea,' +
+  'grid-view,list-view,share-element,snapshot,span,sticky-header,' +
+  'sticky-section,functional-page-navigator,navigator,audio,camera,' +
+  'channel-live,channel-video,image,live-player,live-pusher,video,' +
+  'voip-room,map,canvas,web-view,ad,ad-custom,official-account,' +
+  'open-data,native-component,aria-component,page-meta'
+)
+
 const isSpace = makeMap('ensp,emsp,nbsp')
 
 const isContWidth = makeMap('col,colgroup,img,table,td,th,tr')
@@ -67,7 +82,8 @@ const isSVGTag = makeMap(SVG_TAGS)
 
 const isVoidTag = makeMap(VOID_TAGS)
 
-const isOriginTag = (tag) => isHTMLTag(tag) || isSVGTag(tag) || isVoidTag(tag)
+// 是否为原始tag，包括 html tag 和小程序原生 tag
+const isOriginTag = (tag) => isHTMLTag(tag) || isSVGTag(tag) || isVoidTag(tag) || isNativeMiniTag(tag)
 
 module.exports = {
   isOriginTag,
@@ -80,5 +96,6 @@ module.exports = {
   isSpace,
   isContWidth,
   isContHeight,
+  isNativeMiniTag,
   isContConRow
 }
