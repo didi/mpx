@@ -12,7 +12,9 @@
   "globals": {
     "__mpx_mode__": "wx",
     "wx": {
-    }
+    },
+    "__DEV__": true
   },
-  "setupFiles": ["./setupFile.js"]
+  "setupFiles": ["./scripts/setupFile.js"],
+  "setupFilesAfterEnv": ["./scripts/setupAfterEnv.js"]
 }

@@ -1,4 +1,4 @@
-import { reactive, isReactive } from '../src/reactive'
+import { reactive, isReactive, toRaw } from '../src/reactive'
 
 describe('test reactivity/reactive', () => {
   test('Object', () => {
@@ -87,5 +87,32 @@ describe('test reactivity/reactive', () => {
     observed.bar = observed2
     expect(observed.bar).toBe(observed2)
     expect(original.bar).toBe(original2)
+  })
+
+  test('toRaw', () => {
+    const original = { foo: 1 }
+    const observed = reactive(original)
+    expect(toRaw(observed)).toBe(original)
+    expect(toRaw(original)).toBe(original)
+  })
+
+  test('toRaw on object using reactive as prototype', () => {
+    const original = reactive({})
+    const obj = Object.create(original)
+    const raw = toRaw(obj)
+    expect(raw).toBe(obj)
+    expect(raw).not.toBe(toRaw(original))
+  })
+
+  test('non-observable values', () => {
+    const assertValue = (value) => {
+      reactive(value)
+      expect(
+        `value cannot be made reactive: ${String(value)}`
+      ).toHaveBeenWarnedLast()
+    }
+
+    // number
+    assertValue(1)
   })
 })

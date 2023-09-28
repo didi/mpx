@@ -41,6 +41,9 @@ function targetTypeMap (rawType) {
 
 function createReactiveObject (target, baseHandlers, proxyMap) {
   if (!isObject(target)) {
+    if (__DEV__) {
+      console.warn(`value cannot be made reactive: ${String(target)}`)
+    }
     return target
   }
   // when target is already a Proxy, return it
