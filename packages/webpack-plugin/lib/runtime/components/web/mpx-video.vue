@@ -146,6 +146,11 @@
         classList: ''
       }
     },
+    watch: {
+      muted (val) {
+        this.mutedCopy = val
+      }
+    },
     mounted () {
       this.initStyle()
       this.initEvent()

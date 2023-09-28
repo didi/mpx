@@ -264,10 +264,9 @@
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
-        const wrapperWidth = wrapper.offsetWidth
-        const wrapperHeight = wrapper.offsetHeight
-        this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
-        this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
+        const computedStyle = getComputedStyle(wrapper)
+        this.$refs.innerWrapper.style.width = `${computedStyle.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+        this.$refs.innerWrapper.style.height = `${computedStyle.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
 
