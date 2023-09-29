@@ -1,4 +1,4 @@
-import { isObject, type } from '@mpxjs/utils'
+import { isObject, type, def } from '@mpxjs/utils'
 import { mutableHandlers } from './baseHandlers'
 
 export const reactiveMap = new WeakMap()
@@ -62,6 +62,7 @@ function createReactiveObject (target, baseHandlers, proxyMap) {
   if (targetType === TargetType.INVALID) {
     return target
   }
+  // only Object or Array type can be observed.
   const proxy = new Proxy(target, baseHandlers)
   proxyMap.set(target, proxy)
   return proxy
@@ -75,7 +76,29 @@ export function isReadonly (value) {
   return !!(value && value[ReactiveFlags.IS_READONLY])
 }
 
-export function toRaw(observed) {
+export function toRaw (observed) {
   const raw = observed && observed[ReactiveFlags.RAW]
   return raw ? toRaw(raw) : observed
+}
+
+/**
+ * Marks an object so that it will never be converted to a proxy. Returns the
+ * object itself.
+ * The value shouldn‘t be reactive in some scenes，such as complex third-party class instances or Mpx component objects.
+ * Skipping the proxy transformation improves performance when rendering large lists of immutable data sources.
+ *
+ * @example
+ * ```js
+ * const foo = markRaw({})
+ * console.log(isReactive(reactive(foo))) // false
+ *
+ * // also works when nested inside other reactive objects
+ * const bar = reactive({ foo })
+ * console.log(isReactive(bar.foo)) // false
+ * ```
+ * @param value - The object to be marked as "raw".
+ */
+export function markRaw (value) {
+  def(value, ReactiveFlags.SKIP, true)
+  return value
 }

@@ -1,4 +1,4 @@
-import { reactive, isReactive, toRaw } from '../src/reactive'
+import { reactive, isReactive, toRaw, markRaw } from '../src/reactive'
 
 describe('test reactivity/reactive', () => {
   test('Object', () => {
@@ -114,5 +114,57 @@ describe('test reactivity/reactive', () => {
 
     // number
     assertValue(1)
+    // string
+    assertValue('foo')
+    // boolean
+    assertValue(false)
+    // null
+    assertValue(null)
+    // undefined
+    assertValue(undefined)
+    // symbol
+    const s = Symbol('s')
+    assertValue(s)
+    // bigint
+    const bn = BigInt('9007199254740991')
+    assertValue(bn)
+
+    // built-ins should work and return same value
+    const p = Promise.resolve()
+    expect(reactive(p)).toBe(p)
+    const r = new RegExp('')
+    expect(reactive(r)).toBe(r)
+    const d = new Date()
+    expect(reactive(d)).toBe(d)
+  })
+
+  test('markRaw', () => {
+    const obj = reactive({
+      foo: { a: 1 },
+      bar: markRaw({ b: 2 })
+    })
+    expect(isReactive(obj.foo)).toBe(true)
+    expect(isReactive(obj.bar)).toBe(false)
+  })
+
+  test('should not observe non-extensible objects', () => {
+    const obj = reactive({
+      foo: Object.preventExtensions({ a: 1 }),
+      // sealed or frozen objects are considered non-extensible as well
+      bar: Object.freeze({ a: 1 }),
+      baz: Object.seal({ a: 1 })
+    })
+    expect(isReactive(obj.foo)).toBe(false)
+    expect(isReactive(obj.bar)).toBe(false)
+    expect(isReactive(obj.baz)).toBe(false)
+  })
+
+  test('should not observe objects with __mpx_skip', () => {
+    const original = {
+      foo: 1,
+      __mpx_skip: true
+    }
+    const observed = reactive(original)
+    expect(isReactive(observed)).toBe(false)
   })
 })
