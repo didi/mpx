@@ -74,7 +74,9 @@ export function trigger (target, key) {
   deps.push(depsMap.get(key))
 
   if (deps.length === 1) {
-    triggerEffects(deps[0])
+    if( deps[0] ) {
+      triggerEffects(deps[0])
+    }
   } else {
     const effects = []
     for (const dep of deps) {
