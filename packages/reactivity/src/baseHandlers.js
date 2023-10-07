@@ -1,5 +1,6 @@
 import { hasOwn, isArray, isObject } from '@mpxjs/utils'
 import { reactive, ReactiveFlags, reactiveMap, toRaw } from './reactive'
+import { track, trigger } from '../src/effect'
 
 function createArrayInstrumentations () {
   const instrumentations = {}
@@ -60,6 +61,8 @@ class BaseReactiveHandler {
 
     const res = Reflect.get(target, key, receiver)
 
+    track(target, key)
+
     if (isObject(res)) {
       return reactive(res)
     }
@@ -76,11 +79,13 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   set (target, key, value, receiver) {
     value = toRaw(value)
     const result = Reflect.set(target, key, value, receiver)
+    trigger(target, key, value)
     return result
   }
 
   has (target, key) {
     const result = Reflect.has(target, key)
+    track(target, key)
     return result
   }
 
@@ -90,7 +95,11 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 
   deleteProperty (target, key) {
+    const hadKey = hasOwn(target, key)
     const result = Reflect.deleteProperty(target, key)
+    if (result && hadKey) {
+      trigger(target, key)
+    }
     return result
   }
 }
