@@ -1,4 +1,4 @@
-import { isArray } from '@mpxjs/utils'
+import { isArray, isIntegerKey } from '@mpxjs/utils'
 import { createDep } from './dep'
 
 const targetMap = new WeakMap()
@@ -72,6 +72,11 @@ export function trigger (target, key) {
   }
   const deps = []
   deps.push(depsMap.get(key))
+
+  // new index added to array -> length changes
+  if (isArray(target) && isIntegerKey(key)) {
+    deps.push(depsMap.get('length'))
+  }
 
   if (deps.length === 1) {
     if( deps[0] ) {
