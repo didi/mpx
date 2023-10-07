@@ -43,7 +43,8 @@
       return {
         currentIndex: this.current,
         currentChildLength: 0,
-        lastChildLength: 0
+        lastChildLength: 0,
+        init: false
       }
     },
     computed: {
@@ -88,6 +89,7 @@
     },
     watch: {
       current (val) {
+        this.currentIndex = val
         if (this.bs) {
           this.lastX = this.bs.x
           this.lastY = this.bs.y
@@ -119,65 +121,83 @@
       this.itemIds = []
     },
     mounted () {
-      const originBsOptions = {
-        scrollX: !this.vertical,
-        scrollY: this.vertical,
-        slide: {
-          loop: this.circular,
-          threshold: 0.5,
-          speed: this.duration,
-          easing: this.easing,
-          interval: this.interval,
-          autoplay: this.autoplay,
-          startPageXIndex: this.vertical ? 0 : this.current,
-          startPageYIndex: this.vertical? this.current : 0
-        },
-        momentum: false,
-        bounce: false,
-        probeType: 3,
-        stopPropagation: true
-      }
-      const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
-      this.bs = new BScroll(this.$refs.wrapper, bsOptions)
-      this.bs.on('slideWillChange', (page) => {
-        this.currentIndex = this.vertical ? page.pageY : page.pageX
-        this.$emit('change', getCustomEvent('change', {
-          current: this.currentIndex,
-          currentItemId: this.itemIds[this.currentIndex] || '',
-          source: this.changeSource
-        }, this))
-      })
-
-      this.bs.on('scrollEnd', () => {
-        this.$emit('animationfinish', getCustomEvent('animationfinish', {
-          current: this.currentIndex,
-          currentItemId: this.itemIds[this.currentIndex] || '',
-          source: this.changeSource
-        }, this))
-      })
-      this.bs.on('scroll', throttle(({ x, y }) => {
-        this.$emit('transition', getCustomEvent('transition', {
-          dx: this.lastX - x,
-          dy: this.lastY - y
-        }, this))
-      }, 30, {
-        leading: true,
-        trailing: false
-      }))
-
-      this.bs.on('beforeScrollStart', () => {
-        if (this.bs) {
-          this.lastX = this.bs.x
-          this.lastY = this.bs.y
-        }
-        this.changeSource = 'touch'
-      })
+      this.createResizeObserver()
+      this.initBs()
     },
     beforeDestroy () {
       this.bs && this.bs.destroy()
       delete this.bs
     },
     methods: {
+      initBs () {
+        const originBsOptions = {
+          scrollX: !this.vertical,
+          scrollY: this.vertical,
+          slide: {
+            loop: this.circular,
+            threshold: 0.5,
+            speed: this.duration,
+            easing: this.easing,
+            interval: this.interval,
+            autoplay: this.autoplay,
+            startPageXIndex: this.vertical ? 0 : this.currentIndex,
+            startPageYIndex: this.vertical? this.currentIndex : 0
+          },
+          momentum: false,
+          bounce: false,
+          probeType: 3,
+          stopPropagation: true
+        }
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+        this.bs = new BScroll(this.$refs.wrapper, bsOptions)
+        this.bs.on('slideWillChange', (page) => {
+          this.currentIndex = this.vertical ? page.pageY : page.pageX
+          this.$emit('change', getCustomEvent('change', {
+            current: this.currentIndex,
+            currentItemId: this.itemIds[this.currentIndex] || '',
+            source: this.changeSource
+          }, this))
+        })
+
+        this.bs.on('scrollEnd', () => {
+          this.$emit('animationfinish', getCustomEvent('animationfinish', {
+            current: this.currentIndex,
+            currentItemId: this.itemIds[this.currentIndex] || '',
+            source: this.changeSource
+          }, this))
+        })
+        this.bs.on('scroll', throttle(({ x, y }) => {
+          this.$emit('transition', getCustomEvent('transition', {
+            dx: this.lastX - x,
+            dy: this.lastY - y
+          }, this))
+        }, 30, {
+          leading: true,
+          trailing: false
+        }))
+
+        this.bs.on('beforeScrollStart', () => {
+          if (this.bs) {
+            this.lastX = this.bs.x
+            this.lastY = this.bs.y
+          }
+          this.changeSource = 'touch'
+        })
+      },
+      createResizeObserver () {
+        const resizeObserver = new ResizeObserver(entries => {
+          for (let entry of entries) {
+            if (!this.init) {
+              this.init = true
+              return
+            }
+            this.bs.destroy()
+            this.initBs()
+          }
+        })
+        const elementToObserve = document.querySelector('.mpx-swiper');
+        resizeObserver.observe(elementToObserve);
+      },
       refresh () {
         this.bs && this.bs.refresh()
       },
