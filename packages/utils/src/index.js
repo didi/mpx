@@ -7,6 +7,7 @@ export {
   hasProto,
   noop,
   type,
+  isSymbol,
   isString,
   isBoolean,
   isNumber,

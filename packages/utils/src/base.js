@@ -1,5 +1,9 @@
 const noop = () => {}
 
+function isSymbol (str) {
+  return typeof str === 'symbol'
+}
+
 function isString (str) {
   return typeof str === 'string'
 }
@@ -102,6 +106,7 @@ export {
   hasProto,
   noop,
   type,
+  isSymbol,
   isString,
   isBoolean,
   isNumber,
