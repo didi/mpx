@@ -21,7 +21,8 @@ export {
   dash2hump,
   hump2dash,
   def,
-  hasChanged
+  hasChanged,
+  isIntegerKey
 } from './base'
 
 export {

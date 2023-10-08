@@ -94,6 +94,10 @@ function hasChanged (value, oldValue) {
   return !Object.is(value, oldValue)
 }
 
+function isIntegerKey (key) {
+  return isString(key) && key !== 'NaN' && key[0] !== '-' && '' + parseInt(key, 10) === key
+}
+
 export {
   hasProto,
   noop,
@@ -112,5 +116,6 @@ export {
   dash2hump,
   hump2dash,
   def,
-  hasChanged
+  hasChanged,
+  isIntegerKey
 }
