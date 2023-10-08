@@ -281,7 +281,7 @@ describe('render function simplify should correct', function () {
     `
 
     expect(trim(res)).toBe(trim(output))
-  });
+  })
 
   it('should expression is correct', function () {
     const input = `
