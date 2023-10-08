@@ -24,6 +24,9 @@ describe('render function simplify should correct', function () {
         
         obj2;
         obj2.a.b;
+
+        String(a).b.c;
+        !!!String(a).b.c;
       }
     }
     `
@@ -108,7 +111,6 @@ describe('render function simplify should correct', function () {
         
           // 9
           if (this._c("bName", this.bName)) {} // 10
-          // 11
           // 删除wxs.test
           wxs.test("" + ""); // 12
         
@@ -256,6 +258,30 @@ describe('render function simplify should correct', function () {
     `
     expect(trim(res)).toBe(trim(output))
   })
+
+  it('should prefix check is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          name;
+          nameage;
+          name.age
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: true, renderReduce: true }).code
+
+    const output = `
+      global.currentInject = {
+        render: function () {
+          this._c("name", this.name);
+          this._c("nameage", this.nameage);
+        }
+      };
+    `
+
+    expect(trim(res)).toBe(trim(output))
+  });
 
   it('should expression is correct', function () {
     const input = `

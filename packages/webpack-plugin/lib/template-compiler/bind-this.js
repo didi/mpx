@@ -80,34 +80,27 @@ function checkDelAndGetPath (path) {
   let replace = false
 
   // 确定删除路径
-  let tempPath = current
-  while (!t.isBlockStatement(tempPath)) {
+  while (!t.isBlockStatement(current)) {
     // case: !!a
-    while (t.isUnaryExpression(tempPath.parent) && tempPath.key === 'argument') {
-      tempPath = tempPath.parentPath
-      delPath = tempPath
-    }
-
-    // 遇到复杂表达式，则直接停止，避免同一个path挂载多个delInfo
-    if (t.isBinaryExpression(tempPath.container) ||
-      t.isLogicalExpression(tempPath.container) ||
-      t.isObjectProperty(tempPath.container)) {
+    if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
+      delPath = current.parentPath
+    } else if (t.isCallExpression(current.parent)) {
+      // case: String(a) || this._p(a)
+      const args = current.node.arguments || current.parent.arguments || []
+      if (args.length === 1) {
+        delPath = current.parentPath
+      } else {
+        // case: this._i(a, function() {})
+        break
+      }
+    } else if (t.isMemberExpression(current.parent) && current === delPath) {
+      // case: String(a).b.c
+      delPath = current.parentPath
+    } else {
       break
     }
 
-    if (t.isCallExpression(tempPath)) {
-      // case: String(a) || this._p(a)
-      const args = tempPath.node.arguments || tempPath.parent.arguments || []
-      if (args.length === 1) {
-        delPath = tempPath
-      }
-    }
-    // case: String(a).length
-    if (tempPath.type === 'MemberExpression' && t.isCallExpression(tempPath.node.object)) {
-      delPath = tempPath
-    }
-
-    tempPath = tempPath.parentPath
+    current = current.parentPath
   }
 
   // 确定是否可删除
@@ -115,7 +108,6 @@ function checkDelAndGetPath (path) {
     const { key, listKey, computed, node, container } = current
     if (
       computed || // a[b] => a
-      key === 'property' || // a[b] => b
       (node.computed && !t.isStringLiteral(node.property)) || // a['b']
       t.isLogicalExpression(container) || // a && b
       (t.isIfStatement(container) && key === 'test') || // if (a) {}
@@ -150,14 +142,13 @@ function checkDelAndGetPath (path) {
   }
 }
 
+// 判断前缀是否存在(只判断前缀，全等的情况，会返回false)
 function checkPrefix (keys, key) {
-  if (keys.length === 0) return false
-  const temp = key.split('.')
-  if (temp.length === 1) return false
-
   for (let i = 0; i < keys.length; i++) {
     const str = keys[i]
-    if (key.startsWith(str)) return true
+    if (key === str) continue
+    // 确保判断当前标识是完整的单词
+    if (key.startsWith(str) && key[str.length] === '.') return true
   }
   return false
 }
@@ -223,6 +214,7 @@ module.exports = {
 
           if (!renderReduce) return
 
+          // 参数改用path，不用last
           const { delPath, canDel, ignore, replace } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
           if (ignore) return
 
@@ -275,7 +267,8 @@ module.exports = {
             if (args) {
               path.replaceWith(args)
             } else {
-              // 查找可删除路径时，有可能查不多_p就结束了，类似: this._p(String(a + b))，所以遇到没有参数的场景，很可能就是依据被删除了
+              // todo 确认参数为空的场景
+              // 查找可删除路径时，有可能查不到_p就结束了，类似: this._p(String(a+b))，所以遇到没有参数的场景，很可能就是已经被删除了
               path.remove()
             }
             isProps = false
@@ -283,6 +276,7 @@ module.exports = {
           }
         }
       },
+      // enter 先于特定标识执行
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
