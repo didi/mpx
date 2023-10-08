@@ -1,5 +1,6 @@
 import { isArray, isIntegerKey } from '@mpxjs/utils'
 import { createDep } from './dep'
+import { TriggerOpTypes } from './operations'
 
 const targetMap = new WeakMap()
 let activeEffect
@@ -17,6 +18,8 @@ class ReactiveEffect {
     return result
   }
 }
+
+export const ITERATE_KEY = Symbol(__DEV__ ? 'iterate' : '')
 
 export function effect (fn) {
   const _effect = new ReactiveEffect(fn)
@@ -63,23 +66,32 @@ export function trackEffects (dep) {
  * triggers the effects stored within.
  *
  * @param target - The reactive object.
+ * @param type - Defines the type of the operation that needs to trigger effects.
  * @param key - Can be used to target a specific reactive property in the target object.
  */
-export function trigger (target, key) {
+export function trigger (target, type, key) {
   const depsMap = targetMap.get(target)
   if (!depsMap) {
     return
   }
   const deps = []
-  deps.push(depsMap.get(key))
-
   // new index added to array -> length changes
   if (isArray(target) && isIntegerKey(key)) {
     deps.push(depsMap.get('length'))
+  } else {
+    deps.push(depsMap.get(key))
+  }
+
+  switch (type) {
+    case TriggerOpTypes.ADD:
+      deps.push(depsMap.get(ITERATE_KEY))
+      break
+    case TriggerOpTypes.SET:
+      break
   }
 
   if (deps.length === 1) {
-    if( deps[0] ) {
+    if (deps[0]) {
       triggerEffects(deps[0])
     }
   } else {
