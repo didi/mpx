@@ -53,7 +53,7 @@ global.currentInject = {
     global.currentInject = {
       render: function () {
         if (bName) {} // 1
-        this._p(bName) // 2
+        this._p(bName)
         this._p(wxs.test(bName)) // 3
         this._p(wxs.test(bName + cName)) // 4
         Number(bName + cName) // 5
@@ -65,7 +65,7 @@ global.currentInject = {
         this._p(Object.keys(bName)) // 9
 
         if (bName) {} // 10
-        this._p(bName) // 11
+        this._p(bName)
         wxs.test(bName); // 删除wxs.test
         this._p(wxs.test(bName + cName)) // 12
         this._p(wxs.test(bName + cName)) // 13
