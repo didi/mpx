@@ -100,9 +100,8 @@ function checkDelAndGetPath (path) {
 
   // 确定是否可删除
   while (!t.isBlockStatement(current)) {
-    const { key, listKey, computed, node, container } = current
+    const { key, listKey, node, container } = current
     if (
-      computed || // a[b] => a
       (node.computed && !t.isStringLiteral(node.property)) || // a['b']
       t.isLogicalExpression(container) || // a && b
       (t.isIfStatement(container) && key === 'test') || // if (a) {}
