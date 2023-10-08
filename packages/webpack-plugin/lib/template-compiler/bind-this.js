@@ -258,13 +258,7 @@ module.exports = {
           if (path.isProps) {
             // 移除无意义的__props调用
             const args = path.node.arguments[0]
-            if (args) {
-              path.replaceWith(args)
-            } else {
-              // todo 确认参数为空的场景
-              // 查找可删除路径时，有可能查不到_p就结束了，类似: this._p(String(a+b))，所以遇到没有参数的场景，很可能就是已经被删除了
-              path.remove()
-            }
+            path.replaceWith(args)
             isProps = false
             delete path.isProps
           }
