@@ -23,13 +23,14 @@ function capitalToHyphen (v) {
   return ret
 }
 
-function trim (str) {
-  return str.replace(/\s+/g, '')
+// 删除空行
+function trimBlankRow (str) {
+  return str.replace(/^\s*[\r\n]/gm, '')
 }
 
 module.exports = {
   isCapital,
   isMustache,
   capitalToHyphen,
-  trim
+  trimBlankRow
 }
