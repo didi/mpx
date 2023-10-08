@@ -37,14 +37,11 @@ function calPropName (path) {
   let last = path
   let keyPath = '' + path.node.name
 
-  let hasDangerous = false
-
   while (current.isMemberExpression() && last.parentKey !== 'property') {
     if (current.node.computed) {
       if (t.isLiteral(current.node.property)) {
         if (t.isStringLiteral(current.node.property)) {
           if (dangerousKeyMap[current.node.property.value]) {
-            hasDangerous = true
             break
           }
           keyPath += `.${current.node.property.value}`
@@ -56,7 +53,6 @@ function calPropName (path) {
       }
     } else {
       if (dangerousKeyMap[current.node.property.name]) {
-        hasDangerous = true
         break
       }
       keyPath += `.${current.node.property.name}`
@@ -67,8 +63,7 @@ function calPropName (path) {
 
   return {
     last,
-    keyPath,
-    hasDangerous
+    keyPath
   }
 }
 
@@ -208,14 +203,13 @@ module.exports = {
           !ignoreMap[path.node.name] &&
           needCollect
         ) {
-          const { last, keyPath, hasDangerous } = calPropName(path)
+          const { last, keyPath } = calPropName(path)
           path.keyPath = keyPath
           last.collectPath = t.stringLiteral(keyPath)
 
           if (!renderReduce) return
 
-          // 参数改用path，不用last
-          const { delPath, canDel, ignore, replace } = checkDelAndGetPath(hasDangerous ? last.parentPath : last)
+          const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
           if (ignore) return
 
           delPath.delInfo = {
