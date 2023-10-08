@@ -211,4 +211,34 @@ describe('reactivity/effect', () => {
     delete numbers.num1
     expect(dummy).toBe(4)
   })
+
+  it('should observe symbol keyed properties', () => {
+    const key = Symbol('symbol keyed prop')
+    let dummy, hasDummy
+    const obj = reactive({ [key]: 'value' })
+    effect(() => (dummy = obj[key]))
+    effect(() => (hasDummy = key in obj))
+
+    expect(dummy).toBe('value')
+    expect(hasDummy).toBe(true)
+    obj[key] = 'newValue'
+    expect(dummy).toBe('newValue')
+
+    delete obj[key]
+    expect(dummy).toBe(undefined)
+    expect(hasDummy).toBe(false)
+  })
+
+  it('should not observe well-known symbol keyed properties', () => {
+    const key = Symbol.isConcatSpreadable
+    let dummy
+    const array = reactive([])
+    effect(() => (dummy = array[key]))
+
+    expect(array[key]).toBe(undefined)
+    expect(dummy).toBe(undefined)
+    array[key] = true
+    expect(array[key]).toBe(true)
+    expect(dummy).toBe(undefined)
+  })
 })

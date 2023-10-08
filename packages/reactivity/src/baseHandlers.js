@@ -1,7 +1,18 @@
-import { hasOwn, isArray, isObject, isIntegerKey } from '@mpxjs/utils'
+import { hasOwn, isArray, isObject, isIntegerKey, isSymbol } from '@mpxjs/utils'
 import { reactive, ReactiveFlags, reactiveMap, toRaw } from './reactive'
 import { track, trigger, ITERATE_KEY } from '../src/effect'
 import { TriggerOpTypes } from './operations'
+
+const builtInSymbols = new Set(
+  /* #__PURE__ */
+  Object.getOwnPropertyNames(Symbol)
+    // ios10.x Object.getOwnPropertyNames(Symbol) can enumerate 'arguments' and 'caller'
+    // but accessing them on Symbol leads to TypeError because Symbol is a strict mode
+    // function
+    .filter(key => key !== 'arguments' && key !== 'caller')
+    .map(key => Symbol[key])
+    .filter(isSymbol)
+)
 
 function createArrayInstrumentations () {
   const instrumentations = {}
@@ -61,6 +72,10 @@ class BaseReactiveHandler {
     }
 
     const res = Reflect.get(target, key, receiver)
+
+    if (builtInSymbols.has(key)) {
+      return res
+    }
 
     track(target, key)
 
