@@ -97,16 +97,8 @@ class WebIntersectionObserver {
     nextTick(() => {
       const marginsTemp = margins || {}
       const { left = 0, right = 0, top = 0, bottom = 0 } = marginsTemp
-      this._root = document.querySelector('html')
-      const viewportWidth = window.innerWidth || document.documentElement.clientWidth
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight
-      const rootWidth = this._root.offsetWidth || 0
-      const rootHeight = this._root.offsetHeight || 0
-      if (rootHeight >= viewportHeight) {
-        this._rootMargin = `${top}px ${viewportWidth - rootWidth + right}px ${viewportHeight - rootHeight + bottom}px ${left}px`
-      } else {
-        this._rootMargin = `${top}px ${right}px ${bottom}px ${left}px`
-      }
+      this._root = null
+      this._rootMargin = `${top}px ${right}px ${bottom}px ${left}px`
       this._relativeInfo.push({ selector: null, margins })
     })
     return this

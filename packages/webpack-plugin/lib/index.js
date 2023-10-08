@@ -170,6 +170,7 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
+    options.optimizeSize = options.optimizeSize || false
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -294,6 +295,14 @@ class MpxWebpackPlugin {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
+      if (this.options.optimizeSize) {
+        compiler.options.optimization.chunkIds = 'total-size'
+        compiler.options.optimization.moduleIds = 'natural'
+        compiler.options.optimization.mangleExports = 'size'
+        compiler.options.output.globalObject = 'g'
+        // todo chunkLoadingGlobal不具备项目唯一性，在多构建产物混编时可能存在问题，尤其在支付宝使用全局对象传递的情况下
+        compiler.options.output.chunkLoadingGlobal = 'c'
+      }
     }
 
     if (!compiler.options.node || !compiler.options.node.global) {
@@ -387,6 +396,7 @@ class MpxWebpackPlugin {
         const query = parseQuery(obj.query || '?')
         return query.isPage && !query.type
       }
+
       // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
       compiler.resolverFactory.hooks.resolver.intercept({
         factory: (type, hook) => {
@@ -685,7 +695,15 @@ class MpxWebpackPlugin {
             mpx.extractedFilesCache.set(resource, file)
             return file
           },
-          recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
+          recordResourceMap: ({
+            resourcePath,
+            resourceType,
+            outputPath,
+            packageRoot = '',
+            recordOnly,
+            warn,
+            error
+          }) => {
             const packageName = packageRoot || 'main'
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
             const currentResourceMap = resourceMap.main ? resourceMap[packageName] = resourceMap[packageName] || {} : resourceMap
@@ -1297,6 +1315,8 @@ class MpxWebpackPlugin {
           chunkLoadingGlobal
         } = compilation.outputOptions
 
+        const chunkLoadingGlobalStr = JSON.stringify(chunkLoadingGlobal)
+
         function getTargetFile (file) {
           let targetFile = file
           const queryStringIdx = targetFile.indexOf('?')
@@ -1316,7 +1336,7 @@ class MpxWebpackPlugin {
 
           const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
-          source.add(`\nvar ${globalObject} = ${globalObject} || {};\n\n`)
+          source.add(`\nvar ${globalObject} = {};\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {
             const relativeChunkFile = relativeChunk.files.values().next().value
@@ -1333,16 +1353,16 @@ class MpxWebpackPlugin {
                 if (compilation.options.entry[chunk.name]) {
                   // 在rootChunk中挂载jsonpCallback
                   source.add('// process ali subpackages runtime in root chunk\n' +
-                    'var context = (function() { return this })() || Function("return this")();\n\n')
-                  source.add(`context[${JSON.stringify(chunkLoadingGlobal)}] = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = require("${relativePath}");\n`)
+                    'var context = (function() { return this })() || Function("return this")();\n')
+                  source.add(`context[${chunkLoadingGlobalStr}] = ${globalObject}[${chunkLoadingGlobalStr}] = require("${relativePath}");\n`)
                 } else {
                   // 其余chunk中通过context全局传递runtime
                   source.add('// process ali subpackages runtime in other chunk\n' +
-                    'var context = (function() { return this })() || Function("return this")();\n\n')
-                  source.add(`${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = context[${JSON.stringify(chunkLoadingGlobal)}];\n`)
+                    'var context = (function() { return this })() || Function("return this")();\n')
+                  source.add(`${globalObject}[${chunkLoadingGlobalStr}] = context[${chunkLoadingGlobalStr}];\n`)
                 }
               } else {
-                source.add(`${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = require("${relativePath}");\n`)
+                source.add(`${globalObject}[${chunkLoadingGlobalStr}] = require("${relativePath}");\n`)
               }
             } else {
               source.add(`require("${relativePath}");\n`)
@@ -1350,10 +1370,11 @@ class MpxWebpackPlugin {
           })
 
           if (isRuntime) {
-            source.add('var context = (function() { return this })() || Function("return this")();\n')
-            source.add(`
+            if (mpx.mode === 'ali' || mpx.mode === 'qq') {
+              source.add(`
 // Fix babel runtime in some quirky environment like ali & qq dev.
 try {
+  var context = (function() { return this })() || Function("return this")();
   if(!context.console){
     context.console = console;
     context.setInterval = setInterval;
@@ -1394,8 +1415,9 @@ try {
   }
 } catch(e){
 }\n`)
+            }
             source.add(originalSource)
-            source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
+            source.add(`\nmodule.exports = ${globalObject}[${chunkLoadingGlobalStr}];\n`)
           } else {
             source.add(originalSource)
           }
