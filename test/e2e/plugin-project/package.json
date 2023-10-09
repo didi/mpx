@@ -23,9 +23,10 @@
   "license": "ISC",
   "dependencies": {
     "@mpxjs/api-proxy": "^2.7.1",
+    "@mpxjs/core": "^2.7.2",
+    "@mpxjs/store": "^2.8.15",
     "vue": "^2.6.10",
-    "vue-i18n": "^8.15.3",
-    "@mpxjs/core": "^2.7.2"
+    "vue-i18n": "^8.15.3"
   },
   "browserslist": [
     "ios >= 9",
@@ -38,8 +39,8 @@
     "@babel/plugin-transform-typescript": "^7.16.1",
     "@babel/preset-env": "^7.10.4",
     "@babel/runtime-corejs3": "^7.10.4",
-    "@mpxjs/miniprogram-simulate": "1.4.9",
-    "@mpxjs/mpx-jest": "0.0.16",
+    "@mpxjs/miniprogram-simulate": "^1.4.17",
+    "@mpxjs/mpx-jest": "0.0.27",
     "@mpxjs/webpack-plugin": "^2.7.2",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",

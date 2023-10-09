@@ -3,7 +3,7 @@
 </template>
 
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import { getCustomEvent } from './getInnerListeners'
   import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
 
   const eventLoad = 'load'
@@ -43,17 +43,15 @@
         return domain
       }
     },
-    created () {
+    mounted () {
       setTimeout(() => {
         if (!this.Loaded) {
           const loadData = {
             src: this.src
           }
-          this.$emit(eventError, getCustomEvent(eventError, loadData))
+          this.$emit(eventError, getCustomEvent(eventError, loadData, this))
         }
       }, 1000)
-    },
-    mounted () {
       this.mpxIframe = this.$refs.mpxIframe
       this.mpxIframe.addEventListener('load', (event) => {
         event.currentTarget.contentWindow.postMessage(this.mainDomain, '*')
@@ -94,7 +92,7 @@
             const loadData = {
               src: this.src
             }
-            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData))
+            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData, this))
         }
       })
     },
@@ -110,7 +108,7 @@
         type: 'message',
         data: this.messageList
       }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
     destroyed () {
       if (!this.isPostMessage) {
@@ -120,7 +118,7 @@
         type: 'message',
         data: this.messageList
       }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     }
   }
 </script>

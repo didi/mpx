@@ -59,6 +59,7 @@ export default function processOption (
       global.__mpxRouter.stack = []
       global.__mpxRouter.needCache = null
       global.__mpxRouter.needRemove = []
+      global.__mpxRouter.eventChannelMap = {}
       // 处理reLaunch中传递的url并非首页时的replace逻辑
       global.__mpxRouter.beforeEach(function (to, from, next) {
         let action = global.__mpxRouter.__mpxAction
@@ -97,24 +98,15 @@ export default function processOption (
               })
             }
           } else {
-            let methods = ''
-            switch (action.type) {
-              case 'to':
-                methods = 'navigateTo'
-                break
-              case 'redirect':
-                methods = 'redirectTo'
-                break
-              case 'back':
-                methods = 'navigateBack'
-                break
-              case 'reLaunch':
-                methods = 'reLaunch'
-                break
-              default:
-                methods = 'navigateTo'
+            const typeMethodMap = {
+              to: 'navigateTo',
+              redirect: 'redirectTo',
+              back: 'navigateBack',
+              switch: 'switchTab',
+              reLaunch: 'reLaunch'
             }
-            throw new Error(`${methods}:fail page "${to.path}" is not found`)
+            const method = typeMethodMap[action.type]
+            throw new Error(`${method}:fail page "${to.path}" is not found`)
           }
         }
 
@@ -126,6 +118,7 @@ export default function processOption (
           case 'to':
             stack.push(insertItem)
             global.__mpxRouter.needCache = insertItem
+            if (action.eventChannel) global.__mpxRouter.eventChannelMap[to.path.slice(1)] = action.eventChannel
             break
           case 'back':
             global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
@@ -147,6 +140,7 @@ export default function processOption (
               global.__mpxRouter.needRemove = stack.filter((item) => {
                 if (tabBarMap[item.path.slice(1)]) {
                   tabItem = item
+                  tabItem.path = to.path
                   return false
                 }
                 return true
@@ -165,7 +159,7 @@ export default function processOption (
               return next({
                 path: action.path,
                 query: {
-                  reLaunchCount: action.reLaunchCount
+                  routeCount: action.routeCount
                 },
                 replace: true
               })

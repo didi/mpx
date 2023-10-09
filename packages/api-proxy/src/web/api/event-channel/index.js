@@ -19,13 +19,13 @@ class EventChannel {
     }
   }
 
-  off (eventName, EventCallback) {
-    if (EventCallback) {
+  off (eventName, listener) {
+    if (listener) {
       const cbs = this.listener[eventName]
       const copyCbs = []
       if (cbs) {
         cbs.forEach((item) => {
-          if (item.fn !== EventCallback) {
+          if (item.fn !== listener) {
             copyCbs.push(item)
           }
         })
@@ -36,26 +36,25 @@ class EventChannel {
     }
   }
 
-  on (eventName, EventCallback) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: EventCallback, type: 'on' })
+  on (eventName, listener) {
+    this._addListener(eventName, listener, 'on')
   }
 
-  once (eventName, EventCallback) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: EventCallback, type: 'once' })
+  once (eventName, listener) {
+    this._addListener(eventName, listener, 'once')
   }
 
-  _addListener (eventName, EventCallback, type) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: EventCallback, type })
+  _addListener (eventName, listener, type) {
+    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: listener, type })
   }
 
   _addListeners (events) {
-    if (Object.prototype.toString.call(events) === '[object Object]') {
-      Object.keys(events).forEach((eventName) => {
-        (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: events[eventName], type: 'on' })
-      })
-    }
+    Object.keys(events).forEach((eventName) => {
+      this.on(eventName, events[eventName])
+    })
   }
 }
+
 export {
   EventChannel
 }

@@ -1,5 +1,7 @@
 import { isEmptyObject } from '../../utils'
-const isTouchDevice = document && ('ontouchstart' in document.documentElement)
+import { isBrowser } from '../../env'
+
+const isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
 
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
@@ -142,11 +144,13 @@ export function inheritEvent (type, oe, detail = {}) {
 }
 
 export function getCustomEvent (type, detail = {}, target = null) {
+  const targetEl = (target && target.$el) || null
+  const targetInfo = targetEl ? { target: targetEl, currentTarget: targetEl } : {}
   return {
     type,
     detail,
-    target,
-    timeStamp: new Date().valueOf()
+    timeStamp: new Date().valueOf(),
+    ...targetInfo
   }
 }
 

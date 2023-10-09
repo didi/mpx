@@ -10,39 +10,12 @@ const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
-
-/**
- * Make a map and return a function for checking if a key
- * is in that map.
- */
-function makeMap (str, expectsLowerCase) {
-  const map = Object.create(null)
-  const list = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase
-    ? function (val) {
-      return map[val.toLowerCase()]
-    }
-    : function (val) {
-      return map[val]
-    }
-}
+const makeMap = require('../utils/make-map')
+const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 
 const no = function () {
   return false
 }
-
-// HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
-// Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-const isNonPhrasingTag = makeMap(
-  'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
-  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
-  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track'
-)
 
 /*!
  * HTML Parser By John Resig (ejohn.org)
@@ -653,6 +626,9 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    data: {
+      usingComponents: options.usingComponents
+    },
     warn: _warn,
     error: _error
   })
@@ -878,6 +854,7 @@ function moveBaseDirective (target, from, isDelete = true) {
 }
 
 function stringify (str) {
+  if (mode === 'web') str = str.replace(/'/g, '"')
   return JSON.stringify(str)
 }
 
@@ -988,7 +965,7 @@ function parseFuncStr2 (str) {
       if (subIndex) {
         const index1 = ret.index + subIndex
         const index2 = index1 + 6
-        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+        args = args.substring(0, index1) + stringify(eventIdentifier) + args.substring(index2)
       }
     }
     return {
@@ -1016,7 +993,7 @@ function stringifyWithResolveComputed (modelValue) {
       computedStack.push(char)
       if (computedStack.length === 1) {
         fragment += '.'
-        result.push(JSON.stringify(fragment))
+        result.push(stringify(fragment))
         fragment = ''
         continue
       }
@@ -1033,7 +1010,7 @@ function stringifyWithResolveComputed (modelValue) {
     fragment += char
   }
   if (fragment !== '') {
-    result.push(JSON.stringify(fragment))
+    result.push(stringify(fragment))
   }
   return result.join('+')
 }
@@ -1696,7 +1673,7 @@ function processWebExternalClassesHack (el, options) {
     options.externalClasses.forEach((className) => {
       const index = classNames.indexOf(className)
       if (index > -1) {
-        replacements.push(`$attrs[${JSON.stringify(className)}]`)
+        replacements.push(`$attrs[${stringify(className)}]`)
         classNames.splice(index, 1)
       }
     })
@@ -1730,13 +1707,13 @@ function processWebExternalClassesHack (el, options) {
         options.externalClasses.forEach((className) => {
           const index = classNames.indexOf(className)
           if (index > -1) {
-            replacements.push(`$attrs[${JSON.stringify(className)}]`)
+            replacements.push(`$attrs[${stringify(className)}]`)
             classNames.splice(index, 1)
           }
         })
 
         if (classNames.length) {
-          replacements.unshift(JSON.stringify(classNames.join(' ')))
+          replacements.unshift(stringify(classNames.join(' ')))
         }
 
         addAttrs(el, [{

@@ -25,7 +25,7 @@ export default function install (Vue) {
   Vue.prototype.createSelectorQuery = function () {
     return webApi.createSelectorQuery().in(this)
   }
-  Vue.prototype.createIntersectionObserver = function (component, options) {
-    return webApi.createIntersectionObserver(component, options)
+  Vue.prototype.createIntersectionObserver = function (options) {
+    return webApi.createIntersectionObserver(this, options)
   }
 }

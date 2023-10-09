@@ -33,7 +33,7 @@ function diffAndCloneA (a, b) {
   let curPath = ''
   let diff = false
 
-  function deepDiffAndCloneA (a, b, currentDiff) {
+  function deepDiffAndCloneA (a, b, currentDiff, bIsEmpty) {
     const setDiff = (val) => {
       if (val) {
         currentDiff = val
@@ -44,7 +44,9 @@ function diffAndCloneA (a, b) {
       }
     }
     let clone = a
-    if (typeof a !== 'object' || a === null) {
+    if (bIsEmpty) {
+      if (!currentDiff) setDiff(true)
+    } else if (typeof a !== 'object' || a === null) {
       if (!currentDiff) setDiff(a !== b)
     } else {
       const toString = Object.prototype.toString
@@ -61,7 +63,7 @@ function diffAndCloneA (a, b) {
         for (let i = 0; i < length; i++) {
           const key = keys[i]
           curPath += `.${key}`
-          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff, !(sameClass && hasOwn(b, key)))
           curPath = lastPath
         }
         // 继承原始对象的freeze/seal/preventExtensions操作
@@ -79,7 +81,7 @@ function diffAndCloneA (a, b) {
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           curPath += `[${i}]`
-          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
+          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff, !(sameClass && i < b.length))
           curPath = lastPath
         }
         // 继承原始数组的freeze/seal/preventExtensions操作

@@ -6,6 +6,7 @@ const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
+const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
@@ -16,10 +17,12 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const pathHash = mpx.pathHash
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
-  const enableAliRequireAsync = mpx.enableAliRequireAsync
+  const enableRequireAsync = mpx.enableRequireAsync
+  const asyncSubpackageRules = mpx.asyncSubpackageRules
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
+  const isScript = ext => /\.(ts|js)$/.test(ext)
 
   const dynamicEntryMap = new Map()
 
@@ -45,23 +48,33 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
-
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
-
+      let placeholder = null
       if (queryObj.root) {
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (mode === 'wx' || (mode === 'ali' && enableAliRequireAsync)) tarRoot = queryObj.root
+        if (enableRequireAsync) {
+          tarRoot = queryObj.root
+        }
+      } else if (!queryObj.root && asyncSubpackageRules && enableRequireAsync) {
+        for (const item of asyncSubpackageRules) {
+          if (matchCondition(resourcePath, item)) {
+            tarRoot = item.root
+            placeholder = item.placeholder
+            break
+          }
+        }
       }
+
       const parsed = path.parse(resourcePath)
       const ext = parsed.ext
       const resourceName = path.join(parsed.dir, parsed.name)
 
       if (!outputPath) {
-        if (ext === '.js' && resourceName.includes('node_modules') && mode !== 'web') {
+        if (isScript(ext) && resourceName.includes('node_modules') && mode !== 'web') {
           let root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
@@ -79,12 +92,12 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      if (ext === '.js' && mode !== 'web') {
+      if (isScript(ext) && mode !== 'web') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry)
+      callback(null, entry, tarRoot, placeholder)
     })
   }
 
@@ -94,14 +107,16 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       aliasPath = page.path
       page = page.src
     }
-    if (!isUrlRequest(page)) return callback(null, page)
+    if (!isUrlRequest(page)) return callback(null, page, { key: page })
     if (resolveMode === 'native') {
       page = urlToRequest(page)
     }
     // 增加 page 标识
     page = addQuery(page, { isPage: true })
     resolve(context, page, loaderContext, (err, resource) => {
-      if (err) return callback(err)
+      if (err) {
+        return callback(err)
+      }
       const { resourcePath, queryObj: { isFirst } } = parseRequest(resource)
       const ext = path.extname(resourcePath)
       let outputPath
@@ -117,14 +132,15 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
         }
       }
-      if (ext === '.js' && mode !== 'web') {
+      if (isScript(ext) && mode !== 'web') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
       const key = [resourcePath, outputPath, tarRoot].join('|')
       callback(null, entry, {
         isFirst,
-        key
+        key,
+        resource
       })
     })
   }

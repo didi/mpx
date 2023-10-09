@@ -1,6 +1,8 @@
 import { webHandleSuccess, webHandleFail, isTabBarPage } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
+let routeCount = 0
+
 function redirectTo (options = {}) {
   const router = global.__mpxRouter
   if (router) {
@@ -9,11 +11,17 @@ function redirectTo (options = {}) {
       webHandleFail(res, options.fail, options.complete)
       return Promise.reject(res)
     }
-    router.__mpxAction = { type: 'redirect' }
+    router.__mpxAction = {
+      type: 'redirect'
+    }
+    if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
     return new Promise((resolve, reject) => {
       router.replace(
         {
-          path: options.url
+          path: options.url,
+          query: {
+            routeCount: ++routeCount
+          }
         },
         () => {
           const res = { errMsg: 'redirectTo:ok' }
@@ -46,10 +54,14 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
+    if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
     return new Promise((resolve, reject) => {
       router.push(
         {
-          path: options.url
+          path: options.url,
+          query: {
+            routeCount: ++routeCount
+          }
         },
         () => {
           const res = { errMsg: 'navigateTo:ok', eventChannel }
@@ -81,19 +93,17 @@ function navigateBack (options = {}) {
   }
 }
 
-let reLaunchCount = 0
-
 function reLaunch (options = {}) {
   const router = global.__mpxRouter
   if (router) {
-    if (reLaunchCount === 0 && router.currentRoute.query.reLaunchCount) reLaunchCount = router.currentRoute.query.reLaunchCount
-    const delta = router.stack.length - 1
+    if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
     router.__mpxAction = {
       type: 'reLaunch',
       path: options.url,
-      reLaunchCount: ++reLaunchCount,
+      routeCount: ++routeCount,
       replaced: false
     }
+    const delta = router.stack.length - 1
     // 在需要操作后退时，先操作后退，在beforeEach中基于当前action通过next()进行replace操作，避免部分浏览器的表现不一致
     if (delta > 0) {
       router.go(-delta)
@@ -104,7 +114,7 @@ function reLaunch (options = {}) {
           {
             path: options.url,
             query: {
-              reLaunchCount
+              routeCount
             }
           },
           () => {
@@ -137,12 +147,12 @@ function switchTab (options = {}) {
         webHandleFail(res, options.fail, options.complete)
         return Promise.reject(res)
       }
-      const delta = router.stack.length - 1
       router.__mpxAction = {
         type: 'switch',
         path: options.url,
         replaced: false
       }
+      const delta = router.stack.length - 1
       if (delta > 0) {
         router.go(-delta)
       } else {
