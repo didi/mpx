@@ -203,12 +203,13 @@ module.exports = {
         if (
           checkBindThis(path) &&
           !path.scope.hasBinding(path.node.name) &&
-          !ignoreMap[path.node.name] &&
-          needCollect
+          !ignoreMap[path.node.name]
         ) {
           const { last, keyPath } = calPropName(path)
-          path.keyPath = keyPath
-          last.collectPath = t.stringLiteral(keyPath)
+          path.needBind = true
+          if (needCollect) {
+            last.collectPath = t.stringLiteral(keyPath)
+          }
 
           if (!renderReduce) return
 
@@ -297,15 +298,15 @@ module.exports = {
         }
 
         // bind this 将 a 转换成 this.a
-        if (path.keyPath) {
-          const { name } = path.node || {}
-          if (isProps) {
-            propKeys.push(name)
-          }
+        if (path.needBind) {
+          const name = path.node.name
           if (name) { // 确保path没有被删除 且 没有被替换成字符串
+            if (isProps) {
+              propKeys.push(name)
+            }
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
           }
-          delete path.keyPath
+          delete path.needBind
         }
       },
       MemberExpression: {

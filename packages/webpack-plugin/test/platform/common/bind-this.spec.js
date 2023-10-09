@@ -580,4 +580,72 @@ global.currentInject = {
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
+
+  it('should needCollect config is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          name;
+          !name;
+          !!name;
+          !!!!!!!name;
+          
+          name2;
+          name3;
+          name3[name2];
+          
+          name4 && name4.length;
+          name4['length']
+          !name4.length;
+          
+          name5;
+          this._p(name5);
+          
+          name6;
+          name7;
+          name6 + name7;
+          name6 + '123';
+          '123' + name7;
+          '123' + name7 + name6;
+          name6 + '123' + name7 + name6;
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: false, renderReduce: true }).code
+    const output = `
+global.currentInject = {
+  render: function () {
+    this.name;
+    this.name3[this.name2];
+    this.name4 && this.name4.length;
+    this.name5;
+    this.name6;
+    this.name7;
+    "" + "";
+    "" + '123';
+    '123' + "";
+    '123' + "" + "";
+    "" + '123' + "" + "";
+  }
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
+  })
+
+  it('should propKeys is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          this._p(a);
+          this._p(a + b);
+          this._p(a && c);
+          this._p(a || d);
+          this._p(name.b.c && name2.b);
+        }
+      }
+    `
+    const res = bindThis(input, { renderReduce: true })
+    const output = [ 'a', 'b', 'a', 'c', 'a', 'd', 'name', 'name2' ]
+    expect(res.propKeys.join('')).toBe(output.join(''))
+  })
+
 })
