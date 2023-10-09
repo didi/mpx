@@ -241,4 +241,65 @@ describe('reactivity/effect', () => {
     expect(array[key]).toBe(true)
     expect(dummy).toBe(undefined)
   })
+
+  it('should observe function valued properties', () => {
+    const oldFunc = () => {}
+    const newFunc = () => {}
+
+    let dummy
+    const obj = reactive({ func: oldFunc })
+    effect(() => (dummy = obj.func))
+
+    expect(dummy).toBe(oldFunc)
+    obj.func = newFunc
+    expect(dummy).toBe(newFunc)
+  })
+
+  it('should observe chained getters relying on this', () => {
+    const obj = reactive({
+      a: 1,
+      get b () {
+        return this.a
+      }
+    })
+
+    let dummy
+    effect(() => (dummy = obj.b))
+    expect(dummy).toBe(1)
+    obj.a++
+    expect(dummy).toBe(2)
+  })
+
+  it('should observe methods relying on this', () => {
+    const obj = reactive({
+      a: 1,
+      b () {
+        return this.a
+      }
+    })
+
+    let dummy
+    effect(() => (dummy = obj.b()))
+    expect(dummy).toBe(1)
+    obj.a++
+    expect(dummy).toBe(2)
+  })
+
+  it('should not observe set operations without a value change', () => {
+    let hasDummy, getDummy
+    const obj = reactive({ prop: 'value' })
+
+    const getSpy = jest.fn(() => (getDummy = obj.prop))
+    const hasSpy = jest.fn(() => (hasDummy = 'prop' in obj))
+    effect(getSpy)
+    effect(hasSpy)
+
+    expect(getDummy).toBe('value')
+    expect(hasDummy).toBe(true)
+    obj.prop = 'value'
+    expect(getSpy).toHaveBeenCalledTimes(1)
+    expect(hasSpy).toHaveBeenCalledTimes(1)
+    expect(getDummy).toBe('value')
+    expect(hasDummy).toBe(true)
+  })
 })

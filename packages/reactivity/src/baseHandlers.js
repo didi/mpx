@@ -1,4 +1,4 @@
-import { hasOwn, isArray, isObject, isIntegerKey, isSymbol } from '@mpxjs/utils'
+import { hasOwn, isArray, isObject, isIntegerKey, isSymbol, hasChanged } from '@mpxjs/utils'
 import { reactive, ReactiveFlags, reactiveMap, toRaw } from './reactive'
 import { track, trigger, ITERATE_KEY } from '../src/effect'
 import { TriggerOpTypes } from './operations'
@@ -94,13 +94,14 @@ class MutableReactiveHandler extends BaseReactiveHandler {
 
   set (target, key, value, receiver) {
     value = toRaw(value)
+    const oldValue = toRaw(target[key])
     const hadKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key)
     const result = Reflect.set(target, key, value, receiver)
 
     // 这里需要做一下区分：区分为 ADD、SET
     if (!hadKey) {
       trigger(target, TriggerOpTypes.ADD, key)
-    } else {
+    } else if (hasChanged(oldValue, value)) {
       trigger(target, TriggerOpTypes.SET, key)
     }
     return result
