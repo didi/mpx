@@ -98,11 +98,14 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     const hadKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key)
     const result = Reflect.set(target, key, value, receiver)
 
-    // 这里需要做一下区分：区分为 ADD、SET
-    if (!hadKey) {
-      trigger(target, TriggerOpTypes.ADD, key)
-    } else if (hasChanged(oldValue, value)) {
-      trigger(target, TriggerOpTypes.SET, key)
+    // don't trigger if target is something up in the prototype chain of original
+    if (target === toRaw(receiver)) {
+      // 这里需要做一下区分：区分为 ADD、SET
+      if (!hadKey) {
+        trigger(target, TriggerOpTypes.ADD, key)
+      } else if (hasChanged(oldValue, value)) {
+        trigger(target, TriggerOpTypes.SET, key)
+      }
     }
     return result
   }
