@@ -57,15 +57,23 @@
     data () {
       return {
         isLoading: false,
-        isAutoPullDown: true
+        isAutoPullDown: true,
+        currentX: 0,
+        currentY: 0,
+        lastX: 0,
+        lastY: 0
       }
     },
     computed: {
       _scrollTop () {
-        return processSize(this.scrollTop)
+        const size = processSize(this.scrollTop)
+        this.currentY = size
+        return size
       },
       _scrollLeft () {
-        return processSize(this.scrollLeft)
+        const size = processSize(this.scrollLeft)
+        this.currentX = size
+        return size
       },
       _lowerThreshold () {
         return processSize(this.lowerThreshold)
@@ -136,6 +144,14 @@
             }
           }
         },
+      },
+      scrollX () {
+        this.destroy()
+        this.init()
+      },
+      scrollY (val) {
+        this.destroy()
+        this.init()
       }
     },
     methods: {
@@ -148,8 +164,8 @@
         if (this.bs) return
         this.initLayerComputed()
         const originBsOptions = {
-          startX: -this._scrollLeft,
-          startY: -this._scrollTop,
+          startX: -this.currentX,
+          startY: -this.currentY,
           scrollX: this.scrollX,
           scrollY: this.scrollY,
           probeType: 3,
@@ -170,8 +186,8 @@
         this.bs.scroller.hooks.on('beforeRefresh', () => {
           this.initLayerComputed()
         })
-        this.lastX = -this._scrollLeft
-        this.lastY = -this._scrollTop
+        this.lastX = -this.currentX
+        this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
           const deltaX = x - this.lastX
           const deltaY = y - this.lastY
@@ -201,6 +217,10 @@
           leading: true,
           trailing: false
         }))
+        this.bs.on('scrollEnd', () => {
+          this.currentX = -this.bs.x
+          this.currentY = -this.bs.y
+        })
         if (this.scrollIntoView) this.scrollToView(this.scrollIntoView)
         // 若开启自定义下拉刷新 或 开启 scroll-view 增强特性
         if (this.refresherEnabled || this.enhanced) {
@@ -265,8 +285,8 @@
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
         const computedStyle = getComputedStyle(wrapper)
-        this.$refs.innerWrapper.style.width = `${computedStyle.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
-        this.$refs.innerWrapper.style.height = `${computedStyle.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
+        this.$refs.innerWrapper.style.width = `${wrapper.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+        this.$refs.innerWrapper.style.height = `${wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
 
