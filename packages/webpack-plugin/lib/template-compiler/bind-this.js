@@ -86,11 +86,16 @@ function checkDelAndGetPath (path) {
         delPath = current.parentPath
       } else {
         // case: this._i(a, function() {})
+        canDel = false
         break
       }
-    } else if (t.isMemberExpression(current.parent) && current === delPath) {
-      // case: String(a).b.c
-      delPath = current.parentPath
+    } else if (t.isMemberExpression(current.parent)) { // case: String(a,'123').b.c
+      if (current.parent.computed && !t.isStringLiteral(current.parent.property)) { // case: a[b] or a.b[c.d]
+        canDel = false
+        break
+      } else {
+        delPath = current.parentPath
+      }
     } else {
       break
     }
@@ -99,13 +104,11 @@ function checkDelAndGetPath (path) {
   }
 
   // 确定是否可删除
-  while (!t.isBlockStatement(current)) {
-    const { key, listKey, node, container } = current
+  while (!t.isBlockStatement(current) && canDel) {
+    const { key, container } = current
     if (
-      (node.computed && !t.isStringLiteral(node.property)) || // a['b']
       t.isLogicalExpression(container) || // a && b
-      (t.isIfStatement(container) && key === 'test') || // if (a) {}
-      (key === 0 && container.length > 1 && listKey === 'arguments') // this._i(a, function() {})
+      (t.isIfStatement(container) && key === 'test') // if (a) {}
     ) {
       canDel = false
       break
@@ -119,10 +122,11 @@ function checkDelAndGetPath (path) {
 
     if (
       t.isBinaryExpression(container) || // 运算 a + b
-      (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a }) and ({ name: a && !b })
+      (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a })
     ) {
       canDel = true
       replace = true
+      // 不能break，case: if (a + b) {}
     }
 
     current = current.parentPath
@@ -142,7 +146,7 @@ function checkPrefix (keys, key) {
     const str = keys[i]
     if (key === str) continue
     // 确保判断当前标识是完整的单词
-    if (key.startsWith(str) && key[str.length] === '.') return true
+    if (key.startsWith(str) && (key[str.length] === '.' || key[str.length] === '[')) return true
   }
   return false
 }
