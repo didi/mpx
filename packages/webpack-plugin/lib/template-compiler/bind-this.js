@@ -90,7 +90,7 @@ function checkDelAndGetPath (path) {
         break
       }
     } else if (t.isMemberExpression(current.parent)) { // case: String(a,'123').b.c
-      if (current.parent.computed && !t.isStringLiteral(current.parent.property)) { // case: a[b] or a.b[c.d]
+      if (current.parent.computed && !t.isLiteral(current.parent.property)) { // case: a[b] or a.b[c.d]
         canDel = false
         break
       } else {
