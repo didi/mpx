@@ -132,6 +132,10 @@ global.currentInject.getRefsData = function () {
 };\n`
   }
 
+  if (meta.options) {
+    resultSource += bindThis(`global.currentInject.injectOptions = ${JSON.stringify(meta.options)};`).code + '\n'
+  }
+
   this.emitFile(resourcePath, '', undefined, {
     skipEmit: true,
     extractedResultSource: resultSource

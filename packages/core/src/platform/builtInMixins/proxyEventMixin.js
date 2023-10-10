@@ -114,7 +114,6 @@ export default function proxyEventMixin () {
         }
       },
       __proxyEvent (e) {
-        console.log('proxyEvent trigger in this ___')
         const getHandler = (eventName, props) => {
           const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
           return props && (props['on' + handlerName] || props['catch' + handlerName])

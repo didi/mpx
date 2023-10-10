@@ -40,7 +40,6 @@ export default function proxyEventMixin () {
       },
       __proxyEvent (e) {
         const getHandler = (eventName, props) => {
-          // const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
           return props && props[eventName]
         }
         const type = e.type

@@ -1781,7 +1781,7 @@ function processRootViewEventHack (el, options, root) {
   }
   const { fallthroughEventAttrsRules } = options
   // TODO: 设置可透传的事件可选列表
-  let fallThroughEvents = ['bindtap']
+  let fallThroughEvents = []
   // 判断当前文件是否在范围中
   const filePath = options.filePath
   for (const item of fallthroughEventAttrsRules) {
@@ -1857,16 +1857,6 @@ function getVirtualHostRoot (options, meta) {
           value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
         }
       ])
-      const transAli = mode === 'ali' && srcMode === 'wx'
-      const transWeb = mode === 'web' && srcMode === 'wx'
-      if (transAli) {
-        processRootViewStyleClassHack(rootView, options, rootView)
-        processRootViewEventHack(rootView, options, rootView)
-      }
-      if (transWeb) {
-        // processRootViewStyleClassHack(rootView, options, rootView)
-        processRootViewEventHack(rootView, options, rootView)
-      }
       // 添加时间处理
       processElement(rootView, rootView, options, meta)
       return rootView
@@ -2049,6 +2039,16 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
+  const transAli = mode === 'ali' && srcMode === 'wx'
+  const transWeb = mode === 'web' && srcMode === 'wx'
+  if (transAli) {
+    processRootViewStyleClassHack(el, options, rootView)
+    processRootViewEventHack(el, options, el)
+  }
+  if (transWeb) {
+    processRootViewEventHack(el, options, el)
+  }
+
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2067,8 +2067,6 @@ function processElement (el, root, options, meta) {
   processMpxTagName(el)
 
   processInjectWxs(el, meta)
-
-  const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
