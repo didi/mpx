@@ -155,7 +155,7 @@ MpxWebpackPlugin支持传入以下配置：
 ### mode
 - **类型**：`string`
 
-- **默认值**：`'wx'`。
+- **默认值**：`'wx'`
 
 - **详细**：
 
@@ -1403,6 +1403,34 @@ module.exports = defineConfig({
 :::warning
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
+
+### renderOptimizeRules
+
+- **详细**: render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积
+
+- **类型**：[`Rules`](#rules)
+
+- **默认值**：不配置该参数，则不会消除重复变量
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  renderOptimizeRules: {
+    include: [
+      resolve('src')
+    ],
+    /*
+    include: [
+      (pageResourcePath) => pageResourcePath.includes('pages')
+    ],
+    include: [
+      () => true
+    ]
+    */
+  }
+})
+```
 
 ### asyncSubpackageRules
 
