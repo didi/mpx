@@ -345,7 +345,11 @@
             class: 'circle circle-c'
           }),
         ]
-      ) : null
+      ) : this.$slots.refresher
+        ? createElement('div', {
+          class: 'mpx-pull-down-slot',
+        }, this.$slots.refresher)
+        : null
 
       const pullDownWrapper = this.refresherEnabled ? createElement('div', {
         class: 'mpx-pull-down-wrapper',
@@ -379,7 +383,11 @@
         bottom: 20px
         left: 50%
         transform: translateX(-50%)
-
+      .mpx-pull-down-slot
+        position: absolute
+        width: 100%
+        height: 56px
+        bottom: 0
       .mpx-pull-down-content-black
         .circle
           display: inline-block;
