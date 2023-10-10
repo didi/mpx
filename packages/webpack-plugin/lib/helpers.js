@@ -23,6 +23,10 @@ module.exports = function createHelpers (loaderContext) {
     return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
   }
 
+  function getRequireExtract (type, part, extraOptions, index) {
+    return 'require.extract(' + getRequestString(type, part, extraOptions, index) + ')'
+  }
+
   function getImport (type, part, extraOptions, index) {
     return (
       'import __' + type + '__ from ' +
@@ -77,6 +81,7 @@ module.exports = function createHelpers (loaderContext) {
 
   return {
     getRequire,
+    getRequireExtract,
     getImport,
     getNamedExports,
     getRequestString
