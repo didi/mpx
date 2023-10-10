@@ -9,8 +9,10 @@ const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
+const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
+const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 
 module.exports = function (json, {
   loaderContext,
@@ -26,6 +28,7 @@ module.exports = function (json, {
   const mpx = loaderContext.getMpx()
   const {
     mode,
+    srcMode,
     env,
     projectRoot
   } = mpx
@@ -75,12 +78,44 @@ module.exports = function (json, {
     })
   }
 
+  const { resourcePath } = parseRequest(loaderContext.resource)
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+
   if (!json) {
     return callback()
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
     jsonObj = JSON5.parse(json.content)
+    // 处理runner
+    const rulesRunnerOptions = {
+      mode,
+      srcMode,
+      type: 'json',
+      waterfall: true,
+      warn: emitWarning,
+      error: emitError,
+      data: {
+        // polyfill global usingComponents & record globalComponents
+        globalComponents: mpx.usingComponents
+      }
+    }
+
+    if (!isApp) {
+      rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+    }
+
+    const rulesRunner = getRulesRunner(rulesRunnerOptions)
+
+    if (rulesRunner) {
+      rulesRunner(jsonObj)
+    }
+    if (isApp) {
+      // 收集全局组件
+      Object.assign(mpx.usingComponents, jsonObj.usingComponents)
+      // 在 rulesRunner 运行后保存全局注册组件
+      loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, loaderContext.context))
+    }
   } catch (e) {
     return callback(e)
   }
