@@ -928,9 +928,9 @@ class MpxWebpackPlugin {
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
         // 移除extractor抽取后的空模块
-        for (let module of modules) {
+        for (const module of modules) {
           if (module.buildInfo.isEmpty) {
-            for (let connection of moduleGraph.getIncomingConnections(module)) {
+            for (const connection of moduleGraph.getIncomingConnections(module)) {
               if (connection.dependency.type === 'mpx cjs extract') {
                 connection.weak = true
                 connection.dependency.weak = true
@@ -1113,7 +1113,7 @@ class MpxWebpackPlugin {
 
         const requireExtractHandler = (expr, members, args) => {
           if (members[0] === 'extract') {
-            let request = expr.arguments[0].value
+            const request = expr.arguments[0].value
             const range = expr.range
             const dep = new CommonJsExtractDependency(request, range)
             parser.state.current.addDependency(dep)
@@ -1135,7 +1135,6 @@ class MpxWebpackPlugin {
             name: 'MpxWebpackPlugin',
             stage: -2000
           }, (expr, calleeMembers, callExpr) => requireExtractHandler(callExpr, calleeMembers, expr.arguments))
-
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
