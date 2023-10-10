@@ -112,6 +112,36 @@ export default function proxyEventMixin () {
           }
           handler.call(this, eventObj)
         }
+      },
+      __proxyEvent (e) {
+        console.log('proxyEvent trigger in this ___')
+        const getHandler = (eventName, props) => {
+          const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+          return props && (props['on' + handlerName] || props['catch' + handlerName])
+        }
+        const type = e.type
+        const handler = getHandler(type, this.props)
+
+        if (handler && typeof handler === 'function') {
+          const dataset = collectDataset(this.props)
+          const id = this.props.id || ''
+          const targetData = Object.assign({}, e.target || {}, {
+            id,
+            dataset
+          })
+
+          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
+            id,
+            dataset
+          })
+
+          const eventObj = Object.assign({}, e, {
+            target: targetData,
+            currentTarget: currentTargetData
+          })
+
+          handler.call(this, eventObj)
+        }
       }
     })
   }

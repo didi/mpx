@@ -1,4 +1,18 @@
-import { setByPath } from '@mpxjs/utils'
+import {hasOwn, setByPath} from '@mpxjs/utils'
+const datasetReg = /^data-(.+)$/
+
+function collectDataset (props) {
+  const dataset = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
+}
 
 export default function proxyEventMixin () {
   return {
@@ -23,6 +37,35 @@ export default function proxyEventMixin () {
         const router = global.__mpxRouter
         const eventChannel = router && router.__mpxAction && router.__mpxAction.eventChannel
         return eventChannel
+      },
+      __proxyEvent (e) {
+        const getHandler = (eventName, props) => {
+          // const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+          return props && props[eventName]
+        }
+        const type = e.type
+        const handler = getHandler(type, this.$listeners)
+
+        if (handler && typeof handler === 'function') {
+          const dataset = collectDataset(this.$attrs)
+          const id = this.$attrs.id || ''
+          const targetData = Object.assign({}, e.target || {}, {
+            id,
+            dataset
+          })
+
+          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
+            id,
+            dataset
+          })
+
+          const eventObj = Object.assign({}, e, {
+            target: targetData,
+            currentTarget: currentTargetData
+          })
+
+          handler.call(this, eventObj)
+        }
       }
     }
   }

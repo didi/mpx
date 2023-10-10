@@ -1858,9 +1858,13 @@ function getVirtualHostRoot (options, meta) {
         }
       ])
       const transAli = mode === 'ali' && srcMode === 'wx'
-      const transWeb = mode === 'web' && srcMode === 'web'
-      if (transAli || transWeb) {
+      const transWeb = mode === 'web' && srcMode === 'wx'
+      if (transAli) {
         processRootViewStyleClassHack(rootView, options, rootView)
+        processRootViewEventHack(rootView, options, rootView)
+      }
+      if (transWeb) {
+        // processRootViewStyleClassHack(rootView, options, rootView)
         processRootViewEventHack(rootView, options, rootView)
       }
       // 添加时间处理
