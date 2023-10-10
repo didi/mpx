@@ -1781,7 +1781,7 @@ function processRootViewEventHack (el, options, root) {
   }
   const { fallthroughEventAttrsRules } = options
   // TODO: 设置可透传的事件可选列表
-  let fallThroughEvents = []
+  let fallThroughEvents = null
   // 判断当前文件是否在范围中
   const filePath = options.filePath
   for (const item of fallthroughEventAttrsRules) {
@@ -1795,18 +1795,18 @@ function processRootViewEventHack (el, options, root) {
       exclude
     })) {
       const eventsRaw = item.events
-      const events = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
-      fallThroughEvents = Array.from(new Set(fallThroughEvents.concat(events)))
+      fallThroughEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
       break
     }
   }
-
-  fallThroughEvents.forEach((type) => {
-    addAttrs(el, [{
-      name: type,
-      value: '__proxyEvent'
-    }])
-  })
+  if (fallThroughEvents) {
+    fallThroughEvents.forEach((type) => {
+      addAttrs(el, [{
+        name: type,
+        value: '__proxyEvent'
+      }])
+    })
+  }
 }
 
 function processRootViewStyleClassHack (el, options, root) {
@@ -2042,7 +2042,7 @@ function processElement (el, root, options, meta) {
   const transAli = mode === 'ali' && srcMode === 'wx'
   const transWeb = mode === 'web' && srcMode === 'wx'
   if (transAli) {
-    processRootViewStyleClassHack(el, options, rootView)
+    processRootViewStyleClassHack(el, options, el)
     processRootViewEventHack(el, options, el)
   }
   if (transWeb) {

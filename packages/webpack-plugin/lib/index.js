@@ -170,14 +170,12 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
-    if (options.mode) {
-      let fallthroughEventAttrsRules = []
-      const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
-      if (fallthroughEventAttrsRulesRaw) {
-        fallthroughEventAttrsRules = Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]
-      }
-      options.fallthroughEventAttrsRules = fallthroughEventAttrsRules
+    let fallthroughEventAttrsRules = []
+    const fallthroughEventAttrsRulesRaw = options.fallthroughEventAttrsRules
+    if (fallthroughEventAttrsRulesRaw) {
+      fallthroughEventAttrsRules = Array.isArray(fallthroughEventAttrsRulesRaw) ? fallthroughEventAttrsRulesRaw : [fallthroughEventAttrsRulesRaw]
     }
+    options.fallthroughEventAttrsRules = fallthroughEventAttrsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies

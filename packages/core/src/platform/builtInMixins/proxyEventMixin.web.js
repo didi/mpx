@@ -1,4 +1,4 @@
-import {hasOwn, setByPath} from '@mpxjs/utils'
+import { hasOwn, setByPath } from '@mpxjs/utils'
 const datasetReg = /^data-(.+)$/
 
 function collectDataset (props) {
