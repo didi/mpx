@@ -8,6 +8,7 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+const CommonJsExtractDependency = require('./dependencies/CommonJsExtractDependency')
 const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
@@ -555,6 +556,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
 
+      compilation.dependencyFactories.set(CommonJsExtractDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(CommonJsExtractDependency, new CommonJsExtractDependency.Template())
+
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
     })
@@ -925,6 +929,17 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+        // 移除extractor抽取后的空模块
+        for (const module of modules) {
+          if (module.buildInfo.isEmpty) {
+            for (const connection of moduleGraph.getIncomingConnections(module)) {
+              if (connection.dependency.type === 'mpx cjs extract') {
+                connection.weak = true
+                connection.dependency.weak = true
+              }
+            }
+          }
+        }
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
@@ -1097,6 +1112,31 @@ class MpxWebpackPlugin {
             name: 'MpxWebpackPlugin',
             stage: -1000
           }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers, expr.arguments))
+
+        const requireExtractHandler = (expr, members, args) => {
+          if (members[0] === 'extract') {
+            const request = expr.arguments[0].value
+            const range = expr.range
+            const dep = new CommonJsExtractDependency(request, range)
+            parser.state.current.addDependency(dep)
+            if (args) parser.walkExpressions(args)
+            return true
+          }
+        }
+
+        parser.hooks.callMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -2000
+          }, (expr, members) => requireExtractHandler(expr, members))
+
+        parser.hooks.callMemberChainOfCallMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -2000
+          }, (expr, calleeMembers, callExpr) => requireExtractHandler(callExpr, calleeMembers, expr.arguments))
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
