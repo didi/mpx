@@ -98,7 +98,7 @@ module.exports = function (content) {
   })
 
   const {
-    getRequireExtract
+    getRequire
   } = createHelpers(loaderContext)
 
   let output = ''
@@ -315,7 +315,7 @@ module.exports = function (content) {
         }
         if (template.src) extraOptions.resourcePath = resourcePath
         // 基于global.currentInject来注入模板渲染函数和refs等信息
-        output += getRequireExtract('template', template, extraOptions) + '\n'
+        output += getRequire('template', template, extraOptions) + '\n'
       }
 
       // styles
@@ -332,19 +332,19 @@ module.exports = function (content) {
             scoped
           }
           // require style
-          output += getRequireExtract('styles', style, extraOptions, i) + '\n'
+          output += getRequire('styles', style, extraOptions, i) + '\n'
         })
       }
 
       if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
-        output += getRequireExtract('styles', {}, {}, parts.styles.length) + '\n'
+        output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 
       // json
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequireExtract('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
+      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -362,7 +362,7 @@ module.exports = function (content) {
           ctorType,
           lang: script.lang || 'js'
         }
-        output += getRequireExtract('script', script, extraOptions) + '\n'
+        output += getRequire('script', script, extraOptions) + '\n'
       }
       callback(null, output)
     }
