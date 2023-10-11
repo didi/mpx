@@ -149,7 +149,7 @@
         this.destroy()
         this.init()
       },
-      scrollY (val) {
+      scrollY () {
         this.destroy()
         this.init()
       }

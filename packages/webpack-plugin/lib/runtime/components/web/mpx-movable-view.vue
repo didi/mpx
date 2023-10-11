@@ -23,6 +23,8 @@
         maxScrollX: 0,
         minScrollY: 0,
         maxScrollY: 0,
+        currentX: this.x,
+        currentY: this.y,
         lastestX: 0,
         lastestY: 0,
         lastestScale: 1,
@@ -100,6 +102,7 @@
         if (newVal < this.bs.maxScrollX) {
           newVal = this.bs.maxScrollX
         }
+        this.currentX = newVal
         this.bs.scrollTo(newVal, this.bs.y, this.speed)
       },
       y (newVal) {
@@ -110,6 +113,7 @@
         if (newVal < this.bs.maxScrollY) {
           newVal = this.bs.maxScrollY
         }
+        this.currentY = newVal
         this.bs.scrollTo(this.bs.x, newVal, this.speed)
       },
       scaleValue (newVal) {
@@ -122,21 +126,21 @@
         }
         this.bs.zoomTo(newVal, 'center', 'center')
       },
-      disabled (newVal) {
-        if (newVal) {
-          this.bs && this.bs.disable()
-        } else {
-          this.bs && this.bs.enable()
-        }
+      disabled () {
+        this.destroyBs()
+        this.init()
       }
     },
     mounted () {
       this.init()
     },
     beforeDestroy () {
-      this.bs && this.bs.destroy()
+      this.destroyBs()
     },
     methods: {
+      destroyBs () {
+        this.bs && this.bs.destroy()
+      },
       init () {
         if (!this.$refs.scrollContent.parentNode || (this.$refs.scrollContent.parentNode && this.$refs.scrollContent.parentNode.className !== 'mpx-movable-scroll-wrapper')) {
           return
@@ -150,8 +154,8 @@
           scrollX: false,
           scrollY: false,
           movable: true,
-          startX: this.x,
-          startY: this.y,
+          startX: this.currentX,
+          startY: this.currentY,
           bounce: this.outOfBounds,
           bounceTime: 800 / (this.damping / 20),
           probeType: 3,
@@ -160,7 +164,7 @@
         const BehaviorHooks = this.bs.scroller.scrollBehaviorY.hooks
         const actionsHandlerHooks = this.bs.scroller.actionsHandler.hooks
         const scrollerHooks = this.bs.scroller.hooks
-        this.bs.putAt(this.x, this.y, 0)
+        this.bs.putAt(this.currentX, this.currentY, 0)
         this.lastestX = this.roundFun(this.x)
         this.lastestY = this.roundFun(this.y)
         this.lastestScale = this.roundFun(this.scaleValue)
@@ -190,6 +194,10 @@
           }
           this.lastestX = this.roundFun(position.x)
           this.lastestY = this.roundFun(position.y)
+        })
+        scrollerHooks.on('scrollEnd', (position) =>{
+          this.currentX = this.bs.x
+          this.currentY = this.bs.y
         })
         scrollerHooks.on('touchEnd', (position) => {
           this.isFirstTouch = true
@@ -257,9 +265,6 @@
             this.isZooming = false
           })
         }
-        if (this.disabled) { // 禁用
-          this.bs.disable()
-        }
       },
       initOptions () {
         if (!this.friction || this.friction < 0) {
@@ -290,19 +295,24 @@
             swipeTime: 50
           }
         }
-        if (this.direction === 'vertical') {
+        if (this.disabled) {
+          this.bsOptions = {
+            ...this.bsOptions,
+            freeScroll: false,
+            scrollY: false,
+            scrollX: false
+          }
+        } else if (this.direction === 'vertical') {
           this.bsOptions = {
             ...this.bsOptions,
             scrollY: true
           }
-        }
-        if (this.direction === 'horizontal') {
+        } else if (this.direction === 'horizontal') {
           this.bsOptions = {
             ...this.bsOptions,
             scrollX: true
           }
-        }
-        if (this.direction === 'all') {
+        } else if (this.direction === 'all') {
           this.bsOptions = {
             ...this.bsOptions,
             freeScroll: true,
