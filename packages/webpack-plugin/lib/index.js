@@ -407,13 +407,13 @@ class MpxWebpackPlugin {
               name: 'MpxPartialCompilePlugin',
               stage: -100
             }, (obj, resolverContext, callback) => {
-              if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
+              if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
                 return callback(null, obj)
               }
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
                 const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
-                obj.path = require.resolve('./json-compiler/default-page.mpx')
+                obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
               }
               callback(null, obj)
             })
