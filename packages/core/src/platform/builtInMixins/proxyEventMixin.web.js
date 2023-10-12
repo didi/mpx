@@ -1,18 +1,4 @@
 import { hasOwn, setByPath } from '@mpxjs/utils'
-const datasetReg = /^data-(.+)$/
-
-function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
-}
 
 export default function proxyEventMixin () {
   return {
@@ -39,31 +25,12 @@ export default function proxyEventMixin () {
         return eventChannel
       },
       __proxyEvent (e) {
-        const getHandler = (eventName, props) => {
-          return props && props[eventName]
-        }
         const type = e.type
-        const handler = getHandler(type, this.$listeners)
-
+        const handler = this.$listeners && this.$listeners[type]
+        // 保持和微信一致 target 和 currentTarget 相同
+        e.target = e.currentTarget
         if (handler && typeof handler === 'function') {
-          const dataset = collectDataset(this.$attrs)
-          const id = this.$attrs.id || ''
-          const targetData = Object.assign({}, e.target || {}, {
-            id,
-            dataset
-          })
-
-          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
-            id,
-            dataset
-          })
-
-          const eventObj = Object.assign({}, e, {
-            target: targetData,
-            currentTarget: currentTargetData
-          })
-
-          handler.call(this, eventObj)
+          handler.call(this, e)
         }
       }
     }

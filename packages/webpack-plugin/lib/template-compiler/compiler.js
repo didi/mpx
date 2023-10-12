@@ -2042,11 +2042,11 @@ function processElement (el, root, options, meta) {
   const transAli = mode === 'ali' && srcMode === 'wx'
   const transWeb = mode === 'web' && srcMode === 'wx'
   if (transAli) {
-    processRootViewStyleClassHack(el, options, el)
-    processRootViewEventHack(el, options, el)
+    processRootViewStyleClassHack(el, options, root)
+    processRootViewEventHack(el, options, root)
   }
   if (transWeb) {
-    processRootViewEventHack(el, options, el)
+    processRootViewEventHack(el, options, root)
   }
 
   processAtMode(el)
