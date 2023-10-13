@@ -127,6 +127,8 @@
     beforeDestroy () {
       this.bs && this.bs.destroy()
       delete this.bs
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
     },
     methods: {
       initBs () {
@@ -185,7 +187,7 @@
         })
       },
       createResizeObserver () {
-        const resizeObserver = new ResizeObserver(entries => {
+        this.resizeObserver = new ResizeObserver(entries => {
           for (let entry of entries) {
             if (!this.init) {
               this.init = true
@@ -196,7 +198,7 @@
           }
         })
         const elementToObserve = document.querySelector('.mpx-swiper');
-        resizeObserver.observe(elementToObserve);
+        this.resizeObserver.observe(elementToObserve);
       },
       refresh () {
         this.bs && this.bs.refresh()

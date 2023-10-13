@@ -136,8 +136,16 @@ class SelectQuery {
       }
     }
     if (scrollOffset) {
-      res.scrollLeft = el.scrollLeft
-      res.scrollTop = el.scrollTop
+      if (el.isBScrollContainer) {
+        const bs = el?.__vue__?.bs
+        res.scrollLeft = -bs.x
+        res.scrollTop = -bs.y
+      } else {
+        res.scrollLeft = el.scrollLeft
+        res.scrollTop = el.scrollTop
+      }
+      res.scrollHeight= el.scrollHeight
+      res.scrollWidth = el.scrollWidth
     }
     properties.forEach(prop => {
       const attr = el.getAttribute(prop)

@@ -32,7 +32,8 @@
         isZooming: false,
         isFirstTouch: true,
         source: '',
-        touchEvent: ''
+        touchEvent: '',
+        isInited: false
       }
     },
     props: {
@@ -91,7 +92,8 @@
       speed: {
         type: Number,
         default: 1000
-      }
+      },
+      scrollOptions: Object
     },
     watch: {
       x (newVal) {
@@ -132,12 +134,28 @@
       }
     },
     mounted () {
+      this.createResizeObserver()
       this.init()
     },
     beforeDestroy () {
       this.destroyBs()
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
     },
     methods: {
+      createResizeObserver () {
+        const resizeObserver = new ResizeObserver(entries => {
+          for (let entry of entries) {
+            if (!this.isInited) {
+              this.isInited = true
+              return
+            }
+            this.bs.refresh()
+          }
+        })
+        const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
+        resizeObserver.observe(elementToObserve)
+      },
       destroyBs () {
         this.bs && this.bs.destroy()
       },
@@ -319,6 +337,10 @@
             scrollX: true,
             scrollY: true
           }
+        }
+        this.bsOptions = {
+          ...this.bsOptions,
+          ...this.scrollOptions
         }
       },
       // 处理小数点，四舍五入，默认保留一位小数
