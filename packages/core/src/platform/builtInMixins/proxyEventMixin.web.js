@@ -1,4 +1,4 @@
-import { hasOwn, setByPath } from '@mpxjs/utils'
+import { setByPath } from '@mpxjs/utils'
 
 export default function proxyEventMixin () {
   return {
