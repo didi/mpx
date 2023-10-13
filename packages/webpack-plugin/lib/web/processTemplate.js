@@ -39,7 +39,7 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    fallthroughEventAttrsRules
+    proxyComponentEventsRules
     // autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
@@ -103,7 +103,7 @@ module.exports = function (template, {
           globalComponents: [],
           // web模式下实现抽象组件
           componentGenerics,
-          fallthroughEventAttrsRules
+          proxyComponentEventsRules
           // todo 后续输出web也基于autoVirtualHostRules决定是否添加root wrapper
           // hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
         })

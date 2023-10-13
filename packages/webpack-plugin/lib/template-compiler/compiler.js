@@ -1779,12 +1779,12 @@ function processRootViewEventHack (el, options, root) {
   if (!(options.isComponent && el === root && isRealNode(el))) {
     return
   }
-  const { fallthroughEventAttrsRules } = options
+  const { proxyComponentEventsRules } = options
   // TODO: 设置可透传的事件可选列表
   let fallThroughEvents = null
   // 判断当前文件是否在范围中
   const filePath = options.filePath
-  for (const item of fallthroughEventAttrsRules) {
+  for (const item of proxyComponentEventsRules) {
     const {
       include,
       exclude
@@ -1815,10 +1815,6 @@ function processRootViewStyleClassHack (el, options, root) {
     const processor = ({ name, value, typeName }) => {
       const sep = name === 'style' ? ';' : ' '
       value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      if (mode === 'web') {
-        name = ':' + name
-        value = parseMustache(value).result
-      }
       return [name, value]
     }
 

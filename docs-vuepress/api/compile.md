@@ -1480,6 +1480,57 @@ module.exports = defineConfig({
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
+### proxyComponentEventsRules
+
+- **类型**：`Array<Object> | Object`
+  - `option.include` 同webpack的include规则
+  - `option.exclude` 同webpack的exclude规则
+  - `option.events` 需要在支付宝环境代理的事件，数组形式的支付宝事件名，例如['onTap', 'onTouchMove']
+
+- **详细**：
+
+在微信小程序中，自定义组件本身的那个节点是一个“普通”的节点，使用时可以在这个节点上设置 class style、事件、 flex 布局等，就如同普通的 view 组件节点一样。
+
+在支付宝平台下，自定义组件节点默认是虚拟节点，会展示自定义组件内部的第一层节点，自定义组件节点本身设置的 class style 等不会生效。
+
+跨端输出支付宝时，当自定义组件未开启 virtualHost 时，为了保持和微信一直，Mpx 框架会在自定义组件根节点包裹添加一个 view 节点来保持和微信一致，并将用户在自定义组件节点上设置的
+style、class、绑定事件等 copy 至包裹节点，对于事件来说，由于在编译自定义组件时，我们无法感知外部父组件是否绑定事件，我们不能无脑给所有自定义组件包裹节点都绑定上小程序的事件监听，
+这样会导致整体运行时开销很大，因此当你需要在支付宝环境中自定义组件根节点上绑定事件时，需要通过次配置来告诉框架需要帮你代理抹平哪些事件。
+
+跨端输出Web时，为了和微信小程序保持一致，在非virtualHost的自定义组件节点上，默认也会插入一个包裹节点，同理对于事件的代理也需要用户进行配置告诉框架来对哪些自定义组件的哪些事件进行代理。
+
+- **示例**：
+
+当我们在小程序开发时存在以下代码时
+```html
+<!--自定义组件list-->
+<!--src/packageA/pages/index.mpx-->
+<list bindtap="tapHandler"></list>
+```
+支付宝环境的自定义组件节点绑定事件并不会触发，但微信环境可以，若想在支付宝环境下使用该功能，则需配置此规则
+```js
+const path = require('path')
+
+new MpxWebpackPlugin({
+  proxyComponentEventsRules: [
+    {
+      include: path.resolve('src/packageA'), // 输出支付宝时，对src/packageA文件夹中的所有自定义组件添加 onTap, onToucheMove 事件代理
+      exclude: path.resolve('lib'),
+      events: ['bindtap', 'bindtouchstart']
+    },
+    {
+      include: path.resolve('src/packageB'), // 输出支付宝时，对src/packageB文件夹中的所有自定义组件添加 onTap, onLongTap 事件代理
+      events: ['bindtap']
+    },
+  ]
+})
+```
+
+需要注意的是，所有的事件名配置，我们以微信事件为基准，例如虽然你是跨端输出支付宝，也请配置bindtap，而不是onTap。
+
+请注意，在跨端输出 Web 时，只支持配置 tap 、longtap、longpress 这三个事件代理，且最好不要同时配置了两个事件，不然有可能会导致同一个事件触发两次。
+
+
 ## MpxWebpackPlugin static methods
 
 `MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
