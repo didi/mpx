@@ -39,6 +39,14 @@ module.exports = function (raw) {
     )
   }
 
+  let proxyComponentEvents = null
+  for (const item of mpx.proxyComponentEventsRules) {
+    if (matchCondition(resourcePath, item)) {
+      const eventsRaw = item.events
+      proxyComponentEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
+      break
+    }
+  }
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
@@ -62,7 +70,7 @@ module.exports = function (raw) {
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
-    proxyComponentEventsRules: mpx.proxyComponentEventsRules
+    proxyComponentEvents
   })
 
   if (meta.wxsContentMap) {

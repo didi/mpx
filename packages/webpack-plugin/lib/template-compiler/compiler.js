@@ -3,7 +3,6 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
-const { matchCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -1779,28 +1778,9 @@ function processRootViewEventHack (el, options, root) {
   if (!(options.isComponent && el === root && isRealNode(el))) {
     return
   }
-  const { proxyComponentEventsRules } = options
-  // TODO: 设置可透传的事件可选列表
-  let fallThroughEvents = null
-  // 判断当前文件是否在范围中
-  const filePath = options.filePath
-  for (const item of proxyComponentEventsRules) {
-    const {
-      include,
-      exclude
-    } = item || {}
-
-    if (matchCondition(filePath, {
-      include,
-      exclude
-    })) {
-      const eventsRaw = item.events
-      fallThroughEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
-      break
-    }
-  }
-  if (fallThroughEvents) {
-    fallThroughEvents.forEach((type) => {
+  const { proxyComponentEvents } = options
+  if (proxyComponentEvents) {
+    proxyComponentEvents.forEach((type) => {
       addAttrs(el, [{
         name: type,
         value: '__proxyEvent'
