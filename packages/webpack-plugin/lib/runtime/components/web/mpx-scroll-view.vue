@@ -95,6 +95,9 @@
           className += ' active'
         }
         return className
+      },
+      scroll() {
+        return this.scrollX || this.scrollY
       }
     },
     mounted () {
@@ -145,13 +148,12 @@
           }
         },
       },
-      scrollX () {
-        this.destroy()
-        this.init()
-      },
-      scrollY () {
-        this.destroy()
-        this.init()
+      scroll(val) {
+        if (val) {
+          this.init()
+        } else {
+          this.disableBSScroll()
+        }
       }
     },
     methods: {
@@ -160,8 +162,14 @@
         this.bs.destroy()
         delete this.bs
       },
+      disableBSScroll() {
+        if (!this.bs) return
+        this.bs.disable()
+        this.currentX = -this.bs.x
+        this.currentY = -this.bs.y
+      },
       init () {
-        if (this.bs) return
+        this.destroy()
         this.initLayerComputed()
         const originBsOptions = {
           startX: -this.currentX,
