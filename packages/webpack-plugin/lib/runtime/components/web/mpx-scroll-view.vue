@@ -386,7 +386,7 @@
       .mpx-pull-down-slot
         position: absolute
         width: 100%
-        height: 56px
+        height: auto
         bottom: 0
       .mpx-pull-down-content-black
         .circle
