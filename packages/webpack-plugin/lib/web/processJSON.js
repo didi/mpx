@@ -333,20 +333,7 @@ module.exports = function (json, {
   async.parallel([
     (callback) => {
       // 添加首页标识
-      if (jsonObj.entryPagePath) {
-        const entryPagePath = urlToRequest(jsonObj.entryPagePath, projectRoot)
-        jsonObj.pages.forEach((page, index) => {
-          if (typeof page !== 'string') {
-            if (page.src === entryPagePath) {
-              page.src = addQuery(page.src, { isFirst: true })
-            }
-          } else {
-            if (page === entryPagePath) {
-              jsonObj.pages[index] = addQuery(page, { isFirst: true })
-            }
-          }
-        })
-      } else if (jsonObj.pages && jsonObj.pages[0]) {
+      if (jsonObj.pages && jsonObj.pages[0]) {
         if (typeof jsonObj.pages[0] !== 'string') {
           jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
         } else {
