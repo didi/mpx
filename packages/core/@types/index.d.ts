@@ -86,7 +86,7 @@ type PropValueType<Def> = Def extends {
   : Def extends FullPropType<infer T>
   ? T
   : Def extends PropType<infer T>
-  ? T 
+  ? T
   : any;
 
 type GetPropsType<T> = {
@@ -437,7 +437,7 @@ interface WatchEffectOptions {
 export interface WatchOptions extends WatchEffectOptions {
   immediate?: boolean // 默认：false
   deep?: boolean // 默认：false
-  flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
+  once?: boolean | ((newVal: any, oldVal: any) => boolean)
 }
 
 interface EffectScope {
