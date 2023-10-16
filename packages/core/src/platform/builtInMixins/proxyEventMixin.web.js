@@ -24,14 +24,12 @@ export default function proxyEventMixin () {
         const eventChannel = router && router.__mpxAction && router.__mpxAction.eventChannel
         return eventChannel
       },
-      __proxyEvent (e) {
+      __proxyEvent (e, data) {
         const type = e.type
         const handler = this.$listeners && this.$listeners[type]
         // 保持和微信一致 target 和 currentTarget 相同
         e.target = e.currentTarget
-        if (handler && typeof handler === 'function') {
-          handler.call(this, e)
-        }
+        this.triggerEvent(type, e)
       }
     }
   }

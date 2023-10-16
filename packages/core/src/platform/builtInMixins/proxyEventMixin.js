@@ -89,58 +89,32 @@ export default function proxyEventMixin () {
   }
   if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
-      triggerEvent (eventName, eventDetail) {
+      triggerEvent (eventName, eventDetail, e) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
           const timeStamp = +new Date()
-          const eventObj = {
+          const target = e && e.target ? Object.assign({}, e.target, {id, dataset, targetDataset: dataset}): {id, dataset, targetDataset: dataset}
+          const currentTarget = e && e.currentTarget? Object.assign({}, e.currentTarget, {id, dataset}): {id, dataset}
+          const detail = e && e.detail? e.detail: eventDetail
+          let eventObj = {
             type: eventName,
             timeStamp,
-            target: {
-              id,
-              dataset,
-              targetDataset: dataset
-            },
-            currentTarget: {
-              id,
-              dataset
-            },
-            detail: eventDetail
+            target,
+            currentTarget,
+            detail
+          }
+          if (e) {
+            eventObj = Object.assign({}, e, eventObj)
           }
           handler.call(this, eventObj)
         }
       },
       __proxyEvent (e) {
-        const getHandler = (eventName, props) => {
-          const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-          return props && (props['on' + handlerName] || props['catch' + handlerName])
-        }
-        const type = e.type
-        const handler = getHandler(type, this.props)
-
-        if (handler && typeof handler === 'function') {
-          const dataset = collectDataset(this.props)
-          const id = this.props.id || ''
-          const targetData = Object.assign({}, e.target || {}, {
-            id,
-            dataset
-          })
-
-          const currentTargetData = Object.assign({}, e.currentTarget || {}, {
-            id,
-            dataset
-          })
-
-          const eventObj = Object.assign({}, e, {
-            target: targetData,
-            currentTarget: currentTargetData
-          })
-
-          handler.call(this, eventObj)
-        }
+        const eventName = e.type
+        this.triggerEvent(eventName, {}, e)
       }
     })
   }
