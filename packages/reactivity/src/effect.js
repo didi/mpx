@@ -40,11 +40,11 @@ export function track (target, key) {
   if (activeEffect) {
     let depsMap = targetMap.get(target)
     if (!depsMap) {
-      targetMap.set(target, depsMap = new Map())
+      targetMap.set(target, (depsMap = new Map()))
     }
     let dep = depsMap.get(key)
     if (!dep) {
-      depsMap.set(key, dep = createDep())
+      depsMap.set(key, (dep = createDep()))
     }
     const eventInfo = __DEV__
       ? { effect: activeEffect, target, key }
@@ -113,5 +113,9 @@ function triggerEffects (dep) {
 }
 
 function triggerEffect (effect) {
-  effect.run()
+  // 避免 effect 的入参函数出现无限循环
+  // test(effect): should avoid implicit infinite recursive loops with itself
+  if (effect !== activeEffect) {
+    effect.run()
+  }
 }
