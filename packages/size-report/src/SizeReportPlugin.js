@@ -87,7 +87,7 @@ class SizeReportPlugin {
             // We skip connections without Module pointer
             if (!m) continue
             // We skip weak connections
-            if (connection.weak) continue
+            if (connection.weak && d.type !== 'mpx cjs extract') continue
             // Use undefined runtime
             const state = connection.getActiveState(/* runtime */)
             // We skip inactive connections
@@ -132,7 +132,13 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!(relation && relation.target), children: new Set(), parents: new Set() })
+        if (!moduleEntryGraphMap.has(moduleId)) {
+          moduleEntryGraphMap.set(moduleId, {
+            target: !!(relation && relation.target),
+            children: new Set(),
+            parents: new Set()
+          })
+        }
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
@@ -369,6 +375,7 @@ class SizeReportPlugin {
             }
           }
         }
+
         divideEquallySize(sharedModulesGroupsSet, fillInfo.size)
         divideEquallySize(customGroupSharedModulesGroupsSet, fillInfo.size)
       }
@@ -490,7 +497,8 @@ class SizeReportPlugin {
         totalSize: 0,
         staticSize: 0,
         chunkSize: 0,
-        copySize: 0
+        copySize: 0,
+        webpackTemplateSize: 0
       }
 
       function fillPackagesSizeInfo (packageName, size) {
@@ -588,7 +596,6 @@ class SizeReportPlugin {
             packageName,
             size,
             modules: []
-            // webpackTemplateSize: 0
           }
           assetsSizeInfo.assets.push(chunkAssetInfo)
           fillPackagesSizeInfo(packageName, size)
@@ -626,8 +633,7 @@ class SizeReportPlugin {
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
-
-          // chunkAssetInfo.webpackTemplateSize = size
+          sizeSummary.webpackTemplateSize += size
           // filter sourcemap
         } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
@@ -765,7 +771,7 @@ class SizeReportPlugin {
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
       })
-      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
+      'totalSize|staticSize|chunkSize|copySize|webpackTemplateSize'.split('|').forEach((key) => {
         sizeSummary[key] = formatSize(sizeSummary[key])
       })
 

@@ -11,6 +11,8 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
     if (cfg.test) {
       result.test = cfg.test
     }
+    // 透传 waterfall 信息
+    if (cfg.waterfall) result.waterfall = cfg.waterfall
     const supportedModes = cfg.supportedModes || spec.supportedModes
     // 合并component-config中组件的event 与index中公共的event规则
     const eventRules = (cfg.event || []).concat(spec.event.rules)
