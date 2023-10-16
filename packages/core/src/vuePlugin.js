@@ -1,4 +1,4 @@
-import {walkChildren, parseSelector, error, hasOwn} from '@mpxjs/utils'
+import { walkChildren, parseSelector, error, hasOwn } from '@mpxjs/utils'
 import * as webApi from '@mpxjs/api-proxy/src/web/api'
 const datasetReg = /^data-(.+)$/
 
@@ -20,9 +20,9 @@ export default function install (Vue) {
     const dataset = collectDataset(this.$attrs)
     const id = this.$attrs.id || ''
     const timeStamp = +new Date()
-    const target = e && e.target ? Object.assign({}, e.target, {id, dataset, targetDataset: dataset}): {id, dataset, targetDataset: dataset}
-    const currentTarget = e && e.currentTarget? Object.assign({}, e.currentTarget, {id, dataset}): {id, dataset}
-    const detail = e && e.detail? e.detail: eventDetail
+    const target = e && e.target ? Object.assign({}, e.target, { id, dataset, targetDataset: dataset }) : { id, dataset, targetDataset: dataset }
+    const currentTarget = e && e.currentTarget ? Object.assign({}, e.currentTarget, { id, dataset }) : { id, dataset }
+    const detail = e && e.detail ? e.detail : eventDetail
     let eventObj = {
       type: eventName,
       timeStamp,

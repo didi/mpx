@@ -26,7 +26,6 @@ export default function proxyEventMixin () {
       },
       __proxyEvent (e, data) {
         const type = e.type
-        const handler = this.$listeners && this.$listeners[type]
         // 保持和微信一致 target 和 currentTarget 相同
         e.target = e.currentTarget
         this.triggerEvent(type, e)

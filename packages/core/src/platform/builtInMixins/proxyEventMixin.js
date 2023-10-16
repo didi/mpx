@@ -96,9 +96,9 @@ export default function proxyEventMixin () {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
           const timeStamp = +new Date()
-          const target = e && e.target ? Object.assign({}, e.target, {id, dataset, targetDataset: dataset}): {id, dataset, targetDataset: dataset}
-          const currentTarget = e && e.currentTarget? Object.assign({}, e.currentTarget, {id, dataset}): {id, dataset}
-          const detail = e && e.detail? e.detail: eventDetail
+          const target = e && e.target ? Object.assign({}, e.target, { id, dataset, targetDataset: dataset }) : { id, dataset, targetDataset: dataset }
+          const currentTarget = e && e.currentTarget ? Object.assign({}, e.currentTarget, { id, dataset }) : { id, dataset }
+          const detail = e && e.detail ? e.detail : eventDetail
           let eventObj = {
             type: eventName,
             timeStamp,
