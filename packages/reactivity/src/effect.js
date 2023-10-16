@@ -5,6 +5,8 @@ import { TriggerOpTypes } from './operations'
 const targetMap = new WeakMap()
 let activeEffect
 
+export let shouldTrack = true
+
 class ReactiveEffect {
   constructor (fn) {
     this.deps = []
@@ -37,7 +39,7 @@ export function effect (fn) {
  * @param key - Identifier of the reactive property to track.
  */
 export function track (target, key) {
-  if (activeEffect) {
+  if (shouldTrack && activeEffect) {
     let depsMap = targetMap.get(target)
     if (!depsMap) {
       targetMap.set(target, (depsMap = new Map()))
@@ -118,4 +120,18 @@ function triggerEffect (effect) {
   if (effect !== activeEffect) {
     effect.run()
   }
+}
+
+/**
+ * pauses tracking.
+ */
+export function pauseTracking() {
+  shouldTrack = false
+}
+
+/**
+ * Re-enables effect tracking (if it was paused).
+ */
+export function enableTracking() {
+  shouldTrack = true
 }

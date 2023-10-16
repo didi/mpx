@@ -359,4 +359,27 @@ describe('reactivity/effect', () => {
     expect(counter.num).toBe(5)
     expect(counterSpy).toHaveBeenCalledTimes(2)
   })
+
+  it('should avoid infinite recursive loops when use Array.prototype.push/unshift/pop/shift', () => {
+    ;(['push', 'unshift']).forEach(key => {
+      const arr = reactive([])
+      const counterSpy1 = jest.fn(() => (arr[key])(1))
+      const counterSpy2 = jest.fn(() => (arr[key])(2))
+      effect(counterSpy1)
+      effect(counterSpy2)
+      expect(arr.length).toBe(2)
+      expect(counterSpy1).toHaveBeenCalledTimes(1)
+      expect(counterSpy2).toHaveBeenCalledTimes(1)
+    })
+    ;(['pop', 'shift']).forEach(key => {
+      const arr = reactive([1, 2, 3, 4])
+      const counterSpy1 = jest.fn(() => (arr[key])())
+      const counterSpy2 = jest.fn(() => (arr[key])())
+      effect(counterSpy1)
+      effect(counterSpy2)
+      expect(arr.length).toBe(2)
+      expect(counterSpy1).toHaveBeenCalledTimes(1)
+      expect(counterSpy2).toHaveBeenCalledTimes(1)
+    })
+  })
 })

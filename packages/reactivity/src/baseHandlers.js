@@ -1,6 +1,6 @@
 import { hasOwn, isArray, isObject, isIntegerKey, isSymbol, hasChanged } from '@mpxjs/utils'
 import { reactive, ReactiveFlags, reactiveMap, toRaw } from './reactive'
-import { track, trigger, ITERATE_KEY } from '../src/effect'
+import { track, trigger, ITERATE_KEY, pauseTracking, enableTracking } from '../src/effect'
 import { TriggerOpTypes } from './operations'
 
 const builtInSymbols = new Set(
@@ -39,8 +39,10 @@ function createArrayInstrumentations () {
     instrumentations[key] = function (...args) {
       // calls correct mutation method
       // avoid infinite recursion
+      pauseTracking()
       const arr = toRaw(this)
       const res = arr[key].apply(this, args)
+      enableTracking()
       return res
     }
   })
