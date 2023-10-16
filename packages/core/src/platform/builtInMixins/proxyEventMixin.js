@@ -95,6 +95,7 @@ export default function proxyEventMixin () {
         if (handler && typeof handler === 'function') {
           let eventObj = {}
           if (e) {
+            e.detail = Object.assign({}, e.detail, eventDetail)
             eventObj = e
           } else {
             const dataset = collectDataset(this.props)
