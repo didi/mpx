@@ -58,7 +58,6 @@ interface WatchOpt {
   immediateAsync?: boolean
   deep?: boolean
   sync?: boolean
-  once?: boolean | ((newVal: any, oldVal: any) => boolean)
 }
 
 interface WatchOptWithHandler extends WatchOpt {
@@ -437,7 +436,6 @@ interface WatchEffectOptions {
 export interface WatchOptions extends WatchEffectOptions {
   immediate?: boolean // 默认：false
   deep?: boolean // 默认：false
-  once?: boolean | ((newVal: any, oldVal: any) => boolean)
 }
 
 interface EffectScope {

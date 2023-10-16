@@ -42,7 +42,7 @@ const processWatchOptionsCompat = (options) => {
 }
 
 export function watch (source, cb, options = {}) {
-  let { immediate, once, deep, flush } = processWatchOptionsCompat(options)
+  let { immediate, deep, flush } = processWatchOptionsCompat(options)
   const instance = currentInstance
   let getter
   let isMultiSource = false
@@ -137,22 +137,6 @@ export function watch (source, cb, options = {}) {
   const effect = new ReactiveEffect(getter, scheduler)
 
   if (cb) {
-    if (once) {
-      const rawCb = cb
-      const onceCb = typeof options.once === 'function'
-        ? options.once
-        : function () { return true }
-      cb = function (...args) {
-        const res = onceCb.apply(this, args)
-        if (res) {
-          effect.stop()
-          if (instance && instance.scope) {
-            remove(instance.scope.effects, effect)
-          }
-        }
-        rawCb.apply(this, args)
-      }
-    }
     if (immediate) {
       job()
     } else {

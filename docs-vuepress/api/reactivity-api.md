@@ -428,35 +428,6 @@ unwatch()
   this.someObject.nestedValue = 123
   // callback is fired
   ```
-- **选项**：once
-
-  在选项参数中指定 `once: true` 该回调方法只会执行一次，后续的改变将不会触发回调；  
-  该参数也可以是函数，若函数返回值为 `true` 时，则后续的改变将不会触发回调
-
-  ```JavaScript
-  import {watch} from '@mpxjs/core'
-  
-  watch(() => {
-    return this.a
-  }, () => {
-    // 该回调函数只会执行一次
-  }, {
-    once: true
-  })
-  
-  // 当 once 是函数时
-  watch(() => {
-    return this.a
-   }, (val, newVal) => {
-    // 当 val 等于2时，this.a 的后续改变将不会被监听
-   }, {
-    once: (val, oldVal) => {
-      if (val == 2) {
-        return true
-      }
-    }
-  })
-  ```
 
 - **选项**：immediate
 
