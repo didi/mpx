@@ -647,4 +647,30 @@ global.currentInject = {
     const output = ['a', 'b', 'a', 'c', 'a', 'd', 'name', 'name2']
     expect(res.propKeys.join('')).toBe(output.join(''))
   })
+
+  it('should logicalExpression is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          a
+          a || ''
+          a && a.b
+          b
+          b || 123 || ''
+          '456' || b || ''
+          '' || 123 || b
+          b || a || ''
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: false, renderReduce: true }).code
+    const output = `
+global.currentInject = {
+  render: function () {
+    this.a && this.a.b;
+    this.b || this.a || '';
+  }
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
+  })
 })

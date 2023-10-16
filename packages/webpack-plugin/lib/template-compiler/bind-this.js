@@ -31,6 +31,28 @@ function checkBindThis (path) {
     !hash[path.node.name]
 }
 
+// 获取 Logical container 中存在多少个Identifier
+function getIdentifiersCount (path) {
+  let count = 0
+  let current = path
+  while (t.isLogicalExpression(current.container)) {
+    current = current.parentPath
+  }
+
+  function checkIdentifiers (cur) {
+    ['left', 'right'].forEach(key => {
+      if (t.isLogicalExpression(cur[key])) {
+        checkIdentifiers(cur[key])
+      } else if (!t.isLiteral(cur[key])) {
+        count++
+      }
+    })
+  }
+  checkIdentifiers(current.node)
+
+  return count
+}
+
 // 计算访问路径
 function calPropName (path) {
   let current = path.parentPath
@@ -95,6 +117,13 @@ function checkDelAndGetPath (path) {
         break
       } else {
         delPath = current.parentPath
+      }
+    } else if (t.isLogicalExpression(current.container)) { // case: a || ''
+      const count = getIdentifiersCount(current)
+      if (count === 1) {
+        delPath = current.parentPath
+      } else {
+        break
       }
     } else {
       break
