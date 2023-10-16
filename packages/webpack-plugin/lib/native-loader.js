@@ -8,7 +8,7 @@ const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
 const { JSON_JS_EXT } = require('./utils/const')
 const getRulesRunner = require('./platform')
-
+// todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
   this.cacheable()
 
@@ -44,6 +44,8 @@ module.exports = function (content) {
     scss: '.scss'
   }
 
+  const TS_EXT = '.ts'
+
   let useJSONJS = false
   let cssLang = ''
   const hasScoped = (queryObj.scoped || autoScope) && mode === 'ali'
@@ -54,7 +56,7 @@ module.exports = function (content) {
     this.resolve(parsed.dir, resourceName + extName, callback)
   }
 
-  function checkCSSLangFiles (callback) {
+  function checkCSSLangFile (callback) {
     const langs = mpx.nativeConfig.cssLangs || ['less', 'stylus', 'scss', 'sass']
     const results = []
     async.eachOf(langs, function (lang, i, callback) {
@@ -89,6 +91,15 @@ module.exports = function (content) {
     })
   }
 
+  function checkTSFile (callback) {
+    checkFileExists(TS_EXT, (err, result) => {
+      if (!err && result) {
+        typeResourceMap.script = result
+      }
+      callback()
+    })
+  }
+
   const emitWarning = (msg) => {
     this.emitWarning(
       new Error('[native-loader][' + this.resource + ']: ' + msg)
@@ -105,15 +116,16 @@ module.exports = function (content) {
   async.waterfall([
     (callback) => {
       async.parallel([
-        checkCSSLangFiles,
-        checkJSONJSFile
+        checkCSSLangFile,
+        checkJSONJSFile,
+        checkTSFile
       ], (err) => {
         callback(err)
       })
     },
     (callback) => {
       async.forEachOf(typeExtMap, (ext, key, callback) => {
-        // 检测到jsonjs或cssLang时跳过对应类型文件检测
+        // 对应资源存在预处理类型文件时跳过对应的标准文件检测
         if (typeResourceMap[key]) {
           return callback()
         }
@@ -137,6 +149,7 @@ module.exports = function (content) {
       } catch (e) {
         return callback(e)
       }
+      let usingComponents = Object.keys(mpx.usingComponents)
       const rulesRunnerOptions = {
         mode,
         srcMode,
@@ -147,16 +160,10 @@ module.exports = function (content) {
       }
       if (!isApp) {
         rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        // polyfill global usingComponents
-        // 预读json时无需注入polyfill全局组件
-        // rulesRunnerOptions.data = {
-        //   globalComponents: mpx.usingComponents
-        // }
       }
-      let usingComponents = Object.keys(mpx.usingComponents)
+      const rulesRunner = getRulesRunner(rulesRunnerOptions)
+      if (rulesRunner) rulesRunner(json)
       if (json.usingComponents) {
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        if (rulesRunner) rulesRunner(json)
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
       }
       const {

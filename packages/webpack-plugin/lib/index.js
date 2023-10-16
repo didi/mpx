@@ -8,6 +8,7 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+const CommonJsExtractDependency = require('./dependencies/CommonJsExtractDependency')
 const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
@@ -124,6 +125,7 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
+    options.renderOptimizeRules = options.renderOptimizeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
@@ -170,6 +172,7 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || null
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
+    options.optimizeSize = options.optimizeSize || false
     let proxyComponentEventsRules = []
     const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
     if (proxyComponentEventsRulesRaw) {
@@ -300,6 +303,14 @@ class MpxWebpackPlugin {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
+      if (this.options.optimizeSize) {
+        compiler.options.optimization.chunkIds = 'total-size'
+        compiler.options.optimization.moduleIds = 'natural'
+        compiler.options.optimization.mangleExports = 'size'
+        compiler.options.output.globalObject = 'g'
+        // todo chunkLoadingGlobal不具备项目唯一性，在多构建产物混编时可能存在问题，尤其在支付宝使用全局对象传递的情况下
+        compiler.options.output.chunkLoadingGlobal = 'c'
+      }
     }
 
     if (!compiler.options.node || !compiler.options.node.global) {
@@ -393,6 +404,7 @@ class MpxWebpackPlugin {
         const query = parseQuery(obj.query || '?')
         return query.isPage && !query.type
       }
+
       // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
       compiler.resolverFactory.hooks.resolver.intercept({
         factory: (type, hook) => {
@@ -401,13 +413,13 @@ class MpxWebpackPlugin {
               name: 'MpxPartialCompilePlugin',
               stage: -100
             }, (obj, resolverContext, callback) => {
-              if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
+              if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
                 return callback(null, obj)
               }
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
                 const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
-                obj.path = require.resolve('./json-compiler/default-page.mpx')
+                obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
               }
               callback(null, obj)
             })
@@ -550,6 +562,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
 
+      compilation.dependencyFactories.set(CommonJsExtractDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(CommonJsExtractDependency, new CommonJsExtractDependency.Template())
+
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
     })
@@ -624,6 +639,7 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          renderOptimizeRules: this.options.renderOptimizeRules,
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
@@ -692,7 +708,15 @@ class MpxWebpackPlugin {
             mpx.extractedFilesCache.set(resource, file)
             return file
           },
-          recordResourceMap: ({ resourcePath, resourceType, outputPath, packageRoot = '', recordOnly, warn, error }) => {
+          recordResourceMap: ({
+            resourcePath,
+            resourceType,
+            outputPath,
+            packageRoot = '',
+            recordOnly,
+            warn,
+            error
+          }) => {
             const packageName = packageRoot || 'main'
             const resourceMap = mpx[`${resourceType}sMap`] || mpx.otherResourcesMap
             const currentResourceMap = resourceMap.main ? resourceMap[packageName] = resourceMap[packageName] || {} : resourceMap
@@ -912,6 +936,17 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+        // 移除extractor抽取后的空模块
+        for (const module of modules) {
+          if (module.buildInfo.isEmpty) {
+            for (const connection of moduleGraph.getIncomingConnections(module)) {
+              if (connection.dependency.type === 'mpx cjs extract') {
+                connection.weak = true
+                connection.dependency.weak = true
+              }
+            }
+          }
+        }
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
@@ -1084,6 +1119,31 @@ class MpxWebpackPlugin {
             name: 'MpxWebpackPlugin',
             stage: -1000
           }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers, expr.arguments))
+
+        const requireExtractHandler = (expr, members, args) => {
+          if (members[0] === 'extract') {
+            const request = expr.arguments[0].value
+            const range = expr.range
+            const dep = new CommonJsExtractDependency(request, range)
+            parser.state.current.addDependency(dep)
+            if (args) parser.walkExpressions(args)
+            return true
+          }
+        }
+
+        parser.hooks.callMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -2000
+          }, (expr, members) => requireExtractHandler(expr, members))
+
+        parser.hooks.callMemberChainOfCallMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -2000
+          }, (expr, calleeMembers, callExpr) => requireExtractHandler(callExpr, calleeMembers, expr.arguments))
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {
@@ -1304,6 +1364,8 @@ class MpxWebpackPlugin {
           chunkLoadingGlobal
         } = compilation.outputOptions
 
+        const chunkLoadingGlobalStr = JSON.stringify(chunkLoadingGlobal)
+
         function getTargetFile (file) {
           let targetFile = file
           const queryStringIdx = targetFile.indexOf('?')
@@ -1323,7 +1385,7 @@ class MpxWebpackPlugin {
 
           const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
-          source.add(`\nvar ${globalObject} = ${globalObject} || {};\n\n`)
+          source.add(`\nvar ${globalObject} = {};\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {
             const relativeChunkFile = relativeChunk.files.values().next().value
@@ -1340,16 +1402,16 @@ class MpxWebpackPlugin {
                 if (compilation.options.entry[chunk.name]) {
                   // 在rootChunk中挂载jsonpCallback
                   source.add('// process ali subpackages runtime in root chunk\n' +
-                    'var context = (function() { return this })() || Function("return this")();\n\n')
-                  source.add(`context[${JSON.stringify(chunkLoadingGlobal)}] = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = require("${relativePath}");\n`)
+                    'var context = (function() { return this })() || Function("return this")();\n')
+                  source.add(`context[${chunkLoadingGlobalStr}] = ${globalObject}[${chunkLoadingGlobalStr}] = require("${relativePath}");\n`)
                 } else {
                   // 其余chunk中通过context全局传递runtime
                   source.add('// process ali subpackages runtime in other chunk\n' +
-                    'var context = (function() { return this })() || Function("return this")();\n\n')
-                  source.add(`${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = context[${JSON.stringify(chunkLoadingGlobal)}];\n`)
+                    'var context = (function() { return this })() || Function("return this")();\n')
+                  source.add(`${globalObject}[${chunkLoadingGlobalStr}] = context[${chunkLoadingGlobalStr}];\n`)
                 }
               } else {
-                source.add(`${globalObject}[${JSON.stringify(chunkLoadingGlobal)}] = require("${relativePath}");\n`)
+                source.add(`${globalObject}[${chunkLoadingGlobalStr}] = require("${relativePath}");\n`)
               }
             } else {
               source.add(`require("${relativePath}");\n`)
@@ -1357,10 +1419,11 @@ class MpxWebpackPlugin {
           })
 
           if (isRuntime) {
-            source.add('var context = (function() { return this })() || Function("return this")();\n')
-            source.add(`
+            if (mpx.mode === 'ali' || mpx.mode === 'qq') {
+              source.add(`
 // Fix babel runtime in some quirky environment like ali & qq dev.
 try {
+  var context = (function() { return this })() || Function("return this")();
   if(!context.console){
     context.console = console;
     context.setInterval = setInterval;
@@ -1401,8 +1464,9 @@ try {
   }
 } catch(e){
 }\n`)
+            }
             source.add(originalSource)
-            source.add(`\nmodule.exports = ${globalObject}[${JSON.stringify(chunkLoadingGlobal)}];\n`)
+            source.add(`\nmodule.exports = ${globalObject}[${chunkLoadingGlobalStr}];\n`)
           } else {
             source.add(originalSource)
           }
@@ -1460,8 +1524,8 @@ try {
       })
 
       const typeLoaderProcessInfo = {
-        styles: ['css-loader', wxssLoaderPath, styleCompilerPath],
-        template: ['html-loader', wxmlLoaderPath, templateCompilerPath]
+        styles: ['node_modules/css-loader', wxssLoaderPath, styleCompilerPath],
+        template: ['node_modules/html-loader', wxmlLoaderPath, templateCompilerPath]
       }
 
       // 应用过rules后，注入mpx相关资源编译loader
@@ -1524,15 +1588,15 @@ try {
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
-          const isPitcherRequest = firstLoader.includes('vue-loader/lib/loaders/pitcher')
+          const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
-            if (currentLoader.includes('css-loader') && cssLoaderIndex === -1) {
+            if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
               cssLoaderIndex = index
-            } else if (currentLoader.includes('vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
+            } else if (currentLoader.includes('node_modules/vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
             } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
               mpxStyleLoaderIndex = index

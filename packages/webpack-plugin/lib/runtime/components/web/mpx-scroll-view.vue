@@ -113,7 +113,7 @@
     },
     watch: {
       scrollIntoView (val) {
-        this.bs && this.bs.scrollToElement('#' + val, this.scrollWithAnimation ? 200 : 0)
+        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0)
       },
       _scrollTop (val) {
         this.bs && this.bs.scrollTo(this.bs.x, -val, this.scrollWithAnimation ? 200 : 0)
@@ -201,9 +201,7 @@
           leading: true,
           trailing: false
         }))
-        if (this.scrollIntoView) {
-          this.bs.scrollToElement('#' + this.scrollIntoView)
-        }
+        if (this.scrollIntoView) this.scrollToView(this.scrollIntoView)
         // 若开启自定义下拉刷新 或 开启 scroll-view 增强特性
         if (this.refresherEnabled || this.enhanced) {
           const actionsHandlerHooks = this.bs.scroller.actionsHandler.hooks
@@ -258,12 +256,17 @@
           }
         }
       },
+      scrollToView (id, duration = 0) {
+        if (!id) return
+        id = '#' + id
+        if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
+        this.bs?.scrollToElement(id, duration)
+      },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
-        const wrapperWidth = wrapper.offsetWidth
-        const wrapperHeight = wrapper.offsetHeight
-        this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
-        this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
+        const computedStyle = getComputedStyle(wrapper)
+        this.$refs.innerWrapper.style.width = `${computedStyle.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+        this.$refs.innerWrapper.style.height = `${computedStyle.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
 

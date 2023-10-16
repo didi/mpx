@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.8.41",
+  "version": "2.8.50",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -29,7 +29,6 @@
     "@better-scroll/zoom": "^2.5.1",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
-    "consolidate": "^0.15.1",
     "css": "^2.2.1",
     "css-selector-tokenizer": "^0.7.0",
     "cssnano": "^5.0.16",

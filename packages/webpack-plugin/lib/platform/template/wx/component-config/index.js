@@ -8,7 +8,7 @@ const checkbox = require('./checkbox')
 const coverImage = require('./cover-image')
 const coverView = require('./cover-view')
 const form = require('./form')
-const HyphenTagName = require('./hypen-tag-name')
+const hyphenTagName = require('./hypen-tag-name')
 const icon = require('./icon')
 const image = require('./image')
 const input = require('./input')
@@ -39,6 +39,7 @@ const view = require('./view')
 const webView = require('./web-view')
 const wxs = require('./wxs')
 const component = require('./component')
+const fixHTMLTag = require('./fix-html-tag')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -79,6 +80,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
 
   // 转换规则只需以微信为基准配置微信和支付宝的差异部分，比如微信和支付宝都支持但是写法不一致，或者微信支持而支付宝不支持的部分(抛出错误或警告)
   return [
+    fixHTMLTag(),
     ...Nonsupport({ print }),
     ad({ print }),
     view({ print }),
@@ -118,7 +120,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     camera({ print }),
     livePlayer({ print }),
     livePusher({ print }),
-    HyphenTagName({ print }),
+    hyphenTagName({ print }),
     component()
   ]
 }

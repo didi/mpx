@@ -155,7 +155,7 @@ MpxWebpackPlugin支持传入以下配置：
 ### mode
 - **类型**：`string`
 
-- **默认值**：`'wx'`。
+- **默认值**：`'wx'`
 
 - **详细**：
 
@@ -1404,10 +1404,38 @@ module.exports = defineConfig({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
+### renderOptimizeRules
+
+- **详细**: render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积
+
+- **类型**：[`Rules`](#rules)
+
+- **默认值**：不配置该参数，则不会消除重复变量
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  renderOptimizeRules: {
+    include: [
+      resolve('src')
+    ],
+    /*
+    include: [
+      (pageResourcePath) => pageResourcePath.includes('pages')
+    ],
+    include: [
+      () => true
+    ]
+    */
+  }
+})
+```
+
 ### asyncSubpackageRules
 
 - **类型**：
- ```ts
+```ts
 type Condition = string | Function | RegExp
 
 interface AsyncSubpackageRules {
@@ -1480,56 +1508,62 @@ module.exports = defineConfig({
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
-### proxyComponentEventsRules
+### retryRequireAsync
 
-- **类型**：`Array<Object> | Object`
-  - `option.include` 同webpack的include规则
-  - `option.exclude` 同webpack的exclude规则
-  - `option.events` 需要在支付宝环境代理的事件，数组形式的支付宝事件名，例如['onTap', 'onTouchMove']
+`boolean = false`
 
-- **详细**：
+开启时在处理`require.async`时会添加单次重试逻辑
 
-在微信小程序中，自定义组件本身的那个节点是一个“普通”的节点，使用时可以在这个节点上设置 class style、事件、 flex 布局等，就如同普通的 view 组件节点一样。
-
-在支付宝平台下，自定义组件节点默认是虚拟节点，会展示自定义组件内部的第一层节点，自定义组件节点本身设置的 class style 等不会生效。
-
-跨端输出支付宝时，当自定义组件未开启 virtualHost 时，为了保持和微信一直，Mpx 框架会在自定义组件根节点包裹添加一个 view 节点来保持和微信一致，并将用户在自定义组件节点上设置的
-style、class、绑定事件等 copy 至包裹节点，对于事件来说，由于在编译自定义组件时，我们无法感知外部父组件是否绑定事件，我们不能无脑给所有自定义组件包裹节点都绑定上小程序的事件监听，
-这样会导致整体运行时开销很大，因此当你需要在支付宝环境中自定义组件根节点上绑定事件时，需要通过次配置来告诉框架需要帮你代理抹平哪些事件。
-
-跨端输出Web时，为了和微信小程序保持一致，在非virtualHost的自定义组件节点上，默认也会插入一个包裹节点，同理对于事件的代理也需要用户进行配置告诉框架来对哪些自定义组件的哪些事件进行代理。
-
-- **示例**：
-
-当我们在小程序开发时存在以下代码时
-```html
-<!--自定义组件list-->
-<!--src/packageA/pages/index.mpx-->
-<list bindtap="tapHandler"></list>
-```
-支付宝环境的自定义组件节点绑定事件并不会触发，但微信环境可以，若想在支付宝环境下使用该功能，则需配置此规则
 ```js
-const path = require('path')
-
-new MpxWebpackPlugin({
-  proxyComponentEventsRules: [
-    {
-      include: path.resolve('src/packageA'), // 输出支付宝时，对src/packageA文件夹中的所有自定义组件添加 onTap, onToucheMove 事件代理
-      exclude: path.resolve('lib'),
-      events: ['bindtap', 'bindtouchstart']
-    },
-    {
-      include: path.resolve('src/packageB'), // 输出支付宝时，对src/packageB文件夹中的所有自定义组件添加 onTap, onLongTap 事件代理
-      events: ['bindtap']
-    },
-  ]
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        retryRequireAsync: true
+      }
+    }
+  }
 })
 ```
 
-需要注意的是，所有的事件名配置，我们以微信事件为基准，例如虽然你是跨端输出支付宝，也请配置bindtap，而不是onTap。
+### enableAliRequireAsync
 
-请注意，在跨端输出 Web 时，只支持配置 tap 、longtap、longpress 这三个事件代理，且最好不要同时配置了两个事件，不然有可能会导致同一个事件触发两次。
+`boolean = false`
 
+支付宝在`2.8.2`基础库版本后开始支持分包异步化，开启此配置时Mpx的分包异步构建能力能在输出支付宝时生效，不开启时则还是采用兜底策略进行构建来兼容`2.8.2`之前的基础库版本
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        enableAliRequireAsync: true
+      }
+    }
+  }
+})
+```
+
+### optimizeSize
+
+`boolean = false`
+
+开启后可优化编译配置减少构建产物体积
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        optimizeSize: true
+      }
+    }
+  }
+})
+```
 
 ## MpxWebpackPlugin static methods
 
@@ -1537,50 +1571,9 @@ new MpxWebpackPlugin({
 
 ### MpxWebpackPlugin.loader
 
-`MpxWebpackPlugin` 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
+`MpxWebpackPlugin` 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[目标平台](#mode)将 `.mpx` 文件输出为不同的结果。
 
-> \* 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
-
-```js
-module.exports = {
-  module: {
-    rules: [
-      {
-        test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader(options)
-      }
-    ]
-  }
-};
-```
-
-#### Options
-
-##### Options.transRpx `{Array<Object> | Object}`
-
-用于统一转换 px 或者 rpx 单位，默认值为`{}`，详见 [transRpxRules](/api/compile.html#transrpxrules)
-
-:::warning
-`transRpx` 已在`v2.6.0`版本中**移除**，请在统一配置文件 `build/mpx.plugin.conf.js` 中使用 `transRpxRules` 属性进行配置。
-:::
-
-::: tip @mpxjs/cli@3.x 版本配置如下
-```javascript
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      loader: {
-        transRpxRules: [] 
-      }
-    }
-  }
-})
-```
-:::
-
-##### Options.loaders `{Object}`
-
-可用于对某些资源文件的默认 loader 做覆盖或新增处理，以下例子演示了对 [less-loader](https://webpack.docschina.org/loaders/less-loader/) 做额外配置。
+> 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
 
 ```js
 module.exports = {
@@ -1588,77 +1581,12 @@ module.exports = {
     rules: [
       {
         test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader({
-          loaders: { // loaders选项
-            less: [ // 针对less做loader配置
-              'css-loader',
-              {
-                loader: 'less-loader',
-                options: { // 为less-loader添加额外配置
-                  lessOptions: {
-                    strictMath: true
-                  }
-                }
-              }
-            ]
-          }
-        })
+        use: MpxWebpackPlugin.loader()
       }
     ]
   }
 };
 ```
-
-::: tip @mpxjs/cli 3.x 版本配置如下
-```js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      loader: {
-        loaders: { // loaders选项
-          less: [ // 针对less做loader配置
-            'css-loader',
-            {
-              loader: 'less-loader',
-              options: { // 为less-loader添加额外配置
-                lessOptions: {
-                  strictMath: true
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
-})
-```
-:::
-
-##### Options.templateOption `{Object}`
-
-针对使用其他模板引擎(如 [pug](https://www.pugjs.cn/api/getting-started.html))来编写 template 的情景下，可通过 `options.templateOption` 来传入引擎渲染时的额外参数。等同于：
-
-```js
-const pug = require('pug')
-
-const template = `view(class='gray') 这是一段pug模板`
-
-pug.render(template, options.templateOption)
-```
-
-::: tip
-在 `@mpxjs/cli 3.x`版本已经内置了对于 `pug` 的支持，只需要安装 `pug` 依赖相关即可：
-
-```javascript
-npm install -D pug pug-plain-loader
-```
-:::
-
-##### Options.excludedPreLoaders `{RegExp}`
-
-在构建过程中忽略特定 `pre-loader` 对文件的处理，仅支持正则表达式，默认值为 `/eslint-loader/`。
 
 ### MpxWebpackPlugin.pluginLoader
 

@@ -1,13 +1,13 @@
 <template>
-    <div class="mpx-movable-scroll-content" ref="scrollContent">
-        <div class="mpx-movable-scroll-item">
-            <slot></slot>
-        </div>
+  <div class="mpx-movable-scroll-content" ref="scrollContent">
+    <div class="mpx-movable-scroll-item">
+      <slot></slot>
     </div>
+  </div>
 </template>
 
 <script type="text/ecmascript-6">
-  import {getCustomEvent} from './getInnerListeners'
+  import {getCustomEvent, extendEvent} from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import Movable from '@better-scroll/movable'
   import Zoom from '@better-scroll/zoom'
@@ -121,6 +121,13 @@
           newVal = 0.5
         }
         this.bs.zoomTo(newVal, 'center', 'center')
+      },
+      disabled (newVal) {
+        if (newVal) {
+          this.bs && this.bs.disable()
+        } else {
+          this.bs && this.bs.enable()
+        }
       }
     },
     mounted () {
@@ -204,6 +211,14 @@
             this.bs.movingDirectionY = -1
           }
         })
+        actionsHandlerHooks.on('start', (e) => {
+          extendEvent(e, { detail: Object.assign({}, e.detail) })
+          this.$emit('touchstart', e)
+        })
+        actionsHandlerHooks.on('end', (e) => {
+          extendEvent(e, { detail: Object.assign({}, e.detail) })
+          this.$emit('touchend', e)
+        })
         actionsHandlerHooks.on('move', ({ deltaX, deltaY, e }) => {
           if (this.isZooming) {
             return
@@ -215,7 +230,9 @@
               this.touchEvent = 'vtouchmove'
             }
           }
-          this.$emit(this.touchEvent, getCustomEvent(this.touchEvent, {}, this))
+          extendEvent(e, { detail: Object.assign({}, e.detail), currentTarget: e.target })
+          this.$emit(this.touchEvent, e)
+          this.$emit('touchmove', e)
           this.isFirstTouch = false
         })
         if (this.inertia) { // movable-view是否带有惯性
@@ -302,7 +319,9 @@
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
-    .mpx-movable-scroll-content {
-        position: absolute
-    }
+  .mpx-movable-scroll-content
+    position: absolute
+    .mpx-movable-scroll-item
+      width: 100%
+      height: 100%
 </style>

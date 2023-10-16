@@ -19,11 +19,6 @@ export default function proxyEventMixin () {
         const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' && this[filterMethod]) : originValue
         setByPath(this, expr, value)
       },
-      getOpenerEventChannel () {
-        const router = global.__mpxRouter
-        const eventChannel = router && router.__mpxAction && router.__mpxAction.eventChannel
-        return eventChannel
-      },
       __proxyEvent (e) {
         const type = e.type
         // 保持和微信一致 target 和 currentTarget 相同
