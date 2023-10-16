@@ -19,7 +19,7 @@ export default function install (Vue) {
   Vue.prototype.triggerEvent = function (eventName, eventDetail, e) {
     let eventObj = {}
     if (e) {
-      e.detail = Object.assign({}, e.detail, eventDetail)
+      e.detail = Object.assign(e.detail, eventDetail)
       eventObj = e
     } else {
       const dataset = collectDataset(this.$attrs)
