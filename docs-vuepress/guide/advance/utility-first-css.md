@@ -46,13 +46,43 @@
 
 > 与 web 中使用 unocss 不同，在 Mpx 中使用 unocss 不需要显式引入虚拟模块 `import 'uno.css'` 来承载生成的样式内容，这是由于在 Mpx 中，我们充分考虑到小程序分包架构的特殊性和主包体积的重要性，结合 Mpx 强大的分包构建能力，对生成的原子工具类的使用情况进行分析，将其自动注入到合适的主包或者分包中，来达到全局体积分配的最优（在没有内容冗余的情况下尽可能输出到分包）。
 
-对于使用 `@mpxjs/cli@3.0` 新版脚手架创建的项目，可以
+对于使用 `@mpxjs/cli@3.0` 新版脚手架创建的项目，可以在项目初始化时选择`需要使用原子类`选项，或在已有项目下执行`mpx add @mpxjs/vue-cli-plugin-mpx-utility-first-css`以激活原子类相关编译配置。
 
-对于使用旧版脚手架创建的项目，可以通过修改项目模板
+对于使用旧版脚手架创建的项目，可以通过修改项目编译配置以激活原子类支持：
+1. 安装相关依赖：
+```json5
+{
+  //...
+  "devDependencies": {
+    "@mpxjs/unocss-base": '^2.9.0',
+    "@mpxjs/unocss-plugin": '^2.9.0'
+  }
+}
+```
 
+2. 新建uno.config.js，基础配置内容如下：
+```js
+const { defineConfig } = require('unocss')
+const presetMpx = require('@mpxjs/unocss-base')
 
+module.exports = defineConfig({
+  presets: [
+    presetMpx()
+  ]
+})
+```
+
+3. 注册`MpxUnocssPlugin`，在`build/getPlugins`中添加如下代码：
+```js
+const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+// ...
+plugins.push(new MpxUnocssPlugin())
+```
+
+即可在项目模版中使用基于`unocss`的原子类功能，`unocss`默认的preset兼容`tailwindcss`/`windicss`，可以通过查阅[tailwindcss文档](https://tailwindcss.com/docs/installation)、[windicss文档](https://windicss.org/utilities/general/colors.html)或[unocss可交互文档](https://unocss.dev/interactive/)进行探索使用。
 
 ## 功能支持范围
+我们支持了`unocss`大部分的功能（90%以上），并针对小程序技术规范提供了一些额外的功能支持，如分包输出和样式隔离等
 
 ## 工具类支持范围
 
