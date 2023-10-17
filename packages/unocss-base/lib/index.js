@@ -3,12 +3,16 @@ const { presetUno } = require('@unocss/preset-uno')
 // eslint-disable-next-line
 const remRE = /(-?[\.\d]+)rem/g
 
-module.exports = function presetMpx (options = { preflight: false, baseFontSize: 37.5 }) {
+module.exports = function presetMpx (options = { preflight: true, baseFontSize: 37.5 }) {
   const uno = presetUno(options)
   const { baseFontSize } = options
   return {
     ...uno,
     name: '@mpxjs/unocss-base',
+    theme: {
+      ...uno.theme,
+      preflightRoot: 'page'
+    },
     postprocess: (util) => {
       util.entries.forEach((i) => {
         const value = i[1]
