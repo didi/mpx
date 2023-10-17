@@ -113,6 +113,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
 
   Vue.filter('transRpxStyle', transRpxStyle)
 
+  Vue.config.ignoredElements = ['page']
+
   const routes = []
 
   for (const pagePath in pagesMap) {
