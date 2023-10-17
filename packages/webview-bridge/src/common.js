@@ -28,10 +28,10 @@ const ENV_PATH_MAP = {
 }
 
 let env = null
-let isOrigin
+let callbackId = 0
+const callbacks = {}
 window.addEventListener('message', (event) => {
-  isOrigin = event.data === event.origin
-  if (isOrigin) {
+  if (event.data.isMpxWeb) {
     env = 'web'
     window.parent.postMessage({
       type: 'load',
@@ -39,6 +39,20 @@ window.addEventListener('message', (event) => {
         load: true
       }
     }, '*')
+  }
+  // 接收webview返回的数据location等
+  const { callbackId, error, result } = event.data
+  if (callbackId !== undefined && callbacks[callbackId]) {
+    if (error) {
+      const _error = {
+        code: error?.code || -1,
+        data: error?.data || 'unknown error'
+      }
+      callbacks[callbackId](_error)
+    } else {
+      callbacks[callbackId](null, result)
+    }
+    delete callbacks[callbackId]
   }
 }, false)
 // 环境判断
@@ -84,8 +98,27 @@ function postMessage (type, data) {
     case 'getEnv':
       eventType = 'getEnv'
       break
+    default:
+      eventType = 'message'
   }
-  if (type !== 'getEnv' && isOrigin) {
+  if (type === 'getLocation') {
+    const message = {
+      callbackId: ++callbackId
+    }
+    callbacks[message.callbackId] = (err, res) => {
+      if (err) {
+        data.fail(err)
+        data.complete
+      } else {
+        data.success(res)
+      }
+      delete callbacks[message.callbackId]
+    }
+    window.parent.postMessage({
+      type: 'getLocation',
+      callbackId
+    }, '*')
+  } else if (type !== 'getEnv') {
     window.parent.postMessage({
       type: eventType,
       detail: {
@@ -133,12 +166,17 @@ const getWebviewApi = (sdkReady) => {
       ali: true
     }
   }
+  if (env === 'web' || env === null) {
+    Object.assign(webviewApiNameList, {
+      getLocation: 'getLocation'
+    })
+  }
 
   for (const item in webviewApiNameList) {
     const apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item
 
     webviewApiList[item] = (...args) => {
-      if (env === 'web') {
+      if (env === 'web' || env === null) {
         return postMessage(item, ...args)
         // console.log(`${env}小程序不支持 ${item} 方法`)
       } else {

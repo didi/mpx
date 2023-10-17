@@ -4,7 +4,8 @@
 
 <script>
   import { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
+  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy/src/web/api/index'
+  import mpx from '@mpxjs/core'
 
   const eventLoad = 'load'
   const eventError = 'error'
@@ -17,7 +18,8 @@
         Loaded: false,
         isActived: false,
         mpxIframe: null,
-        isPostMessage: false
+        isPostMessage: false,
+        isMpxWeb: true
       }
     },
     props: {
@@ -28,13 +30,7 @@
     computed: {
       mainDomain () {
         let domain
-        const src = location.href
-        let index = src.indexOf('?')
-        if (index > -1) {
-          domain = src.substr(0, index)
-          return domain
-        }
-        domain = src.split('/')
+        domain = this.src.split('/')
         if (domain[2]) {
           domain = domain[0] + '//' + domain[2]
         } else {
@@ -44,6 +40,16 @@
       }
     },
     mounted () {
+      const domainWhiteLists = mpx.config.webviewConfig && mpx.config.webviewConfig.domainWhiteLists || []
+      if (domainWhiteLists.length) {
+        this.isMpxWeb = domainWhiteLists.some((item) => {
+          const childOrigin = this.mainDomain
+          const origin = childOrigin.substr(childOrigin.length - item.length)
+          return origin === item
+        })
+      } else { // 如果未配置域名白名单就按无限制处理
+        this.isMpxWeb = true
+      }
       setTimeout(() => {
         if (!this.Loaded) {
           const loadData = {
@@ -54,12 +60,14 @@
       }, 1000)
       this.mpxIframe = this.$refs.mpxIframe
       this.mpxIframe.addEventListener('load', (event) => {
-        event.currentTarget.contentWindow.postMessage(this.mainDomain, '*')
+        event.currentTarget.contentWindow.postMessage({
+          isMpxWeb: this.isMpxWeb
+        }, '*')
       })
       window.addEventListener('message', (event) => {
         const data = event.data
         const value = data.detail && data.detail.data && data.detail.data
-        if (!this.isActived) {
+        if (!this.isActived || !this.isMpxWeb) {
           return
         }
         switch (data.type) {
@@ -93,6 +101,24 @@
               src: this.src
             }
             this.$emit(eventLoad, getCustomEvent(eventLoad, loadData, this))
+            break
+          case 'getLocation':
+            const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
+            getLocation && getLocation().then((res) => {
+              this.mpxIframe.contentWindow.postMessage({
+                type: 'getLocation',
+                callbackId: data.callbackId,
+                result: res
+              }, '*')
+            }).catch((error) => {
+              const result =
+                  this.mpxIframe.contentWindow.postMessage({
+                    type: 'getLocation',
+                    callbackId: data.callbackId,
+                    error
+                  }, '*')
+            })
+            break
         }
       })
     },
