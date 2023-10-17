@@ -118,7 +118,7 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(true)
   })
 
-  it.skip('should observe inherited property accessors', () => {
+  it('should observe inherited property accessors', () => {
     let dummy, parentDummy, hiddenValue
     const obj = reactive({})
     const parent = reactive({
@@ -161,7 +161,7 @@ describe('reactivity/effect', () => {
   it('should observe iteration', () => {
     let dummy
     const list = reactive(['Hello'])
-    effect(() => (dummy = list.join(' ')))
+    effect(() => (dummy = list.join(' '))) // join、length、0、1
 
     expect(dummy).toBe('Hello')
     list.push('World!')
@@ -429,5 +429,65 @@ describe('reactivity/effect', () => {
     expect(typeof effect2).toBe('function')
     expect(effect1).not.toBe(greet)
     expect(effect1).not.toBe(effect2)
+  })
+
+
+  it('should discover new branches while running automatically', () => {
+    let dummy
+    const obj = reactive({ prop: 'value', run: false })
+
+    const conditionalSpy = jest.fn(() => {
+      dummy = obj.run ? obj.prop : 'other'
+    })
+    effect(conditionalSpy)
+
+    expect(dummy).toBe('other')
+    expect(conditionalSpy).toHaveBeenCalledTimes(1)
+    obj.prop = 'Hi'
+    expect(dummy).toBe('other')
+    expect(conditionalSpy).toHaveBeenCalledTimes(1)
+    obj.run = true
+    expect(dummy).toBe('Hi')
+    expect(conditionalSpy).toHaveBeenCalledTimes(2)
+    obj.prop = 'World'
+    expect(dummy).toBe('World')
+    expect(conditionalSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('should discover new branches when running manually', () => {
+    let dummy
+    let run = false
+    const obj = reactive({ prop: 'value' })
+    const runner = effect(() => {
+      dummy = run ? obj.prop : 'other'
+    })
+
+    expect(dummy).toBe('other')
+    runner()
+    expect(dummy).toBe('other')
+    run = true
+    runner()
+    expect(dummy).toBe('value')
+    obj.prop = 'World'
+    expect(dummy).toBe('World')
+  })
+
+  it('should not be triggered by mutating a property, which is used in an inactive branch', () => {
+    let dummy
+    const obj = reactive({ prop: 'value', run: true })
+
+    const conditionalSpy = jest.fn(() => {
+      dummy = obj.run ? obj.prop : 'other'
+    })
+    effect(conditionalSpy)
+
+    expect(dummy).toBe('value')
+    expect(conditionalSpy).toHaveBeenCalledTimes(1)
+    obj.run = false
+    expect(dummy).toBe('other')
+    expect(conditionalSpy).toHaveBeenCalledTimes(2)
+    obj.prop = 'value2'
+    expect(dummy).toBe('other')
+    expect(conditionalSpy).toHaveBeenCalledTimes(2)
   })
 })

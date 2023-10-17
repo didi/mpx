@@ -1,11 +1,12 @@
 import { isArray, isIntegerKey } from '@mpxjs/utils'
-import { createDep } from './dep'
+import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers } from './dep'
 import { TriggerOpTypes } from './operations'
 
 const targetMap = new WeakMap()
 let activeEffect
 
 export let shouldTrack = true
+export let trackOpBit = 1
 
 class ReactiveEffect {
   constructor (fn) {
@@ -14,10 +15,18 @@ class ReactiveEffect {
   }
 
   run () {
-    activeEffect = this
-    const result = this.fn()
-    activeEffect = undefined
-    return result
+    let result
+    try {
+      activeEffect = this
+      shouldTrack = true
+      // wasTracked
+      initDepMarkers(this)  // set w = 1
+      result = this.fn()
+    } finally {
+      finalizeDepMarkers(this) 
+      activeEffect = undefined
+      return result
+    }
   }
 }
 
@@ -58,9 +67,20 @@ export function track (target, key) {
 }
 
 export function trackEffects (dep) {
-  dep.add(activeEffect)
-  if (activeEffect) {
-    activeEffect.deps.push(dep)
+  let shouldTrack = false
+  // n: 1
+  if (!newTracked(dep)) {
+    dep.n |= trackOpBit // set newly tracked, n = 1
+    shouldTrack = !wasTracked(dep)
+  } else {
+    shouldTrack = !dep.has(activeEffect)
+  }
+
+  if(shouldTrack) {
+    dep.add(activeEffect)
+    if (activeEffect) {
+      activeEffect.deps.push(dep)
+    }
   }
 }
 
