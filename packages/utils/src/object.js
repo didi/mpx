@@ -35,7 +35,7 @@ function diffAndCloneA (a, b) {
 
   function deepDiffAndCloneA (a, b, currentDiff, bIsEmpty) {
     const setDiff = (val) => {
-      if (val) {
+      if (val && !currentDiff) {
         currentDiff = val
         if (curPath) {
           diffData = diffData || {}
@@ -44,10 +44,9 @@ function diffAndCloneA (a, b) {
       }
     }
     let clone = a
-    if (bIsEmpty) {
-      if (!currentDiff) setDiff(true)
-    } else if (typeof a !== 'object' || a === null) {
-      if (!currentDiff) setDiff(a !== b)
+    setDiff(bIsEmpty)
+    if (typeof a !== 'object' || a === null) {
+      setDiff(a !== b)
     } else {
       const toString = Object.prototype.toString
       const className = toString.call(a)
@@ -58,7 +57,7 @@ function diffAndCloneA (a, b) {
         const keys = Object.keys(a)
         length = keys.length
         clone = {}
-        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
+        setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           const key = keys[i]
@@ -77,7 +76,7 @@ function diffAndCloneA (a, b) {
       } else if (Array.isArray(a)) {
         length = a.length
         clone = []
-        if (!currentDiff) setDiff(!sameClass || length < b.length)
+        setDiff(!sameClass || length < b.length)
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           curPath += `[${i}]`
@@ -93,11 +92,11 @@ function diffAndCloneA (a, b) {
           Object.preventExtensions(clone)
         }
       } else if (a instanceof RegExp) {
-        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+        setDiff(!sameClass || '' + a !== '' + b)
       } else if (a instanceof Date) {
-        if (!currentDiff) setDiff(!sameClass || +a !== +b)
+        setDiff(!sameClass || +a !== +b)
       } else {
-        if (!currentDiff) setDiff(!sameClass || a !== b)
+        setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {
