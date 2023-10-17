@@ -231,9 +231,21 @@ module.exports = {
       Identifier (path) {
         if (
           checkBindThis(path) &&
-          !path.scope.hasBinding(path.node.name) &&
           !ignoreMap[path.node.name]
         ) {
+          const scopeBinding = path.scope.hasBinding(path.node.name)
+          // 删除局部作用域的变量
+          if (scopeBinding && renderReduce) {
+            const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
+            if (canDel && !ignore) {
+              delPath.delInfo = {
+                immediate: true,
+                canDel,
+                replace
+              }
+            }
+            return
+          }
           const { last, keyPath } = calPropName(path)
           path.needBind = true
           if (needCollect) {
@@ -301,10 +313,14 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, replace } = path.delInfo
+          const { keyPath, canDel, immediate, replace } = path.delInfo
           delete path.delInfo
 
           if (canDel) {
+            if (immediate) { // 局部作用域里的变量，可直接删除
+              dealRemove(path, replace)
+              return
+            }
             const data = bindingsMap.get(currentBlock)
             const { bindings, pBindings } = data
             const allBindings = Object.assign({}, pBindings, bindings)

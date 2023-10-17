@@ -673,4 +673,31 @@ global.currentInject = {
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
+
+  it('should scope var is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          this._i(list, function (item, index) {
+            item;
+            index;
+            item.a ? "" : item.b;
+            item.a || "";
+            item.a || item.b;
+          });
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: false, renderReduce: true }).code
+    const output = `
+global.currentInject = {
+  render: function () {
+    this._i(this.list, function (item, index) {
+      item.a ? "" : item.b;
+      item.a || item.b;
+    });
+  }
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
+  })
 })
