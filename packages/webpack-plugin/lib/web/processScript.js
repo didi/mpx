@@ -189,7 +189,6 @@ module.exports = function (script, {
             pageCfg.isFirst = false
           }
         }
-
         if (pageCfg.isFirst) {
           firstPage = pagePath
         }
