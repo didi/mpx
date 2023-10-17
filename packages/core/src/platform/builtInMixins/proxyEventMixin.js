@@ -89,29 +89,34 @@ export default function proxyEventMixin () {
   }
   if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
-      triggerEvent (eventName, eventDetail) {
+      triggerEvent (eventName, eventDetail, e) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
-          const dataset = collectDataset(this.props)
-          const id = this.props.id || ''
-          const timeStamp = +new Date()
-          const eventObj = {
-            type: eventName,
-            timeStamp,
-            target: {
-              id,
-              dataset,
-              targetDataset: dataset
-            },
-            currentTarget: {
-              id,
-              dataset
-            },
-            detail: eventDetail
+          let eventObj = {}
+          if (e) {
+            e.detail = Object.assign(e.detail, eventDetail)
+            eventObj = e
+          } else {
+            const dataset = collectDataset(this.props)
+            const id = this.props.id || ''
+            const timeStamp = +new Date()
+            eventObj = {
+              type: eventName,
+              timeStamp,
+              target: { id, dataset, targetDataset: dataset },
+              currentTarget: { id, dataset },
+              detail: eventDetail
+            }
           }
           handler.call(this, eventObj)
         }
+      },
+      __proxyEvent (e) {
+        const eventName = e.type
+        // 保持和微信一致
+        e.target = e.currentTarget
+        this.triggerEvent(eventName, {}, e)
       }
     })
   }
