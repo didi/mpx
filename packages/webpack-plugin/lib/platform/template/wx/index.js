@@ -364,7 +364,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ name, value }, { eventRules, el }) {
-          if (parseMustache(value).hasBinding) {
+          if (parseMustacheWithContext(value).hasBinding) {
             error('Web environment does not support mustache binding in event props!')
             return
           }
