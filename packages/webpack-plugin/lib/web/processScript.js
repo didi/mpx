@@ -182,14 +182,10 @@ module.exports = function (script, {
             pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
           }
         }
-        if (jsonConfig.entryPagePath) {
-          if (pagePath === jsonConfig.entryPagePath) {
-            pageCfg.isFirst = true
-          } else if (pageCfg.isFirst) {
-            pageCfg.isFirst = false
-          }
+        if(pagePath === jsonConfig.entryPagePath){
+          firstPage = pagePath
         }
-        if (pageCfg.isFirst) {
+        if (!firstPage && pageCfg.isFirst) {
           firstPage = pagePath
         }
       })
