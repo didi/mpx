@@ -214,7 +214,7 @@ module.exports = function (content) {
       let ctorType = 'app'
       if (pagesMap[resourcePath]) {
         ctorType = 'page'
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
+        if (mpx.forceUsePageCtor || mode === 'ali') {
           ctor = 'Page'
         } else {
           ctor = 'Component'
