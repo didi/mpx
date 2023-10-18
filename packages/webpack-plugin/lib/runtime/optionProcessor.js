@@ -73,7 +73,48 @@ registered in parent context!`)
   if (outputPath) {
     option.componentPath = '/' + outputPath
   }
-
+  if (ctorType === 'app') {
+    option.data = function() {
+      return {
+        transitionName: ''
+      }
+    }
+    option.watch = {
+      $route: {
+        handler (to, from) {
+          let action = global.__mpxRouter.__mpxAction
+          // 处理人为操作
+          if (!action) {
+            if (to.path && !from) {
+              action = {
+                type: 'to'
+              }
+            } else {
+              action = {
+                type: 'back',
+                delta: 1
+              }
+            }
+          }
+          switch (action.type) {
+            case 'to':
+              this.transitionName = 'slide-left'
+              break
+            case 'back':
+              this.transitionName = 'slide-right'
+              break
+            case 'reLaunch':
+            case 'redirect':
+              this.transitionName = ''
+              break
+            default:
+              this.transitionName = ''
+          }
+        },
+        immediate: true
+      }
+    }
+  }
   return option
 }
 
