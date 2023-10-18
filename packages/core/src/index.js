@@ -138,8 +138,8 @@ Mpx.config = {
   webRouteConfig: {},
   /*
     支持两个属性
-    domainWhiteLists Array 类型 支持h5域名白名单安全校验
-    apiImplementations webview JSSDK接口 列getlocation
+    hostWhitelists Array 类型 支持h5域名白名单安全校验
+    apiImplementations webview JSSDK接口 例如getlocation
    */
   webviewConfig: {}
 }
