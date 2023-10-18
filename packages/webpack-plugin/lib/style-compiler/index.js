@@ -47,6 +47,10 @@ module.exports = function (css, map) {
       plugins.push(transSpecial({ id }))
     }
 
+    if (mode === 'web') {
+      plugins.push(transSpecial({ id }))
+    }
+
     plugins.push(pluginCondStrip({
       defs
     }))
