@@ -27,8 +27,7 @@ import {
   callWithErrorHandling,
   warn,
   error,
-  getEnvObj,
-  noop
+  getEnvObj
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
