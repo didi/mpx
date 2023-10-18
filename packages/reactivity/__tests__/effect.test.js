@@ -420,7 +420,7 @@ describe('reactivity/effect', () => {
   })
 
   it('should return a new reactive version of the function', () => {
-    function greet() {
+    function greet () {
       return 'Hello World'
     }
     const effect1 = effect(greet)
@@ -430,7 +430,6 @@ describe('reactivity/effect', () => {
     expect(effect1).not.toBe(greet)
     expect(effect1).not.toBe(effect2)
   })
-
 
   it('should discover new branches while running automatically', () => {
     let dummy
@@ -489,5 +488,21 @@ describe('reactivity/effect', () => {
     obj.prop = 'value2'
     expect(dummy).toBe('other')
     expect(conditionalSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('should handle deep effect recursion using cleanup fallback', () => {
+    const results = reactive([0])
+    const effects = []
+    for (let i = 1; i < 40; i++) {
+      ;(index => {
+        const fx = effect(() => {
+          results[index] = results[index - 1] * 2
+        })
+        effects.push({ fx, index })
+      })(i)
+    }
+    expect(results[39]).toBe(0)
+    results[0] = 1
+    expect(results[39]).toBe(Math.pow(2, 39))
   })
 })

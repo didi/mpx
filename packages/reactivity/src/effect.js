@@ -6,7 +6,7 @@ const targetMap = new WeakMap()
 let activeEffect
 
 export let shouldTrack = true
-export let trackOpBit = 1
+export const trackOpBit = 1
 
 class ReactiveEffect {
   constructor (fn) {
@@ -20,10 +20,10 @@ class ReactiveEffect {
       activeEffect = this
       shouldTrack = true
       // wasTracked
-      initDepMarkers(this)  // set w = 1
+      initDepMarkers(this) // set w = 1
       result = this.fn()
     } finally {
-      finalizeDepMarkers(this) 
+      finalizeDepMarkers(this)
       activeEffect = undefined
       return result
     }
@@ -76,7 +76,7 @@ export function trackEffects (dep) {
     shouldTrack = !dep.has(activeEffect)
   }
 
-  if(shouldTrack) {
+  if (shouldTrack) {
     dep.add(activeEffect)
     if (activeEffect) {
       activeEffect.deps.push(dep)
@@ -98,16 +98,16 @@ export function trigger (target, type, key) {
     return
   }
   const deps = []
-  // new index added to array -> length changes
-  if (isArray(target) && isIntegerKey(key)) {
-    deps.push(depsMap.get('length'))
-  } else {
-    deps.push(depsMap.get(key))
-  }
+  deps.push(depsMap.get(key))
 
   switch (type) {
     case TriggerOpTypes.ADD:
-      deps.push(depsMap.get(ITERATE_KEY))
+      if (!isArray(target)) {
+        deps.push(depsMap.get(ITERATE_KEY))
+      } else if (isIntegerKey(key)) {
+        // new index added to array -> length changes
+        deps.push(depsMap.get('length'))
+      }
       break
     case TriggerOpTypes.SET:
       break
@@ -146,13 +146,13 @@ function triggerEffect (effect) {
 /**
  * pauses tracking.
  */
-export function pauseTracking() {
+export function pauseTracking () {
   shouldTrack = false
 }
 
 /**
  * Re-enables effect tracking (if it was paused).
  */
-export function enableTracking() {
+export function enableTracking () {
   shouldTrack = true
 }

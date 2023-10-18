@@ -2,8 +2,8 @@ import { trackOpBit } from './effect'
 
 export function createDep (effects = []) {
   const dep = new Set(effects)
-  dep.w = 0  // wasTracked
-  dep.n = 0  // newTracked
+  dep.w = 0 // wasTracked
+  dep.n = 0 // newTracked
   return dep
 }
 
