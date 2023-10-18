@@ -49,11 +49,6 @@ if (systemUA.indexOf('AlipayClient') > -1) {
 }
 
 const initWebviewBridge = () => {
-  if (env === null) {
-    console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序')
-    getWebviewApi()
-    return
-  }
   sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url, { crossOrigin: !!SDK_URL_MAP[env].crossOrigin }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
   getWebviewApi(sdkReady)
 }
@@ -64,6 +59,7 @@ const webviewBridge = {
       console.warn('非微信环境不需要配置config')
       return
     }
+
     if (sdkReady) {
       sdkReady().then(() => {
         if (window.wx) {

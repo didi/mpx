@@ -74,13 +74,9 @@
           case 'postMessage':
             this.isPostMessage = true
             this.messageList.push(value.data)
-            hasPostMessage && this.mpxIframe.contentWindow.postMessage({
-              type: data.type,
-              callbackId: data.callbackId,
-              result: {
-                errMsg: 'invokeWebappApi:ok'
-              }
-            }, event.origin)
+            asyncCallback = Promise.resolve({
+              errMsg: 'invokeWebappApi:ok'
+            })
             break
           case 'navigateTo':
             this.isActived = false
@@ -107,13 +103,9 @@
             if (getLocation) {
               asyncCallback = getLocation()
             } else {
-              hasPostMessage && this.mpxIframe.contentWindow.postMessage({
-                type: data.type,
-                callbackId: data.callbackId,
-                error: {
-                  errMsg: '未在apiImplementations中配置getLocation方法'
-                }
-              }, event.origin)
+              asyncCallback = Promise.reject({
+                errMsg: '未在apiImplementations中配置getLocation方法'
+              })
             }
             break
         }
