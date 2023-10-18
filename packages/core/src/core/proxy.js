@@ -27,7 +27,8 @@ import {
   callWithErrorHandling,
   warn,
   error,
-  getEnvObj
+  getEnvObj,
+  noop
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -238,7 +239,7 @@ export default class MpxProxy {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
-          triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : function () {},
+          triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
           asyncRefs: this.target.$asyncRefs,
           forceUpdate: this.forceUpdate.bind(this),
