@@ -1,11 +1,11 @@
 <template>
-  <iframe ref="mpxIframe" class="mpx-iframe" :src="src"></iframe>
+  <iframe ref="mpxIframe" class="mpx-iframe" :src="currentUrl"></iframe>
 </template>
 
 <script>
   import { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy/src/web/api/index'
   import mpx from '@mpxjs/core'
+  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy/src/web/api/index'
 
   const eventLoad = 'load'
   const eventError = 'error'
@@ -19,7 +19,8 @@
         isActived: false,
         mpxIframe: null,
         isPostMessage: false,
-        isMpxWeb: true
+        isMpxWeb: true,
+        currentUrl: ''
       }
     },
     props: {
@@ -27,29 +28,30 @@
         type: String
       }
     },
-    computed: {
-      mainDomain () {
+    watch: {
+      src (value) {
         let domain
-        domain = this.src.split('/')
+        domain = value.split('/')
         if (domain[2]) {
           domain = domain[0] + '//' + domain[2]
         } else {
           domain = ''
         }
-        return domain
+        const originValidity = this.originValidity(domain)
+        if (!originValidity) {
+          console.log('该域名不在域名白名单范围')
+          return
+        }
+        this.currentUrl = value
+        this.mpxIframe = this.$refs.mpxIframe
+        this.mpxIframe.addEventListener('load', (event) => {
+          event.currentTarget.contentWindow.postMessage({
+            isMpxWebview: true
+          }, '*')
+        })
       }
     },
     mounted () {
-      const domainWhiteLists = mpx.config.webviewConfig && mpx.config.webviewConfig.domainWhiteLists || []
-      if (domainWhiteLists.length) {
-        this.isMpxWeb = domainWhiteLists.some((item) => {
-          const childOrigin = this.mainDomain
-          const origin = childOrigin.substr(childOrigin.length - item.length)
-          return origin === item
-        })
-      } else { // 如果未配置域名白名单就按无限制处理
-        this.isMpxWeb = true
-      }
       setTimeout(() => {
         if (!this.Loaded) {
           const loadData = {
@@ -58,42 +60,38 @@
           this.$emit(eventError, getCustomEvent(eventError, loadData, this))
         }
       }, 1000)
-      this.mpxIframe = this.$refs.mpxIframe
-      this.mpxIframe.addEventListener('load', (event) => {
-        event.currentTarget.contentWindow.postMessage({
-          isMpxWeb: this.isMpxWeb
-        }, '*')
-      })
       window.addEventListener('message', (event) => {
+        const originValidity = this.originValidity(event.origin)
         const data = event.data
         const value = data.detail && data.detail.data && data.detail.data
-        if (!this.isActived || !this.isMpxWeb) {
+        if (!this.isActived || !originValidity) {
           return
         }
+        let asyncCallback = null
         switch (data.type) {
-          case eventMessage:
+          case 'postMessage':
             this.isPostMessage = true
             this.messageList.push(value.data)
             break
           case 'navigateTo':
             this.isActived = false
-            navigateTo(value)
+            asyncCallback = navigateTo(value)
             break
           case 'navigateBack':
             this.isActived = false
-            value ? navigateBack(value) : navigateBack()
+            asyncCallback = value ? navigateBack(value) : navigateBack()
             break
           case 'redirectTo':
             this.isActived = false
-            redirectTo(value)
+            asyncCallback = redirectTo(value)
             break
           case 'switchTab':
             this.isActived = false
-            switchTab(value)
+            asyncCallback = switchTab(value)
             break
           case 'reLaunch':
             this.isActived = false
-            reLaunch(value)
+            asyncCallback = reLaunch(value)
             break
           case 'load':
             this.Loaded = true
@@ -104,22 +102,23 @@
             break
           case 'getLocation':
             const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
-            getLocation && getLocation().then((res) => {
-              this.mpxIframe.contentWindow.postMessage({
-                type: 'getLocation',
-                callbackId: data.callbackId,
-                result: res
-              }, '*')
-            }).catch((error) => {
-              const result =
-                  this.mpxIframe.contentWindow.postMessage({
-                    type: 'getLocation',
-                    callbackId: data.callbackId,
-                    error
-                  }, '*')
-            })
+            asyncCallback = getLocation && getLocation()
             break
         }
+        const hasPostMessage = this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage
+        asyncCallback && asyncCallback.then((res) => {
+          hasPostMessage && this.mpxIframe.contentWindow.postMessage({
+            type: data.type,
+            callbackId: data.callbackId,
+            result: res
+          }, '*')
+        }).catch((error) => {
+          hasPostMessage && this.mpxIframe.contentWindow.postMessage({
+            type: data.type,
+            callbackId: data.callbackId,
+            error
+          }, '*')
+        })
       })
     },
     activated () {
@@ -145,6 +144,19 @@
         data: this.messageList
       }
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
+    },
+    methods: {
+      originValidity (host) {
+        const domainWhiteLists = mpx.config.webviewConfig && mpx.config.webviewConfig.domainWhiteLists || []
+        if (domainWhiteLists.length) {
+          return domainWhiteLists.some((item) => {
+            const origin = host.substr(host.length - item.length)
+            return origin === item
+          })
+        } else {
+          return true
+        }
+      }
     }
   }
 </script>
