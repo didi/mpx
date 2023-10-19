@@ -26,7 +26,8 @@ import {
   getFirstKey,
   callWithErrorHandling,
   warn,
-  error
+  error,
+  getEnvObj
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -44,6 +45,8 @@ import {
 } from './innerLifecycle'
 
 let uid = 0
+
+const envObj = getEnvObj()
 
 class RenderTask {
   resolved = false
@@ -235,14 +238,14 @@ export default class MpxProxy {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
-          triggerEvent: this.target.triggerEvent.bind(this.target),
+          triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
           asyncRefs: this.target.$asyncRefs,
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
-          createSelectorQuery: this.target.createSelectorQuery.bind(this.target),
-          createIntersectionObserver: this.target.createIntersectionObserver.bind(this.target)
+          createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
+          createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj)
         }
       ])
       if (!isObject(setupResult)) {
