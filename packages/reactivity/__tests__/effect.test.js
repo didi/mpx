@@ -1,5 +1,6 @@
-import { effect } from '../src/effect'
+import { effect, ITERATE_KEY } from '../src/effect'
 import { reactive, toRaw } from '../src/reactive'
+import { TriggerOpTypes } from '../src/index'
 
 describe('reactivity/effect', () => {
   it('should run the passed function once (wrapped by a effect)', () => {
@@ -706,5 +707,76 @@ describe('reactivity/effect', () => {
     run()
     // should have run
     expect(dummy).toBe(2)
+  })
+
+  it('events: onTrack', () => {
+    let events = []
+    let dummy
+    const onTrack = jest.fn(e => {
+      events.push(e)
+    })
+    const obj = reactive({ foo: 1, bar: 2 })
+    const runner = effect(
+      () => {
+        dummy = obj.foo
+        dummy = 'bar' in obj
+        dummy = Object.keys(obj)
+      },
+      { onTrack }
+    )
+    expect(dummy).toEqual(['foo', 'bar'])
+    expect(onTrack).toHaveBeenCalledTimes(3)
+    expect(events).toEqual([
+      {
+        effect: runner.effect,
+        target: toRaw(obj),
+        key: 'foo'
+      },
+      {
+        effect: runner.effect,
+        target: toRaw(obj),
+        key: 'bar'
+      },
+      {
+        effect: runner.effect,
+        target: toRaw(obj),
+        key: ITERATE_KEY
+      }
+    ])
+  })
+
+  it('events: onTrigger', () => {
+    let events = []
+    let dummy
+    const onTrigger = jest.fn(e => {
+      events.push(e)
+    })
+    const obj = reactive({ foo: 1 })
+    const runner = effect(
+      () => {
+        dummy = obj.foo
+      },
+      { onTrigger }
+    )
+
+    obj.foo++
+    expect(dummy).toBe(2)
+    expect(onTrigger).toHaveBeenCalledTimes(1)
+    expect(events[0]).toEqual({
+      effect: runner.effect,
+      target: toRaw(obj),
+      type: TriggerOpTypes.SET,
+      key: 'foo',
+    })
+
+    delete obj.foo
+    expect(dummy).toBeUndefined()
+    expect(onTrigger).toHaveBeenCalledTimes(2)
+    expect(events[1]).toEqual({
+      effect: runner.effect,
+      target: toRaw(obj),
+      type: TriggerOpTypes.DELETE,
+      key: 'foo',
+    })
   })
 })

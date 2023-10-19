@@ -1,4 +1,4 @@
-import { isArray, isIntegerKey } from '@mpxjs/utils'
+import { extend, isArray, isIntegerKey } from '@mpxjs/utils'
 import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers } from './dep'
 import { TriggerOpTypes } from './operations'
 
@@ -9,11 +9,10 @@ export let shouldTrack = true
 export const trackOpBit = 1
 
 class ReactiveEffect {
-  constructor (fn, options) {
+  constructor (fn) {
     this.deps = []
     this.fn = fn
     this.parent = undefined
-    this.scheduler = options.scheduler
   }
 
   run () {
@@ -38,7 +37,8 @@ export function effect (fn, options = {}) {
   if (fn.effect) {
     fn = fn.effect.fn
   }
-  const _effect = new ReactiveEffect(fn, options)
+  const _effect = new ReactiveEffect(fn)
+  extend(_effect, options)
   if (!options.lazy) {
     _effect.run()
   }
@@ -74,7 +74,7 @@ export function track (target, key) {
   }
 }
 
-export function trackEffects (dep) {
+export function trackEffects (dep, debuggerEventExtraInfo) {
   let shouldTrack = false
   // n: 1
   if (!newTracked(dep)) {
@@ -88,6 +88,9 @@ export function trackEffects (dep) {
     dep.add(activeEffect)
     if (activeEffect) {
       activeEffect.deps.push(dep)
+      if (__DEV__ && activeEffect.onTrack) {
+        activeEffect.onTrack(debuggerEventExtraInfo)
+      }
     }
   }
 }
@@ -121,9 +124,17 @@ export function trigger (target, type, key) {
       break
   }
 
+  const eventInfo = __DEV__
+  ? { target, type, key }
+  : undefined
+
   if (deps.length === 1) {
     if (deps[0]) {
-      triggerEffects(deps[0])
+      if (__DEV__) {
+        triggerEffects(deps[0], eventInfo)
+      } else {
+        triggerEffects(deps[0])
+      }
     }
   } else {
     const effects = []
@@ -132,21 +143,28 @@ export function trigger (target, type, key) {
         effects.push(...dep)
       }
     }
-    triggerEffects(createDep(effects))
+    if (__DEV__) {
+      triggerEffects(createDep(effects), eventInfo)
+    } else {
+      triggerEffects(createDep(effects))
+    }
   }
 }
 
-function triggerEffects (dep) {
+function triggerEffects (dep, debuggerEventExtraInfo) {
   const effects = isArray(dep) ? dep : [...dep]
   for (const effect of effects) {
-    triggerEffect(effect)
+    triggerEffect(effect, debuggerEventExtraInfo)
   }
 }
 
-function triggerEffect (effect) {
+function triggerEffect (effect, debuggerEventExtraInfo) {
   // 避免 effect 的入参函数出现无限循环
   // test(effect): should avoid implicit infinite recursive loops with itself
   if (effect !== activeEffect) {
+    if (__DEV__ && effect.onTrigger) {
+      effect.onTrigger(extend({ effect }, debuggerEventExtraInfo))
+    }
     if (effect.scheduler) {
       effect.scheduler()
     } else {
