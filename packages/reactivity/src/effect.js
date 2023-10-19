@@ -12,20 +12,21 @@ class ReactiveEffect {
   constructor (fn) {
     this.deps = []
     this.fn = fn
+    this.parent = undefined
   }
 
   run () {
-    let result
     try {
+      this.parent = activeEffect
       activeEffect = this
       shouldTrack = true
       // wasTracked
       initDepMarkers(this) // set w = 1
-      result = this.fn()
+      return this.fn()
     } finally {
       finalizeDepMarkers(this)
-      activeEffect = undefined
-      return result
+      activeEffect = this.parent
+      this.parent = undefined
     }
   }
 }

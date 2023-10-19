@@ -585,4 +585,58 @@ describe('reactivity/effect', () => {
     expect(runner).not.toBe(otherRunner)
     expect(runner.effect.fn).toBe(otherRunner.effect.fn)
   })
+
+  it('should not run multiple times for a single mutation', () => {
+    let dummy
+    const obj = reactive({})
+    const fnSpy = jest.fn(() => {
+      for (const key in obj) {
+        dummy = obj[key]
+      }
+      dummy = obj.prop
+    })
+    effect(fnSpy)
+
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+    obj.prop = 16
+    expect(dummy).toBe(16)
+    expect(fnSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('should allow nested effects', () => {
+    const nums = reactive({ num1: 0, num2: 1, num3: 2 })
+    const dummy = {}
+
+    const childSpy = jest.fn(() => {
+      dummy.num1 = nums.num1
+    })
+    const childeffect = effect(childSpy)
+    const parentSpy = jest.fn(() => {
+      dummy.num2 = nums.num2
+      childeffect()
+      // childeffect 的调用阻断了后续num3属性的依赖收集
+      dummy.num3 = nums.num3
+    })
+    effect(parentSpy)
+
+    expect(dummy).toEqual({ num1: 0, num2: 1, num3: 2 })
+    expect(parentSpy).toHaveBeenCalledTimes(1)
+    expect(childSpy).toHaveBeenCalledTimes(2)
+    // this should only call the childeffect
+    nums.num1 = 4
+    expect(dummy).toEqual({ num1: 4, num2: 1, num3: 2 })
+    expect(parentSpy).toHaveBeenCalledTimes(1)
+    expect(childSpy).toHaveBeenCalledTimes(3)
+    // // this calls the parenteffect, which calls the childeffect once
+    nums.num2 = 10
+    expect(dummy).toEqual({ num1: 4, num2: 10, num3: 2 })
+    expect(parentSpy).toHaveBeenCalledTimes(2)
+    expect(childSpy).toHaveBeenCalledTimes(4)
+    // // this calls the parenteffect, which calls the childeffect once
+    nums.num3 = 7
+    console.log(4389258493, dummy)
+    expect(dummy).toEqual({ num1: 4, num2: 10, num3: 7 })
+    expect(parentSpy).toHaveBeenCalledTimes(3)
+    expect(childSpy).toHaveBeenCalledTimes(5)
+  })
 })
