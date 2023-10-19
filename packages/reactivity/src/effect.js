@@ -33,9 +33,13 @@ class ReactiveEffect {
 export const ITERATE_KEY = Symbol(__DEV__ ? 'iterate' : '')
 
 export function effect (fn) {
+  if (fn.effect) {
+    fn = fn.effect.fn
+  }
   const _effect = new ReactiveEffect(fn)
   _effect.run()
   const runner = _effect.run.bind(_effect)
+  runner.effect = _effect
   return runner
 }
 
