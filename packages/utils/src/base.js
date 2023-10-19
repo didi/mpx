@@ -102,6 +102,8 @@ function isIntegerKey (key) {
   return isString(key) && key !== 'NaN' && key[0] !== '-' && '' + parseInt(key, 10) === key
 }
 
+const extend = Object.assign
+
 export {
   hasProto,
   noop,
@@ -122,5 +124,6 @@ export {
   hump2dash,
   def,
   hasChanged,
-  isIntegerKey
+  isIntegerKey,
+  extend
 }

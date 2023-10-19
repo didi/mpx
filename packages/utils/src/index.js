@@ -23,7 +23,8 @@ export {
   hump2dash,
   def,
   hasChanged,
-  isIntegerKey
+  isIntegerKey,
+  extend
 } from './base'
 
 export {
