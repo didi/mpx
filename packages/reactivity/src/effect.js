@@ -9,10 +9,11 @@ export let shouldTrack = true
 export const trackOpBit = 1
 
 class ReactiveEffect {
-  constructor (fn) {
+  constructor (fn, options) {
     this.deps = []
     this.fn = fn
     this.parent = undefined
+    this.scheduler = options.scheduler
   }
 
   run () {
@@ -33,12 +34,14 @@ class ReactiveEffect {
 
 export const ITERATE_KEY = Symbol(__DEV__ ? 'iterate' : '')
 
-export function effect (fn) {
+export function effect (fn, options = {}) {
   if (fn.effect) {
     fn = fn.effect.fn
   }
-  const _effect = new ReactiveEffect(fn)
-  _effect.run()
+  const _effect = new ReactiveEffect(fn, options)
+  if (!options.lazy) {
+    _effect.run()
+  }
   const runner = _effect.run.bind(_effect)
   runner.effect = _effect
   return runner
@@ -144,7 +147,11 @@ function triggerEffect (effect) {
   // 避免 effect 的入参函数出现无限循环
   // test(effect): should avoid implicit infinite recursive loops with itself
   if (effect !== activeEffect) {
-    effect.run()
+    if (effect.scheduler) {
+      effect.scheduler()
+    } else {
+      effect.run()
+    }
   }
 }
 
