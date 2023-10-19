@@ -33,7 +33,9 @@
         isFirstTouch: true,
         source: '',
         touchEvent: '',
-        isInited: false
+        isInited: false,
+        deactivatedX: 0,
+        deactivatedY: 0
       }
     },
     props: {
@@ -136,6 +138,19 @@
     mounted () {
       this.createResizeObserver()
       this.init()
+    },
+    activated () {
+      if (this.deactivatedX || this.deactivatedY) {
+        this.bs.refresh()
+        this.bs.putAt(this.deactivatedX, this.deactivatedY, 0)
+      }
+    },
+    deactivated () {
+      // when the hook is triggered
+      // bs will recalculate the boundary of movable to 0
+      // so record the position of the movable
+      this.deactivatedX = this.bs.x
+      this.deactivatedY = this.bs.y
     },
     beforeDestroy () {
       this.destroyBs()
