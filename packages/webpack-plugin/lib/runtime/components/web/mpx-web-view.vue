@@ -1,5 +1,5 @@
 <template>
-  <iframe ref="mpxIframe" class="mpx-iframe" :src="currentUrl"></iframe>
+  <iframe ref="mpxIframe" class="mpx-iframe" :src="currentUrl" :key="currentUrl"></iframe>
 </template>
 
 <script>
@@ -18,8 +18,7 @@
         Loaded: false,
         isActived: false,
         mpxIframe: null,
-        isPostMessage: false,
-        currentUrl: ''
+        isPostMessage: false
       }
     },
     props: {
@@ -27,38 +26,51 @@
         type: String
       }
     },
-    watch: {
-      src (value) {
-        let host
-        host = value.split('/')
+    computed: {
+      host () {
+        let host = this.src.split('/')
         if (host[2]) {
           host = host[0] + '//' + host[2]
         } else {
           host = ''
         }
-        const hostValidate = this.hostValidate(host)
+        return host
+      },
+      currentUrl () {
+        if (!this.src) return ''
+        const hostValidate = this.hostValidate(this.host)
         if (!hostValidate) {
           console.error('访问页面域名不符合domainWhiteLists白名单配置，请确认是否正确配置该域名白名单')
-          return
+          return ''
         }
-        this.currentUrl = value
-        this.mpxIframe = this.$refs.mpxIframe
-        this.mpxIframe.addEventListener('load', (event) => {
-          this.Loaded = true
-          const loadData = {
-            src: this.src
-          }
-          this.$emit(eventLoad, getCustomEvent(eventLoad, loadData, this))
-        })
+        return this.src
+      },
+      loadData () {
+        return {
+          src: this.host,
+          fullUrl: this.src
+        }
+      }
+    },
+    watch: {
+      currentUrl (value) {
+        if (!value) {
+          this.$emit(eventError, getCustomEvent(eventError, {
+            ...this.loadData,
+            errMsg: 'web-view load failed due to not in domain list'
+          }, this))
+        }
       }
     },
     mounted () {
+      this.mpxIframe = this.$refs.mpxIframe
+      this.mpxIframe.addEventListener('load', (event) => {
+        this.Loaded = true
+        this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
+      })
       setTimeout(() => {
         if (!this.Loaded) {
-          const loadData = {
-            src: this.src
-          }
-          this.$emit(eventError, getCustomEvent(eventError, loadData, this))
+          this.$emit(eventError, getCustomEvent(eventError, this.loadData, this))
         }
       }, 1000)
       window.addEventListener('message', (event) => {

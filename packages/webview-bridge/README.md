@@ -25,7 +25,7 @@ navigateBack()
     
     [jssdk接口1](https://developers.weixin.qq.com/miniprogram/dev/component/web-view.html) 提供的方法直接调用即可(参考Usage示例)
     
-    [jssdk接口2](https://developers.weixin.qq.com/miniprogram/dev/component/web-view.html) 提供的方法需要传入config配置后再调用，webview-bridge提供了对应的config方法，该方法只在微信小程序环境下生效，使用示例如下
+    [jssdk接口2](https://developers.weixin.qq.com/miniprogram/dev/component/web-view.html) 提供的方法需要传入config配置后再调用，webview-bridge提供了对应的config方法，该方法只在微信小程序环境下生效，使用示例如下：
     ```js
     import webviewBridge from '@mpxjs/webview-bridge'
     // 具体传入配置参考微信说明
@@ -37,16 +37,14 @@ navigateBack()
       signature: '',
       jsApiList: []
     })
-    // 在微信小程序下调用wx.ready方法中调用接口2能力
-    wx.ready(function () {
-      webviewBridge.updateAppMessageShareData({ 
-         title: '',
-         desc: '',
-         link: '',
-         imgUrl: '',
-         success: function () {
-         }
-      })
+    // wx.ready在框架内部抹平，直接调用方法即可
+    webviewBridge.updateAppMessageShareData({ 
+      title: '',
+      desc: '',
+      link: '',
+      imgUrl: '',
+      success: function () {
+      }
     })
     ```
 - **支付宝、百度、QQ、抖音小程序：**

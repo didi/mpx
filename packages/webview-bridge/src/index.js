@@ -49,8 +49,19 @@ if (systemUA.indexOf('AlipayClient') > -1) {
 }
 
 const initWebviewBridge = () => {
-  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url, { crossOrigin: !!SDK_URL_MAP[env].crossOrigin }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
-  getWebviewApi(sdkReady)
+  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
+  getWebviewApi()
+}
+
+function runWebviewApiMethod (callback) {
+  if (window.__webview_sdkready__) {
+    callback()
+  } else {
+    sdkReady.then(() => {
+      window.__webview_sdkready__ = true
+      callback()
+    })
+  }
 }
 
 const webviewBridge = {
@@ -59,20 +70,11 @@ const webviewBridge = {
       console.warn('非微信环境不需要配置config')
       return
     }
-
-    if (sdkReady) {
-      sdkReady().then(() => {
-        if (window.wx) {
-          if (!config) {
-            console.warn('微信环境下需要配置wx.config才能挂载方法')
-            return
-          }
-          window.wx.config(config)
-        }
-      })
-    } else {
-      console.warn('wx对象未加载完成或者加载失败')
-    }
+    runWebviewApiMethod(() => {
+      if (window.wx) {
+        window.wx.config(config)
+      }
+    })
   }
 }
 
@@ -114,7 +116,7 @@ function postMessage (type, data) {
   }
 }
 
-const getWebviewApi = (sdkReady) => {
+const getWebviewApi = () => {
   const multiApiMap = {
     wx: {
       keyName: 'miniProgram',
@@ -252,7 +254,7 @@ const getWebviewApi = (sdkReady) => {
   const multiApiLists = multiApi.api || []
   multiApiLists.forEach((item) => {
     webviewBridge[item] = (...args) => {
-      return sdkReady.then(() => {
+      runWebviewApiMethod(() => {
         window[env][multiApi.keyName][item](...args)
       })
     }
@@ -260,9 +262,15 @@ const getWebviewApi = (sdkReady) => {
   singleApi.forEach((item) => {
     webviewBridge[item] = (...args) => {
       if (env === 'web') {
-        return postMessage(item, ...args)
+        postMessage(item, ...args)
+      } else if (env === 'wx') {
+        runWebviewApiMethod(() => {
+          window[env] && window[env].ready(() => {
+            window[env][item](...args)
+          })
+        })
       } else {
-        return sdkReady.then(() => {
+        runWebviewApiMethod(() => {
           window[env][item](...args)
         })
       }
