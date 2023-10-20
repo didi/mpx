@@ -1795,7 +1795,7 @@ function processRootViewStyleClassHack (el, options, root) {
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  if (options.isComponent) {
+  if (srcMode === 'wx' && options.isComponent) {
     // 处理组件时
     if (mode === 'wx' && options.hasVirtualHost) {
       // wx组件注入virtualHost配置
@@ -1810,7 +1810,6 @@ function getVirtualHostRoot (options, meta) {
           value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
         }
       ])
-      // 添加时间处理
       processElement(rootView, rootView, options, meta)
       return rootView
     }
