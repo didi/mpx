@@ -42,7 +42,7 @@
           return
         }
         this.currentUrl = value
-        this.mpxIframe = this.$refs.mpxIframe
+        // this.mpxIframe = this.$refs.mpxIframe
         this.mpxIframe.addEventListener('load', (event) => {
           this.Loaded = true
           const loadData = {
@@ -53,6 +53,7 @@
       }
     },
     mounted () {
+      this.mpxIframe = this.$refs.mpxIframe
       setTimeout(() => {
         if (!this.Loaded) {
           const loadData = {
