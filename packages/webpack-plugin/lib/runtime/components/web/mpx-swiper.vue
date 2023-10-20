@@ -142,11 +142,12 @@
     methods: {
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
+        const computedStyle = getComputedStyle(wrapper)
         const innerWrapper = this.$refs.innerWrapper
+        let width = wrapper.clientWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)
+        let height = wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)
         if (!this.vertical) {
-          innerWrapper.style.height = '100%'
           if (this._previousMargin || this._nextMargin) {
-            let width = wrapper.clientWidth
             if (this._previousMargin) {
               innerWrapper.style.marginLeft = `${this._previousMargin}px`
               width = width - this._previousMargin
@@ -154,14 +155,9 @@
             if (this._nextMargin) {
               width = width - this._nextMargin
             }
-            innerWrapper.style.width = `${width}px`
-          } else {
-            innerWrapper.style.width = '100%'
           }
         } else {
-          innerWrapper.style.width = '100%'
           if (this._previousMargin || this._nextMargin) {
-            let height = wrapper.clientHeight
             if (this._previousMargin) {
               innerWrapper.style.marginTop = `${this._previousMargin}px`
               height = height - this._previousMargin
@@ -169,11 +165,10 @@
             if (this._nextMargin) {
               height = height - this._nextMargin
             }
-            innerWrapper.style.height = `${height}px`
-          } else {
-            innerWrapper.style.height = '100%'
           }
         }
+        innerWrapper.style.height = `${height}px`
+        innerWrapper.style.width = `${width}px`
       },
       initBs () {
         this.initLayerComputed()
