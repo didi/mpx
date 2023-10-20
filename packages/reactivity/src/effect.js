@@ -35,6 +35,9 @@ class ReactiveEffect {
   stop () {
     if (this.active) {
       cleanupEffect(this)
+      if (this.onStop) {
+        this.onStop()
+      }
       this.active = false
     }
   }
