@@ -101,7 +101,7 @@
       }
     },
     mounted () {
-      this.init()
+      this.initBs()
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -117,7 +117,7 @@
       this.__mpx_deactivated = true
     },
     beforeDestroy () {
-      this.destroy()
+      this.destroyBs()
     },
     updated () {
       if (this.updateRefresh) this.refresh()
@@ -150,26 +150,26 @@
       },
       scroll(val) {
         if (val) {
-          this.init()
+          this.initBs()
         } else {
-          this.disableBSScroll()
+          this.disableBs()
         }
       }
     },
     methods: {
-      destroy () {
+      destroyBs () {
         if (!this.bs) return
         this.bs.destroy()
         delete this.bs
       },
-      disableBSScroll() {
+      disableBs() {
         if (!this.bs) return
         this.bs.disable()
         this.currentX = -this.bs.x
         this.currentY = -this.bs.y
       },
-      init () {
-        this.destroy()
+      initBs () {
+        this.destroyBs()
         this.initLayerComputed()
         const originBsOptions = {
           startX: -this.currentX,
