@@ -1,7 +1,6 @@
 import {
   effectScope as vueEffectScope,
-  getCurrentScope as vueGetCurrentScope,
-  getCurrentInstance as vueGetCurrentInstance,
+  getCurrentScope as vueGetCurrentScope
   onScopeDispose
 } from 'vue'
 
@@ -28,7 +27,9 @@ export {
   shallowRef,
   triggerRef,
   // computed
-  computed
+  computed,
+  // instance
+  getCurrentInstance
 } from 'vue'
 
 const noop = () => {
@@ -42,12 +43,6 @@ const fixEffectScope = (scope) => {
 
 const effectScope = (detached) => fixEffectScope(vueEffectScope(detached))
 const getCurrentScope = () => fixEffectScope(vueGetCurrentScope())
-const getCurrentInstance = () => vueGetCurrentInstance()?.proxy
-
-export {
-  // instance
-  getCurrentInstance
-}
 
 export {
   // effectScope
