@@ -13,10 +13,12 @@ class ReactiveEffect {
     this.deps = []
     this.fn = fn
     this.parent = undefined
+    this.active = true
   }
 
   run () {
     try {
+      if (!this.active) return this.fn()
       this.parent = activeEffect
       activeEffect = this
       shouldTrack = true
@@ -28,6 +30,23 @@ class ReactiveEffect {
       activeEffect = this.parent
       this.parent = undefined
     }
+  }
+
+  stop () {
+    if (this.active) {
+      cleanupEffect(this)
+      this.active = false
+    }
+  }
+}
+
+function cleanupEffect (effect) {
+  const { deps } = effect
+  if (deps.length) {
+    for (let i = 0; i < deps.length; i++) {
+      deps[i].delete(effect)
+    }
+    deps.length = 0
   }
 }
 
@@ -45,6 +64,10 @@ export function effect (fn, options = {}) {
   const runner = _effect.run.bind(_effect)
   runner.effect = _effect
   return runner
+}
+
+export function stop (runner) {
+  runner && runner.effect && runner.effect.stop()
 }
 
 /**
@@ -125,8 +148,8 @@ export function trigger (target, type, key) {
   }
 
   const eventInfo = __DEV__
-  ? { target, type, key }
-  : undefined
+    ? { target, type, key }
+    : undefined
 
   if (deps.length === 1) {
     if (deps[0]) {

@@ -1,4 +1,4 @@
-import { effect, ITERATE_KEY } from '../src/effect'
+import { effect, ITERATE_KEY, stop } from '../src/effect'
 import { reactive, toRaw } from '../src/reactive'
 import { TriggerOpTypes } from '../src/index'
 
@@ -654,10 +654,11 @@ describe('reactivity/effect', () => {
   it('should observe class method invocations', () => {
     class Model {
       count
-      constructor() {
+      constructor () {
         this.count = 0
       }
-      inc() {
+
+      inc () {
         this.count++
       }
     }
@@ -710,7 +711,7 @@ describe('reactivity/effect', () => {
   })
 
   it('events: onTrack', () => {
-    let events = []
+    const events = []
     let dummy
     const onTrack = jest.fn(e => {
       events.push(e)
@@ -746,7 +747,7 @@ describe('reactivity/effect', () => {
   })
 
   it('events: onTrigger', () => {
-    let events = []
+    const events = []
     let dummy
     const onTrigger = jest.fn(e => {
       events.push(e)
@@ -766,7 +767,7 @@ describe('reactivity/effect', () => {
       effect: runner.effect,
       target: toRaw(obj),
       type: TriggerOpTypes.SET,
-      key: 'foo',
+      key: 'foo'
     })
 
     delete obj.foo
@@ -776,7 +777,24 @@ describe('reactivity/effect', () => {
       effect: runner.effect,
       target: toRaw(obj),
       type: TriggerOpTypes.DELETE,
-      key: 'foo',
+      key: 'foo'
     })
+  })
+
+  it('stop', () => {
+    let dummy
+    const obj = reactive({ prop: 1 })
+    const runner = effect(() => {
+      dummy = obj.prop
+    })
+    obj.prop = 2
+    expect(dummy).toBe(2)
+    stop(runner)
+    obj.prop = 3
+    expect(dummy).toBe(2)
+
+    // stopped effect should still be manually callable
+    runner()
+    expect(dummy).toBe(3)
   })
 })
