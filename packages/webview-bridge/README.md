@@ -65,7 +65,7 @@ navigateBack()
     
      - **getLocation方法使用介绍：** 
      
-        小程序转webapp的项目本身没有getLocation的能力，需要在webapp属主中增加getLocaiton的方法挂载，挂载示例如下：
+        小程序转webapp的项目本身没有getLocation的能力，需要在webapp属主中增加getLocation的方法挂载，挂载示例如下：
     
         ```js
            // webapp app.web.js
