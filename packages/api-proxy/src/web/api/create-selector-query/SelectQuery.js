@@ -144,7 +144,7 @@ class SelectQuery {
         res.scrollLeft = el.scrollLeft
         res.scrollTop = el.scrollTop
       }
-      res.scrollHeight= el.scrollHeight
+      res.scrollHeight = el.scrollHeight
       res.scrollWidth = el.scrollWidth
     }
     properties.forEach(prop => {
