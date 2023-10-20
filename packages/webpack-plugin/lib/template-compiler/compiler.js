@@ -1810,7 +1810,6 @@ function getVirtualHostRoot (options, meta) {
           value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
         }
       ])
-      // 添加时间处理
       processElement(rootView, rootView, options, meta)
       return rootView
     }
