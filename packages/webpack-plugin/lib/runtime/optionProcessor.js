@@ -98,10 +98,10 @@ registered in parent context!`)
           }
           switch (action.type) {
             case 'to':
-              this.transitionName = 'slide-left'
+              this.transitionName = 'mpx-slide-left'
               break
             case 'back':
-              this.transitionName = 'slide-right'
+              this.transitionName = 'mpx-slide-right'
               break
             case 'reLaunch':
             case 'redirect':

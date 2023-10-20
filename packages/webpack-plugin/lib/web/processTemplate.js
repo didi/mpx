@@ -53,7 +53,7 @@ module.exports = function (template, {
     const idName = el?.match(/#(.*)/)?.[1] || 'app'
     template = {
       tag: 'template',
-      content: `<page id="${idName}"><transition :name="transitionName" mode="in-out"><mpx-keep-alive><router-view></router-view></transition></mpx-keep-alive></page>`
+      content: `<page id="${idName}"><transition :name="transitionName"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></transition></page>`
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
