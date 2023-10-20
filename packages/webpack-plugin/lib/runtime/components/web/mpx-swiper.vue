@@ -3,6 +3,7 @@
   import BScroll from '@better-scroll/core'
   import Slide from '@better-scroll/slide'
   import throttle from 'lodash/throttle'
+  import { processSize } from '../../utils'
 
   BScroll.use(Slide)
 
@@ -37,6 +38,8 @@
         type: String,
         default: 'default'
       },
+      previousMargin: String,
+      nextMargin: String,
       scrollOptions: Object
     },
     data () {
@@ -82,7 +85,13 @@
           default:
             return
         }
-      }
+      },
+      _previousMargin () {
+        return processSize(this.previousMargin) || 0
+      },
+      _nextMargin () {
+        return processSize(this.nextMargin) || 0
+      },
     },
     updated () {
       this.currentChildLength = this.$children && this.$children.length
@@ -97,7 +106,7 @@
         this.changeSource = ''
         this.goto(val)
       },
-      currentChildLength(val) {
+      currentChildLength (val) {
         if (val < this.lastChildLength && val < this.currentIndex) {
           this.goto(0, 0)
         }
@@ -131,7 +140,43 @@
       this.resizeObserver = null
     },
     methods: {
+      initLayerComputed () {
+        const wrapper = this.$refs.wrapper
+        const innerWrapper = this.$refs.innerWrapper
+        if (!this.vertical) {
+          innerWrapper.style.height = '100%'
+          if (this._previousMargin || this._nextMargin) {
+            let width = wrapper.clientWidth
+            if (this._previousMargin) {
+              innerWrapper.style.marginLeft = `${this._previousMargin}px`
+              width = width - this._previousMargin
+            }
+            if (this._nextMargin) {
+              width = width - this._nextMargin
+            }
+            innerWrapper.style.width = `${width}px`
+          } else {
+            innerWrapper.style.width = '100%'
+          }
+        } else {
+          innerWrapper.style.width = '100%'
+          if (this._previousMargin || this._nextMargin) {
+            let height = wrapper.clientHeight
+            if (this._previousMargin) {
+              innerWrapper.style.marginTop = `${this._previousMargin}px`
+              height = height - this._previousMargin
+            }
+            if (this._nextMargin) {
+              height = height - this._nextMargin
+            }
+            innerWrapper.style.height = `${height}px`
+          } else {
+            innerWrapper.style.height = '100%'
+          }
+        }
+      },
       initBs () {
+        this.initLayerComputed()
         const originBsOptions = {
           scrollX: !this.vertical,
           scrollY: this.vertical,
@@ -143,7 +188,7 @@
             interval: this.interval,
             autoplay: this.autoplay,
             startPageXIndex: this.vertical ? 0 : this.currentIndex,
-            startPageYIndex: this.vertical? this.currentIndex : 0
+            startPageYIndex: this.vertical ? this.currentIndex : 0
           },
           momentum: false,
           bounce: false,
@@ -151,7 +196,7 @@
           stopPropagation: true
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
-        this.bs = new BScroll(this.$refs.wrapper, bsOptions)
+        this.bs = new BScroll(this.$refs.innerWrapper, bsOptions)
         this.bs.on('slideWillChange', (page) => {
           this.currentIndex = this.vertical ? page.pageY : page.pageX
           this.$emit('change', getCustomEvent('change', {
@@ -216,13 +261,13 @@
         on: getInnerListeners(this, { ignoredListeners: ['change', 'animationfinish', 'transition'] }),
         ref: 'wrapper'
       }
+
       const content = createElement('div', {
         class: {
           'mpx-swiper-content': true,
           vertical: this.vertical
         }
       }, this.$slots.default)
-
       const children = [content]
       if (this.indicatorDots) {
         const items = this.$slots.default.filter((VNode) => VNode.tag && VNode.tag.endsWith('mpx-swiper-item'))
@@ -249,7 +294,14 @@
         }, dotsItems)
         children.push(dots)
       }
-      return createElement('div', data, children)
+
+      const innerWrapper = createElement('div', {
+        ref: 'innerWrapper',
+        class: {
+          'mpx-swiper-wrapper': true
+        }
+      }, children)
+      return createElement('div', data, [innerWrapper])
     }
   }
 </script>
@@ -258,7 +310,6 @@
   .mpx-swiper
     overflow hidden
     position relative
-
 
   .mpx-swiper-content
     width 100%
