@@ -1,6 +1,7 @@
 export {
   reactive,
-  isReactive
+  isReactive,
+  markRaw
 } from './reactive'
 
 export {

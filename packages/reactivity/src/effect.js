@@ -129,13 +129,23 @@ export function trackEffects (dep, debuggerEventExtraInfo) {
  * @param type - Defines the type of the operation that needs to trigger effects.
  * @param key - Can be used to target a specific reactive property in the target object.
  */
-export function trigger (target, type, key) {
+export function trigger (target, type, key, newValue) {
   const depsMap = targetMap.get(target)
   if (!depsMap) {
     return
   }
+
   const deps = []
-  deps.push(depsMap.get(key))
+  if (key === 'length' && isArray(target)) {
+    const newLength = Number(newValue)
+    depsMap.forEach((dep, key) => {
+      if (key === 'length' || key >= newLength) {
+        deps.push(dep)
+      }
+    })
+  } else {
+    deps.push(depsMap.get(key))
+  }
 
   switch (type) {
     case TriggerOpTypes.ADD:

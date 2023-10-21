@@ -1,6 +1,6 @@
 import { effect, ITERATE_KEY, stop } from '../src/effect'
 import { reactive, toRaw } from '../src/reactive'
-import { TriggerOpTypes } from '../src/index'
+import { TriggerOpTypes, markRaw } from '../src/index'
 
 describe('reactivity/effect', () => {
   it('should run the passed function once (wrapped by a effect)', () => {
@@ -805,5 +805,118 @@ describe('reactivity/effect', () => {
     })
     stop(runner)
     expect(onStop).toHaveBeenCalled()
+  })
+
+  it('stop: a stopped effect is nested in a normal effect', () => {
+    let dummy
+    const obj = reactive({ prop: 1 })
+    const runner = effect(() => {
+      dummy = obj.prop
+    })
+    stop(runner)
+    obj.prop = 2
+    expect(dummy).toBe(1)
+
+    // observed value in inner stopped effect
+    // will track outer effect as an dependency
+    effect(() => {
+      runner()
+    })
+    expect(dummy).toBe(2)
+
+    // notify outer effect to run
+    obj.prop = 3
+    expect(dummy).toBe(3)
+  })
+
+  it('markRaw', () => {
+    const obj = reactive({
+      foo: markRaw({
+        prop: 0
+      })
+    })
+    let dummy
+    effect(() => {
+      dummy = obj.foo.prop
+    })
+    expect(dummy).toBe(0)
+    obj.foo.prop++
+    expect(dummy).toBe(0)
+    obj.foo = { prop: 1 }
+    expect(dummy).toBe(1)
+  })
+
+  it('should not be triggered when the value and the old value both are NaN', () => {
+    const obj = reactive({
+      foo: NaN
+    })
+    const fnSpy = jest.fn(() => obj.foo)
+    effect(fnSpy)
+    obj.foo = NaN
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should trigger all effects when array length is set to 0', () => {
+    const observed = reactive([1])
+    let dummy, record
+    effect(() => {
+      dummy = observed.length
+    })
+    effect(() => {
+      record = observed[0]
+    })
+    expect(dummy).toBe(1)
+    expect(record).toBe(1)
+
+    observed[1] = 2
+    expect(observed[1]).toBe(2)
+
+    observed.unshift(3)
+    expect(dummy).toBe(3)
+    expect(record).toBe(3)
+
+    observed.length = 0
+    expect(dummy).toBe(0)
+    expect(record).toBeUndefined()
+  })
+
+  it('should trigger all effects when array length is set to 0', () => {
+    const observed = reactive([1])
+    let dummy, record
+    effect(() => {
+      dummy = observed.length
+    })
+    effect(() => {
+      record = observed[0]
+    })
+    expect(dummy).toBe(1)
+    expect(record).toBe(1)
+
+    observed[1] = 2
+    expect(observed[1]).toBe(2)
+
+    observed.unshift(3)
+    expect(dummy).toBe(3)
+    expect(record).toBe(3)
+
+    observed.length = 0
+    expect(dummy).toBe(0)
+    expect(record).toBeUndefined()
+  })
+
+  it('should be triggered when set length with string', () => {
+    let ret1 = 'idle'
+    let ret2 = 'idle'
+    const arr1 = reactive(new Array(11).fill(0))
+    const arr2 = reactive(new Array(11).fill(0))
+    effect(() => {
+      ret1 = arr1[10] === undefined ? 'arr[10] is set to empty' : 'idle'
+    })
+    effect(() => {
+      ret2 = arr2[10] === undefined ? 'arr[10] is set to empty' : 'idle'
+    })
+    arr1.length = 2
+    arr2.length = '2'
+    expect(ret1).toBe(ret2)
   })
 })

@@ -104,9 +104,9 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     if (target === toRaw(receiver)) {
       // 这里需要做一下区分：区分为 ADD、SET
       if (!hadKey) {
-        trigger(target, TriggerOpTypes.ADD, key)
+        trigger(target, TriggerOpTypes.ADD, key, value)
       } else if (hasChanged(oldValue, value)) {
-        trigger(target, TriggerOpTypes.SET, key)
+        trigger(target, TriggerOpTypes.SET, key, value)
       }
     }
     return result
