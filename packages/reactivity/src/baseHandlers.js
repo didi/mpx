@@ -51,6 +51,12 @@ function createArrayInstrumentations () {
 
 const arrayInstrumentations = createArrayInstrumentations()
 
+function hasOwnProperty (key) {
+  const obj = toRaw(this)
+  track(obj, key)
+  return obj.hasOwnProperty(key)
+}
+
 class BaseReactiveHandler {
   constructor (_isReadonly = false, _shallow = false) {
     this._isReadonly = _isReadonly
@@ -71,6 +77,10 @@ class BaseReactiveHandler {
     // handle array
     if (targetIsArray && hasOwn(arrayInstrumentations, key)) {
       return Reflect.get(arrayInstrumentations, key, receiver)
+    }
+
+    if (key === 'hasOwnProperty') {
+      return hasOwnProperty
     }
 
     const res = Reflect.get(target, key, receiver)

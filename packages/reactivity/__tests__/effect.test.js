@@ -919,4 +919,31 @@ describe('reactivity/effect', () => {
     arr2.length = '2'
     expect(ret1).toBe(ret2)
   })
+
+  test('should track hasOwnProperty', () => {
+    const obj = reactive({})
+    let has = false
+    const fnSpy = jest.fn()
+
+    effect(() => {
+      fnSpy()
+      // eslint-disable-next-line no-prototype-builtins
+      has = obj.hasOwnProperty('foo')
+    })
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+    expect(has).toBe(false)
+
+    obj.foo = 1
+    expect(fnSpy).toHaveBeenCalledTimes(2)
+    expect(has).toBe(true)
+
+    delete obj.foo
+    expect(fnSpy).toHaveBeenCalledTimes(3)
+    expect(has).toBe(false)
+
+    // should not trigger on unrelated key
+    obj.bar = 2
+    expect(fnSpy).toHaveBeenCalledTimes(3)
+    expect(has).toBe(false)
+  })
 })
