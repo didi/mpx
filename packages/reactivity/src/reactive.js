@@ -1,13 +1,38 @@
 import { isObject, type, def } from '@mpxjs/utils'
-import { mutableHandlers } from './baseHandlers'
+import { mutableHandlers, shallowReactiveHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandlers'
 
 export const reactiveMap = new WeakMap()
+export const shallowReactiveMap = new WeakMap()
+export const readonlyMap = new WeakMap()
+export const shallowReadonlyMap = new WeakMap()
 
 export function reactive (target) {
   if (isReadonly(target)) {
     return target
   }
   return createReactiveObject(target, mutableHandlers, reactiveMap)
+}
+
+export function shallowReactive (target) {
+  if (isReadonly(target)) {
+    return target
+  }
+  return createReactiveObject(target, shallowReactiveHandlers, shallowReactiveMap)
+}
+
+export function readonly (target) {
+  if (isReadonly(target)) {
+    return target
+  }
+  return createReactiveObject(target, readonlyHandlers, readonlyMap)
+}
+
+export function shallowReadonly (target) {
+  return createReactiveObject(target, shallowReadonlyHandlers, shallowReadonlyMap)
+}
+
+export function isProxy (target) {
+  return isReactive(target) || isReadonly(target)
 }
 
 export const ReactiveFlags = {
@@ -74,6 +99,10 @@ export function isReactive (value) {
 
 export function isReadonly (value) {
   return !!(value && value[ReactiveFlags.IS_READONLY])
+}
+
+export function isShallow (value) {
+  return !!(value && value[ReactiveFlags.IS_SHALLOW])
 }
 
 export function toRaw (observed) {

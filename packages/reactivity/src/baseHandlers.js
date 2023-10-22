@@ -1,7 +1,31 @@
-import { hasOwn, isArray, isObject, isIntegerKey, isSymbol, hasChanged } from '@mpxjs/utils'
-import { reactive, ReactiveFlags, reactiveMap, toRaw } from './reactive'
-import { track, trigger, ITERATE_KEY, pauseTracking, enableTracking } from '../src/effect'
+import {
+  hasOwn,
+  isArray,
+  isObject,
+  isIntegerKey,
+  isSymbol,
+  hasChanged
+} from '@mpxjs/utils'
+import {
+  reactive,
+  ReactiveFlags,
+  reactiveMap,
+  shallowReactiveMap,
+  readonlyMap,
+  shallowReadonlyMap,
+  toRaw,
+  readonly,
+  isShallow
+} from './reactive'
+import {
+  track,
+  trigger,
+  ITERATE_KEY,
+  pauseTracking,
+  enableTracking
+} from '../src/effect'
 import { TriggerOpTypes } from './operations'
+import { warn } from './warning'
 
 const builtInSymbols = new Set(
   /* #__PURE__ */
@@ -9,16 +33,16 @@ const builtInSymbols = new Set(
     // ios10.x Object.getOwnPropertyNames(Symbol) can enumerate 'arguments' and 'caller'
     // but accessing them on Symbol leads to TypeError because Symbol is a strict mode
     // function
-    .filter(key => key !== 'arguments' && key !== 'caller')
-    .map(key => Symbol[key])
+    .filter((key) => key !== 'arguments' && key !== 'caller')
+    .map((key) => Symbol[key])
     .filter(isSymbol)
 )
 
 function createArrayInstrumentations () {
-  const instrumentations = {}
+  const instrumentations = {};
   // instrument identity-sensitive Array methods to account for possible reactive
   // values
-  ;['includes', 'indexOf', 'lastIndexOf'].forEach(key => {
+  ['includes', 'indexOf', 'lastIndexOf'].forEach((key) => {
     instrumentations[key] = function (...args) {
       // avoid infinite recursion
       const arr = toRaw(this)
@@ -31,11 +55,11 @@ function createArrayInstrumentations () {
         return res
       }
     }
-  })
+  });
 
   // instrument length-altering mutation methods to avoid length being tracked
   // which leads to infinite loops in some cases
-  ;(['push', 'pop', 'shift', 'unshift', 'splice']).forEach(key => {
+  ['push', 'pop', 'shift', 'unshift', 'splice'].forEach((key) => {
     instrumentations[key] = function (...args) {
       // calls correct mutation method
       // avoid infinite recursion
@@ -65,22 +89,39 @@ class BaseReactiveHandler {
 
   get (target, key, receiver) {
     const isReadonly = this._isReadonly
+    const shallow = this._shallow
 
     if (key === ReactiveFlags.IS_REACTIVE) {
       return !isReadonly
-    } else if (key === ReactiveFlags.RAW && receiver === reactiveMap.get(target)) {
+    } else if (key === ReactiveFlags.IS_SHALLOW) {
+      return shallow
+    } else if (key === ReactiveFlags.IS_READONLY) {
+      return isReadonly
+    } else if (
+      key === ReactiveFlags.RAW &&
+      receiver ===
+        (isReadonly
+          ? shallow
+            ? shallowReadonlyMap
+            : readonlyMap
+          : shallow
+            ? shallowReactiveMap
+            : reactiveMap
+        ).get(target)
+    ) {
       return target
     }
 
     const targetIsArray = isArray(target)
 
-    // handle array
-    if (targetIsArray && hasOwn(arrayInstrumentations, key)) {
-      return Reflect.get(arrayInstrumentations, key, receiver)
-    }
-
-    if (key === 'hasOwnProperty') {
-      return hasOwnProperty
+    if (!isReadonly) {
+      // handle array
+      if (targetIsArray && hasOwn(arrayInstrumentations, key)) {
+        return Reflect.get(arrayInstrumentations, key, receiver)
+      }
+      if (key === 'hasOwnProperty') {
+        return hasOwnProperty
+      }
     }
 
     const res = Reflect.get(target, key, receiver)
@@ -89,10 +130,16 @@ class BaseReactiveHandler {
       return res
     }
 
-    track(target, key)
+    if (!isReadonly) {
+      track(target, key)
+    }
+
+    if (shallow) {
+      return res
+    }
 
     if (isObject(res)) {
-      return reactive(res)
+      return isReadonly ? readonly(res) : reactive(res)
     }
 
     return res
@@ -105,9 +152,20 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 
   set (target, key, value, receiver) {
-    value = toRaw(value)
-    const oldValue = toRaw(target[key])
-    const hadKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key)
+    let oldValue = target[key]
+
+    // note: in shallow mode, objects are set as-is regardless of reactive or not
+    if (!this._shallow) {
+      if (!isShallow(value)) {
+        value = toRaw(value)
+        oldValue = toRaw(target[key])
+      }
+    }
+
+    const hadKey =
+      isArray(target) && isIntegerKey(key)
+        ? Number(key) < target.length
+        : hasOwn(target, key)
     const result = Reflect.set(target, key, value, receiver)
 
     // don't trigger if target is something up in the prototype chain of original
@@ -130,10 +188,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
 
   ownKeys (target) {
     const result = Reflect.ownKeys(target)
-    track(
-      target,
-      ITERATE_KEY
-    )
+    track(target, ITERATE_KEY)
     return result
   }
 
@@ -147,4 +202,36 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 }
 
+class ReadonlyReactiveHandler extends BaseReactiveHandler {
+  constructor (shallow = false) {
+    super(true, shallow)
+  }
+
+  set (target, key) {
+    if (__DEV__) {
+      warn(
+        `Set operation on key "${String(key)}" failed: target is readonly.`,
+        target
+      )
+    }
+    return true
+  }
+
+  deleteProperty (target, key) {
+    if (__DEV__) {
+      warn(
+        `Delete operation on key "${String(key)}" failed: target is readonly.`,
+        target
+      )
+    }
+    return true
+  }
+}
+
 export const mutableHandlers = new MutableReactiveHandler()
+
+export const shallowReactiveHandlers = new MutableReactiveHandler(true)
+
+export const readonlyHandlers = new ReadonlyReactiveHandler()
+
+export const shallowReadonlyHandlers = new ReadonlyReactiveHandler(true)

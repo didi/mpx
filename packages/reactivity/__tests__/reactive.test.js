@@ -132,10 +132,19 @@ describe('test reactivity/reactive', () => {
     // built-ins should work and return same value
     const p = Promise.resolve()
     expect(reactive(p)).toBe(p)
+    // eslint-disable-next-line prefer-regex-literals
     const r = new RegExp('')
     expect(reactive(r)).toBe(r)
     const d = new Date()
     expect(reactive(d)).toBe(d)
+    const m = new Map()
+    expect(reactive(m)).toBe(m)
+    const set = new Set()
+    expect(reactive(set)).toBe(set)
+    const wm = new WeakMap()
+    expect(reactive(wm)).toBe(wm)
+    const ws = new WeakSet()
+    expect(reactive(ws)).toBe(ws)
   })
 
   test('markRaw', () => {
