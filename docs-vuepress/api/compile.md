@@ -43,7 +43,7 @@ interface Rules {
 }
 ```
 
-## MpxWebpackPlugin 配置
+## MpxWebpackPlugin 
 
 MpxWebpackPlugin支持传入以下配置：
 
@@ -1377,12 +1377,6 @@ module.exports = defineConfig({
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
-## MpxUnocssPlugin 配置
-
-## MpxWebpackPlugin static methods
-
-`MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
-
 ### MpxWebpackPlugin.loader
 
 `MpxWebpackPlugin` 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
@@ -1629,6 +1623,8 @@ module.exports = defineConfig({
   - `limit` : 对内联文件作为数据 URL 的字节数限制
   - `publicPath` : 自定义 public 目录
   - `fallback` : 文件字节数大于限制时，为文件指定加载程序
+
+## MpxUnocssPlugin 配置
 
 ## Request query
 
