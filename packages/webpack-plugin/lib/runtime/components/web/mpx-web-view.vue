@@ -15,7 +15,6 @@
       return {
         origin: '',
         messageList: [],
-        Loaded: false,
         isActived: false,
         mpxIframe: null,
         isPostMessage: false
@@ -66,7 +65,6 @@
               this.mpxIframe = this.$refs.mpxIframe
               if (this.mpxIframe) {
                 this.mpxIframe.addEventListener('load', (event) => {
-                  this.Loaded = true
                   this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
                 })
               }
@@ -77,11 +75,6 @@
       }
     },
     mounted () {
-      setTimeout(() => {
-        if (!this.Loaded) {
-          this.$emit(eventError, getCustomEvent(eventError, this.loadData, this))
-        }
-      }, 1000)
       window.addEventListener('message', (event) => {
         const hostValidate = this.hostValidate(event.origin)
         const hasPostMessage = this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage
