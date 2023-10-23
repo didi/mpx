@@ -2,10 +2,12 @@
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import Slide from '@better-scroll/slide'
+  import ObserveDOM from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
   import { processSize } from '../../utils'
 
   BScroll.use(Slide)
+  BScroll.use(ObserveDOM)
 
   export default {
     name: 'mpx-swiper',
@@ -134,12 +136,18 @@
       this.initBs()
     },
     beforeDestroy () {
-      this.bs && this.bs.destroy()
-      delete this.bs
-      this.resizeObserver.disconnect()
-      this.resizeObserver = null
+      this.destroyBs()
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
     },
     methods: {
+      destroyBs () {
+        if (!this.bs) return
+        this.bs.destroy()
+        delete this.bs
+      },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
         const computedStyle = getComputedStyle(wrapper)
@@ -171,6 +179,7 @@
         innerWrapper.style.width = `${width}px`
       },
       initBs () {
+        this.destroyBs()
         this.initLayerComputed()
         const originBsOptions = {
           scrollX: !this.vertical,
@@ -227,18 +236,17 @@
         })
       },
       createResizeObserver () {
-        this.resizeObserver = new ResizeObserver(entries => {
-          for (let entry of entries) {
+        if (typeof ResizeObserver !== 'undefined'){
+          this.resizeObserver = new ResizeObserver(entries => {
             if (!this.init) {
               this.init = true
               return
             }
-            this.bs.destroy()
             this.initBs()
-          }
-        })
-        const elementToObserve = document.querySelector('.mpx-swiper');
-        this.resizeObserver.observe(elementToObserve);
+          })
+          const elementToObserve = document.querySelector('.mpx-swiper');
+          this.resizeObserver.observe(elementToObserve);
+        }
       },
       refresh () {
         this.bs && this.bs.refresh()

@@ -10,10 +10,12 @@
   import {getCustomEvent, extendEvent} from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import Movable from '@better-scroll/movable'
+  import ObserveDOM from '@better-scroll/observe-dom'
   import Zoom from '@better-scroll/zoom'
 
   BScroll.use(Movable)
   BScroll.use(Zoom)
+  BScroll.use(ObserveDOM)
 
   export default {
     data () {
@@ -131,7 +133,6 @@
         this.bs.zoomTo(newVal, 'center', 'center')
       },
       disabled () {
-        this.destroyBs()
         this.init()
       }
     },
@@ -154,27 +155,32 @@
     },
     beforeDestroy () {
       this.destroyBs()
-      this.resizeObserver.disconnect()
-      this.resizeObserver = null
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
     },
     methods: {
       createResizeObserver () {
-        const resizeObserver = new ResizeObserver(entries => {
-          for (let entry of entries) {
+        if (typeof ResizeObserver !== 'undefined') {
+          this.resizeObserver = new ResizeObserver(entries => {
             if (!this.isInited) {
               this.isInited = true
               return
             }
             this.bs.refresh()
-          }
-        })
-        const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
-        resizeObserver.observe(elementToObserve)
+          })
+          const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
+          this.resizeObserver.observe(elementToObserve)
+        }
       },
       destroyBs () {
-        this.bs && this.bs.destroy()
+        if (!this.bs) return
+        this.bs.destroy()
+        delete this.bs
       },
       init () {
+        this.destroyBs()
         if (!this.$refs.scrollContent.parentNode || (this.$refs.scrollContent.parentNode && this.$refs.scrollContent.parentNode.className !== 'mpx-movable-scroll-wrapper')) {
           return
         }
