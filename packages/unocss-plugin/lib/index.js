@@ -6,6 +6,9 @@ const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const UnoCSSWebpackPlugin = require('@unocss/webpack').default
+const transformerDirectives = require('@unocss/transformer-directives').default
+const transformerVariantGroup = require('@unocss/transformer-variant-group')
 const {
   parseClasses,
   parseStrings,
@@ -52,6 +55,7 @@ function normalizeOptions (options) {
     styleIsolation = 'isolated',
     minCount = 2,
     scan = {},
+    escapeMap = {},
     // 公共的配置
     root = process.cwd(),
     config,
@@ -60,26 +64,55 @@ function normalizeOptions (options) {
     transformGroups = true,
     webOptions = {}
   } = options
-  // web配置，剔除小程序的配置，防影响
+  // web配置
+  // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
     include: [
       'src/**/*',
       ...(scan.include || [])
     ],
     exclude: scan.exclude || [],
+    transformers: [
+      ...transformGroups ? [transformerVariantGroup()] : [],
+      ...transformCSS ? [transformerDirectives()] : []
+    ],
     ...webOptions
   }
+
+  escapeMap = {
+    '(': '_pl_',
+    ')': '_pr_',
+    '[': '_bl_',
+    ']': '_br_',
+    '{': '_cl_',
+    '}': '_cr_',
+    '#': '_h_',
+    '!': '_i_',
+    '/': '_s_',
+    '.': '_d_',
+    ':': '_c_',
+    '2c ': '_2c_',
+    '%': '_p_',
+    '\'': '_q_',
+    '"': '_dq_',
+    '+': '_a_',
+    $: '_si_',
+    unknown: '_u_',
+    ...escapeMap
+  }
+
   return {
     unoFile,
-    root,
     styleIsolation,
     minCount,
     scan,
+    escapeMap,
+    root,
+    config,
+    configFiles,
     transformCSS,
     transformGroups,
-    webOptions,
-    configFiles,
-    config
+    webOptions
   }
 }
 
@@ -123,7 +156,7 @@ class MpxUnocssPlugin {
   async generateStyle (uno, classes = [], options = {}) {
     const tokens = new Set(classes)
     const result = await uno.generate(tokens, options)
-    return mpEscape(result.css)
+    return mpEscape(result.css, this.options.escapeMap)
   }
 
   getSafeListClasses (safelist) {
@@ -175,24 +208,10 @@ class MpxUnocssPlugin {
     }
     const mode = this.mode = mpxPluginInstance.options.mode
     if (mode === 'web') {
-      const UnoCSSWebpackPlugin = require('@unocss/webpack').default
-      const transformerDirectives = require('@unocss/transformer-directives').default
-      const transformerVariantGroup = require('@unocss/transformer-variant-group')
-      const { webOptions, scan, transformGroups, transformCSS } = this.options
-
+      const { webOptions } = this.options
       if (!getPlugin(compiler, UnoCSSWebpackPlugin)) {
-        compiler.options.plugins.push(new UnoCSSWebpackPlugin({
-          include: [
-            'src/**/*',
-            ...(scan.include || [])
-          ],
-          exclude: scan.exclude || [],
-          transformers: [
-            ...transformGroups ? [transformerVariantGroup()] : [],
-            ...transformCSS ? [transformerDirectives()] : []
-          ],
-          ...webOptions
-        }))
+        // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
+        compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
       }
       // 给app注入unocss模块
       compiler.options.module.rules.push({
@@ -219,7 +238,11 @@ class MpxUnocssPlugin {
         const uno = await this.createContext(compilation, mode)
         const config = uno.config
 
-        const generateOptions = { preflights: false, safelist: false, minify: this.minify }
+        const generateOptions = {
+          preflights: false,
+          safelist: false,
+          minify: this.minify
+        }
         // 包相关
         const packages = Object.keys(dynamicEntryInfo)
 
@@ -293,7 +316,7 @@ class MpxUnocssPlugin {
             } else if (!mainClassesMap[className]) {
               currentClassesMap[className] = true
             }
-            return mpEscape(cssEscape(className))
+            return mpEscape(cssEscape(className), this.options.escapeMap)
           }
           parseClasses(content).forEach(({ result, start, end }) => {
             let { replaced, val } = parseMustache(result, (exp) => {
