@@ -53,21 +53,30 @@
       }
     },
     watch: {
-      currentUrl (value) {
-        if (!value) {
-          this.$emit(eventError, getCustomEvent(eventError, {
-            ...this.loadData,
-            errMsg: 'web-view load failed due to not in domain list'
-          }, this))
-        }
+      currentUrl: {
+        handler (value) {
+          this.mpxIframe = null
+          if (!value) {
+            this.$emit(eventError, getCustomEvent(eventError, {
+              ...this.loadData,
+              errMsg: 'web-view load failed due to not in domain list'
+            }, this))
+          } else {
+            this.$nextTick(() => {
+              this.mpxIframe = this.$refs.mpxIframe
+              if (this.mpxIframe) {
+                this.mpxIframe.addEventListener('load', (event) => {
+                  this.Loaded = true
+                  this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
+                })
+              }
+            })
+          }
+        },
+        immediate: true
       }
     },
     mounted () {
-      this.mpxIframe = this.$refs.mpxIframe
-      this.mpxIframe.addEventListener('load', (event) => {
-        this.Loaded = true
-        this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
-      })
       setTimeout(() => {
         if (!this.Loaded) {
           this.$emit(eventError, getCustomEvent(eventError, this.loadData, this))

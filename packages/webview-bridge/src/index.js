@@ -53,12 +53,13 @@ const initWebviewBridge = () => {
   getWebviewApi()
 }
 
+let webview_sdkready = false
 function runWebviewApiMethod (callback) {
-  if (window.__webview_sdkready__) {
+  if (webview_sdkready) {
     callback()
   } else {
     sdkReady.then(() => {
-      window.__webview_sdkready__ = true
+      webview_sdkready = true
       callback()
     })
   }
