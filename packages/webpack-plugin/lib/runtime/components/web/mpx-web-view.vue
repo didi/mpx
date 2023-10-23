@@ -10,16 +10,10 @@
   const eventError = 'error'
   const eventMessage = 'message'
   const mpx = global.__mpx
+  const messageList = []
+  let isActived = false
+  let isPostMessage = false
   export default {
-    data: function () {
-      return {
-        origin: '',
-        messageList: [],
-        isActived: false,
-        mpxIframe: null,
-        isPostMessage: false
-      }
-    },
     props: {
       src: {
         type: String
@@ -80,36 +74,36 @@
         const hasPostMessage = this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage
         const data = event.data
         const value = data.payload
-        if (!this.isActived || !hostValidate) {
+        if (!isActived || !hostValidate) {
           return
         }
         let asyncCallback = null
         switch (data.type) {
           case 'postMessage':
-            this.isPostMessage = true
-            this.messageList.push(value.data)
+            isPostMessage = true
+            messageList.push(value.data)
             asyncCallback = Promise.resolve({
               errMsg: 'invokeWebappApi:ok'
             })
             break
           case 'navigateTo':
-            this.isActived = false
+            isActived = false
             asyncCallback = navigateTo(value)
             break
           case 'navigateBack':
-            this.isActived = false
+            isActived = false
             asyncCallback = value ? navigateBack(value) : navigateBack()
             break
           case 'redirectTo':
-            this.isActived = false
+            isActived = false
             asyncCallback = redirectTo(value)
             break
           case 'switchTab':
-            this.isActived = false
+            isActived = false
             asyncCallback = switchTab(value)
             break
           case 'reLaunch':
-            this.isActived = false
+            isActived = false
             asyncCallback = reLaunch(value)
             break
           case 'getLocation':
@@ -139,26 +133,26 @@
       })
     },
     activated () {
-      this.isActived = true
-      this.isPostMessage = false
+      isActived = true
+      isPostMessage = false
     },
     deactivated () {
-      if (!this.isPostMessage) {
+      if (!isPostMessage) {
         return
       }
       let data = {
         type: 'message',
-        data: this.messageList
+        data: messageList
       }
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
     destroyed () {
-      if (!this.isPostMessage) {
+      if (!isPostMessage) {
         return
       }
       let data = {
         type: 'message',
-        data: this.messageList
+        data: messageList
       }
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },

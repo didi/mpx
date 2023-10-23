@@ -250,6 +250,11 @@ interface AnyConstructor {
   prototype: any
 }
 
+interface WebviewConfig {
+  hostWhitelists?: Array<string>
+  apiImplementations?: object
+}
+
 interface MpxConfig {
   useStrictDiff: boolean
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
@@ -260,7 +265,7 @@ interface MpxConfig {
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,
-  webviewConfig: object
+  webviewConfig?: WebviewConfig
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
