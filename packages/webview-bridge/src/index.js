@@ -92,7 +92,7 @@ function filterData (data) {
   return newData
 }
 
-function postMessage (type, data) {
+function postMessage (type, data = {}) {
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId
     callbacks[currentCallbackId] = (err, res) => {

@@ -10,9 +10,6 @@
   const eventError = 'error'
   const eventMessage = 'message'
   const mpx = global.__mpx
-  const messageList = []
-  let isActived = false
-  let isPostMessage = false
   export default {
     props: {
       src: {
@@ -68,42 +65,45 @@
         immediate: true
       }
     },
+    beforeCreate () {
+      this.messageList = []
+    },
     mounted () {
       window.addEventListener('message', (event) => {
         const hostValidate = this.hostValidate(event.origin)
         const hasPostMessage = this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage
         const data = event.data
         const value = data.payload
-        if (!isActived || !hostValidate) {
+        if (!this.isActived || !hostValidate) {
           return
         }
         let asyncCallback = null
         switch (data.type) {
           case 'postMessage':
-            isPostMessage = true
-            messageList.push(value.data)
+            this.isPostMessage = true
+            this.messageList.push(value)
             asyncCallback = Promise.resolve({
               errMsg: 'invokeWebappApi:ok'
             })
             break
           case 'navigateTo':
-            isActived = false
+            this.isActived = false
             asyncCallback = navigateTo(value)
             break
           case 'navigateBack':
-            isActived = false
+            this.isActived = false
             asyncCallback = value ? navigateBack(value) : navigateBack()
             break
           case 'redirectTo':
-            isActived = false
+            this.isActived = false
             asyncCallback = redirectTo(value)
             break
           case 'switchTab':
-            isActived = false
+            this.isActived = false
             asyncCallback = switchTab(value)
             break
           case 'reLaunch':
-            isActived = false
+            this.isActived = false
             asyncCallback = reLaunch(value)
             break
           case 'getLocation':
@@ -133,26 +133,26 @@
       })
     },
     activated () {
-      isActived = true
-      isPostMessage = false
+      this.isActived = true
+      this.isPostMessage = false
     },
     deactivated () {
-      if (!isPostMessage) {
+      if (!this.isPostMessage) {
         return
       }
       let data = {
         type: 'message',
-        data: messageList
+        data: this.messageList
       }
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
     destroyed () {
-      if (!isPostMessage) {
+      if (!this.isPostMessage) {
         return
       }
       let data = {
         type: 'message',
-        data: messageList
+        data: this.messageList
       }
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
