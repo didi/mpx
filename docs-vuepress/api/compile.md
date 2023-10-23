@@ -29,109 +29,6 @@ module.exports = defineConfig({
 ```
 :::
 
-## webpack配置  
-
-下图是采用 Mpx 开发小程序时，一个简短的 webpack 配置。配置说明可参考图中注释以及子项说明。
-```js
-module.exports = {
-  entry: {
-    app: resolveSrc('app.mpx')
-  },
-  output: {
-    // 和 webpack 配置一致,编译后文件输出的路径
-    path: resolveDist(),
-    publicPath: '/',
-    filename: '[name].js'
-  },
-  node: {
-    global: true
-  },
-  module: {
-    rules: [
-      {
-        test: /\.mpx$/,
-        // 以 .mpx 结尾的文件需要使用 Mpx 提供的 loader 进行解析，处理 .mpx 文件包含的template，script, style, json等各个部分
-        use: MpxWebpackPlugin.loader({
-          // 自定义 loaders
-          loaders: {
-            scss: [
-              {loader: 'css-loader'},
-              {loader: 'sass-loader', options: {sassOptions: {outputStyle: 'nested'}}}
-            ]
-          }
-        })
-      },
-      {
-        test: /\.js$/,
-        // js 文件走正常的 babel 解析
-        loader: 'babel-loader',
-        // include 和 exclude 定义哪些 .js 文件走 babel 编译，哪些不走 babel 编译，配置include、exclude 可以提高查找效率
-        include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')],
-        exclude: [resolve('node_modules/**/src/third_party/')]
-      },
-      {
-        // 适用于<script type="application/json" src="../common.json">，Mpx内部会添加上__component，设置 type 以防止走 webpack 内建的 json 解析
-        // webpack json解析，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
-        test: /\.json$/,
-        resourceQuery: /__component/,
-        type: 'javascript/auto'
-      },
-      {
-        // 各小程序平台自有脚本的差异抹平
-        test: /\.(wxs|qs|sjs|filter\.js)$/,
-        loader: MpxWebpackPlugin.wxsPreLoader(),
-        enforce: 'pre'
-      },
-      {
-        test: /\.(png|jpe?g|gif|svg)$/,
-        // Mpx 提供图像资源处理，支持 CDN 和 Base64 两种
-        loader: MpxWebpackPlugin.urlLoader({
-          name: 'img/[name][hash].[ext]'
-        })
-      }
-    ]
-  },
-  mode: 'production',
-  resolve: {
-    extensions: ['.mpx', '.js']
-  },
-  plugins: [
-    new MpxWebpackPlugin({
-      mode: 'wx', // 可选值 wx/ali/swan/qq/tt/web
-      srcMode: 'ali' // 暂时只支持微信为源mode做跨平台，为其他时mode必须和srcMode一致
-    })
-  ]
-}
-```
-::: tip @mpxjs/cli@3.x 版本
-相关 webpack 配置有2种设置方式，一种是通过 `configureWebpack` 配置化的方式，还有一种是通过 `chainWebpack` 的方式，选择其一即可，详见[文档](https://github.com/mpx-ecology/mpx-cli#mpxjscli)
-:::
-
-- 下面是对 webpack 自带的配置，在 Mpx 中特殊配置的具体说明。
-### output.publicPath
-
-由于 Mpx 内部框架实现的原因(如分包路径)，publicPath 必须设置为'/'，默认为'/'。
-如是图像或文件需要设置 publicPath，可配置在 loader options 中。
-
-### output.filename
-
-小程序限定[描述页面的文件具有相同的路径和文件名](https://developers.weixin.qq.com/miniprogram/dev/framework/structure.html)，仅以后缀名进行区分。
-
-因此 output.filename 中必须写为 [name].js，基于 chunk id 或者 hash name 的 filename 都会导致编译后的文件无法被小程序识别。
-
-### node.global
-在 Node 环境中 global 标识全局对象，Mpx 中需要依赖 global 进行运行时注入。
-
-### rule.resourceQuery
-Mpx 内部会对通过 script src 引入的 json 文件，在解析的时候加上 `__component` 标识，同时设置 `type` 为 `javascript/auto` 以防止走 webpack 内建的 json 解析。
-
-因为 webpack json 解析时，抽取内容的占位内容必须为合法 json，否则会在 parse 阶段报错
-
-### resolve.extensions
-当通过 require, import 引 入不带后缀的文件时，webpack 将自动带上后缀后去尝试访问文件是否存在。
-
-
-
 ## 类型定义
 
 为了便于对编译配置的数据类型进行准确地描述，我们在这里对一些常用的配置类型进行定义
@@ -146,7 +43,7 @@ interface Rules {
 }
 ```
 
-## MpxWebpackPlugin options
+## MpxWebpackPlugin 配置
 
 MpxWebpackPlugin支持传入以下配置：
 
@@ -1479,6 +1376,8 @@ module.exports = defineConfig({
 * 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
+
+## MpxUnocssPlugin 配置
 
 ## MpxWebpackPlugin static methods
 
