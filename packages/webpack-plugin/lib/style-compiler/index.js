@@ -89,7 +89,7 @@ module.exports = function (css, map) {
       .process(css, options)
       .then(result => {
         // ali环境添加全局样式抹平root差异
-        if (mode === 'ali' && isApp) {
+        if ((mode === 'ali' || mode === 'web') && isApp) {
           result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
 
