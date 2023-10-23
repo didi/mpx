@@ -15,3 +15,5 @@ export {
 } from './operations'
 
 export { effect } from './effect'
+
+export { ref, isRef, unref } from './ref'
