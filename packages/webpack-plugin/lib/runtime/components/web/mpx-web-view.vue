@@ -45,7 +45,6 @@
     watch: {
       currentUrl: {
         handler (value) {
-          this.mpxIframe = null
           if (!value) {
             this.$emit(eventError, getCustomEvent(eventError, {
               ...this.loadData,
@@ -53,8 +52,8 @@
             }, this))
           } else {
             this.$nextTick(() => {
-              this.mpxIframe = this.$refs.mpxIframe
-              if (this.mpxIframe) {
+              if (this.$refs.mpxIframe && this.mpxIframe != this.$refs.mpxIframe) {
+                this.mpxIframe = this.$refs.mpxIframe
                 this.mpxIframe.addEventListener('load', (event) => {
                   this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
                 })
@@ -69,41 +68,58 @@
       this.messageList = []
     },
     mounted () {
-      window.addEventListener('message', (event) => {
+      window.addEventListener('message', this.messageCallback)
+    },
+    deactivated () {
+      if (!this.messageList.length) {
+        return
+      }
+      let data = {
+        type: 'message',
+        data: this.messageList
+      }
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
+    },
+    destroyed () {
+      window.removeEventListener('message', this.messageCallback)
+      if (!this.messageList.length) {
+        return
+      }
+      let data = {
+        type: 'message',
+        data: this.messageList
+      }
+      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
+    },
+    methods: {
+      messageCallback (event) {
         const hostValidate = this.hostValidate(event.origin)
-        const hasPostMessage = this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage
         const data = event.data
         const value = data.payload
-        if (!this.isActived || !hostValidate) {
+        if (!hostValidate) {
           return
         }
         let asyncCallback = null
         switch (data.type) {
           case 'postMessage':
-            this.isPostMessage = true
             this.messageList.push(value)
             asyncCallback = Promise.resolve({
               errMsg: 'invokeWebappApi:ok'
             })
             break
           case 'navigateTo':
-            this.isActived = false
             asyncCallback = navigateTo(value)
             break
           case 'navigateBack':
-            this.isActived = false
             asyncCallback = value ? navigateBack(value) : navigateBack()
             break
           case 'redirectTo':
-            this.isActived = false
             asyncCallback = redirectTo(value)
             break
           case 'switchTab':
-            this.isActived = false
             asyncCallback = switchTab(value)
             break
           case 'reLaunch':
-            this.isActived = false
             asyncCallback = reLaunch(value)
             break
           case 'getLocation':
@@ -118,45 +134,19 @@
             break
         }
         asyncCallback && asyncCallback.then((res) => {
-          hasPostMessage && this.mpxIframe.contentWindow.postMessage({
+          this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
             type: data.type,
             callbackId: data.callbackId,
             result: res
           }, event.origin)
         }).catch((error) => {
-          hasPostMessage && this.mpxIframe.contentWindow.postMessage({
+          this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
             type: data.type,
             callbackId: data.callbackId,
             error
           }, event.origin)
         })
-      })
-    },
-    activated () {
-      this.isActived = true
-      this.isPostMessage = false
-    },
-    deactivated () {
-      if (!this.isPostMessage) {
-        return
-      }
-      let data = {
-        type: 'message',
-        data: this.messageList
-      }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
-    },
-    destroyed () {
-      if (!this.isPostMessage) {
-        return
-      }
-      let data = {
-        type: 'message',
-        data: this.messageList
-      }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
-    },
-    methods: {
+      },
       hostValidate (host) {
         const hostWhitelists = mpx.config.webviewConfig && mpx.config.webviewConfig.hostWhitelists || []
         if (hostWhitelists.length) {
