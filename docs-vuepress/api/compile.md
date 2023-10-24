@@ -1626,6 +1626,133 @@ module.exports = defineConfig({
 
 ## MpxUnocssPlugin 配置
 
+Mpx中使用原子类主要是使用基于unocss搭建的两个库`@mpxjs/unocss-base`和`@mpxjs/unocss-plugin`,它俩的配置如下：
+
+### @mpxjs/unocss-base
+
+- **详细**:
+  此库基于@unocss/preset-uno搭建，提供MpxUnocss的默认预设，其实大部分也是@unocss/preset-wind的预设。
+- **安装**:
+  ::: code-group
+    ```bash [pnpm]
+      pnpm add -D @mpxjs/unocss-base
+    ```
+    ```bash [yarn]
+      yarn add -D @mpxjs/unocss-base
+    ```
+    ```bash [npm]
+      npm install -D @mpxjs/unocss-base
+    ```
+  :::
+- **示例**:
+  ```js
+    // uno.config.js
+    const { defineConfig } = require('unocss')
+    const presetMpx = require('@mpxjs/unocss-base')
+
+    module.exports = defineConfig({
+      presets: [
+        presetMpx({
+          baseFontSize: 37.5, // 默认37.5，此配置功能是同比换算1rem = 37.5rpx适配小程序
+          // ... 其他配置参照https://unocss.dev/presets/mini
+        })
+      ],
+      // unocss的config，具体配置参考https://unocss.dev/config/
+    })
+  ```
+### @mpxjs/unocss-plugin
+
+- **详细**:
+  此仓库是MpxUnocss的核心仓库，主要通过这个webpack插件来处理unocss的逻辑，以及是否压缩，优化打包处理。
+- **安装**:
+  ::: code-group
+    ```bash [pnpm]
+      pnpm add -D @mpxjs/unocss-plugin
+    ```
+    ```bash [yarn]
+      yarn add -D @mpxjs/unocss-plugin
+    ```
+    ```bash [npm]
+      npm install -D @mpxjs/unocss-plugin
+    ```
+  :::
+- **示例**:
+  旧cli方式
+  ```js
+    // build/getPlugins
+    const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+    // ...
+    plugins.push(new MpxUnocssPlugin())
+  ```
+  新cli方式
+  ```js
+    // vue.config.js
+    const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+    const { defineConfig } = require('@vue/cli-service')
+
+    module.exports = defineConfig({
+      configureWebpack: {
+        plugins: [
+          new MpxUnocssPlugin({
+            // 小程序特有的配置
+            unoFile: 'styles/uno', // 生成主包或分包通用样式存储的相对路径，默认为'styles/uno'，例：'dist/wx/styles/uno.wxss'
+            styleIsolation: 'isolated', // 组件样式隔离，默认为'isolated'，表示启用样式隔离，其他参照https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html#%E7%BB%84%E4%BB%B6%E6%A0%B7%E5%BC%8F%E9%9A%94%E7%A6%BB
+            minCount: 2, // 使用超过minCount次数的class将被打包到公共样式下，默认为'2'
+            scan: {}, // 配置需要扫描的目录{include: [], exclude: []}，默认为'{}'
+            // 公共的配置
+            root: process.cwd(), // 文件根目录，默认process.cwd()
+            transformCSS: true, // 是否转化style中的unocss，默认true
+            transformGroups:  true, // 是否转化VariantGroups，默认true
+            config: {}, // unocss的config，同uno.config.js配置
+            configFiles: : {}, // 针对config文件的操作,具体类型如下
+            <!--
+              interface LoadConfigSource<T = any> {
+                files: Arrayable<string>;
+                /**
+                 * @default ['mts', 'cts', 'ts', 'mjs', 'cjs', 'js', 'json', '']
+                */
+                extensions?: string[];
+                /**
+                 * Loader for loading config,
+                *
+                * @default 'auto'
+                */
+                parser?: BuiltinParsers | CustomParser<T> | 'auto';
+                /**
+                 * Rewrite the config object,
+                * return nullish value to bypassing loading the file
+                */
+                rewrite?: <F = any>(obj: F, filepath: string) => Promise<T | undefined> | T | undefined;
+                /**
+                * Transform the source code before loading,
+                * return nullish value to skip transformation
+                */
+                transform?: (code: string, filepath: string) => Promise<string | undefined> | string | undefined;
+                /**
+                * Skip this source if error occurred on loading
+                *
+                * @default false
+                */
+                skipOnError?: boolean;
+              } 
+            -->
+          }
+        )]
+      },
+      // ...
+    })
+
+  ```
+### commentConfig
+  我们还支持了commentConfig进行组件局部配置，目前支持safelist和styleIsolation，safelist可以用空格分隔写多个
+
+  ```html
+    <template>
+      <!-- mpx_config_styleIsolation: 'isolated' -->
+      <!-- mpx_config_safelist: 'text-red-500 bg-black' -->
+      <view>mpx-unocss</view>
+    </template>
+  ```
 ## Request query
 
 Mpx中允许用户在request中传递特定query执行特定逻辑，目前已支持的query如下：
