@@ -129,7 +129,6 @@
     },
     data () {
       return {
-        player: null
       }
     },
     computed: {
@@ -145,7 +144,7 @@
   },
     watch: {
       muted: function (val) {
-        this.player?.muted(val)
+        this._player?.muted(val)
       },
       controls: function (show) {
         this.$emit('controlstoggle', inheritEvent('controlstoggle', {}, { show }))
@@ -153,7 +152,7 @@
     },
     mounted () {
       const videoNode = this.$refs['_mpx_video_ref']
-      this.player = videojs(videoNode, {
+      this._player = videojs(videoNode, {
         controls: true,
         sources:[
           {
@@ -174,83 +173,82 @@
     },
     methods: {
       initPlayer () {
-        this.player.muted(this.muted)
+        this._player.muted(this.muted)
         if (this.initialTime) {
-          this.player.currentTime(this.initialTime)
+          this._player.currentTime(this.initialTime)
         }
       },
       initStyle () {
-        if (!this.controls) this.player.el_.classList.add('mpx-no-show_controls')
+        if (!this.controls) this._player.el_.classList.add('mpx-no-show_controls')
 
-        if (!this.showBottomProgress) this.player.el_.classList.add('mpx-no-show_progress')
+        if (!this.showBottomProgress) this._player.el_.classList.add('mpx-no-show_progress')
 
         /**
           showProgress若不设置，宽度大于240时才会显示
         */
-        if (!this.showProgress || (this.player.el_.offsetWidth < 240 && this.showProgress)) this.player.el_.classList.add('mpx-no-show_progress')
+        if (!this.showProgress || (this._player.el_.offsetWidth < 240 && this.showProgress)) this._player.el_.classList.add('mpx-no-show_progress')
 
-        if (!this.showFullscreenBtn) this.player.el_.classList.add('mpx-no-show_fullscreen_btn')
+        if (!this.showFullscreenBtn) this._player.el_.classList.add('mpx-no-show_fullscreen_btn')
 
-        if (!this.showPlayBtn) this.player.el_.classList.add('mpx-no-show_play_btn')
+        if (!this.showPlayBtn) this._player.el_.classList.add('mpx-no-show_play_btn')
 
-        if (!this.showCenterPlayBtn) this.player.el_.classList.add('mpx-no-show_center_play_btn')
+        if (!this.showCenterPlayBtn) this._player.el_.classList.add('mpx-no-show_center_play_btn')
 
-        if (!this.showMuteBtn) this.player.el_.classList.add('mpx-no-show_mute_btn')
+        if (!this.showMuteBtn) this._player.el_.classList.add('mpx-no-show_mute_btn')
       },
       initEvent () {
-
-        this.player.on('play', (e) => {
+        this._player.on('play', (e) => {
           this.$emit('play', inheritEvent('play', e, {}))
         })
 
-        this.player.on('pause', (e) => {
+        this._player.on('pause', (e) => {
           this.$emit('pause', inheritEvent('pause', e, {}))
         })
 
-        this.player.on('ended', (e) => {
+        this._player.on('ended', (e) => {
           this.$emit('ended', inheritEvent('ended', e, {}))
         })
 
-        this.player.on('timeupdate', (e) => {
+        this._player.on('timeupdate', (e) => {
           this.$emit('timeupdate', inheritEvent('timeupdate', e, {}))
         })
 
-        this.player.on('error', (e) => {
+        this._player.on('error', (e) => {
           this.$emit('error', inheritEvent('error', e, {}))
         })
 
-        this.player.on('waiting', (e) => {
+        this._player.on('waiting', (e) => {
           this.$emit('waiting', inheritEvent('waiting', e, {}))
         })
-        this.player.on('loadedmetadata', (e) => {
+        this._player.on('loadedmetadata', (e) => {
           this.$emit('loadedmetadata', inheritEvent('loadedmetadata', e, {}))
         })
 
-        this.player.on('progress', (e) => {
+        this._player.on('progress', (e) => {
           const eNode = e.target
           const buffered = (eNode?.buffered?.end(0)) / (eNode?.duration)
           this.$emit('progress', inheritEvent('progress', e, { buffered: buffered * 100 }))
         })
 
-        this.player.on('seeked', (e) => {
+        this._player.on('seeked', (e) => {
           const eNode = e.target
           this.$emit('seekcomplete', inheritEvent('seekcomplete', e, { position: eNode.currentTime  }))
         })
-        this.player.on('fullscreenchange', (e) => {
-          if (!this.player.paused()) {
+        this._player.on('fullscreenchange', (e) => {
+          if (!this._player.paused()) {
             // hack: 解决退出全屏自动暂停
             setTimeout(() => {
-              this.player.play()
+              this._player.play()
             }, 500)
           }
-          this.$emit('fullscreenchange', inheritEvent('fullscreenchange', e, { fullScreen: this.player.isFullscreen() }))
+          this.$emit('fullscreenchange', inheritEvent('fullscreenchange', e, { fullScreen: this._player.isFullscreen() }))
         })
 
-        this.player.on('enterpictureinpicture', (e) => {
+        this._player.on('enterpictureinpicture', (e) => {
           this.$emit('enterpictureinpicture', inheritEvent('enterpictureinpicture', e, {}))
         })
 
-        this.player.on('leavepictureinpicture', (e) => {
+        this._player.on('leavepictureinpicture', (e) => {
           this.$emit('leavepictureinpicture', inheritEvent('leavepictureinpicture', e, {}))
         })
 
