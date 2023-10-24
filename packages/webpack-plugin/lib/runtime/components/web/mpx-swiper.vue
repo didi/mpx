@@ -201,6 +201,9 @@
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.innerWrapper, bsOptions)
+        this.bs.scroller.hooks.on('beforeRefresh', () => {
+          this.initLayerComputed()
+        })
         this.bs.on('slideWillChange', (page) => {
           this.currentIndex = this.vertical ? page.pageY : page.pageX
           this.$emit('change', getCustomEvent('change', {
