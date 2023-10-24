@@ -91,7 +91,7 @@ function normalizeOptions (options) {
     '/': '_s_',
     '.': '_d_',
     ':': '_c_',
-    '2c ': '_2c_',
+    ',': '_2c_',
     '%': '_p_',
     '\'': '_q_',
     '"': '_dq_',
