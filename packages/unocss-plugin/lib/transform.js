@@ -1,7 +1,7 @@
 const MagicString = require('magic-string')
 const transformerDirectives = require('@unocss/transformer-directives').default
 const { getReplaceSource } = require('./source')
-const escapedReg = /\\(2c\s|.)/g
+const escapedReg = /\\(.)/g
 
 function mpEscape (str, escapeMap = {}) {
   return str.replace(escapedReg, (_, p1) => {
