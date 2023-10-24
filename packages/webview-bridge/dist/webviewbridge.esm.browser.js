@@ -43,6 +43,7 @@ function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
   return Promise.race([request(), timeout()])
 }
 
+let sdkReady;
 const SDK_URL_MAP = {
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -78,16 +79,7 @@ if (systemUA.indexOf('AlipayClient') > -1) {
 } else {
   env = 'web';
   window.addEventListener('message', (event) => {
-    if (event.data.isMpxWebview) {
-      env = 'web';
-      window.parent.postMessage({
-        type: 'load',
-        detail: {
-          load: true
-        }
-      }, '*');
-    }
-    // 接收webview返回的数据location等
+    // 接收web-view的回调
     const { callbackId, error, result } = event.data;
     if (callbackId !== undefined && callbacks[callbackId]) {
       if (error) {
@@ -100,23 +92,38 @@ if (systemUA.indexOf('AlipayClient') > -1) {
   }, false);
 }
 
+const initWebviewBridge = () => {
+  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  getWebviewApi();
+};
+
+let webviewSdkready = false;
+function runWebviewApiMethod (callback) {
+  if (webviewSdkready) {
+    callback();
+  } else {
+    sdkReady.then(() => {
+      webviewSdkready = true;
+      callback();
+    });
+  }
+}
+
 const webviewBridge = {
   config (config) {
     if (env !== 'wx') {
-      console.log('非微信环境不需要配置config');
+      console.warn('非微信环境不需要配置config');
       return
     }
-    if (window.wx) {
-      if (!config) {
-        console.log('微信环境下需要配置wx.config才能挂载方法');
-        return
+    runWebviewApiMethod(() => {
+      if (window.wx) {
+        window.wx.config(config);
       }
-      window.wx.config(config);
-    }
+    });
   }
 };
 
-function mergeData (data) {
+function filterData (data) {
   if (Object.prototype.toString.call(data) !== '[object Object]') {
     return data
   }
@@ -129,7 +136,7 @@ function mergeData (data) {
   return newData
 }
 
-function postMessage (type, data) {
+function postMessage (type, data = {}) {
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId;
     callbacks[currentCallbackId] = (err, res) => {
@@ -145,28 +152,16 @@ function postMessage (type, data) {
     window.parent.postMessage && window.parent.postMessage({
       type,
       callbackId,
-      detail: {
-        data: mergeData(data)
-      }
+      payload: filterData(data)
     }, '*');
   } else {
     data({
-      miniprogram: false
+      webapp: true
     });
   }
 }
 
-const initWebviewBridge = () => {
-  if (env === null) {
-    console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
-    getWebviewApi();
-    return
-  }
-  const sdkReady = !window[env] && env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url, { crossOrigin: !!SDK_URL_MAP[env].crossOrigin }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
-  getWebviewApi(sdkReady);
-};
-
-const getWebviewApi = (sdkReady) => {
+const getWebviewApi = () => {
   const multiApiMap = {
     wx: {
       keyName: 'miniProgram',
@@ -304,19 +299,25 @@ const getWebviewApi = (sdkReady) => {
   const multiApiLists = multiApi.api || [];
   multiApiLists.forEach((item) => {
     webviewBridge[item] = (...args) => {
-      return sdkReady.then(() => {
+      runWebviewApiMethod(() => {
         window[env][multiApi.keyName][item](...args);
-      })
+      });
     };
   });
   singleApi.forEach((item) => {
     webviewBridge[item] = (...args) => {
       if (env === 'web') {
-        return postMessage(item, ...args)
+        postMessage(item, ...args);
+      } else if (env === 'wx') {
+        runWebviewApiMethod(() => {
+          window[env] && window[env].ready(() => {
+            window[env][item](...args);
+          });
+        });
       } else {
-        return sdkReady.then(() => {
+        runWebviewApiMethod(() => {
           window[env][item](...args);
-        })
+        });
       }
     };
   });
