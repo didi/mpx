@@ -18,6 +18,7 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
+const isUrlRequest = require('./utils/is-url-request')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const getRulesRunner = require('./platform')
@@ -109,8 +110,85 @@ module.exports = function (content) {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        callback()
+        callback(null, content || '{}')
       })
+    },
+    (jsonContent, callback) => {
+      if (!jsonContent) return callback(null, {})
+      let componentPlaceholder = []
+      let componentGenerics = {}
+      let currentUsingComponentsProxyEvents = {}
+
+      let usingComponents = [].concat(Object.keys(mpx.globalComponents))
+      const finalCallback = (err) => {
+        callback(err, {
+          componentPlaceholder,
+          componentGenerics,
+          currentUsingComponentsProxyEvents,
+          usingComponents
+        })
+      }
+
+      const rulesRunnerOptions = {
+        mode,
+        srcMode,
+        type: 'json',
+        waterfall: true,
+        warn: emitWarning,
+        error: emitError
+      }
+      if (!isApp) {
+        rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+      }
+      const rulesRunner = getRulesRunner(rulesRunnerOptions)
+      try {
+        const ret = JSON5.parse(parts.json.content)
+        if (rulesRunner) rulesRunner(ret)
+        if (ret.componentPlaceholder) {
+          componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
+        }
+        if (ret.componentGenerics) {
+          componentGenerics = Object.assign({}, ret.componentGenerics)
+        }
+        if (ret.usingComponents) {
+          usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          // 判断是否有proxyComponentEventsRules配置
+          if (mpx.proxyComponentEventsRules && mpx.proxyComponentEventsRules.length > 0) {
+            async.eachOf(ret.usingComponents, (component, name, callback) => {
+              if (!isUrlRequest(component)) {
+                // const moduleId = mpx.getModuleId(component, isApp)
+                // if (!isApp) {
+                //   currentUsingComponentsModuleId[name] = moduleId
+                // }
+                return callback()
+              }
+              resolve(this.context, component, loaderContext, (err, resource) => {
+                if (err) return callback(err)
+                const { rawResourcePath } = parseRequest(resource)
+
+                let proxyComponentEvents = null
+                for (const item of mpx.proxyComponentEventsRules) {
+                  if (matchCondition(rawResourcePath, item)) {
+                    const eventsRaw = item.events
+                    proxyComponentEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
+                    break
+                  }
+                }
+                if (!isApp && proxyComponentEvents) currentUsingComponentsProxyEvents[name] = proxyComponentEvents
+                callback()
+              })
+            }, (err) => {
+              finalCallback(err)
+            })
+          } else {
+            finalCallback()
+          }
+        } else {
+          finalCallback()
+        }
+      } catch (e) {
+        return finalCallback(e)
+      }
     },
     (callback) => {
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
@@ -118,39 +196,6 @@ module.exports = function (content) {
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
-      let componentPlaceholder = []
-      let componentGenerics = {}
-
-      if (parts.json && parts.json.content) {
-        const rulesRunnerOptions = {
-          mode,
-          srcMode,
-          type: 'json',
-          waterfall: true,
-          warn: emitWarning,
-          error: emitError
-        }
-        if (!isApp) {
-          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        }
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        try {
-          const ret = JSON5.parse(parts.json.content)
-          if (rulesRunner) rulesRunner(ret)
-          if (ret.usingComponents) {
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-          }
-          if (ret.componentPlaceholder) {
-            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-          }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
-        } catch (e) {
-          return callback(e)
-        }
-      }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
