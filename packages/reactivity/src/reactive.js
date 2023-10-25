@@ -131,3 +131,7 @@ export function markRaw (value) {
   def(value, ReactiveFlags.SKIP, true)
   return value
 }
+
+export function toReactive (value) {
+  return isObject(value) ? reactive(value) : value
+}
