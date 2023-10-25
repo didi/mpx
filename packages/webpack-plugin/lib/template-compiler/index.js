@@ -68,7 +68,7 @@ module.exports = function (raw) {
     filePath: resourcePath,
     i18n,
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
-    globalComponents: Object.keys(mpx.usingComponents),
+    globalComponents: Object.keys(mpx.globalComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
     proxyComponentEvents

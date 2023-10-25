@@ -18,7 +18,7 @@ class RecordGlobalComponentsDependency extends NullDependency {
     const { usingComponents, context } = this
     Object.keys(usingComponents).forEach((key) => {
       const request = usingComponents[key]
-      mpx.usingComponents[key] = addQuery(request, {
+      mpx.globalComponents[key] = addQuery(request, {
         context
       })
     })
