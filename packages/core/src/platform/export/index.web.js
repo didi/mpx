@@ -1,6 +1,6 @@
 import {
   effectScope as vueEffectScope,
-  getCurrentScope as vueGetCurrentScope
+  getCurrentScope as vueGetCurrentScope,
   onScopeDispose
 } from 'vue'
 
