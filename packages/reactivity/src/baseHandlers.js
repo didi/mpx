@@ -26,6 +26,7 @@ import {
 } from '../src/effect'
 import { TriggerOpTypes } from './operations'
 import { warn } from './warning'
+import { isRef } from './ref'
 
 const builtInSymbols = new Set(
   /* #__PURE__ */
@@ -136,6 +137,11 @@ class BaseReactiveHandler {
 
     if (shallow) {
       return res
+    }
+
+    if (isRef(res)) {
+      // ref unwrapping - skip unwrap for Array + integer key.
+      return targetIsArray && isIntegerKey(key) ? res : res.value
     }
 
     if (isObject(res)) {
