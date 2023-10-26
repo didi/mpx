@@ -39,7 +39,17 @@ function request (options = { url: '' }) {
     headers: header,
     responseType,
     timeout,
-    cancelToken: source.token
+    cancelToken: source.token,
+    transitional: {
+      // silent JSON parsing mode
+      // `true`  - ignore JSON parsing errors and set response.data to null if parsing failed (old behaviour)
+      // `false` - throw SyntaxError if JSON parsing failed (Note: responseType must be set to 'json')
+      silentJSONParsing: true, // default value for the current Axios version
+      // try to parse the response string as JSON even if `responseType` is not 'json'
+      forcedJSONParsing: false,
+      // throw ETIMEDOUT error instead of generic ECONNABORTED on request timeouts
+      clarifyTimeoutError: false
+    }
   }
 
   if (method === 'GET') {
