@@ -63,3 +63,5 @@ export * from './animation'
 
 // createIntersectionObserver
 export * from './create-intersection-observer'
+
+export * from './lifecycle'
