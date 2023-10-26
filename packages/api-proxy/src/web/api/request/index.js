@@ -59,7 +59,7 @@ function request (options = { url: '' }) {
 
   const promise = axios(rOptions).then(res => {
     let data = res.data
-    if (responseType === 'text' && dataType === 'json') {
+    if (dataType === 'json' && typeof data === 'string') {
       try {
         data = JSON.parse(data)
       } catch (e) {
