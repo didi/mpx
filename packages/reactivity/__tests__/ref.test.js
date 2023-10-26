@@ -1,11 +1,93 @@
-import { ref, isRef, unref } from '../src/ref'
+import { ref, isRef, unref, shallowRef, toRef, toRefs } from '../src/ref'
+import { isShallow, reactive, isReadonly, shallowReactive, readonly } from '../src/reactive'
+import { effect } from '../src/effect'
 
 describe('reactivity/ref', () => {
+  it('should ref reactive', () => {
+    const origin = { a: 90 }
+    const obj = ref(origin)
+    const obj2 = reactive(origin)
+    expect(obj.value).toBe(obj2)
+    expect(obj.value.a).toBe(obj2.a)
+    obj.value = 2
+    expect(obj.value).not.toBe(obj2.a)
+  })
+
   it('should hold a value', () => {
     const a = ref(1)
     expect(a.value).toBe(1)
     a.value = 2
     expect(a.value).toBe(2)
+  })
+
+  it('should be reactive', () => {
+    const a = ref(1)
+    let dummy
+    const fn = jest.fn(() => {
+      dummy = a.value
+    })
+    effect(fn)
+    expect(fn).toHaveBeenCalledTimes(1)
+    expect(dummy).toBe(1)
+    a.value = 2
+    expect(fn).toHaveBeenCalledTimes(2)
+    expect(dummy).toBe(2)
+    // same value should not trigger
+    a.value = 2
+    expect(fn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should make nested properties reactive', () => {
+    const a = ref({
+      count: 1
+    })
+    let dummy
+    effect(() => {
+      dummy = a.value.count
+    })
+    expect(dummy).toBe(1)
+    a.value.count = 2
+    expect(dummy).toBe(2)
+  })
+
+  it('should work without initial value', () => {
+    const a = ref()
+    let dummy
+    effect(() => {
+      dummy = a.value
+    })
+    expect(dummy).toBe(undefined)
+    a.value = 2
+    expect(dummy).toBe(2)
+  })
+
+  it('should work like a normal property when nested in a reactive object', () => {
+    const a = ref(1)
+    const obj = reactive({
+      a,
+      b: {
+        c: a
+      }
+    })
+
+    let dummy1
+    let dummy2
+
+    effect(() => {
+      dummy1 = obj.a
+      dummy2 = obj.b.c
+    })
+
+    const assertDummiesEqualTo = (val) =>
+      [dummy1, dummy2].forEach(dummy => expect(dummy).toBe(val))
+
+    assertDummiesEqualTo(1)
+    a.value++
+    assertDummiesEqualTo(2)
+    obj.a++
+    assertDummiesEqualTo(3)
+    obj.b.c++
+    assertDummiesEqualTo(4)
   })
 
   it('should unwrap nested ref in types', () => {
@@ -21,7 +103,6 @@ describe('reactivity/ref', () => {
     }
 
     const c = ref(a)
-    c.value.b
     expect(typeof (c.value.b + 1)).toBe('number')
   })
 
@@ -67,7 +148,7 @@ describe('reactivity/ref', () => {
   })
 
   it('should keep symbols', () => {
-    const customSymbol = Symbol()
+    const customSymbol = Symbol('')
     const obj = {
       [Symbol.asyncIterator]: ref(1),
       [Symbol.hasInstance]: { a: ref('a') },
@@ -103,7 +184,7 @@ describe('reactivity/ref', () => {
       Symbol.unscopables,
       customSymbol
     ]
-    
+
     keys.forEach(key => {
       expect(objRef.value[key]).toStrictEqual(obj[key])
     })
@@ -112,5 +193,151 @@ describe('reactivity/ref', () => {
   test('unref', () => {
     expect(unref(1)).toBe(1)
     expect(unref(ref(1))).toBe(1)
+  })
+
+  test('shallowRef isShallow', () => {
+    expect(isShallow(shallowRef({ a: 1 }))).toBe(true)
+  })
+
+  test('isRef', () => {
+    expect(isRef(ref(1))).toBe(true)
+
+    expect(isRef(0)).toBe(false)
+    expect(isRef(1)).toBe(false)
+    expect(isRef({ value: 0 })).toBe(false)
+  })
+
+  //   =============
+
+  test('toRef on array', () => {
+    const a = reactive(['a', 'b'])
+    const r = toRef(a, 1)
+    expect(r.value).toBe('b')
+    r.value = 'c'
+    expect(r.value).toBe('c')
+    expect(a[1]).toBe('c')
+  })
+
+  test('toRef default value', () => {
+    const a = { x: undefined }
+    const x = toRef(a, 'x', 1)
+    expect(x.value).toBe(1)
+
+    a.x = 2
+    expect(x.value).toBe(2)
+
+    a.x = undefined
+    expect(x.value).toBe(1)
+  })
+
+  test('toRef getter', () => {
+    const x = toRef(() => 1)
+    expect(x.value).toBe(1)
+    expect(isRef(x)).toBe(true)
+    expect(unref(x)).toBe(1)
+    expect(() => (x.value = 123)).toThrow()
+
+    expect(isReadonly(x)).toBe(true)
+  })
+
+  test('toRefs', () => {
+    const a = reactive({
+      x: 1,
+      y: 2
+    })
+
+    const { x, y } = toRefs(a)
+
+    expect(isRef(x)).toBe(true)
+    expect(isRef(y)).toBe(true)
+    expect(x.value).toBe(1)
+    expect(y.value).toBe(2)
+
+    // source -> proxy
+    a.x = 2
+    a.y = 3
+    expect(x.value).toBe(2)
+    expect(y.value).toBe(3)
+
+    // proxy -> source
+    x.value = 3
+    y.value = 4
+    expect(a.x).toBe(3)
+    expect(a.y).toBe(4)
+
+    // reactivity
+    // let dummyX, dummyY
+    // effect(() => {
+    //   dummyX = x.value
+    //   dummyY = y.value
+    // })
+    // expect(dummyX).toBe(x.value)
+    // expect(dummyY).toBe(y.value)
+
+    // // mutating source should trigger effect using the proxy refs
+    // a.x = 4
+    // a.y = 5
+    // expect(dummyX).toBe(4)
+    // expect(dummyY).toBe(5)
+  })
+
+  test('toRefs should warn on plain object', () => {
+    toRefs({})
+    expect('toRefs() expects a reactive object').toHaveBeenWarned()
+  })
+
+  test('toRefs should warn on plain array', () => {
+    toRefs([])
+    expect('toRefs() expects a reactive object').toHaveBeenWarned()
+  })
+
+  test('toRefs reactive array', () => {
+    const arr = reactive(['a', 'b', 'c'])
+    const refs = toRefs(arr)
+
+    expect(Array.isArray(refs)).toBe(true)
+
+    refs[0].value = '1'
+    expect(arr[0]).toBe('1')
+
+    arr[1] = '2'
+    expect(refs[1].value).toBe('2')
+  })
+
+  test('should not trigger when setting value to same proxy', () => {
+    const obj = reactive({ count: 0 })
+
+    const a = ref(obj)
+    const spy1 = jest.fn(() => a.value)
+
+    effect(spy1)
+
+    a.value = obj
+    expect(spy1).toBeCalledTimes(1)
+
+    const b = shallowRef(obj)
+    const spy2 = jest.fn(() => b.value)
+
+    effect(spy2)
+
+    b.value = obj
+    expect(spy2).toBeCalledTimes(1)
+  })
+
+  test('ref should preserve value shallow/readonly-ness', () => {
+    const original = {}
+    const r = reactive(original)
+    const s = shallowReactive(original)
+    const rr = readonly(original)
+    const a = ref(original)
+
+    expect(a.value).toBe(r)
+
+    a.value = s
+    expect(a.value).toBe(s)
+    expect(a.value).not.toBe(r)
+
+    expect(a.value).toBe(rr)
+    expect(a.value).not.toBe(r)
   })
 })

@@ -166,6 +166,10 @@ class MutableReactiveHandler extends BaseReactiveHandler {
         value = toRaw(value)
         oldValue = toRaw(target[key])
       }
+      if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+        oldValue.value = value
+        return true
+      }
     }
 
     const hadKey =

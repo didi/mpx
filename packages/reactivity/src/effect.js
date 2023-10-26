@@ -3,7 +3,7 @@ import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers }
 import { TriggerOpTypes } from './operations'
 
 const targetMap = new WeakMap()
-let activeEffect
+export let activeEffect
 
 export let shouldTrack = true
 export const trackOpBit = 1
@@ -187,7 +187,7 @@ export function trigger (target, type, key, newValue) {
   }
 }
 
-function triggerEffects (dep, debuggerEventExtraInfo) {
+export function triggerEffects (dep, debuggerEventExtraInfo) {
   const effects = isArray(dep) ? dep : [...dep]
   for (const effect of effects) {
     triggerEffect(effect, debuggerEventExtraInfo)

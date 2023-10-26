@@ -1,15 +1,18 @@
-import { isFunction, isObject, isPlainObject, isArray, hasChanged } from '@mpxjs/utils'
+import { isFunction, isObject, isArray, hasChanged } from '@mpxjs/utils'
+import { shouldTrack, activeEffect, trackEffects, triggerEffects } from './effect'
 import { isReactive, toRaw, toReactive, isShallow, isReadonly } from './reactive'
+import { createDep } from './dep'
 
 class RefImpl {
   __mpx_isRef = true;
-  constructor (value, shallow) {
+  constructor (value, shallow = false) {
     this._rawValue = shallow ? value : toRaw(value)
     this.__mpx_isShallow = shallow
     this._value = shallow ? value : toReactive(value)
   }
 
   get value () {
+    trackRefValue(this)
     return this._value
   }
 
@@ -20,7 +23,23 @@ class RefImpl {
     if (hasChanged(newVal, this._rawValue)) {
       this._rawValue = newVal
       this._value = useDirectValue ? newVal : toReactive(newVal)
+      triggerRefValue(this, newVal)
     }
+  }
+}
+
+function trackRefValue (ref) {
+  ref = toRaw(ref)
+  if (shouldTrack && activeEffect) {
+    trackEffects(ref.dep || (ref.dep = createDep()))
+  }
+}
+
+function triggerRefValue (ref, newVal) {
+  ref = toRaw(ref)
+  const dep = ref.dep
+  if (dep) {
+    triggerEffects(dep)
   }
 }
 
@@ -33,12 +52,6 @@ class GetterRefImpl {
 
   get value () {
     return this._getter()
-  }
-
-  set value (newVal) {
-    if (__DEV__) {
-      console.warn(`getterRef cannot be set: ${String(newVal)}`)
-    }
   }
 }
 
@@ -110,9 +123,9 @@ export function toRef (source, key, defaultValue) {
   }
 }
 
-function propertyToRef (source, key) {
+function propertyToRef (source, key, defaultValue) {
   const val = source[key]
-  return isRef(val) ? val : new ObjectRefImpl(source, key)
+  return isRef(val) ? val : new ObjectRefImpl(source, key, defaultValue)
 }
 
 /**
@@ -126,7 +139,6 @@ export function toRefs (object) {
   if (__DEV__ && !isReactive(object)) {
     console.warn('toRefs() expects a reactive object but received a plain one.')
   }
-  if (!isPlainObject(object) || !isArray(object)) return object
 
   const result = isArray(object) ? new Array(object.length) : {}
   Object.keys(object).forEach((key) => {
