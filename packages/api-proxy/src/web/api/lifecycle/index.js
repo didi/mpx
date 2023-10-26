@@ -1,5 +1,5 @@
 function getEnterOptionsSync () {
-  const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
+  const current = global.__mpxFirstRoute || {}
   return {
     path: current.path && current.path.replace(/^\//, ''),
     query: current.query,

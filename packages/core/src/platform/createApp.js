@@ -36,6 +36,7 @@ export default function createApp (option, config = {}) {
         Object.assign(this, Mpx.prototype)
         Object.assign(this, appData)
         const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
+        global.__mpxFirstRoute = current
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,
