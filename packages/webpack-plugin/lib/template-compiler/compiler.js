@@ -1833,6 +1833,15 @@ function getVirtualHostRoot (options, meta) {
       return rootView
     }
   }
+  if (srcMode === 'wx' && mode === 'web' && options.isPage) {
+    const rootView = createASTElement('div', [
+      {
+        name: 'class',
+        value: 'mpx-root-view'
+      }
+    ])
+    return rootView
+  }
   return getTempNode()
 }
 
