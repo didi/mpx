@@ -153,8 +153,10 @@ module.exports = function (content) {
         }
         if (ret.usingComponents) {
           usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          const transAli = mode === 'ali' && srcMode === 'wx'
+          const transWeb = mode === 'web' && srcMode === 'wx'
           // 判断是否有proxyComponentEventsRules配置
-          if (mpx.proxyComponentEventsRules && mpx.proxyComponentEventsRules.length > 0) {
+          if ((transAli || transWeb) && mpx.proxyComponentEventsRules && mpx.proxyComponentEventsRules.length > 0) {
             async.eachOf(ret.usingComponents, (component, name, callback) => {
               if (!isUrlRequest(component)) {
                 return callback()
