@@ -81,10 +81,14 @@ function navigateTo (options = {}) {
 function navigateBack (options = {}) {
   const router = global.__mpxRouter
   if (router) {
-    const delta = options.delta || 1
+    let delta = options.delta || 1
+    const stackLength = router.stack.length
     router.__mpxAction = {
       type: 'back',
       delta
+    }
+    if (stackLength > 1 && delta >= stackLength) {
+      delta = stackLength - 1
     }
     router.go(-delta)
     const res = { errMsg: 'navigateBack:ok' }
