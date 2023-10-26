@@ -13,6 +13,7 @@ module.exports = function (template, {
   moduleId,
   ctorType,
   usingComponents,
+  currentUsingComponentsProxyEvents,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -98,6 +99,7 @@ module.exports = function (template, {
           // web模式下实现抽象组件
           componentGenerics,
           proxyComponentEvents,
+          currentUsingComponentsProxyEvents,
           hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
         })
         if (meta.wxsModuleMap) {

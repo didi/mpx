@@ -1751,7 +1751,26 @@ function processBuiltInComponents (el, meta) {
 }
 
 function processRootViewEventHack (el, options, root) {
-  // 只处理组件根节点
+  const isComponent = isComponentNode(el, options)
+  if (isComponent) {
+    // 校验自定义组件节点是否有绑定tap等事件
+    try {
+      for (const attr of el.attrsList) {
+        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(\..*)?$/.exec(attr.name)
+        const fullEventName = match && match[0]
+        const eventName = match && match[2]
+        if (eventName && /^(touchstart|touchmove|touchcancel|touchend|tap|longpress|longtap|transitionend|animationstart|animationiteration|animationend|touchforcechange)$/.test(eventName)) {
+          const currentUsingComponentsProxyEvents = typeof options.currentUsingComponentsProxyEvents === 'string' ? JSON.parse(options.currentUsingComponentsProxyEvents) : options.currentUsingComponentsProxyEvents
+          const elProxyEvents = currentUsingComponentsProxyEvents[el.tag]
+          if (!(elProxyEvents && elProxyEvents.includes(fullEventName))) {
+            options.error(`${filePath} reference to the root node of the custom component ${el.tag} use bindtap events, you need to set up proxyComponentEventsRules compiling configuration, you can search for this configuration in documentation for details.`)
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
   if (!(options.isComponent && el === root && isRealNode(el))) {
     return
   }

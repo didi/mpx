@@ -19,6 +19,7 @@ const RecordVueContentDependency = require('./dependencies/RecordVueContentDepen
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const isUrlRequest = require('./utils/is-url-request')
+const resolve = require('./utils/resolve')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const getRulesRunner = require('./platform')
@@ -75,13 +76,13 @@ module.exports = function (content) {
   }
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
-  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
+  if (isApp && (queryObj.isComponent || queryObj.isPage)) {
     const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
 
-  if (ctorType === 'app') {
+  if (isApp) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
@@ -89,7 +90,7 @@ module.exports = function (content) {
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+  const moduleId = isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
     filePath,
@@ -117,7 +118,7 @@ module.exports = function (content) {
       if (!jsonContent) return callback(null, {})
       let componentPlaceholder = []
       let componentGenerics = {}
-      let currentUsingComponentsProxyEvents = {}
+      const currentUsingComponentsProxyEvents = {}
 
       let usingComponents = [].concat(Object.keys(mpx.globalComponents))
       const finalCallback = (err) => {
@@ -142,7 +143,7 @@ module.exports = function (content) {
       }
       const rulesRunner = getRulesRunner(rulesRunnerOptions)
       try {
-        const ret = JSON5.parse(parts.json.content)
+        const ret = JSON5.parse(jsonContent)
         if (rulesRunner) rulesRunner(ret)
         if (ret.componentPlaceholder) {
           componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
@@ -156,10 +157,6 @@ module.exports = function (content) {
           if (mpx.proxyComponentEventsRules && mpx.proxyComponentEventsRules.length > 0) {
             async.eachOf(ret.usingComponents, (component, name, callback) => {
               if (!isUrlRequest(component)) {
-                // const moduleId = mpx.getModuleId(component, isApp)
-                // if (!isApp) {
-                //   currentUsingComponentsModuleId[name] = moduleId
-                // }
                 return callback()
               }
               resolve(this.context, component, loaderContext, (err, resource) => {
@@ -190,7 +187,13 @@ module.exports = function (content) {
         return finalCallback(e)
       }
     },
-    (callback) => {
+    (componentCorrelation, callback) => {
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        currentUsingComponentsProxyEvents,
+        usingComponents
+      } = componentCorrelation
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
@@ -198,7 +201,7 @@ module.exports = function (content) {
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
+        if (isApp && !queryObj.isApp) {
           const request = addQuery(this.resource, { isApp: true })
           const el = mpx.webConfig.el || '#app'
           output += `
@@ -233,6 +236,7 @@ module.exports = function (content) {
                   moduleId,
                   ctorType,
                   usingComponents,
+                  currentUsingComponentsProxyEvents,
                   componentGenerics
                 }, callback)
               },
@@ -258,7 +262,7 @@ module.exports = function (content) {
             output += templateRes.output
             output += stylesRes.output
             output += jsonRes.output
-            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
+            if (isApp && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
               mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
             }
 
@@ -303,7 +307,7 @@ module.exports = function (content) {
       }
 
       // 为app注入i18n
-      if (i18n && ctorType === 'app') {
+      if (i18n && isApp) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
@@ -353,6 +357,7 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
+          currentUsingComponentsProxyEvents: JSON.stringify(currentUsingComponentsProxyEvents),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
@@ -381,7 +386,7 @@ module.exports = function (content) {
         })
       }
 
-      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
+      if (parts.styles.filter(style => !style.src).length === 0 && isApp && mode === 'ali') {
         output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 
