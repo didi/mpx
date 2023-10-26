@@ -1652,7 +1652,7 @@ Mpx中使用原子类主要是使用基于unocss搭建的两个库`@mpxjs/unocss
 
     module.exports = defineConfig({
       presets: [
-        presetMpx({})
+        presetMpx()
       ],
       // unocss的config，具体配置参考https://unocss.dev/config/
     })
@@ -1701,7 +1701,7 @@ Mpx中使用原子类主要是使用基于unocss搭建的两个库`@mpxjs/unocss
     light?: string
 
     /**
-     * dark variant 的选择器
+     * dark variant的选择器
      *
      * @default '.dark'
      */
