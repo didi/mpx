@@ -36,22 +36,21 @@ export default function createApp (option, config = {}) {
         Object.assign(this, Mpx.prototype)
         Object.assign(this, appData)
         const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
-        global.__mpxFirstRoute = current
-        const options = {
+        global.__mpxEnterOptions = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,
           scene: 0,
           shareTicket: '',
           referrerInfo: {}
         }
-        this.$options.onLaunch && this.$options.onLaunch.call(this, options)
+        this.$options.onLaunch && this.$options.onLaunch.call(this, global.__mpxEnterOptions)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
           hide: [],
           error: []
         }
         if (this.$options.onShow) {
-          this.$options.onShow.call(this, options)
+          this.$options.onShow.call(this, global.__mpxEnterOptions)
           global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
         }
         if (this.$options.onHide) {
