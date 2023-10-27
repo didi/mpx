@@ -96,7 +96,7 @@
       },
     },
     updated () {
-      this.currentChildLength = this.$children && this.$children.length
+      this.setCurrentChildLength()
     },
     watch: {
       current (val) {
@@ -132,6 +132,7 @@
       this.itemIds = []
     },
     mounted () {
+      this.setCurrentChildLength()
       this.createResizeObserver()
       this.initBs()
     },
@@ -259,6 +260,9 @@
         const y = this.vertical ? index : 0
         const speed = time === 0 ? 0 : this.duration
         this.bs && this.bs.goToPage(x, y, speed)
+      },
+      setCurrentChildLength () {
+        this.currentChildLength = this.$children && this.$children.length
       }
     },
     render (createElement) {
