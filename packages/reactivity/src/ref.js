@@ -76,7 +76,7 @@ function trackRefValue (ref) {
   }
 }
 
-function triggerRefValue (ref) {
+export function triggerRefValue (ref) {
   ref = toRaw(ref)
   const dep = ref.dep
   if (dep) {

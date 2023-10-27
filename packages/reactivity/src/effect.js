@@ -8,12 +8,13 @@ export let activeEffect
 export let shouldTrack = true
 export const trackOpBit = 1
 
-class ReactiveEffect {
-  constructor (fn) {
+export class ReactiveEffect {
+  constructor (fn, scheduler) {
     this.deps = []
     this.fn = fn
     this.parent = undefined
     this.active = true
+    this.scheduler = scheduler
   }
 
   run () {
