@@ -1,10 +1,22 @@
 import { isFunction, isObject, isArray, hasChanged } from '@mpxjs/utils'
-import { shouldTrack, activeEffect, trackEffects, triggerEffects } from './effect'
-import { isReactive, toRaw, toReactive, isShallow, isReadonly } from './reactive'
+import {
+  shouldTrack,
+  activeEffect,
+  trackEffects,
+  triggerEffects
+} from './effect'
+import {
+  isReactive,
+  toRaw,
+  toReactive,
+  isShallow,
+  isReadonly
+} from './reactive'
 import { createDep } from './dep'
 
 class RefImpl {
   __mpx_isRef = true;
+  dep = undefined;
   constructor (value, shallow = false) {
     this._rawValue = shallow ? value : toRaw(value)
     this.__mpx_isShallow = shallow
@@ -28,6 +40,35 @@ class RefImpl {
   }
 }
 
+/**
+ * Force trigger effects that depends on a shallow ref. This is typically used
+ * after making deep mutations to the inner value of a shallow ref.
+ *
+ * @example
+ * ```js
+ * const shallow = shallowRef({
+ *   greet: 'Hello, world'
+ * })
+ *
+ * // Logs "Hello, world" once for the first run-through
+ * effect(() => {
+ *   console.log(shallow.value.greet)
+ * })
+ *
+ * // This won't trigger the effect because the ref is shallow
+ * shallow.value.greet = 'Hello, universe'
+ *
+ * // Logs "Hello, universe"
+ * triggerRef(shallow)
+ * ```
+ *
+ * @param ref - The ref whose tied effects shall be executed.
+ */
+export function triggerRef (ref) {
+  // eslint-disable-next-line no-void
+  triggerRefValue(ref, __DEV__ ? ref.value : void 0)
+}
+
 function trackRefValue (ref) {
   ref = toRaw(ref)
   if (shouldTrack && activeEffect) {
@@ -35,7 +76,7 @@ function trackRefValue (ref) {
   }
 }
 
-function triggerRefValue (ref, newVal) {
+function triggerRefValue (ref) {
   ref = toRaw(ref)
   const dep = ref.dep
   if (dep) {
@@ -92,6 +133,37 @@ export function isRef (value) {
   return !!(value && value.__mpx_isRef)
 }
 
+class CustomRefImpl {
+  dep = undefined;
+  __mpx_isRef = true;
+  constructor (factory) {
+    const { get, set } = factory(
+      () => trackRefValue(this),
+      () => triggerRefValue(this)
+    )
+    this._get = get
+    this._set = set
+  }
+
+  get value () {
+    return this._get()
+  }
+
+  set value (newVal) {
+    return this._set(newVal)
+  }
+}
+
+/**
+ * Creates a customized ref with explicit control over its dependency tracking
+ * and updates triggering.
+ *
+ * @param factory - The function that receives the `track` and `trigger` callbacks.
+ */
+export function customRef (factory) {
+  return new CustomRefImpl(factory)
+}
+
 /**
  * Returns the inner value if the argument is a ref, otherwise return the
  * argument itself. This is a sugar function for
@@ -137,7 +209,9 @@ function propertyToRef (source, key, defaultValue) {
  */
 export function toRefs (object) {
   if (__DEV__ && !isReactive(object)) {
-    console.warn('toRefs() expects a reactive object but received a plain one.')
+    console.warn(
+      'toRefs() expects a reactive object but received a plain one.'
+    )
   }
 
   const result = isArray(object) ? new Array(object.length) : {}

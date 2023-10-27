@@ -1,18 +1,8 @@
-import { ref, isRef, unref, shallowRef, toRef, toRefs } from '../src/ref'
-import { isShallow, reactive, isReadonly, shallowReactive, readonly } from '../src/reactive'
+import { ref, isRef, unref, shallowRef, toRef, toRefs, triggerRef, customRef } from '../src/ref'
+import { isShallow, reactive, isReadonly, shallowReactive, readonly, isReactive } from '../src/reactive'
 import { effect } from '../src/effect'
 
 describe('reactivity/ref', () => {
-  it('should ref reactive', () => {
-    const origin = { a: 90 }
-    const obj = ref(origin)
-    const obj2 = reactive(origin)
-    expect(obj.value).toBe(obj2)
-    expect(obj.value.a).toBe(obj2.a)
-    obj.value = 2
-    expect(obj.value).not.toBe(obj2.a)
-  })
-
   it('should hold a value', () => {
     const a = ref(1)
     expect(a.value).toBe(1)
@@ -195,6 +185,37 @@ describe('reactivity/ref', () => {
     expect(unref(ref(1))).toBe(1)
   })
 
+  test('shallowRef', () => {
+    const sref = shallowRef({ a: 1 })
+    expect(isReactive(sref.value)).toBe(false)
+
+    let dummy
+    effect(() => {
+      dummy = sref.value.a
+    })
+    expect(dummy).toBe(1)
+
+    sref.value = { a: 2 }
+    expect(isReactive(sref.value)).toBe(false)
+    expect(dummy).toBe(2)
+  })
+
+  test('shallowRef force trigger', () => {
+    const sref = shallowRef({ a: 1 })
+    let dummy
+    effect(() => {
+      dummy = sref.value.a
+    })
+    expect(dummy).toBe(1)
+
+    sref.value.a = 2
+    expect(dummy).toBe(1) // should not trigger yet
+
+    // force trigger
+    triggerRef(sref)
+    expect(dummy).toBe(2)
+  })
+
   test('shallowRef isShallow', () => {
     expect(isShallow(shallowRef({ a: 1 }))).toBe(true)
   })
@@ -207,7 +228,37 @@ describe('reactivity/ref', () => {
     expect(isRef({ value: 0 })).toBe(false)
   })
 
-  //   =============
+  test('toRef', () => {
+    const a = reactive({
+      x: 1
+    })
+    const x = toRef(a, 'x')
+    expect(isRef(x)).toBe(true)
+    expect(x.value).toBe(1)
+
+    // source -> proxy
+    a.x = 2
+    expect(x.value).toBe(2)
+
+    // proxy -> source
+    x.value = 3
+    expect(a.x).toBe(3)
+
+    // reactivity
+    let dummyX
+    effect(() => {
+      dummyX = x.value
+    })
+    expect(dummyX).toBe(x.value)
+
+    // mutating source should trigger effect using the proxy refs
+    a.x = 4
+    expect(dummyX).toBe(4)
+
+    // should keep ref
+    const r = { x: ref(1) }
+    expect(toRef(r, 'x')).toBe(r.x)
+  })
 
   test('toRef on array', () => {
     const a = reactive(['a', 'b'])
@@ -266,19 +317,19 @@ describe('reactivity/ref', () => {
     expect(a.y).toBe(4)
 
     // reactivity
-    // let dummyX, dummyY
-    // effect(() => {
-    //   dummyX = x.value
-    //   dummyY = y.value
-    // })
-    // expect(dummyX).toBe(x.value)
-    // expect(dummyY).toBe(y.value)
+    let dummyX, dummyY
+    effect(() => {
+      dummyX = x.value
+      dummyY = y.value
+    })
+    expect(dummyX).toBe(x.value)
+    expect(dummyY).toBe(y.value)
 
-    // // mutating source should trigger effect using the proxy refs
-    // a.x = 4
-    // a.y = 5
-    // expect(dummyX).toBe(4)
-    // expect(dummyY).toBe(5)
+    // mutating source should trigger effect using the proxy refs
+    a.x = 4
+    a.y = 5
+    expect(dummyX).toBe(4)
+    expect(dummyY).toBe(5)
   })
 
   test('toRefs should warn on plain object', () => {
@@ -302,6 +353,37 @@ describe('reactivity/ref', () => {
 
     arr[1] = '2'
     expect(refs[1].value).toBe('2')
+  })
+
+  test('customRef', () => {
+    let value = 1
+    let _trigger
+
+    const custom = customRef((track, trigger) => ({
+      get () {
+        track()
+        return value
+      },
+      set (newValue) {
+        value = newValue
+        _trigger = trigger
+      }
+    }))
+
+    expect(isRef(custom)).toBe(true)
+
+    let dummy
+    effect(() => {
+      dummy = custom.value
+    })
+    expect(dummy).toBe(1)
+
+    custom.value = 2
+    // should not trigger yet
+    expect(dummy).toBe(1)
+
+    _trigger()
+    expect(dummy).toBe(2)
   })
 
   test('should not trigger when setting value to same proxy', () => {
@@ -337,6 +419,7 @@ describe('reactivity/ref', () => {
     expect(a.value).toBe(s)
     expect(a.value).not.toBe(r)
 
+    a.value = rr
     expect(a.value).toBe(rr)
     expect(a.value).not.toBe(r)
   })
