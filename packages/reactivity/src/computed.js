@@ -1,7 +1,7 @@
 import { isFunction, noop } from '@mpxjs/utils'
 import { ReactiveEffect } from './effect'
 import { ReactiveFlags, toRaw } from './reactive'
-import { triggerRefValue } from './ref'
+import { triggerRefValue, trackRefValue } from './ref'
 
 export function computed (getterOrOptions) {
   let getter, setter
@@ -18,29 +18,30 @@ export function computed (getterOrOptions) {
     setter = getterOrOptions.set
   }
 
-  console.log(getter, setter)
-
   return new ComputedRefImpl(getter, setter, onlyGetter || !setter)
 }
 
 class ComputedRefImpl {
+    dep = undefined
+    _value
     _dirty = true
     constructor (getter, setter, isReadonly) {
       this._getter = getter
       this._setter = setter
 
       this.effect = new ReactiveEffect(getter, () => {
-        console.log(787)
         if (!this._dirty) {
           this._dirty = true
           triggerRefValue(this)
         }
       })
+      this.effect.computed = this
       this[ReactiveFlags.IS_READONLY] = isReadonly
     }
 
     get value () {
       const self = toRaw(this)
+      trackRefValue(self)
       if (self._dirty) {
         self._dirty = false
         self._value = self.effect.run()

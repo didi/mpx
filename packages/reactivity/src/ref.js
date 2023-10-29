@@ -69,7 +69,7 @@ export function triggerRef (ref) {
   triggerRefValue(ref, __DEV__ ? ref.value : void 0)
 }
 
-function trackRefValue (ref) {
+export function trackRefValue (ref) {
   ref = toRaw(ref)
   if (shouldTrack && activeEffect) {
     trackEffects(ref.dep || (ref.dep = createDep()))
