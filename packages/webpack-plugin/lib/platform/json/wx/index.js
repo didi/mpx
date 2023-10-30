@@ -3,6 +3,7 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
+const { isOriginTag } = require('../../../utils/dom-tag-config')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -125,6 +126,26 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  /**
+   * 将小程序代码中使用的与原生 HTML tag 同名组件进行转化，以解决与原生tag命名冲突问题。
+   * @param {string} type usingComponents
+   * @returns input
+   */
+  function webHTMLTagProcesser (type) {
+    return function (input) {
+      const usingComponents = input[type]
+      if (usingComponents) {
+        Object.keys(usingComponents).forEach(tag => {
+          if (isOriginTag(tag)) {
+            usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
+            delete usingComponents[tag]
+          }
+        })
+      }
+      return input
+    }
+  }
+
   const componentRules = [
     {
       test: 'componentGenerics',
@@ -136,6 +157,10 @@ module.exports = function getSpec ({ warn, error }) {
       swan: deletePath(),
       tt: deletePath(),
       jd: deletePath()
+    },
+    {
+      test: 'usingComponents',
+      web: webHTMLTagProcesser('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -237,7 +262,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd', 'web'],
     normalizeTest,
     page: [
       ...windowRules,
@@ -337,6 +362,10 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath(true),
         tt: deletePath(),
         jd: deletePath(true)
+      },
+      {
+        test: 'usingComponents',
+        web: webHTMLTagProcesser('usingComponents')
       },
       {
         test: 'usingComponents',
