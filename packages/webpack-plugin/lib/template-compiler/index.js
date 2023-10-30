@@ -20,6 +20,7 @@ module.exports = function (raw) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
   const wxsContentMap = mpx.wxsContentMap
+  const renderOptimizeRules = mpx.renderOptimizeRules
   const usingComponents = queryObj.usingComponents || []
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
@@ -39,6 +40,14 @@ module.exports = function (raw) {
     )
   }
 
+  let proxyComponentEvents = null
+  for (const item of mpx.proxyComponentEventsRules) {
+    if (matchCondition(resourcePath, item)) {
+      const eventsRaw = item.events
+      proxyComponentEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
+      break
+    }
+  }
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
@@ -61,7 +70,8 @@ module.exports = function (raw) {
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
+    proxyComponentEvents
   })
 
   if (meta.wxsContentMap) {
@@ -97,6 +107,7 @@ global.currentInject = {
   try {
     bindResult = bindThis(rawCode, {
       needCollect: true,
+      renderReduce: matchCondition(resourcePath, renderOptimizeRules),
       ignoreMap: meta.wxsModuleMap
     })
   } catch (e) {
@@ -129,6 +140,10 @@ global.currentInject.injectComputed = {
 global.currentInject.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
 };\n`
+  }
+
+  if (meta.options) {
+    resultSource += `global.currentInject.injectOptions = ${JSON.stringify(meta.options)};` + '\n'
   }
 
   this.emitFile(resourcePath, '', undefined, {

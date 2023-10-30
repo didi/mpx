@@ -32,7 +32,8 @@ module.exports = function runRules (rules = [], input, options = {}) {
       if (result !== undefined) {
         input = result
       }
-      if (!waterfall) break
+      // rule 内外 waterfall 均为 false 时跳过
+      if (!rule.waterfall && !waterfall) break
     }
   }
   return input

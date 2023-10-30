@@ -190,15 +190,7 @@ module.exports = function getSpec ({ warn, error }) {
           el.isStyleParsed = true
           el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
             const parsed = parseMustacheWithContext(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parsed.result)
-              } else {
-                styleBinding.push(JSON.stringify(item.value))
-              }
-            } else if (item.name === 'wx:style') {
-              styleBinding.push(parsed.result)
-            }
+            styleBinding.push(parsed.result)
           })
           return {
             name: ':style',

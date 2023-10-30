@@ -54,7 +54,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
   return componentsMap
 }
 
-function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr }) {
+function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr, jsonConfig }) {
   let globalTabBar = ''
   let firstPage = ''
   const pagesMap = {}
@@ -100,7 +100,10 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       }
     }
 
-    if (pageCfg.isFirst) {
+    if (pagePath === jsonConfig.entryPagePath) {
+      firstPage = pagePath
+    }
+    if (!firstPage && pageCfg.isFirst) {
       firstPage = pagePath
     }
   })

@@ -285,7 +285,7 @@ module.exports = function (content) {
       let ctor = 'App'
       if (ctorType === 'page') {
         // swan也默认使用Page构造器
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
+        if (mpx.forceUsePageCtor || mode === 'ali') {
           ctor = 'Page'
         } else {
           ctor = 'Component'
