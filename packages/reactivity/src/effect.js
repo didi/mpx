@@ -190,8 +190,16 @@ export function trigger (target, type, key, newValue) {
 
 export function triggerEffects (dep, debuggerEventExtraInfo) {
   const effects = isArray(dep) ? dep : [...dep]
+
   for (const effect of effects) {
-    triggerEffect(effect, debuggerEventExtraInfo)
+    if (effect.computed) {
+      triggerEffect(effect, debuggerEventExtraInfo)
+    }
+  }
+  for (const effect of effects) {
+    if (!effect.computed) {
+      triggerEffect(effect, debuggerEventExtraInfo)
+    }
   }
 }
 
