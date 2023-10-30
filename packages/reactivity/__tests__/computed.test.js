@@ -1,8 +1,9 @@
 
-import { reactive } from '../src/reactive'
+import { reactive, isReadonly, toRaw } from '../src/reactive'
 import { computed } from '../src/computed'
-import { effect } from '../src/effect'
+import { effect, ITERATE_KEY } from '../src/effect'
 import { ref } from '../src/ref'
+import { TriggerOpTypes } from '../src/operations'
 
 describe('reactivity/computed', () => {
   it('should return updated value', () => {
@@ -177,5 +178,101 @@ describe('reactivity/computed', () => {
     n.value++
     // on the 2nd run, plusOne.value should have already updated.
     expect(plusOneValues).toMatchObject([1, 2, 2])
+  })
+
+  it('should warn if trying to set a readonly computed', () => {
+    const n = ref(1)
+    const plusOne = computed(() => n.value + 1)
+    plusOne.value++
+
+    expect(
+      'Write operation failed: computed value is readonly'
+    ).toHaveBeenWarnedLast()
+  })
+
+  it('should be readonly', () => {
+    let a = { a: 1 }
+    const x = computed(() => a)
+    expect(isReadonly(x)).toBe(true)
+    expect(isReadonly(x.value)).toBe(false)
+    expect(isReadonly(x.value.a)).toBe(false)
+    const z = computed({
+      get () {
+        return a
+      },
+      set (v) {
+        a = v
+      }
+    })
+    expect(isReadonly(z)).toBe(false)
+    expect(isReadonly(z.value.a)).toBe(false)
+  })
+
+  it('should expose value when stopped', () => {
+    const x = computed(() => 1)
+    x.effect.stop()
+    expect(x.value).toBe(1)
+  })
+
+  it('debug: onTrack', () => {
+    let events = []
+    const onTrack = jest.fn((e) => {
+      events.push(e)
+    })
+    const obj = reactive({ foo: 1, bar: 2 })
+    const c = computed(() => (obj.foo, 'bar' in obj, Object.keys(obj)), {
+      onTrack
+    })
+    expect(c.value).toEqual(['foo', 'bar'])
+    expect(onTrack).toHaveBeenCalledTimes(3)
+    expect(events).toEqual([
+      {
+        effect: c.effect,
+        target: toRaw(obj),
+        key: 'foo'
+      },
+      {
+        effect: c.effect,
+        target: toRaw(obj),
+        key: 'bar'
+      },
+      {
+        effect: c.effect,
+        target: toRaw(obj),
+        key: ITERATE_KEY
+      }
+    ])
+  })
+
+  it('debug: onTrigger', () => {
+    let events = []
+    const onTrigger = jest.fn((e) => {
+      events.push(e)
+    })
+    const obj = reactive({ foo: 1 })
+    const c = computed(() => obj.foo, { onTrigger })
+
+    // computed won't trigger compute until accessed
+    c.value
+
+    obj.foo++
+    expect(c.value).toBe(2)
+    expect(onTrigger).toHaveBeenCalledTimes(1)
+    expect(events[0]).toEqual({
+      effect: c.effect,
+      target: toRaw(obj),
+      type: TriggerOpTypes.SET,
+      key: 'foo'
+    })
+
+    delete obj.foo
+    expect(c.value).toBeUndefined()
+    expect(onTrigger).toHaveBeenCalledTimes(2)
+    expect(events[1]).toEqual({
+      effect: c.effect,
+      target: toRaw(obj),
+      type: TriggerOpTypes.DELETE,
+      key: 'foo'
+    })
   })
 })

@@ -3,7 +3,7 @@ import { ReactiveEffect } from './effect'
 import { ReactiveFlags, toRaw } from './reactive'
 import { triggerRefValue, trackRefValue } from './ref'
 
-export function computed (getterOrOptions) {
+export function computed (getterOrOptions, debugOptions) {
   let getter, setter
   const onlyGetter = isFunction(getterOrOptions)
   if (onlyGetter) {
@@ -18,7 +18,12 @@ export function computed (getterOrOptions) {
     setter = getterOrOptions.set
   }
 
-  return new ComputedRefImpl(getter, setter, onlyGetter || !setter)
+  const cRef = new ComputedRefImpl(getter, setter, onlyGetter || !setter)
+  if (__DEV__ && debugOptions) {
+    cRef.effect.onTrack = debugOptions.onTrack
+    cRef.effect.onTrigger = debugOptions.onTrigger
+  }
+  return cRef
 }
 
 class ComputedRefImpl {
