@@ -143,8 +143,13 @@ export function toReactive (value) {
  * Forward Compatibility
  */
 export function set (target, key, val) {
-  if ((isArray(target) && isIntegerKey(key)) || isObject(target)) {
+  if (isReactive(target)) {
     target[key] = val
+    return val
+  }
+  if (__DEV__) {
+    console.warn(`${target} is not a reactive object`)
+    target && (target[key] = val)
     return val
   }
 }
@@ -154,7 +159,11 @@ export function set (target, key, val) {
  * Forward Compatibility
  */
 export function del (target, key) {
-  if ((isArray(target) && isIntegerKey(key)) || isObject(target)) {
+  if (isReactive(target)) {
+    return delete target[key]
+  }
+  if (__DEV__ && target) {
+    console.warn(`${target} is not a reactive object`)
     return delete target[key]
   }
 }

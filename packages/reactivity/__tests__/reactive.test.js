@@ -1,4 +1,5 @@
-import { reactive, isReactive, toRaw, markRaw } from '../src/reactive'
+import { effect } from '../src'
+import { reactive, isReactive, toRaw, markRaw, set, del } from '../src/reactive'
 
 describe('test reactivity/reactive', () => {
   test('Object', () => {
@@ -175,5 +176,68 @@ describe('test reactivity/reactive', () => {
     }
     const observed = reactive(original)
     expect(isReactive(observed)).toBe(false)
+  })
+
+  test('Set a property on an reactive object should triggers change', () => {
+    const origin = {
+      count: 1
+    }
+    const obj = reactive(origin)
+    const spy = jest.fn(() => {
+      return obj.num
+    })
+    effect(spy)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(obj).toEqual({
+      count: 1
+    })
+    expect(origin).toEqual({
+      count: 1
+    })
+
+    set(obj, 'num', 23)
+    expect(obj).toEqual({
+      count: 1,
+      num: 23
+    })
+    expect(origin).toEqual({
+      count: 1,
+      num: 23
+    })
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    set(obj, 'count', 2)
+    expect(obj).toEqual({
+      count: 2,
+      num: 23
+    })
+    expect(origin).toEqual({
+      count: 2,
+      num: 23
+    })
+    expect(spy).toHaveBeenCalledTimes(2)
+  })
+
+  test('Delete a property on an reactive object should triggers change', () => {
+    const origin = {
+      count: 1
+    }
+    const obj = reactive(origin)
+    const spy = jest.fn(() => {
+      return obj.count
+    })
+    effect(spy)
+
+    expect(obj.count).toBe(1)
+    expect(spy).toHaveBeenCalledTimes(1)
+    del(obj, 'count')
+    expect(obj.count).toBeUndefined()
+    expect(origin).toEqual({})
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    set(obj, 'count', 2)
+    expect(spy).toHaveBeenCalledTimes(3)
+    expect(obj.count).toBe(2)
   })
 })

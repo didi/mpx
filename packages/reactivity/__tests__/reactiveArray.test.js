@@ -1,4 +1,5 @@
-import { reactive, isReactive } from '../src/reactive'
+import { reactive, isReactive, set, del } from '../src/reactive'
+import { effect } from '../src/effect'
 
 describe('test reactivity/reactive/arrary', () => {
   test('should make Array reactive', () => {
@@ -114,5 +115,55 @@ describe('test reactivity/reactive/arrary', () => {
       expect(index).toBe(2)
       expect(observed.lastSearched).toBe(6)
     })
+  })
+
+  test('Set a property on an reactive arrary should triggers change', () => {
+    const origin = [10]
+    const obj = reactive(origin)
+    const spy = jest.fn(() => {
+      return obj[0]
+    })
+    effect(spy)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(obj).toEqual([10])
+    expect(origin).toEqual([10])
+
+    set(obj, 1, 20)
+    expect(obj).toEqual([10, 20])
+    expect(origin).toEqual([10, 20])
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    set(obj, 0, 1)
+    expect(obj).toEqual([1, 20])
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    set(obj, 'name', 'jack')
+    expect(spy).toHaveBeenCalledTimes(2)
+  })
+
+  test('Del property on an reactive arrary should triggers change', () => {
+    const origin = [10]
+    const obj = reactive(origin)
+    const spy = jest.fn(() => {
+      return obj[0]
+    })
+    effect(spy)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(obj).toEqual([10])
+    expect(origin).toEqual([10])
+
+    del(obj, 1)
+    expect(obj).toEqual([10])
+    expect(origin).toEqual([10])
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    del(obj, 0)
+    expect(obj).toEqual([undefined])
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    del(obj, 'name')
+    expect(spy).toHaveBeenCalledTimes(2)
   })
 })
