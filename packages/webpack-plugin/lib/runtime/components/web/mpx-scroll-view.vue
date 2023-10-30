@@ -159,7 +159,13 @@
           eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || ''
         }
         if (this.refresherEnabled) {
-          originBsOptions.bounce = true
+          const bounce = {
+            top: true,
+            bottom: false,
+            left: true,
+            right: false
+          }
+          originBsOptions.bounce = bounce
           originBsOptions.pullDownRefresh = {
             threshold: this.refresherThreshold,
             stop: 56
