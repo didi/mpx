@@ -87,7 +87,7 @@ class SizeReportPlugin {
             // We skip connections without Module pointer
             if (!m) continue
             // We skip weak connections
-            if (connection.weak) continue
+            if (connection.weak && d.type !== 'mpx cjs extract') continue
             // Use undefined runtime
             const state = connection.getActiveState(/* runtime */)
             // We skip inactive connections

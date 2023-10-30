@@ -8,6 +8,7 @@ const ReplaceDependency = require('./dependencies/ReplaceDependency')
 const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
+const CommonJsExtractDependency = require('./dependencies/CommonJsExtractDependency')
 const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
@@ -124,6 +125,7 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
+    options.renderOptimizeRules = options.renderOptimizeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
@@ -171,6 +173,12 @@ class MpxWebpackPlugin {
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
+    let proxyComponentEventsRules = []
+    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
+    if (proxyComponentEventsRulesRaw) {
+      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
+    }
+    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -405,13 +413,13 @@ class MpxWebpackPlugin {
               name: 'MpxPartialCompilePlugin',
               stage: -100
             }, (obj, resolverContext, callback) => {
-              if (obj.path.startsWith(require.resolve('./json-compiler/default-page.mpx'))) {
+              if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
                 return callback(null, obj)
               }
               if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
                 const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
-                obj.path = require.resolve('./json-compiler/default-page.mpx')
+                obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
               }
               callback(null, obj)
             })
@@ -554,6 +562,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(CommonJsAsyncDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsAsyncDependency, new CommonJsAsyncDependency.Template())
 
+      compilation.dependencyFactories.set(CommonJsExtractDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(CommonJsExtractDependency, new CommonJsExtractDependency.Template())
+
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
     })
@@ -628,12 +639,14 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
+          renderOptimizeRules: this.options.renderOptimizeRules,
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           asyncSubpackageRules: this.options.asyncSubpackageRules,
+          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -923,6 +936,17 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
+        // 移除extractor抽取后的空模块
+        for (const module of modules) {
+          if (module.buildInfo.isEmpty) {
+            for (const connection of moduleGraph.getIncomingConnections(module)) {
+              if (connection.dependency.type === 'mpx cjs extract') {
+                connection.weak = true
+                connection.dependency.weak = true
+              }
+            }
+          }
+        }
         // 自动跟进分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
@@ -1095,6 +1119,31 @@ class MpxWebpackPlugin {
             name: 'MpxWebpackPlugin',
             stage: -1000
           }, (expr, calleeMembers, callExpr) => requireAsyncHandler(callExpr, calleeMembers, expr.arguments))
+
+        const requireExtractHandler = (expr, members, args) => {
+          if (members[0] === 'extract') {
+            const request = expr.arguments[0].value
+            const range = expr.range
+            const dep = new CommonJsExtractDependency(request, range)
+            parser.state.current.addDependency(dep)
+            if (args) parser.walkExpressions(args)
+            return true
+          }
+        }
+
+        parser.hooks.callMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -2000
+          }, (expr, members) => requireExtractHandler(expr, members))
+
+        parser.hooks.callMemberChainOfCallMemberChain
+          .for('require')
+          .tap({
+            name: 'MpxWebpackPlugin',
+            stage: -2000
+          }, (expr, calleeMembers, callExpr) => requireExtractHandler(callExpr, calleeMembers, expr.arguments))
 
         // hack babel polyfill global
         parser.hooks.statementIf.tap('MpxWebpackPlugin', (expr) => {

@@ -1,0 +1,27 @@
+<template>
+  <view>局部构建兜底页面</view>
+  <view>当前路由：{{currentRoute}}</view>
+</template>
+
+<script>
+import { onLoad } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data() {
+    return {
+      currentRoute: '',
+    }
+  },
+  onLoad() {
+    this.getPagePath()
+  },
+  methods: {
+    getPagePath() {
+      const pages = getCurrentPages() || []
+      const currPage = pages[pages.length - 1]
+      this.currentRoute = currPage && currPage.route || ''
+    },
+  }
+})
+</script>

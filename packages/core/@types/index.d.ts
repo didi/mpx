@@ -86,7 +86,7 @@ type PropValueType<Def> = Def extends {
   : Def extends FullPropType<infer T>
   ? T
   : Def extends PropType<infer T>
-  ? T 
+  ? T
   : any;
 
 type GetPropsType<T> = {
@@ -250,6 +250,11 @@ interface AnyConstructor {
   prototype: any
 }
 
+interface WebviewConfig {
+  hostWhitelists?: Array<string>
+  apiImplementations?: object
+}
+
 interface MpxConfig {
   useStrictDiff: boolean
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
@@ -259,7 +264,8 @@ interface MpxConfig {
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
-  webRouteConfig: object
+  webRouteConfig: object,
+  webviewConfig?: WebviewConfig
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

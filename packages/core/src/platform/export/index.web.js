@@ -1,6 +1,6 @@
 import {
   effectScope as vueEffectScope,
-  getCurrentScope as getCurrentVueScope,
+  getCurrentScope as vueGetCurrentScope,
   onScopeDispose
 } from 'vue'
 
@@ -42,7 +42,7 @@ const fixEffectScope = (scope) => {
 }
 
 const effectScope = (detached) => fixEffectScope(vueEffectScope(detached))
-const getCurrentScope = () => fixEffectScope(getCurrentVueScope())
+const getCurrentScope = () => fixEffectScope(vueGetCurrentScope())
 
 export {
   // effectScope
