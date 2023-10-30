@@ -1,4 +1,4 @@
-import { isObject, type, def } from '@mpxjs/utils'
+import { isObject, type, def, isArray, isIntegerKey } from '@mpxjs/utils'
 import { mutableHandlers, shallowReactiveHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandlers'
 
 export const reactiveMap = new WeakMap()
@@ -134,4 +134,27 @@ export function markRaw (value) {
 
 export function toReactive (value) {
   return isObject(value) ? reactive(value) : value
+}
+
+/**
+ * Set a property on an object. Adds the new property and
+ * triggers change notification if the property doesn't
+ * already exist.
+ * Forward Compatibility
+ */
+export function set (target, key, val) {
+  if ((isArray(target) && isIntegerKey(key)) || isObject(target)) {
+    target[key] = val
+    return val
+  }
+}
+
+/**
+ * Delete a property and trigger change if necessary.
+ * Forward Compatibility
+ */
+export function del (target, key) {
+  if ((isArray(target) && isIntegerKey(key)) || isObject(target)) {
+    return delete target[key]
+  }
 }
