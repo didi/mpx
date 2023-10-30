@@ -1652,14 +1652,122 @@ Mpx中使用原子类主要是使用基于unocss搭建的两个库`@mpxjs/unocss
 
     module.exports = defineConfig({
       presets: [
-        presetMpx({
-          baseFontSize: 37.5, // 默认37.5，此配置功能是同比换算1rem = 37.5rpx适配小程序
-          // ... 其他配置参照https://unocss.dev/presets/mini
-        })
+        presetMpx()
       ],
       // unocss的config，具体配置参考https://unocss.dev/config/
     })
   ```
+
+### Options
+
+`@mpxjs/unocss-base`支持以下配置
+
+#### baseFontSize
+
+- **类型**: Number
+- **默认值**: 37.5
+- **详细**: 同比换算1rem = 37.5rpx适配小程序
+- **示例**:
+  ```js
+    presetMpx({
+      baseFontSize: 37.5
+    })
+  ```
+#### preflight
+
+- **类型**: Boolean
+- **默认值**: true
+- **详细**: 是否生成预设样式
+- **示例**:
+  ```js
+    presetMpx({
+      preflight: true
+    })
+  ```
+  将添加预设样式在主包
+  ```css
+  page{--un-rotate:0;--un-rotate-x:0;--un-rotate-y:0;--un-rotate-z:0;--un-scale-x:1;--un-scale-y:1;--un-scale-z:1;--un-skew-x:0;--un-skew-y:0;--un-translate-x:0;--un-translate-y:0;--un-translate-z:0;--un-pan-x: ;--un-pan-y: ;--un-pinch-zoom: ;--un-scroll-snap-strictness:proximity;--un-ordinal: ;--un-slashed-zero: ;--un-numeric-figure: ;--un-numeric-spacing: ;--un-numeric-fraction: ;--un-border-spacing-x:0;--un-border-spacing-y:0;--un-ring-offset-shadow:0 0 rgba(0,0,0,0);--un-ring-shadow:0 0 rgba(0,0,0,0);--un-shadow-inset: ;--un-shadow:0 0 rgba(0,0,0,0);--un-ring-inset: ;--un-ring-offset-width:0px;--un-ring-offset-color:#fff;--un-ring-width:0px;--un-ring-color:rgba(147,197,253,0.5);--un-blur: ;--un-brightness: ;--un-contrast: ;--un-drop-shadow: ;--un-grayscale: ;--un-hue-rotate: ;--un-invert: ;--un-saturate: ;--un-sepia: ;--un-backdrop-blur: ;--un-backdrop-brightness: ;--un-backdrop-contrast: ;--un-backdrop-grayscale: ;--un-backdrop-hue-rotate: ;--un-backdrop-invert: ;--un-backdrop-opacity: ;--un-backdrop-saturate: ;--un-backdrop-sepia: ;}
+  ```
+#### dark
+
+- **类型**: `class | media | DarkModeSelectors`
+```ts
+  interface DarkModeSelectors {
+    /**
+     * light variant的选择器.
+     *
+     * @default '.light'
+     */
+    light?: string
+
+    /**
+     * dark variant的选择器
+     *
+     * @default '.dark'
+     */
+    dark?: string
+  }
+```
+- **默认值**: class
+- **详细**: 默认情况下，此预设使用dark:variant生成基于类的dark模式。
+  ```html
+    <view class="dark:text-green-400" />
+  ```
+  我们将生成
+  ```css
+    .dark .dark_c_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
+  ```
+  要选择基于媒体查询的dark模式，您可以使用@dark:variant
+  ```html
+    <view class="@dark:text-green-400" />
+  ```
+  我们将生成
+  ```css
+    @media (prefers-color-scheme: dark){
+      ._u_dark_c_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
+    }
+  ```
+  或者使用针对dark:variant的配置进行全局设置
+  ```js
+    presetMpx({
+      dark: "media"
+    })
+  ```
+#### attributifyPseudo
+
+- **类型**: Boolean
+- **默认值**: false
+- **详细**: 将伪选择器生成为[group='']，而不是.group。只支持`group`|`peer`|`parent`|`previous`
+- **示例**:
+  如果attributifyPseudo为true的话，
+  ```html
+    <view class="group">
+      <view class="group-hover:opacity-100" />
+    </view>
+  ```
+  上面template将生成
+  ```css
+    [group=""]:hover .group-hover_c_opacity-100{opacity:1;}
+  ```
+  为false则生成
+  ```css
+    .group:hover .group-hover_c_opacity-100{opacity:1;}
+  ```
+#### variablePrefix
+
+- **类型**: String
+- **默认值**: 'un-'
+- **详细**: CSS变量的前缀
+- **示例**:
+  ```js
+    presetMpx({
+      variablePrefix: 'un-'
+    })
+  ```
+  ```css
+    .bg-red-500{--un-bg-opacity:1;background-color:rgba(239,68,68,var(--un-bg-opacity));}
+  ```
+
 ### @mpxjs/unocss-plugin
 
 - **详细**:
@@ -1693,56 +1801,218 @@ Mpx中使用原子类主要是使用基于unocss搭建的两个库`@mpxjs/unocss
     module.exports = defineConfig({
       configureWebpack: {
         plugins: [
-          new MpxUnocssPlugin({
-            // 小程序特有的配置
-            unoFile: 'styles/uno', // 生成主包或分包通用样式存储的相对路径，默认为'styles/uno'，例：'dist/wx/styles/uno.wxss'
-            styleIsolation: 'isolated', // 组件样式隔离，默认为'isolated'，表示启用样式隔离，其他参照https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html#%E7%BB%84%E4%BB%B6%E6%A0%B7%E5%BC%8F%E9%9A%94%E7%A6%BB
-            minCount: 2, // 使用超过minCount次数的class将被打包到公共样式下，默认为'2'
-            scan: {}, // 配置需要扫描的目录{include: [], exclude: []}，默认为'{}'
-            // 公共的配置
-            root: process.cwd(), // 文件根目录，默认process.cwd()
-            transformCSS: true, // 是否转化style中的unocss，默认true
-            transformGroups:  true, // 是否转化VariantGroups，默认true
-            config: {}, // unocss的config，同uno.config.js配置
-            configFiles: : {}, // 针对config文件的操作,具体类型如下
-            <!--
-              interface LoadConfigSource<T = any> {
-                files: Arrayable<string>;
-                /**
-                 * @default ['mts', 'cts', 'ts', 'mjs', 'cjs', 'js', 'json', '']
-                */
-                extensions?: string[];
-                /**
-                 * Loader for loading config,
-                *
-                * @default 'auto'
-                */
-                parser?: BuiltinParsers | CustomParser<T> | 'auto';
-                /**
-                 * Rewrite the config object,
-                * return nullish value to bypassing loading the file
-                */
-                rewrite?: <F = any>(obj: F, filepath: string) => Promise<T | undefined> | T | undefined;
-                /**
-                * Transform the source code before loading,
-                * return nullish value to skip transformation
-                */
-                transform?: (code: string, filepath: string) => Promise<string | undefined> | string | undefined;
-                /**
-                * Skip this source if error occurred on loading
-                *
-                * @default false
-                */
-                skipOnError?: boolean;
-              } 
-            -->
-          }
-        )]
+          new MpxUnocssPlugin({})
+        ]
       },
       // ...
     })
 
   ```
+### Options
+
+`@mpxjs/unocss-plugin`支持以下配置
+
+#### unoFile
+- **类型**: String
+- **默认值**: 'styles/uno'
+- **详细**: 生成主包或分包通用样式存储的相对路径
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      unoFile: 'styles/uno'
+    })
+  ```
+  则会把通用样式存储到下面目录
+  ```js
+    // 主包
+    dist/wx/styles/uno.wxss
+    // 分包
+    dist/wx/package/styles/uno.wxss
+  ```
+#### minCount
+- **类型**: Number
+- **默认值**: 2
+- **详细**: 使用超过minCount次数的class将被打包到公共样式下
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      minCount: 2
+    })
+  ```
+  ```html
+    <!-- a.mpx -->
+    <view class="bg-black"></view>
+    <!-- b.mpx -->
+    <view class="bg-black"></view>
+  ```
+  `bg-black`生成的样式将被打包到公共样式文件
+
+#### styleIsolation
+- **类型**: String
+- **默认值**: 'isolated'
+- **详细**: 需要和微信小程序的styleIsolation配合使用，比如小程序使用样式隔离的话，这里需要对应配置为isolated，这样的话每个组件会独立引用对应的原子类文件，配置为'apply-shared'的话只有父级页面和app会建立引用，然后通过配合微信的apply-shared的方式获取父级上定义的原子类
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      styleIsolation: 'isolated'
+    })
+  ```
+
+#### scan
+- **类型**: Scan
+```ts
+  interface Scan {
+    include?: string[]
+    exclude?: string[]
+  }
+```
+- **默认值**: {}
+- **详细**: 配置需要扫描的文件目录
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      scan: {
+        include: ['src/**/*']
+      }
+    })
+  ```
+
+#### escapeMap
+
+- **类型**: Record<string, string>
+- **默认值**: {}
+- **详细**: 针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则，可自定义转译规则
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      escapeMap: {
+        ':': '_d_',
+      }
+    })
+  ```
+  ```css
+    <view class="dark:text-green-400"/>
+  ```
+  将会转化为
+  ```css
+    .dark .dark_d_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
+  ```
+
+#### root
+- **类型**: String
+- **默认值**: process.cwd()
+- **详细**: 文件根目录
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      root: process.cwd()
+    })
+  ```
+
+#### transformCSS
+- **类型**: Boolean
+- **默认值**: true
+- **详细**: 转化css指令为常规css
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      transformCSS: true
+    })
+  ```
+  ```css
+    .custom-div {
+      @apply text-center my-0 font-medium;
+    }
+  ```
+  将会转化为
+  ```css
+    .custom-div {
+      margin-top: 0;
+      margin-bottom: 0;
+      text-align: center;
+      font-weight: 500;
+    }
+  ```
+
+#### transformGroups
+- **类型**: Boolean
+- **默认值**: true
+- **详细**: 转化Variant group
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      transformGroups: true
+    })
+  ```
+  ```html
+   <view class="lg:(p-2 m-2 text-red-600)"></view>
+  ```
+  将会转化为
+  ```html
+   <view class="lg:p-2 lg:m-2 lg:text-red-600"></view>
+  ```
+
+#### config
+- **类型**: UserConfig | String
+- **详细**: config可以传配置对象也可以传一个配置文件路径
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      config: {
+        rules: [
+          ['m-1', { margin: '10rpx' }],
+        ]
+      }
+    })
+  ```
+
+#### configFiles
+- **类型**: LoadConfigSource[]
+```ts
+  interface LoadConfigSource<T = any> {
+      files: Arrayable<string>;
+      /**
+       * @default ['mts', 'cts', 'ts', 'mjs', 'cjs', 'js', 'json', '']
+      */
+      extensions?: string[];
+      /**
+       * Loader for loading config,
+      *
+      * @default 'auto'
+      */
+      parser?: BuiltinParsers | CustomParser<T> | 'auto';
+      /**
+       * Rewrite the config object,
+      * return nullish value to bypassing loading the file
+      */
+      rewrite?: <F = any>(obj: F, filepath: string) => Promise<T | undefined> | T | undefined;
+      /**
+       * Transform the source code before loading,
+      * return nullish value to skip transformation
+      */
+      transform?: (code: string, filepath: string) => Promise<string | undefined> | string | undefined;
+      /**
+       * Skip this source if error occurred on loading
+      *
+      * @default false
+      */
+      skipOnError?: boolean;
+  }
+```
+- **详细**: configFiles的话是传递额外的配置文件数组，比如不想用uno.config作为配置文件的话可以在这里面配
+- **示例**:
+  ```js
+    new MpxUnocssPlugin({
+      configFiles: [
+        {
+          files: [
+            'uno2.config.js'
+          ]
+        }
+      ]
+    })
+  ```
+
 ### commentConfig
   我们还支持了commentConfig进行组件局部配置，目前支持safelist和styleIsolation，safelist可以用空格分隔写多个
 
