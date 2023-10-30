@@ -50,18 +50,6 @@ packages|支持|支持|支持|支持|部分支持，无法分包
 
 如果你是自行搭建的mpx项目，你只需要进行简单的配置修改，打开项目的webpack配置，找到@mpxjs/webpack-plugin的声明位置，传入mode和srcMode参数即可，示例如下
 
-```js
-// 下面的示例配置能够将mpx微信小程序源码编译为支付宝小程序
-new MpxwebpackPlugin({
-  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
-  mode: 'ali',
-  // srcMode为mpx编译的源码平台，目前仅支持wx   
-  srcMode: 'wx'
-})
-```
-
-::: tip @mpxjs/cli@3.x 版本配置如下
-
 ```javascript
 // vue.config.js
 module.exports = defineConfig({
@@ -83,7 +71,9 @@ module.exports = defineConfig({
   }
 }
 ```
-:::
+
+> 在 @mpxjs/cli@3.x 之前，通过 --modes 来设置mpx编译的目标平台
+
 ### 跨平台差异抹平
 
 为了实现小程序的跨平台编译，我们在编译和运行时做了很多工作以抹平小程序开发中各个方面的跨平台差异
@@ -171,31 +161,19 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
   import npmModule from 'somePackage/lib/index'
   
   // 配置以下alias后，当mode为ali时，会优先加载项目目录中定义的projectRoot/somePackage/lib/index文件
-  const webpackConf = {
-    resolve: {
-      alias: {
-        'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
-      }
-    }
-  }
-```
-
-:::tip @mpxjs/cli@3.x 版本配置如下
-```javascript
-// vue.config.js
-module.exports = defineConfig({
-  configureWebpack() {
-    return {
-      resolve: {
-        alias: {
-          'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+  // vue.config.js
+  module.exports = defineConfig({
+    configureWebpack() {
+      return {
+        resolve: {
+          alias: {
+            'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+          }
         }
       }
     }
-  }
-})
+  })
 ```
-:::
 
 ### 区块维度条件编译
 
@@ -351,19 +329,6 @@ Mpx 支持在以上四种条件编译的基础上，通过自定义 env 的形�
 实例化 MpxWebpackPlugin 的时候，传入配置 env。
 
 ```javascript
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-new MpxWebpackPlugin({
-  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
-  mode: 'ali',
-  // srcMode为mpx编译的源码平台，目前仅支持wx   
-  srcMode: 'wx',
-  // env为mpx编译的目标环境，需自定义
-  env: 'didi'
-})
-```
-
-::: tip @mpxjs/cli@3.x 版本配置如下
-```javascript
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -376,7 +341,6 @@ module.exports = defineConfig({
   }
 })
 ```
-:::
 
 #### 文件维度条件编译
 
