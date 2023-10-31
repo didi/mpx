@@ -293,6 +293,8 @@
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
         const computedStyle = getComputedStyle(wrapper)
+        // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
+        // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
         this.$refs.innerWrapper.style.width = `${wrapper.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
         this.$refs.innerWrapper.style.height = `${wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         const innerWrapper = this.$refs.innerWrapper
