@@ -94,11 +94,13 @@ export default function proxyEventMixin () {
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           let eventObj = {}
+          const dataset = collectDataset(this.props)
           if (e) {
             e.detail = Object.assign(e.detail, eventDetail)
+            if (e.target) e.target.dataset = dataset
+            if (e.currentTarget) e.currentTarget.dataset = dataset
             eventObj = e
           } else {
-            const dataset = collectDataset(this.props)
             const id = this.props.id || ''
             const timeStamp = +new Date()
             eventObj = {
