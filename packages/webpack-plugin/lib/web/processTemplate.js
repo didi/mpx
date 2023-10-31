@@ -72,6 +72,7 @@ module.exports = function (template, {
           hasComment,
           isNative,
           isComponent: ctorType === 'component',
+          isPage: ctorType === 'page',
           mode,
           srcMode: templateSrcMode,
           defs,
