@@ -23,7 +23,6 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    proxyComponentEventsRules,
     autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
@@ -58,15 +57,6 @@ module.exports = function (template, {
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
 
-        let proxyComponentEvents = null
-        for (const item of proxyComponentEventsRules) {
-          if (matchCondition(resourcePath, item)) {
-            const eventsRaw = item.events
-            proxyComponentEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
-            break
-          }
-        }
-
         const { root, meta } = templateCompiler.parse(template.content, {
           warn: (msg) => {
             loaderContext.emitWarning(
@@ -97,7 +87,6 @@ module.exports = function (template, {
           globalComponents: [],
           // web模式下实现抽象组件
           componentGenerics,
-          proxyComponentEvents,
           hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
         })
         if (meta.wxsModuleMap) {
