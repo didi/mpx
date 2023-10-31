@@ -1760,6 +1760,7 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
+    { condition: /^id$/, action: 'clone' },
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
