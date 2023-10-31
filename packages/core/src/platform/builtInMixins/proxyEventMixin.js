@@ -96,23 +96,15 @@ export default function proxyEventMixin () {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
           const timeStamp = +new Date()
-          const target = { id, dataset, targetDataset: dataset }
-          const currentTarget = { id, dataset }
-          const detail = eventDetail
           const eventObj = {
             type: eventName,
             timeStamp,
-            target,
-            currentTarget,
-            detail
+            target: { id, dataset, targetDataset: dataset },
+            currentTarget: { id, dataset },
+            detail: eventDetail
           }
           handler.call(this, eventObj)
         }
-      },
-      __proxyEvent (e) {
-        // 保持和微信一致
-        // e.target = e.currentTarget
-        this.triggerEvent(e.type, e.detail)
       }
     })
   }
