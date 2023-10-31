@@ -43,6 +43,7 @@ export default function createApp (option, config = {}) {
           shareTicket: '',
           referrerInfo: {}
         }
+        global.__mpxEnterOptions = options
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],

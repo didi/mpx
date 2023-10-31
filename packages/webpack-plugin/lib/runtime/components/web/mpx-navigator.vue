@@ -50,6 +50,11 @@
                 url: this.url
               })
               break
+            case 'switchTab':
+              mpx.switchTab && mpx.switchTab({
+                url: this.url
+              })
+              break
           }
         }
       })
