@@ -1,6 +1,7 @@
 import { extend, isArray, isIntegerKey } from '@mpxjs/utils'
 import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers } from './dep'
-import { TriggerOpTypes } from './operations'
+import { recordEffectScope } from './effectScope'
+import { PausedState, TriggerOpTypes } from './operations'
 
 const targetMap = new WeakMap()
 export let activeEffect
@@ -9,12 +10,14 @@ export let shouldTrack = true
 export const trackOpBit = 1
 
 export class ReactiveEffect {
-  constructor (fn, scheduler) {
-    this.deps = []
+  deps = []
+  active = true
+  parent = undefined
+  pausedState = PausedState.resumed
+  constructor (fn, scheduler, scope) {
     this.fn = fn
-    this.parent = undefined
-    this.active = true
     this.scheduler = scheduler
+    recordEffectScope(this, scope)
   }
 
   run () {
@@ -40,6 +43,26 @@ export class ReactiveEffect {
         this.onStop()
       }
       this.active = false
+    }
+  }
+
+  update () {
+    if (this.pausedState !== PausedState.resumed) {
+      this.pausedState = PausedState.dirty
+    } else {
+      this.scheduler ? this.scheduler() : this.run()
+    }
+  }
+
+  pause () {
+    this.pausedState = PausedState.paused
+  }
+
+  resume (ignoreDirty = false) {
+    const lastPausedState = this.pausedState
+    this.pausedState = PausedState.resumed
+    if (!ignoreDirty && lastPausedState === PausedState.dirty) {
+      this.scheduler ? this.scheduler() : this.run()
     }
   }
 }
@@ -210,11 +233,12 @@ function triggerEffect (effect, debuggerEventExtraInfo) {
     if (__DEV__ && effect.onTrigger) {
       effect.onTrigger(extend({ effect }, debuggerEventExtraInfo))
     }
-    if (effect.scheduler) {
-      effect.scheduler()
-    } else {
-      effect.run()
-    }
+    // if (effect.scheduler) {
+    //   effect.scheduler()
+    // } else {
+    //   effect.run()
+    // }
+    effect.update()
   }
 }
 
