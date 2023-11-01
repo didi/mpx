@@ -104,6 +104,8 @@ function checkDelAndGetPath (path) {
         canDel = false
         break
       }
+    } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) {
+      delPath = current.parentPath
     } else {
       break
     }
@@ -160,9 +162,9 @@ function checkPrefix (keys, key) {
 }
 
 function dealRemove (path, replace) {
-  while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
-    path = path.parentPath
-  }
+  // while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
+  //   path = path.parentPath
+  // }
 
   try {
     if (replace) {
@@ -172,7 +174,7 @@ function dealRemove (path, replace) {
       path.remove()
     }
   } catch (e) {
-    console.error(e)
+    console.log(e)
   }
 }
 

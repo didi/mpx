@@ -644,7 +644,7 @@ global.currentInject = {
       }
     `
     const res = bindThis(input, { renderReduce: true })
-    const output = ['a', 'b', 'a', 'c', 'a', 'd', 'name', 'name2']
+    const output = ['b', 'a', 'c', 'a', 'd', 'name', 'name2']
     expect(res.propKeys.join('')).toBe(output.join(''))
   })
 
@@ -668,6 +668,7 @@ global.currentInject = {
 global.currentInject = {
   render: function () {
     this.a && this.a.b;
+    '' || 123 || this.b;
     this.b || this.a || '';
   }
 };`
