@@ -104,7 +104,7 @@ function checkDelAndGetPath (path) {
         canDel = false
         break
       }
-    } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) {
+    } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) { // dealRemove删除节点时需要
       delPath = current.parentPath
     } else {
       break
@@ -169,9 +169,7 @@ function dealRemove (path, replace) {
       t.validate(path, path.key, null)
       path.remove()
     }
-  } catch (e) {
-    console.log(e)
-  }
+  } catch (e) {}
 }
 
 module.exports = {
