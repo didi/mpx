@@ -19,6 +19,7 @@ module.exports = function (raw) {
   const localSrcMode = queryObj.mode
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap
   const wxsContentMap = mpx.wxsContentMap
   const renderOptimizeRules = mpx.renderOptimizeRules
   const usingComponents = queryObj.usingComponents || []
@@ -48,6 +49,7 @@ module.exports = function (raw) {
     hasComment,
     isNative,
     isComponent: !!componentsMap[resourcePath],
+    isPage: !!pagesMap[resourcePath],
     mode,
     env,
     srcMode: localSrcMode || globalSrcMode,

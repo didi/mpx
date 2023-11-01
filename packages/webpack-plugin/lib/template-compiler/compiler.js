@@ -1817,37 +1817,40 @@ function processAliAddComponentRootView (el, options) {
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  if (srcMode === 'wx' && options.isComponent) {
-    // 处理组件时
-    if (mode === 'wx' && options.hasVirtualHost) {
-      // wx组件注入virtualHost配置
-      !meta.options && (meta.options = {})
-      meta.options.virtualHost = true
-    }
-    if ((mode === 'web') && !options.hasVirtualHost) {
-      // ali组件根节点实体化
-      const rootView = createASTElement('view', [
-        {
-          name: 'class',
-          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-        },
-        {
-          name: 'v-on',
-          value: '$listeners'
-        }
-      ])
-      rootView.hasEvent = true
-      processElement(rootView, rootView, options, meta)
-      return rootView
-    }
-  }
-  if (srcMode === 'wx' && mode === 'web' && options.isPage) {
-    return createASTElement('div', [
-      {
-        name: 'class',
-        value: 'mpx-root-view'
+  if (srcMode === 'wx') {
+    if (options.isComponent) {
+      if ((mode === 'wx') && options.hasVirtualHost) {
+        // wx组件注入virtualHost配置
+        !meta.options && (meta.options = {})
+        meta.options.virtualHost = true
       }
-    ])
+      if ((mode === 'web') && !options.hasVirtualHost) {
+        // ali组件根节点实体化
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+          },
+          {
+            name: 'v-on',
+            value: '$listeners'
+          }
+        ])
+        rootView.hasEvent = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
+    }
+    if (options.isPage) {
+      if (mode === 'web') {
+        return createASTElement('div', [
+          {
+            name: 'class',
+            value: 'page'
+          }
+        ])
+      }
+    }
   }
   return getTempNode()
 }
