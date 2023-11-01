@@ -3,6 +3,7 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
+const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
@@ -1750,68 +1751,105 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processRootViewEventHack (el, options, root) {
-  // 只处理组件根节点
-  if (!(options.isComponent && el === root && isRealNode(el))) {
-    return
+function processAliAddComponentRootView (el, options) {
+  const processAttrsConditions = [
+    { condition: /^(on|catch)Tap$/, action: 'clone' },
+    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
+    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
+    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
+    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
+    { condition: /^(on|catch)LongTap$/, action: 'clone' },
+    { condition: /^data-/, action: 'clone' },
+    { condition: /^id$/, action: 'clone' },
+    { condition: /^style$/, action: 'move' },
+    { condition: /^slot$/, action: 'move' }
+  ]
+  const processAppendAttrsRules = [
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+  ]
+  const newElAttrs = []
+  const allAttrs = cloneAttrsList(el.attrsList)
+
+  function processClone (attr) {
+    newElAttrs.push(attr)
   }
-  const { proxyComponentEvents } = options
-  if (proxyComponentEvents) {
-    proxyComponentEvents.forEach((type) => {
-      addAttrs(el, [{
-        name: type,
-        value: '__proxyEvent'
-      }])
+
+  function processMove (attr) {
+    getAndRemoveAttr(el, attr.name)
+    newElAttrs.push(attr)
+  }
+
+  function processAppendRules (el) {
+    processAppendAttrsRules.forEach((rule) => {
+      const getNeedAppendAttrValue = el.attrsMap[rule.name]
+      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
+      newElAttrs.push({
+        name: rule.name,
+        value
+      })
     })
   }
-}
 
-function processRootViewStyleClassHack (el, options, root) {
-  // 处理组件根节点
-  if (options.isComponent && el === root && isRealNode(el)) {
-    const processor = ({ name, value, typeName }) => {
-      const sep = name === 'style' ? ';' : ' '
-      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
-      return [name, value]
-    }
-
-    ['style', 'class'].forEach((type) => {
-      const exp = getAndRemoveAttr(el, type).val
-      const typeName = type === 'class' ? 'className' : type
-      const [newName, newValue] = processor({
-        name: type,
-        value: exp,
-        typeName
-      })
-      if (newValue !== undefined) {
-        addAttrs(el, [{
-          name: newName,
-          value: newValue
-        }])
+  processAttrsConditions.forEach(item => {
+    const matcher = normalizeCondition(item.condition)
+    allAttrs.forEach((attr) => {
+      if (matcher(attr.name)) {
+        if (item.action === 'clone') {
+          processClone(attr)
+        } else if (item.action === 'move') {
+          processMove(attr)
+        }
       }
     })
+  })
+
+  processAppendRules(el)
+  const componentWrapView = createASTElement('view', newElAttrs)
+  moveBaseDirective(componentWrapView, el)
+  if (el.is && el.components) {
+    el = postProcessComponentIs(el)
   }
+
+  replaceNode(el, componentWrapView, true)
+  addChild(componentWrapView, el)
+  return componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  if (srcMode === 'wx' && options.isComponent) {
-    // 处理组件时
-    if (mode === 'wx' && options.hasVirtualHost) {
-      // wx组件注入virtualHost配置
-      !meta.options && (meta.options = {})
-      meta.options.virtualHost = true
+  if (srcMode === 'wx') {
+    if (options.isComponent) {
+      if ((mode === 'wx') && options.hasVirtualHost) {
+        // wx组件注入virtualHost配置
+        !meta.options && (meta.options = {})
+        meta.options.virtualHost = true
+      }
+      if ((mode === 'web') && !options.hasVirtualHost) {
+        // ali组件根节点实体化
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+          },
+          {
+            name: 'v-on',
+            value: '$listeners'
+          }
+        ])
+        rootView.hasEvent = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
     }
-    if ((mode === 'ali' || mode === 'web') && !options.hasVirtualHost) {
-      // ali组件根节点实体化
-      const rootView = createASTElement('view', [
-        {
-          name: 'class',
-          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-        }
-      ])
-      processElement(rootView, rootView, options, meta)
-      return rootView
+    if (options.isPage) {
+      if (mode === 'web') {
+        return createASTElement('div', [
+          {
+            name: 'class',
+            value: 'page'
+          }
+        ])
+      }
     }
   }
   return getTempNode()
@@ -1991,16 +2029,6 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
-  const transAli = mode === 'ali' && srcMode === 'wx'
-  const transWeb = mode === 'web' && srcMode === 'wx'
-  if (transAli) {
-    processRootViewStyleClassHack(el, options, root)
-    processRootViewEventHack(el, options, root)
-  }
-  if (transWeb) {
-    processRootViewEventHack(el, options, root)
-  }
-
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2019,6 +2047,8 @@ function processElement (el, root, options, meta) {
   processMpxTagName(el)
 
   processInjectWxs(el, meta)
+
+  const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
@@ -2071,7 +2101,11 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    el = postProcessComponentIs(el)
+    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+      el = processAliAddComponentRootView(el, options)
+    } else {
+      el = postProcessComponentIs(el)
+    }
   }
   postProcessFor(el)
   postProcessIf(el)
