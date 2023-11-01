@@ -31,28 +31,6 @@ function checkBindThis (path) {
     !hash[path.node.name]
 }
 
-// 获取 Logical container 中存在多少个Identifier
-function getIdentifiersCount (path) {
-  let count = 0
-  let current = path
-  while (t.isLogicalExpression(current.container)) {
-    current = current.parentPath
-  }
-
-  function checkIdentifiers (cur) {
-    ['left', 'right'].forEach(key => {
-      if (t.isLogicalExpression(cur[key])) {
-        checkIdentifiers(cur[key])
-      } else if (!t.isLiteral(cur[key])) {
-        count++
-      }
-    })
-  }
-  checkIdentifiers(current.node)
-
-  return count
-}
-
 // 计算访问路径
 function calPropName (path) {
   let current = path.parentPath
@@ -119,10 +97,11 @@ function checkDelAndGetPath (path) {
         delPath = current.parentPath
       }
     } else if (t.isLogicalExpression(current.container)) { // case: a || ''
-      const count = getIdentifiersCount(current)
-      if (count === 1) {
+      const key = current.key === 'left' ? 'right' : 'left'
+      if (t.isLiteral(current.parent[key])) {
         delPath = current.parentPath
       } else {
+        canDel = false
         break
       }
     } else {
@@ -235,13 +214,15 @@ module.exports = {
         ) {
           const scopeBinding = path.scope.hasBinding(path.node.name)
           // 删除局部作用域的变量
-          if (scopeBinding && renderReduce) {
-            const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
-            if (canDel && !ignore) {
-              delPath.delInfo = {
-                immediate: true,
-                canDel,
-                replace
+          if (scopeBinding) {
+            if (renderReduce) {
+              const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
+              if (canDel && !ignore) {
+                delPath.delInfo = {
+                  isLocal: true,
+                  canDel,
+                  replace
+                }
               }
             }
             return
@@ -313,11 +294,11 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, immediate, replace } = path.delInfo
+          const { keyPath, canDel, isLocal, replace } = path.delInfo
           delete path.delInfo
 
           if (canDel) {
-            if (immediate) { // 局部作用域里的变量，可直接删除
+            if (isLocal) { // 局部作用域里的变量，可直接删除
               dealRemove(path, replace)
               return
             }
