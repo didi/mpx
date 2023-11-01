@@ -1,8 +1,9 @@
 function makeMap (arr) {
+  const map = Object.create(null)
   return arr.reduce((obj, item) => {
     obj[item] = true
     return obj
-  }, {})
+  }, map)
 }
 
 function findItem (arr = [], key) {
