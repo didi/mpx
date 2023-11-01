@@ -299,5 +299,22 @@ describe('reactivity/effectScope', () => {
 
     scope.resume()
     expect(doubled.value).toBe(6)
+
+    const scope2 = new EffectScope()
+    const r = reactive({count: 0})
+    let dummy
+    scope2.run(() => {
+      effect(() => {
+        dummy = r.count
+      })
+      expect(dummy).toBe(0)
+    })
+    r.count++
+    expect(dummy).toBe(1)
+    scope2.pause()
+    r.count++
+    expect(dummy).toBe(1)
+    scope2.resume()
+    expect(dummy).toBe(2)
   })
 })
