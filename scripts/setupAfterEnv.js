@@ -38,6 +38,29 @@ expect.extend({
             : ' but no warning was recorded.')
       }
     }
+  },
+
+  toHaveBeenWarnedTimes(received, n) {
+    asserted.add(received)
+    let found = 0
+    warn.mock.calls.forEach(args => {
+      if (args[0].includes(received)) {
+        found++
+      }
+    })
+
+    if (found === n) {
+      return {
+        pass: true,
+        message: () => `expected "${received}" to have been warned ${n} times.`
+      }
+    } else {
+      return {
+        pass: false,
+        message: () =>
+          `expected "${received}" to have been warned ${n} times but got ${found}.`
+      }
+    }
   }
 })
 
