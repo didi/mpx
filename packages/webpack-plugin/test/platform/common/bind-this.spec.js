@@ -644,7 +644,61 @@ global.currentInject = {
       }
     `
     const res = bindThis(input, { renderReduce: true })
-    const output = ['a', 'b', 'a', 'c', 'a', 'd', 'name', 'name2']
+    const output = ['b', 'a', 'c', 'a', 'd', 'name', 'name2']
     expect(res.propKeys.join('')).toBe(output.join(''))
+  })
+
+  it('should logicalExpression is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          a
+          a || ''
+          a && a.b
+          b
+          b || 123 || ''
+          '456' || b || ''
+          '' || 123 || b
+          b || a || ''
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: false, renderReduce: true }).code
+    const output = `
+global.currentInject = {
+  render: function () {
+    this.a && this.a.b;
+    '' || 123 || this.b;
+    this.b || this.a || '';
+  }
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
+  })
+
+  it('should scope var is correct', function () {
+    const input = `
+      global.currentInject = {
+        render: function () {
+          this._i(list, function (item, index) {
+            item;
+            index;
+            item.a ? "" : item.b;
+            item.a || "";
+            item.a || item.b;
+          });
+        }
+      }
+    `
+    const res = bindThis(input, { needCollect: false, renderReduce: true }).code
+    const output = `
+global.currentInject = {
+  render: function () {
+    this._i(this.list, function (item, index) {
+      item.a ? "" : item.b;
+      item.a || item.b;
+    });
+  }
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
 })
