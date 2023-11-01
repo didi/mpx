@@ -162,10 +162,6 @@ function checkPrefix (keys, key) {
 }
 
 function dealRemove (path, replace) {
-  // while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
-  //   path = path.parentPath
-  // }
-
   try {
     if (replace) {
       path.replaceWith(t.stringLiteral(''))
