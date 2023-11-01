@@ -19,6 +19,7 @@ module.exports = function (raw) {
   const localSrcMode = queryObj.mode
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const componentsMap = mpx.componentsMap[packageName]
+  const pagesMap = mpx.pagesMap
   const wxsContentMap = mpx.wxsContentMap
   const renderOptimizeRules = mpx.renderOptimizeRules
   const usingComponents = queryObj.usingComponents || []
@@ -40,14 +41,6 @@ module.exports = function (raw) {
     )
   }
 
-  let proxyComponentEvents = null
-  for (const item of mpx.proxyComponentEventsRules) {
-    if (matchCondition(resourcePath, item)) {
-      const eventsRaw = item.events
-      proxyComponentEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
-      break
-    }
-  }
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
@@ -56,6 +49,7 @@ module.exports = function (raw) {
     hasComment,
     isNative,
     isComponent: !!componentsMap[resourcePath],
+    isPage: !!pagesMap[resourcePath],
     mode,
     env,
     srcMode: localSrcMode || globalSrcMode,
@@ -70,8 +64,7 @@ module.exports = function (raw) {
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
-    proxyComponentEvents
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
   if (meta.wxsContentMap) {

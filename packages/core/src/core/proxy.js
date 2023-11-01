@@ -607,7 +607,9 @@ export default class MpxProxy {
 
 export let currentInstance = null
 
-export const getCurrentInstance = () => currentInstance?.target
+export const getCurrentInstance = () => {
+  return currentInstance && { proxy: currentInstance?.target }
+}
 
 export const setCurrentInstance = (instance) => {
   currentInstance = instance
