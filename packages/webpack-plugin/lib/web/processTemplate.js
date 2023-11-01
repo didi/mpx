@@ -2,23 +2,7 @@ const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
 const parseRequest = require('../utils/parse-request')
-// const { matchCondition } = require('../utils/match-condition')
-
-function calculateRootEleChild (arr) {
-  if (!arr) {
-    return 0
-  }
-  return arr.reduce((total, item) => {
-    if (item.type === 1) {
-      if (item.tag === 'template') {
-        total += calculateRootEleChild(item.children)
-      } else {
-        total += 1
-      }
-    }
-    return total
-  }, 0)
-}
+const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function (template, {
   loaderContext,
@@ -39,8 +23,9 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    webConfig
-    // autoVirtualHostRules
+    webConfig,
+    proxyComponentEventsRules,
+    autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -53,7 +38,7 @@ module.exports = function (template, {
     const idName = el?.match(/#(.*)/)?.[1] || 'app'
     template = {
       tag: 'template',
-      content: `<div id="${idName}" class="app"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
+      content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
@@ -75,6 +60,16 @@ module.exports = function (template, {
       }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
+
+        let proxyComponentEvents = null
+        for (const item of proxyComponentEventsRules) {
+          if (matchCondition(resourcePath, item)) {
+            const eventsRaw = item.events
+            proxyComponentEvents = Array.isArray(eventsRaw) ? eventsRaw : [eventsRaw]
+            break
+          }
+        }
+
         const { root, meta } = templateCompiler.parse(template.content, {
           warn: (msg) => {
             loaderContext.emitWarning(
@@ -104,9 +99,9 @@ module.exports = function (template, {
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
           globalComponents: [],
           // web模式下实现抽象组件
-          componentGenerics
-          // todo 后续输出web也基于autoVirtualHostRules决定是否添加root wrapper
-          // hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
+          componentGenerics,
+          proxyComponentEvents,
+          hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap
@@ -125,18 +120,6 @@ module.exports = function (template, {
         }
         if (meta.genericsInfo) {
           genericsInfo = meta.genericsInfo
-        }
-        // 输出H5有多个root element时, 使用mpx-root-view标签包裹
-        // todo 后续输出web也基于autoVirtualHostRules决定是否添加root wrapper
-        if (root.tag === 'temp-node') {
-          const childLen = calculateRootEleChild(root.children)
-          if (childLen >= 2) {
-            root.tag = 'div'
-            templateCompiler.addAttrs(root, [{
-              name: 'class',
-              value: 'mpx-root-view'
-            }])
-          }
         }
         return templateCompiler.serialize(root)
       }

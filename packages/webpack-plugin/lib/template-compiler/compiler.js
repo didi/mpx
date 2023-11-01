@@ -3,46 +3,18 @@ const he = require('he')
 const config = require('../config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
-const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
-
-/**
- * Make a map and return a function for checking if a key
- * is in that map.
- */
-function makeMap (str, expectsLowerCase) {
-  const map = Object.create(null)
-  const list = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase
-    ? function (val) {
-      return map[val.toLowerCase()]
-    }
-    : function (val) {
-      return map[val]
-    }
-}
+const makeMap = require('../utils/make-map')
+const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 
 const no = function () {
   return false
 }
-
-// HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
-// Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-const isNonPhrasingTag = makeMap(
-  'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
-  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
-  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track'
-)
 
 /*!
  * HTML Parser By John Resig (ejohn.org)
@@ -653,6 +625,9 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    data: {
+      usingComponents: options.usingComponents
+    },
     warn: _warn,
     error: _error
   })
@@ -878,6 +853,7 @@ function moveBaseDirective (target, from, isDelete = true) {
 }
 
 function stringify (str) {
+  if (mode === 'web') str = str.replace(/'/g, '"')
   return JSON.stringify(str)
 }
 
@@ -988,7 +964,7 @@ function parseFuncStr2 (str) {
       if (subIndex) {
         const index1 = ret.index + subIndex
         const index2 = index1 + 6
-        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+        args = args.substring(0, index1) + stringify(eventIdentifier) + args.substring(index2)
       }
     }
     return {
@@ -1016,7 +992,7 @@ function stringifyWithResolveComputed (modelValue) {
       computedStack.push(char)
       if (computedStack.length === 1) {
         fragment += '.'
-        result.push(JSON.stringify(fragment))
+        result.push(stringify(fragment))
         fragment = ''
         continue
       }
@@ -1033,7 +1009,7 @@ function stringifyWithResolveComputed (modelValue) {
     fragment += char
   }
   if (fragment !== '') {
-    result.push(JSON.stringify(fragment))
+    result.push(stringify(fragment))
   }
   return result.join('+')
 }
@@ -1718,7 +1694,7 @@ function processWebExternalClassesHack (el, options) {
     options.externalClasses.forEach((className) => {
       const index = classNames.indexOf(className)
       if (index > -1) {
-        replacements.push(`$attrs[${JSON.stringify(className)}]`)
+        replacements.push(`$attrs[${stringify(className)}]`)
         classNames.splice(index, 1)
       }
     })
@@ -1752,13 +1728,13 @@ function processWebExternalClassesHack (el, options) {
         options.externalClasses.forEach((className) => {
           const index = classNames.indexOf(className)
           if (index > -1) {
-            replacements.push(`$attrs[${JSON.stringify(className)}]`)
+            replacements.push(`$attrs[${stringify(className)}]`)
             classNames.splice(index, 1)
           }
         })
 
         if (classNames.length) {
-          replacements.unshift(JSON.stringify(classNames.join(' ')))
+          replacements.unshift(stringify(classNames.join(' ')))
         }
 
         addAttrs(el, [{
@@ -1796,89 +1772,69 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliAddComponentRootView (el, options) {
-  const processAttrsConditions = [
-    { condition: /^(on|catch)Tap$/, action: 'clone' },
-    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
-    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
-    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
-    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
-    { condition: /^(on|catch)LongTap$/, action: 'clone' },
-    { condition: /^data-/, action: 'clone' },
-    { condition: /^style$/, action: 'move' },
-    { condition: /^slot$/, action: 'move' }
-  ]
-  const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
-  ]
-  const newElAttrs = []
-  const allAttrs = cloneAttrsList(el.attrsList)
-
-  function processClone (attr) {
-    newElAttrs.push(attr)
+function processRootViewEventHack (el, options, root) {
+  // 只处理组件根节点
+  if (!(options.isComponent && el === root && isRealNode(el))) {
+    return
   }
-
-  function processMove (attr) {
-    getAndRemoveAttr(el, attr.name)
-    newElAttrs.push(attr)
-  }
-
-  function processAppendRules (el) {
-    processAppendAttrsRules.forEach((rule) => {
-      const getNeedAppendAttrValue = el.attrsMap[rule.name]
-      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
-      newElAttrs.push({
-        name: rule.name,
-        value
-      })
+  const { proxyComponentEvents } = options
+  if (proxyComponentEvents) {
+    proxyComponentEvents.forEach((type) => {
+      addAttrs(el, [{
+        name: type,
+        value: '__proxyEvent'
+      }])
     })
   }
+}
 
-  processAttrsConditions.forEach(item => {
-    const matcher = normalizeCondition(item.condition)
-    allAttrs.forEach((attr) => {
-      if (matcher(attr.name)) {
-        if (item.action === 'clone') {
-          processClone(attr)
-        } else if (item.action === 'move') {
-          processMove(attr)
-        }
+function processRootViewStyleClassHack (el, options, root) {
+  // 处理组件根节点
+  if (options.isComponent && el === root && isRealNode(el)) {
+    const processor = ({ name, value, typeName }) => {
+      const sep = name === 'style' ? ';' : ' '
+      value = value ? `{{${typeName}||''}}${sep}${value}` : `{{${typeName}||''}}`
+      return [name, value]
+    }
+
+    ['style', 'class'].forEach((type) => {
+      const exp = getAndRemoveAttr(el, type).val
+      const typeName = type === 'class' ? 'className' : type
+      const [newName, newValue] = processor({
+        name: type,
+        value: exp,
+        typeName
+      })
+      if (newValue !== undefined) {
+        addAttrs(el, [{
+          name: newName,
+          value: newValue
+        }])
       }
     })
-  })
-
-  processAppendRules(el)
-  const componentWrapView = createASTElement('view', newElAttrs)
-  moveBaseDirective(componentWrapView, el)
-  if (el.is && el.components) {
-    el = postProcessComponentIs(el)
   }
-
-  replaceNode(el, componentWrapView, true)
-  addChild(componentWrapView, el)
-  return componentWrapView
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  if (options.isComponent) {
+  if (srcMode === 'wx' && options.isComponent) {
     // 处理组件时
     if (mode === 'wx' && options.hasVirtualHost) {
       // wx组件注入virtualHost配置
       !meta.options && (meta.options = {})
       meta.options.virtualHost = true
     }
-    // if (mode === 'ali' && !options.hasVirtualHost) {
-    //   // ali组件根节点实体化
-    //   let rootView = createASTElement('view', [
-    //     {
-    //       name: 'class',
-    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-    //     }
-    //   ])
-    //   processElement(rootView, rootView, options, meta)
-    //   return rootView
-    // }
+    if ((mode === 'ali' || mode === 'web') && !options.hasVirtualHost) {
+      // ali组件根节点实体化
+      const rootView = createASTElement('view', [
+        {
+          name: 'class',
+          value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
@@ -2057,6 +2013,16 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
+  const transAli = mode === 'ali' && srcMode === 'wx'
+  const transWeb = mode === 'web' && srcMode === 'wx'
+  if (transAli) {
+    processRootViewStyleClassHack(el, options, root)
+    processRootViewEventHack(el, options, root)
+  }
+  if (transWeb) {
+    processRootViewEventHack(el, options, root)
+  }
+
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2075,8 +2041,6 @@ function processElement (el, root, options, meta) {
   processMpxTagName(el)
 
   processInjectWxs(el, meta)
-
-  const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
@@ -2129,11 +2093,7 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
-      el = processAliAddComponentRootView(el, options)
-    } else {
-      el = postProcessComponentIs(el)
-    }
+    el = postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)

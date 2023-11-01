@@ -31,18 +31,22 @@ type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 // Mpx types
 type Data = object | (() => object)
 
-type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
+type PropConstructor<T = any> = {
+  new (...args: any[]): T & {};
+} | {
+  (): T;
+}
 
-interface PropOpt {
-  type: PropType
-  optionalTypes?: Array<PropType>
-  value?: any
+export type PropType<T> = PropConstructor<T>
 
-  observer? (value: any, old: any, changedPath: string): void
+type FullPropType<T> = {
+  type: PropType<T>;
+  value?: T;
+  optionalTypes?: PropType<T>[];
 }
 
 interface Properties {
-  [key: string]: WechatMiniprogram.Component.AllProperty
+  [key: string]: WechatMiniprogram.Component.AllProperty | PropType<any> | FullPropType<any>
 }
 
 interface Methods {
@@ -78,8 +82,12 @@ type PropValueType<Def> = Def extends {
   }
   ? T
   : Def extends (...args: any[]) => infer T
-    ? T
-    : any;
+  ? T
+  : Def extends FullPropType<infer T>
+  ? T
+  : Def extends PropType<infer T>
+  ? T
+  : any;
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: PropValueType<T[K]>
@@ -242,6 +250,11 @@ interface AnyConstructor {
   prototype: any
 }
 
+interface WebviewConfig {
+  hostWhitelists?: Array<string>
+  apiImplementations?: object
+}
+
 interface MpxConfig {
   useStrictDiff: boolean
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
@@ -251,7 +264,8 @@ interface MpxConfig {
   proxyEventHandler: (e: Event) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
-  webRouteConfig: object
+  webRouteConfig: object,
+  webviewConfig?: WebviewConfig
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

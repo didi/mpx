@@ -98,6 +98,7 @@ const sidebar = {
     'builtIn',
     'reactivity-api',
     'composition-api',
+    'optional-api',
     'extend'
   ],
   '/articles/': [

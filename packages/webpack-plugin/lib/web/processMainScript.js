@@ -19,7 +19,7 @@ module.exports = function (script, {
 }, callback) {
   const { i18n, webConfig } = loaderContext.getMpx()
 
-  const { pagesMap, firstPage, globalTabBar } = buildPagesMap({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr })
+  const { pagesMap, firstPage, globalTabBar } = buildPagesMap({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr, jsonConfig })
 
   const componentsMap = buildComponentsMap({ localComponentsMap, loaderContext })
 

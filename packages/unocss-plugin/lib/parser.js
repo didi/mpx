@@ -3,7 +3,7 @@ const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/temp
 function parseClasses (content) {
   const output = []
   if (!content) { return output }
-  const regex = /class\s*=\s*"[^"]+"|class\s*=\s*'[^']+'/igm
+  const regex = /class\s*=\s*"[^"]*"|class\s*=\s*'[^']*'/igm
   let match
   while (match = regex.exec(content)) {
     const raw = match[0]
@@ -62,7 +62,7 @@ function parseCommentConfig (content) {
 function parseStrings (content) {
   const output = []
   if (!content) { return output }
-  const regex = /'[^']+'|"[^"]+"/gm
+  const regex = /'[^']*'|"[^"]*"/gm
   let match
   while (match = regex.exec(content)) {
     const raw = match[0]
