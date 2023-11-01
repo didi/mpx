@@ -275,4 +275,29 @@ describe('reactivity/effectScope', () => {
       expect(getCurrentScope()).toBe(parentScope)
     })
   })
+
+  it('pause/resume should work', () => {
+    const scope = new EffectScope()
+    const counter = ref(1)
+    const spy = jest.fn(() => {
+      return counter.value * 2
+    })
+
+    let doubled
+    scope.run(() => {
+      doubled = computed(spy)
+    })
+    expect(doubled.value).toBe(2)
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    counter.value++
+    expect(doubled.value).toBe(4)
+
+    scope.pause()
+    counter.value++
+    expect(doubled.value).toBe(4)
+
+    scope.resume()
+    expect(doubled.value).toBe(6)
+  })
 })
