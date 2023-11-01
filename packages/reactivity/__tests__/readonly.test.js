@@ -4,7 +4,8 @@ import {
   isReadonly,
   effect,
   isProxy,
-  reactive
+  reactive,
+  toRaw
 } from '../src'
 
 describe('reactivity/readonly', () => {
@@ -303,6 +304,38 @@ describe('reactivity/readonly', () => {
         })
       }
     })
+  })
+
+  test('calling reactive on an readonly should return readonly', () => {
+    const a = readonly({})
+    const b = reactive(a)
+    expect(isReadonly(b)).toBe(true)
+    // should point to same original
+    expect(toRaw(a)).toBe(toRaw(b))
+  })
+
+  test('calling readonly on a reactive object should return readonly', () => {
+    const a = reactive({})
+    const b = readonly(a)
+    expect(isReadonly(b)).toBe(true)
+    // should point to same original
+    expect(toRaw(a)).toBe(toRaw(b))
+  })
+
+  test('readonly should track and trigger if wrapping reactive original', () => {
+    const a = reactive({ n: 1 })
+    const b = readonly(a)
+    // should return true since it's wrapping a reactive source
+    expect(isReactive(b)).toBe(true)
+
+    let dummy
+    effect(() => {
+      dummy = b.n
+    })
+    expect(dummy).toBe(1)
+    a.n++
+    expect(b.n).toBe(2)
+    expect(dummy).toBe(2)
   })
 
   test('non-observable values', () => {

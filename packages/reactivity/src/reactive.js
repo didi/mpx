@@ -73,7 +73,8 @@ function createReactiveObject (target, baseHandlers, proxyMap) {
   }
   // when target is already a Proxy, return it
   if (
-    target[ReactiveFlags.RAW]
+    target[ReactiveFlags.RAW] &&
+    !(isReadonly && target[ReactiveFlags.IS_REACTIVE])
   ) {
     return target
   }
@@ -94,6 +95,9 @@ function createReactiveObject (target, baseHandlers, proxyMap) {
 }
 
 export function isReactive (value) {
+  if (isReadonly(value)) {
+    return isReactive(value[ReactiveFlags.RAW])
+  }
   return !!(value && value[ReactiveFlags.IS_REACTIVE])
 }
 
