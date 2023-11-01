@@ -50,6 +50,9 @@ function createArrayInstrumentations () {
     instrumentations[key] = function (...args) {
       // avoid infinite recursion
       const arr = toRaw(this)
+      for (let i = 0, l = this.length; i < l; i++) {
+        track(arr, i + '')
+      }
       // we run the method using the original args first (which may be reactive)
       const res = arr[key](...args)
       if (res === -1 || res === false) {
@@ -200,7 +203,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
 
   ownKeys (target) {
     const result = Reflect.ownKeys(target)
-    track(target, ITERATE_KEY)
+    track(target, isArray(target) ? 'length' : ITERATE_KEY)
     return result
   }
 
