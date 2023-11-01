@@ -4,7 +4,8 @@ import {
   isObject,
   isIntegerKey,
   isSymbol,
-  hasChanged
+  hasChanged,
+  makeMap
 } from '@mpxjs/utils'
 import {
   reactive,
@@ -27,6 +28,8 @@ import {
 import { TriggerOpTypes } from './operations'
 import { warn } from './warning'
 import { isRef } from './ref'
+
+const isNonTrackableKeys = /*#__PURE__*/ makeMap(['__proto__', '__mpx_isRef'])
 
 const builtInSymbols = new Set(
   /* #__PURE__ */
@@ -126,8 +129,7 @@ class BaseReactiveHandler {
     }
 
     const res = Reflect.get(target, key, receiver)
-
-    if (builtInSymbols.has(key)) {
+    if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys[key]) {
       return res
     }
 

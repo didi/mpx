@@ -30,6 +30,7 @@ class ComputedRefImpl {
     dep = undefined
     _value
     _dirty = true
+    __mpx_isRef = true
     constructor (getter, setter, isReadonly) {
       this._getter = getter
       this._setter = setter

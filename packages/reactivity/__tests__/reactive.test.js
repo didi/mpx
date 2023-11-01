@@ -1,5 +1,7 @@
 import { effect } from '../src'
 import { reactive, isReactive, toRaw, markRaw, set, del } from '../src/reactive'
+import { ref, isRef } from '../src/ref'
+import { computed } from '../src/computed'
 
 describe('test reactivity/reactive', () => {
   test('Object', () => {
@@ -17,6 +19,19 @@ describe('test reactivity/reactive', () => {
     expect(Object.keys(observed)).toEqual(['foo'])
   })
 
+  test('proto', () => {
+    const obj = {}
+    const reactiveObj = reactive(obj)
+    expect(isReactive(reactiveObj)).toBe(true)
+    // read prop of reactiveObject will cause reactiveObj[prop] to be reactive
+    const prototype = reactiveObj['__proto__']
+    const otherObj = { data: ['a'] }
+    expect(isReactive(otherObj)).toBe(false)
+    const reactiveOther = reactive(otherObj)
+    expect(isReactive(reactiveOther)).toBe(true)
+    expect(reactiveOther.data[0]).toBe('a')
+  })
+
   test('nested reactives', () => {
     const original = {
       nested: {
@@ -28,6 +43,62 @@ describe('test reactivity/reactive', () => {
     expect(isReactive(observed.nested)).toBe(true)
     expect(isReactive(observed.array)).toBe(true)
     expect(isReactive(observed.array[0])).toBe(true)
+  })
+
+  test('should not observing subtypes of IterableCollections(Map, Set)', () => {
+    // subtypes of Map
+    class CustomMap extends Map {}
+    const cmap = reactive(new CustomMap())
+
+    expect(cmap).toBeInstanceOf(Map)
+    expect(isReactive(cmap)).toBe(false)
+
+    cmap.set('key', {})
+    expect(isReactive(cmap.get('key'))).toBe(false)
+
+    // subtypes of Set
+    class CustomSet extends Set {}
+    const cset = reactive(new CustomSet())
+
+    expect(cset).toBeInstanceOf(Set)
+    expect(isReactive(cset)).toBe(false)
+
+    let dummy
+    effect(() => (dummy = cset.has('value')))
+    expect(dummy).toBe(false)
+    cset.add('value')
+    expect(dummy).toBe(false)
+    cset.delete('value')
+    expect(dummy).toBe(false)
+  })
+
+  test('should not observing subtypes of WeakCollections(WeakMap, WeakSet)', () => {
+    // subtypes of WeakMap
+    class CustomMap extends WeakMap {}
+    const cmap = reactive(new CustomMap())
+
+    expect(cmap).toBeInstanceOf(WeakMap)
+    expect(isReactive(cmap)).toBe(false)
+
+    const key = {}
+    cmap.set(key, {})
+    expect(isReactive(cmap.get(key))).toBe(false)
+
+    // subtypes of WeakSet
+    class CustomSet extends WeakSet {}
+    const cset = reactive(new CustomSet())
+
+    expect(cset).toBeInstanceOf(WeakSet)
+    expect(isReactive(cset)).toBe(false)
+
+    // ======================
+    let dummy
+    effect(() => (dummy = cset.has(key)))
+    expect(dummy).toBe(false)
+    cset.add(key)
+    expect(dummy).toBe(false)
+    cset.delete(key)
+    expect(dummy).toBe(false)
   })
 
   test('observed value should proxy mutations to original (Object)', () => {
@@ -103,6 +174,44 @@ describe('test reactivity/reactive', () => {
     const raw = toRaw(obj)
     expect(raw).toBe(obj)
     expect(raw).not.toBe(toRaw(original))
+  })
+
+  test('should not unwrap Ref<T>', () => {
+    const observedNumberRef = reactive(ref(1))
+    const observedObjectRef = reactive(ref({ foo: 1 }))
+
+    expect(isRef(observedNumberRef)).toBe(true)
+    expect(isRef(observedObjectRef)).toBe(true)
+  })
+
+  test('should unwrap computed refs', () => {
+    // readonly
+    const a = computed(() => 1)
+    // writable
+    const b = computed({
+      get: () => 1,
+      set: () => {}
+    })
+    const obj = reactive({ a, b })
+    // check type
+    obj.a + 1
+    obj.b + 1
+    expect(typeof obj.a).toBe(`number`)
+    expect(typeof obj.b).toBe(`number`)
+  })
+
+  test('should allow setting property from a ref to another ref', () => {
+    const foo = ref(0)
+    const bar = ref(1)
+    const observed = reactive({ a: foo })
+    const dummy = computed(() => observed.a)
+    expect(dummy.value).toBe(0)
+
+    observed.a = bar
+    expect(dummy.value).toBe(1)
+
+    bar.value++
+    expect(dummy.value).toBe(2)
   })
 
   test('non-observable values', () => {
