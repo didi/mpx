@@ -1,6 +1,7 @@
 import { ref, isRef, unref, shallowRef, toRef, toRefs, triggerRef, customRef } from '../src/ref'
 import { isShallow, reactive, isReadonly, shallowReactive, readonly, isReactive } from '../src/reactive'
 import { effect } from '../src/effect'
+import { computed } from '../src/computed'
 
 describe('reactivity/ref', () => {
   it('should hold a value', () => {
@@ -222,7 +223,7 @@ describe('reactivity/ref', () => {
 
   test('isRef', () => {
     expect(isRef(ref(1))).toBe(true)
-
+    expect(isRef(computed(() => 1))).toBe(true)
     expect(isRef(0)).toBe(false)
     expect(isRef(1)).toBe(false)
     expect(isRef({ value: 0 })).toBe(false)
