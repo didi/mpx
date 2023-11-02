@@ -10,22 +10,22 @@ export function reactive (target) {
   if (isReadonly(target)) {
     return target
   }
-  return createReactiveObject(target, mutableHandlers, reactiveMap)
+  return createReactiveObject(target, false, mutableHandlers, reactiveMap)
 }
 
 export function shallowReactive (target) {
   if (isReadonly(target)) {
     return target
   }
-  return createReactiveObject(target, shallowReactiveHandlers, shallowReactiveMap)
+  return createReactiveObject(target, false, shallowReactiveHandlers, shallowReactiveMap)
 }
 
 export function readonly (target) {
-  return createReactiveObject(target, readonlyHandlers, readonlyMap)
+  return createReactiveObject(target, true, readonlyHandlers, readonlyMap)
 }
 
 export function shallowReadonly (target) {
-  return createReactiveObject(target, shallowReadonlyHandlers, shallowReadonlyMap)
+  return createReactiveObject(target, true, shallowReadonlyHandlers, shallowReadonlyMap)
 }
 
 export function isProxy (target) {
@@ -61,7 +61,7 @@ function targetTypeMap (rawType) {
   }
 }
 
-function createReactiveObject (target, baseHandlers, proxyMap) {
+function createReactiveObject (target, isReadonly, baseHandlers, proxyMap) {
   if (!isObject(target)) {
     if (__DEV__) {
       console.warn(`value cannot be made reactive: ${String(target)}`)
