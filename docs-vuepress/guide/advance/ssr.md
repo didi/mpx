@@ -3,10 +3,10 @@
 
 ### 配置使用 SSR
 ![Vue ssr流程](http://img-hxy021.didistatic.com/static/webappstatic/do1_kWBH7L8mTgpHeKsBKp85)
-*Vue SSR 流程图*
+<center>Vue SSR 流程图</center>
 
 
-在 Vue SSR 项目中，我们一般需要提供 server entry 和 client entry 两个文件作为 webpack 的构建入口，然后通过 webpack 构建出 server-bundle 和 client bundle。在用户访问页面时，在 server 端会动态生成 HTML 页面，返回给客户端渲染，同时会和客户端内容进行一个混合，来实现一个可交互的页面。而对于 bundle 的构建，vue 有提供 vue-server-renderer 包，通过包里面的 `server-plugin` 和 `client-plugin` 插件可以去构建不同端的资源。
+在 Vue SSR 项目中，我们一般需要提供 server entry 和 client entry 两个文件作为 webpack 的构建入口，然后通过 webpack 构建出 server-bundle 和 client bundle。在用户访问页面时，在服务端将组件渲染成 HTML 字符串，然后向客户端发送静态标签，最后在客户端“激活”这些静态标签，来实现一个可交互的页面。而对于 bundle 的构建，vue 有提供 vue-server-renderer 包，通过包里面的 `server-plugin` 和 `client-plugin` 插件可以去构建不同端的资源。
 
 目前 Mpx 输出 web 支持 SSR，主要是基于 Vue 来实现的，下面我们一起看下 Mpx SSR 项目的配置
 
@@ -18,11 +18,11 @@
 
 **bundle构建**
 
-SSR项目中，我们需要分别构建出 server bundle 和 client bundle，对于不同环境的产物构建，我们建议将配置分为三个文件base, client 和 server， 基本配置（base config）包含两个环境中的共享配置，针对环境的配置分别放在 client config 和 server config 中。
+SSR项目中，我们需要分别构建出 server bundle 和 client bundle，对于不同环境的产物构建，我们需要进行不同的配置。
 
 - 服务端配置
 
-服务端配置除了 entry，target， output 等基础配置外，我们还需要借助 Vue 提供的 `vue-server-renderer` 包中的  `server-plugin` 插件来帮助我们生成 vue-ssr-server-bundle.json。
+服务端配置除了 entry，target， output 等基础配置外，我们还需要借助 Vue 提供的 `vue-server-renderer` 包中的  `server-plugin` 插件来帮助我们生成服务端环境的构建清单和模块信息 vue-ssr-server-bundle.json。
 ```js
 // webpack.server.config.js
 const merge = require('webpack-merge')
@@ -271,7 +271,7 @@ createPage({
 ```
 
 ### 其他注意事项
-1. SSR 项目与 CSR 项目模版不一致。CSR 渲染我们需要在项目模版中提供一个`id="app"`的节点作为 Vue 应用的挂载点，当应用渲染时会对该节点执行替换逻辑，而 SSR 渲染，我们不再需要在项目模版上添加 `id=app` 的 DOM 节点，而是需要在项目模版中添加 `<!--vue-ssr-outlet-->` 注释，Vue 会识别到这个注释进行节点插入，所以项目模版的配置需要注意两者的区别。
+1. SSR 项目与 CSR 项目模版不一致。CSR 渲染我们需要在项目模版中提供一个`id="app"`的节点作为 Vue 应用的挂载点，挂载后的节点会替换原先的挂载点，而 SSR 渲染，我们不再需要在项目模版上添加 `id=app` 的 DOM 节点，而是需要在项目模版中添加 `<!--vue-ssr-outlet-->` 注释，Vue 会识别到这个注释进行节点插入，所以项目模版的配置需要注意两者的区别。
 2. Mpx SSR 渲染目前支持 i18n 的功能，但 i18n 不会随着每次请求重新创建新实例，因为如果每次新建一个实例，再通过 Vue.use 去使用可能会造成内存泄漏，所以 i18n 保持单例状态，同时这也意味着如果用户有动态设置语言参数的场景，可能会产生状态污染。
 3. 在服务端渲染阶段，对于 global 全局对象访问，如__mpx, __mpxRouter, __mpxPinia 可能会存在状态污染，所以在服务端渲染阶段请尽量避免使用。对于 global 全局方法的访问，如 getApp(), getCurrentPages() 在非浏览器环境被调用时，Mpx 会触发 error 报错并阻塞该方法的运行。
 4. SSR 渲染由于服务器无法识别 URL 中的 hash 部分，所以需要通过修改 `mpx.config.webRouteConfig` 将我们的路由模式设置成 `history` 模式
