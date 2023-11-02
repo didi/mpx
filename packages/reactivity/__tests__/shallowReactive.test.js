@@ -94,6 +94,70 @@ describe('shallowReactive', () => {
     expect(shallowReactive(ws)).toBe(ws)
   })
 
+  describe('collections', () => {
+    test('should NOT be reactive', () => {
+      const shallowSet = shallowReactive(new Set())
+      const a = {}
+      let size
+
+      effect(() => {
+        size = shallowSet.size
+      })
+
+      expect(size).toBe(0)
+
+      shallowSet.add(a)
+      expect(size).toBe(0)
+
+      shallowSet.delete(a)
+      expect(size).toBe(0)
+    })
+
+    test('should not observe when iterating', () => {
+      const shallowSet = shallowReactive(new Set())
+      const a = {}
+      shallowSet.add(a)
+
+      const spreadA = [...shallowSet][0]
+      expect(isReactive(spreadA)).toBe(false)
+    })
+
+    test('should not get reactive entry', () => {
+      const shallowMap = shallowReactive(new Map())
+      const a = {}
+      const key = 'a'
+
+      shallowMap.set(key, a)
+
+      expect(isReactive(shallowMap.get(key))).toBe(false)
+    })
+
+    test('should not get reactive on foreach', () => {
+      const shallowSet = shallowReactive(new Set())
+      const a = {}
+      shallowSet.add(a)
+
+      shallowSet.forEach(x => expect(isReactive(x)).toBe(false))
+    })
+
+    test('onTrack NOT be called on objectSpread', () => {
+      const onTrackFn = jest.fn()
+      const shallowSet = shallowReactive(new Set())
+      let a
+      effect(
+        () => {
+          a = Array.from(shallowSet)
+        },
+        {
+          onTrack: onTrackFn
+        }
+      )
+
+      expect(a).toMatchObject([])
+      expect(onTrackFn).not.toHaveBeenCalled()
+    })
+  })
+
   describe('array', () => {
     test('should be reactive', () => {
       const shallowArray = shallowReactive([])
