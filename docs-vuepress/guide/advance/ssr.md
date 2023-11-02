@@ -135,9 +135,6 @@ const renderer = createBundleRenderer(serverBundle, {
     clientManifest,
 });
 
-// 中间件处理静态文件请求
-app.use(express.static("../dist/client", { index: false })); // 为false是不让它渲染成dist/client/index.template.html
-
 // 前端请求返回数据
 app.get("*", async (req, res) => {
     try {
