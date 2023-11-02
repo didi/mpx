@@ -21,9 +21,6 @@ export function shallowReactive (target) {
 }
 
 export function readonly (target) {
-  if (isReadonly(target)) {
-    return target
-  }
   return createReactiveObject(target, readonlyHandlers, readonlyMap)
 }
 

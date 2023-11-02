@@ -16,7 +16,8 @@ import {
   shallowReadonlyMap,
   toRaw,
   readonly,
-  isShallow
+  isShallow,
+  isReadonly
 } from './reactive'
 import {
   track,
@@ -165,9 +166,13 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   set (target, key, value, receiver) {
     let oldValue = target[key]
 
+    if (isReadonly(oldValue) && isRef(oldValue) && !isRef(value)) {
+      return false
+    }
+
     // note: in shallow mode, objects are set as-is regardless of reactive or not
     if (!this._shallow) {
-      if (!isShallow(value)) {
+      if (!isShallow(value) && !isReadonly(value)) {
         value = toRaw(value)
         oldValue = toRaw(target[key])
       }

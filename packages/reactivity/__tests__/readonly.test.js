@@ -5,8 +5,11 @@ import {
   effect,
   isProxy,
   reactive,
-  toRaw
+  toRaw,
+  markRaw
 } from '../src'
+import { ref } from '../src/ref'
+import { computed } from '../src/computed'
 
 describe('reactivity/readonly', () => {
   describe('Object', () => {
@@ -122,12 +125,12 @@ describe('reactivity/readonly', () => {
       wrapped[0] = 1
       expect(wrapped[0]).not.toBe(1)
       expect(
-        `Set operation on key "0" failed: target is readonly.`
+        'Set operation on key "0" failed: target is readonly.'
       ).toHaveBeenWarned()
       wrapped[0].foo = 2
       expect(wrapped[0].foo).toBe(1)
       expect(
-        `Set operation on key "foo" failed: target is readonly.`
+        'Set operation on key "foo" failed: target is readonly.'
       ).toHaveBeenWarned()
 
       // // should block length mutation
@@ -135,14 +138,14 @@ describe('reactivity/readonly', () => {
       expect(wrapped.length).toBe(1)
       expect(wrapped[0].foo).toBe(1)
       expect(
-        `Set operation on key "length" failed: target is readonly.`
+        'Set operation on key "length" failed: target is readonly.'
       ).toHaveBeenWarned()
 
       // // mutation methods invoke set/length internally and thus are blocked as well
       wrapped.push(2)
       expect(wrapped.length).toBe(1)
       // push triggers two warnings on [1] and .length
-      expect(`target is readonly.`).toHaveBeenWarnedTimes(5)
+      expect('target is readonly.').toHaveBeenWarnedTimes(5)
     })
 
     it('should not trigger effects', () => {
@@ -155,11 +158,11 @@ describe('reactivity/readonly', () => {
       wrapped[0].a = 2
       expect(wrapped[0].a).toBe(1)
       expect(dummy).toBe(1)
-      expect(`target is readonly`).toHaveBeenWarnedTimes(1)
+      expect('target is readonly').toHaveBeenWarnedTimes(1)
       wrapped[0] = { a: 2 }
       expect(wrapped[0].a).toBe(1)
       expect(dummy).toBe(1)
-      expect(`target is readonly`).toHaveBeenWarnedTimes(2)
+      expect('target is readonly').toHaveBeenWarnedTimes(2)
     })
   })
 
@@ -336,6 +339,115 @@ describe('reactivity/readonly', () => {
     a.n++
     expect(b.n).toBe(2)
     expect(dummy).toBe(2)
+  })
+
+  test('readonly collection should not track', () => {
+    const map = new Map()
+    map.set('foo', 1)
+
+    const reMap = reactive(map)
+    const roMap = readonly(map)
+
+    let dummy
+    effect(() => {
+      dummy = roMap.get('foo')
+    })
+    expect(dummy).toBe(1)
+    reMap.set('foo', 2)
+    expect(roMap.get('foo')).toBe(2)
+    // should not trigger
+    expect(dummy).toBe(1)
+  })
+
+  test('readonly array should not track', () => {
+    const arr = [1]
+    const roArr = readonly(arr)
+
+    const eff = effect(() => {
+      roArr.includes(2)
+    })
+    expect(eff.effect.deps.length).toBe(0)
+  })
+
+  test('wrapping already wrapped value should return same Proxy', () => {
+    const original = { foo: 1 }
+    const wrapped = readonly(original)
+    const wrapped2 = readonly(wrapped)
+    expect(wrapped2).toBe(wrapped)
+  })
+
+  test('markRaw', () => {
+    const obj = readonly({
+      foo: { a: 1 },
+      bar: markRaw({ b: 2 })
+    })
+    expect(isReadonly(obj.foo)).toBe(true)
+    expect(isReadonly(obj.bar)).toBe(false)
+    expect(isReactive(obj.bar)).toBe(false)
+  })
+
+  test('should make ref readonly', () => {
+    const n = readonly(ref(1))
+    n.value = 2
+    expect(n.value).toBe(1)
+    expect(
+      'Set operation on key "value" failed: target is readonly.'
+    ).toHaveBeenWarned()
+  })
+
+  test('calling readonly on computed should allow computed to set its private properties', () => {
+    const r = ref(false)
+    const c = computed(() => r.value)
+    const rC = readonly(c)
+
+    r.value = true
+
+    expect(rC.value).toBe(true)
+    expect(
+      'Set operation on key "_dirty" failed: target is readonly.'
+    ).not.toHaveBeenWarned()
+    // @ts-expect-error - non-existent property
+    rC.randomProperty = true
+
+    expect(
+      'Set operation on key "randomProperty" failed: target is readonly.'
+    ).toHaveBeenWarned()
+  })
+
+  test('setting a readonly object as a property of a reactive object should retain readonly proxy', () => {
+    const r = readonly({})
+    const rr = reactive({})
+    rr.foo = r
+    expect(rr.foo).toBe(r)
+    expect(isReadonly(rr.foo)).toBe(true)
+  })
+
+  test('attempting to write plain value to a readonly ref nested in a reactive object should fail', () => {
+    const r = ref(false)
+    const ror = readonly(r)
+    const obj = reactive({ ror })
+    expect(() => {
+      obj.ror = true
+    }).toThrow()
+    expect(obj.ror).toBe(false)
+  })
+
+  test('replacing a readonly ref nested in a reactive object with a new ref', () => {
+    const r = ref(false)
+    const ror = readonly(r)
+    const obj = reactive({ ror })
+    obj.ror = ref(true)
+    expect(obj.ror).toBe(true)
+    expect(toRaw(obj).ror).not.toBe(ror) // ref successfully replaced
+  })
+
+  test('setting readonly object to writable nested ref', () => {
+    const r = ref()
+    const obj = reactive({ r })
+    const ro = readonly({})
+    obj.r = ro
+    expect(obj.r).toBe(ro)
+    expect(r.value).toBe(ro)
   })
 
   test('non-observable values', () => {
