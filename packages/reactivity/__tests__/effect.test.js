@@ -1,6 +1,7 @@
 import { effect, ITERATE_KEY, stop } from '../src/effect'
 import { reactive, toRaw } from '../src/reactive'
-import { TriggerOpTypes, markRaw } from '../src/index'
+import { TriggerOpTypes, TrackOpTypes, markRaw } from '../src/index'
+import { ref } from '../src/ref'
 
 describe('reactivity/effect', () => {
   it('should run the passed function once (wrapped by a effect)', () => {
@@ -71,7 +72,7 @@ describe('reactivity/effect', () => {
     effect(() => (dummy = 'prop' in obj))
 
     expect(dummy).toBe(false)
-    obj.prop = 90
+    obj.prop = 12
     expect(dummy).toBe(true)
   })
 
@@ -731,17 +732,20 @@ describe('reactivity/effect', () => {
       {
         effect: runner.effect,
         target: toRaw(obj),
-        key: 'foo'
+        key: 'foo',
+        type: TrackOpTypes.GET
       },
       {
         effect: runner.effect,
         target: toRaw(obj),
-        key: 'bar'
+        key: 'bar',
+        type: TrackOpTypes.HAS
       },
       {
         effect: runner.effect,
         target: toRaw(obj),
-        key: ITERATE_KEY
+        key: ITERATE_KEY,
+        type: TrackOpTypes.ITERATE
       }
     ])
   })
@@ -767,7 +771,9 @@ describe('reactivity/effect', () => {
       effect: runner.effect,
       target: toRaw(obj),
       type: TriggerOpTypes.SET,
-      key: 'foo'
+      key: 'foo',
+      oldValue: 1,
+      newValue: 2
     })
 
     delete obj.foo
@@ -777,7 +783,8 @@ describe('reactivity/effect', () => {
       effect: runner.effect,
       target: toRaw(obj),
       type: TriggerOpTypes.DELETE,
-      key: 'foo'
+      key: 'foo',
+      oldValue: 2
     })
   })
 
@@ -796,6 +803,25 @@ describe('reactivity/effect', () => {
     // stopped effect should still be manually callable
     runner()
     expect(dummy).toBe(3)
+  })
+
+  // when an effect completes its run, it should clear the tracking bits of
+  // its tracked deps. However, if the effect stops itself, the deps list is
+  // emptied so their bits are never cleared.
+  it('edge case: self-stopping effect tracking ref', () => {
+    const c = ref(true)
+    const runner = effect(() => {
+      // reference ref
+      if (!c.value) {
+        // stop itself while running
+        stop(runner)
+      }
+    })
+    // trigger run
+    c.value = !c.value
+    // should clear bits
+    expect(c.dep.w).toBe(0)
+    expect(c.dep.n).toBe(0)
   })
 
   it('events: onStop', () => {

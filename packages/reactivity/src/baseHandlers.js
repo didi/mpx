@@ -26,11 +26,11 @@ import {
   pauseTracking,
   enableTracking
 } from '../src/effect'
-import { TriggerOpTypes } from './operations'
+import { TriggerOpTypes, TrackOpTypes } from './operations'
 import { warn } from './warning'
 import { isRef } from './ref'
 
-const isNonTrackableKeys = /*#__PURE__*/ makeMap(['__proto__', '__mpx_isRef'])
+const isNonTrackableKeys = /* #__PURE__ */ makeMap(['__proto__', '__mpx_isRef'])
 
 const builtInSymbols = new Set(
   /* #__PURE__ */
@@ -52,7 +52,7 @@ function createArrayInstrumentations () {
       // avoid infinite recursion
       const arr = toRaw(this)
       for (let i = 0, l = this.length; i < l; i++) {
-        track(arr, i + '')
+        track(arr, i + '', TrackOpTypes.GET)
       }
       // we run the method using the original args first (which may be reactive)
       const res = arr[key](...args)
@@ -85,7 +85,7 @@ const arrayInstrumentations = createArrayInstrumentations()
 
 function hasOwnProperty (key) {
   const obj = toRaw(this)
-  track(obj, key)
+  track(obj, key, TrackOpTypes.HAS)
   return obj.hasOwnProperty(key)
 }
 
@@ -138,7 +138,7 @@ class BaseReactiveHandler {
     }
 
     if (!isReadonly) {
-      track(target, key)
+      track(target, key, TrackOpTypes.GET)
     }
 
     if (shallow) {
@@ -194,7 +194,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
       if (!hadKey) {
         trigger(target, TriggerOpTypes.ADD, key, value)
       } else if (hasChanged(oldValue, value)) {
-        trigger(target, TriggerOpTypes.SET, key, value)
+        trigger(target, TriggerOpTypes.SET, key, value, oldValue)
       }
     }
     return result
@@ -202,21 +202,22 @@ class MutableReactiveHandler extends BaseReactiveHandler {
 
   has (target, key) {
     const result = Reflect.has(target, key)
-    track(target, key)
+    track(target, key, TrackOpTypes.HAS)
     return result
   }
 
   ownKeys (target) {
     const result = Reflect.ownKeys(target)
-    track(target, isArray(target) ? 'length' : ITERATE_KEY)
+    track(target, isArray(target) ? 'length' : ITERATE_KEY, TrackOpTypes.ITERATE)
     return result
   }
 
   deleteProperty (target, key) {
     const hadKey = hasOwn(target, key)
+    const oldValue = target[key]
     const result = Reflect.deleteProperty(target, key)
     if (result && hadKey) {
-      trigger(target, TriggerOpTypes.DELETE, key)
+      trigger(target, TriggerOpTypes.DELETE, key, undefined, oldValue)
     }
     return result
   }

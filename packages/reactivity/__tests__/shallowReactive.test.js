@@ -6,6 +6,7 @@ import {
   shallowReadonly
 } from '../src/reactive'
 import { effect } from '../src/effect'
+import { ref, isRef } from '../src/ref'
 
 describe('shallowReactive', () => {
   test('should not make non-reactive properties reactive', () => {
@@ -41,6 +42,25 @@ describe('shallowReactive', () => {
     r.foo = shallowReactive({ bar: {} })
     expect(isShallow(r.foo)).toBe(true)
     expect(isReactive(r.foo.bar)).toBe(false)
+  })
+
+  test('should not unwrap refs', () => {
+    const foo = shallowReactive({
+      bar: ref(123)
+    })
+    expect(isRef(foo.bar)).toBe(true)
+    expect(foo.bar.value).toBe(123)
+  })
+
+  test('should not mutate refs', () => {
+    const original = ref(123)
+    const foo = shallowReactive({
+      bar: original
+    })
+    expect(foo.bar).toBe(original)
+    foo.bar = 234
+    expect(foo.bar).toBe(234)
+    expect(original.value).toBe(123)
   })
 
   test('should respect shallow/deep versions of same target on access', () => {
