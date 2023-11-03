@@ -5,6 +5,12 @@ export const TriggerOpTypes = {
   DELETE: 'delete'
 }
 
+export const TrackOpTypes = {
+  GET: 'get',
+  HAS: 'has',
+  ITERATE: 'iterate'
+}
+
 export const PausedState = {
   paused: 0,
   dirty: 1,

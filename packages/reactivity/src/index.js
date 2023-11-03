@@ -11,7 +11,8 @@ export {
 } from './reactive'
 
 export {
-  TriggerOpTypes
+  TriggerOpTypes,
+  TrackOpTypes
 } from './operations'
 
 export { effect } from './effect'

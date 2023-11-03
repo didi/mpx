@@ -13,6 +13,7 @@ export class ReactiveEffect {
   deps = []
   active = true
   parent = undefined
+  deferStop = false
   pausedState = PausedState.resumed
   constructor (fn, scheduler, scope) {
     this.fn = fn
@@ -33,16 +34,25 @@ export class ReactiveEffect {
       finalizeDepMarkers(this)
       activeEffect = this.parent
       this.parent = undefined
+
+      if (this.deferStop) {
+        this.stop()
+      }
     }
   }
 
   stop () {
-    if (this.active) {
-      cleanupEffect(this)
-      if (this.onStop) {
-        this.onStop()
+    // stopped while running itself - defer the cleanup
+    if (activeEffect === this) {
+      this.deferStop = true
+    } else {
+      if (this.active) {
+        cleanupEffect(this)
+        if (this.onStop) {
+          this.onStop()
+        }
+        this.active = false
       }
-      this.active = false
     }
   }
 
@@ -106,7 +116,7 @@ export function stop (runner) {
  * @param target - Object holding the reactive property.
  * @param key - Identifier of the reactive property to track.
  */
-export function track (target, key) {
+export function track (target, key, type) {
   if (shouldTrack && activeEffect) {
     let depsMap = targetMap.get(target)
     if (!depsMap) {
@@ -117,7 +127,7 @@ export function track (target, key) {
       depsMap.set(key, (dep = createDep()))
     }
     const eventInfo = __DEV__
-      ? { effect: activeEffect, target, key }
+      ? { effect: activeEffect, target, key, type }
       : undefined
 
     trackEffects(dep, eventInfo)
@@ -153,7 +163,7 @@ export function trackEffects (dep, debuggerEventExtraInfo) {
  * @param type - Defines the type of the operation that needs to trigger effects.
  * @param key - Can be used to target a specific reactive property in the target object.
  */
-export function trigger (target, type, key, newValue) {
+export function trigger (target, type, key, newValue, oldValue) {
   const depsMap = targetMap.get(target)
   if (!depsMap) {
     return
@@ -185,7 +195,7 @@ export function trigger (target, type, key, newValue) {
   }
 
   const eventInfo = __DEV__
-    ? { target, type, key }
+    ? { target, type, key, newValue, oldValue }
     : undefined
 
   if (deps.length === 1) {
