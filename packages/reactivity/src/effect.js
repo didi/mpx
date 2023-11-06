@@ -1,5 +1,11 @@
 import { extend, isArray, isIntegerKey } from '@mpxjs/utils'
-import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers } from './dep'
+import {
+  createDep,
+  newTracked,
+  wasTracked,
+  initDepMarkers,
+  finalizeDepMarkers
+} from './dep'
 import { recordEffectScope } from './effectScope'
 import { PausedState, TriggerOpTypes } from './operations'
 
@@ -10,11 +16,11 @@ export let shouldTrack = true
 export const trackOpBit = 1
 
 export class ReactiveEffect {
-  deps = []
-  active = true
-  parent = undefined
-  deferStop = false
-  pausedState = PausedState.resumed
+  deps = [];
+  active = true;
+  parent = undefined;
+  deferStop = false;
+  pausedState = PausedState.resumed;
   constructor (fn, scheduler, scope) {
     this.fn = fn
     this.scheduler = scheduler
@@ -252,10 +258,12 @@ function triggerEffect (effect, debuggerEventExtraInfo) {
   }
 }
 
+const trackStack = []
 /**
- * pauses tracking.
+ * Temporarily pauses tracking.
  */
 export function pauseTracking () {
+  trackStack.push(shouldTrack)
   shouldTrack = false
 }
 
@@ -263,5 +271,14 @@ export function pauseTracking () {
  * Re-enables effect tracking (if it was paused).
  */
 export function enableTracking () {
+  trackStack.push(shouldTrack)
   shouldTrack = true
+}
+
+/**
+ * Resets the previous global effect tracking state.
+ */
+export function resetTracking () {
+  const last = trackStack.pop()
+  shouldTrack = last === undefined ? true : last
 }

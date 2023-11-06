@@ -24,7 +24,7 @@ import {
   trigger,
   ITERATE_KEY,
   pauseTracking,
-  enableTracking
+  resetTracking
 } from '../src/effect'
 import { TriggerOpTypes, TrackOpTypes } from './operations'
 import { warn } from './warning'
@@ -74,7 +74,7 @@ function createArrayInstrumentations () {
       pauseTracking()
       const arr = toRaw(this)
       const res = arr[key].apply(this, args)
-      enableTracking()
+      resetTracking()
       return res
     }
   })
