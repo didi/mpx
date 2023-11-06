@@ -7,14 +7,49 @@ export {
   isReadonly,
   markRaw,
   toRaw,
-  isProxy
+  isProxy,
+  isShallow,
+  ReactiveFlags
 } from './reactive'
 
 export {
+  ref,
+  shallowRef,
+  isRef,
+  toRef,
+  toValue,
+  toRefs,
+  unref,
+  customRef,
+  triggerRef
+} from './ref'
+
+export {
+  effect,
+  stop,
+  trigger,
+  track,
+  enableTracking,
+  pauseTracking,
+  resetTracking,
+  ITERATE_KEY,
+  ReactiveEffect
+} from './effect'
+
+export {
+  effectScope,
+  EffectScope,
+  recordEffectScope,
+  getCurrentScope,
+  onScopeDispose
+} from './effectScope'
+
+export {
+  computed
+} from './computed'
+
+export {
   TriggerOpTypes,
-  TrackOpTypes
+  TrackOpTypes,
+  PausedState
 } from './operations'
-
-export { effect } from './effect'
-
-export { ref, isRef, unref } from './ref'

@@ -1,4 +1,4 @@
-import { isObject, type, def, isArray, isIntegerKey } from '@mpxjs/utils'
+import { isObject, type, def } from '@mpxjs/utils'
 import { mutableHandlers, shallowReactiveHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandlers'
 
 export const reactiveMap = new WeakMap()
