@@ -18,7 +18,7 @@ export {
 
 export {
   nextTick
-} from './observer/scheduler'
+} from './runtime/scheduler'
 
 export {
   BEFORECREATE,
