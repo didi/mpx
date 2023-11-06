@@ -1,8 +1,9 @@
 # SSR
+
 近些年来，SSR/SSG 由于其良好的首屏展现速度和SEO友好性逐渐成为主流的技术规范，但过去 Mpx 对 SSR 的支持不完善，使用 Mpx 开发的跨端页面一直无法享受到 SSR 带来的性能提升，在 2.9 版本中，我们对 Mpx 输出 web 流程进行了大量适配改造，解决了 SSR 中常见的内存泄漏、跨请求状态污染和数据预请求等问题，完整支持了基于 Vue 和 Pinia 的 SSR 技术方案。
 
 ### 配置使用 SSR
-![Vue ssr流程](http://img-hxy021.didistatic.com/static/webappstatic/do1_kWBH7L8mTgpHeKsBKp85)
+![Vue ssr流程](https://img-hxy021.didistatic.com/static/webappstatic/do1_kWBH7L8mTgpHeKsBKp85)
 <center>Vue SSR 流程图</center>
 
 
