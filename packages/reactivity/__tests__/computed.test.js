@@ -3,7 +3,7 @@ import { reactive, isReadonly, toRaw } from '../src/reactive'
 import { computed } from '../src/computed'
 import { effect, ITERATE_KEY } from '../src/effect'
 import { ref } from '../src/ref'
-import { TriggerOpTypes } from '../src/operations'
+import { TriggerOpTypes, TrackOpTypes } from '../src/operations'
 
 describe('reactivity/computed', () => {
   it('should return updated value', () => {
@@ -229,17 +229,20 @@ describe('reactivity/computed', () => {
       {
         effect: c.effect,
         target: toRaw(obj),
-        key: 'foo'
+        key: 'foo',
+        type: TrackOpTypes.GET
       },
       {
         effect: c.effect,
         target: toRaw(obj),
-        key: 'bar'
+        key: 'bar',
+        type: TrackOpTypes.HAS
       },
       {
         effect: c.effect,
         target: toRaw(obj),
-        key: ITERATE_KEY
+        key: ITERATE_KEY,
+        type: TrackOpTypes.ITERATE
       }
     ])
   })
@@ -262,7 +265,9 @@ describe('reactivity/computed', () => {
       effect: c.effect,
       target: toRaw(obj),
       type: TriggerOpTypes.SET,
-      key: 'foo'
+      key: 'foo',
+      oldValue: 1,
+      newValue: 2
     })
 
     delete obj.foo
@@ -272,7 +277,8 @@ describe('reactivity/computed', () => {
       effect: c.effect,
       target: toRaw(obj),
       type: TriggerOpTypes.DELETE,
-      key: 'foo'
+      key: 'foo',
+      oldValue: 2
     })
   })
 })
