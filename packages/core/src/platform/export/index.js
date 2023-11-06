@@ -1,45 +1,49 @@
-
 export {
   watchEffect,
   watchSyncEffect,
   watchPostEffect,
   watch
-} from '../../observer/watch'
+} from '../../runtime/apiWatch'
 
 export {
+  // core
   reactive,
-  isReactive,
-  shallowReactive,
-  set,
-  del,
-  markRaw
-} from '../../observer/reactive'
-
-export {
   ref,
+  readonly,
+  computed,
+  // utilities
   unref,
-  toRef,
-  toRefs,
+  proxyRefs,
   isRef,
+  toRef,
+  toValue,
+  toRefs,
+  isProxy,
+  isReactive,
+  isReadonly,
+  isShallow,
+  // advanced
   customRef,
+  triggerRef,
   shallowRef,
-  triggerRef
-} from '../../observer/ref'
-
-export {
-  computed
-} from '../../observer/computed'
-
-export {
+  shallowReactive,
+  shallowReadonly,
+  markRaw,
+  toRaw,
+  // effect
+  effect,
+  stop,
+  ReactiveEffect,
+  // effect scope
   effectScope,
+  EffectScope,
   getCurrentScope,
-  onScopeDispose
-} from '../../observer/effectScope'
+  onScopeDispose,
+  // forwad compatible
+  set,
+  del
+} from '@mpxjs/reactivity'
 
-export {
-  getCurrentInstance
-} from '../../core/proxy'
+export { getCurrentInstance } from '../../core/proxy'
 
-export {
-  useI18n
-} from '../../platform/builtInMixins/i18nMixin'
+export { useI18n } from '../../platform/builtInMixins/i18nMixin'

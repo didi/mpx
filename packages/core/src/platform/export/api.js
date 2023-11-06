@@ -1,5 +1,5 @@
-import { set, del, reactive } from '../../observer/reactive'
-import { watch } from '../../observer/watch'
+import { set, del, reactive } from '@mpxjs/reactivity'
+import { watch } from '../../runtime/apiWatch'
 import { injectMixins } from '../../core/injectMixins'
 
 const APIs = {
