@@ -25,14 +25,6 @@ export {
 } from './base'
 
 export {
-  getByPath,
-  setByPath,
-  doGetByPath,
-  getFirstKey,
-  aIsSubPathOfB
-} from './path'
-
-export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
@@ -41,6 +33,14 @@ export {
   enumerableKeys,
   processUndefined
 } from './object'
+
+export {
+  getByPath,
+  setByPath,
+  doGetByPath,
+  getFirstKey,
+  aIsSubPathOfB
+} from './path'
 
 export {
   arrayProtoAugment,

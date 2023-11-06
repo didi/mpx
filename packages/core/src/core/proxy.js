@@ -311,7 +311,16 @@ export default class MpxProxy {
   watch (source, cb, options) {
     const target = this.target
     const getter = isString(source)
-      ? () => getByPath(target, source)
+      ? () => {
+        // for watch multi path string like 'a.b,c,d'
+        if (source.indexOf(',') > -1) {
+          return source.split(',').map(path => {
+            return getByPath(target, path.trim())
+          })
+        } else {
+          return getByPath(target, source)
+        }
+      }
       : source.bind(target)
 
     if (isObject(cb)) {
@@ -529,6 +538,9 @@ export default class MpxProxy {
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
+    const _i = this._i.bind(this)
+    const _c = this._c.bind(this)
+    const _r = this._r.bind(this)
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {
@@ -537,7 +549,7 @@ export default class MpxProxy {
 
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender()
+          return this.target.__injectedRender(_i, _c, _r)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()

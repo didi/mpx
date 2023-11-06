@@ -2287,7 +2287,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `_i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {

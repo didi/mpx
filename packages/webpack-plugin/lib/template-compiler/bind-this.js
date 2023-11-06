@@ -85,7 +85,7 @@ function checkDelAndGetPath (path) {
       if (args.length === 1) {
         delPath = current.parentPath
       } else {
-        // case: this._i(a, function() {})
+        // case: _i(a, function() {})
         canDel = false
         break
       }
@@ -163,6 +163,8 @@ function dealRemove (path, replace) {
       t.validate(path, path.key, null)
       path.remove()
     }
+    delete path.needBind
+    delete path.collectPath
   } catch (e) {
     console.error(e)
   }
@@ -283,14 +285,12 @@ module.exports = {
             // 优先判断前缀，再判断全等
             if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
               dealRemove(path, replace)
-              return
             } else {
               const currentBlockVars = bindings[keyPath]
               if (currentBlockVars.length > 1) {
                 const index = currentBlockVars.findIndex(item => !item.canDel)
                 if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
                   dealRemove(path, replace)
-                  return
                 }
               }
             }
@@ -312,7 +312,10 @@ module.exports = {
       MemberExpression: {
         exit (path) {
           if (path.collectPath) {
-            path.node && path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
+            const replaceNode = renderReduce
+              ? t.callExpression(t.identifier('_c'), [path.collectPath])
+              : t.callExpression(t.identifier('_c'), [path.collectPath, path.node])
+            path.node && path.replaceWith(replaceNode)
             delete path.collectPath
           }
         }
