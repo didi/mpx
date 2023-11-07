@@ -13,7 +13,6 @@ export {
   computed,
   // utilities
   unref,
-  proxyRefs,
   isRef,
   toRef,
   toValue,
