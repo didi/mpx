@@ -154,6 +154,9 @@ module.exports = function (content) {
       if (!json.usingComponents) {
         json.usingComponents = {}
       }
+      if (!json.component && mode === 'swan') {
+        json.component = true
+      }
     }
   } else if (componentsMap[resourcePath]) {
     // component
@@ -250,7 +253,7 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-    const defaultPagePath = require.resolve('./default-page.mpx')
+    const defaultPagePath = require.resolve('../runtime/components/wx/default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
         const pagesCache = []

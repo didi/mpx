@@ -99,15 +99,8 @@ export default function proxyEventMixin () {
           const eventObj = {
             type: eventName,
             timeStamp,
-            target: {
-              id,
-              dataset,
-              targetDataset: dataset
-            },
-            currentTarget: {
-              id,
-              dataset
-            },
+            target: { id, dataset, targetDataset: dataset },
+            currentTarget: { id, dataset },
             detail: eventDetail
           }
           handler.call(this, eventObj)

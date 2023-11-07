@@ -1,12 +1,34 @@
-import { walkChildren, parseSelector, error } from '@mpxjs/utils'
+import { walkChildren, parseSelector, error, hasOwn } from '@mpxjs/utils'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
+const datasetReg = /^data-(.+)$/
+
+function collectDataset (attrs) {
+  const dataset = {}
+  for (const key in attrs) {
+    if (hasOwn(attrs, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = attrs[key]
+      }
+    }
+  }
+  return dataset
+}
 
 export default function install (Vue) {
   Vue.prototype.triggerEvent = function (eventName, eventDetail) {
-    return this.$emit(eventName, {
+    let eventObj = {}
+    const dataset = collectDataset(this.$attrs)
+    const id = this.$attrs.id || ''
+    const timeStamp = +new Date()
+    eventObj = {
       type: eventName,
+      timeStamp,
+      target: { id, dataset, targetDataset: dataset },
+      currentTarget: { id, dataset },
       detail: eventDetail
-    })
+    }
+    return this.$emit(eventName, eventObj)
   }
   Vue.prototype.selectComponent = function (selector, all) {
     const result = []
