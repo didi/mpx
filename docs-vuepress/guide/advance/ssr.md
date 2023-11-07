@@ -3,28 +3,29 @@
 近些年来，SSR/SSG 由于其良好的首屏展现速度和SEO友好性逐渐成为主流的技术规范，但过去 Mpx 对 SSR 的支持不完善，使用 Mpx 开发的跨端页面一直无法享受到 SSR 带来的性能提升，在 2.9 版本中，我们对 Mpx 输出 web 流程进行了大量适配改造，解决了 SSR 中常见的内存泄漏、跨请求状态污染和数据预请求等问题，完整支持了基于 Vue 和 Pinia 的 SSR 技术方案。
 
 ### 配置使用 SSR
-![Vue ssr流程](https://img-hxy021.didistatic.com/static/webappstatic/do1_kWBH7L8mTgpHeKsBKp85)
-<center>Vue SSR 流程图</center>
+
+![Vue SSR流程](https://img-hxy021.didistatic.com/static/webappstatic/do1_kWBH7L8mTgpHeKsBKp85)
 
 
-在 Vue SSR 项目中，我们一般需要提供 server entry 和 client entry 两个文件作为 webpack 的构建入口，然后通过 webpack 构建出 server-bundle 和 client bundle。在用户访问页面时，在服务端将组件渲染成 HTML 字符串，然后向客户端发送静态标签，最后在客户端“激活”这些静态标签，来实现一个可交互的页面。而对于 bundle 的构建，vue 有提供 vue-server-renderer 包，通过包里面的 `server-plugin` 和 `client-plugin` 插件可以去构建不同端需要的资源。
+在 Vue SSR 项目中，我们一般需要提供 server entry 和 client entry 两个文件作为 webpack 的构建入口，然后通过 webpack 构建出 server bundle 和 client bundle。在用户访问页面时，在服务端使用 server bundle 渲染出 HTML 字符串，作为静态页面发送到客户端，然后在客户端使用 client bundle 通过水合（hydration）对静态页面进行激活，实现可交互效果。Vue 提供了 `vue-server-renderer` 包，通过其中的 `server-plugin` 和 `client-plugin` webpack 插件构建产出 server/client bundle。
 
 目前 Mpx 输出 web 支持 SSR，主要是基于 Vue 来实现的，下面我们一起看下 Mpx SSR 项目的配置
 
-1.构建server-bundle/client-bundle
+#### 构建server/client bundle
 
 SSR项目中，我们需要分别构建出 server bundle 和 client bundle，对于不同环境的产物构建，我们需要进行不同的配置。
-在 Vue 项目中，我们需要提供 server entry 和 client entry 两个文件作为 webpack 的构建入口，与 Vue 不同，使用 Mpx SSR 项目构建入口不需要区分构建环境，只需要将 `app.mpx` 作为构建入口即可。
+在 Vue 中，我们需要提供 `entry-server.js` 和 `entry-client.js` 两个文件分别作为 server 和 client 的构建入口，与 Vue 不同，在 Mpx 中我们通过编译处理与运行时增强生命周期实现了使用 `app.mpx` 作为统一构建入口，无需区分 server 和 client。
 
-- 服务端配置
+##### 服务端构建配置
 
-服务端配置除了 entry，plugin 等基础配置外，我们还需要借助 Vue 提供的 `vue-server-renderer` 包中的  `server-plugin` 插件来帮助我们生成服务端环境的构建清单和模块信息 vue-ssr-server-bundle.json。
+服务端配置中除了将 entry 制定为 `app.mpx` 及其它基础配置外，最重要的是安装 `vue-server-renderer` 包中提供的  `server-plugin` 插件，该插件能够构建产出 `vue-ssr-server-bundle.json` 文件供 `renderer` 后续消费。
+
 ```js
 // webpack.server.config.js
 const VueSSRServerPlugin = require('vue-server-renderer/server-plugin')
 
 module.exports = merge(baseConfig, {
-  // 将 entry 指向应用程序的 app.mpx 文件
+  // 将 entry 指向项目的 app.mpx 文件
   entry: './app.mpx',
   // ...
   plugins: [
@@ -33,34 +34,34 @@ module.exports = merge(baseConfig, {
   ]
 })
 ```
-注意: 除入口文件配置不同外，其他的配置均可参考 [Vue SSR的服务端配置](https://v2.ssr.vuejs.org/zh/guide/build-config.html#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE-server-config)
 
-- 客户端配置
+更加详细的配置说明可参考 [Vue SSR的服务端配置](https://v2.ssr.vuejs.org/guide/build-config.html#server-config)
 
-客户端配置中除了 entry，plugin 等基础配置外，我们还需要借助 Vue 提供的 `vue-server-renderer` 包中 `client-plugin` 插件来帮助我们生成客户端环境的资源清单 vue-ssr-client-manifest.json。
+##### 客户端构建配置
+
+类似服务端构建配置，在客户端构建中我们需要使用 `vue-server-renderer` 包中 `client-plugin` 插件来帮助我们生成客户端环境的资源清单 `vue-ssr-client-manifest.json`，并供 `renderer` 后续消费。
 
 ```js
 // webpack.client.config.js
-
 const VueSSRClientPlugin = require('vue-server-renderer/client-plugin')
 
 module.exports = merge(baseConfig, {
-  // 将 entry 指向应用程序的 app.mpx 文件
+  // 将 entry 指向项目的 app.mpx 文件
   entry: './app.mpx',
-
   // ...
-
   plugins: [
     // 产出 `vue-ssr-client-manifest.json`。
     new VueSSRClientPlugin()
   ]
 })
 ```
-注意: 除入口文件配置不同外，其他的配置均可参考 [Vue SSR的客户端配置](https://v2.ssr.vuejs.org/zh/guide/build-config.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-client-config)
 
-2. 准备 html 模版
+更加详细的配置说明可参考 [Vue SSR的客户端配置](https://v2.ssr.vuejs.org/guide/build-config.html#client-config)
 
-在使用 SSR 模式渲染时，我们在创建 renderer 时需要一个页面模板。多数时候，我们会将页面模板放在特有的文件中，例如 index.template.html：
+#### 准备页面模版
+
+SSR 渲染中，我们创建 `renderer` 需要一个页面模板，简单的示例如下：
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -70,35 +71,31 @@ module.exports = merge(baseConfig, {
   </body>
 </html>
 ```
-与 CSR 渲染不同，SSR 渲染需要提供一个特殊的 `<!--vue-ssr-outlet-->`注释，这里是应用程序 HTML 标记注入的地方。
 
-3.与服务器集成，启动 Node 服务
+与 CSR 渲染模版不同，SSR 渲染模版中需要提供一个特殊的 `<!--vue-ssr-outlet-->`注释，标记 SSR 渲染产物的插入位置，如使用 `@mpxjs/cli` 脚手架创建 SSR 项目，该模版已经内置于脚手架中。
 
-当我们完成页面模版、构建相关配置后， 经过 webpack 构建就可以获取到我们 server bundle 和 client bundle 产物，接下来我们需要与 Node 服务器进行集成，使用上面的产物创建 renderer，当服务器收到请求时渲染出页面并将结果返回。以 `express` 为例：
+#### 集成启动 SSR 服务
+
+当我们准备好页面模版和双端构建产物后，我们就可以创建 `renderer` 并与 Node 服务进行集成，启动 SSR 服务，下面以 `express` 为例：
+
 ```js
 //server.js
-
 const app = require('express')()
-
 const { createBundleRenderer } = require('vue-server-renderer')
-
 // 通过 vue-server-renderer/server-plugin 生成的文件
 const serverBundle = require('../dist/server/vue-ssr-server-bundle.json')
-
 // 通过 vue-server-renderer/client-plugin 生成的文件
 const clientManifest = require('../dist/client/vue-ssr-client-manifest.json')
-
  // 页面模版文件
 const template = require('fs').readFileSync('../src/index.template.html', 'utf-8')
-
-// 生成 renderer 渲染器
+// 创建 renderer 渲染器
 const renderer = createBundleRenderer(serverBundle, {
     runInNewContext: false,
     template,
     clientManifest,
 });
-
-app.get('*', async (req, res) => {
+// 注册启动 SSR 服务
+app.get('*', (req, res) => {
   const context = { url: req.url }
   renderer.renderToString(context, (err, html) => {
   	if (err) {
@@ -110,22 +107,21 @@ app.get('*', async (req, res) => {
 })
 app.listen(8080)
 ```
-注意：与服务器的集成，Mpx SSR 与 Vue SSR 的集成配置并无差别，更多配置遵循 Vue SSR 的配置规范即可。
 
-以上即可完成一个 Mpx SSR 项目的基本配置。
+### SSR 生命周期
 
-### 生命周期
-在 2.9 的版本中，我们提供了三个新的生命周期，分别是`onAppInit`，`serverPrefetch`， `onSSRAppCreated`，下面我们依次介绍下
+在 Mpx 2.9 的版本中，我们提供了三个全新用于 SSR 的生命周期，分别是`onAppInit`、`serverPrefetch` 和 `onSSRAppCreated`，以统一服务端与客户端的构建入口，下面展开介绍：
 
-- onAppInit
+#### onAppInit
 
-随着用户的每一个请求，我们都会新建一个应用实例，而 `onAppInit` 会在应用创建时被调用，这个生命周期仅可用于 App 中。
+> 该生命周期仅可在 App 中使用
 
-如果你的 SSR 项目需要状态管理工具，我们推荐使用 `@mpxjs/pinia` 作为状态管理工具。**为避免出现内存泄漏问题，pinia 的初始化请放在此 app 生命周期中执行**。
+在 SSR 中用户每发出一个请求，我们都会为其生成一个新的应用实例，`onAppInit` 生命周期会在应用创建 `new Vue(...)` 前被调用，其执行的返回结果会被合并到创建应用的 `options` 中
+
+很常见的使用场景在于返回新的全局状态管理实例，Mpx 中提供了 `@mpxjs/pinia` 作为全局状态管理工具，我们可以在 `onAppInit` 中返回全新的 `pinia` 示例避免产生跨请求状态污染，示例如下：
 
 ```js
 // app.mpx
-
 import mpx, { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
@@ -133,83 +129,83 @@ createApp({
   // ...
   onAppInit () {
     const pinia = createPinia()
-    mpx.use(pinia)
     return {
       pinia
     }
   }
 })
 ```
-- serverPrefetch
 
-SSR 提供的新生命周期, 仅在服务端渲染期间被调用，在这个生命周期中可以实现服务端数据预取
+> SSR 中仅支持使用 `@mpxjs/pinia` 作为状态管理工具，`@mpxjs/store` 暂不支持
 
-选项式 API 可在 App/Page/Component 中使用 serverPrefetch：
+#### serverPrefetch
 
+> 该生命周期可在 App/Page/Component 中使用，只在服务端渲染时执行
+
+当我们需要在 SSR 使用数据预拉取时，可以使用这个生命周期进行，使用方法与 Vue 一致, 示例如下：
+
+选项式 API：
 
 ```js
 import { createPage } from '@mpxjs/core'
-import { fetchUserRepositories } from '@/api/repositories'
-import userStore from '../store/user'
+import useStore from '../store/index'
 
 createPage({
   //...
-  async serverPrefetch () {
+  serverPrefetch () {
     const query = this.$route.query
-    const store = userStore(this.$pinia)
-    store.updateQuery(query)
-    await fetchUserRepositories()
+    const store = useStore(this.$pinia)
+    // return the promise from the action, fetch data and update state
+    return store.fetchData(query)
   }
 })
 ```
 
-组合式 API 可在 Page/Component 中使用 onServerPrefetch：
+组合式 API：
 
 ```js
 import { onServerPrefetch, getCurrentInstance, createPage } from '@mpxjs/core'
-import { fetchUserRepositories } from '@/api/repositories'
-import userStore from '../store/user'
+import useStore from '../store/index'
 
 createPage({
   setup () {
-    const proxy = getCurrentInstance().proxy
     const store = userStore()
-
-    onServerPrefetch(async() => {
-      const query = proxy.$route.query
-      store.updateQuery(query)
-      await fetchUserRepositories()
+    onServerPrefetch(() => {
+      const query = getCurrentInstance().proxy.$route.query
+      // return the promise from the action, fetch data and update state
+      return store.fetchData(query)
     })
   }
 })
 ```
 
-- **onSSRAppCreated**
+关于数据预拉取更详细的说明可以查看[这里](https://v2.ssr.vuejs.org/guide/data.html)。
 
-SSR 提供的新生命周期，随着每次用户请求时被调用，这个生命周期仅可用于 App 中。
+#### onSSRAppCreated
 
-对于 Vue SSR 项目，我们会在 server entry 中去创建、返回应用程序实例、完成路由匹配等，在 client entry 中去实现创建应用、应用挂载，store 状态同步等逻辑。
+> 该生命周期仅可在 App 中使用，只在服务端渲染时执行
 
-而对于 Mpx SSR 来说，项目的构建入口只有一个 `app.mpx`，用户无需关心服务端与客户端应用创建，客户端应用挂载的逻辑，这部分已经集成在框架内部，无需用户再手动处理，但如果你想实现 server entry 中的其它逻辑，Mpx 提供了 `onSSRAppCreated` 这个 App 生命周期，在这个生命周期中 Mpx 会将新建的应用实例，路由信息，上下文等信息暴露给用户，你可以在这里去实现服务端返回应用程序实例、路由匹配等逻辑。
+在 Vue SSR 项目中，我们会在 `entry-server.js` 中导出一个工厂函数，在该函数中实现创建应用实例、路由匹配和状态同步等逻辑，并返回应用实例 `app`。
 
-此外如果你需要用到状态管理工具，当服务端预请求完成后，需要在这里将 store 数据挂载到 `context.state`上，挂载后 Vue 会帮我们将 `context.state` 作为 `window.__INITIAL_STATE__` 状态，自动嵌入到最终的 HTML 中，而在客户端，在挂载(mount)应用程序之前，Mpx 会在内部获取到状态并同步 store 数据。
+在 Mpx SSR 中，我们将这部分逻辑整合在 `onSSRAppCreated` 中执行，该生命周期执行时用户可以从参数中获取应用实例 `app`、路由实例 `router`、数据管理实例 `pinia` 和 SSR 上下文 `context`，在完成必要的操作后，该生命周期需要返回一个 `resolve(app)` 的 promise。
+
+通常我们会在 `onSSRAppCreated` 中进行路由路径设置和数据预拉取后的状态同步工作，示例如下：
 
 ```js
 // app.mpx
 createApp({
-    ...,
+    // ...,
     onSSRAppCreated ({ pinia, router, app, context }) {
       return new Promise((resolve, reject) => {
+        // 设置服务端路由路径
         router.push(context.url)
         router.onReady(() => {
-          // 是否匹配到我们要用的组件
-          const matchedComponents = router.getMatchedComponents()
-          if (!matchedComponents.length) {
-            return reject({ code: 404 })
-          }
-          // store 数据挂载到当前应用的上下文
+          // 应用完成渲染时执行
           context.rendered = () => {
-            context.state = JSON.stringify(pinia.state.value)
+            // 将服务端渲染后得到的 pinia.state 同步到 context.state 中，
+            // context.state 会被自动序列化并通过 `window.__INITIAL_STATE__`
+            // 注入到 HTML 中，并在客户端运行时再读取同步
+            context.state = pinia.state.value
           }
           // 返回应用程序实例
           resolve(app)
@@ -218,10 +214,39 @@ createApp({
     }
 })
 ```
-若用户没有配置 onSSRAppCreated，且识别出当前运行环境非浏览器环境，框架内部会默认创建应用实例并返回。
 
+上述示例代码等价于 Vue 中的 `entry-server.js`
+
+```js
+// entry-server.js
+import { createApp } from './app'
+
+export default context => {
+  return new Promise((resolve, reject) => {
+    const { app, router, store } = createApp()
+    router.push(context.url)
+    router.onReady(() => {
+      // This `rendered` hook is called when the app has finished rendering
+      context.rendered = () => {
+        // After the app is rendered, our store is now
+        // filled with the state from our components.
+        // When we attach the state to the context, and the `template` option
+        // is used for the renderer, the state will automatically be
+        // serialized and injected into the HTML as `window.__INITIAL_STATE__`.
+        context.state = store.state
+      }
+      resolve(app)
+    }, reject)
+  })
+}
+```
+
+如用户没有配置 onSSRAppCreated，框架内部会执行兜底逻辑，以保障 SSR 的正常运行。
 
 ### 其他注意事项
-1. Mpx SSR 渲染支持 i18n 的功能，但目前 i18n 不会随着每次请求重新创建新实例，因为在 Vue2 的版本中，如果每次新建一个实例，再通过 Vue.use 全局注册可能会造成内存泄漏，所以 i18n 保持单例状态，同时这也意味着如果用户在服务端渲染时通过参数控制渲染页面的语言时，可能会因为全局状态污染产生语言错乱的问题，不过这个问题在未来输出 web 迁移至 vue3 后会完全解决。
-2. 在服务端渲染阶段，对于 global 全局对象访问，如__mpx, __mpxRouter, __mpxPinia 可能会存在状态污染，所以在服务端渲染阶段请尽量避免使用。对于 global 全局方法的访问，如 getApp(), getCurrentPages() 在非浏览器环境被调用时，Mpx 会触发 error 报错并阻塞该方法的运行。
-3. SSR 渲染由于服务器无法识别 URL 中的 hash 部分，所以需要通过修改 `mpx.config.webRouteConfig` 将我们的路由模式设置成 `history` 模式
+
+1. Mpx SSR 渲染支持 i18n 的功能，但为了防止内存泄漏，当前 i18n 实例不会随着每次请求而重新创建，这是由于 Vue2.x 版本插件机制的设计缺陷所造成的，因此在使用 i18n 进行 SSR 时可能会产生跨请求状态污染的问题，这个问题会在未来 Mpx 输出 web 切换为 Vue3 后完全解决。
+   
+2. 在服务端渲染阶段，对于 global 全局对象访问修改，如__mpx, __mpxRouter, __mpxPinia 都可能导致全局状态污染，所以在服务端渲染阶段请尽量避免进行相关操作；对于存在全局访问修改的方法，如 getApp(), getCurrentPages() 等在服务端渲染中被调用时，会产生相关报错提示。
+   
+3. 由于服务器无法收到 URL 中的 hash 信息，使用 SSR 时需要通过修改 `mpx.config.webRouteConfig` 将路由模式设置成 `history` 模式。
