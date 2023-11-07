@@ -1,5 +1,5 @@
 const path = require('path')
-const minimatch = require('minimatch')
+const { minimatch } = require('minimatch')
 const unoConfig = require('@unocss/config')
 const core = require('@unocss/core')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
