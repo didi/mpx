@@ -4,6 +4,7 @@ import path from 'path'
 import chalk from 'chalk'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
+import replace from '@rollup/plugin-replace'
 
 if (!process.env.TARGET) {
   throw new Error('TARGET package must be specified via --environment flag.')
@@ -36,8 +37,6 @@ const packageFormats = packageOptions.formats || defaultFormats
 const packageConfigs = packageFormats.map((format) =>
   createConfig(format, outputConfigs[format])
 )
-
-console.log(45657, packageConfigs)
 
 packageFormats.forEach(format => {
   if (format === 'cjs') {
@@ -75,7 +74,13 @@ function createConfig (format, output, plugins = []) {
     plugins: [
       nodeResolve(),
       commonjs(),
-      ...plugins
+      ...plugins,
+      replace({
+        values: {
+          __DEV__: '!!(process.env.NODE_ENV !== \'production\')'
+        },
+        preventAssignment: true
+      })
     ],
     output,
     onwarn: (msg, warn) => {
