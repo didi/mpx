@@ -209,6 +209,16 @@ createComponent({
 
 **注意：** 仅微信小程序支持
 
+
+### onServerPrefetch
+- **类型：** `Function`
+- **详细：**
+
+SSR渲染定制钩子，在服务端渲染期间被调用，可以实现在服务端进行数据预取。
+
+**注意：** 仅 web 环境支持
+
+
 ## getCurrentInstance
 
 getCurrentInstance 支持访问内部组件实例。

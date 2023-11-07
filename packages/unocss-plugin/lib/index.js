@@ -386,7 +386,7 @@ class MpxUnocssPlugin {
           const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
           appStyleSource.add(assets[appStyleFile] || '')
           assets[appStyleFile] = appStyleSource
-          dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
+          dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
             const commentConfig = commentConfigMap[filename] || {}
             const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
             if (styleIsolation === 'isolated' && entryType === 'component') {
@@ -411,7 +411,7 @@ class MpxUnocssPlugin {
             assets[unoFile] = getRawSource(unoFileContent)
           }
 
-          dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
+          dynamicEntryInfo[packageRoot] && dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
             if (unoFile && entryType === 'page') {
               const pageStyleFile = filename + styleExt
               const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), unoFile)), mode)
