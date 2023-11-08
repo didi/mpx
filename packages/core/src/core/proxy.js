@@ -226,8 +226,8 @@ export default class MpxProxy {
 
   initProps () {
     this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-    reactive(this.props)
-    proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
+    const propProxy = reactive(this.props)
+    proxy(this.target, propProxy, undefined, false, this.createProxyConflictHandler('props'))
   }
 
   initSetup () {
@@ -264,8 +264,8 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    reactive(this.data)
-    proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
+    const dataProxy = reactive(this.data)
+    proxy(this.target, dataProxy, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
 
