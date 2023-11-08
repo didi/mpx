@@ -5,6 +5,8 @@ const core = require('@unocss/core')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
+const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
+const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const UnoCSSWebpackPlugin = require('@unocss/webpack').default
 const transformerDirectives = require('@unocss/transformer-directives').default
@@ -33,19 +35,41 @@ const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
   const { include = [], exclude = [] } = scan
-  for (const pattern of exclude) {
-    if (minimatch(file, pattern)) {
+  for (const rule of exclude) {
+    if (rule.test(file)) {
       return false
     }
   }
 
-  for (const pattern of include) {
-    if (!minimatch(file, pattern)) {
-      return false
+  for (const rule of include) {
+    if (rule.test(file)) {
+      return true
     }
   }
 
-  return true
+  return !include.length
+}
+
+function normalizeRules (rules, root) {
+  if (!rules) return
+  if (!Array.isArray(rules)) {
+    rules = [rules]
+  }
+  return rules.map((rule) => {
+    if (rule instanceof RegExp) {
+      return rule
+    }
+    if (typeof rule === 'string') {
+      if (!(path.isAbsolute(rule) || rule.startsWith('**'))) {
+        rule = path.join(root, rule)
+      }
+      rule = toPosix(rule)
+      return {
+        test: (file) => minimatch(file, rule)
+      }
+    }
+    return false
+  }).filter(i => i)
 }
 
 function normalizeOptions (options) {
@@ -54,7 +78,11 @@ function normalizeOptions (options) {
     unoFile = 'styles/uno',
     styleIsolation = 'isolated',
     minCount = 2,
-    scan = {},
+    scan = {
+      include: [
+        'src/**/*'
+      ]
+    },
     escapeMap = {},
     // 公共的配置
     root = process.cwd(),
@@ -67,10 +95,7 @@ function normalizeOptions (options) {
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
-    include: [
-      'src/**/*',
-      ...(scan.include || [])
-    ],
+    include: scan.include || [],
     exclude: scan.exclude || [],
     transformers: [
       ...transformGroups ? [transformerVariantGroup()] : [],
@@ -234,7 +259,7 @@ class MpxUnocssPlugin {
         // const warn = (msg) => {
         //   compilation.warnings.push(new Error(msg))
         // }
-        const { mode, dynamicEntryInfo, appInfo } = mpx
+        const { mode, dynamicEntryInfo, appInfo, assetsModulesMap } = mpx
         const uno = await this.createContext(compilation, mode)
         const config = uno.config
 
@@ -349,15 +374,29 @@ class MpxUnocssPlugin {
           assets[file] = source
         }
 
+        // normalize scan
+        const scan = this.options.scan
+        const root = this.options.root
+        scan.include = normalizeRules(scan.include, root)
+        scan.exclude = normalizeRules(scan.exclude, root)
+
         await Promise.all(Object.entries(assets).map(([file, source]) => {
-          if (!filterFile(file, this.options.scan)) {
-            return Promise.resolve()
-          }
-          if (this.options.transformCSS && file.endsWith(styleExt)) {
-            return processStyle(file, source)
-          }
-          if (file.endsWith(templateExt)) {
-            return processTemplate(file, source)
+          if (file.endsWith(styleExt) || file.endsWith(templateExt)) {
+            const assetModules = assetsModulesMap.get(file)
+            if (has(assetModules, (module) => {
+              if (module.resource) {
+                const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
+                return filterFile(resourcePath, scan)
+              }
+              return false
+            })) {
+              if (this.options.transformCSS && file.endsWith(styleExt)) {
+                return processStyle(file, source)
+              }
+              if (file.endsWith(templateExt)) {
+                return processTemplate(file, source)
+              }
+            }
           }
           return Promise.resolve()
         }))

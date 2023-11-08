@@ -315,7 +315,7 @@ function composeHooks (target, includes) {
   Object.keys(target).forEach(key => {
     if (!includes || includes[key]) {
       const hooks = target[key]
-      if(Array.isArray(hooks)){
+      if (Array.isArray(hooks)) {
         target[key] = function (...args) {
           let result
           for (let i = 0; i < hooks.length; i++) {
