@@ -1,4 +1,4 @@
-import { isObject } from '@mpxjs/utils'
+import { isObject, getByPath, hasOwn } from '@mpxjs/utils'
 
 export default function renderHelperMixin () {
   return {
@@ -22,6 +22,12 @@ export default function renderHelperMixin () {
         }
       },
       _c (key, value) {
+        if (hasOwn(this.__mpxProxy.renderData, key)) {
+          return this.__mpxProxy.renderData[key]
+        }
+        if (value === undefined) {
+          value = getByPath(this, key)
+        }
         this.__mpxProxy.renderData[key] = value
         return value
       },
