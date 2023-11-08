@@ -34,15 +34,15 @@ describe('render function simplify should correct', function () {
     const output = `
 global.currentInject = {
   render: function () {
-    if (this._c("a", this.a)) {}
-    this._c("c", this.c);
-    this._c("a", this.a) ? this._c("b", this.b) : this._c("c", this.c);
-    this._c("a", this.a) && this._c("b", this.b);
-    this._c("d", this.d);
-    this._c("e", this.e);
-    if (this._c("a", this.a) ? this._c("d", this.d) : this._c("e", this.e)) {}
-    this._c("obj1", this.obj1);
-    this._c("obj2", this.obj2);
+    if (_c("a")) {}
+    _c("c");
+    _c("a") ? _c("b") : _c("c");
+    _c("a") && _c("b");
+    _c("d");
+    _c("e");
+    if (_c("a") ? _c("d") : _c("e")) {}
+    _c("obj1");
+    _c("obj2");
   }
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
@@ -84,10 +84,10 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    if (this._c("bName", this.bName)) {} // 1
+    if (_c("bName")) {} // 1
 
     // 3
-    wxs.test("" + this._c("cName", this.cName)); // 4
+    wxs.test("" + _c("cName")); // 4
   
     Number("" + ""); // 5
   
@@ -102,7 +102,7 @@ global.currentInject = {
     }); // 8
   
     // 9
-    if (this._c("bName", this.bName)) {} // 10
+    if (_c("bName")) {} // 10
     // 删除wxs.test
     wxs.test("" + ""); // 12
   
@@ -113,17 +113,17 @@ global.currentInject = {
     }).length; // 14
     
     if (Object.keys({
-      name: this._c("bName", this.bName)
+      name: _c("bName")
     }).length) {} // 15
   
   
     Object.keys({
-      name: this._c("bName", this.bName)
-    }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2); // 16
+      name: _c("bName")
+    }).length ? _c("bName1") : _c("bName2"); // 16
   
     Object.keys({
-      name: this._c("bName", this.bName)
-    }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2); // 17
+      name: _c("bName")
+    }).length ? _c("bName1") : _c("bName2"); // 17
   }
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
@@ -170,28 +170,28 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    this._c("grade", this.grade);
+    _c("grade");
 
-    if (this._c("random", this.random)) {
-      this._c("name", this.name);
+    if (_c("random")) {
+      _c("name");
     } else {
-      this._c("name", this.name);
+      _c("name");
     }
 
-    this._c("aName", this.aName);
+    _c("aName");
 
-    if (this._c("random", this.random)) {}
+    if (_c("random")) {}
 
-    this._c("bName", this.bName);
+    _c("bName");
 
-    if (this._c("random", this.random)) {} else {}
+    if (_c("random")) {} else {}
 
-    this._c("cName", this.cName);
+    _c("cName");
 
-    if (this._c("random", this.random)) {
-      this._c("dName", this.dName);
+    if (_c("random")) {
+      _c("dName");
 
-      if (this._c("random2", this.random2)) {}
+      if (_c("random2")) {}
     }
   }
 };`
@@ -226,23 +226,23 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    if (this._c("name1", this.name1)) {}
+    if (_c("name1")) {}
 
-    if (this._c("name2", this.name2)) {}
+    if (_c("name2")) {}
   
-    if (this._c("name3", this.name3) ? 'big' : 'small') {}
+    if (_c("name3") ? 'big' : 'small') {}
   
-    if (this._c("name2", this.name2) ? this._c("name3", this.name3) : 'small') {}
+    if (_c("name2") ? _c("name3") : 'small') {}
   
-    if ([this._c("name4", this.name4)].length) {}
+    if ([_c("name4")].length) {}
   
-    this._c("name5", this.name5) ? 'a' : 'b';
+    _c("name5") ? 'a' : 'b';
   
-    this._c("a", this.a);
+    _c("a");
   
-    this._c("b", this.b);
+    _c("b");
   
-    this._c("name5", this.name5) ? this._c("a", this.a) : this._c("b", this.b);
+    _c("name5") ? _c("a") : _c("b");
   }
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
@@ -263,8 +263,8 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    this._c("name", this.name);
-    this._c("nameage", this.nameage);
+    _c("name");
+    _c("nameage");
   }
 };`
 
@@ -327,16 +327,16 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    this._c("name", this.name);
+    _c("name");
 
-    this._c("name3", this.name3)[this._c("name2", this.name2)];
-    this._c("name4", this.name4) && this._c("name4", this.name4).length;
+    _c("name3")[_c("name2")];
+    _c("name4") && _c("name4").length;
 
-    this._c("name5", this.name5);
+    _c("name5");
 
-    this._c("name6", this.name6);
+    _c("name6");
 
-    this._c("name7", this.name7);
+    _c("name7");
 
     "" + "";
     "" + '123';
@@ -345,23 +345,23 @@ global.currentInject = {
     "" + '123' + "" + "";
 
     ({
-      key: this._c("name8", this.name8) && !this._c("name9", this.name9)
+      key: _c("name8") && !_c("name9")
     });
     ({
       key: ""
     });
 
-    if (this._c("xxx", this.xxx)) {
-      if (this._c("name10", this.name10)) {}
+    if (_c("xxx")) {
+      if (_c("name10")) {}
 
     }
 
-    if (this._c("name10", this.name10)) {}
+    if (_c("name10")) {}
 
 
-    this._c("name11", this.name11);
+    _c("name11");
 
-    this._i(this._c("name12", this.name12), function (item) {});
+    this._i(_c("name12"), function (item) {});
   }
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
@@ -394,22 +394,22 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    this._c("a", this.a);
+    _c("a");
 
     {
-      this._c("c", this.c);
+      _c("c");
   
       {}
   
-      this._c("aa", this.aa); // 分割线
+      _c("aa"); // 分割线
   
   
       {
-        this._c("d", this.d);
+        _c("d");
       }
     }
   
-    this._c("b", this.b);
+    _c("b");
 
   }
 };`
@@ -432,10 +432,10 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    if (this._c("a.b", this.a['b'])) {}
+    if (_c("a.b")) {}
 
-    this._c("a", this.a)[this._c("c", this.c)];
-    this._c("a.b", this.a.b)[this._c("c.d", this.c.d)];
+    _c("a")[_c("c")];
+    _c("a.b")[_c("c.d")];
   }
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
@@ -480,14 +480,14 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    this._c("handlerName", this.handlerName);
+    _c("handlerName");
 
     ({
       tap: [["handler", true, 123]],
       click: [["handler", ""]]
     });
   
-    this._c("aName", this.aName);
+    _c("aName");
   
     ({
       open: true,
@@ -498,24 +498,24 @@ global.currentInject = {
       name: ""
     });
   
-    if (this._c("bName", this.bName)) {}
+    if (_c("bName")) {}
   
-    Number("" + this._c("cName", this.cName));
+    Number("" + _c("cName"));
     Number("" + "");
     Object.keys({
       name: ""
     }).length;
   
     if (Object.keys({
-      name: this._c("bName", this.bName)
+      name: _c("bName")
     }).length) {}
   
     Object.keys({
-      name: this._c("bName", this.bName)
-    }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
+      name: _c("bName")
+    }).length ? _c("bName1") : _c("bName2");
     Object.keys({
-      name: this._c("bName", this.bName)
-    }).length ? this._c("bName1", this.bName1) : this._c("bName2", this.bName2);
+      name: _c("bName")
+    }).length ? _c("bName1") : _c("bName2");
     Object.keys({
       name: ""
     });
@@ -540,11 +540,11 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    if (this._c("a", this.a) || this._c("b", this.b)) {
-      this._c("a", this.a) || this._c("b", this.b);
+    if (_c("a") || _c("b")) {
+      _c("a") || _c("b");
     }
 
-    if (this._c("c", this.c)) {}
+    if (_c("c")) {}
 
     ({
       active: ""
@@ -571,11 +571,11 @@ global.currentInject = {
     const output = `
 global.currentInject = {
   render: function () {
-    this._c("b", this.b);
+    _c("b");
   
-    this._c("c", this.c);
+    _c("c");
     
-    if (this._c("a", this.a) ? this._c("b", this.b) : this._c("c", this.c)) {}
+    if (_c("a") ? _c("b") : _c("c")) {}
   }
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
