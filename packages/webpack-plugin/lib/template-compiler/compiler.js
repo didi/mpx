@@ -1091,6 +1091,7 @@ function processBindEvent (el, options) {
   for (const type in eventConfigMap) {
     let needBind = false
     let { configs, rawName, proxy } = eventConfigMap[type]
+    delete eventConfigMap[type]
     if (proxy) {
       needBind = true
     } else if (configs.length > 1) {
@@ -1098,11 +1099,14 @@ function processBindEvent (el, options) {
     } else if (configs.length === 1) {
       needBind = !!configs[0].hasArgs
     }
+
+    const escapedType = dash2hump(type)
     // 排除特殊情况
-    if (needBind && !isValidIdentifierStr(type)) {
+    if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
       needBind = false
     }
+
     if (needBind) {
       if (rawName) {
         // 清空原始事件绑定
@@ -1120,11 +1124,9 @@ function processBindEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[type] = configs.map((item) => {
+      eventConfigMap[escapedType] = configs.map((item) => {
         return item.expStr
       })
-    } else {
-      delete eventConfigMap[type]
     }
   }
 
