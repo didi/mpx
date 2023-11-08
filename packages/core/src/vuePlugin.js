@@ -16,22 +16,17 @@ function collectDataset (attrs) {
 }
 
 export default function install (Vue) {
-  Vue.prototype.triggerEvent = function (eventName, eventDetail, e) {
+  Vue.prototype.triggerEvent = function (eventName, eventDetail) {
     let eventObj = {}
-    if (e) {
-      e.detail = Object.assign(e.detail, eventDetail)
-      eventObj = e
-    } else {
-      const dataset = collectDataset(this.$attrs)
-      const id = this.$attrs.id || ''
-      const timeStamp = +new Date()
-      eventObj = {
-        type: eventName,
-        timeStamp,
-        target: { id, dataset, targetDataset: dataset },
-        currentTarget: { id, dataset },
-        detail: eventDetail
-      }
+    const dataset = collectDataset(this.$attrs)
+    const id = this.$attrs.id || ''
+    const timeStamp = +new Date()
+    eventObj = {
+      type: eventName,
+      timeStamp,
+      target: { id, dataset, targetDataset: dataset },
+      currentTarget: { id, dataset },
+      detail: eventDetail
     }
     return this.$emit(eventName, eventObj)
   }
