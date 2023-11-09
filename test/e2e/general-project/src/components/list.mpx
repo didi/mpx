@@ -1,7 +1,7 @@
 <template>
   <view class="list">
     <view wx:for="{{listData}}" wx:key="index" bindtap="handleAddListData(item)">{{item}}</view>
-    <!-- <view>{{ message }}{{ msg }}</view> -->
+    <view>{{ message }}{{ msg }}</view>
   </view>
 </template>
 
@@ -10,7 +10,7 @@ import { createComponent, set } from '@mpxjs/core'
 
 createComponent({
   data: {
-    listData: ['手机2', '电视2', '电脑2'],
+    listData: ['手机', '电视', '电脑'],
     message: 'hello world!',
     testObj: {
       name: 'jack',
@@ -31,7 +31,8 @@ createComponent({
       // debugger
       // this.listData[4] = 'mac pro' // ✅
       debugger
-      set(this.testObj, 'msg', 'hello !!') // 无效果？
+      set(this.testObj, 'msg', 'jack')
+      console.log(this.msg)
     }
   },
   ready() {
