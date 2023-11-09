@@ -17,6 +17,10 @@ function collectDataset (attrs) {
 
 export default function install (Vue) {
   Vue.prototype.triggerEvent = function (eventName, eventDetail) {
+    // 输出Web时自定义组件绑定click事件会和web原生事件冲突，组件内部triggerEvent时会导致事件执行两次，将click事件改为wclick来规避此问题
+    if (eventName === 'click') {
+      eventName = 'wclick'
+    }
     let eventObj = {}
     const dataset = collectDataset(this.$attrs)
     const id = this.$attrs.id || ''

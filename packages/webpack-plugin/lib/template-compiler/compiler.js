@@ -1727,6 +1727,15 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
+function processWebClickHack (el) {
+  el.attrsList.forEach((attr) => {
+    // 输出Web时自定义组件绑定click事件会和web原生事件冲突，组件内部triggerEvent时会导致事件执行两次，将click事件改为wclick来规避此问题
+    if (attr.name === '@click') {
+      attr.name = '@wclick'
+    }
+  })
+}
+
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
@@ -2059,6 +2068,9 @@ function processElement (el, root, options, meta) {
     processIfForWeb(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
+    if (isComponentNode(el, options) && !options.hasVirtualHost) {
+      processWebClickHack(el)
+    }
     return
   }
 
