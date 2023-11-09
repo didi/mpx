@@ -1727,11 +1727,14 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
-function processWebClickHack (el) {
+function processWebEventHack (el) {
+  const conditions = [/^(@)(click)$/]
   el.attrsList.forEach((attr) => {
-    // 输出Web时自定义组件绑定click事件会和web原生事件冲突，组件内部triggerEvent时会导致事件执行两次，将click事件改为wclick来规避此问题
-    if (attr.name === '@click') {
-      attr.name = '@wclick'
+    for (let condition of conditions) {
+      const match = condition.exec(attr.name)
+      if (condition.exec(attr.name)) {
+        attr.name = match[1] + '_' + match[2]
+      }
     }
   })
 }
@@ -2070,7 +2073,7 @@ function processElement (el, root, options, meta) {
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
     if (isComponentNode(el, options) && !options.hasVirtualHost && transWeb) {
-      processWebClickHack(el)
+      processWebEventHack(el)
     }
     return
   }
