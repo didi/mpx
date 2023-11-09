@@ -2060,6 +2060,7 @@ function processElement (el, root, options, meta) {
   processInjectWxs(el, meta)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
+  const transWeb = mode === 'web' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
@@ -2068,7 +2069,7 @@ function processElement (el, root, options, meta) {
     processIfForWeb(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
-    if (isComponentNode(el, options) && !options.hasVirtualHost) {
+    if (isComponentNode(el, options) && !options.hasVirtualHost && transWeb) {
       processWebClickHack(el)
     }
     return
