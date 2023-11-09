@@ -170,7 +170,7 @@ function dealRemove (path, replace) {
       path.remove()
     }
     delete path.needBind
-    delete path.collectPath
+    delete path.collectInfo
   } catch (e) {
   }
 }
@@ -229,7 +229,10 @@ module.exports = {
           const { last, keyPath } = calPropName(path)
           path.needBind = true
           if (needCollect) {
-            last.collectPath = t.stringLiteral(keyPath)
+            last.collectInfo = {
+              key: t.stringLiteral(keyPath),
+              isSimple: !/[[.]/.test(keyPath)
+            }
           }
 
           if (!renderReduce) return
@@ -334,12 +337,14 @@ module.exports = {
       },
       MemberExpression: {
         exit (path) {
-          if (path.collectPath) {
+          if (path.collectInfo) {
+            const { isSimple, key } = path.collectInfo
+            const callee = isSimple ? t.identifier('_sc') : t.identifier('_c')
             const replaceNode = renderReduce
-              ? t.callExpression(t.identifier('_c'), [path.collectPath])
-              : t.callExpression(t.identifier('_c'), [path.collectPath, path.node])
+              ? t.callExpression(callee, [key])
+              : t.callExpression(callee, [key, path.node])
             path.node && path.replaceWith(replaceNode)
-            delete path.collectPath
+            delete path.collectInfo
           }
         }
       }
