@@ -141,7 +141,6 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         '456' || obj4 || ''
         '' || 123 || obj4
 
-        // 二进制表达式
         obj5 + 'rpx'
         'height:' + obj5 + 'rpx'
         'height' + ':' + obj5
@@ -151,7 +150,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   // 逻辑运算          
   _sc("obj3") && _c("obj3.b");
-  '' || 123 || _sc("obj4"); // 二进制表达式
+  '' || 123 || _sc("obj4");
 
   _sc("obj5") + 'rpx';
   'height:' + "" + 'rpx';
