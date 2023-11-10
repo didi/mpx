@@ -32,7 +32,10 @@ describe('render function simplify should correct', function () {
 
         obj3;
         String(obj3).b.c;
+        this._p(obj3)
+        String(obj3,'123').b.c
         !!!String(obj3).b.c;
+        _i(obj3, function() {})
 
         obj5
         !obj5
@@ -75,7 +78,8 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   _sc("obj2");
 
-  _sc("obj3");
+  String(_sc("obj3"), '123').b.c;
+  _i(_sc("obj3"), function () {});
 
   _sc("obj5");
 
