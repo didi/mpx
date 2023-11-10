@@ -137,7 +137,9 @@
       }
     },
     mounted () {
-      this.createResizeObserver()
+      if (!this.scrollOptions.closeResizeObserver) {
+        this.createResizeObserver()
+      }
       this.init()
     },
     activated () {

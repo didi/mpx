@@ -132,8 +132,10 @@
       this.itemIds = []
     },
     mounted () {
+      if (!this.scrollOptions.closeResizeObserver) {
+        this.createResizeObserver()
+      }
       this.setCurrentChildLength()
-      this.createResizeObserver()
       this.initBs()
     },
     beforeDestroy () {
