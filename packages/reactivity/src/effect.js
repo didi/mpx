@@ -21,6 +21,7 @@ export class ReactiveEffect {
   parent = undefined;
   deferStop = false;
   pausedState = PausedState.resumed;
+  allowRecurse = false
   constructor (fn, scheduler, scope) {
     this.fn = fn
     this.scheduler = scheduler
@@ -63,10 +64,13 @@ export class ReactiveEffect {
   }
 
   update () {
-    if (this.pausedState !== PausedState.resumed) {
-      this.pausedState = PausedState.dirty
-    } else {
-      this.scheduler ? this.scheduler() : this.run()
+    // this.allowRecurse
+    if (activeEffect !== this || this.allowRecurse) {
+      if (this.pausedState !== PausedState.resumed) {
+        this.pausedState = PausedState.dirty
+      } else {
+        this.scheduler ? this.scheduler() : this.run()
+      }
     }
   }
 
