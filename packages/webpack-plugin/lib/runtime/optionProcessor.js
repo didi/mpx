@@ -140,6 +140,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       routes: routes
     })
     global.__mpxRouter.stack = []
+    global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
     global.__mpxRouter.eventChannelMap = {}
