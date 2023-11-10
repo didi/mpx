@@ -170,11 +170,14 @@
               this.isInited = true
               return
             }
-            this.bs.refresh()
+            this.refresh()
           })
           const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
           this.resizeObserver.observe(elementToObserve)
         }
+      },
+      refresh () {
+        this.bs && this.bs.refresh()
       },
       destroyBs () {
         if (!this.bs) return
