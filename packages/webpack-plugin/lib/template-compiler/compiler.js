@@ -2051,7 +2051,6 @@ function processElement (el, root, options, meta) {
   processInjectWxs(el, meta)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
-  const transWeb = mode === 'web' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
