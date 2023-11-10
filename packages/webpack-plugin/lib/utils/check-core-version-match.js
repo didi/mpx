@@ -31,7 +31,7 @@ function compareVersion (v1, v2) {
   return 0
 }
 
-function compare(version, latestVersion, npmName, npmPath) {
+function compare (version, latestVersion, npmName, npmPath) {
   if (compareVersion(version, latestVersion) === -1) {
     throw new Error(
       `${npmName} packages version mismatch:
@@ -44,4 +44,3 @@ function compare(version, latestVersion, npmName, npmPath) {
 
 compare(coreVersion, latestCoreVersion, '@mpxjs/core', corePath)
 compare(utilsVersion, latestUtilsVersion, '@mpxjs/utils', utilsPath)
-

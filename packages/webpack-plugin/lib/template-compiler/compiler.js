@@ -1730,7 +1730,7 @@ function processWebExternalClassesHack (el, options) {
 function processWebEventHack (el) {
   const conditions = [/^(@)(click)$/]
   el.attrsList.forEach((attr) => {
-    for (let condition of conditions) {
+    for (const condition of conditions) {
       const match = condition.exec(attr.name)
       if (condition.exec(attr.name)) {
         attr.name = match[1] + '_' + match[2]
