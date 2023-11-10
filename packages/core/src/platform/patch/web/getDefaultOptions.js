@@ -41,7 +41,7 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
-      const instance = getCurrentVueInstance()
+      const instance = getCurrentVueInstance().proxy
       initProxy(instance, rawOptions)
       setCurrentInstance(instance.__mpxProxy)
       const newContext = {
