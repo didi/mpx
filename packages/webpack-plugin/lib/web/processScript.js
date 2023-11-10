@@ -111,9 +111,10 @@ module.exports = function (script, {
   Vue.use(VueRouter)
   global.getApp = function(){}
   global.getCurrentPages = function(){
-    if(!global.__mpxRouter) return []
+    const router = global.__mpxRouter
+    if(!router) return []
     // @ts-ignore
-    return global.__mpxRouter.stack.map(item => {
+    return (router.lastStack || router.stack).map(item => {
       let page
       const vnode = item.vnode
       if(vnode && vnode.componentInstance) {
