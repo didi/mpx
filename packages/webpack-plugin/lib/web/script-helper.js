@@ -129,7 +129,6 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
     global.getCurrentPages = function () {
       if (!(typeof window !== 'undefined')) {
         console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
-        return
       }
       if (!global.__mpxRouter) return []
       // @ts-ignore
