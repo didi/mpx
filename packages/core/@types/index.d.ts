@@ -614,8 +614,7 @@ export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabI
 export function onSaveExitState (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): T
-
+export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): { proxy: T, [x: string]: any }
 // I18n
 export function useI18n<Options extends {
   inheritLocale?: boolean
