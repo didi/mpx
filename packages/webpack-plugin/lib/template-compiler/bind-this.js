@@ -85,7 +85,7 @@ function checkDelAndGetPath (path) {
       if (args.length === 1) {
         delPath = current.parentPath
       } else {
-        // case: this._i(a, function() {})
+        // case: _i(a, function() {})
         canDel = false
         break
       }
@@ -96,6 +96,16 @@ function checkDelAndGetPath (path) {
       } else {
         delPath = current.parentPath
       }
+    } else if (t.isLogicalExpression(current.container)) { // case: a || ''
+      const key = current.key === 'left' ? 'right' : 'left'
+      if (t.isLiteral(current.parent[key])) {
+        delPath = current.parentPath
+      } else {
+        canDel = false
+        break
+      }
+    } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) { // dealRemove删除节点时需要
+      delPath = current.parentPath
     } else {
       break
     }
@@ -152,10 +162,6 @@ function checkPrefix (keys, key) {
 }
 
 function dealRemove (path, replace) {
-  while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
-    path = path.parentPath
-  }
-
   try {
     if (replace) {
       path.replaceWith(t.stringLiteral(''))
@@ -163,8 +169,9 @@ function dealRemove (path, replace) {
       t.validate(path, path.key, null)
       path.remove()
     }
+    delete path.needBind
+    delete path.collectInfo
   } catch (e) {
-    console.error(e)
   }
 }
 
@@ -202,13 +209,30 @@ module.exports = {
       Identifier (path) {
         if (
           checkBindThis(path) &&
-          !path.scope.hasBinding(path.node.name) &&
           !ignoreMap[path.node.name]
         ) {
+          const scopeBinding = path.scope.hasBinding(path.node.name)
+          // 删除局部作用域的变量
+          if (scopeBinding) {
+            if (renderReduce) {
+              const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
+              if (canDel && !ignore) {
+                delPath.delInfo = {
+                  isLocal: true,
+                  canDel,
+                  replace
+                }
+              }
+            }
+            return
+          }
           const { last, keyPath } = calPropName(path)
           path.needBind = true
           if (needCollect) {
-            last.collectPath = t.stringLiteral(keyPath)
+            last.collectInfo = {
+              key: t.stringLiteral(keyPath),
+              isSimple: !/[[.]/.test(keyPath)
+            }
           }
 
           if (!renderReduce) return
@@ -272,10 +296,14 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, replace } = path.delInfo
+          const { keyPath, canDel, isLocal, replace } = path.delInfo
           delete path.delInfo
 
           if (canDel) {
+            if (isLocal) { // 局部作用域里的变量，可直接删除
+              dealRemove(path, replace)
+              return
+            }
             const data = bindingsMap.get(currentBlock)
             const { bindings, pBindings } = data
             const allBindings = Object.assign({}, pBindings, bindings)
@@ -283,14 +311,12 @@ module.exports = {
             // 优先判断前缀，再判断全等
             if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
               dealRemove(path, replace)
-              return
             } else {
               const currentBlockVars = bindings[keyPath]
               if (currentBlockVars.length > 1) {
                 const index = currentBlockVars.findIndex(item => !item.canDel)
                 if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
                   dealRemove(path, replace)
-                  return
                 }
               }
             }
@@ -311,9 +337,14 @@ module.exports = {
       },
       MemberExpression: {
         exit (path) {
-          if (path.collectPath) {
-            path.node && path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
-            delete path.collectPath
+          if (path.collectInfo) {
+            const { isSimple, key } = path.collectInfo
+            const callee = isSimple ? t.identifier('_sc') : t.identifier('_c')
+            const replaceNode = renderReduce
+              ? t.callExpression(callee, [key])
+              : t.callExpression(callee, [key, path.node])
+            path.node && path.replaceWith(replaceNode)
+            delete path.collectInfo
           }
         }
       }
