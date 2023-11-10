@@ -94,7 +94,7 @@ global.currentInject = {
   const rawCode = compiler.genNode(ast)
   if (rawCode) {
     const renderCode = `
-global.currentInject.render = function (_i, _c, _r) {
+global.currentInject.render = function (_i, _c, _r, _sc) {
 ${rawCode}
 _r();
 };\n`
