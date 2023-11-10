@@ -144,7 +144,7 @@
     },
     activated () {
       if (this.deactivatedX || this.deactivatedY) {
-        this.bs.refresh()
+        this.refresh()
         this.bs.putAt(this.deactivatedX, this.deactivatedY, 0)
       }
     },
