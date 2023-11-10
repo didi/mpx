@@ -358,7 +358,7 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        web ({ name, value }, { eventRules, el }) {
+        web ({ name, value }, { eventRules, el, usingComponents }) {
           if (parseMustache(value).hasBinding) {
             error('Web environment does not support mustache binding in event props!')
             return
@@ -373,7 +373,7 @@ module.exports = function getSpec ({ warn, error }) {
           // 记录event监听信息用于后续判断是否需要使用内置基础组件
           el.hasEvent = true
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { usingComponents, tag: el.tag } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -455,6 +455,17 @@ module.exports = function getSpec ({ warn, error }) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
             }
+          }
+        },
+        // 特殊web事件
+        {
+          test: /^click$/,
+          web (eventName, data) {
+            // 自定义组件根节点
+            if (data.usingComponents && data.tag && (data.usingComponents.includes(data.tag) || data.tag === 'component')) {
+              return '_' + eventName
+            }
+            return eventName
           }
         }
       ]

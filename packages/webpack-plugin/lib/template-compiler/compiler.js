@@ -1727,18 +1727,6 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
-function processWebEventHack (el) {
-  const conditions = [/^(@)(click)$/]
-  el.attrsList.forEach((attr) => {
-    for (const condition of conditions) {
-      const match = condition.exec(attr.name)
-      if (condition.exec(attr.name)) {
-        attr.name = match[1] + '_' + match[2]
-      }
-    }
-  })
-}
-
 function processScoped (el, options) {
   if (options.hasScoped && isRealNode(el)) {
     const moduleId = options.moduleId
@@ -2072,9 +2060,6 @@ function processElement (el, root, options, meta) {
     processIfForWeb(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
-    if (isComponentNode(el, options) && !options.hasVirtualHost && transWeb) {
-      processWebEventHack(el)
-    }
     return
   }
 
