@@ -466,7 +466,6 @@ module.exports = function getSpec ({ warn, error }) {
             if (data.isComponent) {
               return '_' + eventName
             }
-            return eventName
           }
         }
       ]
