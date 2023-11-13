@@ -125,7 +125,6 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
-    options.renderOptimizeRules = options.renderOptimizeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
@@ -169,16 +168,11 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    options.asyncSubpackageRules = options.asyncSubpackageRules || null
+    options.asyncSubpackageRules = options.asyncSubpackageRules || []
+    options.optimizeRenderRules = options.optimizeRenderRules || {}
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
-    let proxyComponentEventsRules = []
-    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
-    if (proxyComponentEventsRulesRaw) {
-      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
-    }
-    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -639,14 +633,13 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
-          renderOptimizeRules: this.options.renderOptimizeRules,
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
+          optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))

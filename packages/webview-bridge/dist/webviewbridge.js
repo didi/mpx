@@ -99,6 +99,7 @@
     return Promise.race([request(), timeout()]);
   }
 
+  var sdkReady;
   var SDK_URL_MAP = _objectSpread2({
     wx: {
       url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -132,16 +133,7 @@
   } else {
     env = 'web';
     window.addEventListener('message', function (event) {
-      if (event.data.isMpxWebview) {
-        env = 'web';
-        window.parent.postMessage({
-          type: 'load',
-          detail: {
-            load: true
-          }
-        }, '*');
-      }
-      // 接收webview返回的数据location等
+      // 接收web-view的回调
       var _event$data = event.data,
         callbackId = _event$data.callbackId,
         error = _event$data.error,
@@ -156,22 +148,35 @@
       }
     }, false);
   }
+  var initWebviewBridge = function initWebviewBridge() {
+    sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+    getWebviewApi();
+  };
+  var webviewSdkready = false;
+  function runWebviewApiMethod(callback) {
+    if (webviewSdkready) {
+      callback();
+    } else {
+      sdkReady.then(function () {
+        webviewSdkready = true;
+        callback();
+      });
+    }
+  }
   var webviewBridge = {
     config: function config(_config) {
       if (env !== 'wx') {
-        console.log('非微信环境不需要配置config');
+        console.warn('非微信环境不需要配置config');
         return;
       }
-      if (window.wx) {
-        if (!_config) {
-          console.log('微信环境下需要配置wx.config才能挂载方法');
-          return;
+      runWebviewApiMethod(function () {
+        if (window.wx) {
+          window.wx.config(_config);
         }
-        window.wx.config(_config);
-      }
+      });
     }
   };
-  function mergeData(data) {
+  function filterData(data) {
     if (Object.prototype.toString.call(data) !== '[object Object]') {
       return data;
     }
@@ -183,7 +188,8 @@
     }
     return newData;
   }
-  function postMessage(type, data) {
+  function postMessage(type) {
+    var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     if (type !== 'getEnv') {
       var currentCallbackId = ++callbackId;
       callbacks[currentCallbackId] = function (err, res) {
@@ -199,28 +205,15 @@
       window.parent.postMessage && window.parent.postMessage({
         type: type,
         callbackId: callbackId,
-        detail: {
-          data: mergeData(data)
-        }
+        payload: filterData(data)
       }, '*');
     } else {
       data({
-        miniprogram: false
+        webapp: true
       });
     }
   }
-  var initWebviewBridge = function initWebviewBridge() {
-    if (env === null) {
-      console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
-      getWebviewApi();
-      return;
-    }
-    var sdkReady = !window[env] && env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url, {
-      crossOrigin: !!SDK_URL_MAP[env].crossOrigin
-    }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
-    getWebviewApi(sdkReady);
-  };
-  var getWebviewApi = function getWebviewApi(sdkReady) {
+  var getWebviewApi = function getWebviewApi() {
     var multiApiMap = {
       wx: {
         keyName: 'miniProgram',
@@ -253,7 +246,7 @@
         for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
           args[_key] = arguments[_key];
         }
-        return sdkReady.then(function () {
+        runWebviewApiMethod(function () {
           var _window$env$multiApi$;
           (_window$env$multiApi$ = window[env][multiApi.keyName])[item].apply(_window$env$multiApi$, args);
         });
@@ -265,11 +258,18 @@
           args[_key2] = arguments[_key2];
         }
         if (env === 'web') {
-          return postMessage.apply(void 0, [item].concat(args));
+          postMessage.apply(void 0, [item].concat(args));
+        } else if (env === 'wx') {
+          runWebviewApiMethod(function () {
+            window[env] && window[env].ready(function () {
+              var _window$env;
+              (_window$env = window[env])[item].apply(_window$env, args);
+            });
+          });
         } else {
-          return sdkReady.then(function () {
-            var _window$env;
-            (_window$env = window[env])[item].apply(_window$env, args);
+          runWebviewApiMethod(function () {
+            var _window$env2;
+            (_window$env2 = window[env])[item].apply(_window$env2, args);
           });
         }
       };
