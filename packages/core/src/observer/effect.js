@@ -119,7 +119,9 @@ export class ReactiveEffect {
   }
 
   pause () {
-    this.pausedState = PausedState.paused
+    if (this.pausedState !== PausedState.dirty) {
+      this.pausedState = PausedState.paused
+    }
   }
 
   resume (ignoreDirty = false) {
