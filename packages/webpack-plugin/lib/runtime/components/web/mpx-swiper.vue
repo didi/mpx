@@ -42,7 +42,10 @@
       },
       previousMargin: String,
       nextMargin: String,
-      scrollOptions: Object
+      scrollOptions: {
+        type: Object,
+        default: {}
+      },
     },
     data () {
       return {
