@@ -32,7 +32,9 @@
       },
       scrollOptions: {
         type: Object,
-        default: {}
+        default: () => {
+          return {}
+        }
       },
       updateRefresh: {
         type: Boolean,

@@ -99,7 +99,9 @@
       },
       scrollOptions: {
         type: Object,
-        default: {}
+        default: () => {
+          return {}
+        }
       },
     },
     watch: {

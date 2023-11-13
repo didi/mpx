@@ -44,7 +44,9 @@
       nextMargin: String,
       scrollOptions: {
         type: Object,
-        default: {}
+        default: () => {
+          return {}
+        }
       },
     },
     data () {
