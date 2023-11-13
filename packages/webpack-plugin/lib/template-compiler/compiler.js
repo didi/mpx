@@ -10,39 +10,12 @@ const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
-
-/**
- * Make a map and return a function for checking if a key
- * is in that map.
- */
-function makeMap (str, expectsLowerCase) {
-  const map = Object.create(null)
-  const list = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase
-    ? function (val) {
-      return map[val.toLowerCase()]
-    }
-    : function (val) {
-      return map[val]
-    }
-}
+const makeMap = require('../utils/make-map')
+const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 
 const no = function () {
   return false
 }
-
-// HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
-// Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-const isNonPhrasingTag = makeMap(
-  'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
-  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
-  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track'
-)
 
 /*!
  * HTML Parser By John Resig (ejohn.org)
@@ -653,6 +626,9 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    data: {
+      usingComponents: options.usingComponents
+    },
     warn: _warn,
     error: _error
   })
@@ -878,6 +854,7 @@ function moveBaseDirective (target, from, isDelete = true) {
 }
 
 function stringify (str) {
+  if (mode === 'web') str = str.replace(/'/g, '"')
   return JSON.stringify(str)
 }
 
@@ -988,7 +965,7 @@ function parseFuncStr2 (str) {
       if (subIndex) {
         const index1 = ret.index + subIndex
         const index2 = index1 + 6
-        args = args.substring(0, index1) + JSON.stringify(eventIdentifier) + args.substring(index2)
+        args = args.substring(0, index1) + stringify(eventIdentifier) + args.substring(index2)
       }
     }
     return {
@@ -1016,7 +993,7 @@ function stringifyWithResolveComputed (modelValue) {
       computedStack.push(char)
       if (computedStack.length === 1) {
         fragment += '.'
-        result.push(JSON.stringify(fragment))
+        result.push(stringify(fragment))
         fragment = ''
         continue
       }
@@ -1033,7 +1010,7 @@ function stringifyWithResolveComputed (modelValue) {
     fragment += char
   }
   if (fragment !== '') {
-    result.push(JSON.stringify(fragment))
+    result.push(stringify(fragment))
   }
   return result.join('+')
 }
@@ -1114,6 +1091,7 @@ function processBindEvent (el, options) {
   for (const type in eventConfigMap) {
     let needBind = false
     let { configs, rawName, proxy } = eventConfigMap[type]
+    delete eventConfigMap[type]
     if (proxy) {
       needBind = true
     } else if (configs.length > 1) {
@@ -1121,11 +1099,14 @@ function processBindEvent (el, options) {
     } else if (configs.length === 1) {
       needBind = !!configs[0].hasArgs
     }
+
+    const escapedType = dash2hump(type)
     // 排除特殊情况
-    if (needBind && !isValidIdentifierStr(type)) {
+    if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
       needBind = false
     }
+
     if (needBind) {
       if (rawName) {
         // 清空原始事件绑定
@@ -1143,11 +1124,9 @@ function processBindEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[type] = configs.map((item) => {
+      eventConfigMap[escapedType] = configs.map((item) => {
         return item.expStr
       })
-    } else {
-      delete eventConfigMap[type]
     }
   }
 
@@ -1718,7 +1697,7 @@ function processWebExternalClassesHack (el, options) {
     options.externalClasses.forEach((className) => {
       const index = classNames.indexOf(className)
       if (index > -1) {
-        replacements.push(`$attrs[${JSON.stringify(className)}]`)
+        replacements.push(`$attrs[${stringify(className)}]`)
         classNames.splice(index, 1)
       }
     })
@@ -1752,13 +1731,13 @@ function processWebExternalClassesHack (el, options) {
         options.externalClasses.forEach((className) => {
           const index = classNames.indexOf(className)
           if (index > -1) {
-            replacements.push(`$attrs[${JSON.stringify(className)}]`)
+            replacements.push(`$attrs[${stringify(className)}]`)
             classNames.splice(index, 1)
           }
         })
 
         if (classNames.length) {
-          replacements.unshift(JSON.stringify(classNames.join(' ')))
+          replacements.unshift(stringify(classNames.join(' ')))
         }
 
         addAttrs(el, [{
@@ -1805,6 +1784,7 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
+    { condition: /^id$/, action: 'clone' },
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
@@ -1861,24 +1841,40 @@ function processAliAddComponentRootView (el, options) {
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
-  if (options.isComponent) {
-    // 处理组件时
-    if (mode === 'wx' && options.hasVirtualHost) {
-      // wx组件注入virtualHost配置
-      !meta.options && (meta.options = {})
-      meta.options.virtualHost = true
+  if (srcMode === 'wx') {
+    if (options.isComponent) {
+      if ((mode === 'wx') && options.hasVirtualHost) {
+        // wx组件注入virtualHost配置
+        !meta.options && (meta.options = {})
+        meta.options.virtualHost = true
+      }
+      if ((mode === 'web') && !options.hasVirtualHost) {
+        // ali组件根节点实体化
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+          },
+          {
+            name: 'v-on',
+            value: '$listeners'
+          }
+        ])
+        rootView.hasEvent = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
     }
-    // if (mode === 'ali' && !options.hasVirtualHost) {
-    //   // ali组件根节点实体化
-    //   let rootView = createASTElement('view', [
-    //     {
-    //       name: 'class',
-    //       value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
-    //     }
-    //   ])
-    //   processElement(rootView, rootView, options, meta)
-    //   return rootView
-    // }
+    if (options.isPage) {
+      if (mode === 'web') {
+        return createASTElement('div', [
+          {
+            name: 'class',
+            value: 'page'
+          }
+        ])
+      }
+    }
   }
   return getTempNode()
 }
@@ -2349,7 +2345,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `_i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {

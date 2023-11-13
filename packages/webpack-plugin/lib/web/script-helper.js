@@ -54,7 +54,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
   return componentsMap
 }
 
-function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr }) {
+function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBarStr, jsonConfig }) {
   let globalTabBar = ''
   let firstPage = ''
   const pagesMap = {}
@@ -100,7 +100,10 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       }
     }
 
-    if (pageCfg.isFirst) {
+    if (pagePath === jsonConfig.entryPagePath) {
+      firstPage = pagePath
+    }
+    if (!firstPage && pageCfg.isFirst) {
       firstPage = pagePath
     }
   })
@@ -126,11 +129,11 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
     global.getCurrentPages = function () {
       if (!(typeof window !== 'undefined')) {
         console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
-        return
       }
-      if (!global.__mpxRouter) return []
+      const router = global.__mpxRouter
+      if(!router) return []
       // @ts-ignore
-      return global.__mpxRouter.stack.map(item => {
+      return (router.lastStack || router.stack).map(item => {
         let page
         const vnode = item.vnode
         if (vnode && vnode.componentInstance) {

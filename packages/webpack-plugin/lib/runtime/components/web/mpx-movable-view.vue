@@ -1,19 +1,21 @@
 <template>
-    <div class="mpx-movable-scroll-content" ref="scrollContent">
-        <div class="mpx-movable-scroll-item">
-            <slot></slot>
-        </div>
+  <div class="mpx-movable-scroll-content" ref="scrollContent">
+    <div class="mpx-movable-scroll-item">
+      <slot></slot>
     </div>
+  </div>
 </template>
 
 <script type="text/ecmascript-6">
-  import {getCustomEvent} from './getInnerListeners'
+  import {getCustomEvent, extendEvent} from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import Movable from '@better-scroll/movable'
+  import ObserveDOM from '@better-scroll/observe-dom'
   import Zoom from '@better-scroll/zoom'
 
   BScroll.use(Movable)
   BScroll.use(Zoom)
+  BScroll.use(ObserveDOM)
 
   export default {
     data () {
@@ -23,6 +25,8 @@
         maxScrollX: 0,
         minScrollY: 0,
         maxScrollY: 0,
+        currentX: this.x,
+        currentY: this.y,
         lastestX: 0,
         lastestY: 0,
         lastestScale: 1,
@@ -30,7 +34,10 @@
         isZooming: false,
         isFirstTouch: true,
         source: '',
-        touchEvent: ''
+        touchEvent: '',
+        isInited: false,
+        deactivatedX: 0,
+        deactivatedY: 0
       }
     },
     props: {
@@ -89,7 +96,8 @@
       speed: {
         type: Number,
         default: 1000
-      }
+      },
+      scrollOptions: Object
     },
     watch: {
       x (newVal) {
@@ -100,6 +108,7 @@
         if (newVal < this.bs.maxScrollX) {
           newVal = this.bs.maxScrollX
         }
+        this.currentX = newVal
         this.bs.scrollTo(newVal, this.bs.y, this.speed)
       },
       y (newVal) {
@@ -110,6 +119,7 @@
         if (newVal < this.bs.maxScrollY) {
           newVal = this.bs.maxScrollY
         }
+        this.currentY = newVal
         this.bs.scrollTo(this.bs.x, newVal, this.speed)
       },
       scaleValue (newVal) {
@@ -121,16 +131,61 @@
           newVal = 0.5
         }
         this.bs.zoomTo(newVal, 'center', 'center')
+      },
+      disabled () {
+        this.init()
       }
     },
     mounted () {
+      if (!this.scrollOptions.closeResizeObserver) {
+        this.createResizeObserver()
+      }
       this.init()
     },
+    activated () {
+      if (this.deactivatedX || this.deactivatedY) {
+        this.refresh()
+        this.bs.putAt(this.deactivatedX, this.deactivatedY, 0)
+      }
+    },
+    deactivated () {
+      // when the hook is triggered
+      // bs will recalculate the boundary of movable to 0
+      // so record the position of the movable
+      this.deactivatedX = this.bs.x
+      this.deactivatedY = this.bs.y
+    },
     beforeDestroy () {
-      this.bs && this.bs.destroy()
+      this.destroyBs()
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
     },
     methods: {
+      createResizeObserver () {
+        if (typeof ResizeObserver !== 'undefined') {
+          this.resizeObserver = new ResizeObserver(entries => {
+            if (!this.isInited) {
+              this.isInited = true
+              return
+            }
+            this.refresh()
+          })
+          const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
+          this.resizeObserver.observe(elementToObserve)
+        }
+      },
+      refresh () {
+        this.bs && this.bs.refresh()
+      },
+      destroyBs () {
+        if (!this.bs) return
+        this.bs.destroy()
+        delete this.bs
+      },
       init () {
+        this.destroyBs()
         if (!this.$refs.scrollContent.parentNode || (this.$refs.scrollContent.parentNode && this.$refs.scrollContent.parentNode.className !== 'mpx-movable-scroll-wrapper')) {
           return
         }
@@ -143,8 +198,8 @@
           scrollX: false,
           scrollY: false,
           movable: true,
-          startX: this.x,
-          startY: this.y,
+          startX: this.currentX,
+          startY: this.currentY,
           bounce: this.outOfBounds,
           bounceTime: 800 / (this.damping / 20),
           probeType: 3,
@@ -153,7 +208,7 @@
         const BehaviorHooks = this.bs.scroller.scrollBehaviorY.hooks
         const actionsHandlerHooks = this.bs.scroller.actionsHandler.hooks
         const scrollerHooks = this.bs.scroller.hooks
-        this.bs.putAt(this.x, this.y, 0)
+        this.bs.putAt(this.currentX, this.currentY, 0)
         this.lastestX = this.roundFun(this.x)
         this.lastestY = this.roundFun(this.y)
         this.lastestScale = this.roundFun(this.scaleValue)
@@ -184,6 +239,10 @@
           this.lastestX = this.roundFun(position.x)
           this.lastestY = this.roundFun(position.y)
         })
+        scrollerHooks.on('scrollEnd', (position) =>{
+          this.currentX = this.bs.x
+          this.currentY = this.bs.y
+        })
         scrollerHooks.on('touchEnd', (position) => {
           this.isFirstTouch = true
           if (position.x > this.minScrollX || position.x < this.maxScrollX ||
@@ -204,6 +263,14 @@
             this.bs.movingDirectionY = -1
           }
         })
+        actionsHandlerHooks.on('start', (e) => {
+          extendEvent(e, { detail: Object.assign({}, e.detail) })
+          this.$emit('touchstart', e)
+        })
+        actionsHandlerHooks.on('end', (e) => {
+          extendEvent(e, { detail: Object.assign({}, e.detail) })
+          this.$emit('touchend', e)
+        })
         actionsHandlerHooks.on('move', ({ deltaX, deltaY, e }) => {
           if (this.isZooming) {
             return
@@ -215,7 +282,9 @@
               this.touchEvent = 'vtouchmove'
             }
           }
-          this.$emit(this.touchEvent, getCustomEvent(this.touchEvent, {}, this))
+          extendEvent(e, { detail: Object.assign({}, e.detail), currentTarget: e.target })
+          this.$emit(this.touchEvent, e)
+          this.$emit('touchmove', e)
           this.isFirstTouch = false
         })
         if (this.inertia) { // movable-view是否带有惯性
@@ -239,9 +308,6 @@
           this.bs.on('zoomEnd', ({ scale }) => {
             this.isZooming = false
           })
-        }
-        if (this.disabled) { // 禁用
-          this.bs.disable()
         }
       },
       initOptions () {
@@ -273,25 +339,34 @@
             swipeTime: 50
           }
         }
-        if (this.direction === 'vertical') {
+        if (this.disabled) {
+          this.bsOptions = {
+            ...this.bsOptions,
+            freeScroll: false,
+            scrollY: false,
+            scrollX: false
+          }
+        } else if (this.direction === 'vertical') {
           this.bsOptions = {
             ...this.bsOptions,
             scrollY: true
           }
-        }
-        if (this.direction === 'horizontal') {
+        } else if (this.direction === 'horizontal') {
           this.bsOptions = {
             ...this.bsOptions,
             scrollX: true
           }
-        }
-        if (this.direction === 'all') {
+        } else if (this.direction === 'all') {
           this.bsOptions = {
             ...this.bsOptions,
             freeScroll: true,
             scrollX: true,
             scrollY: true
           }
+        }
+        this.bsOptions = {
+          ...this.bsOptions,
+          ...this.scrollOptions
         }
       },
       // 处理小数点，四舍五入，默认保留一位小数
@@ -302,7 +377,9 @@
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
-    .mpx-movable-scroll-content {
-        position: absolute
-    }
+  .mpx-movable-scroll-content
+    position: absolute
+    .mpx-movable-scroll-item
+      width: 100%
+      height: 100%
 </style>

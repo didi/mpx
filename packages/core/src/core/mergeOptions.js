@@ -314,17 +314,19 @@ export function mergeToArray (parent, child, key) {
 function composeHooks (target, includes) {
   Object.keys(target).forEach(key => {
     if (!includes || includes[key]) {
-      const hooksArr = target[key]
-      hooksArr && (target[key] = function (...args) {
-        let result
-        for (let i = 0; i < hooksArr.length; i++) {
-          if (typeof hooksArr[i] === 'function') {
-            const data = hooksArr[i].apply(this, args)
-            data !== undefined && (result = data)
+      const hooks = target[key]
+      if (Array.isArray(hooks)) {
+        target[key] = function (...args) {
+          let result
+          for (let i = 0; i < hooks.length; i++) {
+            if (typeof hooks[i] === 'function') {
+              const data = hooks[i].apply(this, args)
+              data !== undefined && (result = data)
+            }
           }
+          return result
         }
-        return result
-      })
+      }
     }
   })
 }

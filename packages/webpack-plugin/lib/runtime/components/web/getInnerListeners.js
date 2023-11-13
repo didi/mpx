@@ -143,20 +143,8 @@ export function inheritEvent (type, oe, detail = {}) {
 }
 
 export function getCustomEvent (type, detail = {}, target = null) {
-  const targetInfo = {}
-  if (target) {
-    const targetEl = target.$el || {}
-    const info = {
-      id: targetEl.id || '',
-      dataset: targetEl.dataset || {},
-      offsetTop: targetEl.offsetTop || 0,
-      offsetLeft: targetEl.offsetLeft || 0
-    }
-    Object.assign(targetInfo, {
-      target: info,
-      currentTarget: info
-    })
-  }
+  const targetEl = (target && target.$el) || null
+  const targetInfo = targetEl ? { target: targetEl, currentTarget: targetEl } : {}
   return {
     type,
     detail,

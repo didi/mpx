@@ -373,6 +373,10 @@ createComponent({
 
 选项式 API 中使用，作用同[onUpdated](/api/composition-api.html#onupdated)
 
+### SERVERPREFETCH
+
+选项式 API 中使用，作用同[onServerPrefetch](/api/composition-api.html#onServerPrefetch)
+
 ### BEFOREUNMOUNT
 
 选项式 API 中使用，作用同[onBeforeUnmount](/api/composition-api.html#onbeforeunmount)

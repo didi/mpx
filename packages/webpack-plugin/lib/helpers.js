@@ -20,7 +20,15 @@ module.exports = function createHelpers (loaderContext) {
   const { mode, env } = loaderContext.getMpx() || {}
 
   function getRequire (type, part, extraOptions, index) {
-    return 'require(' + getRequestString(type, part, extraOptions, index) + ')'
+    let extract = false
+    switch (type) {
+      // eslint-disable-next-line no-fallthrough
+      case 'json':
+      case 'styles':
+      case 'template':
+        extract = true
+    }
+    return (extract ? 'require.extract(' : 'require(') + getRequestString(type, part, extraOptions, index) + ')'
   }
 
   function getImport (type, part, extraOptions, index) {

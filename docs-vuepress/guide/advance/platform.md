@@ -159,7 +159,7 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
 ```js
   // 对于npm包中的文件依赖
   import npmModule from 'somePackage/lib/index'
-  
+
   // 配置以下alias后，当mode为ali时，会优先加载项目目录中定义的projectRoot/somePackage/lib/index文件
   // vue.config.js
   module.exports = defineConfig({
@@ -279,16 +279,16 @@ module.exports = {
 比如业务中需要通过 button 按钮获取用户信息，虽然可以使用代码维度条件编译来解决，但是增加了很多代码量：
 
 ```html
-<button 
-  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}" 
-  open-type="getUserInfo" 
+<button
+  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}"
+  open-type="getUserInfo"
   bindgetuserinfo="getUserInfo">
   获取用户信息
 </button>
 
-<button 
-  wx:elif="{{__mpx_mode__ === 'ali'}}" 
-  open-type="getAuthorize" 
+<button
+  wx:elif="{{__mpx_mode__ === 'ali'}}"
+  open-type="getAuthorize"
   scope="userInfo"
   onTap="onTap">
   获取用户信息
@@ -298,10 +298,10 @@ module.exports = {
 而用属性维度的编译则方便很多：
 
 ```html
-<button 
-  open-type@wx|swan="getUserInfo" 
+<button
+  open-type@wx|swan="getUserInfo"
   bindgetuserinfo@wx|swan="getUserInfo"
-  open-type@ali="getAuthorize" 
+  open-type@ali="getAuthorize"
   scope@ali="userInfo"
   onTap@ali="onTap">
   获取用户信息
@@ -333,7 +333,7 @@ Mpx 支持在以上四种条件编译的基础上，通过自定义 env 的形�
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
-      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx   
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
       plugin: {
         env: "didi" // env为mpx编译的目标环境，需自定义
       }
@@ -503,7 +503,7 @@ radio|是
 radio-group|是
 rich-text|是
 scroll-view|是|scroll-view 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
-swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal` 
+swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal`
 swiper-item|是
 switch|是
 slider|是
@@ -525,11 +525,13 @@ onShow|是
 onHide|是
 onUnload|是
 onError|是
+onServerPrefetch｜是
 created|是
 attached|是
 ready|是
 detached|是
 updated|是
+serverPrefetch|是
 
 #### 应用级事件
 

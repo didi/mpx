@@ -40,6 +40,7 @@ const sidebar = {
         'advance/ability-compatible',
         'advance/plugin',
         'advance/custom-output-path',
+        'advance/ssr'
       ]
     },
     {
@@ -97,6 +98,7 @@ const sidebar = {
     'builtIn',
     'reactivity-api',
     'composition-api',
+    'optional-api',
     'extend'
   ],
   '/articles/': [

@@ -914,6 +914,34 @@ module.exports = defineConfig({
 该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
 :::
 
+### optimizeRenderRules
+
+- **详细**: render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积
+
+- **类型**：[`Rules`](#rules)
+
+- **默认值**：不配置该参数，则不会消除重复变量
+
+- **示例**：
+
+```js
+new MpxWebpackPlugin({
+  optimizeRenderRules: {
+    include: [
+      resolve('src')
+    ],
+    /*
+    include: [
+      (pageResourcePath) => pageResourcePath.includes('pages')
+    ],
+    include: [
+      () => true
+    ]
+    */
+  }
+})
+```
+
 ### asyncSubpackageRules
 
 ```ts
@@ -959,11 +987,72 @@ module.exports = defineConfig({
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
+### retryRequireAsync
+
+`boolean = false`
+
+开启时在处理`require.async`时会添加单次重试逻辑
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        retryRequireAsync: true
+      }
+    }
+  }
+})
+```
+
+### enableAliRequireAsync
+
+`boolean = false`
+
+支付宝在`2.8.2`基础库版本后开始支持分包异步化，开启此配置时Mpx的分包异步构建能力能在输出支付宝时生效，不开启时则还是采用兜底策略进行构建来兼容`2.8.2`之前的基础库版本
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        enableAliRequireAsync: true
+      }
+    }
+  }
+})
+```
+
+### optimizeSize
+
+`boolean = false`
+
+开启后可优化编译配置减少构建产物体积
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        optimizeSize: true
+      }
+    }
+  }
+})
+```
+
+## MpxWebpackPlugin static methods
+
+`MpxWebpackPlugin` 通过静态方法暴露了以下五个内置 loader，详情如下：
+
 ### MpxWebpackPlugin.loader
 
-`MpxWebpackPlugin` 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[模式(mode)](/api/compile.html#mode)将 `.mpx` 文件输出为不同的结果。
+`MpxWebpackPlugin` 所提供的最主要 loader，用于处理 `.mpx` 文件，根据不同的[目标平台](#mode)将 `.mpx` 文件输出为不同的结果。
 
-> \* 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
+> 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
 
 ```javascript
 // vue.config.js
@@ -985,7 +1074,7 @@ module.exports = {
     rules: [
       {
         test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader(options)
+        use: MpxWebpackPlugin.loader()
       }
     ]
   }
@@ -1394,7 +1483,14 @@ CSS变量的前缀
 
 #### scan
 
-[`Rules`](#rules)
+`Scan = { include: ['src/**/*'] }`
+
+```ts
+  interface Scan {
+    include?: string[]
+    exclude?: string[]
+  }
+```
 
 配置需要扫描的文件目录
 

@@ -140,6 +140,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       routes: routes
     })
     global.__mpxRouter.stack = []
+    global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
     global.__mpxRouter.eventChannelMap = {}
@@ -344,7 +345,7 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
           router.push(context.url)
           router.onReady(() => {
             context.rendered = () => {
-              context.state = JSON.stringify((pinia.state && pinia.state.value) || {})
+              context.state = pinia?.state?.value || {}
             }
             resolve(app)
           }, reject)
@@ -361,8 +362,8 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
       VueRouter,
       tabBarMap
     })
-    if (window.__INITIAL_STATE__) {
-      pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+    if (window.__INITIAL_STATE__ && pinia) {
+      pinia.state.value = window.__INITIAL_STATE__
     }
     app.$mount(webConfig.el || '#app')
   }
