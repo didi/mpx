@@ -13,10 +13,13 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        // @mpxjs/webpack-plugin 相关的配置
+        // mpx webpack plugin options
       },
       unocss: {
         // @mpxjs/unocss-plugin 相关的配置
+      },
+      loader: {
+        // mpx webpack loader options
       }
     }
   }
@@ -24,6 +27,22 @@ module.exports = defineConfig({
 ```
 
 对于使用 `@mpxjs/cli@2.x` 脚手架初始化的项目，编译构建配置涉及到 mpx 生态相关的配置主要是在 `config` 目录下 `mpxPlugin.conf.js` 及 `mpxLoader.conf.js`，涉及到 webpack 本身的配置主要是在 `build` 目录下。
+
+```javascript
+// config/mpxPlugin.conf.js
+module.exports = () => {
+  return {
+    // mpx webpack plugin options
+  }
+}
+```
+
+```javascript
+// config/mpxLoader.conf.js
+module.exports = {
+  /* mpx webpack loader options */
+}
+```
 
 ## 类型定义
 
@@ -69,16 +88,6 @@ module.exports = defineConfig({
   }
 })
 ```
-
-::: warning
-在 @mpxjs/cli@3.x 以前版本当中，通过在 mpxPlugin.conf.js 文件中为 MpxWebpackPlugin 传递配置
-
-```javascript
-new MpxWebpackPlugin({
-  // mpx webpack plugin options
-})
-```
-:::
 
 MpxWebpackPlugin支持传入以下配置：
 
@@ -933,19 +942,26 @@ module.exports = defineConfig({
 render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积。不配置该参数，则不会消除重复变量
 
 ```js
-new MpxWebpackPlugin({
-  optimizeRenderRules: {
-    include: [
-      resolve('src')
-    ],
-    /*
-    include: [
-      (pageResourcePath) => pageResourcePath.includes('pages')
-    ],
-    include: [
-      () => true
-    ]
-    */
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        optimizeRenderRules: {
+        include: [
+          resolve('src')
+        ],
+        /*
+        include: [
+          (pageResourcePath) => pageResourcePath.includes('pages')
+        ],
+        include: [
+          () => true
+        ]
+        */
+      }
+      }
+    }
   }
 })
 ```
@@ -1073,23 +1089,6 @@ module.exports = defineConfig({
 })
 ```
 
-:::warning
-@mpxjs/cli 3.x 以前，通过在 MpxWebpackPlugin.loader 函数中传递参数，后续配置均以 @mpxjs/cli 3.x 为示例
-```js
-// webapck.config.js
-module.exports = {
-  module: {
-    rules: [
-      {
-        test: /\.mpx$/,
-        use: MpxWebpackPlugin.loader()
-      }
-    ]
-  }
-};
-```
-:::
-
 #### Options
 
 ##### Options.transRpx
@@ -1121,6 +1120,7 @@ module.exports = defineConfig({
 可用于对某些资源文件的默认 loader 做覆盖或新增处理，以下例子演示了对 [less-loader](https://webpack.docschina.org/loaders/less-loader/) 做额外配置。
 
 ```js
+// vue.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1280,7 +1280,24 @@ module.exports = defineConfig({
 
 ## MpxUnocssPlugin
 
-Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
+Mpx 编译 unocss 原子类的 webpack 主插件
+
+如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，会自动安装 MpxUnocssPlugin ，直接在 mpx.unocss 配置项中传入相关配置即可
+```js
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        // @mpxjs/unocss-plugin 相关的配置
+      }
+    }
+  }
+})
+```
+
+如果创建项目时未选 unocss，需手动安装，安装示例如下：
 
 ::: code-group
   ```bash [pnpm]
@@ -1305,11 +1322,10 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
     configureWebpack: {
       plugins: [
         new MpxUnocssPlugin({
-          // ...
+          // @mpxjs/unocss-plugin 相关的配置
         })
       ]
     },
-    // ...
   })
 ```
 
@@ -1322,9 +1338,17 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 生成主包或分包通用样式存储的相对路径
 
 ```js
-  new MpxUnocssPlugin({
-    unoFile: 'styles/uno'
-  })
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        unoFile: 'styles/uno'
+      }
+    }
+  }
+})
 ```
 则会把通用样式存储到下面目录
 ```js
@@ -1341,9 +1365,17 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 使用超过minCount次数的class将被打包到公共样式下
 
 ```js
-  new MpxUnocssPlugin({
-    minCount: 2
-  })
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        minCount: 2
+      }
+    }
+  }
+})
 ```
 ```html
   <!-- a.mpx -->
@@ -1360,9 +1392,17 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 需要和微信小程序的styleIsolation配合使用，比如小程序使用样式隔离的话，这里需要对应配置为isolated，这样的话每个组件会独立引用对应的原子类文件，配置为'apply-shared'的话只有父级页面和app会建立引用，然后通过配合微信的apply-shared的方式获取父级上定义的原子类
 
 ```js
-  new MpxUnocssPlugin({
-    styleIsolation: 'isolated'
-  })
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        styleIsolation: 'isolated'
+      }
+    }
+  }
+})
 ```
 
 ### scan
@@ -1377,12 +1417,20 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 配置需要扫描的文件目录
 
 ```js
-  new MpxUnocssPlugin({
-    scan: {
-      include: ['src/**/*']
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        scan: {
+          include: ['src/**/*']
+        }
+      }
     }
-  })
-  ```
+  }
+})
+```
 
 ### escapeMap
 
@@ -1390,11 +1438,19 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 
 针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则，可自定义转译规则
 ```js
-  new MpxUnocssPlugin({
-    escapeMap: {
-      ':': '_d_',
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        escapeMap: {
+          ':': '_d_',
+        }
+      }
     }
-  })
+  }
+})
 ```
 ```css
   <view class="dark:text-green-400"/>
@@ -1411,9 +1467,17 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 文件根目录
 
 ```js
-  new MpxUnocssPlugin({
-    root: process.cwd()
-  })
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        root: process.cwd()
+      }
+    }
+  }
+})
 ```
 
 ### transformCSS
@@ -1423,9 +1487,17 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 转化css指令为常规css
 
 ```js
-  new MpxUnocssPlugin({
-    transformCSS: true
-  })
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        transformCSS: true
+      }
+    }
+  }
+})
 ```
 ```css
   .custom-div {
@@ -1448,9 +1520,17 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 
 转化Variant group
 ```js
-  new MpxUnocssPlugin({
-    transformGroups: true
-  })
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        transformGroups: true
+      }
+    }
+  }
+})
 ```
 ```html
   <view class="lg:(p-2 m-2 text-red-600)"></view>
@@ -1467,13 +1547,21 @@ Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 config可以传配置对象也可以传一个配置文件路径
 
 ```js
-  new MpxUnocssPlugin({
-    config: {
-      rules: [
-        ['m-1', { margin: '10rpx' }],
-      ]
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        config: {
+          rules: [
+            ['m-1', { margin: '10rpx' }],
+          ]
+        }
+      }
     }
-  })
+  }
+})
 ```
 
 ### configFiles
@@ -1514,16 +1602,24 @@ config可以传配置对象也可以传一个配置文件路径
 configFiles的话是传递额外的配置文件数组，比如不想用uno.config作为配置文件的话可以在这里面配
 
 ```js
-  new MpxUnocssPlugin({
-    configFiles: [
-      {
-        files: [
-          'uno2.config.js'
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      unocss: {
+        configFiles: [
+          {
+            files: [
+              'uno2.config.js'
+            ]
+          }
         ]
       }
-    ]
-  })
-  ```
+    }
+  }
+})
+```
 
 ### commentConfig
   我们还支持了commentConfig进行组件局部配置，目前支持safelist和styleIsolation，safelist可以用空格分隔写多个
@@ -1577,8 +1673,16 @@ Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供�
  
 同比换算1rem = 37.5rpx适配小程序
 ```js
-  presetMpx({
-    baseFontSize: 37.5
+  // uno.config.js
+  const { defineConfig } = require('unocss')
+  const presetMpx = require('@mpxjs/unocss-base')
+
+  module.exports = defineConfig({
+    presets: [
+      presetMpx({
+        baseFontSize: 37.5
+      })
+    ],
   })
 ```
 ### preflight
@@ -1587,8 +1691,16 @@ Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供�
 
 是否生成预设样式
 ```js
-  presetMpx({
-    preflight: true
+  // uno.config.js
+  const { defineConfig } = require('unocss')
+  const presetMpx = require('@mpxjs/unocss-base')
+
+  module.exports = defineConfig({
+    presets: [
+      presetMpx({
+        preflight: true
+      })
+    ],
   })
 ```
 将添加预设样式在主包
@@ -1831,6 +1943,18 @@ module.exports = defineConfig({
   }
 })
 ```
+
+:::warning
+对于使用 `@mpxjs/cli@2.x` 脚手架初始化的项目，配置 entry 的方式如下
+```js
+// build/getWebpackConf.js
+module.exports = {
+  entry: {
+    index: '../src/pages/index.mpx?isPage'
+  }
+}
+```
+:::
 
 ### ?isComponent
 
