@@ -435,7 +435,7 @@ module.exports = function getSpec ({ warn, error }) {
       rules: [
         // 通用冒泡事件
         {
-          test: /^(touchstart|touchmove|touchcancel|touchend|tap|longpress|longtap|animationstart|animationiteration|animationend|touchforcechange)$/,
+          test: /^(touchstart|touchmove|touchcancel|touchend|tap|longpress|longtap|transitionend|animationstart|animationiteration|animationend|touchforcechange)$/,
           ali (eventName) {
             const eventMap = {
               touchstart: 'touchStart',
@@ -444,7 +444,11 @@ module.exports = function getSpec ({ warn, error }) {
               touchcancel: 'touchCancel',
               tap: 'tap',
               longtap: 'longTap',
-              longpress: 'longTap'
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
