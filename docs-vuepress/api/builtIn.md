@@ -2,8 +2,6 @@
 
 ## component
 
-**属性**：
-
 - is `string` : 动态渲染组件，通过改变` is `的值，来渲染不同的组件
 
 - range `string` : 使用 range 来指定可能渲染的组件，不传递时则为 全局注册 + usingComponents 中注册的所有组件，存在多个组件时使用逗号 `,` 分隔
@@ -20,9 +18,7 @@
 
 ## slot
 
-**属性**：
-
-  - name `string` : 用于命名插槽
+- name `string` : 用于命名插槽
 
 ` <slot> ` 元素作为组件模板中的内容分发插槽，` <slot> `元素自身将被替换。
 

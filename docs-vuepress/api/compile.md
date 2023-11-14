@@ -9,16 +9,14 @@ sidebarDepth: 2
 ```javascript
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
-
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
-      srcMode: 'wx', // 初始化项目过程中选择的目标平台，一般不需要改动
       plugin: {
         // @mpxjs/webpack-plugin 相关的配置
       },
-      loader: {
-        // @mpxjs/webpack-plugin loader 相关的配置
+      unocss: {
+        // @mpxjs/unocss-plugin 相关的配置
       }
     }
   }
@@ -43,17 +41,29 @@ interface Rules {
 
 ## MpxWebpackPlugin 
 
-MpxWebpackPlugin支持传入以下配置：
+Mpx 编译构建跨平台小程序和 web 的 webpack 主插件，安装示例如下：
 
-通过官方脚手架 @mpxjs/cli@3.x 生成的项目，可在 `vue.config.js` 中对这些项进行配置。
+::: code-group
+  ```bash [pnpm]
+    pnpm add -D @mpxjs/webpack-plugin
+  ```
+  ```bash [yarn]
+    yarn add -D @mpxjs/webpack-plugin
+  ```
+  ```bash [npm]
+    npm install -D @mpxjs/webpack-plugin
+  ```
+:::
 
+使用示例如下：
 ```javascript
 // vue.config.js
+const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        // 在这里传递配置
+        // mpx webpack plugin options
       }
     }
   }
@@ -65,10 +75,12 @@ module.exports = defineConfig({
 
 ```javascript
 new MpxWebpackPlugin({
-  // 在这里传递配置
+  // mpx webpack plugin options
 })
 ```
 :::
+
+MpxWebpackPlugin支持传入以下配置：
 
 ### mode
 
@@ -916,13 +928,9 @@ module.exports = defineConfig({
 
 ### optimizeRenderRules
 
-- **详细**: render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积
+[`Rules`](#rules)
 
-- **类型**：[`Rules`](#rules)
-
-- **默认值**：不配置该参数，则不会消除重复变量
-
-- **示例**：
+render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积。不配置该参数，则不会消除重复变量
 
 ```js
 new MpxWebpackPlugin({
@@ -1269,149 +1277,24 @@ module.exports = defineConfig({
 - `publicPath` : 自定义 public 目录
 - `fallback` : 文件字节数大于限制时，为文件指定加载程序
 
-## MpxUnocssPlugin 配置
 
-Mpx中使用原子类主要是使用基于unocss搭建的两个库`@mpxjs/unocss-base`和`@mpxjs/unocss-plugin`,它俩的配置如下：
+## MpxUnocssPlugin
 
-### @mpxjs/unocss-base
+Mpx 编译 unocss 原子类的 webpack 主插件，安装示例如下：
 
-此库基于@unocss/preset-uno搭建，提供MpxUnocss的默认预设，其实大部分也是@unocss/preset-wind的预设。
+::: code-group
+  ```bash [pnpm]
+    pnpm add -D @mpxjs/unocss-plugin
+  ```
+  ```bash [yarn]
+    yarn add -D @mpxjs/unocss-plugin
+  ```
+  ```bash [npm]
+    npm install -D @mpxjs/unocss-plugin
+  ```
+:::
 
-**安装**:
-
-```bash
-npm install -D @mpxjs/unocss-base
-```
-
-```js
-// uno.config.js
-const { defineConfig } = require('unocss')
-const presetMpx = require('@mpxjs/unocss-base')
-
-module.exports = defineConfig({
-  presets: [
-    presetMpx()
-  ],
-  // unocss的config，具体配置参考https://unocss.dev/config/
-})
-```
-
-### Options
-
-`@mpxjs/unocss-base`支持以下配置
-
-#### baseFontSize
-
-`number = 37.5`
-
-同比换算1rem = 37.5rpx适配小程序
-
-
-```js
-presetMpx({
-  baseFontSize: 37.5
-})
-```
-#### preflight
-
-`boolean = true`
-
-是否生成预设样式
-
-```js
-presetMpx({
-  preflight: true
-})
-```
-将添加预设样式在主包
-```css
-page{--un-rotate:0;--un-rotate-x:0;--un-rotate-y:0;--un-rotate-z:0;--un-scale-x:1;--un-scale-y:1;--un-scale-z:1;--un-skew-x:0;--un-skew-y:0;--un-translate-x:0;--un-translate-y:0;--un-translate-z:0;--un-pan-x: ;--un-pan-y: ;--un-pinch-zoom: ;--un-scroll-snap-strictness:proximity;--un-ordinal: ;--un-slashed-zero: ;--un-numeric-figure: ;--un-numeric-spacing: ;--un-numeric-fraction: ;--un-border-spacing-x:0;--un-border-spacing-y:0;--un-ring-offset-shadow:0 0 rgba(0,0,0,0);--un-ring-shadow:0 0 rgba(0,0,0,0);--un-shadow-inset: ;--un-shadow:0 0 rgba(0,0,0,0);--un-ring-inset: ;--un-ring-offset-width:0px;--un-ring-offset-color:#fff;--un-ring-width:0px;--un-ring-color:rgba(147,197,253,0.5);--un-blur: ;--un-brightness: ;--un-contrast: ;--un-drop-shadow: ;--un-grayscale: ;--un-hue-rotate: ;--un-invert: ;--un-saturate: ;--un-sepia: ;--un-backdrop-blur: ;--un-backdrop-brightness: ;--un-backdrop-contrast: ;--un-backdrop-grayscale: ;--un-backdrop-hue-rotate: ;--un-backdrop-invert: ;--un-backdrop-opacity: ;--un-backdrop-saturate: ;--un-backdrop-sepia: ;}
-```
-#### dark
-
-`'class' | 'media' | DarkModeSelectors = 'class'`
-```ts
-interface DarkModeSelectors {
-  /**
-   * light variant的选择器.
-   *
-   * @default '.light'
-   */
-  light?: string
-
-  /**
-   * dark variant的选择器
-   *
-   * @default '.dark'
-   */
-  dark?: string
-}
-```
-默认情况下，此预设使用dark:variant生成基于类的dark模式。
-```html
-  <view class="dark:text-green-400" />
-```
-我们将生成
-```css
-  .dark .dark_c_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
-```
-要选择基于媒体查询的dark模式，您可以使用@dark:variant
-```html
-  <view class="@dark:text-green-400" />
-```
-我们将生成
-```css
-  @media (prefers-color-scheme: dark){
-    ._u_dark_c_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
-  }
-```
-或者使用针对dark:variant的配置进行全局设置
-```js
-  presetMpx({
-    dark: "media"
-  })
-```
-#### attributifyPseudo
-
-`boolean = false`
-
-将伪选择器生成为[group='']，而不是.group。只支持`group`|`peer`|`parent`|`previous`
-如果attributifyPseudo为true的话，
-```html
-  <view class="group">
-    <view class="group-hover:opacity-100" />
-  </view>
-```
-上面template将生成
-```css
-  [group=""]:hover .group-hover_c_opacity-100{opacity:1;}
-```
-为false则生成
-```css
-  .group:hover .group-hover_c_opacity-100{opacity:1;}
-```
-#### variablePrefix
-
-`string = 'un-'`
-CSS变量的前缀
-
-```js
-  presetMpx({
-    variablePrefix: 'un-'
-  })
-```
-```css
-  .bg-red-500{--un-bg-opacity:1;background-color:rgba(239,68,68,var(--un-bg-opacity));}
-```
-
-### @mpxjs/unocss-plugin
-
-此仓库是MpxUnocss的核心仓库，主要通过这个webpack插件来处理unocss的逻辑，以及是否压缩，优化打包处理。
-
-**安装**:
-```bash
-  npm install -D @mpxjs/unocss-plugin
-```
+使用示例如下：
 
 ```js
   // vue.config.js
@@ -1421,18 +1304,18 @@ CSS变量的前缀
   module.exports = defineConfig({
     configureWebpack: {
       plugins: [
-        new MpxUnocssPlugin({})
+        new MpxUnocssPlugin({
+          // ...
+        })
       ]
     },
     // ...
   })
-
 ```
-### Options
 
-`@mpxjs/unocss-plugin`支持以下配置
+插件支持配置如下：
 
-#### unoFile
+### unoFile
 
 `string = 'styles/uno'`
 
@@ -1450,7 +1333,8 @@ CSS变量的前缀
   // 分包
   dist/wx/package/styles/uno.wxss
 ```
-#### minCount
+
+### minCount
 
 `number = 2`
 
@@ -1469,7 +1353,7 @@ CSS变量的前缀
 ```
 `bg-black`生成的样式将被打包到公共样式文件
 
-#### styleIsolation
+### styleIsolation
 
 `string = 'isolated'`
 
@@ -1481,9 +1365,7 @@ CSS变量的前缀
   })
 ```
 
-#### scan
-
-`Scan = { include: ['src/**/*'] }`
+### scan
 
 ```ts
   interface Scan {
@@ -1502,7 +1384,7 @@ CSS变量的前缀
   })
   ```
 
-#### escapeMap
+### escapeMap
 
 `object`
 
@@ -1522,7 +1404,7 @@ CSS变量的前缀
   .dark .dark_d_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
 ```
 
-#### root
+### root
 
 `string = process.cwd()`
 
@@ -1534,11 +1416,12 @@ CSS变量的前缀
   })
 ```
 
-#### transformCSS
+### transformCSS
 
 `boolean = true`
 
 转化css指令为常规css
+
 ```js
   new MpxUnocssPlugin({
     transformCSS: true
@@ -1559,10 +1442,11 @@ CSS变量的前缀
   }
 ```
 
-#### transformGroups
+### transformGroups
 
 `boolean = true`
 
+转化Variant group
 ```js
   new MpxUnocssPlugin({
     transformGroups: true
@@ -1576,7 +1460,7 @@ CSS变量的前缀
   <view class="lg:p-2 lg:m-2 lg:text-red-600"></view>
 ```
 
-#### config
+### config
 
 `UserConfig | string`
 
@@ -1592,7 +1476,7 @@ config可以传配置对象也可以传一个配置文件路径
   })
 ```
 
-#### configFiles
+### configFiles
 
 `LoadConfigSource[]`
 
@@ -1651,6 +1535,144 @@ configFiles的话是传递额外的配置文件数组，比如不想用uno.confi
       <view>mpx-unocss</view>
     </template>
   ```
+
+## MpxUnocssBase
+
+Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供小程序原子类的预设样式，安装示例如下：
+
+::: code-group
+  ```bash [pnpm]
+    pnpm add -D @mpxjs/unocss-base
+  ```
+  ```bash [yarn]
+    yarn add -D @mpxjs/unocss-base
+  ```
+  ```bash [npm]
+    npm install -D @mpxjs/unocss-base
+  ```
+:::
+
+使用示例如下：
+
+```js
+  // uno.config.js
+  const { defineConfig } = require('unocss')
+  const presetMpx = require('@mpxjs/unocss-base')
+
+  module.exports = defineConfig({
+    presets: [
+      presetMpx({
+        // ...
+      })
+    ],
+    // unocss的config，具体配置参考https://unocss.dev/config/
+  })
+```
+
+支持的配置项如下：
+
+### baseFontSize
+
+`number = 37.5`
+ 
+同比换算1rem = 37.5rpx适配小程序
+```js
+  presetMpx({
+    baseFontSize: 37.5
+  })
+```
+### preflight
+
+`boolean = true`
+
+是否生成预设样式
+```js
+  presetMpx({
+    preflight: true
+  })
+```
+将添加预设样式在主包
+```css
+page{--un-rotate:0;--un-rotate-x:0;--un-rotate-y:0;--un-rotate-z:0;--un-scale-x:1;--un-scale-y:1;--un-scale-z:1;--un-skew-x:0;--un-skew-y:0;--un-translate-x:0;--un-translate-y:0;--un-translate-z:0;--un-pan-x: ;--un-pan-y: ;--un-pinch-zoom: ;--un-scroll-snap-strictness:proximity;--un-ordinal: ;--un-slashed-zero: ;--un-numeric-figure: ;--un-numeric-spacing: ;--un-numeric-fraction: ;--un-border-spacing-x:0;--un-border-spacing-y:0;--un-ring-offset-shadow:0 0 rgba(0,0,0,0);--un-ring-shadow:0 0 rgba(0,0,0,0);--un-shadow-inset: ;--un-shadow:0 0 rgba(0,0,0,0);--un-ring-inset: ;--un-ring-offset-width:0px;--un-ring-offset-color:#fff;--un-ring-width:0px;--un-ring-color:rgba(147,197,253,0.5);--un-blur: ;--un-brightness: ;--un-contrast: ;--un-drop-shadow: ;--un-grayscale: ;--un-hue-rotate: ;--un-invert: ;--un-saturate: ;--un-sepia: ;--un-backdrop-blur: ;--un-backdrop-brightness: ;--un-backdrop-contrast: ;--un-backdrop-grayscale: ;--un-backdrop-hue-rotate: ;--un-backdrop-invert: ;--un-backdrop-opacity: ;--un-backdrop-saturate: ;--un-backdrop-sepia: ;}
+```
+### dark
+
+`class | media | DarkModeSelectors = 'class'`
+```ts
+  interface DarkModeSelectors {
+    /**
+     * light variant的选择器.
+     *
+     * @default '.light'
+     */
+    light?: string
+
+    /**
+     * dark variant的选择器
+     *
+     * @default '.dark'
+     */
+    dark?: string
+  }
+```
+默认情况下，此预设使用dark:variant生成基于类的dark模式。
+```html
+  <view class="dark:text-green-400" />
+```
+我们将生成
+```css
+  .dark .dark_c_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
+```
+要选择基于媒体查询的dark模式，您可以使用@dark:variant
+```html
+  <view class="@dark:text-green-400" />
+```
+我们将生成
+```css
+  @media (prefers-color-scheme: dark){
+    ._u_dark_c_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
+  }
+```
+或者使用针对dark:variant的配置进行全局设置
+```js
+  presetMpx({
+    dark: "media"
+  })
+```
+### attributifyPseudo
+
+`boolean = false`
+
+将伪选择器生成为[group='']，而不是.group。只支持`group`|`peer`|`parent`|`previous`
+如果attributifyPseudo为true的话，
+```html
+  <view class="group">
+    <view class="group-hover:opacity-100" />
+  </view>
+```
+上面template将生成
+```css
+  [group=""]:hover .group-hover_c_opacity-100{opacity:1;}
+```
+为false则生成
+```css
+  .group:hover .group-hover_c_opacity-100{opacity:1;}
+```
+### variablePrefix
+
+`string = 'un-'`
+
+CSS变量的前缀
+
+```js
+  presetMpx({
+    variablePrefix: 'un-'
+  })
+```
+```css
+  .bg-red-500{--un-bg-opacity:1;background-color:rgba(239,68,68,var(--un-bg-opacity));}
+```
+  
 ## Request query
 
 Mpx中允许用户在request中传递特定query执行特定逻辑，目前已支持的query如下：
@@ -1838,7 +1860,6 @@ module.exports = defineConfig({
 输出 H5 时 Vue Router 的路由懒加载功能，Mpx框架默认会对分包开启路由懒加载功能并将分包所有页面都打入同一个Chunk
 ，如果你希望对于部分主包页面或者分包页面配置路由懒加载并想自定义Chunk Name，则可以使用该功能。
 
-- **示例**：
 ```html
 // app.mpx 
 <script type="application/json">
