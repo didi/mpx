@@ -1,4 +1,4 @@
-import Preview from "./Preview"
+import Preview from './Preview'
 
 let preview = null
 

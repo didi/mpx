@@ -5,7 +5,7 @@ import '../../../common/stylus/Preview.styl'
  * todo: unit test
  */
 export default class Preview {
-  constructor() {
+  constructor () {
     this.currentIndex = 0
     this.maxIndex = 0
     this.minDistance = 30
@@ -15,10 +15,11 @@ export default class Preview {
     document.body.appendChild(this.preview)
     this.initEvent()
   }
+
   /**
    * Initializes the event listeners for the preview image feature.
    */
-  initEvent() {
+  initEvent () {
     // swipe to change image
     let startX = 0
     this.preview.addEventListener('touchstart', (e) => {
@@ -45,12 +46,13 @@ export default class Preview {
       this.preview.querySelector('.__mpx_preview_images__').remove()
     })
   }
+
   /**
    * 显示预览图片
    * @param {Object} options - 选项对象
    * @param {string[]} options.urls - 图片地址数组
    */
-  show(options) {
+  show (options) {
     const supported = ['urls', 'success', 'fail', 'complete']
     Object.keys(options).forEach(key => !supported.includes(key) && warn(`previewImage: 暂不支持选项 ${key} ！`))
     const { urls, success, fail, complete } = options
@@ -68,10 +70,11 @@ export default class Preview {
       webHandleFail({ errMsg: 'previewImage:fail', err: e }, fail, complete)
     }
   }
+
   /**
    * 更新文本提示
    */
-  updateTextTip() {
+  updateTextTip () {
     this.textTip.textContent = `${this.currentIndex + 1}/${this.maxIndex}`
   }
 }
