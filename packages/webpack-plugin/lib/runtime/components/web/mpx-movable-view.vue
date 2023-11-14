@@ -97,7 +97,12 @@
         type: Number,
         default: 1000
       },
-      scrollOptions: Object
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      },
     },
     watch: {
       x (newVal) {
