@@ -1,4 +1,4 @@
-import { set } from '@mpxjs/core'
+// import { set } from '@mpxjs/core'
 
 let curStack
 let targetStacks
@@ -169,7 +169,8 @@ function getByPath (data, pathStrOrArr, defaultVal, errTip) {
 function setByPath (data, pathStrOrArr, value) {
   doGetByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      set(current, key, value)
+      // set(current, key, value)
+      current[key] = value
     } else if (!current[key]) {
       current[key] = {}
     }
