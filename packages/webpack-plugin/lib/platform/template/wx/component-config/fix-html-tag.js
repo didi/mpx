@@ -1,9 +1,9 @@
-const { isOriginTag } = require('../../../../utils/dom-tag-config')
+const { isOriginTag, isBuildInTag } = require('../../../../utils/dom-tag-config')
 
 module.exports = function () {
   return {
     waterfall: true,
-    test: (input) => isOriginTag(input),
+    test: (input) => isOriginTag(input) || isBuildInTag(input),
     // 处理原生tag
     web (tag, data = {}) {
       // @see packages/webpack-plugin/lib/platform/json/wx/index.js webHTMLTagProcesser
