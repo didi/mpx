@@ -17,16 +17,13 @@ module.exports = defineConfig({
       },
       unocss: {
         // @mpxjs/unocss-plugin 相关的配置
-      },
-      loader: {
-        // mpx webpack loader options
       }
     }
   }
 })
 ```
 
-对于使用 `@mpxjs/cli@2.x` 脚手架初始化的项目，编译构建配置涉及到 mpx 生态相关的配置主要是在 `config` 目录下 `mpxPlugin.conf.js` 及 `mpxLoader.conf.js`，涉及到 webpack 本身的配置主要是在 `build` 目录下。
+对于使用 `@mpxjs/cli@2.x` 脚手架初始化的项目，编译构建配置涉及到 mpx 插件相关的配置主要是在 `config` 目录下 `mpxPlugin.conf.js`，涉及到 webpack 本身的配置主要是在 `build` 目录下。
 
 ```javascript
 // config/mpxPlugin.conf.js
@@ -34,13 +31,6 @@ module.exports = () => {
   return {
     // mpx webpack plugin options
   }
-}
-```
-
-```javascript
-// config/mpxLoader.conf.js
-module.exports = {
-  /* mpx webpack loader options */
 }
 ```
 
@@ -93,12 +83,11 @@ MpxWebpackPlugin支持传入以下配置：
 
 ### mode
 
-`'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' = 'wx'`
+`'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'jd' | 'dd' | 'qa' | 'web' = 'wx'`
 
-::: warning
-仅 @mpxjs/cli@3.x 以前支持，mode 为 Mpx 编译的目标平台，目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\ QQ 小程序(qq)\ H5 页面(web)。也可以通过在 `npm script` 当中定义 `mode` 来设置目标平台
-:::
+mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)\支付宝小程序(ali)\百度小程序(swan)\头条小程序(tt)\QQ 小程序(qq)\京东小程序(jd)\滴滴小程序(dd)\快应用(qa)\H5 页面(web)。
 
+::: tip
 在 @mpxjs/cli@3.x 版本当中，通过在 `npm script` 当中定义 `targets` 来设置目标平台
 
 ```javascript
@@ -109,10 +98,11 @@ MpxWebpackPlugin支持传入以下配置：
   }
 }
 ```
+:::
 
 ### srcMode
 
-`'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' = 'wx'`
+`'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'jd' | 'dd' | 'qa' = 'wx'`
 
 默认和 [mode](#mode) 一致。，当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
 
@@ -312,7 +302,7 @@ module.exports = defineConfig({
 
 `object`
 
-给模板、js、json中定义一些全局常量。一般用于区分平台/环境。
+给模板、js、json、style中定义一些全局常量。一般用于区分平台/环境。
 
 ```js
 // vue.config.js
@@ -329,10 +319,41 @@ module.exports = defineConfig({
 })
 ```
 
-使用的时候：
+在模板中使用：
+
+```html
+<template>
+  <view>{{__env__}}</view>
+</template>
+```
+
+在js中使用：
 
 ```js
 const env = __env__;
+```
+
+在style中使用：
+
+```js
+/* @mpx-if (__env__ === 'mini') */
+.color {
+  background: red;
+}
+/* @mpx-endif */
+```
+
+在json中使用：
+
+```js
+<script name='json'>
+  module.exports = {
+    "component": true,
+    "usingComponents": {
+      "a": __env__
+    }
+  }
+</script>
 ```
 
 > 注意：这里定义之后使用的时候是按照全局变量来使用，而非按照`process.env.KEY`这样的形式
@@ -1078,84 +1099,30 @@ module.exports = defineConfig({
 
 > 在微信环境下 `todo.mpx` 被loader处理后的文件为：`todo.wxml`、`todo.wxss`、`todo.js`、`todo.json`
 
-```javascript
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      loader: options
-    }
-  }
-})
-```
-
-#### Options
-
-##### Options.transRpx
-
-`Array<object> | object`
-
-用于统一转换 px 或者 rpx 单位，默认值为`{}`，详见 [transRpxRules](/api/compile.html#transrpxrules)
-
-:::warning
-`transRpx` 已在`v2.6.0`版本中**移除**，请在统一使用 `transRpxRules` 属性进行配置。
-:::
-
-```javascript
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      loader: {
-        transRpxRules: [] 
-      }
-    }
-  }
-})
-```
-
-##### Options.loaders 
-
-`object`
-
-可用于对某些资源文件的默认 loader 做覆盖或新增处理，以下例子演示了对 [less-loader](https://webpack.docschina.org/loaders/less-loader/) 做额外配置。
-
 ```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      loader: {
-        loaders: { // loaders选项
-          less: [ // 针对less做loader配置
-            'css-loader',
-            {
-              loader: 'less-loader',
-              options: { // 为less-loader添加额外配置
-                lessOptions: {
-                  strictMath: true
-                }
-              }
-            }
-          ]
-        }
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.mpx$/,
+        use: MpxWebpackPlugin.loader()
       }
-    }
+    ]
   }
-})
+};
 ```
 
-##### Options.templateOption
-
-`object`
-
-针对使用其他模板引擎(如 [pug](https://www.pugjs.cn/api/getting-started.html))来编写 template 的情景下，可通过 `options.templateOption` 来传入引擎渲染时的额外参数。
-
+::: tip
 在 `@mpxjs/cli 3.x`版本已经内置了对于 `pug` 的支持，只需要安装 `pug` 依赖相关即可：
 
 ```javascript
 npm install -D pug pug-plain-loader
 ```
+:::
+
+##### Options.excludedPreLoaders `{RegExp}`
+
+在构建过程中忽略特定 `pre-loader` 对文件的处理，仅支持正则表达式，默认值为 `/eslint-loader/`。
 
 ### MpxWebpackPlugin.pluginLoader
 
