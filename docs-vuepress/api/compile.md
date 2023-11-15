@@ -1112,18 +1112,6 @@ module.exports = {
 };
 ```
 
-::: tip
-在 `@mpxjs/cli 3.x`版本已经内置了对于 `pug` 的支持，只需要安装 `pug` 依赖相关即可：
-
-```javascript
-npm install -D pug pug-plain-loader
-```
-:::
-
-##### Options.excludedPreLoaders `{RegExp}`
-
-在构建过程中忽略特定 `pre-loader` 对文件的处理，仅支持正则表达式，默认值为 `/eslint-loader/`。
-
 ### MpxWebpackPlugin.pluginLoader
 
 :::warning
