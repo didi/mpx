@@ -441,7 +441,11 @@ module.exports = function getSpec ({ warn, error }) {
               touchcancel: 'touchCancel',
               tap: 'tap',
               longtap: 'longTap',
-              longpress: 'longTap'
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
