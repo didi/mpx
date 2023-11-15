@@ -1,45 +1,53 @@
 <template>
   <view class="list">
-    <view wx:for="{{listData}}" wx:key="index" bindtap="handleAddListData(item)">{{item}}</view>
+    <view wx:for="{{listData}}" wx:key="index" bindtap="handleAddListData(item)">{{ item }}</view>
     <view>{{ message }}{{ msg }}</view>
   </view>
 </template>
 
 <script>
-import { createComponent, set } from '@mpxjs/core'
+  import { createComponent, set } from '@mpxjs/core'
 
-createComponent({
-  data: {
-    listData: ['手机', '电视', '电脑'],
-    message: 'hello world!',
-    testObj: {
-      name: 'jack',
-      age: 90
+  createComponent({
+    data: {
+      listData: ['手机1', '电视1', '电脑1'],
+      message: 'hello world!',
+      testObj: {
+        name: 'jack',
+        age: 90
+      }
+    },
+    watch: {
+      listData(newV, oldV) {
+        console.log('listData-------', newV === oldV, newV, oldV)
+      },
+      'testObj.name': {
+        handler(newV, oldV) {
+          console.log('testObj-------', newV === oldV, newV, oldV)
+        },
+        // deep: true
+      }
+    },
+    methods: {
+      handleAddListData(item) {
+        console.log(899, item)
+        this.listData.push(9090) // ✅
+        // this.testObj = {}
+        this.testObj.name = 9090
+        // this.listData.splice(0, 1) // ✅
+        // set(this.listData, 4, 'mac pro') // ✅
+        // debugger
+        // this.listData[4] = 'mac pro' // ✅
+        // debugger
+        // set(this.testObj, 'msg', 'jack')
+        // console.log(this.msg)
+      }
+    },
+    ready() {
+      // this.message = 'jack'
+      // this.msg = 9098
     }
-  },
-  watch: {
-    testObj(newV, oldV) {
-      console.log('testObj-------', newV, oldV)
-    }
-  },
-  methods: {
-    handleAddListData(item) {
-      console.warn(899, item)
-      // this.listData.push(9090) // ✅
-      // this.listData.splice(0, 1) // ✅
-      // set(this.listData, 4, 'mac pro') // ✅
-      // debugger
-      // this.listData[4] = 'mac pro' // ✅
-      debugger
-      set(this.testObj, 'msg', 'jack')
-      console.log(this.msg)
-    }
-  },
-  ready() {
-    // this.message = 'jack'
-    // this.msg = 9098
-  }
-})
+  })
 </script>
 
 <style lang="stylus">

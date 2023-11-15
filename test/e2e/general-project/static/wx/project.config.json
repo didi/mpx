@@ -1,16 +1,30 @@
 {
-  "compileType": "miniprogram",
-  "setting": {
-    "newFeature": true,
-    "urlCheck": true,
-    "es6": false,
-    "postcss": false,
-    "minified": false,
-    "checkSiteMap": false,
-    "autoAudits": false
-  },
-  "appid": "",
-  "projectname": "general-project",
-  "description": "A mpx project",
-  "condition": {}
+    "compileType": "miniprogram",
+    "setting": {
+        "newFeature": true,
+        "urlCheck": true,
+        "es6": false,
+        "postcss": false,
+        "minified": false,
+        "checkSiteMap": false,
+        "autoAudits": false,
+        "babelSetting": {
+            "ignore": [],
+            "disablePlugins": [],
+            "outputPath": ""
+        }
+    },
+    "appid": "wx39f7201a9da13e5a",
+    "projectname": "general-project",
+    "description": "A mpx project",
+    "condition": {},
+    "libVersion": "3.2.0",
+    "packOptions": {
+        "ignore": [],
+        "include": []
+    },
+    "editorSetting": {
+        "tabIndent": "insertSpaces",
+        "tabSize": 4
+    }
 }

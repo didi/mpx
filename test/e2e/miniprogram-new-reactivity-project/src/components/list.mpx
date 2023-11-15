@@ -1,44 +1,84 @@
 <template>
   <view class="list">
-    <view wx:for="{{listData}}" wx:key="index" bindtap="handleAddListData(item)">{{item}}</view>
-    <!-- <view>{{ message }}{{ msg }}</view> -->
+    <view wx:for="{{listData}}" wx:key="index" wx:for-item="itemName">
+     {{ itemName }}
+      <!-- <view wx:for="{{itemName}}" wx:key="index" bindtap="handleAddListData(item)">
+        {{ item }}
+    </view> -->
+    </view>
+    <view>{{ message }}</view>
   </view>
 </template>
 
 <script>
-import { createComponent, set } from '@mpxjs/core'
+  import { createComponent, set, watch, reactive, } from '@mpxjs/core'
 
-createComponent({
-  data: {
-    listData: ['手机2', '电视2', '电脑2'],
-    message: 'hello world!',
-    testObj: {
-      name: 'jack',
-      age: 90
+  // const listData = reactive(['手机2', '电视2', '电脑2'])
+
+  // watch(listData, (newV, oldV) => {
+  //   console.log('testObj-------', newV, oldV)
+  // })
+
+  const name = 'listData'
+
+  createComponent({
+    data: {
+      // listData: [['手机2', '手机1'], ['电视2'], ['电脑2']],
+      listData: ['手机2', '电脑2', '电视2'],
+      message: 'hello world!',
+      testObj: {
+        name: 'jack',
+        age: 90
+      }
+    },
+    watch: {
+      listData: {
+        handler(newV, oldV) {
+          console.log('listData-------', newV, oldV)
+        },
+        // deep: true
+      },
+      // 'testObj.name': {
+      //   handler(newV, oldV) {
+      //     console.log('testObj-------', newV === oldV, newV, oldV)
+      //   },
+      // },
+      //  testObj: {
+      //   handler(newV, oldV) {
+      //     console.log('testObj-------', newV === oldV, newV, oldV)
+      //   },
+      //   deep: true
+      // }
+    },
+    methods: {
+      handleAddListData(item) {
+        console.warn(899, item)
+        // this.listData[0].push('shouji3')
+        // this.listData.length = 2
+        // debugger
+        // this.listData.shift()
+        // this.listData.push(9090) // ✅
+        // this.testObj.name = 92
+        // // this.listData.splice(0, 1) // ✅
+        // set(this.listData, 4, 'mac pro') // ✅
+        // debugger
+        // this.listData[4] = 'mac pro' // ✅
+        // debugger
+        // set(this.testObj, 'msg', 'hello !!') // 无效果？
+        // this.testObj = {}
+
+        // this.testObj.name = 'october'
+        // this.testObj.name22 = 'october'
+      }
+    },
+    ready() {
+      // this.message = 'jack'
+      // this.msg = 9098
     }
-  },
-  watch: {
-    testObj(newV, oldV) {
-      console.log('testObj-------', newV, oldV)
-    }
-  },
-  methods: {
-    handleAddListData(item) {
-      console.warn(899, item)
-      // this.listData.push(9090) // ✅
-      // this.listData.splice(0, 1) // ✅
-      // set(this.listData, 4, 'mac pro') // ✅
-      // debugger
-      // this.listData[4] = 'mac pro' // ✅
-      debugger
-      set(this.testObj, 'msg', 'hello !!') // 无效果？
-    }
-  },
-  ready() {
-    // this.message = 'jack'
-    // this.msg = 9098
-  }
-})
+  })
+  // defineExpose({
+  //   listData
+  // })
 </script>
 
 <style lang="stylus">
