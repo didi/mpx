@@ -40,6 +40,7 @@ const sidebar = {
         'advance/ability-compatible',
         'advance/plugin',
         'advance/custom-output-path',
+        'advance/utility-first-css',
         'advance/ssr'
       ]
     },
