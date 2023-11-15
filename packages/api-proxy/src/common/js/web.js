@@ -26,7 +26,7 @@ function isTabBarPage (url, router) {
 function createDom (tag, attrs = {}, children = []) {
   const dom = document.createElement(tag)
   Object.keys(attrs).forEach(k => dom.setAttribute(k, attrs[k]))
-  children.length && children.forEach(child => dom.appendChild(child))
+  children.length && children.forEach(child => dom.appendChild(typeof child === 'string' ? document.createTextNode(child) : child))
   return dom
 }
 
