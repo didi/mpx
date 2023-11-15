@@ -317,6 +317,20 @@ export default class MpxProxy {
       cb = cb.handler
     }
 
+    // 兼容处理: 响应式升级成Proxy时，source 为数组时，当source变更无法 watch 到数组变化的问题。将数组options设置为 true 深度监听即可
+    if (isString(source)) {
+      const normalizedArr = source.split(',').map(str => str.trim())
+      normalizedArr.forEach(attr => {
+        if (!attr) return
+        if (!/[[\]]/.test(attr)) {
+          attr = attr.split('.')
+          if (hasOwn(target, attr[0])) {
+            options.deep = true
+          }
+        }
+      })
+    }
+
     if (isString(cb) && target[cb]) {
       cb = target[cb]
     }
