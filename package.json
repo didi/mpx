@@ -6,7 +6,7 @@
     "lerna:publish": "lerna publish from-package --yes --dist-tag test",
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
-    "pretest": "lerna clean && lerna bootstrap --hoist",
+    "pretest": "lerna bootstrap --hoist",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
