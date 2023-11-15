@@ -1,4 +1,4 @@
-import { setByPath, error, hasOwn } from '@mpxjs/utils'
+import { setByPath, error, hasOwn, dash2hump } from '@mpxjs/utils'
 import Mpx from '../../index'
 
 const datasetReg = /^data-(.+)$/
@@ -36,6 +36,8 @@ export default function proxyEventMixin () {
       if (type === 'begin' || type === 'end') {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
         fallbackType = 'regionchange'
+      } else if (/-([a-z])/.test(type)) {
+        fallbackType = dash2hump(type)
       } else if (__mpx_mode__ === 'ali') {
         fallbackType = type.replace(/^./, i => i.toLowerCase())
       }

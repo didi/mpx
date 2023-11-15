@@ -57,6 +57,7 @@ export default function processOption (
         routes: routes
       })
       global.__mpxRouter.stack = []
+      global.__mpxRouter.lastStack = null
       global.__mpxRouter.needCache = null
       global.__mpxRouter.needRemove = []
       global.__mpxRouter.eventChannelMap = {}

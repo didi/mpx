@@ -3,7 +3,7 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
-const { isOriginTag } = require('../../../utils/dom-tag-config')
+const { isOriginTag, isBuildInTag } = require('../../../utils/dom-tag-config')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -127,7 +127,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   /**
-   * 将小程序代码中使用的与原生 HTML tag 同名组件进行转化，以解决与原生tag命名冲突问题。
+   * 将小程序代码中使用的与原生 HTML tag 或 内建组件 同名的组件进行转化，以解决与原生tag命名冲突问题。
    * @param {string} type usingComponents
    * @returns input
    */
@@ -136,7 +136,7 @@ module.exports = function getSpec ({ warn, error }) {
       const usingComponents = input[type]
       if (usingComponents) {
         Object.keys(usingComponents).forEach(tag => {
-          if (isOriginTag(tag)) {
+          if (isOriginTag(tag) || isBuildInTag(tag)) {
             usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
             delete usingComponents[tag]
           }

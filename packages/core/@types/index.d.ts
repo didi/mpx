@@ -46,7 +46,7 @@ type FullPropType<T> = {
 }
 
 interface Properties {
-  [key: string]: WechatMiniprogram.Component.AllProperty | PropType<any> | FullPropType<any>
+  [key: string]: WechatMiniprogram.Component.AllProperty
 }
 
 interface Methods {
@@ -82,12 +82,12 @@ type PropValueType<Def> = Def extends {
   }
   ? T
   : Def extends (...args: any[]) => infer T
-  ? T
-  : Def extends FullPropType<infer T>
-  ? T
-  : Def extends PropType<infer T>
-  ? T
-  : any;
+    ? T
+    : Def extends FullPropType<infer T>
+      ? T
+      : Def extends PropType<infer T>
+        ? T
+        : any;
 
 type GetPropsType<T> = {
   readonly [K in keyof T]: PropValueType<T[K]>
@@ -240,7 +240,10 @@ export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMi
 
 type MixinType = 'app' | 'page' | 'component'
 
-export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): Mpx
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | {
+  types?: MixinType | MixinType[],
+  stage?: number
+}): Mpx
 
 // export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -339,7 +342,7 @@ export interface Ref<T = any> {
    * We need this to be in public d.ts but don't want it to show up in IDE
    * autocomplete, so we use a private Symbol instead.
    */
-    [RefSymbol]: true
+  [RefSymbol]: true
 }
 
 type CollectionTypes = IterableCollections | WeakCollections
@@ -448,7 +451,11 @@ export interface WatchOptions extends WatchEffectOptions {
 
 interface EffectScope {
   run<T> (fn: () => T): T | undefined // 如果作用域不活跃就为 undefined
-  stop (): void
+  stop (fromParent?: boolean): void
+
+  pause (): void
+
+  resume (ignoreDirty?: boolean): void
 }
 
 
@@ -614,7 +621,7 @@ export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabI
 export function onSaveExitState (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): T
+export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): { proxy: T, [x: string]: any }
 
 // I18n
 export function useI18n<Options extends {

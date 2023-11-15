@@ -358,7 +358,7 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        web ({ name, value }, { eventRules, el }) {
+        web ({ name, value }, { eventRules, el, usingComponents }) {
           if (parseMustache(value).hasBinding) {
             error('Web environment does not support mustache binding in event props!')
             return
@@ -370,10 +370,11 @@ module.exports = function getSpec ({ warn, error }) {
           const meta = {
             modifierStr
           }
+          const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
           // 记录event监听信息用于后续判断是否需要使用内置基础组件
           el.hasEvent = true
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -443,7 +444,11 @@ module.exports = function getSpec ({ warn, error }) {
               touchcancel: 'touchCancel',
               tap: 'tap',
               longtap: 'longTap',
-              longpress: 'longTap'
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -454,6 +459,16 @@ module.exports = function getSpec ({ warn, error }) {
           web (eventName) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
+            }
+          }
+        },
+        // 特殊web事件
+        {
+          test: /^click$/,
+          web (eventName, data) {
+            // 自定义组件根节点
+            if (data.isComponent) {
+              return '_' + eventName
             }
           }
         }

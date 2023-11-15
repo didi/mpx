@@ -1,13 +1,6 @@
-import { webHandleSuccess } from '../../../common/js'
+import { webHandleSuccess, createDom } from '../../../common/js'
 import '../../../common/stylus/Toast.styl'
 import '../../../common/stylus/Loading.styl'
-
-function createDom (tag, attrs = {}, children = []) {
-  const dom = document.createElement(tag)
-  Object.keys(attrs).forEach(k => dom.setAttribute(k, attrs[k]))
-  children.length && children.forEach(child => dom.appendChild(child))
-  return dom
-}
 
 export default class Toast {
   constructor () {
