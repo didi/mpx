@@ -54,3 +54,9 @@ export default function install (target, options = {}) {
       }
     })
 }
+
+export function getProxy (options = {}) {
+  const apiProxy = {}
+  install(apiProxy, options)
+  return apiProxy
+}
