@@ -83,6 +83,7 @@ const sidebar = {
       title: '迁移',
       collapsable: false,
       children: [
+        'migrate/2.9',
         'migrate/2.8',
         'migrate/2.7',
         'migrate/mpx-cli-3'
