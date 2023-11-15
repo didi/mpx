@@ -738,7 +738,7 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      if (options.hasComment) {
+      if (options.hasComment || /mpx_config_/.test(text)) {
         currentParent.children.push({
           type: 3,
           text: text,
@@ -944,7 +944,7 @@ function processComponentIs (el, options) {
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
-    el.is = parseMustache(is).result
+    el.is = parseMustacheWithContext(is).result
   } else {
     warn$1('<component> tag should have attrs[is].')
   }
@@ -956,7 +956,7 @@ function parseFuncStr2 (str) {
   const funcRE = /^([^()]+)(\((.*)\))?/
   const match = funcRE.exec(str)
   if (match) {
-    const funcName = parseMustache(match[1]).result
+    const funcName = parseMustacheWithContext(match[1]).result
     const hasArgs = !!match[2]
     let args = match[3] ? `,${match[3]}` : ''
     const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
@@ -1142,7 +1142,43 @@ function wrapMustache (val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
 }
 
-function parseMustache (raw = '') {
+function parseMustacheWithContext (raw = '') {
+  return parseMustache(raw, (exp) => {
+    if (defs) {
+      // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
+      const defKeys = Object.keys(defs)
+      defKeys.forEach((defKey) => {
+        const defRE = new RegExp(`\\b${defKey}\\b`)
+        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+        if (defRE.test(exp)) {
+          exp = exp.replace(defREG, stringify(defs[defKey]))
+        }
+      })
+    }
+
+    if (i18n) {
+      for (const i18nFuncName of i18nFuncNames) {
+        const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
+        const funcNameREG = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`, 'g')
+        if (funcNameRE.test(exp)) {
+          if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
+            const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
+            i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
+            exp = i18nInjectComputedKey
+          } else {
+            exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(null, _l, _fl, `)
+          }
+          hasI18n = true
+          break
+        }
+      }
+    }
+
+    return exp
+  })
+}
+
+function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => str) {
   let replaced = false
   if (tagRE.test(raw)) {
     const ret = []
@@ -1151,53 +1187,35 @@ function parseMustache (raw = '') {
     while (match = tagREG.exec(raw)) {
       const pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
-        ret.push(stringify(pre))
-      }
-      let exp = match[1]
-
-      // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
-      const defKeys = Object.keys(defs)
-      defKeys.forEach((defKey) => {
-        const defRE = new RegExp(`\\b${defKey}\\b`)
-        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
-        if (defRE.test(exp)) {
-          exp = exp.replace(defREG, stringify(defs[defKey]))
-          replaced = true
-        }
-      })
-
-      if (i18n) {
-        for (const i18nFuncName of i18nFuncNames) {
-          const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
-          const funcNameREG = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`, 'g')
-          if (funcNameRE.test(exp)) {
-            if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
-              const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
-              i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
-              exp = i18nInjectComputedKey
-            } else {
-              exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(null, _l, _fl, `)
-            }
-            hasI18n = true
-            replaced = true
-            break
-          }
-        }
+        const pre2 = strHandler(pre)
+        if (pre2 !== pre) replaced = true
+        if (pre2) ret.push(stringify(pre2))
       }
 
-      ret.push(`(${exp.trim()})`)
+      const exp = match[1].trim()
+      if (exp) {
+        const exp2 = expHandler(exp)
+        if (exp2 !== exp) replaced = true
+        if (exp2) ret.push(`(${exp2})`)
+      }
+
       lastLastIndex = tagREG.lastIndex
     }
+
     const post = raw.substring(lastLastIndex)
     if (post) {
-      ret.push(stringify(post))
+      const post2 = strHandler(post)
+      if (post2 !== post) replaced = true
+      if (post2) ret.push(stringify(post2))
     }
+
     let result
     if (ret.length === 1) {
       result = ret[0]
     } else {
       result = `(${ret.join('+')})`
     }
+
     return {
       result,
       hasBinding: true,
@@ -1205,10 +1223,14 @@ function parseMustache (raw = '') {
       replaced
     }
   }
+
+  const raw2 = strHandler(raw)
+  if (raw2 !== raw) replaced = true
+
   return {
-    result: stringify(raw),
+    result: stringify(raw2),
     hasBinding: false,
-    val: raw,
+    val: raw2,
     replaced
   }
 }
@@ -1226,14 +1248,14 @@ function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     if (mode === 'swan') val = wrapMustache(val)
-    const parsed = parseMustache(val)
+    const parsed = parseMustacheWithContext(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
     if (mode === 'swan') val = wrapMustache(val)
-    const parsed = parseMustache(val)
+    const parsed = parseMustacheWithContext(val)
     el.elseif = {
       raw: parsed.val,
       exp: parsed.result
@@ -1275,7 +1297,7 @@ function processFor (el) {
       }
     } else {
       if (mode === 'swan') val = wrapMustache(val)
-      const parsed = parseMustache(val)
+      const parsed = parseMustacheWithContext(val)
       el.for = {
         raw: parsed.val,
         exp: parsed.result
@@ -1387,14 +1409,14 @@ function processAttrs (el, options) {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
     const value = needWrap ? `{${attr.value}}` : attr.value
-    const parsed = parseMustache(value)
+    const parsed = parseMustacheWithContext(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
       const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
-    }
-    if (parsed.replaced) {
-      modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
+      if (parsed.replaced) {
+        modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
+      }
     }
   })
 }
@@ -1526,7 +1548,7 @@ function processText (el) {
   if (el.type !== 3 || el.isComment) {
     return
   }
-  const parsed = parseMustache(el.text)
+  const parsed = parseMustacheWithContext(el.text)
   if (parsed.hasBinding) {
     addExp(el, parsed.result)
   }
@@ -1571,8 +1593,8 @@ function processClass (el, meta) {
   let staticClass = getAndRemoveAttr(el, type).val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
-    const staticClassExp = parseMustache(staticClass).result
-    const dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result, {
+    const staticClassExp = parseMustacheWithContext(staticClass).result
+    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
     addAttrs(el, [{
@@ -1607,8 +1629,8 @@ function processStyle (el, meta) {
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
-    const staticStyleExp = parseMustache(staticStyle).result
-    const dynamicStyleExp = parseMustache(dynamicStyle).result
+    const staticStyleExp = parseMustacheWithContext(staticStyle).result
+    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
@@ -1866,7 +1888,7 @@ function processShow (el, options, root) {
   if (options.hasVirtualHost) {
     if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
-        show = `{{${parseMustache(show).result}&&mpxShow}}`
+        show = `{{${parseMustacheWithContext(show).result}&&mpxShow}}`
       } else {
         show = '{{mpxShow}}'
       }
@@ -1888,7 +1910,7 @@ function processShow (el, options, root) {
 
   function processShowStyle () {
     if (show !== undefined) {
-      const showExp = parseMustache(show).result
+      const showExp = parseMustacheWithContext(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
@@ -2372,6 +2394,7 @@ module.exports = {
   makeAttrsMap,
   stringifyAttr,
   parseMustache,
+  parseMustacheWithContext,
   stringifyWithResolveComputed,
   addAttrs
 }
