@@ -18,7 +18,7 @@
   "license": "ISC",
   "dependencies": {
     "@mpxjs/api-proxy": "^2.8.0",
-    "@mpxjs/core": "^2.8.0",
+    "@mpxjs/core": "^2.9.0",
     "@mpxjs/store": "^2.8.0",
     "@mpxjs/pinia": "^2.8.0",
     "@mpxjs/utils": "^2.8.0",
@@ -33,7 +33,7 @@
     "chrome >= 47"
   ],
   "devDependencies": {
-    "@mpxjs/webpack-plugin": "^2.8.0",
+    "@mpxjs/webpack-plugin": "^2.9.0",
     "@mpxjs/size-report": "^2.8.0",
     "@mpxjs/babel-plugin-inject-page-events": "^2.8.0",
     "copy-webpack-plugin": "^9.0.1",
