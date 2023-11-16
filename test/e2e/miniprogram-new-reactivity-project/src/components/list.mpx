@@ -1,12 +1,13 @@
 <template>
   <view class="list">
-    <view wx:for="{{listData}}" wx:key="index" wx:for-item="itemName">
+    <view wx:for="{{listData}}" wx:key="index" wx:for-item="itemName" bindtap="handleAddListData(itemName)">
      {{ itemName }}
       <!-- <view wx:for="{{itemName}}" wx:key="index" bindtap="handleAddListData(item)">
         {{ item }}
     </view> -->
     </view>
     <view>{{ message }}</view>
+    <view>listDataLength---{{ listDataLength.length }}</view>
   </view>
 </template>
 
@@ -43,16 +44,25 @@
       //     console.log('testObj-------', newV === oldV, newV, oldV)
       //   },
       // },
-      //  testObj: {
-      //   handler(newV, oldV) {
-      //     console.log('testObj-------', newV === oldV, newV, oldV)
-      //   },
-      //   deep: true
-      // }
+       testObj: {
+        handler(newV, oldV) {
+          console.log('testObj-------', newV === oldV, newV, oldV)
+        },
+        // deep: true
+      }
+    },
+    computed: {
+      listDataLength() {
+        return this.listData
+      }
     },
     methods: {
       handleAddListData(item) {
         console.warn(899, item)
+        this.listData.push(77)
+        // debugger
+        // this.listDataLength = 90
+
         // this.listData[0].push('shouji3')
         // this.listData.length = 2
         // debugger
@@ -82,8 +92,7 @@
 </script>
 
 <style lang="stylus">
-  .list
-    background-color red
+
 </style>
 
 <script type="application/json">
