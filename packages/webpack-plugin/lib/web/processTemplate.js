@@ -23,6 +23,7 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
+    webConfig,
     autoVirtualHostRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
@@ -32,9 +33,11 @@ module.exports = function (template, {
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
+    const { el } = webConfig
+    const idName = el?.match(/#(.*)/)?.[1] || 'app'
     template = {
       tag: 'template',
-      content: '<div class="app"><mpx-keep-alive><router-view class="page"></router-view></mpx-keep-alive></div>'
+      content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })

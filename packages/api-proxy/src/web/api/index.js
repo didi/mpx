@@ -10,6 +10,9 @@ export * from './action-sheet'
 // showToast, hideToast, showLoading, hideLoading
 export * from './toast'
 
+// previewImage
+export * from './preview-image'
+
 // showModal
 export * from './modal'
 

@@ -314,17 +314,19 @@ export function mergeToArray (parent, child, key) {
 function composeHooks (target, includes) {
   Object.keys(target).forEach(key => {
     if (!includes || includes[key]) {
-      const hooksArr = target[key]
-      hooksArr && (target[key] = function (...args) {
-        let result
-        for (let i = 0; i < hooksArr.length; i++) {
-          if (typeof hooksArr[i] === 'function') {
-            const data = hooksArr[i].apply(this, args)
-            data !== undefined && (result = data)
+      const hooks = target[key]
+      if (Array.isArray(hooks)) {
+        target[key] = function (...args) {
+          let result
+          for (let i = 0; i < hooks.length; i++) {
+            if (typeof hooks[i] === 'function') {
+              const data = hooks[i].apply(this, args)
+              data !== undefined && (result = data)
+            }
           }
+          return result
         }
-        return result
-      })
+      }
     }
   })
 }
@@ -352,7 +354,7 @@ function transformHOOKS (options) {
     const componentHooksMap = makeMap(convertRule.lifecycle.component)
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
-      if (typeof options[key] === 'function' && key !== 'dataFn' && key !== 'setup' && !componentHooksMap[key]) {
+      if (typeof options[key] === 'function' && key !== 'dataFn' && key !== 'setup' && key !== 'serverPrefetch' && !componentHooksMap[key]) {
         if (!options.methods) options.methods = {}
         options.methods[key] = options[key]
         delete options[key]
