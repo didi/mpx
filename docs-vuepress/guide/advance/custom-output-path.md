@@ -57,20 +57,7 @@ Mpx 框架 webpack-plugin 也提供了 customOutputPath 方法可以让用户进
 需要注意的是，该方法需要具有**稳定性和唯一性**，即同样的输入不管什么时候执行都要有同样的返回以及不同的的输入一定会得到不同的输出。  
 
 - **示例**：
-```js
-new MpxWebpackPlugin({
-  customOutputPath: (type, name, hash, ext) => {
-    // type: 资源类型(page | component | static)
-    // name: 资源原有文件名
-    // hash: 8位长度的hash串
-    // ext: 文件后缀(.js｜ .wxml | .json 等)
 
-    // 输出示例： pages/testax34dde3/index.js
-    return path.join(type + 's', name + hash, 'index' + ext)
-  },
-})
-```
-::: tip @mpxjs/cli@3.x 版本配置如下
 ```js
 // vue.config.js
 module.exports = defineConfig({
@@ -91,5 +78,4 @@ module.exports = defineConfig({
   }
 })
 ```
-:::
 基于上方示例，你可以根据需要进行路径定制化，例如缩短hash、使用012代替文件名等各种自定义路径

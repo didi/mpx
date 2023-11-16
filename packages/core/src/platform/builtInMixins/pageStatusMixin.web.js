@@ -63,7 +63,7 @@ export default function pageStatusMixin (mixinType) {
       },
       created () {
         // onLoad应该在用户声明周期CREATED后再执行，故此处使用原生created声明周期来触发onLoad
-        const query = (global.__mpxRouter && global.__mpxRouter.currentRoute && global.__mpxRouter.currentRoute.query) || {}
+        const query = this.$root.$options?.router?.currentRoute?.query || {}
         this.__mpxProxy.callHook(ONLOAD, [query])
       }
     })
@@ -71,25 +71,27 @@ export default function pageStatusMixin (mixinType) {
 
   Object.assign(mixin, {
     [CREATED] () {
-      const pageInstance = mixinType === 'page' ? this : getCurrentPageInstance()
-      if (pageInstance) {
-        this.$watch(() => pageInstance.mpxPageStatus, status => {
-          if (!status) return
-          if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
-          if (status === 'hide') this.__mpxProxy.callHook(ONHIDE)
-          const pageLifetimes = this.__mpxProxy.options.pageLifetimes
-          if (pageLifetimes) {
-            if (/^resize/.test(status) && isFunction(pageLifetimes.resize)) {
-              // resize
-              pageLifetimes.resize.call(this, systemInfo)
-            } else if (isFunction(pageLifetimes[status])) {
-              // show & hide
-              pageLifetimes[status].call(this)
+      if (isBrowser) {
+        const pageInstance = mixinType === 'page' ? this : getCurrentPageInstance()
+        if (pageInstance) {
+          this.$watch(() => pageInstance.mpxPageStatus, status => {
+            if (!status) return
+            if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
+            if (status === 'hide') this.__mpxProxy.callHook(ONHIDE)
+            const pageLifetimes = this.__mpxProxy.options.pageLifetimes
+            if (pageLifetimes) {
+              if (/^resize/.test(status) && isFunction(pageLifetimes.resize)) {
+                // resize
+                pageLifetimes.resize.call(this, systemInfo)
+              } else if (isFunction(pageLifetimes[status])) {
+                // show & hide
+                pageLifetimes[status].call(this)
+              }
             }
-          }
-        }, {
-          sync: true
-        })
+          }, {
+            sync: true
+          })
+        }
       }
     }
   })

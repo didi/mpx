@@ -1,3 +1,4 @@
+import { isBrowser } from '../../../common/js'
 global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
@@ -6,7 +7,9 @@ global.__mpxAppCbs = global.__mpxAppCbs || {
 }
 
 function onError (callback) {
-  global.__mpxAppCbs.error.push(callback)
+  if (isBrowser) {
+    global.__mpxAppCbs.error.push(callback)
+  }
 }
 
 function offError (callback) {
@@ -16,7 +19,9 @@ function offError (callback) {
 }
 
 function onAppShow (callback) {
-  global.__mpxAppCbs.show.push(callback)
+  if (isBrowser) {
+    global.__mpxAppCbs.show.push(callback)
+  }
 }
 
 function offAppShow (callback) {
@@ -26,7 +31,9 @@ function offAppShow (callback) {
 }
 
 function onAppHide (callback) {
-  global.__mpxAppCbs.hide.push(callback)
+  if (isBrowser) {
+    global.__mpxAppCbs.hide.push(callback)
+  }
 }
 
 function offAppHide (callback) {

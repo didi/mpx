@@ -113,7 +113,6 @@ class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
     options.env = options.env || ''
-
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
@@ -125,7 +124,6 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
-    options.renderOptimizeRules = options.renderOptimizeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
@@ -169,16 +167,11 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    options.asyncSubpackageRules = options.asyncSubpackageRules || null
+    options.asyncSubpackageRules = options.asyncSubpackageRules || []
+    options.optimizeRenderRules = options.optimizeRenderRules || {}
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
-    let proxyComponentEventsRules = []
-    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
-    if (proxyComponentEventsRulesRaw) {
-      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
-    }
-    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -500,17 +493,17 @@ class MpxWebpackPlugin {
     }, (compilation, callback) => {
       processSubpackagesEntriesMap(compilation, (err) => {
         if (err) return callback(err)
-        const checkRegisterPack = () => {
-          for (const packRoot in mpx.dynamicEntryInfo) {
-            const entryMap = mpx.dynamicEntryInfo[packRoot]
-            if (!entryMap.hasPage) {
+        const checkDynamicEntryInfo = () => {
+          for (const packageName in mpx.dynamicEntryInfo) {
+            const entryMap = mpx.dynamicEntryInfo[packageName]
+            if (packageName !== 'main' && !entryMap.hasPage) {
               // 引用未注册分包的所有资源
-              const strRequest = entryMap.entries.join(',')
-              compilation.errors.push(new Error(`资源${strRequest}目标是打入${packRoot}分包, 但是app.json中并未声明${packRoot}分包`))
+              const resources = entryMap.entries.map(info => info.resource).join(',')
+              compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
             }
           }
         }
-        checkRegisterPack()
+        checkDynamicEntryInfo()
         callback()
       })
     })
@@ -570,8 +563,8 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
-      compilation.warnings = compilation.warnings.concat(warnings)
-      compilation.errors = compilation.errors.concat(errors)
+      compilation.warnings.push(...warnings)
+      compilation.errors.push(...errors)
       const moduleGraph = compilation.moduleGraph
 
       if (!compilation.__mpx__) {
@@ -600,7 +593,7 @@ class MpxWebpackPlugin {
           subpackagesEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
-          // 动态记录注册的分包与注册页面映射
+          // 记录动态添加入口的分包信息
           dynamicEntryInfo: {},
           // 记录entryModule与entryNode的对应关系，用于体积分析
           entryNodeModulesMap: new Map(),
@@ -639,21 +632,32 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
-          renderOptimizeRules: this.options.renderOptimizeRules,
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
+          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
+            const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
+              hasPage: false,
+              entries: []
+            }
+            if (entryType === 'page') curInfo.hasPage = true
+            curInfo.entries.push({
+              entryType,
+              resource,
+              filename
+            })
+          },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
+          optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
             }
             return hash(resourcePath)
           },
-          addEntry (request, name, callback) {
+          addEntry: (request, name, callback) => {
             const dep = EntryPlugin.createDependency(request, { name })
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
@@ -821,10 +825,14 @@ class MpxWebpackPlugin {
       const rawProcessModuleDependencies = compilation.processModuleDependencies
       compilation.processModuleDependencies = (module, callback) => {
         const presentationalDependencies = module.presentationalDependencies || []
+        const errors = []
         async.forEach(presentationalDependencies.filter((dep) => dep.mpxAction), (dep, callback) => {
-          dep.mpxAction(module, compilation, callback)
-        }, (err) => {
-          if (err) compilation.errors.push(err)
+          dep.mpxAction(module, compilation, (err) => {
+            if (err) errors.push(err)
+            callback()
+          })
+        }, () => {
+          compilation.errors.push(...errors)
           rawProcessModuleDependencies.call(compilation, module, callback)
         })
       }
@@ -910,16 +918,17 @@ class MpxWebpackPlugin {
       }
 
       // hack process https://github.com/webpack/webpack/issues/16045
-      const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
-
-      compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
-        const rawCallback = callback
-        callback = (err) => {
-          if (err) return rawCallback(err)
-          return rawCallback(null, module)
-        }
-        return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
-      }
+      // no need anymore
+      // const _handleModuleBuildAndDependenciesRaw = compilation._handleModuleBuildAndDependencies
+      //
+      // compilation._handleModuleBuildAndDependencies = (originModule, module, recursive, callback) => {
+      //   const rawCallback = callback
+      //   callback = (err) => {
+      //     if (err) return rawCallback(err)
+      //     return rawCallback(null, module)
+      //   }
+      //   return _handleModuleBuildAndDependenciesRaw.call(compilation, originModule, module, recursive, callback)
+      // }
 
       const rawEmitAsset = compilation.emitAsset
 
