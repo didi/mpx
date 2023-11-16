@@ -106,10 +106,14 @@ export default class MpxProxy {
     this.hooks = {}
     if (__mpx_mode__ !== 'web') {
       this.scope = effectScope(true)
-      // props响应式数据代理
+      // props原始数据
       this.props = {}
-      // data响应式数据代理
+      // props响应式数据代理
+      this.propProxy = {}
+      // data原始数据
       this.data = {}
+      // data响应式数据代理
+      this.dataProxy = {}
       // 非props key
       this.localKeysMap = {}
       // 渲染函数中收集的数据
@@ -227,15 +231,15 @@ export default class MpxProxy {
 
   initProps () {
     this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-    const propProxy = reactive(this.props)
-    proxy(this.target, propProxy, undefined, false, this.createProxyConflictHandler('props'))
+    this.propProxy = reactive(this.props)
+    proxy(this.target, this.propProxy, undefined, false, this.createProxyConflictHandler('props'))
   }
 
   initSetup () {
     const setup = this.options.setup
     if (setup) {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
-        this.props,
+        this.propProxy,
         {
           triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
@@ -265,8 +269,8 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    const dataProxy = reactive(this.data)
-    proxy(this.target, dataProxy, undefined, false, this.createProxyConflictHandler('data'))
+    this.dataProxy = reactive(this.data)
+    proxy(this.target, this.dataProxy, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
 
