@@ -1,31 +1,33 @@
 <template>
   <view class="list">
-    <view wx:for="{{listData}}" wx:key="index" wx:for-item="itemName" bindtap="handleAddListData(itemName)">
-     {{ itemName }}
+    <view
+      wx:for="{{listData}}"
+      wx:key="index"
+      wx:for-item="itemName"
+      bindtap="handleAddListData(itemName)"
+    >
+      {{ itemName }}
       <!-- <view wx:for="{{itemName}}" wx:key="index" bindtap="handleAddListData(item)">
         {{ item }}
     </view> -->
     </view>
     <view>{{ message }}</view>
     <view>listDataLength---{{ listDataLength.length }}</view>
+    <view bindtap="handleAdd">========={{ reactiveObj.name }}=============</view>
+    <view>title------{{ title }}</view>
   </view>
 </template>
 
 <script>
-  import { createComponent, set, watch, reactive, } from '@mpxjs/core'
-
-  // const listData = reactive(['手机2', '电视2', '电脑2'])
-
-  // watch(listData, (newV, oldV) => {
-  //   console.log('testObj-------', newV, oldV)
-  // })
-
-  const name = 'listData'
+  import { createComponent, set, watch, reactive, ref, toRefs, toRef } from '@mpxjs/core'
 
   createComponent({
+    props: {
+      title: String
+    },
     data: {
       // listData: [['手机2', '手机1'], ['电视2'], ['电脑2']],
-      listData: ['手机2', '电脑2', '电视2'],
+      // listData: ['手机2', '电脑2', '电视2'],
       message: 'hello world!',
       testObj: {
         name: 'jack',
@@ -36,7 +38,7 @@
       listData: {
         handler(newV, oldV) {
           console.log('listData-------', newV, oldV)
-        },
+        }
         // deep: true
       },
       // 'testObj.name': {
@@ -44,10 +46,10 @@
       //     console.log('testObj-------', newV === oldV, newV, oldV)
       //   },
       // },
-       testObj: {
+      testObj: {
         handler(newV, oldV) {
           console.log('testObj-------', newV === oldV, newV, oldV)
-        },
+        }
         // deep: true
       }
     },
@@ -81,9 +83,61 @@
         // this.testObj.name22 = 'october'
       }
     },
-    ready() {
-      // this.message = 'jack'
-      // this.msg = 9098
+    ready() {},
+    setup(props) {
+      const count = ref(0)
+      const reactiveObj = reactive({})
+      const listData = reactive(['手机2', '电脑2', '电视2'])
+      // const { title } = toRefs(props)
+      const title = toRef(props, 'title')
+
+      watch(title, (newV, oldV) => {
+        console.log(`watch--发生变化了吗`, newV, oldV)
+      })
+
+
+      // listData: ['手机2', '电脑2', '电视2'],
+
+      const handleAdd = (item) => {
+        count.value++
+        const value = Math.ceil(Math.random() * 100 * count.value)
+        reactiveObj.name = value
+        listData.push(value)
+      }
+
+      // watch(listData, (newV, oldV) => {
+      //   console.log('listData-----', newV, oldV, newV === oldV)
+      // })
+
+      // watch(() => listData, (newV, oldV) => {
+      //   console.log('listData-----', newV, oldV, newV === oldV)
+      // })
+      // reactiveObj.name 变化不会触发，必须增加 deep 选项才行。
+      watch(
+        () => reactiveObj,
+        (newV, oldV) => {
+          console.log('reactiveObj-----', newV, oldV, newV === oldV)
+        }
+      )
+
+      watch(
+        () => reactiveObj,
+        (newV, oldV) => {
+          console.log('reactiveObj-----', newV, oldV, newV === oldV)
+        },
+        {
+          deep: true,
+          immediate: true
+        }
+      )
+
+      console.log('setup-props', props)
+      return {
+        count,
+        handleAdd,
+        reactiveObj,
+        listData,
+      }
     }
   })
   // defineExpose({
@@ -91,9 +145,7 @@
   // })
 </script>
 
-<style lang="stylus">
-
-</style>
+<style lang="stylus"></style>
 
 <script type="application/json">
   {
