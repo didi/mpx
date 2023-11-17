@@ -148,7 +148,7 @@ class Store {
   registerModule (module) {
     const state = module.state || {}
     const reactiveModule = {
-      state
+      state: reactive(state)
     }
     if (module.getters) {
       reactiveModule.getters = transformGetters(module.getters, reactiveModule, this)
@@ -192,7 +192,6 @@ class Store {
         proxy(this.getters, vm, computedKeys)
         proxy(this.getters, this.__depsGetters)
       } else {
-        reactive(this.state)
         const computedObj = {}
         Object.entries(this.__wrappedGetters).forEach(([key, value]) => {
           computedObj[key] = computed(value)
