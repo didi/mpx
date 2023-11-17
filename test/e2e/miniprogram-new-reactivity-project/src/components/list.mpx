@@ -15,11 +15,20 @@
     <view>listDataLength---{{ listDataLength.length }}</view>
     <view bindtap="handleAdd">========={{ reactiveObj.name }}=============</view>
     <view>title------{{ title }}</view>
+    <view bindtap="handleStateCount">stateCount：{{ stateCount }}</view>
+    <view bindtap="handleStateCount">getterCount：{{ getterCount }}</view>
   </view>
 </template>
 
 <script>
   import { createComponent, set, watch, reactive, ref, toRefs, toRef } from '@mpxjs/core'
+  import {store, storeC} from '../store'
+  debugger
+  console.log(
+    8890,
+    // store.mapMutations(['increment']),
+    // store.mapGetters(['getterCount'])
+  )
 
   createComponent({
     props: {
@@ -56,9 +65,25 @@
     computed: {
       listDataLength() {
         return this.listData
-      }
+      },
+      stateCount() {
+        return store.state.count + store.state.storeC.countC
+      },
+      // ...store.mapState({
+      //   stateCount: (state) => state.count
+      //   // stateCount: 'count'
+      // }),
+      ...store.mapGetters(['getterCount'])
     },
     methods: {
+      handleStateCount() {
+        // debugger
+        // store.commit('increment')
+        // store.dispatch('increment')
+        // store.state.moduleB.countB
+        storeC.commit('incrementC')
+        // console.log(store.storeC)
+      },
       handleAddListData(item) {
         console.warn(899, item)
         this.listData.push(77)
@@ -94,7 +119,6 @@
       watch(title, (newV, oldV) => {
         console.log(`watch--发生变化了吗`, newV, oldV)
       })
-
 
       // listData: ['手机2', '电脑2', '电视2'],
 
@@ -136,7 +160,7 @@
         count,
         handleAdd,
         reactiveObj,
-        listData,
+        listData
       }
     }
   })
