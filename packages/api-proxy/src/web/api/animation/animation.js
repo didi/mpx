@@ -1,3 +1,5 @@
+import { isBrowser, throwSSRWarning } from '../../../common/js'
+
 class Animation {
   constructor (options) {
     this._actions = []
@@ -5,11 +7,15 @@ class Animation {
     this._options = options
   }
 
-  _processSize (size) {
+  _processSize (size, type) {
     if (typeof size === 'number') {
       return `${size}px`
     } else {
       if (size.indexOf('rpx') !== -1) {
+        if (!isBrowser) {
+          throwSSRWarning(`Animation's ${type} API cannot use rpx in non browser environments`)
+          return
+        }
         // 计算rpx折算回px
         const rs = parseInt(size, 10)
         const width = window.screen.width
@@ -29,7 +35,7 @@ class Animation {
       case 'bottom':
       case 'width':
       case 'height':
-        value = this._processSize(value)
+        value = this._processSize(value, type)
         this._propMaps[type] = {
           args: [type, value],
           type: 'style'

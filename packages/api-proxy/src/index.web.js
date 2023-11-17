@@ -1,11 +1,8 @@
 import * as allApi from './web/api'
-import { EventChannel } from './web/api/event-channel'
 import { genFromMap } from './common/js'
 
 export default function install (target) {
   const fromMap = genFromMap()
-
-  global.EventChannel = new EventChannel()
 
   Object.keys(allApi).forEach(api => {
     target[api] = function (...args) {

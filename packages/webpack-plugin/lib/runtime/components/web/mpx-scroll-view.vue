@@ -30,7 +30,12 @@
         type: [Number, String],
         default: 0
       },
-      scrollOptions: Object,
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      },
       updateRefresh: {
         type: Boolean,
         default: true

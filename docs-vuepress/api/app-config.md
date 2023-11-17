@@ -5,11 +5,7 @@
 
 ## useStrictDiff
 
-- **类型**： `boolean`
-
-- **默认值**：`false`
-
-- **用法**：
+`boolean = false`
 
 每次有数据变更时，是否使用严格的 diff 算法。如果项目中有大数据集的渲染建议使用，可以提升效率。
 
@@ -58,11 +54,7 @@ mpx.config.useStrictDiff = true
 
 ## ignoreWarning
 
-- **类型**： `boolean`
-
-- **默认值**：`false`
-
-- **用法**：
+`boolean = false`
 
 是否忽略运行时的 warning 信息，默认不忽略。
 
@@ -73,11 +65,7 @@ mpx.config.ignoreWarning = true
 
 ## ignoreProxyWhiteList
 
-- **类型**： `Array<string>`
-
-- **默认值**：`['id']`
-
-- **用法**：
+`Array<string> = ['id']`
 
 Mpx 实例上的 key（包括data、computed、methods）如果有重名冲突，在`ignoreProxyWhiteList`配置中的属性会被最新的覆盖；而不在`ignoreProxyWhiteList`配置中的属性，不会被覆盖。
 
@@ -90,20 +78,13 @@ mpx.config.ignoreConflictWhiteList = ['id', 'test']
 
 ## observeClassInstance
 
-- **类型**： `boolean`
-
-- **默认值**：`false`
-
-- **用法**：
+`boolean = false`
 
 当需要对 class 对象的数据进行响应性转化，需要开启该选项。
 
 ## proxyEventHandler
-- **类型**： `Function | null`
 
-- **默认值**：`null`
-
-- **用法**：
+`Function`
 
 需要代理的事件的钩子方法，该钩子方法仅对内联传参事件或 [forceProxyEventRules](/api/compile.html#forceproxyeventrules) 规则匹配的事件生效。
 
@@ -117,11 +98,9 @@ mpx.config.proxyEventHandler = function (event) {
 
 ## setDataHandler
 
-- **类型**：`(data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null`
-
-- **默认值**：`null`
-
-- **用法**：
+```ts
+function setDataHandler(data: object, target: ComponentIns<{}, {}, {}, {}, []>): any
+```
 
 页面/组件状态更新时，使用该方法可以对 setData 调用进行监听，可以用来统计 setData 调用次数和数据量的统计，方法的入参是 setData 传输的 data 和当前组件实例。
 
@@ -134,9 +113,8 @@ mpx.config.setDataHandler = function(data, comp) {
 ```
 
 ## forceFlushSync
-- **类型**： `boolean`
 
-- **默认值**：`false`
+`boolean = false`
 
 Mpx 中更改响应性状态时，最终页面的更新并不是同步立即生效的，而是由 Mpx 将它们缓存在一个队列中， 异步等到下一个 tick 一起执行，如果想将所有队列的执行改为同步执行，我们可以通过该配置来实现。
 
@@ -157,11 +135,8 @@ mpx.config.webRouteConfig = {
 ```
 
 ## errorHandler
-- **类型**： `Function`
 
-- **默认值**：`null`
-
-- **用法**：
+`Function`
 
 ```js
 mpx.config.errorHandler = function (errmsg, location, error) {

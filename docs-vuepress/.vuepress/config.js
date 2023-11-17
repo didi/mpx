@@ -40,6 +40,8 @@ const sidebar = {
         'advance/ability-compatible',
         'advance/plugin',
         'advance/custom-output-path',
+        'advance/utility-first-css',
+        'advance/ssr'
       ]
     },
     {
@@ -81,6 +83,7 @@ const sidebar = {
       title: '迁移',
       collapsable: false,
       children: [
+        'migrate/2.9',
         'migrate/2.8',
         'migrate/2.7',
         'migrate/mpx-cli-3'
@@ -97,6 +100,7 @@ const sidebar = {
     'builtIn',
     'reactivity-api',
     'composition-api',
+    'optional-api',
     'extend'
   ],
   '/articles/': [
