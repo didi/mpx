@@ -76,7 +76,8 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
     const { resolved = '' } = dep
     // for tenon
     if (dep.compilation.__mpx__.mode === 'tenon') {
-      return `getRelativePath(currentURL, ${JSON.stringify(resolved)}) + '.js'`
+      // 暂时仅支持所有产物在一个目录下的场景
+      return `(Hummer.pageInfo && Hummer.pageInfo.url && Hummer.pageInfo.url.replace(/\\/[^/]+(?=\\.[^.]+($|\\?))/, '/${resolved}') || './${resolved}.js')`
     }
     // ?resolve 必定返回绝对路径
     return JSON.stringify('/' + resolved)
