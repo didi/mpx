@@ -2,14 +2,39 @@ import { webHandleSuccess } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 const { Navigator } = __GLOBAL__
 
+function handleUrl (url) {
+  const [urlString, queryString] = url.split('?')
+  const queryObj = {}
+
+  if (!queryString) {
+    return {
+      query: queryObj,
+      url: urlString
+    }
+  }
+
+  const paramsArray = queryString.split('&')
+  for (const pair of paramsArray) {
+    const [key, value] = pair.split('=')
+    queryObj[key] = decodeURIComponent(value)
+  }
+
+  return {
+    query: queryObj,
+    url: urlString
+  }
+}
+
 function redirectTo (options = {}) {
+  const { url, query } = handleUrl(options.url || '')
   if (Navigator) {
-    Navigator.__mpxAction = { type: 'redirect' }
     return new Promise((resolve, reject) => {
       // 关闭本页面的跳转
       Navigator.openPage(
         {
-          url: options.url,
+          url,
+          animated: false,
+          params: query,
           closeSelf: true
         },
         // 执行环境变了 得不到执行的机会 故回调无效
@@ -23,25 +48,22 @@ function redirectTo (options = {}) {
 }
 
 function navigateTo (options = {}) {
+  const { url, query } = handleUrl(options.url || '')
+  const events = options.events
+
   if (Navigator) {
     const eventChannel = new EventChannel()
-    Navigator.__mpxAction = {
-      type: 'to',
-      eventChannel
-    }
-    if (options.events) {
-      eventChannel._addListeners(options.events)
+    if (events) {
+      eventChannel._addListeners(events)
     }
     return new Promise((resolve, reject) => {
       // 不关闭本页面的跳转
-      Navigator.openPage(
-        {
-          url: options.url
-        },
-        // 执行环境变了 得不到执行的机会 故回调无效
-        () => {}
-      )
-      const res = { errMsg: 'redirectTo:ok' }
+      Navigator.openPage({
+        url,
+        animated: true,
+        params: query
+      }, () => {})
+      const res = { errMsg: 'redirectTo:ok', eventChannel }
       webHandleSuccess(res, options.success, options.complete)
       resolve(res)
     })
@@ -51,12 +73,9 @@ function navigateTo (options = {}) {
 function navigateBack (options = {}) {
   if (Navigator) {
     const delta = options.delta || 1
-    Navigator.__mpxAction = {
-      type: 'back',
-      delta
-    }
-    // popBack方法
-    Navigator.popBack(delta, { animated: true })
+    Navigator.popBack(delta, {
+      animated: true
+    })
     const res = { errMsg: 'navigateBack:ok' }
     webHandleSuccess(res, options.success, options.complete)
     return Promise.resolve(res)

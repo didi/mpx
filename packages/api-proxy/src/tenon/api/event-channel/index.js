@@ -1,57 +1,48 @@
+const notifyCenter = Hummer.notifyCenter
+const { Memory } = __GLOBAL__
+// 通过Memory 和 notifyCenter实现跨页面事件通道
+// FIXME:可能存在的问题once订阅的移除   emit事件传参数量
 class EventChannel {
-  constructor () {
-    this.listener = {}
-  }
-
   emit (eventName, ...args) {
-    const cbs = this.listener[eventName]
-    if (cbs) {
-      cbs.forEach((item, index) => {
-        try {
-          item.fn.apply(this, args)
-        } catch (e) {
-          console.log(`event "${eventName}" error ${e}`)
-        }
-        if (item.type === 'once') {
-          cbs.splice(index, 1)
-        }
-      })
+    notifyCenter.triggerEvent(eventName, args)
+    if (Memory.exist(`_ENENT_ONCE_${eventName}`)) {
+      // 订阅和发送可能不是一个上下文 暂时只能全部移除
+      this.off(eventName)
+      Memory.remove(`_ENENT_ONCE_${eventName}`)
     }
   }
 
   off (eventName, EventCallback) {
-    if (EventCallback) {
-      const cbs = this.listener[eventName]
-      const copyCbs = []
-      if (cbs) {
-        cbs.forEach((item, index) => {
-          if (item.fn !== EventCallback) {
-            copyCbs.push(item)
-          }
-        })
-      }
-      this.listener[eventName] = copyCbs
-    } else {
-      this.listener[eventName] && (this.listener[eventName].length = 0)
-    }
+    notifyCenter.removeEventListener(eventName, EventCallback)
   }
 
   on (eventName, EventCallback) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: EventCallback, type: 'on' })
+    notifyCenter.addEventListener(eventName, EventCallback)
   }
 
   once (eventName, EventCallback) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: EventCallback, type: 'once' })
+    notifyCenter.addEventListener(eventName, EventCallback)
+    Memory.set(`_ENENT_ONCE_${eventName}`, 1)
   }
 
   _addListener (eventName, EventCallback, type) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: EventCallback, type })
+    switch (type) {
+      case 'on':
+        this.on(eventName, EventCallback)
+        break
+      case 'once':
+        this.once(eventName, EventCallback)
+        break
+      default:
+        this.on(eventName, EventCallback)
+        break
+    }
   }
 
   _addListeners (events) {
     if (Object.prototype.toString.call(events) === '[object Object]') {
       Object.keys(events).forEach((eventName) => {
-        (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: events[eventName], type: 'on' })
+        this.on(eventName, events[eventName])
       })
     }
   }
