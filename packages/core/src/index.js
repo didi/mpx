@@ -4,6 +4,8 @@ import { APIs, InstanceAPIs } from './platform/export/api'
 
 import { createI18n } from './platform/builtInMixins/i18nMixin'
 
+export { proxy } from './helper/index'
+
 export * from './platform/export/index'
 
 export * from '@mpxjs/store'

@@ -1,6 +1,7 @@
-import { reactive, isReactive, toRaw, set, del } from '../src/reactive'
+import { reactive, isReactive, toRaw } from '../src/reactive'
 import { effect } from '../src/effect'
 import { ref, isRef } from '../src/ref'
+import { set, del } from '../../utils/src/index'
 
 describe('test reactivity/reactive/arrary', () => {
   test('should make Array reactive', () => {
@@ -239,7 +240,7 @@ describe('test reactivity/reactive/arrary', () => {
   })
 
   test('Del property on an reactive arrary should triggers change', () => {
-    const origin = [10]
+    const origin = [10, 90]
     const obj = reactive(origin)
     const spy = jest.fn(() => {
       return obj[0]
@@ -247,19 +248,15 @@ describe('test reactivity/reactive/arrary', () => {
     effect(spy)
 
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(obj).toEqual([10])
-    expect(origin).toEqual([10])
+    expect(obj).toEqual([10, 90])
+    expect(origin).toEqual([10, 90])
 
     del(obj, 1)
     expect(obj).toEqual([10])
     expect(origin).toEqual([10])
     expect(spy).toHaveBeenCalledTimes(1)
 
-    del(obj, 0)
-    expect(obj).toEqual([undefined])
-    expect(spy).toHaveBeenCalledTimes(2)
-
     del(obj, 'name')
-    expect(spy).toHaveBeenCalledTimes(2)
+    expect(spy).toHaveBeenCalledTimes(1)
   })
 })

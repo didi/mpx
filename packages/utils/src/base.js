@@ -1,3 +1,5 @@
+import { isValidArrayIndex } from './array'
+
 const noop = () => {}
 
 function isSymbol (str) {
@@ -104,6 +106,24 @@ function isIntegerKey (key) {
 
 const extend = Object.assign
 
+function set (target, key, val) {
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    target.length = Math.max(target.length, key)
+    target.splice(key, 1, val)
+    return val
+  }
+  target[key] = val
+  return val
+}
+
+function del (target, key) {
+  if (Array.isArray(target) && isValidArrayIndex(key)) {
+    target.splice(key, 1)
+    return
+  }
+  delete target[key]
+}
+
 export {
   hasProto,
   noop,
@@ -125,5 +145,7 @@ export {
   def,
   hasChanged,
   isIntegerKey,
-  extend
+  extend,
+  set,
+  del
 }

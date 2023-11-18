@@ -1,7 +1,8 @@
 import { effect } from '../src'
-import { reactive, isReactive, toRaw, markRaw, set, del } from '../src/reactive'
+import { reactive, isReactive, toRaw, markRaw } from '../src/reactive'
 import { ref, isRef } from '../src/ref'
 import { computed } from '../src/computed'
+import { set, del } from '../../utils/src/index'
 
 describe('test reactivity/reactive', () => {
   test('Object', () => {

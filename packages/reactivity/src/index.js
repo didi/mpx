@@ -9,9 +9,7 @@ export {
   toRaw,
   isProxy,
   isShallow,
-  ReactiveFlags,
-  set,
-  del
+  ReactiveFlags
 } from './reactive'
 
 export {

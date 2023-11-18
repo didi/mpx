@@ -1,5 +1,10 @@
 import { isObject, type, def } from '@mpxjs/utils'
-import { mutableHandlers, shallowReactiveHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandlers'
+import {
+  mutableHandlers,
+  shallowReactiveHandlers,
+  readonlyHandlers,
+  shallowReadonlyHandlers
+} from './baseHandlers'
 
 export const reactiveMap = new WeakMap()
 export const shallowReactiveMap = new WeakMap()
@@ -17,7 +22,12 @@ export function shallowReactive (target) {
   if (isReadonly(target)) {
     return target
   }
-  return createReactiveObject(target, false, shallowReactiveHandlers, shallowReactiveMap)
+  return createReactiveObject(
+    target,
+    false,
+    shallowReactiveHandlers,
+    shallowReactiveMap
+  )
 }
 
 export function readonly (target) {
@@ -25,7 +35,12 @@ export function readonly (target) {
 }
 
 export function shallowReadonly (target) {
-  return createReactiveObject(target, true, shallowReadonlyHandlers, shallowReadonlyMap)
+  return createReactiveObject(
+    target,
+    true,
+    shallowReadonlyHandlers,
+    shallowReadonlyMap
+  )
 }
 
 export function isProxy (target) {
@@ -135,36 +150,4 @@ export function markRaw (value) {
 
 export function toReactive (value) {
   return isObject(value) ? reactive(value) : value
-}
-
-/**
- * Set a property on an object. Adds the new property and
- * triggers change notification if the property doesn't
- * already exist.
- * Forward Compatibility
- */
-export function set (target, key, val) {
-  if (isReactive(target)) {
-    target[key] = val
-    return val
-  }
-  if (__DEV__) {
-    console.warn(`${target} is not a reactive object`)
-    target && (target[key] = val)
-    return val
-  }
-}
-
-/**
- * Delete a property and trigger change if necessary.
- * Forward Compatibility
- */
-export function del (target, key) {
-  if (isReactive(target)) {
-    return delete target[key]
-  }
-  if (__DEV__ && target) {
-    console.warn(`${target} is not a reactive object`)
-    return delete target[key]
-  }
 }

@@ -37,6 +37,5 @@
     "rollup": "^3.29.2",
     "typescript": "^4.1.3",
     "vuepress": "^1.9.7"
-  },
-  "dependencies": {}
+  }
 }

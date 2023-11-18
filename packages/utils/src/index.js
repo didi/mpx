@@ -24,14 +24,15 @@ export {
   def,
   hasChanged,
   isIntegerKey,
-  extend
+  extend,
+  set,
+  del
 } from './base'
 
 export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
-  proxy,
   spreadProp,
   enumerableKeys,
   processUndefined

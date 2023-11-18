@@ -37,11 +37,13 @@ export {
   effectScope,
   EffectScope,
   getCurrentScope,
-  onScopeDispose,
-  // forwad compatible
-  set,
-  del
+  onScopeDispose
 } from '@mpxjs/reactivity'
+
+export {
+ set,
+  del
+} from '@mpxjs/utils'
 
 export { getCurrentInstance } from '../../core/proxy'
 

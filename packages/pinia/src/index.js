@@ -4,14 +4,13 @@ import {
   isRef,
   reactive,
   isReactive,
-  set,
   effectScope,
   watch,
   nextTick,
   getCurrentInstance,
   markRaw
 } from '@mpxjs/core'
-import { error as Error, warn } from '@mpxjs/utils'
+import { error as Error, warn, set } from '@mpxjs/utils'
 import { createPinia } from './createPinia'
 import { MutationType } from './const'
 import {

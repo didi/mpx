@@ -1,5 +1,4 @@
-import { isRef, isReactive } from '@mpxjs/core'
-import { type, noop } from './base'
+import { type } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
@@ -112,40 +111,6 @@ function diffAndCloneA (a, b) {
   }
 }
 
-function proxy (target, source, keys, readonly, onConflict) {
-  keys = keys || Object.keys(source)
-  keys.forEach((key) => {
-    const descriptor = {
-      get () {
-        const val = source[key]
-        return !isReactive(source) && isRef(val) ? val.value : val
-      },
-      configurable: true,
-      enumerable: true
-    }
-    descriptor.set = readonly
-      ? noop
-      : function (val) {
-        // 对reactive对象代理时不需要处理ref解包
-        if (!isReactive(source)) {
-          const oldVal = source[key]
-          if (isRef(oldVal) && !isRef(val)) {
-            oldVal.value = val
-            return
-          }
-        }
-        source[key] = val
-      }
-    if (onConflict) {
-      if (key in target) {
-        if (onConflict(key) === false) return
-      }
-    }
-    Object.defineProperty(target, key, descriptor)
-  })
-  return target
-}
-
 function spreadProp (obj, key) {
   if (hasOwn(obj, key)) {
     const temp = obj[key]
@@ -182,7 +147,6 @@ export {
   hasOwn,
   isPlainObject,
   diffAndCloneA,
-  proxy,
   spreadProp,
   enumerableKeys,
   processUndefined

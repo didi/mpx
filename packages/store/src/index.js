@@ -1,8 +1,7 @@
-import Mpx, { reactive, computed, effectScope } from '@mpxjs/core'
+import Mpx, { reactive, computed, effectScope, proxy } from '@mpxjs/core'
 import {
   getByPath,
-  warn,
-  proxy
+  warn
 } from '@mpxjs/utils'
 
 // 兼容在web和小程序平台中创建表现一致的store

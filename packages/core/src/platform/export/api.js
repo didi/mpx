@@ -1,6 +1,7 @@
-import { set, del, reactive } from '@mpxjs/reactivity'
+import { reactive } from '@mpxjs/reactivity'
 import { watch } from '../../runtime/apiWatch'
 import { injectMixins } from '../../core/injectMixins'
+import { set, del } from '@mpxjs/utils'
 
 const APIs = {
   injectMixins,

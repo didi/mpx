@@ -15,7 +15,6 @@ import {
   setByPath,
   diffAndCloneA,
   hasOwn,
-  proxy,
   makeMap,
   isString,
   aIsSubPathOfB,
@@ -42,6 +41,7 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
+import { proxy } from '../helper/index'
 
 let uid = 0
 
