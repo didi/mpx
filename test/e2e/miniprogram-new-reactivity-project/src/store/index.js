@@ -11,7 +11,6 @@ export const storeC = createStore({
   }
 })
 
-debugger
 export const store = createStore({
   state: {
     count: 0
