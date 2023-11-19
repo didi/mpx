@@ -100,7 +100,7 @@ describe('reactivity/shallowReadonly', () => {
 
         sroMap.get(key).foo = 2
         expect(
-          `Set operation on key "foo" failed: target is readonly.`
+          'Set operation on key "foo" failed: target is readonly.'
         ).not.toHaveBeenWarned()
       })
     })
@@ -120,7 +120,7 @@ describe('reactivity/shallowReadonly', () => {
 
       values1[0].foo = 2
       expect(
-        `Set operation on key "foo" failed: target is readonly.`
+        'Set operation on key "foo" failed: target is readonly.'
       ).not.toHaveBeenWarned()
 
       expect(isReadonly(values2[0][1])).toBe(false)
@@ -129,7 +129,7 @@ describe('reactivity/shallowReadonly', () => {
 
       values2[0][1].foo = 2
       expect(
-        `Set operation on key "foo" failed: target is readonly.`
+        'Set operation on key "foo" failed: target is readonly.'
       ).not.toHaveBeenWarned()
     })
 
@@ -145,7 +145,7 @@ describe('reactivity/shallowReadonly', () => {
 
         val.foo = 2
         expect(
-          `Set operation on key "foo" failed: target is readonly.`
+          'Set operation on key "foo" failed: target is readonly.'
         ).not.toHaveBeenWarned()
       })
     })
@@ -173,10 +173,10 @@ describe('reactivity/shallowReadonly', () => {
       expect(values[0]).toBe(obj)
       expect(isReadonly(values[0])).toBe(false)
       expect(isReactive(values[0])).toBe(false)
-      
+
       values[0].foo = 2
       expect(
-        `Set operation on key "foo" failed: target is readonly.`
+        'Set operation on key "foo" failed: target is readonly.'
       ).not.toHaveBeenWarned()
     })
 
@@ -194,7 +194,7 @@ describe('reactivity/shallowReadonly', () => {
 
       values1[0].foo = 2
       expect(
-        `Set operation on key "foo" failed: target is readonly.`
+        'Set operation on key "foo" failed: target is readonly.'
       ).not.toHaveBeenWarned()
 
       expect(isReadonly(values2[0][1])).toBe(false)
@@ -203,7 +203,7 @@ describe('reactivity/shallowReadonly', () => {
 
       values2[0][1].foo = 2
       expect(
-        `Set operation on key "foo" failed: target is readonly.`
+        'Set operation on key "foo" failed: target is readonly.'
       ).not.toHaveBeenWarned()
     })
 
@@ -219,7 +219,7 @@ describe('reactivity/shallowReadonly', () => {
 
         val.foo = 2
         expect(
-          `Set operation on key "foo" failed: target is readonly.`
+          'Set operation on key "foo" failed: target is readonly.'
         ).not.toHaveBeenWarned()
       })
     })

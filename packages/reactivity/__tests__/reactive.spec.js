@@ -25,7 +25,7 @@ describe('test reactivity/reactive', () => {
     const reactiveObj = reactive(obj)
     expect(isReactive(reactiveObj)).toBe(true)
     // read prop of reactiveObject will cause reactiveObj[prop] to be reactive
-    const prototype = reactiveObj['__proto__']
+    reactiveObj.__proto__
     const otherObj = { data: ['a'] }
     expect(isReactive(otherObj)).toBe(false)
     const reactiveOther = reactive(otherObj)
@@ -197,8 +197,8 @@ describe('test reactivity/reactive', () => {
     // check type
     obj.a + 1
     obj.b + 1
-    expect(typeof obj.a).toBe(`number`)
-    expect(typeof obj.b).toBe(`number`)
+    expect(typeof obj.a).toBe('number')
+    expect(typeof obj.b).toBe('number')
   })
 
   test('should allow setting property from a ref to another ref', () => {

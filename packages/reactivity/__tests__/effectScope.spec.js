@@ -301,7 +301,7 @@ describe('reactivity/effectScope', () => {
     expect(doubled.value).toBe(6)
 
     const scope2 = new EffectScope()
-    const r = reactive({count: 0})
+    const r = reactive({ count: 0 })
     let dummy
     scope2.run(() => {
       effect(() => {

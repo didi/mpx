@@ -5,10 +5,7 @@ module.exports = {
     sourceType: 'module'
   },
   extends: 'standard',
-  plugins: [
-    'html',
-    'jest'
-  ],
+  plugins: ['html', 'jest'],
   globals: {
     wx: 'readonly',
     my: 'readonly',
@@ -24,7 +21,8 @@ module.exports = {
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
     getRegExp: 'readonly',
-    getCurrentPages: 'readonly'
+    getCurrentPages: 'readonly',
+    __DEV__: 'readonly'
   },
   rules: {
     'no-cond-assign': 0,
@@ -33,5 +31,27 @@ module.exports = {
   },
   env: {
     'jest/globals': true
-  }
+  },
+  // no-prototype-builtins
+  overrides: [
+    // tests, no restrictions
+    {
+      files: ['**/__tests__/**'],
+      rules: {
+        'no-unused-expressions': 'off',
+        'prefer-const': 'off',
+        'no-sequences': 'off',
+        'no-prototype-builtins': 'off',
+        'no-proto': 'off'
+      }
+    },
+    {
+      files: [
+        'packages/**/**'
+      ],
+      rules: {
+        'no-prototype-builtins': 'off'
+      }
+    }
+  ]
 }
