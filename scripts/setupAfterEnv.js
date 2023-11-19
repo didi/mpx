@@ -40,7 +40,7 @@ expect.extend({
     }
   },
 
-  toHaveBeenWarnedTimes(received, n) {
+  toHaveBeenWarnedTimes (received, n) {
     asserted.add(received)
     let found = 0
     warn.mock.calls.forEach(args => {
