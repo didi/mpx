@@ -113,6 +113,7 @@ const sidebar = {
     { title: 'Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导', path: 'ts-derivation' },
     { title: 'Mpx2.7 版本正式发布，大幅提升编译构建速度', path: '2.7-release' },
     { title: 'Mpx2.8 版本正式发布，使用组合式 API 开发小程序', path: '2.8-release' },
+    { title: 'Mpx2.9 版本正式发布，支持原子类、SSR 和包体积优化', path: '2.9-release' },
     { title: 'Mpx-cli 插件化改造', path: 'mpx-cli-next' },
     { title: 'Mpx 小程序单元测试能力建设与实践', path: 'unit-test'}
   ]

@@ -52,17 +52,11 @@ interface Rules {
 
 Mpx 编译构建跨平台小程序和 web 的 webpack 主插件，安装示例如下：
 
-::: code-group
-  ```bash [pnpm]
-    pnpm add -D @mpxjs/webpack-plugin
-  ```
-  ```bash [yarn]
-    yarn add -D @mpxjs/webpack-plugin
-  ```
-  ```bash [npm]
-    npm install -D @mpxjs/webpack-plugin
-  ```
-:::
+```bash 
+npm install -D @mpxjs/webpack-plugin
+pnpm install -D @mpxjs/webpack-plugin
+yarn add -D @mpxjs/webpack-plugin
+```
 
 使用示例如下：
 ```javascript
@@ -1254,17 +1248,11 @@ module.exports = defineConfig({
 
 如果创建项目时未选 unocss，需手动安装，安装示例如下：
 
-::: code-group
-  ```bash [pnpm]
-    pnpm add -D @mpxjs/unocss-plugin
-  ```
-  ```bash [yarn]
-    yarn add -D @mpxjs/unocss-plugin
-  ```
-  ```bash [npm]
-    npm install -D @mpxjs/unocss-plugin
-  ```
-:::
+```bash 
+npm install -D @mpxjs/unocss-plugin
+pnpm install -D @mpxjs/unocss-plugin
+yarn add -D @mpxjs/unocss-plugin
+```
 
 使用示例如下：
 
@@ -1591,17 +1579,11 @@ module.exports = defineConfig({
 
 Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供小程序原子类的预设样式，安装示例如下：
 
-::: code-group
-  ```bash [pnpm]
-    pnpm add -D @mpxjs/unocss-base
-  ```
-  ```bash [yarn]
-    yarn add -D @mpxjs/unocss-base
-  ```
-  ```bash [npm]
-    npm install -D @mpxjs/unocss-base
-  ```
-:::
+```bash 
+npm install -D @mpxjs/unocss-base
+pnpm install -D @mpxjs/unocss-base
+yarn add -D @mpxjs/unocss-base
+```
 
 使用示例如下：
 
