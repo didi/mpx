@@ -109,7 +109,7 @@ export default class MpxProxy {
       // props原始数据
       this.props = {}
       // props响应式数据代理
-      this.propProxy = {}
+      this.propsProxy = {}
       // data原始数据
       this.data = {}
       // data响应式数据代理
@@ -231,15 +231,15 @@ export default class MpxProxy {
 
   initProps () {
     this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-    this.propProxy = reactive(this.props)
-    proxy(this.target, this.propProxy, undefined, false, this.createProxyConflictHandler('props'))
+    this.propsProxy = reactive(this.props)
+    proxy(this.target, this.propsProxy, undefined, false, this.createProxyConflictHandler('props'))
   }
 
   initSetup () {
     const setup = this.options.setup
     if (setup) {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
-        this.propProxy,
+        this.propsProxy,
         {
           triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
