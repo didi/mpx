@@ -47,7 +47,7 @@
         default: () => {
           return {}
         }
-      },
+      }
     },
     data () {
       return {
