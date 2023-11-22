@@ -34,10 +34,10 @@
     "@mpxjs/utils": "^2.9.0"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.8.0",
+    "@mpxjs/core": "^2.9.0",
     "pinia": "^2.0.14",
     "vue": "^2.7.10",
-    "vue-demi": "^0.13.11"
+    "vue-demi": "^0.14.6"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

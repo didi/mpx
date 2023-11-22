@@ -24,10 +24,10 @@
     "miniprogram-api-typings": "^3.10.0"
   },
   "peerDependencies": {
-    "@mpxjs/api-proxy": "^2.7.44",
-    "@mpxjs/store": "^2.8.0",
+    "@mpxjs/api-proxy": "^2.9.0",
+    "@mpxjs/store": "^2.9.0",
     "vue": "^2.7.10",
-    "vue-demi": "^0.13.11",
+    "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
     "vue-i18n-bridge": "^9.2.2"
   },
