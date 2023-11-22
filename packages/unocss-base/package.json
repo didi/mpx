@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/unocss-base",
   "description": "mpx unocss base preset",
-  "version": "2.9.0",
+  "version": "2.8.64-bridgetest",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib"
