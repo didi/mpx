@@ -11,9 +11,7 @@
 
 ## 近期更新
 
-Mpx 2.8 版本正式发布，完整支持组合式 API，更多详情查看[这里](https://mpxjs.cn/articles/2.8-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.8.html)，相关指南及 API 参考文档已更新。
-
-`@mpxjs/cli` 3.2 版本正式发布，基于 `@vue/cli` 插件化架构实现的全新脚手架，更多详情查看[这里](https://github.com/mpx-ecology/mpx-cli)。
+Mpx 2.9 版本正式发布，支持原子类、SSR和构建产物体积优化，更多详情查看[这里](https://mpxjs.cn/articles/2.9-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.9.html)，相关指南及 API 参考文档已更新。
 
 ## 简介
 
@@ -30,14 +28,16 @@ Mpx具有以下功能特性：
 * [状态管理](https://www.mpxjs.cn/guide/advance/store.html) (Vuex规范 / 支持多实例Store)
 * 跨团队开发 ([packages](https://www.mpxjs.cn/guide/advance/subpackage.html))
 * 逻辑复用 ([mixins](https://www.mpxjs.cn/guide/advance/mixin.html))
-* [周边能力支持](https://www.mpxjs.cn/guide/extend/) (fetch / api增强 / mock / webview-bridge)
+* [周边能力](https://www.mpxjs.cn/guide/extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
 * 多平台增强 (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
 * [跨平台编译](https://www.mpxjs.cn/guide/advance/platform.html) (一套代码跨端输出到微信、支付宝、百度、字节、QQ、京东、快应用(web) 和 [web平台](https://www.mpxjs.cn/guide/advance/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb) 中运行)
 * [TypeScript支持](https://www.mpxjs.cn/guide/tool/ts.html) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](https://www.mpxjs.cn/guide/tool/i18n.html)
-* [单元测试支持](https://www.mpxjs.cn/guide/tool/unit-test.html)
-* [E2E测试支持](https://www.mpxjs.cn/guide/tool/e2e-test.html)
+* [单元测试](https://www.mpxjs.cn/guide/tool/unit-test.html)
+* [E2E测试](https://www.mpxjs.cn/guide/tool/e2e-test.html)
+* [原子类](https://mpxjs.cn/guide/advance/utility-first-css.html)
+* [SSR](https://mpxjs.cn/guide/advance/ssr.html)
 * [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
 
 ## 快速开始
