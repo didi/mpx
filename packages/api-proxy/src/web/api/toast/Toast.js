@@ -1,4 +1,4 @@
-import { webHandleSuccess, createDom } from '../../../common/js'
+import { webHandleSuccess, createDom, getRootElement } from '../../../common/js'
 import '../../../common/stylus/Toast.styl'
 import '../../../common/stylus/Loading.styl'
 
@@ -31,7 +31,7 @@ export default class Toast {
       return createDom('div', { class: `line${i + 1}` })
     }))
 
-    document.body.appendChild(this.toast)
+    getRootElement().appendChild(this.toast)
   }
 
   show (options, type) {

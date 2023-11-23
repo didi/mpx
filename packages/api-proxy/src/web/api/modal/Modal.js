@@ -1,4 +1,4 @@
-import { ToPromise, webHandleSuccess } from '../../../common/js'
+import { ToPromise, getRootElement, webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -61,7 +61,7 @@ export default class Modal extends ToPromise {
     box.appendChild(btns)
     modal.appendChild(mask)
     modal.appendChild(box)
-    document.body.appendChild(modal)
+    getRootElement().appendChild(modal)
 
     this.modal = modal
     this.mask = mask
