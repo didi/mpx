@@ -1,6 +1,9 @@
-import { reactive } from '../observer/reactive'
-import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
-import { effectScope } from '../platform/export/index'
+// import { reactive } from '../observer/reactive'
+// import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
+import { reactive, ReactiveEffect, pauseTracking, resetTracking } from '@vue/reactivity'
+import { effectScope } from '@vue/reactivity'
+
+// import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
@@ -109,8 +112,12 @@ export default class MpxProxy {
     if (__mpx_mode__ !== 'web') {
       this.scope = effectScope(true)
       // props响应式数据代理
+      this.propsProxy = {}
+      // props 原始数据
       this.props = {}
       // data响应式数据代理
+      this.dataProxy = {}
+      // data 原始数据
       this.data = {}
       // 非props key
       this.localKeysMap = {}
@@ -229,15 +236,15 @@ export default class MpxProxy {
 
   initProps () {
     this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-    reactive(this.props)
-    proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
+    this.propsProxy = reactive(this.props)
+    proxy(this.target, this.propsProxy, undefined, false, this.createProxyConflictHandler('props'))
   }
 
   initSetup () {
     const setup = this.options.setup
     if (setup) {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
-        this.props,
+        this.propsProxy,
         {
           triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
@@ -267,8 +274,8 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    reactive(this.data)
-    proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
+    this.dataProxy = reactive(this.data)
+    proxy(this.target, this.dataProxy, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
 
@@ -327,6 +334,20 @@ export default class MpxProxy {
     if (isObject(cb)) {
       options = cb
       cb = cb.handler
+    }
+
+    // 兼容处理: 响应式升级成Proxy，在选项式写法中无法 watch 到数组变化，因此将数组 options 设置为 true 强制进行深度监听。
+    if (isString(source)) {
+      const normalizedArr = source.split(',').map(str => str.trim())
+      normalizedArr.forEach(attr => {
+        if (!attr) return
+        if (!/[[\]]/.test(attr)) {
+          attr = attr.split('.')
+          if (hasOwn(target, attr[0])) {
+            options.deep = true
+          }
+        }
+      })
     }
 
     if (isString(cb) && target[cb]) {

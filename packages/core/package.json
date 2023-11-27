@@ -20,13 +20,14 @@
   "main": "src/index.js",
   "dependencies": {
     "@mpxjs/utils": "^2.9.1",
+    "@vue/reactivity": "^3.3.8",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
   "peerDependencies": {
     "@mpxjs/api-proxy": "^2.9.0",
     "@mpxjs/store": "^2.9.0",
-    "vue": "^2.7.10",
+    "vue": "^3.3.8",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
     "vue-i18n-bridge": "^9.2.2"

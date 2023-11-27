@@ -6,16 +6,20 @@ export {
   watch
 } from '../../observer/watch'
 
+// export {
+//   reactive,
+//   isReactive,
+//   shallowReactive,
+//   set,
+//   del,
+//   markRaw
+// } from '../../observer/reactive'
+
 export {
   reactive,
   isReactive,
   shallowReactive,
-  set,
-  del,
-  markRaw
-} from '../../observer/reactive'
-
-export {
+  markRaw,
   ref,
   unref,
   toRef,
@@ -24,17 +28,38 @@ export {
   customRef,
   shallowRef,
   triggerRef
-} from '../../observer/ref'
+} from '@vue/reactivity'
+
+// export {
+//   ref,
+//   unref,
+//   toRef,
+//   toRefs,
+//   isRef,
+//   customRef,
+//   shallowRef,
+//   triggerRef
+// } from '../../observer/ref'
+
+// export {
+//   computed
+// } from '../../observer/computed'
 
 export {
   computed
-} from '../../observer/computed'
+} from '@vue/reactivity'
+
+// export {
+//   effectScope,
+//   getCurrentScope,
+//   onScopeDispose
+// } from '../../observer/effectScope'
 
 export {
   effectScope,
   getCurrentScope,
   onScopeDispose
-} from '../../observer/effectScope'
+} from '@vue/reactivity'
 
 export {
   getCurrentInstance
