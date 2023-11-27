@@ -55,7 +55,8 @@
     "postcss-selector-parser": "^6.0.8",
     "postcss-value-parser": "^4.0.2",
     "source-list-map": "^2.0.0",
-    "video.js": "^8.6.0"
+    "video.js": "^8.6.0",
+    "semver": "^7.5.4"
   },
   "peerDependencies": {
     "webpack": "^5.48.0"
