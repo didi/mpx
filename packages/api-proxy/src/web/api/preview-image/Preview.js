@@ -12,7 +12,6 @@ export default class Preview {
     this.preview = createDom('div', { class: '__mpx_preview__' }, [
       this.textTip = createDom('div', { class: '__mpx_preview_tip__' })
     ])
-    getRootElement().appendChild(this.preview)
     this.initEvent()
   }
 
@@ -45,6 +44,7 @@ export default class Preview {
       this.currentIndex = 0
       this.preview.style.display = 'none'
       this.preview.querySelector('.__mpx_preview_images__').remove()
+      this.preview.remove()
     })
   }
 
@@ -58,6 +58,7 @@ export default class Preview {
     Object.keys(options).forEach(key => !supported.includes(key) && warn(`previewImage: 暂不支持选项 ${key} ！`))
     const { urls, success, fail, complete } = options
     try {
+      getRootElement().appendChild(this.preview)
       this.preview.style.display = 'block'
       // create images with urls
       // append to preview

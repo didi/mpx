@@ -31,10 +31,10 @@ export default class Toast {
       return createDom('div', { class: `line${i + 1}` })
     }))
 
-    getRootElement().appendChild(this.toast)
   }
 
   show (options, type) {
+    getRootElement().appendChild(this.toast) // show 则挂载
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
@@ -92,7 +92,10 @@ export default class Toast {
       this.hideTimer = null
     }
 
-    this.hideTimer = setTimeout(() => { this.toast.classList.remove('show') }, duration)
+    this.hideTimer = setTimeout(() => {
+      this.toast.classList.remove('show')
+      this.toast.remove() // hide 则卸载
+    }, duration)
     return Promise.resolve({ errMsg })
   }
 }

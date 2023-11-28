@@ -22,10 +22,10 @@ export default class ActionSheet extends ToPromise {
         this.cancelBtn = createDom('div', { class: '__mpx_actionsheet_cancel__' }, ['取消'])
       ])
     ])
-    getRootElement().appendChild(this.actionSheet)
   }
 
   show (options) {
+    getRootElement().appendChild(this.actionSheet) // show 则挂载
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
@@ -79,6 +79,7 @@ export default class ActionSheet extends ToPromise {
     this.box.classList.remove('show')
     this.hideTimer = setTimeout(() => {
       this.actionSheet.classList.remove('show')
+      this.actionSheet.remove() // hide 则卸载
     }, 300) // animation duration is 300ms
   }
 }
