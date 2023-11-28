@@ -129,16 +129,12 @@ module.exports = function (json, options, rawCallback) {
                 defs,
                 env
               })
-              const json = parts.json || {}
-              if (json.content) {
-                content = json.content
-              } else if (json.src) {
-                return getJSONContent(json || {}, loaderContext, (err, content) => {
-                  callback(err, result, content)
-                })
-              }
+              getJSONContent(parts.json || {}, result, loaderContext, (err, content) => {
+                callback(err, result, content)
+              })
+            } else {
+              callback(null, result, content)
             }
-            callback(null, result, content)
           },
           (result, content, callback) => {
             try {
