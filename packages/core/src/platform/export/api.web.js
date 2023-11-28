@@ -15,5 +15,5 @@ const APIs = {
 
 export {
   APIs,
-  InstanceAPIs
+  // InstanceAPIs
 }

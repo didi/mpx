@@ -1,6 +1,7 @@
 import Vue from './vue'
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
-import { APIs, InstanceAPIs } from './platform/export/api'
+// import { APIs, InstanceAPIs } from './platform/export/api'
+import { APIs } from './platform/export/api'
 
 import { createI18n } from './platform/builtInMixins/i18nMixin'
 
@@ -9,6 +10,16 @@ export * from './platform/export/index'
 export * from '@mpxjs/store'
 
 export { implement } from './core/implement'
+
+
+const set = () => {}
+
+const del = () => {}
+
+export {
+  set,
+  del
+}
 
 export {
   createApp,
@@ -118,7 +129,7 @@ function factory () {
   }
 
   Object.assign(Mpx, APIs)
-  Object.assign(Mpx.prototype, InstanceAPIs)
+  // Object.assign(Mpx.prototype, InstanceAPIs)
   // 输出web时在mpx上挂载Vue对象
   if (__mpx_mode__ === 'web') {
     Mpx.__vue = Vue

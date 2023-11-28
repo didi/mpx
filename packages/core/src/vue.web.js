@@ -1,11 +1,11 @@
 // import Vue from 'vue'
 import { createApp } from "vue";
 
-// import install from "./vuePlugin";
+import install from "./vuePlugin";
 
 const app = createApp({});
 
-// app.use(install)
+app.use(install)
 
 // Vue.use(install);
 

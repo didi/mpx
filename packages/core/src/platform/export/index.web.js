@@ -66,8 +66,8 @@ export {
   reactive,
   isReactive,
   shallowReactive,
-  set,
-  del,
+  // set,
+  // del,
   markRaw,
   // ref
   ref,

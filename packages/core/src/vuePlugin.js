@@ -15,8 +15,8 @@ function collectDataset (attrs) {
   return dataset
 }
 
-export default function install (Vue) {
-  Vue.prototype.triggerEvent = function (eventName, eventDetail) {
+export default function install (app, options) {
+  app.config.globalProperties.triggerEvent = function (eventName, eventDetail) {
     // 输出Web时自定义组件绑定click事件会和web原生事件冲突，组件内部triggerEvent时会导致事件执行两次，将click事件改为_click来规避此问题
     const escapeEvents = ['click']
     if (escapeEvents.includes(eventName)) {
@@ -35,7 +35,7 @@ export default function install (Vue) {
     }
     return this.$emit(eventName, eventObj)
   }
-  Vue.prototype.selectComponent = function (selector, all) {
+  app.config.globalProperties.selectComponent = function (selector, all) {
     const result = []
     if (/[>\s]/.test(selector)) {
       const location = this.__mpxProxy.options.mpxFileResource
@@ -46,13 +46,13 @@ export default function install (Vue) {
     }
     return all ? result : result[0]
   }
-  Vue.prototype.selectAllComponents = function (selector) {
+  app.config.globalProperties.selectAllComponents = function (selector) {
     return this.selectComponent(selector, true)
   }
-  Vue.prototype.createSelectorQuery = function () {
+  app.config.globalProperties.createSelectorQuery = function () {
     return webApi.createSelectorQuery().in(this)
   }
-  Vue.prototype.createIntersectionObserver = function (options) {
+  app.config.globalProperties.createIntersectionObserver = function (options) {
     return webApi.createIntersectionObserver(this, options)
   }
 }
