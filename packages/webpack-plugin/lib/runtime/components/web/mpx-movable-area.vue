@@ -14,17 +14,21 @@
     mounted () {
       this.computedStyle()
     },
-    beforeDestroy () {
-
+    activated () {
+      this.computedStyle()
     },
     methods: {
       computedStyle() {
         const style = this.$refs.movableArea.getBoundingClientRect()
         if (!style.width) {
-          this.$refs.movableArea.style.width = '10px'
+          this.$refs.movableArea.style.minWidth = '10px'
+        } else {
+          this.$refs.movableArea.style.minWidth = '0px'
         }
         if (!style.height) {
-          this.$refs.movableArea.style.height = '10px'
+          this.$refs.movableArea.style.minHeight = '10px'
+        } else {
+          this.$refs.movableArea.style.minHeight = '0px'
         }
       }
     }
