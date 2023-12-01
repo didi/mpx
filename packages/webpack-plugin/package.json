@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.1",
+  "version": "2.9.3",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -58,7 +58,7 @@
     "video.js": "^8.6.0"
   },
   "peerDependencies": {
-    "webpack": "^5.48.0"
+    "webpack": "^5.75.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
