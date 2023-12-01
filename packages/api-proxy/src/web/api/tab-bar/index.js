@@ -1,5 +1,5 @@
 import { webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
-import Vue from 'vue'
+// import Vue from 'vue'
 
 function setTabBarStyle (options = {}) {
   const tabBar = global.__tabBar
@@ -10,7 +10,8 @@ function setTabBarStyle (options = {}) {
     } else {
       'color|selectedColor|backgroundColor|borderStyle'.split('|').forEach((key) => {
         if (hasOwn(options, key)) {
-          Vue.set(tabBar, key, options[key])
+          // Vue.set(tabBar, key, options[key])
+          tabBar[key] = options[key]
         }
       })
       resolved = { errMsg: 'setTabBarStyle:ok' }
@@ -38,7 +39,8 @@ function setTabBarItem (options = {}) {
       if (item) {
         'text|iconPath|selectedIconPath'.split('|').forEach((key) => {
           if (hasOwn(options, key)) {
-            Vue.set(item, key, options[key])
+            // Vue.set(item, key, options[key])
+            item[key] = options[key]
           }
         })
         resolved = { errMsg: 'setTabBarItem:ok' }
@@ -62,7 +64,8 @@ function showTabBar (options = {}) {
   const tabBar = global.__tabBar
   let resolved, rejected
   if (tabBar) {
-    Vue.set(tabBar, 'isShow', true)
+    // Vue.set(tabBar, 'isShow', true)
+    tabBar.isShow = true
     resolved = { errMsg: 'showTabBar:ok' }
   } else {
     rejected = { errMsg: 'showTabBar:fail no tabBar found' }
@@ -80,7 +83,8 @@ function hideTabBar (options = {}) {
   const tabBar = global.__tabBar
   let resolved, rejected
   if (tabBar) {
-    Vue.set(tabBar, 'isShow', false)
+    // Vue.set(tabBar, 'isShow', false)
+    tabBar.isShow = false
     resolved = { errMsg: 'hideTabBar:ok' }
   } else {
     rejected = { errMsg: 'hideTabBar:fail no tabBar found' }

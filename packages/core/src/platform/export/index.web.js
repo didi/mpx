@@ -88,7 +88,7 @@ export {
   onScopeDispose
 } from 'vue'
 
-export {
-  // i18n
-  useI18n
-} from 'vue-i18n-bridge'
+// export {
+//   // i18n
+//   useI18n
+// } from 'vue-i18n-bridge'
