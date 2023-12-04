@@ -128,10 +128,8 @@ module.exports = function getSpec ({ warn, error }) {
 
   /**
    * 将小程序代码中使用的与原生 HTML tag 或 内建组件 同名的组件进行转化，以解决与原生tag命名冲突问题。
-   * @param {string} type usingComponents
-   * @returns input
    */
-  function webHTMLTagProcesser (type) {
+  function fixComponentName (type) {
     return function (input) {
       const usingComponents = input[type]
       if (usingComponents) {
@@ -160,7 +158,7 @@ module.exports = function getSpec ({ warn, error }) {
     },
     {
       test: 'usingComponents',
-      web: webHTMLTagProcesser('usingComponents')
+      web: fixComponentName('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -365,7 +363,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        web: webHTMLTagProcesser('usingComponents')
+        web: fixComponentName('usingComponents')
       },
       {
         test: 'usingComponents',

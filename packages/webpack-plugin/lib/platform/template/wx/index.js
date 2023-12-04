@@ -200,12 +200,20 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         // 样式类名绑定
-        test: /^wx:(class)$/,
-        web ({ value }) {
-          const parsed = parseMustacheWithContext(value)
+        test: /^(class|wx:class)$/,
+        web ({ value }, { el }) {
+          if (el.isClassParsed) {
+            return false
+          }
+          const classBinding = []
+          el.isClassParsed = true
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
+            const parsed = parseMustacheWithContext(item.value)
+            classBinding.push(parsed.result)
+          })
           return {
             name: ':class',
-            value: parsed.result
+            value: `[${classBinding}]`
           }
         }
       },
