@@ -35,7 +35,7 @@ export default function proxyEventMixin () {
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
-        fallbackType = 'regionchange'
+        fallbackType = __mpx_mode__ === 'ali' ? 'regionChange' : 'regionchange'
       } else if (/-([a-z])/.test(type)) {
         fallbackType = dash2hump(type)
       } else if (__mpx_mode__ === 'ali') {
