@@ -30,7 +30,6 @@ export default class Toast {
     this.loading = createDom('div', { class: '__mpx_loading_wrapper__' }, Array.from({ length: 12 }, (_, i) => {
       return createDom('div', { class: `line${i + 1}` })
     }))
-
   }
 
   show (options, type) {
