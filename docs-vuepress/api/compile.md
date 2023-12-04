@@ -1226,6 +1226,38 @@ module.exports = defineConfig({
 - `publicPath` : 自定义 public 目录
 - `fallback` : 文件字节数大于限制时，为文件指定加载程序
 
+### MpxWebpackPlugin.getPageEntry
+
+在 webpack config entry 入口文件配置中，你可以使用该方法获取独立构建页面路径，构建产物为该页面的独立原生代码，
+你可以提供该页面给其他小程序使用。
+
+```js
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = defineConfig({
+  chainWebpack(config) {
+    config.entry('index').add(MpxWebpackPlugin.getPageEntry('./index.mpx'))
+  }
+})
+```
+
+### MpxWebpackPlugin.getComponentEntry
+
+在 webpack config entry 入口文件配置中，你可以使用该方法获取独立构建组件路径，构建产物为该组件的独立原生代码，
+你可以提供该组件给其他小程序使用。
+
+```js
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = defineConfig({
+  chainWebpack(config) {
+    config.entry('index').add(MpxWebpackPlugin.getComponentEntry('./components/list.mpx'))
+  }
+})
+```
+
 
 ## MpxUnocssPlugin
 
@@ -1866,7 +1898,7 @@ isStyle 是在非 style 模块中编写样式时，声明这部分引用的静�
 `boolean`
 
 在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isPage 来声明独立页面构建，构建产物为该页面的独立原生代码，
-你可以提供该页面给其他小程序使用。此外，独立页面构建也可以通过MpxWebpackPlugin.getPageEntry生成
+你可以提供该页面给其他小程序使用。此外，独立页面构建也可以通过MpxWebpackPlugin.getPageEntry生成，推荐使用[此方法。](#mpxwebpackplugin-getpageentry)
 
 ```js
 // vue.config.js
@@ -1899,7 +1931,7 @@ module.exports = {
 
 在 webpack config entry 入口文件配置中，你可以在路径后追加 ?isComponent 来声明独立组件构建，构建产物为该组件的独立原生代码，
 你可以提供该组件给其他小程序使用。
-此外，独立组件构建也可以通过MpxWebpackPlugin.getComponentEntry生成
+此外，独立组件构建也可以通过MpxWebpackPlugin.getComponentEntry生成，推荐使用[此方法。](#mpxwebpackplugin-getcomponententry)。
 
 ```js
 // vue.config.js
