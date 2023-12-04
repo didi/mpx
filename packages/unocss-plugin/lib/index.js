@@ -56,7 +56,7 @@ function normalizeRules (rules, root) {
     rules = [rules]
   }
   return rules.map((rule) => {
-    if (rule instanceof RegExp) {
+    if (typeof rule.test === 'function') {
       return rule
     }
     if (typeof rule === 'string') {
@@ -125,6 +125,9 @@ function normalizeOptions (options) {
     unknown: '_u_',
     ...escapeMap
   }
+
+  scan.include = normalizeRules(scan.include, root)
+  scan.exclude = normalizeRules(scan.exclude, root)
 
   return {
     unoFile,
@@ -374,19 +377,13 @@ class MpxUnocssPlugin {
           assets[file] = source
         }
 
-        // normalize scan
-        const scan = this.options.scan
-        const root = this.options.root
-        scan.include = normalizeRules(scan.include, root)
-        scan.exclude = normalizeRules(scan.exclude, root)
-
         await Promise.all(Object.entries(assets).map(([file, source]) => {
           if (file.endsWith(styleExt) || file.endsWith(templateExt)) {
             const assetModules = assetsModulesMap.get(file)
             if (has(assetModules, (module) => {
               if (module.resource) {
                 const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
-                return filterFile(resourcePath, scan)
+                return filterFile(resourcePath, this.options.scan)
               }
               return false
             })) {

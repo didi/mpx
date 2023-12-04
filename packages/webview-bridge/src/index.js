@@ -7,7 +7,7 @@ const SDK_URL_MAP = {
   qq: {
     url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
   },
-  ali: {
+  my: {
     url: 'https://appx/web-view.min.js'
   },
   baidu: {

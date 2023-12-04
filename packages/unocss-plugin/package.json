@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/unocss-plugin",
-  "version": "2.9.0",
+  "version": "2.9.5",
   "description": "mpx unocss webpack plugin",
   "main": "lib/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "2.8.28-beta.3",
+    "@mpxjs/webpack-plugin": "^2.9.0",
     "webpack": "^5.83.1"
   },
   "publishConfig": {
