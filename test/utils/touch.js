@@ -1,6 +1,6 @@
 // jest 没有 Touch，支持一下
 class Touch {
-  constructor (params) {
+  constructor(params) {
     const { identifier, target, clientX, clientY } = params
     this.identifier = identifier
     this.target = target
