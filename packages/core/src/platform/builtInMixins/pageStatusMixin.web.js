@@ -1,4 +1,5 @@
 import {
+  BEFORECREATE,
   CREATED,
   ONHIDE,
   ONSHOW,
@@ -47,6 +48,18 @@ if (isBrowser) {
   window.addEventListener('resize', onResize)
 }
 
+function getParentPage (vm) {
+  let parent = vm.$parent
+  while (parent) {
+    if (parent.route) {
+      return parent
+    } else if (parent.$page) {
+      return parent.$page
+    }
+    parent = parent.$parent
+  }
+}
+
 export default function pageStatusMixin (mixinType) {
   const mixin = {}
 
@@ -69,10 +82,19 @@ export default function pageStatusMixin (mixinType) {
     })
   }
 
+  // 创建组件时记录当前所属page，用于驱动pageLifetimes和onShow/onHide钩子
+  if (mixinType === 'component') {
+    Object.assign(mixin, {
+      [BEFORECREATE] () {
+        this.$page = getParentPage(this)
+      }
+    })
+  }
+
   Object.assign(mixin, {
     [CREATED] () {
       if (isBrowser) {
-        const pageInstance = mixinType === 'page' ? this : getCurrentPageInstance()
+        const pageInstance = mixinType === 'page' ? this : this.$page
         if (pageInstance) {
           this.$watch(() => pageInstance.mpxPageStatus, status => {
             if (!status) return
