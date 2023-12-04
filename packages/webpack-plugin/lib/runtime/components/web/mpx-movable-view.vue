@@ -178,7 +178,7 @@
             this.refresh()
           })
           const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
-          this.resizeObserver.observe(elementToObserve)
+          elementToObserve && this.resizeObserver.observe(elementToObserve)
         }
       },
       refresh () {

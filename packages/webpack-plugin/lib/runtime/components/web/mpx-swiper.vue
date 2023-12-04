@@ -47,7 +47,7 @@
         default: () => {
           return {}
         }
-      },
+      }
     },
     data () {
       return {
@@ -212,7 +212,7 @@
         this.bs.scroller.hooks.on('beforeRefresh', () => {
           this.initLayerComputed()
         })
-        this.bs.on('slideWillChange', (page) => {
+        this.bs.on('slidePageChanged', (page) => {
           this.currentIndex = this.vertical ? page.pageY : page.pageX
           this.$emit('change', getCustomEvent('change', {
             current: this.currentIndex,
