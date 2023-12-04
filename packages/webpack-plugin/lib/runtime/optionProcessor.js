@@ -101,19 +101,39 @@ export function getWxsMixin (wxsModules) {
 
 function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, tabBarMap }) {
   const option = {}
+
+  if (App.onAppInit) {
+    Object.assign(option, App.onAppInit() || {})
+  }
+
+  if (isBrowser && global.__mpxPinia) {
+    // 注入pinia
+    option.pinia = global.__mpxPinia
+  }
+
+  // const app = new Vue({
+  //   ...option,
+  //   render: (h) => h(App)
+  // })
+  const app = Vue.createApp({
+    ...option,
+    render: (h) => h(App)
+  })
+
+  app.directive('animation', animation)
+
+  // 过滤器需要重写
+  // Vue.filter('transRpxStyle', transRpxStyle)
+
+  app.config.ignoredElements = ['page']
+
   // 对于app中的组件需要全局注册
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
       const component = componentsMap[componentName]
-      Vue.component(componentName, component)
+      app.component(componentName, component)
     }
   }
-
-  Vue.directive('animation', animation)
-
-  Vue.filter('transRpxStyle', transRpxStyle)
-
-  Vue.config.ignoredElements = ['page']
 
   const routes = []
 
@@ -266,7 +286,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           throw args[0]
         }
       }
-      Vue.config.errorHandler = (...args) => {
+      app.config.errorHandler = (...args) => {
         return errorHandler(args, true)
       }
       window.addEventListener('error', (event) => {
@@ -306,20 +326,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       global.__mpxRouter.__mpxHistoryLength = global.history.length
     }
   }
-
-  if (App.onAppInit) {
-    Object.assign(option, App.onAppInit() || {})
-  }
-
-  if (isBrowser && global.__mpxPinia) {
-    // 注入pinia
-    option.pinia = global.__mpxPinia
-  }
-
-  const app = new Vue({
-    ...option,
-    render: (h) => h(App)
-  })
   return {
     app,
     ...option

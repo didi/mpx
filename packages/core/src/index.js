@@ -1,4 +1,4 @@
-import Vue from './vue'
+// import Vue from './vue'
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 // import { APIs, InstanceAPIs } from './platform/export/api'
 import { APIs } from './platform/export/api'
@@ -132,7 +132,9 @@ function factory () {
   // Object.assign(Mpx.prototype, InstanceAPIs)
   // 输出web时在mpx上挂载Vue对象
   if (__mpx_mode__ === 'web') {
-    Mpx.__vue = Vue
+    // Mpx.__vue = Vue
+    Mpx.__vue = {}
+    // Mpx.__vue = app
   }
   return Mpx
 }
