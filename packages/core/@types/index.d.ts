@@ -31,13 +31,18 @@ type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 // Mpx types
 type Data = object | (() => object)
 
-type PropConstructor<T = any> = {
-  new (...args: any[]): T & {};
-} | {
-  (): T;
-}
-
-export type PropType<T> = PropConstructor<T>
+export type PropType<T> = T & (
+  T extends string 
+    ? StringConstructor
+    : T extends number 
+      ? NumberConstructor
+      : T extends boolean
+        ? BooleanConstructor
+        : T extends any[]
+          ? ArrayConstructor
+          : T extends object 
+            ? ObjectConstructor
+            : never )
 
 type FullPropType<T> = {
   type: PropType<T>;
@@ -75,17 +80,17 @@ interface WatchField {
 
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
-type PropValueType<Def> = Def extends {
-    type: (...args: any[]) => infer T;
-    optionalType?: ((...args: any[]) => infer T)[];
-    value?: infer T;
-  }
+type PropValueType<Def> = Def extends FullPropType<infer T>
   ? T
-  : Def extends (...args: any[]) => infer T
+  : Def extends PropType<infer T>
     ? T
-    : Def extends FullPropType<infer T>
+    : Def extends {
+      type: (...args: any[]) => infer T;
+      optionalType?: ((...args: any[]) => infer T)[];
+      value?: infer T;
+    }
       ? T
-      : Def extends PropType<infer T>
+      : Def extends (...args: any[]) => infer T
         ? T
         : any;
 
