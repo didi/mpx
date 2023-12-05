@@ -28,9 +28,6 @@ const {
   cssRequiresTransform
 } = require('./transform')
 const platformPreflightsMap = require('./platform')
-const loadersPath = path.resolve(__dirname, './loaders')
-const transAppLoader = path.resolve(loadersPath, 'unocss-app.js')
-
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
@@ -241,21 +238,19 @@ class MpxUnocssPlugin {
         // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
         compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
       }
-      // 给app注入unocss模块
-      compiler.options.module.rules.push({
-        test: /\.mpx$/,
-        resourceQuery: /isApp/,
-        enforce: 'pre',
-        use: [transAppLoader]
-      })
-      return
     }
-    compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
+    compiler.hooks.thisCompilation.tap({
+      name: PLUGIN_NAME,
+      // 确保在MpxWebpackPlugin后执行，获取完整mpx对象
+      stage: 100
+    }, (compilation) => {
+      const { __mpx__: mpx } = compilation
+      mpx.hasUnoCSS = true
+      if (mode === 'web') return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
-        const { __mpx__: mpx } = compilation
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
         }

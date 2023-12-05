@@ -81,10 +81,11 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
     })
   }
   if (tabBarStr && tabBarPagesMap) {
-    globalTabBar += `  global.__tabBar = ${tabBarStr}
-                        Vue.observable(global.__tabBar)
-                        // @ts-ignore
-                        global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
+    globalTabBar += `
+  global.__tabBar = ${tabBarStr}
+  Vue.observable(global.__tabBar)
+  // @ts-ignore
+  global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
   }
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
@@ -125,29 +126,30 @@ function getRequireScript ({ ctorType, script, loaderContext }) {
 function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProduction, jsonConfig, webConfig, isMain, globalTabBar }) {
   let content = ''
   if (isMain) {
-    content += `global.getApp = function(){}
-    global.getCurrentPages = function () {
-      if (!(typeof window !== 'undefined')) {
-        console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
-      }
-      const router = global.__mpxRouter
-      if(!router) return []
-      // @ts-ignore
-      return (router.lastStack || router.stack).map(item => {
-        let page
-        const vnode = item.vnode
-        if (vnode && vnode.componentInstance) {
-          page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-        }
-        return page || { route: item.path.slice(1) }
-      })
+    content += `
+  global.getApp = function(){}
+  global.getCurrentPages = function () {
+    if (!(typeof window !== 'undefined')) {
+      console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
-    global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-    global.__mpxGenericsMap = {}
-    global.__mpxOptionsMap = {}
-    global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-    global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-    global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+    const router = global.__mpxRouter
+    if(!router) return []
+    // @ts-ignore
+    return (router.lastStack || router.stack).map(item => {
+      let page
+      const vnode = item.vnode
+      if (vnode && vnode.componentInstance) {
+        page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+      }
+      return page || { route: item.path.slice(1) }
+    })
+  }
+  global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+  global.__mpxGenericsMap = {}
+  global.__mpxOptionsMap = {}
+  global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
     if (globalTabBar) {
       content += globalTabBar
     }
@@ -164,9 +166,10 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
 function buildI18n ({ i18n, loaderContext }) {
   let i18nContent = ''
   const i18nObj = Object.assign({}, i18n)
-  i18nContent += `  import VueI18n from 'vue-i18n'
-          import { createI18n } from 'vue-i18n-bridge'
-          Vue.use(VueI18n , { bridge: true })\n`
+  i18nContent += `
+  import VueI18n from 'vue-i18n'
+  import { createI18n } from 'vue-i18n-bridge'
+  Vue.use(VueI18n , { bridge: true })\n`
   const requestObj = {}
   const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
   i18nKeys.forEach((key) => {
@@ -179,10 +182,11 @@ function buildI18n ({ i18n, loaderContext }) {
   Object.keys(requestObj).forEach((key) => {
     i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
   })
-  i18nContent += '  i18nCfg.legacy = false\n'
-  i18nContent += `  const i18n = createI18n(i18nCfg, VueI18n)
-                        Vue.use(i18n)
-                        Mpx.i18n = i18n\n`
+  i18nContent += `
+  i18nCfg.legacy = false
+  const i18n = createI18n(i18nCfg, VueI18n)
+  Vue.use(i18n)
+  Mpx.i18n = i18n\n`
   return i18nContent
 }
 
