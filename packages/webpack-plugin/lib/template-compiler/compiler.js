@@ -1867,7 +1867,7 @@ function getVirtualHostRoot (options, meta) {
     }
     if (options.isPage) {
       if (mode === 'web') {
-        return createASTElement('page',[])
+        return createASTElement('page', [])
       }
     }
   }
