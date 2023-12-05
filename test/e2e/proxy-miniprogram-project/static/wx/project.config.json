@@ -3,7 +3,7 @@
     "setting": {
         "newFeature": true,
         "urlCheck": true,
-        "es6": false,
+        "es6": true,
         "postcss": false,
         "minified": false,
         "checkSiteMap": false,
@@ -12,7 +12,8 @@
             "ignore": [],
             "disablePlugins": [],
             "outputPath": ""
-        }
+        },
+        "enhance": true
     },
     "appid": "wx39f7201a9da13e5a",
     "projectname": "proxy-miniprogram-project",

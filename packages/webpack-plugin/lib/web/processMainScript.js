@@ -27,17 +27,16 @@ module.exports = function (script, {
 
   let output = `\n  import { processAppOption, getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
           import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
-          // import Vue from 'vue'
-          import { createApp } from 'vue'
+          import Vue from 'vue'
           import VueRouter from 'vue-router'
           import Mpx from '@mpxjs/core'
           import App from ${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}
           // Vue.use(VueRouter)
   \n`
 
-  if (i18n) {
-    output += buildI18n({ i18n, loaderContext })
-  }
+  // if (i18n) {
+  //   output += buildI18n({ i18n, loaderContext })
+  // }
 
   output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, jsonConfig, webConfig, isMain: true, globalTabBar })
   output += `export default processAppOption({
