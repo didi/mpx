@@ -33,6 +33,12 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
         `object`
     
         设置请求参数，参数会以 Query String 的形式进行传递
+    - **header**
+
+        `object`
+
+        设置请求的 header，header 中不能设置 Referer。
+        `content-type` 默认为 `application/json`
     - **timeout**
                         
         `number`
@@ -73,6 +79,9 @@ mpx.xfetch.fetch({
     },
     data: {
         name: 'test'
+    },
+    header: {
+      'content-type': 'application/x-www-form-urlencoded',
     },
     emulateJSON: true,
     usePre: true,
