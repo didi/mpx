@@ -76,6 +76,7 @@ export default class ActionSheet extends ToPromise {
       this.hideTimer = null
     }
     this.tempListeners.forEach(unbind => unbind())
+    this.tempListeners = []
     this.box.classList.remove('show')
     this.hideTimer = setTimeout(() => {
       this.actionSheet.classList.remove('show')
