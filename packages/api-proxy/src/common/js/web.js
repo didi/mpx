@@ -1,4 +1,4 @@
-import { isBrowser } from "./utils"
+import { isBrowser } from './utils'
 
 function webHandleSuccess (result, success, complete) {
   typeof success === 'function' && success(result)
