@@ -75,7 +75,8 @@ module.exports = function (script, {
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
       content += getRequireScript({ ctorType, script, loaderContext })
-      content += `  export default processComponentOption({
+      content += `
+  export default processComponentOption({
     option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
     outputPath: ${JSON.stringify(outputPath)},
@@ -85,12 +86,11 @@ module.exports = function (script, {
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     mixin: getWxsMixin(wxsModules),
-    hasApp: ${hasApp}`
-      content += '\n  })\n'
+    hasApp: ${hasApp}
+  })\n`
       return content
     }
   })
-  output += '\n'
 
   callback(null, {
     output

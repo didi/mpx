@@ -222,10 +222,6 @@ module.exports = function (content) {
             output += templateRes.output
             output += stylesRes.output
             output += jsonRes.output
-            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
-              mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
-            }
-
             processScript(parts.script, {
               loaderContext,
               ctorType,
