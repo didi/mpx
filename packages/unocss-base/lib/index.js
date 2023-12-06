@@ -18,7 +18,7 @@ module.exports = function presetMpx (options = {}) {
         const value = i[1]
         if (typeof value === 'string' && remRE.test(value)) {
           i[1] = value.replace(remRE, (_, p1) => process.env.MPX_CURRENT_TARGET_MODE === 'web'
-            ? `${p1 * baseFontSize * +(100 / 750).toFixed(8)}vw`
+            ? `${p1 * baseFontSize * (100 / 750).toFixed(8)}vw`
             : `${p1 * baseFontSize}rpx`)
         }
       })
