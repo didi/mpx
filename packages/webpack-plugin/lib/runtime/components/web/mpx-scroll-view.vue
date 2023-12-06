@@ -3,10 +3,10 @@
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
-  import ObserveDom from '@better-scroll/observe-dom'
+  // import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
 
-  BScroll.use(ObserveDom)
+  // BScroll.use(ObserveDom)
   BScroll.use(PullDown)
 
   export default {
@@ -66,7 +66,8 @@
         currentX: 0,
         currentY: 0,
         lastX: 0,
-        lastY: 0
+        lastY: 0,
+        resizeObserver: null
       }
     },
     computed: {
@@ -101,12 +102,13 @@
         }
         return className
       },
-      scroll() {
+      scroll () {
         return this.scrollX || this.scrollY
       }
     },
     mounted () {
       this.initBs()
+      this.createResizeObserver()
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -123,9 +125,10 @@
     },
     beforeDestroy () {
       this.destroyBs()
-    },
-    updated () {
-      if (this.updateRefresh) this.refresh()
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
     },
     watch: {
       scrollIntoView (val) {
@@ -153,7 +156,7 @@
           }
         },
       },
-      scroll(val) {
+      scroll (val) {
         if (val) {
           this.initBs()
         } else {
@@ -167,7 +170,7 @@
         this.bs.destroy()
         delete this.bs
       },
-      disableBs() {
+      disableBs () {
         if (!this.bs) return
         this.bs.disable()
         this.currentX = -this.bs.x
@@ -196,9 +199,9 @@
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
-        this.bs.scroller.hooks.on('beforeRefresh', () => {
-          this.initLayerComputed()
-        })
+        // this.bs.scroller.hooks.on('beforeRefresh', () => {
+        //   this.initLayerComputed()
+        // })
         this.lastX = -this.currentX
         this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
@@ -300,7 +303,7 @@
         const computedStyle = getComputedStyle(wrapper)
         // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
         // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
-        this.$refs.innerWrapper.style.width = `${wrapper.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+        this.$refs.innerWrapper.style.width = `${wrapper.clientWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
         this.$refs.innerWrapper.style.height = `${wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
@@ -354,7 +357,22 @@
       }, 200, {
         leading: true,
         trailing: false
-      })
+      }),
+      createResizeObserver () {
+        if (typeof ResizeObserver !== 'undefined') {
+          this.resizeObserver = new ResizeObserver(entries => {
+            this.initLayerComputed()
+            this.$nextTick(() => {
+              this.refresh()
+            })
+          })
+          this.$slots.default.map(item => {
+            if (item.tag) {
+              item.elm && this.resizeObserver.observe(item.elm)
+            }
+          })
+        }
+      },
     },
     render (createElement) {
       const data = {
@@ -418,11 +436,13 @@
         bottom: 20px
         left: 50%
         transform: translateX(-50%)
+
       .mpx-pull-down-slot
         position: absolute
         width: 100%
         height: auto
         bottom: 0
+
       .mpx-pull-down-content-black
         .circle
           display: inline-block;
