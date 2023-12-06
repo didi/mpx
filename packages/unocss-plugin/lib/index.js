@@ -85,8 +85,8 @@ function normalizeOptions (options) {
     root = process.cwd(),
     config,
     configFiles,
-    transformCSS = true,
-    transformGroups = true,
+    transformCSS,
+    transformGroups,
     webOptions = {}
   } = options
   // web配置
@@ -238,11 +238,19 @@ class MpxUnocssPlugin {
         // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
         compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
       }
+      compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
+        for (const dep of compilation.fileDependencies) {
+          if (dep.includes('__uno.css')) {
+            // 移除虚拟模块产生的fileDeps避免初始watch执行两次
+            compilation.fileDependencies.delete(dep)
+          }
+        }
+      })
     }
     compiler.hooks.thisCompilation.tap({
       name: PLUGIN_NAME,
-      // 确保在MpxWebpackPlugin后执行，获取完整mpx对象
-      stage: 100
+      // 确保在MpxWebpackPlugin后执行，获取mpx对象
+      stage: 1000
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
