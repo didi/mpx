@@ -327,9 +327,6 @@ class MpxWebpackPlugin {
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
-    let splitChunksPlugin
-    let splitChunksOptions
-
     const optimization = compiler.options.optimization
     optimization.runtimeChunk = {
       name: (entrypoint) => {
@@ -341,7 +338,7 @@ class MpxWebpackPlugin {
         return 'bundle'
       }
     }
-    splitChunksOptions = Object.assign({
+    const splitChunksOptions = Object.assign({
       defaultSizeTypes: ['javascript', 'unknown'],
       chunks: 'all',
       usedExports: optimization.usedExports === true,
@@ -353,7 +350,7 @@ class MpxWebpackPlugin {
       automaticNameDelimiter: '-'
     }, optimization.splitChunks)
     delete optimization.splitChunks
-    splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
+    const splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
     splitChunksPlugin.apply(compiler)
 
     // 代理writeFile
