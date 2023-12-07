@@ -15,6 +15,8 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
+const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
+const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -328,33 +330,31 @@ class MpxWebpackPlugin {
     let splitChunksPlugin
     let splitChunksOptions
 
-    if (this.options.mode !== 'web') {
-      const optimization = compiler.options.optimization
-      optimization.runtimeChunk = {
-        name: (entrypoint) => {
-          for (const packageName in mpx.independentSubpackagesMap) {
-            if (hasOwn(mpx.independentSubpackagesMap, packageName) && isChunkInPackage(entrypoint.name, packageName)) {
-              return `${packageName}/bundle`
-            }
+    const optimization = compiler.options.optimization
+    optimization.runtimeChunk = {
+      name: (entrypoint) => {
+        for (const packageName in mpx.independentSubpackagesMap) {
+          if (hasOwn(mpx.independentSubpackagesMap, packageName) && isChunkInPackage(entrypoint.name, packageName)) {
+            return `${packageName}/bundle`
           }
-          return 'bundle'
         }
+        return 'bundle'
       }
-      splitChunksOptions = Object.assign({
-        defaultSizeTypes: ['javascript', 'unknown'],
-        chunks: 'all',
-        usedExports: optimization.usedExports === true,
-        minChunks: 1,
-        minSize: 1000,
-        enforceSizeThreshold: Infinity,
-        maxAsyncRequests: 30,
-        maxInitialRequests: 30,
-        automaticNameDelimiter: '-'
-      }, optimization.splitChunks)
-      delete optimization.splitChunks
-      splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
-      splitChunksPlugin.apply(compiler)
     }
+    splitChunksOptions = Object.assign({
+      defaultSizeTypes: ['javascript', 'unknown'],
+      chunks: 'all',
+      usedExports: optimization.usedExports === true,
+      minChunks: 1,
+      minSize: 1000,
+      enforceSizeThreshold: Infinity,
+      maxAsyncRequests: 30,
+      maxInitialRequests: 30,
+      automaticNameDelimiter: '-'
+    }, optimization.splitChunks)
+    delete optimization.splitChunks
+    splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
+    splitChunksPlugin.apply(compiler)
 
     // 代理writeFile
     if (this.options.writeMode === 'changed') {
@@ -635,7 +635,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1093,15 +1093,29 @@ class MpxWebpackPlugin {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.enableRequireAsync) {
-                const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
-                  isRequireAsync: true,
-                  retryRequireAsync: !!this.options.retryRequireAsync
-                })
+              if (mpx.supportRequireAsync) {
+                if (mpx.mode === 'web') {
+                  const depBlock = new AsyncDependenciesBlock(
+                    {
+                      name: tarRoot
+                    },
+                    expr.loc,
+                    request
+                  )
+                  const dep = new ImportDependency(request, expr.range)
+                  dep.loc = expr.loc
+                  depBlock.addDependency(dep)
+                  parser.state.current.addBlock(depBlock)
+                } else {
+                  const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
+                    isRequireAsync: true,
+                    retryRequireAsync: !!this.options.retryRequireAsync
+                  })
 
-                parser.state.current.addPresentationalDependency(dep)
-                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
-                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                  parser.state.current.addPresentationalDependency(dep)
+                  // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                  parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                }
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)
