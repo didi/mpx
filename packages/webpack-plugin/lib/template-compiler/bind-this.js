@@ -98,7 +98,7 @@ function checkDelAndGetPath (path) {
       }
     } else if (t.isLogicalExpression(current.container)) {
       if (current.key === 'left') {
-        if (t.isLiteral(current.parent['right'])) { // case: a || '' => 整个表达式被删掉
+        if (t.isLiteral(current.parent.right)) { // case: a || '' => 整个表达式被删掉
           delPath = current.parentPath
         } else {
           canDel = false
