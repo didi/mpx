@@ -31,18 +31,25 @@ type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
 // Mpx types
 type Data = object | (() => object)
 
-export type PropType<T> = T & (
-  T extends string 
+export type PropType<T> = Exclude<
+  T,
+  | StringConstructor
+  | NumberConstructor
+  | BooleanConstructor
+  | ArrayConstructor
+  | ObjectConstructor
+> &
+  (T extends string
     ? StringConstructor
-    : T extends number 
+    : T extends number
       ? NumberConstructor
       : T extends boolean
         ? BooleanConstructor
         : T extends any[]
           ? ArrayConstructor
-          : T extends object 
+          : T extends object
             ? ObjectConstructor
-            : never )
+            : never)
 
 type FullPropType<T> = {
   type: PropType<T>;
