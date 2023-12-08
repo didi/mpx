@@ -61,6 +61,7 @@ describe('render function simplify should correct', function () {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   if (_sc("a")) {}
 
+  _sc("b");
   _sc("c");
 
   _sc("a") ? _sc("b") : _sc("c");
@@ -141,6 +142,23 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         '456' || obj4 || ''
         '' || 123 || obj4
 
+        a1;
+        b1;
+        c1;
+        a1 || b1 || c1;
+        
+        a2;
+        b2;
+        a2 || b2 || '';
+        
+        a3;
+        c3
+        a3 || ''
+        a3 || '' || c3
+        
+        a4
+        a4 || '' || ''
+
         obj5 + 'rpx'
         'height:' + obj5 + 'rpx'
         'height' + ':' + obj5
@@ -150,7 +168,25 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   // 逻辑运算          
   _sc("obj3") && _c("obj3.b");
+  _sc("obj4");
+  '456' || _sc("obj4") || '';
   '' || 123 || _sc("obj4");
+
+  _sc("b1");
+
+  _sc("c1");
+
+  _sc("a1") || _sc("b1") || _sc("c1");
+
+  _sc("b2");
+
+  _sc("a2") || _sc("b2") || '';
+
+  _sc("c3");
+
+  _sc("a3") || '' || _sc("c3");
+
+  _sc("a4");
 
   _sc("obj5") + 'rpx';
   'height:' + "" + 'rpx';
