@@ -76,8 +76,12 @@ ResolveDependency.Template = class ResolveDependencyTemplate {
     const { resolved = '' } = dep
     // for tenon
     if (dep.compilation.__mpx__.mode === 'tenon') {
-      // 暂时仅支持所有产物在一个目录下的场景
-      return `(Hummer.pageInfo && Hummer.pageInfo.url && Hummer.pageInfo.url.replace(/\\/[^/]+(?=\\.[^.]+($|\\?))/, '/${resolved}') || './${resolved}.js')`
+      // hummer scheme 直接返回
+      if (resolved.startswith('hummer://')) {
+        return resolved
+      }
+      // 所有产物在一个目录下的场景 进行相对路径跳转
+      return `'./${resolved}.js'`
     }
     // ?resolve 必定返回绝对路径
     return JSON.stringify('/' + resolved)
