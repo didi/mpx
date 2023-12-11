@@ -96,10 +96,12 @@ function checkDelAndGetPath (path) {
       } else {
         delPath = current.parentPath
       }
-    } else if (t.isLogicalExpression(current.container)) { // case: a || ''
-      const key = current.key === 'left' ? 'right' : 'left'
-      if (t.isLiteral(current.parent[key])) {
+    } else if (t.isLogicalExpression(current.container)) { // 只处理case: a || ''
+      const key = current.key
+      if (key === 'left' && t.isLiteral(current.parent.right)) {
         delPath = current.parentPath
+      } else {
+        break
       }
     } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) { // dealRemove删除节点时需要
       delPath = current.parentPath
