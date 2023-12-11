@@ -186,9 +186,7 @@ function dealRemove (path, replace) {
     }
     delete path.needBind
     delete path.collectInfo
-  } catch (e) {
-    console.log(e)
-  }
+  } catch (e) {}
 }
 
 module.exports = {
