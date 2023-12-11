@@ -96,17 +96,10 @@ function checkDelAndGetPath (path) {
       } else {
         delPath = current.parentPath
       }
-    } else if (t.isLogicalExpression(current.container)) {
-      if (current.key === 'left') {
-        if (t.isLiteral(current.parent.right)) { // case: a || '' => 整个表达式被删掉
-          delPath = current.parentPath
-        } else {
-          canDel = false
-          break
-        }
-      } else {
-        ignore = true
-        break
+    } else if (t.isLogicalExpression(current.container)) { // case: a || ''
+      const key = current.key === 'left' ? 'right' : 'left'
+      if (t.isLiteral(current.parent[key])) {
+        delPath = current.parentPath
       }
     } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) { // dealRemove删除节点时需要
       delPath = current.parentPath
@@ -118,15 +111,24 @@ function checkDelAndGetPath (path) {
   }
 
   // 确定是否可删除
-  while (!t.isBlockStatement(current) && canDel && !ignore) {
+  while (!t.isBlockStatement(current) && canDel) {
     const { key, container } = current
     if (t.isIfStatement(container) && key === 'test') { // if (a) {}
       canDel = false
       break
     }
 
+    if (t.isLogicalExpression(container)) { // case: a || ((b || c) && d)
+      ignore = true
+      break
+    }
+
     // case: a ??= b
-    if (t.isAssignmentExpression(container)) {
+    if (
+      key === 'right' &&
+      t.isAssignmentExpression(container) &&
+      ['??=', '||=', '&&='].includes(container.operator)
+    ) {
       ignore = true
       break
     }
