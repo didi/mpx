@@ -177,12 +177,18 @@ function dealRemove (path, replace) {
     if (replace) {
       path.replaceWith(t.stringLiteral(''))
     } else {
-      t.validate(path.parent, path.key, null)
+      if (path.inList) {
+        t.validate(path.parent, path.key, [null])
+      } else {
+        t.validate(path.parent, path.key, null)
+      }
       path.remove()
     }
     delete path.needBind
     delete path.collectInfo
-  } catch (e) {}
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 module.exports = {
