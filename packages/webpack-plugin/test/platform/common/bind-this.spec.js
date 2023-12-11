@@ -184,7 +184,6 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   _sc("obj3") && _c("obj3.b");
 
   _sc("obj4");
-  '456' || _sc("obj4") || '';
   '' || 123 || _sc("obj4");
   _sc("obj5") || 123 || '';
   

@@ -96,9 +96,9 @@ function checkDelAndGetPath (path) {
       } else {
         delPath = current.parentPath
       }
-    } else if (t.isLogicalExpression(current.container)) { // 只处理case: a || ''
-      const key = current.key
-      if (key === 'left' && t.isLiteral(current.parent.right)) {
+    } else if (t.isLogicalExpression(current.container)) { // 只处理case: a || '' or '123' || a
+      const key = current.key === 'left' ? 'right' : 'left'
+      if (t.isLiteral(current.parent[key])) {
         delPath = current.parentPath
       } else {
         break
