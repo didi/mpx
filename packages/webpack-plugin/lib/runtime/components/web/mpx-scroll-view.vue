@@ -36,10 +36,6 @@
           return {}
         }
       },
-      updateRefresh: {
-        type: Boolean,
-        default: true
-      },
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean,
@@ -67,7 +63,8 @@
         currentY: 0,
         lastX: 0,
         lastY: 0,
-        resizeObserver: null
+        resizeObserver: null,
+        mutationObserver: null
       }
     },
     computed: {
@@ -109,6 +106,7 @@
     mounted () {
       this.initBs()
       this.createResizeObserver()
+      this.handleMutationObserver()
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -128,6 +126,10 @@
       if (this.resizeObserver) {
         this.resizeObserver.disconnect()
         this.resizeObserver = null
+      }
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect()
+        this.mutationObserver = null
       }
     },
     watch: {
@@ -199,9 +201,9 @@
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
-        // this.bs.scroller.hooks.on('beforeRefresh', () => {
-        //   this.initLayerComputed()
-        // })
+        this.bs.scroller.hooks.on('beforeRefresh', () => {
+          this.initLayerComputed()
+        })
         this.lastX = -this.currentX
         this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
@@ -373,6 +375,56 @@
           })
         }
       },
+      handleMutationObserver () {
+        if (typeof MutationObserver !== 'undefined') {
+          let timer = 0
+          this.mutationObserver = new MutationObserver((mutations) => {
+            this.mutationObserverHandler(mutations, timer)
+          })
+          const config = { attributes: true, childList: true, subtree: true,}
+          this.mutationObserver.observe(this.$refs.scrollContent, config)
+        }
+      },
+      mutationObserverHandler (mutations, timer) {
+        if (this.shouldNotRefresh()) {
+          return
+        }
+        let immediateRefresh = false
+        let deferredRefresh = false
+        for (let i = 0; i < mutations.length; i++) {
+          const mutation = mutations[i]
+          if (mutation.type !== 'attributes') {
+            immediateRefresh = true
+            break
+          } else {
+            if (mutation.target !== this.bs.scroller.content) {
+              deferredRefresh = true
+              break
+            }
+          }
+        }
+        if (immediateRefresh) {
+          this.refresh()
+        } else if (deferredRefresh) {
+          // attributes changes too often
+          clearTimeout(timer)
+          timer = window.setTimeout(() => {
+            if (!this.shouldNotRefresh()) {
+              this.refresh()
+            }
+          }, 60)
+        }
+      },
+      shouldNotRefresh() {
+        const { scroller } = this.bs
+        const { scrollBehaviorX, scrollBehaviorY } = scroller
+        let outsideBoundaries =
+          scrollBehaviorX.currentPos > scrollBehaviorX.minScrollPos ||
+          scrollBehaviorX.currentPos < scrollBehaviorX.maxScrollPos ||
+          scrollBehaviorY.currentPos > scrollBehaviorY.minScrollPos ||
+          scrollBehaviorY.currentPos < scrollBehaviorY.maxScrollPos
+        return scroller.animater.pending || outsideBoundaries
+      }
     },
     render (createElement) {
       const data = {
