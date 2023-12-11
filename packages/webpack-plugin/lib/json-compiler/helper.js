@@ -17,7 +17,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const pathHash = mpx.pathHash
   const getOutputPath = mpx.getOutputPath
   const mode = mpx.mode
-  const enableRequireAsync = mpx.enableRequireAsync
+  const supportRequireAsync = mpx.supportRequireAsync
   const asyncSubpackageRules = mpx.asyncSubpackageRules
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
@@ -51,15 +51,15 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
-      let placeholder = null
+      let placeholder = ''
       if (queryObj.root) {
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
         // 目前只有微信支持分包异步化
-        if (enableRequireAsync) {
+        if (supportRequireAsync) {
           tarRoot = queryObj.root
         }
-      } else if (!queryObj.root && asyncSubpackageRules && enableRequireAsync) {
+      } else if (!queryObj.root && asyncSubpackageRules && supportRequireAsync) {
         for (const item of asyncSubpackageRules) {
           if (matchCondition(resourcePath, item)) {
             tarRoot = item.root
@@ -97,7 +97,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
-      callback(null, entry, tarRoot, placeholder)
+      callback(null, entry, {
+        tarRoot,
+        placeholder
+      })
     })
   }
 
