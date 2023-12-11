@@ -3,7 +3,7 @@ module.exports = function (loaderContext) {
   const moduleGraph = loaderContext._compilation.moduleGraph
   let entryName = ''
   for (const [name, { dependencies }] of loaderContext._compilation.entries) {
-    for(const dep of dependencies) {
+    for (const dep of dependencies) {
       const entryModule = moduleGraph.getModule(dep)
       if (entryModule && entryModule.resource === loaderContext.resource) {
         entryName = name
