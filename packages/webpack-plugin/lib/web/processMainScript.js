@@ -46,7 +46,6 @@ module.exports = function (script, {
   output += `  import Vue from 'vue'
   import VueRouter from 'vue-router'
   import Mpx from '@mpxjs/core'
-  import App from ${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}
   import { processAppOption, getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
   Vue.use(VueRouter)\n`
 
@@ -64,6 +63,9 @@ module.exports = function (script, {
     isMain: true,
     globalTabBar
   })
+
+  output += `\n  const App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
+
   output += `
   export default processAppOption({
     App,
