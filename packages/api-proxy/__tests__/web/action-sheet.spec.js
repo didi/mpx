@@ -6,7 +6,7 @@ import { dispatchTap } from '../../../../test/utils/touch'
 
 describe('test toast', () => {
   afterAll(() => {
-    document.body.lastChild.remove()
+    // document.body.lastChild.remove()
   })
   test('should show actionSheet', () => {
     const A = 'A'
