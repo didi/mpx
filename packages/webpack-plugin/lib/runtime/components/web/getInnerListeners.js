@@ -1,8 +1,6 @@
 import { isEmptyObject } from '../../utils'
 import { isBrowser } from '../../env'
 
-const isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
-
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
@@ -49,6 +47,7 @@ function mergeListeners (listeners, otherListeners, options = {}) {
 function processTap (listeners, context) {
   const listenerMap = {}
   const tapEvents = ['tap', 'longpress', 'longtap']
+  const isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
   tapEvents.forEach((eventName) => {
     if (listeners[eventName]) {
       listenerMap[eventName] = true

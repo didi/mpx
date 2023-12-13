@@ -41,6 +41,7 @@ export default function pageScrollMixin (mixinType) {
   return {
     mounted () {
       this.__lastScrollY = 0
+      this.__originalOverflow = document.body.style.overflow
     },
     activated () {
       if (!refreshMs()) {
@@ -72,19 +73,22 @@ export default function pageScrollMixin (mixinType) {
       }
     },
     deactivated () {
-      if (ms) {
+      if (ms) { // 保存滚动位置, 用于 keep-alive
         this.__lastScrollY = getScrollTop()
-        ms.destroy()
-        hideLoading(this)
       }
+      this.__uninstallMpxScroll()
     },
     beforeDestroy () {
-      if (ms) {
-        ms.destroy()
-        hideLoading(this)
-      }
+      this.__uninstallMpxScroll()
     },
     methods: {
+      __uninstallMpxScroll () {
+        if (ms) {
+          ms.destroy()
+          hideLoading(this)
+          document.body.style.overflow = this.__originalOverflow // 恢复原有 overflow, 避免影响其他页面
+        }
+      },
       __mpxPullDownHandler (autoStop = false, isRefresh = false) {
         this.__pullingDown = true
         // 同微信保持一致

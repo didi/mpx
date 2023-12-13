@@ -1,7 +1,6 @@
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
-const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
@@ -30,7 +29,7 @@ module.exports = function (css, map) {
 
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
   loadPostcssConfig(this, inlineConfig).then(config => {
-    const plugins = [trim] // init with trim plugin
+    const plugins = [] // init with trim plugin
     const options = Object.assign(
       {
         to: this.resourcePath,

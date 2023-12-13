@@ -61,7 +61,8 @@ module.exports = function (json, {
     customGetDynamicEntry (resource, type, outputPath, packageRoot) {
       return {
         resource,
-        outputPath: toPosix(path.join(packageRoot, outputPath)),
+        // 输出web时组件outputPath不需要拼接packageRoot
+        outputPath: type === 'page' ? toPosix(path.join(packageRoot, outputPath)) : outputPath,
         packageRoot
       }
     }
@@ -297,7 +298,7 @@ module.exports = function (json, {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
+        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
@@ -307,7 +308,7 @@ module.exports = function (json, {
               isComponent: true,
               outputPath
             }),
-            async: queryObj.async
+            async: queryObj.async || tarRoot
           }
           callback()
         })

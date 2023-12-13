@@ -13,7 +13,6 @@
 
 > options的默认值为`{types: ['app','page','component'], stage: -1}`，不传stage时，全局注入mixin的声明周期默认在`options.mixins`之前执行
 
-**使用**
 ```js
 import mpx from '@mpxjs/core'
 // 只在page中混入
@@ -55,10 +54,9 @@ mpx.mixin({
 
 ### observable
 
-- **参数**：
-    - `{Object} options`
-
-- **用法**:
+```ts
+function observable(options: object): Mpx
+```
 
 用于创建响应式数据。
 
@@ -74,11 +72,13 @@ const b = mpx.observable(object)
 用于对一个响应式对象新增属性，会`触发订阅者更新操作`。[查看详情](/api/global-api.html#set)
 
 ### delete
+
+```ts
+function delete(target: Object, key: string | number): void
+```
+
 用于对一个响应式对象删除属性，会`触发订阅者更新操作`
-- **参数**：
-    - `{Object | Array} target`
-    - `{string | number} propertyName/index`
-- **示例：**
+
 ```js
 import mpx, { reactive } from '@mpxjs/core'
 const person = reactive({name: 1})
@@ -93,7 +93,6 @@ mpx.delete(person, 'age')
 - 第一个参数是要安装的外部扩展
 - 第二个参数是对象，如果第二个参数是一个包含（prefix or postfix）的option， 那么将会对插件扩展的属性添加前缀或后缀
 
-**示例：**
 ```js
 import mpx from '@mpxjs/core'
 import test from './test'
@@ -107,18 +106,7 @@ watch 可以通过全局实例访问，也可以使用具名导出的方式，�
 
 ## createApp
 > 注册一个小程序，接受一个 Object 类型的参数
-- **用法：**
-```js
-createApp(options)
-```
 
-- **参数：**
-  - `{Object} options`
-
-    可指定小程序的生命周期回调，以及一些全局变量等
-
-
-- **示例：**
 ```js
 import {createApp} from '@mpxjs/core'
 
@@ -140,22 +128,21 @@ createApp(options)
 ## createPage
 > 类微信小程序（微信、百度、头条等）内部使用[Component的方式创建页面](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/component.html)，所以除了支持页面的生命周期之外还同时支持组件的一切特性。当使用 Component 创建页面时，页面生命周期需要写在 methods 内部（微信小程序原生规则），mpx 进行了统一封装转换，页面生命周期都写在最外层即可
 
-- **用法：**
-    ```js
-    createPage(options, config?)
-    ```
-- **参数：**
-  - `{Object} options`
+```ts
+function createPage(options: object, config?: object): void
+```
+ 
+- options: 
 
-    具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
-  - `{Object} config`（可选参数）
+  具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
 
-    如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
-    如果有需要复写/改写最终调用的创建页面的构造器，可以通过 config 对象的 customCtor 提供。
-    **注意:**
+- config:
+
+  如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
+  如果有需要复写/改写最终调用的创建页面的构造器，可以通过 config 对象的 customCtor 提供。
+  - **注意:**
     mpx本身是用 component 来创建页面的，如果传page可能在初始化时候生命周期不正常导致取props有一点问题
 
-- **示例：**
 ```js
 import {createPage} from '@mpxjs/core'
 
@@ -180,21 +167,10 @@ createPage({
 ## createComponent
 > 创建自定义组件，接受两个Object类型的参数。
 
-- **用法：**
-    ```js
-    createComponent(options, config?)
-    ```
-- **参数：**
-  - `{Object} options`
+```ts
+function createComponent(options: object, config?: object): void
+```
 
-    具体形式除了 computed、watch 这类 Mpx 扩展特性之外，其他的属性都参照原生小程序的官方文档即可。
-  - `{Object} config`（可选参数）
-
-    如果希望标识一个组件是最纯粹的原生组件，不用数据响应等能力，可通过 config.isNative 传 true 声明。
-    如果有需要复写/改写最终调用的创建组件的构造器，可以通过 config 对象的 customCtor 提供。
-
-
-- **示例：**
 ```js
 import {createComponent} from '@mpxjs/core'
 
@@ -227,15 +203,15 @@ createComponent({
 
 ## nextTick
 
-* **参数：**
-  * `{Function} callback`
-* **用法：**
+```ts
+function nextTick(callback: Function): void
+```
 
 当我们在 Mpx 中更改响应性状态时，最终页面的更新并不是同步立即生效的，而是由 Mpx 将它们缓存在一个队列中， 等到下一个 tick 一起执行，
 从而保证了组件/页面无论发生多少状态改变，都仅执行一次更新，从而减少 `setData` 调用次数。
 
 `nextTick()` 可以在状态改变后立即调用，可以传递一个函数作为参数，在等待页面/组件更新完成后，函数参数会触发执行。
-* **示例：**
+
  ``` js
       import {createComponent, nextTick, ref} from '@mpxjs/core'
       createComponent({
@@ -257,10 +233,9 @@ createComponent({
 
 ## toPureObject
 
-- **参数**：
-  - `{Object} options`
-
-- **用法**:
+```ts
+function toPureObject(options: object): object
+```
 
 业务拿到的数据可能是响应式数据实例（包含了些其他属性），使用`toPureObject`方法可以将响应式的数据转化成纯 js 对象。
 
@@ -272,7 +247,6 @@ const pureObject = toPureObject(object)
 ## getMixin
 专为ts项目提供的反向推导辅助方法，该函数接收类型为 `Object` ,会将传入的嵌套mixins对象拉平成一个扁平的mixin对象
 
-**使用**
 ```js
 import { createComponent, getMixin} from '@mpxjs/core'
 // 使用mixins，需要对每一个mixin子项进行getMixin辅助函数包裹，支持嵌套mixin
@@ -320,15 +294,15 @@ createComponent({
 
 ## implement
 
-- **参数**：
-  - `{String} name`
-  - `{Object} options`
-    - `{Array} modes`：需要取消的平台
-    - `{Boolean} remove`：是否将此能力直接移除
-    - `{Function} processor`：设置成功的回调函数
+```ts
+function implement(name: string, options: object): object
+```
 
+- `{Object} options`
+  - `{Array} modes`：需要取消的平台
+  - `{Boolean} remove`：是否将此能力直接移除
+  - `{Function} processor`：设置成功的回调函数
 
-- **用法**:
 
 以微信为 base 将代码转换输出到其他平台时（如支付宝、web 平台等），会存在一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用 moved 生命周期等。使用`implement`方法可以取消这种报错。您可以使用 mixin 自行实现跨平台差异，然后使用 implement 取消报错。
 
@@ -351,8 +325,8 @@ Mpx 在运行时自身有着一套内建生命周期，当开发者想使用内�
 需要注意的是，这部分内建生命周期变量**只能用于选项式 API 中**。
 
 ### BEFORECREATE
-- **类型：** `String`
-- **详细：**
+
+`string`
 
 在组件实例刚刚被创建时执行，在实例初始化之后、进行数据侦听和 data 初始化之前同步调用，注意此时不能调用 setData。
 
@@ -367,8 +341,8 @@ createComponent({
 ```
 
 ### CREATED
-- **类型：** `String`
-- **详细：**
+
+`string`
 
 在组件实例刚刚被创建时执行。在这一步中，实例已完成对选项的处理，意味着以下内容已被配置完毕：数据侦听、计算属性、事件/侦听器的回调函数。
 然而，挂载阶段还没开始，注意此时不能调用 setData。
@@ -398,6 +372,10 @@ createComponent({
 ### UPDATED
 
 选项式 API 中使用，作用同[onUpdated](/api/composition-api.html#onupdated)
+
+### SERVERPREFETCH
+
+选项式 API 中使用，作用同[onServerPrefetch](/api/composition-api.html#onServerPrefetch)
 
 ### BEFOREUNMOUNT
 

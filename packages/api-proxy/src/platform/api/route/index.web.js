@@ -1,9 +1,13 @@
-import { webHandleSuccess, webHandleFail, isTabBarPage } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 let routeCount = 0
 
 function redirectTo (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('redirectTo API is running in non browser environments')
+    return
+  }
   const router = global.__mpxRouter
   if (router) {
     if (isTabBarPage(options.url, router)) {
@@ -33,6 +37,10 @@ function redirectTo (options = {}) {
 }
 
 function navigateTo (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('navigateTo API is running in non browser environments')
+    return
+  }
   const router = global.__mpxRouter
   if (router) {
     if (isTabBarPage(options.url, router)) {
@@ -69,6 +77,10 @@ function navigateTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('navigateBack API is running in non browser environments')
+    return
+  }
   const router = global.__mpxRouter
   if (router) {
     let delta = options.delta || 1
@@ -87,6 +99,10 @@ function navigateBack (options = {}) {
 }
 
 function reLaunch (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('reLaunch API is running in non browser environments')
+    return
+  }
   const router = global.__mpxRouter
   if (router) {
     if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
@@ -125,6 +141,10 @@ function reLaunch (options = {}) {
 }
 
 function switchTab (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('switchTab API is running in non browser environments')
+    return
+  }
   const router = global.__mpxRouter
   if (router) {
     const toRoute = router.match(options.url, router.history.current)

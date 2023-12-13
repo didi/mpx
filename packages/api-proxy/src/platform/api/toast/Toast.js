@@ -1,4 +1,4 @@
-import { webHandleSuccess, createDom } from '../../../common/js'
+import { webHandleSuccess, createDom, getRootElement } from '../../../common/js'
 import '../../../common/stylus/Toast.styl'
 import '../../../common/stylus/Loading.styl'
 
@@ -30,11 +30,10 @@ export default class Toast {
     this.loading = createDom('div', { class: '__mpx_loading_wrapper__' }, Array.from({ length: 12 }, (_, i) => {
       return createDom('div', { class: `line${i + 1}` })
     }))
-
-    document.body.appendChild(this.toast)
   }
 
   show (options, type) {
+    getRootElement().appendChild(this.toast) // show 则挂载
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
@@ -90,7 +89,10 @@ export default class Toast {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
     }
-
-    this.hideTimer = setTimeout(() => { this.toast.classList.remove('show') }, duration)
+    this.hideTimer = setTimeout(() => {
+      this.toast.classList.remove('show')
+      this.toast.remove() // hide 则卸载
+    }, duration)
+    // return Promise.resolve({ errMsg }) todo 验证一下
   }
 }

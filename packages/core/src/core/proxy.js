@@ -37,6 +37,7 @@ import {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
+  SERVERPREFETCH,
   UNMOUNTED,
   ONLOAD,
   ONSHOW,
@@ -659,6 +660,7 @@ export const onLoad = createHook(ONLOAD)
 export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
+export const onServerPrefetch = createHook(SERVERPREFETCH)
 export const onPullDownRefresh = createHook('__onPullDownRefresh__')
 export const onReachBottom = createHook('__onReachBottom__')
 export const onShareAppMessage = createHook('__onShareAppMessage__')

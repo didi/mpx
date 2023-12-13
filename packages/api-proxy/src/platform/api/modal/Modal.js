@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../../common/js'
+import { createDom, getRootElement, webHandleSuccess } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -27,52 +27,24 @@ export default class Modal {
       fail: (...args) => {},
       complete: (...args) => {}
     }
+
     this.hideTimer = null
 
-    const modal = document.createElement('div')
-    modal.setAttribute('class', '__mpx_modal__')
-
-    const mask = document.createElement('div')
-    mask.setAttribute('class', '__mpx_mask__')
-
-    const box = document.createElement('div')
-    box.setAttribute('class', '__mpx_modal_box__')
-
-    const title = document.createElement('div')
-    title.setAttribute('class', '__mpx_modal_title__')
-
-    const content = document.createElement('div')
-    content.setAttribute('class', '__mpx_modal_content__')
-
-    const btns = document.createElement('div')
-    btns.setAttribute('class', '__mpx_modal_btns__')
-
-    const cancelBtn = document.createElement('div')
-    cancelBtn.setAttribute('class', '__mpx_modal_cancel__')
-
-    const confirmBtn = document.createElement('div')
-    confirmBtn.setAttribute('class', '__mpx_modal_confirm__')
-
-    btns.appendChild(cancelBtn)
-    btns.appendChild(confirmBtn)
-    box.appendChild(title)
-    box.appendChild(content)
-    box.appendChild(btns)
-    modal.appendChild(mask)
-    modal.appendChild(box)
-    document.body.appendChild(modal)
-
-    this.modal = modal
-    this.mask = mask
-    this.box = box
-    this.title = title
-    this.content = content
-    this.btns = btns
-    this.cancelBtn = cancelBtn
-    this.confirmBtn = confirmBtn
+    this.modal = createDom('div', { class: '__mpx_modal__' }, [
+      this.mask = createDom('div', { class: '__mpx_mask__' }),
+      this.box = createDom('div', { class: '__mpx_modal_box__' }, [
+        this.title = createDom('div', { class: '__mpx_modal_title__' }),
+        this.content = createDom('div', { class: '__mpx_modal_content__' }),
+        this.btns = createDom('div', { class: '__mpx_modal_btns__' }, [
+          this.cancelBtn = createDom('div', { class: '__mpx_modal_cancel__' }),
+          this.confirmBtn = createDom('div', { class: '__mpx_modal_confirm__' })
+        ])
+      ])
+    ])
   }
 
   show (options = {}) {
+    getRootElement().appendChild(this.modal)
     if (options.confirmText && _getLength(options.confirmText) > 8) {
       // eslint-disable-next-line
       return Promise.reject({errMsg: 'showModal:fail confirmText length should not larger than 4 Chinese characters'})
@@ -131,6 +103,7 @@ export default class Modal {
 
     this.hideTimer = setTimeout(() => {
       this.modal.classList.remove('show')
+      this.modal.remove()
     }, 0)
   }
 }
