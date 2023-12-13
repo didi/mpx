@@ -14,6 +14,9 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
+const normalize = require('../utils/normalize')
+const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
+const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -65,9 +68,17 @@ module.exports = function (content) {
   }
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      placeholder = {
-        name: placeholder
+      let compName = placeholder; let compPath
+      switch (placeholder) {
+        case 'view':
+          compName = 'mpx-view'
+          compPath = mpxViewPath
+          break
+        case 'text':
+          compName = 'mpx-text'
+          compPath = mpxTextPath
       }
+      placeholder = compPath ? { name: compName, resource: compPath } : { name: compName }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
