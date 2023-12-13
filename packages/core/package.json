@@ -24,7 +24,7 @@
     "miniprogram-api-typings": "^3.0.2"
   },
   "peerDependencies": {
-    "@hummer/tenon-store": "^1.4.0",
+    "@hummer/tenon-store": "^1.7.0",
     "@hummer/tenon-vue": "^1.5.1",
     "@mpxjs/api-proxy": "^2.7.44",
     "@mpxjs/store": "^2.8.0",
