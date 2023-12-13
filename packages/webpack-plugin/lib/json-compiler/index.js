@@ -211,14 +211,14 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, root, placeholder) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          if (root) {
+          if (tarRoot) {
             if (placeholder) {
               placeholder = normalizePlaceholder(placeholder)
               if (placeholder.resource) {

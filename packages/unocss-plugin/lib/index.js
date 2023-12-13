@@ -28,9 +28,6 @@ const {
   cssRequiresTransform
 } = require('./transform')
 const platformPreflightsMap = require('./platform')
-const loadersPath = path.resolve(__dirname, './loaders')
-const transAppLoader = path.resolve(loadersPath, 'unocss-app.js')
-
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
@@ -56,7 +53,7 @@ function normalizeRules (rules, root) {
     rules = [rules]
   }
   return rules.map((rule) => {
-    if (rule instanceof RegExp) {
+    if (typeof rule.test === 'function') {
       return rule
     }
     if (typeof rule === 'string') {
@@ -88,8 +85,8 @@ function normalizeOptions (options) {
     root = process.cwd(),
     config,
     configFiles,
-    transformCSS = true,
-    transformGroups = true,
+    transformCSS,
+    transformGroups,
     webOptions = {}
   } = options
   // web配置
@@ -125,6 +122,9 @@ function normalizeOptions (options) {
     unknown: '_u_',
     ...escapeMap
   }
+
+  scan.include = normalizeRules(scan.include, root)
+  scan.exclude = normalizeRules(scan.exclude, root)
 
   return {
     unoFile,
@@ -238,21 +238,27 @@ class MpxUnocssPlugin {
         // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
         compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
       }
-      // 给app注入unocss模块
-      compiler.options.module.rules.push({
-        test: /\.mpx$/,
-        resourceQuery: /isApp/,
-        enforce: 'pre',
-        use: [transAppLoader]
+      compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
+        for (const dep of compilation.fileDependencies) {
+          if (dep.includes('__uno.css')) {
+            // 移除虚拟模块产生的fileDeps避免初始watch执行两次
+            compilation.fileDependencies.delete(dep)
+          }
+        }
       })
-      return
     }
-    compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
+    compiler.hooks.thisCompilation.tap({
+      name: PLUGIN_NAME,
+      // 确保在MpxWebpackPlugin后执行，获取mpx对象
+      stage: 1000
+    }, (compilation) => {
+      const { __mpx__: mpx } = compilation
+      mpx.hasUnoCSS = true
+      if (mode === 'web') return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
-        const { __mpx__: mpx } = compilation
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
         }
@@ -374,19 +380,13 @@ class MpxUnocssPlugin {
           assets[file] = source
         }
 
-        // normalize scan
-        const scan = this.options.scan
-        const root = this.options.root
-        scan.include = normalizeRules(scan.include, root)
-        scan.exclude = normalizeRules(scan.exclude, root)
-
         await Promise.all(Object.entries(assets).map(([file, source]) => {
           if (file.endsWith(styleExt) || file.endsWith(templateExt)) {
             const assetModules = assetsModulesMap.get(file)
             if (has(assetModules, (module) => {
               if (module.resource) {
                 const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
-                return filterFile(resourcePath, scan)
+                return filterFile(resourcePath, this.options.scan)
               }
               return false
             })) {

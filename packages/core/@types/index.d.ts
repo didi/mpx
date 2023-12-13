@@ -24,25 +24,33 @@ type UnionToIntersection<U> = (U extends any
   ? (k: U) => void
   : never) extends ((k: infer I) => void)
   ? I
-  : never;
+  : never
 
-type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
+type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never
 
 // Mpx types
 type Data = object | (() => object)
 
-type PropConstructor<T = any> = {
-  new (...args: any[]): T & {};
-} | {
-  (): T;
-}
-
-export type PropType<T> = PropConstructor<T>
+export type PropType<T> = {
+  __type: T
+} & (
+  T extends String
+    ? StringConstructor
+    : T extends number
+      ? NumberConstructor
+      : T extends boolean
+        ? BooleanConstructor
+        : T extends any[]
+          ? ArrayConstructor
+          : T extends object
+            ? ObjectConstructor
+            : never
+  )
 
 type FullPropType<T> = {
-  type: PropType<T>;
-  value?: T;
-  optionalTypes?: PropType<T>[];
+  type: PropType<T>
+  value?: T
+  optionalTypes?: WechatMiniprogram.Component.ShortProperty[]
 }
 
 interface Properties {
@@ -75,27 +83,17 @@ interface WatchField {
 
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
-type PropValueType<Def> = Def extends {
-    type: (...args: any[]) => infer T;
-    optionalType?: ((...args: any[]) => infer T)[];
-    value?: infer T;
-  }
-  ? T
-  : Def extends (...args: any[]) => infer T
-    ? T
-    : Def extends FullPropType<infer T>
-      ? T
-      : Def extends PropType<infer T>
-        ? T
-        : any;
-
-type GetPropsType<T> = {
-  readonly [K in keyof T]: PropValueType<T[K]>
+type GetPropsType<T extends Properties> = {
+  readonly [K in keyof T]: T[K] extends FullPropType<infer V>
+    ? V
+    : T[K] extends PropType<infer V>
+      ? V
+      : WechatMiniprogram.Component.PropertyToData<T[K]>
 }
 
 type RequiredPropertyNames<T> = {
   [K in keyof T]-?: T[K] extends undefined ? never : K
-}[keyof T];
+}[keyof T]
 
 type RequiredPropertiesForUnion<T> = T extends object ? Pick<T, RequiredPropertyNames<T>> : never
 
@@ -126,7 +124,7 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
-interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
+interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
   data?: D
   properties?: P
   computed?: C
@@ -144,7 +142,7 @@ interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, 
   [index: string]: any
 }
 
-type PageOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> =
+type PageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> =
   ComponentOpt<D, P, C, M, Mi, S>
   & Partial<WechatMiniprogram.Page.ILifetime>
 
@@ -281,11 +279,11 @@ interface ImplementOptions {
 
 export function toPureObject<T extends object> (obj: T): T
 
-declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any;
+declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
 export type Plugin = PluginInstallFunction | {
-  install: PluginInstallFunction;
-};
+  install: PluginInstallFunction
+}
 
 export interface Mpx {
   getMixin: typeof getMixin
@@ -670,7 +668,7 @@ export const ONHIDE: string
 export const ONRESIZE: string
 
 declare global {
-  const defineProps: (<T>(props: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)
+  const defineProps: (<T extends Properties = {}>(props: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context

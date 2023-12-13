@@ -112,13 +112,14 @@ describe('test toast', () => {
       title: 'toast',
       mask: true
     })
+    // hideToast 之后会从dom中移除，这里先添加变量
+    const toast = document.body.lastChild
     jest.useFakeTimers()
     hideToast({
       success,
       complete
     })
     jest.runAllTimers()
-    const toast = document.body.lastChild
     expect(toast).toHaveAttribute('class', expect.not.stringContaining('show'))
     expect(success.mock.calls.length).toBe(1)
     expect(success.mock.calls[0][0].errMsg).toBe('hideToast:ok')

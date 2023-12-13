@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/windicss-plugin",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "description": "mpx windicss webpack plugin",
   "main": "lib/index.js",
   "directories": {
@@ -31,7 +31,7 @@
     "windicss-webpack-plugin": "^1.7.8"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "^2.8.0",
+    "@mpxjs/webpack-plugin": "^2.9.0",
     "webpack": "^5.48.0"
   }
 }
