@@ -68,20 +68,11 @@ module.exports = function (content) {
   }
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      placeholder = { name: placeholder }
-      if (srcMode === 'wx' && mode === 'ali') {
-        let compName, compPath
-        switch (placeholder.name) {
-          case 'view':
-            compName = 'mpx-view'
-            compPath = mpxViewPath
-            break
-          case 'text':
-            compName = 'mpx-text'
-            compPath = mpxTextPath
-        }
-        if (compName) placeholder = { name: compName, resource: compPath }
-      }
+      const placeholderMap = mode === 'ali' ? {
+        view: { name: 'mpx-view', resource: mpxViewPath },
+        text: { name: 'mpx-text', resource: mpxTextPath }
+      } : {}
+      placeholder = placeholderMap[placeholder] || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
