@@ -285,6 +285,10 @@ export type Plugin = PluginInstallFunction | {
   install: PluginInstallFunction
 }
 
+export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never;
+
+export type PluginFunctionParams<T extends PluginInstallFunction> = T extends (app: any, ...args: infer P) => any ? P : [];
+
 export interface Mpx {
   getMixin: typeof getMixin
   mixin: typeof injectMixins
@@ -293,7 +297,7 @@ export interface Mpx {
   observable: typeof observable
   watch: typeof watch
 
-  use (plugin: Plugin, ...rest: any[]): Mpx
+  use <T extends Plugin = Plugin>(plugin: T, ...rest: PluginFunctionParams<PluginFunction<T>>): Mpx
 
   implement (name: string, options?: ImplementOptions): void
 
