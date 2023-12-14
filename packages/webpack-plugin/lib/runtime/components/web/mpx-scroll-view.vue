@@ -63,7 +63,10 @@
         lastY: 0,
         resizeObserver: null,
         mutationObserver: null,
-        isMounted: false
+        isMounted: false,
+        mpxScrollOptions: {},
+        lastContentWidth: 0,
+        lastContentHeight: 0
       }
     },
     computed: {
@@ -103,9 +106,6 @@
       }
     },
     mounted () {
-      if (this.scrollOptions.observeDOM) {
-        console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
-      }
       this.initBs()
       this.createResizeObserver()
       this.handleMutationObserver()
@@ -166,6 +166,17 @@
         } else {
           this.disableBs()
         }
+      },
+      scrollOptions: {
+        handler(val) {
+          if (val.observeDOM) {
+            console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
+            this.mpxScrollOptions = Object.assign({}, val, { observeDOM: false })
+          } else {
+            this.mpxScrollOptions = val
+          }
+        },
+        immediate: true
       }
     },
     methods: {
@@ -201,7 +212,7 @@
             stop: 56
           }
         }
-        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+        const bsOptions = Object.assign({}, originBsOptions, this.mpxScrollOptions)
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
         this.lastX = -this.currentX
         this.lastY = -this.currentY
@@ -342,6 +353,10 @@
         const height = maxBottom - minTop || 0
         this.$refs.scrollContent.style.width = `${width}px`
         this.$refs.scrollContent.style.height = `${height}px`
+        return {
+          scrollContentWidth: width,
+          scrollContentHeight: height
+        }
       },
       refresh () {
         if (this.__mpx_deactivated) {
@@ -349,8 +364,12 @@
           return
         }
         setTimeout(() => {
-          this.initLayerComputed()
-          if (this.bs) this.bs.refresh()
+          const { scrollContentWidth, scrollContentHeight } = this.initLayerComputed()
+          if ((scrollContentWidth !== this.lastContentWidth) || (scrollContentHeight !== this.lastContentHeight)) {
+            this.lastContentWidth = scrollContentWidth
+            this.lastContentHeight = scrollContentHeight
+            if (this.bs) this.bs.refresh()
+          }
         }, 50)
       },
       dispatchScrollTo: throttle(function (direction) {
