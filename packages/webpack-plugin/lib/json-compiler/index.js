@@ -68,10 +68,12 @@ module.exports = function (content) {
   }
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali' ? {
+      const placeholderMap = mode === 'ali'
+      ? {
         view: { name: 'mpx-view', resource: mpxViewPath },
         text: { name: 'mpx-text', resource: mpxTextPath }
-      } : {}
+      }
+      : {}
       placeholder = placeholderMap[placeholder] || { name: placeholder }
     }
     if (!placeholder.name) {
