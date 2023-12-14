@@ -96,12 +96,11 @@ function checkDelAndGetPath (path) {
       } else {
         delPath = current.parentPath
       }
-    } else if (t.isLogicalExpression(current.container)) { // case: a || ''
+    } else if (t.isLogicalExpression(current.container)) { // 只处理case: a || '' or '123' || a
       const key = current.key === 'left' ? 'right' : 'left'
       if (t.isLiteral(current.parent[key])) {
         delPath = current.parentPath
       } else {
-        canDel = false
         break
       }
     } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) { // dealRemove删除节点时需要
@@ -116,11 +115,23 @@ function checkDelAndGetPath (path) {
   // 确定是否可删除
   while (!t.isBlockStatement(current) && canDel) {
     const { key, container } = current
-    if (
-      t.isLogicalExpression(container) || // a && b
-      (t.isIfStatement(container) && key === 'test') // if (a) {}
-    ) {
+    if (t.isIfStatement(container) && key === 'test') { // if (a) {}
       canDel = false
+      break
+    }
+
+    if (t.isLogicalExpression(container)) { // case: a || ((b || c) && d)
+      ignore = true
+      break
+    }
+
+    // case: a ??= b
+    if (
+      key === 'right' &&
+      t.isAssignmentExpression(container) &&
+      ['??=', '||=', '&&='].includes(container.operator)
+    ) {
+      ignore = true
       break
     }
 
@@ -166,13 +177,16 @@ function dealRemove (path, replace) {
     if (replace) {
       path.replaceWith(t.stringLiteral(''))
     } else {
-      t.validate(path, path.key, null)
+      if (path.inList) {
+        t.validate(path.parent, path.key, [null])
+      } else {
+        t.validate(path.parent, path.key, null)
+      }
       path.remove()
     }
     delete path.needBind
     delete path.collectInfo
-  } catch (e) {
-  }
+  } catch (e) {}
 }
 
 module.exports = {
