@@ -315,6 +315,8 @@ export interface Mpx {
     te: typeof te
     tm: typeof tm
   }
+
+  __vue: any
 }
 
 type GetFunctionKey<T> = {
