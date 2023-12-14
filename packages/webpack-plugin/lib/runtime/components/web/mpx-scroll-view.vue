@@ -3,10 +3,8 @@
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
-  // import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
 
-  // BScroll.use(ObserveDom)
   BScroll.use(PullDown)
 
   export default {
@@ -64,7 +62,8 @@
         lastX: 0,
         lastY: 0,
         resizeObserver: null,
-        mutationObserver: null
+        mutationObserver: null,
+        isMounted: false
       }
     },
     computed: {
@@ -104,6 +103,9 @@
       }
     },
     mounted () {
+      if (this.scrollOptions.observeDOM) {
+        console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
+      }
       this.initBs()
       this.createResizeObserver()
       this.handleMutationObserver()
@@ -201,9 +203,6 @@
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
-        this.bs.scroller.hooks.on('beforeRefresh', () => {
-          this.initLayerComputed()
-        })
         this.lastX = -this.currentX
         this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
@@ -339,9 +338,8 @@
           maxRight = getMaxLength(maxRight, temp.right)
           maxBottom = getMaxLength(maxBottom, temp.bottom)
         })
-
-        const width = maxRight - minLeft
-        const height = maxBottom - minTop
+        const width = maxRight - minLeft || 0
+        const height = maxBottom - minTop || 0
         this.$refs.scrollContent.style.width = `${width}px`
         this.$refs.scrollContent.style.height = `${height}px`
       },
@@ -350,7 +348,10 @@
           this.__mpx_deactivated_refresh = true
           return
         }
-        if (this.bs) this.bs.refresh()
+        setTimeout(() => {
+          this.initLayerComputed()
+          if (this.bs) this.bs.refresh()
+        }, 50)
       },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
@@ -363,59 +364,46 @@
       createResizeObserver () {
         if (typeof ResizeObserver !== 'undefined') {
           this.resizeObserver = new ResizeObserver(entries => {
-            this.initLayerComputed()
-            this.$nextTick(() => {
+            if (this.isMounted) {
               this.refresh()
-            })
-          })
-          this.$slots.default.map(item => {
-            if (item.tag) {
-              item.elm && this.resizeObserver.observe(item.elm)
             }
+            this.isMounted = true
           })
+          this.resizeObserver.observe(this.$refs.wrapper)
         }
       },
       handleMutationObserver () {
         if (typeof MutationObserver !== 'undefined') {
-          let timer = 0
-          this.mutationObserver = new MutationObserver((mutations) => {
-            this.mutationObserverHandler(mutations, timer)
-          })
-          const config = { attributes: true, childList: true, subtree: true,}
+          this.mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
+          const config = { attributes: true, childList: true, subtree: true }
           this.mutationObserver.observe(this.$refs.scrollContent, config)
         }
       },
-      mutationObserverHandler (mutations, timer) {
+      mutationObserverHandler (mutations) {
         if (this.shouldNotRefresh()) {
           return
         }
-        let immediateRefresh = false
-        let deferredRefresh = false
+        let needRefresh = false
         for (let i = 0; i < mutations.length; i++) {
           const mutation = mutations[i]
           if (mutation.type !== 'attributes') {
-            immediateRefresh = true
+            needRefresh = true
             break
           } else {
             if (mutation.target !== this.bs.scroller.content) {
-              deferredRefresh = true
+              needRefresh = true
               break
             }
           }
         }
-        if (immediateRefresh) {
-          this.refresh()
-        } else if (deferredRefresh) {
-          // attributes changes too often
-          clearTimeout(timer)
-          timer = window.setTimeout(() => {
-            if (!this.shouldNotRefresh()) {
-              this.refresh()
-            }
-          }, 60)
+        if (needRefresh) {
+          this.throttleRefresh()
         }
       },
-      shouldNotRefresh() {
+      throttleRefresh: throttle(function (mutations) {
+        this.refresh()
+      }, 100),
+      shouldNotRefresh () {
         const { scroller } = this.bs
         const { scrollBehaviorX, scrollBehaviorY } = scroller
         let outsideBoundaries =
