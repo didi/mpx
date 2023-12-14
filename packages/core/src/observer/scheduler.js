@@ -69,10 +69,11 @@ export function queueJob (job) {
   // if the job is a watch() callback, the search will start with a +1 index to
   // allow it recursively trigger itself - it is the user's responsibility to
   // ensure it doesn't end up in an infinite loop.
-  if ((!queue.length ||
-    !queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)) &&
-    job !== currentPreFlushParentJob
-  ) {
+  if ((
+      !queue.length ||
+      !queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)
+    ) &&
+    job !== currentPreFlushParentJob) {
     if (job.id == null) {
       queue.push(job)
     } else {
@@ -93,11 +94,17 @@ function queueFlush () {
   }
 }
 
+// todo follow vue
 export function flushPreFlushCbs (seen, parentJob = null) {
   if (pendingPreFlushCbs.length) {
-    currentPreFlushParentJob = parentJob
-    activePreFlushCbs = [...new Set(pendingPreFlushCbs)]
+    const deduped = [...new Set(pendingPreFlushCbs)]
     pendingPreFlushCbs.length = 0
+    if (activePreFlushCbs) {
+      activePreFlushCbs.push(...deduped)
+      return
+    }
+    currentPreFlushParentJob = parentJob
+    activePreFlushCbs = deduped
     if (isDev) seen = seen || new Map()
     for (
       preFlushIndex = 0;
@@ -117,10 +124,14 @@ export function flushPreFlushCbs (seen, parentJob = null) {
 
 export function flushPostFlushCbs (seen) {
   if (pendingPostFlushCbs.length) {
-    activePostFlushCbs = [...new Set(pendingPostFlushCbs)]
+    const deduped = [...new Set(pendingPostFlushCbs)]
     pendingPostFlushCbs.length = 0
+    if (activePostFlushCbs) {
+      activePostFlushCbs.push(...deduped)
+      return
+    }
+    activePostFlushCbs = deduped
     if (isDev) seen = seen || new Map()
-
     // activePostFlushCbs.sort((a, b) => getId(a) - getId(b))
     for (
       postFlushIndex = 0;
