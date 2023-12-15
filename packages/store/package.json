@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/store",
-  "version": "2.9.9",
+  "version": "2.9.11-test.0",
   "description": "A store for mpx framework",
   "main": "src/index.js",
   "types": "@types/index.d.ts",
