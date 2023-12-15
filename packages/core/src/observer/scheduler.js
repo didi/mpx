@@ -18,7 +18,7 @@ const RECURSION_LIMIT = 100
 
 const getId = (job) => job.id == null ? Infinity : job.id
 
-const comparator = (a, b)=> {
+const comparator = (a, b) => {
   const diff = getId(a) - getId(b)
   if (diff === 0) {
     if (a.pre && !b.pre) return -1
