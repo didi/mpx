@@ -163,7 +163,7 @@ const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
-const stringifyModuleName = '__stringify__'
+const stringifyModuleName = '__sfy__'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -1600,7 +1600,7 @@ function processClass (el, meta) {
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.sCls('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.sCls(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -1633,7 +1633,7 @@ function processStyle (el, meta) {
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      value: `{{${stringifyModuleName}.sStyl(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
