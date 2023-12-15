@@ -1088,7 +1088,7 @@ class MpxWebpackPlugin {
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
-              // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              // wx、ali(需开启enableAliRequireAsync)和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (mpx.mode === 'web') {
                   const depBlock = new AsyncDependenciesBlock(
