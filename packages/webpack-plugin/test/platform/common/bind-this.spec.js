@@ -171,6 +171,11 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         if (a5 && b5) {}
         if (a5 ? b5 : c5) {}
 
+        a6 ? b6 : c6 // b6 c6只出现一次，不会被删除
+        
+        b7
+        a7 ? b7.name : c7
+
         obj8
         obj8 + 'rpx'
         'height:' + obj8 + 'rpx'
@@ -225,6 +230,11 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   if (_sc("a5") && _sc("b5")) {}
 
   if (_sc("a5") ? _sc("b5") : _sc("c5")) {}
+  
+  _sc("a6") ? _sc("b6") : _sc("c6"); // b6 c6只出现一次，不会被删除
+
+  _sc("b7");
+  _sc("a7") ? "" : _sc("c7");
 
   _sc("obj8");
   "" + 'rpx';

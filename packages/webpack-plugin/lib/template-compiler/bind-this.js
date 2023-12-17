@@ -203,7 +203,6 @@ module.exports = {
     let isProps = false
 
     const cacheIgnore = new Map()
-
     // 把ignore的数据过滤出来
     function filterIgnoreKey (bindings) {
       if (cacheIgnore.has(bindings)) return cacheIgnore.get(bindings)
@@ -333,7 +332,7 @@ module.exports = {
           delete path.delInfo
 
           if (canDel) {
-            if (isLocal || ignore) { // 局部作用域或可忽略的变量，可直接删除
+            if (isLocal) { // 局部作用域里的变量，可直接删除
               dealRemove(path, replace)
               return
             }
@@ -348,11 +347,15 @@ module.exports = {
             if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
               dealRemove(path, replace)
             } else {
-              const currentBlockVars = bindings[keyPath] || [] // bindings[keyPath] 全是ignore，所以需要兜底一下
+              const currentBlockVars = bindings[keyPath] || [] // 避免bindings[keyPath] 全是ignore，所以需要兜底一下
               if (currentBlockVars.length > 1) {
-                const index = currentBlockVars.findIndex(item => !item.canDel)
-                if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
+                if (ignore) {
                   dealRemove(path, replace)
+                } else {
+                  const index = currentBlockVars.findIndex(item => !item.canDel)
+                  if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
+                    dealRemove(path, replace)
+                  }
                 }
               }
             }
