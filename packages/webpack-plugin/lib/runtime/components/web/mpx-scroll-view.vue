@@ -109,6 +109,7 @@
       this.initBs()
       this.createResizeObserver()
       this.handleMutationObserver()
+      this.observeAnimation('add')
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -133,6 +134,9 @@
         this.mutationObserver.disconnect()
         this.mutationObserver = null
       }
+    },
+    destroyed () {
+      this.observeAnimation('remove')
     },
     watch: {
       scrollIntoView (val) {
@@ -363,14 +367,12 @@
           this.__mpx_deactivated_refresh = true
           return
         }
-        setTimeout(() => {
-          const { scrollContentWidth, scrollContentHeight } = this.initLayerComputed()
-          if ((scrollContentWidth !== this.lastContentWidth) || (scrollContentHeight !== this.lastContentHeight)) {
-            this.lastContentWidth = scrollContentWidth
-            this.lastContentHeight = scrollContentHeight
-            if (this.bs) this.bs.refresh()
-          }
-        }, 50)
+        const { scrollContentWidth, scrollContentHeight } = this.initLayerComputed()
+        if ((scrollContentWidth !== this.lastContentWidth) || (scrollContentHeight !== this.lastContentHeight)) {
+          this.lastContentWidth = scrollContentWidth
+          this.lastContentHeight = scrollContentHeight
+          if (this.bs) this.bs.refresh()
+        }
       },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
@@ -419,7 +421,7 @@
           this.throttleRefresh()
         }
       },
-      throttleRefresh: throttle(function (mutations) {
+      throttleRefresh: throttle(function () {
         this.refresh()
       }, 100),
       shouldNotRefresh () {
@@ -431,6 +433,26 @@
           scrollBehaviorY.currentPos > scrollBehaviorY.minScrollPos ||
           scrollBehaviorY.currentPos < scrollBehaviorY.maxScrollPos
         return scroller.animater.pending || outsideBoundaries
+      },
+      observeAnimation (type) {
+        const eventNames = ['transitionend', 'animationend']
+        const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
+        eventNames.forEach(eventName => {
+          this.$refs.scrollContent?.[behaviorType](eventName, (e) => {
+            this.handleObserveAnimation(e, eventName)
+          })
+        })
+      },
+      handleObserveAnimation (e, eventName) {
+        if (e.target !== this.bs.scroller.content) {
+          if (eventName === 'transitionend') {
+            if (e.propertyName?.includes('width') || e.propertyName?.includes('height')) {
+              this.throttleRefresh()
+            }
+          } else {
+            this.throttleRefresh()
+          }
+        }
       }
     },
     render (createElement) {
