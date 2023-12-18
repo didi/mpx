@@ -23,10 +23,10 @@
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.7.1",
+    "@mpxjs/api-proxy": "^2.8.63",
+    "@mpxjs/core": "^2.8.62",
     "vue": "^2.6.10",
-    "vue-i18n": "^8.15.3",
-    "@mpxjs/core": "^2.7.2"
+    "vue-i18n": "^8.15.3"
   },
   "browserslist": [
     "ios >= 9",
@@ -39,7 +39,7 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.27",
-    "@mpxjs/webpack-plugin": "^2.7.2",
+    "@mpxjs/webpack-plugin": "^2.8.64",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",
