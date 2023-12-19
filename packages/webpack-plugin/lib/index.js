@@ -338,20 +338,24 @@ class MpxWebpackPlugin {
         return 'bundle'
       }
     }
-    const splitChunksOptions = Object.assign({
-      defaultSizeTypes: ['javascript', 'unknown'],
-      chunks: 'all',
-      usedExports: optimization.usedExports === true,
-      minChunks: 1,
-      minSize: 1000,
-      enforceSizeThreshold: Infinity,
-      maxAsyncRequests: 30,
-      maxInitialRequests: 30,
-      automaticNameDelimiter: '-'
-    }, optimization.splitChunks)
-    delete optimization.splitChunks
-    const splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
-    splitChunksPlugin.apply(compiler)
+    let splitChunksOptions = null
+    let splitChunksPlugin = null
+    if (optimization.splitChunks) {
+      splitChunksOptions = Object.assign({
+        defaultSizeTypes: ['javascript', 'unknown'],
+        chunks: 'all',
+        usedExports: optimization.usedExports === true,
+        minChunks: 1,
+        minSize: 1000,
+        enforceSizeThreshold: Infinity,
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        automaticNameDelimiter: '-'
+      }, optimization.splitChunks)
+      delete optimization.splitChunks
+      splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
+      splitChunksPlugin.apply(compiler)
+    }
 
     // 代理writeFile
     if (this.options.writeMode === 'changed') {
