@@ -38,7 +38,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       if (componentCfg.async) {
-        componentsMap[componentName] = `function () { return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res) { return getComponent(res) }) }`
+        componentsMap[componentName] = `()=>import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(res => getComponent(res))`
       } else {
         componentsMap[componentName] = `getComponent(require(${componentRequest}))`
       }
