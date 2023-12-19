@@ -1,3 +1,4 @@
+// 该文件下的字符串语句需要使用 es5 语法
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
