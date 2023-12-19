@@ -229,8 +229,7 @@ module.exports = {
                 delPath.delInfo = {
                   isLocal: true,
                   canDel,
-                  replace,
-                  ignore
+                  replace
                 }
               }
             }
