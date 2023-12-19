@@ -348,7 +348,7 @@ class MpxWebpackPlugin {
       maxAsyncRequests: 30,
       maxInitialRequests: 30,
       automaticNameDelimiter: '-',
-      cacheGroups: []
+      cacheGroups: {}
     }, optimization.splitChunks)
     delete optimization.splitChunks
     const splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
