@@ -167,17 +167,6 @@ function checkPrefix (keys, key) {
   return false
 }
 
-// 把ignore的node节点过滤出来
-function filterIgnoreNode (bindings) {
-  const res = {}
-  Object.keys(bindings).forEach(key => {
-    const temp = bindings[key].filter(sub => !sub.ignore)
-    // 避免 bindings[key] 全是ignore
-    if (temp.length) res[key] = temp
-  })
-  return res
-}
-
 function dealRemove (path, replace) {
   try {
     if (replace) {
@@ -259,21 +248,20 @@ module.exports = {
           if (!renderReduce) return
 
           const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
-          // if (ignore) return
 
           delPath.delInfo = {
             keyPath,
             canDel,
-            replace,
-            ignore
+            replace
           }
+
+          if (ignore) return // ignore不计数，不需要被统计
 
           const { bindings } = bindingsMap.get(currentBlock)
           const target = bindings[keyPath] || []
           target.push({
             path: delPath,
-            canDel,
-            ignore
+            canDel
           })
           bindings[keyPath] = target
         }
@@ -285,7 +273,6 @@ module.exports = {
         enter (path) {
           const scope = bindingsMap.get(path)
           const parentScope = bindingsMap.get(scope.parent)
-          scope.bindings = filterIgnoreNode(scope.bindings)
           scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
           currentBlock = path
         },
@@ -320,7 +307,7 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, isLocal, replace, ignore } = path.delInfo
+          const { keyPath, canDel, isLocal, replace } = path.delInfo
           delete path.delInfo
 
           if (canDel) {
@@ -337,15 +324,11 @@ module.exports = {
             if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
               dealRemove(path, replace)
             } else {
-              const currentBlockVars = bindings[keyPath] || [] // 避免bindings[keyPath] 全是ignore，所以需要兜底一下
+              const currentBlockVars = bindings[keyPath]
               if (currentBlockVars.length >= 1) {
-                if (ignore) {
+                const index = currentBlockVars.findIndex(item => !item.canDel)
+                if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
                   dealRemove(path, replace)
-                } else {
-                  const index = currentBlockVars.findIndex(item => !item.canDel)
-                  if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
-                    dealRemove(path, replace)
-                  }
                 }
               }
             }
