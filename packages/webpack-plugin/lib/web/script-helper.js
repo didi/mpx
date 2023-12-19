@@ -69,7 +69,9 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       if (pageCfg) {
         const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
         if (pageCfg.async) {
-          tabBarPagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+          tabBarPagesMap[pagePath] = `function() {
+            return import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(function(res) {return getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} })});
+          }`
         } else {
           tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
         }
@@ -94,7 +96,9 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       pagesMap[pagePath] = `getComponent(require(${stringifyRequest(loaderContext, tabBarContainerPath)}), { __mpxBuiltIn: true })`
     } else {
       if (pageCfg.async) {
-        pagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+        pagesMap[pagePath] = `function() {
+          return import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(function(res){ return getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} })});
+        }`
       } else {
         // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
         pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
