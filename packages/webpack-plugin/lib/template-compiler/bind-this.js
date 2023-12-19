@@ -317,14 +317,13 @@ module.exports = {
             }
             const data = bindingsMap.get(currentBlock)
             const { bindings, pBindings } = data
-
             const allBindings = Object.assign({}, pBindings, bindings)
 
             // 优先判断前缀，再判断全等
             if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
               dealRemove(path, replace)
             } else {
-              const currentBlockVars = bindings[keyPath]
+              const currentBlockVars = bindings[keyPath] || [] // 对于只出现一次的可忽略变量，需要兜底
               if (currentBlockVars.length >= 1) {
                 const index = currentBlockVars.findIndex(item => !item.canDel)
                 if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
