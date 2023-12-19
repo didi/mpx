@@ -64,7 +64,7 @@ module.exports = function (script, {
     globalTabBar
   })
 
-  output += `\n  const App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
+  output += `\n  var App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
 
   output += `
   export default processAppOption({

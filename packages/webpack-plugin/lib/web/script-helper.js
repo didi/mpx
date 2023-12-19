@@ -132,12 +132,12 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
     if (!(typeof window !== 'undefined')) {
       console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
-    const router = global.__mpxRouter
+    var router = global.__mpxRouter
     if(!router) return []
     // @ts-ignore
-    return (router.lastStack || router.stack).map(item => {
-      let page
-      const vnode = item.vnode
+    return (router.lastStack || router.stack).map(function(item){
+      var page
+      var vnode = item.vnode
       if (vnode && vnode.componentInstance) {
         page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
       }
@@ -178,13 +178,13 @@ function buildI18n ({ i18n, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
-  i18nContent += `  const i18nCfg = ${JSON.stringify(i18nObj)}\n`
+  i18nContent += `  var i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
     i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
   i18nCfg.legacy = false
-  const i18n = createI18n(i18nCfg, VueI18n)
+  var i18n = createI18n(i18nCfg, VueI18n)
   Vue.use(i18n)
   Mpx.i18n = i18n\n`
   return i18nContent
