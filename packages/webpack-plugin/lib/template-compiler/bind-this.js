@@ -167,6 +167,17 @@ function checkPrefix (keys, key) {
   return false
 }
 
+// 把ignore的node节点过滤出来
+function filterIgnoreNode (bindings) {
+  const res = {}
+  Object.keys(bindings).forEach(key => {
+    const temp = bindings[key].filter(sub => !sub.ignore)
+    // 避免 bindings[key] 全是ignore
+    if (temp.length) res[key] = temp
+  })
+  return res
+}
+
 function dealRemove (path, replace) {
   try {
     if (replace) {
@@ -201,26 +212,6 @@ module.exports = {
 
     const propKeys = []
     let isProps = false
-
-    const cacheIgnore = new Map()
-    // 把ignore的数据过滤出来
-    function filterIgnoreKey (bindings) {
-      if (cacheIgnore.has(bindings)) return cacheIgnore.get(bindings)
-
-      const res = {}
-      Object.keys(bindings).forEach(key => {
-        const temp = []
-        bindings[key].forEach(sub => {
-          if (!sub.ignore) {
-            temp.push(sub)
-          }
-        })
-        // 避免 bindings[key] 全是ignore
-        if (temp.length) res[key] = temp
-      })
-      cacheIgnore.set(bindings, res)
-      return res
-    }
 
     const collectVisitor = {
       BlockStatement: {
@@ -294,6 +285,7 @@ module.exports = {
         enter (path) {
           const scope = bindingsMap.get(path)
           const parentScope = bindingsMap.get(scope.parent)
+          scope.bindings = filterIgnoreNode(scope.bindings)
           scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
           currentBlock = path
         },
@@ -337,9 +329,7 @@ module.exports = {
               return
             }
             const data = bindingsMap.get(currentBlock)
-            let { bindings, pBindings } = data
-            bindings = filterIgnoreKey(bindings)
-            pBindings = filterIgnoreKey(pBindings)
+            const { bindings, pBindings } = data
 
             const allBindings = Object.assign({}, pBindings, bindings)
 
@@ -348,7 +338,7 @@ module.exports = {
               dealRemove(path, replace)
             } else {
               const currentBlockVars = bindings[keyPath] || [] // 避免bindings[keyPath] 全是ignore，所以需要兜底一下
-              if (currentBlockVars.length > 1) {
+              if (currentBlockVars.length >= 1) {
                 if (ignore) {
                   dealRemove(path, replace)
                 } else {
