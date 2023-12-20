@@ -1867,12 +1867,7 @@ function getVirtualHostRoot (options, meta) {
     }
     if (options.isPage) {
       if (mode === 'web') {
-        return createASTElement('div', [
-          {
-            name: 'class',
-            value: 'page'
-          }
-        ])
+        return createASTElement('page', [])
       }
     }
   }
@@ -1936,7 +1931,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,noMode')
 
 const wrapRE = /^\((.*)\)$/
 

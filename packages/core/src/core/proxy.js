@@ -531,7 +531,7 @@ export default class MpxProxy {
   updatePreRender () {
     this.toggleRecurse(false)
     pauseTracking()
-    flushPreFlushCbs(undefined, this.update)
+    flushPreFlushCbs(this)
     resetTracking()
     this.toggleRecurse(true)
   }

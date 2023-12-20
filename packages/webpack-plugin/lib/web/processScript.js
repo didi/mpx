@@ -40,7 +40,7 @@ module.exports = function (script, {
       return attrs
     },
     content (script) {
-      let content = `\n  import processComponentOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
       let hasApp = true
       if (!appInfo.name) {
         hasApp = false
@@ -75,7 +75,8 @@ module.exports = function (script, {
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
       content += getRequireScript({ ctorType, script, loaderContext })
-      content += `  export default processComponentOption({
+      content += `
+  export default processComponentOption({
     option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
     outputPath: ${JSON.stringify(outputPath)},
@@ -84,13 +85,12 @@ module.exports = function (script, {
     componentsMap: ${shallowStringify(componentsMap)},
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
-    mixin: getWxsMixin(wxsModules),
-    hasApp: ${hasApp}`
-      content += '\n  })\n'
+    wxsMixin: getWxsMixin(wxsModules),
+    hasApp: ${hasApp}
+  })\n`
       return content
     }
   })
-  output += '\n'
 
   callback(null, {
     output
