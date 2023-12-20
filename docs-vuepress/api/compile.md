@@ -707,6 +707,37 @@ module.exports = defineConfig({
 })
 ```
 
+**注意：**默认添加的 postcss 插件均会在`mpx的内置插件`（例如如rpx插件等）之后处理。如需使配置的插件优先于内置插件，可以在插件 options 中设置 `mpxPrePlugin` 选项为 `true`。
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        postcssInlineConfig: {
+          plugins: [
+            require('postcss-import'),
+            require('postcss-preset-env'),
+            require('cssnano')({ mpxPrePlugin: true }),
+            require('autoprefixer')({ remove: true, mpxPrePlugin: true })
+          ]
+          // 以下写法同理
+          // plugins: {
+          //   'postcss-import': {},
+          //   'postcss-preset-env': {},
+          //   'cssnano': { mpxPrePlugin: true },
+          //   'autoprefixer': { remove: true, mpxPrePlugin: true }
+          // }
+        }
+      }
+    }
+  }
+})
+```
+
+在上面这个例子当中，postcss 插件处理的最终顺序为：`cssnano` -> `autoprefixer` -> `mpx内置插件` -> `postcss-import` -> `postcss-preset-env`
+
 ### decodeHTMLText
 
 `boolean = false`

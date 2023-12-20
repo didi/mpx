@@ -82,9 +82,17 @@ module.exports = function (css, map) {
       }
     }
 
-    plugins.push(...config.plugins) // push user config plugins
+    const prePlugins = []
 
-    return postcss(plugins)
+    config.plugins.forEach(e => {
+      if (e.options && e.options.mpxPrePlugin) {
+        prePlugins.push(e)
+      } else {
+        plugins.push(e)
+      }
+    })
+
+    return postcss(prePlugins.concat(plugins))
       .process(css, options)
       .then(result => {
         // ali环境添加全局样式抹平root差异
