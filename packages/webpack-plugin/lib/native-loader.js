@@ -8,6 +8,9 @@ const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
 const { JSON_JS_EXT } = require('./utils/const')
 const getRulesRunner = require('./platform')
+const getEntryName = require('./utils/get-entry-name')
+const AppEntryDependency = require('./dependencies/AppEntryDependency')
+
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
   this.cacheable()
@@ -143,6 +146,7 @@ module.exports = function (content) {
         useJSONJS
       }, null, this, callback)
     }, (content, callback) => {
+      let componentPlaceholder = []
       let json
       try {
         json = JSON5.parse(content)
@@ -166,6 +170,9 @@ module.exports = function (content) {
       if (json.usingComponents) {
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
       }
+      if (json.componentPlaceholder) {
+        componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
+      }
       const {
         getRequire
       } = createHelpers(loaderContext)
@@ -186,8 +193,10 @@ module.exports = function (content) {
               hasComment,
               isNative,
               moduleId,
-              usingComponents
+              usingComponents,
+              componentPlaceholder
             })
+            // if (template.src) extraOptions.resourcePath = resourcePath
             break
           case 'styles':
             if (cssLang) part.lang = cssLang
@@ -223,6 +232,12 @@ module.exports = function (content) {
         ctor = 'Component'
         ctorType = 'component'
       }
+
+      if (ctorType === 'app') {
+        const appName = getEntryName(this)
+        if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+      }
+
       output += `global.currentCtor = ${ctor}\n`
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
