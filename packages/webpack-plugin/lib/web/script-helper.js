@@ -69,7 +69,9 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       if (pageCfg) {
         const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
         if (pageCfg.async) {
-          tabBarPagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+          tabBarPagesMap[pagePath] = `function() {
+            return import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(function(res) {return getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} })});
+          }`
         } else {
           tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
         }
@@ -94,7 +96,9 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       pagesMap[pagePath] = `getComponent(require(${stringifyRequest(loaderContext, tabBarContainerPath)}), { __mpxBuiltIn: true })`
     } else {
       if (pageCfg.async) {
-        pagesMap[pagePath] = `()=>import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(res => getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} }))`
+        pagesMap[pagePath] = `function() {
+          return import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(function(res){ return getComponent(res, { __mpxPageRoute: ${JSON.stringify(pagePath)} })});
+        }`
       } else {
         // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
         pagesMap[pagePath] = `getComponent(require(${pageRequest}), { __mpxPageRoute: ${JSON.stringify(pagePath)} })`
@@ -132,12 +136,12 @@ function buildGlobalParams ({ moduleId, scriptSrcMode, loaderContext, isProducti
     if (!(typeof window !== 'undefined')) {
       console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
-    const router = global.__mpxRouter
+    var router = global.__mpxRouter
     if(!router) return []
     // @ts-ignore
-    return (router.lastStack || router.stack).map(item => {
-      let page
-      const vnode = item.vnode
+    return (router.lastStack || router.stack).map(function(item){
+      var page
+      var vnode = item.vnode
       if (vnode && vnode.componentInstance) {
         page = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
       }
@@ -178,13 +182,13 @@ function buildI18n ({ i18n, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
-  i18nContent += `  const i18nCfg = ${JSON.stringify(i18nObj)}\n`
+  i18nContent += `  var i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
     i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
   i18nCfg.legacy = false
-  const i18n = createI18n(i18nCfg, VueI18n)
+  var i18n = createI18n(i18nCfg, VueI18n)
   Vue.use(i18n)
   Mpx.i18n = i18n\n`
   return i18nContent
