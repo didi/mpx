@@ -224,7 +224,7 @@ module.exports = {
           // 删除局部作用域的变量
           if (scopeBinding) {
             if (renderReduce) {
-              const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
+              const { delPath, canDel, replace } = checkDelAndGetPath(path)
               if (canDel) {
                 delPath.delInfo = {
                   isLocal: true,
