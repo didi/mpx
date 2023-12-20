@@ -36,7 +36,7 @@ jobs:
 
       - name: install deps
         if: steps.cache.outputs.cache-hit != 'true'
-        run: npm i && npm ci --prefix test/e2e/miniprogram-project && npm ci --prefix test/e2e/plugin-project  && npx lerna bootstrap --no-ci
+        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project  && npx lerna bootstrap --no-ci
 
       - name: copy-webpack-plugin
         run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/plugin-project
