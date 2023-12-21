@@ -707,7 +707,7 @@ module.exports = defineConfig({
 })
 ```
 
-**注意：**默认添加的 postcss 插件均会在`mpx的内置插件`（例如如rpx插件等）之后处理。如需使配置的插件优先于内置插件，可以在插件 options 中设置 `mpxPrePlugin` 选项为 `true`。
+**注意：**默认添加的 postcss 插件均会在`mpx的内置插件`（例如如rpx插件等）之后处理。如需使配置的插件优先于内置插件，可以在 `postcssInlineConfig` 中添加 `mpxPrePlugins` 配置：
 
 ```js
 // vue.config.js
