@@ -27,7 +27,6 @@ module.exports = function (css, map) {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
-  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = [] // init with trim plugin
     const options = Object.assign(
@@ -82,17 +81,9 @@ module.exports = function (css, map) {
       }
     }
 
-    const prePlugins = []
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
 
-    config.plugins.forEach(e => {
-      if (e.options && e.options.mpxPrePlugin) {
-        prePlugins.push(e)
-      } else {
-        plugins.push(e)
-      }
-    })
-
-    return postcss(prePlugins.concat(plugins))
+    return postcss(finalPlugins)
       .process(css, options)
       .then(result => {
         // ali环境添加全局样式抹平root差异

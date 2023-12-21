@@ -1,4 +1,5 @@
 const load = require('postcss-load-config')
+const loadPlugins = require('postcss-load-config/src/plugins')
 
 let loaded
 
@@ -28,19 +29,25 @@ module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
     })
   }
 
-  return loaded.then(config => {
+  return loaded.then((config = {}) => {
     let plugins = inlineConfig.plugins || []
     let options = inlineConfig.options || {}
+    let prePlugins = inlineConfig.prePlugins || []
 
     // merge postcss config file
-    if (config && config.plugins) {
+    if (config.plugins) {
       plugins = plugins.concat(config.plugins)
     }
-    if (config && config.options) {
+    if (config.options) {
       options = Object.assign({}, config.options, options)
+      if (config.options.mpxPrePlugins) {
+        // 使入参和postcss格式保持一致
+        prePlugins = prePlugins.concat(loadPlugins({ plugins: config.options.mpxPrePlugins }, config.file))
+      }
     }
 
     return {
+      prePlugins,
       plugins,
       options
     }

@@ -719,15 +719,15 @@ module.exports = defineConfig({
           plugins: [
             require('postcss-import'),
             require('postcss-preset-env'),
-            require('cssnano')({ mpxPrePlugin: true }),
-            require('autoprefixer')({ remove: true, mpxPrePlugin: true })
+          ],
+          mpxPrePlugins: [
+            require('cssnano'),
+            require('autoprefixer')
           ]
           // 以下写法同理
-          // plugins: {
-          //   'postcss-import': {},
-          //   'postcss-preset-env': {},
-          //   'cssnano': { mpxPrePlugin: true },
-          //   'autoprefixer': { remove: true, mpxPrePlugin: true }
+          // mpxPrePlugins: {
+          //   'cssnano': {},
+          //   'autoprefixer': {}
           // }
         }
       }
@@ -737,6 +737,10 @@ module.exports = defineConfig({
 ```
 
 在上面这个例子当中，postcss 插件处理的最终顺序为：`cssnano` -> `autoprefixer` -> `mpx内置插件` -> `postcss-import` -> `postcss-preset-env`
+
+::: warning
+注意：在 `mpxPrePlugins` 中配置的 postcss 插件如果不通过 mpx 进行处理，那么将不会生效。
+:::
 
 ### decodeHTMLText
 
