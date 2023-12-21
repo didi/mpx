@@ -228,7 +228,6 @@ module.exports = {
               if (canDel) {
                 delPath.delInfo = {
                   isLocal: true,
-                  canDel,
                   replace
                 }
               }
@@ -248,10 +247,11 @@ module.exports = {
 
           const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
 
-          delPath.delInfo = {
-            keyPath,
-            canDel,
-            replace
+          if (canDel) {
+            delPath.delInfo = {
+              keyPath,
+              replace
+            }
           }
 
           if (ignore) return // ignore不计数，不需要被统计
@@ -306,28 +306,26 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, isLocal, replace } = path.delInfo
+          const { keyPath, isLocal, replace } = path.delInfo
           delete path.delInfo
 
-          if (canDel) {
-            if (isLocal) { // 局部作用域里的变量，可直接删除
-              dealRemove(path, replace)
-              return
-            }
-            const data = bindingsMap.get(currentBlock)
-            const { bindings, pBindings } = data
-            const allBindings = Object.assign({}, pBindings, bindings)
+          if (isLocal) { // 局部作用域里的变量，可直接删除
+            dealRemove(path, replace)
+            return
+          }
+          const data = bindingsMap.get(currentBlock)
+          const { bindings, pBindings } = data
+          const allBindings = Object.assign({}, pBindings, bindings)
 
-            // 优先判断前缀，再判断全等
-            if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
-              dealRemove(path, replace)
-            } else {
-              const currentBlockVars = bindings[keyPath] || [] // 对于只出现一次的可忽略变量，需要兜底
-              if (currentBlockVars.length >= 1) {
-                const index = currentBlockVars.findIndex(item => !item.canDel)
-                if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
-                  dealRemove(path, replace)
-                }
+          // 优先判断前缀，再判断全等
+          if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
+            dealRemove(path, replace)
+          } else {
+            const currentBlockVars = bindings[keyPath] || [] // 对于只出现一次的可忽略变量，需要兜底
+            if (currentBlockVars.length >= 1) {
+              const index = currentBlockVars.findIndex(item => !item.canDel)
+              if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
+                dealRemove(path, replace)
               }
             }
           }
