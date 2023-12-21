@@ -27,6 +27,7 @@ module.exports = function (css, map) {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
+  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = [] // init with trim plugin
     const options = Object.assign(
