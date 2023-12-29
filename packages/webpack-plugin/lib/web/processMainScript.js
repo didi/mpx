@@ -76,7 +76,7 @@ module.exports = function (script, {
     componentsMap: ${shallowStringify(componentsMap)},
     Vue,
     VueRouter,
-    webConfig: ${JSON.stringify(webConfig)}
+    el: ${JSON.stringify(webConfig.el || '#app')}
   })\n`
 
   callback(null, {
