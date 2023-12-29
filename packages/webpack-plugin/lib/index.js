@@ -344,7 +344,7 @@ class MpxWebpackPlugin {
     let splitChunksOptions = null
     let splitChunksPlugin = null
     // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
-    if (this.options.mode === 'web' && optimization.splitChunks !== false) {
+    if (optimization.splitChunks !== false) {
       splitChunksOptions = Object.assign({
         chunks: 'all',
         usedExports: optimization.usedExports === true,
@@ -353,7 +353,8 @@ class MpxWebpackPlugin {
         enforceSizeThreshold: Infinity,
         maxAsyncRequests: 30,
         maxInitialRequests: 30,
-        automaticNameDelimiter: '-'
+        automaticNameDelimiter: '-',
+        cacheGroups: {}
       }, optimization.splitChunks)
       splitChunksOptions.defaultSizeTypes = ['javascript', 'unknown']
       delete optimization.splitChunks
@@ -965,10 +966,6 @@ class MpxWebpackPlugin {
           let needInit = false
           if (mpx.mode === 'web') {
             // web独立处理splitChunk
-            if (!splitChunksOptions.maxSize && !splitChunksOptions.maxAsyncSize && !splitChunksOptions.maxInitialSize) {
-              splitChunksOptions.maxSize = 500000
-              needInit = true
-            }
             if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
                 chunks: 'initial',
