@@ -45,12 +45,8 @@ module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
     if (config.options) {
       if (config.options.mpxPrePlugins) {
         // 使入参和postcss格式保持一致
-<<<<<<< Updated upstream
-        prePlugins = prePlugins.concat(loadPlugins({ plugins: config.options.mpxPrePlugins }, config.file))
-        delete config.options.mpxPrePlugins
-=======
         prePlugins = prePlugins.concat(formatPlugins(config.options.mpxPrePlugins, config.file))
->>>>>>> Stashed changes
+        delete config.options.mpxPrePlugins
       }
       options = Object.assign({}, config.options, options)
     }
