@@ -10,9 +10,6 @@ module.exports = function ({ print }) {
   return {
     test: TAG_NAME,
     web (tag, { el }) {
-      if (el.hasEvent) {
-        el.isBuiltIn = true
-      }
       if (el.isBuiltIn) {
         return 'mpx-text'
       } else {

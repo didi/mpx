@@ -1,4 +1,6 @@
-const mpxEvents = (layer, options) => {
+import { isBrowser } from '../../env'
+
+const mpxEvent = (layer, options) => {
     options = options || {}
 
     this.targetElement = null
@@ -9,19 +11,9 @@ const mpxEvents = (layer, options) => {
 
     this.startTimer = null
 
-    this.touchBoundary = options.touchBoundary || 10
+    this.needTap = true
 
-    this.sendEvent = (targetElement, type) => {
-        if (document.activeElement && document.activeElement !== targetElement) {
-            document.activeElement.blur()
-        }
-        const clickEvent = new TouchEvent(type, {
-            view: window,
-            bubbles: true,
-            cancelable: true
-        })
-        targetElement.dispatchEvent(clickEvent)
-    }
+    this.touchBoundary = options.touchBoundary || 1
 
     this.onTouchStart = (event) => {
         if (event.targetTouches?.length > 1) {
@@ -30,41 +22,42 @@ const mpxEvents = (layer, options) => {
 
         const touch = event.targetTouches[0]
         this.targetElement = event.target
-
+        this.needTap = true
+        this.startTimer = null
         this.touchStartX = touch.pageX
         this.touchStartY = touch.pageY
         this.startTimer = setTimeout(() => {
+            this.needTap = false
             this.sendEvent(this.targetElement, 'longpress')
             this.sendEvent(this.targetElement, 'longtap')
         }, 350)
-        return true
-    }
-
-    this.touchHasMoved = (event) => {
-        const touch = event.changedTouches[0]
-        const boundary = this.touchBoundary
-        if (Math.abs(touch.pageX - this.touchStartX) > boundary || Math.abs(touch.pageY - this.touchStartY) > boundary) {
-            this.startTimer && clearTimeout(this.startTimer)
-            this.startTimer = null
-            return true
-        }
-        return false
     }
 
     this.onTouchMove = (event) => {
-        if (this.targetElement !== event.target || this.touchHasMoved(event)) {
-            this.targetElement = null
+        const touch = event.changedTouches[0]
+        const boundary = this.touchBoundary
+        if (Math.abs(touch.pageX - this.touchStartX) > boundary || Math.abs(touch.pageY - this.touchStartY) > boundary) {
+            this.needTap = false
+            this.startTimer && clearTimeout(this.startTimer)
+            this.startTimer = null
         }
-        return true
     }
 
-    this.onTouchEnd = (event) => {
-        const targetElement = this.targetElement
+    this.onTouchEnd = () => {
         this.startTimer && clearTimeout(this.startTimer)
         this.startTimer = null
-        event.preventDefault()
-        this.sendEvent(targetElement, 'tap')
-        return false
+        if (this.needTap) {
+            this.sendEvent(this.targetElement, 'tap')
+        }
+    }
+
+    this.sendEvent = (targetElement, type) => {
+        const clickEvent = new TouchEvent(type, {
+            view: window,
+            bubbles: true,
+            cancelable: true
+        })
+        targetElement && targetElement.dispatchEvent(clickEvent)
     }
 
     layer.addEventListener('touchstart', this.onTouchStart, false)
@@ -75,6 +68,8 @@ const mpxEvents = (layer, options) => {
     })
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    mpxEvents(document.getElementsByTagName('body')[0])
-}, false)
+if (isBrowser) {
+    document.addEventListener('DOMContentLoaded', () => {
+        mpxEvent(document.getElementsByTagName('body')[0])
+    }, false)
+}

@@ -12,9 +12,6 @@ module.exports = function ({ print }) {
     //   return 'a:view'
     // },
     web (tag, { el }) {
-      if (el.hasEvent) {
-        el.isBuiltIn = true
-      }
       if (el.isBuiltIn) {
         return 'mpx-view'
       } else {
