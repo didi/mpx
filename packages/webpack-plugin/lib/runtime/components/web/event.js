@@ -46,6 +46,7 @@ const mpxEvent = (layer, options) => {
     }
 
     this.sendEvent = (targetElement, type) => {
+        // eslint-disable-next-line no-undef
         const clickEvent = new TouchEvent(type, {
             view: window,
             bubbles: true,
