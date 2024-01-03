@@ -82,9 +82,9 @@ module.exports = function (css, map) {
       }
     }
 
-    plugins.push(...config.plugins) // push user config plugins
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
 
-    return postcss(plugins)
+    return postcss(finalPlugins)
       .process(css, options)
       .then(result => {
         // ali环境添加全局样式抹平root差异

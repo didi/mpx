@@ -39,7 +39,7 @@
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
-      if (!isBrowser) {
+      if (!isBrowser || !vnode) {
         return vnode || (slot && slot[0])
       }
       const router = global.__mpxRouter
