@@ -21,7 +21,7 @@ function WebpackPlugin (configOrPath, defaults) {
       compiler.extract = extract
       compiler.ctx = ctx
       compiler.tasks = tasks
-
+      // 添加解析虚拟模块插件 import 'uno.css' 并且注入layer代码
       const resolverPlugin = {
         apply (resolver) {
           const target = resolver.ensureHook('resolve')
@@ -65,7 +65,7 @@ function WebpackPlugin (configOrPath, defaults) {
       }
       compiler.options.resolve.plugins = compiler.options.resolve.plugins || []
       compiler.options.resolve.plugins.push(resolverPlugin)
-
+      // transform 提取tokens
       compiler.options.module.rules.unshift({
         enforce: 'pre',
         use: (data) => {
@@ -84,6 +84,7 @@ function WebpackPlugin (configOrPath, defaults) {
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
+          // 可以收集到cache中的tokens，可解决存在cache，二次serve中无法获取tokens的问题
           const tokens = new Set()
           for (const module of compilation.modules) {
             const assetsInfo = module.buildInfo.assetsInfo || new Map()
