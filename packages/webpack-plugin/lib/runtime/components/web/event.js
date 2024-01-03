@@ -58,9 +58,6 @@ const mpxEvent = (layer, options) => {
     layer.addEventListener('touchstart', this.onTouchStart, false)
     layer.addEventListener('touchmove', this.onTouchMove, false)
     layer.addEventListener('touchend', this.onTouchEnd, false)
-    layer.addEventListener('contextmenu', (e) => {
-        e.preventDefault()
-    })
 }
 if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
