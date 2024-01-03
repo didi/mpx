@@ -1,6 +1,10 @@
-const mpxEvent = (layer, options) => {
-    options = options || {}
+import { extendEvent } from './getInnerListeners'
+import { isBrowser } from '../../env'
+
+function mpxEvent (layer) {
     this.targetElement = null
+
+    this.touches = []
 
     this.touchStartX = 0
 
@@ -15,16 +19,16 @@ const mpxEvent = (layer, options) => {
             return true
         }
 
-        const touch = event.targetTouches[0]
+        this.touches = event.targetTouches
         this.targetElement = event.target
         this.needTap = true
         this.startTimer = null
-        this.touchStartX = touch.pageX
-        this.touchStartY = touch.pageY
+        this.touchStartX = this.touches[0].pageX
+        this.touchStartY = this.touches[0].pageY
         this.startTimer = setTimeout(() => {
             this.needTap = false
-            this.sendEvent(this.targetElement, 'longpress')
-            this.sendEvent(this.targetElement, 'longtap')
+            this.sendEvent(this.targetElement, 'longpress', event)
+            this.sendEvent(this.targetElement, 'longtap', event)
         }, 350)
     }
 
@@ -37,20 +41,33 @@ const mpxEvent = (layer, options) => {
         }
     }
 
-    this.onTouchEnd = () => {
+    this.onTouchEnd = (event) => {
+        if (event.targetTouches?.length > 1) {
+            return true
+        }
         this.startTimer && clearTimeout(this.startTimer)
         this.startTimer = null
         if (this.needTap) {
-            this.sendEvent(this.targetElement, 'tap')
+            this.sendEvent(this.targetElement, 'tap', event)
         }
     }
 
-    this.sendEvent = (targetElement, type) => {
+    this.sendEvent = (targetElement, type, event) => {
         // eslint-disable-next-line no-undef
         const clickEvent = new TouchEvent(type, {
             view: window,
             bubbles: true,
             cancelable: true
+        })
+        const changedTouches = event.changedTouches
+        extendEvent(clickEvent, {
+            currentTarget: event.target,
+            changedTouches,
+            touches: this.touches,
+            detail: {
+                x: changedTouches[0].pageX,
+                y: changedTouches[0].pageY
+            }
         })
         targetElement && targetElement.dispatchEvent(clickEvent)
     }
@@ -59,8 +76,9 @@ const mpxEvent = (layer, options) => {
     layer.addEventListener('touchmove', this.onTouchMove, false)
     layer.addEventListener('touchend', this.onTouchEnd, false)
 }
-if (typeof window !== 'undefined') {
+if (isBrowser) {
     document.addEventListener('DOMContentLoaded', () => {
-        mpxEvent(document.getElementsByTagName('body')[0])
+      // eslint-disable-next-line no-new
+      new mpxEvent(document.getElementsByTagName('body')[0])
     }, false)
 }
