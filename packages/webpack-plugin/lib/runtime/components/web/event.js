@@ -1,8 +1,5 @@
-import { isBrowser } from '../../env'
-
 const mpxEvent = (layer, options) => {
     options = options || {}
-
     this.targetElement = null
 
     this.touchStartX = 0
@@ -12,8 +9,6 @@ const mpxEvent = (layer, options) => {
     this.startTimer = null
 
     this.needTap = true
-
-    this.touchBoundary = options.touchBoundary || 1
 
     this.onTouchStart = (event) => {
         if (event.targetTouches?.length > 1) {
@@ -35,8 +30,7 @@ const mpxEvent = (layer, options) => {
 
     this.onTouchMove = (event) => {
         const touch = event.changedTouches[0]
-        const boundary = this.touchBoundary
-        if (Math.abs(touch.pageX - this.touchStartX) > boundary || Math.abs(touch.pageY - this.touchStartY) > boundary) {
+        if (Math.abs(touch.pageX - this.touchStartX) > 1 || Math.abs(touch.pageY - this.touchStartY) > 1) {
             this.needTap = false
             this.startTimer && clearTimeout(this.startTimer)
             this.startTimer = null
@@ -67,8 +61,7 @@ const mpxEvent = (layer, options) => {
         e.preventDefault()
     })
 }
-
-if (isBrowser) {
+if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         mpxEvent(document.getElementsByTagName('body')[0])
     }, false)
