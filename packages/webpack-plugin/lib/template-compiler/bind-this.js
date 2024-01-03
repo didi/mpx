@@ -121,24 +121,19 @@ function checkDelAndGetPath (path) {
     }
 
     if (t.isLogicalExpression(container)) { // case: a || ((b || c) && d)
-      ignore = true
-      break
-    }
-
-    // case: a ??= b
-    if (
-      key === 'right' &&
-      t.isAssignmentExpression(container) &&
-      ['??=', '||=', '&&='].includes(container.operator)
-    ) {
+      canDel = false
       ignore = true
       break
     }
 
     if (t.isConditionalExpression(container)) {
-      if (key === 'test') canDel = false
-      else ignore = true
-      break
+      if (key === 'test') {
+        canDel = false
+        break
+      } else {
+        ignore = true
+        replace = true
+      }
     }
 
     if (
@@ -229,11 +224,10 @@ module.exports = {
           // 删除局部作用域的变量
           if (scopeBinding) {
             if (renderReduce) {
-              const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
-              if (canDel && !ignore) {
+              const { delPath, canDel, replace } = checkDelAndGetPath(path)
+              if (canDel) {
                 delPath.delInfo = {
                   isLocal: true,
-                  canDel,
                   replace
                 }
               }
@@ -252,13 +246,15 @@ module.exports = {
           if (!renderReduce) return
 
           const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
-          if (ignore) return
 
-          delPath.delInfo = {
-            keyPath,
-            canDel,
-            replace
+          if (canDel) {
+            delPath.delInfo = {
+              keyPath,
+              replace
+            }
           }
+
+          if (ignore) return // ignore不计数，不需要被统计
 
           const { bindings } = bindingsMap.get(currentBlock)
           const target = bindings[keyPath] || []
@@ -310,28 +306,26 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, isLocal, replace } = path.delInfo
+          const { keyPath, isLocal, replace } = path.delInfo
           delete path.delInfo
 
-          if (canDel) {
-            if (isLocal) { // 局部作用域里的变量，可直接删除
-              dealRemove(path, replace)
-              return
-            }
-            const data = bindingsMap.get(currentBlock)
-            const { bindings, pBindings } = data
-            const allBindings = Object.assign({}, pBindings, bindings)
+          if (isLocal) { // 局部作用域里的变量，可直接删除
+            dealRemove(path, replace)
+            return
+          }
+          const data = bindingsMap.get(currentBlock)
+          const { bindings, pBindings } = data
+          const allBindings = Object.assign({}, pBindings, bindings)
 
-            // 优先判断前缀，再判断全等
-            if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
-              dealRemove(path, replace)
-            } else {
-              const currentBlockVars = bindings[keyPath]
-              if (currentBlockVars.length > 1) {
-                const index = currentBlockVars.findIndex(item => !item.canDel)
-                if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
-                  dealRemove(path, replace)
-                }
+          // 优先判断前缀，再判断全等
+          if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
+            dealRemove(path, replace)
+          } else {
+            const currentBlockVars = bindings[keyPath] || [] // 对于只出现一次的可忽略变量，需要兜底
+            if (currentBlockVars.length >= 1) {
+              const index = currentBlockVars.findIndex(item => !item.canDel)
+              if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
+                dealRemove(path, replace)
               }
             }
           }

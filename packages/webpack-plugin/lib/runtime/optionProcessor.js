@@ -325,7 +325,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
   }
 }
 
-export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, webConfig }) {
+export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, el }) {
   if (!isBrowser) {
     return context => {
       const { app, router, pinia = {} } = createApp({
@@ -364,6 +364,6 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
     if (window.__INITIAL_STATE__ && pinia) {
       pinia.state.value = window.__INITIAL_STATE__
     }
-    app.$mount(webConfig.el || '#app')
+    app.$mount(el)
   }
 }
