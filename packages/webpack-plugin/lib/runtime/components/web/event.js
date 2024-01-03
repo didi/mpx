@@ -1,7 +1,7 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
 
-function mpxEvent (layer) {
+function MpxEvent (layer) {
     this.targetElement = null
 
     this.touches = []
@@ -79,6 +79,6 @@ function mpxEvent (layer) {
 if (isBrowser) {
     document.addEventListener('DOMContentLoaded', () => {
       // eslint-disable-next-line no-new
-      new mpxEvent(document.getElementsByTagName('body')[0])
+      new MpxEvent(document.getElementsByTagName('body')[0])
     }, false)
 }
