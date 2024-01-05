@@ -114,8 +114,11 @@ function checkDelAndGetPath (path) {
 
   // 确定是否可删除
   while (!t.isBlockStatement(current) && canDel) {
-    const { key, container } = current
-    if (t.isIfStatement(container) && key === 'test') { // if (a) {}
+    const { key, listKey, container } = current
+    if (
+      (t.isIfStatement(container) && key === 'test') || // if (a) {}
+      (listKey === 'arguments' && current.parent.arguments && current.parent.arguments.length > 1) // _i([a], function() {})
+    ) {
       canDel = false
       break
     }

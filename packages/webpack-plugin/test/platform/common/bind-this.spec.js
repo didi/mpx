@@ -187,6 +187,10 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         obj12
         obj9 || (obj10 || obj11 && obj12)
         obj12 || ''
+
+        obj13;
+        obj14;
+        _i([obj13, obj14], function() {});
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
@@ -250,6 +254,8 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   _sc("obj12");
 
   _sc("obj9") || _sc("obj10") || _sc("obj11") && _sc("obj12");
+
+  _i([_sc("obj13"), _sc("obj14")], function () {});
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
