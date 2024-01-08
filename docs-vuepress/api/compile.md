@@ -736,6 +736,23 @@ module.exports = defineConfig({
 })
 ```
 
+`postcss.config.js` 中配置同理：
+
+```js
+// postcss.config.js
+module.exports = {
+  plugins: [
+    require('postcss-import'),
+    require('postcss-preset-env'),
+  ],
+  mpxPrePlugins: [
+    require('cssnano'),
+    require('autoprefixer')
+  ]
+}
+
+```
+
 在上面这个例子当中，postcss 插件处理的最终顺序为：`cssnano` -> `autoprefixer` -> `mpx内置插件` -> `postcss-import` -> `postcss-preset-env`
 
 ::: warning
