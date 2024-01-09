@@ -40,7 +40,7 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     })
     return result
   }
-  
+
   async function extract (code, id) {
     const tokens = new Set()
     await uno.applyExtractors(code, id, tokens)
