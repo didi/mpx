@@ -4,7 +4,7 @@ const node_path = require('node:path')
 const process = require('process')
 const fs = require('fs')
 const { createContext, getPath, normalizeAbsolutePath } = require('./utils')
-const { HASH_PLACEHOLDER_RE, LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('./consts')
+const { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('./consts')
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')
@@ -13,14 +13,12 @@ function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
       const ctx = createContext(configOrPath, defaults)
-      const { uno, tasks, filter, extract } = ctx
+      const { uno, filter } = ctx
       const entries = new Set()
       const __vfsModules = new Set()
       const __vfs = new VirtualModulesPlugin()
       compiler.options.plugins.push(__vfs)
-      compiler.extract = extract
-      compiler.ctx = ctx
-      compiler.tasks = tasks
+      compiler.__unoCtx = ctx
       // 添加解析虚拟模块插件 import 'uno.css' 并且注入layer代码
       const resolverPlugin = {
         apply (resolver) {
@@ -103,7 +101,6 @@ function WebpackPlugin (configOrPath, defaults) {
             if (file === '*') { return }
             let code = compilation.assets[file].source().toString()
             let replaced = false
-            code = code.replace(HASH_PLACEHOLDER_RE, '')
             code = code.replace(LAYER_PLACEHOLDER_RE, (_, quote, layer) => {
               replaced = true
               const css = layer === LAYER_MARK_ALL ? result.getLayers(undefined, Array.from(entries).map((i) => resolveLayer(i)).filter((i) => !!i)) : result.getLayer(layer) || ''

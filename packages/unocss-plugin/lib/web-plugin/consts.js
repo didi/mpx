@@ -29,17 +29,10 @@ function getLayerPlaceholder (layer) {
   return `#--unocss--{layer:${layer}}`
 }
 
-const HASH_PLACEHOLDER_RE = /#--unocss-hash--\s*{\s*content\s*:\s*\\*"(.+?)\\*";?\s*}/g
-function getHashPlaceholder (hash) {
-  return `#--unocss-hash--{content:"${hash}"}`
-}
-
 module.exports = {
-  HASH_PLACEHOLDER_RE,
   LAYER_MARK_ALL,
   LAYER_PLACEHOLDER_RE,
   RESOLVED_ID_RE,
-  getHashPlaceholder,
   getLayerPlaceholder,
   resolveLayer,
   resolveId
