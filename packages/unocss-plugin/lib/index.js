@@ -8,7 +8,7 @@ const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
 const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const UnoCSSWebpackPlugin = require('@unocss/webpack').default
+const UnoCSSWebpackPlugin = require('./web-plugin')
 const transformerDirectives = require('@unocss/transformer-directives').default
 const transformerVariantGroup = require('@unocss/transformer-variant-group')
 const {
