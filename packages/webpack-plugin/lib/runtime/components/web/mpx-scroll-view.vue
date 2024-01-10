@@ -4,6 +4,7 @@
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
   import throttle from 'lodash/throttle'
+import debounce from 'lodash/debounce'
 
   BScroll.use(PullDown)
 
@@ -61,12 +62,13 @@
         currentY: 0,
         lastX: 0,
         lastY: 0,
-        resizeObserver: null,
         mutationObserver: null,
         isMounted: false,
         mpxScrollOptions: {},
         lastContentWidth: 0,
-        lastContentHeight: 0
+        lastContentHeight: 0,
+        lastWrapperWidth: 0,
+        lastWrapperHeight: 0
       }
     },
     computed: {
@@ -107,7 +109,6 @@
     },
     mounted () {
       this.initBs()
-      this.createResizeObserver()
       this.handleMutationObserver()
       this.observeAnimation('add')
     },
@@ -126,10 +127,6 @@
     },
     beforeDestroy () {
       this.destroyBs()
-      if (this.resizeObserver) {
-        this.resizeObserver.disconnect()
-        this.resizeObserver = null
-      }
       if (this.mutationObserver) {
         this.mutationObserver.disconnect()
         this.mutationObserver = null
@@ -316,12 +313,14 @@
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
+        const scrollWrapperWidth = wrapper?.clientWidth || 0
+        const scrollWrapperHeight = wrapper?.clientHeight || 0
         if (wrapper) {
           const computedStyle = getComputedStyle(wrapper)
           // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
           // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
-          this.$refs.innerWrapper.style.width = `${wrapper.clientWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
-          this.$refs.innerWrapper.style.height = `${wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
+          this.$refs.innerWrapper.style.width = `${scrollWrapperWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+          this.$refs.innerWrapper.style.height = `${scrollWrapperHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         }
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
@@ -361,7 +360,9 @@
         this.$refs.scrollContent.style.height = `${height}px`
         return {
           scrollContentWidth: width,
-          scrollContentHeight: height
+          scrollContentHeight: height,
+          scrollWrapperWidth,
+          scrollWrapperHeight
         }
       },
       refresh () {
@@ -369,12 +370,17 @@
           this.__mpx_deactivated_refresh = true
           return
         }
-        const { scrollContentWidth, scrollContentHeight } = this.initLayerComputed()
-        if ((scrollContentWidth !== this.lastContentWidth) || (scrollContentHeight !== this.lastContentHeight)) {
+        const { scrollContentWidth, scrollContentHeight,  scrollWrapperWidth, scrollWrapperHeight} = this.initLayerComputed()
+        if (!this.compare(scrollWrapperWidth, this.lastWrapperWidth) || !this.compare(scrollWrapperHeight, this.lastWrapperHeight) || !this.compare(scrollContentWidth, this.lastContentWidth) || !this.compare(scrollContentHeight, this.lastContentHeight)) {
           this.lastContentWidth = scrollContentWidth
           this.lastContentHeight = scrollContentHeight
+          this.lastWrapperWidth = scrollWrapperWidth
+          this.lastWrapperHeight = scrollWrapperHeight
           if (this.bs) this.bs.refresh()
         }
+      },
+      compare(num1, num2, scale = 1) {
+        return Math.abs(num1 - num2) < scale
       },
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
@@ -384,28 +390,14 @@
         leading: true,
         trailing: false
       }),
-      createResizeObserver () {
-        if (typeof ResizeObserver !== 'undefined') {
-          this.resizeObserver = new ResizeObserver(entries => {
-            if (this.isMounted) {
-              this.refresh()
-            }
-            this.isMounted = true
-          })
-          this.resizeObserver.observe(this.$refs.wrapper)
-        }
-      },
       handleMutationObserver () {
         if (typeof MutationObserver !== 'undefined') {
           this.mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
           const config = { attributes: true, childList: true, subtree: true }
-          this.mutationObserver.observe(this.$refs.scrollContent, config)
+          this.mutationObserver.observe(this.$refs.wrapper, config)
         }
       },
       mutationObserverHandler (mutations) {
-        if (this.shouldNotRefresh()) {
-          return
-        }
         let needRefresh = false
         for (let i = 0; i < mutations.length; i++) {
           const mutation = mutations[i]
@@ -420,10 +412,10 @@
           }
         }
         if (needRefresh) {
-          this.throttleRefresh()
+          this.debounceRefresh()
         }
       },
-      throttleRefresh: throttle(function () {
+      debounceRefresh: debounce(function () {
         this.refresh()
       }, 50, {
         leading: false,
@@ -452,10 +444,10 @@
         if (e.target !== this.bs.scroller.content) {
           if (eventName === 'transitionend') {
             if (e.propertyName?.includes('width') || e.propertyName?.includes('height')) {
-              this.throttleRefresh()
+              this.debounceRefresh()
             }
           } else {
-            this.throttleRefresh()
+            this.debounceRefresh()
           }
         }
       }
