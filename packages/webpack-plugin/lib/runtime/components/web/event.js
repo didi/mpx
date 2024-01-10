@@ -1,7 +1,7 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
 
-function MpxEvent (layer) {
+function MpxEvent(layer) {
     this.targetElement = null
 
     this.touches = []
@@ -13,6 +13,8 @@ function MpxEvent (layer) {
     this.startTimer = null
 
     this.needTap = true
+
+    this.isTouchDevice = document && ('ontouchstart' in document.documentElement)
 
     this.onTouchStart = (event) => {
         if (event.targetTouches?.length > 1) {
@@ -52,6 +54,10 @@ function MpxEvent (layer) {
         }
     }
 
+    this.onClick = (event) => {
+        this.targetElement = event.target
+        this.sendEvent(this.targetElement, 'tap', event)
+    }
     this.sendEvent = (targetElement, type, event) => {
         // eslint-disable-next-line no-undef
         const clickEvent = new TouchEvent(type, {
@@ -59,26 +65,30 @@ function MpxEvent (layer) {
             bubbles: true,
             cancelable: true
         })
-        const changedTouches = event.changedTouches
+        const changedTouches = event.changedTouches || []
         extendEvent(clickEvent, {
             currentTarget: event.target,
             changedTouches,
-            touches: this.touches,
+            touches: changedTouches,
             detail: {
-                x: changedTouches[0].pageX,
-                y: changedTouches[0].pageY
+                // pc端点击事件可能没有changedTouches，所以直接从 event中取
+                x: changedTouches[0]?.pageX || event.pageX || 0,
+                y: changedTouches[0]?.pageY || event.pageY || 0
             }
         })
         targetElement && targetElement.dispatchEvent(clickEvent)
     }
-
-    layer.addEventListener('touchstart', this.onTouchStart, false)
-    layer.addEventListener('touchmove', this.onTouchMove, false)
-    layer.addEventListener('touchend', this.onTouchEnd, false)
+    if (this.isTouchDevice) {
+        layer.addEventListener('touchstart', this.onTouchStart, true)
+        layer.addEventListener('touchmove', this.onTouchMove, true)
+        layer.addEventListener('touchend', this.onTouchEnd, true)
+    } else {
+        layer.addEventListener('click', this.onClick, true)
+    }
 }
 if (isBrowser) {
     document.addEventListener('DOMContentLoaded', () => {
-      // eslint-disable-next-line no-new
-      new MpxEvent(document.getElementsByTagName('body')[0])
+        // eslint-disable-next-line no-new
+        new MpxEvent(document.body)
     }, false)
 }
