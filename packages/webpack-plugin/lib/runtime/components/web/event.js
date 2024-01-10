@@ -60,13 +60,14 @@ function MpxEvent(layer) {
     }
     this.sendEvent = (targetElement, type, event) => {
         // eslint-disable-next-line no-undef
-        const clickEvent = new TouchEvent(type, {
+        const touchEvent = new TouchEvent(type, {
             view: window,
             bubbles: true,
             cancelable: true
         })
         const changedTouches = event.changedTouches || []
-        extendEvent(clickEvent, {
+        extendEvent(touchEvent, {
+            timeStamp: event.timeStamp,
             currentTarget: event.target,
             changedTouches,
             touches: changedTouches,
@@ -76,7 +77,7 @@ function MpxEvent(layer) {
                 y: changedTouches[0]?.pageY || event.pageY || 0
             }
         })
-        targetElement && targetElement.dispatchEvent(clickEvent)
+        targetElement && targetElement.dispatchEvent(touchEvent)
     }
     if (this.isTouchDevice) {
         layer.addEventListener('touchstart', this.onTouchStart, true)
