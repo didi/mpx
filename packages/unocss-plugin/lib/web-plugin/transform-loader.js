@@ -5,9 +5,11 @@ async function transform (code, map) {
   const ctx = this._compiler.__unoCtx
   if (!ctx) return callback(null, code, map)
   await ctx.ready
+  // 使用resourcePath而不是resource作为id，规避query的影响
   const id = this.resourcePath
   const { extract, transformCache } = ctx
   let res
+  // 通过transformCache减少不必要的重复的transform/extract行为，如对于.mpx/.vue文件及其block request(template/style/script)进行重复transform/extract
   if (transformCache.has(id)) {
     res = transformCache.get(id)
   } else {

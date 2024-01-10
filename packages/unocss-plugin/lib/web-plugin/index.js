@@ -13,7 +13,7 @@ function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
       const ctx = createContext(configOrPath, defaults)
-      const { uno, filter } = ctx
+      const { uno, filter, transformCache } = ctx
       const entries = new Set()
       const __vfsModules = new Set()
       const __vfs = new VirtualModulesPlugin()
@@ -82,7 +82,8 @@ function WebpackPlugin (configOrPath, defaults) {
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
-          // 可以收集到cache中的tokens，可解决存在cache，二次serve中无法获取tokens的问题
+          // 清空transformCache避免watch修改不生效
+          transformCache.clear()
           const tokens = new Set()
           for (const module of compilation.modules) {
             const assetsInfo = module.buildInfo.assetsInfo || new Map()
@@ -94,9 +95,8 @@ function WebpackPlugin (configOrPath, defaults) {
               }
             }
           }
-          const files = Object.keys(compilation.assets)
           const result = await uno.generate(tokens, { minify: true })
-
+          const files = Object.keys(compilation.assets)
           for (const file of files) {
             if (file === '*') { return }
             let code = compilation.assets[file].source().toString()
