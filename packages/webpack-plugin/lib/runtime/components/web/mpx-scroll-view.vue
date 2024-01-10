@@ -4,7 +4,7 @@
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
   import throttle from 'lodash/throttle'
-import debounce from 'lodash/debounce'
+  import debounce from 'lodash/debounce'
 
   BScroll.use(PullDown)
 
@@ -63,7 +63,6 @@ import debounce from 'lodash/debounce'
         lastX: 0,
         lastY: 0,
         mutationObserver: null,
-        isMounted: false,
         mpxScrollOptions: {},
         lastContentWidth: 0,
         lastContentHeight: 0,
@@ -421,16 +420,6 @@ import debounce from 'lodash/debounce'
         leading: false,
         trailing: true
       }),
-      shouldNotRefresh () {
-        const { scroller } = this.bs
-        const { scrollBehaviorX, scrollBehaviorY } = scroller
-        let outsideBoundaries =
-          scrollBehaviorX.currentPos > scrollBehaviorX.minScrollPos ||
-          scrollBehaviorX.currentPos < scrollBehaviorX.maxScrollPos ||
-          scrollBehaviorY.currentPos > scrollBehaviorY.minScrollPos ||
-          scrollBehaviorY.currentPos < scrollBehaviorY.maxScrollPos
-        return scroller.animater.pending || outsideBoundaries
-      },
       observeAnimation (type) {
         const eventNames = ['transitionend', 'animationend']
         const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
