@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/extend-expect'
 import {
   showActionSheet
 } from '../../src/web/api/action-sheet/index'
+import { dispatchTap } from '../../../../test/utils/touch'
 
 function manualPromise (promise, execResolve, execReject) {
   return new Promise((resolve, reject) => {
@@ -41,7 +42,8 @@ describe('test toast', () => {
     expect(list.childNodes[0]).toHaveTextContent(A)
     expect(list.childNodes[1]).toHaveTextContent(B)
     expect(list.childNodes[2]).toHaveTextContent(C)
-    list.childNodes[2].click()
+    // 点击第三个
+    dispatchTap(list.childNodes[2])
     jest.runAllTimers()
     expect(actionSheet).toHaveAttribute('class', expect.not.stringContaining('show'))
     expect(success.mock.calls.length).toBe(1)
@@ -76,7 +78,7 @@ describe('test toast', () => {
     expect(actionSheet).toHaveAttribute('class', expect.stringContaining('show'))
     expect(actionSheet.childNodes.length).toBe(2)
     expect(list.childNodes.length).toBe(5)
-    cancelBtn.click()
+    dispatchTap(cancelBtn)
     jest.runAllTimers()
     expect(actionSheet).toHaveAttribute('class', expect.not.stringContaining('show'))
     expect(fail.mock.calls.length).toBe(1)
@@ -90,7 +92,7 @@ describe('test toast', () => {
     const execResolve = () => {
       const actionSheet = document.body.lastChild
       const list = actionSheet.lastChild.firstChild
-      list.childNodes[2].click()
+      dispatchTap(list.childNodes[2])
     }
 
     return manualPromise(() => {
@@ -110,7 +112,7 @@ describe('test toast', () => {
     const execReject = () => {
       const actionSheet = document.body.lastChild
       const cancelBtn = actionSheet.lastChild.lastChild
-      cancelBtn.click()
+      dispatchTap(cancelBtn)
     }
 
     return manualPromise(() => {

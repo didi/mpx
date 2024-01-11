@@ -1,46 +1,21 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
+const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const isEmptyObject = require('../utils/is-empty-object')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
-
-/**
- * Make a map and return a function for checking if a key
- * is in that map.
- */
-function makeMap (str, expectsLowerCase) {
-  const map = Object.create(null)
-  const list = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase
-    ? function (val) {
-      return map[val.toLowerCase()]
-    }
-    : function (val) {
-      return map[val]
-    }
-}
+const makeMap = require('../utils/make-map')
+const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 
 const no = function () {
   return false
 }
-
-// HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
-// Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-const isNonPhrasingTag = makeMap(
-  'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
-  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
-  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track'
-)
 
 /*!
  * HTML Parser By John Resig (ejohn.org)
@@ -651,6 +626,9 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    data: {
+      usingComponents: options.usingComponents
+    },
     warn: _warn,
     error: _error
   })
@@ -672,7 +650,7 @@ function parse (template, options) {
 
   function genTempRoot () {
     // 使用临时节点作为root，处理multi root的情况
-    root = currentParent = getTempNode()
+    root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
   }
 
@@ -760,7 +738,7 @@ function parse (template, options) {
     },
     comment: function comment (text) {
       if (!currentParent) genTempRoot()
-      if (options.hasComment) {
+      if (options.hasComment || /mpx_config_/.test(text)) {
         currentParent.children.push({
           type: 3,
           text: text,
@@ -966,7 +944,7 @@ function processComponentIs (el, options) {
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
-    el.is = parseMustache(is).result
+    el.is = parseMustacheWithContext(is).result
   } else {
     warn$1('<component> tag should have attrs[is].')
   }
@@ -978,7 +956,7 @@ function parseFuncStr2 (str) {
   const funcRE = /^([^()]+)(\((.*)\))?/
   const match = funcRE.exec(str)
   if (match) {
-    const funcName = parseMustache(match[1]).result
+    const funcName = parseMustacheWithContext(match[1]).result
     const hasArgs = !!match[2]
     let args = match[3] ? `,${match[3]}` : ''
     const ret = /(,|^)\s*(\$event)\s*(,|$)/.exec(args)
@@ -1113,6 +1091,7 @@ function processBindEvent (el, options) {
   for (const type in eventConfigMap) {
     let needBind = false
     let { configs, rawName, proxy } = eventConfigMap[type]
+    delete eventConfigMap[type]
     if (proxy) {
       needBind = true
     } else if (configs.length > 1) {
@@ -1120,11 +1099,14 @@ function processBindEvent (el, options) {
     } else if (configs.length === 1) {
       needBind = !!configs[0].hasArgs
     }
+
+    const escapedType = dash2hump(type)
     // 排除特殊情况
-    if (needBind && !isValidIdentifierStr(type)) {
+    if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
       needBind = false
     }
+
     if (needBind) {
       if (rawName) {
         // 清空原始事件绑定
@@ -1142,11 +1124,9 @@ function processBindEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[type] = configs.map((item) => {
+      eventConfigMap[escapedType] = configs.map((item) => {
         return item.expStr
       })
-    } else {
-      delete eventConfigMap[type]
     }
   }
 
@@ -1162,7 +1142,43 @@ function wrapMustache (val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
 }
 
-function parseMustache (raw = '') {
+function parseMustacheWithContext (raw = '') {
+  return parseMustache(raw, (exp) => {
+    if (defs) {
+      // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
+      const defKeys = Object.keys(defs)
+      defKeys.forEach((defKey) => {
+        const defRE = new RegExp(`\\b${defKey}\\b`)
+        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
+        if (defRE.test(exp)) {
+          exp = exp.replace(defREG, stringify(defs[defKey]))
+        }
+      })
+    }
+
+    if (i18n) {
+      for (const i18nFuncName of i18nFuncNames) {
+        const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
+        const funcNameREG = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`, 'g')
+        if (funcNameRE.test(exp)) {
+          if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
+            const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
+            i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
+            exp = i18nInjectComputedKey
+          } else {
+            exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(null, _l, _fl, `)
+          }
+          hasI18n = true
+          break
+        }
+      }
+    }
+
+    return exp
+  })
+}
+
+function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => str) {
   let replaced = false
   if (tagRE.test(raw)) {
     const ret = []
@@ -1171,53 +1187,35 @@ function parseMustache (raw = '') {
     while (match = tagREG.exec(raw)) {
       const pre = raw.substring(lastLastIndex, match.index)
       if (pre) {
-        ret.push(stringify(pre))
-      }
-      let exp = match[1]
-
-      // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
-      const defKeys = Object.keys(defs)
-      defKeys.forEach((defKey) => {
-        const defRE = new RegExp(`\\b${defKey}\\b`)
-        const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
-        if (defRE.test(exp)) {
-          exp = exp.replace(defREG, stringify(defs[defKey]))
-          replaced = true
-        }
-      })
-
-      if (i18n) {
-        for (const i18nFuncName of i18nFuncNames) {
-          const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
-          const funcNameREG = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`, 'g')
-          if (funcNameRE.test(exp)) {
-            if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
-              const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
-              i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
-              exp = i18nInjectComputedKey
-            } else {
-              exp = exp.replace(funcNameREG, `${i18nModuleName}.$1(null, _l, _fl, `)
-            }
-            hasI18n = true
-            replaced = true
-            break
-          }
-        }
+        const pre2 = strHandler(pre)
+        if (pre2 !== pre) replaced = true
+        if (pre2) ret.push(stringify(pre2))
       }
 
-      ret.push(`(${exp.trim()})`)
+      const exp = match[1].trim()
+      if (exp) {
+        const exp2 = expHandler(exp)
+        if (exp2 !== exp) replaced = true
+        if (exp2) ret.push(`(${exp2})`)
+      }
+
       lastLastIndex = tagREG.lastIndex
     }
+
     const post = raw.substring(lastLastIndex)
     if (post) {
-      ret.push(stringify(post))
+      const post2 = strHandler(post)
+      if (post2 !== post) replaced = true
+      if (post2) ret.push(stringify(post2))
     }
+
     let result
     if (ret.length === 1) {
       result = ret[0]
     } else {
       result = `(${ret.join('+')})`
     }
+
     return {
       result,
       hasBinding: true,
@@ -1225,10 +1223,14 @@ function parseMustache (raw = '') {
       replaced
     }
   }
+
+  const raw2 = strHandler(raw)
+  if (raw2 !== raw) replaced = true
+
   return {
-    result: stringify(raw),
+    result: stringify(raw2),
     hasBinding: false,
-    val: raw,
+    val: raw2,
     replaced
   }
 }
@@ -1246,14 +1248,14 @@ function processIf (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     if (mode === 'swan') val = wrapMustache(val)
-    const parsed = parseMustache(val)
+    const parsed = parseMustacheWithContext(val)
     el.if = {
       raw: parsed.val,
       exp: parsed.result
     }
   } else if (val = getAndRemoveAttr(el, config[mode].directive.elseif).val) {
     if (mode === 'swan') val = wrapMustache(val)
-    const parsed = parseMustache(val)
+    const parsed = parseMustacheWithContext(val)
     el.elseif = {
       raw: parsed.val,
       exp: parsed.result
@@ -1295,7 +1297,7 @@ function processFor (el) {
       }
     } else {
       if (mode === 'swan') val = wrapMustache(val)
-      const parsed = parseMustache(val)
+      const parsed = parseMustacheWithContext(val)
       el.for = {
         raw: parsed.val,
         exp: parsed.result
@@ -1407,14 +1409,14 @@ function processAttrs (el, options) {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
     const value = needWrap ? `{${attr.value}}` : attr.value
-    const parsed = parseMustache(value)
+    const parsed = parseMustacheWithContext(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
       const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
       addExp(el, parsed.result, isProps)
-    }
-    if (parsed.replaced) {
-      modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
+      if (parsed.replaced) {
+        modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
+      }
     }
   })
 }
@@ -1546,7 +1548,7 @@ function processText (el) {
   if (el.type !== 3 || el.isComment) {
     return
   }
-  const parsed = parseMustache(el.text)
+  const parsed = parseMustacheWithContext(el.text)
   if (parsed.hasBinding) {
     addExp(el, parsed.result)
   }
@@ -1591,8 +1593,8 @@ function processClass (el, meta) {
   let staticClass = getAndRemoveAttr(el, type).val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
-    const staticClassExp = parseMustache(staticClass).result
-    const dynamicClassExp = transDynamicClassExpr(parseMustache(dynamicClass).result, {
+    const staticClassExp = parseMustacheWithContext(staticClass).result
+    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
     addAttrs(el, [{
@@ -1627,8 +1629,8 @@ function processStyle (el, meta) {
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
-    const staticStyleExp = parseMustache(staticStyle).result
-    const dynamicStyleExp = parseMustache(dynamicStyle).result
+    const staticStyleExp = parseMustacheWithContext(staticStyle).result
+    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
@@ -1652,6 +1654,38 @@ function isRealNode (el) {
 
 function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
+function processAliExternalClassesHack (el, options) {
+  const isComponent = isComponentNode(el, options)
+  // 处理组件externalClass多层传递
+  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+  classLikeAttrNames.forEach((classLikeAttrName) => {
+    let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+    if (classLikeAttrValue) {
+      options.externalClasses.forEach((className) => {
+        const reg = new RegExp('\\b' + className + '\\b', 'g')
+        const replacement = dash2hump(className)
+        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
+      })
+      addAttrs(el, [{
+        name: classLikeAttrName,
+        value: classLikeAttrValue
+      }])
+    }
+  })
+
+  if (options.hasScoped && isComponent) {
+    options.externalClasses.forEach((className) => {
+      const externalClass = getAndRemoveAttr(el, className).val
+      if (externalClass) {
+        addAttrs(el, [{
+          name: className,
+          value: `${externalClass} ${options.moduleId}`
+        }])
+      }
+    })
+  }
 }
 
 // externalClasses只能模拟静态传递
@@ -1715,6 +1749,18 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
+function processScoped (el, options) {
+  if (options.hasScoped && isRealNode(el)) {
+    const moduleId = options.moduleId
+    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
+    const staticClass = getAndRemoveAttr(el, 'class').val
+    addAttrs(el, [{
+      name: 'class',
+      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+    }])
+  }
+}
+
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
 function processBuiltInComponents (el, meta) {
@@ -1729,6 +1775,105 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+function processAliAddComponentRootView (el, options) {
+  const processAttrsConditions = [
+    { condition: /^(on|catch)Tap$/, action: 'clone' },
+    { condition: /^(on|catch)TouchStart$/, action: 'clone' },
+    { condition: /^(on|catch)TouchMove$/, action: 'clone' },
+    { condition: /^(on|catch)TouchEnd$/, action: 'clone' },
+    { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
+    { condition: /^(on|catch)LongTap$/, action: 'clone' },
+    { condition: /^data-/, action: 'clone' },
+    { condition: /^id$/, action: 'clone' },
+    { condition: /^style$/, action: 'move' },
+    { condition: /^slot$/, action: 'move' }
+  ]
+  const processAppendAttrsRules = [
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+  ]
+  const newElAttrs = []
+  const allAttrs = cloneAttrsList(el.attrsList)
+
+  function processClone (attr) {
+    newElAttrs.push(attr)
+  }
+
+  function processMove (attr) {
+    getAndRemoveAttr(el, attr.name)
+    newElAttrs.push(attr)
+  }
+
+  function processAppendRules (el) {
+    processAppendAttrsRules.forEach((rule) => {
+      const getNeedAppendAttrValue = el.attrsMap[rule.name]
+      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
+      newElAttrs.push({
+        name: rule.name,
+        value
+      })
+    })
+  }
+
+  processAttrsConditions.forEach(item => {
+    const matcher = normalizeCondition(item.condition)
+    allAttrs.forEach((attr) => {
+      if (matcher(attr.name)) {
+        if (item.action === 'clone') {
+          processClone(attr)
+        } else if (item.action === 'move') {
+          processMove(attr)
+        }
+      }
+    })
+  })
+
+  processAppendRules(el)
+  const componentWrapView = createASTElement('view', newElAttrs)
+  moveBaseDirective(componentWrapView, el)
+  if (el.is && el.components) {
+    el = postProcessComponentIs(el)
+  }
+
+  replaceNode(el, componentWrapView, true)
+  addChild(componentWrapView, el)
+  return componentWrapView
+}
+
+// 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
+function getVirtualHostRoot (options, meta) {
+  if (srcMode === 'wx') {
+    if (options.isComponent) {
+      if ((mode === 'wx') && options.hasVirtualHost) {
+        // wx组件注入virtualHost配置
+        !meta.options && (meta.options = {})
+        meta.options.virtualHost = true
+      }
+      if ((mode === 'web') && !options.hasVirtualHost) {
+        // ali组件根节点实体化
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+          },
+          {
+            name: 'v-on',
+            value: '$listeners'
+          }
+        ])
+        rootView.hasEvent = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
+    }
+    if (options.isPage) {
+      if (mode === 'web') {
+        return createASTElement('page', [])
+      }
+    }
+  }
+  return getTempNode()
+}
+
 function processShow (el, options, root) {
   // 开启 virtualhost 全部走 props 传递处理
   // 未开启 virtualhost 直接绑定 display:none 到节点上
@@ -1736,31 +1881,31 @@ function processShow (el, options, root) {
   if (mode === 'swan') show = wrapMustache(show)
 
   if (options.hasVirtualHost) {
-    // 给虚拟组件添加 {{ mpxShow }}
     if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
-        show = `{{${parseMustache(show).result}&&mpxShow}}`
+        show = `{{${parseMustacheWithContext(show).result}&&mpxShow}}`
       } else {
         show = '{{mpxShow}}'
       }
     }
-  }
-
-  if (isComponentNode(el, options) && show !== undefined) {
-    if (show === '') {
-      show = '{{false}}'
+    if (isComponentNode(el, options) && show !== undefined) {
+      if (show === '') {
+        show = '{{false}}'
+      }
+      addAttrs(el, [{
+        name: 'mpxShow',
+        value: show
+      }])
+    } else {
+      processShowStyle()
     }
-    addAttrs(el, [{
-      name: 'mpxShow',
-      value: show
-    }])
+  } else {
+    processShowStyle()
   }
-
-  processShowStyle()
 
   function processShowStyle () {
     if (show !== undefined) {
-      const showExp = parseMustache(show).result
+      const showExp = parseMustacheWithContext(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
@@ -1786,7 +1931,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,noMode')
 
 const wrapRE = /^\((.*)\)$/
 
@@ -1922,6 +2067,8 @@ function processElement (el, root, options, meta) {
 
   processInjectWxs(el, meta)
 
+  const transAli = mode === 'ali' && srcMode === 'wx'
+
   if (mode === 'web') {
     // 收集内建组件
     processBuiltInComponents(el, meta)
@@ -1933,6 +2080,15 @@ function processElement (el, root, options, meta) {
   }
 
   const pass = isNative || processTemplate(el) || processingTemplate
+
+  // 仅ali平台需要scoped模拟样式隔离
+  if (mode === 'ali') {
+    processScoped(el, options)
+  }
+
+  if (transAli) {
+    processAliExternalClassesHack(el, options)
+  }
 
   processIf(el)
   processFor(el)
@@ -1964,7 +2120,11 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    el = postProcessComponentIs(el)
+    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+      el = processAliAddComponentRootView(el, options)
+    } else {
+      el = postProcessComponentIs(el)
+    }
   }
   postProcessFor(el)
   postProcessIf(el)
@@ -2180,7 +2340,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `this._i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `_i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {
@@ -2229,6 +2389,7 @@ module.exports = {
   makeAttrsMap,
   stringifyAttr,
   parseMustache,
+  parseMustacheWithContext,
   stringifyWithResolveComputed,
   addAttrs
 }

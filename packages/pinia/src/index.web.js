@@ -19,6 +19,7 @@ vue.use(PiniaVuePlugin)
 function createPinia () {
   const pinia = webCreatePinia()
   global.__mpxPinia = pinia
+  setActivePinia(pinia)
   return pinia
 }
 

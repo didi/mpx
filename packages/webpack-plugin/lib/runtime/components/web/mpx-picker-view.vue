@@ -163,7 +163,7 @@
     height: 100%
     overflow: hidden
     text-align: center
-    font-size: 14px
+    font-size: 16px
     position: relative
 
     &.mpx-picker-fade-enter, &.mpx-picker-fade-leave-active

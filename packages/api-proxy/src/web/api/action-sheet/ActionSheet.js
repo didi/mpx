@@ -1,4 +1,4 @@
-import { ToPromise, webHandleSuccess, webHandleFail } from '../../../common/js'
+import { ToPromise, webHandleSuccess, webHandleFail, createDom, bindTap, getRootElement } from '../../../common/js'
 import '../../../common/stylus/ActionSheet.styl'
 
 export default class ActionSheet extends ToPromise {
@@ -12,37 +12,20 @@ export default class ActionSheet extends ToPromise {
       complete: null
     }
     this.hideTimer = null
+    // 临时绑定事件的解绑方法数组，用于在 hide 时解绑
+    this.tempListeners = []
 
-    const actionSheet = document.createElement('div')
-    actionSheet.setAttribute('class', '__mpx_actionsheet__')
-
-    const mask = document.createElement('div')
-    mask.setAttribute('class', '__mpx_mask__')
-
-    const box = document.createElement('div')
-    box.setAttribute('class', '__mpx_actionsheet_box__')
-
-    const list = document.createElement('div')
-    list.setAttribute('class', '__mpx_actionsheet_list__')
-
-    const cancelBtn = document.createElement('div')
-    cancelBtn.setAttribute('class', '__mpx_actionsheet_cancel__')
-    cancelBtn.textContent = '取消'
-
-    box.appendChild(list)
-    box.appendChild(cancelBtn)
-    actionSheet.appendChild(mask)
-    actionSheet.appendChild(box)
-    document.body.appendChild(actionSheet)
-
-    this.actionSheet = actionSheet
-    this.mask = mask
-    this.box = box
-    this.list = list
-    this.cancelBtn = cancelBtn
+    this.actionSheet = createDom('div', { class: '__mpx_actionsheet__' }, [
+      this.mask = createDom('div', { class: '__mpx_mask__' }),
+      this.box = createDom('div', { class: '__mpx_actionsheet_box__' }, [
+        this.list = createDom('div', { class: '__mpx_actionsheet_list__' }),
+        this.cancelBtn = createDom('div', { class: '__mpx_actionsheet_cancel__' }, ['取消'])
+      ])
+    ])
   }
 
   show (options) {
+    getRootElement().appendChild(this.actionSheet) // show 则挂载
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
@@ -50,14 +33,12 @@ export default class ActionSheet extends ToPromise {
 
     const opts = Object.assign({}, this.defaultOpts, options)
 
-    const list = document.createElement('div')
-    list.setAttribute('class', '__mpx_actionsheet_list__')
+    const list = createDom('div', { class: '__mpx_actionsheet_list__' })
 
+    // todo 使用事件代理
     opts.itemList.forEach((item, index) => {
-      const sheet = document.createElement('div')
-      sheet.setAttribute('class', '__mpx_actionsheet_sheet__')
-      sheet.textContent = item
-      sheet.onclick = () => {
+      const sheet = createDom('div', { class: '__mpx_actionsheet_sheet__' }, [item])
+      this.tempListeners.push(bindTap(sheet, () => {
         this.hide()
         const res = {
           errMsg: 'showActionSheet:ok',
@@ -65,7 +46,7 @@ export default class ActionSheet extends ToPromise {
         }
         webHandleSuccess(res, opts.success, opts.complete)
         this.toPromiseResolve(res)
-      }
+      }))
       list.appendChild(sheet)
     })
 
@@ -73,15 +54,18 @@ export default class ActionSheet extends ToPromise {
     this.list = list
     this.list.style.color = opts.itemColor
 
-    this.cancelBtn.onclick = () => {
+    this.tempListeners.push(bindTap(this.cancelBtn, () => {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
       webHandleFail(err, opts.fail, opts.complete)
       !opts.fail && this.toPromiseReject(err)
-    }
-
-    this.box.classList.add('show')
+    }))
+    // make transition next frame
     this.actionSheet.classList.add('show')
+    // 如果使用 requestAnimationFrame，第一次展示不会有动画效果，原因待确认，这里先使用 setTimeout
+    setTimeout(() => {
+      this.box.classList.add('show')
+    }, 17)
 
     return this.toPromiseInitPromise()
   }
@@ -91,10 +75,12 @@ export default class ActionSheet extends ToPromise {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
     }
-
+    this.tempListeners.forEach(unbind => unbind())
+    this.tempListeners = []
+    this.box.classList.remove('show')
     this.hideTimer = setTimeout(() => {
-      this.box.classList.remove('show')
       this.actionSheet.classList.remove('show')
-    }, 0)
+      this.actionSheet.remove() // hide 则卸载
+    }, 300) // animation duration is 300ms
   }
 }

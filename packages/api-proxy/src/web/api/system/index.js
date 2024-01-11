@@ -1,6 +1,10 @@
-import { webHandleSuccess } from '../../../common/js'
+import { isBrowser, throwSSRWarning, webHandleSuccess } from '../../../common/js'
 
 function getSystemInfoSync () {
+  if (!isBrowser) {
+    throwSSRWarning('getSystemInfoSync API is running in non browser environments')
+    return
+  }
   const ua = navigator.userAgent.split('(')[1].split(')')[0]
   const phones = new Map([
     ['iPhone', /iPhone|iPad|iPod|iOS/i],
@@ -66,6 +70,10 @@ function getSystemInfoSync () {
 }
 
 function getSystemInfo (options = {}) {
+  if (!isBrowser) {
+    throwSSRWarning('getSystemInfo API is running in non browser environments')
+    return
+  }
   const info = getSystemInfoSync()
   const res = Object.assign({ errMsg: 'getSystemInfo:ok' }, info)
   webHandleSuccess(res, options.success, options.complete)

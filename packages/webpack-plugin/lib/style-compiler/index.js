@@ -1,7 +1,7 @@
+const path = require('path')
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
-const trim = require('./plugins/trim')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
@@ -27,9 +27,9 @@ module.exports = function (css, map) {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
-  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
+  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs, inlineConfigFile: path.join(mpx.projectRoot, 'vue.config.js') })
   loadPostcssConfig(this, inlineConfig).then(config => {
-    const plugins = [trim] // init with trim plugin
+    const plugins = [] // init with trim plugin
     const options = Object.assign(
       {
         to: this.resourcePath,
@@ -40,6 +40,10 @@ module.exports = function (css, map) {
     )
     // ali平台下处理host选择器
     if (mode === 'ali') {
+      plugins.push(transSpecial({ id }))
+    }
+
+    if (mode === 'web') {
       plugins.push(transSpecial({ id }))
     }
 
@@ -75,13 +79,13 @@ module.exports = function (css, map) {
       }
     }
 
-    plugins.push(...config.plugins) // push user config plugins
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
 
-    return postcss(plugins)
+    return postcss(finalPlugins)
       .process(css, options)
       .then(result => {
         // ali环境添加全局样式抹平root差异
-        if (mode === 'ali' && isApp) {
+        if ((mode === 'ali' || mode === 'web') && isApp) {
           result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
 

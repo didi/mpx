@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.8.46",
+  "version": "2.9.9",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -31,7 +31,7 @@
     "promise"
   ],
   "author": "httpsxiao",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },

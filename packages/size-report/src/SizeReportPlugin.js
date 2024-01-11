@@ -48,7 +48,10 @@ class SizeReportPlugin {
       stage: 1000
     }, async (compilation) => {
       const { moduleGraph, chunkGraph, __mpx__: mpx } = compilation
-      if (!mpx) return
+      if (!mpx) {
+        compilation.errors.push(new Error('@mpxjs/size-report需要与@mpxjs/webpack-plugin配合使用，请检查!'))
+        return
+      }
 
       const logger = compilation.getLogger('SizeReportPlugin')
       const cache = compilation.getCache('SizeReportPlugin')
@@ -87,7 +90,7 @@ class SizeReportPlugin {
             // We skip connections without Module pointer
             if (!m) continue
             // We skip weak connections
-            if (connection.weak) continue
+            if (connection.weak && d.type !== 'mpx cjs extract') continue
             // Use undefined runtime
             const state = connection.getActiveState(/* runtime */)
             // We skip inactive connections
@@ -228,12 +231,12 @@ class SizeReportPlugin {
         })
       }
 
-      const subpackages = Object.keys(mpx.componentsMap)
-      delete subpackages.main
+      const packages = Object.keys(mpx.dynamicEntryInfo)
 
       function getPackageName (fileName) {
         fileName = toPosix(fileName)
-        for (const packageName of subpackages) {
+        for (const packageName of packages) {
+          if (packageName === 'main') continue
           if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'

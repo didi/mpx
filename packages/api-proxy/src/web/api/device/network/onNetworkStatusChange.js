@@ -1,4 +1,4 @@
-import { isBrowser } from '../../../../common/js/utils'
+import { isBrowser, throwSSRWarning } from '../../../../common/js/utils'
 const fnMap = new Map()
 
 const oldObserveList = new Set()
@@ -13,6 +13,10 @@ if (isBrowser) {
 }
 
 export function onNetworkStatusChange (callbackFn) {
+  if (!isBrowser) {
+    throwSSRWarning('onNetworkStatusChange API is running in non browser environments')
+    return
+  }
   if (navigator.connection) {
     const proxyCallback = evt => {
       const isConnected = navigator.onLine
@@ -29,6 +33,10 @@ export function onNetworkStatusChange (callbackFn) {
 }
 
 export function offNetworkStatusChange (callbackFn) {
+  if (!isBrowser) {
+    throwSSRWarning('offNetworkStatusChange API is running in non browser environments')
+    return
+  }
   if (navigator.connection) {
     navigator.connection.removeEventListener('change', fnMap.get(callbackFn))
   } else {

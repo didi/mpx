@@ -26,7 +26,8 @@ import {
   getFirstKey,
   callWithErrorHandling,
   warn,
-  error
+  error,
+  getEnvObj
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -36,6 +37,7 @@ import {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
+  SERVERPREFETCH,
   UNMOUNTED,
   ONLOAD,
   ONSHOW,
@@ -44,6 +46,8 @@ import {
 } from './innerLifecycle'
 
 let uid = 0
+
+const envObj = getEnvObj()
 
 class RenderTask {
   resolved = false
@@ -235,14 +239,14 @@ export default class MpxProxy {
       const setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
-          triggerEvent: this.target.triggerEvent.bind(this.target),
+          triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
           asyncRefs: this.target.$asyncRefs,
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
-          createSelectorQuery: this.target.createSelectorQuery.bind(this.target),
-          createIntersectionObserver: this.target.createIntersectionObserver.bind(this.target)
+          createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
+          createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj)
         }
       ])
       if (!isObject(setupResult)) {
@@ -308,7 +312,16 @@ export default class MpxProxy {
   watch (source, cb, options) {
     const target = this.target
     const getter = isString(source)
-      ? () => getByPath(target, source)
+      ? () => {
+        // for watch multi path string like 'a.b,c,d'
+        if (source.indexOf(',') > -1) {
+          return source.split(',').map(path => {
+            return getByPath(target, path.trim())
+          })
+        } else {
+          return getByPath(target, source)
+        }
+      }
       : source.bind(target)
 
     if (isObject(cb)) {
@@ -518,7 +531,7 @@ export default class MpxProxy {
   updatePreRender () {
     this.toggleRecurse(false)
     pauseTracking()
-    flushPreFlushCbs(undefined, this.update)
+    flushPreFlushCbs(this)
     resetTracking()
     this.toggleRecurse(true)
   }
@@ -526,6 +539,10 @@ export default class MpxProxy {
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
+    const _i = this.target._i.bind(this.target)
+    const _c = this.target._c.bind(this.target)
+    const _r = this.target._r.bind(this.target)
+    const _sc = this.target._sc.bind(this.target)
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {
@@ -534,7 +551,7 @@ export default class MpxProxy {
 
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender()
+          return this.target.__injectedRender(_i, _c, _r, _sc)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
@@ -604,7 +621,9 @@ export default class MpxProxy {
 
 export let currentInstance = null
 
-export const getCurrentInstance = () => currentInstance?.target
+export const getCurrentInstance = () => {
+  return currentInstance && { proxy: currentInstance?.target }
+}
 
 export const setCurrentInstance = (instance) => {
   currentInstance = instance
@@ -641,6 +660,7 @@ export const onLoad = createHook(ONLOAD)
 export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
+export const onServerPrefetch = createHook(SERVERPREFETCH)
 export const onPullDownRefresh = createHook('__onPullDownRefresh__')
 export const onReachBottom = createHook('__onReachBottom__')
 export const onShareAppMessage = createHook('__onShareAppMessage__')
