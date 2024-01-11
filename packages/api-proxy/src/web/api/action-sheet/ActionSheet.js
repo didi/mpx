@@ -57,7 +57,7 @@ export default class ActionSheet extends ToPromise {
     this.list = list
     this.list.style.color = opts.itemColor
     // eslint-disable-next-line no-new
-    new MpxEvent({
+    this.tempListeners.push(new MpxEvent({
       layer: this.cancelBtn,
       touchend: () => {
         this.hide()
@@ -65,7 +65,7 @@ export default class ActionSheet extends ToPromise {
         webHandleFail(err, opts.fail, opts.complete)
         !opts.fail && this.toPromiseReject(err)
       }
-    })
+    }))
     // make transition next frame
     this.actionSheet.classList.add('show')
     // 如果使用 requestAnimationFrame，第一次展示不会有动画效果，原因待确认，这里先使用 setTimeout
