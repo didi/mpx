@@ -1,5 +1,3 @@
-import { isBrowser } from './utils'
-
 function webHandleSuccess (result, success, complete) {
   typeof success === 'function' && success(result)
   typeof complete === 'function' && complete(result)
