@@ -1,4 +1,5 @@
-import { webHandleSuccess, webHandleFail, createDom, warn, bindTap, getRootElement } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, createDom, warn, getRootElement } from '../../../common/js'
+import MpxEvent from '@mpxjs/webpack-plugin/lib/runtime/components/web/event'
 import '../../../common/stylus/Preview.styl'
 /**
  * Preview class for displaying images in a slideshow format.
@@ -21,30 +22,38 @@ export default class Preview {
   initEvent () {
     // swipe to change image
     let startX = 0
-    this.preview.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].pageX
-    })
-    this.preview.addEventListener('touchend', (e) => {
-      const endX = e.changedTouches[0].pageX
-      const distance = endX - startX
-      if (Math.abs(distance) < this.minDistance) {
-        return
+    let startY = 0
+    // eslint-disable-next-line no-new
+    new MpxEvent({
+      layer: this.preview,
+      touchstart: (e) => {
+        startX = e.touches[0].pageX
+        startY = e.touches[0].pageY
+      },
+      touchend: (e) => {
+        // click to close
+        if (Math.abs(e.changedTouches[0].pageX - startX) < 10 && Math.abs(e.changedTouches[0].pageY - startY) < 10) {
+          this.currentIndex = 0
+          this.preview.style.display = 'none'
+          this.preview.querySelector('.__mpx_preview_images__').remove()
+          this.preview.remove()
+        } else {
+          // swipe to change image
+          const endX = e.changedTouches[0].pageX
+          const distance = endX - startX
+          if (Math.abs(distance) < this.minDistance) {
+            return
+          }
+          if (distance > 0) {
+            this.currentIndex = Math.max(0, this.currentIndex - 1)
+          }
+          if (distance < 0) {
+            this.currentIndex = Math.min(this.maxIndex - 1, this.currentIndex + 1)
+          }
+          this.preview.querySelector('.__mpx_preview_images__').style.transform = `translateX(-${this.currentIndex * 100}%)`
+          this.updateTextTip()
+        }
       }
-      if (distance > 0) {
-        this.currentIndex = Math.max(0, this.currentIndex - 1)
-      }
-      if (distance < 0) {
-        this.currentIndex = Math.min(this.maxIndex - 1, this.currentIndex + 1)
-      }
-      this.preview.querySelector('.__mpx_preview_images__').style.transform = `translateX(-${this.currentIndex * 100}%)`
-      this.updateTextTip()
-    })
-    // click to close
-    bindTap(this.preview, () => {
-      this.currentIndex = 0
-      this.preview.style.display = 'none'
-      this.preview.querySelector('.__mpx_preview_images__').remove()
-      this.preview.remove()
     })
   }
 

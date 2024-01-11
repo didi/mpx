@@ -3,6 +3,7 @@ const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const eventPath = normalize.lib('runtime/components/web/event')
+const envPath = normalize.lib('runtime/env')
 const {
   buildComponentsMap,
   buildPagesMap,
@@ -49,6 +50,7 @@ module.exports = function (script, {
   import VueRouter from 'vue-router'
   import Mpx from '@mpxjs/core'
   import { processAppOption, getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+  import { isBrowser } from ${stringifyRequest(loaderContext, envPath)}
   Vue.use(VueRouter)\n`
 
   if (i18n) {
@@ -66,7 +68,17 @@ module.exports = function (script, {
     globalTabBar
   })
 
-  output += `\n  require(${stringifyRequest(loaderContext, eventPath)})\n`
+  output += `\n  var mpxEvent = require(${stringifyRequest(loaderContext, eventPath)}).default
+  if (isBrowser) {
+    document.addEventListener('DOMContentLoaded', function(){
+      //eslint-disable-next-line no-new
+      new mpxEvent({
+        layer: document.body
+      })
+    }, false)
+  }
+  \n`
+
   output += `\n  var App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
 
   output += `

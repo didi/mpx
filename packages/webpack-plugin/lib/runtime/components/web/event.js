@@ -1,7 +1,12 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
 
-function MpxEvent(layer) {
+function MpxEvent ({
+    layer,
+    touchstart: startHandle,
+    touchmove: moveHandle,
+    touchend: endHandle
+}) {
     this.targetElement = null
 
     this.touches = []
@@ -14,7 +19,7 @@ function MpxEvent(layer) {
 
     this.needTap = true
 
-    this.isTouchDevice = document && ('ontouchstart' in document.documentElement)
+    this.isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
 
     this.onTouchStart = (event) => {
         if (event.targetTouches?.length > 1) {
@@ -27,6 +32,7 @@ function MpxEvent(layer) {
         this.startTimer = null
         this.touchStartX = this.touches[0].pageX
         this.touchStartY = this.touches[0].pageY
+        if (startHandle) startHandle(event)
         this.startTimer = setTimeout(() => {
             this.needTap = false
             this.sendEvent(this.targetElement, 'longpress', event)
@@ -40,6 +46,7 @@ function MpxEvent(layer) {
             this.needTap = false
             this.startTimer && clearTimeout(this.startTimer)
             this.startTimer = null
+            if (moveHandle) moveHandle(event)
         }
     }
 
@@ -49,6 +56,7 @@ function MpxEvent(layer) {
         }
         this.startTimer && clearTimeout(this.startTimer)
         this.startTimer = null
+        if (endHandle) endHandle(event)
         if (this.needTap) {
             this.sendEvent(this.targetElement, 'tap', event)
         }
@@ -56,6 +64,7 @@ function MpxEvent(layer) {
 
     this.onClick = (event) => {
         this.targetElement = event.target
+        if (endHandle) endHandle(event)
         this.sendEvent(this.targetElement, 'tap', event)
     }
     this.sendEvent = (targetElement, type, event) => {
@@ -87,9 +96,5 @@ function MpxEvent(layer) {
         layer.addEventListener('click', this.onClick, true)
     }
 }
-if (isBrowser) {
-    document.addEventListener('DOMContentLoaded', () => {
-        // eslint-disable-next-line no-new
-        new MpxEvent(document.body)
-    }, false)
-}
+
+export default MpxEvent
