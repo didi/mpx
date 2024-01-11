@@ -1,7 +1,7 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
 
-function MpxEvent({
+function MpxEvent ({
     layer,
     touchstart: startHandle,
     touchmove: moveHandle,
