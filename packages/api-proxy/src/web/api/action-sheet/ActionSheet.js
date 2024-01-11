@@ -13,6 +13,7 @@ export default class ActionSheet extends ToPromise {
       complete: null
     }
     this.hideTimer = null
+    this.tempListeners = []
 
     this.actionSheet = createDom('div', { class: '__mpx_actionsheet__' }, [
       this.mask = createDom('div', { class: '__mpx_mask__' }),
@@ -37,7 +38,7 @@ export default class ActionSheet extends ToPromise {
     opts.itemList.forEach((item, index) => {
       const sheet = createDom('div', { class: '__mpx_actionsheet_sheet__' }, [item])
       // eslint-disable-next-line no-new
-      new MpxEvent({
+      this.tempListeners.push(new MpxEvent({
         layer: sheet,
         touchend: () => {
           this.hide()
@@ -48,7 +49,7 @@ export default class ActionSheet extends ToPromise {
           webHandleSuccess(res, opts.success, opts.complete)
           this.toPromiseResolve(res)
         }
-      })
+      }))
       list.appendChild(sheet)
     })
 
@@ -80,6 +81,8 @@ export default class ActionSheet extends ToPromise {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
     }
+    this.tempListeners.forEach(event => event.removeListener())
+    this.tempListeners = []
     this.box.classList.remove('show')
     this.hideTimer = setTimeout(() => {
       this.actionSheet.classList.remove('show')

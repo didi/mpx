@@ -1,7 +1,7 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
 
-function MpxEvent ({
+function MpxEvent({
     layer,
     touchstart: startHandle,
     touchmove: moveHandle,
@@ -88,13 +88,26 @@ function MpxEvent ({
         })
         targetElement && targetElement.dispatchEvent(touchEvent)
     }
-    if (this.isTouchDevice) {
-        layer.addEventListener('touchstart', this.onTouchStart, true)
-        layer.addEventListener('touchmove', this.onTouchMove, true)
-        layer.addEventListener('touchend', this.onTouchEnd, true)
-    } else {
-        layer.addEventListener('click', this.onClick, true)
+    this.removeListener = () => {
+        if (this.isTouchDevice) {
+            layer.removeEventListener('touchstart', this.onTouchStart, true)
+            layer.removeEventListener('touchmove', this.onTouchMove, true)
+            layer.removeEventListener('touchend', this.onTouchEnd, true)
+        } else {
+            layer.removeEventListener('click', this.onClick, true)
+        }
     }
+
+    this.addListener = () => {
+        if (this.isTouchDevice) {
+            layer.addEventListener('touchstart', this.onTouchStart, true)
+            layer.addEventListener('touchmove', this.onTouchMove, true)
+            layer.addEventListener('touchend', this.onTouchEnd, true)
+        } else {
+            layer.addEventListener('click', this.onClick, true)
+        }
+    }
+    this.addListener()
 }
 
 export default MpxEvent
