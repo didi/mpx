@@ -38,5 +38,8 @@
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
     "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "@mpxjs/webpack-plugin": "^2.9.12"
   }
 }
