@@ -1,5 +1,5 @@
 import * as platformApi from './platform'
-import { getEnvObj, getEnvStr } from './common/js'
+import { getEnvObj } from './common/js'
 import promisify from './common/js/promisify'
 
 export default function install (target, options = {}) {
@@ -12,7 +12,6 @@ export default function install (target, options = {}) {
   } = options
 
   let transedApi = {}
-  const envStr = getEnvStr()
 
   if (__mpx_env__ === 'web') {
     transedApi = platformApi
@@ -24,35 +23,7 @@ export default function install (target, options = {}) {
   }
 
   const promisedApi = usePromise ? promisify(transedApi, whiteList, blackList) : {}
-  const allApi = Object.assign({}, transedApi, promisedApi)
-
-  Object.keys(allApi).forEach(api => {
-    try {
-      if (typeof allApi[api] !== 'function') {
-        target[api] = allApi[api]
-        return
-      }
-      target[api] = (...args) => {
-        return allApi[api].apply(target, args)
-      }
-    } catch (e) {
-    } // 支付宝不支持重写 call 方法
-  })
-  if (custom[envStr]) {
-    Object.keys(custom[envStr])
-      .forEach(k => {
-        target[k] = (...args) => {
-          return custom[envStr][k].apply(target, args)
-        }
-      })
-  }
-  // Fallback Map option
-  Object.keys(fallbackMap)
-    .forEach(k => {
-      if (!target[k]) {
-        target[k] = fallbackMap[k]
-      }
-    })
+  Object.assign(target, fallbackMap, transedApi, promisedApi, custom[__mpx_env__])
 }
 
 export function getProxy (options = {}) {

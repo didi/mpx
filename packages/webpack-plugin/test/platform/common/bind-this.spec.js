@@ -61,16 +61,17 @@ describe('render function simplify should correct', function () {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   if (_sc("a")) {}
 
+  _sc("b");
   _sc("c");
 
-  _sc("a") ? _sc("b") : _sc("c");
+  _sc("a") ? "" : "";
   _sc("a") && _sc("b");
 
   _sc("d");
 
   _sc("e");
 
-  _sc("a") ? _sc("d") : _sc("e");
+  _sc("a") ? "" : "";
 
   if (_sc("f") + _sc("g")) {}
 
@@ -140,21 +141,115 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         obj4 || 123 || ''
         '456' || obj4 || ''
         '' || 123 || obj4
+        obj5 || 123 || ''
+        obj5
 
-        obj5 + 'rpx'
-        'height:' + obj5 + 'rpx'
-        'height' + ':' + obj5
+        obj6
+        obj6 || (obj7 || '')
+        
+        a1;
+        b1;
+        c1;
+        a1 || b1 || c1;
+        
+        a2;
+        b2;
+        a2 || b2 || '';
+        
+        a3;
+        c3
+        a3 || ''
+        a3 || '' || c3
+        
+        a4
+        a4 || '' || ''
+        
+        a5
+        b5
+        c5
+        a5 && b5
+        if (a5 && b5) {}
+        if (a5 ? b5 : c5) {}
+
+        a6 ? b6 : c6 // b6 c6只出现一次，不会被删除
+        
+        b7
+        a7 ? b7.name : c7
+
+        obj8
+        obj8 + 'rpx'
+        'height:' + obj8 + 'rpx'
+        'height' + ':' + obj8
+        
+        obj9
+        obj10
+        obj11
+        obj12
+        obj9 || (obj10 || obj11 && obj12)
+        obj12 || ''
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
 global.currentInject.render = function (_i, _c, _r, _sc) {
   // 逻辑运算          
+  _sc("obj3") || '';
   _sc("obj3") && _c("obj3.b");
-  '' || 123 || _sc("obj4");
 
-  _sc("obj5") + 'rpx';
+  _sc("obj4");
+  '' || 123 || _sc("obj4");
+  _sc("obj5") || 123 || '';
+  
+  _sc("obj6");
+  _sc("obj6") || _sc("obj7") || '';
+
+  _sc("a1");
+  _sc("b1");
+
+  _sc("c1");
+
+  _sc("a1") || _sc("b1") || _sc("c1");
+
+  _sc("a2");
+  _sc("b2");
+
+  _sc("a2") || _sc("b2") || '';
+
+  _sc("a3");
+  _sc("c3");
+
+  _sc("a3") || '' || _sc("c3");
+
+  _sc("a4");
+
+  _sc("b5");
+
+  _sc("c5");
+
+  _sc("a5") && _sc("b5");
+
+  if (_sc("a5") && _sc("b5")) {}
+
+  if (_sc("a5") ? _sc("b5") : _sc("c5")) {}
+  
+  _sc("a6") ? _sc("b6") : _sc("c6"); // b6 c6只出现一次，不会被删除
+
+  _sc("b7");
+  _sc("a7") ? "" : _sc("c7");
+
+  _sc("obj8");
+  "" + 'rpx';
   'height:' + "" + 'rpx';
   'height' + ':' + "";
+  
+  _sc("obj9");
+
+  _sc("obj10");
+
+  _sc("obj11");
+
+  _sc("obj12");
+
+  _sc("obj9") || _sc("obj10") || _sc("obj11") && _sc("obj12");
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
@@ -220,7 +315,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     const output = `
 global.currentInject.render = function (_i, _c, _r, _sc) {
   this._i(this.list, function (item, index) {
-    item.a ? "" : item.b;
+    item.a ? "" : "";
     item.a || item.b;
   });
 };`
@@ -238,7 +333,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       }
     `
     const res = bindThis(input, { renderReduce: true })
-    const output = ['b', 'a', 'c', 'a', 'd', 'name', 'name2']
+    const output = ['a', 'b', 'a', 'c', 'a', 'd', 'name', 'name2']
     expect(res.propKeys.join('')).toBe(output.join(''))
   })
 
@@ -279,6 +374,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   this.name3[this.name2];
 
   this.name4 && this.name4.length;
+  this.name4['length'];
 
   this.name5;
 

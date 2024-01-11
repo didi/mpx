@@ -34,6 +34,6 @@ module.exports = {
   i18n: {
     locale: 'zh-CN',
     dateTimeFormats: dateTimeFormats,
-    messagesPath: resolve('i18n/index.web.js')
+    messagesPath: resolve('i18n/index.js')
   },
 }

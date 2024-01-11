@@ -533,7 +533,7 @@ function compileScriptSetup (
         (node.type === 'VariableDeclaration' && node.declare)
       ) {
         recordType(node, declaredTypes)
-        _s.move(node.start, node.end, 0)
+        _s.move(node.start, node.end + 1, 0)
       }
     }
 

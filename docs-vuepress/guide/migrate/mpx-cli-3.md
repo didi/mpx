@@ -71,7 +71,7 @@ module.exports = defineConfig({
 例如我们新建一个`vue-cli-plugin-mpx-build-upload`插件,用来在构建完成后上传图片到`cdn`。
 
 ```js
-// index.web.js
+// index.js
 module.exports = function (api, options) {
   function runServiceCommand(api, command, ...args){
     const { fn } = api.service.commands[command]

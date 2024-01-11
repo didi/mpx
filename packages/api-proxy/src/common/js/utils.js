@@ -81,29 +81,6 @@ function getEnvObj () {
   }
 }
 
-function getEnvStr () {
-  switch (__mpx_mode__) {
-    case 'wx':
-      return 'wx'
-    case 'ali':
-      return 'ali'
-    case 'swan':
-      return 'swan'
-    case 'qq':
-      return 'qq'
-    case 'tt':
-      return 'tt'
-    case 'jd':
-      return 'jd'
-    case 'qa':
-      return 'qa'
-    case 'dd':
-      return 'dd'
-    case 'web':
-      return 'web'
-  }
-}
-
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
@@ -137,7 +114,6 @@ export {
   handleSuccess,
   genFromMap,
   getEnvObj,
-  getEnvStr,
   error,
   envError,
   warn,

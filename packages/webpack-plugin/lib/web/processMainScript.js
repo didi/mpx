@@ -1,3 +1,4 @@
+// 该文件下的字符串语句需要使用 es5 语法
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
@@ -64,18 +65,18 @@ module.exports = function (script, {
     globalTabBar
   })
 
-  output += `\n  const App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
+  output += `\n  var App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
 
   output += `
   export default processAppOption({
-    App,
+    App: App,
     tabBarMap: ${JSON.stringify(tabBarMap)},
     firstPage: ${JSON.stringify(firstPage)},
     pagesMap: ${shallowStringify(pagesMap)},
     componentsMap: ${shallowStringify(componentsMap)},
-    Vue,
-    VueRouter,
-    webConfig: ${JSON.stringify(webConfig)}
+    Vue: Vue,
+    VueRouter: VueRouter,
+    el: ${JSON.stringify(webConfig.el || '#app')}
   })\n`
 
   callback(null, {

@@ -35,9 +35,9 @@
 
 示例如下：
 ```js
-// subPackageA/index.web.js
+// subPackageA/index.js
 // 或者使用 Promise 风格的调用
-require.async('../commonPackage/index.web.js?root=subPackageB').then(pkg => {
+require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
   pkg.getPackageName() // 'common'
 })
 ```
