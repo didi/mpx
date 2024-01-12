@@ -1,6 +1,5 @@
 import { ToPromise, webHandleSuccess, webHandleFail, createDom, getRootElement } from '../../../common/js'
 import '../../../common/stylus/ActionSheet.styl'
-import MpxEvent from '@mpxjs/webpack-plugin/lib/runtime/components/web/event'
 
 export default class ActionSheet extends ToPromise {
   constructor () {
@@ -13,8 +12,6 @@ export default class ActionSheet extends ToPromise {
       complete: null
     }
     this.hideTimer = null
-    // 临时绑定事件的解绑方法数组，用于在 hide 时解绑
-    this.tempListeners = []
 
     this.actionSheet = createDom('div', { class: '__mpx_actionsheet__' }, [
       this.mask = createDom('div', { class: '__mpx_mask__' }),
@@ -38,35 +35,28 @@ export default class ActionSheet extends ToPromise {
 
     opts.itemList.forEach((item, index) => {
       const sheet = createDom('div', { class: '__mpx_actionsheet_sheet__' }, [item])
-      // eslint-disable-next-line no-new
-      this.tempListeners.push(new MpxEvent({
-        layer: sheet,
-        touchend: () => {
-          this.hide()
-          const res = {
-            errMsg: 'showActionSheet:ok',
-            tapIndex: index
-          }
-          webHandleSuccess(res, opts.success, opts.complete)
-          this.toPromiseResolve(res)
+      sheet.addEventListener('tap', () => {
+        this.hide()
+        const res = {
+          errMsg: 'showActionSheet:ok',
+          tapIndex: index
         }
-      }))
+        webHandleSuccess(res, opts.success, opts.complete)
+        this.toPromiseResolve(res)
+      })
       list.appendChild(sheet)
     })
 
     this.box.replaceChild(list, this.list)
     this.list = list
     this.list.style.color = opts.itemColor
-    // eslint-disable-next-line no-new
-    this.tempListeners.push(new MpxEvent({
-      layer: this.cancelBtn,
-      touchend: () => {
-        this.hide()
-        const err = { errMsg: 'showActionSheet:fail cancel' }
-        webHandleFail(err, opts.fail, opts.complete)
-        !opts.fail && this.toPromiseReject(err)
-      }
-    }))
+    this.cancelBtnTap = () => {
+      this.hide()
+      const err = { errMsg: 'showActionSheet:fail cancel' }
+      webHandleFail(err, opts.fail, opts.complete)
+      !opts.fail && this.toPromiseReject(err)
+    }
+    this.cancelBtn.addEventListener('tap', this.cancelBtnTap)
     // make transition next frame
     this.actionSheet.classList.add('show')
     // 如果使用 requestAnimationFrame，第一次展示不会有动画效果，原因待确认，这里先使用 setTimeout
@@ -82,8 +72,7 @@ export default class ActionSheet extends ToPromise {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
     }
-    this.tempListeners.forEach(event => event.removeListener())
-    this.tempListeners = []
+    this.cancelBtn.removeEventListener('tap', this.cancelBtnTap)
     this.box.classList.remove('show')
     this.hideTimer = setTimeout(() => {
       this.actionSheet.classList.remove('show')

@@ -1,12 +1,7 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
 
-function MpxEvent ({
-    layer,
-    touchstart: startHandle,
-    touchmove: moveHandle,
-    touchend: endHandle
-}) {
+function MpxEvent (layer) {
     this.targetElement = null
 
     this.touches = []
@@ -19,7 +14,7 @@ function MpxEvent ({
 
     this.needTap = true
 
-    this.isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
+    this.isTouchDevice = document && ('ontouchstart' in document.documentElement)
 
     this.onTouchStart = (event) => {
         if (event.targetTouches?.length > 1) {
@@ -32,7 +27,6 @@ function MpxEvent ({
         this.startTimer = null
         this.touchStartX = this.touches[0].pageX
         this.touchStartY = this.touches[0].pageY
-        if (startHandle) startHandle(event)
         this.startTimer = setTimeout(() => {
             this.needTap = false
             this.sendEvent(this.targetElement, 'longpress', event)
@@ -46,7 +40,6 @@ function MpxEvent ({
             this.needTap = false
             this.startTimer && clearTimeout(this.startTimer)
             this.startTimer = null
-            if (moveHandle) moveHandle(event)
         }
     }
 
@@ -56,7 +49,6 @@ function MpxEvent ({
         }
         this.startTimer && clearTimeout(this.startTimer)
         this.startTimer = null
-        if (endHandle) endHandle(event)
         if (this.needTap) {
             this.sendEvent(this.targetElement, 'tap', event)
         }
@@ -64,7 +56,6 @@ function MpxEvent ({
 
     this.onClick = (event) => {
         this.targetElement = event.target
-        if (endHandle) endHandle(event)
         this.sendEvent(this.targetElement, 'tap', event)
     }
     this.sendEvent = (targetElement, type, event) => {
@@ -110,4 +101,9 @@ function MpxEvent ({
     this.addListener()
 }
 
-export default MpxEvent
+if (isBrowser) {
+    document.addEventListener('DOMContentLoaded', function () {
+        // eslint-disable-next-line no-new
+        new MpxEvent(document.body)
+    }, false)
+}
