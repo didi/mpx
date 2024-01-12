@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, createDom, warn, bindTap, getRootElement } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, createDom, warn, getRootElement } from '../../../common/js'
 import '../../../common/stylus/Preview.styl'
 /**
  * Preview class for displaying images in a slideshow format.
@@ -79,7 +79,7 @@ export default class Preview {
   /**
    * 更新文本提示
    */
-  updateTextTip() {
+  updateTextTip () {
     this.textTip.textContent = `${this.currentIndex + 1}/${this.maxIndex}`
   }
 }
