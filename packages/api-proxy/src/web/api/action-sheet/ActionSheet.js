@@ -13,6 +13,7 @@ export default class ActionSheet extends ToPromise {
       complete: null
     }
     this.hideTimer = null
+    // 临时绑定事件的解绑方法数组，用于在 hide 时解绑
     this.tempListeners = []
 
     this.actionSheet = createDom('div', { class: '__mpx_actionsheet__' }, [
