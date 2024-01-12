@@ -107,6 +107,12 @@
       }
     },
     mounted () {
+       this.debounceRefresh = debounce(function () {
+        this.refresh()
+      }, 100, {
+        leading: false,
+        trailing: true
+      }),
       this.initBs()
       this.handleMutationObserver()
       this.observeAnimation('add')
@@ -120,11 +126,9 @@
         this.__mpx_deactivated_refresh = false
         this.refresh()
       }
-       this.handleMutationObserver()
     },
     deactivated () {
       this.__mpx_deactivated = true
-      this.destroyMutationObserver()
     },
     beforeDestroy () {
       this.destroyBs()
@@ -413,12 +417,6 @@
           this.debounceRefresh()
         }
       },
-      debounceRefresh: debounce(function () {
-        this.refresh()
-      }, 100, {
-        leading: false,
-        trailing: true
-      }),
       observeAnimation (type) {
         const eventNames = ['transitionend', 'animationend']
         const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
