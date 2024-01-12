@@ -120,16 +120,15 @@
         this.__mpx_deactivated_refresh = false
         this.refresh()
       }
+       this.handleMutationObserver()
     },
     deactivated () {
       this.__mpx_deactivated = true
+      this.destroyMutationObserver()
     },
     beforeDestroy () {
       this.destroyBs()
-      if (this.mutationObserver) {
-        this.mutationObserver.disconnect()
-        this.mutationObserver = null
-      }
+      this.destroyMutationObserver()
     },
     destroyed () {
       this.observeAnimation('remove')
@@ -322,7 +321,7 @@
           this.$refs.innerWrapper.style.height = `${scrollWrapperHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         }
         const innerWrapper = this.$refs.innerWrapper
-        const childrenArr = Array.from(innerWrapper.children)
+        const childrenArr = innerWrapper ? Array.from(innerWrapper.children) : []
 
         const getMinLength = (min, value) => {
           if (min === undefined) {
@@ -416,7 +415,7 @@
       },
       debounceRefresh: debounce(function () {
         this.refresh()
-      }, 50, {
+      }, 100, {
         leading: false,
         trailing: true
       }),
@@ -438,6 +437,12 @@
           } else {
             this.debounceRefresh()
           }
+        }
+      },
+      destroyMutationObserver () {
+        if (this.mutationObserver) {
+          this.mutationObserver.disconnect()
+          this.mutationObserver = null
         }
       }
     },
