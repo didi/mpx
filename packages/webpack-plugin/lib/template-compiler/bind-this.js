@@ -318,7 +318,7 @@ module.exports = {
         // 删除重复变量
         if (path.delInfo) {
           const { keyPath, isLocal, replace } = path.delInfo
-          // delete path.delInfo
+          delete path.delInfo
 
           if (isLocal) { // 局部作用域里的变量，可直接删除
             dealRemove(path, replace)
