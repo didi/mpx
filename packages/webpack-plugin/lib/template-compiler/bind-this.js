@@ -80,19 +80,19 @@ function checkDelAndGetPath (path) {
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
-      // case: String(a) || this._p(a)
       const args = current.node.arguments || current.parent.arguments || []
-      if (args.length === 1) {
+      if (args.length === 1) { // // case: String(a) || this._p(a)
         delPath = current.parentPath
       } else {
-        // case: _i(a, function() {})
-        canDel = false
         break
       }
     } else if (t.isMemberExpression(current.parent)) { // case: String(a,'123').b.c
-      if (current.parent.computed && !t.isLiteral(current.parent.property)) { // case: a[b] or a.b[c.d]
-        canDel = false
-        break
+      if (current.parent.computed) { // case: a['b'] or a.b['c.d']
+        if (t.isLiteral(current.parent.property)) {
+          delPath = current.parentPath
+        } else { // case: a[b]
+          break
+        }
       } else {
         delPath = current.parentPath
       }
@@ -115,10 +115,18 @@ function checkDelAndGetPath (path) {
   // 确定是否可删除
   while (!t.isBlockStatement(current) && canDel) {
     const { key, listKey, container } = current
-    if (
-      (t.isIfStatement(container) && key === 'test') || // if (a) {}
-      (listKey === 'arguments' && current.parent.arguments && current.parent.arguments.length > 1) // _i([a], function() {})
-    ) {
+
+    if (t.isIfStatement(container) && key === 'test') {
+      canDel = false
+      break
+    }
+
+    if (listKey === 'arguments') {
+      canDel = false
+      break
+    }
+
+    if (container.computed) {
       canDel = false
       break
     }
@@ -135,7 +143,7 @@ function checkDelAndGetPath (path) {
         break
       } else {
         ignore = true
-        replace = true
+        replace = true // 继续往上找，判断是否存在if条件等
       }
     }
 
@@ -310,7 +318,7 @@ module.exports = {
         // 删除重复变量
         if (path.delInfo) {
           const { keyPath, isLocal, replace } = path.delInfo
-          delete path.delInfo
+          // delete path.delInfo
 
           if (isLocal) { // 局部作用域里的变量，可直接删除
             dealRemove(path, replace)
