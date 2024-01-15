@@ -20,6 +20,7 @@ const blackList = [
   'createAnimationVideo',
   'createSelectorQuery',
   'createIntersectionObserver',
+  'getPerformance',
   'hideKeyboard',
   'stopPullDownRefresh',
   'createWorker',
