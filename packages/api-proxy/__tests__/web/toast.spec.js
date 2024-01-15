@@ -5,7 +5,7 @@ import {
 
 describe('test toast', () => {
   afterAll(() => {
-    document.body.lastChild.remove()
+    document.body.lastChild && document.body.lastChild.remove()
   })
 
   test('should show normal toast', done => {
