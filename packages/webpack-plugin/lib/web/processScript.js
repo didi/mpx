@@ -56,7 +56,7 @@ module.exports = function (script, {
       }
 
       // 获取组件集合
-      const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext })
+      const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
 
       // 获取pageConfig
       const pageConfig = {}

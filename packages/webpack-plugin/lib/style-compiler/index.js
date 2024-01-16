@@ -1,3 +1,4 @@
+const path = require('path')
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
@@ -27,7 +28,7 @@ module.exports = function (css, map) {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
-  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
+  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs, inlineConfigFile: path.join(mpx.projectRoot, 'vue.config.js') })
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = [] // init with trim plugin
     const options = Object.assign(
