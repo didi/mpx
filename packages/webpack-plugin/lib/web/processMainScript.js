@@ -3,7 +3,6 @@ const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const eventPath = normalize.lib('runtime/components/web/event')
-const envPath = normalize.lib('runtime/env')
 const {
   buildComponentsMap,
   buildPagesMap,
