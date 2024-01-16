@@ -1,4 +1,4 @@
-import { getEnvObj } from './utils'
+import { getEnvObj, noop } from './utils'
 
 const envObj = getEnvObj()
 
@@ -69,6 +69,9 @@ function promisify (listObj, whiteList, customBlackList) {
 
     result[key] = function (...args) {
       if (promisifyFilter(key)) {
+        if (!args[0]) {
+          args.unshift({ success: noop, fail: noop })
+        }
         const obj = args[0]
         let returned
         const promise = new Promise((resolve, reject) => {
