@@ -79,7 +79,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      if (ext === '.js') {
+      if (ext === '.js' && mode === 'web') {
         resource = `!!@vue/vue-loader-v15!${nativeLoaderPath}!${resource}`
       }
 

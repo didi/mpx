@@ -221,7 +221,7 @@ module.exports = function (script, {
       content += `  ${getRequire('script', script, extraOptions)}\n`
 
       // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n console.log('in this currentOption read')\n`
+      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {

@@ -1117,6 +1117,22 @@ class MpxWebpackPlugin {
 
           // 转换wx全局对象
           parser.hooks.expression.for('wx').tap('MpxWebpackPlugin', transGlobalObject)
+          // 转换this.data等原生用法，仅在输出web时需要
+          // parser.hooks.expression.for('this').tap('MpxWebpackPlugin', (expression) => {
+          //   console.log('express ====', expression)
+          // });
+          parser.hooks.evaluate.for('MemberExpression').tap('MpxWebpackPlugin', (expression) => {
+            if (expression.object && expression.object.type === 'ThisExpression' && expression.property.name === 'data') {
+              console.log('expression', expression)
+              const module = parser.state.module
+              const current = parser.state.current
+              const { queryObj, resourcePath } = parseRequest(module.resource)
+              if (!resourcePath.indexOf('@vant')) return
+              const replaceContent = 'this.$data'
+              const dep = new ReplaceDependency(replaceContent, expression.range)
+              current.addPresentationalDependency(dep)
+            }
+          });
           // Proxy ctor for transMode
           if (!this.options.forceDisableProxyCtor) {
             parser.hooks.call.for('Page').tap('MpxWebpackPlugin', (expr) => {
@@ -1135,7 +1151,6 @@ class MpxWebpackPlugin {
               })
             }
           }
-
           // 为跨平台api调用注入srcMode参数指导api运行时转换
           const apiBlackListMap = [
             'createApp',
