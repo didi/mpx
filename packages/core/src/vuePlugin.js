@@ -52,7 +52,7 @@ export default function install (Vue) {
   Vue.prototype.createSelectorQuery = function () {
     return createSelectorQuery().in(this)
   }
-  Vue.prototype.createIntersectionObserver = function (component, options) {
+  Vue.prototype.createIntersectionObserver = function (options) {
     return createIntersectionObserver(this, options)
   }
 }

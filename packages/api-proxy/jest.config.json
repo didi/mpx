@@ -3,7 +3,6 @@
     "^.+\\.(js|jsx)?$": "babel-jest"
   },
   "testEnvironment": "jsdom",
-  "rootDir": "../",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy"
   }

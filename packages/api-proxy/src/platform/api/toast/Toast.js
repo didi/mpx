@@ -93,6 +93,5 @@ export default class Toast {
       this.toast.classList.remove('show')
       this.toast.remove() // hide 则卸载
     }, duration)
-    // return Promise.resolve({ errMsg }) todo 验证一下
   }
 }

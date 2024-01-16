@@ -49,15 +49,6 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
-function genFromMap () {
-  const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd']
-  platforms.forEach((platform) => {
-    result[`__mpx_src_mode_${platform}__`] = platform
-  })
-  return result
-}
-
 function getEnvObj () {
   switch (__mpx_mode__) {
     case 'wx':
@@ -112,7 +103,6 @@ function throwSSRWarning (info) {
 export {
   changeOpts,
   handleSuccess,
-  genFromMap,
   getEnvObj,
   error,
   envError,

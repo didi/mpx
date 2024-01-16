@@ -10,20 +10,10 @@ export default function install (target, options = {}) {
     custom = {}, // 自定义转化规则
     fallbackMap = {} // 对于不支持的API，允许配置一个映射表，接管不存在的API
   } = options
-
-  let transedApi = {}
-
-  if (__mpx_env__ === 'web') {
-    transedApi = platformApi
-  } else {
-    const envObj = getEnvObj()
-    Object.keys(envObj).concat(Object.keys(platformApi)).forEach((key) => {
-      transedApi[key] = platformApi[key] || envObj[key]
-    })
-  }
-
+  const envObj = getEnvObj()
+  const transedApi = Object.assign({}, envObj, platformApi)
   const promisedApi = usePromise ? promisify(transedApi, whiteList, blackList) : {}
-  Object.assign(target, fallbackMap, transedApi, promisedApi, custom[__mpx_env__])
+  Object.assign(target, fallbackMap, transedApi, promisedApi, custom[__mpx_mode__])
 }
 
 export function getProxy (options = {}) {

@@ -87,7 +87,7 @@ module.exports = {
     if (name === 'customOutputCom') {
       return path.join(type + 's', name, 'index' + ext)
     }
-    // 输出示例： pages/testax34dde3/index.web.js
+    // 输出示例： pages/testax34dde3/index.js
     return path.join(type + 's', name + hash, 'index' + ext)
   }
 
