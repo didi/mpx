@@ -1,7 +1,7 @@
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
-import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
+import { queueJob, queuePostFlushCb } from './scheduler'
 import { currentInstance } from '../core/proxy'
 import {
   noop,
@@ -129,7 +129,9 @@ export function watch (source, cb, options = {}) {
     scheduler = () => queuePostFlushCb(job)
   } else {
     // default: 'pre'
-    scheduler = () => queuePreFlushCb(job)
+    job.pre = true
+    if (instance) job.id = instance.uid
+    scheduler = () => queueJob(job)
   }
 
   job.allowRecurse = !!cb

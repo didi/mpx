@@ -15,6 +15,8 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
+const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
+const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -325,11 +327,8 @@ class MpxWebpackPlugin {
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
-    let splitChunksPlugin
-    let splitChunksOptions
-
+    const optimization = compiler.options.optimization
     if (this.options.mode !== 'web') {
-      const optimization = compiler.options.optimization
       optimization.runtimeChunk = {
         name: (entrypoint) => {
           for (const packageName in mpx.independentSubpackagesMap) {
@@ -340,8 +339,13 @@ class MpxWebpackPlugin {
           return 'bundle'
         }
       }
+    }
+
+    let splitChunksOptions = null
+    let splitChunksPlugin = null
+    // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
+    if (optimization.splitChunks !== false) {
       splitChunksOptions = Object.assign({
-        defaultSizeTypes: ['javascript', 'unknown'],
         chunks: 'all',
         usedExports: optimization.usedExports === true,
         minChunks: 1,
@@ -349,8 +353,10 @@ class MpxWebpackPlugin {
         enforceSizeThreshold: Infinity,
         maxAsyncRequests: 30,
         maxInitialRequests: 30,
-        automaticNameDelimiter: '-'
+        automaticNameDelimiter: '-',
+        cacheGroups: {}
       }, optimization.splitChunks)
+      splitChunksOptions.defaultSizeTypes = ['javascript', 'unknown']
       delete optimization.splitChunks
       splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
       splitChunksPlugin.apply(compiler)
@@ -451,7 +457,6 @@ class MpxWebpackPlugin {
           },
           name: `${packageName}/bundle`,
           minChunks: 2,
-          minSize: 1000,
           priority: 100,
           chunks: 'all'
         }
@@ -635,7 +640,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -956,15 +961,35 @@ class MpxWebpackPlugin {
             }
           }
         }
-        // 自动跟进分包配置修改splitChunksPlugin配置
+        // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          Object.keys(mpx.componentsMap).forEach((packageName) => {
-            if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
+          if (mpx.mode === 'web') {
+            // web独立处理splitChunk
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+              splitChunksOptions.cacheGroups.main = {
+                chunks: 'initial',
+                name: 'bundle',
+                test: /[\\/]node_modules[\\/]/
+              }
               needInit = true
-              splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
             }
-          })
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
+              splitChunksOptions.cacheGroups.async = {
+                chunks: 'async',
+                name: 'async',
+                minChunks: 2
+              }
+              needInit = true
+            }
+          } else {
+            Object.keys(mpx.componentsMap).forEach((packageName) => {
+              if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
+                splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
+                needInit = true
+              }
+            })
+          }
           if (needInit) {
             splitChunksPlugin.options = new SplitChunksPlugin(splitChunksOptions).options
           }
@@ -1092,16 +1117,30 @@ class MpxWebpackPlugin {
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
-              // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.enableRequireAsync) {
-                const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
-                  isRequireAsync: true,
-                  retryRequireAsync: !!this.options.retryRequireAsync
-                })
+              // wx、ali(需开启enableAliRequireAsync)和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              if (mpx.supportRequireAsync) {
+                if (mpx.mode === 'web') {
+                  const depBlock = new AsyncDependenciesBlock(
+                    {
+                      name: tarRoot
+                    },
+                    expr.loc,
+                    request
+                  )
+                  const dep = new ImportDependency(request, expr.range)
+                  dep.loc = expr.loc
+                  depBlock.addDependency(dep)
+                  parser.state.current.addBlock(depBlock)
+                } else {
+                  const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
+                    isRequireAsync: true,
+                    retryRequireAsync: !!this.options.retryRequireAsync
+                  })
 
-                parser.state.current.addPresentationalDependency(dep)
-                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
-                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                  parser.state.current.addPresentationalDependency(dep)
+                  // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                  parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                }
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)

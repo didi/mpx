@@ -40,7 +40,7 @@ module.exports = function (script, {
       return attrs
     },
     content (script) {
-      let content = `\n  import processComponentOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
       let hasApp = true
       if (!appInfo.name) {
         hasApp = false
@@ -56,7 +56,7 @@ module.exports = function (script, {
       }
 
       // 获取组件集合
-      const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext })
+      const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
 
       // 获取pageConfig
       const pageConfig = {}
@@ -85,7 +85,7 @@ module.exports = function (script, {
     componentsMap: ${shallowStringify(componentsMap)},
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
-    mixin: getWxsMixin(wxsModules),
+    wxsMixin: getWxsMixin(wxsModules),
     hasApp: ${hasApp}
   })\n`
       return content

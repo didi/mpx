@@ -8,6 +8,8 @@
 
   BScroll.use(PullDown)
 
+  let mutationObserver = null
+
   export default {
     name: 'mpx-scroll-view',
     props: {
@@ -62,7 +64,6 @@
         currentY: 0,
         lastX: 0,
         lastY: 0,
-        mutationObserver: null,
         mpxScrollOptions: {},
         lastContentWidth: 0,
         lastContentHeight: 0,
@@ -115,7 +116,6 @@
       }),
       this.initBs()
       this.handleMutationObserver()
-      this.observeAnimation('add')
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -133,9 +133,6 @@
     beforeDestroy () {
       this.destroyBs()
       this.destroyMutationObserver()
-    },
-    destroyed () {
-      this.observeAnimation('remove')
     },
     watch: {
       scrollIntoView (val) {
@@ -394,37 +391,10 @@
       }),
       handleMutationObserver () {
         if (typeof MutationObserver !== 'undefined') {
-          this.mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
-          const config = { attributes: true, childList: true, subtree: true }
-          this.mutationObserver.observe(this.$refs.wrapper, config)
+          mutationObserver = new MutationObserver(() => this.debounceRefresh())
+          const config = { attributes: true, attributeFilter:['style', 'class', 'id'], childList: true, subtree: true }
+          mutationObserver.observe(this.$refs.wrapper, config)
         }
-      },
-      mutationObserverHandler (mutations) {
-        let needRefresh = false
-        for (let i = 0; i < mutations.length; i++) {
-          const mutation = mutations[i]
-          if (mutation.type !== 'attributes') {
-            needRefresh = true
-            break
-          } else {
-            if (mutation.target !== this.bs.scroller.content) {
-              needRefresh = true
-              break
-            }
-          }
-        }
-        if (needRefresh) {
-          this.debounceRefresh()
-        }
-      },
-      observeAnimation (type) {
-        const eventNames = ['transitionend', 'animationend']
-        const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
-        eventNames.forEach(eventName => {
-          this.$refs.scrollContent?.[behaviorType](eventName, (e) => {
-            this.handleObserveAnimation(e, eventName)
-          })
-        })
       },
       handleObserveAnimation (e, eventName) {
         if (e.target !== this.bs.scroller.content) {
@@ -438,9 +408,9 @@
         }
       },
       destroyMutationObserver () {
-        if (this.mutationObserver) {
-          this.mutationObserver.disconnect()
-          this.mutationObserver = null
+        if (mutationObserver) {
+          mutationObserver.disconnect()
+          mutationObserver = null
         }
       }
     },
