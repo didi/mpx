@@ -81,7 +81,7 @@ function checkDelAndGetPath (path) {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
       const args = current.node.arguments || current.parent.arguments || []
-      if (args.length === 1) { // // case: String(a) || this._p(a)
+      if (args.length === 1) { // case: String(a) || this._p(a)
         delPath = current.parentPath
       } else {
         break
@@ -121,14 +121,18 @@ function checkDelAndGetPath (path) {
       break
     }
 
-    if (listKey === 'arguments') {
+    if (listKey === 'arguments' && t.isCallExpression(current.parent)) {
       canDel = false
       break
     }
 
     if (container.computed) {
-      canDel = false
-      break
+      if (key === 'property') {
+        replace = true
+      } else {
+        canDel = false
+        break
+      }
     }
 
     if (t.isLogicalExpression(container)) { // case: a || ((b || c) && d)
@@ -147,13 +151,12 @@ function checkDelAndGetPath (path) {
       }
     }
 
-    if (
-      t.isBinaryExpression(container) || // 运算 a + b
-      (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a })
-    ) {
-      canDel = true
+    if (t.isBinaryExpression(container)) { // 运算 a + b
+      replace = true // 不能break，case: if (a + b) {}
+    }
+
+    if (key === 'value' && t.isObjectProperty(container)) { // ({ name: a })
       replace = true
-      // 不能break，case: if (a + b) {}
     }
 
     current = current.parentPath
