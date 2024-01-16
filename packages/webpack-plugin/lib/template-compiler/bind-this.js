@@ -96,7 +96,7 @@ function checkDelAndGetPath (path) {
       } else {
         delPath = current.parentPath
       }
-    } else if (t.isLogicalExpression(current.container)) { // 只处理case: a || '' or '123' || a
+    } else if (t.isLogicalExpression(current.parent)) { // 只处理case: a || '' or '123' || a
       const key = current.key === 'left' ? 'right' : 'left'
       if (t.isLiteral(current.parent[key])) {
         delPath = current.parentPath
@@ -114,19 +114,19 @@ function checkDelAndGetPath (path) {
 
   // 确定是否可删除
   while (!t.isBlockStatement(current) && canDel) {
-    const { key, listKey, container } = current
+    const { key, listKey, parent } = current
 
-    if (t.isIfStatement(container) && key === 'test') {
+    if (t.isIfStatement(parent) && key === 'test') {
       canDel = false
       break
     }
 
-    if (listKey === 'arguments' && t.isCallExpression(current.parent)) {
+    if (listKey === 'arguments' && t.isCallExpression(parent)) {
       canDel = false
       break
     }
 
-    if (container.computed) {
+    if (parent.computed && t.isMemberExpression(parent)) {
       if (key === 'property') {
         replace = true
       } else {
@@ -135,13 +135,13 @@ function checkDelAndGetPath (path) {
       }
     }
 
-    if (t.isLogicalExpression(container)) { // case: a || ((b || c) && d)
+    if (t.isLogicalExpression(parent)) { // case: a || ((b || c) && d)
       canDel = false
       ignore = true
       break
     }
 
-    if (t.isConditionalExpression(container)) {
+    if (t.isConditionalExpression(parent)) {
       if (key === 'test') {
         canDel = false
         break
@@ -151,11 +151,11 @@ function checkDelAndGetPath (path) {
       }
     }
 
-    if (t.isBinaryExpression(container)) { // 运算 a + b
+    if (t.isBinaryExpression(parent)) { // 运算 a + b
       replace = true // 不能break，case: if (a + b) {}
     }
 
-    if (key === 'value' && t.isObjectProperty(container)) { // ({ name: a })
+    if (key === 'value' && t.isObjectProperty(parent)) { // ({ name: a })
       replace = true
     }
 
