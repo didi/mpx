@@ -79,15 +79,6 @@ function MpxEvent (layer) {
         })
         targetElement && targetElement.dispatchEvent(touchEvent)
     }
-    this.removeListener = () => {
-        if (this.isTouchDevice) {
-            layer.removeEventListener('touchstart', this.onTouchStart, true)
-            layer.removeEventListener('touchmove', this.onTouchMove, true)
-            layer.removeEventListener('touchend', this.onTouchEnd, true)
-        } else {
-            layer.removeEventListener('click', this.onClick, true)
-        }
-    }
 
     this.addListener = () => {
         if (this.isTouchDevice) {
