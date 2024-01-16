@@ -50,7 +50,6 @@ module.exports = function (script, {
   import VueRouter from 'vue-router'
   import Mpx from '@mpxjs/core'
   import { processAppOption, getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
-  import { isBrowser } from ${stringifyRequest(loaderContext, envPath)}
   Vue.use(VueRouter)\n`
 
   if (i18n) {
