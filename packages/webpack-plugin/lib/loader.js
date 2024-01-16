@@ -50,7 +50,6 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -130,7 +129,7 @@ module.exports = function (content) {
           warn: emitWarning,
           error: emitError
         }
-        if (!isApp) {
+        if (ctorType !== 'app') {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
         }
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
