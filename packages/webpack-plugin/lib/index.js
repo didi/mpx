@@ -333,31 +333,39 @@ class MpxWebpackPlugin {
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
     const optimization = compiler.options.optimization
-    optimization.runtimeChunk = {
-      name: (entrypoint) => {
-        for (const packageName in mpx.independentSubpackagesMap) {
-          if (hasOwn(mpx.independentSubpackagesMap, packageName) && isChunkInPackage(entrypoint.name, packageName)) {
-            return `${packageName}/bundle`
+    if (this.options.mode !== 'web') {
+      optimization.runtimeChunk = {
+        name: (entrypoint) => {
+          for (const packageName in mpx.independentSubpackagesMap) {
+            if (hasOwn(mpx.independentSubpackagesMap, packageName) && isChunkInPackage(entrypoint.name, packageName)) {
+              return `${packageName}/bundle`
+            }
           }
+          return 'bundle'
         }
-        return 'bundle'
       }
     }
-    const splitChunksOptions = Object.assign({
-      defaultSizeTypes: ['javascript', 'unknown'],
-      chunks: 'all',
-      usedExports: optimization.usedExports === true,
-      minChunks: 1,
-      minSize: 1000,
-      enforceSizeThreshold: Infinity,
-      maxAsyncRequests: 30,
-      maxInitialRequests: 30,
-      automaticNameDelimiter: '-',
-      cacheGroups: {}
-    }, optimization.splitChunks)
-    delete optimization.splitChunks
-    const splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
-    splitChunksPlugin.apply(compiler)
+
+    let splitChunksOptions = null
+    let splitChunksPlugin = null
+    // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
+    if (optimization.splitChunks !== false) {
+      splitChunksOptions = Object.assign({
+        chunks: 'all',
+        usedExports: optimization.usedExports === true,
+        minChunks: 1,
+        minSize: 1000,
+        enforceSizeThreshold: Infinity,
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        automaticNameDelimiter: '-',
+        cacheGroups: {}
+      }, optimization.splitChunks)
+      splitChunksOptions.defaultSizeTypes = ['javascript', 'unknown']
+      delete optimization.splitChunks
+      splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
+      splitChunksPlugin.apply(compiler)
+    }
 
     // 代理writeFile
     if (this.options.writeMode === 'changed') {
@@ -454,7 +462,6 @@ class MpxWebpackPlugin {
           },
           name: `${packageName}/bundle`,
           minChunks: 2,
-          minSize: 1000,
           priority: 100,
           chunks: 'all'
         }
@@ -959,15 +966,35 @@ class MpxWebpackPlugin {
             }
           }
         }
-        // 自动跟进分包配置修改splitChunksPlugin配置
+        // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          Object.keys(mpx.componentsMap).forEach((packageName) => {
-            if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
+          if (mpx.mode === 'web') {
+            // web独立处理splitChunk
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+              splitChunksOptions.cacheGroups.main = {
+                chunks: 'initial',
+                name: 'bundle',
+                test: /[\\/]node_modules[\\/]/
+              }
               needInit = true
-              splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
             }
-          })
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
+              splitChunksOptions.cacheGroups.async = {
+                chunks: 'async',
+                name: 'async',
+                minChunks: 2
+              }
+              needInit = true
+            }
+          } else {
+            Object.keys(mpx.componentsMap).forEach((packageName) => {
+              if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
+                splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
+                needInit = true
+              }
+            })
+          }
           if (needInit) {
             splitChunksPlugin.options = new SplitChunksPlugin(splitChunksOptions).options
           }

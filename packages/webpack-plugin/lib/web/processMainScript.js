@@ -69,14 +69,14 @@ module.exports = function (script, {
 
   output += `
   export default processAppOption({
-    App,
+    App: App,
     tabBarMap: ${JSON.stringify(tabBarMap)},
     firstPage: ${JSON.stringify(firstPage)},
     pagesMap: ${shallowStringify(pagesMap)},
     componentsMap: ${shallowStringify(componentsMap)},
-    Vue,
-    VueRouter,
-    webConfig: ${JSON.stringify(webConfig)}
+    Vue: Vue,
+    VueRouter: VueRouter,
+    el: ${JSON.stringify(webConfig.el || '#app')}
   })\n`
 
   callback(null, {
