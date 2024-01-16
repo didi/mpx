@@ -30,6 +30,15 @@ function createDom (tag, attrs = {}, children = []) {
   return dom
 }
 
+// 在H5中，直接绑定 click 可能出现延时问题，很多点击可以关闭的组件被唤出之后，有概率立马触发点击事件，导致组件被关闭。
+// 使用该方法通过 touchstart 和 touchend 模拟 click 事件，解决延时问题。
+function bindTap (dom, handler) {
+  dom.addEventListener('tap', handler)
+  return () => {
+    dom.removeEventListener('tap', handler)
+  }
+}
+
 /**
  * 获取弹窗应当挂载的根节点
  * @returns dom
@@ -43,6 +52,7 @@ export {
   webHandleSuccess,
   webHandleFail,
   createDom,
+  bindTap,
   getRootElement,
   isTabBarPage
 }
