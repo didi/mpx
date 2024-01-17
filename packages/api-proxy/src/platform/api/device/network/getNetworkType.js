@@ -1,6 +1,6 @@
 import { webHandleSuccess, webHandleFail, isBrowser, throwSSRWarning } from '../../../../common/js'
 
-export function getNetworkType ({ success, fail = () => {}, complete = () => {} }) {
+export function getNetworkType ({ success, fail = () => {}, complete = () => {} } = {}) {
   if (!isBrowser) {
     throwSSRWarning('getNetworkType API is running in non browser environments')
     return
