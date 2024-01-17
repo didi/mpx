@@ -4,9 +4,8 @@
 
 <script>
   import { getCustomEvent } from './getInnerListeners'
-  import promisify from './promisify'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-
+  import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
+  const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
   const eventLoad = 'load'
   const eventError = 'error'
   const eventMessage = 'message'
@@ -109,19 +108,19 @@
             })
             break
           case 'navigateTo':
-            asyncCallback = promisify(value, navigateTo)
+            asyncCallback = navObj.navigateTo(value)
             break
           case 'navigateBack':
-            asyncCallback = promisify(value = {}, navigateBack)
+            asyncCallback = navObj.navigateBack(value = {})
             break
           case 'redirectTo':
-            asyncCallback = promisify(value, redirectTo)
+            asyncCallback = navObj.redirectTo(value)
             break
           case 'switchTab':
-            asyncCallback = promisify(value, switchTab)
+            asyncCallback = navObj.switchTab(value)
             break
           case 'reLaunch':
-            asyncCallback = promisify(value, reLaunch)
+            asyncCallback = navObj.reLaunch(value)
             break
           case 'getLocation':
             const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation

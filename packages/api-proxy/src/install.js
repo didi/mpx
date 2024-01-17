@@ -7,13 +7,12 @@ export default function install (target, options = {}) {
     usePromise = false, // 是否转为 promise 格式
     whiteList = [], // 强制变成 promise 格式的 api
     blackList = [], // 强制不变成 promise 格式的 api
-    custom = {}, // 自定义转化规则
-    fallbackMap = {} // 对于不支持的API，允许配置一个映射表，接管不存在的API
+    custom = {} // 自定义转化规则
   } = options
   const envObj = getEnvObj()
   const transedApi = Object.assign({}, envObj, platformApi)
   const promisedApi = usePromise ? promisify(transedApi, whiteList, blackList) : {}
-  Object.assign(target, fallbackMap, transedApi, promisedApi, custom[__mpx_mode__])
+  Object.assign(target, transedApi, promisedApi, custom[__mpx_mode__])
 }
 
 export function getProxy (options = {}) {
