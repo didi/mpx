@@ -10,7 +10,7 @@ const IGNORE_COMMENT = '@unocss-ignore'
 const CSS_PLACEHOLDER = '@unocss-placeholder'
 
 const defaultExclude = [core.cssIdRE]
-const defaultInclude = [/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
+const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
 
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
@@ -84,8 +84,10 @@ async function applyTransformers (ctx, original, id, enforce = 'default') {
   if (!transformers.length) {
     return
   }
+  const skipMap = new Map()
   let code = original
-  let s = new MagicString(code)
+
+  let s = new MagicString(transformSkipCode(code, skipMap))
   const maps = []
   for (const t of transformers) {
     if (t.idFilter) {
@@ -97,7 +99,7 @@ async function applyTransformers (ctx, original, id, enforce = 'default') {
     }
     await t.transform(s, id, ctx)
     if (s.hasChanged()) {
-      code = s.toString()
+      code = restoreSkipCode(s.toString(), skipMap)
       maps.push(s.generateMap({ hires: true, source: id }))
       s = new MagicString(code)
     }
@@ -124,6 +126,41 @@ function getPath (id) {
 
 function isCssId (id) {
   return core.cssIdRE.test(id)
+}
+
+function hash (str) {
+  let i
+  let l
+  let hval = 0x811C9DC5
+
+  for (i = 0, l = str.length; i < l; i++) {
+    hval ^= str.charCodeAt(i)
+    hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24)
+  }
+  return (`00000${(hval >>> 0).toString(36)}`).slice(-6)
+}
+
+const SKIP_SCRIPT_RE = /<script(\s|\S)*?<\/script>/g
+function transformSkipCode (code, map) {
+  for (const item of Array.from(code.matchAll(SKIP_SCRIPT_RE))) {
+    if (item != null) {
+      const matched = item[0]
+      console.log(matched, 'matched')
+      const withHashKey = `@unocss-skip-placeholder-${hash(matched)}`
+      map.set(withHashKey, matched)
+      code = code.replace(matched, withHashKey)
+    }
+  }
+
+  return code
+}
+
+function restoreSkipCode (code, map) {
+  for (const [withHashKey, matched] of map.entries()) {
+    code = code.replace(withHashKey, matched)
+  }
+
+  return code
 }
 
 module.exports = {
