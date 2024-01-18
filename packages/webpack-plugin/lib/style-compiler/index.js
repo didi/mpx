@@ -5,6 +5,7 @@ const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
+const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
@@ -38,8 +39,11 @@ module.exports = function (css, map) {
       },
       config.options
     )
-    // ali平台下处理host选择器
+    // ali平台下处理scoped和host选择器
     if (mode === 'ali') {
+      if (queryObj.scoped) {
+        plugins.push(scopeId({ id }))
+      }
       plugins.push(transSpecial({ id }))
     }
 

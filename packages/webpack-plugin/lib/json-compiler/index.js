@@ -47,6 +47,7 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+  const transAli = mode === 'ali' && srcMode === 'wx'
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -170,14 +171,6 @@ module.exports = function (content) {
     // component
     if (json.component !== true) {
       json.component = true
-    }
-  }
-
-  // wx 转 ali 默认开启样式隔离
-  const transAli = mode === 'ali' && srcMode === 'wx'
-  if (transAli && !isApp) {
-    if (!json.styleIsolation) {
-      json.styleIsolation = 'apply-shared'
     }
   }
 
