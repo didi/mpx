@@ -123,10 +123,6 @@ export default function getRefsMixin () {
           return originalExec.call(this, cb)
         }
 
-        selectorQuery.in = function () {
-          return this
-        }
-
         return selectorQuery
       },
       selectComponent (selector) {
