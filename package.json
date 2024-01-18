@@ -18,7 +18,6 @@
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
-    "@types/webpack": "^5.28.5",
     "@vuepress/plugin-back-to-top": "^1.8.2",
     "@vuepress/plugin-pwa": "^1.8.0",
     "eslint": "^7.32.0",
