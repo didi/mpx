@@ -198,7 +198,7 @@
         eventNames.forEach(eventName => {
           this.$refs.scrollContent?.[behaviorType](eventName, (e) => {
             if (e.target !== this.bs.scroller.content) {
-              this.throttleRefresh()
+              this.debounceRefresh()
             }
           })
         })
