@@ -87,7 +87,6 @@ module.exports = function (raw) {
     return result
   }
 
-
   const injectOptionsCode = (() => {
     if (mode === 'wx' && hasVirtualHost) {
       // 微信小程序 hasVirtualHost 默认是 false，所以只需要为 true 时添加配置
