@@ -119,7 +119,7 @@ global.currentInject = {
       resultSource += `
 global.currentInject.render = function (_i, _c, _r, _sc) {
 ${bindResult.code}
-_r(${optimizeRenderLevel > 0 ? 'true' : ''});
+_r(${optimizeRenderLevel === 2 ? 'true' : ''});
 };\n`
       if ((mode === 'tt' || mode === 'swan') && bindResult.propKeys) {
         resultSource += `global.currentInject.propKeys = ${JSON.stringify(bindResult.propKeys)};\n`
