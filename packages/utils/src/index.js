@@ -39,8 +39,7 @@ export {
   setByPath,
   doGetByPath,
   getFirstKey,
-  aIsSubPathOfB,
-  getRelativePath
+  aIsSubPathOfB
 } from './path'
 
 export {
