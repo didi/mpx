@@ -39,6 +39,11 @@ export default function getRefsMixin () {
       this.__refCacheMap = new Map()
       this.__asyncRefCacheMap = new Map()
       this.__getRefs()
+
+      if (__mpx_mode__ === 'ali') {
+        this._originCreateSelectorQuery = this.createSelectorQuery
+        this.createSelectorQuery = this._createSelectorQuery
+      }
     },
     [BEFOREUPDATE] () {
       this.__refCacheMap.clear()
@@ -82,10 +87,6 @@ export default function getRefsMixin () {
         return {
           mpxCid: this.__mpxProxy.uid
         }
-      },
-      [BEFORECREATE] () {
-        this._originCreateSelectorQuery = this.createSelectorQuery
-        this.createSelectorQuery = this._createSelectorQuery
       },
       [CREATED] () {
         this.__updateRef()
