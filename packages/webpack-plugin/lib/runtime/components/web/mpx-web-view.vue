@@ -111,7 +111,7 @@
             asyncCallback = navObj.navigateTo(value)
             break
           case 'navigateBack':
-            asyncCallback = navObj.navigateBack(value = {})
+            asyncCallback = navObj.navigateBack(value)
             break
           case 'redirectTo':
             asyncCallback = navObj.redirectTo(value)
