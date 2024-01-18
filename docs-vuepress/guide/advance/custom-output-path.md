@@ -57,7 +57,6 @@ Mpx 框架 webpack-plugin 也提供了 customOutputPath 方法可以让用户进
 需要注意的是，该方法需要具有**稳定性和唯一性**，即同样的输入不管什么时候执行都要有同样的返回以及不同的的输入一定会得到不同的输出。  
 
 - **示例**：
-
 ```js
 // vue.config.js
 module.exports = defineConfig({

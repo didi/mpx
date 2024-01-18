@@ -123,8 +123,10 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   if (_c("a.b")) {}
 
-  _sc("a")[_sc("c")];
-  _c("a.b")[_c("c.d")];
+  _sc("c");
+
+  _sc("a")[""];
+  _c("a.b")[""];
 
   _sc("e");
 };`
@@ -187,6 +189,10 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         obj12
         obj9 || (obj10 || obj11 && obj12)
         obj12 || ''
+
+        obj13;
+        obj14;
+        _i([obj13, obj14], function() {});
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
@@ -250,6 +256,8 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   _sc("obj12");
 
   _sc("obj9") || _sc("obj10") || _sc("obj11") && _sc("obj12");
+
+  _i([_sc("obj13"), _sc("obj14")], function () {});
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
@@ -371,7 +379,8 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   this.name;
 
-  this.name3[this.name2];
+  this.name2;
+  this.name3[""];
 
   this.name4 && this.name4.length;
   this.name4['length'];

@@ -140,7 +140,7 @@ npm run build
       }
     },
     handleTap (index) {
-      // 处理函数直接通过参数获取当前点击的index，清晰简洁
+      // 处理函数直接通过参数获取当前点击的index，清晰简洁.
       this.list[index].active = !this.list[index].active
     },
     onReady () {

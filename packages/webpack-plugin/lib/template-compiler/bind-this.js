@@ -80,23 +80,23 @@ function checkDelAndGetPath (path) {
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
-      // case: String(a) || this._p(a)
       const args = current.node.arguments || current.parent.arguments || []
-      if (args.length === 1) {
+      if (args.length === 1) { // case: String(a) || this._p(a)
         delPath = current.parentPath
       } else {
-        // case: _i(a, function() {})
-        canDel = false
         break
       }
     } else if (t.isMemberExpression(current.parent)) { // case: String(a,'123').b.c
-      if (current.parent.computed && !t.isLiteral(current.parent.property)) { // case: a[b] or a.b[c.d]
-        canDel = false
-        break
+      if (current.parent.computed) { // case: a['b'] or a.b['c.d']
+        if (t.isLiteral(current.parent.property)) {
+          delPath = current.parentPath
+        } else { // case: a[b]
+          break
+        }
       } else {
         delPath = current.parentPath
       }
-    } else if (t.isLogicalExpression(current.container)) { // 只处理case: a || '' or '123' || a
+    } else if (t.isLogicalExpression(current.parent)) { // 只处理case: a || '' or '123' || a
       const key = current.key === 'left' ? 'right' : 'left'
       if (t.isLiteral(current.parent[key])) {
         delPath = current.parentPath
@@ -114,35 +114,49 @@ function checkDelAndGetPath (path) {
 
   // 确定是否可删除
   while (!t.isBlockStatement(current) && canDel) {
-    const { key, container } = current
-    if (t.isIfStatement(container) && key === 'test') { // if (a) {}
+    const { key, listKey, parent } = current
+
+    if (t.isIfStatement(parent) && key === 'test') {
       canDel = false
       break
     }
 
-    if (t.isLogicalExpression(container)) { // case: a || ((b || c) && d)
+    if (listKey === 'arguments' && t.isCallExpression(parent)) {
+      canDel = false
+      break
+    }
+
+    if (parent.computed && t.isMemberExpression(parent)) {
+      if (key === 'property') {
+        replace = true
+      } else {
+        canDel = false
+        break
+      }
+    }
+
+    if (t.isLogicalExpression(parent)) { // case: a || ((b || c) && d)
       canDel = false
       ignore = true
       break
     }
 
-    if (t.isConditionalExpression(container)) {
+    if (t.isConditionalExpression(parent)) {
       if (key === 'test') {
         canDel = false
         break
       } else {
         ignore = true
-        replace = true
+        replace = true // 继续往上找，判断是否存在if条件等
       }
     }
 
-    if (
-      t.isBinaryExpression(container) || // 运算 a + b
-      (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a })
-    ) {
-      canDel = true
+    if (t.isBinaryExpression(parent)) { // 运算 a + b
+      replace = true // 不能break，case: if (a + b) {}
+    }
+
+    if (key === 'value' && t.isObjectProperty(parent)) { // ({ name: a })
       replace = true
-      // 不能break，case: if (a + b) {}
     }
 
     current = current.parentPath
