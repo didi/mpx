@@ -145,7 +145,6 @@ function transformSkipCode (code, map) {
   for (const item of Array.from(code.matchAll(SKIP_SCRIPT_RE))) {
     if (item != null) {
       const matched = item[0]
-      console.log(matched, 'matched')
       const withHashKey = `@unocss-skip-placeholder-${hash(matched)}`
       map.set(withHashKey, matched)
       code = code.replace(matched, withHashKey)
