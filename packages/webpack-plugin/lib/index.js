@@ -169,7 +169,7 @@ class MpxWebpackPlugin {
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
-    options.optimizeRenderRules = options.optimizeRenderRules || {}
+    options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
