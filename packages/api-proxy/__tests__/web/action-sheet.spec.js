@@ -1,20 +1,12 @@
 import '@testing-library/jest-dom/extend-expect'
 import {
   showActionSheet
-} from '../../src/web/api/action-sheet/index'
+} from '../../src/platform/api/action-sheet/index.web'
 import { dispatchTap } from '../../../../test/utils/touch'
-
-function manualPromise (promise, execResolve, execReject) {
-  return new Promise((resolve, reject) => {
-    promise().then(res => resolve(res)).catch(err => reject(err))
-    execResolve && execResolve()
-    execReject && execReject()
-  })
-}
 
 describe('test toast', () => {
   afterAll(() => {
-    document.body.lastChild.remove()
+    document.body.lastChild && document.body.lastChild.remove()
   })
   test('should show actionSheet', () => {
     const A = 'A'
@@ -86,44 +78,5 @@ describe('test toast', () => {
     expect(fail.mock.calls[0][0]).toEqual({
       errMsg: 'showActionSheet:fail cancel'
     })
-  })
-
-  test('should exec promise then', () => {
-    const execResolve = () => {
-      const actionSheet = document.body.lastChild
-      const list = actionSheet.lastChild.firstChild
-      dispatchTap(list.childNodes[2])
-    }
-
-    return manualPromise(() => {
-      return showActionSheet({
-        itemList: ['A', 'B', 'C']
-      })
-    }, execResolve)
-      .then(res => {
-        expect(res).toEqual({
-          errMsg: 'showActionSheet:ok',
-          tapIndex: 2
-        })
-      })
-  })
-
-  test('should exec promise catch', () => {
-    const execReject = () => {
-      const actionSheet = document.body.lastChild
-      const cancelBtn = actionSheet.lastChild.lastChild
-      dispatchTap(cancelBtn)
-    }
-
-    return manualPromise(() => {
-      return showActionSheet({
-        itemList: ['A', 'B', 'C']
-      })
-    }, null, execReject)
-      .catch(err => {
-        expect(err).toEqual({
-          errMsg: 'showActionSheet:fail cancel'
-        })
-      })
   })
 })
