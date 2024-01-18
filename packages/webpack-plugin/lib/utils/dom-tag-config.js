@@ -68,6 +68,19 @@ const isNativeMiniTag = makeMap(
   'open-data,native-component,aria-component,page-meta'
 )
 
+/**
+ * 是否为mpx内置组件
+ * collected from packages/webpack-plugin/lib/runtime/components/web/
+ */
+const isBuildInTag = makeMap(
+  'mpx-image,mpx-picker-view,mpx-slider,mpx-textarea,mpx-input,mpx-picker,' +
+  'mpx-swiper-item,mpx-video,mpx-button,mpx-keep-alive,mpx-progress,' +
+  'mpx-swiper,mpx-view,mpx-checkbox-group,mpx-movable-area,mpx-radio-group,' +
+  'mpx-switch,mpx-web-view,mpx-checkbox,mpx-movable-view,mpx-radio,' +
+  'mpx-tab-bar-container,mpx-form,mpx-navigator,mpx-rich-text,mpx-tab-bar,' +
+  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text'
+)
+
 const isSpace = makeMap('ensp,emsp,nbsp')
 
 const isContWidth = makeMap('col,colgroup,img,table,td,th,tr')
@@ -92,6 +105,7 @@ module.exports = {
   isVoidTag,
   isNonPhrasingTag,
   isRichTextTag,
+  isBuildInTag,
   isUnaryTag,
   isSpace,
   isContWidth,

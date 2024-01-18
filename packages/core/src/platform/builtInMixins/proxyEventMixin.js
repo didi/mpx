@@ -1,4 +1,4 @@
-import { setByPath, error, hasOwn } from '@mpxjs/utils'
+import { setByPath, error, hasOwn, dash2hump } from '@mpxjs/utils'
 import Mpx from '../../index'
 
 const datasetReg = /^data-(.+)$/
@@ -35,7 +35,9 @@ export default function proxyEventMixin () {
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
-        fallbackType = 'regionchange'
+        fallbackType = __mpx_mode__ === 'ali' ? 'regionChange' : 'regionchange'
+      } else if (/-([a-z])/.test(type)) {
+        fallbackType = dash2hump(type)
       } else if (__mpx_mode__ === 'ali') {
         fallbackType = type.replace(/^./, i => i.toLowerCase())
       }
@@ -89,34 +91,22 @@ export default function proxyEventMixin () {
   }
   if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
-      triggerEvent (eventName, eventDetail, e) {
+      triggerEvent (eventName, eventDetail) {
         const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
         const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
-          let eventObj = {}
-          if (e) {
-            e.detail = Object.assign(e.detail, eventDetail)
-            eventObj = e
-          } else {
-            const dataset = collectDataset(this.props)
-            const id = this.props.id || ''
-            const timeStamp = +new Date()
-            eventObj = {
-              type: eventName,
-              timeStamp,
-              target: { id, dataset, targetDataset: dataset },
-              currentTarget: { id, dataset },
-              detail: eventDetail
-            }
+          const dataset = collectDataset(this.props)
+          const id = this.props.id || ''
+          const timeStamp = +new Date()
+          const eventObj = {
+            type: eventName,
+            timeStamp,
+            target: { id, dataset, targetDataset: dataset },
+            currentTarget: { id, dataset },
+            detail: eventDetail
           }
           handler.call(this, eventObj)
         }
-      },
-      __proxyEvent (e) {
-        const eventName = e.type
-        // 保持和微信一致
-        e.target = e.currentTarget
-        this.triggerEvent(eventName, {}, e)
       }
     })
   }

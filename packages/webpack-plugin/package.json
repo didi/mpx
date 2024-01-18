@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.0-beta.2",
+  "version": "2.9.14",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -54,11 +54,12 @@
     "postcss-modules-values": "^4.0.0",
     "postcss-selector-parser": "^6.0.8",
     "postcss-value-parser": "^4.0.2",
+    "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
     "video.js": "^8.6.0"
   },
   "peerDependencies": {
-    "webpack": "^5.48.0"
+    "webpack": "^5.75.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

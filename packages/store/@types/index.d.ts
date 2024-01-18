@@ -6,7 +6,6 @@ type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
 interface compContext {
-  __mpxProxy: object;
   [key: string]: any
 }
 

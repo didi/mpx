@@ -9,12 +9,13 @@ const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
 const CommonJsExtractDependency = require('./dependencies/CommonJsExtractDependency')
-const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
+const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
+const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -124,7 +125,6 @@ class MpxWebpackPlugin {
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
-    options.renderOptimizeRules = options.renderOptimizeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
@@ -168,16 +168,11 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
-    options.asyncSubpackageRules = options.asyncSubpackageRules || null
+    options.asyncSubpackageRules = options.asyncSubpackageRules || []
+    options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
-    let proxyComponentEventsRules = []
-    const proxyComponentEventsRulesRaw = options.proxyComponentEventsRules
-    if (proxyComponentEventsRulesRaw) {
-      proxyComponentEventsRules = Array.isArray(proxyComponentEventsRulesRaw) ? proxyComponentEventsRulesRaw : [proxyComponentEventsRulesRaw]
-    }
-    options.proxyComponentEventsRules = proxyComponentEventsRules
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -331,11 +326,8 @@ class MpxWebpackPlugin {
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
-    let splitChunksPlugin
-    let splitChunksOptions
-
+    const optimization = compiler.options.optimization
     if (this.options.mode !== 'web') {
-      const optimization = compiler.options.optimization
       optimization.runtimeChunk = {
         name: (entrypoint) => {
           for (const packageName in mpx.independentSubpackagesMap) {
@@ -346,8 +338,13 @@ class MpxWebpackPlugin {
           return 'bundle'
         }
       }
+    }
+
+    let splitChunksOptions = null
+    let splitChunksPlugin = null
+    // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
+    if (optimization.splitChunks !== false) {
       splitChunksOptions = Object.assign({
-        defaultSizeTypes: ['javascript', 'unknown'],
         chunks: 'all',
         usedExports: optimization.usedExports === true,
         minChunks: 1,
@@ -355,8 +352,10 @@ class MpxWebpackPlugin {
         enforceSizeThreshold: Infinity,
         maxAsyncRequests: 30,
         maxInitialRequests: 30,
-        automaticNameDelimiter: '-'
+        automaticNameDelimiter: '-',
+        cacheGroups: {}
       }, optimization.splitChunks)
+      splitChunksOptions.defaultSizeTypes = ['javascript', 'unknown']
       delete optimization.splitChunks
       splitChunksPlugin = new SplitChunksPlugin(splitChunksOptions)
       splitChunksPlugin.apply(compiler)
@@ -457,7 +456,6 @@ class MpxWebpackPlugin {
           },
           name: `${packageName}/bundle`,
           minChunks: 2,
-          minSize: 1000,
           priority: 100,
           chunks: 'all'
         }
@@ -638,11 +636,10 @@ class MpxWebpackPlugin {
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
-          renderOptimizeRules: this.options.renderOptimizeRules,
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          enableRequireAsync: this.options.mode === 'wx' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -657,7 +654,7 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          proxyComponentEventsRules: this.options.proxyComponentEventsRules,
+          optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -963,15 +960,35 @@ class MpxWebpackPlugin {
             }
           }
         }
-        // 自动跟进分包配置修改splitChunksPlugin配置
+        // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          Object.keys(mpx.componentsMap).forEach((packageName) => {
-            if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
+          if (mpx.mode === 'web') {
+            // web独立处理splitChunk
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+              splitChunksOptions.cacheGroups.main = {
+                chunks: 'initial',
+                name: 'bundle',
+                test: /[\\/]node_modules[\\/]/
+              }
               needInit = true
-              splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
             }
-          })
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
+              splitChunksOptions.cacheGroups.async = {
+                chunks: 'async',
+                name: 'async',
+                minChunks: 2
+              }
+              needInit = true
+            }
+          } else {
+            Object.keys(mpx.componentsMap).forEach((packageName) => {
+              if (!hasOwn(splitChunksOptions.cacheGroups, packageName)) {
+                splitChunksOptions.cacheGroups[packageName] = getPackageCacheGroup(packageName)
+                needInit = true
+              }
+            })
+          }
           if (needInit) {
             splitChunksPlugin.options = new SplitChunksPlugin(splitChunksOptions).options
           }
@@ -1099,16 +1116,30 @@ class MpxWebpackPlugin {
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
-              // 目前仅wx和ali支持require.async，ali需要开启enableAliRequireAsync，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.enableRequireAsync) {
-                const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
-                  isRequireAsync: true,
-                  retryRequireAsync: !!this.options.retryRequireAsync
-                })
+              // wx、ali(需开启enableAliRequireAsync)和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              if (mpx.supportRequireAsync) {
+                if (mpx.mode === 'web') {
+                  const depBlock = new AsyncDependenciesBlock(
+                    {
+                      name: tarRoot
+                    },
+                    expr.loc,
+                    request
+                  )
+                  const dep = new ImportDependency(request, expr.range)
+                  dep.loc = expr.loc
+                  depBlock.addDependency(dep)
+                  parser.state.current.addBlock(depBlock)
+                } else {
+                  const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
+                    isRequireAsync: true,
+                    retryRequireAsync: !!this.options.retryRequireAsync
+                  })
 
-                parser.state.current.addPresentationalDependency(dep)
-                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
-                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                  parser.state.current.addPresentationalDependency(dep)
+                  // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                  parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
+                }
               } else {
                 const range = expr.range
                 const dep = new CommonJsAsyncDependency(request, range)
@@ -1299,58 +1330,6 @@ class MpxWebpackPlugin {
               })
             }
           }
-
-          // 为跨平台api调用注入srcMode参数指导api运行时转换
-          const apiBlackListMap = [
-            'createApp',
-            'createPage',
-            'createComponent',
-            'createStore',
-            'createStoreWithThis',
-            'mixin',
-            'injectMixins',
-            'toPureObject',
-            'observable',
-            'watch',
-            'use',
-            'set',
-            'remove',
-            'delete',
-            'setConvertRule',
-            'getMixin',
-            'getComputed',
-            'implement'
-          ].reduce((map, api) => {
-            map[api] = true
-            return map
-          }, {})
-
-          const injectSrcModeForTransApi = (expr, members) => {
-            // members为空数组时，callee并不是memberExpression
-            if (!members.length) return
-            const callee = expr.callee
-            const args = expr.arguments
-            const name = callee.object.name
-            const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-            const localSrcMode = queryObj.mode
-            const globalSrcMode = mpx.srcMode
-            const srcMode = localSrcMode || globalSrcMode
-
-            if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
-
-            const srcModeString = `__mpx_src_mode_${srcMode}__`
-            const dep = new InjectDependency({
-              content: args.length
-                ? `, ${JSON.stringify(srcModeString)}`
-                : JSON.stringify(srcModeString),
-              index: expr.end - 1
-            })
-            parser.state.current.addPresentationalDependency(dep)
-          }
-
-          parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
       }
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)

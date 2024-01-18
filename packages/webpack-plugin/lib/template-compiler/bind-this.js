@@ -32,7 +32,7 @@ function checkBindThis (path) {
 }
 
 // 计算访问路径
-function calPropName (path) {
+function getCollectPath (path) {
   let current = path.parentPath
   let last = path
   let keyPath = '' + path.node.name
@@ -80,22 +80,31 @@ function checkDelAndGetPath (path) {
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
-      // case: String(a) || this._p(a)
       const args = current.node.arguments || current.parent.arguments || []
-      if (args.length === 1) {
+      if (args.length === 1) { // case: String(a) || this._p(a)
         delPath = current.parentPath
       } else {
-        // case: this._i(a, function() {})
-        canDel = false
         break
       }
     } else if (t.isMemberExpression(current.parent)) { // case: String(a,'123').b.c
-      if (current.parent.computed && !t.isLiteral(current.parent.property)) { // case: a[b] or a.b[c.d]
-        canDel = false
-        break
+      if (current.parent.computed) { // case: a['b'] or a.b['c.d']
+        if (t.isLiteral(current.parent.property)) {
+          delPath = current.parentPath
+        } else { // case: a[b]
+          break
+        }
       } else {
         delPath = current.parentPath
       }
+    } else if (t.isLogicalExpression(current.parent)) { // 只处理case: a || '' or '123' || a
+      const key = current.key === 'left' ? 'right' : 'left'
+      if (t.isLiteral(current.parent[key])) {
+        delPath = current.parentPath
+      } else {
+        break
+      }
+    } else if (current.key === 'expression' && t.isExpressionStatement(current.parentPath)) { // dealRemove删除节点时需要
+      delPath = current.parentPath
     } else {
       break
     }
@@ -105,28 +114,49 @@ function checkDelAndGetPath (path) {
 
   // 确定是否可删除
   while (!t.isBlockStatement(current) && canDel) {
-    const { key, container } = current
-    if (
-      t.isLogicalExpression(container) || // a && b
-      (t.isIfStatement(container) && key === 'test') // if (a) {}
-    ) {
+    const { key, listKey, parent } = current
+
+    if (t.isIfStatement(parent) && key === 'test') {
       canDel = false
       break
     }
 
-    if (t.isConditionalExpression(container)) {
-      if (key === 'test') canDel = false
-      else ignore = true
+    if (t.isCallExpression(parent) && listKey === 'arguments') {
+      canDel = false
       break
     }
 
-    if (
-      t.isBinaryExpression(container) || // 运算 a + b
-      (key === 'value' && t.isObjectProperty(container) && canDel) // ({ name: a })
-    ) {
-      canDel = true
+    if (t.isMemberExpression(parent) && parent.computed) {
+      if (key === 'property') {
+        replace = true
+      } else {
+        canDel = false
+        break
+      }
+    }
+
+    if (t.isLogicalExpression(parent)) { // case: a || ((b || c) && d)
+      canDel = false
+      ignore = true
+      break
+    }
+
+    if (t.isConditionalExpression(parent)) {
+      if (key === 'test') {
+        canDel = false
+        break
+      } else {
+        ignore = true
+        replace = true // 继续往上找，判断是否存在if条件等
+      }
+    }
+
+    if (t.isBinaryExpression(parent)) { // 运算 a + b
+      replace = true // 不能break，case: if (a + b) {}
+    }
+
+    if (t.isObjectProperty(parent) && key === 'value') { // ({ name: a })
       replace = true
-      // 不能break，case: if (a + b) {}
     }
 
     current = current.parentPath
@@ -142,33 +172,99 @@ function checkDelAndGetPath (path) {
 
 // 判断前缀是否存在(只判断前缀，全等的情况，会返回false)
 function checkPrefix (keys, key) {
-  for (let i = 0; i < keys.length; i++) {
-    const str = keys[i]
-    if (key === str) continue
-    // 确保判断当前标识是完整的单词
-    if (key.startsWith(str) && (key[str.length] === '.' || key[str.length] === '[')) return true
+  for (const item of keys) {
+    if (checkBIsPrefixOfA(key, item)) return true
   }
   return false
 }
 
-function dealRemove (path, replace) {
-  while (path.key === 'expression' && t.isExpressionStatement(path.parentPath)) {
-    path = path.parentPath
-  }
+function checkBIsPrefixOfA (a, b) {
+  return a.startsWith(b) && (a[b.length] === '.' || a[b.length] === '[')
+}
 
+function dealRemove (path, replace) {
   try {
     if (replace) {
       path.replaceWith(t.stringLiteral(''))
     } else {
-      t.validate(path, path.key, null)
+      if (path.inList) {
+        t.validate(path.parent, path.key, [null])
+      } else {
+        t.validate(path.parent, path.key, null)
+      }
       path.remove()
     }
+    delete path.needBind
+    delete path.collectInfo
   } catch (e) {
-    console.error(e)
   }
 }
 
+function isSimpleKey (key) {
+  return !/[[.]/.test(key)
+}
+
 module.exports = {
+  transformSimple (code, {
+    ignoreMap = {}
+  }) {
+    const ast = babylon.parse(code, {
+      plugins: [
+        'objectRestSpread'
+      ]
+    })
+    const collectKeySet = new Set()
+    const propKeySet = new Set()
+    let isProps = false
+    const visitor = {
+      // 标记收集props数据
+      CallExpression: {
+        enter (path) {
+          const callee = path.node.callee
+          if (
+            t.isMemberExpression(callee) &&
+            t.isThisExpression(callee.object) &&
+            (callee.property.name === '_p' || callee.property.value === '_p')
+          ) {
+            isProps = true
+            path.isProps = true
+          }
+        },
+        exit (path) {
+          if (path.isProps) {
+            isProps = false
+            delete path.isProps
+          }
+        }
+      },
+      Identifier (path) {
+        if (
+          checkBindThis(path) &&
+          !ignoreMap[path.node.name] &&
+          !path.scope.hasBinding(path.node.name)
+        ) {
+          if (isProps) {
+            propKeySet.add(path.node.property.name)
+          }
+          const { keyPath } = getCollectPath(path)
+          collectKeySet.add(keyPath)
+        }
+      }
+    }
+    traverse(ast, visitor)
+    const collectKeys = [...collectKeySet]
+    const pCollectKeys = collectKeys.filter((keyA) => {
+      return collectKeys.every((keyB) => {
+        return !checkBIsPrefixOfA(keyA, keyB)
+      })
+    })
+    return {
+      code: pCollectKeys.map((key) => {
+        return isSimpleKey(key) ? `_sc(${JSON.stringify(key)});` : `_c(${JSON.stringify(key)});`
+      }).join('\n'),
+      propKeys: [...propKeySet]
+    }
+  },
   transform (code, {
     needCollect = false,
     renderReduce = false,
@@ -183,7 +279,7 @@ module.exports = {
     let currentBlock = null
     const bindingsMap = new Map()
 
-    const propKeys = []
+    const propKeySet = new Set()
     let isProps = false
 
     const collectVisitor = {
@@ -202,25 +298,43 @@ module.exports = {
       Identifier (path) {
         if (
           checkBindThis(path) &&
-          !path.scope.hasBinding(path.node.name) &&
           !ignoreMap[path.node.name]
         ) {
-          const { last, keyPath } = calPropName(path)
+          const scopeBinding = path.scope.hasBinding(path.node.name)
+          // 删除局部作用域的变量
+          if (scopeBinding) {
+            if (renderReduce) {
+              const { delPath, canDel, replace } = checkDelAndGetPath(path)
+              if (canDel) {
+                delPath.delInfo = {
+                  isLocal: true,
+                  replace
+                }
+              }
+            }
+            return
+          }
           path.needBind = true
+          const { last, keyPath } = getCollectPath(path)
           if (needCollect) {
-            last.collectPath = t.stringLiteral(keyPath)
+            last.collectInfo = {
+              key: t.stringLiteral(keyPath),
+              isSimple: isSimpleKey(keyPath)
+            }
           }
 
           if (!renderReduce) return
 
           const { delPath, canDel, ignore, replace } = checkDelAndGetPath(path)
-          if (ignore) return
 
-          delPath.delInfo = {
-            keyPath,
-            canDel,
-            replace
+          if (canDel) {
+            delPath.delInfo = {
+              keyPath,
+              replace
+            }
           }
+
+          if (ignore) return // ignore不计数，不需要被统计
 
           const { bindings } = bindingsMap.get(currentBlock)
           const target = bindings[keyPath] || []
@@ -272,26 +386,26 @@ module.exports = {
       enter (path) {
         // 删除重复变量
         if (path.delInfo) {
-          const { keyPath, canDel, replace } = path.delInfo
+          const { keyPath, isLocal, replace } = path.delInfo
           delete path.delInfo
 
-          if (canDel) {
-            const data = bindingsMap.get(currentBlock)
-            const { bindings, pBindings } = data
-            const allBindings = Object.assign({}, pBindings, bindings)
+          if (isLocal) { // 局部作用域里的变量，可直接删除
+            dealRemove(path, replace)
+            return
+          }
+          const data = bindingsMap.get(currentBlock)
+          const { bindings, pBindings } = data
+          const allBindings = Object.assign({}, pBindings, bindings)
 
-            // 优先判断前缀，再判断全等
-            if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
-              dealRemove(path, replace)
-              return
-            } else {
-              const currentBlockVars = bindings[keyPath]
-              if (currentBlockVars.length > 1) {
-                const index = currentBlockVars.findIndex(item => !item.canDel)
-                if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
-                  dealRemove(path, replace)
-                  return
-                }
+          // 优先判断前缀，再判断全等
+          if (checkPrefix(Object.keys(allBindings), keyPath) || pBindings[keyPath]) {
+            dealRemove(path, replace)
+          } else {
+            const currentBlockVars = bindings[keyPath] || [] // 对于只出现一次的可忽略变量，需要兜底
+            if (currentBlockVars.length >= 1) {
+              const index = currentBlockVars.findIndex(item => !item.canDel)
+              if (index !== -1 || currentBlockVars[0].path !== path) { // 当前block中存在不可删除的变量 || 不是第一个可删除变量，即可删除该变量
+                dealRemove(path, replace)
               }
             }
           }
@@ -302,7 +416,7 @@ module.exports = {
           const name = path.node.name
           if (name) { // 确保path没有被删除 且 没有被替换成字符串
             if (isProps) {
-              propKeys.push(name)
+              propKeySet.add(name)
             }
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
           }
@@ -311,9 +425,14 @@ module.exports = {
       },
       MemberExpression: {
         exit (path) {
-          if (path.collectPath) {
-            path.node && path.replaceWith(t.callExpression(t.memberExpression(t.thisExpression(), t.identifier('_c')), [path.collectPath, path.node]))
-            delete path.collectPath
+          if (path.collectInfo) {
+            const { isSimple, key } = path.collectInfo
+            const callee = isSimple ? t.identifier('_sc') : t.identifier('_c')
+            const replaceNode = renderReduce
+              ? t.callExpression(callee, [key])
+              : t.callExpression(callee, [key, path.node])
+            path.node && path.replaceWith(replaceNode)
+            delete path.collectInfo
           }
         }
       }
@@ -324,7 +443,7 @@ module.exports = {
 
     return {
       code: generate(ast).code,
-      propKeys
+      propKeys: [...propKeySet]
     }
   }
 }

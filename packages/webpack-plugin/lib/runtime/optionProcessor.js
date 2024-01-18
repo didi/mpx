@@ -1,9 +1,9 @@
-import { hasOwn } from './utils'
+import { hasOwn, isEmptyObject } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
-export default function processComponentOption (
+export function processComponentOption (
   {
     option,
     ctorType,
@@ -12,7 +12,7 @@ export default function processComponentOption (
     componentsMap,
     componentGenerics,
     genericsInfo,
-    mixin,
+    wxsMixin,
     hasApp
   }
 ) {
@@ -40,7 +40,7 @@ registered in parent context!`)
     })
   }
 
-  if (componentGenerics) {
+  if (!isEmptyObject(componentGenerics)) {
     option.props = option.props || {}
     option.props.generichash = String
     Object.keys(componentGenerics).forEach((genericName) => {
@@ -64,10 +64,9 @@ registered in parent context!`)
     option.filters = { transRpxStyle }
   }
 
-  if (option.mixins) {
-    option.mixins.push(mixin)
-  } else {
-    option.mixins = [mixin]
+  if (wxsMixin) {
+    option.mixins = option.mixins || []
+    option.mixins.push(wxsMixin)
   }
 
   if (outputPath) {
@@ -85,7 +84,7 @@ export function getComponent (component, extendOptions) {
 }
 
 export function getWxsMixin (wxsModules) {
-  if (!wxsModules || !Object.keys(wxsModules).length) return {}
+  if (!wxsModules || !Object.keys(wxsModules).length) return
   return {
     created () {
       Object.keys(wxsModules).forEach((key) => {
@@ -140,6 +139,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       routes: routes
     })
     global.__mpxRouter.stack = []
+    global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
     global.__mpxRouter.eventChannelMap = {}
@@ -325,7 +325,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
   }
 }
 
-export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, webConfig }) {
+export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, el }) {
   if (!isBrowser) {
     return context => {
       const { app, router, pinia = {} } = createApp({
@@ -344,7 +344,7 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
           router.push(context.url)
           router.onReady(() => {
             context.rendered = () => {
-              context.state = JSON.stringify((pinia.state && pinia.state.value) || {})
+              context.state = pinia?.state?.value || {}
             }
             resolve(app)
           }, reject)
@@ -361,9 +361,9 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
       VueRouter,
       tabBarMap
     })
-    if (window.__INITIAL_STATE__) {
-      pinia.state.value = JSON.parse(window.__INITIAL_STATE__)
+    if (window.__INITIAL_STATE__ && pinia) {
+      pinia.state.value = window.__INITIAL_STATE__
     }
-    app.$mount(webConfig.el || '#app')
+    app.$mount(el)
   }
 }

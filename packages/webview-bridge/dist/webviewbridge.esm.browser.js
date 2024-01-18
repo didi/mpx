@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.8.1
- * (c) 2023 @mpxjs team
+ * mpxjs webview bridge v2.9.1
+ * (c) 2024 @mpxjs team
  * @license Apache
  */
 function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
@@ -51,7 +51,7 @@ const SDK_URL_MAP = {
   qq: {
     url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
   },
-  ali: {
+  my: {
     url: 'https://appx/web-view.min.js'
   },
   baidu: {

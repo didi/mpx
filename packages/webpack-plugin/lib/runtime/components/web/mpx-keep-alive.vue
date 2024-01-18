@@ -39,7 +39,7 @@
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
-      if (!isBrowser) {
+      if (!isBrowser || !vnode) {
         return vnode || (slot && slot[0])
       }
       const router = global.__mpxRouter
@@ -64,6 +64,8 @@
             removeItem.vnode.componentInstance.$destroy()
           }
         })
+        // 在执行完destroy后再同步lastStack信息，让用户在destroy钩子中还能够访问到销毁之前的页面栈，与小程序保持一致
+        router.lastStack = router.stack.slice()
         router.needRemove.length = 0
 
         const stack = router.stack
