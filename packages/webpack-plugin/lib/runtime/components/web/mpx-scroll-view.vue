@@ -108,13 +108,22 @@
       }
     },
     mounted () {
-       this.debounceRefresh = debounce(function () {
+      this.debounceRefresh = debounce(function () {
         this.refresh()
-      }, 100, {
+      }, 200, {
         leading: false,
         trailing: true
       }),
+      this.dispatchScrollTo = throttle(function (direction) {
+        let eventName = 'scrolltoupper'
+        if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
+        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
+      }, 200, {
+        leading: true,
+        trailing: false
+      }),
       this.initBs()
+      this.observeAnimation('add')
       this.handleMutationObserver()
     },
     activated () {
@@ -129,6 +138,9 @@
     },
     deactivated () {
       this.__mpx_deactivated = true
+    },
+    destroyed () {
+      this.observeAnimation('remove')
     },
     beforeDestroy () {
       this.destroyBs()
@@ -180,6 +192,17 @@
       }
     },
     methods: {
+      observeAnimation (type) {
+        const eventNames = ['transitionend', 'animationend']
+        const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
+        eventNames.forEach(eventName => {
+          this.$refs.scrollContent?.[behaviorType](eventName, (e) => {
+            if (e.target !== this.bs.scroller.content) {
+              this.throttleRefresh()
+            }
+          })
+        })
+      },
       destroyBs () {
         if (!this.bs) return
         this.bs.destroy()
@@ -355,8 +378,10 @@
         })
         const width = maxRight - minLeft || 0
         const height = maxBottom - minTop || 0
-        this.$refs.scrollContent.style.width = `${width}px`
-        this.$refs.scrollContent.style.height = `${height}px`
+        if (this.$refs.scrollContent) {
+          this.$refs.scrollContent.style.width = `${width}px`
+          this.$refs.scrollContent.style.height = `${height}px`
+        }
         return {
           scrollContentWidth: width,
           scrollContentHeight: height,
@@ -381,19 +406,29 @@
       compare(num1, num2, scale = 1) {
         return Math.abs(num1 - num2) < scale
       },
-      dispatchScrollTo: throttle(function (direction) {
-        let eventName = 'scrolltoupper'
-        if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
-      }, 200, {
-        leading: true,
-        trailing: false
-      }),
       handleMutationObserver () {
         if (typeof MutationObserver !== 'undefined') {
-          mutationObserver = new MutationObserver(() => this.debounceRefresh())
-          const config = { attributes: true, attributeFilter:['style', 'class', 'id'], childList: true, subtree: true }
+          mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
+          const config = { attributes: true, childList: true, subtree: true }
           mutationObserver.observe(this.$refs.wrapper, config)
+        }
+      },
+       mutationObserverHandler (mutations) {
+        let needRefresh = false
+        for (let i = 0; i < mutations.length; i++) {
+          const mutation = mutations[i]
+          if (mutation.type !== 'attributes') {
+             needRefresh = true
+            break
+          } else {
+            if (mutation.target !== this.bs.scroller.content && mutation.target !== this.$refs.innerWrapper) {
+              needRefresh = true
+              break
+            }
+          }
+        }
+        if (needRefresh) {
+          this.debounceRefresh()
         }
       },
       handleObserveAnimation (e, eventName) {
