@@ -4,8 +4,8 @@
 
 <script>
   import { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy/src/web/api/index'
-
+  import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
+  const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
   const eventLoad = 'load'
   const eventError = 'error'
   const eventMessage = 'message'
@@ -95,32 +95,32 @@
       messageCallback (event) {
         const hostValidate = this.hostValidate(event.origin)
         const data = event.data
-        const value = data.payload
+        let value = data.payload
         if (!hostValidate) {
           return
         }
         let asyncCallback = null
         switch (data.type) {
           case 'postMessage':
-            this.messageList.push(value)
+            this.messageList.push(value.data || value)
             asyncCallback = Promise.resolve({
               errMsg: 'invokeWebappApi:ok'
             })
             break
           case 'navigateTo':
-            asyncCallback = navigateTo(value)
+            asyncCallback = navObj.navigateTo(value)
             break
           case 'navigateBack':
-            asyncCallback = value ? navigateBack(value) : navigateBack()
+            asyncCallback = navObj.navigateBack(value)
             break
           case 'redirectTo':
-            asyncCallback = redirectTo(value)
+            asyncCallback = navObj.redirectTo(value)
             break
           case 'switchTab':
-            asyncCallback = switchTab(value)
+            asyncCallback = navObj.switchTab(value)
             break
           case 'reLaunch':
-            asyncCallback = reLaunch(value)
+            asyncCallback = navObj.reLaunch(value)
             break
           case 'getLocation':
             const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
