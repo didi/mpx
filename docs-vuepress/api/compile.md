@@ -160,7 +160,7 @@ module.exports = defineConfig({
 ```
 
 ::: warning
-抹平支付宝和微信之间的差异，微信转支付宝时可以使用该功能。
+抹平支付宝和微信之间的差异，当使用了微信 **externalClasses** 语法时，跨端输出需要在 @mpxjs/webpack-plugin 的配置中添加此配置来辅助框架进行转换。
 :::
 
 ### resolveMode
