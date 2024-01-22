@@ -313,30 +313,36 @@ module.exports = {
 ```html
 <view @ali>this is view</view>
 ```
-需要注意使用上述用法时，整个节点以及子节点都会被认为是支付宝小程序节点，在构建时框架不会对节点属性进行平台语法转换。
+需要注意使用上述用法时，节点自身在构建时框架不会对节点属性进行平台语法转换，但对于其子节点，框架并不会继承父级节点 mode，会进行正常跨平台语法转换。
 ```html
 <!--错误示例-->
-<view @ali>
+<view @ali bindtap="otherClick">
     <view bindtap="someClick">tap click</view>
 </view>
+// srcMode 为 wx 跨端输出 ali 结果为
+<view @ali bindtap="otherClick">
+    <view onTap="someClick">tap click</view>
+</view>
 ```
-上述示例为错误写法，假如srcMode为微信小程序，用上述写法构建输出支付宝小程序时，bindtap 不会被转为 onTap，在支付宝平台执行时事件会无响应。
+上述示例为错误写法，假如srcMode为微信小程序，用上述写法构建输出支付宝小程序时，父节点 bindtap 不会被转为 onTap，在支付宝平台执行时事件会无响应。
 
 正确写法如下：
 ```html
 <!--正确示例-->
-<view @ali>
+<view @ali onTap="otherClick">
+    <view bindtap="someClick">tap click</view>
+</view>
+// 输出 ali 产物
+<view @ali onTap="otherClick">
     <view onTap="someClick">tap click</view>
 </view>
 ```
 有时开发者期望使用 @ali 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力
 ```html
-<view @_ali>
 <!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
-    <view bindtap="someClick">tap click</view>
-</view>
+<view @_ali bindtap="someClick">test</view>
 ```
-在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，平台语法转换能力依旧。
+在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
 
 有时候我们不仅需要对节点属性进行条件编译，可能还需要对节点标签进行条件编译。
 
