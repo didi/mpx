@@ -76,20 +76,16 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   }
 }
 
-async function applyTransformers (ctx, original, id, enforce = 'default') {
+async function applyTransformers (ctx, original, id) {
   if (original.includes(IGNORE_COMMENT)) {
     return
   }
-  const transformers = (ctx.uno.config.transformers || []).filter((i) => (i.enforce || 'default') === enforce)
-  if (!transformers.length) {
-    return
-  }
-  const skipMap = new Map()
+  const transformers = ctx.uno.config.transformers
   let code = original
-
-  let s = new MagicString(transformSkipCode(code, skipMap))
   const maps = []
   for (const t of transformers) {
+    // transformerVariantGroup会调用s.overwrite影响transformerDirectives执行，所以每次重新赋值。
+    const s = new MagicString(code)
     if (t.idFilter) {
       if (!t.idFilter(id)) {
         continue
@@ -99,9 +95,8 @@ async function applyTransformers (ctx, original, id, enforce = 'default') {
     }
     await t.transform(s, id, ctx)
     if (s.hasChanged()) {
-      code = restoreSkipCode(s.toString(), skipMap)
+      code = s.toString()
       maps.push(s.generateMap({ hires: true, source: id }))
-      s = new MagicString(code)
     }
   }
   if (code !== original) {
@@ -126,40 +121,6 @@ function getPath (id) {
 
 function isCssId (id) {
   return core.cssIdRE.test(id)
-}
-
-function hash (str) {
-  let i
-  let l
-  let hval = 0x811C9DC5
-
-  for (i = 0, l = str.length; i < l; i++) {
-    hval ^= str.charCodeAt(i)
-    hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24)
-  }
-  return (`00000${(hval >>> 0).toString(36)}`).slice(-6)
-}
-
-const SKIP_SCRIPT_RE = /<script(\s|\S)*?<\/script>/g
-function transformSkipCode (code, map) {
-  for (const item of Array.from(code.matchAll(SKIP_SCRIPT_RE))) {
-    if (item != null) {
-      const matched = item[0]
-      const withHashKey = `@unocss-skip-placeholder-${hash(matched)}`
-      map.set(withHashKey, matched)
-      code = code.replace(matched, withHashKey)
-    }
-  }
-
-  return code
-}
-
-function restoreSkipCode (code, map) {
-  for (const [withHashKey, matched] of map.entries()) {
-    code = code.replace(withHashKey, matched)
-  }
-
-  return code
 }
 
 module.exports = {
