@@ -81,6 +81,9 @@ async function applyTransformers (ctx, original, id) {
     return
   }
   const transformers = ctx.uno.config.transformers
+  if (!transformers.length) {
+    return
+  }
   let code = original
   const maps = []
   for (const t of transformers) {
