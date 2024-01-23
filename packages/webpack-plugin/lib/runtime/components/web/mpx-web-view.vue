@@ -102,7 +102,7 @@
         let asyncCallback = null
         switch (data.type) {
           case 'postMessage':
-            this.messageList.push(value)
+            this.messageList.push(value.data || value)
             asyncCallback = Promise.resolve({
               errMsg: 'invokeWebappApi:ok'
             })
