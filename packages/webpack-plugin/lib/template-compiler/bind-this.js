@@ -32,7 +32,7 @@ function checkBindThis (path) {
 }
 
 // 计算访问路径
-function calPropName (path) {
+function getCollectPath (path) {
   let current = path.parentPath
   let last = path
   let keyPath = '' + path.node.name
@@ -75,7 +75,7 @@ function checkDelAndGetPath (path) {
   let replace = false
 
   // 确定删除路径
-  while (!t.isBlockStatement(current)) {
+  while (!t.isBlockStatement(current) && !t.isProgram(current)) {
     // case: !!a
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
@@ -113,7 +113,7 @@ function checkDelAndGetPath (path) {
   }
 
   // 确定是否可删除
-  while (!t.isBlockStatement(current) && canDel) {
+  while (!t.isBlockStatement(current) && !t.isProgram(current)) {
     const { key, listKey, parent } = current
 
     if (t.isIfStatement(parent) && key === 'test') {
@@ -121,12 +121,12 @@ function checkDelAndGetPath (path) {
       break
     }
 
-    if (listKey === 'arguments' && t.isCallExpression(parent)) {
+    if (t.isCallExpression(parent) && listKey === 'arguments') {
       canDel = false
       break
     }
 
-    if (parent.computed && t.isMemberExpression(parent)) {
+    if (t.isMemberExpression(parent) && parent.computed) {
       if (key === 'property') {
         replace = true
       } else {
@@ -155,7 +155,7 @@ function checkDelAndGetPath (path) {
       replace = true // 不能break，case: if (a + b) {}
     }
 
-    if (key === 'value' && t.isObjectProperty(parent)) { // ({ name: a })
+    if (t.isObjectProperty(parent) && key === 'value') { // ({ name: a })
       replace = true
     }
 
@@ -172,13 +172,14 @@ function checkDelAndGetPath (path) {
 
 // 判断前缀是否存在(只判断前缀，全等的情况，会返回false)
 function checkPrefix (keys, key) {
-  for (let i = 0; i < keys.length; i++) {
-    const str = keys[i]
-    if (key === str) continue
-    // 确保判断当前标识是完整的单词
-    if (key.startsWith(str) && (key[str.length] === '.' || key[str.length] === '[')) return true
+  for (const item of keys) {
+    if (checkBIsPrefixOfA(key, item)) return true
   }
   return false
+}
+
+function checkBIsPrefixOfA (a, b) {
+  return a.startsWith(b) && (a[b.length] === '.' || a[b.length] === '[')
 }
 
 function dealRemove (path, replace) {
@@ -195,10 +196,75 @@ function dealRemove (path, replace) {
     }
     delete path.needBind
     delete path.collectInfo
-  } catch (e) {}
+  } catch (e) {
+  }
+}
+
+function isSimpleKey (key) {
+  return !/[[.]/.test(key)
 }
 
 module.exports = {
+  transformSimple (code, {
+    ignoreMap = {}
+  }) {
+    const ast = babylon.parse(code, {
+      plugins: [
+        'objectRestSpread'
+      ]
+    })
+    const collectKeySet = new Set()
+    const propKeySet = new Set()
+    let isProps = false
+    const visitor = {
+      // 标记收集props数据
+      CallExpression: {
+        enter (path) {
+          const callee = path.node.callee
+          if (
+            t.isMemberExpression(callee) &&
+            t.isThisExpression(callee.object) &&
+            (callee.property.name === '_p' || callee.property.value === '_p')
+          ) {
+            isProps = true
+            path.isProps = true
+          }
+        },
+        exit (path) {
+          if (path.isProps) {
+            isProps = false
+            delete path.isProps
+          }
+        }
+      },
+      Identifier (path) {
+        if (
+          checkBindThis(path) &&
+          !ignoreMap[path.node.name] &&
+          !path.scope.hasBinding(path.node.name)
+        ) {
+          if (isProps) {
+            propKeySet.add(path.node.name)
+          }
+          const { keyPath } = getCollectPath(path)
+          collectKeySet.add(keyPath)
+        }
+      }
+    }
+    traverse(ast, visitor)
+    const collectKeys = [...collectKeySet]
+    const pCollectKeys = collectKeys.filter((keyA) => {
+      return collectKeys.every((keyB) => {
+        return !checkBIsPrefixOfA(keyA, keyB)
+      })
+    })
+    return {
+      code: pCollectKeys.map((key) => {
+        return isSimpleKey(key) ? `_sc(${JSON.stringify(key)});` : `_c(${JSON.stringify(key)});`
+      }).join('\n'),
+      propKeys: [...propKeySet]
+    }
+  },
   transform (code, {
     needCollect = false,
     renderReduce = false,
@@ -213,22 +279,25 @@ module.exports = {
     let currentBlock = null
     const bindingsMap = new Map()
 
-    const propKeys = []
+    const propKeySet = new Set()
     let isProps = false
 
-    const collectVisitor = {
-      BlockStatement: {
-        enter (path) { // 收集作用域下所有变量(keyPath)
-          bindingsMap.set(path, {
-            parent: currentBlock,
-            bindings: {}
-          })
-          currentBlock = path
-        },
-        exit (path) {
-          currentBlock = bindingsMap.get(path).parent
-        }
+    const blockCollectVisitor = {
+      enter (path) { // 收集作用域下所有变量(keyPath)
+        bindingsMap.set(path, {
+          parent: currentBlock,
+          bindings: {}
+        })
+        currentBlock = path
       },
+      exit (path) {
+        currentBlock = bindingsMap.get(path).parent
+      }
+    }
+
+    const collectVisitor = {
+      Program: blockCollectVisitor,
+      BlockStatement: blockCollectVisitor,
       Identifier (path) {
         if (
           checkBindThis(path) &&
@@ -248,12 +317,12 @@ module.exports = {
             }
             return
           }
-          const { last, keyPath } = calPropName(path)
           path.needBind = true
+          const { last, keyPath } = getCollectPath(path)
           if (needCollect) {
             last.collectInfo = {
               key: t.stringLiteral(keyPath),
-              isSimple: !/[[.]/.test(keyPath)
+              isSimple: isSimpleKey(keyPath)
             }
           }
 
@@ -281,18 +350,21 @@ module.exports = {
       }
     }
 
-    const bindThisVisitor = {
-      BlockStatement: {
-        enter (path) {
-          const scope = bindingsMap.get(path)
-          const parentScope = bindingsMap.get(scope.parent)
-          scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
-          currentBlock = path
-        },
-        exit (path) {
-          currentBlock = bindingsMap.get(path).parent
-        }
+    const blockBindVisitor = {
+      enter (path) {
+        const scope = bindingsMap.get(path)
+        const parentScope = bindingsMap.get(scope.parent)
+        scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
+        currentBlock = path
       },
+      exit (path) {
+        currentBlock = bindingsMap.get(path).parent
+      }
+    }
+
+    const bindVisitor = {
+      Program: blockBindVisitor,
+      BlockStatement: blockBindVisitor,
       // 标记收集props数据
       CallExpression: {
         enter (path) {
@@ -350,7 +422,7 @@ module.exports = {
           const name = path.node.name
           if (name) { // 确保path没有被删除 且 没有被替换成字符串
             if (isProps) {
-              propKeys.push(name)
+              propKeySet.add(name)
             }
             path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
           }
@@ -373,11 +445,11 @@ module.exports = {
     }
 
     traverse(ast, collectVisitor)
-    traverse(ast, bindThisVisitor)
+    traverse(ast, bindVisitor)
 
     return {
       code: generate(ast).code,
-      propKeys
+      propKeys: [...propKeySet]
     }
   }
 }

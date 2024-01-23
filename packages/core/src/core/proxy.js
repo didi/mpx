@@ -377,8 +377,8 @@ export default class MpxProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData () {
-    const renderData = preProcessRenderData(this.renderData)
+  renderWithData (skipPre) {
+    const renderData = skipPre ? this.renderData : preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
     this.renderData = {}
