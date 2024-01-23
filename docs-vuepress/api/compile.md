@@ -683,7 +683,7 @@ module.exports = defineConfig({
 
 ### postcssInlineConfig
 
-`{options? : PostcssOptions, plugins? : PostcssPlugin[], ignoreConfigFile : Boolean}`
+`{options? : PostcssOptions, plugins? : PostcssPlugin[], mpxPrePlugins? : PostcssPlugin[], ignoreConfigFile : Boolean}`
 
 使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Mpx 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
 
@@ -707,7 +707,7 @@ module.exports = defineConfig({
 })
 ```
 
-**注意：**默认添加的 postcss 插件均会在`mpx的内置插件`（例如如rpx插件等）之后处理。如需使配置的插件优先于内置插件，可以在 `postcssInlineConfig` 中添加 `mpxPrePlugins` 配置：
+**注意**：默认添加的 postcss 插件均会在`mpx的内置插件`（例如如rpx插件等）之后处理。如需使配置的插件优先于内置插件，可以在 `postcssInlineConfig` 中添加 `mpxPrePlugins` 配置：
 
 ```js
 // vue.config.js
