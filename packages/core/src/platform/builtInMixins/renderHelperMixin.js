@@ -1,4 +1,4 @@
-import { isObject } from '@mpxjs/utils'
+import { getByPath, hasOwn, isObject } from '@mpxjs/utils'
 import genVnodeTree from '../../vnode/render'
 import staticMap from '../../vnode/staticMap'
 
@@ -23,12 +23,23 @@ export default function renderHelperMixin () {
           }
         }
       },
+      // collect
       _c (key, value) {
+        if (hasOwn(this.__mpxProxy.renderData, key)) {
+          return this.__mpxProxy.renderData[key]
+        }
+        if (value === undefined) {
+          value = getByPath(this, key)
+        }
         this.__mpxProxy.renderData[key] = value
         return value
       },
-      _r (vnode) {
-        this.__mpxProxy.renderWithData(vnode)
+      // simple collect
+      _sc (key) {
+        return (this.__mpxProxy.renderData[key] = this[key])
+      },
+      _r (skipPre, vnode) {
+        this.__mpxProxy.renderWithData(skipPre, vnode)
       },
       _g (moduleId) {
         const { template = {}, styles = [] } = staticMap[moduleId]

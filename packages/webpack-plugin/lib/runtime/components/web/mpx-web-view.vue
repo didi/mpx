@@ -1,107 +1,77 @@
 <template>
-  <iframe ref="mpxIframe" class="mpx-iframe" :src="src"></iframe>
+  <iframe ref="mpxIframe" class="mpx-iframe" :src="currentUrl" :key="currentUrl"></iframe>
 </template>
 
 <script>
   import { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
-
+  import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
+  const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
   const eventLoad = 'load'
   const eventError = 'error'
   const eventMessage = 'message'
+  const mpx = global.__mpx
   export default {
-    data: function () {
-      return {
-        origin: '',
-        messageList: [],
-        Loaded: false,
-        isActived: false,
-        mpxIframe: null,
-        isPostMessage: false
-      }
-    },
     props: {
       src: {
         type: String
       }
     },
     computed: {
-      mainDomain () {
-        let domain
-        const src = location.href
-        let index = src.indexOf('?')
-        if (index > -1) {
-          domain = src.substr(0, index)
-          return domain
-        }
-        domain = src.split('/')
-        if (domain[2]) {
-          domain = domain[0] + '//' + domain[2]
+      host () {
+        let host = this.src.split('/')
+        if (host[2]) {
+          host = host[0] + '//' + host[2]
         } else {
-          domain = ''
+          host = ''
         }
-        return domain
+        return host
+      },
+      currentUrl () {
+        if (!this.src) return ''
+        const hostValidate = this.hostValidate(this.host)
+        if (!hostValidate) {
+          console.error('访问页面域名不符合domainWhiteLists白名单配置，请确认是否正确配置该域名白名单')
+          return ''
+        }
+        return this.src
+      },
+      loadData () {
+        return {
+          src: this.host,
+          fullUrl: this.src
+        }
       }
     },
-    mounted () {
-      setTimeout(() => {
-        if (!this.Loaded) {
-          const loadData = {
-            src: this.src
+    watch: {
+      currentUrl: {
+        handler (value) {
+          if (!value) {
+            this.$emit(eventError, getCustomEvent(eventError, {
+              ...this.loadData,
+              errMsg: 'web-view load failed due to not in domain list'
+            }, this))
+          } else {
+            this.$nextTick(() => {
+              if (this.$refs.mpxIframe && this.mpxIframe != this.$refs.mpxIframe) {
+                this.mpxIframe = this.$refs.mpxIframe
+                this.mpxIframe.addEventListener('load', (event) => {
+                  this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
+                })
+              }
+            })
           }
-          this.$emit(eventError, getCustomEvent(eventError, loadData, this))
-        }
-      }, 1000)
-      this.mpxIframe = this.$refs.mpxIframe
-      this.mpxIframe.addEventListener('load', (event) => {
-        event.currentTarget.contentWindow.postMessage(this.mainDomain, '*')
-      })
-      window.addEventListener('message', (event) => {
-        const data = event.data
-        const value = data.detail && data.detail.data && data.detail.data
-        if (!this.isActived) {
-          return
-        }
-        switch (data.type) {
-          case eventMessage:
-            this.isPostMessage = true
-            this.messageList.push(value.data)
-            break
-          case 'navigateTo':
-            this.isActived = false
-            navigateTo(value)
-            break
-          case 'navigateBack':
-            this.isActived = false
-            value ? navigateBack(value) : navigateBack()
-            break
-          case 'redirectTo':
-            this.isActived = false
-            redirectTo(value)
-            break
-          case 'switchTab':
-            this.isActived = false
-            switchTab(value)
-            break
-          case 'reLaunch':
-            this.isActived = false
-            reLaunch(value)
-            break
-          case 'load':
-            this.Loaded = true
-            const loadData = {
-              src: this.src
-            }
-            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData, this))
-        }
-      })
+        },
+        immediate: true
+      }
     },
-    activated () {
-      this.isActived = true
-      this.isPostMessage = false
+    beforeCreate () {
+      this.messageList = []
+    },
+    mounted () {
+      window.addEventListener('message', this.messageCallback)
     },
     deactivated () {
-      if (!this.isPostMessage) {
+      if (!this.messageList.length) {
         return
       }
       let data = {
@@ -111,7 +81,8 @@
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
     destroyed () {
-      if (!this.isPostMessage) {
+      window.removeEventListener('message', this.messageCallback)
+      if (!this.messageList.length) {
         return
       }
       let data = {
@@ -119,6 +90,73 @@
         data: this.messageList
       }
       this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
+    },
+    methods: {
+      messageCallback (event) {
+        const hostValidate = this.hostValidate(event.origin)
+        const data = event.data
+        let value = data.payload
+        if (!hostValidate) {
+          return
+        }
+        let asyncCallback = null
+        switch (data.type) {
+          case 'postMessage':
+            this.messageList.push(value.data || value)
+            asyncCallback = Promise.resolve({
+              errMsg: 'invokeWebappApi:ok'
+            })
+            break
+          case 'navigateTo':
+            asyncCallback = navObj.navigateTo(value)
+            break
+          case 'navigateBack':
+            asyncCallback = navObj.navigateBack(value)
+            break
+          case 'redirectTo':
+            asyncCallback = navObj.redirectTo(value)
+            break
+          case 'switchTab':
+            asyncCallback = navObj.switchTab(value)
+            break
+          case 'reLaunch':
+            asyncCallback = navObj.reLaunch(value)
+            break
+          case 'getLocation':
+            const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
+            if (getLocation) {
+              asyncCallback = getLocation()
+            } else {
+              asyncCallback = Promise.reject({
+                errMsg: '未在apiImplementations中配置getLocation方法'
+              })
+            }
+            break
+        }
+        asyncCallback && asyncCallback.then((res) => {
+          this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
+            type: data.type,
+            callbackId: data.callbackId,
+            result: res
+          }, event.origin)
+        }).catch((error) => {
+          this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
+            type: data.type,
+            callbackId: data.callbackId,
+            error
+          }, event.origin)
+        })
+      },
+      hostValidate (host) {
+        const hostWhitelists = mpx.config.webviewConfig && mpx.config.webviewConfig.hostWhitelists || []
+        if (hostWhitelists.length) {
+          return hostWhitelists.some((item) => {
+            return host.endsWith(item)
+          })
+        } else {
+          return true
+        }
+      }
     }
   }
 </script>

@@ -124,13 +124,6 @@ Mpx npm构建的优势主要有两点：1. 按需构建；2. 支持分包
 Mpx 提供了两种路径规范的配置模式可供大家选择，具体的使用方式为：
 
 ```js
-new MpxWebpackPlugin({
-  resolveMode: 'webpack'
-})
-```
-
-::: tip @mpxjs/cli@3.x 版本配置如下
-```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -142,7 +135,7 @@ module.exports = defineConfig({
   }
 })
 ```
-:::
+
 在 MpxWebpackPlugin 插件中设置 resolveMode 项，默认值为 webpack，可选值有 webpack/native，推荐使用 webpack 模式，更舒服一些，配置项为 webpack 时，json 中的 pages/usingComponents 等需要写相对路径，但是也可以直接写 npm 包路径。例如：
 ```js
 {
@@ -157,24 +150,6 @@ module.exports = defineConfig({
 
 resolveMode 为 native 时的使用示例：
 ```js
-// webpack.config.js
-new MpxWebpackPlugin({
-  resolveMode: 'native',
-  // 当resolveMode为native时可通过该字段指定项目根目录
-  projectRoot: path.resolve(__dirname, '../src')
-})
-
-// 项目page.mpx
-{
-  "usingComponents": {
-    "mpx-button": "~mpx-ui/src/components/button", // npm 包路径
-    "component-tag-name": "path/to/the/custom/component" // 内部组件路径
-  }
-}
-```
-
-::: tip @mpxjs/cli@3.x 版本配置如下
-```js
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
@@ -187,5 +162,12 @@ module.exports = defineConfig({
     }
   }
 })
+
+// 项目page.mpx
+{
+  "usingComponents": {
+    "mpx-button": "~mpx-ui/src/components/button", // npm 包路径
+    "component-tag-name": "path/to/the/custom/component" // 内部组件路径
+  }
+}
 ```
-:::

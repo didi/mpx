@@ -1,4 +1,4 @@
-import { hasOwn } from '@mpxjs/utils'
+import { hasOwn, noop } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
@@ -83,16 +83,14 @@ function transformApiForProxy (context, currentInject) {
 
   // 绑定注入的render
   if (currentInject) {
-    if (currentInject.render) {
-      Object.defineProperties(context, {
-        __injectedRender: {
-          get () {
-            return currentInject.render
-          },
-          configurable: false
-        }
-      })
-    }
+    Object.defineProperties(context, {
+      __injectedRender: {
+        get () {
+          return currentInject.render || noop
+        },
+        configurable: false
+      }
+    })
     if (currentInject.getRefsData) {
       Object.defineProperties(context, {
         __getRefsData: {

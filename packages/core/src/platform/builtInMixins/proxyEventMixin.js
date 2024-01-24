@@ -1,4 +1,4 @@
-import { setByPath, error, hasOwn } from '@mpxjs/utils'
+import { setByPath, error, hasOwn, dash2hump } from '@mpxjs/utils'
 import Mpx from '../../index'
 import contextMap from '../../vnode/context'
 
@@ -41,7 +41,9 @@ export default function proxyEventMixin () {
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
-        fallbackType = 'regionchange'
+        fallbackType = __mpx_mode__ === 'ali' ? 'regionChange' : 'regionchange'
+      } else if (/-([a-z])/.test(type)) {
+        fallbackType = dash2hump(type)
       } else if (__mpx_mode__ === 'ali') {
         fallbackType = type.replace(/^./, i => i.toLowerCase())
       }
@@ -108,15 +110,8 @@ export default function proxyEventMixin () {
           const eventObj = {
             type: eventName,
             timeStamp,
-            target: {
-              id,
-              dataset,
-              targetDataset: dataset
-            },
-            currentTarget: {
-              id,
-              dataset
-            },
+            target: { id, dataset, targetDataset: dataset },
+            currentTarget: { id, dataset },
             detail: eventDetail
           }
           handler.call(this, eventObj)

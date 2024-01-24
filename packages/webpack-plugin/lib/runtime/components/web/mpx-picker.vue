@@ -138,6 +138,12 @@
       fields: {
         type: String,
         default: 'day'
+      },
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
       }
     },
     data () {
@@ -311,7 +317,9 @@
                     wheelWrapperClass: 'wheel-scroll',
                     wheelItemClass: 'wheel-item'
                   },
-                  probeType: 3
+                  probeType: 3,
+                  bindToWrapper: true,
+                  ...this.scrollOptions
                 })
                 if (this.mode === 'time' || this.mode === 'date') {
                   this.wheels[i].on('scrollStart', function (i) {

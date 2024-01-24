@@ -17,6 +17,9 @@ const resolve = require('../utils/resolve')
 const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const isEmptyObject = require('../utils/is-empty-object')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
+const normalize = require('../utils/normalize')
+const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
+const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -68,9 +71,13 @@ module.exports = function (content) {
   }
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      placeholder = {
-        name: placeholder
+      const placeholderMap = mode === 'ali'
+      ? {
+        view: { name: 'mpx-view', resource: mpxViewPath },
+        text: { name: 'mpx-text', resource: mpxTextPath }
       }
+      : {}
+      placeholder = placeholderMap[placeholder] || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
@@ -156,6 +163,9 @@ module.exports = function (content) {
     if (!mpx.forceUsePageCtor) {
       if (!json.usingComponents) {
         json.usingComponents = {}
+      }
+      if (!json.component && mode === 'swan') {
+        json.component = true
       }
     }
   } else if (componentsMap[resourcePath]) {
@@ -247,7 +257,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, root, placeholder, resourcePath) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -255,7 +265,7 @@ module.exports = function (content) {
           if (err) return callback(err)
           components[name] = entry
           collectRuntimeComponents(name, resourcePath)
-          if (root) {
+          if (tarRoot) {
             if (placeholder) {
               placeholder = normalizePlaceholder(placeholder)
               if (placeholder.resource) {
@@ -293,7 +303,7 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-    const defaultPagePath = require.resolve('./default-page.mpx')
+    const defaultPagePath = require.resolve('../runtime/components/wx/default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
         const pagesCache = []
