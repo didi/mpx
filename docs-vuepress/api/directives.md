@@ -382,7 +382,7 @@ wx:model并不会影响相关的事件处理函数，比如像下面这样：
 ## wx:model-prop
 
 wx:model 默认使用 `value` 属性传值，使用 `wx:model-prop` 定义 wx:model 指令对应的属性；
- 
+
 ## wx:model-event
 
 wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:model 指令对应的事件；
@@ -675,3 +675,59 @@ capture-catch中断捕获阶段和取消冒泡阶段
 点击inner view仅执行handleTap2
 
 **参考：** [事件处理 - capture-catch](../guide/basic/event.html)
+
+
+## @mode
+`type mode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'`
+
+跨平台输出场景下，Mpx 框架允许用户在组件上使用 @ 和 | 符号来指定某个节点或属性只在某些平台下有效。
+
+```html
+<button
+  open-type@wx|swan="getUserInfo"
+  bindgetuserinfo@wx|swan="getUserInfo"
+  open-type@ali="getAuthorize"
+  scope@ali="userInfo"
+  onTap@ali="onTap">
+  获取用户信息
+</button>
+```
+在上方示例中，开发者可以便捷的设置在支付宝小程序与微信和百度小程序等平台分别生效的 open-type 属性，
+以及事件绑定或其他属性。假设当前 srcMode 为 wx，目标平台为 ali，则输出产物为：
+```html
+<button
+  open-type="getAuthorize"
+  scope="userInfo"
+  onTap="onTap">
+  获取用户信息
+</button>
+```
+同时，该指令也可以作用在单个节点上，但需要注意的是，该指令作用在单个节点时，节点仅在目标平台输出，同时节点自身属性不会进行跨平台语法转换，不过其子节点不受影响。
+```html
+<!--当srcMode为wx，跨平台输出ali时-->
+<!--错误写法-->
+<view @ali bindtap="someClick">
+    <view wx:if="{{flag}}">text</view>
+</view>
+<!--正确写法-->
+<view @ali onTap="someClick">
+    <view wx:if="{{flag}}">text</view>
+</view>
+```
+
+## @_mode
+`type _mode = '_wx' | '_ali' | '_qq' | '_swan' | '_tt' | '_web' | '_qa'`
+
+有时开发者期望使用 @mode 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力。
+```html
+<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
+<view @_ali bindtap="someClick">test</view>
+```
+在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
+## @env
+`string`
+
+## mpxTagName
+`string`
+
+
