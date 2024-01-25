@@ -678,6 +678,7 @@ capture-catch中断捕获阶段和取消冒泡阶段
 
 
 ## @mode
+
 `type mode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'`
 
 跨平台输出场景下，Mpx 框架允许用户在组件上使用 @ 和 | 符号来指定某个节点或属性只在某些平台下有效。
@@ -716,6 +717,7 @@ capture-catch中断捕获阶段和取消冒泡阶段
 ```
 
 ## @_mode
+
 `type _mode = '_wx' | '_ali' | '_qq' | '_swan' | '_tt' | '_web' | '_qa'`
 
 有时开发者期望使用 @mode 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力。
@@ -724,10 +726,52 @@ capture-catch中断捕获阶段和取消冒泡阶段
 <view @_ali bindtap="someClick">test</view>
 ```
 在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
+
 ## @env
+
 `string`
+
+跨平台输出场景下，除了 mode 平台场景值，Mpx 框架还提供自定义 env 目标应用，来实现在不同应用下编译产出不同的代码。
+
+关于 env 的详细介绍可以点击[查看](../guide/advance/platform.html#use-env)
+
+跨平台输出使用 env 与 mode 一样支持文件纬度、区块纬度、节点纬度、属性纬度等条件编译，这里我们仅介绍下节点和属性纬度的指令模式使用，env 与 mode 可以组合使用。
+
+env 属性维度条件编译与 mode 的用法大致相同，使用 : 符号与 mode 和其他 env 进行串联，与 mode 组合使用格式形如 attr@mode:env:env|mode:env，为了不与 mode 混淆，当条件编译中仅存在 env 条件时，也需要添加 : 前缀，形如 attr@:env。
+
+```html
+<!--open-type 属性仅在百度平台且应用 env 为 didi 时保留-->
+<button open-type@swan:didi="getUserInfo">获取用户信息</button>
+<!--open-type 属性在应用 env 为 didi 的任意小程序平台保留-->
+<button open-type@:didi="getUserInfo">获取用户信息</button>
+<!--open-type 属性在微信平台且应用 env 为 didi 或 qingju 时保留-->
+<button open-type@wx:didi:qingju="getUserInfo">获取用户信息</button>
+```
+
+env 也可在单个节点上进行条件编译：
+
+```html
+<!--整个节点在应用 env 为 didi时进行保留-->
+<view @:didi>this is a  view component</view>
+```
+
+需要注意的时，如果只声明了 env，没有声明 mode，跨平台输出时框架对于节点属性默认会进行转换：
+
+```html
+<!--srcMode为wx，跨平台输出ali时，bindtap会被转为onTap-->
+<view @:didi bindtap="someClick">this is a  view component</view>
+<view bindtap@:didi ="someClick">this is a  view component</view>
+```
 
 ## mpxTagName
+
 `string`
 
+跨平台输出时，有时开发者不仅需要对节点属性进行条件编译，可能还需对节点标签进行条件编译。
+
+为此，Mpx 框架支持了一个特殊属性 mpxTagName，如果节点存在这个属性，在最终输出时将节点标签修改为该属性的值，配合属性维度条件编译，即可实现对节点标签进行条件编译，例如在百度环境下希望将某个 view 标签替换为 cover-view，我们可以这样写：
+
+```html
+<view mpxTagName@swan="cover-view">will be cover-view in swan</view>
+```
 
