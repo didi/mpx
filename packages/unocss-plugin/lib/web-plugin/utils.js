@@ -11,6 +11,9 @@ const CSS_PLACEHOLDER = '@unocss-placeholder'
 
 const defaultExclude = [core.cssIdRE]
 const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
+const templateIdRE = /\.(vue|mpx|wxml)($|\?)/
+const cssIdRE = /\.(wxss)($|\?)/
+const filterIdRE = [templateIdRE, core.cssIdRE, cssIdRE]
 
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
@@ -58,7 +61,14 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     }
   }
 
+
+  function filterId (id) {
+    return !!filterIdRE.filter(re => re.test(id)).length
+  }
   function filter (code, id) {
+    if (!filterId(id)) {
+      return false
+    }
     if (code.includes(IGNORE_COMMENT)) {
       return false
     }
@@ -123,7 +133,7 @@ function getPath (id) {
 }
 
 function isCssId (id) {
-  return core.cssIdRE.test(id)
+  return core.cssIdRE.test(id) || cssIdRE.test(id)
 }
 
 module.exports = {
