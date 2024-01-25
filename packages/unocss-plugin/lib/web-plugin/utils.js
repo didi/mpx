@@ -61,7 +61,6 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     }
   }
 
-
   function filterId (id) {
     return !!filterIdRE.filter(re => re.test(id)).length
   }
