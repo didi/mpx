@@ -201,19 +201,30 @@ module.exports = function getSpec ({ warn, error }) {
       {
         // 样式类名绑定
         test: /^(class|wx:class)$/,
-        web ({ value }, { el }) {
-          if (el.isClassParsed) {
-            return false
-          }
+        web ({ name, value }, { el }) {
+          if (el.classMerged) return false
           const classBinding = []
-          el.isClassParsed = true
-          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
-            const parsed = parseMustacheWithContext(item.value)
-            classBinding.push(parsed.result)
+          el.attrsList.filter(item => this.test.test(item.name)).forEach(({ name, value }) => {
+            const parsed = parseMustacheWithContext(value)
+            if (name === 'wx:class') {
+              classBinding.push(parsed.result)
+            } else if (name === 'class' && parsed.hasBinding === true) {
+              el.classMerged = true
+              classBinding.push(parsed.result)
+            }
           })
-          return {
-            name: ':class',
-            value: `[${classBinding}]`
+
+          if (el.classMerged) {
+            return {
+              name: ':class',
+              value: `[${classBinding}]`
+            }
+          } else if (name === 'wx:class') {
+            // 对于纯静态class不做合并转换
+            return {
+              name: ':class',
+              value: classBinding[0]
+            }
           }
         }
       },
