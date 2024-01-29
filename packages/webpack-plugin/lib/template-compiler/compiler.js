@@ -1725,7 +1725,7 @@ function processWebExternalClassesHack (el, options) {
 
       addAttrs(el, [{
         name: ':class',
-        value: `[${replacements.join(',')}]`
+        value: `[${replacements}]`
       }])
     }
   }
@@ -1752,7 +1752,7 @@ function processWebExternalClassesHack (el, options) {
 
         addAttrs(el, [{
           name: ':' + classLikeAttrName,
-          value: `[${replacements.join(',')}].join(' ')`
+          value: `[${replacements}].join(' ')`
         }])
       }
     })
