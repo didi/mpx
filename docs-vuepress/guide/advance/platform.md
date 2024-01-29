@@ -352,7 +352,7 @@ module.exports = {
 <view mpxTagName@swan="cover-view">will be cover-view in swan</view>
 ```
 
-### 通过 env 实现自定义目标环境的条件编译
+### 通过 env 实现自定义目标环境的条件编译 {#use-env}
 
 Mpx 支持在以上四种条件编译的基础上，通过自定义 env 的形式实现在不同环境下编译产出不同的代码。
 
