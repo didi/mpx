@@ -75,7 +75,7 @@ function checkDelAndGetPath (path) {
   let replace = false
 
   // 确定删除路径
-  while (!t.isBlockStatement(current)) {
+  while (!t.isBlockStatement(current) && !t.isProgram(current)) {
     // case: !!a
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
@@ -113,7 +113,7 @@ function checkDelAndGetPath (path) {
   }
 
   // 确定是否可删除
-  while (!t.isBlockStatement(current) && canDel) {
+  while (!t.isBlockStatement(current) && !t.isProgram(current)) {
     const { key, listKey, parent } = current
 
     if (t.isIfStatement(parent) && key === 'test') {
@@ -244,7 +244,7 @@ module.exports = {
           !path.scope.hasBinding(path.node.name)
         ) {
           if (isProps) {
-            propKeySet.add(path.node.property.name)
+            propKeySet.add(path.node.name)
           }
           const { keyPath } = getCollectPath(path)
           collectKeySet.add(keyPath)
@@ -282,19 +282,22 @@ module.exports = {
     const propKeySet = new Set()
     let isProps = false
 
-    const collectVisitor = {
-      BlockStatement: {
-        enter (path) { // 收集作用域下所有变量(keyPath)
-          bindingsMap.set(path, {
-            parent: currentBlock,
-            bindings: {}
-          })
-          currentBlock = path
-        },
-        exit (path) {
-          currentBlock = bindingsMap.get(path).parent
-        }
+    const blockCollectVisitor = {
+      enter (path) { // 收集作用域下所有变量(keyPath)
+        bindingsMap.set(path, {
+          parent: currentBlock,
+          bindings: {}
+        })
+        currentBlock = path
       },
+      exit (path) {
+        currentBlock = bindingsMap.get(path).parent
+      }
+    }
+
+    const collectVisitor = {
+      Program: blockCollectVisitor,
+      BlockStatement: blockCollectVisitor,
       Identifier (path) {
         if (
           checkBindThis(path) &&
@@ -347,18 +350,21 @@ module.exports = {
       }
     }
 
-    const bindThisVisitor = {
-      BlockStatement: {
-        enter (path) {
-          const scope = bindingsMap.get(path)
-          const parentScope = bindingsMap.get(scope.parent)
-          scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
-          currentBlock = path
-        },
-        exit (path) {
-          currentBlock = bindingsMap.get(path).parent
-        }
+    const blockBindVisitor = {
+      enter (path) {
+        const scope = bindingsMap.get(path)
+        const parentScope = bindingsMap.get(scope.parent)
+        scope.pBindings = parentScope ? Object.assign({}, parentScope.bindings, parentScope.pBindings) : {}
+        currentBlock = path
       },
+      exit (path) {
+        currentBlock = bindingsMap.get(path).parent
+      }
+    }
+
+    const bindVisitor = {
+      Program: blockBindVisitor,
+      BlockStatement: blockBindVisitor,
       // 标记收集props数据
       CallExpression: {
         enter (path) {
@@ -439,7 +445,7 @@ module.exports = {
     }
 
     traverse(ast, collectVisitor)
-    traverse(ast, bindThisVisitor)
+    traverse(ast, bindVisitor)
 
     return {
       code: generate(ast).code,

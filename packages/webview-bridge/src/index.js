@@ -24,7 +24,7 @@ let callbackId = 0
 const callbacks = {}
 // 环境判断
 const systemUA = navigator.userAgent
-if (systemUA.indexOf('AlipayClient') > -1) {
+if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
   env = 'my'
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx'
