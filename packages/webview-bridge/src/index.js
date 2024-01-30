@@ -22,7 +22,7 @@ const SDK_URL_MAP = {
 let env = null
 let callbackId = 0
 const callbacks = {}
-// 环境判断
+// 环境判断逻辑
 const systemUA = navigator.userAgent
 if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
   env = 'my'
