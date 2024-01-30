@@ -365,13 +365,18 @@ class MpxWebpackPlugin {
     if (this.options.writeMode === 'changed') {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
-      compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
+      // fs.writeFile(file, data[, options], callback)
+      compiler.outputFileSystem.writeFile = (filePath, content, ...args) => {
         const lastContent = writedFileContentMap.get(filePath)
         if (Buffer.isBuffer(lastContent) ? lastContent.equals(content) : lastContent === content) {
-          return callback()
+          const callback = args[args.length - 1]
+          if (typeof callback === 'function') {
+            callback()
+          }
+          return
         }
         writedFileContentMap.set(filePath, content)
-        originalWriteFile(filePath, content, callback)
+        originalWriteFile(filePath, content, ...args)
       }
     }
 
