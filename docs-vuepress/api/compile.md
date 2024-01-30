@@ -160,7 +160,7 @@ module.exports = defineConfig({
 ```
 
 ::: warning
-抹平支付宝和微信之间的差异，微信转支付宝时可以使用该功能。
+抹平支付宝和微信之间的差异，当使用了微信 **externalClasses** 语法时，跨端输出需要在 @mpxjs/webpack-plugin 的配置中添加此配置来辅助框架进行转换。
 :::
 
 ### resolveMode
@@ -1006,7 +1006,11 @@ module.exports = defineConfig({
 
 [`Rules`](#rules)
 
-render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积。不配置该参数，则不会消除重复变量
+render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积。不配置该参数，则不会消除重复变量。
+
+同时框架 render 函数优化提供了两个等级，使用 level 字段来进行控制，默认为 level = 1
+* level = 1时，框架生成 render 函数中完成保留 template 中的计算逻辑，setData 传输量保持了最优。
+* level = 2时，框架生成 render 函数中仅保留所有 template 中使用到的响应性变量，无任何计算逻辑保留，render 函数体积达最小状态，但 setData 传输量相对于 level=1 会有所增加。
 
 ```js
 // vue.config.js
@@ -1015,18 +1019,11 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         optimizeRenderRules: {
-        include: [
-          resolve('src')
-        ],
-        /*
-        include: [
-          (pageResourcePath) => pageResourcePath.includes('pages')
-        ],
-        include: [
-          () => true
-        ]
-        */
-      }
+          include: [
+            resolve('src')
+          ],
+          level: 1
+        }
       }
     }
   }
