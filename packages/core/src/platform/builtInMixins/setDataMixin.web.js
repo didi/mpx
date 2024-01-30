@@ -2,6 +2,14 @@ import {isObject, isFunction, error} from '@mpxjs/utils'
 
 export default function setDataMixin() {
   return {
+    beforeCreate() {
+      Object.defineProperty(this, 'data', {
+        get () {
+          return this.$data
+        },
+        configurable: true
+      })
+    },
     methods: {
       setData(data, callback) {
         if (!isObject(data)) {

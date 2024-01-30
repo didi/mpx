@@ -338,6 +338,10 @@ module.exports = function getSpec ({ warn, error }) {
           const meta = {
             modifierStr
           }
+          const parsed = parseMustache(value)
+          if (parsed.hasBinding) {
+            value = parsed.result
+          }
           // 记录event监听信息用于后续判断是否需要使用内置基础组件
           el.hasEvent = true
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
