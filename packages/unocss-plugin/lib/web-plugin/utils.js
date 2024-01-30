@@ -10,7 +10,10 @@ const IGNORE_COMMENT = '@unocss-ignore'
 const CSS_PLACEHOLDER = '@unocss-placeholder'
 
 const defaultExclude = [core.cssIdRE]
-const defaultInclude = [/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
+const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
+const templateIdRE = /\.(vue|mpx|wxml)($|\?)/
+const cssIdRE = /\.(wxss)($|\?)/
+const filterIdRE = [templateIdRE, core.cssIdRE, cssIdRE]
 
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
@@ -58,7 +61,13 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     }
   }
 
+  function filterId (id) {
+    return !!filterIdRE.filter(re => re.test(id)).length
+  }
   function filter (code, id) {
+    if (!filterId(id)) {
+      return false
+    }
     if (code.includes(IGNORE_COMMENT)) {
       return false
     }
@@ -76,18 +85,19 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   }
 }
 
-async function applyTransformers (ctx, original, id, enforce = 'default') {
+async function applyTransformers (ctx, original, id) {
   if (original.includes(IGNORE_COMMENT)) {
     return
   }
-  const transformers = (ctx.uno.config.transformers || []).filter((i) => (i.enforce || 'default') === enforce)
+  const transformers = ctx.uno.config.transformers
   if (!transformers.length) {
     return
   }
   let code = original
-  let s = new MagicString(code)
   const maps = []
   for (const t of transformers) {
+    // transformerVariantGroup会调用s.overwrite影响transformerDirectives执行，所以每次重新赋值。
+    const s = new MagicString(code)
     if (t.idFilter) {
       if (!t.idFilter(id)) {
         continue
@@ -99,7 +109,6 @@ async function applyTransformers (ctx, original, id, enforce = 'default') {
     if (s.hasChanged()) {
       code = s.toString()
       maps.push(s.generateMap({ hires: true, source: id }))
-      s = new MagicString(code)
     }
   }
   if (code !== original) {
@@ -123,7 +132,7 @@ function getPath (id) {
 }
 
 function isCssId (id) {
-  return core.cssIdRE.test(id)
+  return core.cssIdRE.test(id) || cssIdRE.test(id)
 }
 
 module.exports = {
