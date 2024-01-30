@@ -1715,7 +1715,7 @@ function processWebExternalClassesHack (el, options) {
 
       addAttrs(el, [{
         name: ':class',
-        value: `[${replacements.join(',')}]`
+        value: `[${replacements}]`
       }])
     }
   }
@@ -1742,7 +1742,7 @@ function processWebExternalClassesHack (el, options) {
 
         addAttrs(el, [{
           name: ':' + classLikeAttrName,
-          value: `[${replacements.join(',')}].join(' ')`
+          value: `[${replacements}].join(' ')`
         }])
       }
     })
@@ -1940,9 +1940,10 @@ function isValidModeP (i) {
 const wrapRE = /^\((.*)\)$/
 
 function processAtMode (el) {
-  if (el.parent && el.parent._atModeStatus) {
-    el._atModeStatus = el.parent._atModeStatus
-  }
+  // 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
+  // if (el.parent && el.parent._atModeStatus) {
+  //   el._atModeStatus = el.parent._atModeStatus
+  // }
 
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
