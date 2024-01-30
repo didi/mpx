@@ -104,6 +104,7 @@ let env
 let platformGetTagNamespace
 let filePath
 let refId
+let haveOptionChain = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -164,6 +165,8 @@ const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
+const optionsChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
+const optionsChainWxsName = '_oc'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -637,6 +640,7 @@ function parse (template, options) {
   forScopes = []
   forScopesMap = {}
   hasI18n = false
+  haveOptionChain = false
 
   platformGetTagNamespace = options.getTagNamespace || no
 
@@ -759,6 +763,10 @@ function parse (template, options) {
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
     }
+  }
+
+  if (haveOptionChain) {
+    injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
   }
 
   injectNodes.forEach((node) => {
@@ -1155,7 +1163,7 @@ function parseMustacheWithContext (raw = '') {
         }
       })
     }
-
+    exp = parseOptionChain(exp).str
     if (i18n) {
       for (const i18nFuncName of i18nFuncNames) {
         const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
@@ -2392,6 +2400,48 @@ function genNode (node) {
   }
   return exp
 }
+
+/**
+ * 处理可选链用法
+ * @param str
+ * @returns
+ */
+function parseOptionChain (str) {
+  const rules = [
+    {
+      // 处理视图里面使用可选链场景
+      rule: /([A-Za-z0-9_$.]+)\?.([A-Za-z0-9_$.?]+)/,
+      replace (resArr) {
+        return `${resArr[1]},${JSON.stringify(resArr[2].replace(/(?:\?)/g, '').split('.'))}`
+      }
+    },
+    {
+      // 处理显式使用 __mpx_GetSafeValue 场景
+      rule: /__mpx_GetSafeValue\(([A-Za-z0-9._$]+)\)/,
+      replace (resArr) {
+        const varList = resArr[1].split('.')
+        return `${varList[0]},['${varList.slice(1).join("','")}']`
+      }
+    }
+  ]
+  let haveOptions = false
+  rules.forEach(({ rule, replace }) => {
+    let optionsRes
+    while (optionsRes = rule.exec(str)) {
+      str = str.replace(optionsRes[0], `${optionsChainWxsName}.g(${replace(optionsRes)})`)
+      !haveOptions && (haveOptions = true)
+    }
+  })
+  if (haveOptions) {
+    haveOptionChain = haveOptions
+    // injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
+  }
+  return {
+    haveReplace: haveOptions,
+    str
+  }
+}
+
 
 module.exports = {
   parseComponent,
