@@ -1006,7 +1006,11 @@ module.exports = defineConfig({
 
 [`Rules`](#rules)
 
-render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积。不配置该参数，则不会消除重复变量
+render 函数中可能会存在一些重复变量，该配置可消除 render 函数中的重复变量，进而减少包体积。不配置该参数，则不会消除重复变量。
+
+同时框架 render 函数优化提供了两个等级，使用 level 字段来进行控制，默认为 level = 1
+* level = 1时，框架生成 render 函数中完成保留 template 中的计算逻辑，setData 传输量保持了最优。
+* level = 2时，框架生成 render 函数中仅保留所有 template 中使用到的响应性变量，无任何计算逻辑保留，render 函数体积达最小状态，但 setData 传输量相对于 level=1 会有所增加。
 
 ```js
 // vue.config.js
@@ -1015,18 +1019,11 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         optimizeRenderRules: {
-        include: [
-          resolve('src')
-        ],
-        /*
-        include: [
-          (pageResourcePath) => pageResourcePath.includes('pages')
-        ],
-        include: [
-          () => true
-        ]
-        */
-      }
+          include: [
+            resolve('src')
+          ],
+          level: 1
+        }
       }
     }
   }
@@ -1389,8 +1386,8 @@ module.exports = defineConfig({
 
 `number = 2`
 
-使用超过minCount次数的class将被打包到公共样式下
-
+使用到某个原子类的最小分包个数，比如设置为2的话一个原子类只有超过2个分包使用才会输出到主包
+> 主要是用来控制主包占用的，数值越大分包的原子类就有更大可能性不占用主包
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1405,12 +1402,13 @@ module.exports = defineConfig({
 })
 ```
 ```html
-  <!-- a.mpx -->
-  <view class="bg-black"></view>
-  <!-- b.mpx -->
+  <!-- minCount=2 -->
+  <!-- a分包 -->
+  <view class="bg-black color-white"></view>
+  <!-- b分包 -->
   <view class="bg-black"></view>
 ```
-`bg-black`生成的样式将被打包到公共样式文件
+unocss将把生成的`bg-black`样式打包到主包
 
 ### styleIsolation
 
