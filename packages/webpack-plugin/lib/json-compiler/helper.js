@@ -80,7 +80,11 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         }
       }
       if (ext === '.js' && mode === 'web') {
-        resource = `!!@vue/vue-loader-v15!${nativeLoaderPath}!${resource}`
+        if (mode === 'web') {
+          resource = `!!@vue/vue-loader-v15!${nativeLoaderPath}!${resource}`
+        } else {
+          resource = `!!${nativeLoaderPath}!${resource}`
+        }
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
