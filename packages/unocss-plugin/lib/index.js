@@ -96,11 +96,11 @@ function normalizeOptions (options) {
     exclude: scan.exclude || [],
     transformers: [
       ...transformGroups
-      ? [{
-        ...transformerVariantGroup(),
+        ? [{
+          ...transformerVariantGroup(),
           idFilter: (id) => !!id.match(/\.(wxml|html)($|\?)/)
         }]
-      : [],
+        : [],
       // todo 由于enforce不为pre以及idFilter的存在，输出web时transformerDirectives暂时无法对.mpx中的样式文件生效，待优化改进
       ...transformCSS ? [transformerDirectives()] : []
     ],

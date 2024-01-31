@@ -261,6 +261,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           global.__mpxAppCbs.error.forEach((cb) => {
             cb.apply(null, args)
           })
+          console.error(...args)
         } else if (fromVue) {
           throw args[0]
         }

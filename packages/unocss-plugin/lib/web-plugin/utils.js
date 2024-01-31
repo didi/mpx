@@ -11,15 +11,16 @@ const CSS_PLACEHOLDER = '@unocss-placeholder'
 
 const defaultExclude = [core.cssIdRE]
 const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
-const templateIdRE = /\.(vue|mpx|wxml)($|\?)/
-const cssIdRE = /\.(wxss)($|\?)/
-const filterIdRE = [templateIdRE, core.cssIdRE, cssIdRE]
+const sfcIdRE = /\.(vue|mpx)($|\?)/
+const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
+const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
   const uno = core.createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
+  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
   const ready = reloadConfig()
 
   async function reloadConfig () {
@@ -61,11 +62,8 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     }
   }
 
-  function filterId (id) {
-    return !!filterIdRE.filter(re => re.test(id)).length
-  }
   function filter (code, id) {
-    if (!filterId(id)) {
+    if (!idFilter(id)) {
       return false
     }
     if (code.includes(IGNORE_COMMENT)) {
