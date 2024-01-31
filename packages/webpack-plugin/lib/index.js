@@ -1288,7 +1288,11 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
+            // 兼容 pnpm node_modules 路径
+            const lastIndex = resourcePath.lastIndexOf('node_modules')
+            const relativeResourcePath = lastIndex === -1 ? resourcePath : resourcePath.slice(lastIndex)
+
+            if (!matchCondition(relativeResourcePath, this.options.transMpxRules) || relativeResourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
