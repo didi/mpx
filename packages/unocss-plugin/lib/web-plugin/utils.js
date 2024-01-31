@@ -42,12 +42,24 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
         presets.add(i.name)
       }
     })
-    const nonPreTransformers = uno.config.transformers?.filter((i) => i.enforce !== 'pre')
-    if (nonPreTransformers?.length) {
-      console.warn(
-        '[unocss] webpack integration only supports "pre" enforce transformers currently.the following transformers will be ignored\n' + nonPreTransformers.map((i) => ` - ${i.name}`).join('\n')
-      )
+
+    const transformers = uno.config.transformers
+    if (transformers) {
+      const pre = []
+      const normal = []
+      const post = []
+      transformers.forEach(i => {
+        if (i.enforce === 'pre') pre.push(i)
+        else if (i.enforce === 'post') post.push(i)
+        else normal.push(i)
+      })
+      uno.config.transformers = [
+        ...pre,
+        ...normal,
+        ...post
+      ]
     }
+
     return result
   }
 
@@ -88,9 +100,7 @@ async function applyTransformers (ctx, original, id) {
     return
   }
   const transformers = ctx.uno.config.transformers
-  if (!transformers.length) {
-    return
-  }
+  if (!transformers.length) return
   let code = original
   const maps = []
   for (const t of transformers) {

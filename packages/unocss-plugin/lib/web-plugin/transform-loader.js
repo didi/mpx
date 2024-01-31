@@ -54,8 +54,8 @@ async function transform (code, map) {
           }
         })
       }
-      output += genComponentTag(parts.script)
-      output += genComponentTag(parts.json)
+      if (parts.script) output += genComponentTag(parts.script)
+      if (parts.json) output += genComponentTag(parts.json)
       res = {
         code: output
       }
