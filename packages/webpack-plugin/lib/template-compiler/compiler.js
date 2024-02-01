@@ -2417,10 +2417,60 @@ function parseOptionChain (str) {
     },
     {
       // 处理显式使用 __mpx_GetSafeValue 场景
-      rule: /__mpx_GetSafeValue\(([A-Za-z0-9._$]+)\)/,
+      rule: /__mpx_GetSafeValue\(([A-Za-z0-9._$'"\[\]\(\)\+\-\*%\/\s]+)\)/,
       replace (resArr) {
-        const varList = resArr[1].split('.')
-        return `${varList[0]},['${varList.slice(1).join("','")}']`
+        let result = ''
+        let r = ''
+        let count = 0
+        let noString = false
+        let finish = false
+        let canSum = true
+        let curNotString = true
+        let first = true
+
+        for (const i of resArr[1]) {
+          if (i === '[') {
+            if (!count) {
+              canSum = false
+              finish = true
+              curNotString = false
+            }
+            count++
+          } else if (i === ']') {
+            count--
+            if (!count) {
+              noString = true
+              finish = true
+              canSum = false
+              curNotString = true
+            }
+          } else if (i === '.' && curNotString) {
+            finish = true
+            canSum = false
+          }
+
+          if (canSum) {
+            r += i
+          } else {
+            canSum = true
+          }
+
+          if (finish && r) {
+            if (first) {
+              result += `${r},[`
+              first = false
+            } else {
+              result += (noString ? `${r},` : `'${r}',`)
+            }
+            r = ''
+            finish = false
+            noString = false
+          }
+        }
+        if (r) {
+          result += (first ? `${r},[,` : `'${r}',`)
+        }
+        return result.slice(0, -1) + ']'
       }
     }
   ]
@@ -2428,13 +2478,36 @@ function parseOptionChain (str) {
   rules.forEach(({ rule, replace }) => {
     let optionsRes
     while (optionsRes = rule.exec(str)) {
+      const originStr = optionsRes[0]
+      const grammarMap = {
+        '[': 0,
+        ']': 0,
+        '(': 0,
+        ')': 0
+      }
+      let correctIndex
+      for (const i in originStr) {
+        const v = originStr[i]
+        if (grammarMap[v] !== undefined) {
+          grammarMap[v]++
+        }
+        if (grammarMap['['] === grammarMap[']'] && grammarMap['('] === grammarMap[')']) {
+          correctIndex = +i
+          if (grammarMap['('] || grammarMap['[']) break
+        }
+      }
+      if (correctIndex !== originStr.length - 1) {
+        optionsRes = rule.exec(originStr.slice(0, correctIndex + 1))
+        if (!optionsRes) {
+          throw new Error('option rule illegal!!!')
+        }
+      }
       str = str.replace(optionsRes[0], `${optionsChainWxsName}.g(${replace(optionsRes)})`)
       !haveOptions && (haveOptions = true)
     }
   })
   if (haveOptions) {
     haveOptionChain = haveOptions
-    // injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
   }
   return {
     haveReplace: haveOptions,
