@@ -2,12 +2,12 @@ const { applyTransformers, isCssId } = require('./utils')
 const parseComponent = require('@mpxjs/webpack-plugin/lib/parser')
 const genComponentTag = require('@mpxjs/webpack-plugin/lib/utils/gen-component-tag')
 const path = require('path')
-const MagicString = require('magic-string')
 
 async function transform (code, map) {
   const callback = this.async()
   const ctx = this._compiler.__unoCtx
-  if (!ctx) return callback(null, code, map)
+  const mpx = this.getMpx()
+  if (!ctx || !mpx) return callback(null, code, map)
   await ctx.ready
   // 使用resourcePath而不是resource作为id，规避query的影响
   const id = this.resourcePath
@@ -17,48 +17,47 @@ async function transform (code, map) {
   if (transformCache.has(id)) {
     res = transformCache.get(id)
   } else {
-    const mpx = this._compilation.__mpx__
     const extname = path.extname(id)
     if (extname === '.mpx') {
+      const { mode, env } = mpx
       const parts = parseComponent(code, {
         id,
-        needMap: this.sourceMap,
-        mode: mpx.mode,
-        env: mpx.env
+        needMap: false,
+        mode,
+        env
       })
       let output = ''
       if (parts.styles.length) {
-        await Promise.all(parts.styles.map(style => {
-          return (async function () {
-            const styleRes = await applyTransformers(ctx, style.content.trim(), id + '.css')
-            output += genComponentTag(style, {
-              content () {
-                if (styleRes) {
-                  return styleRes.code
-                }
-                return style.content
+        await Promise.all(parts.styles.map(async (style, index) => {
+          const content = style.content.trim()
+          // id中添加index query避免缓存设计
+          const styleRes = await applyTransformers(ctx, content, id + '.css?index=' + index)
+          output += genComponentTag(style, {
+            content () {
+              if (styleRes) {
+                return styleRes.code
               }
-            })
-          }())
+              return content
+            }
+          })
         }))
       }
       if (parts.template) {
-        const templateRes = await applyTransformers(ctx, parts.template.content.trim(), id + '.html')
+        const content = parts.template.content.trim()
+        const templateRes = await applyTransformers(ctx, content, id + '.html')
         output += genComponentTag(parts.template, {
           content () {
             if (templateRes) {
               return templateRes.code
             }
-            return parts.template.content
+            return content
           }
         })
       }
-      output += genComponentTag(parts.script)
-      output += genComponentTag(parts.json)
-      const s = new MagicString(output)
+      if (parts.script) output += genComponentTag(parts.script)
+      if (parts.json) output += genComponentTag(parts.json)
       res = {
-        code: output,
-        map: s.generateMap({ hires: true, source: id })
+        code: output
       }
     } else {
       res = await applyTransformers(ctx, code, id)

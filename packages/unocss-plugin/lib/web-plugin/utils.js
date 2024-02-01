@@ -11,15 +11,16 @@ const CSS_PLACEHOLDER = '@unocss-placeholder'
 
 const defaultExclude = [core.cssIdRE]
 const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
-const templateIdRE = /\.(vue|mpx|wxml)($|\?)/
-const cssIdRE = /\.(wxss)($|\?)/
-const filterIdRE = [templateIdRE, core.cssIdRE, cssIdRE]
+const sfcIdRE = /\.(vue|mpx)($|\?)/
+const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
+const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
   const uno = core.createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
+  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
   const ready = reloadConfig()
 
   async function reloadConfig () {
@@ -41,12 +42,24 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
         presets.add(i.name)
       }
     })
-    const nonPreTransformers = uno.config.transformers?.filter((i) => i.enforce !== 'pre')
-    if (nonPreTransformers?.length) {
-      console.warn(
-        '[unocss] webpack integration only supports "pre" enforce transformers currently.the following transformers will be ignored\n' + nonPreTransformers.map((i) => ` - ${i.name}`).join('\n')
-      )
+
+    const transformers = uno.config.transformers
+    if (transformers) {
+      const pre = []
+      const normal = []
+      const post = []
+      transformers.forEach(i => {
+        if (i.enforce === 'pre') pre.push(i)
+        else if (i.enforce === 'post') post.push(i)
+        else normal.push(i)
+      })
+      uno.config.transformers = [
+        ...pre,
+        ...normal,
+        ...post
+      ]
     }
+
     return result
   }
 
@@ -61,11 +74,8 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     }
   }
 
-  function filterId (id) {
-    return !!filterIdRE.filter(re => re.test(id)).length
-  }
   function filter (code, id) {
-    if (!filterId(id)) {
+    if (!idFilter(id)) {
       return false
     }
     if (code.includes(IGNORE_COMMENT)) {
@@ -90,9 +100,7 @@ async function applyTransformers (ctx, original, id) {
     return
   }
   const transformers = ctx.uno.config.transformers
-  if (!transformers.length) {
-    return
-  }
+  if (!transformers.length) return
   let code = original
   const maps = []
   for (const t of transformers) {
