@@ -2417,6 +2417,7 @@ function parseOptionChain (str) {
     },
     {
       // 处理显式使用 __mpx_GetSafeValue 场景
+      // eslint-disable-next-line no-useless-escape
       rule: /__mpx_GetSafeValue\(([A-Za-z0-9._$'"\[\]\(\)\+\-\*%\/\s]+)\)/,
       replace (resArr) {
         let result = ''
@@ -2514,7 +2515,6 @@ function parseOptionChain (str) {
     str
   }
 }
-
 
 module.exports = {
   parseComponent,
