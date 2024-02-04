@@ -6,8 +6,12 @@ const createHelpers = require('./helpers')
 const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
-const { JSON_JS_EXT } = require('./utils/const')
+const { JSON_JS_EXT, MPX_APP_MODULE_ID } = require('./utils/const')
 const getRulesRunner = require('./platform')
+const getEntryName = require('./utils/get-entry-name')
+const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
   this.cacheable()
@@ -21,8 +25,8 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = 'm' + mpx.pathHash(filePath)
   const { resourcePath, queryObj } = parseRequest(this.resource)
+  const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
@@ -31,7 +35,6 @@ module.exports = function (content) {
   const componentsMap = mpx.componentsMap[packageName]
   const parsed = path.parse(resourcePath)
   const resourceName = path.join(parsed.dir, parsed.name)
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const srcMode = localSrcMode || globalSrcMode
   const typeExtMap = config[srcMode].typeExtMap
   const typeResourceMap = {}
@@ -143,6 +146,7 @@ module.exports = function (content) {
         useJSONJS
       }, null, this, callback)
     }, (content, callback) => {
+      let componentPlaceholder = []
       let json
       try {
         json = JSON5.parse(content)
@@ -158,13 +162,44 @@ module.exports = function (content) {
         warn: emitWarning,
         error: emitError
       }
-      if (!isApp) {
+
+      let ctorType = pagesMap[resourcePath]
+        ? 'page'
+        : componentsMap[resourcePath]
+          ? 'component'
+          : 'app'
+
+      // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+      if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
+        const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
+        ctorType = queryObj.isComponent ? 'component' : 'page'
+        this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+      }
+
+      // 处理构造器类型
+      const ctor = ctorType === 'page'
+        ? (mpx.forceUsePageCtor || mode === 'ali') ? 'Page' : 'Component'
+        : ctorType === 'component'
+          ? 'Component'
+          : 'App'
+
+      if (ctorType === 'app') {
+        const appName = getEntryName(this)
+        if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+      }
+
+      const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+
+      if (ctorType !== 'app') {
         rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
       }
       const rulesRunner = getRulesRunner(rulesRunnerOptions)
       if (rulesRunner) rulesRunner(json)
       if (json.usingComponents) {
         usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
+      }
+      if (json.componentPlaceholder) {
+        componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
       }
       const {
         getRequire
@@ -180,14 +215,16 @@ module.exports = function (content) {
 
         switch (type) {
           case 'template':
-            if (isApp) return ''
+            if (ctorType === 'app') return ''
             Object.assign(extraOptions, {
               hasScoped,
               hasComment,
               isNative,
               moduleId,
-              usingComponents
+              usingComponents,
+              componentPlaceholder
             })
+            // if (template.src) extraOptions.resourcePath = resourcePath
             break
           case 'styles':
             if (cssLang) part.lang = cssLang
@@ -209,20 +246,6 @@ module.exports = function (content) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
 
-      // 注入构造函数
-      let ctor = 'App'
-      let ctorType = 'app'
-      if (pagesMap[resourcePath]) {
-        ctorType = 'page'
-        if (mpx.forceUsePageCtor || mode === 'ali') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (componentsMap[resourcePath]) {
-        ctor = 'Component'
-        ctorType = 'component'
-      }
       output += `global.currentCtor = ${ctor}\n`
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
