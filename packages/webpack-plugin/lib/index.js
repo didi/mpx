@@ -9,7 +9,6 @@ const NullFactory = require('webpack/lib/NullFactory')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const CommonJsAsyncDependency = require('./dependencies/CommonJsAsyncDependency')
 const CommonJsExtractDependency = require('./dependencies/CommonJsExtractDependency')
-const harmonySpecifierTag = require('webpack/lib/dependencies/HarmonyImportDependencyParserPlugin').harmonySpecifierTag
 const NormalModule = require('webpack/lib/NormalModule')
 const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
@@ -171,7 +170,7 @@ class MpxWebpackPlugin {
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
-    options.optimizeRenderRules = options.optimizeRenderRules || {}
+    options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
@@ -371,13 +370,18 @@ class MpxWebpackPlugin {
     if (this.options.writeMode === 'changed') {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
-      compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
+      // fs.writeFile(file, data[, options], callback)
+      compiler.outputFileSystem.writeFile = (filePath, content, ...args) => {
         const lastContent = writedFileContentMap.get(filePath)
         if (Buffer.isBuffer(lastContent) ? lastContent.equals(content) : lastContent === content) {
-          return callback()
+          const callback = args[args.length - 1]
+          if (typeof callback === 'function') {
+            callback()
+          }
+          return
         }
         writedFileContentMap.set(filePath, content)
-        originalWriteFile(filePath, content, callback)
+        originalWriteFile(filePath, content, ...args)
       }
     }
 
@@ -1294,7 +1298,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
@@ -1336,58 +1340,6 @@ class MpxWebpackPlugin {
               })
             }
           }
-
-          // 为跨平台api调用注入srcMode参数指导api运行时转换
-          const apiBlackListMap = [
-            'createApp',
-            'createPage',
-            'createComponent',
-            'createStore',
-            'createStoreWithThis',
-            'mixin',
-            'injectMixins',
-            'toPureObject',
-            'observable',
-            'watch',
-            'use',
-            'set',
-            'remove',
-            'delete',
-            'setConvertRule',
-            'getMixin',
-            'getComputed',
-            'implement'
-          ].reduce((map, api) => {
-            map[api] = true
-            return map
-          }, {})
-
-          const injectSrcModeForTransApi = (expr, members) => {
-            // members为空数组时，callee并不是memberExpression
-            if (!members.length) return
-            const callee = expr.callee
-            const args = expr.arguments
-            const name = callee.object.name
-            const { queryObj, resourcePath } = parseRequest(parser.state.module.resource)
-            const localSrcMode = queryObj.mode
-            const globalSrcMode = mpx.srcMode
-            const srcMode = localSrcMode || globalSrcMode
-
-            if (srcMode === globalSrcMode || apiBlackListMap[callee.property.name || callee.property.value] || (name !== 'mpx' && name !== 'wx') || (name === 'wx' && !matchCondition(resourcePath, this.options.transMpxRules))) return
-
-            const srcModeString = `__mpx_src_mode_${srcMode}__`
-            const dep = new InjectDependency({
-              content: args.length
-                ? `, ${JSON.stringify(srcModeString)}`
-                : JSON.stringify(srcModeString),
-              index: expr.end - 1
-            })
-            parser.state.current.addPresentationalDependency(dep)
-          }
-
-          parser.hooks.callMemberChain.for(harmonySpecifierTag).tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('mpx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
-          parser.hooks.callMemberChain.for('wx').tap('MpxWebpackPlugin', injectSrcModeForTransApi)
         }
       }
       normalModuleFactory.hooks.parser.for('javascript/auto').tap('MpxWebpackPlugin', normalModuleFactoryParserCallback)

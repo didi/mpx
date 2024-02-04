@@ -341,7 +341,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       }
     `
     const res = bindThis(input, { renderReduce: true })
-    const output = ['a', 'b', 'a', 'c', 'a', 'd', 'name', 'name2']
+    const output = ['a', 'b', 'c', 'd', 'name', 'name2']
     expect(res.propKeys.join('')).toBe(output.join(''))
   })
 

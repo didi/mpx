@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.9.0
- * (c) 2023 @mpxjs team
+ * mpxjs webview bridge v2.9.15
+ * (c) 2024 @mpxjs team
  * @license Apache
  */
 function ownKeys(object, enumerableOnly) {
@@ -98,7 +98,7 @@ var SDK_URL_MAP = _objectSpread2({
   my: {
     url: 'https://appx/web-view.min.js'
   },
-  baidu: {
+  swan: {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
@@ -110,11 +110,11 @@ var callbackId = 0;
 var callbacks = {};
 // 环境判断
 var systemUA = navigator.userAgent;
-if (systemUA.indexOf('AlipayClient') > -1) {
+if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
   env = 'my';
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
-} else if (systemUA.indexOf('swan') > -1) {
+} else if (systemUA.indexOf('swan/') > -1) {
   env = 'swan';
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt';

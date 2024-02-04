@@ -1,5 +1,5 @@
 import { walkChildren, parseSelector, error, hasOwn } from '@mpxjs/utils'
-import * as webApi from '@mpxjs/api-proxy/src/web/api'
+import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 const datasetReg = /^data-(.+)$/
 
 function collectDataset (attrs) {
@@ -50,9 +50,9 @@ export default function install (Vue) {
     return this.selectComponent(selector, true)
   }
   Vue.prototype.createSelectorQuery = function () {
-    return webApi.createSelectorQuery().in(this)
+    return createSelectorQuery().in(this)
   }
   Vue.prototype.createIntersectionObserver = function (options) {
-    return webApi.createIntersectionObserver(this, options)
+    return createIntersectionObserver(this, options)
   }
 }

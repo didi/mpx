@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom/extend-expect'
 import {
   showToast, hideToast
-} from '../../src/web/api//toast/index'
+} from '../../src/platform/api/toast/index.web'
 
 describe('test toast', () => {
   afterAll(() => {
-    document.body.lastChild.remove()
+    document.body.lastChild && document.body.lastChild.remove()
   })
 
   test('should show normal toast', done => {
@@ -124,26 +124,5 @@ describe('test toast', () => {
     expect(success.mock.calls.length).toBe(1)
     expect(success.mock.calls[0][0].errMsg).toBe('hideToast:ok')
     expect(complete.mock.calls.length).toBe(1)
-  })
-
-  test('should exec showToast promise then', () => {
-    return showToast({
-      title: 'show'
-    }).then(res => {
-      expect(res).toEqual({
-        errMsg: 'showToast:ok'
-      })
-    })
-  })
-
-  test('should exec hideToast promise then', () => {
-    showToast({
-      title: 'hide'
-    })
-    return hideToast().then(res => {
-      expect(res).toEqual({
-        errMsg: 'hideToast:ok'
-      })
-    })
   })
 })
