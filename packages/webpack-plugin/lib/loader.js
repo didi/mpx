@@ -63,14 +63,11 @@ module.exports = function (content) {
     )
   }
 
-  let ctorType = 'app'
-  if (pagesMap[resourcePath]) {
-    // page
-    ctorType = 'page'
-  } else if (componentsMap[resourcePath]) {
-    // component
-    ctorType = 'component'
-  }
+  let ctorType = pagesMap[resourcePath]
+    ? 'page'
+    : componentsMap[resourcePath]
+      ? 'component'
+      : 'app'
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
@@ -277,17 +274,12 @@ module.exports = function (content) {
       }
 
       // 注入构造函数
-      let ctor = 'App'
-      if (ctorType === 'page') {
-        // swan也默认使用Page构造器
-        if (mpx.forceUsePageCtor || mode === 'ali') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (ctorType === 'component') {
-        ctor = 'Component'
-      }
+      const ctor = ctorType === 'page'
+        ? (mpx.forceUsePageCtor || mode === 'ali') ? 'Page' : 'Component'
+        : ctorType === 'component'
+          ? 'Component'
+          : 'App'
+
       output += `global.currentCtor = ${ctor}\n`
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()

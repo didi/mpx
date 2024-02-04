@@ -162,20 +162,12 @@ module.exports = function (content) {
         warn: emitWarning,
         error: emitError
       }
-      // 处理构造器类型
-      let ctor = 'App'
-      let ctorType = 'app'
-      if (pagesMap[resourcePath]) {
-        ctorType = 'page'
-        if (mpx.forceUsePageCtor || mode === 'ali') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (componentsMap[resourcePath]) {
-        ctor = 'Component'
-        ctorType = 'component'
-      }
+
+      let ctorType = pagesMap[resourcePath]
+        ? 'page'
+        : componentsMap[resourcePath]
+          ? 'component'
+          : 'app'
 
       // 支持资源query传入isPage或isComponent支持页面/组件单独编译
       if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
@@ -183,6 +175,13 @@ module.exports = function (content) {
         ctorType = queryObj.isComponent ? 'component' : 'page'
         this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
       }
+
+      // 处理构造器类型
+      const ctor = ctorType === 'page'
+        ? (mpx.forceUsePageCtor || mode === 'ali') ? 'Page' : 'Component'
+        : ctorType === 'component'
+          ? 'Component'
+          : 'App'
 
       if (ctorType === 'app') {
         const appName = getEntryName(this)
