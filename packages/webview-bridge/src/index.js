@@ -10,7 +10,7 @@ const SDK_URL_MAP = {
   my: {
     url: 'https://appx/web-view.min.js'
   },
-  baidu: {
+  swan: {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
@@ -22,13 +22,13 @@ const SDK_URL_MAP = {
 let env = null
 let callbackId = 0
 const callbacks = {}
-// 环境判断
+// 环境判断逻辑
 const systemUA = navigator.userAgent
-if (systemUA.indexOf('AlipayClient') > -1) {
+if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
   env = 'my'
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx'
-} else if (systemUA.indexOf('swan') > -1) {
+} else if (systemUA.indexOf('swan/') > -1) {
   env = 'swan'
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt'

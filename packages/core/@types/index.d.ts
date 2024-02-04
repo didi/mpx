@@ -262,7 +262,7 @@ interface MpxConfig {
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
   errorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
-  proxyEventHandler: (e: Event) => any | null
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,

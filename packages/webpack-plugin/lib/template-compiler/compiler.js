@@ -1715,7 +1715,7 @@ function processWebExternalClassesHack (el, options) {
 
       addAttrs(el, [{
         name: ':class',
-        value: `[${replacements.join(',')}]`
+        value: `[${replacements}]`
       }])
     }
   }
@@ -1742,7 +1742,7 @@ function processWebExternalClassesHack (el, options) {
 
         addAttrs(el, [{
           name: ':' + classLikeAttrName,
-          value: `[${replacements.join(',')}].join(' ')`
+          value: `[${replacements}].join(' ')`
         }])
       }
     })
@@ -1932,12 +1932,17 @@ function postProcessTemplate (el) {
 
 const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,noMode')
 
+function isValidModeP (i) {
+  return isValidMode(i[0] === '_' ? i.slice(1) : i)
+}
+
 const wrapRE = /^\((.*)\)$/
 
 function processAtMode (el) {
-  if (el.parent && el.parent._atModeStatus) {
-    el._atModeStatus = el.parent._atModeStatus
-  }
+  // 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
+  // if (el.parent && el.parent._atModeStatus) {
+  //   el._atModeStatus = el.parent._atModeStatus
+  // }
 
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
@@ -1971,24 +1976,31 @@ function processAtMode (el) {
 
     const modeArr = [...conditionMap.keys()]
 
-    if (modeArr.every(i => isValidMode(i))) {
+    if (modeArr.every(i => isValidModeP(i))) {
       const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
       const processedAttr = { name: replacedAttrName, value: attrValue }
 
-      for (const [defineMode, defineEnvArr] of conditionMap.entries()) {
+      for (let [defineMode, defineEnvArr] of conditionMap.entries()) {
+        const isImplicitMode = defineMode[0] === '_'
+        if (isImplicitMode) defineMode = defineMode.slice(1)
         if (defineMode === 'noMode' || defineMode === mode) {
           // 命中 env 规则(没有定义env 或者定义的envArr包含当前env)
           if (!defineEnvArr.length || defineEnvArr.includes(env)) {
-            el._atModeStatus = ''
             if (!replacedAttrName) {
-              // 若defineMode 为 noMode，则不论是element，还是attr，都需要经过规则转换
-              if (defineMode !== 'noMode') {
+              if (defineMode === 'noMode' || isImplicitMode) {
+                // 若defineMode 为 noMode 或 implicitMode，则 element 都需要进行规则转换
+              } else {
                 el._atModeStatus = 'match'
               }
             } else {
-              // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-              el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+              if (defineMode === 'noMode' || isImplicitMode) {
+                // 若defineMode 为 noMode 或 implicitMode，则直接将 attr 挂载回 el，进行规则转换
+                addAttrs(el, [processedAttr])
+              } else {
+                // 如果命中了指定的mode，且当前 mode 不为 noMode 或 implicitMode，则把不需要转换的 attrs 暂存在 noTransAttrs 上，等规则转换后再挂载回去
+                el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+              }
             }
             // 命中mode，命中env，完成匹配，直接退出
             break

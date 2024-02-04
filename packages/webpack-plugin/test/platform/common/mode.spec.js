@@ -38,8 +38,8 @@ describe('template should transform correct', function () {
     expect(output).toBe('')
   })
 
-  it('will no trans child node if parent is matched mode', function () {
-    const input = '<ali-view @ali test@ali="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>'
+  it('will trans child node without atMode declaration even if parent is matched mode', function () {
+    const input = '<ali-view @ali test="ttt"><ttt bindtap="handleTap">123</ttt></ali-view>'
     const output = compileTemplate(input, { mode: 'ali' })
     expect(output).toBe('<ali-view test="ttt"><ttt onTap="handleTap">123</ttt></ali-view>')
   })
