@@ -46,6 +46,7 @@ const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
 const hash = require('hash-sum')
+const nativeLoaderPath = normalize.lib('native-loader')
 const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
@@ -196,7 +197,7 @@ class MpxWebpackPlugin {
 
   static nativeLoader (options = {}) {
     return {
-      loader: normalize.lib('native-loader'),
+      loader: nativeLoaderPath,
       options
     }
   }
@@ -249,6 +250,10 @@ class MpxWebpackPlugin {
 
   static getComponentEntry (request) {
     return addQuery(request, { isComponent: true })
+  }
+
+  static getNativeEntry (request) {
+    return `!!${nativeLoaderPath}!${request}`
   }
 
   static getPluginEntry (request) {
