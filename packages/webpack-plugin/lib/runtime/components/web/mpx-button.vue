@@ -95,7 +95,7 @@
     },
     mounted () {
       if (this.formType) {
-        document.addEventListener('tap', () => {
+        this.$el.addEventListener('tap', () => {
           if (this.form && this.form[this.formType]) {
             this.form[this.formType]()
           }
