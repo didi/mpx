@@ -4,7 +4,9 @@ const hash = require('hash-sum')
 
 const directives = new Set([...Object.values(wx.directive), 'slot'])
 
-const OPTIMIZE_NODES = ['view', 'text', 'image']
+// todo 节点优化
+// const OPTIMIZE_NODES = ['view', 'text', 'image']
+const OPTIMIZE_NODES = []
 
 let hashIndex = 0
 
@@ -13,15 +15,17 @@ function makeAttrsMap (attrKeys = []) {
 }
 
 function setCustomEle (el, meta) {
+  if (el.dynamic) return
   const tag = el.aliasTag || el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
-  const eleAttrsMap = el.isRuntimeComponent ? meta.runtimeInfo.runtimeComponents : meta.runtimeInfo.normalComponents
+  // const eleAttrsMap = el.isRuntimeComponent ? meta.runtimeInfo.runtimeComponents : meta.runtimeInfo.normalComponents
+  const eleAttrsMap = meta.runtimeInfo.normalComponents
   if (tag && !eleAttrsMap[tag]) {
     eleAttrsMap[tag] = {}
-    if (el.isRuntimeComponent) {
-      attrKeys.push('slots', 'mpxAttrs')
-    }
+    // if (el.isRuntimeComponent) {
+    //   attrKeys.push('slots', 'mpxAttrs')
+    // }
   }
   Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
 }

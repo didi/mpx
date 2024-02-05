@@ -38,6 +38,22 @@ module.exports = class RuntimeRenderPlugin {
         // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
         mpx.runtimeInfo = {}
 
+        // 注入到 mpx-custom-element-*.json 里面的组件路径
+        mpx.getPackageInjectedComponentsMap = function (packageName = 'main') {
+          let res = {}
+          let componentsMap = Object.values(mpx.componentsMap).reduce((preVal, curVal) => Object.assign(preVal, curVal), {})
+          const resourceHashNameMap = mpx.runtimeInfo[packageName].resourceHashNameMap
+          const outputPath = compilation.outputOptions.publicPath || ''
+          for (let path in resourceHashNameMap) {
+            const hashName = resourceHashNameMap[path]
+            if (hashName && componentsMap[path]) {
+              res[hashName] = outputPath + componentsMap[path]
+            }
+          }
+
+          return res
+        }
+
         mpx.hooks.finishSubpackagesMake.tapAsync('MpxCustomElementEntry', (compilation, callback) => {
           if (mpx.usingRuntimePackages.size === 0) {
             return callback()

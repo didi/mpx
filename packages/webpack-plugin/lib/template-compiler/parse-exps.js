@@ -2,6 +2,7 @@
 const acorn = require('acorn')
 const walk = require('acorn-walk')
 
+// todo 增加对于函数判断报错
 walk.full = function full (node, baseVisitor, state, override) {
   const stack = []
     ; (function c (node, st, override, s) {

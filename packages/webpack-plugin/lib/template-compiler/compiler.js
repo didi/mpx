@@ -1663,7 +1663,7 @@ function isComponentNode (el, options) {
 }
 
 function isRuntimeComponentNode (el, options) {
-  return (options.runtimeComponents && options.runtimeComponents.includes(el.tag)) || false
+  return !!(options.runtimeComponents && options.runtimeComponents[el.tag] && options.runtimeComponents[el.tag].isRuntimeMode)
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -2045,7 +2045,10 @@ function processDuplicateAttrsList (el) {
 }
 
 function processRuntime (el, options) {
-  el.isRuntimeComponent = isRuntimeComponentNode(el, options)
+  const isDynamic = isRuntimeComponentNode(el, options)
+  if (isDynamic) {
+    el.dynamic = isDynamic
+  }
 }
 
 // 处理wxs注入逻辑
@@ -2169,7 +2172,7 @@ function postProcessRuntime (el, options, meta) {
   const isCustomComponent = isComponentNode(el, options)
 
   // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
-  if (!options.runtimeCompile && el.isRuntimeComponent) {
+  if (!options.runtimeCompile && el.dynamic) {
     addIfBlock(el, '__mpxDynamicLoaded')
   }
 
@@ -2183,6 +2186,12 @@ function postProcessRuntime (el, options, meta) {
         normalComponents: {},
         wxs: {}
       }
+    }
+
+    if (isCustomComponent) {
+      const { hashName, resourcePath } = options.runtimeComponents[el.tag]
+      el.aliasTag = hashName
+      meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
     }
 
     // 按需收集节点属性信息，存储到 meta 后到外层处理

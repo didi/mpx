@@ -194,7 +194,6 @@ function simplifyTemplate (vnode, config) {
   processChildren(vnode, config)
 
   delete vnode.parent
-  delete vnode.isRuntimeComponent
 
   if (vnode.tag === 'temp-node') {
     vnode.tag = 'block'

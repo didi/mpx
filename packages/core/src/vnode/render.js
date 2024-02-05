@@ -2,12 +2,16 @@ import cssSelect from './css-select'
 // todo: stringify wxs 模块只能放到逻辑层执行，主要还是因为生成 vdom tree 需要根据 class 去做匹配，需要看下这个代码从哪引入
 import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
+import staticMap from './staticMap'
 
-export default function genVnodeTree (vnodeAst, contextScope, cssList) {
+export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
   // 引用的 vnodeAst 浅复制，解除引用
   vnodeAst = cloneNode(vnodeAst)
   // 获取实例 uid
-  const uid = contextScope[0]?.__mpxProxy?.uid
+  const uid = contextScope[0]?.__mpxProxy?.uid || contextScope[0]?.uid
+  // slots 通过上下文传递，相当于 props
+  const slots = contextScope[0]?.$slots || {}
+  const slotName = contextScope[0]?.slot
   function simpleNormalizeChildren (children) {
     for (let i = 0; i < children.length; i++) {
       if (Array.isArray(children[i])) {
@@ -51,10 +55,16 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
         return genFor(node)
       } else if (node.if && !node.ifProcessed) {
         return genIf(node)
+      } else if (node.tag === 'slot') {
+        return genSlot(node)
       } else {
         const data = genData(node)
         const children = genChildren(node)
-        return _c(node.aliasTag || node.tag, data, children)
+        if (node.dynamic) {
+          return _cd(node.aliasTag, data, children)
+        } else {
+          return _c(node.aliasTag || node.tag, data, children)
+        }
       }
     } else if (node.type === 3) {
       return genText(node)
@@ -83,7 +93,7 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     }
 
     // 处理 for 循环产生的数组，同时清除空节点
-    children = simpleNormalizeChildren(children).filter(node => !!node.nodeType)
+    children = simpleNormalizeChildren(children).filter(node => !!node?.nodeType)
 
     return {
       // tagName: tag,
@@ -91,6 +101,35 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
       data,
       children
     }
+  }
+
+  function _cd(moduleId, data = {}, children = []) {
+    console.log('the staticMap and moduleId is:', staticMap, moduleId)
+    const { template = {}, styles = [] } = staticMap[moduleId]
+    data.$slots = resolveSlot(children) // 将 slot 通过上下文传递到子组件的渲染流程中
+    const vnodeTree = _genVnodeTree(template, [data], styles)
+    return vnodeTree
+  }
+
+  function resolveSlot(children) {
+    const slots = {}
+    if (children.length) {
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i]
+        const name = child.data?.slot
+        if (name) {
+          const slot = (slots[name] || (slots[name] = []))
+          if (child.tag === 'template') {
+            slot.push.apply(slot, child.children || [])
+          } else {
+            slot.push(child)
+          }
+        } else {
+          (slots.default || (slots.default = [])).push(child)
+        }
+      }
+    }
+    return slots
   }
 
   function genData (node) {
@@ -222,6 +261,13 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     return res
   }
 
+  // 暂时不支持作用域插槽
+  function genSlot (node) {
+    const data = genData(node) // 计算属性值
+    const slotName = data.name || 'default'
+    return slots[slotName] || createEmptyNode()
+  }
+
   function genVnodeWithStaticCss (vnodeTree) {
     cssList.forEach((item) => {
       const [selector, style] = item
@@ -234,5 +280,9 @@ export default function genVnodeTree (vnodeAst, contextScope, cssList) {
     return vnodeTree
   }
 
-  return genVnodeWithStaticCss(genVnodeTree(vnodeAst))
+  const interpreteredVnodeTree = genVnodeTree(vnodeAst)
+  if (slotName) {
+    interpreteredVnodeTree.data.slot = slotName
+  }
+  return genVnodeWithStaticCss(interpreteredVnodeTree)
 }

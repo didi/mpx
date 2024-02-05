@@ -175,15 +175,18 @@ module.exports = function (content) {
     }
   }
 
-  const injectMpxCustomElement = () => {
+  const fillMpxCustomElement = (isMpxCustomElement = false) => {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
+    if (isMpxCustomElement) {
+      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
+    }
   }
 
   if (queryObj.mpxCustomElement) {
-    injectMpxCustomElement()
+    fillMpxCustomElement(true)
     callback()
     return
   }
@@ -724,7 +727,7 @@ module.exports = function (content) {
       },
       (callback) => {
         if (checkIsRuntimeMode(resourcePath)) {
-          injectMpxCustomElement()
+          fillMpxCustomElement()
         }
         callback()
       }

@@ -34,7 +34,7 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
   const runtimeCompile = checkIsRuntimeMode(resourcePath)
-  const runtimeComponents = queryObj.runtimeComponents || []
+  const runtimeComponents = JSON.parse(queryObj.runtimeComponents)
   const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0
@@ -57,6 +57,7 @@ module.exports = function (raw) {
   }
 
   if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
     let result = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
     result += unRecursiveTemplate.buildTemplate(mpx.runtimeInfo[packageName])
     return result
