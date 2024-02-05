@@ -1307,6 +1307,22 @@ module.exports = defineConfig({
 })
 ```
 
+### MpxWebpackPlugin.getNativeEntry
+
+在 webpack config entry 入口文件配置中，你可以使用该方法获取原生小程序入口文件路径。如果你不想将原生的小程序入口文件整合为 `app.mpx` 文件，则可以使用该方法直接使用原有的小程序入口文件进行编译。见[#1330]([1330](https://github.com/didi/mpx/issues/1330))。
+
+```js
+// vue.config.js
+const { defineConfig } = require('@vue/cli-service')
+const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+module.exports = defineConfig({
+  chainWebpack(config) {
+    // 将 app 入口由默认的 app.mpx 更改为 app.js
+    config.entry('app').clear().add(MpxWebpackPlugin.getNativeEntry('./src/app.js'))
+  }
+})
+```
+
 
 ## MpxUnocssPlugin
 
