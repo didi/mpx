@@ -36,7 +36,7 @@
       }
     },
     mounted () {
-      this.$on('tap', () => {
+      document.addEventListener('tap', () => {
         const mpx = global.__mpx
         if (mpx) {
           switch (this.openType) {
