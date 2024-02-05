@@ -9,7 +9,8 @@ import { createComponent } from '@mpxjs/core'
 createComponent({
   options: {
     addGlobalClass: true,
-    styleIsolation: 'shared'
+    styleIsolation: 'shared',
+    virtualHost: true
   },
   properties: {
     r: { // vdom 数据

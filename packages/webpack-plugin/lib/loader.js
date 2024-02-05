@@ -144,6 +144,7 @@ module.exports = function (content) {
 
         async.eachOf(needMapComponents, (component, name, callback) => {
           resolve(loaderContext.context, component, loaderContext, (err, resource) => {
+            if (err) return callback(err)
             // runtimeComponents[name] = 'm' + mpx.pathHash(resource)
             runtimeComponents[name] = {
               isRuntimeMode: checkIsRuntimeMode(resource),
@@ -186,7 +187,6 @@ module.exports = function (content) {
           if (rulesRunner) rulesRunner(ret)
           if (ret.usingComponents) {
             usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-
           }
           if (ret.componentPlaceholder) {
             componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))

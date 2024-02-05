@@ -110,6 +110,11 @@ function mapTree (vtree, parent, options) {
     }
   }
 
+  // 样式隔离：如果已经进行过样式匹配直接返回
+  if (vtree.scopeProcessed) {
+    return null
+  }
+
   if (vtree.nodeType != null) {
     const node = {}
     node.parent = parent

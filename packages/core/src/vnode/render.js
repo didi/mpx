@@ -103,7 +103,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
     }
   }
 
-  function _cd(moduleId, data = {}, children = []) {
+  function _cd (moduleId, data = {}, children = []) {
     console.log('the staticMap and moduleId is:', staticMap, moduleId)
     const { template = {}, styles = [] } = staticMap[moduleId]
     data.$slots = resolveSlot(children) // 将 slot 通过上下文传递到子组件的渲染流程中
@@ -111,7 +111,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
     return vnodeTree
   }
 
-  function resolveSlot(children) {
+  function resolveSlot (children) {
     const slots = {}
     if (children.length) {
       for (let i = 0; i < children.length; i++) {
@@ -277,6 +277,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
       })
     })
 
+    // 默认使用样式隔离的策略
+    vnodeTree.scopeProcessed = true
     return vnodeTree
   }
 

@@ -173,7 +173,6 @@ ${e.stack}`)
     }
   }
 
-
   if (meta.computed) {
     resultSource += bindThis.transform(`
 global.currentInject.injectComputed = {
