@@ -46,6 +46,7 @@ const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
 const hash = require('hash-sum')
+const nativeLoaderPath = normalize.lib('native-loader')
 const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
@@ -169,7 +170,7 @@ class MpxWebpackPlugin {
     options.webConfig = options.webConfig || {}
     options.partialCompile = options.mode !== 'web' && options.partialCompile
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
-    options.optimizeRenderRules = options.optimizeRenderRules || {}
+    options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
@@ -196,7 +197,7 @@ class MpxWebpackPlugin {
 
   static nativeLoader (options = {}) {
     return {
-      loader: normalize.lib('native-loader'),
+      loader: nativeLoaderPath,
       options
     }
   }
@@ -249,6 +250,10 @@ class MpxWebpackPlugin {
 
   static getComponentEntry (request) {
     return addQuery(request, { isComponent: true })
+  }
+
+  static getNativeEntry (request) {
+    return `!!${nativeLoaderPath}!${request}`
   }
 
   static getPluginEntry (request) {
@@ -365,13 +370,18 @@ class MpxWebpackPlugin {
     if (this.options.writeMode === 'changed') {
       const writedFileContentMap = new Map()
       const originalWriteFile = compiler.outputFileSystem.writeFile
-      compiler.outputFileSystem.writeFile = (filePath, content, callback) => {
+      // fs.writeFile(file, data[, options], callback)
+      compiler.outputFileSystem.writeFile = (filePath, content, ...args) => {
         const lastContent = writedFileContentMap.get(filePath)
         if (Buffer.isBuffer(lastContent) ? lastContent.equals(content) : lastContent === content) {
-          return callback()
+          const callback = args[args.length - 1]
+          if (typeof callback === 'function') {
+            callback()
+          }
+          return
         }
         writedFileContentMap.set(filePath, content)
-        originalWriteFile(filePath, content, callback)
+        originalWriteFile(filePath, content, ...args)
       }
     }
 
@@ -1288,7 +1298,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
