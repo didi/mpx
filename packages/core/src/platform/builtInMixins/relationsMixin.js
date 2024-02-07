@@ -1,4 +1,3 @@
-import { getRelativePath } from '@mpxjs/utils'
 import { BEFORECREATE, CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const relationTypeMap = {
@@ -7,21 +6,7 @@ const relationTypeMap = {
 }
 
 export default function relationsMixin (mixinType) {
-  if (__mpx_mode__ === 'ali' && mixinType === 'component') {
-    return {
-      [BEFORECREATE] () {
-        this._originGetRelationNodes = this.getRelationNodes
-        this.getRelationNodes = this._getRelationNodes
-      },
-      methods: {
-        _getRelationNodes (path) {
-          const currentResource = this.$rawOptions.options.currentResource
-          const relativePath = getRelativePath(currentResource, path)
-          return this._originGetRelationNodes(relativePath)
-        }
-      }
-    }
-  } else if (__mpx_mode__ === 'web' && mixinType === 'component') {
+  if (__mpx_mode__ === 'web' && mixinType === 'component') {
     return {
       [CREATED] () {
         this.__mpxRelations = {}
