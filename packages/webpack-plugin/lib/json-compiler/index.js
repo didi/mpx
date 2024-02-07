@@ -47,7 +47,6 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-  const transAli = mode === 'ali' && srcMode === 'wx'
 
   const emitWarning = (msg) => {
     this.emitWarning(

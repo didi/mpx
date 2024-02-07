@@ -1,4 +1,4 @@
-import { BEFORECREATE, CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
+import { CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const relationTypeMap = {
   parent: 'child',
