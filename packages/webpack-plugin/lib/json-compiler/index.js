@@ -534,21 +534,18 @@ module.exports = function (content) {
     }
 
     const processCustomTabBar = (tabBar, context, callback) => {
-      if (tabBar && (tabBar.custom || tabBar.customize)) {
-        const outputCustomKey = config[mode].tabBar.customKey
-        const srcCustomKey = tabBar.custom ? 'custom' : 'customize'
+      const outputCustomKey = config[mode].tabBar.customKey
+      if (tabBar && tabBar[outputCustomKey]) {
+        const srcCustomKey = config[srcMode].tabBar.customKey
         const srcPath = resolveTabBarPath(srcCustomKey)
         const outputPath = resolveTabBarPath(outputCustomKey)
 
         processComponent(`./${srcPath}`, context, { outputPath }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
-            delete tabBar[outputCustomKey]
+            delete tabBar[srcCustomKey]
             return callback()
           }
           if (err) return callback(err)
-          if (transAli) {
-            delete tabBar.custom
-          }
           tabBar[outputCustomKey] = entry // hack for javascript parser call hook.
           callback()
         })

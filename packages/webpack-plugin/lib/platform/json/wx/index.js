@@ -325,6 +325,9 @@ module.exports = function getSpec ({ warn, error }) {
         },
         {
           test: 'custom',
+          ali: function (input) {
+            return changeKey(input, this.test, 'customize')
+          },
           swan: deletePath(),
           tt: deletePath(),
           jd: deletePath()
