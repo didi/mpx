@@ -68,7 +68,8 @@
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
-        lastWrapperHeight: 0
+        lastWrapperHeight: 0,
+        animationFn: null
       }
     },
     computed: {
@@ -113,7 +114,7 @@
       }, 200, {
         leading: false,
         trailing: true
-      }),
+      })
       this.dispatchScrollTo = throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
@@ -121,7 +122,12 @@
       }, 200, {
         leading: true,
         trailing: false
-      }),
+      })
+      this.animationFn = (e) => {
+        if (e.target !== this.$refs.scrollContent) {
+          this.debounceRefresh()
+        }
+      }
       this.initBs()
       this.observeAnimation('add')
       this.handleMutationObserver()
@@ -139,11 +145,10 @@
     deactivated () {
       this.__mpx_deactivated = true
     },
-    destroyed () {
-      this.observeAnimation('remove')
-    },
+
     beforeDestroy () {
       this.destroyBs()
+      this.observeAnimation('remove')
       this.destroyMutationObserver()
     },
     watch: {
@@ -196,11 +201,7 @@
         const eventNames = ['transitionend', 'animationend']
         const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
         eventNames.forEach(eventName => {
-          this.$refs.scrollContent?.[behaviorType](eventName, (e) => {
-            if (e.target !== this.bs.scroller.content) {
-              this.debounceRefresh()
-            }
-          })
+          this.$refs.scrollContent?.[behaviorType](eventName, this.animationFn)
         })
       },
       destroyBs () {
@@ -421,7 +422,7 @@
              needRefresh = true
             break
           } else {
-            if (mutation.target !== this.bs.scroller.content && mutation.target !== this.$refs.innerWrapper) {
+            if (mutation.target !== this.$refs.scrollContent && mutation.target !== this.$refs.innerWrapper) {
               needRefresh = true
               break
             }
@@ -432,7 +433,7 @@
         }
       },
       handleObserveAnimation (e, eventName) {
-        if (e.target !== this.bs.scroller.content) {
+        if (e.target !== this.$refs.scrollContent) {
           if (eventName === 'transitionend') {
             if (e.propertyName?.includes('width') || e.propertyName?.includes('height')) {
               this.debounceRefresh()
