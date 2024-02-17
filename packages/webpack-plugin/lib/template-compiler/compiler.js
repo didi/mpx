@@ -104,6 +104,7 @@ let env
 let platformGetTagNamespace
 let filePath
 let refId
+let haveOptionChain = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -164,6 +165,8 @@ const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
+const optionsChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
+const optionsChainWxsName = '_oc'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -637,6 +640,7 @@ function parse (template, options) {
   forScopes = []
   forScopesMap = {}
   hasI18n = false
+  haveOptionChain = false
 
   platformGetTagNamespace = options.getTagNamespace || no
 
@@ -759,6 +763,10 @@ function parse (template, options) {
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
     }
+  }
+
+  if (haveOptionChain) {
+    injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
   }
 
   injectNodes.forEach((node) => {
@@ -1156,6 +1164,7 @@ function parseMustacheWithContext (raw = '') {
       })
     }
 
+    exp = parseOptionChain(exp)
     if (i18n) {
       for (const i18nFuncName of i18nFuncNames) {
         const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
@@ -2391,6 +2400,187 @@ function genNode (node) {
     }
   }
   return exp
+}
+
+/**
+ * 处理可选链用法
+ * @param str
+ * @returns
+ */
+function parseOptionChain (str) {
+  const wxsName = `${optionsChainWxsName}.g`
+  const rules = [
+    {
+      // 处理视图里面使用可选链场景
+      rule: /\?\./,
+      replace (originStr, execRes) {
+        const grammarMap = {
+          init () {
+            const initKey = [
+              {
+                mapKey: '[]',
+                mapValue: [
+                  {
+                    key: '[',
+                    value: 1
+                  },
+                  {
+                    key: ']',
+                    value: -1
+                  }
+                ]
+              },
+              {
+                mapKey: '()',
+                mapValue: [
+                  {
+                    key: '(',
+                    value: 1
+                  },
+                  {
+                    key: ')',
+                    value: -1
+                  }
+                ]
+              }
+            ]
+            this.count = {}
+            initKey.forEach(({ mapKey, mapValue }) => {
+              mapValue.forEach(({ key, value }) => {
+                this[key] = this.changeState(mapKey, value)
+              })
+            })
+          },
+          changeState (key, value) {
+            if (!this.count[key]) {
+              this.count[key] = 0
+            }
+            return () => {
+              this.count[key] = this.count[key] + value
+              return this.count[key]
+            }
+          },
+          checkState () {
+            return Object.values(this.count).find(i => i)
+          }
+        }
+        const strLength = originStr.length
+        let forwardIndex = execRes.index
+        let behindIndex = forwardIndex + 2
+        let haveNotGetValue = true
+        let chainValue = ''
+        let chainKey = ''
+        let notCheck = false
+        grammarMap.init()
+        // 查 ?. 左边值
+        while (haveNotGetValue && forwardIndex > 0) {
+          const forward = originStr[forwardIndex - 1]
+          const grammar = grammarMap[forward]
+          if (notCheck) {
+            // 处于表达式内
+            chainValue = forward + chainValue
+            if (grammar) {
+              grammar()
+              if (!grammarMap.checkState()) {
+                // 表达式结束
+                notCheck = false
+              }
+            }
+          } else if (~[']', ')'].indexOf(forward)) {
+            // 命中表达式，开始记录表达式
+            chainValue = forward + chainValue
+            notCheck = true
+            grammar()
+          } else if (!/[A-Za-z0-9_$.]/.test(forward)) {
+            // 结束
+            haveNotGetValue = false
+            forwardIndex++
+          } else {
+            // 正常语法
+            chainValue = forward + chainValue
+          }
+          forwardIndex--
+        }
+        if (grammarMap.checkState() && haveNotGetValue) {
+          // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+          throw new Error('[optionChain] option value illegal!!!')
+        }
+        haveNotGetValue = true
+        let keyValue = ''
+        // 查 ?. 右边key
+        while (haveNotGetValue && behindIndex < strLength) {
+          const behind = originStr[behindIndex]
+          const grammar = grammarMap[behind]
+          if (notCheck) {
+            // 处于表达式内
+            if (grammar) {
+              grammar()
+              if (grammarMap.checkState()) {
+                keyValue += behind
+              } else {
+                // 表达式结束
+                notCheck = false
+                chainKey += `,${keyValue}`
+                keyValue = ''
+              }
+            } else {
+              keyValue += behind
+            }
+          } else if (~['[', '('].indexOf(behind)) {
+            // 命中表达式，开始记录表达式
+            grammar()
+            if (keyValue) {
+              chainKey += `,'${keyValue}'`
+              keyValue = ''
+            }
+            notCheck = true
+          } else if (!/[A-Za-z0-9_$.?]/.test(behind)) {
+            // 结束
+            haveNotGetValue = false
+            behindIndex--
+          } else if (behind !== '?') {
+            // 正常语法
+            if (behind === '.') {
+              if (keyValue) {
+                chainKey += `,'${keyValue}'`
+              }
+              keyValue = ''
+            } else {
+              keyValue += behind
+            }
+          }
+          behindIndex++
+        }
+        if (grammarMap.checkState() && haveNotGetValue) {
+          // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+          throw new Error('[optionChain] option key illegal!!!')
+        }
+        if (keyValue) {
+          chainKey += `,'${keyValue}'`
+        }
+        return originStr.slice(0, forwardIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + originStr.slice(behindIndex)
+      }
+    },
+    {
+      // 处理显式使用 $safe_get 场景
+      rule: /\$safe_get\(.*\)/,
+      replace (originStr) {
+        return originStr.replace(/\$safe_get/g, wxsName)
+      }
+    }
+  ]
+  let haveOptions = false
+  rules.forEach(({ rule, replace }) => {
+    let optionsRes
+    while (optionsRes = rule.exec(str)) {
+      str = replace(str, optionsRes)
+      if (!haveOptions) {
+        haveOptions = true
+        haveOptionChain = haveOptions
+      }
+    }
+  })
+  return str
 }
 
 module.exports = {
