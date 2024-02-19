@@ -2465,43 +2465,43 @@ function parseOptionChain (str) {
           }
         }
         const strLength = originStr.length
-        let forwardIndex = execRes.index
-        let behindIndex = forwardIndex + 2
+        let leftIndex = execRes.index
+        let rightIndex = leftIndex + 2
         let haveNotGetValue = true
         let chainValue = ''
         let chainKey = ''
         let notCheck = false
         grammarMap.init()
         // 查 ?. 左边值
-        while (haveNotGetValue && forwardIndex > 0) {
-          const forward = originStr[forwardIndex - 1]
-          const grammar = grammarMap[forward]
-          if (forward !== ' ') {
-            if (notCheck) {
-              // 处于表达式内
-              chainValue = forward + chainValue
-              if (grammar) {
-                grammar()
-                if (!grammarMap.checkState()) {
-                  // 表达式结束
-                  notCheck = false
-                }
-              }
-            } else if (~[']', ')'].indexOf(forward)) {
-              // 命中表达式，开始记录表达式
-              chainValue = forward + chainValue
-              notCheck = true
+        while (haveNotGetValue && leftIndex > 0) {
+          const left = originStr[leftIndex - 1]
+          const grammar = grammarMap[left]
+          if (notCheck) {
+            // 处于表达式内
+            chainValue = left + chainValue
+            if (grammar) {
               grammar()
-            } else if (!/[A-Za-z0-9_$.]/.test(forward)) {
+              if (!grammarMap.checkState()) {
+                // 表达式结束
+                notCheck = false
+              }
+            }
+          } else if (~[']', ')'].indexOf(left)) {
+            // 命中表达式，开始记录表达式
+            chainValue = left + chainValue
+            notCheck = true
+            grammar()
+          } else if (left !== ' ') {
+            if (!/[A-Za-z0-9_$.]/.test(left)) {
               // 结束
               haveNotGetValue = false
-              forwardIndex++
+              leftIndex++
             } else {
               // 正常语法
-              chainValue = forward + chainValue
+              chainValue = left + chainValue
             }
           }
-          forwardIndex--
+          leftIndex--
         }
         if (grammarMap.checkState() && haveNotGetValue) {
           // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
@@ -2510,50 +2510,50 @@ function parseOptionChain (str) {
         haveNotGetValue = true
         let keyValue = ''
         // 查 ?. 右边key
-        while (haveNotGetValue && behindIndex < strLength) {
-          const behind = originStr[behindIndex]
-          const grammar = grammarMap[behind]
-          if (behind !== ' ') {
-            if (notCheck) {
-              // 处于表达式内
-              if (grammar) {
-                grammar()
-                if (grammarMap.checkState()) {
-                  keyValue += behind
-                } else {
-                  // 表达式结束
-                  notCheck = false
-                  chainKey += `,${keyValue}`
-                  keyValue = ''
-                }
-              } else {
-                keyValue += behind
-              }
-            } else if (~['[', '('].indexOf(behind)) {
-              // 命中表达式，开始记录表达式
+        while (haveNotGetValue && rightIndex < strLength) {
+          const right = originStr[rightIndex]
+          const grammar = grammarMap[right]
+          if (notCheck) {
+            // 处于表达式内
+            if (grammar) {
               grammar()
-              if (keyValue) {
-                chainKey += `,'${keyValue}'`
+              if (grammarMap.checkState()) {
+                keyValue += right
+              } else {
+                // 表达式结束
+                notCheck = false
+                chainKey += `,${keyValue}`
                 keyValue = ''
               }
-              notCheck = true
-            } else if (!/[A-Za-z0-9_$.?]/.test(behind)) {
+            } else {
+              keyValue += right
+            }
+          } else if (~['[', '('].indexOf(right)) {
+            // 命中表达式，开始记录表达式
+            grammar()
+            if (keyValue) {
+              chainKey += `,'${keyValue}'`
+              keyValue = ''
+            }
+            notCheck = true
+          } else if (right !== ' ') {
+            if (!/[A-Za-z0-9_$.?]/.test(right)) {
               // 结束
               haveNotGetValue = false
-              behindIndex--
-            } else if (behind !== '?') {
+              rightIndex--
+            } else if (right !== '?') {
               // 正常语法
-              if (behind === '.') {
+              if (right === '.') {
                 if (keyValue) {
                   chainKey += `,'${keyValue}'`
                 }
                 keyValue = ''
               } else {
-                keyValue += behind
+                keyValue += right
               }
             }
           }
-          behindIndex++
+          rightIndex++
         }
         if (grammarMap.checkState() && haveNotGetValue) {
           // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
@@ -2562,7 +2562,7 @@ function parseOptionChain (str) {
         if (keyValue) {
           chainKey += `,'${keyValue}'`
         }
-        return originStr.slice(0, forwardIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + originStr.slice(behindIndex)
+        return originStr.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + originStr.slice(rightIndex)
       }
     },
     {
