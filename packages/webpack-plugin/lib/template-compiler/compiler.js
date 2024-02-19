@@ -166,7 +166,7 @@ const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
 const optionsChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionsChainWxsName = '_oc'
+const optionsChainWxsName = '__oc__'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -2476,28 +2476,30 @@ function parseOptionChain (str) {
         while (haveNotGetValue && forwardIndex > 0) {
           const forward = originStr[forwardIndex - 1]
           const grammar = grammarMap[forward]
-          if (notCheck) {
-            // 处于表达式内
-            chainValue = forward + chainValue
-            if (grammar) {
-              grammar()
-              if (!grammarMap.checkState()) {
-                // 表达式结束
-                notCheck = false
+          if (forward !== ' ') {
+            if (notCheck) {
+              // 处于表达式内
+              chainValue = forward + chainValue
+              if (grammar) {
+                grammar()
+                if (!grammarMap.checkState()) {
+                  // 表达式结束
+                  notCheck = false
+                }
               }
+            } else if (~[']', ')'].indexOf(forward)) {
+              // 命中表达式，开始记录表达式
+              chainValue = forward + chainValue
+              notCheck = true
+              grammar()
+            } else if (!/[A-Za-z0-9_$.]/.test(forward)) {
+              // 结束
+              haveNotGetValue = false
+              forwardIndex++
+            } else {
+              // 正常语法
+              chainValue = forward + chainValue
             }
-          } else if (~[']', ')'].indexOf(forward)) {
-            // 命中表达式，开始记录表达式
-            chainValue = forward + chainValue
-            notCheck = true
-            grammar()
-          } else if (!/[A-Za-z0-9_$.]/.test(forward)) {
-            // 结束
-            haveNotGetValue = false
-            forwardIndex++
-          } else {
-            // 正常语法
-            chainValue = forward + chainValue
           }
           forwardIndex--
         }
@@ -2511,42 +2513,44 @@ function parseOptionChain (str) {
         while (haveNotGetValue && behindIndex < strLength) {
           const behind = originStr[behindIndex]
           const grammar = grammarMap[behind]
-          if (notCheck) {
-            // 处于表达式内
-            if (grammar) {
-              grammar()
-              if (grammarMap.checkState()) {
-                keyValue += behind
+          if (behind !== ' ') {
+            if (notCheck) {
+              // 处于表达式内
+              if (grammar) {
+                grammar()
+                if (grammarMap.checkState()) {
+                  keyValue += behind
+                } else {
+                  // 表达式结束
+                  notCheck = false
+                  chainKey += `,${keyValue}`
+                  keyValue = ''
+                }
               } else {
-                // 表达式结束
-                notCheck = false
-                chainKey += `,${keyValue}`
-                keyValue = ''
+                keyValue += behind
               }
-            } else {
-              keyValue += behind
-            }
-          } else if (~['[', '('].indexOf(behind)) {
-            // 命中表达式，开始记录表达式
-            grammar()
-            if (keyValue) {
-              chainKey += `,'${keyValue}'`
-              keyValue = ''
-            }
-            notCheck = true
-          } else if (!/[A-Za-z0-9_$.?]/.test(behind)) {
-            // 结束
-            haveNotGetValue = false
-            behindIndex--
-          } else if (behind !== '?') {
-            // 正常语法
-            if (behind === '.') {
+            } else if (~['[', '('].indexOf(behind)) {
+              // 命中表达式，开始记录表达式
+              grammar()
               if (keyValue) {
                 chainKey += `,'${keyValue}'`
+                keyValue = ''
               }
-              keyValue = ''
-            } else {
-              keyValue += behind
+              notCheck = true
+            } else if (!/[A-Za-z0-9_$.?]/.test(behind)) {
+              // 结束
+              haveNotGetValue = false
+              behindIndex--
+            } else if (behind !== '?') {
+              // 正常语法
+              if (behind === '.') {
+                if (keyValue) {
+                  chainKey += `,'${keyValue}'`
+                }
+                keyValue = ''
+              } else {
+                keyValue += behind
+              }
             }
           }
           behindIndex++
@@ -2563,9 +2567,9 @@ function parseOptionChain (str) {
     },
     {
       // 处理显式使用 $safe_get 场景
-      rule: /\$safe_get\(.*\)/,
+      rule: /\$g\(.*\)/,
       replace (originStr) {
-        return originStr.replace(/\$safe_get/g, wxsName)
+        return originStr.replace(/\$g/g, wxsName)
       }
     }
   ]
