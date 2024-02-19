@@ -2409,179 +2409,159 @@ function genNode (node) {
  */
 function parseOptionChain (str) {
   const wxsName = `${optionsChainWxsName}.g`
-  const rules = [
-    {
-      // 处理视图里面使用可选链场景
-      rule: /\?\./,
-      replace (originStr, execRes) {
-        const grammarMap = {
-          init () {
-            const initKey = [
+  let optionsRes
+  while (optionsRes = /\?\./.exec(str)) {
+    const strLength = str.length
+    const grammarMap = {
+      init () {
+        const initKey = [
+          {
+            mapKey: '[]',
+            mapValue: [
               {
-                mapKey: '[]',
-                mapValue: [
-                  {
-                    key: '[',
-                    value: 1
-                  },
-                  {
-                    key: ']',
-                    value: -1
-                  }
-                ]
+                key: '[',
+                value: 1
               },
               {
-                mapKey: '()',
-                mapValue: [
-                  {
-                    key: '(',
-                    value: 1
-                  },
-                  {
-                    key: ')',
-                    value: -1
-                  }
-                ]
+                key: ']',
+                value: -1
               }
             ]
-            this.count = {}
-            initKey.forEach(({ mapKey, mapValue }) => {
-              mapValue.forEach(({ key, value }) => {
-                this[key] = this.changeState(mapKey, value)
-              })
-            })
           },
-          changeState (key, value) {
-            if (!this.count[key]) {
-              this.count[key] = 0
-            }
-            return () => {
-              this.count[key] = this.count[key] + value
-              return this.count[key]
-            }
-          },
-          checkState () {
-            return Object.values(this.count).find(i => i)
+          {
+            mapKey: '()',
+            mapValue: [
+              {
+                key: '(',
+                value: 1
+              },
+              {
+                key: ')',
+                value: -1
+              }
+            ]
+          }
+        ]
+        this.count = {}
+        initKey.forEach(({ mapKey, mapValue }) => {
+          mapValue.forEach(({ key, value }) => {
+            this[key] = this.changeState(mapKey, value)
+          })
+        })
+      },
+      changeState (key, value) {
+        if (!this.count[key]) {
+          this.count[key] = 0
+        }
+        return () => {
+          this.count[key] = this.count[key] + value
+          return this.count[key]
+        }
+      },
+      checkState () {
+        return Object.values(this.count).find(i => i)
+      }
+    }
+    let leftIndex = optionsRes.index
+    let rightIndex = leftIndex + 2
+    let haveNotGetValue = true
+    let chainValue = ''
+    let chainKey = ''
+    let notCheck = false
+    grammarMap.init()
+    // 查 ?. 左边值
+    while (haveNotGetValue && leftIndex > 0) {
+      const left = str[leftIndex - 1]
+      const grammar = grammarMap[left]
+      if (notCheck) {
+        // 处于表达式内
+        chainValue = left + chainValue
+        if (grammar) {
+          grammar()
+          if (!grammarMap.checkState()) {
+            // 表达式结束
+            notCheck = false
           }
         }
-        const strLength = originStr.length
-        let leftIndex = execRes.index
-        let rightIndex = leftIndex + 2
-        let haveNotGetValue = true
-        let chainValue = ''
-        let chainKey = ''
-        let notCheck = false
-        grammarMap.init()
-        // 查 ?. 左边值
-        while (haveNotGetValue && leftIndex > 0) {
-          const left = originStr[leftIndex - 1]
-          const grammar = grammarMap[left]
-          if (notCheck) {
-            // 处于表达式内
-            chainValue = left + chainValue
-            if (grammar) {
-              grammar()
-              if (!grammarMap.checkState()) {
-                // 表达式结束
-                notCheck = false
-              }
-            }
-          } else if (~[']', ')'].indexOf(left)) {
-            // 命中表达式，开始记录表达式
-            chainValue = left + chainValue
-            notCheck = true
-            grammar()
-          } else if (left !== ' ') {
-            if (!/[A-Za-z0-9_$.]/.test(left)) {
-              // 结束
-              haveNotGetValue = false
-              leftIndex++
-            } else {
-              // 正常语法
-              chainValue = left + chainValue
-            }
+      } else if (~[']', ')'].indexOf(left)) {
+        // 命中表达式，开始记录表达式
+        chainValue = left + chainValue
+        notCheck = true
+        grammar()
+      } else if (left !== ' ') {
+        if (!/[A-Za-z0-9_$.]/.test(left)) {
+          // 结束
+          haveNotGetValue = false
+          leftIndex++
+        } else {
+          // 正常语法
+          chainValue = left + chainValue
+        }
+      }
+      leftIndex--
+    }
+    if (grammarMap.checkState() && haveNotGetValue) {
+      // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+      throw new Error('[optionChain] option value illegal!!!')
+    }
+    haveNotGetValue = true
+    let keyValue = ''
+    // 查 ?. 右边key
+    while (haveNotGetValue && rightIndex < strLength) {
+      const right = str[rightIndex]
+      const grammar = grammarMap[right]
+      if (notCheck) {
+        // 处于表达式内
+        if (grammar) {
+          grammar()
+          if (grammarMap.checkState()) {
+            keyValue += right
+          } else {
+            // 表达式结束
+            notCheck = false
+            chainKey += `,${keyValue}`
+            keyValue = ''
           }
-          leftIndex--
+        } else {
+          keyValue += right
         }
-        if (grammarMap.checkState() && haveNotGetValue) {
-          // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-          throw new Error('[optionChain] option value illegal!!!')
-        }
-        haveNotGetValue = true
-        let keyValue = ''
-        // 查 ?. 右边key
-        while (haveNotGetValue && rightIndex < strLength) {
-          const right = originStr[rightIndex]
-          const grammar = grammarMap[right]
-          if (notCheck) {
-            // 处于表达式内
-            if (grammar) {
-              grammar()
-              if (grammarMap.checkState()) {
-                keyValue += right
-              } else {
-                // 表达式结束
-                notCheck = false
-                chainKey += `,${keyValue}`
-                keyValue = ''
-              }
-            } else {
-              keyValue += right
-            }
-          } else if (~['[', '('].indexOf(right)) {
-            // 命中表达式，开始记录表达式
-            grammar()
-            if (keyValue) {
-              chainKey += `,'${keyValue}'`
-              keyValue = ''
-            }
-            notCheck = true
-          } else if (right !== ' ') {
-            if (!/[A-Za-z0-9_$.?]/.test(right)) {
-              // 结束
-              haveNotGetValue = false
-              rightIndex--
-            } else if (right !== '?') {
-              // 正常语法
-              if (right === '.') {
-                if (keyValue) {
-                  chainKey += `,'${keyValue}'`
-                }
-                keyValue = ''
-              } else {
-                keyValue += right
-              }
-            }
-          }
-          rightIndex++
-        }
-        if (grammarMap.checkState() && haveNotGetValue) {
-          // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-          throw new Error('[optionChain] option key illegal!!!')
-        }
+      } else if (~['[', '('].indexOf(right)) {
+        // 命中表达式，开始记录表达式
+        grammar()
         if (keyValue) {
           chainKey += `,'${keyValue}'`
+          keyValue = ''
         }
-        return originStr.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + originStr.slice(rightIndex)
+        notCheck = true
+      } else if (!/[A-Za-z0-9_$.?]/.test(right)) {
+        // 结束
+        haveNotGetValue = false
+        rightIndex--
+      } else if (right !== '?') {
+        // 正常语法
+        if (right === '.') {
+          if (keyValue) {
+            chainKey += `,'${keyValue}'`
+          }
+          keyValue = ''
+        } else {
+          keyValue += right
+        }
       }
-    },
-    {
-      // 处理显式使用 $safe_get 场景
-      rule: /\$g\(.*\)/,
-      replace (originStr) {
-        return originStr.replace(/\$g/g, wxsName)
-      }
+      rightIndex++
     }
-  ]
-  rules.forEach(({ rule, replace }) => {
-    let optionsRes
-    while (optionsRes = rule.exec(str)) {
-      str = replace(str, optionsRes)
-      if (!haveOptionChain) {
-        haveOptionChain = true
-      }
+    if (grammarMap.checkState() && haveNotGetValue) {
+      // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+      throw new Error('[optionChain] option key illegal!!!')
     }
-  })
+    if (keyValue) {
+      chainKey += `,'${keyValue}'`
+    }
+    str = str.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + str.slice(rightIndex)
+    if (!haveOptionChain) {
+      haveOptionChain = true
+    }
+  }
   return str
 }
 
