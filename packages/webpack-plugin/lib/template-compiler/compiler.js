@@ -2569,14 +2569,12 @@ function parseOptionChain (str) {
       }
     }
   ]
-  let haveOptions = false
   rules.forEach(({ rule, replace }) => {
     let optionsRes
     while (optionsRes = rule.exec(str)) {
       str = replace(str, optionsRes)
-      if (!haveOptions) {
-        haveOptions = true
-        haveOptionChain = haveOptions
+      if (!haveOptionChain) {
+        haveOptionChain = true
       }
     }
   })
