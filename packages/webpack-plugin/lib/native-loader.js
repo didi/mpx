@@ -129,10 +129,18 @@ module.exports = function (content) {
           if (typeResourceMap[key]) {
             fs.readFile(typeResourceMap[key], (err, content) => {
               if (err) return callback(err)
-              parts[key] = {
-                content: content.toString('utf-8'),
-                tag: key,
-                attrs: {}
+              if (key === 'styles') {
+                parts[key] = [{
+                  content: content.toString('utf-8'),
+                  tag: 'style',
+                  attrs: {}
+                }]
+              } else {
+                parts[key] = {
+                  content: content.toString('utf-8'),
+                  tag: key,
+                  attrs: {}
+                }
               }
               callback()
             })
