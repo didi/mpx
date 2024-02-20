@@ -12,7 +12,7 @@ export function createPinia () {
   const _p = []
   const pinia = markRaw({
     install () {
-      setActivePinia(pinia)
+      console.warn('pinia no longer needs to be installed via mpx.use in version 2.9')
     },
     use (plugin) {
       _p.push(plugin)
@@ -24,5 +24,6 @@ export function createPinia () {
     _s: new Map(),
     state
   })
+  setActivePinia(pinia)
   return pinia
 }

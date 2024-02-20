@@ -1,0 +1,29 @@
+{
+  "name": "@mpxjs/windicss-base",
+  "version": "2.9.1",
+  "description": "mpx windicss base preset",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "node ./build/transRem.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "windicss",
+    "preset",
+    "utility-first-css",
+    "mpx",
+    "miniprogram"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "author": "donghongping",
+  "license": "Apache-2.0"
+}

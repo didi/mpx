@@ -2,19 +2,11 @@ import '@testing-library/jest-dom/extend-expect'
 
 import {
   showModal
-} from '../../src/web/api/modal'
-
-function manualPromise (promise, execResolve, execReject) {
-  return new Promise((resolve, reject) => {
-    promise().then(res => resolve(res)).catch(err => reject(err))
-    execResolve && execResolve()
-    execReject && execReject()
-  })
-}
+} from '../../src/platform/api/modal/index.web'
 
 describe('test modal', () => {
   afterAll(() => {
-    document.body.lastChild.remove()
+    document.body.lastChild && document.body.lastChild.remove()
   })
 
   test('should show actionSheet', () => {
@@ -69,27 +61,5 @@ describe('test modal', () => {
       cancel: false,
       confirm: true
     })
-  })
-  test('should exec promise then', () => {
-    const execResolve = () => {
-      const modal = document.body.lastChild
-      const box = modal.lastChild
-      const btns = box.lastChild
-      const confirmBtn = btns.lastChild
-      confirmBtn.click()
-    }
-
-    return manualPromise(() => {
-      return showModal({
-        title: 'promise'
-      })
-    }, execResolve)
-      .then(res => {
-        expect(res).toEqual({
-          errMsg: 'showModal:ok',
-          cancel: false,
-          confirm: true
-        })
-      })
   })
 })

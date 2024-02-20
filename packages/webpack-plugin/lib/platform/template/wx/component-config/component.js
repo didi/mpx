@@ -1,5 +1,4 @@
-const templateCompiler = require('../../../../template-compiler/compiler')
-const parseMustache = templateCompiler.parseMustache
+const { parseMustache } = require('../../../../template-compiler/compiler')
 const normalize = require('../../../../utils/normalize')
 const TAG_NAME = 'component'
 

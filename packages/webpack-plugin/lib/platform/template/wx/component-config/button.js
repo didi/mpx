@@ -102,7 +102,7 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            const supportList = ['share', 'getPhoneNumber', 'contact']
+            const supportList = ['share', 'getPhoneNumber', 'contact', 'im', 'openSetting']
             if (value && supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }

@@ -3,9 +3,7 @@ const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const templateCompiler = require('../../../template-compiler/compiler')
-const parseMustache = templateCompiler.parseMustache
-const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
+const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
@@ -17,10 +15,10 @@ module.exports = function getSpec ({ warn, error }) {
     postProps: [
       {
         web ({ name, value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             return {
-              name: name === 'animation' ? 'v-' + name : ':' + name,
+              name: name === 'animation' ? 'v-animation' : ':' + name,
               value: parsed.result
             }
           }
@@ -34,7 +32,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:for',
         swan (obj, data) {
           const attrsMap = data.el.attrsMap
-          const parsed = parseMustache(obj.value)
+          const parsed = parseMustacheWithContext(obj.value)
           let listName = parsed.result
           const el = data.el
 
@@ -48,7 +46,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
 
           if (keyName) {
-            const parsed = parseMustache(keyName)
+            const parsed = parseMustacheWithContext(keyName)
             if (parsed.hasBinding) {
               // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
             } else if (keyName === '*this') {
@@ -78,7 +76,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -190,17 +188,9 @@ module.exports = function getSpec ({ warn, error }) {
           }
           const styleBinding = []
           el.isStyleParsed = true
-          el.attrsList.forEach((item) => {
-            const parsed = parseMustache(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parseMustache(item.value).result)
-              } else {
-                styleBinding.push(JSON.stringify(item.value))
-              }
-            } else if (item.name === 'wx:style') {
-              styleBinding.push(parseMustache(item.value).result)
-            }
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
+            const parsed = parseMustacheWithContext(item.value)
+            styleBinding.push(parsed.result)
           })
           return {
             name: ':style',
@@ -210,12 +200,31 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         // 样式类名绑定
-        test: /^wx:(class)$/,
-        web ({ value }) {
-          const parsed = parseMustache(value)
-          return {
-            name: ':class',
-            value: parsed.result
+        test: /^(class|wx:class)$/,
+        web ({ name, value }, { el }) {
+          if (el.classMerged) return false
+          const classBinding = []
+          el.attrsList.filter(item => this.test.test(item.name)).forEach(({ name, value }) => {
+            const parsed = parseMustacheWithContext(value)
+            if (name === 'wx:class') {
+              classBinding.push(parsed.result)
+            } else if (name === 'class' && parsed.hasBinding === true) {
+              el.classMerged = true
+              classBinding.push(parsed.result)
+            }
+          })
+
+          if (el.classMerged) {
+            return {
+              name: ':class',
+              value: `[${classBinding}]`
+            }
+          } else if (name === 'wx:class') {
+            // 对于纯静态class不做合并转换
+            return {
+              name: ':class',
+              value: classBinding[0]
+            }
           }
         }
       },
@@ -266,7 +275,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }
@@ -295,18 +304,39 @@ module.exports = function getSpec ({ warn, error }) {
         },
         swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'swan' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         qq ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'qq' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'jd' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         // tt ({ name, value }, { eventRules }) {
         //   const match = this.test.exec(name)
@@ -322,15 +352,33 @@ module.exports = function getSpec ({ warn, error }) {
         // },
         tt ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'tt' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         dd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'dd' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
-        web ({ name, value }, { eventRules, el }) {
+        web ({ name, value }, { eventRules, el, usingComponents }) {
+          if (parseMustacheWithContext(value).hasBinding) {
+            error('Web environment does not support mustache binding in event props!')
+            return
+          }
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
@@ -338,6 +386,7 @@ module.exports = function getSpec ({ warn, error }) {
           const meta = {
             modifierStr
           }
+          const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
           const parsed = parseMustache(value)
           if (parsed.hasBinding) {
             value = parsed.result
@@ -345,7 +394,7 @@ module.exports = function getSpec ({ warn, error }) {
           // 记录event监听信息用于后续判断是否需要使用内置基础组件
           el.hasEvent = true
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -415,7 +464,11 @@ module.exports = function getSpec ({ warn, error }) {
               touchcancel: 'touchCancel',
               tap: 'tap',
               longtap: 'longTap',
-              longpress: 'longTap'
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -426,6 +479,16 @@ module.exports = function getSpec ({ warn, error }) {
           web (eventName) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
+            }
+          }
+        },
+        // 特殊web事件
+        {
+          test: /^click$/,
+          web (eventName, data) {
+            // 自定义组件根节点
+            if (data.isComponent) {
+              return '_' + eventName
             }
           }
         }

@@ -30,7 +30,12 @@
         type: [Number, String],
         default: 0
       },
-      scrollOptions: Object,
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      },
       updateRefresh: {
         type: Boolean,
         default: true
@@ -57,15 +62,23 @@
     data () {
       return {
         isLoading: false,
-        isAutoPullDown: true
+        isAutoPullDown: true,
+        currentX: 0,
+        currentY: 0,
+        lastX: 0,
+        lastY: 0
       }
     },
     computed: {
       _scrollTop () {
-        return processSize(this.scrollTop)
+        const size = processSize(this.scrollTop)
+        this.currentY = size
+        return size
       },
       _scrollLeft () {
-        return processSize(this.scrollLeft)
+        const size = processSize(this.scrollLeft)
+        this.currentX = size
+        return size
       },
       _lowerThreshold () {
         return processSize(this.lowerThreshold)
@@ -87,10 +100,13 @@
           className += ' active'
         }
         return className
+      },
+      scroll() {
+        return this.scrollX || this.scrollY
       }
     },
     mounted () {
-      this.init()
+      this.initBs()
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -106,14 +122,14 @@
       this.__mpx_deactivated = true
     },
     beforeDestroy () {
-      this.destroy()
+      this.destroyBs()
     },
     updated () {
       if (this.updateRefresh) this.refresh()
     },
     watch: {
       scrollIntoView (val) {
-        this.bs && this.bs.scrollToElement('#' + val, this.scrollWithAnimation ? 200 : 0)
+        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0)
       },
       _scrollTop (val) {
         this.bs && this.bs.scrollTo(this.bs.x, -val, this.scrollWithAnimation ? 200 : 0)
@@ -124,7 +140,7 @@
       refresherTriggered: {
         handler (val) {
           if (!val) {
-            this.$emit('refresherrestore')
+            this.$emit('refresherrestore', getCustomEvent('refresherrestore', {}, this))
             this.isLoading = false
             this.isAutoPullDown = true
             this.bs && this.bs.finishPullDown()
@@ -136,20 +152,33 @@
             }
           }
         },
+      },
+      scroll(val) {
+        if (val) {
+          this.initBs()
+        } else {
+          this.disableBs()
+        }
       }
     },
     methods: {
-      destroy () {
+      destroyBs () {
         if (!this.bs) return
         this.bs.destroy()
         delete this.bs
       },
-      init () {
-        if (this.bs) return
+      disableBs() {
+        if (!this.bs) return
+        this.bs.disable()
+        this.currentX = -this.bs.x
+        this.currentY = -this.bs.y
+      },
+      initBs () {
+        this.destroyBs()
         this.initLayerComputed()
         const originBsOptions = {
-          startX: -this._scrollLeft,
-          startY: -this._scrollTop,
+          startX: -this.currentX,
+          startY: -this.currentY,
           scrollX: this.scrollX,
           scrollY: this.scrollY,
           probeType: 3,
@@ -170,8 +199,8 @@
         this.bs.scroller.hooks.on('beforeRefresh', () => {
           this.initLayerComputed()
         })
-        this.lastX = -this._scrollLeft
-        this.lastY = -this._scrollTop
+        this.lastX = -this.currentX
+        this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
           const deltaX = x - this.lastX
           const deltaY = y - this.lastY
@@ -182,7 +211,7 @@
             scrollHeight: this.bs.scrollerHeight,
             deltaX,
             deltaY
-          }))
+          }, this))
           if (this.bs.minScrollX - x < this._upperThreshold && deltaX > 0) {
             this.dispatchScrollTo('left')
           }
@@ -201,9 +230,11 @@
           leading: true,
           trailing: false
         }))
-        if (this.scrollIntoView) {
-          this.bs.scrollToElement('#' + this.scrollIntoView)
-        }
+        this.bs.on('scrollEnd', () => {
+          this.currentX = -this.bs.x
+          this.currentY = -this.bs.y
+        })
+        if (this.scrollIntoView) this.scrollToView(this.scrollIntoView)
         // 若开启自定义下拉刷新 或 开启 scroll-view 增强特性
         if (this.refresherEnabled || this.enhanced) {
           const actionsHandlerHooks = this.bs.scroller.actionsHandler.hooks
@@ -212,7 +243,7 @@
               this.$emit('dragstart', getCustomEvent('dragstart', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
-              }))
+              }, this))
             }
             if (this.refresherEnabled) {
               this.isAutoPullDown = false
@@ -223,13 +254,13 @@
               this.$emit('dragging', getCustomEvent('dragging', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
-              }))
+              }, this))
             }
             if (this.refresherEnabled) {
               if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
                 this.isAutoPullDown = false
                 this.isLoading = false
-                this.$emit('refresherpulling')
+                this.$emit('refresherpulling', getCustomEvent('refresherpulling', {}, this))
               }
             }
           })
@@ -238,7 +269,7 @@
               this.$emit('dragend', getCustomEvent('dragend', {
                 scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
                 scrollTop: this.bs.y ? this.bs.y * -1 : 0
-              }))
+              }, this))
             }
           })
           if (this.refresherEnabled) {
@@ -248,22 +279,29 @@
                 this.isLoading = true
                 if (this.bs.y < this.refresherThreshold) {
                   this.isAutoPullDown = true
-                  this.$emit('refresherabort')
+                  this.$emit('refresherabort', getCustomEvent('refresherabort', {}, this))
                 }
               }
             })
             this.bs.on('pullingDown', () => {
-              this.$emit('refresherrefresh')
+              this.$emit('refresherrefresh', getCustomEvent('refresherrefresh', {}, this))
             })
           }
         }
       },
+      scrollToView (id, duration = 0) {
+        if (!id) return
+        id = '#' + id
+        if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
+        this.bs?.scrollToElement(id, duration)
+      },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
-        const wrapperWidth = wrapper.offsetWidth
-        const wrapperHeight = wrapper.offsetHeight
-        this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
-        this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
+        const computedStyle = getComputedStyle(wrapper)
+        // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
+        // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
+        this.$refs.innerWrapper.style.width = `${wrapper.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+        this.$refs.innerWrapper.style.height = `${wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
         const innerWrapper = this.$refs.innerWrapper
         const childrenArr = Array.from(innerWrapper.children)
 
@@ -312,7 +350,7 @@
       dispatchScrollTo: throttle(function (direction) {
         let eventName = 'scrolltoupper'
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, { direction }))
+        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
       }, 200, {
         leading: true,
         trailing: false
@@ -342,7 +380,11 @@
             class: 'circle circle-c'
           }),
         ]
-      ) : null
+      ) : this.$slots.refresher
+        ? createElement('div', {
+          class: 'mpx-pull-down-slot',
+        }, this.$slots.refresher)
+        : null
 
       const pullDownWrapper = this.refresherEnabled ? createElement('div', {
         class: 'mpx-pull-down-wrapper',
@@ -376,7 +418,11 @@
         bottom: 20px
         left: 50%
         transform: translateX(-50%)
-
+      .mpx-pull-down-slot
+        position: absolute
+        width: 100%
+        height: auto
+        bottom: 0
       .mpx-pull-down-content-black
         .circle
           display: inline-block;

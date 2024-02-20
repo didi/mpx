@@ -650,10 +650,7 @@ createComponent({
 
 ## `<script setup>`
 
-和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
-* 更少的样板内容，更简洁的代码
-* 能够使用纯 TypeScript 声明 props 类型
-* 更好的 IDE 类型推导性能
+和 Vue 类似，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。不过受小程序底层技术限制，在 Mpx 中 `<script setup>` 无法完整提供其在 Vue 中所具备的相关优势，我们提供了这个语法能力，但不作为默认的推荐选项。
 
 ### 基本语法
 
@@ -667,6 +664,9 @@ createComponent({
 `<script>` 里边的代码会被编译成组件 `setup()` 函数的内容。
 
 ### 顶层的绑定会被暴露给模版
+
+> 从 v2.8.19 开始，顶层绑定自动暴露给模板的能力被取消，构建时会强制用户通过 `defineExpose` 手动声明需要暴露给模板的数据或方法。
+
 和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
 ```html
 <script setup>
@@ -692,7 +692,7 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
     import { clickTrigger } from './utils'
 </script>
 ```
-- 注意项：如果你 `script setup` 中有较多对象或方法的声明和引入，比如全局 store 这种十分复杂的对象，走默认逻辑暴露给模版会造成性能问题，因此需要使用 `defineExpose` 来手动定义暴露给模版的方法或变量。
+> 注意项：如果你 `script setup` 中有较多对象或方法的声明和引入，比如全局 store 这种十分复杂的对象，走默认逻辑暴露给模版会造成性能问题，因此需要使用 `defineExpose` 来手动定义暴露给模版的数据和方法。
 
 ### 响应式
 和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：

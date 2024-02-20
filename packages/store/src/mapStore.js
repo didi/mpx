@@ -82,6 +82,12 @@ function checkMapInstance (args) {
   }
 }
 
+function mapComputedToInstance (result, context) {
+  const options = __mpx_mode__ === 'web' ? context.$options : context.__mpxProxy.options
+  options.computed = options.computed || {}
+  Object.assign(options.computed, result)
+}
+
 export default function (store) {
   const mapState = mapFactory('state', store)
   const mapGetters = mapFactory('getters', store)
@@ -113,14 +119,12 @@ export default function (store) {
       const { context, restParams } = checkMapInstance(args)
       const result = mapState(...restParams)
       // 将result挂载到mpxProxy实例属性上
-      context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
-      Object.assign(context.__mpxProxy.options.computed, result)
+      mapComputedToInstance(result, context)
     },
     mapGettersToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(args)
       const result = mapGetters(...restParams)
-      context.__mpxProxy.options.computed = context.__mpxProxy.options.computed || {}
-      Object.assign(context.__mpxProxy.options.computed, result)
+      mapComputedToInstance(result, context)
     },
     mapMutationsToInstance: (...args) => {
       const { context, restParams } = checkMapInstance(args)
