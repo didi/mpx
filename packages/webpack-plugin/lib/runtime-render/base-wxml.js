@@ -1,8 +1,6 @@
-const { wx } = require('../config')
+const mpxConfig = require('../config')
 const { hasExtractAttr } = require('./utils')
 const hash = require('hash-sum')
-
-const directives = new Set([...Object.values(wx.directive), 'slot'])
 
 // todo 节点优化
 // const OPTIMIZE_NODES = ['view', 'text', 'image']
@@ -14,8 +12,10 @@ function makeAttrsMap (attrKeys = []) {
   return attrKeys.reduce((preVal, curVal) => Object.assign(preVal, { [curVal]: '' }), {})
 }
 
-function setCustomEle (el, meta) {
+function setCustomEle (el, options, meta) {
   if (el.dynamic) return
+  const modeConfig = mpxConfig[options.mode]
+  const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
   const tag = el.aliasTag || el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
@@ -30,7 +30,7 @@ function setCustomEle (el, meta) {
   Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
 }
 
-function setBaseEle (el, meta) {
+function setBaseEle (el, options, meta) {
   let aliasTag = ''
   let hasEvents = false
   let usingHashTag = false
@@ -38,10 +38,12 @@ function setBaseEle (el, meta) {
   const rawTag = el.tag
 
   // 属性收集
+  const modeConfig = mpxConfig[options.mode]
+  const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
   attrKeys.forEach(key => {
-    const eventObj = wx.event.parseEvent(key)
+    const eventObj = modeConfig.event.parseEvent(key)
     if (eventObj) { // 事件的格式化
       key = `${eventObj.prefix}:${eventObj.eventName}`
       hasEvents = true
@@ -79,7 +81,7 @@ function setBaseEle (el, meta) {
   Object.assign(meta.runtimeInfo.internalComponents[tag], renderAttrsMap)
 }
 
-module.exports = function setBaseWxml (el, isCustomComponent, meta) {
-  const set = isCustomComponent ? setCustomEle : setBaseEle
-  set(el, meta)
+module.exports = function setBaseWxml (el, options, meta) {
+  const set = options.isCustomComponent ? setCustomEle : setBaseEle
+  set(el, options, meta)
 }

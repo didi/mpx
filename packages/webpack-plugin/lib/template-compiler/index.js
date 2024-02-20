@@ -58,9 +58,8 @@ module.exports = function (raw) {
 
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
-    let result = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
-    result += unRecursiveTemplate.buildTemplate(mpx.runtimeInfo[packageName])
-    return result
+    raw = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
+    raw += unRecursiveTemplate.buildTemplate(mpx.runtimeInfo[packageName])
   }
 
   const { root: ast, meta } = compiler.parse(raw, {
@@ -117,7 +116,7 @@ module.exports = function (raw) {
 
   const result = compiler.serialize(ast)
 
-  if (isNative) {
+  if (isNative || queryObj.mpxCustomElement) {
     return result
   }
 

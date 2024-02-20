@@ -63,6 +63,16 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.getRuntimeModules) {
+      Object.defineProperties(context, {
+        __getRuntimeModules: {
+          get () {
+            return currentInject.getRuntimeModules
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 
@@ -106,6 +116,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
     [hookNames[0]] () {
+      console.log(hookNames[0], rawOptions.mpxFileResource);
       if (rawOptions.__nativeRender__ && this.props) {
         const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
         Object.keys(this.props).forEach((key) => {

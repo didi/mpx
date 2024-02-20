@@ -13,6 +13,7 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -667,6 +668,7 @@ function parse (template, options) {
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+
       if (ns) {
         element.ns = ns
       }
@@ -2152,6 +2154,7 @@ function closeElement (el, meta, options) {
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
+      postProcessRuntime(el.children[0], options, meta)
     } else {
       el = postProcessComponentIs(el)
     }
@@ -2189,19 +2192,25 @@ function postProcessRuntime (el, options, meta) {
     }
 
     if (isCustomComponent) {
-      const { hashName, resourcePath } = options.runtimeComponents[el.tag]
+      const tag = Object.keys(options.runtimeComponents).filter(key=> {
+        if(mode === 'ali' || mode === 'swan') {
+          return capitalToHyphen(key) === el.tag
+        }
+        return key === el.tag
+      })[0]
+      const { hashName, resourcePath } = options.runtimeComponents[tag]
       el.aliasTag = hashName
       meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
     }
 
     // 按需收集节点属性信息，存储到 meta 后到外层处理
-    setBaseWxml(el, isCustomComponent, meta)
+    setBaseWxml(el, { mode, isCustomComponent }, meta)
   }
 }
 
 function addIfBlock (el, ifCondition) {
   const blockNode = createASTElement('block', [{
-    name: 'wx:if',
+    name: config[mode].directive.if,
     value: `{{ ${ifCondition} }}`
   }], el.parent)
   blockNode.if = {
