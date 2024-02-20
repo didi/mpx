@@ -1,8 +1,8 @@
-import {isObject, isFunction, error} from '@mpxjs/utils'
+import { isObject, isFunction, error } from '@mpxjs/utils'
 
-export default function setDataMixin() {
+export default function setDataMixin () {
   return {
-    beforeCreate() {
+    beforeCreate () {
       Object.defineProperty(this, 'data', {
         get () {
           return this.$data
@@ -11,7 +11,7 @@ export default function setDataMixin() {
       })
     },
     methods: {
-      setData(data, callback) {
+      setData (data, callback) {
         if (!isObject(data)) {
           error(`The data entry type of the setData method must be object, The type of data ${data} is incorrect`)
           return
@@ -26,4 +26,3 @@ export default function setDataMixin() {
     }
   }
 }
-

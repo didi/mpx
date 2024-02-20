@@ -12,13 +12,11 @@ const getRulesRunner = require('./platform')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const fixUsingComponent = require('./utils/fix-using-component')
-const { JSON_JS_EXT } = require('./utils/const')
 const processTemplate = require('./web/processTemplate')
 const processStyles = require('./web/processStyles')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
-const RecordVueContentDependency = require("./dependencies/RecordVueContentDependency")
+const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
@@ -63,7 +61,6 @@ module.exports = function (content) {
   const hasComment = false
   const isNative = true
   const parts = {}
-  let ctorType = 'component'
   let output = ''
 
   const checkFileExists = (extName, callback) => {
@@ -241,21 +238,6 @@ module.exports = function (content) {
       }
       if (json.componentPlaceholder) {
         componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
-      }
-
-      // 注入构造函数
-      let ctor = 'App'
-      let ctorType = 'app'
-      if (pagesMap[resourcePath]) {
-        ctorType = 'page'
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (componentsMap[resourcePath]) {
-        ctor = 'Component'
-        ctorType = 'component'
       }
 
       if (mode === 'web') {

@@ -51,7 +51,6 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
-const nativeLoaderPath = normalize.lib('native-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -1627,10 +1626,10 @@ try {
           }
           if (babelLoaderIndex === loaders.length - 1 && queryObj.vue) {
             loaders.splice(loaders.length - 1, 1, {
-              "loader": "/Users/didi/blackdir/mpx-native-to-h5/node_modules/@vue/vue-loader-v15/lib/index.js"
+              loader: '/Users/didi/blackdir/mpx-native-to-h5/node_modules/@vue/vue-loader-v15/lib/index.js'
             })
             loaders.splice(loaders.length, 0, {
-              "loader": "/Users/didi/blackdir/mpx-native-to-h5/node_modules/@mpxjs/webpack-plugin/lib/native-loader.js"
+              loader: '/Users/didi/blackdir/mpx-native-to-h5/node_modules/@mpxjs/webpack-plugin/lib/native-loader.js'
             })
           }
         }

@@ -387,7 +387,7 @@ module.exports = function getSpec ({ warn, error }) {
             modifierStr
           }
           const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             value = parsed.result
           }
