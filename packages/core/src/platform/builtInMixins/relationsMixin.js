@@ -188,7 +188,7 @@ export default function relationsMixin (mixinType) {
         this.__mpxExecRelations('unlinked')
       },
       methods: {
-        getRelationNodes(path) {
+        getRelationNodes (path) {
           return this.__mpxRelations[path] || []
         },
         __mpxCollectRelations () {
