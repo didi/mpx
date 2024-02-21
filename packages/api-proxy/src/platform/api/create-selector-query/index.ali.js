@@ -23,8 +23,12 @@ function createSelectorQuery (options = {}) {
     return originalExec.call(this, cb)
   }
 
-  selectorQuery.in = function () {
-    return this
+  selectorQuery.in = function (_this) {
+    if (typeof _this !== 'object' || typeof _this.createSelectorQuery !== 'function') {
+      throw new Error('in 方法中，传入的 this 参数不是组件实例')
+    }
+
+    return _this.createSelectorQuery(options)
   }
 
   return selectorQuery
