@@ -10,13 +10,17 @@ const IGNORE_COMMENT = '@unocss-ignore'
 const CSS_PLACEHOLDER = '@unocss-placeholder'
 
 const defaultExclude = [core.cssIdRE]
-const defaultInclude = [/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
+const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
+const sfcIdRE = /\.(vue|mpx)($|\?)/
+const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
+const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
   const uno = core.createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
+  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
   const ready = reloadConfig()
 
   async function reloadConfig () {
@@ -38,12 +42,24 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
         presets.add(i.name)
       }
     })
-    const nonPreTransformers = uno.config.transformers?.filter((i) => i.enforce !== 'pre')
-    if (nonPreTransformers?.length) {
-      console.warn(
-        '[unocss] webpack integration only supports "pre" enforce transformers currently.the following transformers will be ignored\n' + nonPreTransformers.map((i) => ` - ${i.name}`).join('\n')
-      )
+
+    const transformers = uno.config.transformers
+    if (transformers) {
+      const pre = []
+      const normal = []
+      const post = []
+      transformers.forEach(i => {
+        if (i.enforce === 'pre') pre.push(i)
+        else if (i.enforce === 'post') post.push(i)
+        else normal.push(i)
+      })
+      uno.config.transformers = [
+        ...pre,
+        ...normal,
+        ...post
+      ]
     }
+
     return result
   }
 
@@ -59,6 +75,9 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   }
 
   function filter (code, id) {
+    if (!idFilter(id)) {
+      return false
+    }
     if (code.includes(IGNORE_COMMENT)) {
       return false
     }
@@ -76,18 +95,17 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   }
 }
 
-async function applyTransformers (ctx, original, id, enforce = 'default') {
+async function applyTransformers (ctx, original, id) {
   if (original.includes(IGNORE_COMMENT)) {
     return
   }
-  const transformers = (ctx.uno.config.transformers || []).filter((i) => (i.enforce || 'default') === enforce)
-  if (!transformers.length) {
-    return
-  }
+  const transformers = ctx.uno.config.transformers
+  if (!transformers.length) return
   let code = original
-  let s = new MagicString(code)
   const maps = []
   for (const t of transformers) {
+    // transformerVariantGroup会调用s.overwrite影响transformerDirectives执行，所以每次重新赋值。
+    const s = new MagicString(code)
     if (t.idFilter) {
       if (!t.idFilter(id)) {
         continue
@@ -99,7 +117,6 @@ async function applyTransformers (ctx, original, id, enforce = 'default') {
     if (s.hasChanged()) {
       code = s.toString()
       maps.push(s.generateMap({ hires: true, source: id }))
-      s = new MagicString(code)
     }
   }
   if (code !== original) {
@@ -123,7 +140,7 @@ function getPath (id) {
 }
 
 function isCssId (id) {
-  return core.cssIdRE.test(id)
+  return core.cssIdRE.test(id) || cssIdRE.test(id)
 }
 
 module.exports = {
