@@ -188,6 +188,9 @@ export default function relationsMixin (mixinType) {
         this.__mpxExecRelations('unlinked')
       },
       methods: {
+        getRelationNodes(path) {
+          return this.__mpxRelations[path] || []
+        },
         __mpxCollectRelations () {
           const relations = this.__mpxProxy.options.relations
           if (!relations) return
@@ -221,6 +224,10 @@ export default function relationsMixin (mixinType) {
                 targetRelation,
                 relation
               }
+              // 父子组件相互绑定
+              const currentPath = this.$options.componentPath
+              target.__mpxRelations[currentPath] = target.__mpxRelations[currentPath] || []
+              target.__mpxRelations[currentPath].push(this)
             } else if (type === 'ancestor') {
               // 当前匹配失败，但type为ancestor时，继续向上查找
               return this.__mpxCheckParent(target, relation, path)
@@ -229,6 +236,7 @@ export default function relationsMixin (mixinType) {
         },
         __mpxExecRelations (type) {
           Object.keys(this.__mpxRelations).forEach(path => {
+            if (Array.isArray(this.__mpxRelations[path])) return
             const { target, targetRelation, relation } = this.__mpxRelations[path]
             if (typeof targetRelation[type] === 'function') {
               targetRelation[type].call(target, this)
