@@ -221,7 +221,7 @@
             stop: 56
           }
         }
-        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false})
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false })
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
         this.lastX = -this.currentX
         this.lastY = -this.currentY
