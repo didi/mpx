@@ -67,8 +67,7 @@
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
-        lastWrapperHeight: 0,
-        animationFn: null
+        lastWrapperHeight: 0
       }
     },
     computed: {
@@ -122,11 +121,6 @@
         leading: true,
         trailing: false
       })
-      this.animationFn = (e) => {
-        if (e.target !== this.$refs.scrollContent) {
-          this.debounceRefresh()
-        }
-      }
       this.initBs()
       this.observeAnimation('add')
       this.handleMutationObserver()
@@ -189,7 +183,7 @@
         const eventNames = ['transitionend', 'animationend']
         const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
         eventNames.forEach(eventName => {
-          this.$refs.scrollContent?.[behaviorType](eventName, this.animationFn)
+          this.$refs.scrollContent?.[behaviorType](eventName, this.handleObserveAnimation)
         })
       },
       destroyBs () {
@@ -424,15 +418,9 @@
           this.debounceRefresh()
         }
       },
-      handleObserveAnimation (e, eventName) {
+      handleObserveAnimation (e) {
         if (e.target !== this.$refs.scrollContent) {
-          if (eventName === 'transitionend') {
-            if (e.propertyName?.includes('width') || e.propertyName?.includes('height')) {
-              this.debounceRefresh()
-            }
-          } else {
-            this.debounceRefresh()
-          }
+          this.debounceRefresh()
         }
       },
       destroyMutationObserver () {
