@@ -12,7 +12,7 @@ module.exports = function ({ print }) {
     //   return 'a:view'
     // },
     web (tag, { el }) {
-      if (el.hasEvent) {
+      if (el.hasModel) {
         el.isBuiltIn = true
       }
       if (el.isBuiltIn) {

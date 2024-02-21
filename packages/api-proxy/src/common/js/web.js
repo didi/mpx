@@ -1,5 +1,3 @@
-import { isBrowser } from './utils'
-
 function webHandleSuccess (result, success, complete) {
   typeof success === 'function' && success(result)
   typeof complete === 'function' && complete(result)
@@ -35,30 +33,9 @@ function createDom (tag, attrs = {}, children = []) {
 // 在H5中，直接绑定 click 可能出现延时问题，很多点击可以关闭的组件被唤出之后，有概率立马触发点击事件，导致组件被关闭。
 // 使用该方法通过 touchstart 和 touchend 模拟 click 事件，解决延时问题。
 function bindTap (dom, handler) {
-  const isTouchDevice = isBrowser && document && ('ontouchstart' in document.documentElement)
-  if (isTouchDevice) {
-    let startTime = 0; let x = 0; let y = 0
-    const touchStart = (e) => {
-      startTime = Date.now()
-      x = e.touches[0].pageX
-      y = e.touches[0].pageY
-    }
-    const touchEnd = (e) => {
-      if (Date.now() - startTime < 300 && Math.abs(e.changedTouches[0].pageX - x) < 10 && Math.abs(e.changedTouches[0].pageY - y) < 10) {
-        handler(e)
-      }
-    }
-    dom.addEventListener('touchstart', touchStart)
-    dom.addEventListener('touchend', touchEnd)
-    return () => {
-      dom.removeEventListener('touchstart', touchStart)
-      dom.removeEventListener('touchend', touchEnd)
-    }
-  } else {
-    dom.addEventListener('click', handler)
-    return () => {
-      dom.removeEventListener('click', handler)
-    }
+  dom.addEventListener('tap', handler)
+  return () => {
+    dom.removeEventListener('tap', handler)
   }
 }
 

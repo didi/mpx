@@ -1869,7 +1869,6 @@ function getVirtualHostRoot (options, meta) {
             value: '$listeners'
           }
         ])
-        rootView.hasEvent = true
         processElement(rootView, rootView, options, meta)
         return rootView
       }
