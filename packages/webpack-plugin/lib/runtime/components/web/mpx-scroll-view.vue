@@ -64,7 +64,6 @@
         currentY: 0,
         lastX: 0,
         lastY: 0,
-        mpxScrollOptions: {},
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
@@ -183,17 +182,6 @@
         } else {
           this.disableBs()
         }
-      },
-      scrollOptions: {
-        handler(val) {
-          if (val.observeDOM) {
-            console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
-            this.mpxScrollOptions = Object.assign({}, val, { observeDOM: false })
-          } else {
-            this.mpxScrollOptions = val
-          }
-        },
-        immediate: true
       }
     },
     methods: {
@@ -218,6 +206,9 @@
       initBs () {
         this.destroyBs()
         this.initLayerComputed()
+        if (this.scrollOptions.observeDOM) {
+          console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
+        }
         const originBsOptions = {
           startX: -this.currentX,
           startY: -this.currentY,
@@ -236,7 +227,7 @@
             stop: 56
           }
         }
-        const bsOptions = Object.assign({}, originBsOptions, this.mpxScrollOptions)
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false})
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
         this.lastX = -this.currentX
         this.lastY = -this.currentY
@@ -322,6 +313,7 @@
                 }
               }
             })
+
             this.bs.on('pullingDown', () => {
               this.$emit('refresherrefresh', getCustomEvent('refresherrefresh', {}, this))
             })
