@@ -19,7 +19,8 @@ const sidebar = {
         'basic/event',
         'basic/two-way-binding',
         'basic/component',
-        'basic/refs'
+        'basic/refs',
+        'basic/option-chain'
       ]
     },
     {

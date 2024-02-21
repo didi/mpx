@@ -526,6 +526,10 @@ scope.run(() => {
 
 scope.stop()
 ```
+
+需要注意的是，effectScope 接受一个 detached 参数，默认为false，该参数来表示当前作用域是否和父级作用域进行分离，若 detached 为 true，
+当前 effectScope 则不会被父级作用域收集。
+
 * 暂停侦听
 
 Mpx 提供了 pause 方法可以将整个作用域中的响应性副作用批量暂停侦听。
