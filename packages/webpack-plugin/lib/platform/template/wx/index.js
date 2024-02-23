@@ -375,9 +375,10 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ name, value }, { eventRules, el, usingComponents }) {
-          if (parseMustacheWithContext(value).hasBinding) {
-            error('Web environment does not support mustache binding in event props!')
-            return
+          const parsed = parseMustacheWithContext(value)
+          if (parsed.hasBinding) {
+            const parsedValue = /^\((.*)\)$/.exec(parsed.result)[1]
+            value = "(__invokeHandler(" + parsedValue + ', $event))'
           }
           const match = this.test.exec(name)
           const prefix = match[1]
