@@ -7,7 +7,8 @@ module.exports = function (content) {
   this.cacheable()
   // 兼容处理处理ts-loader中watch-run/updateFile逻辑，直接跳过当前loader及后续的loader返回内容
   const pathExtname = path.extname(this.resourcePath)
-  if (!['.vue', '.mpx'].includes(pathExtname)) {
+  const { queryObj } = parseRequest(this.resource)
+  if (!['.vue', '.mpx'].includes(pathExtname) && !queryObj.isNative) {
     this.loaderIndex = tsWatchRunLoaderFilter(this.loaders, this.loaderIndex)
     return content
   }
@@ -17,7 +18,6 @@ module.exports = function (content) {
     return content
   }
 
-  const { queryObj } = parseRequest(this.resource)
   const ctorType = queryObj.ctorType
   const type = queryObj.type
   const index = queryObj.index || 0
