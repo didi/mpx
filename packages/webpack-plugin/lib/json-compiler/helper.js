@@ -95,13 +95,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       // TODO 待调整
       if (ext === '.js') {
         if (mode === 'web') {
-          resource = `!!@vue/vue-loader-v15!${nativeLoaderPath}!${resource}`
+          resource = `${resource}?isNative=true`
         } else {
-          resource = `!!${nativeLoaderPath}!${resource}`
+          resource = `!!${nativeLoaderPath}!${resource}?isNative=true`
         }
-      }
-      if (isScript(ext) && mode !== 'web') {
-        resource = `!!${nativeLoaderPath}!${resource}`
       }
 
       const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)

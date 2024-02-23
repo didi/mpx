@@ -1597,7 +1597,7 @@ try {
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
-          let babelLoaderIndex = -1
+          let nativeLoaderIndex = -1
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
@@ -1606,8 +1606,8 @@ try {
               vueStyleLoaderIndex = index
             } else if (currentLoader.includes(styleCompilerPath) && mpxStyleLoaderIndex === -1) {
               mpxStyleLoaderIndex = index
-            } else if (currentLoader.includes('babel-loader')) {
-              babelLoaderIndex = index
+            } else if (currentLoader.includes('native-loader')) {
+              nativeLoaderIndex = index
             }
           })
           if (mpxStyleLoaderIndex === -1) {
@@ -1624,12 +1624,12 @@ try {
               })
             }
           }
-          if (babelLoaderIndex === loaders.length - 1 && queryObj.vue) {
-            loaders.splice(loaders.length - 1, 1, {
-              loader: '/Users/didi/blackdir/mpx-native-to-h5/node_modules/@vue/vue-loader-v15/lib/index.js'
+          if (queryObj.isNative && nativeLoaderIndex !== loaders.length - 1) {
+            loaders.push({
+              loader: require.resolve('@vue/vue-loader-v15/lib/index.js')
             })
-            loaders.splice(loaders.length, 0, {
-              loader: '/Users/didi/blackdir/mpx-native-to-h5/node_modules/@mpxjs/webpack-plugin/lib/native-loader.js'
+            loaders.push({
+              loader: require.resolve(nativeLoaderPath)
             })
           }
         }
