@@ -1589,7 +1589,6 @@ try {
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-        // TODO loader 顺序有待调整
         if (mpx.mode === 'web') {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''

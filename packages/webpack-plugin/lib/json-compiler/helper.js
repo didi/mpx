@@ -92,7 +92,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      // TODO 待调整
       if (ext === '.js') {
         if (mode === 'web') {
           resource = `${resource}?isNative=true`
@@ -140,7 +139,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
         }
       }
-      if (isScript(ext)) {
+      if (isScript(ext) && mode !== 'web') {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)
