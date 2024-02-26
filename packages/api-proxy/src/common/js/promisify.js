@@ -78,12 +78,18 @@ function promisify (listObj, whiteList, customBlackList) {
           const originSuccess = obj.success
           const originFail = obj.fail
           obj.success = function (res) {
-            originSuccess && originSuccess.call(this, res)
-            resolve(res)
+            if (originSuccess) {
+              originSuccess.call(this, res)
+            } else {
+              resolve(res)
+            }
           }
           obj.fail = function (e) {
-            originFail && originFail.call(this, e)
-            reject(e)
+            if (originFail) {
+              originFail.call(this, e)
+            } else {
+              reject(e)
+            }
           }
           returned = listObj[key].apply(envObj, args)
         })
