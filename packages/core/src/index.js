@@ -1,45 +1,64 @@
-import * as platform from './platform'
-import createStore, {
-  createStoreWithThis,
-  createStateWithThis,
-  createGettersWithThis,
-  createMutationsWithThis,
-  createActionsWithThis
-} from './core/createStore'
-import { injectMixins } from './core/injectMixins'
-import { extend, diffAndCloneA, makeMap } from './helper/utils'
-import { setConvertRule } from './convertor/convertor'
-import { getMixin } from './core/mergeOptions'
-import { error } from './helper/log'
 import Vue from './vue'
-import { observe, set, del } from './observer/index'
-import { watch as watchWithVm } from './observer/watch'
-import implement from './core/implement'
+import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
+import { APIs, InstanceAPIs } from './platform/export/api'
 
-export function createApp (config, ...rest) {
-  const mpx = new EXPORT_MPX()
-  platform.createApp(Object.assign({ proto: mpx.proto }, config), ...rest)
-}
+import { createI18n } from './platform/builtInMixins/i18nMixin'
 
-export function createPage (config, ...rest) {
-  const mpx = new EXPORT_MPX()
-  platform.createPage(Object.assign({ proto: mpx.proto }, config), ...rest)
-}
+export * from './platform/export/index'
 
-export function createComponent (config, ...rest) {
-  const mpx = new EXPORT_MPX()
-  platform.createComponent(Object.assign({ proto: mpx.proto }, config), ...rest)
-}
+export * from '@mpxjs/store'
+
+export { implement } from './core/implement'
 
 export {
-  createStore,
-  createStoreWithThis,
-  createStateWithThis,
-  createGettersWithThis,
-  createMutationsWithThis,
-  createActionsWithThis,
-  getMixin
-}
+  createApp,
+  createPage,
+  createComponent
+} from './platform/index'
+
+export {
+  nextTick
+} from './observer/scheduler'
+
+export {
+  BEFORECREATE,
+  CREATED,
+  BEFOREMOUNT,
+  MOUNTED,
+  BEFOREUPDATE,
+  UPDATED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
+  SERVERPREFETCH,
+  ONLOAD,
+  ONSHOW,
+  ONHIDE,
+  ONRESIZE
+} from './core/innerLifecycle'
+
+export {
+  onBeforeMount,
+  onMounted,
+  onBeforeUpdate,
+  onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
+  onServerPrefetch,
+  onLoad,
+  onShow,
+  onHide,
+  onResize,
+  onPullDownRefresh,
+  onReachBottom,
+  onShareAppMessage,
+  onShareTimeline,
+  onAddToFavorites,
+  onPageScroll,
+  onTabItemTap,
+  onSaveExitState
+} from './core/proxy'
+
+export { getMixin } from './core/mergeOptions'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -57,7 +76,7 @@ function extendProps (target, proxyObj, rawProps, option) {
         ? option.prefix + '_' + key
         : key + '_' + option.postfix
       target[transformKey] = proxyObj[key]
-    } else if (!target.hasOwnProperty(key)) {
+    } else if (!hasOwn(target, key)) {
       target[key] = proxyObj[key]
     } else {
       error(`Mpx property [${key}] from installing plugin conflicts with already exists，please pass prefix/postfix options to avoid property conflict, for example: "use('plugin', {prefix: 'mm'})"`)
@@ -74,151 +93,65 @@ function use (plugin, options = {}) {
   }
 
   const args = [options]
-  const proxyMPX = factory()
-  const rawProps = Object.getOwnPropertyNames(proxyMPX)
-  const rawPrototypeProps = Object.getOwnPropertyNames(proxyMPX.prototype)
-  args.unshift(proxyMPX)
+  const proxyMpx = factory()
+  const rawProps = Object.getOwnPropertyNames(proxyMpx)
+  const rawPrototypeProps = Object.getOwnPropertyNames(proxyMpx.prototype)
+  args.unshift(proxyMpx)
   // 传入真正的mpx对象供插件访问
-  args.push(EXPORT_MPX)
+  args.push(Mpx)
   if (typeof plugin.install === 'function') {
     plugin.install.apply(plugin, args)
   } else if (typeof plugin === 'function') {
     plugin.apply(null, args)
   }
-  extendProps(EXPORT_MPX, proxyMPX, rawProps, options)
-  extendProps(EXPORT_MPX.prototype, proxyMPX.prototype, rawPrototypeProps, options)
+  extendProps(Mpx, proxyMpx, rawProps, options)
+  extendProps(Mpx.prototype, proxyMpx.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
   return this
 }
 
-let APIs = {}
-
-// 实例属性
-let InstanceAPIs = {}
-
-let observable
-let watch
-
-if (__mpx_mode__ === 'web') {
-  const vm = new Vue()
-  observable = Vue.observable.bind(Vue)
-  watch = vm.$watch.bind(vm)
-  const set = Vue.set.bind(Vue)
-  const del = Vue.delete.bind(Vue)
-  const remove = function (...args) {
-    if (process.env.NODE_ENV !== 'production') {
-      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
-    }
-    return del.apply(this, args)
-  }
-  // todo 补齐web必要api
-  APIs = {
-    createApp,
-    createPage,
-    createComponent,
-    createStore,
-    createStoreWithThis,
-    mixin: injectMixins,
-    injectMixins,
-    toPureObject,
-    observable,
-    watch,
-    use,
-    set,
-    remove,
-    delete: del,
-    setConvertRule,
-    getMixin,
-    implement
-  }
-
-  InstanceAPIs = {
-    $remove: remove
-  }
-} else {
-  observable = function (obj) {
-    observe(obj)
-    return obj
-  }
-
-  const vm = {}
-
-  watch = function (expOrFn, cb, options) {
-    return watchWithVm(vm, expOrFn, cb, options)
-  }
-
-  const remove = function (...args) {
-    if (process.env.NODE_ENV !== 'production') {
-      error('$remove will be removed in next minor version, please use $delete instead!', this.$rawOptions && this.$rawOptions.mpxFileResource)
-    }
-    return del.apply(this, args)
-  }
-
-  APIs = {
-    createApp,
-    createPage,
-    createComponent,
-    createStore,
-    createStoreWithThis,
-    mixin: injectMixins,
-    injectMixins,
-    toPureObject,
-    observable,
-    watch,
-    use,
-    set,
-    remove,
-    delete: del,
-    setConvertRule,
-    getMixin,
-    implement
-  }
-
-  InstanceAPIs = {
-    $set: set,
-    $remove: remove,
-    $delete: del
-  }
-}
-
-export { watch, observable }
+APIs.use = use
 
 function factory () {
   // 作为原型挂载属性的中间层
-  function MPX () {
-    this.proto = extend({}, this)
+  function Mpx () {
   }
 
-  Object.assign(MPX, APIs)
-  Object.assign(MPX.prototype, InstanceAPIs)
-  return MPX
+  Object.assign(Mpx, APIs)
+  Object.assign(Mpx.prototype, InstanceAPIs)
+  // 输出web时在mpx上挂载Vue对象
+  if (__mpx_mode__ === 'web') {
+    Mpx.__vue = Vue
+  }
+  return Mpx
 }
 
-const EXPORT_MPX = factory()
+const Mpx = factory()
 
-EXPORT_MPX.config = {
+Mpx.config = {
   useStrictDiff: false,
-  ignoreRenderError: false,
+  ignoreWarning: false,
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
-  observeClassInstance: false
+  observeClassInstance: false,
+  errorHandler: null,
+  proxyEventHandler: null,
+  setDataHandler: null,
+  forceFlushSync: false,
+  webRouteConfig: {},
+  /*
+    支持两个属性
+    hostWhitelists Array 类型 支持h5域名白名单安全校验
+    apiImplementations webview JSSDK接口 例如getlocation
+   */
+  webviewConfig: {}
 }
 
-if (__mpx_mode__ === 'web') {
-  global.__mpx = EXPORT_MPX
-} else {
+global.__mpx = Mpx
+
+if (__mpx_mode__ !== 'web') {
   if (global.i18n) {
-    observe(global.i18n)
-    // 挂载翻译方法
-    if (global.i18nMethods) {
-      Object.keys(global.i18nMethods).forEach((methodName) => {
-        global.i18n[methodName] = (...args) => {
-          args.unshift(global.i18n.locale)
-          return global.i18nMethods[methodName].apply(this, args)
-        }
-      })
-    }
-    EXPORT_MPX.i18n = global.i18n
+    Mpx.i18n = createI18n(global.i18n)
   }
 }
 
-export default EXPORT_MPX
+export default Mpx

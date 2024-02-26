@@ -2,11 +2,12 @@ import transferOptions from '../../core/transferOptions'
 import getBuiltInMixins from '../builtInMixins/index'
 import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions'
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
+import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
-import { error } from '../../helper/log'
+import { error } from '@mpxjs/utils'
 
 export default function createFactory (type) {
-  return (options, { isNative, customCtor, customCtorType } = {}) => {
+  return (options = {}, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
@@ -22,6 +23,9 @@ export default function createFactory (type) {
           ctor = global.currentCtor
           if (global.currentCtorType === 'page') {
             options.__pageCtor__ = true
+          }
+          if (global.currentResourceType && global.currentResourceType !== type) {
+            error(`The ${global.currentResourceType} [${global.currentResource}] is not supported to be created by ${type} constructor.`)
           }
         } else {
           if (type === 'page') {
@@ -39,29 +43,25 @@ export default function createFactory (type) {
       getDefaultOptions = getWebDefaultOptions
     } else if (__mpx_mode__ === 'ali') {
       getDefaultOptions = getAliDefaultOptions
+    } else if (__mpx_mode__ === 'swan') {
+      getDefaultOptions = getSwanDefaultOptions
     } else {
       getDefaultOptions = getWxDefaultOptions
     }
 
-    // 获取内建的mixins
-    const builtInMixins = getBuiltInMixins(options, type)
-    const { rawOptions, currentInject } = transferOptions(options, type, builtInMixins)
+    const { setup } = options
+    const { rawOptions, currentInject } = transferOptions(options, type)
+    rawOptions.setup = setup
+    // 不接受mixin中的setup配置
+    // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
+    // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
+    rawOptions.mixins = getBuiltInMixins(rawOptions, type)
     const defaultOptions = getDefaultOptions(type, { rawOptions, currentInject })
-    if (defaultOptions.pageShow || defaultOptions.pageHide) {
-      error('出于性能考虑，pageShow/pageHide增强钩子将在下个版本被移除，请使用原生的pageLifetimes替代，此外请不要强依赖pageLifetimes.show进行初始化操作，因为pageLifetimes.show并不能保证在初始化时一定被调用！', global.currentResource)
-    }
     if (__mpx_mode__ === 'web') {
-      global.currentOption = defaultOptions
+      global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+      global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)
-    }
-  }
-}
-
-export function getRenderCallBack (context) {
-  return () => {
-    if (__mpx_mode__ !== 'ali' || context.options.__type__ === 'page') {
-      context.updated()
     }
   }
 }

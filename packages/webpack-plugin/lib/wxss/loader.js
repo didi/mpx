@@ -1,169 +1,262 @@
+/* eslint-disable operator-linebreak */
 /*
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
-  Modified by @hiyuki
 */
-const loaderUtils = require('loader-utils')
-const processCss = require('./processCss')
-const getImportPrefix = require('./getImportPrefix')
-const compileExports = require('./compile-exports')
-const createResolver = require('./createResolver')
-const isUrlRequest = require('../utils/is-url-request')
-const getMainCompilation = require('../utils/get-main-compilation')
-const addQuery = require('../utils/add-query')
+// base on css-loader@6.7.1
 
-module.exports = function (content, map) {
-  if (this.cacheable) this.cacheable()
+const postcss = require('postcss')
+const postcssPkg = require('postcss/package.json')
+const { satisfies } = require('semver')
 
+const CssSyntaxError = require('./CssSyntaxError')
+const Warning = require('./Warning')
+const schema = require('./options.json')
+const { icssParser, importParser, urlParser } = require('./plugins')
+const {
+  normalizeOptions,
+  shouldUseModulesPlugins,
+  shouldUseImportPlugin,
+  shouldUseURLPlugin,
+  shouldUseIcssPlugin,
+  getPreRequester,
+  getExportCode,
+  getFilter,
+  getImportCode,
+  getModuleCode,
+  getModulesPlugins,
+  normalizeSourceMap,
+  sort,
+  combineRequests,
+  stringifyRequest
+} = require('./utils')
+const createHelpers = require('../helpers')
+
+module.exports = async function loader (content, map, meta) {
+  const rawOptions = this.getOptions(schema)
+  const plugins = []
   const callback = this.async()
-  const query = loaderUtils.getOptions(this) || {}
-  const root = query.root
-  const moduleMode = query.modules || query.module
-  const camelCaseKeys = query.camelCase || query.camelcase
-  const sourceMap = query.sourceMap || false
-  const resolve = createResolver(query.alias)
-  const mpx = getMainCompilation(this._compilation).__mpx__
+
+  const mpx = this.getMpx()
   const externals = mpx.externals
+  const root = mpx.projectRoot
+  const sourceMap = mpx.cssSourceMap || false
 
-  if (sourceMap) {
-    if (map) {
-      if (typeof map === 'string') {
-        map = JSON.stringify(map)
-      }
+  let options
 
-      if (map.sources) {
-        map.sources = map.sources.map(function (source) {
-          return source.replace(/\\/g, '/')
-        })
-        map.sourceRoot = ''
-      }
-    }
-  } else {
-    // Some loaders (example `"postcss-loader": "1.x.x"`) always generates source map, we should remove it
-    map = null
+  try {
+    options = normalizeOptions(Object.assign({}, rawOptions, { sourceMap }), this)
+  } catch (error) {
+    callback(error)
+
+    return
   }
 
-  processCss(content, map, {
-    mode: moduleMode ? 'local' : 'global',
-    from: loaderUtils.getRemainingRequest(this).split('!').pop(),
-    to: loaderUtils.getCurrentRequest(this).split('!').pop(),
-    query: query,
-    resolve: resolve,
-    minimize: this.minimize,
-    loaderContext: this,
-    sourceMap: sourceMap
-  }, function (err, result) {
-    if (err) return callback(err)
+  const replacements = []
+  const exports = []
 
-    let cssAsString = JSON.stringify(result.source)
+  if (shouldUseModulesPlugins(options)) {
+    plugins.push(...getModulesPlugins(options, this))
+  }
 
-    // for importing CSS
-    const importUrlPrefix = getImportPrefix(this)
+  const importPluginImports = []
+  const importPluginApi = []
 
-    const alreadyImported = {}
-    const importJs = result.importItems.filter(function (imp) {
-      if (!imp.mediaQuery) {
-        if (alreadyImported[imp.url]) {
-          return false
+  let isSupportAbsoluteURL = false
+
+  // TODO enable by default in the next major release
+  if (
+    this._compilation &&
+    this._compilation.options &&
+    this._compilation.options.experiments &&
+    this._compilation.options.experiments.buildHttp
+  ) {
+    isSupportAbsoluteURL = true
+  }
+  const isSupportDataURL =
+    options.esModule && Boolean('fsStartTime' in this._compiler)
+
+  if (shouldUseImportPlugin(options)) {
+    const { getRequestString } = createHelpers(this)
+    plugins.push(
+      importParser({
+        isSupportAbsoluteURL: false,
+        isSupportDataURL: false,
+        externals,
+        root,
+        isCSSStyleSheet: options.exportType === 'css-style-sheet',
+        loaderContext: this,
+        imports: importPluginImports,
+        api: importPluginApi,
+        filter: options.import.filter,
+        urlHandler: (url) => {
+          url = combineRequests(getPreRequester(this)(options.importLoaders), url)
+          return getRequestString('styles', { src: url }, {
+            isStatic: true,
+            issuerResource: this.resource,
+            fromImport: true
+          })
         }
-        alreadyImported[imp.url] = true
+      })
+    )
+  }
+
+  const urlPluginImports = []
+
+  if (shouldUseURLPlugin(options)) {
+    const needToResolveURL = !options.esModule
+
+    plugins.push(
+      urlParser({
+        isSupportAbsoluteURL,
+        isSupportDataURL,
+        externals,
+        root,
+        imports: urlPluginImports,
+        replacements,
+        context: this.context,
+        rootContext: this.rootContext,
+        filter: getFilter(options.url.filter, this.resourcePath),
+        resolver: needToResolveURL
+          ? this.getResolve({ mainFiles: [], extensions: [] })
+          : // eslint-disable-next-line no-undefined
+          undefined,
+        urlHandler: (url) => stringifyRequest(this, url)
+        // Support data urls as input in new URL added in webpack@5.38.0
+      })
+    )
+  }
+
+  const icssPluginImports = []
+  const icssPluginApi = []
+
+  const needToUseIcssPlugin = shouldUseIcssPlugin(options)
+
+  if (needToUseIcssPlugin) {
+    plugins.push(
+      icssParser({
+        loaderContext: this,
+        imports: icssPluginImports,
+        api: icssPluginApi,
+        replacements,
+        exports,
+        urlHandler: (url) =>
+          stringifyRequest(
+            this,
+            combineRequests(getPreRequester(this)(options.importLoaders), url)
+          )
+      })
+    )
+  }
+
+  if (this.minimize) {
+    const cssnano = require('cssnano')
+    const minimizeOptions = rawOptions.minimize || {}
+    let cssnanoConfig = {
+      preset: ['cssnano-preset-default', minimizeOptions.optimisation || {}]
+    }
+    if (minimizeOptions.advanced) {
+      cssnanoConfig = {
+        preset: ['cssnano-preset-advanced', minimizeOptions.optimisation || {}]
       }
-      return true
-    }).map(function (imp) {
-      if (!isUrlRequest(imp.url, root) || externals.some((external) => {
-        if (typeof external === 'string') {
-          return external === imp.url
-        } else if (external instanceof RegExp) {
-          return external.test(imp.url)
-        }
-        return false
-      })) {
-        return 'exports.push([module.id, ' +
-          JSON.stringify('@import url(' + imp.url + ');') + ', ' +
-          JSON.stringify(imp.mediaQuery) + ']);'
-      } else {
-        if (query.extract) {
-          const importUrlPrefix = getImportPrefix(this, true)
-          const importUrl = importUrlPrefix + addQuery(imp.url, { isStatic: true, issuerResource: this.resource })
-          return 'exports.push([module.id, ' +
-            JSON.stringify('@import "') +
-            '+ require(' + loaderUtils.stringifyRequest(this, importUrl) + ') +' +
-            JSON.stringify('";') + ', ' +
-            JSON.stringify(imp.mediaQuery) + ']);'
-        }
-        const importUrl = importUrlPrefix + imp.url
-        return 'exports.i(require(' + loaderUtils.stringifyRequest(this, importUrl) + '), ' + JSON.stringify(imp.mediaQuery) + ');'
-      }
-    }, this).join('\n')
+    }
+    plugins.push(cssnano(cssnanoConfig))
+  }
 
-    function importItemMatcher (item) {
-      const match = result.importItemRegExp.exec(item)
-      const idx = +match[1]
-      const importItem = result.importItems[idx]
-      const importUrl = importUrlPrefix + importItem.url
-      return '" + require(' + loaderUtils.stringifyRequest(this, importUrl) + ').locals' +
-        '[' + JSON.stringify(importItem.export) + '] + "'
+  // Reuse CSS AST (PostCSS AST e.g 'postcss-loader') to avoid reparsing
+  if (meta) {
+    const { ast } = meta
+
+    if (
+      ast &&
+      ast.type === 'postcss' &&
+      satisfies(ast.version, `^${postcssPkg.version}`)
+    ) {
+      // eslint-disable-next-line no-param-reassign
+      content = ast.root
+    }
+  }
+
+  const { resourcePath } = this
+
+  let result
+
+  try {
+    result = await postcss(plugins).process(content, {
+      hideNothingWarning: true,
+      from: resourcePath,
+      to: resourcePath,
+      map: options.sourceMap
+        ? {
+            prev: map ? normalizeSourceMap(map, resourcePath) : null,
+            inline: false,
+            annotation: false
+          }
+        : false
+    })
+  } catch (error) {
+    if (error.file) {
+      this.addDependency(error.file)
     }
 
-    cssAsString = cssAsString.replace(result.importItemRegExpG, importItemMatcher.bind(this))
+    callback(
+      error.name === 'CssSyntaxError' ? new CssSyntaxError(error) : error
+    )
 
-    // helper for ensuring valid CSS strings from requires
-    let urlEscapeHelper = ''
+    return
+  }
 
-    if (query.url !== false && result.urlItems.length > 0) {
-      urlEscapeHelper = 'var escape = require(' + loaderUtils.stringifyRequest(this, '!!' + require.resolve('./url/escape.js')) + ');\n'
+  for (const warning of result.warnings()) {
+    this.emitWarning(new Warning(warning))
+  }
 
-      cssAsString = cssAsString.replace(result.urlItemRegExpG, function (item) {
-        const match = result.urlItemRegExp.exec(item)
-        let idx = +match[1]
-        const urlItem = result.urlItems[idx]
-        const url = resolve(urlItem.url)
-        idx = url.indexOf('?#')
-        if (idx < 0) idx = url.indexOf('#')
-        var urlRequest
-        if (idx > 0) { // idx === 0 is catched by isUrlRequest
-          // in cases like url('webfont.eot?#iefix')
-          urlRequest = url.substr(0, idx)
-          return '" + escape(require(' + loaderUtils.stringifyRequest(this, urlRequest) + ')) + "' +
-            url.substr(idx)
-        }
-        urlRequest = url
-        return '" + escape(require(' + loaderUtils.stringifyRequest(this, urlRequest) + ')) + "'
-      }.bind(this))
-    }
+  const imports = []
+    .concat(icssPluginImports.sort(sort))
+    .concat(importPluginImports.sort())
+    .concat(urlPluginImports.sort(sort))
 
-    let exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys)
-    if (exportJs) {
-      exportJs = 'exports.locals = ' + exportJs + ';'
-    }
+  const api = []
+    .concat(importPluginApi.sort(sort))
+    .concat(icssPluginApi.sort(sort))
 
-    let moduleJs
-    if (sourceMap && result.map) {
-      // add a SourceMap
-      map = result.map
-      if (map.sources) {
-        map.sources = map.sources.map(function (source) {
-          return source.split('!').pop().replace(/\\/g, '/')
-        }, this)
-        map.sourceRoot = ''
-      }
-      map.file = map.file.split('!').pop().replace(/\\/g, '/')
-      map = JSON.stringify(map)
-      moduleJs = 'exports.push([module.id, ' + cssAsString + ', "", ' + map + ']);'
+  if (options.modules.exportOnlyLocals !== true) {
+    imports.unshift({
+      type: 'api_import',
+      importName: '___CSS_LOADER_API_IMPORT___',
+      url: stringifyRequest(this, '!!' + require.resolve('./runtime/api'))
+    })
+
+    if (options.sourceMap) {
+      imports.unshift({
+        importName: '___CSS_LOADER_API_SOURCEMAP_IMPORT___',
+        url: stringifyRequest(this, '!!' + require.resolve('./runtime/sourceMaps'))
+      })
     } else {
-      moduleJs = 'exports.push([module.id, ' + cssAsString + ', ""]);'
+      imports.unshift({
+        importName: '___CSS_LOADER_API_NO_SOURCEMAP_IMPORT___',
+        url: stringifyRequest(this, '!!' + require.resolve('./runtime/noSourceMaps'))
+      })
     }
+  }
 
-    // embed runtime
-    callback(null, urlEscapeHelper +
-      'exports = module.exports = require(' +
-      loaderUtils.stringifyRequest(this, '!!' + require.resolve('./css-base.js')) +
-      ')(' + sourceMap + ');\n' +
-      '// imports\n' +
-      importJs + '\n\n' +
-      '// module\n' +
-      moduleJs + '\n\n' +
-      '// exports\n' +
-      exportJs)
-  }.bind(this))
+  const importCode = getImportCode(imports, options)
+
+  let moduleCode
+
+  try {
+    moduleCode = getModuleCode(result, api, replacements, options, this)
+  } catch (error) {
+    callback(error)
+
+    return
+  }
+
+  const exportCode = getExportCode(
+    exports,
+    replacements,
+    needToUseIcssPlugin,
+    options
+  )
+
+  callback(null, `${importCode}${moduleCode}${exportCode}`)
 }

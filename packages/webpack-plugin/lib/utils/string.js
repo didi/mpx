@@ -3,7 +3,7 @@ function isCapital (c) {
 }
 
 function isMustache (str) {
-  return /\{\{((?:.|\n)+?)\}\}(?!})/.test(str)
+  return /\{\{((?:.|\n|\r)+?)\}\}(?!})/.test(str)
 }
 
 // WordExample/wordExample -> word-example
@@ -23,8 +23,14 @@ function capitalToHyphen (v) {
   return ret
 }
 
+// 删除空行
+function trimBlankRow (str) {
+  return str.replace(/^\s*[\r\n]/gm, '')
+}
+
 module.exports = {
   isCapital,
   isMustache,
-  capitalToHyphen
+  capitalToHyphen,
+  trimBlankRow
 }

@@ -1,4 +1,4 @@
-import { createSelectorQuery } from '../../src/web/api/create-selector-query'
+import { createSelectorQuery } from '../../src/platform/api/create-selector-query/index.web'
 import Vue from 'vue/dist/vue.common.prod'
 
 describe('test create-selector-query', () => {

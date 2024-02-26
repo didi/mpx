@@ -122,6 +122,8 @@ Mpx 提供了对原生页面的支持，允许项目中存在原生小程序文�
 
   1. 修改 webpack config 中 entry 一项，将 app 改为对应的页面/组件即可。
 
+在路径后追加 ?isPage 来声明独立页面构建，构建产物为该页面的独立原生代码,在路径后追加 ?isComponent 来声明独立组件构建，构建产物为该组件的独立原生代码。
+
 请参考下面的例子，`注意resolve时候最后的query不可以省略，一定要按正确的类型声明这是一个组件or页面。`
 
 例子：
@@ -138,8 +140,8 @@ module.exports = merge(baseWebpackConfig, {
     // app: resolveSrc('app.mpx')
     
     // after，这里"pages/dindex"代表将原页面导出到output目录下的pages目录，文件名改为dindex.*
-    'pages/dindex': resolveSrc('./pages/index.mpx?page'), // ?后标识导出类型
-    'components/dlist': resolveSrc('./components/list.mpx?component')
+    'pages/dindex': resolveSrc('./pages/index.mpx?isPage'), // ?后标识导出类型
+    'components/dlist': resolveSrc('./components/list.mpx?isComponent')
   }
 })
 ```

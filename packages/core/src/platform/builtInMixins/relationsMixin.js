@@ -1,5 +1,5 @@
-import { isObject } from '../../helper/utils'
-import { CREATED, MOUNTED } from '../../core/innerLifecycle'
+import { isObject } from '@mpxjs/utils'
+import { CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const targets = []
 let curTarget = null
@@ -57,7 +57,7 @@ export default function relationsMixin (mixinType) {
               if (child && child.props) {
                 if (child.props.$isCustomComponent) {
                   // 只有relations中声明为后代的节点才能被作为有效子节点
-                  let relation = this.$mpxRelations[child.type.displayName]
+                  const relation = this.$mpxRelations[child.type.displayName]
                   if (relation && (relation.type === 'child' || relation.type === 'descendant')) {
                     child.props.$mpxIsSlot = true
                     list.push(child)
@@ -120,7 +120,7 @@ export default function relationsMixin (mixinType) {
         },
         mpxPropagateFindRelation (child) {
           let cur = this
-          let contexts = []
+          const contexts = []
           let depth = 1
           // 向上查找所有可能匹配的父级relation上下文
           while (cur) {
@@ -138,8 +138,9 @@ export default function relationsMixin (mixinType) {
         }
       },
       onInit () {
-        if (this.$rawOptions.relations) {
-          this.$mpxRelations = transferPath(this.$rawOptions.relations, this.is)
+        const options = this.__mpxProxy.options
+        if (options.relations) {
+          this.$mpxRelations = transferPath(options.relations, this.is)
           this.$relationNodesMap = {}
         }
         if (curTarget && this.props.$mpxIsSlot) {
@@ -183,12 +184,12 @@ export default function relationsMixin (mixinType) {
         this.__mpxCollectRelations()
         this.__mpxExecRelations('linked')
       },
-      beforeDestroy () {
+      [BEFOREUNMOUNT] () {
         this.__mpxExecRelations('unlinked')
       },
       methods: {
         __mpxCollectRelations () {
-          const relations = this.$rawOptions.relations
+          const relations = this.__mpxProxy.options.relations
           if (!relations) return
           Object.keys(relations).forEach(path => {
             const relation = relations[path]
@@ -208,11 +209,11 @@ export default function relationsMixin (mixinType) {
 
           // 当前组件在target的slots当中
           if ((type === 'parent' || type === 'ancestor') && target.$vnode.context === this.$vnode.context) {
-            const targetRelation = target.$rawOptions && target.$rawOptions.relations && target.$rawOptions.relations[this.$options.mpxCid]
+            const targetRelation = target?.__mpxProxy.options.relations?.[this.$options.componentPath]
             if (
               targetRelation &&
               targetRelation.type === relationTypeMap[type] &&
-              target.$options.mpxCid === path
+              target.$options.componentPath === path
             ) {
               // 当前匹配成功
               this.__mpxRelations[path] = {

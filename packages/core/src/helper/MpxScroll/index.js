@@ -1,4 +1,3 @@
-import { error } from '../../helper/log'
 import { getOffsetTop, getElement, getScrollTop, preventDefault } from './dom'
 import EventEmitter from './EventEmitter'
 import EventRegister from './EventRegister'
@@ -22,7 +21,7 @@ export default class MpxScroll {
     // 下拉阻尼系数
     this.ratio = 0.5
 
-    this.el = getElement('.page')
+    this.el = getElement('page')
     this.touchstartY = 0
     this.currentY = 0
     this.translateY = 0
@@ -197,11 +196,7 @@ export default class MpxScroll {
     )
   }
 
-  pageScrollTo ({
-    scrollTop,
-    selector,
-    duration = 300
-  }) {
+  pageScrollTo ({ scrollTop, selector, duration = 300 }) {
     let _scrollTop
 
     if (isDef(scrollTop)) {
@@ -209,7 +204,7 @@ export default class MpxScroll {
     } else if (isDef(selector)) {
       _scrollTop = getOffsetTop(getElement(selector))
     } else {
-      return error('[pageScrollTo error]: scrollTop and selector are not defined')
+      return console.error('[pageScrollTo error]: scrollTop and selector are not defined')
     }
 
     if (duration === 0) {

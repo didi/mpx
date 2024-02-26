@@ -6,10 +6,10 @@ export function mergeLifecycle (lifecycle) {
     const pageHooks = (lifecycle.PAGE_HOOKS || []).concat(INNER_LIFECYCLES)
     const componentHooks = (lifecycle.COMPONENT_HOOKS || []).concat(INNER_LIFECYCLES)
     return {
-      'app': appHooks,
-      'page': pageHooks,
-      'component': componentHooks,
-      'blend': pageHooks.concat(lifecycle.COMPONENT_HOOKS || [])
+      app: appHooks,
+      page: pageHooks,
+      component: componentHooks,
+      blend: pageHooks.concat(lifecycle.COMPONENT_HOOKS || [])
     }
   }
 }

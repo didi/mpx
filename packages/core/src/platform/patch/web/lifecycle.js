@@ -10,7 +10,7 @@ const COMPONENT_HOOKS = [
   'beforeDestroy',
   'destroyed',
   'errorCaptured',
-  'onPageNotFound'
+  'serverPrefetch'
 ]
 
 const PAGE_HOOKS = [
@@ -23,8 +23,12 @@ const PAGE_HOOKS = [
   'onPullDownRefresh',
   'onReachBottom',
   'onPageScroll',
+  'onAddToFavorites',
+  'onShareAppMessage',
+  'onShareTimeline',
+  'onResize',
   'onTabItemTap',
-  'onResize'
+  'onSaveExitState'
 ]
 
 const APP_HOOKS = [
@@ -35,7 +39,9 @@ const APP_HOOKS = [
   'onError',
   'onPageNotFound',
   'onUnhandledRejection',
-  'onThemeChange'
+  'onThemeChange',
+  'onSSRAppCreated',
+  'onAppInit'
 ]
 
 export const LIFECYCLE = {

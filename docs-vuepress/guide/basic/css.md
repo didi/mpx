@@ -2,7 +2,8 @@
 
 ## CSS 预编译
 
-Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器。Mpx 会根据指定的 CSS 预处理器类型，将其编译为浏览器可识别的 CSS 标准代码。
+Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器，此外需要在对应的 webpack 配置文件中
+加入对应的 loader 配置
 
 ```html
 <!-- 使用 stylus -->
@@ -15,6 +16,17 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
       background-color #f40
       color #fff
 </style>
+
+// getRules 配置文件
+rules: [
+    {
+        test: /\.styl(us)?$/,
+        use: [
+            MpxWebpackPlugin.wxssLoader(),
+            'stylus-loader'
+        ]
+    }
+]
 ```
 ```html
 <!-- 使用 sass  -->
@@ -29,6 +41,17 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
     }
   }
 </style>
+
+// getRules 配置文件
+rules: [
+    {
+        test: /\.scss$/,
+        use: [
+            'css-loader',
+            'sass-loader'
+        ]
+    }
+]
 ```
 ```html
 <!-- 使用 less -->
@@ -46,6 +69,17 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
     }
   }
 </style>
+
+// getRules 配置文件
+rules: [
+    {
+        test: /\.less$/,
+        use: [
+            'css-loader',
+            'less-loader'
+        ]
+    }
+]
 
 ```
 
@@ -67,15 +101,15 @@ Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang`
 
 ``` template
 <!-- index.mpx -->
-<style lang="stylus" src="../styles/mixin.styl"></style>
+<style lang="stylus" src="../styles/common.styl"></style>
 ```
 
 ``` template
 <!-- list.mpx -->
-<style lang="stylus" src="../styles/mixin.styl"></style>
+<style lang="stylus" src="../styles/common.styl"></style>
 ```
 
-Mpx 将 mixin.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
+Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
 
 ### @import 复用
 
@@ -121,3 +155,44 @@ Mpx 将 mixin.styl 中的代码经过 loader 编译后生成一份单独的 wxss
 ```
 
 对于多个页面或组件公用的样式，建议使用 style src 形式引入，避免一份样式被内联打成多份，同时还能使用 less、scss 等提升编码效率。
+
+## CSS 压缩
+
+在 production 模式下，框架默认会使用 [`cssnano`](https://www.cssnano.cn/) 对 css 内容进行压缩。
+
+框架默认内置 cssnano 的 default 预设，默认配置为：
+
+```js
+cssnanoConfig = {
+  preset: ['cssnano-preset-default', minimizeOptions.optimisation || {}]
+}
+```
+以上配置为框架内置，开发者无需手动配置。
+
+如果你想要使用 cssnano advanced 预设，则需要在 wxssLoader 中传入配置开启
+
+```js
+{
+  test: /\.(wxss|acss|css|qss|ttss|jxss|ddss)$/,
+  use: [
+    MpxWebpackPlugin.wxssLoader({
+      minimize: {
+        advanced: true, // 使用 cssnano advanced preset
+        optimisation: {
+          'autoprefixer': true,
+          'discardUnused': true,
+          'mergeIdents': true
+        }
+      }
+    })
+  ]
+},
+```
+
+同时也需要安装 advanced 依赖：
+
+```bash
+npm i -D cssnano-preset-advanced
+```
+
+optimisation 配置可以点击[详情](https://www.cssnano.cn/docs/what-are-optimisations/)查看更多配置项。

@@ -1,73 +1,142 @@
-var ora = require('ora')
-var rm = require('rimraf')
-var path = require('path')
-var chalk = require('chalk')
-var webpack = require('webpack')
-var merge = require('webpack-merge')
-var program = require('commander')
-var webpackConfig = require('./webpack.main.conf')
-
-var prodEnv = require('../config/prod.env')
-var devEnv = require('../config/dev.env')
+const rm = require('rimraf')
+const chalk = require('chalk')
+const webpack = require('webpack')
+const program = require('commander')
+const { userConf, supportedModes } = require('../config/index')
+const getWebpackConf = require('./getWebpackConf')
+const { resolveDist, getRootPath } = require('./utils')
 
 program
   .option('-w, --watch', 'watch mode')
   .option('-p, --production', 'production release')
   .parse(process.argv)
 
-function runWebpack (cfg) {
-  // env
-  if (Array.isArray(cfg)) {
-    cfg.forEach(item => item.plugins.unshift(new webpack.DefinePlugin(program.production ? prodEnv : devEnv)))
-  } else {
-    cfg.plugins.unshift(new webpack.DefinePlugin(program.production ? prodEnv : devEnv))
-  }
+const env = process.env
 
-  if (program.production || program.watch) {
-    const extendCfg = program.production ? { mode: 'production' } : { cache: true }
-    if (Array.isArray(cfg)) {
-      cfg = cfg.map(item => merge(item, extendCfg))
-    } else {
-      cfg = merge(cfg, extendCfg)
+const modeStr = env.npm_config_mode || env.npm_config_modes || ''
+
+const report = env.npm_config_report
+
+const modes = modeStr.split(/[,|]/)
+  .map((mode) => {
+    const modeArr = mode.split(':')
+    if (supportedModes.includes(modeArr[0])) {
+      return {
+        mode: modeArr[0],
+        env: modeArr[1]
+      }
     }
-  }
-  if (process.env.npm_config_report) {
-    var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-    var mainCfg = Array.isArray(cfg) ? cfg[0] : cfg
-    mainCfg.plugins.push(new BundleAnalyzerPlugin())
-  }
-  if (program.watch) {
-    webpack(cfg).watch({}, callback)
-  } else {
-    webpack(cfg, callback)
+  }).filter((item) => item)
+
+if (!modes.length) {
+  modes.push({
+    mode: userConf.srcMode
+  })
+}
+
+// 开启子进程
+if (userConf.openChildProcess && modes.length > 1) {
+  let scriptType = ''
+  const isProduct = program.production
+  const isWatch = program.watch
+  if (!isProduct && isWatch) scriptType = 'watch'
+  if (isProduct && !isWatch) scriptType = 'build'
+  if (isProduct && isWatch) scriptType = 'watch:prod'
+  if (!isProduct && !isWatch) scriptType = 'build:dev'
+
+  const spawn = require('child_process').spawn
+  while (modes.length > 1) {
+    const modeObj = modes.pop()
+    const modeAndEnv = modeObj.env ? `${modeObj.mode}:${modeObj.env}` : modeObj.mode
+    const ls = spawn('npm', ['run', scriptType, `--modes=${modeAndEnv}`, `--mode=${modeAndEnv}`], { stdio: 'inherit' })
+    ls.on('close', (code) => {
+      process.exitCode = code
+    })
   }
 }
 
-function callback (err, stats) {
-  spinner.stop()
-  if (err) return console.error(err)
-  process.stdout.write(stats.toString({
-    colors: true,
-    modules: false,
-    children: false,
-    chunks: false,
-    chunkModules: false,
-    entrypoints: false
-  }) + '\n\n')
+let webpackConfs = []
 
-  console.log(chalk.cyan('  Build complete.\n'))
-  if (program.watch) {
-    console.log(chalk.cyan('  Watching...\n'))
-  }
+modes.forEach(({ mode, env }) => {
+  const options = Object.assign({}, userConf, {
+    mode,
+    env,
+    production: program.production,
+    watch: program.watch,
+    report,
+    subDir: (userConf.isPlugin || userConf.cloudFunc) ? 'miniprogram' : ''
+  })
+  webpackConfs.push(getWebpackConf(options))
+})
+
+if (userConf.isPlugin) {
+  // 目前支持的plugin构建平台
+  modes.filter(({ mode }) => ['wx', 'ali'].includes(mode)).forEach(({ mode, env }) => {
+    const options = Object.assign({}, userConf, {
+      plugin: true,
+      mode,
+      env,
+      production: program.production,
+      watch: program.watch,
+      report,
+      subDir: 'plugin'
+    })
+    webpackConfs.push(getWebpackConf(options))
+  })
 }
 
-var spinner = ora('building...')
-spinner.start()
+if (webpackConfs.length === 1) {
+  webpackConfs = webpackConfs[0]
+}
+
 
 try {
-  rm.sync(path.resolve(__dirname, '../dist/*'))
+  modes.forEach(({ mode, env }) => {
+    rm.sync(resolveDist(getRootPath(mode, env), '*'))
+  })
 } catch (e) {
   console.error(e)
   console.log('\n\n删除dist文件夹遇到了一些问题，如果遇到问题请手工删除dist重来\n\n')
 }
-runWebpack(webpackConfig)
+if (program.watch) {
+  webpack(webpackConfs).watch(undefined, callback)
+} else {
+  webpack(webpackConfs, callback)
+}
+
+function callback (err, stats) {
+  if (err) {
+    process.exitCode = 1
+    return console.error(err)
+  }
+  if (Array.isArray(stats.stats)) {
+    stats.stats.forEach(item => {
+      console.log(item.compilation.name + '打包结果：')
+      process.stdout.write(item.toString({
+        colors: true,
+        modules: false,
+        children: false,
+        chunks: false,
+        chunkModules: false,
+        entrypoints: false
+      }) + '\n\n')
+    })
+  } else {
+    process.stdout.write(stats.toString({
+      colors: true,
+      modules: false,
+      children: false,
+      chunks: false,
+      chunkModules: false,
+      entrypoints: false
+    }) + '\n\n')
+  }
+
+  if (stats.hasErrors()) {
+    console.log(chalk.red('  Build failed with errors.\n'))
+  } else if (program.watch) {
+    console.log(chalk.cyan(`  Build complete at ${new Date()}.\n  Still watching...\n`))
+  } else {
+    console.log(chalk.cyan('  Build complete.\n'))
+  }
+}

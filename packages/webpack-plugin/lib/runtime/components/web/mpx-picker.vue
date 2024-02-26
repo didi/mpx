@@ -18,8 +18,8 @@
                 <div class="wheel" v-for="(data, index) in pickerData" :key="index">
                   <ul class="wheel-scroll">
                     <li
-                            v-for="item in data" :key="item"
-                            class="wheel-item">{{item}}
+                      v-for="item in data" :key="item"
+                      class="wheel-item">{{item}}
                     </li>
                   </ul>
                 </div>
@@ -36,13 +36,13 @@
 <script type="text/ecmascript-6">
   import BScroll from '@better-scroll/core'
   import Wheel from '@better-scroll/wheel'
-  import { type } from './util'
+  import { type } from '../../utils'
   import { getCustomEvent } from './getInnerListeners'
 
-  const startYear = 1970
+  const startYear = 1900
   const modeOptions = {
     time: [23, 59],
-    date: [130, 11, 30]
+    date: [200, 11, 30]
   }
 
   BScroll.use(Wheel)
@@ -73,7 +73,7 @@
     let months = []
     let days = []
 
-    for (let i = 0; i <= 130; i++) {
+    for (let i = 0; i <= 200; i++) {
       years.push(`${startYear + i}年`)
     }
     if (fields === 'year') {
@@ -127,11 +127,23 @@
           }
         }
       },
-      start: String,
-      end: String,
+      start: {
+        type: String,
+        default: '1970-01-01'
+      },
+      end: {
+        type: String,
+        default: '2100-01-01'
+      },
       fields: {
         type: String,
-        value: 'day'
+        default: 'day'
+      },
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
       }
     },
     data () {
@@ -260,11 +272,11 @@
           default:
             value = this.selectedIndex[0]
         }
-        this.$emit('change', getCustomEvent('change', {value}))
+        this.$emit('change', getCustomEvent('change', {value}, this))
       },
       _cancel () {
         this.hide()
-        this.$emit('cancel', getCustomEvent('cancel'))
+        this.$emit('cancel', getCustomEvent('cancel', {}, this))
       },
       _isMoving () {
         return this.wheels.some((wheel) => {
@@ -305,7 +317,9 @@
                     wheelWrapperClass: 'wheel-scroll',
                     wheelItemClass: 'wheel-item'
                   },
-                  probeType: 3
+                  probeType: 3,
+                  bindToWrapper: true,
+                  ...this.scrollOptions
                 })
                 if (this.mode === 'time' || this.mode === 'date') {
                   this.wheels[i].on('scrollStart', function (i) {
@@ -321,7 +335,7 @@
                       this.$emit('columnchange', getCustomEvent('columnchange', {
                         column: i,
                         value: currentIndex
-                      }))
+                      }, this))
                     }
                   }
                   if (this.mode === 'time' || this.mode === 'date') {

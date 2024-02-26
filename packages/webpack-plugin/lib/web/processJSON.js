@@ -6,27 +6,33 @@ const parseRequest = require('../utils/parse-request')
 const toPosix = require('../utils/to-posix')
 const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
-const readJsonForSrc = require('../utils/read-json-for-src')
-const isUrlRequest = require('../utils/is-url-request')
+const getJSONContent = require('../utils/get-json-content')
+const resolve = require('../utils/resolve')
+const createJSONHelper = require('../json-compiler/helper')
+const getRulesRunner = require('../platform/index')
+const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
+const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 
-module.exports = function (json, options, rawCallback) {
-  const mode = options.mode
-  const defs = options.defs
-  const loaderContext = options.loaderContext
-  const resolveMode = options.resolveMode
-  const pagesMap = options.pagesMap
-  const componentsMap = options.componentsMap
-  const pagesEntryMap = options.pagesEntryMap
-  const projectRoot = options.projectRoot
-  const pathHash = options.pathHash
+module.exports = function (json, {
+  loaderContext,
+  pagesMap,
+  componentsMap
+}, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
-  const buildInfo = loaderContext._module.buildInfo
-
-  let output = '/* json */\n'
+  const output = '/* json */\n'
   let jsonObj = {}
   let tabBarMap
   let tabBarStr
+  const mpx = loaderContext.getMpx()
+  const {
+    mode,
+    srcMode,
+    env,
+    projectRoot
+  } = mpx
+
   const context = loaderContext.context
 
   const emitWarning = (msg) => {
@@ -35,7 +41,32 @@ module.exports = function (json, options, rawCallback) {
     )
   }
 
+  const emitError = (msg) => {
+    loaderContext.emitError(
+      new Error('[json compiler][' + loaderContext.resource + ']: ' + msg)
+    )
+  }
+
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
+  const {
+    isUrlRequest,
+    urlToRequest,
+    processPage,
+    processComponent
+  } = createJSONHelper({
+    loaderContext,
+    emitWarning,
+    emitError,
+    customGetDynamicEntry (resource, type, outputPath, packageRoot) {
+      return {
+        resource,
+        // 输出web时组件outputPath不需要拼接packageRoot
+        outputPath: type === 'page' ? toPosix(path.join(packageRoot, outputPath)) : outputPath,
+        packageRoot
+      }
+    }
+  })
 
   const callback = (err) => {
     return rawCallback(err, {
@@ -48,23 +79,49 @@ module.exports = function (json, options, rawCallback) {
     })
   }
 
+  const { resourcePath } = parseRequest(loaderContext.resource)
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+
   if (!json) {
     return callback()
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
     jsonObj = JSON5.parse(json.content)
+    // 处理runner
+    const rulesRunnerOptions = {
+      mode,
+      srcMode,
+      type: 'json',
+      waterfall: true,
+      warn: emitWarning,
+      error: emitError,
+      data: {
+        // polyfill global usingComponents & record globalComponents
+        globalComponents: mpx.usingComponents
+      }
+    }
+
+    if (!isApp) {
+      rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+    }
+
+    const rulesRunner = getRulesRunner(rulesRunnerOptions)
+
+    if (rulesRunner) {
+      rulesRunner(jsonObj)
+    }
+    if (isApp) {
+      // 收集全局组件
+      Object.assign(mpx.usingComponents, jsonObj.usingComponents)
+      // 在 rulesRunner 运行后保存全局注册组件
+      loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, loaderContext.context))
+    }
   } catch (e) {
     return callback(e)
   }
 
   const fs = loaderContext._compiler.inputFileSystem
-
-  const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
-    context = queryObj.context || context
-    return loaderContext.resolve(context, request, callback)
-  }
 
   const defaultTabbar = {
     borderStyle: 'black',
@@ -77,13 +134,13 @@ module.exports = function (json, options, rawCallback) {
     if (tabBar) {
       tabBar = Object.assign({}, defaultTabbar, tabBar)
       tabBarMap = {}
-      jsonObj.tabBar.list.forEach((item) => {
-        tabBarMap['/' + item.pagePath] = true
+      jsonObj.tabBar.list.forEach(({ pagePath }) => {
+        tabBarMap[pagePath] = true
       })
       tabBarStr = JSON.stringify(tabBar)
       tabBarStr = tabBarStr.replace(/"(iconPath|selectedIconPath)":"([^"]+)"/g, function (matched, $1, $2) {
         if (isUrlRequest($2, projectRoot)) {
-          return `"${$1}":require(${stringifyRequest(loaderUtils.urlToRequest($2, projectRoot))})`
+          return `"${$1}":require(${stringifyRequest(urlToRequest($2, projectRoot))})`
         }
         return matched
       })
@@ -93,44 +150,37 @@ module.exports = function (json, options, rawCallback) {
 
   const processPackages = (packages, context, callback) => {
     if (packages) {
-      async.forEach(packages, (packagePath, callback) => {
-        const parsed = parseRequest(packagePath)
-        const queryObj = parsed.queryObj
-        // readFile无法处理query
-        packagePath = parsed.resourcePath
+      async.each(packages, (packagePath, callback) => {
+        const { queryObj } = parseRequest(packagePath)
         async.waterfall([
           (callback) => {
-            resolve(context, packagePath, (err, result) => {
-              callback(err, result)
+            resolve(context, packagePath, loaderContext, (err, result) => {
+              if (err) return callback(err)
+              const { rawResourcePath } = parseRequest(result)
+              callback(err, rawResourcePath)
             })
           },
           (result, callback) => {
-            loaderContext.addDependency(result)
             fs.readFile(result, (err, content) => {
               if (err) return callback(err)
               callback(err, result, content.toString('utf-8'))
             })
           },
           (result, content, callback) => {
-            const filePath = result
-            const extName = path.extname(filePath)
-            if (extName === '.mpx' || extName === '.vue') {
+            const extName = path.extname(result)
+            if (extName === '.mpx') {
               const parts = parseComponent(content, {
-                filePath,
+                filePath: result,
                 needMap: loaderContext.sourceMap,
                 mode,
-                defs
+                env
               })
-              const json = parts.json || {}
-              if (json.content) {
-                content = json.content
-              } else if (json.src) {
-                return readJsonForSrc(json.src, loaderContext, (content) => {
-                  callback(null, result, content)
-                })
-              }
+              getJSONContent(parts.json || {}, result, loaderContext, (err, content) => {
+                callback(err, result, content)
+              })
+            } else {
+              callback(null, result, content)
             }
-            callback(null, result, content)
           },
           (result, content, callback) => {
             try {
@@ -143,20 +193,25 @@ module.exports = function (json, options, rawCallback) {
             const context = path.dirname(result)
 
             if (content.pages) {
-              let tarRoot = queryObj.root
+              const tarRoot = queryObj.root
               if (tarRoot) {
                 delete queryObj.root
-                let subPackage = {
+                const subPackage = {
                   tarRoot,
                   pages: content.pages,
                   ...queryObj
                 }
+
+                if (content.plugins) {
+                  subPackage.plugins = content.plugins
+                }
+
                 processSelfQueue.push((callback) => {
                   processSubPackage(subPackage, context, callback)
                 })
               } else {
                 processSelfQueue.push((callback) => {
-                  processPages(content.pages, '', '', context, callback)
+                  processPages(content.pages, context, '', callback)
                 })
               }
             }
@@ -171,57 +226,40 @@ module.exports = function (json, options, rawCallback) {
               callback()
             }
           }
-        ], callback)
+        ], (err) => {
+          callback(err === RESOLVE_IGNORED_ERR ? null : err)
+        })
       }, callback)
     } else {
       callback()
     }
   }
 
-  const getPageName = (resourcePath, ext) => {
-    const baseName = path.basename(resourcePath, ext)
-    return path.join('pages', baseName + pathHash(resourcePath), baseName)
-  }
+  const pageKeySet = new Set()
 
-  const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
+  const processPages = (pages, context, tarRoot = '', callback) => {
     if (pages) {
-      context = path.join(context, srcRoot)
-      async.forEach(pages, (page, callback) => {
-        if (!isUrlRequest(page, projectRoot)) return callback()
-        if (resolveMode === 'native') {
-          page = loaderUtils.urlToRequest(page, projectRoot)
-        }
-        resolve(context, page, (err, resource) => {
-          if (err) return callback(err)
+      async.each(pages, (page, callback) => {
+        processPage(page, context, tarRoot, (err, { resource, outputPath } = {}, { isFirst, key } = {}) => {
+          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+          if (pageKeySet.has(key)) return callback()
+          pageKeySet.add(key)
           const { resourcePath, queryObj } = parseRequest(resource)
-          const ext = path.extname(resourcePath)
-          // 获取pageName
-          let pageName
-          const relative = path.relative(context, resourcePath)
-          if (/^\./.test(relative)) {
-            // 如果当前page不存在于context中，对其进行重命名
-            pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-            emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-          } else {
-            pageName = '/' + toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-            // 如果当前page与已有page存在命名冲突，也进行重命名
-            for (let key in pagesMap) {
-              // 此处引入pagesEntryMap确保相同entry下路由路径重复注册才报错，不同entry下的路由路径重复则无影响
-              if (pagesMap[key] === pageName && key !== resourcePath && pagesEntryMap[key] === loaderContext.resourcePath) {
-                const pageNameRaw = pageName
-                pageName = '/' + toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-                break
-              }
+          if (localPagesMap[outputPath]) {
+            const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
+            if (oldResourcePath !== resourcePath) {
+              const oldOutputPath = outputPath
+              outputPath = mpx.getOutputPath(resourcePath, 'page', { conflictPath: outputPath })
+              emitWarning(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
             }
           }
-          buildInfo.pagesMap = buildInfo.pagesMap || {}
-          buildInfo.pagesMap[resourcePath] = pagesMap[resourcePath] = pageName
-          pagesEntryMap[resourcePath] = loaderContext.resourcePath
-          localPagesMap[pageName] = {
-            resource: addQuery(resource, { page: true }),
-            async: tarRoot || queryObj.async,
-            isFirst: queryObj.isFirst
+
+          pagesMap[resourcePath] = outputPath
+          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
+          localPagesMap[outputPath] = {
+            resource: addQuery(resource, { isPage: true }),
+            async: queryObj.async || tarRoot,
+            isFirst
           }
           callback()
         })
@@ -233,10 +271,15 @@ module.exports = function (json, options, rawCallback) {
 
   const processSubPackage = (subPackage, context, callback) => {
     if (subPackage) {
-      let tarRoot = subPackage.tarRoot || subPackage.root || ''
-      let srcRoot = subPackage.srcRoot || subPackage.root || ''
+      if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
+        emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
+        return callback()
+      }
+      const tarRoot = subPackage.tarRoot || subPackage.root || ''
+      const srcRoot = subPackage.srcRoot || subPackage.root || ''
       if (!tarRoot) return callback()
-      processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+      context = path.join(context, srcRoot)
+      processPages(subPackage.pages, context, tarRoot, callback)
     } else {
       callback()
     }
@@ -244,7 +287,7 @@ module.exports = function (json, options, rawCallback) {
 
   const processSubPackages = (subPackages, context, callback) => {
     if (subPackages) {
-      async.forEach(subPackages, (subPackage, callback) => {
+      async.each(subPackages, (subPackage, callback) => {
         processSubPackage(subPackage, context, callback)
       }, callback)
     } else {
@@ -254,48 +297,35 @@ module.exports = function (json, options, rawCallback) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      async.forEachOf(components, (component, name, callback) => {
-        processComponent(component, name, context, callback)
+      async.eachOf(components, (component, name, callback) => {
+        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
+          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+          const { resourcePath, queryObj } = parseRequest(resource)
+          componentsMap[resourcePath] = outputPath
+          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+          localComponentsMap[name] = {
+            resource: addQuery(resource, {
+              isComponent: true,
+              outputPath
+            }),
+            async: queryObj.async || tarRoot
+          }
+          callback()
+        })
       }, callback)
     } else {
       callback()
     }
   }
 
-  const processComponent = (component, name, context, callback) => {
-    if (!isUrlRequest(component, projectRoot)) return callback()
-
-    if (resolveMode === 'native') {
-      component = loaderUtils.urlToRequest(component, projectRoot)
-    }
-
-    resolve(context, component, (err, resource) => {
-      if (err) return callback(err)
-      const { resourcePath, queryObj } = parseRequest(resource)
-      const parsed = path.parse(resourcePath)
-      const componentId = parsed.name + pathHash(resourcePath)
-
-      buildInfo.packageName = 'main'
-      buildInfo.componentsMap = buildInfo.componentsMap || {}
-      buildInfo.componentsMap[resourcePath] = componentsMap[resourcePath] = componentId
-
-      localComponentsMap[name] = {
-        resource: addQuery(resource, { component: true, mpxCid: componentId }),
-        async: queryObj.async
-      }
-      callback()
-    })
-  }
-
   const processGenerics = (generics, context, callback) => {
     if (generics) {
-      async.forEachOf(generics, (generic, name, callback) => {
-        if (generic.default) {
-          processComponent(generic.default, `${name}default`, context, callback)
-        } else {
-          callback()
-        }
-      }, callback)
+      const genericsComponents = {}
+      Object.keys(generics).forEach((name) => {
+        const generic = generics[name]
+        if (generic.default) genericsComponents[`${name}default`] = generic.default
+      })
+      processComponents(genericsComponents, context, callback)
     } else {
       callback()
     }
@@ -303,10 +333,15 @@ module.exports = function (json, options, rawCallback) {
 
   async.parallel([
     (callback) => {
+      // 添加首页标识
       if (jsonObj.pages && jsonObj.pages[0]) {
-        jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+        if (typeof jsonObj.pages[0] !== 'string') {
+          jsonObj.pages[0].src = addQuery(jsonObj.pages[0].src, { isFirst: true })
+        } else {
+          jsonObj.pages[0] = addQuery(jsonObj.pages[0], { isFirst: true })
+        }
       }
-      processPages(jsonObj.pages, '', '', context, callback)
+      processPages(jsonObj.pages, context, '', callback)
     },
     (callback) => {
       processComponents(jsonObj.usingComponents, context, callback)

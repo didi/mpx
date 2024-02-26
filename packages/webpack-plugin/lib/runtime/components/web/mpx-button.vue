@@ -95,7 +95,7 @@
     },
     mounted () {
       if (this.formType) {
-        this.$on('tap', () => {
+        this.$el.addEventListener('tap', () => {
           if (this.form && this.form[this.formType]) {
             this.form[this.formType]()
           }
@@ -129,7 +129,7 @@
           defaultListeners: ['tap']
         })
       }
-      return createElement('button', data, this.$slots.default)
+      return createElement('div', data, this.$slots.default)
     },
     methods: {
       handleTouchstart (e) {
@@ -175,7 +175,6 @@
     display block
     margin-left auto
     margin-right auto
-    margin-bottom 10px
     box-sizing border-box
     font-size 18px
     text-align center

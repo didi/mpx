@@ -6,7 +6,7 @@ sidebarDepth: 2
 
 > 作者：[sky-admin](https://github.com/sky-admin)
 
-> MPX框架是滴滴出行推出的一款专注小程序开发的增强型框架。本篇文章将从使用角度谈谈MPX的优势与好处。如果嫌内容太长，优势部分每个小节都有简单的一句话总结，可以快速阅读。如果想了解更多设计细节，可以阅读 [前一篇文章 - MPX2.0发布](https://didi.github.io/mpx/articles/2.0.html)。
+> MPX框架是滴滴出行推出的一款专注小程序开发的增强型框架。本篇文章将从使用角度谈谈MPX的优势与好处。如果嫌内容太长，优势部分每个小节都有简单的一句话总结，可以快速阅读。如果想了解更多设计细节，可以阅读 [前一篇文章 - MPX2.0发布](./2.0.md)。
 
 ## 背景
 
@@ -86,9 +86,9 @@ MPX几乎支持原生的每一个特性，在 .mpx 文件里，模板部分写�
 
 带来的好处就是：如果你喜欢vant的按钮，iview的输入框，wux的布局，欢迎尝试MPX，让你能同时使用多个UI框架的同时不用担心应用的体积爆炸。
 
-同理，面对一个大型项目，我们可以拆成不同的部分，由不同的团队完成后发npm包，在一个主项目中引入即可，具体内容可以看文档[JSON增强 - packages](https://didi.github.io/mpx/single/json-enhance.html#packages)一节。
+同理，面对一个大型项目，我们可以拆成不同的部分，由不同的团队完成后发npm包，在一个主项目中引入即可，具体内容可以看文档[packages](../guide/advance/subpackage.md#packages)一节。
 
-收集依赖的细节可以查阅文档[编译构建](https://didi.github.io/mpx/understanding/understanding.html#%E7%BC%96%E8%AF%91%E6%9E%84%E5%BB%BA)一节。
+收集依赖的细节可以查阅文档[编译构建](../guide/understand/compile.md)一节。
 
 ### 跨小程序平台
 
@@ -123,13 +123,13 @@ MPX提供了丰富的条件编译能力，可以以文件为维度差别构建�
 
 当尝试构建百度小程序时，会优先去查找pick/index.swan.wxml，再被alias到一个src下的文件，自己修改一下第三方包里有一些小问题的部分即可。
 
-关于跨平台的条件编译，更多具体信息可以[查阅我们的官方文档 - 跨平台条件编译](https://didi.github.io/mpx/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%BC%96%E8%AF%91)
+关于跨平台的条件编译，更多具体信息可以[查阅我们的官方文档 - 跨平台编译](../guide/advance/platform.md#跨平台编译)
 
 ### 能力增强
 
 > 通过数据响应、编译时预处理提供了computed/watch，完备的样式类型绑定，双向数据绑定，动态组件等一系列方便开发者更好开发小程序的能力增强
 
-能力增强应该是一个框架提供的最核心最重要的能力了，而MPX也确实在这里下了很大的力气，提供了多且好用的能力增强，不过受限于此处的篇幅，就只简单介绍，细节大家还是[查阅我们的文档](https://didi.github.io/mpx/single/template-enhance.html#template%E5%A2%9E%E5%BC%BA%E7%89%B9%E6%80%A7)的好。
+能力增强应该是一个框架提供的最核心最重要的能力了，而MPX也确实在这里下了很大的力气，提供了多且好用的能力增强，不过受限于此处的篇幅，就只简单介绍，细节大家还是[查阅我们的文档](../guide/basic/template.md)的好。
 
 别的框架由于往往基于react/vue的，会给个列表写明不支持哪些能力，用户写的时候习惯使然，往往用了后可能才反应过来哦这个不支持。MPX则是原生的小程序语法写着难受时候突然想起MPX有这个能力。
 
@@ -176,7 +176,7 @@ mpvue/wepy/megalo等框架也提供了数据响应的能力，但是数据响应
 
 虽然只是一个小小的TODO MVC示例，但是这个优化和应用的规模没关系，而且同时大家可以尝试别家的小demo对比看看。
 
-这个优化的细节可以看[前一篇文章](https://didi.github.io/mpx/articles/2.0.html)，或者我们的文档[MPX运行机制 - 数据响应与性能优化](https://didi.github.io/mpx/understanding/understanding.html#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96)
+这个优化的细节可以看[前一篇文章](./2.0.md)，或者我们的文档[MPX运行机制 - 数据响应与性能优化](../guide/understand/runtime.md)
 
 ## 总结
 

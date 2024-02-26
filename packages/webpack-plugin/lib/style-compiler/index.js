@@ -1,35 +1,36 @@
-const getMainCompilation = require('../utils/get-main-compilation')
+const path = require('path')
 const postcss = require('postcss')
-const loaderUtils = require('loader-utils')
 const loadPostcssConfig = require('./load-postcss-config')
-
-const trim = require('./plugins/trim')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const rpx = require('./plugins/rpx')
+const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
-const matchCondition = require('../utils/match-condition')
+const transSpecial = require('./plugins/trans-special')
+const { matchCondition } = require('../utils/match-condition')
+const parseRequest = require('../utils/parse-request')
 
 module.exports = function (css, map) {
   this.cacheable()
   const cb = this.async()
-  const loaderOptions = loaderUtils.getOptions(this) || {}
-
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const mpx = this.getMpx()
+  const id = queryObj.moduleId || queryObj.mid || 'm' + mpx.pathHash(resourcePath)
+  const appInfo = mpx.appInfo
   const defs = mpx.defs
-
-  const transRpxRulesRaw = mpx.transRpxRules || loaderOptions.transRpx
-
+  const mode = mpx.mode
+  const isApp = resourcePath === appInfo.resourcePath
+  const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
 
+  const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {
     return matchCondition(this.resourcePath, { include, exclude })
   }
 
-  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs })
-
+  const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs, inlineConfigFile: path.join(mpx.projectRoot, 'vue.config.js') })
   loadPostcssConfig(this, inlineConfig).then(config => {
-    const plugins = config.plugins.concat(trim)
+    const plugins = [] // init with trim plugin
     const options = Object.assign(
       {
         to: this.resourcePath,
@@ -38,16 +39,23 @@ module.exports = function (css, map) {
       },
       config.options
     )
+    // ali平台下处理scoped和host选择器
+    if (mode === 'ali') {
+      if (queryObj.scoped) {
+        plugins.push(scopeId({ id }))
+      }
+      plugins.push(transSpecial({ id }))
+    }
 
-    if (loaderOptions.scoped) {
-      plugins.push(scopeId({ id: loaderOptions.moduleId }))
+    if (mode === 'web') {
+      plugins.push(transSpecial({ id }))
     }
 
     plugins.push(pluginCondStrip({
       defs
     }))
 
-    for (let item of transRpxRules) {
+    for (const item of transRpxRules) {
       const {
         mode,
         comment,
@@ -63,8 +71,11 @@ module.exports = function (css, map) {
       }
     }
 
+    if (mpx.mode === 'web') {
+      plugins.push(vw({ transRpxFn }))
+    }
     // source map
-    if (loaderOptions.sourceMap && !options.map) {
+    if (this.sourceMap && !options.map) {
       options.map = {
         inline: false,
         annotation: false,
@@ -72,16 +83,51 @@ module.exports = function (css, map) {
       }
     }
 
-    return postcss(plugins)
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
+
+    return postcss(finalPlugins)
       .process(css, options)
       .then(result => {
-        if (result.messages) {
-          result.messages.forEach(({ type, file }) => {
-            if (type === 'dependency') {
-              this.addDependency(file)
-            }
-          })
+        // ali环境添加全局样式抹平root差异
+        if ((mode === 'ali' || mode === 'web') && isApp) {
+          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
         }
+
+        for (const warning of result.warnings()) {
+          this.emitWarning(warning)
+        }
+
+        // todo 后续考虑直接使用postcss-loader来处理postcss
+        for (const message of result.messages) {
+          // eslint-disable-next-line default-case
+          switch (message.type) {
+            case 'dependency':
+              this.addDependency(message.file)
+              break
+
+            case 'build-dependency':
+              this.addBuildDependency(message.file)
+              break
+
+            case 'missing-dependency':
+              this.addMissingDependency(message.file)
+              break
+
+            case 'context-dependency':
+              this.addContextDependency(message.file)
+              break
+
+            case 'dir-dependency':
+              this.addContextDependency(message.dir)
+              break
+
+            case 'asset':
+              if (message.content && message.file) {
+                this.emitFile(message.file, message.content, message.sourceMap, message.info)
+              }
+          }
+        }
+
         const map = result.map && result.map.toJSON()
         cb(null, result.css, map)
         return null // silence bluebird warning

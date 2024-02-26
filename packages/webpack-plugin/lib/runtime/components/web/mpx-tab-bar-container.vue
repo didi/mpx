@@ -14,14 +14,13 @@
   const components = {
     'mpx-tab-bar': tabBarPagesMap['mpx-tab-bar']
   }
-  tabBar.list.forEach((item) => {
-    const path = item.pagePath
-    const name = path.replace('/', '-')
-    const page = tabBarPagesMap['/' + path]
+  tabBar.list.forEach(({ pagePath }) => {
+    const name = pagePath.replace(/\//g, '-')
+    const page = tabBarPagesMap[pagePath]
     if (page) {
       components[name] = page
     } else {
-      console.warn(`[Mpx runtime warn]: TabBar page path ${path} is not exist in local page map, please check!`)
+      console.warn(`[Mpx runtime warn]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
     }
   })
 
@@ -40,7 +39,7 @@
       currentComponent () {
         const index = this.currentIndex
         const tabItem = tabBar.list[index]
-        return tabItem.pagePath.replace('/', '-')
+        return tabItem.pagePath.replace(/\//g, '-')
       }
     },
     watch: {

@@ -1,13 +1,13 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.6.44",
+  "version": "2.9.17",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
     "mpx"
   ],
   "author": "donghongping",
-  "license": "Apache",
+  "license": "Apache-2.0",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
   "directories": {
@@ -17,16 +17,23 @@
     "src",
     "@types"
   ],
+  "main": "src/index.js",
   "dependencies": {
-    "lodash.throttle": "^4.1.1",
-    "miniprogram-api-typings": "^3.0.2"
+    "@mpxjs/utils": "^2.9.1",
+    "lodash": "^4.1.1",
+    "miniprogram-api-typings": "^3.10.0"
   },
   "peerDependencies": {
-    "vue": "^2.6.10",
-    "vue-i18n": "^8.15.3"
+    "@mpxjs/api-proxy": "^2.9.0",
+    "@mpxjs/store": "^2.9.0",
+    "vue": "^2.7.10",
+    "vue-demi": "^0.14.6",
+    "vue-i18n": "^8.27.2",
+    "vue-i18n-bridge": "^9.2.2"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
@@ -39,5 +46,6 @@
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

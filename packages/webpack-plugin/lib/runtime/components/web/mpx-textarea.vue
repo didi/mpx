@@ -86,7 +86,7 @@
       }
 
       if (this.maxlength !== -1) {
-        domProps.maxlength = this.maxlength
+        domProps.maxLength = this.maxlength
       }
 
       const data = {
@@ -142,4 +142,7 @@
     display block
     position relative
     resize none
+    border: none
+    outline: none
+    background: transparent
 </style>

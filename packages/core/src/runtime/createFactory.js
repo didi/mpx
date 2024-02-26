@@ -1,6 +1,10 @@
-import mpx from '../index'
+const factoryMap = {
+  App: require('../index').createApp,
+  Page: require('../index').createPage,
+  Component: require('../index').createComponent
+}
 
-export default (type) => (...args) => {
+module.exports = (type) => (...args) => {
   if (type === 'Behavior') {
     if (args[0]) {
       Object.defineProperty(args[0], '__mpx_behaviors_to_mixins__', {
@@ -13,5 +17,5 @@ export default (type) => (...args) => {
     }
     return args[0]
   }
-  return mpx[`create${type}`] && mpx[`create${type}`].apply(null, args.concat({ isNative: true }))
+  return factoryMap[type].apply(null, args.concat({ isNative: true }))
 }

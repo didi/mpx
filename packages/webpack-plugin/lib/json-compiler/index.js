@@ -1,31 +1,51 @@
 const async = require('async')
 const JSON5 = require('json5')
 const path = require('path')
-const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin')
-const loaderUtils = require('loader-utils')
 const parseComponent = require('../parser')
 const config = require('../config')
-const normalize = require('../utils/normalize')
-const nativeLoaderPath = normalize.lib('native-loader')
-const themeLoaderPath = normalize.lib('json-compiler/theme-loader')
-const extractorPath = normalize.lib('extractor')
 const parseRequest = require('../utils/parse-request')
-const mpxJSON = require('../utils/mpx-json')
-const toPosix = require('../utils/to-posix')
-const fixUsingComponent = require('../utils/fix-using-component')
+const evalJSONJS = require('../utils/eval-json-js')
 const getRulesRunner = require('../platform/index')
-const isUrlRequestRaw = require('../utils/is-url-request')
 const addQuery = require('../utils/add-query')
-const readJsonForSrc = require('../utils/read-json-for-src')
-const getMainCompilation = require('../utils/get-main-compilation')
+const getJSONContent = require('../utils/get-json-content')
+const createHelpers = require('../helpers')
+const createJSONHelper = require('./helper')
+const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
+const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
+const resolve = require('../utils/resolve')
+const normalize = require('../utils/normalize')
+const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
+const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
-module.exports = function (raw = '{}') {
-  // 该loader中会在每次编译中动态添加entry，不能缓存，否则watch不好使
-  this.cacheable(false)
+module.exports = function (content) {
   const nativeCallback = this.async()
-  const options = loaderUtils.getOptions(this) || {}
-  const mainCompilation = getMainCompilation(this._compilation)
-  const mpx = mainCompilation.__mpx__
+  const mpx = this.getMpx()
+
+  if (!mpx) {
+    return nativeCallback(null, content)
+  }
+  // json模块必须每次都创建（但并不是每次都需要build），用于动态添加编译入口，传递信息以禁用父级extractor的缓存
+  this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
+
+  // 微信插件下要求组件使用相对路径
+  const useRelativePath = mpx.isPluginMode || mpx.useRelativePath
+  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const useJSONJS = queryObj.useJSONJS || this.resourcePath.endsWith(JSON_JS_EXT)
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const pagesMap = mpx.pagesMap
+  const componentsMap = mpx.componentsMap[packageName]
+  const appInfo = mpx.appInfo
+  const mode = mpx.mode
+  const env = mpx.env
+  const globalSrcMode = mpx.srcMode
+  const localSrcMode = queryObj.mode
+  const srcMode = localSrcMode || globalSrcMode
+  const projectRoot = mpx.projectRoot
+
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const publicPath = this._compilation.outputOptions.publicPath || ''
+  const fs = this._compiler.inputFileSystem
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -39,46 +59,58 @@ module.exports = function (raw = '{}') {
     )
   }
 
-  const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
-  const isUrlRequest = r => isUrlRequestRaw(r, options.root)
-  const urlToRequest = r => loaderUtils.urlToRequest(r, options.root)
-
-  if (!mpx) {
-    return nativeCallback(null, raw)
+  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
+    const componentPlaceholder = json.componentPlaceholder || {}
+    if (componentPlaceholder[name]) return
+    componentPlaceholder[name] = placeholder
+    json.componentPlaceholder = componentPlaceholder
+    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
   }
-  const useRelativePath = mpx.useRelativePath
-  const { resourcePath, queryObj } = parseRequest(this.resource)
-  const packageName = queryObj.packageName || mpx.currentPackageRoot || 'main'
-  const pagesMap = mpx.pagesMap
-  const componentsMap = mpx.componentsMap[packageName]
-  const getEntryNode = mpx.getEntryNode
-  const mode = mpx.mode
-  const defs = mpx.defs
-  const globalSrcMode = mpx.srcMode
-  const localSrcMode = queryObj.mode
-  const srcMode = localSrcMode || globalSrcMode
-  const resolveMode = mpx.resolveMode
-  const externals = mpx.externals
-  const pathHash = mpx.pathHash
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
-  const publicPath = this._compilation.outputOptions.publicPath || ''
-  const fs = this._compiler.inputFileSystem
-  const rootName = mainCompilation._preparedEntrypoints[0].name
-  const currentName = componentsMap[resourcePath] || pagesMap[resourcePath] || rootName
-  const currentPath = publicPath + currentName
+  const normalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      const placeholderMap = mode === 'ali'
+      ? {
+        view: { name: 'mpx-view', resource: mpxViewPath },
+        text: { name: 'mpx-text', resource: mpxTextPath }
+      }
+      : {}
+      placeholder = placeholderMap[placeholder] || { name: placeholder }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    return placeholder
+  }
 
-  // json模块都是由.mpx或.js的入口模块引入，且引入关系为一对一，其issuer必为入口module
-  const entryModule = this._module.issuer
-  // 通过rawRequest关联entryNode和entryModule
-  const entryRequest = entryModule.rawRequest
-  const entryType = isApp ? 'App' : pagesMap[resourcePath] ? 'Page' : 'Component'
+  const {
+    isUrlRequest,
+    urlToRequest,
+    processPage,
+    processDynamicEntry,
+    processComponent,
+    processJsExport
+  } = createJSONHelper({
+    loaderContext: this,
+    emitWarning,
+    emitError
+  })
 
-  const currentEntry = getEntryNode(entryRequest, entryType, entryModule)
+  const { getRequestString } = createHelpers(this)
+
+  let currentName
+
+  if (isApp) {
+    currentName = appInfo.name
+  } else {
+    currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
+  }
+
+  const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
 
   const copydir = (dir, context, callback) => {
     fs.readdir(dir, (err, files) => {
       if (err) return callback(err)
-      async.forEach(files, (file, callback) => {
+      async.each(files, (file, callback) => {
         file = path.join(dir, file)
         async.waterfall([
           (callback) => {
@@ -90,15 +122,9 @@ module.exports = function (raw = '{}') {
             } else {
               fs.readFile(file, (err, content) => {
                 if (err) return callback(err)
-                let targetPath = path.relative(context, file)
-                this._compilation.assets[targetPath] = {
-                  size: function size () {
-                    return stats.size
-                  },
-                  source: function source () {
-                    return content
-                  }
-                }
+                if (!this._compilation) return callback()
+                const targetPath = path.relative(context, file)
+                this.emitFile(targetPath, content)
                 callback()
               })
             }
@@ -108,58 +134,21 @@ module.exports = function (raw = '{}') {
     })
   }
 
-  let entryDeps = new Set()
-
-  let cacheCallback
-
-  const checkEntryDeps = (callback) => {
-    callback = callback || cacheCallback
-    if (callback && entryDeps.size === 0) {
-      callback()
-    } else {
-      cacheCallback = callback
-    }
-  }
-
-  const addEntrySafely = (resource, name, callback) => {
-    // 如果loader已经回调，就不再添加entry
-    if (callbacked) return callback()
-    const dep = SingleEntryPlugin.createDependency(resource, name)
-    entryDeps.add(dep)
-    this._compilation.addEntry(this._compiler.context, dep, name, (err, module) => {
-      entryDeps.delete(dep)
-      checkEntryDeps()
-      callback(err, module)
-    })
-  }
-
-  // const deleteEntry = (name) => {
-  //   const index = this._compilation._preparedEntrypoints.findIndex(slot => slot.name === name)
-  //   if (index >= 0) {
-  //     this._compilation._preparedEntrypoints.splice(index, 1)
-  //   }
-  // }
-
-  let callbacked = false
   const callback = (err, processOutput) => {
-    checkEntryDeps(() => {
-      callbacked = true
-      if (err) return nativeCallback(err)
-      let output = `var json = ${JSON.stringify(json, null, 2)};\n`
-      if (processOutput) output = processOutput(output)
-      output += `module.exports = JSON.stringify(json, null, 2);\n`
-      nativeCallback(null, output)
-    })
+    if (err) return nativeCallback(err)
+    let output = `var json = ${JSON.stringify(json, null, 2)};\n`
+    if (processOutput) output = processOutput(output)
+    const jsonSpace = this.minimize ? 0 : 2
+    output += `module.exports = JSON.stringify(json, null, ${jsonSpace});\n`
+    nativeCallback(null, output)
   }
 
-  let json = {}
+  let json
   try {
-    // 使用了MPXJSON的话先编译
-    // 此处需要使用真实的resourcePath
-    if (this.resourcePath.endsWith('.json.js')) {
-      json = JSON.parse(mpxJSON.compileMPXJSONText({ source: raw, defs, filePath: this.resourcePath }))
+    if (useJSONJS) {
+      json = evalJSONJS(content, this.resourcePath, this)
     } else {
-      json = JSON5.parse(raw)
+      json = JSON5.parse(content || '{}')
     }
   } catch (err) {
     return callback(err)
@@ -183,37 +172,33 @@ module.exports = function (raw = '{}') {
     }
   }
 
-  if (json.usingComponents) {
-    fixUsingComponent(json.usingComponents, mode, emitWarning)
+  // 快应用补全json配置，必填项
+  if (mode === 'qa' && isApp) {
+    const defaultConf = {
+      package: '',
+      name: '',
+      icon: 'assets/images/logo.png',
+      versionName: '',
+      versionCode: 1,
+      minPlatformVersion: 1080
+    }
+    json = Object.assign({}, defaultConf, json)
   }
 
   const rulesRunnerOptions = {
     mode,
-    mpx,
     srcMode,
     type: 'json',
     waterfall: true,
     warn: emitWarning,
-    error: emitError
+    error: emitError,
+    data: {
+      // polyfill global usingComponents & record globalComponents
+      globalComponents: mpx.usingComponents
+    }
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-    // polyfill global usingComponents
-    // todo 传入rulesRunner中进行按平台转换
-    rulesRunnerOptions.data = {
-      globalComponents: mpx.usingComponents
-    }
-  } else {
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      mpx.usingComponents = {}
-      Object.keys(json.usingComponents).forEach((key) => {
-        const request = json.usingComponents[key]
-        mpx.usingComponents[key] = addQuery(request, {
-          context: this.context
-        })
-      })
-    }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -222,150 +207,137 @@ module.exports = function (raw = '{}') {
     rulesRunner(json)
   }
 
-  const resolve = (context, request, callback) => {
-    const { queryObj } = parseRequest(request)
-    context = queryObj.context || context
-    return this.resolve(context, request, callback)
+  if (isApp) {
+    Object.assign(mpx.usingComponents, json.usingComponents)
+    // 在 rulesRunner 运行后保存全局注册组件
+    // todo 其余地方在使用mpx.usingComponents时存在缓存问题，要规避该问题需要在所有使用mpx.usingComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
+    // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
+    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
   }
 
-  const processComponent = (component, context, rewritePath, outputPath, callback) => {
-    if (!isUrlRequest(component)) return callback()
-    if (resolveMode === 'native') {
-      component = urlToRequest(component)
-    }
-
-    if (externals.some((external) => {
-      if (typeof external === 'string') {
-        return external === component
-      } else if (external instanceof RegExp) {
-        return external.test(component)
-      }
-      return false
-    })) {
-      return callback()
-    }
-
-    resolve(context, component, (err, resource, info) => {
-      if (err) return callback(err)
-      const resourcePath = parseRequest(resource).resourcePath
-      const parsed = path.parse(resourcePath)
-      const ext = parsed.ext
-      const resourceName = path.join(parsed.dir, parsed.name)
-
-      if (!outputPath) {
-        if (ext === '.js') {
-          let root = info.descriptionFileRoot
-          let name = 'nativeComponent'
-          if (info.descriptionFileData) {
-            if (info.descriptionFileData.miniprogram) {
-              root = path.join(root, info.descriptionFileData.miniprogram)
-            }
-            if (info.descriptionFileData.name) {
-              // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
-              name = info.descriptionFileData.name.split('@').join('')
-            }
+  const processComponents = (components, context, callback) => {
+    if (components) {
+      async.eachOf(components, (component, name, callback) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder } = {}) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            delete components[name]
+            return callback()
           }
-          let relativePath = path.relative(root, resourceName)
-          outputPath = path.join('components', name + pathHash(root), relativePath)
-        } else {
-          let componentName = parsed.name
-          outputPath = path.join('components', componentName + pathHash(resourcePath), componentName)
-        }
-      }
-      const packageInfo = mpx.getPackageInfo({
-        resource,
-        outputPath,
-        isStatic: false,
-        warn: (err) => {
-          this.emitWarning(err)
-        }
-      })
-      // 此处query为了实现消除分包间模块缓存，以实现不同分包中引用的组件在不同分包中都能输出
-      resource = addQuery(resource, {
-        packageName: packageInfo.packageName
-      })
-      const componentPath = packageInfo.outputPath
-      rewritePath && rewritePath(publicPath + componentPath)
-      if (ext === '.js') {
-        resource = '!!' + nativeLoaderPath + '!' + resource
-      }
-      currentEntry.addChild(getEntryNode(resource, 'Component'))
-      // 如果之前已经创建了入口，直接return
-      if (packageInfo.alreadyOutputed) {
-        return callback()
-      }
-      addEntrySafely(resource, componentPath, callback)
-    })
-  }
-
-  // 由于json模块都是由mpx/js文件引入的，需要向上找两层issuer获取真实的引用源
-  function getJsonIssuer (module) {
-    if (module.issuer) {
-      return module.issuer.issuer
+          if (err) return callback(err)
+          components[name] = entry
+          if (tarRoot) {
+            if (placeholder) {
+              placeholder = normalizePlaceholder(placeholder)
+              if (placeholder.resource) {
+                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
+                  if (err) return callback(err)
+                  fillInComponentPlaceholder(name, placeholder.name, entry)
+                  callback()
+                })
+              } else {
+                fillInComponentPlaceholder(name, placeholder.name)
+                callback()
+              }
+            } else {
+              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
+                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+                emitError(errMsg)
+              }
+              callback()
+            }
+          } else {
+            callback()
+          }
+        })
+      }, callback)
+    } else {
+      callback()
     }
   }
 
   if (isApp) {
-    if (!mpx.hasApp) {
-      mpx.hasApp = true
-    } else {
-      const issuer = getJsonIssuer(this._module)
-      if (issuer) {
-        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，当前组件/页面[${this.resource}]通过[${issuer.resource}]非法引入，引用的资源将被忽略，请确保组件/页面资源通过usingComponents/pages配置引入！`)
-      } else {
-        emitError(`[json compiler]:Mpx单次构建中只能存在一个App，请检查当前entry中的资源[${this.resource}]是否为组件/页面，通过添加?component/page查询字符串显式声明该资源是组件/页面！`)
-      }
-      return callback()
-    }
     // app.json
-    const subPackagesCfg = {}
     const localPages = []
-    const processSubPackagesQueue = []
-    // 添加首页标识
-    if (json.pages && json.pages[0]) {
-      json.pages[0] = addQuery(json.pages[0], { isFirst: true })
+    const subPackagesCfg = {}
+    const pageKeySet = new Set()
+    const defaultPagePath = require.resolve('../runtime/components/wx/default-page.mpx')
+    const processPages = (pages, context, tarRoot = '', callback) => {
+      if (pages) {
+        const pagesCache = []
+        async.each(pages, (page, callback) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key, resource } = {}) => {
+            if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+            if (pageKeySet.has(key)) return callback()
+            if (resource.startsWith(defaultPagePath)) {
+              pagesCache.push(entry)
+              return callback()
+            }
+            pageKeySet.add(key)
+
+            if (tarRoot && subPackagesCfg) {
+              subPackagesCfg[tarRoot].pages.push(entry)
+            } else {
+              // 确保首页
+              if (isFirst) {
+                localPages.unshift(entry)
+              } else {
+                localPages.push(entry)
+              }
+            }
+            callback()
+          })
+        }, () => {
+          if (tarRoot && subPackagesCfg) {
+            if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
+              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+            }
+          } else {
+            if (!localPages.length && pagesCache[0]) {
+              localPages.push(pagesCache[0])
+            }
+          }
+          callback()
+        })
+      } else {
+        callback()
+      }
     }
 
     const processPackages = (packages, context, callback) => {
       if (packages) {
-        async.forEach(packages, (packagePath, callback) => {
-          const parsed = parseRequest(packagePath)
-          const queryObj = parsed.queryObj
-          // readFile无法处理query
-          packagePath = parsed.resourcePath
+        async.each(packages, (packagePath, callback) => {
+          const { queryObj } = parseRequest(packagePath)
           async.waterfall([
             (callback) => {
-              resolve(context, packagePath, (err, result) => {
-                callback(err, result)
+              resolve(context, packagePath, this, (err, result) => {
+                if (err) return callback(err)
+                const { rawResourcePath } = parseRequest(result)
+                callback(err, rawResourcePath)
               })
             },
             (result, callback) => {
-              this.addDependency(result)
               fs.readFile(result, (err, content) => {
                 if (err) return callback(err)
                 callback(err, result, content.toString('utf-8'))
               })
             },
             (result, content, callback) => {
-              const filePath = result
-              const extName = path.extname(filePath)
-              if (extName === '.mpx' || extName === '.vue') {
+              const extName = path.extname(result)
+              if (extName === '.mpx') {
                 const parts = parseComponent(content, {
-                  filePath,
+                  filePath: result,
                   needMap: this.sourceMap,
                   mode,
-                  defs
+                  env
                 })
-                const json = parts.json || {}
-                if (json.content) {
-                  content = json.content
-                } else if (json.src) {
-                  return readJsonForSrc(json.src, this, (content) => {
-                    callback(null, result, content)
-                  })
-                }
+                // 对于通过.mpx文件声明的独立分包，默认将其自身的script block视为init module
+                if (queryObj.independent === true) queryObj.independent = result
+                getJSONContent(parts.json || {}, result, this, (err, content) => {
+                  callback(err, result, content)
+                })
+              } else {
+                callback(null, result, content)
               }
-              callback(null, result, content)
             },
             (result, content, callback) => {
               try {
@@ -378,10 +350,10 @@ module.exports = function (raw = '{}') {
               const context = path.dirname(result)
 
               if (content.pages) {
-                let tarRoot = queryObj.root
+                const tarRoot = queryObj.root
                 if (tarRoot) {
                   delete queryObj.root
-                  let subPackage = {
+                  const subPackage = {
                     tarRoot,
                     pages: content.pages,
                     ...queryObj
@@ -391,12 +363,12 @@ module.exports = function (raw = '{}') {
                     subPackage.plugins = content.plugins
                   }
 
-                  processSubPackagesQueue.push((callback) => {
+                  processSelfQueue.push((callback) => {
                     processSubPackage(subPackage, context, callback)
                   })
                 } else {
                   processSelfQueue.push((callback) => {
-                    processPages(content.pages, '', '', context, callback)
+                    processPages(content.pages, context, '', callback)
                   })
                 }
               }
@@ -411,45 +383,88 @@ module.exports = function (raw = '{}') {
                 callback()
               }
             }
-          ], callback)
+          ], (err) => {
+            callback(err === RESOLVE_IGNORED_ERR ? null : err)
+          })
         }, callback)
       } else {
         callback()
       }
     }
 
-    const getOtherConfig = (raw) => {
-      let result = {}
-      let blackListMap = {
+    const getOtherConfig = (config) => {
+      const result = {}
+      const blackListMap = {
         tarRoot: true,
         srcRoot: true,
         root: true,
         pages: true
       }
-      for (let key in raw) {
+      for (const key in config) {
         if (!blackListMap[key]) {
-          result[key] = raw[key]
+          result[key] = config[key]
         }
       }
       return result
     }
 
+    const recordIndependent = (root, request) => {
+      this._module && this._module.addPresentationalDependency(new RecordIndependentDependency(root, request))
+    }
+
+    const processIndependent = (otherConfig, context, tarRoot, callback) => {
+      // 支付宝不支持独立分包，无需处理
+      const independent = otherConfig.independent
+      if (!independent || mode === 'ali') {
+        delete otherConfig.independent
+        return callback()
+      }
+      // independent配置为字符串时视为init module
+      if (typeof independent === 'string') {
+        otherConfig.independent = true
+        resolve(context, independent, this, (err, result) => {
+          if (err) return callback(err)
+          recordIndependent(tarRoot, result)
+          callback()
+        })
+      } else {
+        recordIndependent(tarRoot, true)
+        callback()
+      }
+    }
+
     // 为了获取资源的所属子包，该函数需串行执行
     const processSubPackage = (subPackage, context, callback) => {
       if (subPackage) {
-        let tarRoot = subPackage.tarRoot || subPackage.root || ''
-        let srcRoot = subPackage.srcRoot || subPackage.root || ''
+        if (typeof subPackage.root === 'string' && subPackage.root.startsWith('.')) {
+          emitError(`Current subpackage root [${subPackage.root}] is not allow starts with '.'`)
+          return callback()
+        }
+        const tarRoot = subPackage.tarRoot || subPackage.root || ''
+        const srcRoot = subPackage.srcRoot || subPackage.root || ''
         if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
 
+        context = path.join(context, srcRoot)
+        const otherConfig = getOtherConfig(subPackage)
         subPackagesCfg[tarRoot] = {
           root: tarRoot,
-          pages: [],
-          ...getOtherConfig(subPackage)
+          pages: []
         }
-        mpx.currentPackageRoot = tarRoot
-        mpx.componentsMap[tarRoot] = {}
-        mpx.staticResourceMap[tarRoot] = {}
-        processPages(subPackage.pages, srcRoot, tarRoot, context, callback)
+        async.parallel([
+          (callback) => {
+            processIndependent(otherConfig, context, tarRoot, callback)
+          },
+          (callback) => {
+            processPages(subPackage.pages, context, tarRoot, callback)
+          },
+          (callback) => {
+            processPlugins(subPackage.plugins, context, tarRoot, callback)
+          }
+        ], (err) => {
+          if (err) return callback(err)
+          Object.assign(subPackagesCfg[tarRoot], otherConfig)
+          callback()
+        })
       } else {
         callback()
       }
@@ -457,70 +472,8 @@ module.exports = function (raw = '{}') {
 
     const processSubPackages = (subPackages, context, callback) => {
       if (subPackages) {
-        subPackages.forEach((subPackage) => {
-          processSubPackagesQueue.push((callback) => {
-            processSubPackage(subPackage, context, callback)
-          })
-        })
-      }
-      callback()
-    }
-
-    const getPageName = (resourcePath, ext) => {
-      const baseName = path.basename(resourcePath, ext)
-      return path.join('pages', baseName + pathHash(resourcePath), baseName)
-    }
-
-    const processPages = (pages, srcRoot = '', tarRoot = '', context, callback) => {
-      if (pages) {
-        context = path.join(context, srcRoot)
-        async.forEach(pages, (page, callback) => {
-          if (!isUrlRequest(page)) return callback()
-          if (resolveMode === 'native') {
-            page = urlToRequest(page)
-          }
-          resolve(context, page, (err, resource) => {
-            if (err) return callback(err)
-            const { resourcePath, queryObj } = parseRequest(resource)
-            const ext = path.extname(resourcePath)
-            // 获取pageName
-            let pageName
-            const relative = path.relative(context, resourcePath)
-            if (/^\./.test(relative)) {
-              // 如果当前page不存在于context中，对其进行重命名
-              pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-              emitWarning(`Current page ${resourcePath} is not in current pages directory ${context}, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-            } else {
-              pageName = toPosix(path.join(tarRoot, /^(.*?)(\.[^.]*)?$/.exec(relative)[1]))
-              // 如果当前page与已有page存在命名冲突，也进行重命名
-              for (let key in pagesMap) {
-                if (pagesMap[key] === pageName && key !== resourcePath) {
-                  const pageNameRaw = pageName
-                  pageName = toPosix(path.join(tarRoot, getPageName(resourcePath, ext)))
-                  emitWarning(`Current page ${resourcePath} is registered with a conflict page path ${pageNameRaw} which is already existed in system, the page path will be replaced with ${pageName}, use ?resolve to get the page path and navigate to it!`)
-                  break
-                }
-              }
-            }
-            if (ext === '.js') {
-              resource = '!!' + nativeLoaderPath + '!' + resource
-            }
-            currentEntry.addChild(getEntryNode(resource, 'Page'))
-            // 如果之前已经创建了页面入口，直接return，目前暂时不支持多个分包复用同一个页面
-            if (pagesMap[resourcePath] === pageName) return callback()
-            pagesMap[resourcePath] = pageName
-            if (tarRoot && subPackagesCfg[tarRoot]) {
-              subPackagesCfg[tarRoot].pages.push(toPosix(path.relative(tarRoot, pageName)))
-            } else {
-              // 确保首页
-              if (queryObj.isFirst) {
-                localPages.unshift(pageName)
-              } else {
-                localPages.push(pageName)
-              }
-            }
-            addEntrySafely(resource, pageName, callback)
-          })
+        async.each(subPackages, (subPackage, callback) => {
+          processSubPackage(subPackage, context, callback)
         }, callback)
       } else {
         callback()
@@ -528,10 +481,10 @@ module.exports = function (raw = '{}') {
     }
 
     const processTabBar = (output) => {
-      let tabBarCfg = config[mode].tabBar
-      let itemKey = tabBarCfg.itemKey
-      let iconKey = tabBarCfg.iconKey
-      let activeIconKey = tabBarCfg.activeIconKey
+      const tabBarCfg = config[mode].tabBar
+      const itemKey = tabBarCfg.itemKey
+      const iconKey = tabBarCfg.iconKey
+      const activeIconKey = tabBarCfg.activeIconKey
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
@@ -547,9 +500,9 @@ module.exports = function (raw = '{}') {
     }
 
     const processOptionMenu = (output) => {
-      let optionMenuCfg = config[mode].optionMenu
+      const optionMenuCfg = config[mode].optionMenu
       if (optionMenuCfg && json.optionMenu) {
-        let iconKey = optionMenuCfg.iconKey
+        const iconKey = optionMenuCfg.iconKey
         if (json.optionMenu[iconKey] && isUrlRequest(json.optionMenu[iconKey])) {
           output += `json.optionMenu.${iconKey} = require("${addQuery(urlToRequest(json.optionMenu[iconKey]), { useLocal: true })}");\n`
         }
@@ -559,37 +512,18 @@ module.exports = function (raw = '{}') {
 
     const processThemeLocation = (output) => {
       if (json.themeLocation && isUrlRequest(json.themeLocation)) {
-        const themeRequest = '!!' + extractorPath + '?' +
-          JSON.stringify({
-            type: 'json',
-            index: -1
-          }) + '!' +
-          themeLoaderPath + '?root = ' + options.root + '!' +
-          addQuery(urlToRequest(json.themeLocation), { __component: true, isStatic: true })
-
-        output += `json.themeLocation = require(${stringifyRequest(themeRequest)});\n`
+        const requestString = getRequestString('json', { src: urlToRequest(json.themeLocation) }, {
+          isTheme: true,
+          isStatic: true
+        })
+        output += `json.themeLocation = require(${requestString});\n`
       }
       return output
     }
 
-    const processComponents = (components, context, callback) => {
-      if (components) {
-        async.forEachOf(components, (component, name, callback) => {
-          processComponent(component, context, (componentPath) => {
-            if (useRelativePath === true) {
-              componentPath = path.relative(path.dirname(currentPath), componentPath)
-            }
-            json.usingComponents[name] = componentPath
-          }, undefined, callback)
-        }, callback)
-      } else {
-        callback()
-      }
-    }
-
     const processWorkers = (workers, context, callback) => {
       if (workers) {
-        let workersPath = path.join(context, workers)
+        const workersPath = path.join(context, workers)
         this.addContextDependency(workersPath)
         copydir(workersPath, context, callback)
       } else {
@@ -599,66 +533,115 @@ module.exports = function (raw = '{}') {
 
     const processCustomTabBar = (tabBar, context, callback) => {
       if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, undefined, 'custom-tab-bar/index', callback)
+        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err, entry) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            delete tabBar.custom
+            return callback()
+          }
+          if (err) return callback(err)
+          tabBar.custom = entry // hack for javascript parser call hook.
+          callback()
+        })
       } else {
         callback()
       }
     }
 
-    // 串行处理，先处理主包代码，再处理分包代码，为了正确识别出分包中定义的组件属于主包还是分包
-    let errors = []
-    // 外部收集errors，确保整个series流程能够执行完
-    async.series([
-      (callback) => {
+    const processPluginGenericsImplementation = (plugin, context, tarRoot, callback) => {
+      if (!plugin.genericsImplementation) return callback()
+      const relativePath = useRelativePath ? publicPath + tarRoot : ''
+      async.eachOf(plugin.genericsImplementation, (genericComponents, name, callback) => {
+        async.eachOf(genericComponents, (genericComponentPath, name, callback) => {
+          processComponent(genericComponentPath, context, {
+            tarRoot,
+            relativePath
+          }, (err, entry) => {
+            if (err === RESOLVE_IGNORED_ERR) {
+              delete genericComponents[name]
+              return callback()
+            }
+            if (err) return callback(err)
+            genericComponents[name] = entry
+          })
+        }, callback)
+      }, callback)
+    }
+
+    const processPluginExport = (plugin, context, tarRoot, callback) => {
+      if (!plugin.export) return callback()
+      processJsExport(plugin.export, context, tarRoot, (err, entry) => {
+        if (err === RESOLVE_IGNORED_ERR) {
+          delete plugin.export
+          return callback()
+        }
+        if (err) return callback(err)
+        plugin.export = entry
+        callback()
+      })
+    }
+
+    const processPlugins = (plugins, context, tarRoot = '', callback) => {
+      if (mode !== 'wx' || !plugins) return callback() // 目前只有微信支持导出到插件
+      async.eachOf(plugins, (plugin, name, callback) => {
         async.parallel([
           (callback) => {
-            processPages(json.pages, '', '', this.context, callback)
+            processPluginGenericsImplementation(plugin, context, tarRoot, callback)
           },
           (callback) => {
-            processComponents(json.usingComponents, this.context, callback)
-          },
-          (callback) => {
-            processWorkers(json.workers, this.context, callback)
-          },
-          (callback) => {
-            processPackages(json.packages, this.context, callback)
-          },
-          (callback) => {
-            processCustomTabBar(json.tabBar, this.context, callback)
-          },
-          (callback) => {
-            processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+            processPluginExport(plugin, context, tarRoot, callback)
           }
-        ], (err) => {
-          if (err) {
-            errors.push(err)
+        ], callback)
+      }, callback)
+    }
+
+    async.parallel([
+      (callback) => {
+        // 添加首页标识
+        if (json.pages && json.pages[0]) {
+          if (typeof json.pages[0] !== 'string') {
+            json.pages[0].src = addQuery(json.pages[0].src, { isFirst: true })
+          } else {
+            json.pages[0] = addQuery(json.pages[0], { isFirst: true })
           }
-          callback()
-        })
+        }
+        processPages(json.pages, this.context, '', callback)
       },
       (callback) => {
-        async.series(processSubPackagesQueue, (err) => {
-          if (err) {
-            errors.push(err)
-          }
-          // 处理完分包后重置currentPackageRoot以确保app中的资源输出到主包
-          mpx.currentPackageRoot = ''
-          callback()
-        })
+        processComponents(json.usingComponents, this.context, callback)
+      },
+      (callback) => {
+        processPlugins(json.plugins, this.context, '', callback)
+      },
+      (callback) => {
+        processWorkers(json.workers, this.context, callback)
+      },
+      (callback) => {
+        processPackages(json.packages, this.context, callback)
+      },
+      (callback) => {
+        processCustomTabBar(json.tabBar, this.context, callback)
+      },
+      (callback) => {
+        processSubPackages(json.subPackages || json.subpackages, this.context, callback)
       }
-    ], () => {
-      if (errors.length) return callback(errors[0])
+    ], (err) => {
+      if (err) return callback(err)
       delete json.packages
       delete json.subpackages
       delete json.subPackages
       json.pages = localPages
-      for (let root in subPackagesCfg) {
-        if (!json.subPackages) {
-          json.subPackages = []
+      for (const root in subPackagesCfg) {
+        const subPackageCfg = subPackagesCfg[root]
+        // 分包不存在 pages，输出 subPackages 字段会报错
+        if (subPackageCfg.pages.length) {
+          if (!json.subPackages) {
+            json.subPackages = []
+          }
+          json.subPackages.push(subPackageCfg)
         }
-        json.subPackages.push(subPackagesCfg[root])
       }
       const processOutput = (output) => {
+        output = processDynamicEntry(output)
         output = processTabBar(output)
         output = processOptionMenu(output)
         output = processThemeLocation(output)
@@ -668,31 +651,36 @@ module.exports = function (raw = '{}') {
     })
   } else {
     // page.json或component.json
-    if (json.usingComponents) {
-      async.forEachOf(json.usingComponents, (component, name, callback) => {
-        processComponent(component, this.context, (componentPath) => {
-          if (useRelativePath === true) {
-            componentPath = path.relative(path.dirname(currentPath), componentPath)
+    const processGenerics = (generics, context, callback) => {
+      if (generics) {
+        async.eachOf(generics, (generic, name, callback) => {
+          if (generic.default) {
+            processComponent(generic.default, context, { relativePath }, (err, entry) => {
+              if (err === RESOLVE_IGNORED_ERR) {
+                delete generic.default
+                return callback()
+              }
+              if (err) return callback(err)
+              generic.default = entry
+              callback()
+            })
+          } else {
+            callback()
           }
-          json.usingComponents[name] = componentPath
-        }, undefined, callback)
-      }, callback)
-    } else if (json.componentGenerics) {
-      // 处理抽象节点
-      async.forEachOf(json.componentGenerics, (genericCfg, name, callback) => {
-        if (genericCfg && genericCfg.default) {
-          processComponent(genericCfg.default, this.context, (componentPath) => {
-            if (useRelativePath === true) {
-              componentPath = path.relative(path.dirname(currentPath), componentPath)
-            }
-            json.componentGenerics[name].default = componentPath
-          }, undefined, callback)
-        } else {
-          callback()
-        }
-      }, callback)
-    } else {
-      callback()
+        }, callback)
+      } else {
+        callback()
+      }
     }
+    async.parallel([
+      (callback) => {
+        processComponents(json.usingComponents, this.context, callback)
+      },
+      (callback) => {
+        processGenerics(json.componentGenerics, this.context, callback)
+      }
+    ], (err) => {
+      callback(err, processDynamicEntry)
+    })
   }
 }

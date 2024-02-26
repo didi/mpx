@@ -2,20 +2,20 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
 import { mergeToArray } from '../core/mergeOptions'
-import { error } from '../helper/log'
+import { error, hasOwn, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 
-const NOTSUPPORTS = ['moved', 'definitionFilter']
+const unsupported = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to ali.`, global.currentResource)
 }
 
 function notSupportTip (options) {
-  NOTSUPPORTS.forEach(key => {
+  unsupported.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
-        process.env.NODE_ENV !== 'production' && convertErrorDesc(key)
+        isDev && convertErrorDesc(key)
         delete options[key]
       } else if (implemented[key].remove) {
         delete options[key]
@@ -23,7 +23,7 @@ function notSupportTip (options) {
     }
   })
   // relations部分支持
-  const relations = options['relations']
+  const relations = options.relations
   if (relations) {
     Object.keys(relations).forEach(path => {
       const item = relations[path]
@@ -42,27 +42,22 @@ export default {
   lifecycle2: mergeLifecycle(aliLifecycle.LIFECYCLE),
   pageMode: 'blend',
   support: false,
-  lifecycleProxyMap: {
-    '__created__': ['onLoad', 'created', 'attached'],
-    '__mounted__': ['ready', 'onReady'],
-    '__destroyed__': ['detached', 'onUnload'],
-    '__updated__': ['updated']
-  },
+  lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
   convert (options) {
-    if (options.properties) {
-      const newProps = {}
-      Object.keys(options.properties).forEach(key => {
-        const prop = options.properties[key]
+    const props = Object.assign({}, options.properties, options.props)
+    if (props) {
+      Object.keys(props).forEach(key => {
+        const prop = props[key]
         if (prop) {
-          if (prop.hasOwnProperty('value')) {
-            newProps[key] = prop.value
+          if (hasOwn(prop, 'value')) {
+            props[key] = prop.value
           } else {
-            const type = prop.hasOwnProperty('type') ? prop.type : prop
-            if (typeof type === 'function') newProps[key] = type()
+            const type = hasOwn(prop, 'type') ? prop.type : prop
+            if (typeof type === 'function') props[key] = type()
           }
         }
       })
-      options.props = Object.assign(newProps, options.props)
+      options.props = props
       delete options.properties
     }
     if (options.onResize) {

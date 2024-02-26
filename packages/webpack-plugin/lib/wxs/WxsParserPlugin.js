@@ -3,11 +3,11 @@ class WxsParserPlugin {
     this.options = options
   }
 
-  apply (parser, compilation) {
+  apply (parser) {
     parser.hooks.program.tap({
       name: 'WxsParserPlugin',
       // 放在最后面执行
-      stage: 100
+      stage: 1000
     }, ast => {
       const module = parser.state.module
       if (module.buildInfo) {

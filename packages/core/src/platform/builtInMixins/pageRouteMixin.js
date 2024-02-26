@@ -3,9 +3,20 @@ export default function pageRouteMixin (mixinType) {
   if (mixinType === 'page') {
     return {
       beforeCreate () {
-        if (this.$options.__mpxPageRoute) {
-          this.route = this.$options.__mpxPageRoute.slice(1)
+        this.route = this.$options.__mpxPageRoute || ''
+      },
+      methods: {
+        getOpenerEventChannel () {
+          const router = global.__mpxRouter
+          const eventChannel = router && router.eventChannelMap[this.route]
+          return eventChannel || {}
         }
+      }
+    }
+  }
+  return {
+    methods: {
+      getOpenerEventChannel () {
       }
     }
   }

@@ -1,104 +1,128 @@
-const Template = require('webpack/lib/Template')
 const config = require('../config')
-const { ConcatSource } = require('webpack-sources')
+const { ConcatSource } = require('webpack').sources
+const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
+const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
+const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
+const Template = require('webpack/lib/Template')
 
-module.exports = class WxsMainTemplatePlugin {
+class MakeNamespaceObjectRuntimeModule extends HelperRuntimeModule {
+  constructor () {
+    super('make namespace object')
+  }
+
+  generate () {
+    const { runtimeTemplate } = this.compilation
+    const fn = RuntimeGlobals.makeNamespaceObject
+    return Template.asString([
+      '// define __esModule on exports',
+      `${fn} = ${runtimeTemplate.basicFunction('exports', [
+        'exports.__esModule = true;'
+      ])};`
+    ])
+  }
+}
+
+class CompatGetDefaultExportRuntimeModule extends HelperRuntimeModule {
+  constructor () {
+    super('compat get default export')
+  }
+
+  generate () {
+    const { runtimeTemplate } = this.compilation
+    const fn = RuntimeGlobals.compatGetDefaultExport
+    return Template.asString([
+      '// getDefaultExport function for compatibility with non-harmony modules',
+      `${fn} = ${runtimeTemplate.basicFunction('module', [
+        'var getter = module && module.__esModule ?',
+        Template.indent([
+          `${runtimeTemplate.returningFunction('module["default"]')} :`,
+          `${runtimeTemplate.returningFunction('module')};`
+        ]),
+        'getter.a = getter();',
+        'return getter;'
+      ])};`
+    ])
+  }
+}
+
+module.exports = class WxsTemplatePlugin {
   constructor (options = { mode: 'wx' }) {
     this.options = options
   }
 
-  apply (mainTemplate, compilation) {
-    mainTemplate.hooks.require.tap('MainTemplate', (source, chunk, hash) => {
-      return Template.asString([
-        '// Check if module is in cache',
-        'if(installedModules[moduleId]) {',
-        Template.indent('return installedModules[moduleId].exports;'),
-        '}',
-        '// Create a new module (and put it into the cache)',
-        'var module = installedModules[moduleId] = {',
-        Template.indent(mainTemplate.hooks.moduleObj.call('', chunk, hash, 'moduleId')),
-        '};',
-        '',
-        Template.asString(
-          [
-            '// Execute the module function',
-            '// wxs连call都不支持我也是服气...',
-            `modules[moduleId](module, module.exports, ${mainTemplate.renderRequireFunctionForModule(
-              hash,
-              chunk,
-              'moduleId'
-            )});`
-          ]
-        ),
-        '',
-        '// Flag the module as loaded',
-        'module.l = true;',
-        '',
-        '// Return the exports of the module',
-        'return module.exports;'
-      ])
-    })
-    mainTemplate.hooks.requireExtensions.tap(
-      'WxsMainTemplatePlugin',
-      () => {
-        return Template.asString([
-          '// define harmony function exports',
-          `${mainTemplate.requireFn}.d = function(exports, name, getter) {`,
-          Template.indent([
-            'exports[name] = getter();'
-          ]),
-          '};',
-          '',
-          '// define __esModule on exports',
-          `${mainTemplate.requireFn}.r = function(exports) {`,
-          Template.indent([
-            'exports.__esModule = true;'
-          ]),
-          '};',
-          '',
-          '// getDefaultExport function for compatibility with non-harmony modules',
-          mainTemplate.requireFn + '.n = function(module) {',
-          Template.indent([
-            'var getter = module && module.__esModule ?',
-            Template.indent([
-              'function getDefault() { return module["default"]; } :',
-              'function getModuleExports() { return module; };'
-            ]),
-            `getter.a = getter();`,
-            'return getter;'
-          ]),
-          '};'
-        ])
-      }
-    )
-    mainTemplate.hooks.renderWithEntry.tap(
-      'WxsMainTemplatePlugin',
-      (source, chunk, hash) => {
-        const prefix = config[this.options.mode].wxs.templatePrefix
-        return new ConcatSource(prefix, source)
-      }
-    )
+  apply (compilation) {
+    const hooks = JavascriptModulesPlugin.getCompilationHooks(compilation)
 
-    mainTemplate.hooks.startup.tap('MainTemplate', (source, chunk, hash) => {
-      /** @type {string[]} */
-      const buf = []
-      if (chunk.entryModule) {
-        buf.push('// Load entry module and return exports')
-        buf.push(
-          `var entryExports = ${mainTemplate.renderRequireFunctionForModule(
-            hash,
-            chunk,
-            JSON.stringify(chunk.entryModule.id)
-          )}(${mainTemplate.requireFn}.s = ${JSON.stringify(chunk.entryModule.id)});`
+    hooks.renderStartup.tap('WxsTemplatePlugin', (source) => {
+      const postfix = 'return __webpack_exports__ && __webpack_exports__.__esModule? __webpack_exports__["default"] : __webpack_exports__;\n'
+      return new ConcatSource(source, postfix)
+    })
+
+    hooks.render.tap('WxsTemplatePlugin', (source) => {
+      const prefix = config[this.options.mode].wxs.templatePrefix
+      return new ConcatSource(prefix, source)
+    })
+
+    // __webpack_require__.r
+    compilation.hooks.runtimeRequirementInTree
+      .for(RuntimeGlobals.makeNamespaceObject)
+      .tap({
+        name: 'WxsTemplatePlugin',
+        stage: -1000
+      }, chunk => {
+        compilation.addRuntimeModule(
+          chunk,
+          new MakeNamespaceObjectRuntimeModule()
         )
-        buf.push('return entryExports && entryExports.__esModule? entryExports["default"] : entryExports;')
-      }
-      return Template.asString(buf)
-    })
+        return true
+      })
 
-    mainTemplate.hooks.hash.tap('WxsMainTemplatePlugin', hash => {
-      hash.update('wxs')
-      hash.update(this.options.mode)
-    })
+    // __webpack_require__.n
+    compilation.hooks.runtimeRequirementInTree
+      .for(RuntimeGlobals.compatGetDefaultExport)
+      .tap({
+        name: 'WxsTemplatePlugin',
+        stage: -1000
+      }, chunk => {
+        compilation.addRuntimeModule(
+          chunk,
+          new CompatGetDefaultExportRuntimeModule()
+        )
+        return true
+      })
+
+    // mainTemplate.hooks.requireExtensions.tap(
+    //   'WxsMainTemplatePlugin',
+    //   () => {
+    //     return Template.asString([
+    //       '// define harmony function exports',
+    //       `${mainTemplate.requireFn}.d = function(exports, name, getter) {`,
+    //       Template.indent([
+    //         'exports[name] = getter();'
+    //       ]),
+    //       '};',
+    //       '',
+    //       '// define __esModule on exports',
+    //       `${mainTemplate.requireFn}.r = function(exports) {`,
+    //       Template.indent([
+    //         'exports.__esModule = true;'
+    //       ]),
+    //       '};',
+    //       '',
+    //       '// getDefaultExport function for compatibility with non-harmony modules',
+    //       mainTemplate.requireFn + '.n = function(module) {',
+    //       Template.indent([
+    //         'var getter = module && module.__esModule ?',
+    //         Template.indent([
+    //           'function getDefault() { return module["default"]; } :',
+    //           'function getModuleExports() { return module; };'
+    //         ]),
+    //         `getter.a = getter();`,
+    //         'return getter;'
+    //       ]),
+    //       '};'
+    //     ])
+    //   }
+    // )
   }
 }

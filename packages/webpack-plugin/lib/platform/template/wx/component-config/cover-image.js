@@ -8,6 +8,9 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-image'
     },
+    tt () {
+      return 'image'
+    },
     props: [
       {
         test: 'use-built-in',

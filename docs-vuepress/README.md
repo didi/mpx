@@ -1,17 +1,278 @@
 ---
 home: true
+layout: homepageLayout
 heroImage: /logo.png
-heroText: null
-tagline: Mpx, 一款具有优秀开发体验和深度性能优化的增强型小程序开发框架
-actionText: 快速上手 →
-actionLink: /guide/basic/start
+heroText: 增强型跨端小程序框架
+tagline: 良好的开发体验，极致的应用性能，完整的原生兼容，一份源码跨端输出所有小程序平台及Web。
+actionText: 快速进入
+actionLink: /guide/basic/start.html
+githubText: Github
+githubLink: https://github.com/didi/mpx
 features:
-- title: 高效稳定
-  details: 以增强的方式将Vue中大量优良特性引入到小程序开发中，配合灵活强大的编译构建，大大提升了小程序开发体验和效率，同时提供了媲美原生开发的稳定性。
 - title: 高性能
-  details: 框架自带深度的运行时性能优化及包体积优化，让开发者在大多数场景下只需专注于业务开发，就能生产出媲美原生的高性能小程序应用。
+  details: Mpx高度关注小程序性能与包体积，深度整合了运行时性能优化与包体积分析优化能力，让开发者在大部分场景下只需专注于业务开发，就能生产出媲美甚至超出原生的高性能小程序应用。
+  icon: https://dpubstatic.udache.com/static/dpubimg/PsrcQ_igBl/texing_icon_you.png
+  micon: https://dpubstatic.udache.com/static/dpubimg/BBQBgCRCOl/y_icon_you.png
+- title: 优体验
+  details: 以增强的方式将Vue中优良的开发特性引入到小程序开发中，如数据响应、组合式api等，配合强大的工程化能力，大大提升了小程序开发的体验与效率，同时保障了框架开发的可维护性与可预期性。
+  icon: https://dpubstatic.udache.com/static/dpubimg/N7sc6TZnja/texing_icon_gao.png
+  micon: https://dpubstatic.udache.com/static/dpubimg/0S3n12uc1k/y_icon_gao.png
 - title: 跨平台
-  details: 一份源码，多端运行，Mpx专注解决小程序跨端问题，以静态编译为主要手段，将业务源码输出到微信/支付宝/百度/头条/QQ小程序平台和web环境下运行。
+  details: Mpx专注解决小程序跨端问题，通过静态转译与运行时适配结合，将一份源码跨端输出到所有开放的小程序平台和web环境下运行，同时最大限度减少跨端带来的性能与包体积损失。
+  icon: https://dpubstatic.udache.com/static/dpubimg/bJMx84lznm/texing_icon_kua.png
+  micon: https://dpubstatic.udache.com/static/dpubimg/KPG_IXLuwU/y_icon_kua.png
+threeSection:
+  title: 示例项目
+  details: 扫码查看使用Mpx开发的todoMVC项目在各个小程序平台及web下的运行情况，更多示例项目代码可点击这里查看。
+  mdetails: TodoMVC是一个示例项目，它使用目前流行的不同JavaScript框架的来实现同一个Demo，来帮助你熟悉和选择最合适的前端框架。
+  actionText: 查看详情
+  actionLink: https://dpubstatic.udache.com/static/dpubimg/c3b0d3bc-1bb0-4bee-b6da-4205a2744e21.html#/pages/index
+  img: https://dpubstatic.udache.com/static/dpubimg/nYbrJSPSz7/anli_pic_phone.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_bg_v3.png
+  list:
+    - title: 微信
+      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_normal.png
+      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_wechat_active.png
+      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/wx-qrcode.jpg
+    - title: 支付宝
+      icon1: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_normal.png
+      icon2: https://gift-static.hongyibo.com.cn/static/kfpub/3547/todomvc_icon_alipay_active.png
+      code: https://gift-static.hongyibo.com.cn/static/kfpub/3547/ali-qrcode.jpg
+  mlist:
+    - title: 微信
+      icon: https://dpubstatic.udache.com/static/dpubimg/ho5eKaVX5L/y_icon_wechat.png
+    - title: QQ
+      icon: https://dpubstatic.udache.com/static/dpubimg/IoQuifVymo/y_icon_qq.png
+    - title: 支付宝
+      icon: https://dpubstatic.udache.com/static/dpubimg/rMS51-MYUE/y_icon_zhifubao.png
+    - title: 百度
+      icon: https://dpubstatic.udache.com/static/dpubimg/nth1TOFUVA/y_icon_baidu.png
+    - title: 字节跳动
+      icon: https://dpubstatic.udache.com/static/dpubimg/JQBu676x6W/y_icon_zijie.png
+    - title: Web
+      icon: https://dpubstatic.udache.com/static/dpubimg/d4pVP4BUGU/y_icon_web.png
+fourSection:
+  title: 极致性能
+  details: 得益于增强的设计思路，Mpx在运行时没有复杂的封装抹平逻辑，而是专注于实现数据响应，setData优化和Composition api等关键增强能力，压缩后体积占用仅为60KB；配合编译构建中灵活强大的包体积分析优化能力，Mpx在性能与包体积方面做到了业内最优。
+  img: https://dpubstatic.udache.com/static/dpubimg/jvACYsEQfm/jizhi_pic.png
+  mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jizhi_bg_v3.png
+  actionText: 点击进入
+  actionLink: /guide/basic/start.html
+fiveSection:
+  title: 渐进迁移
+  details: 同样得益于增强的设计思路，Mpx能够完整兼容小程序原生技术规范，并以较低的成本进行持续跟进；借助框架提供的渐进迁移能力，小程序开发者可以方便地在Mpx项目中使用已有的原生开发生态，如组件库，统计工具等，同时也能将Mpx开发的组件输出到原生小程序项目中使用。
+  img: https://dpubstatic.udache.com/static/dpubimg/k5Ft6oWF6F/jianjin_pic.png
+  mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jianjin_bg_v3.png
+  actionText: 点击进入
+  actionLink: /guide/basic/start.html
+sixSection:
+  title: 开发生态
+  mtitle: 开发生态
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/kaifa_bg_v3.png
+  details:
+  - title: '@mpxjs/core'
+    details: 运行时核心
+    icon: https://dpubstatic.udache.com/static/dpubimg/K4XYVLjBLH/kaifa_icon_1.png
+    actionLink: /guide/basic/start.html
+  - title: '@mpxjs/webpack-plugin'
+    details: 编译核心
+    icon: https://dpubstatic.udache.com/static/dpubimg/2k0jC-ZkFX/kaifa_icon_2.png
+    actionLink: /guide/basic/start.html
+  - title: '@mpxjs/cli'
+    details: 脚手架工具
+    icon: https://dpubstatic.udache.com/static/dpubimg/ug3MOMmXaz/kaifa_icon_3.png
+    actionLink: /guide/basic/start.html
+  - title: '@mpxjs/fetch'
+    details: 网络请求库
+    icon: https://dpubstatic.udache.com/static/dpubimg/L6kO_akb2G/kaifa_icon_4.png
+    actionLink: /api/extend.html#mpx-fetch
+  - title: '@mpxjs/api-proxy api'
+    details: 增强调用
+    icon: https://dpubstatic.udache.com/static/dpubimg/oZGOmLr5f3/kaifa_icon_5.png
+    actionLink: /api/extend.html#api-proxy
+  - title: '@mpxjs/webview-bridge web'
+    details: 页面桥接
+    icon: https://dpubstatic.udache.com/static/dpubimg/trdVxyR_5_/kaifa_icon_6.png
+    actionLink: /api/extend.html#webview-bridge
+  - title: '@mpxjs/vscode-plugin ide'
+    details: 插件
+    icon: https://dpubstatic.udache.com/static/dpubimg/PczNH3wywM/kaifa_icon_7.png
+    actionLink: https://marketplace.visualstudio.com/items?itemName=pagnkelly.mpx
+  - title: '@mpxjs/es-check'
+    details: 高级语法检查
+    icon: https://dpubstatic.udache.com/static/dpubimg/qXb0ZEY4xN/kaifa_icon_8.png
+    actionLink: https://github.com/mpx-ecology/mpx-es-check
+  - title: '@mpxjs/size-report'
+    details: 包体积分析工具
+    icon: https://dpubstatic.udache.com/static/dpubimg/2pa_xoKoeL/kaifa_icon_9.png
+    actionLink: /guide/advance/size-report.html
+sevenSection:
+  title: 成功案例
+  bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/anli_bg_v3.png
+  details:
+  - title: 滴滴出行
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/bcca3d10-01b7-4c08-951a-22418b2443d6.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/didi2_v3.jpeg'
+  - title: 青桔单车
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/pIM3h2vyj2/qingju.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/shunfengche_demo_v3.jpeg'
+  - title: 滴滴顺风车
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/neOI_G6deQ/shunfengche.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/qingju_demo_v3.jpeg'
+  - title: 出行广场
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/708d5579-81f0-480e-96b3-5f49e8022273.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/guangchuang_v3.jpeg'
+  - title: 滴滴公交
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/69a08787-d3a1-4c51-b182-0fcb96960b56.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/didi2_v3.jpeg'
+  - title: 滴滴金融
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/8c25bec8-938e-452d-96f9-5e524092a8ee.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/jinlong_v3.jpeg'
+  - title: 滴滴外卖
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/8fdd04ed-a74b-4b87-be6e-652550fb843f.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/didi2_v3.jpeg'
+  - title: 司机招募
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/d3b62a33-7dbd-45ea-a4aa-f30ad61965f2.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/siji_v3.jpeg'
+  - title: 小桔加油
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/988099b3-9930-4c54-abd7-75e70134d649.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/jiayou_v3.jpeg'
+  - title: 番薯借阅
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/79573ef6-2a66-462e-8cc7-63eb983168f8.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/jieshu_v3.jpeg'
+  - title: 疫查查应用
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/8932c3c2-b6da-4da2-8661-5554fe2bd4a3.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/yiqin_v3.jpeg'
+  - title: 小桔养车
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/b6507fca-1e1f-4922-9240-d0f172bea6de.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/yangche_v3.jpeg'
+  - title: 学而思直播课
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/40fd646b-10d0-4383-a576-e1d425a8c05d.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/zhibo_v3.jpeg'
+  - title: 小猴启蒙课
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/6833dbdb-1dc8-4929-bd41-6d71069b0714.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/ai_v3.jpeg'
+  - title: 科创书店
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/8627f48d-cf64-4511-8b2f-ede8e54186a7.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/shudian_v3.jpeg'
+  - title: 在武院
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/421bf49b-a9cb-4d54-90d7-e21b80ab21b3.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/wuyuan_v3.jpeg'
+  - title: 三股绳Lite
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/46ee136b-0791-4069-98b0-35566d5ef394.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/daka_v3.jpeg'
+  - title: 学而思优选课
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/eab48487-5ca2-4368-9080-a6b843097e67.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/xueersi_v3.jpeg'
+  - title: 食享会
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/lY7eYSppkW/68747470733a2f2f73686978682e636f6d2f73686571752f696d672f7172636f64655f322e37343664373562342e706e67.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/canshi_v3.jpeg'
+  - title: 青铜安全医生
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/58cdbcc5-1f00-4da9-89c6-e638b2f77b19.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/qintong_v3.jpeg'
+  - title: 青铜安全培训
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/a9d60600-40c0-4b66-934e-3bb176d3f07a.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/peixun_v3.jpeg'
+  - title: 视穹云机械
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/0a816842-dda4-4e30-8c14-e951fb1a8131.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/jixie_v3.jpeg'
+  - title: 店有生意通
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/7f1b5f22-d765-4142-862a-999c1ed9d10f.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/shenyi_v3.jpeg'
+  - title: 花小猪打车
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/JzHnEyu8VT/aaa.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/dache_v3.jpeg'
+  - title: 橙心优选
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/37222642-c508-4a67-8cbc-036a66985bfc.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/chenxin_v3.jpeg'
+  - title: 小二押镖
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/nB6-p3WzIQ/xiaoeryabiao.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/xiaoer_v3.jpeg'
+  - title: 顺鑫官方微商城
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/nY2bg3A1L_/shunxin.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/shangchen_v3.jpeg'
+  - title: 嘀嗒出行
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/DO3m0Iflq1/didachuxing.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/dida_v3.jpeg'
+  - title: 汉行通Pro
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/86cd89be-de29-48ad-8cb0-72c432446e7b.jpg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/hantong_v3.jpeg'
+  - title: 滴滴出行(支付宝)
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/47fe83e5-c41a-4245-b910-60ed6493d87e.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/didi2_v3.jpeg'
+  - title: 小桔充电(支付宝)
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/fa1a524b-da97-4df3-9412-8c988f50b6ae.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/chongdian_v3.jpeg'
+  - title: 唯品会QQ
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/2a150b0a-e23d-4e91-98fe-e862410be911.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/weiping_v3.jpeg'
+  - title: 唯品会(百度)
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/56273723-ba98-4ceb-9672-075a5ab9f2da.png
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/weiping_v3.jpeg'
+  - title: 唯品会(字节)
+    details: 写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧写一些介绍的话语吧
+    img: https://dpubstatic.udache.com/static/dpubimg/88f898a0-2f3b-44c5-b7ce-c1a8aec25299.jpeg
+    demo: 'https://gift-static.hongyibo.com.cn/static/kfpub/3547/weiping_v3.jpeg'
+resourcesList:
+  title: 资源
+  details:
+  - title: 案例收集
+    actionLink: https://github.com/didi/mpx/issues/385
+communityList:
+  title: 社区
+  details:
+  - title: 微信群
+    actionLink: https://github.com/didi/mpx
+    img: https://dpubstatic.udache.com/static/dpubimg/6DN0ebkbjgI2P9QjJr8jr_WechatIMG3.jpeg
+  - title: QQ群
+    actionLink: https://github.com/didi/mpx
+    img: https://dpubstatic.udache.com/static/dpubimg/etX-gKWeUb/temp_qrcode_share_374632411.png
+helpList:
+  title: 帮助
+  details:
+  - title: 反馈问题
+    actionLink: https://github.com/didi/mpx/issues
+moreList:
+  title: 更多
+  details:
+  - title: 滴滴前端技术
+    actionLink: https://juejin.cn/user/4195392101298510
+
 ---
 
 ## 安装使用
@@ -21,186 +282,16 @@ features:
 npm i -g @mpxjs/cli
 
 # 初始化项目
-mpx init <project-name>
+mpx create <project-name>
 
 # 进入项目目录
 cd <project-name>
 
-# 安装依赖
-npm i
-
 # development
-npm run watch
+npm run serve
 
 # production
 npm run build
 ```
 
 使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
-
-## 简单示例
-
-```html
-<template>
-  <!--动态样式-->
-  <view class="container" wx:style="{{dynamicStyle}}">
-    <!--数据绑定-->
-    <view class="title">{{title}}</view>
-    <!--计算属性数据绑定-->
-    <view class="title">{{reversedTitle}}</view>
-    <view class="list">
-      <!--循环渲染，动态类名，事件处理内联传参-->
-      <view wx:for="{{list}}" wx:key="id" class="list-item" wx:class="{{ {active:item.active} }}"
-            bindtap="handleTap(index)">
-        <view>{{item.content}}</view>
-        <!--循环内部双向数据绑定-->
-        <input type="text" wx:model="{{list[index].content}}"/>
-      </view>
-    </view>
-    <!--自定义组件获取实例，双向绑定，自定义双向绑定属性及事件-->
-    <custom-input wx:ref="ci" wx:model="{{customInfo}}" wx:model-prop="info" wx:model-event="change"/>
-    <!--动态组件，is传入组件名字符串，可使用的组件需要在json中注册，全局注册也生效-->
-    <component is="{{current}}"></component>
-    <!--显示/隐藏dom-->
-    <view class="bottom" wx:show="{{showBottom}}">
-      <!--模板条件编译，__mpx_mode__为框架注入的环境变量，条件判断为false的模板不会生成到dist-->
-      <view wx:if="{{__mpx_mode__ === 'wx'}}">wx env</view>
-      <view wx:if="{{__mpx_mode__ === 'ali'}}">ali env</view>
-    </view>
-  </view>
-</template>
-
-<script>
-  import { createPage } from '@mpxjs/core'
-
-  createPage({
-    data: {
-      // 动态样式和类名也可以使用computed返回
-      dynamicStyle: {
-        fontSize: '16px',
-        color: 'red'
-      },
-      title: 'hello world',
-      list: [
-        {
-          content: '全军出击',
-          id: 0,
-          active: false
-        },
-        {
-          content: '猥琐发育，别浪',
-          id: 1,
-          active: false
-        }
-      ],
-      customInfo: {
-        title: 'test',
-        content: 'test content'
-      },
-      current: 'com-a',
-      showBottom: false
-    },
-    computed: {
-      reversedTitle () {
-        return this.title.split('').reverse().join('')
-      }
-    },
-    watch: {
-      title: {
-        handler (val, oldVal) {
-          console.log(val, oldVal)
-        },
-        immediate: true
-      }
-    },
-    handleTap (index) {
-      // 处理函数直接通过参数获取当前点击的index，清晰简洁
-      this.list[index].active = !this.list[index].active
-    },
-    onReady () {
-      setTimeout(() => {
-        // 更新数据，同时关联的计算属性reversedTitle也会更新
-        this.title = '你好，世界'
-        // 此时动态组件会从com-a切换为com-b
-        this.current = 'com-b'
-      }, 1000)
-    }
-  })
-</script>
-
-<script type="application/json">
-  {
-    "usingComponents": {
-      "custom-input": "../components/custom-input",
-      "com-a": "../components/com-a",
-      "com-b": "../components/com-b"
-    }
-  }
-</script>
-
-<style lang="stylus">
-  .container
-    position absolute
-    width 100%
-</style>
-```
-
-## 文档
-
-https://didi.github.io/mpx
-
-[官方示例项目](https://github.com/didi/mpx/tree/master/examples)
-
-## 设计思路
-
-Mpx的核心设计思路为增强，不同于业内大部分小程序框架将web MVVM框架迁移到小程序中运行的做法，Mpx以小程序原生的语法和技术能力为基础，借鉴参考了主流的web技术设计对其进行了扩展与增强，并在此技术上实现了以微信增强语法为base的同构跨平台输出，该设计带来的好处如下：
-* 良好的开发体验：在方便使用框架提供的便捷特性的同时，也能享受到媲美原生开发的确定性和稳定性，完全没有`框架太多坑，不如用原生`的顾虑；不管是增强输出还是跨平台输出，最终的dist代码可读性极强，便于调试排查；
-* 极致的性能：得益于增强的设计思路，Mpx框架在运行时不需要做太多封装抹平转换的工作，框架的运行时部分极为轻量简洁，压缩+gzip后仅占用14KB；配合编译构建进行的包体积优化和基于模板渲染函数进行的数据依赖跟踪，Mpx框架在性能方面做到了业内最优([小程序框架运行时性能评测报告](https://github.com/hiyuki/mp-framework-benchmark/blob/master/README.md))；
-* 完整的原生兼容：同样得益于增强的设计思路，Mpx框架能够完整地兼容小程序原生技术规范，并且做到实时跟进。在Mpx项目中开发者可以方便地使用业内已有的小程序生态，如组件库、统计工具等；原生开发者们可以方便地进行渐进迁移；甚至可以将框架的跨平台编译能力应用在微信的原生小程序组件当中进行跨平台输出。
-
-
-## 生态周边
-
-|包名|版本|描述|
-|-----|----|----|
-|@mpxjs/core|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcore.svg)](https://badge.fury.io/js/%40mpxjs%2Fcore)|mpx运行时核心|
-|@mpxjs/webpack-plugin|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebpack-plugin)|mpx编译核心|
-|@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
-|@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
-|@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
-|@mpxjs/api-proxy|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy.svg)](https://badge.fury.io/js/%40mpxjs%2Fapi-proxy)|将各个平台的 api 进行转换，也可以将 api 转为 promise 格式|
-|@mpxjs/mock|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmock.svg)](https://badge.fury.io/js/%40mpxjs%2Fmock)|结合mockjs提供数据mock能力|
-
-## 成功案例
-
-微信小程序
-
-|<img src="https://user-images.githubusercontent.com/6292668/75111787-a30fb000-5678-11ea-9ef1-78b18973ee75.jpg" width="100" title="滴滴出行"/>|<img src="https://user-images.githubusercontent.com/6292668/75132678-db63cc80-5712-11ea-93ba-0b9f3201dbe3.jpg" width="100" title="滴滴出行营销小程序"/>|<img src="https://user-images.githubusercontent.com/6292668/75133566-44007880-5716-11ea-9090-6e8acb0d77f1.jpg" width="100" title="滴滴动态公交"/>|<img src="https://user-images.githubusercontent.com/18554963/75134630-d8b8a580-5719-11ea-86fb-c3fdb8fbc144.png" width="100" title="滴滴金融"/>|<img src="https://user-images.githubusercontent.com/6292668/75148361-67d5b580-573a-11ea-873b-dd4dcf438bec.png" width="100" title="滴滴外卖"/>|<img src="https://user-images.githubusercontent.com/9695264/75208528-ecfeb000-57b6-11ea-8c24-e9403df2a8a8.jpg" width="100" title="司机招募"/>|<img src="https://user-images.githubusercontent.com/6810697/75212655-87b0bc00-57c2-11ea-9e44-e1f62861feb8.png" width="100" title="小桔加油"/>|
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|滴滴出行|出行广场|滴滴公交|滴滴金融|滴滴外卖|司机招募|小桔加油|
-|<img src="https://user-images.githubusercontent.com/7993339/75113972-5387af00-568d-11ea-96c9-fe8122ce1032.jpg" width="100" title="彗星英语"/>|<img src="https://user-images.githubusercontent.com/18588816/75115186-322bc080-5697-11ea-9036-46066a19b65b.jpg" width="100" title="番薯借阅"/>|<img src="https://user-images.githubusercontent.com/16451550/75129100-6c7e7780-5702-11ea-87c0-dd3faf7a7538.jpg" width="100" title="疫查查应用"/>|<img src="https://user-images.githubusercontent.com/6810697/75212604-69e35700-57c2-11ea-9190-d8a6cb77ba9d.jpg" width="100" title="小桔养车"/>|<img src="https://user-images.githubusercontent.com/6810697/75530109-a2976080-5a4e-11ea-97fa-01a433538ece.jpeg" width="100" title="学而思网校免费直播课"/>|<img src="https://user-images.githubusercontent.com/6810697/75531887-26514d00-5a4f-11ea-81c8-3df632531178.jpeg" width="100" title="小猴启蒙课"/>|<img src="https://user-images.githubusercontent.com/10382462/76416594-547f4700-63d6-11ea-9e9f-390a64e6b9c5.png" width="100" title="科创书店"/>|
-|彗星英语|番薯借阅|疫查查应用|小桔养车|学而思直播课|小猴启蒙课|科创书店|
-|<img src="https://user-images.githubusercontent.com/14816052/76678054-9fd06a00-660f-11ea-8631-be93fe3dc2c2.jpg" width="100" title="在武院"/>|<img src="https://user-images.githubusercontent.com/17399581/77496337-b7b4b300-6e85-11ea-99b8-0ce90844ec67.jpg" width="100" title="三股绳Lite - 群打卡"/>|<img src="https://user-images.githubusercontent.com/6810697/75530379-b80c8a80-5a4e-11ea-9962-add87d56a320.jpeg" width="100" title="学而思网校优选课"/>|<img src="https://camo.githubusercontent.com/8874e8affe1a73de24a94de7072df0d0ccaf2f99/68747470733a2f2f73686978682e636f6d2f73686571752f696d672f7172636f64655f322e37343664373562342e706e67" width="100" title="食享会"/>|<img src="https://user-images.githubusercontent.com/7945757/75128784-c4b47a00-5700-11ea-9a45-4ac0ccdad7ed.png" width="100" title="青铜安全医生"/>|<img src="https://user-images.githubusercontent.com/7945757/75128831-f9283600-5700-11ea-8f6b-50b0abb669fd.png" width="100" title="青铜安全培训"/>|<img src="https://user-images.githubusercontent.com/7945757/77252487-0ba97700-6c8f-11ea-9a0c-377aae60e49e.png" width="100" title="视穹云机械"/>|
-|在武院|三股绳Lite|学而思优选课|食享会|青铜安全医生|青铜安全培训|视穹云机械|
-
-其他平台小程序：
-
-|<img src="https://user-images.githubusercontent.com/6292668/75112173-2bdc1b00-567c-11ea-8c20-aee5472cd4eb.png" width="120" title="滴滴出行(支付宝)"/>|<img src="https://user-images.githubusercontent.com/6810697/75212688-a31bc700-57c2-11ea-9d75-57430cb32c8f.png" width="120" title="小桔充电(支付宝)"/>|<img src="https://user-images.githubusercontent.com/916567/75526665-27817a80-5a4d-11ea-9fec-05005f4ad99c.png" width="120" title="唯品会QQ"/>|<img src="https://user-images.githubusercontent.com/22525904/75538291-539ffa00-5a53-11ea-961d-23e7d849e5a1.png" width="120" title="口袋证件照"/>|<img src="https://user-images.githubusercontent.com/916567/75525961-cad19000-5a4b-11ea-90b2-9f284ce9e680.png" width="120" title="唯品会字节"/>|
-|:---:|:---:|:---:|:---:|:---:|
-|滴滴出行(支付宝)|小桔充电(支付宝)|唯品会(QQ)|口袋证件照(百度)|唯品会(百度)|
-
-[更多案例](https://github.com/didi/mpx/issues/385)，若你也在使用Mpx框架开发小程序，并想分享给大家，请填在此issue中。
-
-## 交流
-
-提供 微信群 / QQ群 两种交流方式
-
-#### 添加MPX入群客服等待受邀入群
-
-<img alt="Mpx-wx客服" src="https://dpubstatic.udache.com/static/dpubimg/3c2048fd-350d-406f-8a84-a3a7b8b9dcf3.jpg" width="300">
-
-#### 扫码进入QQ群
-
-<img alt="Mpx-QQ群" src="https://dpubstatic.udache.com/static/dpubimg/ArcgC_eEr/temp_qrcode_share_374632411.png" width="300">
-
-图片因github网络问题导致不可见的朋友可以点击该链接：[https://s.didi.cn/rod](https://s.didi.cn/rod)

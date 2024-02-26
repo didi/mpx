@@ -24,8 +24,9 @@ function objectKeys (obj) {
         var shift = false
         for (var i = 1; i < objStr.length - 1; i++) {
           var item = objStr[i]
+          var lastItem = objStr[i - 1]
           if (inKey) {
-            if (item === ':') {
+            if (item === ':' && lastItem === '"') {
               keys.push(key.slice(1, -1))
               key = ''
               inKey = false
@@ -81,7 +82,7 @@ function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
-function likeArray (arr) {
+function isArray (arr) {
   if (!__mpx_wxs__) {
     return Array.isArray(arr)
   } else {
@@ -93,25 +94,60 @@ function isDef (v) {
   return v !== undefined && v !== null
 }
 
-function stringifyClass (value) {
-  if (!value) return ''
-  if (likeArray(value)) {
-    return stringifyArray(value)
+var escapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  // wxs can not use '\'' as key
+  // wxs环境中'\''!=="'"，此文件不能格式化，否则会导致程序错误
+  "'": '_q_',
+  // wxs can not use '"' as key
+  '"': '_dq_',
+  '+': '_a_',
+  '$': '_si_'
+}
+
+var escapeReg = genRegExp('[()[\]{}#!/.:,%\'"+$]', 'g')
+
+function mpEscape (str) {
+  return str.replace(escapeReg, function (match) {
+    if (escapeMap[match]) return escapeMap[match]
+    // fix wxs can not use '}' as key
+    if (match === '}') return '_cr_'
+    // unknown escaped
+    return '_u_'
+  })
+}
+
+
+function stringifyDynamicClass (value) {
+  if (isArray(value)) {
+    value = stringifyArray(value)
+  } else if (isObject(value)) {
+    value = stringifyObject(value)
   }
-  if (isObject(value)) {
-    return stringifyObject(value)
-  }
+
   if (typeof value === 'string') {
-    return value
+    return mpEscape(value)
+  } else {
+    return ''
   }
-  return ''
 }
 
 function stringifyArray (value) {
   var res = ''
   var stringified
   for (var i = 0; i < value.length; i++) {
-    if (isDef(stringified = stringifyClass(value[i])) && stringified !== '') {
+    if (isDef(stringified = stringifyDynamicClass(value[i])) && stringified !== '') {
       if (res) res += ' '
       res += stringified
     }
@@ -120,6 +156,8 @@ function stringifyArray (value) {
 }
 
 var mpxDashReg = genRegExp('(.+)MpxDash$')
+// 转义字符在wxs正则中存在平台兼容性问题，用[$]规避使用转义字符
+var mpxDashReplaceReg = genRegExp('[$]', 'g')
 
 function stringifyObject (value) {
   var res = ''
@@ -129,7 +167,7 @@ function stringifyObject (value) {
     if (value[key]) {
       if (res) res += ' '
       if (mpxDashReg.test(key)) {
-        key = hump2dash(mpxDashReg.exec(key)[1])
+        key = mpxDashReg.exec(key)[1].replace(mpxDashReplaceReg, '-')
       }
       res += key
     }
@@ -160,7 +198,10 @@ function parseStyleText (cssText) {
     var item = arr[i]
     if (item) {
       var tmp = item.split(propertyDelimiter)
-      tmp.length > 1 && (res[dash2hump(tmp[0].trim())] = tmp[1].trim())
+      if (tmp.length > 1) {
+        var k = dash2hump(tmp[0].trim())
+        res[k] = tmp[1].trim()
+      }
     }
   }
   return res
@@ -190,7 +231,7 @@ function mergeObjectArray (arr) {
 
 function normalizeDynamicStyle (value) {
   if (!value) return {}
-  if (likeArray(value)) {
+  if (isArray(value)) {
     return mergeObjectArray(value)
   }
   if (typeof value === 'string') {
@@ -204,7 +245,7 @@ module.exports = {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
-    return concat(staticClass, stringifyClass(dynamicClass))
+    return concat(staticClass, stringifyDynamicClass(dynamicClass))
   },
   stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)

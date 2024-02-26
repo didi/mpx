@@ -20,13 +20,17 @@ module.exports = function ({ print }) {
   const qqValueLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'value' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttValueLogError = print({ platform: 'bytedance', tag: TAG_NAME, isError: true, type: 'value' })
   const ttValueLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'value' })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -75,19 +79,19 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             // 如果是个变量，报warning
             baiduValueLog({ name, value })
-          } else if (supportList.indexOf(value) === -1) {
+          } else if (value && supportList.indexOf(value) === -1) {
             baiduValueLogError({ name, value })
           }
         },
         qq ({ name, value }) {
-          const supportList = ['share', 'getUserInfo', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
+          const supportList = ['share', 'getUserInfo', 'getPhoneNumber', 'launchApp', 'openSetting', 'contact', 'feedback', 'openGroupProfile', 'addFriend', 'addColorSign', 'openPublicProfile', 'addGroupApp', 'shareMessageToFriend', 'addToFavorites']
           if (wxSupportPropsValue[name] && wxSupportPropsValue[name].indexOf(value) === -1) {
             wxPropValueLog({ name, value })
           }
           if (isMustache(value)) {
             // 如果是个变量，报warning
             qqValueLog({ name, value })
-          } else if (supportList.indexOf(value) === -1) {
+          } else if (value && supportList.indexOf(value) === -1) {
             qqValueLogError({ name, value })
           }
         },
@@ -98,8 +102,8 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            const supportList = ['share', 'getPhoneNumber', 'contact']
-            if (supportList.indexOf(value) === -1) {
+            const supportList = ['share', 'getPhoneNumber', 'contact', 'im', 'openSetting']
+            if (value && supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
           }
@@ -118,6 +122,10 @@ module.exports = function ({ print }) {
         qq: qqPropLog
       },
       {
+        test: /^(session-from|send-message-title|send-message-path|send-message-img|show-message-card|bindcontact|bindlaunchapp)$/,
+        jd: jdPropLog
+      },
+      {
         test: /^(plain|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card)$/,
         tt: ttPropLog
       },
@@ -131,6 +139,10 @@ module.exports = function ({ print }) {
           // todo 这部分能力基于内部封装实现
           el.isBuiltIn = true
         }
+      },
+      {
+        test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|bindgetuserinfo|bindcontact|bindgetphonenumber|binderror|bindopensetting|bindlaunchapp)$/,
+        qa: qaPropLog
       }
     ],
     event: [
@@ -151,6 +163,10 @@ module.exports = function ({ print }) {
       {
         test: /^(getphonenumber)$/,
         qq: qqEventLog
+      },
+      {
+        test: /^(contact|feedback)$/,
+        jd: jdEventLog
       },
       {
         test: /^(getuserinfo|contact|error|launchapp|opensetting)$/,

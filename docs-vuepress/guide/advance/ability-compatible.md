@@ -13,7 +13,15 @@ Mpx 支持微信小程序原生自定义 tabbar ，关于自定义 tabbar 的详
   "tabBar": {
     "custom": true,
     "color": "#000000",
-    "backgroundColor": "#ffffff"
+    "selectedColor": "#000000",
+    "backgroundColor": "#000000",
+    "list": [{
+      "pagePath": "./page/component/index",
+      "text": "组件"
+    }, {
+      "pagePath": "./page/API/index",
+      "text": "接口"
+    }]
   },
   "usingComponents": {}
 }
@@ -41,7 +49,7 @@ Mpx 完全支持小程序原生的 worker ，需要在 app.mpx 文件中的 json
 
 Mpx 支持微信小程序提供的原生云开发能力。如果需要在项目中使用云开发的能力，可以通过 Mpx 脚手架工具在初始化项目时选择支持云开发。如果需要支持云开发能力，在项目初始化时需要选择是微信平台下，且不能支持跨平台开发。如下图所示：
 
-![云开发](../../assets/images/cloud.png)
+![云开发](https://gift-static.hongyibo.com.cn/static/kfpub/3547/cloud_v2.png)
 
 更多关于云开发相关可查看[这里](https://developers.weixin.qq.com/miniprogram/dev/wxcloud/basis/getting-started.html)
 

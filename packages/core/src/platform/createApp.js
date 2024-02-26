@@ -1,10 +1,12 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap } from '../helper/utils'
+import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
+import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
+import Mpx from '../index'
 
-const webAppHooksMap = makeMap(webLifecycle.LIFECYCLE.APP_HOOKS)
+const webAppHooksMap = makeMap(mergeLifecycle(webLifecycle.LIFECYCLE).app)
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -22,14 +24,19 @@ function filterOptions (options, appData) {
 }
 
 export default function createApp (option, config = {}) {
-  const builtInMixins = []
+  // 在App中挂载mpx对象供周边工具访问，如e2e测试
+  const builtInMixins = [{
+    getMpx () {
+      return Mpx
+    }
+  }]
   const appData = {}
   if (__mpx_mode__ === 'web') {
     builtInMixins.push({
       created () {
-        Object.assign(this, option.proto)
+        Object.assign(this, Mpx.prototype)
         Object.assign(this, appData)
-        const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
+        const current = this.$root.$options?.router?.currentRoute || {}
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,
@@ -37,33 +44,49 @@ export default function createApp (option, config = {}) {
           shareTicket: '',
           referrerInfo: {}
         }
+        global.__mpxEnterOptions = options
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
-          hide: []
+          hide: [],
+          error: []
         }
-        if (this.$options.onShow) {
-          this.$options.onShow.call(this, options)
-          global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
-        }
-        if (this.$options.onHide) {
-          global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+        if (isBrowser) {
+          if (this.$options.onShow) {
+            this.$options.onShow.call(this, options)
+            global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
+          }
+          if (this.$options.onHide) {
+            global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+          }
+          if (this.$options.onError) {
+            global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+          }
         }
       }
     })
   } else {
+    if (option.onAppInit) {
+      option.onAppInit()
+    }
     builtInMixins.push({
       onLaunch () {
-        Object.assign(this, option.proto)
+        Object.assign(this, Mpx.prototype)
       }
     })
   }
-  const { rawOptions } = transferOptions(option, 'app', builtInMixins)
-  const defaultOptions = filterOptions(mergeOptions(rawOptions, 'app', false), appData)
+  // app选项目前不需要进行转换
+  const { rawOptions } = transferOptions(option, 'app', false)
+  rawOptions.mixins = builtInMixins
+  const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web') {
-    global.currentOption = defaultOptions
+    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+    global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
     global.getApp = function () {
+      if (!isBrowser) {
+        console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
+      }
       return appData
     }
   } else {

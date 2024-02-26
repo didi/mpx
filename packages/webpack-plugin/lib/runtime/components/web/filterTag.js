@@ -1,6 +1,15 @@
+const {
+  isRichTextTag,
+  isUnaryTag,
+  isSpace,
+  isContWidth,
+  isContHeight,
+  isContConRow
+} = require('../../../utils/dom-tag-config')
+
 // eslint-disable-next-line
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/ // useless escape
-const ncname = `[a-zA-Z_][\\w\\-\\.]*`
+const ncname = '[a-zA-Z_][\\w\\-\\.]*'
 const qname = `((?:${ncname}\\:)?${ncname})`
 const startTagOpen = new RegExp(`^<${qname}`)
 const startTagClose = /^\s*(\/?)>/
@@ -10,36 +19,6 @@ const comment = /^<!\--/
 // eslint-disable-next-line
 const invalidAttributeRE = /[\s"'<>\/=]/
 let currentParent
-
-function makeMap (str, expectsLowerCase) {
-  const map = Object.create(null)
-  const list = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase
-    ? val => map[val.toLowerCase()]
-    : val => map[val]
-}
-
-const isRichTextTag = makeMap(
-  'a,abbr,address,article,aside,b,bdi,bdo,big,blockquote,br,caption,' +
-  'center,cite,code,col,colgroup,dd,del,div,dl,dt,em,fieldset,' +
-  'font,footer,h1,h2,h3,h4,h5,h6,header,hr,i,img,ins,label,legend,' +
-  'li,mark,nav,ol,p,pre,q,rt,ruby,s,section,small,span,strong,sub,sup,' +
-  'table,tbody,td,tfoot,th,thead,tr,tt,u,ul'
-)
-const isUnaryTag = makeMap(
-  'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
-  'link,meta,param,source,track,wbr'
-)
-const isSpace = makeMap('ensp,emsp,nbsp')
-
-const isContWidth = makeMap('col,colgroup,img,table,td,th,tr')
-
-const isContHeight = makeMap('img,td,th,tr')
-
-const isContConRow = makeMap('td,th,tr')
 
 function makeAttrsMap (attrs) {
   const map = {}
@@ -208,7 +187,7 @@ function parseHTML (html, options) {
 }
 
 export function parse (template) {
-  let nodes = []
+  const nodes = []
   const stack = []
   let root
   function pushChild (currentParent, child) {
@@ -220,7 +199,7 @@ export function parse (template) {
   }
   parseHTML(template, {
     start (tag, attrs, unary) {
-      let element = createASTElement(tag, attrs, currentParent)
+      const element = createASTElement(tag, attrs, currentParent)
       if (!unary && !stack.length) {
         root = element
       }
@@ -232,9 +211,9 @@ export function parse (template) {
       }
       attrs.forEach(attr => {
         if (invalidAttributeRE.test(attr.name)) {
-          console.warn(`Invalid dynamic argument expression: attribute names cannot contain ` +
-            `spaces, quotes, <, >, / or =.`, {
-            start: attr.start + attr.name.indexOf(`[`),
+          console.warn('Invalid dynamic argument expression: attribute names cannot contain ' +
+            'spaces, quotes, <, >, / or =.', {
+            start: attr.start + attr.name.indexOf('['),
             end: attr.start + attr.name.length
           })
         }

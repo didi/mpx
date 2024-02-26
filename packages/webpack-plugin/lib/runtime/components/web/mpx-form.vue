@@ -28,16 +28,25 @@
     })
     return value
   }
+  function setEmptyValue (value) {
+    if (typeof value === 'string') {
+      return ''
+    } else if (typeof value === 'number') {
+      return 0
+    } else if (Array.isArray(value)) {
+      return []
+    }
+  }
 
   function setFormValue (slot, value) {
     travelSlot(slot, (VNode) => {
       if (VNode.tag) {
         const el = VNode.elm
         const component = VNode.componentInstance
-        if (component && component.name && component.notifyChange) {
-          component.notifyChange(value[component.name])
+        if (component && component.name && component.setValue) {
+          component.setValue(setEmptyValue(value[component.name]))
         } else if (el && el.name && el.value !== undefined) {
-          el.value = value[el.name]
+          el.value = setEmptyValue(value[el.name])
         }
       }
     })
@@ -50,7 +59,7 @@
         class: 'mpx-form',
         on: getInnerListeners(this, { ignoredListeners: ['submit', 'reset'] }),
       }
-      return createElement('div', data, this.$slots.default)
+      return createElement('form', data, this.$slots.default)
     },
     mounted () {
       this.initialValue = getFormValue(this.$slots.default, (VNode) => {
@@ -67,11 +76,11 @@
     methods: {
       submit () {
         const value = getFormValue(this.$slots.default)
-        this.$emit('submit', getCustomEvent('submit', { value }))
+        this.$emit('submit', getCustomEvent('submit', { value }, this))
       },
       reset () {
         setFormValue(this.$slots.default, this.initialValue)
-        this.$emit('reset', getCustomEvent('reset', { value: this.initialValue }))
+        this.$emit('reset', getCustomEvent('reset', { value: this.initialValue }, this))
       }
     }
   }

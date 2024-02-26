@@ -3,16 +3,36 @@ import CancelToken from './cancelToken'
 
 let installed = false
 
-function install (proxyMPX, options, MPX) {
+let xfetch = null
+
+// RequestQueue Options
+const defaultRequestQueueOptions = {
+  limit: 10,
+  delay: 0 // ms
+}
+
+function install (proxyMpx, options, Mpx) {
   if (installed) return
-  const xfetch = new XFetch(options, MPX)
+  // add request queue when mode is qq
+  const isqq = __mpx_mode__ === 'qq'
+  xfetch = new XFetch(isqq ? { useQueue: defaultRequestQueueOptions, ...options } : options, Mpx)
   installed = true
-  proxyMPX.xfetch = xfetch
-  Object.defineProperty(proxyMPX.prototype, '$xfetch', {
+  proxyMpx.xfetch = xfetch
+  Object.defineProperty(proxyMpx.prototype, '$xfetch', {
     get () {
       return xfetch
     }
   })
+}
+
+function useFetch (options) {
+  if (options) {
+    return new XFetch(options)
+  } else if (xfetch) {
+    return xfetch
+  } else {
+    console.error('useFetch method calls must be made after the @mpxjs/fetch plugin is used')
+  }
 }
 
 export { XFetch, CancelToken }
@@ -20,5 +40,6 @@ export { XFetch, CancelToken }
 export default {
   install,
   XFetch,
-  CancelToken
+  CancelToken,
+  useFetch
 }

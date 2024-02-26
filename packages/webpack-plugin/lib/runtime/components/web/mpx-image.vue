@@ -1,5 +1,6 @@
 <script>
-  import getInnerListeners from './getInnerListeners'
+  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
+  import { isBrowser } from '../../env'
 
   export default {
     name: 'mpx-image',
@@ -21,31 +22,44 @@
       }
     },
     beforeCreate () {
-      this.image = new Image()
-      this.image.onload = (e) => {
-        this.$emit('load', e)
-      }
-      this.image.onerror = (e) => {
-        this.$emit('error', e)
+      if (isBrowser) {
+        this.image = new Image()
+        this.image.onload = () => {
+          this.$emit('load', getCustomEvent('load', {
+            width: this.image.width,
+            height: this.image.height
+          }, this))
+        }
+        this.image.onerror = () => {
+          this.$emit('error', getCustomEvent('error', {}, this))
+        }
       }
     },
     watch: {
       src: {
         handler (src) {
-          if (src) this.image.src = src
+          if (src && this.image) this.image.src = src
         },
         immediate: true
       }
     },
     render (createElement) {
-      if (this.mode === 'widthFix') {
+      if (this.mode === 'widthFix' || this.mode === 'heightFix') {
+        let style
+        if (this.mode === 'widthFix') {
+          style = {
+            height: 'auto'
+          }
+        } else {
+          style = {
+            width: 'auto'
+          }
+        }
         const domProps = {}
         if (this.src) domProps.src = this.src
         return createElement('img', {
           domProps,
-          style: {
-            height: 'auto'
-          },
+          style,
           class: ['mpx-image'],
           on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
         })

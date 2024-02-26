@@ -3,23 +3,22 @@ const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const templateCompiler = require('../../../template-compiler/compiler')
-const parseMustache = templateCompiler.parseMustache
-const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
+const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
+const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
     // props预处理
     preProps: [],
     // props后处理
     postProps: [
       {
         web ({ name, value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             return {
-              name: ':' + name,
+              name: name === 'animation' ? 'v-animation' : ':' + name,
               value: parsed.result
             }
           }
@@ -33,66 +32,51 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:for',
         swan (obj, data) {
           const attrsMap = data.el.attrsMap
-          const parsed = parseMustache(obj.value)
+          const parsed = parseMustacheWithContext(obj.value)
           let listName = parsed.result
-          let KEY_TYPES = {
-            PROPERTY: 0,
-            INDEX: 1
-          }
-          let keyType = KEY_TYPES.PROPERTY
-          // 在wx:for="abcd"值为字符串时varListName为null,按照小程序循环规则将字符串转换为 ["a", "b", "c", "d"]
-          if (parsed.hasBinding) {
-            // unwrap ()
-            listName = listName.slice(1, -1)
-            // 处理数字循环
-            if (/^\d+$/.test(listName)) {
-              keyType = KEY_TYPES.INDEX
-              // 创建循环数组
-              const loopNum = +listName
-              // 定义一个建议值,因为会增加template文件大小,
-              if (loopNum > 300) warn(`It's not recommended to exceed 300 in baidu environment`)
-              let list = []
-              for (let i = 0; i < loopNum; i++) {
-                list[i] = i
-              }
-              listName = JSON.stringify(list)
-            }
-          } else {
-            keyType = KEY_TYPES.INDEX
-            // for值为字符串,转成字符数组
-            listName = JSON.stringify(parsed.val.split(''))
-          }
+          const el = data.el
+
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
           const keyName = attrsMap['wx:key'] || null
           let keyStr = ''
+
+          if (parsed.hasBinding) {
+            listName = listName.slice(1, -1)
+          }
+
           if (keyName) {
-            const parsed = parseMustache(keyName)
+            const parsed = parseMustacheWithContext(keyName)
             if (parsed.hasBinding) {
               // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
             } else if (keyName === '*this') {
               keyStr = ` trackBy ${itemName}`
             } else {
-              // 定义key索引
-              if (keyType === KEY_TYPES.INDEX) {
-                warn(`The numeric type loop variable does not support custom keys. Automatically set to the index value.`)
-                keyStr = ` trackBy ${itemName}`
-              } else if (keyType === KEY_TYPES.PROPERTY && !isValidIdentifierStr(keyName)) {
+              if (!isValidIdentifierStr(keyName)) {
                 keyStr = ` trackBy ${itemName}['${keyName}']`
-              } else if (keyType === KEY_TYPES.PROPERTY) {
-                keyStr = ` trackBy ${itemName}.${keyName}`
               } else {
-                // 以后增加其他key类型
+                keyStr = ` trackBy ${itemName}.${keyName}`
               }
+            }
+          }
+          if (el) {
+            const injectWxsProp = {
+              injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
+              injectWxsModuleName: '__swanHelper__'
+            }
+            if (el.injectWxsProps && Array.isArray(el.injectWxsProps)) {
+              el.injectWxsProps.push(injectWxsProp)
+            } else {
+              el.injectWxsProps = [injectWxsProp]
             }
           }
           return {
             name: 's-for',
-            value: `${itemName}, ${indexName} in ${listName}${keyStr}`
+            value: `${itemName}, ${indexName} in __swanHelper__.processFor(${listName})${keyStr}`
           }
         },
         web ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -140,9 +124,9 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'wx:model',
         web ({ value }, { el }) {
-          el.hasEvent = true
+          el.hasModel = true
           const attrsMap = el.attrsMap
-          const tagRE = /\{\{((?:.|\n)+?)\}\}(?!})/
+          const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
           const stringify = JSON.stringify
           const match = tagRE.exec(value)
           if (match) {
@@ -161,7 +145,7 @@ module.exports = function getSpec ({ warn, error }) {
                 modelValuePathArr = modelValuePath.split('.')
               }
             }
-            let modelValue = match[1].trim()
+            const modelValue = match[1].trim()
             return [
               {
                 name: ':' + modelProp,
@@ -196,14 +180,51 @@ module.exports = function getSpec ({ warn, error }) {
         }
       },
       {
-        // 样式类名绑定
-        test: /^wx:(class|style)$/,
-        web ({ name, value }) {
-          const dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+        // style样式绑定
+        test: /^(style|wx:style)$/,
+        web ({ value }, { el }) {
+          if (el.isStyleParsed) {
+            return false
+          }
+          const styleBinding = []
+          el.isStyleParsed = true
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
+            const parsed = parseMustacheWithContext(item.value)
+            styleBinding.push(parsed.result)
+          })
           return {
-            name: ':' + dir,
-            value: parsed.result
+            name: ':style',
+            value: `[${styleBinding}] | transRpxStyle`
+          }
+        }
+      },
+      {
+        // 样式类名绑定
+        test: /^(class|wx:class)$/,
+        web ({ name, value }, { el }) {
+          if (el.classMerged) return false
+          const classBinding = []
+          el.attrsList.filter(item => this.test.test(item.name)).forEach(({ name, value }) => {
+            const parsed = parseMustacheWithContext(value)
+            if (name === 'wx:class') {
+              classBinding.push(parsed.result)
+            } else if (name === 'class' && parsed.hasBinding === true) {
+              el.classMerged = true
+              classBinding.push(parsed.result)
+            }
+          })
+
+          if (el.classMerged) {
+            return {
+              name: ':class',
+              value: `[${classBinding}]`
+            }
+          } else if (name === 'wx:class') {
+            // 对于纯静态class不做合并转换
+            return {
+              name: ':class',
+              value: classBinding[0]
+            }
           }
         }
       },
@@ -231,6 +252,13 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
+        jd ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'jd:' + dir,
+            value
+          }
+        },
         tt ({ name, value }) {
           const dir = this.test.exec(name)[1]
           return {
@@ -238,9 +266,16 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
+        dd ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'dd:' + dir,
+            value
+          }
+        },
         web ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }
@@ -267,25 +302,83 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        tt ({ name, value }) {
-          const match = this.test.exec(name)
-          const modifierStr = match[3] || ''
-          let ret
-          if (match[1] === 'capture-catch' || match[1] === 'capture-bind') {
-            const convertName = 'bind'
-            warn(`bytedance miniapp doens't support '${match[1]}' and will be translated into '${convertName}' automatically!`)
-            ret = { name: convertName + match[2] + modifierStr, value }
-          } else {
-            ret = { name, value }
-          }
-          return ret
-        },
         swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'swan' })
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
-        web ({ name, value }, { eventRules, el }) {
+        qq ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
+        },
+        jd ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
+        },
+        // tt ({ name, value }, { eventRules }) {
+        //   const match = this.test.exec(name)
+        //   const prefix = match[1]
+        //   const eventName = match[2]
+        //   const modifierStr = match[3] || ''
+        //   const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+        //   return {
+        //     // 字节将所有事件转为小写
+        //     name: prefix + rEventName.toLowerCase() + modifierStr,
+        //     value
+        //   }
+        // },
+        tt ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
+        },
+        dd ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
+        },
+        web ({ name, value }, { eventRules, el, usingComponents }) {
+          if (parseMustacheWithContext(value).hasBinding) {
+            error('Web environment does not support mustache binding in event props!')
+            return
+          }
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
@@ -293,10 +386,9 @@ module.exports = function getSpec ({ warn, error }) {
           const meta = {
             modifierStr
           }
-          // 记录event监听信息用于后续判断是否需要使用内置基础组件
-          el.hasEvent = true
+          const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -307,7 +399,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: /^aria-(role|label)$/,
         ali () {
-          warn(`Ali environment does not support aria-role|label props!`)
+          warn('Ali environment does not support aria-role|label props!')
         }
       }
     ],
@@ -316,8 +408,8 @@ module.exports = function getSpec ({ warn, error }) {
         {
           ali (prefix) {
             const prefixMap = {
-              'bind': 'on',
-              'catch': 'catch'
+              bind: 'on',
+              catch: 'catch'
             }
             if (!prefixMap[prefix]) {
               error(`Ali environment does not support [${prefix}] event handling!`)
@@ -360,13 +452,17 @@ module.exports = function getSpec ({ warn, error }) {
           test: /^(touchstart|touchmove|touchcancel|touchend|tap|longpress|longtap|transitionend|animationstart|animationiteration|animationend|touchforcechange)$/,
           ali (eventName) {
             const eventMap = {
-              'touchstart': 'touchStart',
-              'touchmove': 'touchMove',
-              'touchend': 'touchEnd',
-              'touchcancel': 'touchCancel',
-              'tap': 'tap',
-              'longtap': 'longTap',
-              'longpress': 'longTap'
+              touchstart: 'touchStart',
+              touchmove: 'touchMove',
+              touchend: 'touchEnd',
+              touchcancel: 'touchCancel',
+              tap: 'tap',
+              longtap: 'longTap',
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -377,6 +473,16 @@ module.exports = function getSpec ({ warn, error }) {
           web (eventName) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
+            }
+          }
+        },
+        // 特殊web事件
+        {
+          test: /^click$/,
+          web (eventName, data) {
+            // 自定义组件根节点
+            if (data.isComponent) {
+              return '_' + eventName
             }
           }
         }

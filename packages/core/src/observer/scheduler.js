@@ -1,75 +1,182 @@
-import { asyncLock } from '../helper/utils'
-import { error } from '../helper/log'
+import { warn, isArray, callWithErrorHandling, isDev } from '@mpxjs/utils'
+import Mpx from '../index'
+
+let isFlushing = false
+let isFlushPending = false
 
 const queue = []
-let has = {}
-let circular = {}
-let flushing = false
-let curIndex = 0
-const lockTask = asyncLock()
-const MAX_UPDATE_COUNT = 100
+let flushIndex = 0
 
-export function queueWatcher (watcher) {
-  if (!watcher.id && typeof watcher === 'function') {
-    watcher = {
-      id: Infinity,
-      run: watcher
-    }
+const pendingPostFlushCbs = []
+let activePostFlushCbs = null
+let postFlushIndex = 0
+
+const resolvedPromise = Promise.resolve()
+let currentFlushPromise = null
+
+const RECURSION_LIMIT = 100
+
+const getId = (job) => job.id == null ? Infinity : job.id
+
+const comparator = (a, b) => {
+  const diff = getId(a) - getId(b)
+  if (diff === 0) {
+    if (a.pre && !b.pre) return -1
+    if (b.pre && !a.pre) return 1
   }
-  if (!has[watcher.id] || watcher.id === Infinity) {
-    has[watcher.id] = true
-    if (!flushing) {
-      queue.push(watcher)
-      lockTask(flushQueue, resetQueue)
+  return diff
+}
+
+function findInsertionIndex (id) {
+  // the start index should be `flushIndex + 1`
+  let start = flushIndex + 1
+  let end = queue.length
+
+  while (start < end) {
+    const middle = (start + end) >>> 1
+    const middleJob = queue[middle]
+    const middleJobId = getId(middleJob)
+    if (middleJobId < id || (middleJobId === id && middleJob.pre)) {
+      start = middle + 1
     } else {
-      let i = queue.length - 1
-      while (i > curIndex && watcher.id < queue[i].id) {
-        i--
+      end = middle
+    }
+  }
+
+  return start
+}
+
+export function nextTick (fn) {
+  const p = currentFlushPromise || resolvedPromise
+  return fn ? p.then(this ? fn.bind(this) : fn) : p
+}
+
+export function queuePostFlushCb (cb) {
+  if (isArray(cb)) {
+    pendingPostFlushCbs.push(...cb)
+  } else if (
+    !activePostFlushCbs ||
+    !activePostFlushCbs.includes(cb, cb.allowRecurse ? postFlushIndex + 1 : postFlushIndex)
+  ) {
+    pendingPostFlushCbs.push(cb)
+  }
+  queueFlush()
+}
+
+export function queueJob (job) {
+  // the dedupe search uses the startIndex argument of Array.includes()
+  // by default the search index includes the current job that is being run
+  // so it cannot recursively trigger itself again.
+  // if the job is a watch() callback, the search will start with a +1 index to
+  // allow it recursively trigger itself - it is the user's responsibility to
+  // ensure it doesn't end up in an infinite loop.
+  if (
+    !queue.length ||
+    !queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)
+  ) {
+    if (job.id == null) {
+      queue.push(job)
+    } else {
+      queue.splice(findInsertionIndex(job.id), 0, job)
+    }
+    queueFlush()
+  }
+}
+
+function queueFlush () {
+  if (!isFlushing && !isFlushPending) {
+    isFlushPending = true
+    if (Mpx.config.forceFlushSync) {
+      flushJobs()
+    } else {
+      currentFlushPromise = resolvedPromise.then(flushJobs)
+    }
+  }
+}
+
+export function flushPreFlushCbs (instance, seen) {
+  if (isDev) seen = seen || new Map()
+  for (let i = isFlushing ? flushIndex + 1 : 0; i < queue.length; i++) {
+    const cb = queue[i]
+    if (cb && cb.pre) {
+      if (instance && cb.id !== instance.uid) continue
+      if (isDev && checkRecursiveUpdates(seen, cb)) continue
+      queue.splice(i, 1)
+      i--
+      cb()
+    }
+  }
+}
+
+export function flushPostFlushCbs (seen) {
+  if (pendingPostFlushCbs.length) {
+    const deduped = [...new Set(pendingPostFlushCbs)]
+    pendingPostFlushCbs.length = 0
+    if (activePostFlushCbs) {
+      activePostFlushCbs.push(...deduped)
+      return
+    }
+    activePostFlushCbs = deduped
+    if (isDev) seen = seen || new Map()
+    // activePostFlushCbs.sort((a, b) => getId(a) - getId(b))
+    for (
+      postFlushIndex = 0;
+      postFlushIndex < activePostFlushCbs.length;
+      postFlushIndex++
+    ) {
+      if (isDev && checkRecursiveUpdates(seen, activePostFlushCbs[postFlushIndex])) continue
+      activePostFlushCbs[postFlushIndex]()
+    }
+    activePostFlushCbs = null
+    postFlushIndex = 0
+  }
+}
+
+function flushJobs (seen) {
+  isFlushPending = false
+  isFlushing = true
+
+  if (isDev) seen = seen || new Map()
+
+  queue.sort(comparator)
+
+  try {
+    for (flushIndex = 0; flushIndex < queue.length; flushIndex++) {
+      const job = queue[flushIndex]
+      if (job && job.active !== false) {
+        if (isDev && checkRecursiveUpdates(seen, job)) continue
+        callWithErrorHandling(job, null, 'scheduler')
       }
-      queue.splice(i + 1, 0, watcher)
+    }
+  } finally {
+    flushIndex = 0
+    queue.length = 0
+
+    flushPostFlushCbs(seen)
+
+    isFlushing = false
+    currentFlushPromise = null
+    // some postFlushCb queued jobs!
+    // keep flushing until it drains.
+    if (queue.length || pendingPostFlushCbs.length) {
+      flushJobs(seen)
     }
   }
 }
 
-export function dequeueWatcher (watcher) {
-  if (!watcher.id || !has[watcher.id]) return
-  const index = queue.indexOf(watcher)
-  if (index > -1) {
-    queue.splice(index, 1)
-    has[watcher.id] = false
-  }
-}
-
-function flushQueue () {
-  flushing = true
-  queue.sort((a, b) => a.id - b.id)
-  for (curIndex = 0; curIndex < queue.length; curIndex++) {
-    const watcher = queue[curIndex]
-    const id = watcher.id
-    if (id !== Infinity) {
-      delete has[id]
-      if (process.env.NODE_ENV !== 'production') {
-        circular[id] = (circular[id] || 0) + 1
-        if (circular[id] > MAX_UPDATE_COUNT) {
-          let location = watcher.vm && watcher.vm.options && watcher.vm.options.mpxFileResource
-          error(`You may have a dead circular update in watcher with expression [${watcher.expression}], please check!`, location)
-          break
-        }
-      }
+function checkRecursiveUpdates (seen, fn) {
+  if (!seen.has(fn)) {
+    seen.set(fn, 1)
+  } else {
+    const count = seen.get(fn)
+    if (count > RECURSION_LIMIT) {
+      warn(
+        'Maximum recursive updates exceeded.\n' +
+        'This means you have a reactive effect that is mutating its own dependencies and thus recursively triggering itself'
+      )
+      return true
+    } else {
+      seen.set(fn, count + 1)
     }
-    // 如果已经销毁，就不再执行
-    if (!watcher.destroyed) {
-      watcher.run()
-    }
-  }
-  resetQueue()
-}
-
-function resetQueue () {
-  flushing = false
-  curIndex = queue.length = 0
-  has = {}
-  if (process.env.NODE_ENV !== 'production') {
-    circular = {}
   }
 }

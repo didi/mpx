@@ -1,11 +1,14 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import { processSize } from './util'
+  import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
-  import ObserveDom from '@better-scroll/observe-dom'
+  import PullDown from '@better-scroll/pull-down'
   import throttle from 'lodash/throttle'
+  import debounce from 'lodash/debounce'
 
-  BScroll.use(ObserveDom)
+  BScroll.use(PullDown)
+
+  let mutationObserver = null
 
   export default {
     name: 'mpx-scroll-view',
@@ -28,75 +31,200 @@
         type: [Number, String],
         default: 0
       },
-      observeDOM: Boolean,
-      updateRefresh: Boolean,
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      },
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
-      enableFlex: Boolean
+      enableFlex: Boolean,
+      enhanced: Boolean,
+      refresherEnabled: Boolean,
+      refresherTriggered: Boolean,
+      refresherThreshold: {
+        type: Number,
+        default: 45
+      },
+      refresherDefaultStyle: {
+        type: String,
+        default: 'black'
+      },
+      refresherBackground: {
+        type: String,
+        default: ''
+      }
+    },
+    data () {
+      return {
+        isLoading: false,
+        isAutoPullDown: true,
+        currentX: 0,
+        currentY: 0,
+        lastX: 0,
+        lastY: 0,
+        lastContentWidth: 0,
+        lastContentHeight: 0,
+        lastWrapperWidth: 0,
+        lastWrapperHeight: 0
+      }
     },
     computed: {
       _scrollTop () {
-        return processSize(this.scrollTop)
+        const size = processSize(this.scrollTop)
+        this.currentY = size
+        return size
       },
       _scrollLeft () {
-        return processSize(this.scrollLeft)
+        const size = processSize(this.scrollLeft)
+        this.currentX = size
+        return size
       },
       _lowerThreshold () {
         return processSize(this.lowerThreshold)
       },
       _upperThreshold () {
         return processSize(this.upperThreshold)
+      },
+      _pullDownWrapperStyle () {
+        return `background:${this.refresherBackground}`
+      },
+      _pullDownContentClassName () {
+        let className = 'mpx-pull-down-content'
+        if (this.refresherDefaultStyle === 'black') {
+          className += ' mpx-pull-down-content-black'
+        } else if (this.refresherDefaultStyle === 'white') {
+          className += ' mpx-pull-down-content-white'
+        }
+        if (this.isLoading) {
+          className += ' active'
+        }
+        return className
+      },
+      scroll () {
+        return this.scrollX || this.scrollY
       }
     },
     mounted () {
-      this.init()
+      this.debounceRefresh = debounce(function () {
+        this.refresh()
+      }, 200, {
+        leading: false,
+        trailing: true
+      })
+      this.dispatchScrollTo = throttle(function (direction) {
+        let eventName = 'scrolltoupper'
+        if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
+        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
+      }, 200, {
+        leading: true,
+        trailing: false
+      })
+      this.initBs()
+      this.observeAnimation('add')
+      this.handleMutationObserver()
     },
     activated () {
-      this.refresh()
+      if (!this.__mpx_deactivated) {
+        return
+      }
+      this.__mpx_deactivated = false
+      if (this.__mpx_deactivated_refresh) {
+        this.__mpx_deactivated_refresh = false
+        this.refresh()
+      }
     },
+    deactivated () {
+      this.__mpx_deactivated = true
+    },
+
     beforeDestroy () {
-      this.destroy()
-    },
-    updated () {
-      if (this.updateRefresh) this.refresh()
+      this.destroyBs()
+      this.observeAnimation('remove')
+      this.destroyMutationObserver()
     },
     watch: {
       scrollIntoView (val) {
-        this.bs && this.bs.scrollToElement('#' + val, this.scrollWithAnimation ? 200 : 0)
+        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0)
       },
       _scrollTop (val) {
         this.bs && this.bs.scrollTo(this.bs.x, -val, this.scrollWithAnimation ? 200 : 0)
       },
       _scrollLeft (val) {
         this.bs && this.bs.scrollTo(-val, this.bs.y, this.scrollWithAnimation ? 200 : 0)
+      },
+      refresherTriggered: {
+        handler (val) {
+          if (!val) {
+            this.$emit('refresherrestore', getCustomEvent('refresherrestore', {}, this))
+            this.isLoading = false
+            this.isAutoPullDown = true
+            this.bs && this.bs.finishPullDown()
+            this.bs && this.bs.refresh()
+          } else {
+            if (this.isAutoPullDown) {
+              this.isLoading = true
+              this.bs.autoPullDownRefresh()
+            }
+          }
+        },
+      },
+      scroll (val) {
+        if (val) {
+          this.initBs()
+        } else {
+          this.disableBs()
+        }
       }
     },
     methods: {
-      destroy () {
+      observeAnimation (type) {
+        const eventNames = ['transitionend', 'animationend']
+        const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
+        eventNames.forEach(eventName => {
+          this.$refs.scrollContent?.[behaviorType](eventName, this.handleObserveAnimation)
+        })
+      },
+      destroyBs () {
         if (!this.bs) return
         this.bs.destroy()
         delete this.bs
       },
-      init () {
-        if (this.bs) return
+      disableBs () {
+        if (!this.bs) return
+        this.bs.disable()
+        this.currentX = -this.bs.x
+        this.currentY = -this.bs.y
+      },
+      initBs () {
+        this.destroyBs()
         this.initLayerComputed()
-        this.bs = new BScroll(this.$refs.wrapper, {
-          startX: -this._scrollLeft,
-          startY: -this._scrollTop,
+        if (this.scrollOptions.observeDOM) {
+          console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
+        }
+        const originBsOptions = {
+          startX: -this.currentX,
+          startY: -this.currentY,
           scrollX: this.scrollX,
           scrollY: this.scrollY,
           probeType: 3,
           bounce: false,
-          observeDOM: this.observeDOM,
           stopPropagation: true,
-          bindToWrapper: true
-        })
-        this.bs.scroller.hooks.on('beforeRefresh', () => {
-          this.initLayerComputed()
-        })
-
-        this.lastX = -this._scrollLeft
-        this.lastY = -this._scrollTop
+          bindToWrapper: true,
+          eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || ''
+        }
+        if (this.refresherEnabled) {
+          originBsOptions.bounce = true
+          originBsOptions.pullDownRefresh = {
+            threshold: this.refresherThreshold,
+            stop: 56
+          }
+        }
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false })
+        this.bs = new BScroll(this.$refs.wrapper, bsOptions)
+        this.lastX = -this.currentX
+        this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
           const deltaX = x - this.lastX
           const deltaY = y - this.lastY
@@ -107,7 +235,7 @@
             scrollHeight: this.bs.scrollerHeight,
             deltaX,
             deltaY
-          }))
+          }, this))
           if (this.bs.minScrollX - x < this._upperThreshold && deltaX > 0) {
             this.dispatchScrollTo('left')
           }
@@ -126,19 +254,85 @@
           leading: true,
           trailing: false
         }))
-        if (this.scrollIntoView) {
-          this.bs.scrollToElement('#' + this.scrollIntoView)
+        this.bs.on('scrollEnd', () => {
+          this.currentX = -this.bs.x
+          this.currentY = -this.bs.y
+        })
+        if (this.scrollIntoView) this.scrollToView(this.scrollIntoView)
+        // 若开启自定义下拉刷新 或 开启 scroll-view 增强特性
+        if (this.refresherEnabled || this.enhanced) {
+          const actionsHandlerHooks = this.bs.scroller.actionsHandler.hooks
+          actionsHandlerHooks.on('start', () => {
+            if (this.enhanced) {
+              this.$emit('dragstart', getCustomEvent('dragstart', {
+                scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
+                scrollTop: this.bs.y ? this.bs.y * -1 : 0
+              }, this))
+            }
+            if (this.refresherEnabled) {
+              this.isAutoPullDown = false
+            }
+          })
+          actionsHandlerHooks.on('move', () => {
+            if (this.enhanced) {
+              this.$emit('dragging', getCustomEvent('dragging', {
+                scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
+                scrollTop: this.bs.y ? this.bs.y * -1 : 0
+              }, this))
+            }
+            if (this.refresherEnabled) {
+              if (this.bs.y > 0 && this.bs.y < this.refresherThreshold && this.bs.movingDirectionY !== 1) {
+                this.isAutoPullDown = false
+                this.isLoading = false
+                this.$emit('refresherpulling', getCustomEvent('refresherpulling', {}, this))
+              }
+            }
+          })
+          actionsHandlerHooks.on('end', () => {
+            if (this.enhanced) {
+              this.$emit('dragend', getCustomEvent('dragend', {
+                scrollLeft: this.bs.x ? this.bs.x * -1 : 0,
+                scrollTop: this.bs.y ? this.bs.y * -1 : 0
+              }, this))
+            }
+          })
+          if (this.refresherEnabled) {
+            // 下拉结束其他钩子都被bs阻止了，只有touchEnd可以触发
+            this.bs.scroller.hooks.on('touchEnd', () => {
+              if (this.bs.y > 0 && this.bs.movingDirectionY !== 1) {
+                this.isLoading = true
+                if (this.bs.y < this.refresherThreshold) {
+                  this.isAutoPullDown = true
+                  this.$emit('refresherabort', getCustomEvent('refresherabort', {}, this))
+                }
+              }
+            })
+
+            this.bs.on('pullingDown', () => {
+              this.$emit('refresherrefresh', getCustomEvent('refresherrefresh', {}, this))
+            })
+          }
         }
+      },
+      scrollToView (id, duration = 0) {
+        if (!id) return
+        id = '#' + id
+        if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
+        this.bs?.scrollToElement(id, duration)
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
-        const wrapperWidth = wrapper.offsetWidth
-        const wrapperHeight = wrapper.offsetHeight
-        this.$refs.innerWrapper.style.width = `${wrapperWidth}px`
-        this.$refs.innerWrapper.style.height = `${wrapperHeight}px`
-
+        const scrollWrapperWidth = wrapper?.clientWidth || 0
+        const scrollWrapperHeight = wrapper?.clientHeight || 0
+        if (wrapper) {
+          const computedStyle = getComputedStyle(wrapper)
+          // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
+          // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
+          this.$refs.innerWrapper.style.width = `${scrollWrapperWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+          this.$refs.innerWrapper.style.height = `${scrollWrapperHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
+        }
         const innerWrapper = this.$refs.innerWrapper
-        const childrenArr = Array.from(innerWrapper.children)
+        const childrenArr = innerWrapper ? Array.from(innerWrapper.children) : []
 
         const getMinLength = (min, value) => {
           if (min === undefined) {
@@ -169,23 +363,72 @@
           maxRight = getMaxLength(maxRight, temp.right)
           maxBottom = getMaxLength(maxBottom, temp.bottom)
         })
-
-        const width = maxRight - minLeft
-        const height = maxBottom - minTop
-        this.$refs.scrollContent.style.width = `${width}px`
-        this.$refs.scrollContent.style.height = `${height}px`
+        const width = maxRight - minLeft || 0
+        const height = maxBottom - minTop || 0
+        if (this.$refs.scrollContent) {
+          this.$refs.scrollContent.style.width = `${width}px`
+          this.$refs.scrollContent.style.height = `${height}px`
+        }
+        return {
+          scrollContentWidth: width,
+          scrollContentHeight: height,
+          scrollWrapperWidth,
+          scrollWrapperHeight
+        }
       },
       refresh () {
-        if (this.bs) this.bs.refresh()
+        if (this.__mpx_deactivated) {
+          this.__mpx_deactivated_refresh = true
+          return
+        }
+        const { scrollContentWidth, scrollContentHeight,  scrollWrapperWidth, scrollWrapperHeight} = this.initLayerComputed()
+        if (!this.compare(scrollWrapperWidth, this.lastWrapperWidth) || !this.compare(scrollWrapperHeight, this.lastWrapperHeight) || !this.compare(scrollContentWidth, this.lastContentWidth) || !this.compare(scrollContentHeight, this.lastContentHeight)) {
+          this.lastContentWidth = scrollContentWidth
+          this.lastContentHeight = scrollContentHeight
+          this.lastWrapperWidth = scrollWrapperWidth
+          this.lastWrapperHeight = scrollWrapperHeight
+          if (this.bs) this.bs.refresh()
+        }
       },
-      dispatchScrollTo: throttle(function (direction) {
-        let eventName = 'scrolltoupper'
-        if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, { direction }))
-      }, 200, {
-        leading: true,
-        trailing: false
-      })
+      compare(num1, num2, scale = 1) {
+        return Math.abs(num1 - num2) < scale
+      },
+      handleMutationObserver () {
+        if (typeof MutationObserver !== 'undefined') {
+          mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
+          const config = { attributes: true, childList: true, subtree: true }
+          mutationObserver.observe(this.$refs.wrapper, config)
+        }
+      },
+       mutationObserverHandler (mutations) {
+        let needRefresh = false
+        for (let i = 0; i < mutations.length; i++) {
+          const mutation = mutations[i]
+          if (mutation.type !== 'attributes') {
+             needRefresh = true
+            break
+          } else {
+            if (mutation.target !== this.$refs.scrollContent && mutation.target !== this.$refs.innerWrapper) {
+              needRefresh = true
+              break
+            }
+          }
+        }
+        if (needRefresh) {
+          this.debounceRefresh()
+        }
+      },
+      handleObserveAnimation (e) {
+        if (e.target !== this.$refs.scrollContent) {
+          this.debounceRefresh()
+        }
+      },
+      destroyMutationObserver () {
+        if (mutationObserver) {
+          mutationObserver.disconnect()
+          mutationObserver = null
+        }
+      }
     },
     render (createElement) {
       const data = {
@@ -198,10 +441,34 @@
         ref: 'innerWrapper'
       }, this.$slots.default)
 
+      const pullDownContent = this.refresherDefaultStyle !== 'none' ? createElement('div', {
+          class: this._pullDownContentClassName,
+        }, [
+          createElement('div', {
+            class: 'circle circle-a'
+          }),
+          createElement('div', {
+            class: 'circle circle-b'
+          }),
+          createElement('div', {
+            class: 'circle circle-c'
+          }),
+        ]
+      ) : this.$slots.refresher
+        ? createElement('div', {
+          class: 'mpx-pull-down-slot',
+        }, this.$slots.refresher)
+        : null
+
+      const pullDownWrapper = this.refresherEnabled ? createElement('div', {
+        class: 'mpx-pull-down-wrapper',
+        style: this._pullDownWrapperStyle
+      }, [pullDownContent]) : null
+
       const content = createElement('div', {
         class: 'mpx-scroll-view-content',
         ref: 'scrollContent'
-      }, [innerWrapper])
+      }, [pullDownWrapper, innerWrapper])
 
       return createElement('div', data, [content])
     }
@@ -212,4 +479,73 @@
   .mpx-scroll-view
     overflow hidden
     position relative
+
+    .mpx-pull-down-wrapper
+      position: absolute
+      width: 100%
+      height: 250px
+      box-sizing: border-box
+      transform: translateY(-100%) translateZ(0)
+
+      .mpx-pull-down-content
+        position: absolute
+        bottom: 20px
+        left: 50%
+        transform: translateX(-50%)
+
+      .mpx-pull-down-slot
+        position: absolute
+        width: 100%
+        height: auto
+        bottom: 0
+
+      .mpx-pull-down-content-black
+        .circle
+          display: inline-block;
+          margin-right: 5px
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, .3);
+
+        &.active
+          .circle-a
+            animation: blackLoading 1s 0s infinite
+
+          .circle-b
+            animation: blackLoading 1s 0.3s infinite
+
+          .circle-c
+            animation: blackLoading 1s 0.6s infinite
+
+          @keyframes blackLoading
+            0%
+              background: rgba(0, 0, 0, .8);
+            100%
+              background: rgba(0, 0, 0, .3)
+
+      .mpx-pull-down-content-white
+        .circle
+          display: inline-block;
+          margin-right: 5px
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, .3)
+
+        &.active
+          .circle-a
+            animation: whiteLoading 1s 0s infinite;
+
+          .circle-b
+            animation: whiteLoading 1s 0.3s infinite;
+
+          .circle-c
+            animation: whiteLoading 1s 0.6s infinite;
+
+          @keyframes whiteLoading
+            0%
+              background: rgba(255, 255, 255, .7)
+            100%
+              background: rgba(255, 255, 255, .3)
 </style>

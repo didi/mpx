@@ -41,50 +41,6 @@ function mergeListeners (listeners, otherListeners, options = {}) {
   })
 }
 
-function processTap (listeners, context) {
-  if (!(listeners.tap || listeners.longpress || listeners.longtap)) {
-    return
-  }
-  context.__mpxTapInfo = context.__mpxTapInfo || {}
-  mergeListeners(listeners, {
-    touchstart (e) {
-      context.__mpxTapInfo.detail = {
-        x: e.changedTouches[0].pageX,
-        y: e.changedTouches[0].pageY
-      }
-      context.__mpxTapInfo.startTimer = null
-      context.__mpxTapInfo.needTap = true
-      if (listeners.longpress || listeners.longtap) {
-        context.__mpxTapInfo.startTimer = setTimeout(() => {
-          context.__mpxTapInfo.needTap = false
-          if (listeners.longpress) {
-            const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
-            context.$emit('longpress', re)
-          }
-          if (listeners.longtap) {
-            const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
-            context.$emit('longtap', re)
-          }
-        }, 350)
-      }
-    },
-    touchmove () {
-      context.__mpxTapInfo.needTap = false
-      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-      context.__mpxTapInfo.startTimer = null
-    },
-    touchend (e) {
-      context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-      if (listeners.tap && context.__mpxTapInfo.needTap) {
-        const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-        context.$emit('tap', re)
-      }
-    }
-  }, {
-    force: true
-  })
-}
-
 export function extendEvent (e, extendObj = {}) {
   Object.keys(extendObj).forEach((key) => {
     Object.defineProperty(e, key, {
@@ -100,6 +56,7 @@ export function inheritEvent (type, oe, detail = {}) {
   detail = Object.assign({}, oe.detail, detail)
   const ne = getCustomEvent(type, detail)
   extendEvent(ne, {
+    timeStamp: oe.timeStamp,
     target: oe.target,
     currentTarget: oe.currentTarget,
     stopPropagation: oe.stopPropagation.bind(oe),
@@ -108,10 +65,15 @@ export function inheritEvent (type, oe, detail = {}) {
   return ne
 }
 
-export function getCustomEvent (type, detail = {}) {
-  /* eslint-disable no-undef */
-  const ce = new CustomEvent(type, { detail })
-  return ce
+export function getCustomEvent (type, detail = {}, target = null) {
+  const targetEl = (target && target.$el) || null
+  const targetInfo = targetEl ? { target: targetEl, currentTarget: targetEl } : {}
+  return {
+    type,
+    detail,
+    timeStamp: new Date().valueOf(),
+    ...targetInfo
+  }
 }
 
 function noop () {
@@ -142,7 +104,6 @@ export default function getInnerListeners (context, options = {}) {
   }
 
   processModel(listeners, context)
-  processTap(listeners, context)
   mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
   mergeListeners(listeners, mergeAfter, mergeAfterOptions)
   ignoredListeners.forEach((key) => {
