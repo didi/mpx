@@ -1,5 +1,5 @@
 import { isObject } from '@mpxjs/utils'
-import { CREATED, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
+import { BEFORECREATE, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
 
 const targets = []
 let curTarget = null
@@ -177,7 +177,7 @@ export default function relationsMixin (mixinType) {
     }
   } else if (__mpx_mode__ === 'web' && mixinType === 'component') {
     return {
-      [CREATED] () {
+      [BEFORECREATE] () {
         this.__mpxRelations = {}
         this.__mpxRelationNodesMap = {} // 用于getRelationNodes关系查询
       },
@@ -241,7 +241,7 @@ export default function relationsMixin (mixinType) {
             const currentPath = this.$options.componentPath
             if (type === 'linked') {
               this.__mpxLinkRelationNodes(target, currentPath)
-            } else {
+            } else if (type === 'unlinked') {
               this.__mpxRemoveRelationNodes(target, currentPath)
             }
             if (typeof targetRelation[type] === 'function') {
@@ -258,11 +258,8 @@ export default function relationsMixin (mixinType) {
         },
         __mpxRemoveRelationNodes (target, path) {
           const arr = target.__mpxRelationNodesMap[path] || []
-          arr.forEach((vm, index) => {
-            if (vm === this) {
-              arr.splice(index, 1)
-            }
-          })
+          const index = arr.indexOf(this)
+          if (index !== -1) arr.splice(index, 1)
         }
       }
     }
