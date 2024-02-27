@@ -2,17 +2,12 @@ import cssauron from './cssauron'
 
 const language = cssauron({
   tag: function (node) {
-    // #todo 目前的 tag 命名不一致
     return node.nodeType
   },
   class: function (node) {
-    // if (node.class !== undefined) {
-    //   return node.class
-    // }
     return node.data?.class
   },
   id: function (node) {
-    // return node.id
     return node.data?.id
   },
   children: function (node) {
@@ -101,41 +96,17 @@ function getNormalizeCaseFn (caseSensitive) {
 // traverse.
 function mapTree (vtree, parent, options) {
   const normalizeTagCase = getNormalizeCaseFn(options.caseSensitiveTag)
-  // const moduleId = options.moduleId
-  // VText represents text nodes
-  // See https://github.com/Matt-Esch/virtual-dom/blob/master/docs/vtext.md
-  // if (vtree.type === 'VirtualText') {
-  //   return {
-  //     contents: vtree.text,
-  //     parent: parent,
-  //     vtree: vtree
-  //   }
-  // }
-
-  // 样式隔离：如果已经进行过样式匹配直接返回
-  // if (vtree.scopeProcessed) {
-  //   return null
-  // }
 
   if (vtree.nodeType != null) {
     const node = {}
     node.parent = parent
     node.vtree = vtree
     node.nodeType = normalizeTagCase(vtree.nodeType)
-    // #todo 取值字段，将 data 当中的数据取出来放置外层节点
-    // 依据 moduleId 来确定是否需要匹配
     if (vtree.data) {
-    // if (vtree.data?.moduleId === moduleId && vtree.data) {
       node.data = vtree.data
-      // if (typeof vtree.data.class === 'string') {
-      //   node.class = vtree.data.class
-      // }
-      // if (typeof vtree.data.id === 'string') {
-      //   node.id = vtree.data.id
-      // }
     }
 
-    if (vtree.children && typeof vtree.children.map === 'function') {
+    if (vtree.children) {
       node.children = vtree.children
         .map(function (child) {
           return mapTree(child, node, options)

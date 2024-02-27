@@ -186,6 +186,7 @@ module.exports = function (content) {
   }
 
   if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
     fillMpxCustomElement(true)
     callback()
     return
