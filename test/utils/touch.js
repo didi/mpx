@@ -25,11 +25,5 @@ export const createTouchEvent = (type, target, params = {}) => {
 }
 
 export const dispatchTap = (el) => {
-  const isTouchDevice = typeof window !== 'undefined' && document && ('ontouchstart' in document.documentElement)
-  if (isTouchDevice) {
-    el.dispatchEvent(createTouchEvent('touchstart', el))
-    el.dispatchEvent(createTouchEvent('touchend', el))
-  } else {
-    el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-  }
+  el.dispatchEvent(createTouchEvent('tap', el))
 }

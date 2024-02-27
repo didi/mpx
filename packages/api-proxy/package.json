@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.9.16",
+  "version": "2.9.19",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -37,6 +37,6 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "axios": "^0.21.1"
+    "axios": "^1.6.7"
   }
 }

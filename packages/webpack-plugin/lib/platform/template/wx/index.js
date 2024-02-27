@@ -124,7 +124,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'wx:model',
         web ({ value }, { el }) {
-          el.hasEvent = true
+          el.hasModel = true
           const attrsMap = el.attrsMap
           const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
           const stringify = JSON.stringify
@@ -387,8 +387,6 @@ module.exports = function getSpec ({ warn, error }) {
             modifierStr
           }
           const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-          // 记录event监听信息用于后续判断是否需要使用内置基础组件
-          el.hasEvent = true
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
           const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {

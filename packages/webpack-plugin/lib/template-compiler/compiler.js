@@ -105,6 +105,7 @@ let env
 let platformGetTagNamespace
 let filePath
 let refId
+let haveOptionChain = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -165,6 +166,8 @@ const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
+const optionsChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
+const optionsChainWxsName = '__oc__'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -638,6 +641,7 @@ function parse (template, options) {
   forScopes = []
   forScopesMap = {}
   hasI18n = false
+  haveOptionChain = false
 
   platformGetTagNamespace = options.getTagNamespace || no
 
@@ -760,6 +764,10 @@ function parse (template, options) {
     } else {
       injectWxs(meta, i18nModuleName, i18nWxsRequest)
     }
+  }
+
+  if (haveOptionChain) {
+    injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
   }
 
   injectNodes.forEach((node) => {
@@ -1158,6 +1166,7 @@ function parseMustacheWithContext (raw = '') {
       })
     }
 
+    exp = parseOptionChain(exp)
     if (i18n) {
       for (const i18nFuncName of i18nFuncNames) {
         const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
@@ -1870,7 +1879,6 @@ function getVirtualHostRoot (options, meta) {
             value: '$listeners'
           }
         ])
-        rootView.hasEvent = true
         processElement(rootView, rootView, options, meta)
         return rootView
       }
@@ -2464,6 +2472,169 @@ function genNode (node) {
     }
   }
   return exp
+}
+
+/**
+ * 处理可选链用法
+ * @param str
+ * @returns
+ */
+function parseOptionChain (str) {
+  const wxsName = `${optionsChainWxsName}.g`
+  let optionsRes
+  while (optionsRes = /\?\./.exec(str)) {
+    const strLength = str.length
+    const grammarMap = {
+      init () {
+        const initKey = [
+          {
+            mapKey: '[]',
+            mapValue: [
+              {
+                key: '[',
+                value: 1
+              },
+              {
+                key: ']',
+                value: -1
+              }
+            ]
+          },
+          {
+            mapKey: '()',
+            mapValue: [
+              {
+                key: '(',
+                value: 1
+              },
+              {
+                key: ')',
+                value: -1
+              }
+            ]
+          }
+        ]
+        this.count = {}
+        initKey.forEach(({ mapKey, mapValue }) => {
+          mapValue.forEach(({ key, value }) => {
+            this[key] = this.changeState(mapKey, value)
+          })
+        })
+      },
+      changeState (key, value) {
+        if (!this.count[key]) {
+          this.count[key] = 0
+        }
+        return () => {
+          this.count[key] = this.count[key] + value
+          return this.count[key]
+        }
+      },
+      checkState () {
+        return Object.values(this.count).find(i => i)
+      }
+    }
+    let leftIndex = optionsRes.index
+    let rightIndex = leftIndex + 2
+    let haveNotGetValue = true
+    let chainValue = ''
+    let chainKey = ''
+    let notCheck = false
+    grammarMap.init()
+    // 查 ?. 左边值
+    while (haveNotGetValue && leftIndex > 0) {
+      const left = str[leftIndex - 1]
+      const grammar = grammarMap[left]
+      if (notCheck) {
+        // 处于表达式内
+        chainValue = left + chainValue
+        if (grammar) {
+          grammar()
+          if (!grammarMap.checkState()) {
+            // 表达式结束
+            notCheck = false
+          }
+        }
+      } else if (~[']', ')'].indexOf(left)) {
+        // 命中表达式，开始记录表达式
+        chainValue = left + chainValue
+        notCheck = true
+        grammar()
+      } else if (left !== ' ') {
+        if (!/[A-Za-z0-9_$.]/.test(left)) {
+          // 结束
+          haveNotGetValue = false
+          leftIndex++
+        } else {
+          // 正常语法
+          chainValue = left + chainValue
+        }
+      }
+      leftIndex--
+    }
+    if (grammarMap.checkState() && haveNotGetValue) {
+      // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+      throw new Error('[optionChain] option value illegal!!!')
+    }
+    haveNotGetValue = true
+    let keyValue = ''
+    // 查 ?. 右边key
+    while (haveNotGetValue && rightIndex < strLength) {
+      const right = str[rightIndex]
+      const grammar = grammarMap[right]
+      if (notCheck) {
+        // 处于表达式内
+        if (grammar) {
+          grammar()
+          if (grammarMap.checkState()) {
+            keyValue += right
+          } else {
+            // 表达式结束
+            notCheck = false
+            chainKey += `,${keyValue}`
+            keyValue = ''
+          }
+        } else {
+          keyValue += right
+        }
+      } else if (~['[', '('].indexOf(right)) {
+        // 命中表达式，开始记录表达式
+        grammar()
+        if (keyValue) {
+          chainKey += `,'${keyValue}'`
+          keyValue = ''
+        }
+        notCheck = true
+      } else if (!/[A-Za-z0-9_$.?]/.test(right)) {
+        // 结束
+        haveNotGetValue = false
+        rightIndex--
+      } else if (right !== '?') {
+        // 正常语法
+        if (right === '.') {
+          if (keyValue) {
+            chainKey += `,'${keyValue}'`
+          }
+          keyValue = ''
+        } else {
+          keyValue += right
+        }
+      }
+      rightIndex++
+    }
+    if (grammarMap.checkState() && haveNotGetValue) {
+      // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+      throw new Error('[optionChain] option key illegal!!!')
+    }
+    if (keyValue) {
+      chainKey += `,'${keyValue}'`
+    }
+    str = str.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + str.slice(rightIndex)
+    if (!haveOptionChain) {
+      haveOptionChain = true
+    }
+  }
+  return str
 }
 
 module.exports = {
