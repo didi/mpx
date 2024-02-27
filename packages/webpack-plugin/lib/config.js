@@ -556,5 +556,9 @@ module.exports = {
       ref: 'dd:ref',
       show: 'dd:show'
     }
+  },
+  react: {
+    directive: {
+    }
   }
 }

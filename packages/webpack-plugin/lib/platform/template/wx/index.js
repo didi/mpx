@@ -8,7 +8,7 @@ const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'react'],
     // props预处理
     preProps: [],
     // props后处理

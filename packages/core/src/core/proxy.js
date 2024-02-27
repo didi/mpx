@@ -144,7 +144,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'react') {
       this.initRender()
     }
 
@@ -191,8 +191,8 @@ export default class MpxProxy {
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
-    this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
+    this.callHook(UNMOUNTED)
   }
 
   isUnmounted () {

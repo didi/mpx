@@ -130,8 +130,8 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
 
 function getRequireScript ({ ctorType, script, loaderContext }) {
   let content = '  /** script content **/\n'
-  const extraOptions = { ctorType, lang: script.lang || 'js' }
   const { getRequire } = createHelpers(loaderContext)
+  const extraOptions = { ctorType, lang: script.lang || 'js' }
   content += `  ${getRequire('script', script, extraOptions)}\n`
   return content
 }

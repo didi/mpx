@@ -5,21 +5,16 @@ const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
 const async = require('async')
-const processJSON = require('./web/processJSON')
-const processScript = require('./web/processScript')
-const processStyles = require('./web/processStyles')
-const processTemplate = require('./web/processTemplate')
 const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
-const processMainScript = require('./web/processMainScript')
+const processWeb = require('./web/index')
 const getRulesRunner = require('./platform')
 
 module.exports = function (content) {
@@ -96,7 +91,7 @@ module.exports = function (content) {
     getRequire
   } = createHelpers(loaderContext)
 
-  let output = ''
+
   const callback = this.async()
 
   async.waterfall([
@@ -148,98 +143,47 @@ module.exports = function (content) {
       }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
-          return async.waterfall([
-            (callback) => {
-              processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, callback)
-            },
-            (jsonRes, callback) => {
-              processMainScript(parts.script, {
-                loaderContext,
-                ctorType,
-                srcMode,
-                moduleId,
-                isProduction,
-                jsonConfig: jsonRes.jsonObj,
-                outputPath: queryObj.outputPath || '',
-                localComponentsMap: jsonRes.localComponentsMap,
-                tabBar: jsonRes.jsonObj.tabBar,
-                tabBarMap: jsonRes.tabBarMap,
-                tabBarStr: jsonRes.tabBarStr,
-                localPagesMap: jsonRes.localPagesMap,
-                resource: this.resource
-              }, callback)
-            }
-          ], (err, scriptRes) => {
-            if (err) return callback(err)
-            this.loaderIndex = -1
-            return callback(null, scriptRes.output)
-          })
-        }
-        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-        const cacheContent = mpx.vueContentCache.get(filePath)
-        if (cacheContent) return callback(null, cacheContent)
-
-        return async.waterfall([
-          (callback) => {
-            async.parallel([
-              (callback) => {
-                processTemplate(parts.template, {
-                  loaderContext,
-                  hasScoped,
-                  hasComment,
-                  isNative,
-                  srcMode,
-                  moduleId,
-                  ctorType,
-                  usingComponents,
-                  componentGenerics
-                }, callback)
-              },
-              (callback) => {
-                processStyles(parts.styles, {
-                  ctorType,
-                  autoScope,
-                  moduleId
-                }, callback)
-              },
-              (callback) => {
-                processJSON(parts.json, {
-                  loaderContext,
-                  pagesMap,
-                  componentsMap
-                }, callback)
-              }
-            ], (err, res) => {
-              callback(err, res)
-            })
-          },
-          ([templateRes, stylesRes, jsonRes], callback) => {
-            output += templateRes.output
-            output += stylesRes.output
-            output += jsonRes.output
-            processScript(parts.script, {
-              loaderContext,
-              ctorType,
-              srcMode,
-              moduleId,
-              isProduction,
-              componentGenerics,
-              jsonConfig: jsonRes.jsonObj,
-              outputPath: queryObj.outputPath || '',
-              builtInComponentsMap: templateRes.builtInComponentsMap,
-              genericsInfo: templateRes.genericsInfo,
-              wxsModuleMap: templateRes.wxsModuleMap,
-              localComponentsMap: jsonRes.localComponentsMap
-            }, callback)
-          }
-        ], (err, scriptRes) => {
-          if (err) return callback(err)
-          output += scriptRes.output
-          this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
-          callback(null, output)
+        return processWeb({
+          parts,
+          loaderContext,
+          pagesMap,
+          componentsMap,
+          queryObj,
+          ctorType,
+          srcMode,
+          moduleId,
+          isProduction,
+          hasScoped,
+          hasComment,
+          isNative,
+          usingComponents,
+          componentGenerics,
+          autoScope,
+          callback
         })
       }
+      // 处理mode为react时输出react js格式文件
+      if(mode === 'react'){
+        return processReact({
+          parts,
+          loaderContext,
+          pagesMap,
+          componentsMap,
+          queryObj,
+          ctorType,
+          srcMode,
+          moduleId,
+          isProduction,
+          hasScoped,
+          hasComment,
+          isNative,
+          usingComponents,
+          componentGenerics,
+          autoScope,
+          callback
+        })
+      }
+
       const moduleGraph = this._compilation.moduleGraph
 
       const issuer = moduleGraph.getIssuer(this._module)
@@ -248,6 +192,7 @@ module.exports = function (content) {
         return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
       }
 
+      let output = ''
       // 注入模块id及资源路径
       output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {

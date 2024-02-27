@@ -102,7 +102,7 @@ function initProxy (context, rawOptions, currentInject) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
+export function getDefaultOptions ({type,  rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
     [hookNames[0]] () {

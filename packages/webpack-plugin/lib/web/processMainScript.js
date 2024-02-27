@@ -23,8 +23,7 @@ module.exports = function (script, {
   tabBar,
   tabBarMap,
   tabBarStr,
-  localPagesMap,
-  resource
+  localPagesMap
 }, callback) {
   const { i18n, webConfig, hasUnoCSS } = loaderContext.getMpx()
   const { pagesMap, firstPage, globalTabBar } = buildPagesMap({
@@ -68,7 +67,7 @@ module.exports = function (script, {
 
   output += `\n  require(${stringifyRequest(loaderContext, eventPath)})\n`
 
-  output += `\n  var App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
+  output += `\n  var App = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default\n`
 
   output += `
   export default processAppOption({
