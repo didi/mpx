@@ -179,6 +179,7 @@ export default function relationsMixin (mixinType) {
     return {
       [CREATED] () {
         this.__mpxRelations = {}
+        this.__mpxRelationNodesMap = {} // 用于getRelationNodes关系查询
       },
       [MOUNTED] () {
         this.__mpxCollectRelations()
@@ -186,6 +187,9 @@ export default function relationsMixin (mixinType) {
       },
       [BEFOREUNMOUNT] () {
         this.__mpxExecRelations('unlinked')
+        // 重置缓存数据
+        this.__mpxRelations = {}
+        this.__mpxRelationNodesMap = {}
       },
       methods: {
         getRelationNodes (path) {
@@ -212,7 +216,7 @@ export default function relationsMixin (mixinType) {
 
           // 当前组件在target的slots当中
           if ((type === 'parent' || type === 'ancestor') && target.$vnode.context === this.$vnode.context) {
-            const targetRelation = target?.__mpxProxy.options.relations?.[this.$options.componentPath]
+            const targetRelation = target.__mpxProxy.options.relations?.[this.$options.componentPath]
             if (
               targetRelation &&
               targetRelation.type === relationTypeMap[type] &&
@@ -224,10 +228,7 @@ export default function relationsMixin (mixinType) {
                 targetRelation,
                 relation
               }
-              // 父子组件相互绑定
-              const currentPath = this.$options.componentPath
-              target.__mpxRelations[currentPath] = target.__mpxRelations[currentPath] || []
-              target.__mpxRelations[currentPath].push(this)
+              this.__mpxRelationNodesMap[path] = [target] // 子级绑定父级
             } else if (type === 'ancestor') {
               // 当前匹配失败，但type为ancestor时，继续向上查找
               return this.__mpxCheckParent(target, relation, path)
@@ -236,13 +237,30 @@ export default function relationsMixin (mixinType) {
         },
         __mpxExecRelations (type) {
           Object.keys(this.__mpxRelations).forEach(path => {
-            if (Array.isArray(this.__mpxRelations[path])) return
             const { target, targetRelation, relation } = this.__mpxRelations[path]
+            const currentPath = this.$options.componentPath
+            if (type === 'linked') {
+              this.__mpxLinkRelationNodes(target, currentPath)
+            } else {
+              this.__mpxRemoveRelationNodes(target, currentPath)
+            }
             if (typeof targetRelation[type] === 'function') {
               targetRelation[type].call(target, this)
             }
             if (typeof relation[type] === 'function') {
               relation[type].call(this, target)
+            }
+          })
+        },
+        __mpxLinkRelationNodes (target, path) {
+          target.__mpxRelationNodesMap[path] = target.__mpxRelationNodesMap[path] || [] // 父级绑定子级
+          target.__mpxRelationNodesMap[path].push(this)
+        },
+        __mpxRemoveRelationNodes (target, path) {
+          const arr = target.__mpxRelationNodesMap[path] || []
+          arr.forEach((vm, index) => {
+            if (vm === this) {
+              arr.splice(index, 1)
             }
           })
         }
