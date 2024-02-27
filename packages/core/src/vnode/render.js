@@ -286,8 +286,6 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
   if (slotName) {
     interpreteredVnodeTree.data.slot = slotName
   }
-
   const res =  genVnodeWithStaticCss(interpreteredVnodeTree)
-  console.log(2222, res);
   return res
 }
