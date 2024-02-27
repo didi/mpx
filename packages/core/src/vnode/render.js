@@ -4,6 +4,10 @@ import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
 import staticMap from './staticMap'
 
+const deepClone = function (val) {
+  return JSON.parse(JSON.stringify(val))
+}
+
 function simpleNormalizeChildren (children) {
   for (let i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {
@@ -233,9 +237,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
         contextScope.push(scope)
 
         // 针对 for 循环避免每次都操作的同一个 node 导致数据的污染的问题
-        // res.push(genVnodeTree(JSON.parse(JSON.stringify(node))))
-        res.push(JSON.parse(JSON.stringify(genVnodeTree(node))))
-        // res.push(deepClone(genVnodeTree(node)))
+        res.push(deepClone(genVnodeTree(deepClone(node))))
 
         contextScope.pop()
       })
