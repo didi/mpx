@@ -43,7 +43,9 @@ export default function renderHelperMixin () {
       },
       _g (moduleId) {
         const { template = {}, styles = [] } = staticMap[moduleId]
-        const vnodeTree = genVnodeTree(template, [this], styles)
+        const time1 = new Date().getTime()
+        const vnodeTree = genVnodeTree(template, [this], styles, moduleId)
+        console.log(new Date().getTime() - time1)
         return vnodeTree
       }
     }

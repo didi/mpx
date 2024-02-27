@@ -4,46 +4,46 @@ import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
 import staticMap from './staticMap'
 
-export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
+function simpleNormalizeChildren (children) {
+  for (let i = 0; i < children.length; i++) {
+    if (Array.isArray(children[i])) {
+      return Array.prototype.concat.apply([], children)
+    }
+  }
+  return children
+}
+
+function cloneNode (el) {
+  const clone = Object.assign({}, el)
+  if (el.parent) clone.parent = null
+  if (el.children) {
+    clone.children = []
+    el.children.forEach((child) => {
+      addChild(clone, cloneNode(child))
+    })
+  }
+  return clone
+}
+
+function addChild (parent, newChild, before) {
+  parent.children = parent.children || []
+  if (before) {
+    parent.children.unshift(newChild)
+  } else {
+    parent.children.push(newChild)
+  }
+}
+
+export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId) {
   // 引用的 vnodeAst 浅复制，解除引用
   vnodeAst = cloneNode(vnodeAst)
   // 获取实例 uid
   const uid = contextScope[0]?.__mpxProxy?.uid || contextScope[0]?.uid
   // slots 通过上下文传递，相当于 props
   const slots = contextScope[0]?.$slots || {}
-  const slotName = contextScope[0]?.slot
-  function simpleNormalizeChildren (children) {
-    for (let i = 0; i < children.length; i++) {
-      if (Array.isArray(children[i])) {
-        return Array.prototype.concat.apply([], children)
-      }
-    }
-    return children
-  }
-
-  function cloneNode (el) {
-    const clone = Object.assign({}, el)
-    if (el.parent) clone.parent = null
-    if (el.children) {
-      clone.children = []
-      el.children.forEach((child) => {
-        addChild(clone, cloneNode(child))
-      })
-    }
-    return clone
-  }
-
-  function addChild (parent, newChild, before) {
-    parent.children = parent.children || []
-    if (before) {
-      parent.children.unshift(newChild)
-    } else {
-      parent.children.push(newChild)
-    }
-  }
 
   function createEmptyNode () {
-    return _c('block')
+    return createNode('block')
   }
 
   function genVnodeTree (node) {
@@ -61,9 +61,9 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
         const data = genData(node)
         const children = genChildren(node)
         if (node.dynamic) {
-          return _cd(node.aliasTag, data, children)
+          return createDynamicNode(node.aliasTag, data, children)
         } else {
-          return _c(node.aliasTag || node.tag, data, children)
+          return createNode(node.aliasTag || node.tag, data, children)
         }
       }
     } else if (node.type === 3) {
@@ -83,7 +83,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
     return value
   }
 
-  function _c (tag, data = {}, children = []) {
+  function createNode (tag, data = {}, children = []) {
     if (Array.isArray(data)) {
       children = data
       data = {}
@@ -96,18 +96,27 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
     children = simpleNormalizeChildren(children).filter(node => !!node?.nodeType)
 
     return {
-      // tagName: tag,
       nodeType: tag,
       data,
       children
     }
   }
 
-  function _cd (moduleId, data = {}, children = []) {
-    console.log('the staticMap and moduleId is:', staticMap, moduleId)
+  /**
+   *
+   * 样式隔离的匹配策略优化：
+   *
+   * 条件1： 子组件不能影响到父组件的样式
+   * 条件2： slot 的内容必须在父组件的上下文当中完成样式匹配
+   * 条件3： 匹配过程只能进行一次
+   *
+   * 方案一：根据 moduleId 即作用域来进行匹配
+   * 方案二：根据虚拟树来进行匹配
+   */
+  function createDynamicNode (moduleId, data = {}, children = []) {
     const { template = {}, styles = [] } = staticMap[moduleId]
     data.$slots = resolveSlot(children) // 将 slot 通过上下文传递到子组件的渲染流程中
-    const vnodeTree = _genVnodeTree(template, [data], styles)
+    const vnodeTree = _genVnodeTree(template, [data], styles, moduleId)
     return vnodeTree
   }
 
@@ -138,7 +147,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
     }
 
     const res = {
-      uid
+      uid,
+      moduleId
     }
     node.attrsList.forEach((attr) => {
       if (attr.name === 'class' || attr.name === 'style') {
@@ -196,7 +206,6 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
 
   function genText (node) {
     return {
-      // tagName: "#text",
       nodeType: '#text',
       content: node.__exps ? evalExps(node.__exps) : node.text
     }
@@ -224,7 +233,9 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
         contextScope.push(scope)
 
         // 针对 for 循环避免每次都操作的同一个 node 导致数据的污染的问题
-        res.push(genVnodeTree(cloneNode(node)))
+        // res.push(genVnodeTree(JSON.parse(JSON.stringify(node))))
+        res.push(JSON.parse(JSON.stringify(genVnodeTree(node))))
+        // res.push(deepClone(genVnodeTree(node)))
 
         contextScope.pop()
       })
@@ -265,26 +276,26 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList) {
   function genSlot (node) {
     const data = genData(node) // 计算属性值
     const slotName = data.name || 'default'
-    return slots[slotName] || createEmptyNode()
+    return slots[slotName] || null
   }
 
   function genVnodeWithStaticCss (vnodeTree) {
     cssList.forEach((item) => {
       const [selector, style] = item
-      const nodes = cssSelect(selector)(vnodeTree)
+      const nodes = cssSelect(selector, { moduleId })(vnodeTree)
       nodes?.forEach((node) => {
         node.data.style = node.data.style ? style + node.data.style : style
       })
     })
 
     // 默认使用样式隔离的策略
-    vnodeTree.scopeProcessed = true
+    // vnodeTree.scopeProcessed = true
     return vnodeTree
   }
 
   const interpreteredVnodeTree = genVnodeTree(vnodeAst)
-  if (slotName) {
-    interpreteredVnodeTree.data.slot = slotName
-  }
+  // if (slotName) {
+  //   interpreteredVnodeTree.data.slot = slotName
+  // }
   return genVnodeWithStaticCss(interpreteredVnodeTree)
 }

@@ -1663,7 +1663,7 @@ function isComponentNode (el, options) {
 }
 
 function isRuntimeComponentNode (el, options) {
-  return !!(options.runtimeComponents && options.runtimeComponents[el.tag] && options.runtimeComponents[el.tag].isRuntimeMode)
+  return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -2189,7 +2189,7 @@ function postProcessRuntime (el, options, meta) {
     }
 
     if (isCustomComponent) {
-      const { hashName, resourcePath } = options.runtimeComponents[el.tag]
+      const { hashName, resourcePath } = options.componentInfo[el.tag]
       el.aliasTag = hashName
       meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
     }

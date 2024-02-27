@@ -1,10 +1,11 @@
 import tokenizer from './tokenizer'
 
 export default function language (lookups, matchComparison) {
-  return function (selector) {
+  return function (selector, moduleId) {
     return parse(
       selector,
       remap(lookups),
+      moduleId,
       matchComparison || caseSensitiveComparison
     )
   }
@@ -29,7 +30,7 @@ function opt_okay (opts, key) {
   return Object.prototype.hasOwnProperty.call(opts, key) && typeof opts[key] === 'string'
 }
 
-function parse (selector, options, matchComparison) {
+function parse (selector, options, moduleId, matchComparison) {
   const stream = tokenizer()
   // const default_subj = true
   const selectors = [[]]
@@ -87,6 +88,9 @@ function parse (selector, options, matchComparison) {
 
   // 单节点对比
   function selector_fn (node, as_boolean) {
+    if (node.data?.moduleId !== moduleId) {
+      return
+    }
     let current, length, subj
 
     const orig = node

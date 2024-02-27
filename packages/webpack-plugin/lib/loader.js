@@ -110,7 +110,7 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
-  const runtimeComponents = {}
+  const componentInfo = {}
 
   async.waterfall([
     (callback) => {
@@ -145,8 +145,7 @@ module.exports = function (content) {
         async.eachOf(needMapComponents, (component, name, callback) => {
           resolve(loaderContext.context, component, loaderContext, (err, resource) => {
             if (err) return callback(err)
-            // runtimeComponents[name] = 'm' + mpx.pathHash(resource)
-            runtimeComponents[name] = {
+            componentInfo[name] = {
               isRuntimeMode: checkIsRuntimeMode(resource),
               hashName: 'm' + mpx.pathHash(resource),
               resourcePath: resource
@@ -353,7 +352,7 @@ module.exports = function (content) {
           moduleId,
           usingComponents,
           componentPlaceholder,
-          runtimeComponents: JSON.stringify(runtimeComponents)
+          componentInfo: JSON.stringify(componentInfo)
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true

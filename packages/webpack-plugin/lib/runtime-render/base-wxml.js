@@ -15,6 +15,7 @@ function makeAttrsMap (attrKeys = []) {
 }
 
 function setCustomEle (el, meta) {
+  // 动态组件不需要被收集
   if (el.dynamic) return
   const tag = el.aliasTag || el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))

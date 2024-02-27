@@ -6,12 +6,14 @@ const language = cssauron({
     return node.nodeType
   },
   class: function (node) {
-    if (node.class !== undefined) {
-      return node.class
-    }
+    // if (node.class !== undefined) {
+    //   return node.class
+    // }
+    return node.data?.class
   },
   id: function (node) {
-    return node.id
+    // return node.id
+    return node.data?.id
   },
   children: function (node) {
     return node.children
@@ -37,7 +39,7 @@ const language = cssauron({
 
 export default function cssSelect (sel, options) {
   options = options || {}
-  const selector = language(sel)
+  const selector = language(sel, options.moduleId)
   function match (vtree) {
     const node = mapTree(vtree, null, options) || {}
     const matched = []
@@ -99,21 +101,21 @@ function getNormalizeCaseFn (caseSensitive) {
 // traverse.
 function mapTree (vtree, parent, options) {
   const normalizeTagCase = getNormalizeCaseFn(options.caseSensitiveTag)
-
+  // const moduleId = options.moduleId
   // VText represents text nodes
   // See https://github.com/Matt-Esch/virtual-dom/blob/master/docs/vtext.md
-  if (vtree.type === 'VirtualText') {
-    return {
-      contents: vtree.text,
-      parent: parent,
-      vtree: vtree
-    }
-  }
+  // if (vtree.type === 'VirtualText') {
+  //   return {
+  //     contents: vtree.text,
+  //     parent: parent,
+  //     vtree: vtree
+  //   }
+  // }
 
   // 样式隔离：如果已经进行过样式匹配直接返回
-  if (vtree.scopeProcessed) {
-    return null
-  }
+  // if (vtree.scopeProcessed) {
+  //   return null
+  // }
 
   if (vtree.nodeType != null) {
     const node = {}
@@ -121,14 +123,16 @@ function mapTree (vtree, parent, options) {
     node.vtree = vtree
     node.nodeType = normalizeTagCase(vtree.nodeType)
     // #todo 取值字段，将 data 当中的数据取出来放置外层节点
+    // 依据 moduleId 来确定是否需要匹配
     if (vtree.data) {
+    // if (vtree.data?.moduleId === moduleId && vtree.data) {
       node.data = vtree.data
-      if (typeof vtree.data.class === 'string') {
-        node.class = vtree.data.class
-      }
-      if (typeof vtree.data.id === 'string') {
-        node.id = vtree.data.id
-      }
+      // if (typeof vtree.data.class === 'string') {
+      //   node.class = vtree.data.class
+      // }
+      // if (typeof vtree.data.id === 'string') {
+      //   node.id = vtree.data.id
+      // }
     }
 
     if (vtree.children && typeof vtree.children.map === 'function') {
