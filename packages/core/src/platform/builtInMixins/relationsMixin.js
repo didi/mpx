@@ -216,7 +216,7 @@ export default function relationsMixin (mixinType) {
 
           // 当前组件在target的slots当中
           if ((type === 'parent' || type === 'ancestor') && target.$vnode.context === this.$vnode.context) {
-            const targetRelation = target.__mpxProxy.options.relations?.[this.$options.componentPath]
+            const targetRelation = target?.__mpxProxy.options.relations?.[this.$options.componentPath]
             if (
               targetRelation &&
               targetRelation.type === relationTypeMap[type] &&
