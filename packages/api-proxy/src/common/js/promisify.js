@@ -68,28 +68,18 @@ function promisify (listObj, whiteList, customBlackList) {
     }
 
     result[key] = function (...args) {
-      if (promisifyFilter(key)) {
+      const obj = args[0]
+      if (promisifyFilter(key) && !(obj.success || obj.fail || obj.complete)) {
         if (!args[0]) {
           args.unshift({ success: noop, fail: noop })
         }
-        const obj = args[0]
         let returned
         const promise = new Promise((resolve, reject) => {
-          const originSuccess = obj.success
-          const originFail = obj.fail
           obj.success = function (res) {
-            if (originSuccess) {
-              originSuccess.call(this, res)
-            } else {
-              resolve(res)
-            }
+            resolve(res)
           }
           obj.fail = function (e) {
-            if (originFail) {
-              originFail.call(this, e)
-            } else {
-              reject(e)
-            }
+            reject(e)
           }
           returned = listObj[key].apply(envObj, args)
         })
