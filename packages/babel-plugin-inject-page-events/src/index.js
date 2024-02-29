@@ -41,7 +41,9 @@ module.exports = ({ parse }) => {
               if (idx + 1 !== state.sideEffectHooks.size) pageEventsFun += ','
             })
             const code = `global.currentInject.pageEvents = {${pageEventsFun}};`
-            const newAst = parse(code)
+            const newAst = parse(code, {
+              filename: state.filename
+            })
             path.unshiftContainer('body', newAst.program.body)
           }
         }

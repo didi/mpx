@@ -7,7 +7,7 @@ module.exports = function ({ print }) {
   return {
     test: TAG_NAME,
     web (tag, { el }) {
-      if (el.hasEvent) {
+      if (el.hasModel) {
         el.isBuiltIn = true
       }
       if (el.isBuiltIn) {

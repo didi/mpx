@@ -43,12 +43,13 @@ class DynamicEntryDependency extends NullDependency {
         }
       },
       (resource, callback) => {
+        const { resourcePath } = parseRequest(resource)
+
         if (!outputPath) {
-          const { resourcePath } = parseRequest(resource)
           outputPath = mpx.getOutputPath(resourcePath, entryType)
         }
 
-        const { packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
+        const { packageName, packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
           resource,
           outputPath,
           resourceType: entryType,
@@ -103,6 +104,12 @@ class DynamicEntryDependency extends NullDependency {
             .catch(err => callback(err))
 
           mpx.addEntryPromiseMap.set(key, addEntryPromise)
+          mpx.collectDynamicEntryInfo({
+            resource,
+            packageName,
+            filename,
+            entryType
+          })
         }
       }
     ], callback)

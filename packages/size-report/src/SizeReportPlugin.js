@@ -48,7 +48,10 @@ class SizeReportPlugin {
       stage: 1000
     }, async (compilation) => {
       const { moduleGraph, chunkGraph, __mpx__: mpx } = compilation
-      if (!mpx) return
+      if (!mpx) {
+        compilation.errors.push(new Error('@mpxjs/size-report需要与@mpxjs/webpack-plugin配合使用，请检查!'))
+        return
+      }
 
       const logger = compilation.getLogger('SizeReportPlugin')
       const cache = compilation.getCache('SizeReportPlugin')
@@ -62,11 +65,13 @@ class SizeReportPlugin {
       // 简化identifier
       function getSuccinctIdentifier (module) {
         const identifier = module.readableIdentifier(compilation.requestShortener)
-        // 保留packageRoot信息
-        const end = identifier.match(/\?|!/)?.index
-        if (!end) return identifier
-        // 保留第一个?后的packageRoot信息，不存在就切割
-        return identifier.match(/^[^?!]*\?packageRoot=(\w+)/)?.[0] || identifier.substring(0, end)
+        let query = ''
+        const resource = module.resource || (module.rootModule && module.rootModule.resource)
+        if (resource) {
+          const { queryObj } = parseRequest(resource)
+          query = queryObj.packageRoot ? '?packageRoot=' + queryObj.packageRoot : ''
+        }
+        return identifier.split(/\?|!/)[0] + query
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -85,7 +90,7 @@ class SizeReportPlugin {
             // We skip connections without Module pointer
             if (!m) continue
             // We skip weak connections
-            if (connection.weak) continue
+            if (connection.weak && d.type !== 'mpx cjs extract') continue
             // Use undefined runtime
             const state = connection.getActiveState(/* runtime */)
             // We skip inactive connections
@@ -106,6 +111,8 @@ class SizeReportPlugin {
       const reportRedundance = this.options.reportRedundance
 
       const needEntryPathRules = this.options.needEntryPathRules || {}
+
+      const ignoreSubpackages = this.options.ignoreSubpackages
 
       if (reportPages) {
         Object.entries(mpx.pagesMap).forEach(([resourcePath, name]) => {
@@ -128,7 +135,13 @@ class SizeReportPlugin {
 
       function addModuleEntryGraph (moduleId, relation) {
         if (typeof moduleId !== 'number') return
-        if (!moduleEntryGraphMap.has(moduleId)) moduleEntryGraphMap.set(moduleId, { target: !!relation?.target, children: new Set(), parents: new Set() })
+        if (!moduleEntryGraphMap.has(moduleId)) {
+          moduleEntryGraphMap.set(moduleId, {
+            target: !!(relation && relation.target),
+            children: new Set(),
+            parents: new Set()
+          })
+        }
         const value = moduleEntryGraphMap.get(moduleId)
 
         if (Array.isArray(relation.children)) {
@@ -218,12 +231,12 @@ class SizeReportPlugin {
         })
       }
 
-      const subpackages = Object.keys(mpx.componentsMap)
-      delete subpackages.main
+      const packages = Object.keys(mpx.dynamicEntryInfo)
 
       function getPackageName (fileName) {
         fileName = toPosix(fileName)
-        for (const packageName of subpackages) {
+        for (const packageName of packages) {
+          if (packageName === 'main') continue
           if (fileName.startsWith(packageName + '/')) return packageName
         }
         return 'main'
@@ -287,6 +300,7 @@ class SizeReportPlugin {
         const entrySet = getEntrySet(reportGroup.entryModules, reportGroup.ignoreSubEntry)
         Object.assign(reportGroup, entrySet, {
           selfSize: 0,
+          ignoreSelfSize: 0,
           selfSizeInfo: {},
           sharedSize: 0,
           sharedSizeInfo: {},
@@ -319,6 +333,9 @@ class SizeReportPlugin {
               })
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(noEntryModules, (noEntryModule) => {
               return reportGroup.noEntryModules.has(noEntryModule)
@@ -333,6 +350,9 @@ class SizeReportPlugin {
               return reportGroup.selfEntryModules.has(entryModule)
             })) {
               reportGroup.selfSize += fillInfo.size
+              if (ignoreSubpackages && ignoreSubpackages.includes(packageName)) {
+                reportGroup.ignoreSelfSize += fillInfo.size
+              }
               return fillSizeInfo(reportGroup.selfSizeInfo, packageName, fillType, fillInfo)
             } else if (has(entryModules, (entryModule) => {
               return reportGroup.selfEntryModules.has(entryModule) || reportGroup.sharedEntryModules.has(entryModule)
@@ -358,6 +378,7 @@ class SizeReportPlugin {
             }
           }
         }
+
         divideEquallySize(sharedModulesGroupsSet, fillInfo.size)
         divideEquallySize(customGroupSharedModulesGroupsSet, fillInfo.size)
       }
@@ -479,7 +500,8 @@ class SizeReportPlugin {
         totalSize: 0,
         staticSize: 0,
         chunkSize: 0,
-        copySize: 0
+        copySize: 0,
+        webpackTemplateSize: 0
       }
 
       function fillPackagesSizeInfo (packageName, size) {
@@ -577,7 +599,6 @@ class SizeReportPlugin {
             packageName,
             size,
             modules: []
-            // webpackTemplateSize: 0
           }
           assetsSizeInfo.assets.push(chunkAssetInfo)
           fillPackagesSizeInfo(packageName, size)
@@ -615,8 +636,7 @@ class SizeReportPlugin {
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
-
-          // chunkAssetInfo.webpackTemplateSize = size
+          sizeSummary.webpackTemplateSize += size
           // filter sourcemap
         } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
@@ -645,11 +665,15 @@ class SizeReportPlugin {
 
       function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
         const sizeThreshold = normalizeThreshold(threshold.size || threshold)
+        const preWarningSize = threshold.preWarningSize
         const packagesThreshold = threshold.packages
         const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
-          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），请检查！`)
+          compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
+        }
+        if (preWarningSize && size && size < sizeThreshold) {
+          compilation.warnings.push(`当前${prefix}的总体积 ${size / 1024}kb，${prefix}的体积阈值为${sizeThreshold / 1024}kb, 共剩余${(sizeThreshold - size) / 1024}kb，请注意！`)
         }
 
         if (packagesThreshold && sizeInfo) {
@@ -658,19 +682,31 @@ class SizeReportPlugin {
             const packageSizeThreshold = normalizeThreshold(packagesThreshold[packageName] || packagesThreshold)
             if (packageSize && packageSizeThreshold && packageSize > packageSizeThreshold) {
               const readablePackageName = packageName === 'main' ? '主包' : `${packageName}分包`
-              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），请检查！`)
+              compilation.errors.push(`${prefix}的${readablePackageName}体积（${packageSize}B）超过设定阈值（${packageSizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
             }
           }
         }
       }
 
       if (this.options.threshold) {
-        checkThreshold(this.options.threshold, sizeSummary.totalSize, packagesSizeInfo)
+        let filterIgnoreTotalSize = sizeSummary.totalSize
+        if (ignoreSubpackages) {
+          ignoreSubpackages.forEach(ignoreName => {
+            if (packagesSizeInfo[ignoreName]) {
+              filterIgnoreTotalSize -= packagesSizeInfo[ignoreName]
+            }
+          })
+        }
+        checkThreshold(this.options.threshold, filterIgnoreTotalSize, packagesSizeInfo)
       }
 
       reportGroups.forEach((reportGroup) => {
         if (reportGroup.threshold) {
-          checkThreshold(reportGroup.threshold, reportGroup.selfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
+          let groupSelfSize = reportGroup.selfSize
+          if (reportGroup.ignoreSelfSize) {
+            groupSelfSize -= reportGroup.ignoreSelfSize
+          }
+          checkThreshold(reportGroup.threshold, groupSelfSize, reportGroup.selfSizeInfo, reportGroup.name || 'anonymous group')
         }
       })
 
@@ -738,7 +774,7 @@ class SizeReportPlugin {
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
       })
-      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
+      'totalSize|staticSize|chunkSize|copySize|webpackTemplateSize'.split('|').forEach((key) => {
         sizeSummary[key] = formatSize(sizeSummary[key])
       })
 
@@ -763,7 +799,7 @@ class SizeReportPlugin {
       }
 
       const redundanceSizeInfo = formatRedundanceReport()
-      if (moduleEntryGraph) reportData.moduleEntryGraph = moduleEntryGraph
+      if (Object.keys(moduleEntryGraph).length) reportData.moduleEntryGraph = moduleEntryGraph
       if (groupsSizeInfo.length) reportData.groupsSizeInfo = groupsSizeInfo
       if (pagesSizeInfo.length) reportData.pagesSizeInfo = pagesSizeInfo
       if (redundanceSizeInfo.length) reportData.redundanceSizeInfo = redundanceSizeInfo
@@ -780,6 +816,8 @@ class SizeReportPlugin {
       if (this.options.server.enable) {
         startServer(JSON.stringify(reportData), Object.assign({ logger }, this.options.server))
       }
+
+      this.options.callback && this.options.callback(reportData)
 
       logger.timeEnd('compute size')
     })

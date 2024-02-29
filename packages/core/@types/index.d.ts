@@ -8,7 +8,7 @@
 /// <reference path="./node.d.ts" />
 
 // @ts-ignore
-import type { GetComputedType } from '@mpxjs/store'
+import { GetComputedType } from '@mpxjs/store'
 
 // @ts-ignore
 export * from '@mpxjs/store'
@@ -24,25 +24,37 @@ type UnionToIntersection<U> = (U extends any
   ? (k: U) => void
   : never) extends ((k: infer I) => void)
   ? I
-  : never;
+  : never
 
-type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never;
+type ArrayType<T extends any[]> = T extends Array<infer R> ? R : never
 
 // Mpx types
 type Data = object | (() => object)
 
-type PropType = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor | null
+export type PropType<T> = {
+  __type: T
+} & (
+  T extends String
+    ? StringConstructor
+    : T extends number
+      ? NumberConstructor
+      : T extends boolean
+        ? BooleanConstructor
+        : T extends any[]
+          ? ArrayConstructor
+          : T extends object
+            ? ObjectConstructor
+            : never
+  )
 
-interface PropOpt {
-  type: PropType
-  optionalTypes?: Array<PropType>
-  value?: any
-
-  observer? (value: any, old: any, changedPath: string): void
+type FullPropType<T> = {
+  type: PropType<T>
+  value?: T
+  optionalTypes?: WechatMiniprogram.Component.ShortProperty[]
 }
 
 interface Properties {
-  [key: string]: PropType | PropOpt
+  [key: string]: WechatMiniprogram.Component.AllProperty
 }
 
 interface Methods {
@@ -69,29 +81,19 @@ interface WatchField {
   [key: string]: WatchHandler | WatchOptWithHandler
 }
 
-interface ObserversDefs {
-  [expression: string]: (...fields: any[]) => any
-}
-
 type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
-type PropValueType<Def> = Def extends {
-    type: (...args: any[]) => infer T;
-    optionalType?: ((...args: any[]) => infer T)[];
-    value?: infer T;
-  }
-  ? T
-  : Def extends (...args: any[]) => infer T
-    ? T
-    : any;
-
-type GetPropsType<T> = {
-  readonly [K in keyof T]: PropValueType<T[K]>
+type GetPropsType<T extends Properties> = {
+  readonly [K in keyof T]: T[K] extends FullPropType<infer V>
+    ? V
+    : T[K] extends PropType<infer V>
+      ? V
+      : WechatMiniprogram.Component.PropertyToData<T[K]>
 }
 
 type RequiredPropertyNames<T> = {
   [K in keyof T]-?: T[K] extends undefined ? never : K
-}[keyof T];
+}[keyof T]
 
 type RequiredPropertiesForUnion<T> = T extends object ? Pick<T, RequiredPropertyNames<T>> : never
 
@@ -100,6 +102,7 @@ interface Mixin<D, P, C, M> {
   properties?: P
   computed?: C
   methods?: M
+
   [index: string]: any
 }
 
@@ -112,53 +115,42 @@ interface Context {
   triggerEvent: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['triggerEvent']
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
   asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
+
   forceUpdate (params?: object, callback?: () => void): void
+
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
   createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
-interface ComponentOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes> {
+interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
   data?: D
   properties?: P
   computed?: C
   methods?: M
   mixins?: Mi
   watch?: WatchField
-  observers?: ObserversDefs
-  options?: Partial<{
-    addGlobalClass: boolean
-    multipleSlots: boolean
-    styleIsolation: string
-  }>
-
   setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: Context) => S
 
   pageShow?: () => void
 
   pageHide?: () => void
 
-  externalClasses?: string[]
-
-  lifetimes?: Partial<WechatMiniprogram.Component.Lifetimes>
-
-  pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes>
-
-  relations?: { [key: string]: WechatMiniprogram.Component.RelationOption }
+  initData?: Record<string, any>
 
   [index: string]: any
 }
 
-type PageOpt<D, P, C, M, Mi extends Array<any>, S extends Record<any, any>> =
+type PageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> =
   ComponentOpt<D, P, C, M, Mi, S>
   & Partial<WechatMiniprogram.Page.ILifetime>
 
-type ThisTypedPageOpt<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
+type ThisTypedPageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   PageOpt<D, P, C, M, Mi, S>
   & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
-type ThisTypedComponentOpt<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
+type ThisTypedComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi, S>
   & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
@@ -186,13 +178,17 @@ type MpxComProps<O> = { $rawOptions: O }
 
 export interface MpxComponentIns {
   $refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
-  $asyncRefs : ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
+  $asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
   $set: typeof set
   $remove: typeof del
   $delete: typeof del
+
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
+
   $forceUpdate (params?: object, callback?: () => void): void
+
   $nextTick (fn: () => void): void
+
   $i18n: {
     locale: string
     fallbackLocale: string
@@ -201,6 +197,7 @@ export interface MpxComponentIns {
   $tc: typeof tc
   $te: typeof te
   $tm: typeof tm
+
   [k: string]: any
 }
 
@@ -210,17 +207,16 @@ interface ReplaceWxComponentIns {
   selectAllComponents (selector: string): Array<ComponentIns<{}, {}, {}, {}, []>>
 }
 
-type WxComponentIns<D extends AnyObject> =
-  ReplaceWxComponentIns
-  & WechatMiniprogram.Component.InstanceProperties
-  & WechatMiniprogram.Component.InstanceMethods<D>
+type WxComponentIns<D extends Data = {}, P extends Properties = {}, M extends Methods = {}> =
+  Omit<WechatMiniprogram.Component.Instance<D, P, M>, 'selectComponent' | 'selectAllComponents'>
+  & ReplaceWxComponentIns
 
-type ComponentIns<D extends AnyObject, P, C, M, Mi extends Array<any>, S extends Record<any, any> = {}, O = {}> =
+type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
   GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> &
-  WxComponentIns<D> & MpxComponentIns & MpxComProps<O>
+  WxComponentIns<D, P, M> & MpxComponentIns & MpxComProps<O>
 
 interface CreateConfig {
   customCtor: any
@@ -242,7 +238,10 @@ export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMi
 
 type MixinType = 'app' | 'page' | 'component'
 
-export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | { types?: MixinType | MixinType[], stage?: number }): void
+export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | {
+  types?: MixinType | MixinType[],
+  stage?: number
+}): Mpx
 
 // export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
@@ -252,16 +251,22 @@ interface AnyConstructor {
   prototype: any
 }
 
+interface WebviewConfig {
+  hostWhitelists?: Array<string>
+  apiImplementations?: object
+}
+
 interface MpxConfig {
   useStrictDiff: boolean
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
   errorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
-  proxyEventHandler: (e: Event) => any | null
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
-  webRouteConfig: object
+  webRouteConfig: object,
+  webviewConfig?: WebviewConfig
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -274,11 +279,15 @@ interface ImplementOptions {
 
 export function toPureObject<T extends object> (obj: T): T
 
-declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any;
+declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
 export type Plugin = PluginInstallFunction | {
-  install: PluginInstallFunction;
-};
+  install: PluginInstallFunction
+}
+
+export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never;
+
+export type PluginFunctionParams<T extends PluginInstallFunction> = T extends (app: any, ...args: infer P) => any ? P : [];
 
 export interface Mpx {
   getMixin: typeof getMixin
@@ -286,10 +295,9 @@ export interface Mpx {
   injectMixins: typeof injectMixins
   toPureObject: typeof toPureObject
   observable: typeof observable
+  watch: typeof watch
 
-  // watch: typeof watch
-
-  use (plugin: Plugin, ...rest: any[]): Mpx
+  use <T extends Plugin = Plugin>(plugin: T, ...rest: PluginFunctionParams<PluginFunction<T>>): Mpx
 
   implement (name: string, options?: ImplementOptions): void
 
@@ -311,6 +319,8 @@ export interface Mpx {
     te: typeof te
     tm: typeof tm
   }
+
+  __vue: any
 }
 
 type GetFunctionKey<T> = {
@@ -336,7 +346,7 @@ export interface Ref<T = any> {
    * We need this to be in public d.ts but don't want it to show up in IDE
    * autocomplete, so we use a private Symbol instead.
    */
-    [RefSymbol]: true
+  [RefSymbol]: true
 }
 
 type CollectionTypes = IterableCollections | WeakCollections
@@ -445,7 +455,11 @@ export interface WatchOptions extends WatchEffectOptions {
 
 interface EffectScope {
   run<T> (fn: () => T): T | undefined // 如果作用域不活跃就为 undefined
-  stop (): void
+  stop (fromParent?: boolean): void
+
+  pause (): void
+
+  resume (ignoreDirty?: boolean): void
 }
 
 
@@ -455,14 +469,14 @@ type StringObj = {
 
 interface UseI18n {
   id: number
-  locale: string
+  locale: WritableComputedRef<string>
   fallbackLocale: string
   readonly messages: StringObj
   readonly isGlobal: boolean
   inheritLocale: boolean
   fallbackRoot: boolean
 
-  t: typeof t | typeof tc
+  t: typeof t & typeof tc
 
   te: typeof te
 
@@ -503,6 +517,8 @@ export function triggerRef (ref: Ref): void
 export function reactive<T extends object> (target: T): Reactive<T>
 
 export function isReactive (value: unknown): boolean
+
+export function markRaw<T extends object> (value: T): T
 
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
@@ -582,6 +598,7 @@ export function onBeforeUnmount (callback: () => void): void
 export function onUnmounted (callback: () => void): void
 
 export function onLoad<T extends Record<string, string | undefined>> (callback: (query: T) => void): void
+
 // wechat dose not have generics
 // export function onLoad (callback: WechatMiniprogram.Page.ILifetime['onLoad']): void
 
@@ -608,7 +625,7 @@ export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabI
 export function onSaveExitState (callback: () => void): void
 
 // get instance
-export function getCurrentInstance<T extends MpxComponentIns> (): T
+export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): { proxy: T, [x: string]: any }
 
 // I18n
 export function useI18n<Options extends {
@@ -620,6 +637,27 @@ export function useI18n<Options extends {
 }> (
   options?: Options
 ): UseI18n
+
+// `<script setup>`
+type NotUndefined<T> = T extends undefined ? never : T
+
+type InferDefaults<T> = {
+  [K in keyof T]?: InferDefault<T, NotUndefined<T[K]>>
+}
+
+type InferDefault<P, T> = T extends | null
+  | number
+  | string
+  | boolean
+  | symbol
+  | Array<any>
+  | Object
+  ? T | ((props: P) => T)
+  : (props: P) => T
+
+type PropsWithDefaults<Base, Defaults> = Base & {
+  [K in keyof Defaults]: K extends keyof Base ? NotUndefined<Base[K]> : never
+}
 
 // inner lifecycle
 export const BEFORECREATE: string
@@ -636,8 +674,9 @@ export const ONHIDE: string
 export const ONRESIZE: string
 
 declare global {
-  const defineProps: <T>(props: T) => Readonly<GetPropsType<T>>
+  const defineProps: (<T extends Properties = {}>(props: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
+  const withDefaults: <Props, Defaults extends InferDefaults<Props>>(props: Props, defaults: Defaults) => PropsWithDefaults<Props, Defaults>
 }

@@ -4,12 +4,26 @@ import { PausedState } from '../helper/const'
 
 let uid = 0
 
+let shouldTrack = true
+const trackStack = []
+
+export function pauseTracking () {
+  trackStack.push(shouldTrack)
+  shouldTrack = false
+}
+
+export function resetTracking () {
+  const last = trackStack.pop()
+  shouldTrack = last === undefined ? true : last
+}
+
 export class ReactiveEffect {
   active = true
   deps = []
   newDeps = []
   depIds = new Set()
   newDepIds = new Set()
+  allowRecurse = false
 
   constructor (
     fn,
@@ -26,17 +40,21 @@ export class ReactiveEffect {
   // run fn and return value
   run () {
     if (!this.active) return this.fn()
-    pushTarget(this)
+    const lastShouldTrack = shouldTrack
     try {
+      pushTarget(this)
+      shouldTrack = true
       return this.fn()
     } finally {
       popTarget()
+      shouldTrack = lastShouldTrack
       this.deferStop ? this.stop() : this.cleanupDeps()
     }
   }
 
   // add dependency to this
   addDep (dep) {
+    if (!shouldTrack) return
     const id = dep.id
     if (!this.newDepIds.has(id)) {
       this.newDepIds.add(id)
@@ -69,11 +87,12 @@ export class ReactiveEffect {
   // same as trigger
   update () {
     // avoid dead cycle
-    if (Dep.target === this) return
-    if (this.pausedState !== PausedState.resumed) {
-      this.pausedState = PausedState.dirty
-    } else {
-      this.scheduler ? this.scheduler() : this.run()
+    if (Dep.target !== this || this.allowRecurse) {
+      if (this.pausedState !== PausedState.resumed) {
+        this.pausedState = PausedState.dirty
+      } else {
+        this.scheduler ? this.scheduler() : this.run()
+      }
     }
   }
 
@@ -100,13 +119,15 @@ export class ReactiveEffect {
   }
 
   pause () {
-    this.pausedState = PausedState.paused
+    if (this.pausedState !== PausedState.dirty) {
+      this.pausedState = PausedState.paused
+    }
   }
 
-  resume () {
+  resume (ignoreDirty = false) {
     const lastPausedState = this.pausedState
     this.pausedState = PausedState.resumed
-    if (lastPausedState === PausedState.dirty) {
+    if (!ignoreDirty && lastPausedState === PausedState.dirty) {
       this.scheduler ? this.scheduler() : this.run()
     }
   }

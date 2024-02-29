@@ -86,7 +86,6 @@ return {
 ### isReactive
 检查对象是否是由 reactive 创建的响应式对象。
 
-**示例：**
 ```js
 import { createComponent, reactive, isReactive } from '@mpxjs/core'
 
@@ -105,8 +104,6 @@ createComponent({
 
 ### markRaw
 标记一个对象，使其永远不会被抓换为响应性对象，并返回对象本身
-
-**示例：**
 
 ```js
 import { markRaw, reactive, isReactive } from '@mpxjs/core'
@@ -143,8 +140,6 @@ reactive() 的浅层作用形式，只跟踪自身 property 的响应性，但�
 
 和 reactive() 不同，这里没有深层级的转换：一个浅层响应式对象里只有根级别的 property 是响应式的。property 的值会被原样存储和暴露，这也意味着值为 ref 的 property 不会被自动解包了。
 
-**示例：**
-
 ```js
 import { shallowReactive } from '@mpxjs/core'
 
@@ -172,12 +167,11 @@ state.head.value
 
 ### set
 用于对一个响应式对象新增属性，会`触发订阅者更新操作`
-- **参数**：
-    - `{Object | Array} target`
-    - `{string | number} propertyName/index`
-    - `{any} value`
 
-- **示例：**
+```ts
+function set(target: Object | Array, property: string | number, value: any): void
+```
+
 ```js
 import { set, reactive } from '@mpxjs/core'
 const person = reactive({name: 1})
@@ -187,10 +181,11 @@ set(person, 'age', 17) // age 改变后会触发订阅者视图更新
 
 ### del
 用于对一个响应式对象删除属性，会`触发订阅者更新操作`
-- **参数**：
-    - `{Object | Array} target`
-    - `{string | number} propertyName/index`
-- **示例：**
+
+```ts
+function del(target: Object | Array, property: string | number): void
+```
+
 ```js
 import {del, reactive } from '@mpxjs/core'
 const person = reactive({name: 1})
@@ -201,6 +196,21 @@ del(person, 'age')
 ## Computed 与 Watch
 
 ### computed
+
+```ts
+// 只读形式
+function computed<T>(
+    getter: () => T
+): Readonly<Ref<Readonly<T>>>
+
+// 可写形式
+function computed<T>(
+    options: {
+        get: () => T
+        set: (value: T) => void
+    }
+): Ref<T>
+```
 
 接受一个 getter 函数，并根据 getter 的返回值返回一个不可变的响应式 ref 对象。
 ```js
@@ -225,23 +235,23 @@ const plusOne = computed({
 plusOne.value = 1
 console.log(count.value) // 0
 ```
-**类型声明：**
-```ts
-// 只读形式
-function computed<T>(
-    getter: () => T
-): Readonly<Ref<Readonly<T>>>
-
-// 可写形式
-function computed<T>(
-    options: {
-        get: () => T
-        set: (value: T) => void
-    }
-): Ref<T>
-```
 
 ### watchEffect
+
+```ts
+function watchEffect(
+  effect: (onInvalidate: InvalidateCbRegistrator) => void,
+  options?: WatchEffectOptions
+): StopHandle
+
+interface WatchEffectOptions {
+    flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
+}
+
+type InvalidateCbRegistrator = (invalidate: () => void) => void
+
+type StopHandle = () => void
+```
 
 立即执行传入的函数，同时对其依赖进行响应式追踪，并在其依赖变更时重新运行该函数。
 ```js
@@ -303,22 +313,6 @@ watchEffect(callback, {
 })
 ```
 
-**类型声明：**
-```ts
-function watchEffect(
-  effect: (onInvalidate: InvalidateCbRegistrator) => void,
-  options?: WatchEffectOptions
-): StopHandle
-
-interface WatchEffectOptions {
-    flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
-}
-
-type InvalidateCbRegistrator = (invalidate: () => void) => void
-
-type StopHandle = () => void
-```
-
 ### watchSyncEffect
 watchEffect 的别名，带有 flush: 'sync' 选项。
 
@@ -326,15 +320,6 @@ watchEffect 的别名，带有 flush: 'sync' 选项。
 watchEffect 的别名，带有 flush: 'post' 选项。
 
 ### watch
-该 API 与选项式 API 中的 watch 基本等效，watch 需要侦听特定的数据源，并在单独的回调函数中执行副作用。默认情况下
-是惰性的——即回调仅在侦听源发生变化时被调用。
-
-与 watchEffect 比较，watch 允许我们：
-* 懒执行副作用；
-* 更具体地说明什么状态应该触发侦听器重新运行；
-* 访问侦听状态变化前后的值。
-
-**类型声明：**
 
 ```ts
 // 侦听单一源
@@ -362,6 +347,15 @@ interface WatchOptions extends WatchEffectOptions {
     immediateAsync: boolean // 默认：false
 }
 ```
+
+该 API 与选项式 API 中的 watch 基本等效，watch 需要侦听特定的数据源，并在单独的回调函数中执行副作用。默认情况下
+是惰性的——即回调仅在侦听源发生变化时被调用。
+
+与 watchEffect 比较，watch 允许我们：
+* 懒执行副作用；
+* 更具体地说明什么状态应该触发侦听器重新运行；
+* 访问侦听状态变化前后的值。
+
 
 #### 侦听单一源
 watch 可以侦听一个具有返回值的 getter，也可以直接是一个 ref
@@ -504,9 +498,7 @@ unwatch()
 ## Effect 作用域 API
 
 ### effectScope
-创建一个 effect 作用域对象，捕获在其内部创建的响应性副作用(例如计算属性或监听器)，可以对这些副作用进行批量处理
 
-**类型声明：**
 ```ts
 function effectScope(detached?: boolean): EffectScope
 
@@ -517,7 +509,9 @@ interface EffectScope {
     resume(): void
 }
 ```
-**示例：**
+
+创建一个 effect 作用域对象，捕获在其内部创建的响应性副作用(例如计算属性或监听器)，可以对这些副作用进行批量处理
+
 ```js
 import { effectScope } from '@mpxjs/core'
 
@@ -532,6 +526,10 @@ scope.run(() => {
 
 scope.stop()
 ```
+
+需要注意的是，effectScope 接受一个 detached 参数，默认为false，该参数来表示当前作用域是否和父级作用域进行分离，若 detached 为 true，
+当前 effectScope 则不会被父级作用域收集。
+
 * 暂停侦听
 
 Mpx 提供了 pause 方法可以将整个作用域中的响应性副作用批量暂停侦听。
@@ -566,29 +564,33 @@ onShow(() => {
 ```
 
 ### getCurrentScope
-返回当前活跃的 effect 作用域。
 
-**类型声明：**
 ```ts
 function getCurrentScope(): EffectScope | undefined
 ```
 
-### onScopeDispose
-在当前活跃的 effect 作用域上注册一个处理回调。该回调会在相关的 effect 作用域结束之后被调用。
+返回当前活跃的 effect 作用域。
 
-**类型声明：**
+### onScopeDispose
 
 ```ts
 function onScopeDispose(fn: () => void): void
 ```
 
+在当前活跃的 effect 作用域上注册一个处理回调。该回调会在相关的 effect 作用域结束之后被调用。
+
 ## Refs
 
 ### ref
 
-接受一个内部值，返回一个响应式的、可更改的 ref 对象，此对象只有一个指向其内部值的 property .value。
+```ts
+interface Ref<T> {
+    value: T
+}
+function ref<T>(value: T): Ref<T>
+```
 
-**示例：**
+接受一个内部值，返回一个响应式的、可更改的 ref 对象，此对象只有一个指向其内部值的 property .value。
 
 ```js
 const count = ref(0)
@@ -596,14 +598,6 @@ console.log(count.value) // 0
 
 count.value++
 console.log(count.value) // 1
-```
-
-**类型声明：**
-```ts
-interface Ref<T> {
-    value: T
-}
-function ref<T>(value: T): Ref<T>
 ```
 
 **注意事项：**
@@ -628,7 +622,6 @@ console.log(state.value.foo)
 
 如果参数是一个 ref，则返回内部值，否则返回参数本身，是 `val = isRef(ref) ? ref.value : ref` 的语法糖函数。
 
-**示例：**
 ```js
 import { ref, unref } from '@mpxjs/core'
 const count = ref(0)
@@ -640,7 +633,6 @@ console.log(foo === 0) // -> true
 用于为响应式对象上的property 创建 ref。创建的 ref 与其源 property 保持同步：改变源 property
 将更新 ref，改变 ref 也将更新 property。
 
-**示例：**
 ```js
 const state = reactive({
     f: 1,
@@ -675,7 +667,6 @@ console.log(blackRef.value) // 3
 ### toRefs
 将一个响应式对象转换为一个普通对象，这个普通对象的每个 property 都是指向源对象相应 property 的 ref。每个单独的 ref 都是 `toRef` 创建的
 
-**示例：**
 ```js
 const state = reactive({
     black: 1,
@@ -715,15 +706,27 @@ const {black, white} = useFeatX()
 检查某个值是否为 ref，返回true/false。
 
 ### customRef
+
+```ts
+function customRef<T>(factory: CustomRefFactory<T>): Ref<T>
+
+type CustomRefFactory<T> = (
+    track: () => void,
+    trigger: () => void
+) => {
+    get: () => T,
+    set: (value: T) => void
+}
+```
+
 创建一个自定义 ref，可对其进行依赖项跟踪和更新触发显示控制。需要一个工厂函数，该函数接收 `track` 和 `trigger`
 做为参数，并且应该返回一个带有 `get` 和 `set` 的对象。
 
 同时，`track()` 应该在 get() 方法中调用，`trigger()` 应该在 `set()` 中调用。不过这里具体何时调用、
 是否调用都将由用户自己来控制
 
-**示例：**
-创建一个防抖 ref，即只在最近一次 set 调用后的一段固定间隔后再调用：
 
+示例：创建一个防抖 ref，即只在最近一次 set 调用后的一段固定间隔后再调用：
 ```js
 function useDebouncedRef(value, delay = 200) {
   let timeout
@@ -747,23 +750,10 @@ function useDebouncedRef(value, delay = 200) {
 // text 的每次改变都只在最近一次set后的200ms后调用
 const text = useDebouncedRef('hello')
 ```
-**类型声明：**
-```ts
-function customRef<T>(factory: CustomRefFactory<T>): Ref<T>
-
-type CustomRefFactory<T> = (
-    track: () => void,
-    trigger: () => void
-) => {
-    get: () => T,
-    set: (value: T) => void
-}
-```
 
 ### shallowRef
 `ref()` 的浅层作用形式，创建一个仅跟踪自身 `.value` 变化的 ref，其他值不做任何处理都为非响应式
 
-**示例：**
 ```js
 const state = shallowRef({
     count: 1

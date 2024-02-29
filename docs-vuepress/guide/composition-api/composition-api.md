@@ -650,10 +650,7 @@ createComponent({
 
 ## `<script setup>`
 
-和 Vue 一样，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。相较于普通的 `<script>` 语法，它具有一些优势：
-* 更少的样板内容，更简洁的代码
-* 能够使用纯 TypeScript 声明 props 类型
-* 更好的 IDE 类型推导性能
+和 Vue 类似，`<script setup>` 是在 Mpx 单文件组件中使用组合式 API 时的编译时语法糖。不过受小程序底层技术限制，在 Mpx 中 `<script setup>` 无法完整提供其在 Vue 中所具备的相关优势，我们提供了这个语法能力，但不作为默认的推荐选项。
 
 ### 基本语法
 
@@ -667,6 +664,9 @@ createComponent({
 `<script>` 里边的代码会被编译成组件 `setup()` 函数的内容。
 
 ### 顶层的绑定会被暴露给模版
+
+> 从 v2.8.19 开始，顶层绑定自动暴露给模板的能力被取消，构建时会强制用户通过 `defineExpose` 手动声明需要暴露给模板的数据或方法。
+
 和 Vue 一样，当使用 `<script setup>` 时，任何在 `<script setup>` 声明的顶层的绑定（包括变量，函数声明，以及 import 导入的内容） 都能在模版中直接使用：
 ```html
 <script setup>
@@ -692,7 +692,7 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
     import { clickTrigger } from './utils'
 </script>
 ```
-- 注意项：如果你 `script setup` 中有较多对象或方法的声明和引入，比如全局 store 这种十分复杂的对象，走默认逻辑暴露给模版会造成性能问题，因此建议使用 `defineExpose` 来手动定义暴露给模版的方法或变量。
+> 注意项：如果你 `script setup` 中有较多对象或方法的声明和引入，比如全局 store 这种十分复杂的对象，走默认逻辑暴露给模版会造成性能问题，因此需要使用 `defineExpose` 来手动定义暴露给模版的数据和方法。
 
 ### 响应式
 和 Vue 中一样，响应式状态需要明确使用响应性 API 来创建。和 `setup()` 函数的返回值一样，ref 在模版中使用的时候会自动解包：
@@ -723,7 +723,13 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
 * 传入到 `defineProps` 的选项会从 setup 中提升到模块的作用域。因此传入的选项不能引用在 setup 作用域中声明的局部变量，否则会导致编译错误，不过可以引入导入的绑定。
 
 ### `defineExpose()`
-在 `<script setup>` 声明的顶层的绑定(包括变量，函数声明，以及 import 导入的内容)，编译后在 `setup()` 中都会统一被 return 出去，当开发者想自定义暴露给模版的变量和方法，可以使用 `defineExpose` 编译宏进行定义。
+在 `<script setup>` 中定义暴露给模版的变量和方法，在 Mpx `<script setup>` 中属于**强制要求**，若不使用该编译宏，则会构建报错。
+
+Mpx 中的 defineExpose 和 Vue3 中的不尽相同，在 Vue3 中，使用 `<scrip setup>` 的组件默认是关闭的-即通过模版引用或者 `$parent` 链获取到的组件实例中不会暴露任何在`<script setup>` 中声明的绑定。
+
+
+在 Mpx 中，`<script setup>` 中的声明绑定都会挂载到组件实例中，都可以通过组件实例来访问，Mpx `defineExpose` 更大的作用是假如你在 `<scrip setup>` 中引入了一些 store 实例，这些 store 实例默认会挂载到组件实例中，会导致后续的响应式处理以及组件更新速度变慢，这里我们通过强制使用
+`defineExpose` 来规避掉这个问题。
 
 ```html
 <script setup>
@@ -740,11 +746,6 @@ import 导入的内容，除了从 `@mpxjs/core` 中导入的变量或方法，�
     <view>{{count}}</view>
 </template>
 ```
-
-Mpx 中的 defineExpose 和 Vue3 中的不尽相同，在 Vue3 中，使用 `<scrip setup>` 的组件默认是关闭的-即通过模版引用或者 `$parent` 链获取到的组件实例中不会暴露任何在`<script setup>` 中声明的绑定。
-
-在 Mpx 中，`<script setup>` 中的声明绑定都会挂载到组件实例中，都可以通过组件实例来访问，Mpx `defineExpose` 更大的左右是假如你在 `<scrip setup>` 中引入了一些 store 实例，这些 store 实例默认会挂载到组件实例中，会导致后续的响应式处理以及组件更新速度变慢，这里我们就可以使用
-`defineExpose` 来规避掉这个问题。
 
 ### `defineOptions()`
 此编译宏相较于 Vue 是 Mpx 中独有的，主要是当开发者想在 `<script setup>` 中使用一些微信小程序中特有的选项式，例如 relations、moved 等，可以使用该编译宏进行定义。
@@ -780,9 +781,9 @@ props 可以通过给 `defineProps` 传递纯类型函数的方式来声明：
 
 ```ts
     const props = defineProps<{
-        foo: string
+        foo: string,
         bar: number
-    }>
+    }>()
 
     // 构建转换为
     {
@@ -832,6 +833,7 @@ const props = withDefaults(defineProps<Props>(), {
 * `setup` 不能是异步函数
 * `<script setup>` 提供的宏方法不同，详见[这里](#script-setup)
 * `<script setup>` 不支持 `import` 快捷引入组件
+* `<script setup>` 必须使用 [defineExpose](#defineprops)
 * 支持的生命周期钩子不同，详见[这里](#生命周期钩子)
 * 模板引用的方式不同，详见[这里](#模板引用)
 
