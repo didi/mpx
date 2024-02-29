@@ -42,7 +42,7 @@
     "@mpxjs/babel-plugin-inject-page-events": "^2.8.0",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.27",
-    "@mpxjs/webpack-plugin": "^2.8.0",
+    "@mpxjs/webpack-plugin": "^2.9.21",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "async": "^3.2.4",

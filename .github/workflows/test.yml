@@ -33,7 +33,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: install deps
-        if: steps.cache.outputs.cache-hit != 'true'
+#        if: steps.cache.outputs.cache-hit != 'true'
         run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project && npx lerna bootstrap --no-ci
 
       - name: copy-webpack-plugin
