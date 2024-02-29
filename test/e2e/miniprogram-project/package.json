@@ -25,6 +25,7 @@
   "dependencies": {
     "@mpxjs/api-proxy": "^2.7.1",
     "@mpxjs/core": "^2.9.1",
+    "@mpxjs/store": "^2.9.9",
     "@mpxjs/utils": "^2.9.1",
     "semver": "^7.5.4",
     "vue": "^2.6.10",
