@@ -24,10 +24,10 @@ module.exports = function ({
   callback
 }) {
   const mpx = loaderContext.getMpx()
-  let output = ''
   // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-  const cacheContent = mpx.vueContentCache.get(filePath)
+  const cacheContent = mpx.vueContentCache.get(loaderContext.resourcePath)
   if (cacheContent) return callback(null, cacheContent)
+  let output = ''
   return async.waterfall([
     (callback) => {
       async.parallel([

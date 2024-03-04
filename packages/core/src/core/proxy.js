@@ -166,9 +166,9 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
-      this.state = MOUNTED
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
+      this.state = MOUNTED
       this.callHook(MOUNTED)
       this.currentRenderTask && this.currentRenderTask.resolve()
     }

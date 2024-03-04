@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
+import { BEFOREUPDATE, UPDATED } from '@mpxjs/core/src/core/innerLifecycle'
 
 function createEffect (adm) {
   adm.effect = new ReactiveEffect(adm.render, () => {
@@ -68,6 +69,27 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
     __injectedRender: currentInject.render || noop,
     __getRefsData () {
     },
+    // render helper
+    _i (val, fn) {
+      let i, l, keys, key
+      const result = []
+      if (Array.isArray(val) || typeof val === 'string') {
+        for (i = 0, l = val.length; i < l; i++) {
+          result.push(fn.call(this, val[i], i))
+        }
+      } else if (typeof val === 'number') {
+        for (i = 0; i < val; i++) {
+          result.push(fn.call(this, i + 1, i))
+        }
+      } else if (isObject(val)) {
+        keys = Object.keys(val)
+        for (i = 0, l = keys.length; i < l; i++) {
+          key = keys[i]
+          result.push(fn.call(this, val[key], key, i))
+        }
+      }
+      return result
+    },
     triggerEvent () {
     },
     selectComponent () {
@@ -87,7 +109,6 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
   return instance
 }
 
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   return (props, ref) => {
     const instanceRef = useRef(null)
@@ -95,6 +116,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject })
     }
     const instance = instanceRef.current
+
+    useEffect(() => {
+      if (instance.__mpxProxy && instance.__mpxProxy.isMounted()) {
+        instance.__mpxProxy.callHook(BEFOREUPDATE)
+        instance.__mpxProxy.callHook(UPDATED)
+      }
+    })
+
     useEffect(() => {
       if (instance.__mpxProxy) instance.__mpxProxy.mounted()
       return () => {
@@ -102,10 +131,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     }, [])
 
-    const _i = instance._i.bind(instance)
+    const components = currentInject.components || {}
 
     return useObserver(() => {
-      return instance.__injectedRender(createElement, _i)
+      return instance.__injectedRender.call(instance, createElement, components)
     })
   }
 }

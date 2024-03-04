@@ -14,7 +14,8 @@ const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDepen
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
-const processWeb = require('./web/index')
+const processWeb = require('./web')
+const processReact = require('./react')
 const getRulesRunner = require('./platform')
 
 module.exports = function (content) {
@@ -243,6 +244,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
+          ctorType,
           moduleId,
           usingComponents,
           componentPlaceholder

@@ -24,7 +24,6 @@ module.exports = function ({
   autoScope,
   callback
 }) {
-  let output = ''
   const mpx = loaderContext.getMpx()
   if (ctorType === 'app' && !queryObj.isApp) {
     return async.waterfall([
@@ -58,8 +57,9 @@ module.exports = function ({
     })
   }
   // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-  const cacheContent = mpx.vueContentCache.get(filePath)
+  const cacheContent = mpx.vueContentCache.get(loaderContext.resourcePath)
   if (cacheContent) return callback(null, cacheContent)
+  let output = ''
   return async.waterfall([
     (callback) => {
       async.parallel([

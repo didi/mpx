@@ -5,6 +5,7 @@ const createHelpers = require('../helpers')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 const addQuery = require('../utils/add-query')
+const parseRequest = require('../utils/parse-request')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
@@ -128,10 +129,17 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   }
 }
 
-function getRequireScript ({ ctorType, script, loaderContext }) {
+function getRequireScript ({ script, ctorType, loaderContext }) {
   let content = '  /** script content **/\n'
   const { getRequire } = createHelpers(loaderContext)
-  const extraOptions = { ctorType, lang: script.lang || 'js' }
+  const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
+  const extraOptions = {
+    ...script.src
+      ? { ...queryObj, resourcePath }
+      : null,
+    ctorType,
+    lang: script.lang || 'js'
+  }
   content += `  ${getRequire('script', script, extraOptions)}\n`
   return content
 }
@@ -218,7 +226,6 @@ module.exports = {
   getRequireScript,
   buildGlobalParams,
   shallowStringify,
-  getAsyncChunkName,
   stringifyRequest,
   buildI18n
 }

@@ -15,34 +15,16 @@ function findPrevNode (node) {
 
 function genIf (node) {
   node.ifProcessed = true
-  return `if(${node.if.exp}){\n${genNode(node)}}\n`
+  return genIfConditions(el.ifConditions.slice())
 }
 
-function genElseif (node) {
-  node.elseifProcessed = true
-  if (node.for) {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
-    return
-  }
-  const preNode = findPrevNode(node)
-  if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
+function genIfConditions(conditions){
+  if(!conditions.length) return 'null'
+  const condition = conditions.shift()
+  if(condition.exp) {
+    return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
   } else {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
-  }
-}
-
-function genElse (node) {
-  node.elseProcessed = true
-  if (node.for) {
-    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
-    return
-  }
-  const preNode = findPrevNode(node)
-  if (preNode && (preNode.if || preNode.elseif)) {
-    return `else{\n${genNode(node)}}\n`
-  } else {
-    error$1(`wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
+    return  genNode(condition.block)
   }
 }
 
@@ -50,7 +32,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `_i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `_i(${node.for.exp}, function(${item},${index}){return ${genNode(node)}})`
 }
 
 const s = JSON.stringify
@@ -60,15 +42,15 @@ function mapAttrName (name) {
   return dash2hump(name)
 }
 
-export default function genNode (node) {
+function genNode (node) {
   let exp = ''
   if (node) {
     if (node.type === 3) {
       if (!node.isComment) {
         if (node.exps) {
-          exp += `,${node.exps[0].exp}`
+          exp += `${node.exps[0].exp}`
         } else {
-          exp += `,${s(node.text)}`
+          exp += `${s(node.text)}`
         }
       }
     }
@@ -98,23 +80,26 @@ export default function genNode (node) {
             })
             exp += '}'
           } else {
-            exp += ',undefined'
+            exp += ',null'
           }
 
           if (!node.unary && node.children.length) {
-            node.children.forEach(function (child) {
-              exp += `,${genNode(child)}`
+            exp+=','
+            node.children.forEach(function (child, index) {
+              exp += `${index === 0 ? '' : ','}${genNode(child)}`
             })
           }
           exp += ')'
         }
       } else {
-        node.children.forEach(function (child) {
-          exp += `,${genNode(child)}`
+        node.children.forEach(function (child, index) {
+          exp += `${index === 0 ? '' : ','}${genNode(child)}`
         })
       }
     }
   }
   return exp
 }
+
+module.exports = genNode
 

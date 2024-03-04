@@ -111,6 +111,10 @@ class EntryNode {
   }
 }
 
+const isWeb = mode => {
+  return mode === 'web' || mode === 'react'
+}
+
 class MpxWebpackPlugin {
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
@@ -119,7 +123,7 @@ class MpxWebpackPlugin {
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
-    if (options.mode === 'web' && options.srcMode !== 'wx') {
+    if (isWeb(options.mode) && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
@@ -649,7 +653,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          supportRequireAsync: this.options.mode === 'wx' || isWeb(this.options.mode) || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
           partialCompile: this.options.partialCompile,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -973,7 +977,7 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (mpx.mode === 'web') {
+          if (isWeb(mpx.mode)) {
             // web独立处理splitChunk
             if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
@@ -1128,7 +1132,7 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali(需开启enableAliRequireAsync)和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
-                if (mpx.mode === 'web') {
+                if (isWeb(mpx.mode)) {
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot
@@ -1333,7 +1337,7 @@ class MpxWebpackPlugin {
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
               transGlobalObject(expr.callee)
             })
-            if (mpx.mode === 'ali' || mpx.mode === 'web') {
+            if (mpx.mode === 'ali' || isWeb(mpx.mode)) {
               // 支付宝和web不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
                 transGlobalObject(expr.callee)
@@ -1351,7 +1355,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (mpx.mode === 'web') return
+        if (isWeb(mpx.mode)) return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -1590,7 +1594,7 @@ try {
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
-        if (mpx.mode === 'web') {
+        if (isWeb(mpx.mode)) {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')

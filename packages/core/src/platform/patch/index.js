@@ -4,6 +4,7 @@ import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions
 import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
+import { getDefaultOptions as getReactDefaultOptions } from './react/getDefaultOptions'
 import { error } from '@mpxjs/utils'
 
 export default function createFactory (type) {
@@ -11,7 +12,7 @@ export default function createFactory (type) {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__!=='react') {
       if (customCtor) {
         ctor = customCtor
         customCtorType = customCtorType || type
@@ -39,7 +40,9 @@ export default function createFactory (type) {
     }
 
     let getDefaultOptions
-    if (__mpx_mode__ === 'web') {
+    if(__mpx_mode__ === 'react'){
+      getDefaultOptions = getReactDefaultOptions
+    } else if (__mpx_mode__ === 'web') {
       getDefaultOptions = getWebDefaultOptions
     } else if (__mpx_mode__ === 'ali') {
       getDefaultOptions = getAliDefaultOptions

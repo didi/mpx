@@ -61,7 +61,7 @@ module.exports = function (json, {
     customGetDynamicEntry (resource, type, outputPath, packageRoot) {
       return {
         resource,
-        // 输出web时组件outputPath不需要拼接packageRoot
+        // 输出react时组件outputPath不需要拼接packageRoot
         outputPath: type === 'page' ? toPosix(path.join(packageRoot, outputPath)) : outputPath,
         packageRoot
       }

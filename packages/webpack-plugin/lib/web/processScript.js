@@ -2,7 +2,13 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, getRequireScript, buildGlobalParams, shallowStringify } = require('./script-helper')
+const {
+  buildComponentsMap,
+  getRequireScript,
+  buildGlobalParams,
+  shallowStringify,
+  stringifyRequest
+} = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -19,8 +25,6 @@ module.exports = function (script, {
   localComponentsMap
 }, callback) {
   const { projectRoot, appInfo } = loaderContext.getMpx()
-
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
   let output = '/* script */\n'
 
@@ -40,7 +44,7 @@ module.exports = function (script, {
       return attrs
     },
     content (script) {
-      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
       let hasApp = true
       if (!appInfo.name) {
         hasApp = false
@@ -50,7 +54,7 @@ module.exports = function (script, {
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach((module) => {
           const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)
-          const expression = `require(${stringifyRequest(src)})`
+          const expression = `require(${stringifyRequest(loaderContext, src)})`
           content += `  wxsModules.${module} = ${expression}\n`
         })
       }

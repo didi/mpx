@@ -88,23 +88,28 @@ function isForbiddenTag (el) {
 let warn$1
 let error$1
 let mode
+let env
 let defs
 let i18n
 let srcMode
-let processingTemplate
+let ctorType
+let moduleId
 let isNative
+let hasScoped
+let hasVirtualHost
 let rulesRunner
 let currentEl
 let injectNodes = []
 let forScopes = []
 let forScopesMap = {}
-let hasI18n = false
-let i18nInjectableComputed = []
-let env
 let platformGetTagNamespace
 let filePath
 let refId
+let hasI18n = false
+let i18nInjectableComputed = []
 let hasOptionalChaining = false
+let processingTemplate = false
+const rulesResultMap = new Map()
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -126,7 +131,6 @@ function popForScopes () {
   return scope
 }
 
-const rulesResultMap = new Map()
 const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
   Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
@@ -595,10 +599,30 @@ function parseComponent (content, options) {
 }
 
 function parse (template, options) {
-  rulesResultMap.clear()
+  // global var init
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
+  mode = options.mode || 'wx'
+  env = options.env
+  defs = options.defs || {}
+  srcMode = options.srcMode || mode
+  ctorType = options.ctorType
+  moduleId = options.moduleId
+  isNative = options.isNative
+  hasScoped = options.hasScoped
+  hasVirtualHost = options.hasVirtualHost
+  filePath = options.filePath
+  i18n = options.i18n
+  platformGetTagNamespace = options.getTagNamespace || no
+  refId = 0
+  injectNodes = []
+  forScopes = []
+  forScopesMap = {}
+  hasI18n = false
   i18nInjectableComputed = []
+  hasOptionalChaining = false
+  processingTemplate = false
+  rulesResultMap.clear()
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -615,15 +639,6 @@ function parse (template, options) {
     currentElementRuleResult.errorArray.push(content)
   }
 
-  mode = options.mode || 'wx'
-  env = options.env
-  defs = options.defs || {}
-  srcMode = options.srcMode || mode
-  isNative = options.isNative
-  filePath = options.filePath
-  i18n = options.i18n
-  refId = 0
-
   rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -635,14 +650,6 @@ function parse (template, options) {
     warn: _warn,
     error: _error
   })
-
-  injectNodes = []
-  forScopes = []
-  forScopesMap = {}
-  hasI18n = false
-  hasOptionalChaining = false
-
-  platformGetTagNamespace = options.getTagNamespace || no
 
   const stack = []
   let root
@@ -785,7 +792,7 @@ function parse (template, options) {
         arr.push(item)
       }
     })
-    arr.length && warn$1(`\n ${options.filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
+    arr.length && warn$1(`\n ${filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
   }
 
   return {
@@ -895,7 +902,7 @@ function stringify (str) {
 
 const genericRE = /^generic:(.+)$/
 
-function processComponentGenericsForWeb (el, options, meta) {
+function processComponentGenericsWeb (el, options, meta) {
   if (options.componentGenerics && options.componentGenerics[el.tag]) {
     const generic = dash2hump(el.tag)
     el.tag = 'component'
@@ -907,7 +914,7 @@ function processComponentGenericsForWeb (el, options, meta) {
 
   let hasGeneric = false
 
-  const genericHash = options.moduleId
+  const genericHash = moduleId
 
   el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
@@ -1433,7 +1440,7 @@ function processIf (el) {
   }
 }
 
-function processIfForWeb (el) {
+function processIfWeb (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     el.if = {
@@ -1636,6 +1643,12 @@ function postProcessFor (el) {
   }
 }
 
+function postProcessForReact (el) {
+  if (el.for) {
+    popForScopes()
+  }
+}
+
 function evalExp (exp) {
   let result = { success: false }
   try {
@@ -1709,6 +1722,34 @@ function postProcessIf (el) {
   }
   if (attrs) {
     addAttrs(el, attrs)
+  }
+}
+
+function addIfCondition (el, condition) {
+  if (!el.ifConditions) {
+    el.ifConditions = []
+  }
+  el.ifConditions.push(condition)
+}
+
+function postProcessIfReact (el) {
+  let prevNode
+  if (el.if) {
+    addIfCondition(el, {
+      exp: el.if.exp,
+      block: el
+    })
+  } else if (el.elseif || el.else) {
+    prevNode = findPrevNode(el)
+    if (prevNode && prevNode.if) {
+      addIfCondition(prevNode, {
+        exp: el.elseif.exp,
+        block: el
+      })
+      removeNode(el, true)
+    } else {
+      warn$1(`wx:${el.elseif ? `elif="${el.elseif.raw}"` : 'else'} used on element [${el.tag}] without corresponding wx:if.`)
+    }
   }
 }
 
@@ -1843,13 +1884,13 @@ function processAliExternalClassesHack (el, options) {
     }
   })
 
-  if (options.hasScoped && isComponent) {
+  if (hasScoped && isComponent) {
     options.externalClasses.forEach((className) => {
       const externalClass = getAndRemoveAttr(el, className).val
       if (externalClass) {
         addAttrs(el, [{
           name: className,
-          value: `${externalClass} ${options.moduleId}`
+          value: `${externalClass} ${moduleId}`
         }])
       }
     })
@@ -1917,10 +1958,9 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
-function processScoped (el, options) {
-  if (options.hasScoped && isRealNode(el)) {
-    const moduleId = options.moduleId
-    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
+function processScoped (el) {
+  if (hasScoped && isRealNode(el)) {
+    const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
@@ -1957,7 +1997,7 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^slot$/, action: 'move' }
   ]
   const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${moduleId}` }
   ]
   const newElAttrs = []
   const allAttrs = cloneAttrsList(el.attrsList)
@@ -2010,18 +2050,18 @@ function processAliAddComponentRootView (el, options) {
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
-    if (options.isComponent) {
-      if ((mode === 'wx') && options.hasVirtualHost) {
+    if (ctorType === 'component') {
+      if (mode === 'wx' && hasVirtualHost) {
         // wx组件注入virtualHost配置
         !meta.options && (meta.options = {})
         meta.options.virtualHost = true
       }
-      if ((mode === 'web') && !options.hasVirtualHost) {
+      if (mode === 'web' && !hasVirtualHost) {
         // ali组件根节点实体化
         const rootView = createASTElement('view', [
           {
             name: 'class',
-            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
           },
           {
             name: 'v-on',
@@ -2032,10 +2072,8 @@ function getVirtualHostRoot (options, meta) {
         return rootView
       }
     }
-    if (options.isPage) {
-      if (mode === 'web') {
-        return createASTElement('page', [])
-      }
+    if (mode === 'web' && ctorType === 'page') {
+      return createASTElement('page', [])
     }
   }
   return getTempNode()
@@ -2047,8 +2085,8 @@ function processShow (el, options, root) {
   let show = getAndRemoveAttr(el, config[mode].directive.show).val
   if (mode === 'swan') show = wrapMustache(show)
 
-  if (options.hasVirtualHost) {
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
+  if (hasVirtualHost) {
+    if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
         show = `{{${parseMustacheWithContext(show).result}&&mpxShow}}`
       } else {
@@ -2226,7 +2264,7 @@ function processMpxTagName (el) {
   }
 }
 
-function processIsComponent (el, options) {
+function postProcessComponent (el, options) {
   if (isComponentNode(el, options)) {
     el.isComponent = true
   }
@@ -2252,17 +2290,15 @@ function processElement (el, root, options, meta) {
 
   processInjectWxs(el, meta)
 
-  processIsComponent(el, options)
-
   const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
-    processIfForWeb(el)
+    processIfWeb(el)
     processWebExternalClassesHack(el, options)
-    processComponentGenericsForWeb(el, options, meta)
+    processComponentGenericsWeb(el, options, meta)
     return
   }
 
@@ -2279,7 +2315,7 @@ function processElement (el, root, options, meta) {
 
   // 仅ali平台需要scoped模拟样式隔离
   if (mode === 'ali') {
-    processScoped(el, options)
+    processScoped(el)
   }
 
   if (transAli) {
@@ -2313,15 +2349,17 @@ function closeElement (el, meta, options) {
     return
   }
   if (mode === 'react') {
-    postProcessFor(el)
-    postProcessIf(el)
+    postProcessForReact(el)
+    postProcessIfReact(el)
+    // flag component for react
+    postProcessComponent(el, options)
     return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
 
   if (!pass) {
-    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
     } else {
       el = postProcessComponentIs(el)
@@ -2378,7 +2416,6 @@ function postProcessComponentIs (el) {
         addChild(newChild, cloneNode(child))
       })
       newChild.exps = el.exps
-      newChild.isComponent = true
       addChild(tempNode, newChild)
       postProcessIf(newChild)
     })
@@ -2469,8 +2506,8 @@ function findPrevNode (node) {
   }
 }
 
-function replaceNode (node, newNode, reserveNode) {
-  if (!reserveNode) deleteErrorInResultMap(node)
+function replaceNode (node, newNode, reserveError) {
+  if (!reserveError) deleteErrorInResultMap(node)
   const parent = node.parent
   if (parent) {
     const index = parent.children.indexOf(node)
@@ -2482,8 +2519,8 @@ function replaceNode (node, newNode, reserveNode) {
   }
 }
 
-function removeNode (node, reserveNode) {
-  if (!reserveNode) deleteErrorInResultMap(node)
+function removeNode (node, reserveError) {
+  if (!reserveError) deleteErrorInResultMap(node)
   const parent = node.parent
   if (parent) {
     const index = parent.children.indexOf(node)
