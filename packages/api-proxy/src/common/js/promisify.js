@@ -69,7 +69,7 @@ function promisify (listObj, whiteList, customBlackList) {
 
     result[key] = function (...args) {
       const obj = args[0]
-      if (promisifyFilter(key) && !(obj.success || obj.fail || obj.complete)) {
+      if (promisifyFilter(key) && !(obj?.success || obj?.fail || obj?.complete)) {
         if (!args[0]) {
           args.unshift({ success: noop, fail: noop })
         }
