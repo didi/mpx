@@ -83,11 +83,10 @@ function buildGlobalParams ({
   return content
 }
 
-
 module.exports = {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
   shallowStringify,
-  stringifyRequest,
+  stringifyRequest
 }

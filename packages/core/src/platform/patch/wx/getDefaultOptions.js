@@ -141,7 +141,7 @@ export function initProxy (context, rawOptions, currentInject) {
   }
 }
 
-export function getDefaultOptions ({type,  rawOptions = {}, currentInject }) {
+export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   let hookNames = ['attached', 'ready', 'detached']
   // 当用户传入page作为构造器构造页面时，修改所有关键hooks
   if (rawOptions.__pageCtor__) {

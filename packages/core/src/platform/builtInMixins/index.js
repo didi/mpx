@@ -12,9 +12,9 @@ import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
 
 export default function getBuiltInMixins (options, type) {
-  let bulitInMixins = []
+  let bulitInMixins
   if (__mpx_mode__ === 'react') {
-
+    bulitInMixins = []
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [
       proxyEventMixin(),

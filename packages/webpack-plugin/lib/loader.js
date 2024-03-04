@@ -92,7 +92,6 @@ module.exports = function (content) {
     getRequire
   } = createHelpers(loaderContext)
 
-
   const callback = this.async()
 
   async.waterfall([
@@ -164,7 +163,7 @@ module.exports = function (content) {
         })
       }
       // 处理mode为react时输出react js格式文件
-      if(mode === 'react'){
+      if (mode === 'react') {
         return processReact({
           parts,
           loaderContext,

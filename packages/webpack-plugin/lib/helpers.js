@@ -29,7 +29,7 @@ module.exports = function createHelpers (loaderContext) {
         extract = true
     }
     // 允许外部强制关闭extract
-    if(extraOptions.extract === false) extract = false
+    if (extraOptions.extract === false) extract = false
     return (extract ? 'require.extract(' : 'require(') + getRequestString(type, part, extraOptions, index) + ')'
   }
 
@@ -73,7 +73,7 @@ module.exports = function createHelpers (loaderContext) {
         options.extract = true
     }
     // 允许外部强制关闭extract
-    if(extraOptions.extract === false) delete options.extract
+    if (extraOptions.extract === false) delete options.extract
 
     if (part.mode) options.mode = part.mode
 

@@ -1,4 +1,3 @@
-const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const { buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
@@ -25,7 +24,7 @@ module.exports = function (script, {
   }
 
   let output = '/* script */\n'
-  output += `import { lazy } from 'react'\n`
+  output += 'import { lazy } from \'react\'\n'
   output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
 
   // 获取组件集合

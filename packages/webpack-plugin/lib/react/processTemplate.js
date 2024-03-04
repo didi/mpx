@@ -104,7 +104,7 @@ module.exports = function (template, {
         const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], projectRoot)
         output += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
       }
-      
+
       const rawCode = genNode(root)
       if (rawCode) {
         try {

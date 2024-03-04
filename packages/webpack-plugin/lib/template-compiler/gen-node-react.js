@@ -1,30 +1,17 @@
 const { dash2hump } = require('../utils/hump-dash')
 
-function findPrevNode (node) {
-  const parent = node.parent
-  if (parent) {
-    let index = parent.children.indexOf(node)
-    while (index--) {
-      const preNode = parent.children[index]
-      if (preNode.type === 1) {
-        return preNode
-      }
-    }
-  }
-}
-
 function genIf (node) {
   node.ifProcessed = true
-  return genIfConditions(el.ifConditions.slice())
+  return genIfConditions(node.ifConditions.slice())
 }
 
-function genIfConditions(conditions){
-  if(!conditions.length) return 'null'
+function genIfConditions (conditions) {
+  if (!conditions.length) return 'null'
   const condition = conditions.shift()
-  if(condition.exp) {
+  if (condition.exp) {
     return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
   } else {
-    return  genNode(condition.block)
+    return genNode(condition.block)
   }
 }
 
@@ -60,10 +47,6 @@ function genNode (node) {
           exp += genFor(node)
         } else if (node.if && !node.ifProcessed) {
           exp += genIf(node)
-        } else if (node.elseif && !node.elseifProcessed) {
-          exp += genElseif(node)
-        } else if (node.else && !node.elseProcessed) {
-          exp += genElse(node)
         } else {
           exp += `createElement(${node.isComponent ? `components[${s(node.tag)}]` : s(node.tag)}`
           if (node.attrsList.length) {
@@ -84,7 +67,7 @@ function genNode (node) {
           }
 
           if (!node.unary && node.children.length) {
-            exp+=','
+            exp += ','
             node.children.forEach(function (child, index) {
               exp += `${index === 0 ? '' : ','}${genNode(child)}`
             })
@@ -102,4 +85,3 @@ function genNode (node) {
 }
 
 module.exports = genNode
-

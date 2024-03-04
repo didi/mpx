@@ -12,7 +12,7 @@ export default function createFactory (type) {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
-    if (__mpx_mode__ !== 'web' && __mpx_mode__!=='react') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'react') {
       if (customCtor) {
         ctor = customCtor
         customCtorType = customCtorType || type
@@ -40,7 +40,7 @@ export default function createFactory (type) {
     }
 
     let getDefaultOptions
-    if(__mpx_mode__ === 'react'){
+    if (__mpx_mode__ === 'react') {
       getDefaultOptions = getReactDefaultOptions
     } else if (__mpx_mode__ === 'web') {
       getDefaultOptions = getWebDefaultOptions
@@ -59,7 +59,7 @@ export default function createFactory (type) {
     // 注入内建的mixins, 内建mixin是按原始平台编写的，所以合并规则和rootMixins保持一致
     // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
     rawOptions.mixins = getBuiltInMixins(rawOptions, type)
-    const defaultOptions = getDefaultOptions({type,  rawOptions, currentInject })
+    const defaultOptions = getDefaultOptions({ type, rawOptions, currentInject })
     if (__mpx_mode__ === 'web' || __mpx_mode__ === 'react') {
       global.__mpxOptionsMap = global.__mpxOptionsMap || {}
       global.__mpxOptionsMap[global.currentModuleId] = defaultOptions

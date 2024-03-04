@@ -1,11 +1,12 @@
 import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
-import { hasOwn, isFunction, noop } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, UPDATED } from '@mpxjs/core/src/core/innerLifecycle'
+import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 
 function createEffect (adm) {
   adm.effect = new ReactiveEffect(adm.render, () => {
+    // eslint-disable-next-line symbol-description
     adm.stateVersion = Symbol()
     adm.onStoreChange && adm.onStoreChange()
   })
@@ -17,11 +18,13 @@ function useObserver (render, options) {
     const _adm = {
       effect: null,
       onStoreChange: null,
+      // eslint-disable-next-line symbol-description
       stateVersion: Symbol(),
       render,
       subscribe: (onStoreChange) => {
         if (!_adm.effect) {
           createEffect(adm)
+          // eslint-disable-next-line symbol-description
           _adm.stateVersion = Symbol()
         }
         _adm.onStoreChange = onStoreChange
@@ -30,7 +33,6 @@ function useObserver (render, options) {
           _adm.effect = null
           _adm.onStoreChange = null
         }
-
       },
       getSnapshot: () => {
         return _adm.stateVersion
@@ -134,7 +136,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const components = currentInject.components || {}
 
     return useObserver(() => {
-      return instance.__injectedRender.call(instance, createElement, components)
+      return instance.__injectedRender(createElement, components)
     })
   }
 }
