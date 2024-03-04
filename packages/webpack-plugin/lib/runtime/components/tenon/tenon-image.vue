@@ -63,5 +63,4 @@ export default {
 .mpx-image
   width 300px
   height 225px
-  display inline-block
 </style>
