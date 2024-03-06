@@ -68,11 +68,11 @@ function promisify (listObj, whiteList, customBlackList) {
     }
 
     result[key] = function (...args) {
+      const obj = args[0] || {}
       // 不需要转换 or 用户已定义回调，则不处理
-      if (!promisifyFilter(key) || ['success', 'fail', 'complete'].some(k => args[0] && args[0][k])) {
+      if (!promisifyFilter(key) || obj.success || obj.fail) {
         return listObj[key].apply(envObj, args)
       } else { // 其他情况进行转换
-        const obj = args[0] || { success: noop, fail: noop }
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
