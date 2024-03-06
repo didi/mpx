@@ -1,5 +1,5 @@
 import { webHandleSuccess, webHandleFail, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
-import { EventChannel } from '../event-channel'
+import { EventChannel } from './event-channel'
 
 let routeCount = 0
 
