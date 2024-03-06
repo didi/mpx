@@ -34,7 +34,7 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
   const runtimeCompile = checkIsRuntimeMode(resourcePath)
-  const componentInfo = JSON.parse(queryObj.componentInfo)
+  const componentInfo = JSON.parse(queryObj.componentInfo || "{}")
   const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0

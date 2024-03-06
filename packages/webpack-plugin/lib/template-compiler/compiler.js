@@ -2196,8 +2196,9 @@ function postProcessRuntime (el, options, meta) {
       }
     }
 
-    if (isCustomComponent) {
-      const { hashName, resourcePath } = options.componentInfo[el.tag]
+    const componentInfo = options.componentInfo[el.tag]
+    if (isCustomComponent && componentInfo) {
+      const { hashName, resourcePath } = componentInfo
       el.aliasTag = hashName
       meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
     }

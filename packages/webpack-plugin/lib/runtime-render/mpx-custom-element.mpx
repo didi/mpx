@@ -10,6 +10,7 @@ createComponent({
   options: {
     addGlobalClass: true,
     styleIsolation: 'shared',
+    // todo: 超过基础模板的层数，virtualHost 置为 true，避免样式规则失效
     virtualHost: true
   },
   properties: {

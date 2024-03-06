@@ -16,17 +16,17 @@ function makeAttrsMap (attrKeys = []) {
 
 function setCustomEle (el, meta) {
   // 动态组件不需要被收集
-  if (el.dynamic) return
+  // if (el.dynamic) return
   const tag = el.aliasTag || el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
-  // const eleAttrsMap = el.isRuntimeComponent ? meta.runtimeInfo.runtimeComponents : meta.runtimeInfo.normalComponents
-  const eleAttrsMap = meta.runtimeInfo.normalComponents
+  const eleAttrsMap = el.dynamic ? meta.runtimeInfo.runtimeComponents : meta.runtimeInfo.normalComponents
+  // const eleAttrsMap = meta.runtimeInfo.normalComponents
   if (tag && !eleAttrsMap[tag]) {
     eleAttrsMap[tag] = {}
-    // if (el.isRuntimeComponent) {
-    //   attrKeys.push('slots', 'mpxAttrs')
-    // }
+    if (el.dynamic) {
+      attrKeys.push('slots', 'mpxAttrs')
+    }
   }
   Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
 }

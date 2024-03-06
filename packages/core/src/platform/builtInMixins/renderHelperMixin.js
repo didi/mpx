@@ -1,6 +1,6 @@
 import { getByPath, hasOwn, isObject } from '@mpxjs/utils'
 import genVnodeTree from '../../vnode/render'
-import staticMap from '../../vnode/staticMap'
+import dynamicComponentsMap from '../../vnode/staticMap'
 
 export default function renderHelperMixin () {
   return {
@@ -42,7 +42,7 @@ export default function renderHelperMixin () {
         this.__mpxProxy.renderWithData(skipPre, vnode)
       },
       _g (moduleId) {
-        const { template = {}, styles = [] } = staticMap[moduleId]
+        const { template = {}, styles = [] } = dynamicComponentsMap[moduleId]
         const time1 = new Date().getTime()
         const vnodeTree = genVnodeTree(template, [this], styles, moduleId)
         console.log(new Date().getTime() - time1)

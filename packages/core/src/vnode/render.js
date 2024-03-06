@@ -3,8 +3,9 @@ import cssSelect from './css-select'
 import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
 import staticMap from './staticMap'
+import { dash2hump } from '@mpxjs/utils'
 
-const deepClone = function (val) {
+const deepCloneNode = function (val) {
   return JSON.parse(JSON.stringify(val))
 }
 
@@ -44,7 +45,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
   // 获取实例 uid
   const uid = contextScope[0]?.__mpxProxy?.uid || contextScope[0]?.uid
   // slots 通过上下文传递，相当于 props
-  const slots = contextScope[0]?.$slots || {}
+  // const slots = contextScope[0]?.$slots || {}
+  const slots = contextScope[0]?.slots || {}
 
   function createEmptyNode () {
     return createNode('block')
@@ -63,12 +65,18 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
         return genSlot(node)
       } else {
         const data = genData(node)
-        const children = genChildren(node)
+        let children = genChildren(node)
+        // 运行时组件的子组件都通过 slots 属性传递
         if (node.dynamic) {
-          return createDynamicNode(node.aliasTag, data, children)
-        } else {
-          return createNode(node.aliasTag || node.tag, data, children)
+          data.slots = resolveSlot(children.slice())
+          children = []
         }
+        // if (node.dynamic) {
+        //   return createDynamicNode(node.aliasTag, data, children)
+        // } else {
+        //   return createNode(node.aliasTag || node.tag, data, children)
+        // }
+        return createNode(node.aliasTag || node.tag, data, children)
       }
     } else if (node.type === 3) {
       return genText(node)
@@ -174,9 +182,9 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
         attr.__exps?.forEach(({ eventName, exps }) => {
           eventMap[eventName] = exps.map(exp => evalExps(exp))
         })
-        res.dataEventconfigs = eventMap
+        res[dash2hump(attr.name)] = eventMap
       } else {
-        res[attr.name] = attr.__exps
+        res[dash2hump(attr.name)] = attr.__exps
           ? evalExps(attr.__exps)
           : attr.value
       }
@@ -226,8 +234,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     }
     const forExp = node.for
     const res = []
-
     const forValue = evalExps(forExp.__exps)
+
     if (Array.isArray(forValue)) {
       forValue.forEach((item, index) => {
         // item、index 模板当中如果没申明，需要给到默认值
@@ -237,7 +245,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
         contextScope.push(scope)
 
         // 针对 for 循环避免每次都操作的同一个 node 导致数据的污染的问题
-        res.push(deepClone(genVnodeTree(deepClone(node))))
+        res.push(deepCloneNode(genVnodeTree(deepCloneNode(node))))
 
         contextScope.pop()
       })
