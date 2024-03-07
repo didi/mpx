@@ -1793,8 +1793,8 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^(on|catch)TouchCancel$/, action: 'clone' },
     { condition: /^(on|catch)LongTap$/, action: 'clone' },
     { condition: /^data-/, action: 'clone' },
-    // { condition: /^id$/, action: 'clone' },
-    // { condition: /^style$/, action: 'move' },
+    { condition: /^id$/, action: 'clone' },
+    { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
   const processAppendAttrsRules = [
@@ -1814,11 +1814,11 @@ function processAliAddComponentRootView (el, options) {
 
   function processAppendRules (el) {
     processAppendAttrsRules.forEach((rule) => {
-      // const getNeedAppendAttrValue = el.attrsMap[rule.name]
-      // const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
+      const getNeedAppendAttrValue = el.attrsMap[rule.name]
+      const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
       newElAttrs.push({
         name: rule.name,
-        value: rule.value
+        value
       })
     })
   }
@@ -1852,6 +1852,11 @@ function processAliAddComponentRootView (el, options) {
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
     if (options.isComponent) {
+      if ((mode === 'wx') && options.hasVirtualHost) {
+        // wx组件注入virtualHost配置
+        !meta.options && (meta.options = {})
+        meta.options.virtualHost = true
+      }
       if ((mode === 'web') && !options.hasVirtualHost) {
         // ali组件根节点实体化
         const rootView = createASTElement('view', [
@@ -2135,7 +2140,7 @@ function closeElement (el, meta, options) {
   postProcessWxs(el, meta)
 
   if (!pass) {
-    if (isComponentNode(el, options) && mode === 'ali') {
+    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
     } else {
       el = postProcessComponentIs(el)

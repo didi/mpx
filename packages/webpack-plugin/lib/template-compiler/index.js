@@ -28,7 +28,6 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
-  const hasVirtualHost = matchCondition(resourcePath, mpx.autoVirtualHostRules)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -72,7 +71,7 @@ module.exports = function (raw) {
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
   if (meta.wxsContentMap) {
@@ -94,22 +93,8 @@ module.exports = function (raw) {
     return result
   }
 
-  const injectOptionsCode = (() => {
-    // 节约包体积
-    // 微信小程序 hasVirtualHost 默认是 false，所以只需要为 true 时添加配置
-    // 支付宝小程序 hasVirtualHost 默认是 true，所以只需要为 false 时添加配置
-    const wxNeedVirtualHost = mode === 'wx' && hasVirtualHost
-    const aliNoNeedVirtualHost = mode === 'ali' && !hasVirtualHost
-    if (wxNeedVirtualHost || aliNoNeedVirtualHost) {
-      return `injectOptions: { virtualHost: ${hasVirtualHost} },`
-    }
-    return ''
-  })()
-
   resultSource += `
 global.currentInject = {
-  ${injectOptionsCode}
-  injectComponentPath: ${JSON.stringify(componentsMap[this.resourcePath])},
   moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
