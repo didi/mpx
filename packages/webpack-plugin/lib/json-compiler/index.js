@@ -538,8 +538,12 @@ module.exports = function (content) {
         const srcCustomKey = config[srcMode].tabBar.customKey
         const srcPath = resolveTabBarPath(srcCustomKey)
         const outputPath = resolveTabBarPath(outputCustomKey)
+        const dynamicEntryExtraOptions = {
+          // replace with true for custom-tab-bar
+          replaceContent: true
+        }
 
-        processComponent(`./${srcPath}`, context, { outputPath }, (err, entry) => {
+        processComponent(`./${srcPath}`, context, { outputPath, extraOptions: dynamicEntryExtraOptions }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete tabBar[srcCustomKey]
             return callback()
