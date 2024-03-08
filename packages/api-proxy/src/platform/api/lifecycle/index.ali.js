@@ -1,5 +1,5 @@
 function getEnterOptionsSync () {
-  my.getEnterOptionsSync()
+  return my.getEnterOptionsSync()
 }
 
 export {
