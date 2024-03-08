@@ -16,7 +16,7 @@ function getStorage (options) {
 function getStorageSync (key) {
   return my.getStorageSync({
     key
-  })
+  }).data
 }
 
 function getStorageInfo (options) {
