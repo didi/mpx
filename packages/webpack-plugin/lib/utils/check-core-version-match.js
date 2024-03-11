@@ -5,9 +5,7 @@ const packageName = require('../../package.json').name
 const packageVersion = require('../../package.json').version
 
 // skip check prerelease version
-if (/-\w+$/.test(packageVersion)) return
-
-if (packageVersion.slice(0, 3) !== coreVersion.slice(0, 3)) {
+if (!/-\w+$/.test(packageVersion) && packageVersion.slice(0, 3) !== coreVersion.slice(0, 3)) {
   const corePath = require.resolve('@mpxjs/core')
   const packagePath = require.resolve('../../package.json')
   throw new Error(
