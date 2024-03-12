@@ -47,7 +47,8 @@
         default: () => {
           return {}
         }
-      }
+      },
+      displayMultipleItems: Number
     },
     data () {
       return {
@@ -171,6 +172,9 @@
             if (this._nextMargin) {
               width = width - this._nextMargin
             }
+            if (this.displayMultipleItems) {
+              width = width / this.displayMultipleItems
+            }
           }
         } else {
           if (this._previousMargin || this._nextMargin) {
@@ -180,6 +184,9 @@
             }
             if (this._nextMargin) {
               height = height - this._nextMargin
+            }
+            if (this.displayMultipleItems) {
+              height = height / this.displayMultipleItems
             }
           }
         }
