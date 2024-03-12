@@ -90,7 +90,7 @@ export default function getRefsMixin () {
               const all = ref.all
               if (!vnodeContext.$refs[ref.key] || (all && !vnodeContext.$refs[ref.key].length)) {
                 const refNode = this.__getRefNode(ref)
-                if (all && refNode.length || refNode) {
+                if ((all && refNode.length) || refNode) {
                   Object.defineProperty(vnodeContext.$refs, ref.key, {
                     enumerable: true,
                     configurable: true,

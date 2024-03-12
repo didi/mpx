@@ -2,7 +2,6 @@ import cssSelect from './css-select'
 // todo: stringify wxs 模块只能放到逻辑层执行，主要还是因为生成 vdom tree 需要根据 class 去做匹配，需要看下这个代码从哪引入
 import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
-import staticMap from './staticMap'
 import { dash2hump } from '@mpxjs/utils'
 
 const deepCloneNode = function (val) {
@@ -125,12 +124,12 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
    * 方案一：根据 moduleId 即作用域来进行匹配
    * 方案二：根据虚拟树来进行匹配
    */
-  function createDynamicNode (moduleId, data = {}, children = []) {
-    const { template = {}, styles = [] } = staticMap[moduleId]
-    data.$slots = resolveSlot(children) // 将 slot 通过上下文传递到子组件的渲染流程中
-    const vnodeTree = _genVnodeTree(template, [data], styles, moduleId)
-    return vnodeTree
-  }
+  // function createDynamicNode (moduleId, data = {}, children = []) {
+  //   const { template = {}, styles = [] } = staticMap[moduleId]
+  //   data.$slots = resolveSlot(children) // 将 slot 通过上下文传递到子组件的渲染流程中
+  //   const vnodeTree = _genVnodeTree(template, [data], styles, moduleId)
+  //   return vnodeTree
+  // }
 
   function resolveSlot (children) {
     const slots = {}

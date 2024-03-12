@@ -90,6 +90,7 @@ class Interpreter {
 
   initGlobalContext () {
     const context = {
+      // eslint-disable-next-line
       'undefined': undefined
     }
     return context
