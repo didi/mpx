@@ -500,7 +500,7 @@ export default class MpxProxy {
       }
     }
     // 缓存本地的 vnode 用以下一次 diff
-    this._vnode = vnode
+    this._vnode = diffAndCloneA(vnode).clone
   }
 
   doRender (data, cb) {
