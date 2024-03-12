@@ -34,7 +34,7 @@ module.exports = function (template, {
 
   if (ctorType === 'app') {
     const { el } = webConfig
-    const idName = el?.match(/#(.*)/)?.[1] || 'app'
+    const idName = (el && el.match(/#(.*)/)[1]) || 'app'
     template = {
       tag: 'template',
       content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
