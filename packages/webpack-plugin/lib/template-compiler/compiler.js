@@ -1978,7 +1978,7 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
+      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
     }
   }
 }
@@ -2304,10 +2304,11 @@ function processElement (el, root, options, meta) {
 
   if (mode === 'react') {
     // 收集内建组件
-    // processBuiltInComponents(el, meta)
+    processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
+    processAttrs(el, options)
     return
   }
 

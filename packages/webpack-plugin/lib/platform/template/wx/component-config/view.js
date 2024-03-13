@@ -21,6 +21,10 @@ module.exports = function ({ print }) {
         return 'div'
       }
     },
+    react (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-view'
+    },
     qa (tag) {
       return 'div'
     },

@@ -20,6 +20,10 @@ module.exports = function ({ print }) {
         return 'span'
       }
     },
+    react(tag, {el}){
+      el.isBuiltIn = true
+      return 'mpx-text'
+    },
     props: [
       {
         test: /^(decode|user-select)$/,
