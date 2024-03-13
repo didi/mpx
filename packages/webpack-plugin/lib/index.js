@@ -172,7 +172,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
-    options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.partialCompile = !isWeb(options.mode) && options.partialCompile
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
@@ -296,7 +296,7 @@ class MpxWebpackPlugin {
     // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
     new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
-    if (this.options.mode !== 'web') {
+    if (!isWeb(this.options.mode)) {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
@@ -336,7 +336,7 @@ class MpxWebpackPlugin {
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
 
     const optimization = compiler.options.optimization
-    if (this.options.mode !== 'web') {
+    if (!isWeb(this.options.mode)) {
       optimization.runtimeChunk = {
         name: (entrypoint) => {
           for (const packageName in mpx.independentSubpackagesMap) {
@@ -1011,7 +1011,7 @@ class MpxWebpackPlugin {
 
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
         // 处理dll产生的external模块
-        if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
+        if (module.external && module.userRequest.startsWith('dll-reference ') && !isWeb(mpx.mode)) {
           const chunk = renderContext.chunk
           const request = module.request
           let relativePath = toPosix(path.relative(path.dirname(chunk.name), request))
