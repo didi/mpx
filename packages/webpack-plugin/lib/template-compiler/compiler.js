@@ -2142,6 +2142,8 @@ function processElement (el, root, options, meta) {
 
 function closeElement (el, meta, options) {
   postProcessAtMode(el)
+  postProcessRuntime(el, options, meta)
+
   if (mode === 'web') {
     postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
@@ -2154,14 +2156,12 @@ function closeElement (el, meta, options) {
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
-      postProcessRuntime(el.children[0], options, meta)
     } else {
       el = postProcessComponentIs(el)
     }
   }
   postProcessFor(el)
   postProcessIf(el)
-  postProcessRuntime(el, options, meta)
 }
 
 // 部分节点类型不需要被收集
