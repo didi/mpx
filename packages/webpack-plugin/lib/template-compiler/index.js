@@ -61,7 +61,10 @@ module.exports = function (raw) {
     this.cacheable(false)
     const template = getTemplate(mode)
     raw = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
-    raw += template.buildTemplate(mpx.runtimeInfo[packageName])
+    raw += template.buildTemplate({
+      ...mpx.runtimeInfo[packageName],
+      inlineSlot: mode === 'ali'
+    })
   }
 
   const { root: ast, meta } = compiler.parse(raw, {
