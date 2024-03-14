@@ -8,7 +8,7 @@ const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/cons
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
 
-const { getTemplate } = require('../runtime-render/template')
+const { buildTemplate } = require('../runtime-render/template')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -61,10 +61,7 @@ module.exports = function (raw) {
     this.cacheable(false)
     const template = getTemplate(mode)
     raw = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
-    raw += template.buildTemplate({
-      ...mpx.runtimeInfo[packageName],
-      inlineSlot: mode === 'ali'
-    })
+    raw += buildTemplate(mode, mpx.runtimeInfo[packageName])
   }
 
   const { root: ast, meta } = compiler.parse(raw, {
