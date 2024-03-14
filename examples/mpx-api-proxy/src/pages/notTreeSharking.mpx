@@ -1,0 +1,23 @@
+<template>
+  <list></list>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, { usePromise: true })
+createPage({
+  onLoad() {
+    //
+  }
+})
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+    }
+  }
+</script>
