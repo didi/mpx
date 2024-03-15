@@ -18,13 +18,10 @@ export default function getRuntimeModulesMixin () {
           }
         }
         if (typeof this.mpxLoadDynamic === 'function' && moduleIds.length) {
-          // 通过 id 获取对应静态内容
+          // todo: 依赖业务侧的约定，在业务侧的具体实现一个资源位对应一个 id，请求数据后在内存当中挂载
           this.mpxLoadDynamic().then(data => {
             this.__mpxDynamicLoaded = true
-            for (const componentName in runtimeModules) {
-              const moduleId = runtimeModules[componentName]
-              staticMap[moduleId] = data[moduleId]
-            }
+            Object.assign(staticMap, data)
           }).catch(e => {
             // do something
           })

@@ -2,6 +2,7 @@ class Interpreter {
   constructor (contextScope = []) {
     this.stateStack = []
     this.value = undefined
+    contextScope.unshift(this.initGlobalContext())
     this.contextScope = contextScope
 
     this.TYPE_ERROR = 'TypeError'
@@ -85,6 +86,14 @@ class Interpreter {
 
   throwException (errorType, message) {
     throw new Error('[JsInterpreter]: ' + errorType + ` ${message}.`)
+  }
+
+  initGlobalContext () {
+    const context = {
+      // eslint-disable-next-line
+      'undefined': undefined
+    }
+    return context
   }
 }
 

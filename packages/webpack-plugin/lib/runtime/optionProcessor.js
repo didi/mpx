@@ -86,7 +86,7 @@ export function getComponent (component, extendOptions) {
 export function getWxsMixin (wxsModules) {
   if (!wxsModules || !Object.keys(wxsModules).length) return
   return {
-    created () {
+    beforeCreate () {
       Object.keys(wxsModules).forEach((key) => {
         if (key in this) {
           console.error(`[Mpx runtime error]: The wxs module key [${key}] exist in the component/page instance already, please check and rename it!`)

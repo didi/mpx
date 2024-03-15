@@ -3,11 +3,12 @@
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
-  import ObserveDom from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
+  import debounce from 'lodash/debounce'
 
-  BScroll.use(ObserveDom)
   BScroll.use(PullDown)
+
+  let mutationObserver = null
 
   export default {
     name: 'mpx-scroll-view',
@@ -36,10 +37,6 @@
           return {}
         }
       },
-      updateRefresh: {
-        type: Boolean,
-        default: true
-      },
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean,
@@ -66,7 +63,11 @@
         currentX: 0,
         currentY: 0,
         lastX: 0,
-        lastY: 0
+        lastY: 0,
+        lastContentWidth: 0,
+        lastContentHeight: 0,
+        lastWrapperWidth: 0,
+        lastWrapperHeight: 0
       }
     },
     computed: {
@@ -101,12 +102,28 @@
         }
         return className
       },
-      scroll() {
+      scroll () {
         return this.scrollX || this.scrollY
       }
     },
     mounted () {
+      this.debounceRefresh = debounce(function () {
+        this.refresh()
+      }, 200, {
+        leading: false,
+        trailing: true
+      })
+      this.dispatchScrollTo = throttle(function (direction) {
+        let eventName = 'scrolltoupper'
+        if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
+        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
+      }, 200, {
+        leading: true,
+        trailing: false
+      })
       this.initBs()
+      this.observeAnimation('add')
+      this.handleMutationObserver()
     },
     activated () {
       if (!this.__mpx_deactivated) {
@@ -121,11 +138,11 @@
     deactivated () {
       this.__mpx_deactivated = true
     },
+
     beforeDestroy () {
       this.destroyBs()
-    },
-    updated () {
-      if (this.updateRefresh) this.refresh()
+      this.observeAnimation('remove')
+      this.destroyMutationObserver()
     },
     watch: {
       scrollIntoView (val) {
@@ -153,7 +170,7 @@
           }
         },
       },
-      scroll(val) {
+      scroll (val) {
         if (val) {
           this.initBs()
         } else {
@@ -162,12 +179,19 @@
       }
     },
     methods: {
+      observeAnimation (type) {
+        const eventNames = ['transitionend', 'animationend']
+        const  behaviorType = type === 'add' ? 'addEventListener' : 'removeEventListener'
+        eventNames.forEach(eventName => {
+          this.$refs.scrollContent?.[behaviorType](eventName, this.handleObserveAnimation)
+        })
+      },
       destroyBs () {
         if (!this.bs) return
         this.bs.destroy()
         delete this.bs
       },
-      disableBs() {
+      disableBs () {
         if (!this.bs) return
         this.bs.disable()
         this.currentX = -this.bs.x
@@ -176,6 +200,9 @@
       initBs () {
         this.destroyBs()
         this.initLayerComputed()
+        if (this.scrollOptions.observeDOM) {
+          console.warn('[Mpx runtime warn]The observeDOM attribute in scroll-view has been deprecated, please stop using it')
+        }
         const originBsOptions = {
           startX: -this.currentX,
           startY: -this.currentY,
@@ -194,11 +221,8 @@
             stop: 56
           }
         }
-        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false })
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
-        this.bs.scroller.hooks.on('beforeRefresh', () => {
-          this.initLayerComputed()
-        })
         this.lastX = -this.currentX
         this.lastY = -this.currentY
         this.bs.on('scroll', throttle(({ x, y }) => {
@@ -283,6 +307,7 @@
                 }
               }
             })
+
             this.bs.on('pullingDown', () => {
               this.$emit('refresherrefresh', getCustomEvent('refresherrefresh', {}, this))
             })
@@ -297,13 +322,17 @@
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
-        const computedStyle = getComputedStyle(wrapper)
-        // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
-        // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
-        this.$refs.innerWrapper.style.width = `${wrapper.clientWidth -  parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
-        this.$refs.innerWrapper.style.height = `${wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
+        const scrollWrapperWidth = wrapper?.clientWidth || 0
+        const scrollWrapperHeight = wrapper?.clientHeight || 0
+        if (wrapper) {
+          const computedStyle = getComputedStyle(wrapper)
+          // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
+          // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
+          this.$refs.innerWrapper.style.width = `${scrollWrapperWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
+          this.$refs.innerWrapper.style.height = `${scrollWrapperHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)}px`
+        }
         const innerWrapper = this.$refs.innerWrapper
-        const childrenArr = Array.from(innerWrapper.children)
+        const childrenArr = innerWrapper ? Array.from(innerWrapper.children) : []
 
         const getMinLength = (min, value) => {
           if (min === undefined) {
@@ -334,27 +363,72 @@
           maxRight = getMaxLength(maxRight, temp.right)
           maxBottom = getMaxLength(maxBottom, temp.bottom)
         })
-
-        const width = maxRight - minLeft
-        const height = maxBottom - minTop
-        this.$refs.scrollContent.style.width = `${width}px`
-        this.$refs.scrollContent.style.height = `${height}px`
+        const width = maxRight - minLeft || 0
+        const height = maxBottom - minTop || 0
+        if (this.$refs.scrollContent) {
+          this.$refs.scrollContent.style.width = `${width}px`
+          this.$refs.scrollContent.style.height = `${height}px`
+        }
+        return {
+          scrollContentWidth: width,
+          scrollContentHeight: height,
+          scrollWrapperWidth,
+          scrollWrapperHeight
+        }
       },
       refresh () {
         if (this.__mpx_deactivated) {
           this.__mpx_deactivated_refresh = true
           return
         }
-        if (this.bs) this.bs.refresh()
+        const { scrollContentWidth, scrollContentHeight,  scrollWrapperWidth, scrollWrapperHeight} = this.initLayerComputed()
+        if (!this.compare(scrollWrapperWidth, this.lastWrapperWidth) || !this.compare(scrollWrapperHeight, this.lastWrapperHeight) || !this.compare(scrollContentWidth, this.lastContentWidth) || !this.compare(scrollContentHeight, this.lastContentHeight)) {
+          this.lastContentWidth = scrollContentWidth
+          this.lastContentHeight = scrollContentHeight
+          this.lastWrapperWidth = scrollWrapperWidth
+          this.lastWrapperHeight = scrollWrapperHeight
+          if (this.bs) this.bs.refresh()
+        }
       },
-      dispatchScrollTo: throttle(function (direction) {
-        let eventName = 'scrolltoupper'
-        if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
-        this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
-      }, 200, {
-        leading: true,
-        trailing: false
-      })
+      compare(num1, num2, scale = 1) {
+        return Math.abs(num1 - num2) < scale
+      },
+      handleMutationObserver () {
+        if (typeof MutationObserver !== 'undefined') {
+          mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
+          const config = { attributes: true, childList: true, subtree: true }
+          mutationObserver.observe(this.$refs.wrapper, config)
+        }
+      },
+       mutationObserverHandler (mutations) {
+        let needRefresh = false
+        for (let i = 0; i < mutations.length; i++) {
+          const mutation = mutations[i]
+          if (mutation.type !== 'attributes') {
+             needRefresh = true
+            break
+          } else {
+            if (mutation.target !== this.$refs.scrollContent && mutation.target !== this.$refs.innerWrapper) {
+              needRefresh = true
+              break
+            }
+          }
+        }
+        if (needRefresh) {
+          this.debounceRefresh()
+        }
+      },
+      handleObserveAnimation (e) {
+        if (e.target !== this.$refs.scrollContent) {
+          this.debounceRefresh()
+        }
+      },
+      destroyMutationObserver () {
+        if (mutationObserver) {
+          mutationObserver.disconnect()
+          mutationObserver = null
+        }
+      }
     },
     render (createElement) {
       const data = {
@@ -418,11 +492,13 @@
         bottom: 20px
         left: 50%
         transform: translateX(-50%)
+
       .mpx-pull-down-slot
         position: absolute
         width: 100%
         height: auto
         bottom: 0
+
       .mpx-pull-down-content-black
         .circle
           display: inline-block;

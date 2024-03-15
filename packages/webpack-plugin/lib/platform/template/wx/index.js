@@ -124,7 +124,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'wx:model',
         web ({ value }, { el }) {
-          el.hasEvent = true
+          el.hasModel = true
           const attrsMap = el.attrsMap
           const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
           const stringify = JSON.stringify
@@ -375,9 +375,9 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ name, value }, { eventRules, el, usingComponents }) {
-          if (parseMustacheWithContext(value).hasBinding) {
-            error('Web environment does not support mustache binding in event props!')
-            return
+          const parsed = parseMustacheWithContext(value)
+          if (parsed.hasBinding) {
+            value = '__invokeHandler(' + parsed.result + ', $event)'
           }
           const match = this.test.exec(name)
           const prefix = match[1]
@@ -387,8 +387,6 @@ module.exports = function getSpec ({ warn, error }) {
             modifierStr
           }
           const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-          // 记录event监听信息用于后续判断是否需要使用内置基础组件
-          el.hasEvent = true
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
           const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {
