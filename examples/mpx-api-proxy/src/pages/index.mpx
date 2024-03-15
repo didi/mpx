@@ -12,7 +12,6 @@ import { navigateTo } from '@mpxjs/api-proxy'
 createPage({
   methods: {
     treeSharking() {
-      console.log(111, navigateTo)
       navigateTo({ url: './treeSharking' })
     },
     notTreeSharking() {

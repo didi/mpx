@@ -32,14 +32,14 @@
     </view>
     <view class="api-proxy-block">
       <view class="title">app</view>
-      <button bindtap="offAppShow" class="mb20">offAppShow</button>
-      <button bindtap="offAppHide" class="mb20">offAppHide</button>
-      <button bindtap="offError" class="mb20">offError</button>
+      <button bindtap="offAppShow">offAppShow</button>
+      <button bindtap="offAppHide">offAppHide</button>
+      <button bindtap="offError">offError</button>
     </view>
     <view class="api-proxy-block">
       <view class="title">audio</view>
-      <button bindtap="audioHandle" class="mb20">createInnerAudioContext</button>
-      <button bindtap="pauseHandle" class="mb20">pause</button>
+      <button bindtap="audioHandle">createInnerAudioContext</button>
+      <button bindtap="pauseHandle">pause</button>
     </view>
     <view class="api-proxy-block">
       <view class="title">base</view>
@@ -47,7 +47,7 @@
       <button bindtap="arrayBufferToBase64">arrayBufferToBase64</button>
     </view>
     <view class="api-proxy-block">
-      <view class="title">ble-connection</view>
+      <view class="title">BLEConnection</view>
       待补充
     </view>
     <view class="api-proxy-block">
@@ -68,6 +68,7 @@
 
     <view class="api-proxy-block">
       <view class="title">createIntersectionObserver</view>
+      <view class="logo">logo</view>
       <button bindtap="createIntersectionObserver">createIntersectionObserver</button>
     </view>
 
@@ -78,12 +79,15 @@
 
     <view class="api-proxy-block">
       <view class="title">network</view>
-      待补充
+      <button bindtap="getNetworkTypeHandle">getNetworkType</button>
+      <button bindtap="onNetworkStatusChangeHandle">onNetworkStatusChange</button>
+      <button bindtap="offNetworkStatusChangeHandle">offNetworkStatusChange</button>
     </view>
 
     <view class="api-proxy-block">
       <view class="title">file</view>
-      待补充
+      <button bindtap="downloadFileHandle">downloadFile</button>
+      <button bindtap="uploadFileHandle">uploadFile</button>
     </view>
 
     <view class="api-proxy-block">
@@ -99,7 +103,7 @@
 
     <view class="api-proxy-block">
       <view class="title">lifecycle</view>
-      待补充
+      <button bindtap="getEnterOptionsSyncHandle">getEnterOptionsSync</button>
     </view>
 
     <view class="api-proxy-block">
@@ -145,7 +149,10 @@
 
     <view class="api-proxy-block">
       <view class="title">route</view>
-      待处理
+      <button bindtap="navigateToHandle">navigateTo</button>
+      <button bindtap="redirectToHandle">redirectTo</button>
+      <button bindtap="reLaunchHandle">reLaunch</button>
+      <button bindtap="switchTabHandle">switchTab</button>
     </view>
 
     <view class="api-proxy-block">
@@ -249,6 +256,7 @@ import {
   previewImage,
   checkSession,
   compressImage,
+  getEnterOptionsSync,
   login,
   request,
   makePhoneCall,
@@ -258,7 +266,10 @@ import {
   startPullDownRefresh,
   stopPullDownRefresh,
   requestPayment,
+  redirectTo,
   navigateTo,
+  reLaunch,
+  switchTab,
   scanCode,
   getScreenBrightness,
   setScreenBrightness,
@@ -295,14 +306,17 @@ const errorHandle = (error, stack) => {
   console.log('onError error', error)
   console.log('onError stack', stack)
 }
-const listener = function (res) { console.log(res, 'onNetworkStatusChange:test') }
+const listener = function (res) { console.log(res, 'Change:test') }
+const resizeListener = (res) => {
+  console.log(res, 'onWindowResize:data')
+}
 createPage({
   data: {
     animationData: {},
     videoContext: null,
     animation: null
   },
-  onLoad() {
+  ready() {
     this.animation = createAnimation({
       duration: 400,
       timingFunction: 'linear',
@@ -312,12 +326,8 @@ createPage({
     onAppShow(onAppShowHandler)
     onAppHide(onAppHideHandler)
     this.videoContext = createVideoContext('myVideo')
-    onWindowResize((res) => {
-      console.log(res, 'onWindowResize:data')
-    })
-    console.log(this.videoContext, '=====')
+    onWindowResize(resizeListener)
     onNetworkStatusChange(listener)
-    console.log(this.animation)
   },
   methods: {
     showActionSheet() {
@@ -349,7 +359,7 @@ createPage({
       this.innerAudioContext.pause()
     },
     offWindowResize() {
-      offWindowResize(listener)
+      offWindowResize(resizeListener)
     },
     hideToast() {
       hideToast({
@@ -362,6 +372,7 @@ createPage({
       })
     },
     hideLoading() {
+      console.log(hideLoading, '=======')
       hideLoading({
         success(res) {
           console.log(res, '==========hideToast:success')
@@ -382,6 +393,17 @@ createPage({
           console.log(res, '=======showLoading: fail')
         }
       })
+      setTimeout(() => {
+        console.log('-----------')
+        hideLoading({
+          success(res) {
+            console.log(res, '==========hideToast:success')
+          },
+          fail(res) {
+            console.log(res, '==========hideToast:fail')
+          }
+        })
+      }, 2000)
     },
     addPhoneContact() {
       addPhoneContact({
@@ -443,6 +465,10 @@ createPage({
     canvasGetImageDataHandle() {
       canvasGetImageData({
         canvasId: 'myCanvas',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
         success(res) {
           console.log(res.width) // 100
           console.log(res.height) // 100
@@ -552,7 +578,7 @@ createPage({
     base64ToArrayBuffer() {
       const base64 = 'CxYh'
       const arrayBuffer = base64ToArrayBuffer(base64)
-      console.log(arrayBuffer, 'arrayBuffer value')
+      console.log(arrayBuffer, arrayBuffer[0], 'arrayBuffer value')
     },
     arrayBufferToBase64() {
       const arrayBuffer = new Uint8Array([11, 22, 33])
@@ -575,11 +601,11 @@ createPage({
     },
     checkSession() {
       checkSession({
-        success() {
-          console.log('4444')
+        success(res) {
+          console.log(res, 'checkSession:success')
         },
-        fail() {
-          console.log('3333')
+        fail(res) {
+          console.log(res, 'checkSession:fail')
         }
       })
     },
@@ -587,12 +613,18 @@ createPage({
       setClipboardData({
         data: 'data',
         success(res) {
-          console.log(res, '#########')
+          console.log(res, 'setClipboardData:success')
           getClipboardData({
             success(res1) {
-              console.log(res1.data, '@@@@@@@@') // data
+              console.log(res1, 'getClipboardData:success') // data
+            },
+            fail(res1) {
+              console.log(res1, 'getClipboardData:fail') // data
             }
           })
+        },
+        fail(res) {
+          console.log(res1, 'setClipboardData:fail') // data
         }
       })
     },
@@ -621,19 +653,28 @@ createPage({
         console.log(res[1].scrollTop)
       })
     },
-    getNetworkType() {
+    getNetworkTypeHandle() {
       getNetworkType({
         success(res) {
-          console.log(res, 'getNetworkType')
+          console.log(res, 'getNetworkType:success')
+        },
+        fail(res) {
+          console.log(res, 'getNetworkType:fail')
         }
       })
     },
-    offNetworkStatusChange() {
+    onNetworkStatusChangeHandle() {
+      onNetworkStatusChange(function (res) {
+        console.log(res.isConnected)
+        console.log(res.networkType)
+      })
+    },
+    offNetworkStatusChangeHandle() {
       offNetworkStatusChange(listener)
     },
-    downloadFile() {
+    downloadFileHandle() {
       downloadFile({
-        url: 'https://example.com/audio/123',
+        url: 'https://ut-static.udache.com/webapp/passenger/apps/bus-station-v2/static/img/empty.5ac07e3.png',
         success(res) {
           console.log(res, '======downloadFile:success')
         },
@@ -642,10 +683,10 @@ createPage({
         }
       })
     },
-    uploadFile() {
+    uploadFileHandle() {
       uploadFile({
         url: 'https://httpbin.org/post',
-        filePath: tempFilePaths[0],
+        filePath: 'http://tmp/VH8WGlFPmp9e37fdb9e4dcd2e4480b1f67e3acb1b2a3.jpeg',
         name: 'file',
         formData: {
           user: 'test'
@@ -681,7 +722,7 @@ createPage({
     },
     compressImage() {
       compressImage({
-        src: '',
+        src: 'https://pic.616pic.com/photoone/00/03/96/618ce5441d6a75161.jpg',
         quality: 80,
         success(res) {
           console.log(res, '===========compressImage:success')
@@ -707,6 +748,10 @@ createPage({
       //   }
       // })
     },
+    getEnterOptionsSyncHandle() {
+      const getEnterOption = getEnterOptionsSync()
+      console.log(getEnterOption)
+    },
     login() {
       login({
         success(res) {
@@ -722,6 +767,9 @@ createPage({
           } else {
             console.log('登录失败！' + res.errMsg)
           }
+        },
+        fail(res) {
+          console.log(res, 'login:fail')
         }
       })
     },
@@ -751,7 +799,7 @@ createPage({
     },
     nextTick() {
       nextTick(() => {
-        console.log('~~~~~~~~')
+        console.log('这里是nextTick回调')
       })
     },
     pageScrollTo() {
@@ -771,7 +819,14 @@ createPage({
       })
     },
     stopPullDownRefresh() {
-      stopPullDownRefresh()
+      stopPullDownRefresh({
+        success(res) {
+          console.log(res, 'stopPullDownRefresh:success')
+        },
+        fail(err) {
+          console.log(err, 'stopPullDownRefresh:fail')
+        }
+      })
     },
     request() {
       request({
@@ -807,8 +862,17 @@ createPage({
         }
       })
     },
-    navigateTo() {
-      navigateTo({ url: './index1' })
+    navigateToHandle() {
+      navigateTo({ url: './notTreeSharking' })
+    },
+    redirectToHandle() {
+      redirectTo({ url: './notTreeSharking' })
+    },
+    reLaunchHandle() {
+      reLaunch({ url: './notTreeSharking' })
+    },
+    switchTabHandle() {
+      switchTab({ url: './notTreeSharking' })
     },
     scanCode() {
       scanCode({
@@ -820,7 +884,7 @@ createPage({
     getScreenBrightness() {
       getScreenBrightness({
         success(res) {
-          console.log(res, '~~~~~~')
+          console.log(res, 'getScreenBrightness: success')
         }
       })
     },
@@ -828,7 +892,7 @@ createPage({
       setScreenBrightness({
         value: 1,
         success(res) {
-          console.log(res, '~~~~~~')
+          console.log(res, 'setScreenBrightness: success')
         }
       })
     },
@@ -918,6 +982,24 @@ createPage({
     }
   }
 })
+</script>
+
+<script type="application/json">
+{
+  "tabBar": {
+    "custom": true,
+    "color": "#000000",
+    "selectedColor": "#000000",
+    "backgroundColor": "#000000",
+    "list": [{
+      "pagePath": "./index",
+      "text": "组件"
+    }, {
+      "pagePath": "./notTreeSharking",
+      "text": "接口"
+    }]
+  }
+}
 </script>
 
 <style lang="stylus">

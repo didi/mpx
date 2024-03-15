@@ -15,7 +15,8 @@ createApp({
 <script type="application/json">
   {
     "pages": [
-      "./pages/treeSharking"
+      "./pages/treeSharking",
+      "./pages/notTreeSharking"
     ]
   }
 </script>
