@@ -2192,12 +2192,12 @@ function postProcessRuntime (el, options, meta) {
     }
 
     if (isCustomComponent) {
-      const tag = Object.keys(options.runtimeComponents).filter(key=> {
+      const tag = Object.keys(options.runtimeComponents).find((key) => {
         if(mode === 'ali' || mode === 'swan') {
           return capitalToHyphen(key) === el.tag
         }
         return key === el.tag
-      })[0]
+      })
       const { hashName, resourcePath } = options.runtimeComponents[tag]
       el.aliasTag = hashName
       meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
