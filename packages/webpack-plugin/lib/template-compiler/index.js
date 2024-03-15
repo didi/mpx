@@ -7,7 +7,8 @@ const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
-const { unRecursiveTemplate } = require('../runtime-render/wx-template')
+
+const { buildTemplate } = require('../runtime-render/template')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -58,9 +59,8 @@ module.exports = function (raw) {
 
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
-    let result = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
-    result += unRecursiveTemplate.buildTemplate(mpx.runtimeInfo[packageName])
-    return result
+    raw = '<template is="tmpl_0_container" wx:if="{{r && r.nodeType}}" data="{{ i: r }}"></template>\n'
+    raw += buildTemplate(mode, mpx.runtimeInfo[packageName])
   }
 
   const { root: ast, meta } = compiler.parse(raw, {
@@ -117,7 +117,7 @@ module.exports = function (raw) {
 
   const result = compiler.serialize(ast)
 
-  if (isNative) {
+  if (isNative || queryObj.mpxCustomElement) {
     return result
   }
 
