@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "mpx-cli-service serve --targets=web,wx,ali",
+    "serve": "mpx-cli-service serve --targets=web,wx,ali,tt",
     "serve:wx": "mpx-cli-service serve --targets=wx",
     "build": "mpx-cli-service build",
     "lint": "eslint --ext .js,.ts,.mpx src/"
