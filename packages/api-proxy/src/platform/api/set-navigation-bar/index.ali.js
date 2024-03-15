@@ -1,22 +1,22 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   handleSuccess(options, res => {
     return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
   })
-  if (my.canIUse('setNavigationBarTitle')) {
-    my.setNavigationBarTitle(options)
+  if (ENV_OBJ.canIUse('setNavigationBarTitle')) {
+    ENV_OBJ.setNavigationBarTitle(options)
     return
   }
-  my.setNavigationBar(options)
+  ENV_OBJ.setNavigationBar(options)
 }
 
 function setNavigationBarColor (options = {}) {
-  if (my.canIUse('setNavigationBarColor')) {
-    my.setNavigationBarColor(options)
+  if (ENV_OBJ.canIUse('setNavigationBarColor')) {
+    ENV_OBJ.setNavigationBarColor(options)
     return
   }
-  my.setNavigationBar(options)
+  ENV_OBJ.setNavigationBar(options)
 }
 
 export {

@@ -1,13 +1,15 @@
+import { ENV_OBJ } from '../../../common/js'
+
 function closeBLEConnection (options = {}) {
-  my.disconnectBLEDevice(options)
+  ENV_OBJ.disconnectBLEDevice(options)
 }
 
 function createBLEConnection (options = {}) {
-  my.connectBLEDevice(options)
+  ENV_OBJ.connectBLEDevice(options)
 }
 
 function onBLEConnectionStateChange (callback) {
-  my.onBLEConnectionStateChanged(callback)
+  ENV_OBJ.onBLEConnectionStateChanged(callback)
 }
 
 export {

@@ -1,7 +1,7 @@
-import { noop } from '../../../common/js'
+import { ENV_OBJ, noop } from '../../../common/js'
 
 function createSelectorQuery (options = {}) {
-  const selectorQuery = my.createSelectorQuery(options)
+  const selectorQuery = ENV_OBJ.createSelectorQuery(options)
   const proxyMethods = ['boundingClientRect', 'scrollOffset']
   const cbs = []
   proxyMethods.forEach((name) => {
