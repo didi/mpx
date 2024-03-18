@@ -2,7 +2,7 @@ import cssSelect from './css-select'
 // todo: stringify wxs 模块只能放到逻辑层执行，主要还是因为生成 vdom tree 需要根据 class 去做匹配，需要看下这个代码从哪引入
 import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
-import { dash2hump } from '@mpxjs/utils'
+import { dash2hump, isString } from '@mpxjs/utils'
 
 const deepCloneNode = function (val) {
   return JSON.parse(JSON.stringify(val))
@@ -153,14 +153,14 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
   }
 
   function genData (node) {
-    if (!node.attrsList) {
-      return {}
-    }
-
     const res = {
       uid,
       moduleId
     }
+    if (!node.attrsList) {
+      return res
+    }
+
     node.attrsList.forEach((attr) => {
       if (attr.name === 'class' || attr.name === 'style') {
         // class/style 的表达式为数组形式，class/style的计算过程需要放到逻辑层，主要是因为有逻辑匹配的过程去生成 vnodeTree
@@ -233,7 +233,12 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     }
     const forExp = node.for
     const res = []
-    const forValue = evalExps(forExp.__exps)
+    let forValue = evalExps(forExp.__exps)
+
+    // 和微信的模版渲染策略保持一致：当 wx:for 的值为字符串时，会将字符串解析成字符串数组
+    if (isString(forValue)) {
+      forValue = forValue.split('')
+    }
 
     if (Array.isArray(forValue)) {
       forValue.forEach((item, index) => {
@@ -266,15 +271,15 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     let res = {} // 空节点
     for (let i = 0; i < ifConditions.length; i++) {
       const condition = ifConditions[i]
-      // else 节点
-      if (!condition.exp) {
-        res = genVnodeTree(condition.block)
-        break
-      }
       // 非 else 节点
-      const identifierValue = evalExps(condition.__exps)
-      if (identifierValue) {
-        res = genVnodeTree(condition.block === 'self' ? node : condition.block)
+      if (condition.ifExp) {
+        const identifierValue = evalExps(condition.__exps)
+        if (identifierValue) {
+          res = genVnodeTree(condition.block === 'self' ? node : condition.block)
+          break
+        }
+      } else { // else 节点
+        res = genVnodeTree(condition.block)
         break
       }
     }
@@ -297,14 +302,10 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
       })
     })
 
-    // 默认使用样式隔离的策略
-    // vnodeTree.scopeProcessed = true
     return vnodeTree
   }
 
   const interpreteredVnodeTree = genVnodeTree(vnodeAst)
-  // if (slotName) {
-  //   interpreteredVnodeTree.data.slot = slotName
-  // }
+
   return genVnodeWithStaticCss(interpreteredVnodeTree)
 }

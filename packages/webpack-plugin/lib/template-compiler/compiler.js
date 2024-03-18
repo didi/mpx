@@ -2651,5 +2651,7 @@ module.exports = {
   addAttrs,
   getAndRemoveAttr,
   findPrevNode,
-  removeNode
+  removeNode,
+  replaceNode,
+  createASTElement
 }
