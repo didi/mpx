@@ -2200,7 +2200,7 @@ function postProcessRuntime (el, options, meta) {
     }
 
     const tag = Object.keys(options.componentInfo).find((key) => {
-      if(mode === 'ali' || mode === 'swan') {
+      if (mode === 'ali' || mode === 'swan') {
         return capitalToHyphen(key) === el.tag
       }
       return key === el.tag

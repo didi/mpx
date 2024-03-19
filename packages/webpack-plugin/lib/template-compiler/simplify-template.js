@@ -58,7 +58,7 @@ function processIfConditions (el) {
   }
 }
 
-function findPrevIfNode(el) {
+function findPrevIfNode (el) {
   const prevNode = findPrevNode(el)
   if (!prevNode) {
     return null
