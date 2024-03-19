@@ -1,4 +1,4 @@
-import { isEmptyObject, type } from '../../utils'
+import { isEmptyObject } from '../../utils'
 
 const tapEvents = [
   'onTouchstart',
@@ -80,21 +80,18 @@ function processOriginEvent (listeners, context, _input) {
   if (listeners.onInput && _input) {
     delete listeners.onInput
     listeners.onInput = function (e) {
-      let _type;
+      let _type
       const { state } = e || {}
       if (state === 1) {
         _type = 'focus'
-      }
-      else if (state === 2) {
+      } else if (state === 2) {
         _type = 'focus'
-      }
-      else if (state === 3) {
+      } else if (state === 3) {
         _type = 'blur'
+      } else {
+        _type = 'confirm'
       }
-      else {
-        _type = "confirm"
-      }
-      context.$emit(_type, { ...e, detail: e})
+      context.$emit(_type, { ...e, detail: e })
     }
   }
 }
