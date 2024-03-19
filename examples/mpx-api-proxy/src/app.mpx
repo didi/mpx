@@ -1,15 +1,8 @@
 <script>
 import { createApp } from '@mpxjs/core'
-import { setTabBarStyle } from '@mpxjs/api-proxy'
 
 createApp({
   onLaunch() {
-    setTabBarStyle({
-      color: '#bb00ff',
-      selectedColor: '#00FFFF',
-      backgroundColor: '#0000FF',
-      borderStyle: 'white'
-    })
   }
 })
 </script>
@@ -25,10 +18,8 @@ createApp({
       "./pages/notTreeSharking"
     ],
     "tabBar": {
-      "custom": true,
       "color": "#7A7E83",
       "selectedColor": "#3cc51f",
-      "borderStyle": "black",
       "backgroundColor": "#ffffff",
       "list": [
         {
