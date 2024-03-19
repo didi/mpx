@@ -199,7 +199,10 @@
 
     <view class="api-proxy-block">
       <view class="title">setTab</view>
-      待处理
+      <button bindtap="setTabBarItem">setTabBarItem</button>
+      <button bindtap="setTabBarStyle">setTabBarStyle</button>
+      <button bindtap="showTabBar">showTabBar</button>
+      <button bindtap="hideTabBar">hideTabBar</button>
     </view>
 
     <view class="api-proxy-block">
@@ -278,6 +281,10 @@ import {
   connectSocket,
   getSystemInfo,
   getSystemInfoSync,
+  setTabBarItem,
+  setTabBarStyle,
+  showTabBar,
+  hideTabBar,
   showToast,
   hideToast,
   showLoading,
@@ -338,6 +345,46 @@ createPage({
         },
         fail: (res) => {
           console.log(res, '=========showActionSheet:fail')
+        }
+      })
+    },
+    setTabBarItem() {
+      setTabBarItem({
+        index: 1,
+        text: 'text',
+        success(res) {
+          console.log(res, '=====setTabBarItem: success')
+        },
+        fail(res) {
+          console.log(res, '=====setTabBarItem: fail')
+        }
+      })
+    },
+    setTabBarStyle() {
+      setTabBarStyle({
+        color: '#bb00ff',
+        selectedColor: '#00FFFF',
+        backgroundColor: '#0000FF',
+        borderStyle: 'white'
+      })
+    },
+    showTabBar() {
+      showTabBar({
+        success(res) {
+          console.log(res, '=====showTabBar: success')
+        },
+        fail(res) {
+          console.log(res, '=====showTabBar: fail')
+        }
+      })
+    },
+    hideTabBar() {
+      hideTabBar({
+        success(res) {
+          console.log(res, '=====hideTabBar: success')
+        },
+        fail(res) {
+          console.log(res, '=====hideTabBar: fail')
         }
       })
     },
