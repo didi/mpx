@@ -443,11 +443,11 @@ module.exports = function (content) {
         }
         const tarRoot = subPackage.tarRoot || subPackage.root || ''
         const srcRoot = subPackage.srcRoot || subPackage.root || ''
-        if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
+        if (!tarRoot) return callback()
 
         context = path.join(context, srcRoot)
         const otherConfig = getOtherConfig(subPackage)
-        subPackagesCfg[tarRoot] = {
+        subPackagesCfg[tarRoot] = subPackagesCfg[tarRoot] || {
           root: tarRoot,
           pages: []
         }
