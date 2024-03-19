@@ -31,6 +31,14 @@ export default {
       type: Number,
       default: -1,
     },
+    placeholderStyle: {
+      type: String,
+      default: '',
+    },
+    confirmType: {
+      type: String,
+      default: 'return',
+    }
   },
   computed: {
     originRef() {
@@ -50,9 +58,11 @@ export default {
       class: "mpx-textarea",
       ref: "mpx-textarea",
       focus: this.focus,
+      value: this.value,
       placeholder: this.placeholder,
-      maxLength: this.maxLength,
+      maxLength: this.maxlength,
       disabled: this.disabled,
+      returnKeyType: this.confirmType,
       ...getInnerListeners(this),
     };
     return h("textarea", data);

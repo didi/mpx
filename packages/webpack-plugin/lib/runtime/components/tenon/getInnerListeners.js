@@ -1,4 +1,4 @@
-import { isEmptyObject } from '../../utils'
+import { isEmptyObject, type } from '../../utils'
 
 const tapEvents = [
   'onTouchstart',
@@ -61,9 +61,9 @@ function createTouch (context, hasLongTap, __mpxTapInfo) {
   })
 }
 
-function processOriginEvent (listeners) {
+function processOriginEvent (listeners, context, _input) {
   // 给event添加_originEvent属性
-  const ignoreEvents = ['onTap', 'onFocus', 'onChange', 'onBlur', 'onConfirm']
+  const ignoreEvents = ['onTap', 'onFocus', 'onChange', 'onBlur', 'onConfirm', 'onInput']
   Object.keys(listeners).forEach((key) => {
     if (!ignoreEvents.includes(key)) {
       const listener = listeners[key]
@@ -75,14 +75,35 @@ function processOriginEvent (listeners) {
       }
     }
   })
+
+  // 处理input输入框事件
+  if (listeners.onInput && _input) {
+    delete listeners.onInput
+    listeners.onInput = function (e) {
+      let _type;
+      const { state } = e || {}
+      if (state === 1) {
+        _type = 'focus'
+      }
+      else if (state === 2) {
+        _type = 'focus'
+      }
+      else if (state === 3) {
+        _type = 'blur'
+      }
+      else {
+        _type = "confirm"
+      }
+      context.$emit(_type, { ...e, detail: e})
+    }
+  }
 }
 
-function processModel (listeners, context) {
+function processModel (listeners, context, _input = false) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
   // todo 此处对于$attrs的访问会导致父组件更新时子组件必然更新，暂时用短路效应避免影响，待优化
   // todo 访问$listeners也会导致上述现象，但是为了事件代理还必须访问$listeners，待后续思考处理
-
   const modelEvent = context.$attrs.mpxModelEvent
   const modelEventId = context.$attrs.mpxModelEventId
   if (modelEvent && modelEventId) {
@@ -278,11 +299,13 @@ export default function getInnerListeners (context, options = {}) {
     mergeBefore = {},
     mergeAfter = {},
     defaultListeners = [],
-    ignoredListeners = []
+    ignoredListeners = [],
+    _input = false
   } = options
   const __mpxTapInfo = {}
   // 从attrs里面拿到以on开头的所有绑定的事件
   const listeners = Object.assign({}, getListeners(context))
+
   defaultListeners.forEach((key) => {
     if (!listeners[key]) listeners[key] = noop
   })
@@ -302,8 +325,8 @@ export default function getInnerListeners (context, options = {}) {
     mergeAfterOptions.force = mergeAfter.force
     mergeAfter = mergeAfter.listeners
   }
-  processOriginEvent(listeners)
-  processModel(listeners, context)
+  processOriginEvent(listeners, context, _input)
+  processModel(listeners, context, _input)
   processTouchAndLtap(listeners, context, __mpxTapInfo)
   mergeListeners(listeners, mergeBefore, mergeBeforeOptions, context, __mpxTapInfo)
   mergeListeners(listeners, mergeAfter, mergeAfterOptions, context, __mpxTapInfo)
