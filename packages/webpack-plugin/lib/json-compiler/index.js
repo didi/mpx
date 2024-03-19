@@ -540,7 +540,7 @@ module.exports = function (content) {
         const outputPath = resolveTabBarPath(outputCustomKey)
         const dynamicEntryExtraOptions = {
           // replace with true for custom-tab-bar
-          replaceContent: true
+          replaceContent: 'true'
         }
 
         processComponent(`./${srcPath}`, context, { outputPath, extraOptions: dynamicEntryExtraOptions }, (err, entry) => {

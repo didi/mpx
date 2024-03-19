@@ -191,7 +191,7 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     let replaceContent = ''
 
     if (extraOptions.replaceContent) {
-      replaceContent = JSON.stringify(extraOptions.replaceContent)
+      replaceContent = extraOptions.replaceContent
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
         let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
