@@ -7,7 +7,7 @@ function login (options = {}) {
     return changeOpts(res, { authCode: 'code' }, { errMsg: 'login:ok' })
   })
 
-  ENV_OBJ.getAuthCode(opts)
+  return ENV_OBJ.getAuthCode(opts)
 }
 
 export {

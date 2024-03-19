@@ -10,7 +10,7 @@ function getUserInfo (options = {}) {
     warn(`支付宝不支持在 ${TIPS_NAME}.getUserInfo 中使用 lang 参数`)
   }
 
-  ENV_OBJ.getOpenUserInfo(options)
+  return ENV_OBJ.getOpenUserInfo(options)
 }
 
 export {

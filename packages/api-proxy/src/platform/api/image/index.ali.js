@@ -8,7 +8,7 @@ function previewImage (options = {}) {
     opts.current = idx !== -1 ? idx : 0
   }
 
-  ENV_OBJ.previewImage(opts)
+  return ENV_OBJ.previewImage(opts)
 }
 
 function compressImage (options = {}) {
@@ -27,7 +27,7 @@ function compressImage (options = {}) {
     )
   })
 
-  ENV_OBJ.compressImage(opts)
+  return ENV_OBJ.compressImage(opts)
 }
 
 export {

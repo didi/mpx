@@ -11,7 +11,7 @@ function setClipboardData (options = {}) {
       errMsg: 'setClipboardData:ok'
     })
   })
-  ENV_OBJ.setClipboard(opts)
+  return ENV_OBJ.setClipboard(opts)
 }
 
 function getClipboardData (options = {}) {
@@ -21,7 +21,7 @@ function getClipboardData (options = {}) {
     return changeOpts(res, { text: 'data' })
   })
 
-  ENV_OBJ.getClipboard(opts)
+  return ENV_OBJ.getClipboard(opts)
 }
 
 export {

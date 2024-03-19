@@ -13,7 +13,7 @@ function showModal (options = {}) {
       return changeOpts(res, undefined, { cancel: !res.confirm })
     })
 
-    ENV_OBJ.confirm(opts)
+    return ENV_OBJ.confirm(opts)
   } else {
     opts = changeOpts(options, {
       confirmText: 'buttonText'
@@ -23,7 +23,7 @@ function showModal (options = {}) {
       return changeOpts(res, undefined, { cancel: false, confirm: true })
     })
 
-    ENV_OBJ.alert(opts)
+    return ENV_OBJ.alert(opts)
   }
 }
 

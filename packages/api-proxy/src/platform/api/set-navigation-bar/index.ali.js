@@ -5,18 +5,16 @@ function setNavigationBarTitle (options = {}) {
     return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
   })
   if (ENV_OBJ.canIUse('setNavigationBarTitle')) {
-    ENV_OBJ.setNavigationBarTitle(options)
-    return
+    return ENV_OBJ.setNavigationBarTitle(options)
   }
-  ENV_OBJ.setNavigationBar(options)
+  return ENV_OBJ.setNavigationBar(options)
 }
 
 function setNavigationBarColor (options = {}) {
   if (ENV_OBJ.canIUse('setNavigationBarColor')) {
-    ENV_OBJ.setNavigationBarColor(options)
-    return
+    return ENV_OBJ.setNavigationBarColor(options)
   }
-  ENV_OBJ.setNavigationBar(options)
+  return ENV_OBJ.setNavigationBar(options)
 }
 
 export {

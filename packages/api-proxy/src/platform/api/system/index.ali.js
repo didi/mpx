@@ -15,7 +15,7 @@ function getSystemInfo (options = {}) {
     return res
   })
 
-  ENV_OBJ.getSystemInfo(opts)
+  return ENV_OBJ.getSystemInfo(opts)
 }
 
 function getSystemInfoSync () {

@@ -8,7 +8,7 @@ function canvasToTempFilePath (options = {}) {
     )
   })
 
-  ENV_OBJ.canvasToTempFilePath(options)
+  return ENV_OBJ.canvasToTempFilePath(options)
 }
 const createCanvasContext = envError('createCanvasContext')
 const canvasGetImageData = envError('canvasGetImageData')

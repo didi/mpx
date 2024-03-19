@@ -4,7 +4,7 @@ function makePhoneCall (options = {}) {
   const opts = changeOpts(options, {
     phoneNumber: 'number'
   })
-  ENV_OBJ.makePhoneCall(opts)
+  return ENV_OBJ.makePhoneCall(opts)
 }
 
 export {

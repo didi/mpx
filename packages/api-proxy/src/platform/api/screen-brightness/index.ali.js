@@ -7,7 +7,7 @@ function setScreenBrightness (options = {}) {
   handleSuccess(opts, res => {
     return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
   })
-  ENV_OBJ.setScreenBrightness(opts)
+  return ENV_OBJ.setScreenBrightness(opts)
 }
 
 function getScreenBrightness (options = {}) {
@@ -17,7 +17,7 @@ function getScreenBrightness (options = {}) {
     return changeOpts(res, { brightness: 'value' }, { errMsg: 'getScreenBrightness:ok' })
   })
 
-  ENV_OBJ.getScreenBrightness(opts)
+  return ENV_OBJ.getScreenBrightness(opts)
 }
 
 export {

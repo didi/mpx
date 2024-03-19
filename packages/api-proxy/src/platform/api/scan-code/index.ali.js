@@ -9,7 +9,7 @@ function scanCode (options = {}) {
     return changeOpts(res, { code: 'result' })
   })
 
-  ENV_OBJ.scan(opts)
+  return ENV_OBJ.scan(opts)
 }
 
 export {

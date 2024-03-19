@@ -21,7 +21,7 @@ function showActionSheet (options = {}) {
     }
   }
 
-  ENV_OBJ.showActionSheet(opts)
+  return ENV_OBJ.showActionSheet(opts)
 }
 
 export {

@@ -37,7 +37,7 @@ function requestPayment (options = {}) {
     }
   }
 
-  ENV_OBJ.tradePay(opts)
+  return ENV_OBJ.tradePay(opts)
 }
 
 export {

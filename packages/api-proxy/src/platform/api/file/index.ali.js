@@ -25,7 +25,7 @@ function saveFile (options = {}) {
     return changeOpts(res, { apFilePath: 'savedFilePath' })
   })
 
-  ENV_OBJ.saveFile(opts)
+  return ENV_OBJ.saveFile(opts)
 }
 
 export {

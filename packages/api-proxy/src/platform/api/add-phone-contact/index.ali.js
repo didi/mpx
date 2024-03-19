@@ -5,7 +5,7 @@ function addPhoneContact (options = {}) {
     weChatNumber: 'alipayAccount'
   })
 
-  ENV_OBJ.addPhoneContact(opts)
+  return ENV_OBJ.addPhoneContact(opts)
 }
 
 export {
