@@ -14,7 +14,9 @@ import pageRouteMixin from './pageRouteMixin'
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins
   if (__mpx_mode__ === 'react') {
-    bulitInMixins = []
+    bulitInMixins = [
+      proxyEventMixin()
+    ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [
       proxyEventMixin(),

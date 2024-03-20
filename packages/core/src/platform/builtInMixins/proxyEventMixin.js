@@ -27,7 +27,6 @@ export default function proxyEventMixin () {
       }
       const location = this.__mpxProxy.options.mpxFileResource
       const type = $event.type
-      const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
         error('Event object must have [type] property!', location)
         return
@@ -51,19 +50,9 @@ export default function proxyEventMixin () {
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
-        if (emitMode) {
-          $event = $event.detail.data
-        }
         if (callbackName) {
           const params = item.length > 1
             ? item.slice(1).map(item => {
-              // 暂不支持$event.xxx的写法
-              // if (/^\$event/.test(item)) {
-              //   this.__mpxTempEvent = $event
-              //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-              //   // 删除临时变量
-              //   delete this.__mpxTempEvent
-              //   return value
               if (item === '__mpx_event__') {
                 return $event
               } else {

@@ -1,8 +1,9 @@
 import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
-import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, diffAndCloneA } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
+import mergeOptions from '../../../core/mergeOptions'
 
 function createEffect (adm) {
   adm.effect = new ReactiveEffect(adm.render, () => {
@@ -112,12 +113,26 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
+  rawOptions = mergeOptions(rawOptions, type, false)
+  const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+
   return (props, ref) => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
       instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject })
     }
     const instance = instanceRef.current
+    // 待测试完善，或许需要通过react.memo进行包裹处理props更新以及优化渲染函数执行
+    // // 处理props更新
+    // Object.keys(props).forEach(key => {
+    //   if (hasOwn(validProps, key) && !isFunction(props[key])) {
+    //     const { diff, clone } = diffAndCloneA(props[key], instance[key])
+    //     // 此处进行深clone后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
+    //     if (diff) instance[key] = clone
+    //   }
+    // })
+    // //
+    // this.__mpxProxy.propsUpdated()
 
     useEffect(() => {
       if (instance.__mpxProxy && instance.__mpxProxy.isMounted()) {

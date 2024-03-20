@@ -393,6 +393,20 @@ module.exports = function getSpec ({ warn, error }) {
             name: rPrefix + rEventName + meta.modifierStr,
             value
           }
+        },
+        react ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'react' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'react', data: { el } })
+          return {
+            name: rPrefix + rEventName.replace(/^./, (matched) => {
+              return matched.toUpperCase()
+            }) + modifierStr,
+            value
+          }
         }
       },
       // 无障碍
@@ -443,6 +457,17 @@ module.exports = function getSpec ({ warn, error }) {
             const tempModifierStr = Object.keys(modifierMap).join('.')
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
+          },
+          react (prefix) {
+            const prefixMap = {
+              bind: 'on',
+              catch: 'on'
+            }
+            if (!prefixMap[prefix]) {
+              error(`react native environment does not support [${prefix}] event handling!`)
+              return
+            }
+            return prefixMap[prefix]
           }
         }
       ],
@@ -474,14 +499,26 @@ module.exports = function getSpec ({ warn, error }) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
             }
+          },
+          react (eventName) {
+            const eventMap = {
+              tap: 'press',
+              longtap: 'longPress',
+              longpress: 'longPress'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React Native environment does not support [${eventName}] event!`)
+            }
           }
         },
-        // 特殊web事件
+        // web event escape
         {
           test: /^click$/,
-          web (eventName, data) {
+          web (eventName, { isComponent }) {
             // 自定义组件根节点
-            if (data.isComponent) {
+            if (isComponent) {
               return '_' + eventName
             }
           }

@@ -967,7 +967,7 @@ function processComponentIs (el, options) {
 
 const eventIdentifier = '__mpx_event__'
 
-function parseFuncStr2 (str) {
+function parseFuncStr (str) {
   const funcRE = /^([^()]+)(\((.*)\))?/
   const match = funcRE.exec(str)
   if (match) {
@@ -1030,7 +1030,67 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processBindEvent (el, options) {
+function processEventForReact (el) {
+  el.attrsList.forEach(function (attr) {
+    const parsedEvent = config[mode].event.parseEvent(attr.name)
+    if (parsedEvent) {
+      const type = parsedEvent.eventName
+      const parsedFunc = parseFuncStr(attr.value)
+      if (parsedFunc) {
+        if (!eventConfigMap[type]) {
+          eventConfigMap[type] = {
+            rawName: attr.name,
+            configs: []
+          }
+        }
+        eventConfigMap[type].configs.push(parsedFunc)
+      }
+    }
+  })
+
+  let wrapper
+
+  for (const type in eventConfigMap) {
+    let { configs, rawName } = eventConfigMap[type]
+    if (rawName) {
+      // 清空原始事件绑定
+      let has
+      do {
+        has = getAndRemoveAttr(el, rawName).has
+      } while (has)
+      // 清除修饰符
+      rawName = rawName.replace(/\..*/, '')
+    }
+
+    configs = configs.map((item) => {
+      return item.expStr
+    })
+    // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
+    if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
+      if (!wrapper) {
+        wrapper = createASTElement('TouchableWithoutFeedback')
+        wrapper.isBuiltIn = true
+        replaceNode(el, wrapper, true)
+        addChild(wrapper, el)
+      }
+      addAttrs(wrapper, [
+        {
+          name: rawName || config[mode].event.getEvent(type),
+          value: `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
+        }
+      ])
+    } else {
+      addAttrs(el, [
+        {
+          name: rawName || config[mode].event.getEvent(type),
+          value: `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
+        }
+      ])
+    }
+  }
+}
+
+function processEvent (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function (attr) {
     const parsedEvent = config[mode].event.parseEvent(attr.name)
@@ -1038,7 +1098,7 @@ function processBindEvent (el, options) {
     if (parsedEvent) {
       const type = parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
-      const parsedFunc = parseFuncStr2(attr.value)
+      const parsedFunc = parseFuncStr(attr.value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
@@ -1148,9 +1208,21 @@ function processBindEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+      value: `{{${shallowStringify(eventConfigMap)}}}`
     }])
   }
+}
+
+function shallowStringify (obj) {
+  const arr = []
+  for (const key in obj) {
+    let value = obj[key]
+    if (Array.isArray(value)) {
+      value = `[${value.join(',')}]`
+    }
+    arr.push(`${key}:${value}`)
+  }
+  return ` {${arr.join(',')}} `
 }
 
 function wrapMustache (val) {
@@ -1762,6 +1834,19 @@ function processText (el) {
     addExp(el, parsed.result)
   }
   el.text = parsed.val
+  if (mode === 'react') {
+    processWrapTextForReact()
+  }
+}
+
+// RN中文字需被Text包裹
+function processWrapTextForReact (el) {
+  if (el.parent.tag !== 'mpx-text') {
+    const wrapper = createASTElement('mpx-text')
+    wrapper.isBuiltIn = true
+    replaceNode(el, wrapper, true)
+    addChild(wrapper, el)
+  }
 }
 
 // function injectComputed (el, meta, type, body) {
@@ -2308,6 +2393,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
+    processEventForReact(el, options)
     processAttrs(el, options)
     return
   }
@@ -2334,7 +2420,7 @@ function processElement (el, root, options, meta) {
   }
 
   if (!pass) {
-    processBindEvent(el, options)
+    processEvent(el, options)
     processComponentIs(el, options)
   }
 

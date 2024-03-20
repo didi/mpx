@@ -27,18 +27,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'wxs',
@@ -101,18 +90,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'import-sjs',
@@ -169,18 +147,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'import-sjs',
@@ -236,18 +203,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return `({${arr.join(',')}})`
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'qs',
@@ -303,18 +259,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'sjs',
@@ -384,18 +329,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'qjs',
@@ -451,18 +385,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'jds',
@@ -518,18 +441,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'dds',
@@ -560,32 +472,25 @@ module.exports = {
   react: {
     event: {
       parseEvent (attr) {
-        const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(on)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
-            eventName: match[2],
+            eventName: match[2].replace(/^./, function (match) {
+              return match.toLowerCase()
+            }),
             modifier: match[3]
           }
         }
       },
-      getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+      getEvent (eventName, prefix = 'on') {
+        return prefix + eventName.replace(/^./, (matched) => {
+          return matched.toUpperCase()
+        })
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'wxs',
