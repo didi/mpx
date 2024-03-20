@@ -189,7 +189,7 @@ function setupLifeCycle (instance) {
 }
 
 export function useI18n (options) {
-  const instance = getCurrentInstance().proxy
+  const instance = getCurrentInstance()
   if (instance == null) {
     error('UseI18n() must be called in setup top.')
     return
@@ -203,7 +203,7 @@ export function useI18n (options) {
     const composerOptions = Object.assign({}, options)
     if (global) composerOptions.__root = global
     composer = createComposer(composerOptions)
-    setupLifeCycle(instance.__mpxProxy)
+    setupLifeCycle(instance)
     i18n.__setInstance(instance, composer)
   }
   return composer
