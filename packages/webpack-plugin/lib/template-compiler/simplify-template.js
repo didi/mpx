@@ -1,6 +1,6 @@
 const { getAndRemoveAttr, parseMustache, findPrevNode, replaceNode, createASTElement } = require('./compiler')
 const allConfigs = require('../config')
-const parseExps = require('./parse-exps')
+const { parseExp } = require('./parse-exps')
 
 function processIf (vnode, config) {
   delete vnode.ifProcessed
@@ -11,7 +11,7 @@ function processIf (vnode, config) {
     addIfCondition(vnode, {
       ifExp: true,
       block: 'self',
-      __exps: parseExps(parsedExp)
+      __exps: parseExp(parsedExp)
     })
 
     vnode.if = true
@@ -49,7 +49,7 @@ function processIfConditions (el) {
     addIfCondition(prev, {
       ifExp: !!el.elseif,
       block: el,
-      __exps: el.elseif ? parseExps(el.elseif.exp) : ''
+      __exps: el.elseif ? parseExp(el.elseif.exp) : ''
     })
 
     const tempNode = createASTElement('block', [])
@@ -75,7 +75,7 @@ function findPrevIfNode (el) {
 
 function processFor (vnode) {
   if (vnode.for) {
-    vnode.for.__exps = parseExps(vnode.for.exp)
+    vnode.for.__exps = parseExp(vnode.for.exp)
 
     delete vnode.for.raw
     delete vnode.for.exp
@@ -115,7 +115,7 @@ function processAttrsMap (vnode, config) {
 function processClass (attr) {
   const { staticClassExp = '', dynamicClassExp = '' } = attr
   if (staticClassExp || dynamicClassExp) {
-    attr.__exps = [parseExps(staticClassExp), parseExps(dynamicClassExp)]
+    attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
 
     delete attr.staticClassExp
     delete attr.dynamicClassExp
@@ -130,7 +130,7 @@ function processClass (attr) {
 function processStyle (attr) {
   const { staticStyleExp = '', dynamicStyleExp = '' } = attr
   if (staticStyleExp || dynamicStyleExp) {
-    attr.__exps = [parseExps(staticStyleExp), parseExps(dynamicStyleExp)]
+    attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
 
     delete attr.staticStyleExp
     delete attr.dynamicStyleExp
@@ -145,7 +145,7 @@ function processStyle (attr) {
 function getAttrExps (attr) {
   const parsed = parseMustache(attr.value)
   if (parsed.hasBinding && !attr.__exps) {
-    return parseExps(parsed.result)
+    return parseExp(parsed.result)
   }
 }
 
@@ -160,7 +160,7 @@ function processBindEvent (attr) {
       }
 
       configs.forEach((item) => {
-        eventExp.exps.push(parseExps(item))
+        eventExp.exps.push(parseExp(item))
       })
 
       exps.push(eventExp)
@@ -175,10 +175,10 @@ function processBindEvent (attr) {
 function processText (vnode) {
   // text 节点
   if (vnode.type === 3) {
-    // todo 全局 defs 静态数的处理?
+    // todo 全局 defs 静态数的处理? -> 目前已经都支持了
     const parsed = parseMustache(vnode.text)
     if (parsed.hasBinding) {
-      vnode.__exps = parseExps(parsed.result)
+      vnode.__exps = parseExp(parsed.result)
       delete vnode.text
     }
 
@@ -226,11 +226,19 @@ function deleteUselessAttrs (vnode) {
   })
 }
 
+// function processWxs (vnode) {
+//   if (vnode.tag === 'wxs') {
+//     replaceNode(vnode, createASTElement('block', []))
+//   }
+// }
+
 function simplifyTemplate (vnode, config) {
   if (!vnode) {
     return
   }
 
+  // todo
+  // processWxs(vnode)
   processIf(vnode, config)
   processFor(vnode)
   processAttrsMap(vnode, config)
