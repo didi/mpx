@@ -24,7 +24,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
         resourceHashNameMap: {},
         internalComponents: {},
         normalComponents: {
-          'block': {} // 默认增加block节点，防止根几点
+          'block': {} // 默认增加block节点，防止根节点渲染失败
         },
         runtimeComponents: {},
         wxs: new Set()
