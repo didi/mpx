@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
-import { hasOwn, isFunction, noop, isObject, diffAndCloneA } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -114,7 +114,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  // const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
 
   return (props, ref) => {
     const instanceRef = useRef(null)

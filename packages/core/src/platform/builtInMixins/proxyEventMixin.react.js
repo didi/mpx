@@ -1,9 +1,9 @@
-import { setByPath, error } from '@mpxjs/utils'
+import { error } from '@mpxjs/utils'
 import Mpx from '../../index'
 
 export default function proxyEventMixin () {
   const methods = {
-    __invoke (rawEvent, type, eventConfigs) {
+    __invoke (rawEvent, type, eventConfig = []) {
       const eventObj = {
         type,
         detail: null,
@@ -17,9 +17,8 @@ export default function proxyEventMixin () {
       }
       const location = this.__mpxProxy.options.mpxFileResource
 
-      const curEventConfig = eventConfigs[type] || []
       let returnedValue
-      curEventConfig.forEach((item) => {
+      eventConfig.forEach((item) => {
         const callbackName = item[0]
         if (callbackName) {
           const params = item.length > 1
@@ -39,7 +38,7 @@ export default function proxyEventMixin () {
         }
       })
       return returnedValue
-    },
+    }
     // __model (expr, $event, valuePath = ['value'], filterMethod) {
     //   const innerFilter = {
     //     trim: val => typeof val === 'string' && val.trim()

@@ -62,7 +62,7 @@ function makeAttrsMap (attrs) {
   return map
 }
 
-function createASTElement (tag, attrs, parent) {
+function createASTElement (tag, attrs = [], parent = null) {
   return {
     type: 1,
     tag: tag,
@@ -743,7 +743,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          processText(el)
+          processText(el, meta, options)
         }
       }
     },
@@ -802,7 +802,7 @@ function parse (template, options) {
 }
 
 function getTempNode () {
-  return createASTElement('temp-node', [])
+  return createASTElement('temp-node')
 }
 
 function addChild (parent, newChild, before) {
@@ -855,16 +855,23 @@ function modifyAttr (el, name, val) {
   }
 }
 
-function moveBaseDirective (target, from, isDelete = true) {
-  target.for = from.for
-  target.if = from.if
-  target.elseif = from.elseif
-  target.else = from.else
+function postMoveBaseDirective (target, source, isDelete = true) {
+  target.for = source.for
+  target.if = source.if
+  target.elseif = source.elseif
+  target.else = source.else
+  if (mode === 'react') {
+    postProcessForReact(target)
+    postProcessIfReact(target)
+  } else {
+    postProcessFor(target)
+    postProcessIf(target)
+  }
   if (isDelete) {
-    delete from.for
-    delete from.if
-    delete from.elseif
-    delete from.else
+    delete source.for
+    delete source.if
+    delete source.elseif
+    delete source.else
   }
 }
 
@@ -1030,16 +1037,17 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processEventForReact (el) {
-  el.attrsList.forEach(function (attr) {
-    const parsedEvent = config[mode].event.parseEvent(attr.name)
+function processEventReact (el, options, meta) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
       const type = parsedEvent.eventName
-      const parsedFunc = parseFuncStr(attr.value)
+      const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            rawName: attr.name,
+            rawName: name,
             configs: []
           }
         }
@@ -1065,44 +1073,53 @@ function processEventForReact (el) {
     configs = configs.map((item) => {
       return item.expStr
     })
+    const name = rawName || config[mode].event.getEvent(type)
+    const value = `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
+
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
     if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
       if (!wrapper) {
         wrapper = createASTElement('TouchableWithoutFeedback')
         wrapper.isBuiltIn = true
-        replaceNode(el, wrapper, true)
-        addChild(wrapper, el)
+        processBuiltInComponents(wrapper, meta)
       }
       addAttrs(wrapper, [
         {
-          name: rawName || config[mode].event.getEvent(type),
-          value: `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
+          name,
+          value
         }
       ])
     } else {
       addAttrs(el, [
         {
-          name: rawName || config[mode].event.getEvent(type),
-          value: `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
+          name,
+          value
         }
       ])
     }
+  }
+
+  if (wrapper) {
+    replaceNode(el, wrapper, true)
+    addChild(wrapper, el)
+    processAttrs(wrapper, options)
+    postMoveBaseDirective(wrapper, el)
   }
 }
 
 function processEvent (el, options) {
   const eventConfigMap = {}
-  el.attrsList.forEach(function (attr) {
-    const parsedEvent = config[mode].event.parseEvent(attr.name)
+  el.attrsList.forEach(function ({ name, value }) {
+    const parsedEvent = config[mode].event.parseEvent(name)
 
     if (parsedEvent) {
       const type = parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
-      const parsedFunc = parseFuncStr(attr.value)
+      const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            rawName: attr.name,
+            rawName: name,
             configs: []
           }
         }
@@ -1675,7 +1692,7 @@ function postProcessFor (el) {
       这个操作主要是因为百度小程序不支持这两个directive在同级使用
      */
     if (el.if && mode === 'swan') {
-      const block = createASTElement('block', [])
+      const block = createASTElement('block')
       replaceNode(el, block, true)
       block.for = el.for
       delete el.for
@@ -1825,7 +1842,7 @@ function postProcessIfReact (el) {
   }
 }
 
-function processText (el) {
+function processText (el, meta) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -1835,15 +1852,16 @@ function processText (el) {
   }
   el.text = parsed.val
   if (mode === 'react') {
-    processWrapTextForReact()
+    processWrapTextReact(el, meta)
   }
 }
 
 // RN中文字需被Text包裹
-function processWrapTextForReact (el) {
+function processWrapTextReact (el, meta) {
   if (el.parent.tag !== 'mpx-text') {
     const wrapper = createASTElement('mpx-text')
     wrapper.isBuiltIn = true
+    processBuiltInComponents(wrapper, meta)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
   }
@@ -2068,7 +2086,7 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliAddComponentRootView (el, options) {
+function postProcessAliComponentRootView (el, options) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -2084,23 +2102,23 @@ function processAliAddComponentRootView (el, options) {
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${moduleId}` }
   ]
-  const newElAttrs = []
+  const newAttrs = []
   const allAttrs = cloneAttrsList(el.attrsList)
 
   function processClone (attr) {
-    newElAttrs.push(attr)
+    newAttrs.push(attr)
   }
 
   function processMove (attr) {
     getAndRemoveAttr(el, attr.name)
-    newElAttrs.push(attr)
+    newAttrs.push(attr)
   }
 
   function processAppendRules (el) {
     processAppendAttrsRules.forEach((rule) => {
       const getNeedAppendAttrValue = el.attrsMap[rule.name]
       const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
-      newElAttrs.push({
+      newAttrs.push({
         name: rule.name,
         value
       })
@@ -2121,15 +2139,10 @@ function processAliAddComponentRootView (el, options) {
   })
 
   processAppendRules(el)
-  const componentWrapView = createASTElement('view', newElAttrs)
-  moveBaseDirective(componentWrapView, el)
-  if (el.is && el.components) {
-    el = postProcessComponentIs(el)
-  }
-
+  const componentWrapView = createASTElement('view', newAttrs)
   replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
-  return componentWrapView
+  postMoveBaseDirective(componentWrapView, el)
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -2158,7 +2171,7 @@ function getVirtualHostRoot (options, meta) {
       }
     }
     if (mode === 'web' && ctorType === 'page') {
-      return createASTElement('page', [])
+      return createASTElement('page')
     }
   }
   return getTempNode()
@@ -2393,7 +2406,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processEventForReact(el, options)
+    processEventReact(el, options, meta)
     processAttrs(el, options)
     return
   }
@@ -2444,13 +2457,11 @@ function closeElement (el, meta, options) {
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
-
   if (!pass) {
     if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
-      el = processAliAddComponentRootView(el, options)
-    } else {
-      el = postProcessComponentIs(el)
+      postProcessAliComponentRootView(el, options)
     }
+    postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)
@@ -2488,11 +2499,13 @@ function postProcessComponentIs (el) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
-      tempNode = createASTElement('block', [])
-      moveBaseDirective(tempNode, el)
+      tempNode = createASTElement('block')
     } else {
       tempNode = getTempNode()
     }
+    replaceNode(el, tempNode, true)
+    postMoveBaseDirective(tempNode, el)
+
     el.components.forEach(function (component) {
       const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
@@ -2510,10 +2523,9 @@ function postProcessComponentIs (el) {
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
-      el = replaceNode(el, tempNode, true) || el
+      replaceNode(el, tempNode, true)
     }
   }
-  return el
 }
 
 function stringifyAttr (val) {
