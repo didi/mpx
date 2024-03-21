@@ -272,7 +272,7 @@ function getMessage (messages, locale, fallbackLocale, key) {
 function resolve (messages, locale, key) {
   if (messages && messages[locale] && key) {
     var format = getPathValue(messages[locale], key)
-    if (typeof format === 'undefined') {
+    if (format == null) {
       format = messages[locale][key]
     }
     return format
