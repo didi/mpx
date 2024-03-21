@@ -3,8 +3,8 @@ const { hasExtractAttr } = require('./utils')
 const hash = require('hash-sum')
 
 // todo 节点优化
-// const OPTIMIZE_NODES = ['view', 'text', 'image']
-const OPTIMIZE_NODES = []
+const OPTIMIZE_NODES = ['view', 'text', 'image']
+// const OPTIMIZE_NODES = []
 
 let hashIndex = 0
 
