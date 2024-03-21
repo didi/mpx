@@ -12,6 +12,8 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
+const setBaseWxml = require('../runtime-render/base-wxml')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -670,6 +672,7 @@ function parse (template, options) {
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+
       if (ns) {
         element.ns = ns
       }
@@ -1141,7 +1144,8 @@ function processBindEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`,
+      eventConfigMap
     }])
   }
 }
@@ -1154,7 +1158,7 @@ function parseMustacheWithContext (raw = '') {
   return parseMustache(raw, (exp) => {
     if (defs) {
       // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
-      const defKeys = Object.keys(defs)
+      const defKeys = Object.keys(defs || {})
       defKeys.forEach((defKey) => {
         const defRE = new RegExp(`\\b${defKey}\\b`)
         const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
@@ -1609,7 +1613,9 @@ function processClass (el, meta) {
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`,
+      staticClassExp,
+      dynamicClassExp
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -1642,7 +1648,9 @@ function processStyle (el, meta) {
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`,
+      staticStyleExp,
+      dynamicStyleExp
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
@@ -1663,6 +1671,10 @@ function isRealNode (el) {
 
 function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
+function isRuntimeComponentNode (el, options) {
+  return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -2042,6 +2054,13 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
+function processRuntime (el, options) {
+  const isDynamic = isRuntimeComponentNode(el, options)
+  if (isDynamic) {
+    el.dynamic = isDynamic
+  }
+}
+
 // 处理wxs注入逻辑
 function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
@@ -2068,6 +2087,7 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
+  processRuntime(el, options)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2130,6 +2150,8 @@ function processElement (el, root, options, meta) {
 
 function closeElement (el, meta, options) {
   postProcessAtMode(el)
+  postProcessRuntime(el, options, meta)
+
   if (mode === 'web') {
     postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
@@ -2148,6 +2170,67 @@ function closeElement (el, meta, options) {
   }
   postProcessFor(el)
   postProcessIf(el)
+}
+
+// 部分节点类型不需要被收集
+const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
+
+// 节点收集，最终注入到 mpx-custom-element-*.wxml 中
+function postProcessRuntime (el, options, meta) {
+  if (RUNTIME_FILTER_NODES.includes(el.tag)) {
+    return
+  }
+  const isCustomComponent = isComponentNode(el, options)
+
+  // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
+  if (!options.runtimeCompile && el.dynamic) {
+    addIfBlock(el, '__mpxDynamicLoaded')
+  }
+
+  // 运行时的组件收集节点信息
+  if (options.runtimeCompile) {
+    if (!meta.runtimeInfo) {
+      meta.runtimeInfo = {
+        resourceHashNameMap: {},
+        internalComponents: {},
+        runtimeComponents: {},
+        normalComponents: {},
+        wxs: {}
+      }
+    }
+
+    const tag = Object.keys(options.componentInfo).find((key) => {
+      if (mode === 'ali' || mode === 'swan') {
+        return capitalToHyphen(key) === el.tag
+      }
+      return key === el.tag
+    })
+    const componentInfo = options.componentInfo[tag]
+    if (isCustomComponent && componentInfo) {
+      const { hashName, resourcePath } = componentInfo
+      el.aliasTag = hashName
+      meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
+    }
+
+    // 按需收集节点属性信息，存储到 meta 后到外层处理
+    setBaseWxml(el, { mode, isCustomComponent }, meta)
+  }
+}
+
+function addIfBlock (el, ifCondition) {
+  const blockNode = createASTElement('block', [{
+    name: config[mode].directive.if,
+    value: `{{ ${ifCondition} }}`
+  }], el.parent)
+  blockNode.if = {
+    raw: `{{ ${ifCondition} }}`,
+    exp: ifCondition
+  }
+  const nodeIndex = el.parent.children.findIndex(item => item === el)
+  const oldParent = el.parent
+  el.parent = blockNode
+  blockNode.children.push(el)
+  oldParent.children.splice(nodeIndex, 1, blockNode)
 }
 
 function postProcessAtMode (el) {
@@ -2574,5 +2657,10 @@ module.exports = {
   parseMustache,
   parseMustacheWithContext,
   stringifyWithResolveComputed,
-  addAttrs
+  addAttrs,
+  getAndRemoveAttr,
+  findPrevNode,
+  removeNode,
+  replaceNode,
+  createASTElement
 }

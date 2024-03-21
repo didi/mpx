@@ -1,4 +1,6 @@
 import { getByPath, hasOwn, isObject } from '@mpxjs/utils'
+import genVnodeTree from '../../vnode/render'
+import dynamicComponentsMap from '../../vnode/staticMap'
 
 export default function renderHelperMixin () {
   return {
@@ -36,8 +38,13 @@ export default function renderHelperMixin () {
       _sc (key) {
         return (this.__mpxProxy.renderData[key] = this[key])
       },
-      _r (skipPre) {
-        this.__mpxProxy.renderWithData(skipPre)
+      _r (skipPre, vnode) {
+        this.__mpxProxy.renderWithData(skipPre, vnode)
+      },
+      _g (moduleId) {
+        const { template = {}, styles = [] } = dynamicComponentsMap[moduleId]
+        const vnodeTree = genVnodeTree(template, [this], styles, moduleId)
+        return vnodeTree
       }
     }
   }

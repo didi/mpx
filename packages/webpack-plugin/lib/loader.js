@@ -4,6 +4,7 @@ const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
+const checkIsRuntimeMode = require('./utils/check-is-runtime')
 const async = require('async')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
@@ -16,11 +17,14 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
+const resolve = require('./utils/resolve')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
+const isEmptyObject = require('./utils/is-empty-object')
 
 module.exports = function (content) {
   this.cacheable()
@@ -50,6 +54,8 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const isRuntimeMode = checkIsRuntimeMode(resourcePath)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -80,6 +86,11 @@ module.exports = function (content) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
+
+  if (isRuntimeMode) {
+    this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
+  }
+
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
@@ -99,6 +110,8 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
+  const componentInfo = {}
+
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
@@ -108,6 +121,43 @@ module.exports = function (content) {
       })
     },
     (callback) => {
+      if (!isApp && parts.json && parts.json.content) {
+        const content = JSON5.parse(parts.json.content)
+        const usingComponents = content.usingComponents || {}
+        const usingRuntimeComponents = Object.keys(usingComponents).reduce((preValue, name) => {
+          if (checkIsRuntimeMode(usingComponents[name])) {
+            preValue[name] = usingComponents[name]
+          }
+          return preValue
+        }, {})
+
+        let needMapComponents = null
+        if (!isRuntimeMode) {
+          if (isEmptyObject(usingRuntimeComponents)) {
+            return callback()
+          } else {
+            needMapComponents = usingRuntimeComponents
+          }
+        } else {
+          needMapComponents = usingComponents
+        }
+
+        async.eachOf(needMapComponents, (component, name, callback) => {
+          resolve(loaderContext.context, component, loaderContext, (err, resource) => {
+            if (err) return callback(err)
+            componentInfo[name] = {
+              isRuntimeMode: checkIsRuntimeMode(resource),
+              hashName: 'm' + mpx.pathHash(resource),
+              resourcePath: resource
+            }
+            callback()
+          })
+        }, callback)
+      } else {
+        callback()
+      }
+    },
+    (callback) => {
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
@@ -115,6 +165,7 @@ module.exports = function (content) {
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       let componentPlaceholder = []
+
       let componentGenerics = {}
 
       if (parts.json && parts.json.content) {
@@ -300,7 +351,8 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
-          componentPlaceholder
+          componentPlaceholder,
+          componentInfo: JSON.stringify(componentInfo)
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
@@ -336,7 +388,16 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
+      const extraOptions = {
+        moduleId
+      }
+      if (json.src) {
+        Object.assign(extraOptions, {
+          ...queryObj,
+          resourcePath
+        })
+      }
+      output += getRequire('json', json, extraOptions) + '\n'
 
       // script
       output += '/* script */\n'

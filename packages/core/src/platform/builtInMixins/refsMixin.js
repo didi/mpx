@@ -1,5 +1,6 @@
 import { CREATED, BEFORECREATE, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
 import { noop, error, getEnvObj } from '@mpxjs/utils'
+import contextMap from '../../vnode/context'
 
 const envObj = getEnvObj()
 
@@ -44,6 +45,13 @@ export default function getRefsMixin () {
       this.__refCacheMap.clear()
       this.__asyncRefCacheMap.clear()
     },
+    [CREATED] () {
+      // todo 需要确认下这部分的逻辑，如果是在 beforeCreate 钩子里面执行，部分数据取不到
+      // 如果是在运行时组件的上下文渲染
+      if (this.mpxCustomElement) {
+        this.__getRuntimeRefs()
+      }
+    },
     methods: {
       __getRefs () {
         if (this.__getRefsData) {
@@ -70,6 +78,29 @@ export default function getRefsMixin () {
             })
           } else {
             return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
+          }
+        }
+      },
+      __getRuntimeRefs () {
+        const vnodeContext = contextMap.get(this.uid)
+        if (vnodeContext) {
+          const refsArr = vnodeContext.__getRefsData && vnodeContext.__getRefsData()
+          if (Array.isArray(refsArr)) {
+            refsArr.forEach((ref) => {
+              const all = ref.all
+              if (!vnodeContext.$refs[ref.key] || (all && !vnodeContext.$refs[ref.key].length)) {
+                const refNode = this.__getRefNode(ref)
+                if ((all && refNode.length) || refNode) {
+                  Object.defineProperty(vnodeContext.$refs, ref.key, {
+                    enumerable: true,
+                    configurable: true,
+                    get: () => {
+                      return refNode
+                    }
+                  })
+                }
+              }
+            })
           }
         }
       }

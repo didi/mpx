@@ -1,6 +1,7 @@
 'use strict'
 
 const path = require('path')
+const { AsyncSeriesHook } = require('tapable')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
@@ -39,7 +40,10 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
+const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
+const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
+const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
@@ -316,6 +320,7 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
+    new RuntimeRenderPlugin().apply(compiler)
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
@@ -517,7 +522,7 @@ class MpxWebpackPlugin {
           }
         }
         checkDynamicEntryInfo()
-        callback()
+        mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
       })
     })
 
@@ -573,6 +578,12 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+
+      compilation.dependencyFactories.set(RuntimeRenderPackageDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RuntimeRenderPackageDependency, new RuntimeRenderPackageDependency.Template())
+
+      compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -831,6 +842,9 @@ class MpxWebpackPlugin {
                 error
               })
             }
+          },
+          hooks: {
+            finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
           }
         }
       }
@@ -1052,10 +1066,19 @@ class MpxWebpackPlugin {
 
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
+        const dynamicAssets = {}
         for (const module of compilation.modules) {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
           for (const [filename, { extractedInfo } = {}] of assetsInfo) {
             if (extractedInfo) {
+              const { moduleId, type, content, dynamic } = extractedInfo
+              if (dynamic) {
+                if (!dynamicAssets[moduleId]) {
+                  dynamicAssets[moduleId] = {}
+                }
+                dynamicAssets[moduleId][type] = JSON.parse(content)
+                continue
+              }
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
                 extractedAssets = [new Map(), new Map()]
@@ -1065,6 +1088,12 @@ class MpxWebpackPlugin {
               compilation.hooks.moduleAsset.call(module, filename)
             }
           }
+        }
+
+        if (!isEmptyObject(dynamicAssets)) {
+          const dynamicSource = new RawSource(JSON.stringify(dynamicAssets))
+          // todo 暂时写死输出到一个静态文件，后续看是否通过分包拆分
+          compilation.emitAsset('dynamic.json', dynamicSource)
         }
 
         for (const [filename, [pre, normal]] of extractedAssetsMap) {

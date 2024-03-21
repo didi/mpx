@@ -14,6 +14,9 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
+const checkIsRuntimeMode = require('../utils/check-is-runtime')
+const isEmptyObject = require('../utils/is-empty-object')
+const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -172,6 +175,23 @@ module.exports = function (content) {
     }
   }
 
+  const fillMpxCustomElement = (isMpxCustomElement = false) => {
+    if (!json.usingComponents) {
+      json.usingComponents = {}
+    }
+    json.usingComponents.element = resolveMpxCustomElementPath(packageName)
+    if (isMpxCustomElement) {
+      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
+    }
+  }
+
+  if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
+    fillMpxCustomElement(true)
+    callback()
+    return
+  }
+
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
@@ -215,16 +235,40 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
   }
 
+  const runtimeComponentMap = {}
+
+  const collectRuntimeComponents = (name, componentPath) => {
+    if (!isApp && checkIsRuntimeMode(componentPath)) {
+      const moduleId = 'm' + mpx.pathHash(componentPath)
+      runtimeComponentMap[name] = moduleId
+    }
+  }
+
+  const injectRuntimeComponents2Script = () => {
+    if (!isEmptyObject(runtimeComponentMap)) {
+      const resultSource = `
+        global.currentInject.getRuntimeModules = function () {
+          return ${JSON.stringify(runtimeComponentMap)}
+        }
+      `
+      this.emitFile(resourcePath, '', undefined, {
+        skipEmit: true,
+        extractedResultSource: resultSource
+      })
+    }
+  }
+
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
+          collectRuntimeComponents(name, resourcePath)
           if (tarRoot) {
             if (placeholder) {
               placeholder = normalizePlaceholder(placeholder)
@@ -249,7 +293,10 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, callback)
+      }, () => {
+        injectRuntimeComponents2Script()
+        callback()
+      })
     } else {
       callback()
     }
@@ -678,6 +725,12 @@ module.exports = function (content) {
       },
       (callback) => {
         processGenerics(json.componentGenerics, this.context, callback)
+      },
+      (callback) => {
+        if (checkIsRuntimeMode(resourcePath)) {
+          fillMpxCustomElement()
+        }
+        callback()
       }
     ], (err) => {
       callback(err, processDynamicEntry)
