@@ -1,4 +1,5 @@
 const createHelpers = require('../helpers')
+const async = require('async')
 
 module.exports = function (styles, {
   loaderContext,
@@ -6,21 +7,36 @@ module.exports = function (styles, {
   autoScope,
   moduleId
 }, callback) {
-  const { getRequire } = createHelpers(loaderContext)
-  let output = '/* styles */\n'
+  const { getRequestString } = createHelpers(loaderContext)
+  let content = ''
   if (styles.length) {
-    styles.forEach((style, i) => {
+    async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
         moduleId,
         scoped,
         extract: false
       }
+      loaderContext.importModule(getRequestString('styles', style, extraOptions, i)).then((result) => {
+        if (Array.isArray(result)) {
+          result = result.map((item) => {
+            return item[1]
+          }).join('\n')
+        }
+        content += result + '\n'
+        callback()
+      }).catch(callback)
       // require style
-      output += getRequire('styles', style, extraOptions, i) + '\n'
+    }, (err) => {
+      if (err) return callback(err)
+      // todo postcss
+      callback(null, {
+        output: ''
+      })
+    })
+  } else {
+    callback(null, {
+      output: ''
     })
   }
-  callback(null, {
-    output
-  })
 }
