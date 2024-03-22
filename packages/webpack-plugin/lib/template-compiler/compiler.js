@@ -13,6 +13,7 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -671,6 +672,7 @@ function parse (template, options) {
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+
       if (ns) {
         element.ns = ns
       }
@@ -2148,6 +2150,8 @@ function processElement (el, root, options, meta) {
 
 function closeElement (el, meta, options) {
   postProcessAtMode(el)
+  postProcessRuntime(el, options, meta)
+
   if (mode === 'web') {
     postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
@@ -2166,7 +2170,6 @@ function closeElement (el, meta, options) {
   }
   postProcessFor(el)
   postProcessIf(el)
-  postProcessRuntime(el, options, meta)
 }
 
 // 部分节点类型不需要被收集
@@ -2196,7 +2199,13 @@ function postProcessRuntime (el, options, meta) {
       }
     }
 
-    const componentInfo = options.componentInfo[el.tag]
+    const tag = Object.keys(options.componentInfo).find((key) => {
+      if (mode === 'ali' || mode === 'swan') {
+        return capitalToHyphen(key) === el.tag
+      }
+      return key === el.tag
+    })
+    const componentInfo = options.componentInfo[tag]
     if (isCustomComponent && componentInfo) {
       const { hashName, resourcePath } = componentInfo
       el.aliasTag = hashName
@@ -2204,13 +2213,13 @@ function postProcessRuntime (el, options, meta) {
     }
 
     // 按需收集节点属性信息，存储到 meta 后到外层处理
-    setBaseWxml(el, isCustomComponent, meta)
+    setBaseWxml(el, { mode, isCustomComponent }, meta)
   }
 }
 
 function addIfBlock (el, ifCondition) {
   const blockNode = createASTElement('block', [{
-    name: 'wx:if',
+    name: config[mode].directive.if,
     value: `{{ ${ifCondition} }}`
   }], el.parent)
   blockNode.if = {
@@ -2651,5 +2660,7 @@ module.exports = {
   addAttrs,
   getAndRemoveAttr,
   findPrevNode,
-  removeNode
+  removeNode,
+  replaceNode,
+  createASTElement
 }

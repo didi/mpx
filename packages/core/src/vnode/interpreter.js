@@ -131,7 +131,7 @@ Interpreter.prototype[2] = function stepIdentifier (stack, state, node) {
   stack[stack.length - 1].value = value
 }
 
-// Literal 暂未支持正则字面量
+// Literal 暂未支持正则字面量，也不需要支持
 Interpreter.prototype[3] = function stepLiteral (stack, state, node) {
   stack.pop()
   stack[stack.length - 1].value = node[1]
