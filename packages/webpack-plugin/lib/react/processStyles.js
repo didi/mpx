@@ -17,13 +17,13 @@ module.exports = function (styles, {
         scoped,
         extract: false
       }
-      loaderContext.importModule(getRequestString('styles', style, extraOptions, i)).then((result) => {
+      loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
           result = result.map((item) => {
             return item[1]
           }).join('\n')
         }
-        content += result + '\n'
+        content += result.trim() + '\n'
         callback()
       }).catch(callback)
       // require style
