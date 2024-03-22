@@ -1100,7 +1100,7 @@ class MpxWebpackPlugin {
 
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
-          args.push(expr.range)
+          args.unshift(expr.range)
 
           const dep = new DynamicEntryDependency(...args)
           parser.state.current.addPresentationalDependency(dep)
@@ -1140,7 +1140,7 @@ class MpxWebpackPlugin {
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
                 } else {
-                  const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
+                  const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isRequireAsync: true,
                     retryRequireAsync: !!this.options.retryRequireAsync
                   })

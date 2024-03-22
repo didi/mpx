@@ -1355,13 +1355,6 @@ function processRef (el, options, meta) {
       all
     })
   }
-
-  if (type === 'component' && mode === 'ali') {
-    addAttrs(el, [{
-      name: 'onUpdateRef',
-      value: '__handleUpdateRef'
-    }])
-  }
 }
 
 function addWxsModule (meta, module, src) {
