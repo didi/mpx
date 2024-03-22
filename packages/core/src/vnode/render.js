@@ -293,7 +293,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
       const [selector, style] = item
       const nodes = cssSelect(selector, { moduleId })(vnodeTree)
       nodes?.forEach((node) => {
-        node.data.style = node.data.style ? style + node.data.style : style
+        // 优先级后覆盖前，直接后style覆盖前style
+        node.data.style = node.data.style ?  node.data.style + style : style
       })
     })
 
