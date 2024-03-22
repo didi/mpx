@@ -10,6 +10,7 @@
 欢迎访问[https://mpxjs.cn](https://mpxjs.cn)，跟随我们提供的文档指南使用Mpx进行跨端小程序开发。
 
 ## 近期更新
+基于 Mpx 的移动端基础组件库 [mpx-cube-ui](https://www.mpxjs.cn/mpx-cube-ui/guide/intro.html) 已经开源，更多详情查看[这里](https://mpxjs.cn/articles/mpx-cube-ui.html)。
 
 Mpx 2.9 版本正式发布，支持原子类、SSR和构建产物体积优化，更多详情查看[这里](https://mpxjs.cn/articles/2.9-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.9.html)，相关指南及 API 参考文档已更新。
 
@@ -196,6 +197,7 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |@mpxjs/mock|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmock.svg)](https://badge.fury.io/js/%40mpxjs%2Fmock)|结合mockjs提供数据mock能力|
 |@mpxjs/utils|[![npm version](https://badge.fury.io/js/%40mpxjs%2Futils.svg)](https://badge.fury.io/js/%40mpxjs%2Futils)|mpx运行时工具库|
 |@mpxjs/babel-plugin-inject-page-events|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events.svg)](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events)|组合式API页面事件处理插件|
+|@mpxjs/mpx-cube-ui|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmpx-cube-ui.svg)](https://badge.fury.io/js/%40mpxjs%2Fmpx-cube-ui)|基于 Mpx 的移动端基础组件库|
 
 ## 开发团队
 

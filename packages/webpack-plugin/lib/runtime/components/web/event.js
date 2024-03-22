@@ -59,9 +59,7 @@ function MpxEvent (layer) {
         this.sendEvent(this.targetElement, 'tap', event)
     }
     this.sendEvent = (targetElement, type, event) => {
-        // eslint-disable-next-line no-undef
-        const touchEvent = new TouchEvent(type, {
-            view: window,
+        const touchEvent = new CustomEvent(type, {
             bubbles: true,
             cancelable: true
         })
