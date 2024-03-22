@@ -1,4 +1,4 @@
-import { CREATED, BEFORECREATE, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
+import { BEFORECREATE, BEFOREUPDATE } from '../../core/innerLifecycle'
 import { noop, getEnvObj } from '@mpxjs/utils'
 
 const envObj = getEnvObj()
@@ -87,13 +87,6 @@ export default function getRefsMixin () {
         return {
           mpxCid: this.__mpxProxy.uid
         }
-      },
-      [CREATED] () {
-        this.__updateRef()
-      },
-      [UNMOUNTED] () {
-        // 销毁ref
-        this.__updateRef(true)
       }
     })
 
@@ -130,36 +123,6 @@ export default function getRefsMixin () {
       },
       selectAllComponents (selector) {
         return this.$selectAllComponents(selector)
-      },
-      __updateRef (destroyed) {
-        this.triggerEvent && this.triggerEvent('updateRef', {
-          component: this,
-          destroyed
-        })
-      },
-      __handleUpdateRef (e) {
-        if (!this.__children__) {
-          this.__children__ = []
-        }
-        const component = e.detail.component
-        const destroyed = e.detail.destroyed
-        const className = component.props.className || component.className
-        const identifiers = className
-          ? className.trim().split(/\s+/).map(item => {
-            return `.${item}`
-          })
-          : []
-        if (component.props.id) {
-          identifiers.push(`#${component.props.id}`)
-        }
-        if (destroyed) {
-          this.__children__ = this.__children__.filter(item => item.component !== component)
-        } else {
-          this.__children__.push({
-            component,
-            identifiers
-          })
-        }
       }
     })
   }
