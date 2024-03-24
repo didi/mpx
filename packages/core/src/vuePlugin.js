@@ -66,7 +66,18 @@ export default function install (Vue) {
       if (key.includes('[')) {
 
       } else if (key.includes('.')) {
+        // key 为索引的路径式设置 this.setData({'a.b': 'text'})
+        const fullKeys = key.split('.');
+        let target = this.$data;
+        const lastKey = fullKeys.pop();
 
+        fullKeys.forEach((nestedKey) => {
+          if (!hasOwn(target, nestedKey)) {
+            this.$set(target, nestedKey, {})
+          }
+          target = target[nestedKey]
+        })
+        target[lastKey] = value;
       } else {
         // key 为正常顶层属性
         if (hasOwn(rawData, key)) {
