@@ -1,4 +1,4 @@
-import { walkChildren, parseSelector, error, hasOwn } from '@mpxjs/utils'
+import { walkChildren, parseSelector, error, hasOwn, isFunction } from '@mpxjs/utils'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 const datasetReg = /^data-(.+)$/
 
@@ -54,5 +54,10 @@ export default function install (Vue) {
   }
   Vue.prototype.createIntersectionObserver = function (options) {
     return createIntersectionObserver(this, options)
+  }
+  Vue.prototype.setData = function (newData, callback) {
+    if (callback && isFunction(callback)) {
+      this.$nextTick(callback.bind(this))
+    }
   }
 }
