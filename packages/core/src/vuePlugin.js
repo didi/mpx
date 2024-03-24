@@ -62,22 +62,28 @@ export default function install (Vue) {
     }
     const rawData = this.$data
     Object.entries(newData).forEach(([key, value]) => {
-
-      if (key.includes('[')) {
-
-      } else if (key.includes('.')) {
-        // key 为索引的路径式设置 this.setData({'a.b': 'text'})
-        const fullKeys = key.split('.');
+      if (key.includes('.') || key.includes('[')) {
+        // key 为索引的路径式设置 (如 'a.b', 'a[0].b.c'）
+        const fullKeyItems = formatKey(key)
         let target = this.$data;
-        const lastKey = fullKeys.pop();
+        const lastItem = fullKeyItems.pop()
 
-        fullKeys.forEach((nestedKey) => {
-          if (!hasOwn(target, nestedKey)) {
-            this.$set(target, nestedKey, {})
-          }
-          target = target[nestedKey]
-        })
-        target[lastKey] = value;
+        if (fullKeyItems.length > 0) {
+          fullKeyItems.forEach((item) => {
+            const nestedKey = item.name;
+            if (item.isArray) {
+              if (!Array.isArray(target[nestedKey])) {
+                this.$set(target, nestedKey, [])
+              }
+            }
+            if (!hasOwn(target, nestedKey)) {
+              this.$set(target, nestedKey, {})
+            }
+            target = item.isArray? target[nestedKey][item.index]: target[nestedKey]
+          })
+        }
+
+        lastItem.isArray? this.$set(target[lastItem.name], lastItem.index, value) : target[lastItem.name] = value
       } else {
         // key 为正常顶层属性
         if (hasOwn(rawData, key)) {
@@ -88,6 +94,24 @@ export default function install (Vue) {
         }
       }
     })
+
+    function formatKey (key) {
+      const regex = /(\w+)(?:\[(\d+)\])?\.?/g
+      let match
+      const parsed = []
+      while ((match = regex.exec(key)) !== null) {
+        const propertyName = match[1]
+        const index = match[2]
+        const property = {
+          name: propertyName,
+          isArray: !!index,
+          index: index ? parseInt(index, 10) : undefined,
+        }
+        parsed.push(property);
+      }
+      return parsed
+    }
+
     if (callback && isFunction(callback)) {
       this.$nextTick(callback.bind(this))
     }
