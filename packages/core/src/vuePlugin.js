@@ -1,4 +1,4 @@
-import { walkChildren, parseSelector, error, hasOwn, isFunction } from '@mpxjs/utils'
+import { walkChildren, parseSelector, error, isObject, hasOwn, isFunction } from '@mpxjs/utils'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 const datasetReg = /^data-(.+)$/
 
@@ -56,6 +56,27 @@ export default function install (Vue) {
     return createIntersectionObserver(this, options)
   }
   Vue.prototype.setData = function (newData, callback) {
+    if (!isObject(newData)) {
+      error(`The data entry type of the setData method must be object, The type of data ${data} is incorrect`)
+      return
+    }
+    const rawData = this.$data
+    Object.entries(newData).forEach(([key, value]) => {
+
+      if (key.includes('[')) {
+
+      } else if (key.includes('.')) {
+
+      } else {
+        // key 为正常顶层属性
+        if (hasOwn(rawData, key)) {
+          rawData[key] = value
+        } else {
+          // data 不存在属性，通过 $set 设置
+          this.$set(rawData, key, value)
+        }
+      }
+    })
     if (callback && isFunction(callback)) {
       this.$nextTick(callback.bind(this))
     }
