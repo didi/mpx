@@ -17,6 +17,7 @@ const processStyles = require('./web/processStyles')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
+const processMainScript = require("./web/processMainScript");
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
@@ -224,13 +225,11 @@ module.exports = function (content) {
       if (ctorType === 'app') {
         const appName = getEntryName(this)
         if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+      } else {
+        rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
       }
 
       const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
-
-      if (ctorType !== 'app') {
-        rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-      }
       const rulesRunner = getRulesRunner(rulesRunnerOptions)
       if (rulesRunner) rulesRunner(json)
       if (json.usingComponents) {
@@ -241,6 +240,38 @@ module.exports = function (content) {
       }
 
       if (mode === 'web') {
+        if (ctorType === 'app' && !queryObj.isApp) {
+          return async.waterfall([
+            (callback) => {
+              processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, callback)
+            },
+            (jsonRes, callback) => {
+              processMainScript(parts.script, {
+                loaderContext,
+                ctorType,
+                srcMode,
+                moduleId,
+                isProduction,
+                jsonConfig: jsonRes.jsonObj,
+                outputPath: queryObj.outputPath || '',
+                localComponentsMap: jsonRes.localComponentsMap,
+                tabBar: jsonRes.jsonObj.tabBar,
+                tabBarMap: jsonRes.tabBarMap,
+                tabBarStr: jsonRes.tabBarStr,
+                localPagesMap: jsonRes.localPagesMap,
+                resource: this.resource
+              }, callback)
+            }
+          ], (err, scriptRes) => {
+            if (err) return callback(err)
+            this.loaderIndex = -1
+            return callback(null, scriptRes.output)
+          })
+        }
+        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
+        const cacheContent = mpx.vueContentCache.get(filePath)
+        if (cacheContent) return callback(null, cacheContent)
+
         return async.waterfall([
           (callback) => {
             async.parallel([
