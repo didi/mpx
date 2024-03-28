@@ -100,6 +100,9 @@ const isBrowser = typeof window !== 'undefined'
 function throwSSRWarning (info) {
   console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
 }
+
+const ENV_OBJ = getEnvObj()
+
 export {
   changeOpts,
   handleSuccess,
@@ -111,5 +114,6 @@ export {
   makeMap,
   isBrowser,
   hasOwn,
-  throwSSRWarning
+  throwSSRWarning,
+  ENV_OBJ
 }

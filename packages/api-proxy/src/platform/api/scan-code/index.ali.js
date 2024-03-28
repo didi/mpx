@@ -1,4 +1,4 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
 
 function scanCode (options = {}) {
   const opts = changeOpts(options, {
@@ -9,7 +9,7 @@ function scanCode (options = {}) {
     return changeOpts(res, { code: 'result' })
   })
 
-  my.scan(opts)
+  return ENV_OBJ.scan(opts)
 }
 
 export {
