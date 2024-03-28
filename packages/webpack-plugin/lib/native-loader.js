@@ -11,13 +11,9 @@ const { JSON_JS_EXT, MPX_APP_MODULE_ID } = require('./utils/const')
 const getRulesRunner = require('./platform')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const processWeb = require('./web')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const processTemplate = require('./web/processTemplate')
-const processStyles = require('./web/processStyles')
-const processJSON = require('./web/processJSON')
-const processScript = require('./web/processScript')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
-const processMainScript = require("./web/processMainScript");
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
@@ -185,7 +181,6 @@ module.exports = function (content) {
         useJSONJS
       }, null, this, callback)
     }, (content, callback) => {
-      let componentPlaceholder = []
       let json
       try {
         json = JSON5.parse(content)
@@ -193,6 +188,8 @@ module.exports = function (content) {
         return callback(e)
       }
       let usingComponents = Object.keys(mpx.usingComponents)
+      let componentPlaceholder = []
+      let componentGenerics = {}
       const rulesRunnerOptions = {
         mode,
         srcMode,
@@ -238,105 +235,28 @@ module.exports = function (content) {
       if (json.componentPlaceholder) {
         componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
       }
+      if (json.componentGenerics) {
+        componentGenerics = Object.assign({}, json.componentGenerics)
+      }
 
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
-          return async.waterfall([
-            (callback) => {
-              processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, callback)
-            },
-            (jsonRes, callback) => {
-              processMainScript(parts.script, {
-                loaderContext,
-                ctorType,
-                srcMode,
-                moduleId,
-                isProduction,
-                jsonConfig: jsonRes.jsonObj,
-                outputPath: queryObj.outputPath || '',
-                localComponentsMap: jsonRes.localComponentsMap,
-                tabBar: jsonRes.jsonObj.tabBar,
-                tabBarMap: jsonRes.tabBarMap,
-                tabBarStr: jsonRes.tabBarStr,
-                localPagesMap: jsonRes.localPagesMap,
-                resource: this.resource
-              }, callback)
-            }
-          ], (err, scriptRes) => {
-            if (err) return callback(err)
-            this.loaderIndex = -1
-            return callback(null, scriptRes.output)
-          })
-        }
-        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-        const cacheContent = mpx.vueContentCache.get(filePath)
-        if (cacheContent) return callback(null, cacheContent)
-
-        return async.waterfall([
-          (callback) => {
-            async.parallel([
-              (callback) => {
-                processTemplate(parts.template, {
-                  loaderContext,
-                  hasScoped,
-                  hasComment,
-                  isNative,
-                  srcMode,
-                  moduleId,
-                  ctorType,
-                  usingComponents: [],
-                  componentGenerics: {}
-                }, callback)
-              },
-              (callback) => {
-                processStyles(parts.styles, {
-                  ctorType,
-                  autoScope,
-                  moduleId
-                }, callback)
-              },
-              (callback) => {
-                processJSON(parts.json, {
-                  loaderContext,
-                  pagesMap,
-                  componentsMap
-                }, callback)
-              }
-            ], (err, res) => {
-              callback(err, res)
-            })
-          },
-          ([templateRes, stylesRes, jsonRes], callback) => {
-            output += templateRes.output
-            output += stylesRes.output
-            output += jsonRes.output
-            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
-              mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
-            }
-
-            processScript(parts.script, {
-              loaderContext,
-              ctorType,
-              srcMode,
-              moduleId,
-              isProduction,
-              componentGenerics: {},
-              jsonConfig: jsonRes.jsonObj,
-              outputPath: queryObj.outputPath || '',
-              tabBarMap: jsonRes.tabBarMap,
-              tabBarStr: jsonRes.tabBarStr,
-              builtInComponentsMap: templateRes.builtInComponentsMap,
-              genericsInfo: templateRes.genericsInfo,
-              wxsModuleMap: templateRes.wxsModuleMap,
-              localComponentsMap: jsonRes.localComponentsMap,
-              localPagesMap: jsonRes.localPagesMap
-            }, callback)
-          }
-        ], (err, scriptRes) => {
-          if (err) return callback(err)
-          output += scriptRes.output
-          this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
-          callback(null, output)
+        processWeb({
+          parts,
+          loaderContext,
+          pagesMap,
+          componentsMap,
+          queryObj,
+          ctorType,
+          srcMode,
+          moduleId,
+          isProduction,
+          hasScoped,
+          hasComment,
+          isNative,
+          usingComponents,
+          componentGenerics,
+          autoScope,
+          callback
         })
       }
 
