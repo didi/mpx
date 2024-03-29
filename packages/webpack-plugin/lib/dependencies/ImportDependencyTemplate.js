@@ -27,7 +27,8 @@ class ImportDependencyTemplate extends (
       message: 'import()',
       runtimeRequirements
     })
-    content = content.replace(/(__webpack_require__\.t\.bind\(.+, )(\d+)(\))/, (_, p1, p2, p3) => {
+    // replace fakeType by 9 to fix require.async to commonjs2 module like 'module.exports = function(){...}'
+    content = content.replace(/(__webpack_require__\.t\.bind\(.+,\s*)(\d+)(\s*\))/, (_, p1, p2, p3) => {
       return p1 + '9' + p3
     })
     source.replace(dep.range[0], dep.range[1] - 1, content)
