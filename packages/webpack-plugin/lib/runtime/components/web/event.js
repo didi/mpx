@@ -66,7 +66,6 @@ function MpxEvent (layer) {
         const changedTouches = event.changedTouches || []
         extendEvent(touchEvent, {
             timeStamp: event.timeStamp,
-            currentTarget: event.target,
             changedTouches,
             touches: changedTouches,
             detail: {
