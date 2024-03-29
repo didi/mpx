@@ -26,7 +26,7 @@
   "peerDependencies": {
     "@hummer/tenon-store": "^1.7.0",
     "@hummer/tenon-vue": "^1.5.1",
-    "@mpxjs/api-proxy": "^2.7.44",
+    "@mpxjs/api-proxy": "^2.8.25-alpha.9",
     "@mpxjs/store": "^2.8.0",
     "vue": "^2.7.10",
     "vue-demi": "^0.13.11",
