@@ -13,10 +13,21 @@ import {
   mapWritableState
 } from 'pinia'
 import { storeToRefs } from './storeToRefs'
+import { isBrowser } from './util'
 
 vue.use(PiniaVuePlugin)
 
 function createPinia () {
+  if (isBrowser) {
+    const activePinia = getActivePinia()
+    if (activePinia) {
+      return activePinia
+    }
+  } else {
+    // todo: support validate
+    console.log('Pinia must be created in the onAppInit lifecycle!')
+    return
+  }
   const pinia = webCreatePinia()
   global.__mpxPinia = pinia
   setActivePinia(pinia)
