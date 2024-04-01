@@ -31,16 +31,16 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
 
     this.mergeResourceHashNameMap(mpx)
     this.mergeComponentAttrs(mpx)
-    this.mergeWxs(mpx)
+    // this.mergeWxs(mpx)
 
     return callback()
   }
 
-  mergeWxs (mpx) {
-    if (this.wxs.length) {
-      this.wxs.forEach(item => mpx.runtimeInfo[this.packageName].wxs.add(item))
-    }
-  }
+  // mergeWxs (mpx) {
+  //   if (this.wxs.length) {
+  //     this.wxs.forEach(item => mpx.runtimeInfo[this.packageName].wxs.add(item))
+  //   }
+  // }
 
   mergeComponentAttrs (mpx) {
     const componentTypes = ['internalComponents', 'normalComponents', 'runtimeComponents']

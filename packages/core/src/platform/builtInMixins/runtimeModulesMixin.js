@@ -1,6 +1,7 @@
 import { CREATED } from '../../core/innerLifecycle'
 import staticMap from '../../vnode/staticMap'
 
+// todo 后续这部分的逻辑应该收敛至业务侧
 export default function getRuntimeModulesMixin () {
   return {
     data: {

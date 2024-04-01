@@ -226,19 +226,22 @@ function deleteUselessAttrs (vnode) {
   })
 }
 
-// function processWxs (vnode) {
-//   if (vnode.tag === 'wxs') {
-//     replaceNode(vnode, createASTElement('block', []))
-//   }
-// }
+function processWxs (vnode) {
+  if (vnode.tag === 'wxs') {
+    const tempNode = createASTElement('block', [])
+    replaceNode(vnode, tempNode)
+    return tempNode
+  }
+  return null
+}
 
 function simplifyTemplate (vnode, config) {
   if (!vnode) {
     return
   }
 
-  // todo
-  // processWxs(vnode)
+  const replacedBlockNode = processWxs(vnode)
+  if (replacedBlockNode) vnode = replacedBlockNode
   processIf(vnode, config)
   processFor(vnode)
   processAttrsMap(vnode, config)

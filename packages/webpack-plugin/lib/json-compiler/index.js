@@ -179,6 +179,9 @@ module.exports = function (content) {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
+    // json.usingComponents = {
+    //   element: resolveMpxCustomElementPath(packageName)
+    // }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     if (isMpxCustomElement) {
       Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
