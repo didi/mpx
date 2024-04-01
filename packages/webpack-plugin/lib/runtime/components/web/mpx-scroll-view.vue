@@ -118,8 +118,8 @@
         if (direction === 'bottom' || direction === 'right') eventName = 'scrolltolower'
         this.$emit(eventName, getCustomEvent(eventName, { direction }, this))
       }, 200, {
-        leading: true,
-        trailing: false
+        leading: false,
+        trailing: true
       })
       this.initBs()
       this.observeAnimation('add')
@@ -251,8 +251,8 @@
           this.lastX = x
           this.lastY = y
         }, 30, {
-          leading: true,
-          trailing: false
+          leading: false,
+          trailing: true
         }))
         this.bs.on('scrollEnd', () => {
           this.currentX = -this.bs.x
