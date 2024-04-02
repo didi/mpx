@@ -1,15 +1,41 @@
-const language = (sel, moduleId) => {
-  return node => {
-    return node.d?.class?.split(' ').find(c => sel.substring(1) === c)
-      ? node
-      : false
-  }
-}
+import cssauron from './cssauron'
 
-export default function cssSelect(sel, options) {
+const language = cssauron({
+  tag: function (node) {
+    return node.nodeType
+  },
+  class: function (node) {
+    return node.data?.class
+  },
+  id: function (node) {
+    return node.data?.id
+  },
+  children: function (node) {
+    return node.children
+  },
+  parent: function (node) {
+    // todo 不能返回默认值，会导致 cssauron 匹配过程找父节点出现死循环
+    // return node.parent || {}
+    return node.parent
+  },
+  contents: function (node) {
+    return node.contents || ''
+  },
+  attr: function (node, attr) {
+    if (node.properties) {
+      const attrs = node.properties.attributes
+      if (attrs && attrs[attr]) {
+        return attrs[attr]
+      }
+      return node.properties[attr]
+    }
+  }
+})
+
+export default function cssSelect (sel, options) {
   options = options || {}
   const selector = language(sel, options.moduleId)
-  function match(vtree) {
+  function match (vtree) {
     const node = mapTree(vtree, null, options) || {}
     const matched = []
 
@@ -37,16 +63,16 @@ export default function cssSelect(sel, options) {
   return match
 }
 
-function traverse(vtree, fn) {
+function traverse (vtree, fn) {
   fn(vtree)
-  if (vtree.c) {
-    vtree.c.forEach(function (vtree) {
+  if (vtree.children) {
+    vtree.children.forEach(function (vtree) {
       traverse(vtree, fn)
     })
   }
 }
 
-function mapResult(result) {
+function mapResult (result) {
   return result
     .filter(function (node) {
       return !!node.vtree
@@ -56,32 +82,32 @@ function mapResult(result) {
     })
 }
 
-function getNormalizeCaseFn(caseSensitive) {
+function getNormalizeCaseFn (caseSensitive) {
   return caseSensitive
-    ? function noop(str) {
-        return str
-      }
-    : function toLowerCase(str) {
-        return str.toLowerCase()
-      }
+    ? function noop (str) {
+      return str
+    }
+    : function toLowerCase (str) {
+      return str.toLowerCase()
+    }
 }
 
 // Map a virtual-dom node tree into a data structure that cssauron can use to
 // traverse.
-function mapTree(vtree, parent, options) {
+function mapTree (vtree, parent, options) {
   const normalizeTagCase = getNormalizeCaseFn(options.caseSensitiveTag)
 
-  if (vtree.nt != null) {
+  if (vtree.nodeType != null) {
     const node = {}
-    node.p = parent
+    node.parent = parent
     node.vtree = vtree
-    node.nt = normalizeTagCase(vtree.nt)
-    if (vtree.d) {
-      node.d = vtree.d
+    node.nodeType = normalizeTagCase(vtree.nodeType)
+    if (vtree.data) {
+      node.data = vtree.data
     }
 
-    if (vtree.c) {
-      node.c = vtree.c
+    if (vtree.children) {
+      node.children = vtree.children
         .map(function (child) {
           return mapTree(child, node, options)
         })
