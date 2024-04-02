@@ -310,7 +310,5 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
 
   const res = genVnodeWithStaticCss(interpreteredVnodeTree)
 
-  console.log(res)
-
   return res
 }
