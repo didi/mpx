@@ -1,6 +1,6 @@
 const language = (sel, moduleId) => {
   return node => {
-    return node.data?.class?.split(' ').find(c => sel.substring(1) === c)
+    return node.d?.class?.split(' ').find(c => sel.substring(1) === c)
       ? node
       : false
   }
@@ -39,8 +39,8 @@ export default function cssSelect(sel, options) {
 
 function traverse(vtree, fn) {
   fn(vtree)
-  if (vtree.children) {
-    vtree.children.forEach(function (vtree) {
+  if (vtree.c) {
+    vtree.c.forEach(function (vtree) {
       traverse(vtree, fn)
     })
   }
@@ -71,17 +71,17 @@ function getNormalizeCaseFn(caseSensitive) {
 function mapTree(vtree, parent, options) {
   const normalizeTagCase = getNormalizeCaseFn(options.caseSensitiveTag)
 
-  if (vtree.nodeType != null) {
+  if (vtree.nt != null) {
     const node = {}
-    node.parent = parent
+    node.p = parent
     node.vtree = vtree
-    node.nodeType = normalizeTagCase(vtree.nodeType)
-    if (vtree.data) {
-      node.data = vtree.data
+    node.nt = normalizeTagCase(vtree.nt)
+    if (vtree.d) {
+      node.d = vtree.d
     }
 
-    if (vtree.children) {
-      node.children = vtree.children
+    if (vtree.c) {
+      node.c = vtree.c
         .map(function (child) {
           return mapTree(child, node, options)
         })

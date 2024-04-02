@@ -51,13 +51,20 @@ function addIfCondition(el, condition) {
   el.ifConditions.push(condition)
 }
 
+function addPreNodeIfCondition(el, condition) {
+  if (!el.ifc) {
+    el.ifc = []
+  }
+  el.ifc.push(condition)
+}
+
 function processIfConditions(el) {
   const prev = findPrevIfNode(el)
   if (prev) {
-    addIfCondition(prev, {
-      ifExp: !!el.elseif,
-      block: el,
-      __exps: el.elseif ? parseExp(el.elseif.exp) : ''
+    addPreNodeIfCondition(prev, {
+      ep: !!el.elseif,
+      b: el,
+      __ep: el.elseif ? parseExp(el.elseif.exp) : ''
     })
 
     const tempNode = createASTElement('block', [])
@@ -247,6 +254,7 @@ function minisizeAttr(v) {
   delete v.name
   delete v.__exps
   delete v.value
+  return v
 }
 
 function minisizeIfConditions(ifConditions) {
@@ -263,7 +271,7 @@ function minisizeFor(forConditions) {
   forConditions.idx = forConditions.index
   forConditions.i = forConditions.item
   forConditions.k = forConditions.key
-  forConditions.__exp = forConditions.__exps
+  forConditions.__ep = forConditions.__exps
 
   delete forConditions.index
   delete forConditions.item
@@ -271,19 +279,58 @@ function minisizeFor(forConditions) {
   delete forConditions.__exps
 }
 
+const NodeType = {
+  // nodeType
+  View: 'view',
+  Swiper: 'swiper',
+  SwiperItem: 'swiper-item',
+  Block: 'block',
+  Text: '#text',
+  Image: 'image',
+  Slot: 'slot',
+  Template: 'template',
+  Element: 'element',
+  CatchView: 'catch-view',
+  StaticView: 'static-view',
+  PureView: 'pure-view',
+  StaticText: 'static-text',
+  StaticImage: 'static-image',
+  Container: 'container'
+}
+
+//  <template is="${templateName}" />
+const TemplateNameAlias = {
+  [NodeType.View]: 'v',
+  [NodeType.Swiper]: 's',
+  [NodeType.SwiperItem]: 'si',
+  [NodeType.Block]: 'b',
+  [NodeType.Text]: 't',
+  [NodeType.Image]: 'i',
+  [NodeType.Slot]: 'sl',
+  [NodeType.CatchView]: 'cv',
+  [NodeType.StaticView]: 'sv',
+  [NodeType.PureView]: 'pv',
+  [NodeType.Container]: 'c'
+}
+
+function minisizeTag(tag) {
+  return TemplateNameAlias[tag] ? TemplateNameAlias[tag] : tag
+}
+
 function minisizeVnode(vnode) {
-  vnode.t = vnode.tag
+  vnode.t = minisizeTag(vnode.tag)
   vnode.ty = vnode.type
   vnode.c = vnode.children
   vnode.p = vnode.parent
-  vnode.al = vnode.attrsList?.forEach(v => minisizeAttr(v))
+  vnode.al = vnode.attrsList?.map(v => minisizeAttr(v))
   vnode.am = vnode.attrsMap
   vnode.ep = vnode.exps
   vnode.__ep = vnode.__exps
   vnode.d = vnode.dynamic
   vnode.at = vnode.aliasTag
   if (vnode.if) {
-    vnode.ifc = vnode.ifConditions?.forEach(v => minisizeIfConditions(v))
+    vnode.ifConditions?.forEach(v => minisizeIfConditions(v))
+    vnode.ifc = vnode.ifConditions
   }
   if (vnode.for) {
     minisizeFor(vnode.for)
@@ -322,7 +369,7 @@ function simplifyTemplate(vnode, config) {
     vnode.tag = 'block'
   }
 
-  // minisizeVnode(vnode)
+  minisizeVnode(vnode)
 }
 
 module.exports = function (vnode, mode) {

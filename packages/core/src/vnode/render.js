@@ -19,10 +19,10 @@ function simpleNormalizeChildren (children) {
 
 function cloneNode (el) {
   const clone = Object.assign({}, el)
-  if (el.parent) clone.parent = null
-  if (el.children) {
-    clone.children = []
-    el.children.forEach((child) => {
+  if (el.p) clone.p = null
+  if (el.c) {
+    clone.c = []
+    el.c.forEach((child) => {
       addChild(clone, cloneNode(child))
     })
   }
@@ -30,11 +30,11 @@ function cloneNode (el) {
 }
 
 function addChild (parent, newChild, before) {
-  parent.children = parent.children || []
+  parent.c = parent.c || []
   if (before) {
-    parent.children.unshift(newChild)
+    parent.c.unshift(newChild)
   } else {
-    parent.children.push(newChild)
+    parent.c.push(newChild)
   }
 }
 
@@ -52,21 +52,21 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
   }
 
   function genVnodeTree (node) {
-    if (node.type === 1) {
+    if (node.ty === 1) {
       // wxs 模块不需要动态渲染
-      if (node.tag === 'wxs') {
+      if (node.t === 'wxs') {
         return createEmptyNode()
       } else if (node.for && !node.forProcessed) {
         return genFor(node)
       } else if (node.if && !node.ifProcessed) {
         return genIf(node)
-      } else if (node.tag === 'slot') {
+      } else if (node.t === 'slot') {
         return genSlot(node)
       } else {
         const data = genData(node)
         let children = genChildren(node)
         // 运行时组件的子组件都通过 slots 属性传递
-        if (node.dynamic) {
+        if (node.d) {
           data.slots = resolveSlot(children.slice())
           children = []
         }
@@ -75,9 +75,9 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
         // } else {
         //   return createNode(node.aliasTag || node.tag, data, children)
         // }
-        return createNode(node.aliasTag || node.tag, data, children)
+        return createNode(node.at || node.t, data, children)
       }
-    } else if (node.type === 3) {
+    } else if (node.ty === 3) {
       return genText(node)
     }
   }
@@ -104,12 +104,12 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     }
 
     // 处理 for 循环产生的数组，同时清除空节点
-    children = simpleNormalizeChildren(children).filter(node => !!node?.nodeType)
+    children = simpleNormalizeChildren(children).filter(node => !!node?.nt)
 
     return {
-      nodeType: tag,
-      data,
-      children
+      nt: tag,
+      d: data,
+      c: children
     }
   }
 
@@ -136,10 +136,10 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     if (children.length) {
       for (let i = 0; i < children.length; i++) {
         const child = children[i]
-        const name = child.data?.slot
+        const name = child.d?.slot
         if (name) {
           const slot = (slots[name] || (slots[name] = []))
-          if (child.tag === 'template') {
+          if (child.t === 'template') {
             slot.push.apply(slot, child.children || [])
           } else {
             slot.push(child)
@@ -157,35 +157,35 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
       uid,
       moduleId
     }
-    if (!node.attrsList) {
+    if (!node.al) {
       return res
     }
 
-    node.attrsList.forEach((attr) => {
-      if (attr.name === 'class' || attr.name === 'style') {
+    node.al.forEach((attr) => {
+      if (attr.n === 'class' || attr.n === 'style') {
         // class/style 的表达式为数组形式，class/style的计算过程需要放到逻辑层，主要是因为有逻辑匹配的过程去生成 vnodeTree
-        const helper = attr.name === 'class' ? stringify.stringifyClass : stringify.stringifyStyle
+        const helper = attr.n === 'class' ? stringify.stringifyClass : stringify.stringifyStyle
         let value = ''
-        if (attr.__exps) {
-          const valueArr = attr.__exps.reduce((preVal, curExpression) => {
+        if (attr.__ep) {
+          const valueArr = attr.__ep.reduce((preVal, curExpression) => {
             preVal.push(evalExps(curExpression))
             return preVal
           }, [])
           value = helper(...valueArr)
         } else {
-          value = attr.value
+          value = attr.v
         }
-        res[attr.name] = value
-      } else if (attr.name === 'data-eventconfigs') {
+        res[attr.n] = value
+      } else if (attr.n === 'data-eventconfigs') {
         const eventMap = {}
-        attr.__exps?.forEach(({ eventName, exps }) => {
+        attr.__ep?.forEach(({ eventName, exps }) => {
           eventMap[eventName] = exps.map(exp => evalExps(exp))
         })
-        res[dash2hump(attr.name)] = eventMap
+        res[dash2hump(attr.n)] = eventMap
       } else {
-        res[dash2hump(attr.name)] = attr.__exps
-          ? evalExps(attr.__exps)
-          : attr.value
+        res[dash2hump(attr.n)] = attr.__ep
+          ? evalExps(attr.__ep)
+          : attr.v
       }
     })
 
@@ -194,7 +194,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
 
   function genChildren (node) {
     const res = []
-    const children = node.children || []
+    const children = node.c || []
     if (children.length) {
       children.forEach((item) => {
         res.push(genNode(item))
@@ -204,9 +204,9 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
   }
 
   function genNode (node) {
-    if (node.type === 1) {
+    if (node.ty === 1) {
       return genVnodeTree(node)
-    } else if (node.type === 3 && node.isComment) {
+    } else if (node.ty === 3 && node.isComment) {
       return ''
       // TODO: 注释暂不处理
       // return _genComment(node)
@@ -217,23 +217,23 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
 
   function genText (node) {
     return {
-      nodeType: '#text',
-      content: node.__exps ? evalExps(node.__exps) : node.text
+      nt: 't',
+      ct: node.__ep ? evalExps(node.__ep) : node.text
     }
   }
 
   function genFor (node) {
     node.forProcessed = true
 
-    const itemKey = node.for.item || 'item'
-    const indexKey = node.for.index || 'index'
+    const itemKey = node.for.i || 'item'
+    const indexKey = node.for.idx || 'index'
     const scope = {
       [itemKey]: null,
       [indexKey]: null
     }
     const forExp = node.for
     const res = []
-    let forValue = evalExps(forExp.__exps)
+    let forValue = evalExps(forExp.__ep)
 
     // 和微信的模版渲染策略保持一致：当 wx:for 的值为字符串时，会将字符串解析成字符串数组
     if (isString(forValue)) {
@@ -260,26 +260,26 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
 
   // 对于 if 而言最终生成 <= 1 节点
   function genIf (node) {
-    if (!node.ifConditions) {
-      node.ifConditions = []
+    if (!node.ifc) {
+      node.ifc = []
       return {} // 一个空节点
     }
     node.ifProcessed = true
 
-    const ifConditions = node.ifConditions.slice()
+    const ifConditions = node.ifc.slice()
 
     let res = {} // 空节点
     for (let i = 0; i < ifConditions.length; i++) {
       const condition = ifConditions[i]
       // 非 else 节点
-      if (condition.ifExp) {
-        const identifierValue = evalExps(condition.__exps)
+      if (condition.ep) {
+        const identifierValue = evalExps(condition.__ep)
         if (identifierValue) {
-          res = genVnodeTree(condition.block === 'self' ? node : condition.block)
+          res = genVnodeTree(condition.b === 'self' ? node : condition.b)
           break
         }
       } else { // else 节点
-        res = genVnodeTree(condition.block)
+        res = genVnodeTree(condition.b)
         break
       }
     }
@@ -299,7 +299,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
       const nodes = cssSelect(selector, { moduleId })(vnodeTree)
       nodes?.forEach((node) => {
         // 优先级后覆盖前，直接后style覆盖前style
-        node.data.style = node.data.style ?  node.data.style + style : style
+        node.d.style = node.d.style ?  node.d.style + style : style
       })
     })
 
@@ -308,5 +308,9 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
 
   const interpreteredVnodeTree = genVnodeTree(vnodeAst)
 
-  return genVnodeWithStaticCss(interpreteredVnodeTree)
+  const res = genVnodeWithStaticCss(interpreteredVnodeTree)
+
+  console.log(res)
+
+  return res
 }
