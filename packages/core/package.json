@@ -29,7 +29,7 @@
     "@mpxjs/api-proxy": "^2.8.25-alpha.9",
     "@mpxjs/store": "^2.8.0",
     "vue": "^2.7.10",
-    "vue-demi": "^0.13.11",
+    "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
     "vue-i18n-bridge": "^9.2.2"
   },
