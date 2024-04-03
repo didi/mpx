@@ -38,7 +38,7 @@ function request (options = { url: '' }) {
   requestFn.method = method
   requestFn.timeout = timeout
   requestFn.header = header
-  requestFn.params = data
+  requestFn.param = data
   requestFn.send((response) => {
     let { status, header: resHeader, data: resData, error } = response
     // 返回的数据处理
