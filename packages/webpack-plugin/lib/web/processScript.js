@@ -1,12 +1,12 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
+const shallowStringify = require('../utils/shallow-stringify')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  shallowStringify,
   stringifyRequest
 } = require('./script-helper')
 

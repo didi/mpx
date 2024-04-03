@@ -1,5 +1,7 @@
 const createHelpers = require('../helpers')
 const async = require('async')
+const getStyleObj = require('./style-helper').getStyleObj
+const shallowStringify = require('../utils/shallow-stringify')
 
 module.exports = function (styles, {
   loaderContext,
@@ -9,6 +11,7 @@ module.exports = function (styles, {
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
   let content = ''
+  let output = '/* styles */\n'
   if (styles.length) {
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
@@ -25,13 +28,24 @@ module.exports = function (styles, {
         }
         content += result.trim() + '\n'
         callback()
-      }).catch(callback)
+      }).catch((e) => {
+        callback(e)
+      })
       // require style
     }, (err) => {
       if (err) return callback(err)
-      // todo postcss
+      try {
+        const styleObj = getStyleObj(content, loaderContext.resourcePath)
+        output += `global.currentInject.injectMethods = {
+        __getStyleObj: function() {
+          return ${shallowStringify(styleObj)};
+        }
+      };\n`
+      } catch (e) {
+        return callback(e)
+      }
       callback(null, {
-        output: ''
+        output
       })
     })
   } else {

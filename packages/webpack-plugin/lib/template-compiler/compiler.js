@@ -12,6 +12,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
+const shallowStringify = require('../utils/shallow-stringify')
 
 const no = function () {
   return false
@@ -1037,6 +1038,33 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
+function processStyleReact (el) {
+  // process class/wx:class/style/wx:style/wx:show for react native
+  const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
+  let staticClass = getAndRemoveAttr(el, 'class').val || ''
+  staticClass = staticClass.replace(/\s+/g, ' ')
+
+  const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
+  let staticStyle = getAndRemoveAttr(el, 'style').val || ''
+  staticStyle = staticStyle.replace(/\s+/g, ' ')
+
+  const show = getAndRemoveAttr(el, config[mode].directive.show).val
+
+  if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
+    const staticClassExp = parseMustacheWithContext(staticClass).result
+    const dynamicClassExp = parseMustacheWithContext(dynamicClass).result
+    const staticStyleExp = parseMustacheWithContext(staticStyle).result
+    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
+    const showExp = parseMustacheWithContext(show).result
+
+    addAttrs(el, [{
+      name: 'style',
+      // runtime helper
+      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+    }])
+  }
+}
+
 function processEventReact (el, options, meta) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
@@ -1228,18 +1256,6 @@ function processEvent (el, options) {
       value: `{{${shallowStringify(eventConfigMap)}}}`
     }])
   }
-}
-
-function shallowStringify (obj) {
-  const arr = []
-  for (const key in obj) {
-    let value = obj[key]
-    if (Array.isArray(value)) {
-      value = `[${value.join(',')}]`
-    }
-    arr.push(`${key}:${value}`)
-  }
-  return ` {${arr.join(',')}} `
 }
 
 function wrapMustache (val) {
@@ -2406,6 +2422,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
+    processStyleReact(el)
     processEventReact(el, options, meta)
     processAttrs(el, options)
     return

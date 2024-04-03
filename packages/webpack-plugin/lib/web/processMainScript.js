@@ -1,13 +1,13 @@
 // 该文件下的字符串语句需要使用 es5 语法
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
+const shallowStringify = require('../utils/shallow-stringify')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
 const eventPath = normalize.lib('runtime/components/web/event')
 const {
   buildComponentsMap,
   buildPagesMap,
   buildGlobalParams,
-  shallowStringify,
   stringifyRequest,
   buildI18n
 } = require('./script-helper')

@@ -1,24 +1,10 @@
-const hasOwn = require('../utils/has-own')
 const loaderUtils = require('loader-utils')
 const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
+const shallowStringify = require('../utils/shallow-stringify')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
-}
-
-function shallowStringify (obj) {
-  const arr = []
-  for (const key in obj) {
-    if (hasOwn(obj, key)) {
-      let value = obj[key]
-      if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
-      }
-      arr.push(`'${key}':${value}`)
-    }
-  }
-  return `{${arr.join(',')}}`
 }
 
 function getAsyncChunkName (chunkName) {
@@ -87,6 +73,5 @@ module.exports = {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  shallowStringify,
   stringifyRequest
 }
