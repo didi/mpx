@@ -1623,7 +1623,7 @@ try {
               })
             }
           }
-          if (queryObj.isNative && nativeLoaderIndex !== loaders.length - 1) {
+          if (queryObj.isNative && (!loaders.length || nativeLoaderIndex !== loaders.length - 1)) {
             loaders.push({
               loader: require.resolve('@vue/vue-loader-v15/lib/index.js')
             })

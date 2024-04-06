@@ -240,7 +240,7 @@ module.exports = function (content) {
       }
 
       if (mode === 'web') {
-        processWeb({
+        return processWeb({
           parts,
           loaderContext,
           pagesMap,

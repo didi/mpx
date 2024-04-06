@@ -149,7 +149,7 @@ module.exports = function (content) {
       }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        processWeb({
+        return processWeb({
           parts,
           loaderContext,
           pagesMap,
