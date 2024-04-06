@@ -57,7 +57,7 @@ export default function install (Vue) {
   }
   Vue.prototype.setData = function (newData, callback) {
     if (!isObject(newData)) {
-      error(`The data entry type of the setData method must be object, The type of data ${data} is incorrect`)
+      error(`The data entry type of the setData method must be object, The type of data ${newData} is incorrect`)
       return
     }
     const rawData = this.$data
@@ -65,12 +65,12 @@ export default function install (Vue) {
       if (key.includes('.') || key.includes('[')) {
         // key 为索引的路径式设置 (如 'a.b', 'a[0].b.c'）
         const fullKeyItems = formatKey(key)
-        let target = this.$data;
+        let target = this.$data
         const lastItem = fullKeyItems.pop()
 
         if (fullKeyItems.length > 0) {
           fullKeyItems.forEach((item) => {
-            const nestedKey = item.name;
+            const nestedKey = item.name
             if (item.isArray) {
               if (!Array.isArray(target[nestedKey])) {
                 this.$set(target, nestedKey, [])
@@ -79,11 +79,11 @@ export default function install (Vue) {
             if (!hasOwn(target, nestedKey)) {
               this.$set(target, nestedKey, {})
             }
-            target = item.isArray? target[nestedKey][item.index]: target[nestedKey]
+            target = item.isArray ? target[nestedKey][item.index] : target[nestedKey]
           })
         }
 
-        lastItem.isArray? this.$set(target[lastItem.name], lastItem.index, value) : target[lastItem.name] = value
+        lastItem.isArray ? this.$set(target[lastItem.name], lastItem.index, value) : target[lastItem.name] = value
       } else {
         // key 为正常顶层属性
         if (hasOwn(rawData, key)) {
@@ -105,9 +105,9 @@ export default function install (Vue) {
         const property = {
           name: propertyName,
           isArray: !!index,
-          index: index ? parseInt(index, 10) : undefined,
+          index: index ? parseInt(index, 10) : undefined
         }
-        parsed.push(property);
+        parsed.push(property)
       }
       return parsed
     }

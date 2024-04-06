@@ -13,7 +13,6 @@ const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const processWeb = require('./web')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {

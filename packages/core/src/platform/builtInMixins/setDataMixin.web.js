@@ -1,5 +1,3 @@
-import { isObject, isFunction, error } from '@mpxjs/utils'
-
 export default function setDataMixin () {
   return {
     beforeCreate () {
