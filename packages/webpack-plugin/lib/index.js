@@ -1631,6 +1631,19 @@ try {
               loader: require.resolve(nativeLoaderPath)
             })
           }
+        } else {
+          let nativeLoaderIndex = -1
+          loaders.forEach((loader, index) => {
+            const currentLoader = toPosix(loader.loader)
+            if (currentLoader.includes('native-loader')) {
+              nativeLoaderIndex = index
+            }
+          })
+          if (queryObj.isNative && !queryObj.type && (!loaders.length || nativeLoaderIndex !== loaders.length - 1)) {
+            loaders.push({
+              loader: require.resolve(nativeLoaderPath)
+            })
+          }
         }
 
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
