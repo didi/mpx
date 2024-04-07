@@ -51,20 +51,13 @@ function addIfCondition(el, condition) {
   el.ifConditions.push(condition)
 }
 
-function addPreNodeIfCondition(el, condition) {
-  if (!el.ifc) {
-    el.ifc = []
-  }
-  el.ifc.push(condition)
-}
-
 function processIfConditions(el) {
   const prev = findPrevIfNode(el)
   if (prev) {
-    addPreNodeIfCondition(prev, {
-      ep: !!el.elseif,
-      b: el,
-      __ep: el.elseif ? parseExp(el.elseif.exp) : ''
+    addIfCondition(prev, {
+      ifExp: !!el.elseif,
+      block: el,
+      __exps: el.elseif ? parseExp(el.elseif.exp) : ''
     })
 
     const tempNode = createASTElement('block', [])
@@ -247,108 +240,6 @@ function deleteUselessAttrs(vnode) {
 //   }
 // }
 
-function minisizeAttr(v) {
-  v.n = v.name
-  v.__ep = v.__exps
-  v.v = v.value
-  delete v.name
-  delete v.__exps
-  delete v.value
-  return v
-}
-
-function minisizeIfConditions(ifConditions) {
-  ifConditions.ep = ifConditions.ifExp
-  ifConditions.b = ifConditions.block
-  ifConditions.__ep = ifConditions.__exps
-
-  delete ifConditions.ifExp
-  delete ifConditions.block
-  delete ifConditions.__exps
-}
-
-function minisizeFor(forConditions) {
-  forConditions.idx = forConditions.index
-  forConditions.i = forConditions.item
-  forConditions.k = forConditions.key
-  forConditions.__ep = forConditions.__exps
-
-  delete forConditions.index
-  delete forConditions.item
-  delete forConditions.key
-  delete forConditions.__exps
-}
-
-const NodeType = {
-  // nodeType
-  View: 'view',
-  Swiper: 'swiper',
-  SwiperItem: 'swiper-item',
-  Block: 'block',
-  Text: '#text',
-  Image: 'image',
-  Slot: 'slot',
-  Template: 'template',
-  Element: 'element',
-  CatchView: 'catch-view',
-  StaticView: 'static-view',
-  PureView: 'pure-view',
-  StaticText: 'static-text',
-  StaticImage: 'static-image',
-  Container: 'container'
-}
-
-//  <template is="${templateName}" />
-const TemplateNameAlias = {
-  [NodeType.View]: 'v',
-  [NodeType.Swiper]: 's',
-  [NodeType.SwiperItem]: 'si',
-  [NodeType.Block]: 'b',
-  [NodeType.Text]: 't',
-  [NodeType.Image]: 'i',
-  [NodeType.Slot]: 'sl',
-  [NodeType.CatchView]: 'cv',
-  [NodeType.StaticView]: 'sv',
-  [NodeType.PureView]: 'pv',
-  [NodeType.Container]: 'c'
-}
-
-function minisizeTag(tag) {
-  return TemplateNameAlias[tag] ? TemplateNameAlias[tag] : tag
-}
-
-function minisizeVnode(vnode) {
-  vnode.t = minisizeTag(vnode.tag)
-  vnode.ty = vnode.type
-  vnode.c = vnode.children
-  vnode.p = vnode.parent
-  vnode.al = vnode.attrsList?.map(v => minisizeAttr(v))
-  vnode.am = vnode.attrsMap
-  vnode.ep = vnode.exps
-  vnode.__ep = vnode.__exps
-  vnode.d = vnode.dynamic
-  vnode.at = vnode.aliasTag
-  if (vnode.if) {
-    vnode.ifConditions?.forEach(v => minisizeIfConditions(v))
-    vnode.ifc = vnode.ifConditions
-  }
-  if (vnode.for) {
-    minisizeFor(vnode.for)
-  }
-
-  delete vnode.type
-  delete vnode.tag
-  delete vnode.children
-  delete vnode.parent
-  delete vnode.attrsList
-  delete vnode.attrsMap
-  delete vnode.exps
-  delete vnode.__exps
-  delete vnode.dynamic
-  delete vnode.aliasTag
-  delete vnode.ifConditions
-}
-
 function simplifyTemplate(vnode, config) {
   if (!vnode) {
     return
@@ -368,8 +259,6 @@ function simplifyTemplate(vnode, config) {
   if (vnode.tag === 'temp-node') {
     vnode.tag = 'block'
   }
-
-  minisizeVnode(vnode)
 }
 
 module.exports = function (vnode, mode) {

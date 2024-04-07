@@ -2368,7 +2368,7 @@ function findPrevNode (node) {
     let index = parent.children.indexOf(node)
     while (index--) {
       const preNode = parent.children[index]
-      if (preNode.type === 1 || preNode.ty === 1) {
+      if (preNode.type === 1) {
         return preNode
       }
     }

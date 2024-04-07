@@ -97,17 +97,17 @@ function getNormalizeCaseFn (caseSensitive) {
 function mapTree (vtree, parent, options) {
   const normalizeTagCase = getNormalizeCaseFn(options.caseSensitiveTag)
 
-  if (vtree.nodeType != null) {
+  if (vtree.nt != null) {
     const node = {}
     node.parent = parent
     node.vtree = vtree
-    node.nodeType = normalizeTagCase(vtree.nodeType)
-    if (vtree.data) {
-      node.data = vtree.data
+    node.nodeType = normalizeTagCase(vtree.nt)
+    if (vtree.d) {
+      node.data = vtree.d
     }
 
-    if (vtree.children) {
-      node.children = vtree.children
+    if (vtree.c) {
+      node.children = vtree.c
         .map(function (child) {
           return mapTree(child, node, options)
         })

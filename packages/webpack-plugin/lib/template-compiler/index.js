@@ -59,7 +59,7 @@ module.exports = function (raw) {
 
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
-    raw = '<template is="t0c" wx:if="{{r && r.nt}}" data="{{ i: r }}"></template>\n'
+    raw = '<template is="t_0_container" wx:if="{{r && r.nt}}" data="{{ i: r }}"></template>\n'
     raw += buildTemplate(mode, mpx.runtimeInfo[packageName])
   }
 
