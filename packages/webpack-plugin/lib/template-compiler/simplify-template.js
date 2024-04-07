@@ -1,14 +1,8 @@
-const {
-  getAndRemoveAttr,
-  parseMustache,
-  findPrevNode,
-  replaceNode,
-  createASTElement
-} = require('./compiler')
+const { getAndRemoveAttr, parseMustache, findPrevNode, replaceNode, createASTElement } = require('./compiler')
 const allConfigs = require('../config')
 const { parseExp } = require('./parse-exps')
 
-function processIf(vnode, config) {
+function processIf (vnode, config) {
   delete vnode.ifProcessed
 
   if (vnode.if) {
@@ -22,9 +16,7 @@ function processIf(vnode, config) {
 
     vnode.if = true
   } else if (vnode.elseif || vnode.else) {
-    const directive = vnode.elseif
-      ? config.directive.elseif
-      : config.directive.else
+    const directive = vnode.elseif ? config.directive.elseif : config.directive.else
     getAndRemoveAttr(vnode, directive)
     processIfConditions(vnode)
 
@@ -44,14 +36,14 @@ function processIf(vnode, config) {
   }
 }
 
-function addIfCondition(el, condition) {
+function addIfCondition (el, condition) {
   if (!el.ifConditions) {
     el.ifConditions = []
   }
   el.ifConditions.push(condition)
 }
 
-function processIfConditions(el) {
+function processIfConditions (el) {
   const prev = findPrevIfNode(el)
   if (prev) {
     addIfCondition(prev, {
@@ -66,7 +58,7 @@ function processIfConditions(el) {
   }
 }
 
-function findPrevIfNode(el) {
+function findPrevIfNode (el) {
   const prevNode = findPrevNode(el)
   if (!prevNode) {
     return null
@@ -81,7 +73,7 @@ function findPrevIfNode(el) {
   }
 }
 
-function processFor(vnode) {
+function processFor (vnode) {
   if (vnode.for) {
     vnode.for.__exps = parseExp(vnode.for.exp)
 
@@ -90,11 +82,11 @@ function processFor(vnode) {
   }
 }
 
-function processAttrsMap(vnode, config) {
+function processAttrsMap (vnode, config) {
   processDirectives(vnode, config)
 
   if (vnode.attrsList && vnode.attrsList.length) {
-    vnode.attrsList.forEach(attr => {
+    vnode.attrsList.forEach((attr) => {
       if (attr.name === 'class') {
         processClass(attr)
       } else if (attr.name === 'style') {
@@ -120,7 +112,7 @@ function processAttrsMap(vnode, config) {
   delete vnode.attrsMap
 }
 
-function processClass(attr) {
+function processClass (attr) {
   const { staticClassExp = '', dynamicClassExp = '' } = attr
   if (staticClassExp || dynamicClassExp) {
     attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
@@ -135,7 +127,7 @@ function processClass(attr) {
   }
 }
 
-function processStyle(attr) {
+function processStyle (attr) {
   const { staticStyleExp = '', dynamicStyleExp = '' } = attr
   if (staticStyleExp || dynamicStyleExp) {
     attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
@@ -150,14 +142,14 @@ function processStyle(attr) {
   }
 }
 
-function getAttrExps(attr) {
+function getAttrExps (attr) {
   const parsed = parseMustache(attr.value)
   if (parsed.hasBinding && !attr.__exps) {
     return parseExp(parsed.result)
   }
 }
 
-function processBindEvent(attr) {
+function processBindEvent (attr) {
   if (attr.eventConfigMap) {
     const exps = []
     for (const eventName in attr.eventConfigMap) {
@@ -167,7 +159,7 @@ function processBindEvent(attr) {
         exps: []
       }
 
-      configs.forEach(item => {
+      configs.forEach((item) => {
         eventExp.exps.push(parseExp(item))
       })
 
@@ -180,7 +172,7 @@ function processBindEvent(attr) {
   }
 }
 
-function processText(vnode) {
+function processText (vnode) {
   // text 节点
   if (vnode.type === 3) {
     // todo 全局 defs 静态数的处理? -> 目前已经都支持了
@@ -194,7 +186,7 @@ function processText(vnode) {
   }
 }
 
-function processDirectives(vnode, config) {
+function processDirectives (vnode, config) {
   const directives = Object.values(config.directive)
   if (vnode.attrsMap) {
     Object.keys(vnode.attrsMap).forEach(item => {
@@ -205,7 +197,7 @@ function processDirectives(vnode, config) {
   }
 }
 
-function processChildren(vnode, config) {
+function processChildren (vnode, config) {
   if (vnode.children && vnode.children.length) {
     vnode.children.forEach(item => {
       simplifyTemplate(item, config)
@@ -215,7 +207,7 @@ function processChildren(vnode, config) {
   }
 }
 
-function postProcessIf(vnode) {
+function postProcessIf (vnode) {
   // 删除遍历过程中 if 替换的临时节点以及明确不会被渲染出来的 if 节点（即 {{ false }}）
   const children = vnode.children
   if (children && children.length) {
@@ -227,7 +219,7 @@ function postProcessIf(vnode) {
   }
 }
 
-function deleteUselessAttrs(vnode) {
+function deleteUselessAttrs (vnode) {
   const uselessAttrs = ['parent', 'exps', 'unary']
   uselessAttrs.forEach(function (attr) {
     delete vnode[attr]
@@ -240,7 +232,7 @@ function deleteUselessAttrs(vnode) {
 //   }
 // }
 
-function simplifyTemplate(vnode, config) {
+function simplifyTemplate (vnode, config) {
   if (!vnode) {
     return
   }
@@ -265,5 +257,6 @@ module.exports = function (vnode, mode) {
   const _vnode = Object.assign({}, vnode)
   const config = allConfigs[mode]
   simplifyTemplate(_vnode, config)
+
   return _vnode
 }
