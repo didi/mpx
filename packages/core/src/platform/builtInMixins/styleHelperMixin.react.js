@@ -18,9 +18,9 @@ function stringifyArray (value) {
 
 function stringifyObject (value) {
   let res = ''
-  let objKeys = Object.keys(value)
-  for (let i = 0; i < objKeys.length; i++) {
-    let key = objKeys[i]
+  const keys = Object.keys(value)
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
     if (value[key]) {
       if (res) res += ' '
       res += key
@@ -83,11 +83,10 @@ function transformStyleObj (context, styleObj) {
   const transformed = {}
   keys.forEach((prop) => {
     // todo 检测不支持的prop
-    let value = styleObj[key]
+    let value = styleObj[prop]
     let matched
     if ((matched = pxRegExp.exec(value))) {
       value = +matched[1]
-
     } else if ((matched = rpxRegExp.exec(value))) {
       value = context.__rpx(+matched[1])
     }
