@@ -1,6 +1,6 @@
 const createHelpers = require('../helpers')
 const async = require('async')
-const getStyleObj = require('./style-helper').getStyleObj
+const getClassMap = require('./style-helper').getClassMap
 const shallowStringify = require('../utils/shallow-stringify')
 
 module.exports = function (styles, {
@@ -35,10 +35,10 @@ module.exports = function (styles, {
     }, (err) => {
       if (err) return callback(err)
       try {
-        const styleObj = getStyleObj(content, loaderContext.resourcePath)
+        const classMap = getClassMap(content, loaderContext.resourcePath)
         output += `global.currentInject.injectMethods = {
-        __getStyleObj: function() {
-          return ${shallowStringify(styleObj)};
+        __getClassMap: function() {
+          return ${shallowStringify(classMap)};
         }
       };\n`
       } catch (e) {

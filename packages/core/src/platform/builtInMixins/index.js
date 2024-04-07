@@ -10,12 +10,14 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
+import styleHelperMixin from './styleHelperMixin'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins
   if (__mpx_mode__ === 'react') {
     bulitInMixins = [
-      proxyEventMixin()
+      proxyEventMixin(),
+      styleHelperMixin()
     ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [

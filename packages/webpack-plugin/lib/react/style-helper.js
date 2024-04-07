@@ -4,13 +4,13 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
 
-function getStyleObj (content, filename) {
-  const styleObj = {}
+function getClassMap (content, filename) {
+  const classMap = {}
   const root = postcss.parse(content, {
     from: filename
   })
   root.walkRules(rule => {
-    const styleObjValue = {}
+    const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
       // todo 检测不支持的prop
       prop = dash2hump(prop)
@@ -20,34 +20,34 @@ function getStyleObj (content, filename) {
         value = matched[1]
         needStringify = false
       } else if ((matched = rpxRegExp.exec(value))) {
-        value = `rpx(${matched[1]})`
+        value = `this.__rpx(${matched[1]})`
         needStringify = false
       }
       // todo 检测不支持的value
-      styleObjValue[prop] = needStringify ? JSON.stringify(value) : value
+      classMapValue[prop] = needStringify ? JSON.stringify(value) : value
     })
 
-    const styleObjKeys = []
+    const classMapKeys = []
 
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
-          styleObjKeys.push(selector.nodes[0].value)
+          classMapKeys.push(selector.nodes[0].value)
         } else {
           rule.error('Only single class selector is supported in react native mode temporarily.')
         }
       })
     }).processSync(rule.selector)
 
-    if (styleObjKeys.length) {
-      styleObjKeys.forEach((key) => {
-        styleObj[key] = Object.assign(styleObj[key] || {}, styleObjValue)
+    if (classMapKeys.length) {
+      classMapKeys.forEach((key) => {
+        classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
       })
     }
   })
-  return styleObj
+  return classMap
 }
 
 module.exports = {
-  getStyleObj
+  getClassMap
 }
