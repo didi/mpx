@@ -1,4 +1,5 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { queryParse } from './utils'
 const { Request } = __GLOBAL__
 
 function request (options = { url: '' }) {
@@ -30,6 +31,16 @@ function request (options = { url: '' }) {
         )}`
       }, '')
       .slice(1)
+  }
+
+  if (data) {
+    if (dataType === 'form') {
+      data = queryParse(data)
+    } else if (dataType === 'json') {
+      try {
+        data = JSON.parse(data)
+      } catch (e) {}
+    }
   }
 
   const requestFn = new Request()
