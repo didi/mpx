@@ -25,7 +25,7 @@ function createPinia () {
     }
   } else {
     if (!global.__mpxCreatePinia) {
-      console.error('Pinia must be created in the onAppInit lifecycle!')
+      console.error('[@mpxjs/pinia error]: Pinia must be created in the onAppInit lifecycle!')
       return
     }
   }
