@@ -86,13 +86,16 @@ function processAttrsMap (vnode, config) {
   processDirectives(vnode, config)
 
   if (vnode.attrsList && vnode.attrsList.length) {
-    vnode.attrsList.forEach((attr) => {
+    for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
+      const attr = vnode.attrsList[i]
       if (attr.name === 'class') {
         processClass(attr)
       } else if (attr.name === 'style') {
         processStyle(attr)
       } else if (attr.name === 'data-eventconfigs') {
         processBindEvent(attr)
+      } else if (config.event.parseEvent(attr.name)) { // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的
+        vnode.attrsList.splice(i, 1)
       } else {
         const exps = getAttrExps(attr)
         if (exps) {
@@ -103,7 +106,7 @@ function processAttrsMap (vnode, config) {
       if (attr.__exps) {
         delete attr.value
       }
-    })
+    }
   } else {
     // 如果长度为空，ast 产出物可以不输出
     delete vnode.attrsList
@@ -143,6 +146,11 @@ function processStyle (attr) {
 }
 
 function getAttrExps (attr) {
+  // 属性为单值的写法 <scroll-view enhenced></scroll-view>
+  // 默认置为 true
+  if (attr.value == null) {
+    attr.value = "{{ true }}"
+  }
   const parsed = parseMustache(attr.value)
   if (parsed.hasBinding && !attr.__exps) {
     return parseExp(parsed.result)
