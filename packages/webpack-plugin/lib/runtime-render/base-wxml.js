@@ -25,7 +25,7 @@ function setCustomEle (el, options, meta) {
   if (tag && !eleAttrsMap[tag]) {
     eleAttrsMap[tag] = {}
     if (el.dynamic) {
-      attrKeys.push('slots', 'mpxAttrs')
+      attrKeys.push('slots')
     }
   }
   Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
