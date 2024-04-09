@@ -149,7 +149,7 @@ function getAttrExps (attr) {
   // 属性为单值的写法 <scroll-view enhenced></scroll-view>
   // 默认置为 true
   if (attr.value == null) {
-    attr.value = "{{ true }}"
+    attr.value = '{{ true }}'
   }
   const parsed = parseMustache(attr.value)
   if (parsed.hasBinding && !attr.__exps) {
