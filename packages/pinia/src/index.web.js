@@ -24,9 +24,10 @@ function createPinia () {
       return activePinia
     }
   } else {
-    // todo: support validate
-    console.log('Pinia must be created in the onAppInit lifecycle!')
-    return
+    if (!global.__mpxCreatePinia) {
+      console.error('Pinia must be created in the onAppInit lifecycle!')
+      return
+    }
   }
   const pinia = webCreatePinia()
   global.__mpxPinia = pinia

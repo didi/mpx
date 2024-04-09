@@ -308,7 +308,9 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
   }
 
   if (App.onAppInit) {
+    global.__mpxCreatePinia = true
     Object.assign(option, App.onAppInit() || {})
+    global.__mpxCreatePinia = false
   }
 
   if (isBrowser && global.__mpxPinia) {
