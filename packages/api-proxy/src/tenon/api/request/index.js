@@ -1,6 +1,7 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
 import { queryParse } from './utils'
 const { Request } = __GLOBAL__
+const requestFn = new Request()
 
 function request (options = { url: '' }) {
   let {
@@ -33,49 +34,48 @@ function request (options = { url: '' }) {
       .slice(1)
   }
 
-  if (data) {
-    if (dataType === 'form') {
-      data = queryParse(data)
-    } else if (dataType === 'json') {
-      try {
-        data = JSON.parse(data)
-      } catch (e) {}
-    }
-  }
-
-  const requestFn = new Request()
-
   requestFn.url = options.url
   requestFn.method = method
   requestFn.timeout = timeout
   requestFn.header = header
   requestFn.param = data
-  requestFn.send((response) => {
-    let { status, header: resHeader, data: resData, error } = response
-    // 返回的数据处理
 
-    if (responseType === 'text' && dataType === 'json') {
+  if (data) {
+    if (dataType === 'form') {
+      requestFn.param = queryParse(data)
+    } else if (dataType === 'json') {
       try {
-        resData = JSON.parse(resData)
+        requestFn.param = JSON.parse(data)
       } catch (e) {}
     }
+  }
 
-    if (status >= 200 && status < 300) {
-      const result = {
-        errMsg: 'request:ok',
-        data: resData,
-        statusCode: status,
-        header: resHeader
+  return new Promise((resolve, reject) => {
+    requestFn.send((response) => {
+      let { status, header: resHeader, data: resData, error } = response
+      // 返回的数据处理
+
+      if (responseType === 'text' && dataType === 'json') {
+        try {
+          resData = JSON.parse(resData)
+        } catch (e) {}
       }
-      webHandleSuccess(result, success, complete)
-      return result
-    } else {
-      const res = { errMsg: `request:fail ${error.msg}` }
-      webHandleFail(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
+
+      if (status >= 200 && status < 300) {
+        const result = {
+          errMsg: 'request:ok',
+          data: resData,
+          statusCode: status,
+          header: resHeader
+        }
+        webHandleSuccess(result, success, complete)
+        resolve(result)
+      } else {
+        const res = { errMsg: `request:fail ${error.msg}` }
+        webHandleFail(res, fail, complete)
+        reject(res)
       }
-    }
+    })
   })
 }
 
