@@ -47,11 +47,11 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
               propertyName = mpEscape(propertyName)
             }
             if (/-/.test(propertyName)) {
-              if (/\$/.test(propertyName)) {
-                error && error(`Dynamic classname [${propertyName}] is not supported, which includes [-] char and [$] char at the same time.`)
-              } else {
-                property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
-              }
+              // if (/\$/.test(propertyName)) {
+              //   error && error(`Dynamic classname [${propertyName}] is not supported, which includes [-] char and [$] char at the same time.`)
+              // } else {
+              property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
+              // }
             } else {
               property.key = t.identifier(propertyName)
             }
