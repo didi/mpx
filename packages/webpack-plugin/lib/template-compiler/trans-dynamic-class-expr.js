@@ -20,7 +20,7 @@ const escapeMap = {
   "'": '_q_',
   '"': '_dq_',
   '+': '_a_',
-  '$': '_si_'
+  $: '_si_'
 }
 
 function mpEscape (str) {
@@ -43,15 +43,9 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
         path.node.properties.forEach((property) => {
           if (t.isObjectProperty(property) && !property.computed) {
             let propertyName = property.key.name || property.key.value
-            if (t.isStringLiteral(property.key)) {
-              propertyName = mpEscape(propertyName)
-            }
+            propertyName = mpEscape(propertyName)
             if (/-/.test(propertyName)) {
-              // if (/\$/.test(propertyName)) {
-              //   error && error(`Dynamic classname [${propertyName}] is not supported, which includes [-] char and [$] char at the same time.`)
-              // } else {
               property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
-              // }
             } else {
               property.key = t.identifier(propertyName)
             }
