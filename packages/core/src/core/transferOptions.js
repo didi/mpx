@@ -9,7 +9,7 @@ export default function transferOptions (options, type, needConvert = true) {
     currentInject = global.currentInject
   } else {
     currentInject = {
-      moduleId: currentModuleId
+      moduleId: global.currentModuleId
     }
   }
   // 文件编译路径
