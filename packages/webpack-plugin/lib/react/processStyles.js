@@ -37,10 +37,10 @@ module.exports = function (styles, {
       try {
         const classMap = getClassMap(content, loaderContext.resourcePath)
         output += `global.currentInject.injectMethods = {
-        __getClassMap: function() {
-          return ${shallowStringify(classMap)};
-        }
-      };\n`
+  __getClassMap: function() {
+    return ${shallowStringify(classMap)};
+  }
+};\n`
       } catch (e) {
         return callback(e)
       }

@@ -7,6 +7,10 @@ export default function transferOptions (options, type, needConvert = true) {
   let currentInject
   if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
     currentInject = global.currentInject
+  } else {
+    currentInject = {
+      moduleId: currentModuleId
+    }
   }
   // 文件编译路径
   options.mpxFileResource = global.currentResource

@@ -62,7 +62,7 @@ export default function createFactory (type) {
     const defaultOptions = getDefaultOptions({ type, rawOptions, currentInject })
     if (__mpx_mode__ === 'web' || __mpx_mode__ === 'react') {
       global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-      global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
+      global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)
     }

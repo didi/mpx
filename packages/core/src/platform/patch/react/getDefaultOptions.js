@@ -114,8 +114,8 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
+  const components = currentInject.getComponents() || {}
   // const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-
   return (props, ref) => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
@@ -147,8 +147,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         if (instance.__mpxProxy) instance.__mpxProxy.unmounted()
       }
     }, [])
-
-    const components = currentInject.components || {}
 
     return useObserver(() => {
       return instance.__injectedRender(createElement, components)

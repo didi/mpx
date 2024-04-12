@@ -21,9 +21,9 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       if (componentCfg.async) {
-        componentsMap[componentName] = `lazy(function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)})})`
+        componentsMap[componentName] = `lazy(function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res, {displayName: ${JSON.stringify(componentName)}})})})`
       } else {
-        componentsMap[componentName] = `getComponent(require(${componentRequest}))`
+        componentsMap[componentName] = `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
       }
     })
   }
@@ -60,12 +60,14 @@ function buildGlobalParams ({
   componentsMap
 }) {
   let content = ''
-  content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-  content += `global.currentInject.components = ${shallowStringify(componentsMap)}\n`
+  content += `global.currentModuleId = ${JSON.stringify(moduleId)};\n`
+  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)};\n`
   if (!isProduction) {
-    content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+    content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)};\n`
   }
+  content += `global.currentInject.getComponents = function() {
+  return ${shallowStringify(componentsMap)};
+};\n`
   return content
 }
 

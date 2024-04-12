@@ -1848,7 +1848,7 @@ function postProcessIfReact (el) {
     prevNode = findPrevNode(el)
     if (prevNode && prevNode.if) {
       addIfCondition(prevNode, {
-        exp: el.elseif.exp,
+        exp: el.elseif && el.elseif.exp,
         block: el
       })
       removeNode(el, true)
