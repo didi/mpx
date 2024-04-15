@@ -1,4 +1,4 @@
-import { error } from '@mpxjs/utils'
+import { error, hasOwn } from '@mpxjs/utils'
 import Mpx from '../../index'
 
 export default function proxyEventMixin () {

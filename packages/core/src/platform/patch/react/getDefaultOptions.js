@@ -13,6 +13,21 @@ function createEffect (adm) {
   })
 }
 
+const datasetReg = /^data-(.+)$/
+
+function collectDataset (props) {
+  const dataset = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = props[key]
+      }
+    }
+  }
+  return dataset
+}
+
 function useObserver (render, options) {
   const admRef = useRef(null)
   if (!admRef.current) {
@@ -93,7 +108,23 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
       }
       return result
     },
-    triggerEvent () {
+    triggerEvent (eventName, eventDetail) {
+      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+      const handler = props && (props['on' + handlerName] || props['catch' + handlerName])
+      console.log('trigger Event trigger in this____')
+      if (handler && typeof handler === 'function') {
+        const timeStamp = +new Date()
+        const dataset = collectDataset(props)
+        const id = props.id || ''
+        const eventObj = {
+          type: eventName,
+          timeStamp,
+          target: { id, dataset, targetDataset: dataset},
+          currentTarget: {id, dataset},
+          detail: eventDetail
+        }
+        handler.call(this, eventObj)
+      }
     },
     selectComponent () {
     },
