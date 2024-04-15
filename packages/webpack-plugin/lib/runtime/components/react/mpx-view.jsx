@@ -13,7 +13,7 @@ import {
   TextStyle,
 } from 'react-native'
 import { extracteTextStyle, omit } from './utils'
-import useClickable, { clickableHandlers } from '../hooks/useClickable'
+import useClickable, { clickableHandlers } from './hook'
 
 const stringToText = (child, props) => {
   // TODO: 实现小程序中效果

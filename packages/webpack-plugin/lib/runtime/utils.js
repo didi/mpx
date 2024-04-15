@@ -42,6 +42,8 @@ export function isEmptyObject (obj) {
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
+export const noop = (..._args) => {}
+
 export function hasOwn (obj, key) {
   return hasOwnProperty.call(obj, key)
 }
