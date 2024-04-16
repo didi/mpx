@@ -1,13 +1,26 @@
 const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
+const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
 
-function getClassMap (content, filename) {
+function getClassMap ({ content, filename, mode, srcMode }) {
   const classMap = {}
   const root = postcss.parse(content, {
     from: filename
+  })
+  const rulesRunner = getRulesRunner({
+    mode,
+    srcMode,
+    type: 'style',
+    testKey: 'prop',
+    warn: () => { // Todo hjw
+      console.log('warn warn warn!!!')
+    },
+    error: () => { // Todo hjw
+      console.log('error error error!!!')
+    }
   })
   root.walkRules(rule => {
     const classMapValue = {}
@@ -24,6 +37,9 @@ function getClassMap (content, filename) {
         needStringify = false
       }
       // todo 检测不支持的value
+      const newData = rulesRunner({ prop, value })
+      prop = newData.prop
+      value = newData.value
       classMapValue[prop] = needStringify ? JSON.stringify(value) : value
     })
 
