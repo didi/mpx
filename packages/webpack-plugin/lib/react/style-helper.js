@@ -37,10 +37,15 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         needStringify = false
       }
       // todo 检测不支持的value
-      const newData = rulesRunner({ prop, value })
-      prop = newData.prop
-      value = newData.value
-      classMapValue[prop] = needStringify ? JSON.stringify(value) : value
+      let newData = rulesRunner({ prop, value })
+      if (!newData.length) {
+        newData = [newData]
+      }
+      newData.forEach(item => {
+        prop = item.prop
+        value = item.value
+        classMapValue[prop] = needStringify ? JSON.stringify(value) : value
+      })
     })
 
     const classMapKeys = []

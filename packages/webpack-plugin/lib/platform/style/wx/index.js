@@ -31,31 +31,42 @@ module.exports = function getSpec ({ warn, error }) {
   
   const spec = {
     supportedModes: ['react'],
-    rules: [ // Todo test
-      // 思路大致想match template component-config
-      // 这里 rpx & 驼峰处理 是不是可以都收到 rules 内
-      // 然后检测不支持的 prop & value
-      // 最后是支持的属性的转换规则
+    rules: [
       {
         test: 'textShadow',
-        react ({ prop, value }) {
+        react ({ prop, value }) { // 仅支持 offset-x | offset-y | blur-radius | color 这种排序
           console.log('css text-shadow', prop, value, 99)
-          return {
-            prop: 'paddingBottom',
-            value: 10
-          }
+          const newValue = value.split(' ')
+          const newProp = ['textShadowOffset','textShadowRadius','textShadowColor']
+          return [
+            {
+              prop: newProp[0],
+              value: {
+                width: newValue[0],
+                height: newValue[1],
+              }
+            },
+            {
+              prop: newProp[1],
+              value: newValue[2],
+            },
+            {
+              prop: newProp[2],
+              value: newValue[3],
+            }
+          ]
         }
-      },
-      {
-        test: 'backgroundColor',
-        react ({ prop, value }) {
-          console.log('cdd background-color', prop, value, 999)
-          return {
-            prop,
-            value: '#000'
-          }
-        }
-      },
+      }
+      // {
+      //   test: 'backgroundColor',
+      //   react ({ prop, value }) {
+      //     console.log('cdd background-color', prop, value, 999)
+      //     return {
+      //       prop,
+      //       value: '#000'
+      //     }
+      //   }
+      // },
     ]
   }
   return spec
