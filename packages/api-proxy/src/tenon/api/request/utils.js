@@ -52,3 +52,29 @@ export function parseHeader (headers) {
   })
   return JSON.stringify(result)
 }
+
+export function queryStringify (obj) {
+  const strArr = []
+  let keys = null
+
+  if (obj && Object.keys(obj).length > 0) {
+    keys = Object.keys(obj)
+
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      strArr.push(`${key}=${encodeURIComponent(obj[key])}`)
+    }
+  }
+
+  return strArr.join('&')
+}
+export function buildQueryStringUrl (params, url = '') {
+  if (!url) return queryStringify(params)
+  let retUrl = url
+
+  if (queryStringify(params)) {
+    retUrl = url.indexOf('?') > -1 ? `${url}&${queryStringify(params)}` : `${url}?${queryStringify(params)}`
+  }
+
+  return retUrl
+}

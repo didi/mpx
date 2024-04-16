@@ -1,38 +1,53 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
-import { queryParse, parseHeader, tryJsonParse } from './utils'
+import { buildQueryStringUrl, parseHeader, tryJsonParse } from './utils'
 const { Request } = __GLOBAL__
 const requestFn = new Request()
 
-function request (options = { url: '' }) {
+function request (options = {}) {
   let {
     data = {},
     method = 'GET',
-    dataType = 'json',
-    responseType = 'text',
+    dataType = 'form',
+    responseType = 'json',
     timeout = 60 * 1000,
     header = {},
     success = null,
     fail = null,
-    complete = null
+    complete = null,
+    url = ''
   } = options
 
   method = method.toUpperCase()
 
-  requestFn.url = options.url
-  requestFn.method = method
-  requestFn.timeout = timeout
-  requestFn.header = header
-  requestFn.param = data
+  if (['GET', 'PUT', 'DELETE'].indexOf(method) > -1) {
+    url = buildQueryStringUrl(data, url)
 
-  if (data) {
-    if (dataType === 'form') {
-      requestFn.param = queryParse(data)
-    } else if (dataType === 'json') {
-      try {
-        requestFn.param = JSON.parse(data)
-      } catch (e) {}
+    if (method === 'GET') {
+      data = {}
     }
   }
+
+  switch (dataType) {
+    case 'form':
+      header = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...header
+      }
+      break
+
+    case 'json':
+      header = {
+        'Content-Type': 'application/json',
+        ...header
+      }
+      break
+  }
+
+  requestFn.url = url
+  requestFn.method = method
+  requestFn.timeout = timeout
+  requestFn.param = data
+  requestFn.header = header
 
   return new Promise((resolve, reject) => {
     requestFn.send((response) => {
@@ -43,7 +58,7 @@ function request (options = { url: '' }) {
           try {
             resData = JSON.parse(resData)
           } catch (e) {
-            console.warn('resDataType默认为"json", 尝试对返回内容进行JSON.parse, 但似乎出了些问题(若不希望对结果进行parse, 可传入resDataType: "text"): ', e)
+            console.log('resDataType默认为"json", 尝试对返回内容进行JSON.parse, 但似乎出了些问题(若不希望对结果进行parse, 可传入resDataType: "text"): ', e)
           }
         }
         const result = {
