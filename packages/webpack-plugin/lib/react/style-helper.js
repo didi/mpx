@@ -5,7 +5,7 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
 
-function getClassMap ({ content, filename, mode, srcMode }) {
+function getClassMap ({ content, filename, mode, srcMode}) {
   const classMap = {}
   const root = postcss.parse(content, {
     from: filename
@@ -25,31 +25,30 @@ function getClassMap ({ content, filename, mode, srcMode }) {
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
-      // todo 检测不支持的prop
-      prop = dash2hump(prop)
-      let matched
-      let needStringify = true
-      if ((matched = pxRegExp.exec(value))) {
-        value = matched[1]
-        needStringify = false
-      } else if ((matched = rpxRegExp.exec(value))) {
-        value = `this.__rpx(${matched[1]})`
-        needStringify = false
-      }
-      // todo 检测不支持的value
       let newData = rulesRunner({ prop, value })
       if (!newData.length) {
         newData = [newData]
       }
       newData.forEach(item => {
-        prop = item.prop
+        // todo 检测不支持的value
         value = item.value
+        // todo 检测不支持的prop
+        prop = dash2hump(item.prop)
+        let matched
+        let needStringify = true
+        if ((matched = pxRegExp.exec(value))) {
+          value = matched[1]
+          needStringify = false
+        } else if ((matched = rpxRegExp.exec(value))) {
+          value = `this.__rpx(${matched[1]})`
+          needStringify = false
+        }
         classMapValue[prop] = needStringify ? JSON.stringify(value) : value
       })
     })
-
+    
     const classMapKeys = []
-
+    
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
@@ -59,7 +58,7 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         }
       })
     }).processSync(rule.selector)
-
+    
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         classMap[key] = Object.assign(classMap[key] || {}, classMapValue)

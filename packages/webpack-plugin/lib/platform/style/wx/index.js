@@ -33,10 +33,10 @@ module.exports = function getSpec ({ warn, error }) {
     supportedModes: ['react'],
     rules: [
       {
-        test: 'textShadow',
+        test: 'text-shadow',
         react ({ prop, value }) { // 仅支持 offset-x | offset-y | blur-radius | color 这种排序
           console.log('css text-shadow', prop, value, 99)
-          const newValue = value.split(' ')
+          const newValue = value.split(' ') // Todo 正则匹配 值类型校验
           const newProp = ['textShadowOffset','textShadowRadius','textShadowColor']
           return [
             {
