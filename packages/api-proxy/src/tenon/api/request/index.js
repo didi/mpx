@@ -1,70 +1,84 @@
 import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { buildQueryStringUrl, parseHeader, tryJsonParse } from './utils'
 const { Request } = __GLOBAL__
+const requestFn = new Request()
 
-function request (options = { url: '' }) {
+function request (options = {}) {
   let {
     data = {},
     method = 'GET',
-    dataType = 'json',
-    responseType = 'text',
+    dataType = 'form',
+    responseType = 'json',
     timeout = 60 * 1000,
     header = {},
     success = null,
     fail = null,
-    complete = null
+    complete = null,
+    url = ''
   } = options
 
   method = method.toUpperCase()
 
-  if (
-    method === 'POST' &&
-    typeof data !== 'string' && // string 不做处理
-    (header['Content-Type'] === 'application/x-www-form-urlencoded' ||
-      header['content-type'] === 'application/x-www-form-urlencoded')
-  ) {
-    // 重新设置data
-    data = Object.keys(data)
-      .reduce((pre, curKey) => {
-        return `${pre}&${encodeURIComponent(curKey)}=${encodeURIComponent(
-          data[curKey]
-        )}`
-      }, '')
-      .slice(1)
+  if (['GET', 'PUT', 'DELETE'].indexOf(method) > -1) {
+    url = buildQueryStringUrl(data, url)
+
+    if (method === 'GET') {
+      data = {}
+    }
   }
 
-  const requestFn = new Request()
+  switch (dataType) {
+    case 'form':
+      header = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...header
+      }
+      break
 
-  requestFn.url = options.url
+    case 'json':
+      header = {
+        'Content-Type': 'application/json',
+        ...header
+      }
+      break
+  }
+
+  requestFn.url = url
   requestFn.method = method
   requestFn.timeout = timeout
-  requestFn.header = header
   requestFn.param = data
-  requestFn.send((response) => {
-    let { status, header: resHeader, data: resData, error } = response
-    // 返回的数据处理
+  requestFn.header = header
 
-    if (responseType === 'text' && dataType === 'json') {
-      try {
-        resData = JSON.parse(resData)
-      } catch (e) {}
-    }
-
-    if (status >= 200 && status < 300) {
-      const result = {
-        errMsg: 'request:ok',
-        data: resData,
-        statusCode: status,
-        header: resHeader
+  return new Promise((resolve, reject) => {
+    requestFn.send((response) => {
+      let { status, header: resHeader, data: resData, error } = response
+      // 返回的数据处理
+      if (status >= 200 && status < 300) {
+        if (responseType === 'json' && typeof resData === 'string') {
+          try {
+            resData = JSON.parse(resData)
+          } catch (e) {
+            console.log('resDataType默认为"json", 尝试对返回内容进行JSON.parse, 但似乎出了些问题(若不希望对结果进行parse, 可传入resDataType: "text"): ', e)
+          }
+        }
+        const result = {
+          errMsg: 'request:ok',
+          data: resData,
+          statusCode: status,
+          header: resHeader
+        }
+        webHandleSuccess(result, success, complete)
+        resolve(result)
+      } else {
+        if (responseType === 'json') {
+          resData = tryJsonParse(resData)
+        }
+        header = parseHeader(header)
+        const res = { errMsg: `request:fail ${error.msg}`, data: resData, header }
+        webHandleFail(res, fail, complete)
+        reject(res)
       }
-      webHandleSuccess(result, success, complete)
-      return result
-    } else {
-      const res = { errMsg: `request:fail ${error.msg}` }
-      webHandleFail(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
-    }
+    })
   })
 }
 
