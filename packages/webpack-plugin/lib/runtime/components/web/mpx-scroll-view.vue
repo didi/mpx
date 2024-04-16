@@ -318,6 +318,7 @@
         if (!id) return
         id = '#' + id
         if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
+        this.refresh()
         this.bs?.scrollToElement(id, duration)
       },
       initLayerComputed () {
