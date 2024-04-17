@@ -10,7 +10,7 @@
     "lint": "eslint --ext .js,.ts,.mpx src/"
   },
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.0",
+    "@mpxjs/api-proxy": "^2.9.28",
     "@mpxjs/core": "^2.9.0",
     "@mpxjs/fetch": "^2.9.0",
     "@mpxjs/pinia": "^2.9.0",
