@@ -1,16 +1,38 @@
-const unsupported = require('./unsupported')
-
 module.exports = function getSpec ({ warn, error }) {
-
-  const print = ({ platform, type = 'prop', isError = true, unsupportedMap = {} }) => ({ prop, value }) => {
+  // react 不支持的 CSS property
+  const UNSUPPORTED_PROP_ARR = ['box-sizing',
+    'background-clip', 'background-attachment', 'background-blend-mode',
+    'background-origin', 'background-position', 'background-repeat', 'background-size', 'background-image'
+  ]
+  // react CSS property 有不支持的 value
+  const UNSUPPORTED_PROP_VAL_ARR = {
+    'overflow': ['clip', 'auto'],
+    'border-style': ['none', 'hidden', 'double', 'groove', 'ridge', 'inset', 'outset'],
+    'vertical-align': ['baseline', 'sub', 'text-top'],
+  }
+  // react 某些属性仅支持部分枚举值
+  const SUPPORTED_PROP_VAL_ARR = {
+    'display': ['flex', 'none'],
+    'pointer-events': ['auto', 'none']
+  }
+  
+  const print = ({ platform, type = 'prop', isError = true }) => ({ prop, value }) => {
     let content = ''
     if (type === 'prop') { // css pro 不支持
       content = `CSS property ${prop} is not supported in ${platform} environment!`
-    } else if (type === 'value' && unsupportedMap[prop]?.includes(value)) { // css value 不支持
+    } else if (type === 'value' && SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)) {
+      content = `CSS property ${prop} only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in ${platform} environment, the value ['${value}'] does not support!`
+    } else if (type === 'value' && UNSUPPORTED_PROP_VAL_ARR[prop]?.includes(value)) {
       content = `CSS property ${prop} does not support ['${value}'] value in ${platform} environment!`
     }
     isError ? error({ prop, content }) : warn({ prop, content })
   }
+  
+  const UnsupportedPropError = print({ platform: 'react', isError: true, type: 'prop' })
+  const unsupportedPropExp = new RegExp('^(' + UNSUPPORTED_PROP_ARR.join('|') + ')$')
+  
+  const propValExp = new RegExp('^(' + (Object.keys(SUPPORTED_PROP_VAL_ARR).concat(Object.keys(UNSUPPORTED_PROP_VAL_ARR))).join('|') + ')$')
+  const UnsupportedPropValError = print({ platform: 'react', isError: true, type: 'value'})
   
   // 简写格式化
   const textShadowMap = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
@@ -42,7 +64,7 @@ module.exports = function getSpec ({ warn, error }) {
           return cssMap.length ? cssMap : { prop, value }
         }
         const newVal = {}
-        curVal.forEach(subkey => { // Todo hjw 简写内不支持的 value 的校验提示
+        curVal.forEach(subkey => { // Todo hjw 1.组合内不支持的 prop & value 的校验提示 2.组合样式内的rpx转换
           newVal[subkey] = values[idx]
           idx += 1
         })
@@ -68,8 +90,14 @@ module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['react'],
     rules: [
-      // unsupportedProps()
-      ...unsupported({ print }),
+      { // RN 不支持的 CSS property
+        test: unsupportedPropExp,
+        react: UnsupportedPropError
+      },
+      { // RN 支持的 CSS property value
+        test: propValExp,
+        react: UnsupportedPropValError
+      },
       {
         test: 'text-shadow',
         react ({ prop, value }) { // 仅支持 offset-x | offset-y | blur-radius | color 这种排序

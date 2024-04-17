@@ -100,6 +100,7 @@ export default function styleHelperMixin () {
   return {
     methods: {
       __rpx (value) {
+        // Todo hjw rpx 计算逻辑
         return value
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
