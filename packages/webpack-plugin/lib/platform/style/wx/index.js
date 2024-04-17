@@ -1,9 +1,6 @@
 module.exports = function getSpec ({ warn, error }) {
   // react 不支持的 CSS property
-  const UNSUPPORTED_PROP_ARR = ['box-sizing',
-    'background-clip', 'background-attachment', 'background-blend-mode',
-    'background-origin', 'background-position', 'background-repeat', 'background-size', 'background-image'
-  ]
+  const UNSUPPORTED_PROP_ARR = ['box-sizing'] // 测试用
   // react CSS property 有不支持的 value
   const UNSUPPORTED_PROP_VAL_ARR = {
     'overflow': ['clip', 'auto'],
@@ -33,6 +30,9 @@ module.exports = function getSpec ({ warn, error }) {
   
   const propValExp = new RegExp('^(' + (Object.keys(SUPPORTED_PROP_VAL_ARR).concat(Object.keys(UNSUPPORTED_PROP_VAL_ARR))).join('|') + ')$')
   const UnsupportedPropValError = print({ platform: 'react', isError: true, type: 'value'})
+  
+  const bgSuppotedExp = new RegExp(/^((?!background-color).)*background-((?!background-color).)*$/) // 包含background-且不包含background-color
+  // const unsupportedBgError = unsupportedPropExp
   
   // 简写格式化
   const textShadowMap = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
@@ -90,6 +90,10 @@ module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['react'],
     rules: [
+      {
+        test: bgSuppotedExp, // 背景正则匹配处理
+        react: UnsupportedPropError
+      },
       { // RN 不支持的 CSS property
         test: unsupportedPropExp,
         react: UnsupportedPropError
