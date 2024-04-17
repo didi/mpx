@@ -106,12 +106,12 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     }
 
     // 处理 for 循环产生的数组，同时清除空节点
-    children = simpleNormalizeChildren(children).filter(node => !!node?.nodeType)
+    children = simpleNormalizeChildren(children).filter(node => !!node?.nt)
 
     return {
-      nodeType: tag,
-      data,
-      children
+      nt: tag,
+      d: data,
+      c: children
     }
   }
 
@@ -219,8 +219,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
 
   function genText (node) {
     return {
-      nodeType: '#text',
-      content: node.__exps ? evalExps(node.__exps) : node.text
+      nt: '#text',
+      ct: node.__exps ? evalExps(node.__exps) : node.text
     }
   }
 
@@ -301,7 +301,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
       const nodes = cssSelect(selector, { moduleId })(vnodeTree)
       nodes?.forEach((node) => {
         // todo style 合并策略问题：合并过程中缺少了权重关系 style, class 的判断，需要优化
-        node.data.style = node.data.style ? style + node.data.style : style
+        node.d.style = node.d.style ? style + node.d.style : style
       })
     })
 
