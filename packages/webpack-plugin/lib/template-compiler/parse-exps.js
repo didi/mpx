@@ -14,7 +14,7 @@ const NODE_TYPE = {
   ObjectExpression: 29,
   Property: 31,
   UnaryExpression: 33,
-  UpdateExpression: 34,
+  // UpdateExpression: 34,
   BinaryExpression: 35,
   LogicalExpression: 37,
   MemberExpression: 38,
@@ -46,8 +46,9 @@ walk.full = function full (node, baseVisitor, state, override) {
 
 const baseVisitor = {}
 
-baseVisitor.UnaryExpression = baseVisitor.UpdateExpression = function (node, st, c, s) {
-  const nodeType = node.type === 'UnaryExpression' ? NODE_TYPE.UnaryExpression : NODE_TYPE.UpdateExpression
+baseVisitor.UnaryExpression = function (node, st, c, s) {
+  // const nodeType = node.type === 'UnaryExpression' ? NODE_TYPE.UnaryExpression : NODE_TYPE.UpdateExpression
+  const nodeType = NODE_TYPE.UnaryExpression
   const argumentNodeStack = []
   s.push(nodeType, node.operator, argumentNodeStack, node.prefix)
   c(node.argument, st, 'Expression', argumentNodeStack)
@@ -57,6 +58,7 @@ baseVisitor.BinaryExpression = baseVisitor.LogicalExpression = function (node, s
   const nodeType = node.type === 'BinaryExpression' ? NODE_TYPE.BinaryExpression : NODE_TYPE.LogicalExpression
   const leftNodeStack = []
   const rightNodeStack = []
+  // todo operator 可以严格按照小程序模版能力进行限制
   s.push(nodeType, node.operator, leftNodeStack, rightNodeStack)
   c(node.left, st, 'Expression', leftNodeStack)
   c(node.right, st, 'Expression', rightNodeStack)
@@ -75,7 +77,6 @@ baseVisitor.ConditionalExpression = (node, st, c, s) => {
 const visitor = walk.make({
   Program (node, st, c, s) {
     const bodyStack = []
-    // todo 后续优化可以去掉
     s.push(NODE_TYPE.Program, bodyStack)
     for (let i = 0, list = node.body; i < list.length; i += 1) {
       const stmt = list[i]
@@ -85,7 +86,6 @@ const visitor = walk.make({
   },
   ExpressionStatement (node, st, c, s) {
     const expressionStack = []
-    // todo 后续优化可以去掉
     s.push(NODE_TYPE.ExpressionStatement, expressionStack)
     c(node.expression, st, null, expressionStack)
   },

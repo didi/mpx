@@ -49,6 +49,7 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+  const runtimeCompile = checkIsRuntimeMode(resourcePath)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -179,12 +180,20 @@ module.exports = function (content) {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
+    // json.usingComponents = {
+    //   element: resolveMpxCustomElementPath(packageName)
+    // }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     if (isMpxCustomElement) {
       Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
     }
   }
 
+  if (queryObj.mpxCustomElement || runtimeCompile) {
+    // this.cacheable(false)
+  }
+
+  // todo cacheable 的设置
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
     fillMpxCustomElement(true)
@@ -241,9 +250,11 @@ module.exports = function (content) {
     if (!isApp && checkIsRuntimeMode(componentPath)) {
       const moduleId = 'm' + mpx.pathHash(componentPath)
       runtimeComponentMap[name] = moduleId
+      return moduleId
     }
   }
 
+  // todo 后续下掉
   const injectRuntimeComponents2Script = () => {
     if (!isEmptyObject(runtimeComponentMap)) {
       const resultSource = `
@@ -268,7 +279,20 @@ module.exports = function (content) {
           }
           if (err) return callback(err)
           components[name] = entry
+          // 可以拿到 resourcePath
+          // 缓存 name, hashName 和 resourcePath，后续在 simplify-template 阶段使用
+          // 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
+          /**
+           * resourcePath: { name }
+           */
           collectRuntimeComponents(name, resourcePath)
+          // const moduleId = collectRuntimeComponents(name, _resourcePath)
+          // 运行时组件需要 hashName
+          if (runtimeCompile) {
+            const moduleId = 'm' + mpx.pathHash(resourcePath)
+            delete components[name]
+            components[moduleId] = entry
+          }
           if (tarRoot) {
             if (placeholder) {
               placeholder = normalizePlaceholder(placeholder)

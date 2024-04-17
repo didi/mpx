@@ -89,6 +89,8 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     try {
       value = interpreter.eval(JSON.parse(JSON.stringify(exps)))
     } catch (e) {
+      // todo: 后续可以把错误往外抛，业务感知
+      console.warn('the exps is:', exps)
       console.warn(e)
     }
     return value
@@ -298,6 +300,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
       const [selector, style] = item
       const nodes = cssSelect(selector, { moduleId })(vnodeTree)
       nodes?.forEach((node) => {
+        // todo style 合并策略问题：合并过程中缺少了权重关系 style, class 的判断，需要优化
         node.d.style = node.d.style ? style + node.d.style : style
       })
     })

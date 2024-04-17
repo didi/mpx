@@ -577,6 +577,12 @@ export default class MpxProxy {
         this.updatePreRender()
       }
 
+      // const ast = this.target.dynamicRender?.() || this.getTplAst(this.moduleId)
+
+      // if (ast) {
+      //   return _r(_g(ast))
+      // }
+
       if (this.target.__injectedRender) {
         try {
           return this.target.__injectedRender(_i, _c, _r, _sc, _g)

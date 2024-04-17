@@ -2182,6 +2182,7 @@ function postProcessRuntime (el, options, meta) {
   }
   const isCustomComponent = isComponentNode(el, options)
 
+  // todo 下掉
   // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
   if (!options.runtimeCompile && el.dynamic) {
     addIfBlock(el, '__mpxDynamicLoaded')
@@ -2191,6 +2192,10 @@ function postProcessRuntime (el, options, meta) {
   if (options.runtimeCompile) {
     if (!meta.runtimeInfo) {
       meta.runtimeInfo = {
+        // resourcePath: {
+        //   baseNodes: {},
+        //   customNodes: {}
+        // },
         resourceHashNameMap: {},
         internalComponents: {},
         runtimeComponents: {},

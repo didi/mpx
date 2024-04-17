@@ -436,9 +436,10 @@ Interpreter.prototype[39] = function stepConditionalExpression (stack, state, no
 
 // ExpressionStatement
 Interpreter.prototype[40] = function stepExpressionStatement (stack, state, node) {
+  const expressionIndex = 1
   if (!state.done_) {
     state.done_ = true
-    return new State(node[1])
+    return new State(node[expressionIndex])
   }
   stack.pop()
   // Save this value to interpreter.value for use as a return value

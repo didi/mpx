@@ -209,6 +209,7 @@ global.currentInject.getRefsData = function () {
       extractedDynamicAsset: JSON.stringify(simpleAst)
     })
     return '<template is="mpx_tmpl" data="{{ r: r }}"></template><template name="mpx_tmpl"><element r="{{r}}" wx:if="{{r}}"></element></template>'
+    // return '<import src="/${packageName}/mpx-custom-element-dynamic.wxml" /><template is="tmpl_0_container" data="{{ i: r }}" wx:if="{{r && r.nodeType}}"></template>'
   }
 
   return result
