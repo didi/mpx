@@ -59,16 +59,13 @@ function MpxEvent (layer) {
         this.sendEvent(this.targetElement, 'tap', event)
     }
     this.sendEvent = (targetElement, type, event) => {
-        // eslint-disable-next-line no-undef
-        const touchEvent = new TouchEvent(type, {
-            view: window,
+        const touchEvent = new CustomEvent(type, {
             bubbles: true,
             cancelable: true
         })
         const changedTouches = event.changedTouches || []
         extendEvent(touchEvent, {
             timeStamp: event.timeStamp,
-            currentTarget: event.target,
             changedTouches,
             touches: changedTouches,
             detail: {

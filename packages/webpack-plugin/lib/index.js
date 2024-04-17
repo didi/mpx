@@ -15,6 +15,7 @@ const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModule
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
+const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -172,7 +173,6 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
-    options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
     this.options = options
     // Hack for buildDependencies
@@ -522,7 +522,10 @@ class MpxWebpackPlugin {
       })
     })
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
+    compiler.hooks.compilation.tap({
+      name: 'MpxWebpackPlugin',
+      stage: 100
+    }, (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
@@ -574,6 +577,8 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -649,7 +654,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || this.options.mode === 'ali',
           partialCompile: this.options.partialCompile,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1101,7 +1106,7 @@ class MpxWebpackPlugin {
 
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
-          args.push(expr.range)
+          args.unshift(expr.range)
 
           const dep = new DynamicEntryDependency(...args)
           parser.state.current.addPresentationalDependency(dep)
@@ -1126,7 +1131,7 @@ class MpxWebpackPlugin {
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
-              // wx、ali(需开启enableAliRequireAsync)和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (mpx.mode === 'web') {
                   const depBlock = new AsyncDependenciesBlock(
@@ -1141,7 +1146,7 @@ class MpxWebpackPlugin {
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
                 } else {
-                  const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
+                  const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isRequireAsync: true,
                     retryRequireAsync: !!this.options.retryRequireAsync
                   })
