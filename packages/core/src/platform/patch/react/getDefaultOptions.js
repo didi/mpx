@@ -1,63 +1,29 @@
-import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
+import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
+import { queueJob } from '../../../observer/scheduler'
 
-function createEffect (adm) {
-  adm.effect = new ReactiveEffect(adm.render, () => {
+function createEffect (instance, components) {
+  const update = instance.update = () => {
     // eslint-disable-next-line symbol-description
-    adm.stateVersion = Symbol()
-    adm.onStoreChange && adm.onStoreChange()
-  })
+    instance.__adm.stateVersion = Symbol()
+    instance.__adm.onStoreChange && instance.__adm.onStoreChange()
+  }
+  update.id = instance.uid
+  instance.effect = new ReactiveEffect(() => {
+    return instance.__injectedRender(createElement, components)
+  }, () => queueJob(update), instance.scope)
 }
 
-function useObserver (render, options) {
-  const admRef = useRef(null)
-  if (!admRef.current) {
-    const _adm = {
-      effect: null,
-      onStoreChange: null,
-      // eslint-disable-next-line symbol-description
-      stateVersion: Symbol(),
-      render,
-      subscribe: (onStoreChange) => {
-        if (!_adm.effect) {
-          createEffect(adm)
-          // eslint-disable-next-line symbol-description
-          _adm.stateVersion = Symbol()
-        }
-        _adm.onStoreChange = onStoreChange
-        return () => {
-          _adm.effect && _adm.effect.stop()
-          _adm.effect = null
-          _adm.onStoreChange = null
-        }
-      },
-      getSnapshot: () => {
-        return _adm.stateVersion
-      }
-    }
-    admRef.current = _adm
-  }
-  const adm = admRef.current
-  if (!adm.effect) {
-    createEffect(adm)
-  }
-
-  useSyncExternalStore(adm.subscribe, adm.getSnapshot)
-
-  return adm.effect.run()
-}
-
-function createInstance ({ props, ref, type, rawOptions, currentInject }) {
+function createInstance ({ props, ref, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData () {
     },
-    __getProps (options) {
+    __getProps () {
       const propsData = {}
-      const validProps = Object.assign({}, options.properties, options.props)
       if (props) {
         Object.keys(props).forEach((key) => {
           if (hasOwn(validProps, key) && !isFunction(props[key])) {
@@ -108,6 +74,32 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
 
   instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   instance.__mpxProxy.created()
+  // react数据响应组件更新管理器
+  instance.__adm = {
+    onStoreChange: null,
+    // eslint-disable-next-line symbol-description
+    stateVersion: Symbol(),
+    subscribe: (onStoreChange) => {
+      if (!instance.effect) {
+        createEffect(instance, components)
+        // eslint-disable-next-line symbol-description
+        instance.__adm.stateVersion = Symbol()
+      }
+      instance.__adm.onStoreChange = onStoreChange
+      return () => {
+        instance.effect && instance.effect.stop()
+        instance.effect = null
+        instance.__adm.onStoreChange = null
+      }
+    },
+    getSnapshot: () => {
+      return instance.__adm.stateVersion
+    }
+  }
+
+  if (!instance.effect) {
+    createEffect(instance, components)
+  }
 
   return instance
 }
@@ -115,24 +107,19 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = currentInject.getComponents() || {}
-  // const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  return (props, ref) => {
+  const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  return memo((props, ref) => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
-      instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject })
+      instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
-    // 待测试完善，或许需要通过react.memo进行包裹处理props更新以及优化渲染函数执行
-    // // 处理props更新
-    // Object.keys(props).forEach(key => {
-    //   if (hasOwn(validProps, key) && !isFunction(props[key])) {
-    //     const { diff, clone } = diffAndCloneA(props[key], instance[key])
-    //     // 此处进行深clone后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
-    //     if (diff) instance[key] = clone
-    //   }
-    // })
-    // //
-    // this.__mpxProxy.propsUpdated()
+    // 处理props更新
+    Object.keys(props).forEach(key => {
+      if (hasOwn(validProps, key) && !isFunction(props[key])) {
+        instance[key] = props[key]
+      }
+    })
 
     useEffect(() => {
       if (instance.__mpxProxy && instance.__mpxProxy.isMounted()) {
@@ -148,8 +135,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     }, [])
 
-    return useObserver(() => {
-      return instance.__injectedRender(createElement, components)
-    })
-  }
+    useSyncExternalStore(instance.__adm.subscribe, instance.__adm.getSnapshot)
+
+    return instance.effect.run()
+  })
 }
