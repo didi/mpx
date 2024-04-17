@@ -1067,6 +1067,7 @@ class MpxWebpackPlugin {
 
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
+        // todo 可以通过插件的机制来解耦这部分的逻辑
         const dynamicAssets = {}
         for (const module of compilation.modules) {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
