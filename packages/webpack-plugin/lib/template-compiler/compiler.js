@@ -2197,7 +2197,7 @@ function postProcessRuntime (el, options, meta) {
         //   customNodes: {}
         // },
         resourceHashNameMap: {},
-        internalComponents: {},
+        baseComponents: {},
         runtimeComponents: {},
         normalComponents: {},
         wxs: {}
