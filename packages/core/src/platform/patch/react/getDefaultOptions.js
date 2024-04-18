@@ -59,7 +59,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
     },
     __render () {
       this.__mpxProxy.stateVersion = Symbol()
-      this.__mpxProxy.onStoreChange && adm.onStoreChange()
+      this.__mpxProxy.onStoreChange && this.__mpxProxy.onStoreChange()
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData () {
