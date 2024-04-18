@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
+import { set } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
@@ -28,6 +29,7 @@ function collectDataset (props) {
   return dataset
 }
 
+let adm
 function useObserver (render, options) {
   const admRef = useRef(null)
   if (!admRef.current) {
@@ -56,7 +58,7 @@ function useObserver (render, options) {
     }
     admRef.current = _adm
   }
-  const adm = admRef.current
+  adm = admRef.current
   if (!adm.effect) {
     createEffect(adm)
   }
@@ -68,7 +70,11 @@ function useObserver (render, options) {
 
 function createInstance ({ props, ref, type, rawOptions, currentInject }) {
   const instance = Object.create({
-    setData () {
+    setData (newData, callback) {
+      Object.keys(newData).forEach((key) => {
+        set(this, key, newData[key])
+      })
+      this.__mpxProxy.forceUpdate(callback)
     },
     __getProps (options) {
       const propsData = {}
@@ -83,6 +89,8 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
       return propsData
     },
     __render () {
+      adm.stateVersion = Symbol()
+      adm.onStoreChange && adm.onStoreChange()
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData () {
