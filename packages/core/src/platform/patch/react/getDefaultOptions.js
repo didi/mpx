@@ -1,74 +1,44 @@
-import { useEffect, useSyncExternalStore, useRef, createElement } from 'react'
+import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
 import { set } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
+import { queueJob } from '../../../observer/scheduler'
 
-function createEffect (adm) {
-  adm.effect = new ReactiveEffect(adm.render, () => {
+function createEffect (proxy, components) {
+  const update = proxy.update = () => {
+    // pre render for props update
+    if (proxy.propsUpdatedFlag) {
+      proxy.updatePreRender()
+    }
     // eslint-disable-next-line symbol-description
-    adm.stateVersion = Symbol()
-    adm.onStoreChange && adm.onStoreChange()
-  })
+    proxy.stateVersion = Symbol()
+    proxy.onStoreChange && proxy.onStoreChange()
+  }
+  update.id = proxy.uid
+  proxy.effect = new ReactiveEffect(() => {
+    return proxy.target.__injectedRender(createElement, components)
+  }, () => queueJob(update), proxy.scope)
 }
 
 const datasetReg = /^data-(.+)$/
 
 function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
+    const dataset = {}
+    for (const key in props) {
+        if (hasOwn(props, key)) {
+            const matched = datasetReg.exec(key)
+            if (matched) {
+                dataset[matched[1]] = props[key]
+            }
+        }
     }
-  }
-  return dataset
+    return dataset
 }
 
-let adm
-function useObserver (render, options) {
-  const admRef = useRef(null)
-  if (!admRef.current) {
-    const _adm = {
-      effect: null,
-      onStoreChange: null,
-      // eslint-disable-next-line symbol-description
-      stateVersion: Symbol(),
-      render,
-      subscribe: (onStoreChange) => {
-        if (!_adm.effect) {
-          createEffect(adm)
-          // eslint-disable-next-line symbol-description
-          _adm.stateVersion = Symbol()
-        }
-        _adm.onStoreChange = onStoreChange
-        return () => {
-          _adm.effect && _adm.effect.stop()
-          _adm.effect = null
-          _adm.onStoreChange = null
-        }
-      },
-      getSnapshot: () => {
-        return _adm.stateVersion
-      }
-    }
-    admRef.current = _adm
-  }
-  adm = admRef.current
-  if (!adm.effect) {
-    createEffect(adm)
-  }
-
-  useSyncExternalStore(adm.subscribe, adm.getSnapshot)
-
-  return adm.effect.run()
-}
-
-function createInstance ({ props, ref, type, rawOptions, currentInject }) {
+function createInstance ({ props, ref, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData (newData, callback) {
       Object.keys(newData).forEach((key) => {
@@ -76,9 +46,8 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
       })
       this.__mpxProxy.forceUpdate(callback)
     },
-    __getProps (options) {
+    __getProps () {
       const propsData = {}
-      const validProps = Object.assign({}, options.properties, options.props)
       if (props) {
         Object.keys(props).forEach((key) => {
           if (hasOwn(validProps, key) && !isFunction(props[key])) {
@@ -89,8 +58,8 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
       return propsData
     },
     __render () {
-      adm.stateVersion = Symbol()
-      adm.onStoreChange && adm.onStoreChange()
+      this.__mpxProxy.stateVersion = Symbol()
+      this.__mpxProxy.onStoreChange && adm.onStoreChange()
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData () {
@@ -144,8 +113,33 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
     ...rawOptions.methods
   })
 
-  instance.__mpxProxy = new MpxProxy(rawOptions, instance)
-  instance.__mpxProxy.created()
+  const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.created()
+  Object.assign(proxy, {
+    onStoreChange: null,
+    // eslint-disable-next-line symbol-description
+    stateVersion: Symbol(),
+    subscribe: (onStoreChange) => {
+      if (!proxy.effect) {
+        createEffect(proxy, components)
+        // eslint-disable-next-line symbol-description
+        proxy.stateVersion = Symbol()
+      }
+      proxy.onStoreChange = onStoreChange
+      return () => {
+        proxy.effect && proxy.effect.stop()
+        proxy.effect = null
+        proxy.onStoreChange = null
+      }
+    },
+    getSnapshot: () => {
+      return proxy.stateVersion
+    }
+  })
+  // react数据响应组件更新管理器
+  if (!proxy.effect) {
+    createEffect(proxy, components)
+  }
 
   return instance
 }
@@ -153,41 +147,38 @@ function createInstance ({ props, ref, type, rawOptions, currentInject }) {
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = currentInject.getComponents() || {}
-  // const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  return (props, ref) => {
+  const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  return memo((props, ref) => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
-      instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject })
+      instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
-    // 待测试完善，或许需要通过react.memo进行包裹处理props更新以及优化渲染函数执行
-    // // 处理props更新
-    // Object.keys(props).forEach(key => {
-    //   if (hasOwn(validProps, key) && !isFunction(props[key])) {
-    //     const { diff, clone } = diffAndCloneA(props[key], instance[key])
-    //     // 此处进行深clone后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
-    //     if (diff) instance[key] = clone
-    //   }
-    // })
-    // //
-    // this.__mpxProxy.propsUpdated()
+    const proxy = instance.__mpxProxy
+    // 处理props更新
+    Object.keys(props).forEach(key => {
+      if (hasOwn(validProps, key) && !isFunction(props[key])) {
+        instance[key] = props[key]
+      }
+    })
+    proxy.propsUpdated()
 
     useEffect(() => {
-      if (instance.__mpxProxy && instance.__mpxProxy.isMounted()) {
-        instance.__mpxProxy.callHook(BEFOREUPDATE)
-        instance.__mpxProxy.callHook(UPDATED)
+      if (proxy.isMounted()) {
+        proxy.callHook(BEFOREUPDATE)
+        proxy.callHook(UPDATED)
       }
     })
 
     useEffect(() => {
-      if (instance.__mpxProxy) instance.__mpxProxy.mounted()
+      proxy.mounted()
       return () => {
-        if (instance.__mpxProxy) instance.__mpxProxy.unmounted()
+        proxy.unmounted()
       }
     }, [])
 
-    return useObserver(() => {
-      return instance.__injectedRender(createElement, components)
-    })
-  }
+    useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
+
+    return proxy.effect.run()
+  })
 }
