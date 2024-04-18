@@ -6,16 +6,20 @@ import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 
-function createEffect (instance, components) {
-  const update = instance.update = () => {
+function createEffect (proxy, components) {
+  const update = proxy.update = () => {
+    // pre render for props update
+    if (proxy.propsUpdatedFlag) {
+      proxy.updatePreRender()
+    }
     // eslint-disable-next-line symbol-description
-    instance.__adm.stateVersion = Symbol()
-    instance.__adm.onStoreChange && instance.__adm.onStoreChange()
+    proxy.stateVersion = Symbol()
+    proxy.onStoreChange && proxy.onStoreChange()
   }
-  update.id = instance.uid
-  instance.effect = new ReactiveEffect(() => {
-    return instance.__injectedRender(createElement, components)
-  }, () => queueJob(update), instance.scope)
+  update.id = proxy.uid
+  proxy.effect = new ReactiveEffect(() => {
+    return proxy.target.__injectedRender(createElement, components)
+  }, () => queueJob(update), proxy.scope)
 }
 
 function createInstance ({ props, ref, type, rawOptions, currentInject, validProps, components }) {
@@ -72,33 +76,32 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
     ...rawOptions.methods
   })
 
-  instance.__mpxProxy = new MpxProxy(rawOptions, instance)
-  instance.__mpxProxy.created()
-  // react数据响应组件更新管理器
-  instance.__adm = {
+  const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.created()
+  Object.assign(proxy, {
     onStoreChange: null,
     // eslint-disable-next-line symbol-description
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
-      if (!instance.effect) {
-        createEffect(instance, components)
+      if (!proxy.effect) {
+        createEffect(proxy, components)
         // eslint-disable-next-line symbol-description
-        instance.__adm.stateVersion = Symbol()
+        proxy.stateVersion = Symbol()
       }
-      instance.__adm.onStoreChange = onStoreChange
+      proxy.onStoreChange = onStoreChange
       return () => {
-        instance.effect && instance.effect.stop()
-        instance.effect = null
-        instance.__adm.onStoreChange = null
+        proxy.effect && proxy.effect.stop()
+        proxy.effect = null
+        proxy.onStoreChange = null
       }
     },
     getSnapshot: () => {
-      return instance.__adm.stateVersion
+      return proxy.stateVersion
     }
-  }
-
-  if (!instance.effect) {
-    createEffect(instance, components)
+  })
+  // react数据响应组件更新管理器
+  if (!proxy.effect) {
+    createEffect(proxy, components)
   }
 
   return instance
@@ -114,29 +117,31 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
+    const proxy = instance.__mpxProxy
     // 处理props更新
     Object.keys(props).forEach(key => {
       if (hasOwn(validProps, key) && !isFunction(props[key])) {
         instance[key] = props[key]
       }
     })
+    proxy.propsUpdated()
 
     useEffect(() => {
-      if (instance.__mpxProxy && instance.__mpxProxy.isMounted()) {
-        instance.__mpxProxy.callHook(BEFOREUPDATE)
-        instance.__mpxProxy.callHook(UPDATED)
+      if (proxy.isMounted()) {
+        proxy.callHook(BEFOREUPDATE)
+        proxy.callHook(UPDATED)
       }
     })
 
     useEffect(() => {
-      if (instance.__mpxProxy) instance.__mpxProxy.mounted()
+      proxy.mounted()
       return () => {
-        if (instance.__mpxProxy) instance.__mpxProxy.unmounted()
+        proxy.unmounted()
       }
     }, [])
 
-    useSyncExternalStore(instance.__adm.subscribe, instance.__adm.getSnapshot)
+    useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return instance.effect.run()
+    return proxy.effect.run()
   })
 }
