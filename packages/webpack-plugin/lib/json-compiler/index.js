@@ -245,30 +245,6 @@ module.exports = function (content) {
   }
 
   const dependencyComponentsMap = {}
-  const runtimeComponentMap = {}
-
-  const collectRuntimeComponents = (name, componentPath, queryObj) => {
-    if (!isApp && mpx.checkIsRuntimeMode(componentPath, queryObj)) {
-      const moduleId = 'm' + mpx.pathHash(componentPath)
-      runtimeComponentMap[name] = moduleId
-      return moduleId
-    }
-  }
-
-  // todo 后续下掉
-  const injectRuntimeComponents2Script = () => {
-    if (!isEmptyObject(runtimeComponentMap)) {
-      const resultSource = `
-        global.currentInject.getRuntimeModules = function () {
-          return ${JSON.stringify(runtimeComponentMap)}
-        }
-      `
-      this.emitFile(resourcePath, '', undefined, {
-        skipEmit: true,
-        extractedResultSource: resultSource
-      })
-    }
-  }
 
   const processComponents = (components, context, callback) => {
     if (components) {
@@ -280,15 +256,7 @@ module.exports = function (content) {
           }
           if (err) return callback(err)
           components[name] = entry
-          // 可以拿到 resourcePath
-          // 缓存 name, hashName 和 resourcePath，后续在 simplify-template 阶段使用
-          // 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
-          /**
-           * resourcePath: { name }
-           */
-          collectRuntimeComponents(name, resourcePath, queryObj)
-          // const moduleId = collectRuntimeComponents(name, _resourcePath)
-          // 运行时组件需要 hashName
+          // todo: 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
           if (runtimeCompile) {
             const moduleId = 'm' + mpx.pathHash(resourcePath)
             delete components[name]
@@ -320,10 +288,7 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, () => {
-        injectRuntimeComponents2Script()
-        callback()
-      })
+      }, callback)
     } else {
       callback()
     }

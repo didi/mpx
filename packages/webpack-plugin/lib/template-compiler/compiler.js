@@ -2054,13 +2054,6 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
-function processRuntime (el, options) {
-  // const isDynamic = isRuntimeComponentNode(el, options)
-  // if (isDynamic) {
-  //   el.dynamic = isDynamic
-  // }
-}
-
 // 处理wxs注入逻辑
 function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
@@ -2087,7 +2080,6 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
-  // processRuntime(el, options)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2182,12 +2174,6 @@ function postProcessRuntime (el, options, meta) {
   }
   const isCustomComponent = isComponentNode(el, options)
 
-  // todo 下掉
-  // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
-  // if (!options.runtimeCompile && el.dynamic) {
-  //   addIfBlock(el, '__mpxDynamicLoaded')
-  // }
-
   // 运行时的组件收集节点信息
   if (options.runtimeCompile) {
     if (!meta.runtimeInfo) {
@@ -2200,22 +2186,6 @@ function postProcessRuntime (el, options, meta) {
     // 按需收集节点属性信息，存储到 meta 后到外层处理
     setBaseWxml(el, { mode, isCustomComponent }, meta)
   }
-}
-
-function addIfBlock (el, ifCondition) {
-  const blockNode = createASTElement('block', [{
-    name: config[mode].directive.if,
-    value: `{{ ${ifCondition} }}`
-  }], el.parent)
-  blockNode.if = {
-    raw: `{{ ${ifCondition} }}`,
-    exp: ifCondition
-  }
-  const nodeIndex = el.parent.children.findIndex(item => item === el)
-  const oldParent = el.parent
-  el.parent = blockNode
-  blockNode.children.push(el)
-  oldParent.children.splice(nodeIndex, 1, blockNode)
 }
 
 function postProcessAtMode (el) {

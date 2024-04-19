@@ -26,21 +26,6 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
 
     this.mergeTemplateUsingComponents(mpx)
 
-    // if (!mpx.runtimeInfo[this.packageName]) {
-    //   mpx.runtimeInfo[this.packageName] = {
-    //     resourceHashNameMap: {},
-    //     baseComponents: {},
-    //     normalComponents: {
-    //       'block': {} // 默认增加block节点，防止根节点渲染失败
-    //     },
-    //     runtimeComponents: {}
-    //   }
-    // }
-
-    // this.mergeResourceHashNameMap(mpx)
-    // // 属性的收集
-    // this.mergeComponentAttrs(mpx)
-
     return callback()
   }
 
@@ -56,23 +41,6 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
       }
     })
   }
-
-  // mergeComponentAttrs (mpx) {
-  //   const componentTypes = ['baseComponents', 'normalComponents', 'runtimeComponents']
-  //   componentTypes.forEach(type => {
-  //     const attrsMap = mpx.runtimeInfo[this.packageName][type]
-  //     for (const tag in this[type]) {
-  //       if (!attrsMap[tag]) {
-  //         attrsMap[tag] = {}
-  //       }
-  //       Object.assign(attrsMap[tag], this[type][tag])
-  //     }
-  //   })
-  // }
-
-  // mergeResourceHashNameMap (mpx) {
-  //   Object.assign(mpx.runtimeInfo[this.packageName].resourceHashNameMap, this.resourceHashNameMap)
-  // }
 
   serialize (context) {
     const { write } = context

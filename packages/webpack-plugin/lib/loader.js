@@ -307,7 +307,6 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          isDynamic: isRuntimeMode,
           usingComponents,
           componentPlaceholder
           // componentInfo: JSON.stringify(componentInfo)
@@ -331,8 +330,7 @@ module.exports = function (content) {
               ? { ...queryObj, isStatic: true, issuerResource: addQuery(this.resource, { type: 'styles' }, true) }
               : null,
             moduleId,
-            scoped,
-            isDynamic: isRuntimeMode
+            scoped
           }
           // require style
           output += getRequire('styles', style, extraOptions, i) + '\n'
@@ -348,8 +346,7 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       const extraOptions = {
-        moduleId,
-        isDynamic: isRuntimeMode
+        moduleId
       }
       if (json.src) {
         Object.assign(extraOptions, {

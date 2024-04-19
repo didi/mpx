@@ -22,25 +22,9 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
     mpx.runtimeInfoJson[this.packageName][this.resourcePath] = {}
 
     this.mergeResource(mpx)
-    // this.mergeResourceHashNameMap(mpx)
-    // 属性的收集
-    // this.mergeComponentAttrs(mpx)
 
     return callback()
   }
-
-  // mergeComponentAttrs (mpx) {
-  //   const componentTypes = ['baseComponents', 'normalComponents', 'runtimeComponents']
-  //   componentTypes.forEach(type => {
-  //     const attrsMap = mpx.runtimeInfo[this.packageName][type]
-  //     for (const tag in this[type]) {
-  //       if (!attrsMap[tag]) {
-  //         attrsMap[tag] = {}
-  //       }
-  //       Object.assign(attrsMap[tag], this[type][tag])
-  //     }
-  //   })
-  // }
 
   mergeResource(mpx) {
     for (let resourcePath in this.usingComponents) {
@@ -54,10 +38,6 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
       }
     }
   }
-
-  // mergeResourceHashNameMap (mpx) {
-  //   Object.assign(mpx.runtimeInfo[this.packageName].resourceHashNameMap, this.resourceHashNameMap)
-  // }
 
   serialize (context) {
     const { write } = context

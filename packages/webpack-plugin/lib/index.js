@@ -1634,7 +1634,7 @@ try {
         }
 
         if (matchCondition(resourcePath, this.options.dynamic)){
-          createData.resource = addQuery(createData.resource, { dynamic: true })
+          createData.resource = addQuery(createData.resource, { isDynamic: true })
         }
 
         if (mpx.mode === 'web') {
