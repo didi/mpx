@@ -20,11 +20,9 @@ const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDepen
 const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
-const resolve = require('./utils/resolve')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
-const isEmptyObject = require('./utils/is-empty-object')
 
 module.exports = function (content) {
   this.cacheable()
@@ -54,7 +52,6 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const isRuntimeMode = checkIsRuntimeMode(resourcePath)
 
   const emitWarning = (msg) => {
@@ -110,8 +107,6 @@ module.exports = function (content) {
   let output = ''
   const callback = this.async()
 
-  const componentInfo = {}
-
   async.waterfall([
     (callback) => {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
@@ -119,43 +114,6 @@ module.exports = function (content) {
         if (parts.json) parts.json.content = content
         callback()
       })
-    },
-    (callback) => {
-      if (!isApp && parts.json && parts.json.content) {
-        const content = JSON5.parse(parts.json.content)
-        const usingComponents = content.usingComponents || {}
-        const usingRuntimeComponents = Object.keys(usingComponents).reduce((preValue, name) => {
-          if (checkIsRuntimeMode(usingComponents[name])) {
-            preValue[name] = usingComponents[name]
-          }
-          return preValue
-        }, {})
-
-        let needMapComponents = null
-        if (!isRuntimeMode) {
-          if (isEmptyObject(usingRuntimeComponents)) {
-            return callback()
-          } else {
-            needMapComponents = usingRuntimeComponents
-          }
-        } else {
-          needMapComponents = usingComponents
-        }
-
-        async.eachOf(needMapComponents, (component, name, callback) => {
-          resolve(loaderContext.context, component, loaderContext, (err, resource) => {
-            if (err) return callback(err)
-            componentInfo[name] = {
-              isRuntimeMode: checkIsRuntimeMode(resource),
-              hashName: 'm' + mpx.pathHash(resource),
-              resourcePath: resource
-            }
-            callback()
-          })
-        }, callback)
-      } else {
-        callback()
-      }
     },
     (callback) => {
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
@@ -350,9 +308,10 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
+          isDynamic: isRuntimeMode,
           usingComponents,
-          componentPlaceholder,
-          componentInfo: JSON.stringify(componentInfo)
+          componentPlaceholder
+          // componentInfo: JSON.stringify(componentInfo)
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
@@ -373,7 +332,8 @@ module.exports = function (content) {
               ? { ...queryObj, isStatic: true, issuerResource: addQuery(this.resource, { type: 'styles' }, true) }
               : null,
             moduleId,
-            scoped
+            scoped,
+            isDynamic: isRuntimeMode
           }
           // require style
           output += getRequire('styles', style, extraOptions, i) + '\n'
@@ -389,7 +349,8 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       const extraOptions = {
-        moduleId
+        moduleId,
+        isDynamic: isRuntimeMode
       }
       if (json.src) {
         Object.assign(extraOptions, {

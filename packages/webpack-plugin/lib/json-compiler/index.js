@@ -12,6 +12,7 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const checkIsRuntimeMode = require('../utils/check-is-runtime')
@@ -49,7 +50,7 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-  const runtimeCompile = checkIsRuntimeMode(resourcePath)
+  const runtimeCompile = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -185,7 +186,7 @@ module.exports = function (content) {
     // }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     if (isMpxCustomElement) {
-      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
+      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMapNew(packageName))
     }
   }
 
@@ -244,6 +245,7 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
   }
 
+  const dependencyComponentsMap = {}
   const runtimeComponentMap = {}
 
   const collectRuntimeComponents = (name, componentPath) => {
@@ -292,6 +294,8 @@ module.exports = function (content) {
             const moduleId = 'm' + mpx.pathHash(resourcePath)
             delete components[name]
             components[moduleId] = entry
+
+            dependencyComponentsMap[resourcePath] = name
           }
           if (tarRoot) {
             if (placeholder) {
@@ -751,7 +755,8 @@ module.exports = function (content) {
         processGenerics(json.componentGenerics, this.context, callback)
       },
       (callback) => {
-        if (checkIsRuntimeMode(resourcePath)) {
+        if (runtimeCompile) {
+          this._module.addPresentationalDependency(new RecordJsonRuntimeInfoDependency(packageName, resourcePath, dependencyComponentsMap))
           fillMpxCustomElement()
         }
         callback()

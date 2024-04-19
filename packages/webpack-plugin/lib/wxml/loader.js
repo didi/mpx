@@ -31,7 +31,7 @@ module.exports = function (content) {
 
   const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
-  // if (checkIsRuntimeMode(resourcePath)) {
+  // if (queryObj.isDynamic) {
   //   return 'module.exports = ' + JSON.stringify(content)
   // }
 

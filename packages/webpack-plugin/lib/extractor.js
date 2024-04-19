@@ -19,7 +19,10 @@ module.exports.pitch = async function (remainingRequest) {
   const issuerResource = queryObj.issuerResource
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
+  // todo isDynamic，在这里替换 json 的 hashName 配置？这样
+  // isDynamic
 
   if (needBabel) {
     // 创建js request应用babel
@@ -104,6 +107,7 @@ module.exports.pitch = async function (remainingRequest) {
         type,
         moduleId,
         resourcePath,
+        packageName,
         index: 0
       }
     })

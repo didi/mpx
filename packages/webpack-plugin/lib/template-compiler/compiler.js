@@ -1673,9 +1673,9 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function isRuntimeComponentNode (el, options) {
-  return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
-}
+// function isRuntimeComponentNode (el, options) {
+//   return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
+// }
 
 function processAliExternalClassesHack (el, options) {
   const isComponent = isComponentNode(el, options)
@@ -2055,10 +2055,10 @@ function processDuplicateAttrsList (el) {
 }
 
 function processRuntime (el, options) {
-  const isDynamic = isRuntimeComponentNode(el, options)
-  if (isDynamic) {
-    el.dynamic = isDynamic
-  }
+  // const isDynamic = isRuntimeComponentNode(el, options)
+  // if (isDynamic) {
+  //   el.dynamic = isDynamic
+  // }
 }
 
 // 处理wxs注入逻辑
@@ -2087,7 +2087,7 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
-  processRuntime(el, options)
+  // processRuntime(el, options)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2190,32 +2190,43 @@ function postProcessRuntime (el, options, meta) {
 
   // 运行时的组件收集节点信息
   if (options.runtimeCompile) {
+    // if (!meta.usingComponents) {
+    //   meta.usingComponents = []
+    // }
+
     if (!meta.runtimeInfo) {
       meta.runtimeInfo = {
         // resourcePath: {
         //   baseNodes: {},
         //   customNodes: {}
         // },
-        resourceHashNameMap: {},
+        // resourceHashNameMap: {},
         internalComponents: {},
-        runtimeComponents: {},
-        normalComponents: {},
-        wxs: {}
+        // runtimeComponents: {},
+        // normalComponents: {},
+        customComponents: {},
+        // wxs: {}
       }
     }
 
-    const tag = Object.keys(options.componentInfo).find((key) => {
-      if (mode === 'ali' || mode === 'swan') {
-        return capitalToHyphen(key) === el.tag
-      }
-      return key === el.tag
-    })
-    const componentInfo = options.componentInfo[tag]
-    if (isCustomComponent && componentInfo) {
-      const { hashName, resourcePath } = componentInfo
-      el.aliasTag = hashName
-      meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
-    }
+    // todo 确认替换逻辑
+    // const tag = Object.keys(options.componentInfo).find((key) => {
+    //   if (mode === 'ali' || mode === 'swan') {
+    //     return capitalToHyphen(key) === el.tag
+    //   }
+    //   return key === el.tag
+    // })
+
+    // if (isCustomComponent) {
+    //   meta.usingComponents.push(el.tag)
+    // }
+
+    // const componentInfo = options.componentInfo[tag]
+    // if (isCustomComponent && componentInfo) {
+    //   const { hashName, resourcePath } = componentInfo
+    //   el.aliasTag = hashName
+    //   meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
+    // }
 
     // 按需收集节点属性信息，存储到 meta 后到外层处理
     setBaseWxml(el, { mode, isCustomComponent }, meta)

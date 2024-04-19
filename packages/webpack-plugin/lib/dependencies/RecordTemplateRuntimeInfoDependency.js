@@ -2,7 +2,7 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordTemplateRuntimeInfoDependency extends NullDependency {
-  constructor (packageName, resourcePath, { resourceHashNameMap, runtimeComponents, normalComponents, internalComponents, wxs } = {}) {
+  constructor (packageName, resourcePath, { resourceHashNameMap, runtimeComponents, normalComponents, internalComponents, wxs, customComponents } = {}) {
     super()
     this.packageName = packageName
     this.resourcePath = resourcePath
@@ -10,7 +10,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     this.runtimeComponents = runtimeComponents
     this.normalComponents = normalComponents
     this.internalComponents = internalComponents
-    this.wxs = wxs
+    this.customComponents = customComponents
   }
 
   get type () {
@@ -19,6 +19,16 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
+    if (!mpx.runtimeInfoTemplate[this.packageName]) {
+      mpx.runtimeInfoTemplate[this.packageName] = {}
+    }
+    mpx.runtimeInfoTemplate[this.packageName][this.resourcePath] = {
+      internalComponents: {},
+      customComponents: {}
+    }
+
+    this.mergeTemplateUsingComponents(mpx)
+
     if (!mpx.runtimeInfo[this.packageName]) {
       mpx.runtimeInfo[this.packageName] = {
         resourceHashNameMap: {},
@@ -26,23 +36,29 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
         normalComponents: {
           'block': {} // 默认增加block节点，防止根节点渲染失败
         },
-        runtimeComponents: {},
-        wxs: new Set()
+        runtimeComponents: {}
       }
     }
 
     this.mergeResourceHashNameMap(mpx)
+    // 属性的收集
     this.mergeComponentAttrs(mpx)
-    // this.mergeWxs(mpx)
 
     return callback()
   }
 
-  // mergeWxs (mpx) {
-  //   if (this.wxs.length) {
-  //     this.wxs.forEach(item => mpx.runtimeInfo[this.packageName].wxs.add(item))
-  //   }
-  // }
+  mergeTemplateUsingComponents(mpx) {
+    const componentTypes = ['internalComponents', 'customComponents']
+    componentTypes.forEach(type => {
+      const attrsMap = mpx.runtimeInfoTemplate[this.packageName][this.resourcePath][type]
+      for (const tag in this[type]) {
+        if (!attrsMap[tag]) {
+          attrsMap[tag] = {}
+        }
+        Object.assign(attrsMap[tag], this[type][tag])
+      }
+    })
+  }
 
   mergeComponentAttrs (mpx) {
     const componentTypes = ['internalComponents', 'normalComponents', 'runtimeComponents']
@@ -69,6 +85,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     write(this.runtimeComponents)
     write(this.normalComponents)
     write(this.internalComponents)
+    write(this.customComponents)
     super.serialize(context)
   }
 
@@ -80,6 +97,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     this.runtimeComponents = read()
     this.normalComponents = read()
     this.internalComponents = read()
+    this.customComponents = read()
     super.deserialize(context)
   }
 }

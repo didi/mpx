@@ -42,6 +42,7 @@ const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
 const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
+const RecordJsonRuntimeInfoDependency = require('./dependencies/RecordJsonRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const fixRelative = require('./utils/fix-relative')
@@ -585,6 +586,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
+
+      compilation.dependencyFactories.set(RecordJsonRuntimeInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordJsonRuntimeInfoDependency, new RecordJsonRuntimeInfoDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -1073,12 +1077,16 @@ class MpxWebpackPlugin {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
           for (const [filename, { extractedInfo } = {}] of assetsInfo) {
             if (extractedInfo) {
-              const { moduleId, type, content, dynamic } = extractedInfo
+              const { moduleId, type, content, dynamic, resourcePath, packageName } = extractedInfo
               if (dynamic) {
                 if (!dynamicAssets[moduleId]) {
                   dynamicAssets[moduleId] = {}
                 }
-                dynamicAssets[moduleId][type] = JSON.parse(content)
+                if (type === 'template') {
+                  dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(JSON.parse(content), packageName, resourcePath)
+                } else {
+                  dynamicAssets[moduleId][type] = JSON.parse(content)
+                }
                 continue
               }
               let extractedAssets = extractedAssetsMap.get(filename)

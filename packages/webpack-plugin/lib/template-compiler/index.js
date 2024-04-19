@@ -3,11 +3,9 @@ const bindThis = require('./bind-this')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
-const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
-
 const { buildTemplate } = require('../runtime-render/template')
 
 module.exports = function (raw) {
@@ -33,9 +31,9 @@ module.exports = function (raw) {
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
+  const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
-  const runtimeCompile = checkIsRuntimeMode(resourcePath)
-  const componentInfo = JSON.parse(queryObj.componentInfo || '{}')
+  // const componentInfo = JSON.parse(queryObj.componentInfo || '{}')
   const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0
@@ -60,13 +58,13 @@ module.exports = function (raw) {
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
     raw = '<template is="t_0_container" wx:if="{{r && r.nt}}" data="{{ i: r }}"></template>\n'
-    raw += buildTemplate(mode, mpx.runtimeInfo[packageName])
+    raw += buildTemplate(mode, mpx.getPackageInjectedTemplateConfig(packageName))
   }
 
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
-    componentInfo,
+    // componentInfo,
     runtimeCompile,
     usingComponents,
     componentPlaceholder,
@@ -209,7 +207,8 @@ global.currentInject.getRefsData = function () {
       extractedDynamicAsset: JSON.stringify(simpleAst)
     })
     return '<template is="mpx_tmpl" data="{{ r: r }}"></template><template name="mpx_tmpl"><element r="{{r}}" wx:if="{{r}}"></element></template>'
-    // return '<import src="/${packageName}/mpx-custom-element-dynamic.wxml" /><template is="tmpl_0_container" data="{{ i: r }}" wx:if="{{r && r.nodeType}}"></template>'
+    // todo
+    // return `<import src="/${packageName}/mpx-custom-element-dynamic.wxml" /><template is="tmpl_0_container" data="{{ i: r }}" wx:if="{{r && r.nodeType}}"></template>`
   }
 
   return result
