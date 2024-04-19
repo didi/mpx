@@ -59,7 +59,7 @@ module.exports = class RuntimeRenderPlugin {
 
         mpx.getPackageInjectedTemplateConfig = function (packageName = 'main') {
           const res = {
-            internalComponents: {
+            baseComponents: {
               block: {}
             },
             runtimeComponents: {},
@@ -69,7 +69,7 @@ module.exports = class RuntimeRenderPlugin {
           const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
 
           for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
-            const { customComponents = {}, internalComponents = {}} = mpx.runtimeInfoTemplate[packageName][resourcePath]
+            const { customComponents = {}, baseComponents = {}} = mpx.runtimeInfoTemplate[packageName][resourcePath]
             const componentsJsonConfig = runtimeInfoJson[resourcePath]
 
             // 合并自定义组件的属性
@@ -93,12 +93,12 @@ module.exports = class RuntimeRenderPlugin {
             }
 
             // 合并基础节点的属性
-            for (const componentName in internalComponents) {
-              const attrsMap = internalComponents[componentName]
-              if (!res.internalComponents[componentName]) {
-                res.internalComponents[componentName] = {}
+            for (const componentName in baseComponents) {
+              const attrsMap = baseComponents[componentName]
+              if (!res.baseComponents[componentName]) {
+                res.baseComponents[componentName] = {}
               }
-              Object.assign(res.internalComponents[componentName], attrsMap)
+              Object.assign(res.baseComponents[componentName], attrsMap)
             }
           }
 

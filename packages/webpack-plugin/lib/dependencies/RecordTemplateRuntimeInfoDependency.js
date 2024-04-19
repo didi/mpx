@@ -2,14 +2,11 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordTemplateRuntimeInfoDependency extends NullDependency {
-  constructor (packageName, resourcePath, { resourceHashNameMap, runtimeComponents, normalComponents, internalComponents, wxs, customComponents } = {}) {
+  constructor (packageName, resourcePath, { baseComponents, customComponents } = {}) {
     super()
     this.packageName = packageName
     this.resourcePath = resourcePath
-    this.resourceHashNameMap = resourceHashNameMap
-    this.runtimeComponents = runtimeComponents
-    this.normalComponents = normalComponents
-    this.internalComponents = internalComponents
+    this.baseComponents = baseComponents
     this.customComponents = customComponents
   }
 
@@ -23,32 +20,32 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
       mpx.runtimeInfoTemplate[this.packageName] = {}
     }
     mpx.runtimeInfoTemplate[this.packageName][this.resourcePath] = {
-      internalComponents: {},
+      baseComponents: {},
       customComponents: {}
     }
 
     this.mergeTemplateUsingComponents(mpx)
 
-    if (!mpx.runtimeInfo[this.packageName]) {
-      mpx.runtimeInfo[this.packageName] = {
-        resourceHashNameMap: {},
-        internalComponents: {},
-        normalComponents: {
-          'block': {} // 默认增加block节点，防止根节点渲染失败
-        },
-        runtimeComponents: {}
-      }
-    }
+    // if (!mpx.runtimeInfo[this.packageName]) {
+    //   mpx.runtimeInfo[this.packageName] = {
+    //     resourceHashNameMap: {},
+    //     baseComponents: {},
+    //     normalComponents: {
+    //       'block': {} // 默认增加block节点，防止根节点渲染失败
+    //     },
+    //     runtimeComponents: {}
+    //   }
+    // }
 
-    this.mergeResourceHashNameMap(mpx)
-    // 属性的收集
-    this.mergeComponentAttrs(mpx)
+    // this.mergeResourceHashNameMap(mpx)
+    // // 属性的收集
+    // this.mergeComponentAttrs(mpx)
 
     return callback()
   }
 
   mergeTemplateUsingComponents(mpx) {
-    const componentTypes = ['internalComponents', 'customComponents']
+    const componentTypes = ['baseComponents', 'customComponents']
     componentTypes.forEach(type => {
       const attrsMap = mpx.runtimeInfoTemplate[this.packageName][this.resourcePath][type]
       for (const tag in this[type]) {
@@ -60,31 +57,28 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     })
   }
 
-  mergeComponentAttrs (mpx) {
-    const componentTypes = ['internalComponents', 'normalComponents', 'runtimeComponents']
-    componentTypes.forEach(type => {
-      const attrsMap = mpx.runtimeInfo[this.packageName][type]
-      for (const tag in this[type]) {
-        if (!attrsMap[tag]) {
-          attrsMap[tag] = {}
-        }
-        Object.assign(attrsMap[tag], this[type][tag])
-      }
-    })
-  }
+  // mergeComponentAttrs (mpx) {
+  //   const componentTypes = ['baseComponents', 'normalComponents', 'runtimeComponents']
+  //   componentTypes.forEach(type => {
+  //     const attrsMap = mpx.runtimeInfo[this.packageName][type]
+  //     for (const tag in this[type]) {
+  //       if (!attrsMap[tag]) {
+  //         attrsMap[tag] = {}
+  //       }
+  //       Object.assign(attrsMap[tag], this[type][tag])
+  //     }
+  //   })
+  // }
 
-  mergeResourceHashNameMap (mpx) {
-    Object.assign(mpx.runtimeInfo[this.packageName].resourceHashNameMap, this.resourceHashNameMap)
-  }
+  // mergeResourceHashNameMap (mpx) {
+  //   Object.assign(mpx.runtimeInfo[this.packageName].resourceHashNameMap, this.resourceHashNameMap)
+  // }
 
   serialize (context) {
     const { write } = context
     write(this.packageName)
     write(this.resourcePath)
-    write(this.resourceHashNameMap)
-    write(this.runtimeComponents)
-    write(this.normalComponents)
-    write(this.internalComponents)
+    write(this.baseComponents)
     write(this.customComponents)
     super.serialize(context)
   }
@@ -93,10 +87,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     const { read } = context
     this.packageName = read()
     this.resourcePath = read()
-    this.resourceHashNameMap = read()
-    this.runtimeComponents = read()
-    this.normalComponents = read()
-    this.internalComponents = read()
+    this.baseComponents = read()
     this.customComponents = read()
     super.deserialize(context)
   }

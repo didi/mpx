@@ -15,7 +15,6 @@ const RecordIndependentDependency = require('../dependencies/RecordIndependentDe
 const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const isEmptyObject = require('../utils/is-empty-object')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const normalize = require('../utils/normalize')
@@ -248,8 +247,8 @@ module.exports = function (content) {
   const dependencyComponentsMap = {}
   const runtimeComponentMap = {}
 
-  const collectRuntimeComponents = (name, componentPath) => {
-    if (!isApp && checkIsRuntimeMode(componentPath)) {
+  const collectRuntimeComponents = (name, componentPath, queryObj) => {
+    if (!isApp && mpx.checkIsRuntimeMode(componentPath, queryObj)) {
       const moduleId = 'm' + mpx.pathHash(componentPath)
       runtimeComponentMap[name] = moduleId
       return moduleId
@@ -274,7 +273,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -287,7 +286,7 @@ module.exports = function (content) {
           /**
            * resourcePath: { name }
            */
-          collectRuntimeComponents(name, resourcePath)
+          collectRuntimeComponents(name, resourcePath, queryObj)
           // const moduleId = collectRuntimeComponents(name, _resourcePath)
           // 运行时组件需要 hashName
           if (runtimeCompile) {

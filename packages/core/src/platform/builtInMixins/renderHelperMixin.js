@@ -41,9 +41,9 @@ export default function renderHelperMixin () {
       _r (skipPre, vnode) {
         this.__mpxProxy.renderWithData(skipPre, vnode)
       },
-      _g (moduleId) {
-        const { template = {}, styles = [] } = dynamicComponentsMap[moduleId]
-        const vnodeTree = genVnodeTree(template, [this], styles, moduleId)
+      _g (astData, id) {
+        const { template = {}, styles = [] } = astData
+        const vnodeTree = genVnodeTree(template, [this], styles, id)
         return vnodeTree
       }
     }

@@ -30,7 +30,7 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
   }
 
   // mergeComponentAttrs (mpx) {
-  //   const componentTypes = ['internalComponents', 'normalComponents', 'runtimeComponents']
+  //   const componentTypes = ['baseComponents', 'normalComponents', 'runtimeComponents']
   //   componentTypes.forEach(type => {
   //     const attrsMap = mpx.runtimeInfo[this.packageName][type]
   //     for (const tag in this[type]) {

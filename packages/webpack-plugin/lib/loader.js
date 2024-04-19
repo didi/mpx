@@ -4,7 +4,6 @@ const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
-const checkIsRuntimeMode = require('./utils/check-is-runtime')
 const async = require('async')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
@@ -52,7 +51,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const isRuntimeMode = checkIsRuntimeMode(resourcePath)
+  const isRuntimeMode = mpx.checkIsRuntimeMode(resourcePath, queryObj)
 
   const emitWarning = (msg) => {
     this.emitWarning(

@@ -77,11 +77,11 @@ function setBaseEle (el, options, meta) {
     el.aliasTag = aliasTag
   }
 
-  if (!meta.runtimeInfo.internalComponents[tag]) {
-    meta.runtimeInfo.internalComponents[tag] = {}
+  if (!meta.runtimeInfo.baseComponents[tag]) {
+    meta.runtimeInfo.baseComponents[tag] = {}
   }
 
-  Object.assign(meta.runtimeInfo.internalComponents[tag], renderAttrsMap)
+  Object.assign(meta.runtimeInfo.baseComponents[tag], renderAttrsMap)
 }
 
 module.exports = function setBaseWxml (el, options, meta) {

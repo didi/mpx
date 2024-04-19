@@ -2184,49 +2184,18 @@ function postProcessRuntime (el, options, meta) {
 
   // todo 下掉
   // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
-  if (!options.runtimeCompile && el.dynamic) {
-    addIfBlock(el, '__mpxDynamicLoaded')
-  }
+  // if (!options.runtimeCompile && el.dynamic) {
+  //   addIfBlock(el, '__mpxDynamicLoaded')
+  // }
 
   // 运行时的组件收集节点信息
   if (options.runtimeCompile) {
-    // if (!meta.usingComponents) {
-    //   meta.usingComponents = []
-    // }
-
     if (!meta.runtimeInfo) {
       meta.runtimeInfo = {
-        // resourcePath: {
-        //   baseNodes: {},
-        //   customNodes: {}
-        // },
-        // resourceHashNameMap: {},
-        internalComponents: {},
-        // runtimeComponents: {},
-        // normalComponents: {},
-        customComponents: {},
-        // wxs: {}
+        baseComponents: {},
+        customComponents: {}
       }
     }
-
-    // todo 确认替换逻辑
-    // const tag = Object.keys(options.componentInfo).find((key) => {
-    //   if (mode === 'ali' || mode === 'swan') {
-    //     return capitalToHyphen(key) === el.tag
-    //   }
-    //   return key === el.tag
-    // })
-
-    // if (isCustomComponent) {
-    //   meta.usingComponents.push(el.tag)
-    // }
-
-    // const componentInfo = options.componentInfo[tag]
-    // if (isCustomComponent && componentInfo) {
-    //   const { hashName, resourcePath } = componentInfo
-    //   el.aliasTag = hashName
-    //   meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
-    // }
 
     // 按需收集节点属性信息，存储到 meta 后到外层处理
     setBaseWxml(el, { mode, isCustomComponent }, meta)

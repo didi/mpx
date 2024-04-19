@@ -6,7 +6,7 @@ const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
-const { buildTemplate } = require('../runtime-render/template')
+const { createTemplateEngine } = require('@mpxjs/template-engine')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -33,7 +33,6 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
-  // const componentInfo = JSON.parse(queryObj.componentInfo || '{}')
   const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0
@@ -58,7 +57,9 @@ module.exports = function (raw) {
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
     raw = '<template is="t_0_container" wx:if="{{r && r.nt}}" data="{{ i: r }}"></template>\n'
-    raw += buildTemplate(mode, mpx.getPackageInjectedTemplateConfig(packageName))
+    const templateEngine = createTemplateEngine(mode)
+    raw += templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
+    return raw
   }
 
   const { root: ast, meta } = compiler.parse(raw, {
@@ -115,7 +116,7 @@ module.exports = function (raw) {
 
   const result = compiler.serialize(ast)
 
-  if (isNative || queryObj.mpxCustomElement) {
+  if (isNative) {
     return result
   }
 
@@ -126,8 +127,9 @@ global.currentInject = {
 
   if (runtimeCompile) {
 resultSource += `
-global.currentInject.render = function(_i, _c, _r, _sc, _g) {
-  _r(false, _g(${moduleIdString}))
+global.currentInject.render = function(_i, _c, _r, _sc, _g, _dr, _d) {
+  const ast = (_dr && typeof _dr === 'function') ? _dr(${moduleIdString}) : _d.getAst(${moduleIdString})
+  _r(false, _g(ast, ${moduleIdString}))
 }
 `
   } else {
