@@ -3,7 +3,6 @@ const bindThis = require('./bind-this')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
-const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
@@ -33,7 +32,7 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
-  const runtimeCompile = checkIsRuntimeMode(resourcePath)
+  const runtimeCompile = mpx.checkIsRuntimeMode(resourcePath, queryObj)
   const componentInfo = JSON.parse(queryObj.componentInfo || '{}')
   const moduleIdString = JSON.stringify(moduleId)
 
@@ -129,8 +128,9 @@ global.currentInject = {
 
   if (runtimeCompile) {
 resultSource += `
-global.currentInject.render = function(_i, _c, _r, _sc, _g) {
-  _r(false, _g(${moduleIdString}))
+global.currentInject.render = function(_i, _c, _r, _sc, _g, _dr, _d) {
+  const ast = (_dr && typeof _dr === 'function') ? _dr(${moduleIdString}) : _d.getAst(${moduleIdString})
+  _r(false, _g(ast, ${moduleIdString}))
 }
 `
   } else {

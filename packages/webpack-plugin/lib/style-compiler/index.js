@@ -24,7 +24,7 @@ module.exports = function (css, map) {
   const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
-  const runtimeCompile = checkIsRuntimeMode(resourcePath)
+  const runtimeCompile = mpx.checkIsRuntimeMode(resourcePath, queryObj)
 
   const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {

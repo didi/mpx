@@ -4,7 +4,7 @@ import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
-import Mpx from '../index'
+import Mpx, { dynamic } from '../index'
 import {
   noop,
   type,
@@ -571,21 +571,15 @@ export default class MpxProxy {
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
     const _g = this.target._g.bind(this.target)
+    const _dr =  this.target.dynamicRender?.bind(this.target)
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
       }
-
-      // const ast = this.target.dynamicRender?.() || this.getTplAst(this.moduleId)
-
-      // if (ast) {
-      //   return _r(_g(ast))
-      // }
-
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender(_i, _c, _r, _sc, _g)
+          return this.target.__injectedRender(_i, _c, _r, _sc, _g, _dr, dynamic)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()

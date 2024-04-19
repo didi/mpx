@@ -178,6 +178,7 @@ class MpxWebpackPlugin {
     options.retryRequireAsync = options.retryRequireAsync || false
     options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
+    options.dynamic = options.dynamic || {}// 运行时组件配置
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -676,6 +677,10 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
+          checkIsRuntimeMode: (resource, queryObj) => {
+            // console.log(resource, queryObj && queryObj.dynamic);
+            return (queryObj && queryObj.dynamic) || matchCondition(resource, this.options.dynamic)
+          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1565,7 +1570,7 @@ try {
 
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
-        const { queryObj } = parseRequest(createData.request)
+        const { queryObj, resourcePath } = parseRequest(createData.request)
         const loaders = createData.loaders
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
@@ -1618,6 +1623,10 @@ try {
             })
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
+        }
+
+        if (matchCondition(resourcePath, this.options.dynamic)){
+          createData.resource = addQuery(createData.resource, { dynamic: true })
         }
 
         if (mpx.mode === 'web') {

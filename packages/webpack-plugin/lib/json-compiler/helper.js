@@ -100,7 +100,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       callback(null, entry, {
         tarRoot,
         placeholder,
-        resourcePath
+        resourcePath,
+        queryObj
       })
     })
   }

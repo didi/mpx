@@ -2184,9 +2184,9 @@ function postProcessRuntime (el, options, meta) {
 
   // todo 下掉
   // 非运行时组件/页面当中使用了运行时组件，使用 if block 包裹
-  if (!options.runtimeCompile && el.dynamic) {
-    addIfBlock(el, '__mpxDynamicLoaded')
-  }
+  // if (!options.runtimeCompile && el.dynamic) {
+  //   addIfBlock(el, '__mpxDynamicLoaded')
+  // }
 
   // 运行时的组件收集节点信息
   if (options.runtimeCompile) {

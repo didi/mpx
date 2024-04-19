@@ -4,7 +4,6 @@ const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
-const checkIsRuntimeMode = require('./utils/check-is-runtime')
 const async = require('async')
 const processJSON = require('./web/processJSON')
 const processScript = require('./web/processScript')
@@ -55,7 +54,7 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
-  const isRuntimeMode = checkIsRuntimeMode(resourcePath)
+  const isRuntimeMode = mpx.checkIsRuntimeMode(resourcePath, queryObj)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -124,31 +123,17 @@ module.exports = function (content) {
       if (!isApp && parts.json && parts.json.content) {
         const content = JSON5.parse(parts.json.content)
         const usingComponents = content.usingComponents || {}
-        const usingRuntimeComponents = Object.keys(usingComponents).reduce((preValue, name) => {
-          if (checkIsRuntimeMode(usingComponents[name])) {
-            preValue[name] = usingComponents[name]
-          }
-          return preValue
-        }, {})
-
-        let needMapComponents = null
-        if (!isRuntimeMode) {
-          if (isEmptyObject(usingRuntimeComponents)) {
-            return callback()
-          } else {
-            needMapComponents = usingRuntimeComponents
-          }
-        } else {
-          needMapComponents = usingComponents
-        }
-
-        async.eachOf(needMapComponents, (component, name, callback) => {
+        async.eachOf(usingComponents, (component, name, callback) => {
           resolve(loaderContext.context, component, loaderContext, (err, resource) => {
             if (err) return callback(err)
-            componentInfo[name] = {
-              isRuntimeMode: checkIsRuntimeMode(resource),
-              hashName: 'm' + mpx.pathHash(resource),
-              resourcePath: resource
+            const { queryObj } = parseRequest(resource)
+            const isRunTimeComponent = mpx.checkIsRuntimeMode(resource, queryObj)
+            if (isRuntimeMode || isRunTimeComponent) {
+              componentInfo[name] = {
+                isRuntimeMode: isRunTimeComponent,
+                hashName: 'm' + mpx.pathHash(resource),
+                resourcePath: resource
+              }
             }
             callback()
           })

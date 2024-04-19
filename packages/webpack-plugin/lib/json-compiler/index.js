@@ -14,7 +14,6 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const checkIsRuntimeMode = require('../utils/check-is-runtime')
 const isEmptyObject = require('../utils/is-empty-object')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const normalize = require('../utils/normalize')
@@ -49,7 +48,7 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-  const runtimeCompile = checkIsRuntimeMode(resourcePath)
+  const runtimeCompile = mpx.checkIsRuntimeMode(resourcePath, queryObj)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -246,8 +245,8 @@ module.exports = function (content) {
 
   const runtimeComponentMap = {}
 
-  const collectRuntimeComponents = (name, componentPath) => {
-    if (!isApp && checkIsRuntimeMode(componentPath)) {
+  const collectRuntimeComponents = (name, componentPath, queryObj) => {
+    if (!isApp && mpx.checkIsRuntimeMode(componentPath, queryObj)) {
       const moduleId = 'm' + mpx.pathHash(componentPath)
       runtimeComponentMap[name] = moduleId
       return moduleId
@@ -272,7 +271,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -285,7 +284,7 @@ module.exports = function (content) {
           /**
            * resourcePath: { name }
            */
-          collectRuntimeComponents(name, resourcePath)
+          collectRuntimeComponents(name, resourcePath, queryObj)
           // const moduleId = collectRuntimeComponents(name, _resourcePath)
           // 运行时组件需要 hashName
           if (runtimeCompile) {
@@ -751,7 +750,7 @@ module.exports = function (content) {
         processGenerics(json.componentGenerics, this.context, callback)
       },
       (callback) => {
-        if (checkIsRuntimeMode(resourcePath)) {
+        if (mpx.checkIsRuntimeMode(resourcePath, queryObj)) {
           fillMpxCustomElement()
         }
         callback()

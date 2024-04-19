@@ -60,6 +60,8 @@ export {
 
 export { getMixin } from './core/mergeOptions'
 
+export { dynamic } from './runtime/astCache' 
+
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
 }
