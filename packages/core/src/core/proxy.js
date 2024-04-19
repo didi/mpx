@@ -124,6 +124,8 @@ export default class MpxProxy {
       this.forceUpdateAll = false
       this.currentRenderTask = null
       this.propsUpdatedFlag = false
+      // react专用，正确触发updated钩子
+      this.pendingUpdatedFlag = false
     }
     this.initApi()
   }

@@ -12,6 +12,10 @@ function createEffect (proxy, components) {
     if (proxy.propsUpdatedFlag) {
       proxy.updatePreRender()
     }
+    if (proxy.isMounted()) {
+      proxy.callHook(BEFOREUPDATE)
+      proxy.pendingUpdatedFlag = true
+    }
     // eslint-disable-next-line symbol-description
     proxy.stateVersion = Symbol()
     proxy.onStoreChange && proxy.onStoreChange()
@@ -127,8 +131,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     proxy.propsUpdated()
 
     useEffect(() => {
-      if (proxy.isMounted()) {
-        proxy.callHook(BEFOREUPDATE)
+      if (proxy.pendingUpdatedFlag) {
+        proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }
     })
