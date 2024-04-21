@@ -46,7 +46,13 @@ module.exports = function getSpec ({ warn, error }) {
     borderStyle: 0,
     borderColor: 0
   }
-  
+
+  const shadowMap  = {
+    shadowOffset: ['width', 'height'],
+    shadowRadius: 0,
+    shadowColor: 0
+  }
+  // todo: check 此处看起来是完全依赖shadowMap里面的map属性的编写顺序？
   const formatAbbreviation = ({ prop, value, keyMap }) => {
     const values = value.trim().split(/\s+/)
     let idx = 0
@@ -112,6 +118,13 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'border',
         react ({ prop, value }) { // 仅支持 width | style | color 这种排序
           return formatAbbreviation({ prop, value, keyMap: borderMap })
+        }
+      },
+      {
+        text: 'box-shadow',
+        react ({ prop, value}) { // offset-x | offset-y | blur-radius | color
+          // TODO 还需要基于Andorid/iOS平台来进行区分编写，后续补齐
+          return formatAbbreviation({ prop, value, keyMap: shadowMap })
         }
       }
     ]
