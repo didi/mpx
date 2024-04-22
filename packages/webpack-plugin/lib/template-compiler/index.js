@@ -123,8 +123,8 @@ global.currentInject = {
   moduleId: ${moduleIdString}
 };\n`
 
-  if(runtimeCompile){
-    resultSource += `global.currentInject.dynamic = true`
+  if (runtimeCompile) {
+    resultSource += 'global.currentInject.dynamic = true'
   }
 
   const rawCode = runtimeCompile ? '' : compiler.genNode(ast)

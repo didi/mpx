@@ -571,7 +571,7 @@ export default class MpxProxy {
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
     const _g = this.target._g.bind(this.target)
-    const _dr =  this.target.dynamicRender?.bind(this.target)
+    const _getAst = this.target._getAst?.bind(this.target)
     const moduleId = this.target.__moduleId
     const dynamicTarget = this.target.__dynamic
 
@@ -580,8 +580,8 @@ export default class MpxProxy {
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
       }
-      if (dynamicTarget || _dr) {
-        const ast = (_dr && typeof _dr === 'function') ? _dr() : dynamic.getAst(moduleId)
+      if (dynamicTarget || _getAst) {
+        const ast = (_getAst && isFunction(_getAst)) ? _dr() : dynamic.getAst(moduleId)
         return _r(false, _g(ast, moduleId))
       }
       if (this.target.__injectedRender) {
