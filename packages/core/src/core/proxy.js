@@ -581,7 +581,7 @@ export default class MpxProxy {
         this.updatePreRender()
       }
       if (dynamicTarget || _getAst) {
-        const ast = (_getAst && isFunction(_getAst)) ? _dr() : dynamic.getAst(moduleId)
+        const ast = (_getAst && isFunction(_getAst)) ? _getAst() : dynamic.getAst(moduleId)
         return _r(false, _g(ast, moduleId))
       }
       if (this.target.__injectedRender) {
