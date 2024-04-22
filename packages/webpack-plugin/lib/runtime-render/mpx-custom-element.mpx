@@ -17,7 +17,7 @@ createComponent({
     r: { // vdom 数据
       type: Object,
       value: {
-        nodeType: 'block'
+        nt: 'block'
       }
     }
   },

@@ -10,7 +10,6 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
-// import runtimeModulesMixin from './runtimeModulesMixin'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
@@ -41,7 +40,6 @@ export default function getBuiltInMixins (options, type) {
         renderHelperMixin(),
         showMixin(type),
         i18nMixin(),
-        // runtimeModulesMixin()
       ])
     }
   }

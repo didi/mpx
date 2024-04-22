@@ -101,11 +101,21 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
-    if (currentInject.getRuntimeModules) {
+    if (currentInject.moduleId) {
       Object.defineProperties(context, {
-        __getRuntimeModules: {
+        __moduleId: {
           get () {
-            return currentInject.getRuntimeModules
+            return currentInject.moduleId
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.dynamic) {
+      Object.defineProperties(context, {
+        __dynamic: {
+          get () {
+            return currentInject.dynamic
           },
           configurable: false
         }

@@ -1,6 +1,5 @@
 import { getByPath, hasOwn, isObject } from '@mpxjs/utils'
 import genVnodeTree from '../../vnode/render'
-import dynamicComponentsMap from '../../vnode/staticMap'
 
 export default function renderHelperMixin () {
   return {

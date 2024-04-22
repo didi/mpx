@@ -41,7 +41,7 @@ module.exports = class RuntimeRenderPlugin {
         // 注入到 mpx-custom-element-*.json 里面的组件路径
         mpx.getPackageInjectedComponentsMap = function (packageName = 'main') {
           const res = {}
-          const componentsMap = Object.values(mpx.componentsMap).reduce((preVal, curVal) => Object.assign(preVal, curVal), {})
+          const componentsMap = mpx.componentsMap[packageName]
           const resourceHashNameMap = mpx.runtimeInfo[packageName].resourceHashNameMap
           const outputPath = compilation.outputOptions.publicPath || ''
           for (const path in resourceHashNameMap) {
