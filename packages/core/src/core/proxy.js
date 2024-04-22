@@ -571,15 +571,22 @@ export default class MpxProxy {
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
     const _g = this.target._g.bind(this.target)
-    const _dr = this.target.dynamicRender?.bind(this.target)
+    const _getAst = this.target._getAst?.bind(this.target)
+    const moduleId = this.target.__moduleId
+    const dynamicTarget = this.target.__dynamic
+
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
       }
+      if (dynamicTarget || _getAst) {
+        const ast = (_getAst && isFunction(_getAst)) ? _getAst() : dynamic.getAst(moduleId)
+        return _r(false, _g(ast, moduleId))
+      }
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender(_i, _c, _r, _sc, _g, _dr, dynamic)
+          return this.target.__injectedRender(_i, _c, _r, _sc, _g)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
