@@ -124,7 +124,7 @@ global.currentInject = {
 };\n`
 
   if(runtimeCompile){
-    resourcePath += `global.currentInject.dynamic = true`
+    resultSource += `global.currentInject.dynamic = true`
   }
 
   const rawCode = runtimeCompile ? '' : compiler.genNode(ast)
