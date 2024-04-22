@@ -13,22 +13,14 @@ function makeAttrsMap (attrKeys = []) {
 }
 
 function setCustomEle (el, options, meta) {
-  // 动态组件不需要被收集
-  // if (el.dynamic) return
   const modeConfig = mpxConfig[options.mode]
   const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
-  // const tag = el.aliasTag || el.tag
   const tag = el.tag
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
-  // const eleAttrsMap = el.dynamic ? meta.runtimeInfo.runtimeComponents : meta.runtimeInfo.normalComponents
   const eleAttrsMap = meta.runtimeInfo.customComponents
-  // const eleAttrsMap = meta.runtimeInfo.normalComponents
   if (tag && !eleAttrsMap[tag]) {
     eleAttrsMap[tag] = {}
-    // if (el.dynamic) {
-    //   attrKeys.push('slots')
-    // }
   }
   Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
 }
@@ -45,6 +37,7 @@ function setBaseEle (el, options, meta) {
   const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
+  // todo: 这部分的逻辑应该收到 template-engine?
   attrKeys.forEach(key => {
     const eventObj = modeConfig.event.parseEvent(key)
     if (eventObj) { // 事件的格式化

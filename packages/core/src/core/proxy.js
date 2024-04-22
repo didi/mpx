@@ -571,7 +571,7 @@ export default class MpxProxy {
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
     const _g = this.target._g.bind(this.target)
-    const _dr =  this.target.dynamicRender?.bind(this.target)
+    const _dr = this.target.dynamicRender?.bind(this.target)
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {

@@ -13,7 +13,6 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
-const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false

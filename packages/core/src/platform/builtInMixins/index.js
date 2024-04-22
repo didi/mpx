@@ -40,7 +40,7 @@ export default function getBuiltInMixins (options, type) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
         showMixin(type),
-        i18nMixin(),
+        i18nMixin()
         // runtimeModulesMixin()
       ])
     }

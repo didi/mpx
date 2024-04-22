@@ -5,6 +5,7 @@ const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
+const getDynamicTemplate = require('../runtime-render/getTemplate')
 const simplifyAstTemplate = require('./simplify-template')
 const { createTemplateEngine } = require('@mpxjs/template-engine')
 
@@ -91,9 +92,6 @@ module.exports = function (raw) {
   })
 
   if (meta.runtimeInfo || runtimeCompile) {
-    // if (meta.wxsModuleMap) {
-    //   meta.runtimeInfo.wxs = Object.keys(meta.wxsModuleMap)
-    // }
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
     // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
@@ -208,9 +206,7 @@ global.currentInject.getRefsData = function () {
       skipEmit: true,
       extractedDynamicAsset: JSON.stringify(simpleAst)
     })
-    return '<template is="mpx_tmpl" data="{{ r: r }}"></template><template name="mpx_tmpl"><element r="{{r}}" wx:if="{{r}}"></element></template>'
-    // todo
-    // return `<import src="/${packageName}/mpx-custom-element-dynamic.wxml" /><template is="tmpl_0_container" data="{{ i: r }}" wx:if="{{r && r.nodeType}}"></template>`
+    return getDynamicTemplate(packageName)
   }
 
   return result

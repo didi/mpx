@@ -26,8 +26,8 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
     return callback()
   }
 
-  mergeResource(mpx) {
-    for (let resourcePath in this.usingComponents) {
+  mergeResource (mpx) {
+    for (const resourcePath in this.usingComponents) {
       const componentName = this.usingComponents[resourcePath]
       const hashName = 'm' + mpx.pathHash(resourcePath)
       const dependencyComponentConfig = mpx.runtimeInfoJson[this.packageName][this.resourcePath]

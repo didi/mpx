@@ -15,7 +15,6 @@ const RecordIndependentDependency = require('../dependencies/RecordIndependentDe
 const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const isEmptyObject = require('../utils/is-empty-object')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
@@ -180,14 +179,13 @@ module.exports = function (content) {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
-    // json.usingComponents = {
-    //   element: resolveMpxCustomElementPath(packageName)
-    // }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     if (isMpxCustomElement) {
       Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMapNew(packageName))
     }
   }
+
+  const dependencyComponentsMap = {}
 
   if (queryObj.mpxCustomElement || runtimeCompile) {
     // this.cacheable(false)
@@ -244,12 +242,10 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
   }
 
-  const dependencyComponentsMap = {}
-
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -258,9 +254,9 @@ module.exports = function (content) {
           components[name] = entry
           // todo: 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
           if (runtimeCompile) {
-            const moduleId = 'm' + mpx.pathHash(resourcePath)
+            const hashName = 'm' + mpx.pathHash(resourcePath)
             delete components[name]
-            components[moduleId] = entry
+            components[hashName] = entry
 
             dependencyComponentsMap[resourcePath] = name
           }

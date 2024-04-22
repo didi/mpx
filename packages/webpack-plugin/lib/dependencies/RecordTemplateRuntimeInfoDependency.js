@@ -29,7 +29,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     return callback()
   }
 
-  mergeTemplateUsingComponents(mpx) {
+  mergeTemplateUsingComponents (mpx) {
     const componentTypes = ['baseComponents', 'customComponents']
     componentTypes.forEach(type => {
       const attrsMap = mpx.runtimeInfoTemplate[this.packageName][this.resourcePath][type]

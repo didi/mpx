@@ -36,7 +36,6 @@ module.exports = class RuntimeRenderPlugin {
         // 使用了运行时渲染的 package
         mpx.usingRuntimePackages = new Set()
         // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
-        mpx.runtimeInfo = {}
         mpx.runtimeInfoJson = {}
         mpx.runtimeInfoTemplate = {}
 
@@ -69,7 +68,7 @@ module.exports = class RuntimeRenderPlugin {
           const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
 
           for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
-            const { customComponents = {}, baseComponents = {}} = mpx.runtimeInfoTemplate[packageName][resourcePath]
+            const { customComponents = {}, baseComponents = {} } = mpx.runtimeInfoTemplate[packageName][resourcePath]
             const componentsJsonConfig = runtimeInfoJson[resourcePath]
 
             // 合并自定义组件的属性
@@ -115,7 +114,9 @@ module.exports = class RuntimeRenderPlugin {
             }
             const componentInfo = componentsMap[ast.tag]
             if (componentInfo) {
-              ast.aliasTag = componentInfo.hashName
+              ast.tag = componentInfo.hashName
+              // todo：本地开发阶段可以加上方便查看组件名
+              // ast.aliasTag = componentInfo.hashName
               if (componentInfo.isDynamic) {
                 ast.dynamic = true
               }

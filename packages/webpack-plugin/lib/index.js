@@ -1633,7 +1633,7 @@ try {
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
-        if (matchCondition(resourcePath, this.options.dynamic)){
+        if (matchCondition(resourcePath, this.options.dynamic)) {
           createData.resource = addQuery(createData.resource, { isDynamic: true })
         }
 
