@@ -13,7 +13,6 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
-const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -1673,9 +1672,9 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function isRuntimeComponentNode (el, options) {
-  return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
-}
+// function isRuntimeComponentNode (el, options) {
+//   return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
+// }
 
 function processAliExternalClassesHack (el, options) {
   const isComponent = isComponentNode(el, options)
@@ -2054,13 +2053,6 @@ function processDuplicateAttrsList (el) {
   el.attrsList = attrsList
 }
 
-function processRuntime (el, options) {
-  const isDynamic = isRuntimeComponentNode(el, options)
-  if (isDynamic) {
-    el.dynamic = isDynamic
-  }
-}
-
 // 处理wxs注入逻辑
 function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
@@ -2087,7 +2079,6 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
-  processRuntime(el, options)
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
@@ -2186,50 +2177,14 @@ function postProcessRuntime (el, options, meta) {
   if (options.runtimeCompile) {
     if (!meta.runtimeInfo) {
       meta.runtimeInfo = {
-        // resourcePath: {
-        //   baseNodes: {},
-        //   customNodes: {}
-        // },
-        resourceHashNameMap: {},
         baseComponents: {},
-        runtimeComponents: {},
-        normalComponents: {},
-        wxs: {}
+        customComponents: {}
       }
-    }
-
-    const tag = Object.keys(options.componentInfo).find((key) => {
-      if (mode === 'ali' || mode === 'swan') {
-        return capitalToHyphen(key) === el.tag
-      }
-      return key === el.tag
-    })
-    const componentInfo = options.componentInfo[tag]
-    if (isCustomComponent && componentInfo) {
-      const { hashName, resourcePath } = componentInfo
-      el.aliasTag = hashName
-      meta.runtimeInfo.resourceHashNameMap[resourcePath] = hashName
     }
 
     // 按需收集节点属性信息，存储到 meta 后到外层处理
     setBaseWxml(el, { mode, isCustomComponent }, meta)
   }
-}
-
-function addIfBlock (el, ifCondition) {
-  const blockNode = createASTElement('block', [{
-    name: config[mode].directive.if,
-    value: `{{ ${ifCondition} }}`
-  }], el.parent)
-  blockNode.if = {
-    raw: `{{ ${ifCondition} }}`,
-    exp: ifCondition
-  }
-  const nodeIndex = el.parent.children.findIndex(item => item === el)
-  const oldParent = el.parent
-  el.parent = blockNode
-  blockNode.children.push(el)
-  oldParent.children.splice(nodeIndex, 1, blockNode)
 }
 
 function postProcessAtMode (el) {

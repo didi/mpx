@@ -12,9 +12,9 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const isEmptyObject = require('../utils/is-empty-object')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
@@ -48,7 +48,7 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
-  const runtimeCompile = mpx.checkIsRuntimeMode(resourcePath, queryObj)
+  const runtimeCompile = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -179,14 +179,13 @@ module.exports = function (content) {
     if (!json.usingComponents) {
       json.usingComponents = {}
     }
-    // json.usingComponents = {
-    //   element: resolveMpxCustomElementPath(packageName)
-    // }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     if (isMpxCustomElement) {
-      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
+      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMapNew(packageName))
     }
   }
+
+  const dependencyComponentsMap = {}
 
   if (queryObj.mpxCustomElement || runtimeCompile) {
     // this.cacheable(false)
@@ -243,54 +242,23 @@ module.exports = function (content) {
     this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
   }
 
-  const runtimeComponentMap = {}
-
-  const collectRuntimeComponents = (name, componentPath, queryObj) => {
-    if (!isApp && mpx.checkIsRuntimeMode(componentPath, queryObj)) {
-      const moduleId = 'm' + mpx.pathHash(componentPath)
-      runtimeComponentMap[name] = moduleId
-      return moduleId
-    }
-  }
-
-  // todo 后续下掉
-  const injectRuntimeComponents2Script = () => {
-    if (!isEmptyObject(runtimeComponentMap)) {
-      const resultSource = `
-        global.currentInject.getRuntimeModules = function () {
-          return ${JSON.stringify(runtimeComponentMap)}
-        }
-      `
-      this.emitFile(resourcePath, '', undefined, {
-        skipEmit: true,
-        extractedResultSource: resultSource
-      })
-    }
-  }
-
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          // 可以拿到 resourcePath
-          // 缓存 name, hashName 和 resourcePath，后续在 simplify-template 阶段使用
-          // 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
-          /**
-           * resourcePath: { name }
-           */
-          collectRuntimeComponents(name, resourcePath, queryObj)
-          // const moduleId = collectRuntimeComponents(name, _resourcePath)
-          // 运行时组件需要 hashName
+          // todo: 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
           if (runtimeCompile) {
-            const moduleId = 'm' + mpx.pathHash(resourcePath)
+            const hashName = 'm' + mpx.pathHash(resourcePath)
             delete components[name]
-            components[moduleId] = entry
+            components[hashName] = entry
+
+            dependencyComponentsMap[resourcePath] = name
           }
           if (tarRoot) {
             if (placeholder) {
@@ -316,10 +284,7 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, () => {
-        injectRuntimeComponents2Script()
-        callback()
-      })
+      }, callback)
     } else {
       callback()
     }
@@ -750,7 +715,8 @@ module.exports = function (content) {
         processGenerics(json.componentGenerics, this.context, callback)
       },
       (callback) => {
-        if (mpx.checkIsRuntimeMode(resourcePath, queryObj)) {
+        if (runtimeCompile) {
+          this._module.addPresentationalDependency(new RecordJsonRuntimeInfoDependency(packageName, resourcePath, dependencyComponentsMap))
           fillMpxCustomElement()
         }
         callback()

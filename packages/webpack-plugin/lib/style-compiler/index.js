@@ -10,7 +10,6 @@ const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
-const checkIsRuntimeMode = require('../utils/check-is-runtime')
 
 module.exports = function (css, map) {
   this.cacheable()
@@ -24,7 +23,7 @@ module.exports = function (css, map) {
   const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
-  const runtimeCompile = mpx.checkIsRuntimeMode(resourcePath, queryObj)
+  const runtimeCompile = queryObj.isDynamic
 
   const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {

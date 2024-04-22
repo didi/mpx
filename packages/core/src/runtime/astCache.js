@@ -1,11 +1,11 @@
 class DynamicAstCache {
   #astCache = {}
 
-  getAst(id) {
+  getAst (id) {
     return this.#astCache[id]
   }
 
-  setAst(id, ast) {
+  setAst (id, ast) {
     this.#astCache[id] = ast
   }
 }

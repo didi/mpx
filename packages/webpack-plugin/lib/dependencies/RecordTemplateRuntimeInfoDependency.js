@@ -2,15 +2,12 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordTemplateRuntimeInfoDependency extends NullDependency {
-  constructor (packageName, resourcePath, { resourceHashNameMap, runtimeComponents, normalComponents, baseComponents, wxs } = {}) {
+  constructor (packageName, resourcePath, { baseComponents, customComponents } = {}) {
     super()
     this.packageName = packageName
     this.resourcePath = resourcePath
-    this.resourceHashNameMap = resourceHashNameMap
-    this.runtimeComponents = runtimeComponents
-    this.normalComponents = normalComponents
     this.baseComponents = baseComponents
-    this.wxs = wxs
+    this.customComponents = customComponents
   }
 
   get type () {
@@ -19,35 +16,23 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
-    if (!mpx.runtimeInfo[this.packageName]) {
-      mpx.runtimeInfo[this.packageName] = {
-        resourceHashNameMap: {},
-        baseComponents: {},
-        normalComponents: {
-          'block': {} // 默认增加block节点，防止根节点渲染失败
-        },
-        runtimeComponents: {},
-        wxs: new Set()
-      }
+    if (!mpx.runtimeInfoTemplate[this.packageName]) {
+      mpx.runtimeInfoTemplate[this.packageName] = {}
+    }
+    mpx.runtimeInfoTemplate[this.packageName][this.resourcePath] = {
+      baseComponents: {},
+      customComponents: {}
     }
 
-    this.mergeResourceHashNameMap(mpx)
-    this.mergeComponentAttrs(mpx)
-    // this.mergeWxs(mpx)
+    this.mergeTemplateUsingComponents(mpx)
 
     return callback()
   }
 
-  // mergeWxs (mpx) {
-  //   if (this.wxs.length) {
-  //     this.wxs.forEach(item => mpx.runtimeInfo[this.packageName].wxs.add(item))
-  //   }
-  // }
-
-  mergeComponentAttrs (mpx) {
-    const componentTypes = ['baseComponents', 'normalComponents', 'runtimeComponents']
+  mergeTemplateUsingComponents (mpx) {
+    const componentTypes = ['baseComponents', 'customComponents']
     componentTypes.forEach(type => {
-      const attrsMap = mpx.runtimeInfo[this.packageName][type]
+      const attrsMap = mpx.runtimeInfoTemplate[this.packageName][this.resourcePath][type]
       for (const tag in this[type]) {
         if (!attrsMap[tag]) {
           attrsMap[tag] = {}
@@ -57,18 +42,12 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     })
   }
 
-  mergeResourceHashNameMap (mpx) {
-    Object.assign(mpx.runtimeInfo[this.packageName].resourceHashNameMap, this.resourceHashNameMap)
-  }
-
   serialize (context) {
     const { write } = context
     write(this.packageName)
     write(this.resourcePath)
-    write(this.resourceHashNameMap)
-    write(this.runtimeComponents)
-    write(this.normalComponents)
     write(this.baseComponents)
+    write(this.customComponents)
     super.serialize(context)
   }
 
@@ -76,10 +55,8 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     const { read } = context
     this.packageName = read()
     this.resourcePath = read()
-    this.resourceHashNameMap = read()
-    this.runtimeComponents = read()
-    this.normalComponents = read()
     this.baseComponents = read()
+    this.customComponents = read()
     super.deserialize(context)
   }
 }
