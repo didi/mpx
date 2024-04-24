@@ -1,9 +1,8 @@
+const { getOptimizedComponentInfo } = require('@mpxjs/template-engine/dist/optimizer')
 const mpxConfig = require('../config')
-const { hasExtractAttr } = require('./utils')
 const hash = require('hash-sum')
 
 // todo 节点优化
-const OPTIMIZE_NODES = ['view', 'text', 'image']
 // const OPTIMIZE_NODES = []
 
 let hashIndex = 0
@@ -27,7 +26,6 @@ function setCustomEle (el, options, meta) {
 
 function setBaseEle (el, options, meta) {
   let aliasTag = ''
-  let hasEvents = false
   let usingHashTag = false
   const renderAttrsMap = {}
   const rawTag = el.tag
@@ -42,7 +40,6 @@ function setBaseEle (el, options, meta) {
     const eventObj = modeConfig.event.parseEvent(key)
     if (eventObj) { // 事件的格式化
       key = `${eventObj.prefix}:${eventObj.eventName}`
-      hasEvents = true
       // 使用了特殊事件的节点，单独生成一个 hashTag
       if (['catch', 'capture-bind', 'capture-catch'].includes(eventObj.prefix)) {
         usingHashTag = true
@@ -51,13 +48,12 @@ function setBaseEle (el, options, meta) {
     renderAttrsMap[key] = ''
   })
 
-  // 节点类型的优化
-  if (OPTIMIZE_NODES.includes(el.tag) && !hasEvents) {
-    aliasTag = `static-${rawTag}`
-    if (rawTag === 'view' && !hasExtractAttr(el)) {
-      aliasTag = 'pure-view'
-    }
-  }
+  const { nodeType } = getOptimizedComponentInfo({
+    nodeType: el.tag,
+    attrs: el.attrsMap
+  })
+
+  aliasTag = nodeType === el.tag ? undefined : nodeType
 
   if (usingHashTag) {
     aliasTag = 'd' + hash(`${rawTag}${++hashIndex}`)
