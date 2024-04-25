@@ -2425,6 +2425,7 @@ function processElement (el, root, options, meta) {
     processStyleReact(el)
     processEventReact(el, options, meta)
     processAttrs(el, options)
+    processComponentIs(el, options)
     return
   }
 
@@ -2466,6 +2467,7 @@ function closeElement (el, meta, options) {
     return
   }
   if (mode === 'react') {
+    postProcessComponentIs(el)
     postProcessForReact(el)
     postProcessIfReact(el)
     // flag component for react
@@ -2534,7 +2536,11 @@ function postProcessComponentIs (el) {
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
-      postProcessIf(newChild)
+      if (mode === 'react') {
+        postProcessIfReact(newChild)
+      } else {
+        postProcessIf(newChild)
+      }
     })
 
     if (!el.parent) {
