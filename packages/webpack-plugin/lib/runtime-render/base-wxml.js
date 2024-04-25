@@ -34,7 +34,7 @@ function setBaseEle (el, options, meta) {
   const optimizedInfo = getOptimizedComponentInfo({
     nodeType: rawTag,
     attrs: renderAttrsMap
-  })
+  }, options.mode)
 
   if (optimizedInfo) {
     const { nodeType } = optimizedInfo
