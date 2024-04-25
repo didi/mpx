@@ -5,46 +5,31 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
 
-function baseWarn (msg) {
-  console.warn(('[style compiler warn]: ' + msg))
-}
-
-function baseError (msg) {
-  console.error(('[style compiler error]: ' + msg))
-}
-
 function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   const classMap = {}
-  const rulesResultMap = new Map()
-  warn$1 = warn || baseWarn
-  error$1 = error || baseError
-  
-  const _warn = ({ prop, content }) => {
-    const currentPropRuleResult = rulesResultMap.get(prop) || rulesResultMap.set(prop, {
-      warnArray: [],
-      errorArray: []
-    }).get(prop)
-    currentPropRuleResult.warnArray.push(content)
-  }
-  
-  const _error = ({ prop, content }) => {
-    const currentPropRuleResult = rulesResultMap.get(prop) || rulesResultMap.set(prop, {
-      warnArray: [],
-      errorArray: []
-    }).get(prop)
-    currentPropRuleResult.errorArray.push(content)
-  }
   
   const root = postcss.parse(content, {
     from: filename
   })
+  
+  function _warn (msg) {
+    console.warn(('[style compiler warn]: ' + msg))
+  }
+  
+  function _error (msg) {
+    console.error(('[style compiler error]: ' + msg))
+  }
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
     type: 'style',
     testKey: 'prop',
-    warn: _warn,
-    error: _error
+    warn: (msg) => {
+      console.warn('[style compiler warn]: ' + msg)
+    },
+    error: (msg) => {
+      console.error('[style compiler error]: ' + msg)
+    }
   })
   root.walkRules(rule => {
     const classMapValue = {}
@@ -69,11 +54,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         }
         classMapValue[prop] = needStringify ? JSON.stringify(value) : value
       })
-    })
-    
-    rulesResultMap.forEach((val) => {
-      Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
-      Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
     })
     
     const classMapKeys = []

@@ -1,52 +1,44 @@
 module.exports = function getSpec ({ warn, error }) {
-  // react 不支持的 CSS property
-  const UNSUPPORTED_PROP_ARR = ['box-sizing'] // 测试用
-  // react CSS property 有不支持的 value
-  const UNSUPPORTED_PROP_VAL_ARR = {
-    'overflow': ['clip', 'auto'],
-    'border-style': ['none', 'hidden', 'double', 'groove', 'ridge', 'inset', 'outset'],
-    'vertical-align': ['baseline', 'sub', 'text-top'],
-  }
-  // react 某些属性仅支持部分枚举值
-  const SUPPORTED_PROP_VAL_ARR = {
-    'display': ['flex', 'none'],
-    'pointer-events': ['auto', 'none']
-  }
-  
   const print = ({ platform, type = 'prop', isError = true }) => ({ prop, value }) => {
     let content = ''
-    if (type === 'prop') { // css pro 不支持
+    if (type === 'prop') {
       content = `CSS property ${prop} is not supported in ${platform} environment!`
     } else if (type === 'value' && SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)) {
       content = `CSS property ${prop} only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in ${platform} environment, the value ['${value}'] does not support!`
-    } else if (type === 'value' && UNSUPPORTED_PROP_VAL_ARR[prop]?.includes(value)) {
-      content = `CSS property ${prop} does not support ['${value}'] value in ${platform} environment!`
     }
-    isError ? error({ prop, content }) : warn({ prop, content })
+    isError ? error(content) : warn(content)
   }
-  
+  // React Native 不支持的 CSS property
+  const unsupportedPropExp = new RegExp('^(box-sizing|white-space|text-overflow)$') // box-sizing|white-space|text-overflow 替换用法待确认
+  // property background 的校验  包含background且不包含background-color
+  const bgSuppotedExp = new RegExp(/^((?!background-color).)*background((?!background-color).)*$/)
   const UnsupportedPropError = print({ platform: 'react', isError: true, type: 'prop' })
-  const unsupportedPropExp = new RegExp('^(' + UNSUPPORTED_PROP_ARR.join('|') + ')$')
   
-  const propValExp = new RegExp('^(' + (Object.keys(SUPPORTED_PROP_VAL_ARR).concat(Object.keys(UNSUPPORTED_PROP_VAL_ARR))).join('|') + ')$')
+  // React Native 某些属性仅支持部分枚举值
+  const SUPPORTED_PROP_VAL_ARR = {
+    'overflow': ['visible', 'hidden', 'scroll'],
+    'border-style': ['solid', 'dotted', 'dashed'],
+    'display': ['flex', 'none'],
+    'pointer-events': ['auto', 'none'],
+    'vertical-align': ['auto', 'top', 'bottom', 'center']
+  }
+  const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const UnsupportedPropValError = print({ platform: 'react', isError: true, type: 'value'})
   
-  const bgSuppotedExp = new RegExp(/^((?!background-color).)*background-((?!background-color).)*$/) // 包含background-且不包含background-color
-  // const unsupportedBgError = unsupportedPropExp
-  
-  // 简写格式化
+  // 简写格式化 Todo 待确认
   const textShadowMap = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
     textShadowOffset: ['width','height'],
     textShadowRadius: 0,
     textShadowColor: 0
   }
   
+  // const textShadowMap = 'textShadowOffset.width:number textShadowOffset.height:number textShadowRadius:number textShadowColor:color '
   const borderMap = {  // 仅支持 width | style | color 这种排序
     borderWidth: 0,
     borderStyle: 0,
     borderColor: 0
   }
-
+  
   const shadowMap  = {
     shadowOffset: ['width', 'height'],
     shadowRadius: 0,
@@ -66,7 +58,7 @@ module.exports = function getSpec ({ warn, error }) {
       if (Array.isArray(keyMap[curProp])) {
         const curVal = keyMap[curProp]
         if (values.length - idx < curVal.length) {
-          error({ curProp, content: `RN prop ${curProp} need ${curVal.length} value, but value only remain ${values.length - idx}` })
+          error(`React Native property ${curProp} need ${curVal.length} value, but value only remain ${values.length - idx}`)
           return cssMap.length ? cssMap : { prop, value }
         }
         const newVal = {}
