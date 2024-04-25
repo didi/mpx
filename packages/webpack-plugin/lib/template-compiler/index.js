@@ -55,18 +55,9 @@ module.exports = function (raw) {
     )
   }
 
-  if (queryObj.mpxCustomElement) {
-    this.cacheable(false)
-    raw = '<template is="t_0_container" wx:if="{{r && r.nt}}" data="{{ i: r }}"></template>\n'
-    const templateEngine = createTemplateEngine(mode)
-    raw += templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
-    return raw
-  }
-
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
-    // componentInfo,
     runtimeCompile,
     usingComponents,
     componentPlaceholder,
@@ -112,7 +103,7 @@ module.exports = function (raw) {
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
 
-  const result = compiler.serialize(ast)
+  let result = compiler.serialize(ast)
 
   if (isNative) {
     return result
@@ -188,6 +179,12 @@ global.currentInject.getRefsData = function () {
     skipEmit: true,
     extractedResultSource: resultSource
   })
+
+  if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
+    const templateEngine = createTemplateEngine(mode)
+    result += '\n' + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
+  }
 
   // 运行时编译的组件直接返回基础模板的内容，并产出动态文本内容
   if (runtimeCompile) {

@@ -15,6 +15,7 @@ const processMpxCustomElement = (mpx, packageName, callback) => {
   }
   // 挂载组件信息至 componentsMap
   mpx.componentsMap[packageName][elementPath] = outputPath
+  mpx.currentPackageRoot = packageName
   // 添加自定义组件进入编译流程
   mpx.addEntry(elementPath + `?mpxCustomElement&isComponent&packageRoot=${packageName}`, outputPath, (err, module) => {
     // 自定义容器组件不缓存

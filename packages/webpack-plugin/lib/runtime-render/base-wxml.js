@@ -41,11 +41,14 @@ function setBaseEle (el, options, meta) {
   attrKeys.forEach(key => {
     const eventObj = modeConfig.event.parseEvent(key)
     if (eventObj) { // 事件的格式化
-      key = `${eventObj.prefix}:${eventObj.eventName}`
+      // todo: catch -> 转为 bind
+      // key = `${eventObj.prefix}:${eventObj.eventName}`
       hasEvents = true
       // 使用了特殊事件的节点，单独生成一个 hashTag
+      // todo 这部分的逻辑可以收到 template-engine
       if (['catch', 'capture-bind', 'capture-catch'].includes(eventObj.prefix)) {
-        usingHashTag = true
+        // usingHashTag = true
+        key = `bind${eventObj.eventName}`
       }
     }
     renderAttrsMap[key] = ''
@@ -80,4 +83,14 @@ function setBaseEle (el, options, meta) {
 module.exports = function setBaseWxml (el, options, meta) {
   const set = options.isCustomComponent ? setCustomEle : setBaseEle
   set(el, options, meta)
+
+  // const modeConfig = mpxConfig[options.mode]
+  // const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
+  // const tag = el.tag
+  // const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
+  // const componentType = options.isCustomComponent ? 'customComponents' : 'baseComponents'
+  // if (!meta.rInfo[componentType][tag]) {
+  //   meta.rInfo[componentType][tag] = {}
+  // }
+  // Object.assign(meta.rInfo[componentType][tag], makeAttrsMap(attrKeys))
 }

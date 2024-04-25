@@ -962,7 +962,7 @@ function processComponentIs (el, options) {
 
 const eventIdentifier = '__mpx_event__'
 
-function parseFuncStr2 (str) {
+function parseFuncStr2 (str, extraStr = '') {
   const funcRE = /^([^()]+)(\((.*)\))?/
   const match = funcRE.exec(str)
   if (match) {
@@ -980,7 +980,7 @@ function parseFuncStr2 (str) {
     }
     return {
       hasArgs,
-      expStr: `[${funcName + args}]`
+      expStr: `[${funcName + args + extraStr}]`
     }
   }
 }
@@ -1033,7 +1033,10 @@ function processBindEvent (el, options) {
     if (parsedEvent) {
       const type = parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
-      const parsedFunc = parseFuncStr2(attr.value)
+      const prefix = parsedEvent.prefix
+      // todo 后续为了方便拓展，对于传参的格式
+      const extraStr = options.runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
+      const parsedFunc = parseFuncStr2(attr.value, extraStr)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
@@ -1042,6 +1045,7 @@ function processBindEvent (el, options) {
           }
         }
         eventConfigMap[type].configs.push(parsedFunc)
+
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
@@ -2177,6 +2181,10 @@ function postProcessRuntime (el, options, meta) {
   if (options.runtimeCompile) {
     if (!meta.runtimeInfo) {
       meta.runtimeInfo = {
+        baseComponents: {},
+        customComponents: {}
+      }
+      meta.rInfo = {
         baseComponents: {},
         customComponents: {}
       }

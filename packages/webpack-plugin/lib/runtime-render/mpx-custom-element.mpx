@@ -1,5 +1,5 @@
 <template>
-  <view></view>
+  <wxs module="event" src="./event.wxs"/>
 </template>
 
 <script>
