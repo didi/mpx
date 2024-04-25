@@ -31,13 +31,10 @@ function mergeReactiveObjects (target, patchToApply) {
   return target
 }
 
-const isBrowser = typeof window !== 'undefined'
-
 export {
   activePinia,
   getActivePinia,
   setActivePinia,
   mergeReactiveObjects,
-  isComputed,
-  isBrowser
+  isComputed
 }
