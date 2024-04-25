@@ -58,6 +58,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
       return propsData
     },
     __render () {
+      // eslint-disable-next-line symbol-description
       this.__mpxProxy.stateVersion = Symbol()
       this.__mpxProxy.onStoreChange && this.__mpxProxy.onStoreChange()
     },
@@ -95,8 +96,15 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
         const eventObj = {
           type: eventName,
           timeStamp,
-          target: { id, dataset, targetDataset: dataset},
-          currentTarget: {id, dataset},
+          target: {
+            id,
+            dataset,
+            targetDataset: dataset
+          },
+          currentTarget: {
+            id,
+            dataset
+          },
           detail: eventDetail
         }
         handler.call(this, eventObj)
