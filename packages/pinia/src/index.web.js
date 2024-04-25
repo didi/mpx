@@ -13,7 +13,7 @@ import {
   mapWritableState
 } from 'pinia'
 import { storeToRefs } from './storeToRefs'
-import { isBrowser } from './util'
+import { isBrowser } from '@mpxjs/utils'
 
 vue.use(PiniaVuePlugin)
 
@@ -24,7 +24,7 @@ function createPinia () {
       return activePinia
     }
   } else {
-    if (!global.__mpxCreatePinia) {
+    if (!global.__mpxAppInit) {
       console.error('[@mpxjs/pinia error]: Pinia must be created in the onAppInit lifecycle!')
       return
     }
