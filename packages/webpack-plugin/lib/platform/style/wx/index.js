@@ -69,7 +69,6 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
   
-  // todo: check 此处看起来是完全依赖shadowMap里面的map属性的编写顺序？
   const formatAbbreviation = ({ prop, value, keyMap }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
