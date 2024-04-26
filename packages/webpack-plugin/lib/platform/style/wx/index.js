@@ -1,20 +1,21 @@
 module.exports = function getSpec ({ warn, error }) {
   const print = ({ platform, type = 'prop', isError = true }) => ({ prop, value }) => {
     let content = ''
-    if (type === 'prop') {
-      content = `CSS property ${prop} is not supported in ${platform} environment!`
+    if (type === 'prop') { // css pro 不支持
+      content = `CSS property [${prop}] is not supported in ${platform} environment!`
     } else if (type === 'value' && SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)) {
-      content = `CSS property ${prop} only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in ${platform} environment, the value ['${value}'] does not support!`
+      content = `CSS property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in ${platform} environment, the value ['${value}'] does not support!`
     }
     isError ? error(content) : warn(content)
   }
-  // React Native 不支持的 CSS property
+  
+  // react 不支持的 CSS property
   const unsupportedPropExp = new RegExp('^(box-sizing|white-space|text-overflow)$') // box-sizing|white-space|text-overflow 替换用法待确认
   // property background 的校验  包含background且不包含background-color
   const bgSuppotedExp = new RegExp(/^((?!background-color).)*background((?!background-color).)*$/)
   const UnsupportedPropError = print({ platform: 'react', isError: true, type: 'prop' })
   
-  // React Native 某些属性仅支持部分枚举值
+  // react 某些属性仅支持部分枚举值
   const SUPPORTED_PROP_VAL_ARR = {
     'overflow': ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
@@ -25,62 +26,80 @@ module.exports = function getSpec ({ warn, error }) {
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const UnsupportedPropValError = print({ platform: 'react', isError: true, type: 'value'})
   
-  // 简写格式化 Todo 待确认
+  const ValueType = {
+    number: 'number',
+    color: 'color',
+    default: 'default' // 不校验
+  }
+  // 简写格式化
   const textShadowMap = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    textShadowOffset: ['width','height'],
-    textShadowRadius: 0,
-    textShadowColor: 0
+    ['textShadowOffset.width']: ValueType.number,
+    ['textShadowOffset.height']: ValueType.number,
+    textShadowRadius: ValueType.number,
+    textShadowColor: ValueType.color,
   }
-  
-  // const textShadowMap = 'textShadowOffset.width:number textShadowOffset.height:number textShadowRadius:number textShadowColor:color '
   const borderMap = {  // 仅支持 width | style | color 这种排序
-    borderWidth: 0,
-    borderStyle: 0,
-    borderColor: 0
+    borderWidth: ValueType.number,
+    borderStyle: ValueType.default,
+    borderColor: ValueType.color
   }
   
-  const shadowMap  = {
-    shadowOffset: ['width', 'height'],
-    shadowRadius: 0,
-    shadowColor: 0
+  const shadowMap  = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
+    ['shadowOffset.width']: ValueType.number,
+    ['shadowOffset.height']: ValueType.number,
+    shadowRadius: ValueType.number,
+    shadowColor: ValueType.color
   }
+  
+  // number 类型支持的单位
+  const numberRegExp = /^\s*(\d+(\.\d+)?)(rpx|px|%)?\s*$/
+  // RN 不支持的颜色格式
+  const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
+  function verifyValues({ prop, value, valueType }) {
+    switch (valueType) {
+      case ValueType.color:
+        (numberRegExp.test(value)) && error(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
+        colorRegExp.test(value) && error(`React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]`)
+        return value
+      case ValueType.number:
+        (!numberRegExp.test(value)) && error(`React Native property [${prop}]'s value only supports unit [rpx,px,%]`)
+        return value
+      default:
+        return value
+    }
+  }
+  
   // todo: check 此处看起来是完全依赖shadowMap里面的map属性的编写顺序？
   const formatAbbreviation = ({ prop, value, keyMap }) => {
-    const values = value.trim().split(/\s+/)
-    let idx = 0
-    let keyIdx = 0
+    const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
-    const props = Object.keys(keyMap)
-    let curProp
-    while (idx < values.length) { // 按值的个数循环赋值
-      curProp = props[keyIdx]
-      // 多个值的属性
-      if (Array.isArray(keyMap[curProp])) {
-        const curVal = keyMap[curProp]
-        if (values.length - idx < curVal.length) {
-          error(`React Native property ${curProp} need ${curVal.length} value, but value only remain ${values.length - idx}`)
-          return cssMap.length ? cssMap : { prop, value }
+    const props = Object.getOwnPropertyNames(keyMap)
+    let idx = 0
+    // 按值的个数循环赋值
+    while (idx < values.length && idx < props.length) {
+      const prop = props[idx]
+      const valueType = keyMap[prop]
+      const value = verifyValues({ prop, value: values[idx], valueType })
+      if (prop.includes('.')) { // 多个属性值的prop
+        const [ main, sub ] = prop.split('.')
+        const cssData = cssMap.find(item => item.prop === main)
+        if (cssData) { // 设置过
+          cssData.value[sub] = value
+        } else { // 第一次设置
+          cssMap.push({
+            prop: main,
+            value: {
+              [sub]: value
+            }
+          })
         }
-        const newVal = {}
-        curVal.forEach(subkey => { // Todo hjw 1.组合内不支持的 prop & value 的校验提示 2.组合样式内的rpx转换
-          newVal[subkey] = values[idx]
-          idx += 1
-        })
+      } else { // 单个值的属性
         cssMap.push({
-          prop: curProp,
-          value: newVal
+          prop,
+          value
         })
-        keyIdx = idx - curVal.length + 1
       }
-      // 单个值的属性
-      if (!keyMap[curProp]){
-        cssMap.push({
-          prop: curProp,
-          value: values[idx]
-        })
-        idx += 1
-        keyIdx += 1
-      }
+      idx += 1
     }
     return cssMap
   }
@@ -113,7 +132,7 @@ module.exports = function getSpec ({ warn, error }) {
         }
       },
       {
-        text: 'box-shadow',
+        test: 'box-shadow',
         react ({ prop, value}) { // offset-x | offset-y | blur-radius | color
           // TODO 还需要基于Andorid/iOS平台来进行区分编写，后续补齐
           return formatAbbreviation({ prop, value, keyMap: shadowMap })

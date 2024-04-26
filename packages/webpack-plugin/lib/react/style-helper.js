@@ -19,6 +19,20 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   function _error (msg) {
     console.error(('[style compiler error]: ' + msg))
   }
+  
+  function formatValue(value) {
+    let matched
+    let needStringify = true
+    if ((matched = pxRegExp.exec(value))) {
+      value = matched[1]
+      needStringify = false
+    } else if ((matched = rpxRegExp.exec(value))) {
+      value = `this.__rpx(${matched[1]})`
+      needStringify = false
+    }
+    return needStringify ? JSON.stringify(value) : value
+  }
+  
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -39,20 +53,16 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         newData = [newData]
       }
       newData.forEach(item => {
-        // todo 检测不支持的value
-        value = item.value
-        // todo 检测不支持的prop
         prop = dash2hump(item.prop)
-        let matched
-        let needStringify = true
-        if ((matched = pxRegExp.exec(value))) {
-          value = matched[1]
-          needStringify = false
-        } else if ((matched = rpxRegExp.exec(value))) {
-          value = `this.__rpx(${matched[1]})`
-          needStringify = false
+        value = item.value
+        if (typeof item.value === 'object') {
+          for (const key in item.value) {
+            item.value[key] = formatValue(item.value[key])
+          }
+        } else {
+          value = formatValue(value)
         }
-        classMapValue[prop] = needStringify ? JSON.stringify(value) : value
+        classMapValue[prop] = value
       })
     })
     
