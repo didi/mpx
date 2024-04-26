@@ -1,6 +1,5 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
-const checkIsRuntimeMode = require('../utils/check-is-runtime')
 
 class RecordJsonRuntimeInfoDependency extends NullDependency {
   constructor (packageName, resourcePath, usingComponents) {
@@ -34,7 +33,7 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
       dependencyComponentConfig[componentName] = {
         hashName,
         resourcePath,
-        isDynamic: checkIsRuntimeMode(resourcePath)
+        isDynamic: mpx.checkIsRuntimeMode(resourcePath)
       }
     }
   }
@@ -43,7 +42,7 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
     const { write } = context
     write(this.packageName)
     write(this.resourcePath)
-    write(this.name)
+    write(this.usingComponents)
     super.serialize(context)
   }
 
@@ -51,7 +50,7 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
     const { read } = context
     this.packageName = read()
     this.resourcePath = read()
-    this.name = read()
+    this.usingComponents = read()
     super.deserialize(context)
   }
 }

@@ -27,7 +27,7 @@ createComponent({
   },
   computed: {
     vnodeData () {
-      const data = this.r.data || {}
+      const data = this.r.d || {}
       return data
     },
     // 当前组件的 uid
