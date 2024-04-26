@@ -47,7 +47,7 @@ const getDefaultEvent = event => {
   }
 }
 
-export const extendEvent = (e, extendObj = {}) => {
+export const extendEvent = (e = {}, extendObj = {}) => {
   e && e.persist && e.persist()
   Object.keys(extendObj).forEach(key => {
     Object.defineProperty(e, key, {
@@ -64,7 +64,7 @@ export const getCustomEvent = (type, oe, { detail = {}, target = {} }) => {
   return extendEvent(oe, {
     type,
     detail: {
-      ...oe.detail,
+      ...(oe?.detail || {}),
       ...detail
     },
     target: {
