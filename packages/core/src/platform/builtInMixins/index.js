@@ -11,10 +11,11 @@ import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
 import styleHelperMixin from './styleHelperMixin'
+import { isReact } from '@mpxjs/utils'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins
-  if (__mpx_mode__ === 'react') {
+  if (isReact) {
     bulitInMixins = [
       proxyEventMixin(),
       styleHelperMixin()

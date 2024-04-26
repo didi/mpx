@@ -21,7 +21,11 @@ module.exports = function ({ print }) {
         return 'div'
       }
     },
-    react (tag, { el }) {
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-view'
+    },
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-view'
     },

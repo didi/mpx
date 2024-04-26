@@ -20,7 +20,11 @@ module.exports = function ({ print }) {
         return 'span'
       }
     },
-    react (tag, { el }) {
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-text'
+    },
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-text'
     },
