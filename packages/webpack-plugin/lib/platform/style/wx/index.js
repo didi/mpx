@@ -31,26 +31,6 @@ module.exports = function getSpec ({ warn, error }) {
     color: 'color',
     default: 'default' // 不校验
   }
-  // 简写格式化
-  const textShadowMap = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    ['textShadowOffset.width']: ValueType.number,
-    ['textShadowOffset.height']: ValueType.number,
-    textShadowRadius: ValueType.number,
-    textShadowColor: ValueType.color,
-  }
-  const borderMap = {  // 仅支持 width | style | color 这种排序
-    borderWidth: ValueType.number,
-    borderStyle: ValueType.default,
-    borderColor: ValueType.color
-  }
-  
-  const shadowMap  = { // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    ['shadowOffset.width']: ValueType.number,
-    ['shadowOffset.height']: ValueType.number,
-    shadowRadius: ValueType.number,
-    shadowColor: ValueType.color
-  }
-  
   // number 类型支持的单位
   const numberRegExp = /^\s*(\d+(\.\d+)?)(rpx|px|%)?\s*$/
   // RN 不支持的颜色格式
@@ -66,6 +46,27 @@ module.exports = function getSpec ({ warn, error }) {
         return value
       default:
         return value
+    }
+  }
+  
+  // 简写转换规则
+  const AbbreviationMap = {
+    'text-shadow': { // 仅支持 offset-x | offset-y | blur-radius | color 排序
+      ['textShadowOffset.width']: ValueType.number,
+      ['textShadowOffset.height']: ValueType.number,
+      textShadowRadius: ValueType.number,
+      textShadowColor: ValueType.color,
+    },
+    border: {  // 仅支持 width | style | color 这种排序
+      borderWidth: ValueType.number,
+      borderStyle: ValueType.default,
+      borderColor: ValueType.color
+    },
+    'box-shadow': { // 仅支持 offset-x | offset-y | blur-radius | color 排序
+      ['shadowOffset.width']: ValueType.number,
+      ['shadowOffset.height']: ValueType.number,
+      shadowRadius: ValueType.number,
+      shadowColor: ValueType.color
     }
   }
   
@@ -103,38 +104,41 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
   
+  const commonAbbreviationExp = new RegExp(/^(text-shadow|border)$/)
+  const getAbbreviation = ({ prop, value }) => {
+    const keyMap = AbbreviationMap[prop]
+    return formatAbbreviation({ prop, value, keyMap })
+  }
+  
   const spec = {
-    supportedModes: ['react'],
+    supportedModes: ['ios', 'android'],
     rules: [
-      {
-        test: bgSuppotedExp, // 背景正则匹配处理
-        react: UnsupportedPropError
+      { // RN不支持的背景相关的属性
+        test: bgSuppotedExp,
+        ios: UnsupportedPropError,
+        android: UnsupportedPropError,
       },
       { // RN 不支持的 CSS property
         test: unsupportedPropExp,
-        react: UnsupportedPropError
+        ios: UnsupportedPropError,
+        android: UnsupportedPropError
       },
       { // RN 支持的 CSS property value
         test: propValExp,
-        react: UnsupportedPropValError
+        ios: UnsupportedPropValError,
+        android: UnsupportedPropValError
       },
-      {
-        test: 'text-shadow',
-        react ({ prop, value }) { // 仅支持 offset-x | offset-y | blur-radius | color 这种排序
-          return formatAbbreviation({ prop, value, keyMap: textShadowMap })
-        }
-      },
-      {
-        test: 'border',
-        react ({ prop, value }) { // 仅支持 width | style | color 这种排序
-          return formatAbbreviation({ prop, value, keyMap: borderMap })
-        }
+      { // 通用的简写格式匹配
+        test: commonAbbreviationExp,
+        ios: getAbbreviation,
+        android: getAbbreviation,
       },
       {
         test: 'box-shadow',
-        react ({ prop, value}) { // offset-x | offset-y | blur-radius | color
-          // TODO 还需要基于Andorid/iOS平台来进行区分编写，后续补齐
-          return formatAbbreviation({ prop, value, keyMap: shadowMap })
+        ios: getAbbreviation,
+        // Todo android 阴影转换要单独写
+        android({ prop, value }) {
+          return { prop, value }
         }
       }
     ]
