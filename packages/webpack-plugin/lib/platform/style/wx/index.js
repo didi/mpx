@@ -138,7 +138,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'box-shadow',
         ios: getAbbreviation,
         // Todo android 阴影转换要单独写
-        android({ prop, value }) {
+        android ({ prop, value }) {
           return { prop, value }
         }
       }

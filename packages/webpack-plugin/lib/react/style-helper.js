@@ -5,13 +5,13 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
 
-function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
+function getClassMap ({ content, filename, mode, srcMode }) {
   const classMap = {}
-  
+
   const root = postcss.parse(content, {
     from: filename
   })
-  
+
   function formatValue (value) {
     let matched
     let needStringify = true
@@ -24,7 +24,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     }
     return needStringify ? JSON.stringify(value) : value
   }
-  
+
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -69,7 +69,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         }
       })
     }).processSync(rule.selector)
-    
+
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
