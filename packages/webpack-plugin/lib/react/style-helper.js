@@ -12,14 +12,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     from: filename
   })
   
-  function _warn (msg) {
-    console.warn(('[style compiler warn]: ' + msg))
-  }
-  
-  function _error (msg) {
-    console.error(('[style compiler error]: ' + msg))
-  }
-  
   function formatValue(value) {
     let matched
     let needStringify = true
