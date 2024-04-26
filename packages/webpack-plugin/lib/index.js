@@ -682,8 +682,7 @@ class MpxWebpackPlugin {
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           checkIsRuntimeMode: (resource, queryObj) => {
-            // console.log(resource, queryObj && queryObj.dynamic);
-            return (queryObj && queryObj.dynamic) || matchCondition(resource, this.options.dynamic)
+            return (queryObj && queryObj.isDynamic) || matchCondition(resource, this.options.dynamic)
           },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {

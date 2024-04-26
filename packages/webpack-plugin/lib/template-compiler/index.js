@@ -183,7 +183,6 @@ global.currentInject.getRefsData = function () {
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
     const templateEngine = createTemplateEngine(mode)
-    console.log(mpx.getPackageInjectedTemplateConfig(packageName))
     result += '<template is="t_0_container" data="{{ i: r }}" wx:if="{{r && r.nt}}"></template>\n' + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
   }
 
