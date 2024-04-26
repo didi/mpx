@@ -12,7 +12,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     from: filename
   })
   
-  function formatValue(value) {
+  function formatValue (value) {
     let matched
     let needStringify = true
     if ((matched = pxRegExp.exec(value))) {
@@ -57,9 +57,9 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         classMapValue[prop] = value
       })
     })
-    
+
     const classMapKeys = []
-    
+
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
