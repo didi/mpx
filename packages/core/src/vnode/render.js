@@ -17,34 +17,12 @@ function simpleNormalizeChildren (children) {
   return children
 }
 
-function cloneNode (el) {
-  const clone = Object.assign({}, el)
-  if (el.parent) clone.parent = null
-  if (el.children) {
-    clone.children = []
-    el.children.forEach((child) => {
-      addChild(clone, cloneNode(child))
-    })
-  }
-  return clone
-}
-
-function addChild (parent, newChild, before) {
-  parent.children = parent.children || []
-  if (before) {
-    parent.children.unshift(newChild)
-  } else {
-    parent.children.push(newChild)
-  }
-}
-
 export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId) {
-  // 引用的 vnodeAst 浅复制，解除引用
-  vnodeAst = cloneNode(vnodeAst)
+  // 解除引用
+  vnodeAst = deepCloneNode(vnodeAst)
   // 获取实例 uid
   const uid = contextScope[0]?.__mpxProxy?.uid || contextScope[0]?.uid
   // slots 通过上下文传递，相当于 props
-  // const slots = contextScope[0]?.$slots || {}
   const slots = contextScope[0]?.slots || {}
 
   function createEmptyNode () {
@@ -70,11 +48,6 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
           data.slots = resolveSlot(children.slice())
           children = []
         }
-        // if (node.dynamic) {
-        //   return createDynamicNode(node.aliasTag, data, children)
-        // } else {
-        //   return createNode(node.aliasTag || node.tag, data, children)
-        // }
         return createNode(node.aliasTag || node.tag, data, children)
       }
     } else if (node.type === 3) {
