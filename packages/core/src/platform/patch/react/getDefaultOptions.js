@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
 import { set } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, error } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -112,12 +112,16 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
       }
     },
     selectComponent () {
+      error('selectComponent is not supported in react native, please use ref instead')
     },
     selectAllComponents () {
+      error('selectAllComponents is not supported in react native, please use ref instead')
     },
     createSelectorQuery () {
+      error('createSelectorQuery is not supported in react native, please use ref instead')
     },
     createIntersectionObserver () {
+      error('createIntersectionObserver is not supported in react native, please use ref instead')
     },
     ...rawOptions.methods
   })
