@@ -26,6 +26,7 @@ const s = JSON.stringify
 
 function mapAttrName (name) {
   if (name === 'class') return 'className'
+  if (name.startsWith('data-')) return name
   return dash2hump(name)
 }
 
