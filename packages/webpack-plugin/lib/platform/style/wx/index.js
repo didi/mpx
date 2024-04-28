@@ -8,9 +8,9 @@ module.exports = function getSpec ({ warn, error }) {
   
   // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(box-sizing|white-space|text-overflow)$/ // box-sizing|white-space|text-overflow 替换用法待确认
-  // React Native 下 Android 不支持的 CSS property
+  // React Native 下 android 不支持的 CSS property
   const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color)$/
-  // // React Native IOS 不支持的 CSS property
+  // React Native IOS 不支持的 CSS property
   // const unsupportedPropIos = /^()$/
   // property background 的校验  包含background且不包含background-color
   const bgSuppotedExp = /^((?!background-color).)*background((?!background-color).)*$/
@@ -55,7 +55,7 @@ module.exports = function getSpec ({ warn, error }) {
         colorRegExp.test(value) && error('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
         return value
       case ValueType.number:
-        (!numberRegExp.test(value)) && error(`React Native property [${prop}]'s value only supports unit [rpx,px,%]`)
+        (!numberRegExp.test(value)) && error(`React Native property [${prop}] unit only supports [rpx,px,%]`)
         return value
       default:
         return value
@@ -82,8 +82,8 @@ module.exports = function getSpec ({ warn, error }) {
       shadowColor: ValueType.color
     },
     'text-decoration': { // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
-      textDecorationLine: ValueType.decorationLine,
-      textDecorationStyle: ValueType.lineStyle,
+      textDecorationLine: ValueType.default,
+      textDecorationStyle: ValueType.default,
       textDecorationColor: ValueType.color
     }
   }
@@ -128,6 +128,11 @@ module.exports = function getSpec ({ warn, error }) {
     return formatAbbreviation({ prop, value, keyMap })
   }
 
+  // 统一校验 value type 值类型
+  const checkCommonValue = (valueType) => ({ prop, value }) => {
+    verifyValues({ prop, value, valueType })
+  }
+  
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
@@ -173,6 +178,17 @@ module.exports = function getSpec ({ warn, error }) {
           })
           return cssMap
         }
+      },
+      // Todo mark 值类型校验放最后，其他 rule 在上面编写
+      { // color 颜色值校验
+        test: /.*color.*/i,
+        ios: checkCommonValue(ValueType.color),
+        android: checkCommonValue(ValueType.color)
+      },
+      { // number 值校验
+        test: /.*width|height|left|right|top|bottom|radius|margin|padding|spacing|offset|size.*/i,
+        ios: checkCommonValue(ValueType.number),
+        android: checkCommonValue(ValueType.number)
       }
     ]
   }
