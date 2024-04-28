@@ -1,17 +1,21 @@
 const { hump2dash } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
-  // const Platform = {
-  //   ios: 'ios',
-  //   android: 'android'
-  // }
-
-  // react 不支持的 CSS property
+  const Platform = {
+    ios: 'ios',
+    android: 'android'
+  }
+  
+  // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(box-sizing|white-space|text-overflow)$/ // box-sizing|white-space|text-overflow 替换用法待确认
+  // React Native 下 Android 不支持的 CSS property
+  const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color)$/
+  // // React Native IOS 不支持的 CSS property
+  // const unsupportedPropIos = /^()$/
   // property background 的校验  包含background且不包含background-color
   const bgSuppotedExp = /^((?!background-color).)*background((?!background-color).)*$/
-  const unsupportedPropError = ({ prop }) => {
-    const content = `Property [${prop}] is not supported in React Native environment!`
+  const unsupportedPropError = ({ prop, platform }) => {
+    const content = `Property [${prop}] is not supported in React Native ${platform} environment!`
     error(content)
   }
 
@@ -21,7 +25,8 @@ module.exports = function getSpec ({ warn, error }) {
     'border-style': ['solid', 'dotted', 'dashed'],
     display: ['flex', 'none'],
     'pointer-events': ['auto', 'none'],
-    'vertical-align': ['auto', 'top', 'bottom', 'center']
+    'vertical-align': ['auto', 'top', 'bottom', 'center'],
+    'position': ['relative','absolute']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
@@ -75,6 +80,11 @@ module.exports = function getSpec ({ warn, error }) {
       'shadowOffset.height': ValueType.number,
       shadowRadius: ValueType.number,
       shadowColor: ValueType.color
+    },
+    'text-decoration': { // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
+      textDecorationLine: ValueType.decorationLine,
+      textDecorationStyle: ValueType.lineStyle,
+      textDecorationColor: ValueType.color
     }
   }
 
@@ -147,6 +157,21 @@ module.exports = function getSpec ({ warn, error }) {
         // Todo android 阴影转换要单独写
         android ({ prop, value }) {
           return { prop, value }
+        }
+      },
+      {
+        test: 'text-decoration',
+        ios: getAbbreviation,
+        android ({ prop, value }) {
+          const cssMap = getAbbreviation({ prop, value })
+          // cssMap= [{ textDecorationLine: 'underline' },{ textDecorationStyle: dotted },{ textDecorationStyle: '#f00'}]
+          // Todo 这里处理 android 不支持的 textDecorationStyle 和 textDecorationStyle
+          // 可以找找有无对应的效果的 prop
+          // 没有的话可以 配置一个 android 不支持的  prop 编译报错提示
+          cssMap.forEach(({ prop, value }) => {
+            unsupportedPropAndroid.test(hump2dash(prop)) && unsupportedPropError({ prop, platform: Platform.android })
+          })
+          return cssMap
         }
       }
     ]
