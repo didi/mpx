@@ -1,19 +1,19 @@
+const { hump2dash } = require('../../../utils/hump-dash')
+
 module.exports = function getSpec ({ warn, error }) {
-  const print = ({ platform, type = 'prop', isError = true }) => ({ prop, value }) => {
-    let content = ''
-    if (type === 'prop') { // css pro 不支持
-      content = `CSS property [${prop}] is not supported in ${platform} environment!`
-    } else if (type === 'value' && SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)) {
-      content = `CSS property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in ${platform} environment, the value ['${value}'] does not support!`
-    }
-    isError ? error(content) : warn(content)
-  }
+  // const Platform = {
+  //   ios: 'ios',
+  //   android: 'android'
+  // }
 
   // react 不支持的 CSS property
   const unsupportedPropExp = /^(box-sizing|white-space|text-overflow)$/ // box-sizing|white-space|text-overflow 替换用法待确认
   // property background 的校验  包含background且不包含background-color
   const bgSuppotedExp = /^((?!background-color).)*background((?!background-color).)*$/
-  const UnsupportedPropError = print({ platform: 'react', isError: true, type: 'prop' })
+  const unsupportedPropError = ({ prop }) => {
+    const content = `Property [${prop}] is not supported in React Native environment!`
+    error(content)
+  }
 
   // react 某些属性仅支持部分枚举值
   const SUPPORTED_PROP_VAL_ARR = {
@@ -24,8 +24,13 @@ module.exports = function getSpec ({ warn, error }) {
     'vertical-align': ['auto', 'top', 'bottom', 'center']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
-  const UnsupportedPropValError = print({ platform: 'react', isError: true, type: 'value' })
-
+  const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
+  const unsupportedValueError = ({ prop, value }) => {
+    if (isIllegalValue({ prop, value })) {
+      content = `Property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, the value [${value}] does not support!`
+      error(content)
+    }
+  }
   const ValueType = {
     number: 'number',
     color: 'color',
@@ -37,6 +42,8 @@ module.exports = function getSpec ({ warn, error }) {
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
 
   function verifyValues ({ prop, value, valueType }) {
+    // 校验 value 枚举 是否支持
+    unsupportedValueError({ prop: hump2dash(prop), value })
     switch (valueType) {
       case ValueType.color:
         (numberRegExp.test(value)) && error(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
@@ -71,7 +78,7 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
-  const formatAbbreviation = ({ prop, value, keyMap }) => {
+  const formatAbbreviation = ({ value, keyMap }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
     const props = Object.getOwnPropertyNames(keyMap)
@@ -116,18 +123,18 @@ module.exports = function getSpec ({ warn, error }) {
     rules: [
       { // RN不支持的背景相关的属性
         test: bgSuppotedExp,
-        ios: UnsupportedPropError,
-        android: UnsupportedPropError
+        ios: unsupportedPropError,
+        android: unsupportedPropError
       },
       { // RN 不支持的 CSS property
         test: unsupportedPropExp,
-        ios: UnsupportedPropError,
-        android: UnsupportedPropError
+        ios: unsupportedPropError,
+        android: unsupportedPropError
       },
       { // RN 支持的 CSS property value
         test: propValExp,
-        ios: UnsupportedPropValError,
-        android: UnsupportedPropValError
+        ios: unsupportedValueError,
+        android: unsupportedValueError
       },
       { // 通用的简写格式匹配
         test: commonAbbreviationExp,
