@@ -1,6 +1,6 @@
 import cssSelect from './css-select'
 // todo: stringify wxs 模块只能放到逻辑层执行，主要还是因为生成 vdom tree 需要根据 class 去做匹配，需要看下这个代码从哪引入
-import stringify from '../../../webpack-plugin/lib/runtime/stringify.wxs'
+import stringify from '@mpxjs/webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
 import { dash2hump, isString } from '@mpxjs/utils'
 
