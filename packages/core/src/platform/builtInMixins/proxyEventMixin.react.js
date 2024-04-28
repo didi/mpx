@@ -4,11 +4,13 @@ import Mpx from '../../index'
 export default function proxyEventMixin () {
   const methods = {
     __invoke (rawEvent, type, eventConfig = []) {
-      const eventObj = rawEvent.customEvent? rawEvent :{
-        type,
-        detail: null,
-        ...rawEvent.nativeEvent
-      }
+      const eventObj = rawEvent.customEvent
+          ? rawEvent
+          : {
+              type,
+              detail: null,
+              ...rawEvent.nativeEvent
+            }
       if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {
           Mpx.config.proxyEventHandler(eventObj)
