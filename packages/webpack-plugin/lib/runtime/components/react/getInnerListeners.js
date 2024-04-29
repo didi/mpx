@@ -134,8 +134,8 @@ export const getCustomEvent = (type, oe, { detail = {}, target = {} }) => {
 // }
 
 const useInnerTouchable = props => {
-  const { onTap, onLongTap, onLongPress, onTouchStart, onTouchMove, onTouchEnd } = props
-  if (!onTap && !onLongTap && !onLongPress && !onTouchStart && !onTouchMove && !onTouchEnd) {
+  const { tap, longTap, longPress, touchstart, touchmove, touchend, catchTouchstart, catchTouchmove, catchTouchend, catchTap, catchLongpress, catchLongtap } = props
+  if (!tap && !longTap && !longPress && !touchstart && !touchmove && !touchend && !catchTouchstart && !catchTouchmove && !catchTouchend && !catchTap && !catchLongpress && !catchLongtap) {
     return props
   }
   const ref = useRef({
@@ -157,17 +157,29 @@ const useInnerTouchable = props => {
         x: nativeEvent.changedTouches[0].pageX,
         y: nativeEvent.changedTouches[0].pageY
       }
-      if (ref.current.props.onTouchStart) {
-        ref.current.props.onTouchStart(getDefaultEvent(e))
+      if (ref.current.props.catchTouchstart) {
+        e.stopPropagation()
+        ref.current.props.catchTouchstart(getDefaultEvent(e))
       }
-      if (ref.current.props.onLongPress || ref.current.props.onLongTap) {
+      if (ref.current.props.touchstart) {
+        ref.current.props.touchstart(getDefaultEvent(e))
+      }
+      if (ref.current.props.catchLongtap || ref.current.props.catchLongpress || ref.current.props.longPress || ref.current.props.longTap) {
         ref.current.startTimer = setTimeout(() => {
           ref.current.needTap = false
-          if (ref.current.props.onLongPress) {
+          if (ref.current.props.catchLongpress) {
+            e.stopPropagation()
+            ref.current.props.catchLongpress(getDefaultEvent(e))
+          }
+          if (ref.current.props.longPress) {
             ref.current.props.onLongPress(getDefaultEvent(e))
           }
-          if (ref.current.props.onLongTap) {
-            ref.current.props.onLongTap(getDefaultEvent(e))
+          if (ref.current.props.catchLongtap) {
+            e.stopPropagation()
+            ref.current.props.catchLongtap(getDefaultEvent(e))
+          }
+          if (ref.current.props.longTap) {
+            ref.current.props.longTap(getDefaultEvent(e))
           }
         }, 350)
       }
@@ -182,21 +194,41 @@ const useInnerTouchable = props => {
         ref.current.startTimer && clearTimeout(ref.current.startTimer)
         ref.current.startTimer = null
       }
-      if (ref.current.props.onTouchMove) {
-        ref.current.props.onTouchMove(getDefaultEvent(e))
+      if (ref.current.props.catchTouchmove) {
+        e.stopPropagation()
+        ref.current.props.catchTouchmove(getDefaultEvent(e))
+      }
+      if (ref.current.props.touchmove) {
+        ref.current.props.touchmove(getDefaultEvent(e))
       }
     },
     onTouchEnd: (e) => {
       ref.current.startTimer && clearTimeout(ref.current.startTimer)
-      if (ref.current.props.onTouchEnd) {
-        ref.current.props.onTouchEnd(getDefaultEvent(e))
+      if (ref.current.props.catchTouchend) {
+        e.stopPropagation()
+        ref.current.props.catchTouchend(getDefaultEvent(e))
+      } else if (ref.current.props.touchend) {
+        ref.current.props.touchend(getDefaultEvent(e))
       }
-      if (ref.current.props.onTap && ref.current.needTap) {
-        ref.current.props.onTap(getDefaultEvent(e))
+      if ((ref.current.props.tap || ref.current.props.catchTap) && ref.current.needTap) {
+        if (ref.current.props.catchTap) {
+          e.stopPropagation()
+          ref.current.props.catchTap(getDefaultEvent(e))
+        }
+        if (ref.current.props.tap) {
+          ref.current.props.tap(getDefaultEvent(e))
+        }
       }
     }
   }
+  const oe = ['onTouchCancel', 'onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture', 'onTouchCancelCapture']
+  oe.forEach(event => {
+    if (ref.current.props[event]) {
+      events[event] = (e) => {
+        ref.current.props[event](e)
+      }
+    }
+  })
   return events
 }
-
 export default useInnerTouchable
