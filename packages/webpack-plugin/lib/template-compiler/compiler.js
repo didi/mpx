@@ -2182,7 +2182,7 @@ function postProcessComponentIs (el) {
     }
     let range = []
     if (el.attrsMap.range) {
-      range = getAndRemoveAttr(el, 'range').val.split(',')
+      range = getAndRemoveAttr(el, 'range').val.split(',').map(item => item.trim())
     }
     el.components.forEach(function (component) {
       if (range.length > 0 && !range.includes(component)) return
