@@ -19,7 +19,7 @@ module.exports = function createHelpers (loaderContext) {
 
   const { mode, env } = loaderContext.getMpx() || {}
 
-  function getRequire (type, part, extraOptions = {}, index = 0) {
+  function getRequire (type, part, extraOptions, index) {
     let extract = false
     switch (type) {
       // eslint-disable-next-line no-fallthrough

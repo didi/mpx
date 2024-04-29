@@ -1,4 +1,5 @@
 const { dash2hump } = require('../utils/hump-dash')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 function genIf (node) {
   node.ifProcessed = true
@@ -26,7 +27,8 @@ const s = JSON.stringify
 
 function mapAttrName (name) {
   if (name === 'class') return 'className'
-  return dash2hump(name)
+  if (!isValidIdentifierStr(name)) return s(name)
+  return name
 }
 
 function genNode (node) {
