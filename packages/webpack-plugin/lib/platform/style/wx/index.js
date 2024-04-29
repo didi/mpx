@@ -5,7 +5,7 @@ module.exports = function getSpec ({ warn, error }) {
     ios: 'ios',
     android: 'android'
   }
-  
+
   // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(box-sizing|white-space|text-overflow)$/ // box-sizing|white-space|text-overflow 替换用法待确认
   // React Native 下 android 不支持的 CSS property
@@ -26,14 +26,14 @@ module.exports = function getSpec ({ warn, error }) {
     display: ['flex', 'none'],
     'pointer-events': ['auto', 'none'],
     'vertical-align': ['auto', 'top', 'bottom', 'center'],
-    'position': ['relative','absolute'],
+    position: ['relative', 'absolute'],
     'font-variant': ['small-caps', 'oldstyle-nums', 'lining-nums', 'tabular-nums', 'proportional-nums']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
   const unsupportedValueError = ({ prop, value }) => {
     if (isIllegalValue({ prop, value })) {
-      content = `Property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, the value [${value}] does not support!`
+      const content = `Property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, the value [${value}] does not support!`
       error(content)
     }
   }
@@ -134,7 +134,7 @@ module.exports = function getSpec ({ warn, error }) {
     verifyValues({ prop, value, valueType })
   }
 
-  function getFontVariant({ prop, value }) {
+  function getFontVariant ({ prop, value }) {
     if (/^(font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures)$/.test(prop)) {
       error(`Property [${prop}] is not supported in React Native environment, please replace [font-variant]!`)
     }
@@ -196,7 +196,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: /.*font-variant.*/,
         ios: getFontVariant,
-        android: getFontVariant,
+        android: getFontVariant
       },
       // Todo mark 值类型校验放最后，其他 rule 在上面编写
       { // color 颜色值校验
