@@ -1,10 +1,10 @@
-import { changeOpts } from '../../../common/js'
+import { ENV_OBJ, changeOpts } from '../../../common/js'
 
 function makePhoneCall (options = {}) {
   const opts = changeOpts(options, {
     phoneNumber: 'number'
   })
-  my.makePhoneCall(opts)
+  return ENV_OBJ.makePhoneCall(opts)
 }
 
 export {

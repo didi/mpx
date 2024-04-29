@@ -15,6 +15,7 @@ const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModule
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
+const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -521,7 +522,10 @@ class MpxWebpackPlugin {
       })
     })
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
+    compiler.hooks.compilation.tap({
+      name: 'MpxWebpackPlugin',
+      stage: 100
+    }, (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
@@ -573,6 +577,8 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
