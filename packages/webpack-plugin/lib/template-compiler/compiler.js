@@ -2537,7 +2537,7 @@ function postProcessComponentIs (el) {
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
-      if (isReact) {
+      if (isReact(mode)) {
         postProcessIfReact(newChild)
       } else {
         postProcessIf(newChild)
