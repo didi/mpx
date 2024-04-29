@@ -9,13 +9,13 @@
  * ✘ enable-passive
  * ✔ refresher-enabled
  * ✘ refresher-threshold
- * 	 refresher-default-style
- * ✔ refresher-background: android
+ * ✔ refresher-default-style(仅 android 支持)
+ * ✔ refresher-background(仅 android 支持)
  * ✔ refresher-triggered
  * ✔ onScrollBeginDrag(binddragstart)
  * ✔ onScrollEndDrag(binddragend)
  * ✔ bindrefresherrefresh
- *   enable-flex
+ * ✘ enable-flex(scroll-x，rn 默认支持)
  * ✘ scroll-anchoring
  * ✔ paging-enabled
  * ✘ using-sticky
@@ -50,6 +50,7 @@ function _ScrollView(props) {
     lowerThreshold = 50,
     scrollWithAnimation,
     refresherEnabled,
+    refresherDefaultStyle,
     refresherBackground,
     refreshControlConfig = {},
   } = props;
@@ -268,7 +269,6 @@ function _ScrollView(props) {
         }),
       );
   }
-
   let scrollElementProps = {
     pinchGestureEnabled: false,
     horizontal: scrollX,
@@ -285,25 +285,35 @@ function _ScrollView(props) {
   if (enhanced) {
     scrollElementProps = {
       ...scrollElementProps,
-      bounces: !bounces,
-      pagingEnabled: !pagingEnabled,
-      refreshControl: refresherEnabled ? (
+      bounces: !!bounces,
+      pagingEnabled: !!pagingEnabled,
+    };
+  }
+
+  const innerTouchable = useInnerTouchable({
+    ...props,
+    touchstart: onTouchStart,
+    touchend: onTouchEnd,
+    touchmove: onTouchMove
+  });
+  const refreshColor = {
+    'black': ['#000'],
+    'white': ['#fff']
+  }
+  return (
+    <ScrollView
+      {...scrollElementProps}
+      {...innerTouchable}
+      refreshControl={refresherEnabled ? (
         <RefreshControl
           progressBackgroundColor={refresherBackground}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          {...(refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : {})}
           {...refreshControlConfig}
         />
-      ) : null,
-    };
-  }
-  const innerTouchable = useInnerTouchable({
-    onTouchStart: onTouchStart,
-    onTouchEnd: onTouchEnd,
-    onTouchMove: onTouchMove,
-  });
-  return (
-    <ScrollView {...scrollElementProps} {...innerTouchable}>
+      ) : null}
+    >
       {children}
     </ScrollView>
   );
