@@ -27,7 +27,8 @@ import {
   callWithErrorHandling,
   warn,
   error,
-  getEnvObj
+  getEnvObj,
+  isReact
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -124,6 +125,8 @@ export default class MpxProxy {
       this.forceUpdateAll = false
       this.currentRenderTask = null
       this.propsUpdatedFlag = false
+      // react专用，正确触发updated钩子
+      this.pendingUpdatedFlag = false
     }
     this.initApi()
   }
@@ -144,7 +147,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'react') {
+    if (__mpx_mode__ !== 'web' && !isReact) {
       this.initRender()
     }
 
@@ -228,7 +231,7 @@ export default class MpxProxy {
   }
 
   initProps () {
-    if (__mpx_mode__ === 'react') {
+    if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
     } else {

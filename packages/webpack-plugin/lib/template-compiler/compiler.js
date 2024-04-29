@@ -13,6 +13,7 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const shallowStringify = require('../utils/shallow-stringify')
+const { isReact } = require('../utils/env')
 
 const no = function () {
   return false
@@ -861,7 +862,7 @@ function postMoveBaseDirective (target, source, isDelete = true) {
   target.if = source.if
   target.elseif = source.elseif
   target.else = source.else
-  if (mode === 'react') {
+  if (isReact(mode)) {
     postProcessForReact(target)
     postProcessIfReact(target)
   } else {
@@ -1867,7 +1868,7 @@ function processText (el, meta) {
     addExp(el, parsed.result)
   }
   el.text = parsed.val
-  if (mode === 'react') {
+  if (isReact(mode)) {
     processWrapTextReact(el, meta)
   }
 }
@@ -2416,7 +2417,7 @@ function processElement (el, root, options, meta) {
     return
   }
 
-  if (mode === 'react') {
+  if (isReact(mode)) {
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
@@ -2466,7 +2467,7 @@ function closeElement (el, meta, options) {
     postProcessIf(el)
     return
   }
-  if (mode === 'react') {
+  if (isReact(mode)) {
     postProcessComponentIs(el)
     postProcessForReact(el)
     postProcessIfReact(el)
@@ -2536,7 +2537,7 @@ function postProcessComponentIs (el) {
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
-      if (mode === 'react') {
+      if (isReact) {
         postProcessIfReact(newChild)
       } else {
         postProcessIf(newChild)

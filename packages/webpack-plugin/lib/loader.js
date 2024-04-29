@@ -13,6 +13,7 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
+const { isReact } = require('./utils/env')
 const path = require('path')
 const processWeb = require('./web')
 const processReact = require('./react')
@@ -162,8 +163,8 @@ module.exports = function (content) {
           callback
         })
       }
-      // 处理mode为react时输出react js格式文件
-      if (mode === 'react') {
+      // 处理mode为react时输出js格式文件
+      if (isReact(mode)) {
         return processReact({
           parts,
           loaderContext,
