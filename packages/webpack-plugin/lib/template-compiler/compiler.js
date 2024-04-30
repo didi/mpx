@@ -1911,7 +1911,7 @@ function processShow (el, options, root) {
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
         name: 'style',
-        value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+        value: `${oldStyle}{{${showExp}'':'display:none;'}}`
       }])
     }
   }
