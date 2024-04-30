@@ -414,7 +414,7 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompile) {
+    if (this.options.partialCompile && this.options.partialCompile.include) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
