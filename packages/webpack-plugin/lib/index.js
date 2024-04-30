@@ -302,7 +302,7 @@ class MpxWebpackPlugin {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
-      if (this.options.optimizeSize) {
+      if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
         compiler.options.optimization.chunkIds = 'total-size'
         compiler.options.optimization.moduleIds = 'natural'
         compiler.options.optimization.mangleExports = 'size'
@@ -964,17 +964,20 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
-        // 移除extractor抽取后的空模块
-        for (const module of modules) {
-          if (module.buildInfo.isEmpty) {
-            for (const connection of moduleGraph.getIncomingConnections(module)) {
-              if (connection.dependency.type === 'mpx cjs extract') {
-                connection.weak = true
-                connection.dependency.weak = true
+        // 移除extractor抽取后的空模块，只有生产模式且optimizeSize设置为true时开启
+        if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
+          for (const module of modules) {
+            if (module.buildInfo.isEmpty) {
+              for (const connection of moduleGraph.getIncomingConnections(module)) {
+                if (connection.dependency.type === 'mpx cjs extract') {
+                  connection.weak = true
+                  connection.dependency.weak = true
+                }
               }
             }
           }
         }
+
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
