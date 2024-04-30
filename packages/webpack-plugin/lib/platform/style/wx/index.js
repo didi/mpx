@@ -13,7 +13,7 @@ module.exports = function getSpec ({ warn, error }) {
   // React Native IOS 不支持的 CSS property
   // const unsupportedPropIos = /^()$/
   // property background 的校验  包含background且不包含background-color
-  const bgSuppotedExp = /^((?!background-color).)*background((?!background-color).)*$/
+  const bgSuppotedExp = /^((?!(-color)).)*background((?!(-color)).)*$/
   const unsupportedPropError = ({ prop, platform }) => {
     const content = `Property [${prop}] is not supported in React Native ${platform} environment!`
     error(content)
@@ -156,7 +156,7 @@ module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
-      { // RN不支持的背景相关的属性
+      { // RN不支持的背景相关的属性(rn仅支持backgroundColor，所以这里单独匹配一下不支持的背景相关的样式来提示开发者)
         test: bgSuppotedExp,
         ios: unsupportedPropError,
         android: unsupportedPropError
