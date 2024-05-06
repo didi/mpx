@@ -5,7 +5,7 @@ import { hasOwn, isFunction, noop, isObject, error } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
-import { queueJob } from '../../../observer/scheduler'
+import { queueJob, nextTick } from '../../../observer/scheduler'
 
 function createEffect (proxy, components) {
   const update = proxy.update = () => {
@@ -48,7 +48,8 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
       Object.keys(newData).forEach((key) => {
         set(this, key, newData[key])
       })
-      this.__mpxProxy.forceUpdate(callback)
+      this.__render()
+      nextTick(callback)
     },
     __getProps () {
       const propsData = {}
@@ -112,7 +113,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
           detail: eventDetail,
           customEvent: true
         }
-        handler.call(this, eventObj)
+        handler.call(this, eventObj, '__customEvent')
       }
     },
     selectComponent () {
