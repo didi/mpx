@@ -33,7 +33,7 @@
  */
 
 import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, RefresherEvent } from 'react-native';
-import React, { useRef, useState, useEffect, ReactNode } from 'react';
+import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
 import useInnerTouchable, { extendEvent, getCustomEvent } from './getInnerListeners';
 interface ScrollViewProps {
   children?: ReactNode;
@@ -79,7 +79,7 @@ type ScrollElementProps = {
   bounces?: boolean;
   pagingEnabled?: boolean;
 };
-function _ScrollView(props: ScrollViewProps = {}) {
+const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {}, ref) {
   const {
     children,
     enhanced,
@@ -342,6 +342,17 @@ function _ScrollView(props: ScrollViewProps = {}) {
     'black': ['#000'],
     'white': ['#fff']
   }
+
+  useImperativeHandle(ref, () => {
+    return {
+      type: 'scroll-view',
+      context: {
+        ...props,
+        scrollTo: scrollToOffset
+      },
+      nodeRef: scrollViewRef.current
+    }
+  })
   return (
     <ScrollView
       {...scrollElementProps}
@@ -358,7 +369,8 @@ function _ScrollView(props: ScrollViewProps = {}) {
       {children}
     </ScrollView>
   );
-}
+})
+
 _ScrollView.displayName = '_ScrollView';
 
 export default _ScrollView
