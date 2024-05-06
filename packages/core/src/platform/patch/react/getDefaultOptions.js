@@ -110,8 +110,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
             id,
             dataset
           },
-          detail: eventDetail,
-          customEvent: true
+          detail: eventDetail
         }
         handler.call(this, eventObj, '__customEvent')
       }

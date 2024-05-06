@@ -1,4 +1,3 @@
-const { dash2hump } = require('../utils/hump-dash')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 function genIf (node) {
