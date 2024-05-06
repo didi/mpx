@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { PanResponder } from 'react-native'
 
-const getDefaultEvent = event => {
+const getDefaultEvent = (type = '', event = {}, props = {}) => {
   const nativeEvent = event.nativeEvent
   const {
     timestamp,
@@ -10,18 +10,19 @@ const getDefaultEvent = event => {
     touches = [],
     changedTouches = []
   } = nativeEvent
+  const { id, offsetLeft, offsetTop } = props
   return {
-    type: 'tap',
+    ...event,
+    type,
     timeStamp: timestamp,
     target: {
-      id: '',
-      dataset: {}
-    },
-    currentTarget: {
-      id: '',
-      dataset: {}
+      id: id || '',
+      dataset: getDataSet(props),
+      offsetLeft: offsetLeft || 0,
+      offsetTop: offsetTop || 0
     },
     detail: {
+      ...(event.detail || {}),
       x: pageX,
       y: pageY
     },
@@ -43,7 +44,9 @@ const getDefaultEvent = event => {
         clientY: item.locationY
       }
     }),
-    nativeEvent
+    persist: event.persist,
+    stopPropagation: event.stopPropagation,
+    preventDefault: event.preventDefault
   }
 }
 
@@ -60,7 +63,20 @@ export const extendEvent = (e = {}, extendObj = {}) => {
   return e
 }
 
-export const getCustomEvent = (type, oe, { detail = {}, target = {} }) => {
+export const getDataSet = (props) => {
+  const result = {}
+
+  for (const key in props) {
+    if (key.indexOf('data-') === 0) {
+      const newKey = key.substr(5) // 去掉 'data-' 前缀
+      result[newKey] = props[key]
+    }
+  }
+
+  return result
+}
+
+export const getCustomEvent = (type, oe, { detail = {}, target = {} }, props = {}) => {
   return extendEvent(oe, {
     type,
     detail: {
@@ -68,8 +84,8 @@ export const getCustomEvent = (type, oe, { detail = {}, target = {} }) => {
       ...detail
     },
     target: {
-      id: '',
-      dataset: {},
+      id: props.id || '',
+      dataset: getDataSet(props),
       ...target
     }
   })
@@ -159,27 +175,27 @@ const useInnerTouchable = props => {
       }
       if (ref.current.props.catchTouchstart) {
         e.stopPropagation()
-        ref.current.props.catchTouchstart(getDefaultEvent(e))
+        ref.current.props.catchTouchstart(getDefaultEvent('touchstart', e, ref.current.props))
       }
       if (ref.current.props.touchstart) {
-        ref.current.props.touchstart(getDefaultEvent(e))
+        ref.current.props.touchstart(getDefaultEvent('touchstart', e, ref.current.props))
       }
       if (ref.current.props.catchLongtap || ref.current.props.catchLongpress || ref.current.props.longPress || ref.current.props.longTap) {
         ref.current.startTimer = setTimeout(() => {
           ref.current.needTap = false
           if (ref.current.props.catchLongpress) {
             e.stopPropagation()
-            ref.current.props.catchLongpress(getDefaultEvent(e))
+            ref.current.props.catchLongpress(getDefaultEvent('longpress', e, ref.current.props))
           }
           if (ref.current.props.longPress) {
-            ref.current.props.onLongPress(getDefaultEvent(e))
+            ref.current.props.onLongPress(getDefaultEvent('longpress', e, ref.current.props))
           }
           if (ref.current.props.catchLongtap) {
             e.stopPropagation()
-            ref.current.props.catchLongtap(getDefaultEvent(e))
+            ref.current.props.catchLongtap(getDefaultEvent('longtap', e, ref.current.props))
           }
           if (ref.current.props.longTap) {
-            ref.current.props.longTap(getDefaultEvent(e))
+            ref.current.props.longTap(getDefaultEvent('longtap', e, ref.current.props))
           }
         }, 350)
       }
@@ -196,27 +212,27 @@ const useInnerTouchable = props => {
       }
       if (ref.current.props.catchTouchmove) {
         e.stopPropagation()
-        ref.current.props.catchTouchmove(getDefaultEvent(e))
+        ref.current.props.catchTouchmove(getDefaultEvent('touchmove', e, ref.current.props))
       }
       if (ref.current.props.touchmove) {
-        ref.current.props.touchmove(getDefaultEvent(e))
+        ref.current.props.touchmove(getDefaultEvent('touchmove', e, ref.current.props))
       }
     },
     onTouchEnd: (e) => {
       ref.current.startTimer && clearTimeout(ref.current.startTimer)
       if (ref.current.props.catchTouchend) {
         e.stopPropagation()
-        ref.current.props.catchTouchend(getDefaultEvent(e))
+        ref.current.props.catchTouchend(getDefaultEvent('touchend', e, ref.current.props))
       } else if (ref.current.props.touchend) {
-        ref.current.props.touchend(getDefaultEvent(e))
+        ref.current.props.touchend(getDefaultEvent('touchend', e, ref.current.props))
       }
       if ((ref.current.props.tap || ref.current.props.catchTap) && ref.current.needTap) {
         if (ref.current.props.catchTap) {
           e.stopPropagation()
-          ref.current.props.catchTap(getDefaultEvent(e))
+          ref.current.props.catchTap(getDefaultEvent('tap', e, ref.current.props))
         }
         if (ref.current.props.tap) {
-          ref.current.props.tap(getDefaultEvent(e))
+          ref.current.props.tap(getDefaultEvent('tap', e, ref.current.props))
         }
       }
     }
@@ -225,7 +241,7 @@ const useInnerTouchable = props => {
   oe.forEach(event => {
     if (ref.current.props[event]) {
       events[event] = (e) => {
-        ref.current.props[event](e)
+        ref.current.props[event]?.(e)
       }
     }
   })

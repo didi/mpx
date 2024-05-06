@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 
-import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, RefresherEvent } from 'react-native';
+import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native';
 import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
 import useInnerTouchable, { extendEvent, getCustomEvent } from './getInnerListeners';
 interface ScrollViewProps {
@@ -56,7 +56,7 @@ interface ScrollViewProps {
   onScrollToUpper?: (event: any) => void;
   onScrollToLower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
   onScroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  onRefresherrefresh?: (event: NativeSyntheticEvent<RefresherEvent> | unknown) => void;
+  onRefresherrefresh?: (event: unknown) => void;
   onDragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
   onDragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
   onDragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
@@ -78,6 +78,9 @@ type ScrollElementProps = {
   ref: React.RefObject<ScrollView>;
   bounces?: boolean;
   pagingEnabled?: boolean;
+  offsetLeft?: number;
+  offsetTop?: number;
+
 };
 const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {}, ref) {
   const {
@@ -174,7 +177,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
               offsetLeft: scrollOptions.current.offsetX || 0,
               offsetTop: scrollOptions.current.offsetY || 0,
             },
-          }),
+          }, props),
         );
         hasCallScrollToUpper.current = true;
       }
@@ -199,7 +202,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
               offsetLeft: scrollOptions.current.offsetX || 0,
               offsetTop: scrollOptions.current.offsetY || 0,
             },
-          }),
+          }, props),
         );
       }
     } else {
@@ -234,7 +237,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             offsetLeft: scrollLeft,
             offsetTop: scrollTop,
           },
-        }),
+        }, props),
       );
 
     const visibleLength = selectLength(e.nativeEvent.layoutMeasurement);
@@ -266,7 +269,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             offsetLeft: scrollOptions.current.offsetX || 0,
             offsetTop: scrollOptions.current.offsetY || 0,
           },
-        }),
+        }, props),
       );
   }
 
@@ -322,7 +325,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     showsHorizontalScrollIndicator: !!(scrollX && showScrollBar),
     showsVerticalScrollIndicator: !!(scrollY && showScrollBar),
     scrollEnabled: scrollEnabled,
-    ref: scrollViewRef,
+    ref: scrollViewRef
   };
   if (enhanced) {
     scrollElementProps = {
@@ -336,7 +339,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     ...props,
     touchstart: onTouchStart,
     touchend: onTouchEnd,
-    touchmove: onTouchMove
+    touchmove: onTouchMove,
+    offsetLeft: scrollOptions.current.offsetX || 0,
+    offsetTop: scrollOptions.current.offsetY || 0
   });
   const refreshColor = {
     'black': ['#000'],
