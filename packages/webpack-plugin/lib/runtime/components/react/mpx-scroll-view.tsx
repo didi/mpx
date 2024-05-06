@@ -35,24 +35,23 @@
 import { ScrollView, RefreshControl } from 'react-native';
 import React, { useRef, useState, useEffect } from 'react';
 import useInnerTouchable, { extendEvent, getCustomEvent } from './getInnerListeners';
-
-function _ScrollView(props) {
+function _ScrollView(props = {}) {
   const {
     children,
-    scrollX,
-    scrollY,
-    enableBackToTop,
     enhanced,
     bounces,
-    showScrollBar,
-    pagingEnabled,
-    upperThreshold = 50,
-    lowerThreshold = 50,
-    scrollWithAnimation,
-    refresherEnabled,
-    refresherDefaultStyle,
-    refresherBackground,
-    refreshControlConfig = {},
+    'scroll-x': scrollX,
+    'scroll-y': scrollY,
+    'enable-back-to-top': enableBackToTop,
+    'show-scrollbar': showScrollBar,
+    'paging-enabled': pagingEnabled,
+    'upper-threshold': upperThreshold = 50,
+    'lower-threshold': lowerThreshold = 50,
+    'scroll-with-animation': scrollWithAnimation,
+    'refresher-enabled': refresherEnabled,
+    'refresher-default-style': refresherDefaultStyle,
+    'refresher-background': refresherBackground,
+    'refresher-control-config': refreshControlConfig = {}
   } = props;
   const [snapScrollTop, setSnapScrollTop] = useState(0);
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
@@ -72,30 +71,30 @@ function _ScrollView(props) {
   const initialTimeout = useRef(null);
   useEffect(() => {
     if (
-      snapScrollTop !== props.scrollTop ||
-      snapScrollLeft !== props.scrollLeft
+      snapScrollTop !== props['scroll-top'] ||
+      snapScrollLeft !== props['scroll-left']
     ) {
-      setSnapScrollTop(props.scrollTop || 0);
-      setSnapScrollLeft(props.scrollLeft || 0);
+      setSnapScrollTop(props['scroll-top'] || 0);
+      setSnapScrollLeft(props['scroll-left'] || 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.scrollTop, props.scrollLeft]);
+  }, [props['scroll-top'], props['scroll-left']]);
 
   useEffect(() => {
-    if (refreshing !== props.refresherTriggered) {
-      setRefreshing(props.refresherTriggered);
+    if (refreshing !== props['refresher-triggered']) {
+      setRefreshing(props['refresher-triggered']);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.refresherTriggered]);
+  }, [props['refresher-triggered']]);
 
   useEffect(() => {
-    if (!props.scrollX && !props.scrollY) {
+    if (!props['scroll-x'] && !props['scroll-y']) {
       setScrollEnabled(false);
     } else {
       setScrollEnabled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.scrollX, props.scrollY]);
+  }, [props['scroll-x'], props['scroll-y']]);
 
   useEffect(() => {
     if (snapScrollTop || snapScrollLeft) {
