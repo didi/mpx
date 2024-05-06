@@ -67,6 +67,14 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
       }
       return result
     },
+    _getWxKeyThis (item, index) {
+      if (typeof item === 'string' || typeof item === 'number') {
+        return item
+      } else {
+        console.warn('The value type of \'wx:key=*this\' is not string or number, this only supports type string or number in React Native environment!')
+        return index
+      }
+    },
     triggerEvent () {
     },
     selectComponent () {

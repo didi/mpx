@@ -109,7 +109,25 @@ module.exports = function getSpec ({ warn, error }) {
             name: ':key',
             value
           }
-        }
+        },
+        ios ({ value }, { el }) {
+          const index = el.attrsMap['wx:for-index'] || 'index'
+          const itemName = el.attrsMap['wx:for-item'] || 'item'
+          const keyName = value
+          if (value === '*this') {
+            value = `{{this._getWxKeyThis(${itemName}, ${index})}}`
+          } else {
+            if (isValidIdentifierStr(keyName)) {
+              value = `{{${itemName}.${keyName}}}`
+            } else {
+              value = `{{${itemName}['${keyName}']}}`
+            }
+          }
+          return {
+            name: 'key',
+            value
+          }
+        },
       },
       {
         // 在swan/web模式下删除for-index/for-item，转换为v/s-for表达式
