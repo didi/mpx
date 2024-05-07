@@ -1,4 +1,4 @@
-import { noop, isBoolean, isString, hasOwn, makeMap, dash2hump, warn } from '@mpxjs/utils'
+import { noop, isBoolean, isString, hasOwn, makeMap, dash2hump, hump2dash, warn } from '@mpxjs/utils'
 
 const _createSelectorQuery = (runCb) => {
   return {
@@ -90,8 +90,7 @@ const getPlainProps = (config, props) => {
   return wrapFn((resolve) => {
     const res = {}
     for (const key in config) {
-      // todo: 确认目前的字段编译规则，是连字符还是转成驼峰了
-      res[dash2hump(key)] = props[key] || props[dash2hump(key)]
+      res[dash2hump(key)] = props[key] || props[hump2dash(key)]
     }
     resolve(res)
   })
@@ -107,8 +106,10 @@ const getComputedStyle = (config, props) => {
       let length = styles.length - 1
       while (length >= 0) {
         const styleObj = styles[length--]
-        if (styleObj[key]) {
-          res[key] = styleObj[key]
+        // 取 style 的 key 是根据传入的 key 来设置，传什么设置什么，取值需要做兼容
+        const humpKey = dash2hump(key)
+        res[key] = styleObj[key] || styleObj[humpKey] || ''
+        if (hasOwn(styleObj, key) || hasOwn(styleObj, humpKey)) {
           break
         }
       }
@@ -159,12 +160,16 @@ export default function createNodesRef (props, instance) {
           Object.assign(plainProps, makeMap(value))
         } else if (key === 'computedStyle') {
           const computedStyle = config.computedStyle
-          computedStyle.forEach((style) => {
+          for (let i = computedStyle.length - 1; i >= 0; i--) {
+            const style = computedStyle[i]
             if (RECT.includes(style) || SIZE.includes(style)) {
               addMeasureProps(style)
+              computedStyle.splice(i, 1)
             }
-          })
-          fns.push(getComputedStyle(computedStyle, props))
+          }
+          if (computedStyle.length) {
+            fns.push(getComputedStyle(computedStyle, props))
+          }
         }
       } else if (isBoolean(value) && value) {
         switch (key) {
