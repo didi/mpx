@@ -60,9 +60,9 @@ interface ScrollViewProps {
   onDragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
   onDragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
   onDragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  onTouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  onTouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  onTouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  onTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  onTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  onTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 type ScrollElementProps = {
   pinchGestureEnabled: boolean;
@@ -273,9 +273,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       );
   }
 
-  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
-    const { onDragstart, onTouchstart } = props;
-    onTouchstart && onTouchstart(e);
+  function onScrollTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
+    const { onDragstart, onTouchStart } = props;
+    onTouchStart && onTouchStart(e);
     onDragstart &&
       onDragstart(
         extendEvent(e, {
@@ -287,9 +287,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       );
   }
 
-  function onTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
-    const { onDragging, onTouchmove } = props;
-    onTouchmove && onTouchmove(e);
+  function onScrollTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
+    const { onDragging, onTouchMove } = props;
+    onTouchMove && onTouchMove(e);
     onDragging &&
       onDragging(
         extendEvent(e, {
@@ -301,9 +301,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       );
   }
 
-  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
-    const { onDragend, onTouchend } = props;
-    onTouchend && onTouchend(e);
+  function onScrollTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
+    const { onDragend, onTouchEnd } = props;
+    onTouchEnd && onTouchEnd(e);
     onDragend &&
       onDragend(
         extendEvent(e, {
@@ -337,9 +337,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    onTouchStart: onTouchStart,
-    onTouchEnd: onTouchEnd,
-    onTouchMove: onTouchMove,
+    onTouchStart: onScrollTouchStart,
+    onTouchEnd: onScrollTouchEnd,
+    onTouchMove: onScrollTouchMove,
     offsetLeft: scrollOptions.current.offsetX || 0,
     offsetTop: scrollOptions.current.offsetY || 0
   });
