@@ -18,7 +18,8 @@ export default function getBuiltInMixins (options, type) {
   if (isReact) {
     bulitInMixins = [
       proxyEventMixin(),
-      styleHelperMixin()
+      styleHelperMixin(),
+      refsMixin()
     ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [

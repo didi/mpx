@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
+import { useEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
@@ -44,8 +44,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
     __render () {
     },
     __injectedRender: currentInject.render || noop,
-    __getRefsData () {
-    },
+    __getRefsData: currentInject.getRefsData || noop,
     // render helper
     _i (val, fn) {
       let i, l, keys, key
@@ -115,7 +114,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  return memo((props, ref) => {
+  return memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
       instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject, validProps, components })
@@ -129,6 +128,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     })
     proxy.propsUpdated()
+
+    useImperativeHandle(ref, () => {
+      return instance
+    })
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
@@ -147,5 +150,5 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
     return proxy.effect.run()
-  })
+  }))
 }
