@@ -1,5 +1,5 @@
 import { isObject, isArray, dash2hump } from '@mpxjs/utils'
-import { Dimensions } from 'react-native';
+import { Dimensions } from 'react-native'
 
 function concat (a, b) {
   return a ? b ? (a + ' ' + b) : a : (b || '')
