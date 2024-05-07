@@ -53,8 +53,8 @@ interface ScrollViewProps {
   'refresher-background'?: string;
   'scroll-top'?: number;
   'scroll-left'?: number;
-  onScrollToUpper?: (event: any) => void;
-  onScrollToLower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
+  onScrolltoupper?: (event: any) => void;
+  onScrolltolower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
   onScroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
   onRefresherrefresh?: (event: unknown) => void;
   onDragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
@@ -164,11 +164,11 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onStartReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { onScrollToUpper } = props;
+    const { onScrolltoupper } = props;
     const { offset } = scrollOptions.current;
-    if (onScrollToUpper && offset <= upperThreshold) {
+    if (onScrolltoupper && (offset <= upperThreshold)) {
       if (!hasCallScrollToUpper.current) {
-        onScrollToUpper(
+        onScrolltoupper(
           getCustomEvent('scrolltoupper', e, {
             detail: {
               direction: scrollX ? 'left' : 'top',
@@ -187,13 +187,13 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onEndReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { onScrollToLower } = props;
+    const { onScrolltolower } = props;
     const { contentLength, visibleLength, offset } = scrollOptions.current;
     const distanceFromEnd = contentLength - visibleLength - offset;
-    if (onScrollToLower && distanceFromEnd < lowerThreshold) {
+    if (onScrolltolower && (distanceFromEnd < lowerThreshold)) {
       if (!hasCallScrollToLower.current) {
         hasCallScrollToLower.current = true;
-        onScrollToLower(
+        onScrolltolower(
           getCustomEvent('scrolltolower', e, {
             detail: {
               direction: scrollX ? 'right' : 'botttom',
