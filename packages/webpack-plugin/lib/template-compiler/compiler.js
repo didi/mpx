@@ -1600,7 +1600,7 @@ function processFor (el) {
   }
 }
 
-function processRefReact(el, meta) {
+function processRefReact (el, meta) {
   const val = getAndRemoveAttr(el, config[mode].directive.ref).val
   if (val) {
     if (!meta.refs) {

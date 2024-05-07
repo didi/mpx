@@ -3,7 +3,10 @@ import { noop, isBoolean, isString, hasOwn, makeMap, dash2hump, warn } from '@mp
 const _createSelectorQuery = (runCb) => {
   return {
     exec: (cb = noop) => {
-      runCb().then(res => cb([res]))
+      runCb().then(res => {
+        res = [res]
+        cb(res)
+      })
     },
     in: () => {
       warn('please use wx:ref to get NodesRef')
@@ -39,13 +42,13 @@ const wrapFn = (fn) => {
 const createMeasureObj = (nodeRef) => {
   const allProps = new Set()
   return {
-    addProps(prop) {
+    addProps (prop) {
       if (isString(prop)) {
         prop = [prop]
       }
       prop.forEach(item => allProps.add(item))
     },
-    measure() {
+    measure () {
       return new Promise((resolve) => {
         nodeRef.measure(function (x, y, width, height, pageX, pageY) {
           const rectAndSize = {
@@ -66,8 +69,7 @@ const createMeasureObj = (nodeRef) => {
   }
 }
 
-// todo: data-
-const datasetReg = /^data(.+)$/
+const datasetReg = /^data-(.+)$/
 
 const getDataset = (props) => {
   return wrapFn((resolve) => {
@@ -103,7 +105,7 @@ const getComputedStyle = (config, props) => {
     config.forEach((key) => {
       // 后序遍历，取到就直接返回
       let length = styles.length - 1
-      while(length >= 0) {
+      while (length >= 0) {
         const styleObj = styles[length--]
         if (styleObj[key]) {
           res[key] = styleObj[key]
@@ -122,18 +124,19 @@ const getInstanceConfig = (config, instance) => {
 }
 
 const getScrollOffsetFallback = (cb) => {
-  cb({
+  const res = {
     scrollLeft: 0,
     scrollTop: 0,
     scrollHeight: 0,
     scrollWidth: 0
-  })
+  }
+  cb(res)
 }
 
 const RECT = ['left', 'top', 'right', 'bottom']
 const SIZE = ['width', 'height']
 
-export default function createNodesRef(props, instance) {
+export default function createNodesRef (props, instance) {
   const nodeRef = instance.nodeRef
 
   const fields = (config, cb = noop) => {
@@ -167,10 +170,10 @@ export default function createNodesRef(props, instance) {
         switch (key) {
           case 'rect':
             addMeasureProps(RECT)
-            break;
+            break
           case 'size':
             addMeasureProps(SIZE)
-            break;
+            break
           case 'scrollOffset':
             fns.push(wrapFn(instance.scrollOffset || getScrollOffsetFallback))
             break
