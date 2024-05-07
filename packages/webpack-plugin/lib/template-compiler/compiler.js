@@ -36,7 +36,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-
+const hoverClassReg = /^mpx-(((cover-)?view)|button|navigator)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1044,6 +1044,12 @@ function processStyleReact (el) {
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
+  
+  let staticHoverClass = ''
+  if (hoverClassReg.test(el.tag)) {
+    staticHoverClass = getAndRemoveAttr(el, 'hover-class').val || ''
+    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
+  }
 
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
@@ -1062,6 +1068,15 @@ function processStyleReact (el) {
       name: 'style',
       // runtime helper
       value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+    }])
+  }
+
+  if (staticHoverClass) {
+    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
+    addAttrs(el, [{
+      name: 'hoverStyle',
+      // runtime helper
+      value: `{{this.__getStyle(${staticClassExp})}}`
     }])
   }
 }
