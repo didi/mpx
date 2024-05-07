@@ -6,6 +6,25 @@ const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
 
+function convertKeyReact ({ value }, { el }) {
+  const index = el.attrsMap['wx:for-index'] || 'index'
+  const itemName = el.attrsMap['wx:for-item'] || 'item'
+  const keyName = value
+  if (value === '*this') {
+    value = `{{this._getWxKeyThis(${itemName}, ${index})}}`
+  } else {
+    if (isValidIdentifierStr(keyName)) {
+      value = `{{${itemName}.${keyName}}}`
+    } else {
+      value = `{{${itemName}['${keyName}']}}`
+    }
+  }
+  return {
+    name: 'key',
+    value
+  }
+}
+
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android'],
@@ -110,42 +129,8 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        ios ({ value }, { el }) {
-          const index = el.attrsMap['wx:for-index'] || 'index'
-          const itemName = el.attrsMap['wx:for-item'] || 'item'
-          const keyName = value
-          if (value === '*this') {
-            value = `{{this._getWxKeyThis(${itemName}, ${index})}}`
-          } else {
-            if (isValidIdentifierStr(keyName)) {
-              value = `{{${itemName}.${keyName}}}`
-            } else {
-              value = `{{${itemName}['${keyName}']}}`
-            }
-          }
-          return {
-            name: 'key',
-            value
-          }
-        },
-        android ({ value }, { el }) {
-          const index = el.attrsMap['wx:for-index'] || 'index'
-          const itemName = el.attrsMap['wx:for-item'] || 'item'
-          const keyName = value
-          if (value === '*this') {
-            value = `{{this._getWxKeyThis(${itemName}, ${index})}}`
-          } else {
-            if (isValidIdentifierStr(keyName)) {
-              value = `{{${itemName}.${keyName}}}`
-            } else {
-              value = `{{${itemName}['${keyName}']}}`
-            }
-          }
-          return {
-            name: 'key',
-            value
-          }
-        }
+        ios: convertKeyReact,
+        android: convertKeyReact
       },
       {
         // 在swan/web模式下删除for-index/for-item，转换为v/s-for表达式
