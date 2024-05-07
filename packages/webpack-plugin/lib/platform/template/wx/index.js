@@ -475,7 +475,7 @@ module.exports = function getSpec ({ warn, error }) {
           ios (prefix) {
             const prefixMap = {
               bind: 'on',
-              catch: 'on'
+              catch: 'catch'
             }
             if (!prefixMap[prefix]) {
               error(`React native environment does not support [${prefix}] event handling!`)
@@ -486,7 +486,7 @@ module.exports = function getSpec ({ warn, error }) {
           android (prefix) {
             const prefixMap = {
               bind: 'on',
-              catch: 'on'
+              catch: 'catch'
             }
             if (!prefixMap[prefix]) {
               error(`React native environment does not support [${prefix}] event handling!`)
@@ -529,7 +529,11 @@ module.exports = function getSpec ({ warn, error }) {
             const eventMap = {
               tap: 'press',
               longtap: 'longPress',
-              longpress: 'longPress'
+              longpress: 'longPress',
+              touchstart: 'touchStart',
+              touchmove: 'touchMove',
+              touchend: 'touchEnd',
+              touchcancel: 'touchCancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -541,7 +545,11 @@ module.exports = function getSpec ({ warn, error }) {
             const eventMap = {
               tap: 'press',
               longtap: 'longPress',
-              longpress: 'longPress'
+              longpress: 'longPress',
+              touchstart: 'touchStart',
+              touchmove: 'touchMove',
+              touchend: 'touchEnd',
+              touchcancel: 'touchCancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]

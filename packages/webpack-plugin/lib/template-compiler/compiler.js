@@ -1107,17 +1107,17 @@ function processEventReact (el, options, meta) {
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
     if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
-      if (!wrapper) {
-        wrapper = createASTElement('TouchableWithoutFeedback')
-        wrapper.isBuiltIn = true
-        processBuiltInComponents(wrapper, meta)
-      }
-      addAttrs(wrapper, [
-        {
-          name,
-          value
-        }
-      ])
+      // if (!wrapper) {
+      //   wrapper = createASTElement('TouchableWithoutFeedback')
+      //   wrapper.isBuiltIn = true
+      //   processBuiltInComponents(wrapper, meta)
+      // }
+      // addAttrs(wrapper, [
+      //   {
+      //     name,
+      //     value
+      //   }
+      // ])
     } else {
       addAttrs(el, [
         {
@@ -2098,7 +2098,11 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      if (mode === 'android' || mode === 'ios') {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+      } else {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      }
     }
   }
 }

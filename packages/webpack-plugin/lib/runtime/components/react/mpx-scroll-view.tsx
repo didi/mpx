@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 
-import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native';
+import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent } from 'react-native';
 import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
 import useInnerTouchable, { extendEvent, getCustomEvent } from './getInnerListeners';
 interface ScrollViewProps {
@@ -337,9 +337,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    touchstart: onTouchStart,
-    touchend: onTouchEnd,
-    touchmove: onTouchMove,
+    onTouchStart: onTouchStart,
+    onTouchEnd: onTouchEnd,
+    onTouchMove: onTouchMove,
     offsetLeft: scrollOptions.current.offsetX || 0,
     offsetTop: scrollOptions.current.offsetY || 0
   });
