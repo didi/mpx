@@ -39,16 +39,15 @@ function getClassMap ({ content, filename, mode, srcMode }) {
   })
   root.walkRules(rule => {
     const classMapValue = {}
-    let isFlex = false, hasFlexDirection = false
+    // let isFlex = false, hasFlexDirection = false
     rule.walkDecls(({ prop, value }) => {
-      // console.log(isFlex, hasFlexDirection)
       let newData = rulesRunner({ prop, value })
       if (!newData.length) {
         newData = [newData]
       }
       newData.forEach(item => {
-        if (value === 'flex') isFlex = true
-        if (prop === 'flex-direction') hasFlexDirection = true
+        // if (value === 'flex') isFlex = true
+        // if (prop === 'flex-direction') hasFlexDirection = true
         prop = dash2hump(item.prop)
         value = item.value
         if (typeof item.value === 'object') {
@@ -61,7 +60,7 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         classMapValue[prop] = value
       })
       // 定义flex布局且未定义方向时设置默认row
-      if (isFlex && !hasFlexDirection) classMapValue['flexDirection'] = formatValue('row')
+      // if (isFlex && !hasFlexDirection) classMapValue['flexDirection'] = formatValue('row')
     })
 
     const classMapKeys = []
