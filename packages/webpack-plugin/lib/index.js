@@ -479,6 +479,23 @@ class MpxWebpackPlugin {
       }
     }
 
+    const runSubpackageEntriesMap = (entriesMap, compilation, callback) => {
+      const mpx = compilation.__mpx__
+      async.eachOfSeries(entriesMap, (deps, packageRoot, callback) => {
+        mpx.currentPackageRoot = packageRoot
+        mpx.componentsMap[packageRoot] = mpx.componentsMap[packageRoot] || {}
+        mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
+        mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
+        async.each(deps, (dep, callback) => {
+          dep.addEntry(compilation, (err, result) => {
+            if (err) return callback(err)
+            dep.resultPath = mpx.replacePathMap[dep.key] = result.resultPath
+            callback()
+          })
+        }, callback)
+      }, callback)
+    }
+
     const processSubpackagesEntriesMap = (compilation, callback) => {
       const mpx = compilation.__mpx__
       if (mpx && !isEmptyObject(mpx.subpackagesEntriesMap)) {
@@ -502,6 +519,10 @@ class MpxWebpackPlugin {
           // 如果执行完当前队列后产生了新的分包执行队列（一般由异步分包组件造成），则继续执行
           processSubpackagesEntriesMap(compilation, callback)
         })
+      } else if (mpx && !isEmptyObject(mpx.postSubpackageEntriesMap)) {
+        const postSubpackageEntriesMap = mpx.postSubpackageEntriesMap
+        mpx.postSubpackageEntriesMap = {}
+        runSubpackageEntriesMap(postSubpackageEntriesMap, compilation, callback)
       } else {
         callback()
       }
@@ -525,7 +546,7 @@ class MpxWebpackPlugin {
           }
         }
         checkDynamicEntryInfo()
-        mpx.hooks.finishSubpackagesMake.callAsync(compilation, callback)
+        callback()
       })
     })
 
@@ -1083,14 +1104,10 @@ class MpxWebpackPlugin {
             if (extractedInfo) {
               const { moduleId, type, content, dynamic, resourcePath, packageName } = extractedInfo
               if (dynamic) {
-                if (!dynamicAssets[moduleId]) {
-                  dynamicAssets[moduleId] = {}
-                }
-                if (type === 'template') {
-                  dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(JSON.parse(content), packageName, resourcePath)
-                } else {
-                  dynamicAssets[moduleId][type] = JSON.parse(content)
-                }
+                dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
+                dynamicAssets[moduleId][type] = type === 'template'
+                  ? mpx.changeHashNameForAstNode(JSON.parse(content), packageName, resourcePath)
+                  : JSON.parse(content)
                 continue
               }
               let extractedAssets = extractedAssetsMap.get(filename)

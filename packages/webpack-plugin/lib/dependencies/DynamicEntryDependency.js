@@ -128,6 +128,16 @@ class DynamicEntryDependency extends NullDependency {
     const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
+    if (this.extraOptions.postSubpackageEntry) {
+      if (!mpx.postSubpackageEntriesMap) {
+        mpx.postSubpackageEntriesMap = {}
+      }
+      if (!mpx.postSubpackageEntriesMap[packageRoot]) {
+        mpx.postSubpackageEntriesMap[packageRoot] = [this]
+      }
+      callback()
+      return
+    }
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []
       mpx.subpackagesEntriesMap[packageRoot].push(this)
@@ -189,6 +199,9 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     if (outputPath === 'custom-tab-bar/index') {
       // replace with true for custom-tab-bar
       replaceContent = JSON.stringify(true)
+    } else if (extraOptions.mpxCustomElement) {
+      // todo: 这部分的代码等合并 master 代码后优化
+      replaceContent = ''
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
         let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))

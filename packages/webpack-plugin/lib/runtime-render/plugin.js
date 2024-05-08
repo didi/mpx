@@ -1,30 +1,3 @@
-const path = require('path')
-const async = require('async')
-const toPosix = require('../utils/to-posix')
-
-const MPX_CUSTOM_ELEMENT = 'mpx-custom-element'
-
-const processMpxCustomElement = (mpx, packageName, callback) => {
-  let outputPath = `${MPX_CUSTOM_ELEMENT}-${packageName}`
-  if (packageName !== 'main') {
-    outputPath = toPosix(path.join(packageName, outputPath))
-  }
-  const elementPath = path.resolve(__dirname, 'mpx-custom-element.mpx')
-  if (!mpx.componentsMap[packageName]) {
-    return callback()
-  }
-  // 挂载组件信息至 componentsMap
-  mpx.componentsMap[packageName][elementPath] = outputPath
-  mpx.currentPackageRoot = packageName
-  // 添加自定义组件进入编译流程
-  mpx.addEntry(elementPath + `?mpxCustomElement&isComponent&packageRoot=${packageName}`, outputPath, (err, module) => {
-    // 自定义容器组件不缓存
-    module.invalidateBuild()
-    if (err) return callback(err)
-    callback()
-  })
-}
-
 module.exports = class RuntimeRenderPlugin {
   apply (compiler) {
     compiler.hooks.thisCompilation.tap({
@@ -114,13 +87,20 @@ module.exports = class RuntimeRenderPlugin {
               return
             }
             const componentInfo = componentsMap[ast.tag]
-            if (componentInfo) {
+            if (componentInfo) { // 自定义节点替换 hashName
               ast.tag = componentInfo.hashName
               // todo：本地开发阶段可以加上方便查看组件名
               // ast.aliasTag = componentInfo.hashName
               if (componentInfo.isDynamic) {
                 ast.dynamic = true
               }
+            } else { // 基础节点的优化
+              // const attrs = ast.attrsList || []
+              // const { nodeType } = getOptimizedComponentInfo({
+              //   nodeType: ast.tag,
+              //   attrs: attrs.map((item) => item.name)
+              // })
+              // ast.tag = nodeType
             }
             // todo 后续看优化情况，simplify 阶段到底是在 template-compiler 还是在这个阶段做
             if (ast.children) {
@@ -135,19 +115,6 @@ module.exports = class RuntimeRenderPlugin {
 
           return ast
         }
-
-        mpx.hooks.finishSubpackagesMake.tapAsync('MpxCustomElementEntry', (compilation, callback) => {
-          if (mpx.usingRuntimePackages.size === 0) {
-            return callback()
-          }
-
-          const tasks = Array.from(mpx.usingRuntimePackages).map(pkg => (callback) => {
-            processMpxCustomElement(mpx, pkg, callback)
-          })
-          async.parallel(tasks, () => {
-            callback()
-          })
-        })
       }
     })
   }

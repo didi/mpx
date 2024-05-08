@@ -17,11 +17,13 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
+const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
+const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
 module.exports = function (content) {
   this.cacheable()
@@ -85,6 +87,8 @@ module.exports = function (content) {
 
   if (isRuntimeMode) {
     this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
+    const { request, outputPath } = genMpxCustomElement(packageName)
+    this._module.addPresentationalDependency(new DynamicEntryDependency(request, 'component', outputPath, packageRoot, '', '', [0, 0], { mpxCustomElement: true, postSubpackageEntry: true }))
   }
 
   const loaderContext = this
