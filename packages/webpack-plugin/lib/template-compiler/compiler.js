@@ -1119,28 +1119,33 @@ function processEventReact (el, options, meta) {
     })
     const name = rawName || config[mode].event.getEvent(type)
     const value = `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
-
+    addAttrs(el, [
+      {
+        name,
+        value
+      }
+    ])
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
-    if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
-      // if (!wrapper) {
-      //   wrapper = createASTElement('TouchableWithoutFeedback')
-      //   wrapper.isBuiltIn = true
-      //   processBuiltInComponents(wrapper, meta)
-      // }
-      // addAttrs(wrapper, [
-      //   {
-      //     name,
-      //     value
-      //   }
-      // ])
-    } else {
-      addAttrs(el, [
-        {
-          name,
-          value
-        }
-      ])
-    }
+    // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
+    //   if (!wrapper) {
+    //     wrapper = createASTElement('TouchableWithoutFeedback')
+    //     wrapper.isBuiltIn = true
+    //     processBuiltInComponents(wrapper, meta)
+    //   }
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // } else {
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // }
   }
 
   if (wrapper) {
