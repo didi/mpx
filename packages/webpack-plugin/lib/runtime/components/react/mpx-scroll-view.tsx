@@ -53,16 +53,16 @@ interface ScrollViewProps {
   'refresher-background'?: string;
   'scroll-top'?: number;
   'scroll-left'?: number;
-  onScrolltoupper?: (event: any) => void;
-  onScrolltolower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  onScroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  onRefresherrefresh?: (event: unknown) => void;
-  onDragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  onDragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  onDragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  onTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  onTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  onTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindScrolltoupper?: (event: any) => void;
+  bindScrolltolower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
+  bindScroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
+  bindRefresherrefresh?: (event: unknown) => void;
+  bindDragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
+  bindDragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
+  bindDragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
+  bindTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 type ScrollElementProps = {
   pinchGestureEnabled: boolean;
@@ -164,11 +164,11 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onStartReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { onScrolltoupper } = props;
+    const { bindScrolltoupper } = props;
     const { offset } = scrollOptions.current;
-    if (onScrolltoupper && (offset <= upperThreshold)) {
+    if (bindScrolltoupper && (offset <= upperThreshold)) {
       if (!hasCallScrollToUpper.current) {
-        onScrolltoupper(
+        bindScrolltoupper(
           getCustomEvent('scrolltoupper', e, {
             detail: {
               direction: scrollX ? 'left' : 'top',
@@ -187,13 +187,13 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onEndReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { onScrolltolower } = props;
+    const { bindScrolltolower } = props;
     const { contentLength, visibleLength, offset } = scrollOptions.current;
     const distanceFromEnd = contentLength - visibleLength - offset;
-    if (onScrolltolower && (distanceFromEnd < lowerThreshold)) {
+    if (bindScrolltolower && (distanceFromEnd < lowerThreshold)) {
       if (!hasCallScrollToLower.current) {
         hasCallScrollToLower.current = true;
-        onScrolltolower(
+        bindScrolltolower(
           getCustomEvent('scrolltolower', e, {
             detail: {
               direction: scrollX ? 'right' : 'botttom',
@@ -219,11 +219,11 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { onScroll } = props;
+    const { bindScroll } = props;
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset;
     const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
-    onScroll &&
-      onScroll(
+    bindScroll &&
+      bindScroll(
         getCustomEvent('scroll', e, {
           detail: {
             scrollLeft,
@@ -261,9 +261,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onRefresh() {
-    const { onRefresherrefresh } = props;
-    onRefresherrefresh &&
-      onRefresherrefresh(
+    const { bindRefresherrefresh } = props;
+    bindRefresherrefresh &&
+      bindRefresherrefresh(
         getCustomEvent('refresherrefresh', {}, {
           target: {
             offsetLeft: scrollOptions.current.offsetX || 0,
@@ -274,10 +274,10 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onScrollTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
-    const { onDragstart, onTouchStart } = props;
-    onTouchStart && onTouchStart(e);
-    onDragstart &&
-      onDragstart(
+    const { bindDragstart, bindTouchStart } = props;
+    bindTouchStart && bindTouchStart(e);
+    bindDragstart &&
+      bindDragstart(
         extendEvent(e, {
           detail: {
             scrollLeft: scrollOptions.current.offsetX || 0,
@@ -288,10 +288,10 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onScrollTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
-    const { onDragging, onTouchMove } = props;
-    onTouchMove && onTouchMove(e);
-    onDragging &&
-      onDragging(
+    const { bindDragging, bindTouchMove } = props;
+    bindTouchMove && bindTouchMove(e);
+    bindDragging &&
+      bindDragging(
         extendEvent(e, {
           detail: {
             scrollLeft: scrollOptions.current.offsetX || 0,
@@ -302,10 +302,10 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onScrollTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
-    const { onDragend, onTouchEnd } = props;
-    onTouchEnd && onTouchEnd(e);
-    onDragend &&
-      onDragend(
+    const { bindDragend, bindTouchEnd } = props;
+    bindTouchEnd && bindTouchEnd(e);
+    bindDragend &&
+      bindDragend(
         extendEvent(e, {
           detail: {
             scrollLeft: scrollOptions.current.offsetX || 0,
@@ -337,9 +337,9 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    onTouchStart: onScrollTouchStart,
-    onTouchEnd: onScrollTouchEnd,
-    onTouchMove: onScrollTouchMove,
+    bindTouchStart: onScrollTouchStart,
+    bindTouchEnd: onScrollTouchEnd,
+    bindTouchMove: onScrollTouchMove,
     offsetLeft: scrollOptions.current.offsetX || 0,
     offsetTop: scrollOptions.current.offsetY || 0
   });
