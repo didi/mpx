@@ -1044,7 +1044,7 @@ function processStyleReact (el) {
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
-  
+
   let staticHoverClass = ''
   if (hoverClassReg.test(el.tag)) {
     staticHoverClass = getAndRemoveAttr(el, 'hover-class').val || ''
@@ -1086,11 +1086,12 @@ function processEventReact (el, options, meta) {
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = parsedEvent.prefix + parsedEvent.eventName
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
+            eventName: parsedEvent.eventName,
             rawName: name,
             configs: []
           }
@@ -1103,7 +1104,7 @@ function processEventReact (el, options, meta) {
   let wrapper
 
   for (const type in eventConfigMap) {
-    let { configs, rawName } = eventConfigMap[type]
+    let { configs, rawName, eventName } = eventConfigMap[type]
     if (rawName) {
       // 清空原始事件绑定
       let has
@@ -1117,8 +1118,8 @@ function processEventReact (el, options, meta) {
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = rawName || config[mode].event.getEvent(type)
-    const value = `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
+    const name = rawName || config[mode].event.getEvent(eventName)
+    const value = `{{(e)=>this.__invoke(e, ${stringify(eventName)}, [${configs}])}}`]
     addAttrs(el, [
       {
         name,

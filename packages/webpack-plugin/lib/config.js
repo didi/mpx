@@ -1,7 +1,7 @@
 const reactConfig = {
   event: {
     parseEvent (attr) {
-      const match = /^(on)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
+      const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
       if (match) {
         return {
           prefix: match[1],
@@ -12,7 +12,7 @@ const reactConfig = {
         }
       }
     },
-    getEvent (eventName, prefix = 'on') {
+    getEvent (eventName, prefix = 'bind') {
       return prefix + eventName.replace(/^./, (matched) => {
         return matched.toUpperCase()
       })

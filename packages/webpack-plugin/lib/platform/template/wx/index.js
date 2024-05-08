@@ -472,28 +472,28 @@ module.exports = function getSpec ({ warn, error }) {
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
           },
-          ios (prefix) {
-            const prefixMap = {
-              bind: 'on',
-              catch: 'catch'
-            }
-            if (!prefixMap[prefix]) {
-              error(`React native environment does not support [${prefix}] event handling!`)
-              return
-            }
-            return prefixMap[prefix]
-          },
-          android (prefix) {
-            const prefixMap = {
-              bind: 'on',
-              catch: 'catch'
-            }
-            if (!prefixMap[prefix]) {
-              error(`React native environment does not support [${prefix}] event handling!`)
-              return
-            }
-            return prefixMap[prefix]
-          }
+          // ios (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // },
+          // android (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // }
         }
       ],
       rules: [
@@ -527,7 +527,7 @@ module.exports = function getSpec ({ warn, error }) {
           },
           ios (eventName) {
             const eventMap = {
-              tap: 'press',
+              tap: 'tap',
               longtap: 'longPress',
               longpress: 'longPress',
               touchstart: 'touchStart',
@@ -543,7 +543,7 @@ module.exports = function getSpec ({ warn, error }) {
           },
           android (eventName) {
             const eventMap = {
-              tap: 'press',
+              tap: 'tap',
               longtap: 'longPress',
               longpress: 'longPress',
               touchstart: 'touchStart',

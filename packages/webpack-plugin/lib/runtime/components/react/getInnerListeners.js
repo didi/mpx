@@ -150,8 +150,8 @@ export const getCustomEvent = (type, oe, { detail = {}, target = {} }, props = {
 // }
 
 const useInnerTouchable = props => {
-  const { onPress, catchPress, onLongPress, catchLongPress, onTouchStart, onTouchMove, onTouchEnd, catchTouchStart, catchTouchMove, catchTouchEnd } = props
-  if (!onPress && !catchPress && !onLongPress && !catchLongPress && !onTouchStart && !onTouchMove && !onTouchEnd && !catchTouchStart && !catchTouchMove && !catchTouchEnd) {
+  const { bindTap, catchTap, bindLongPress, catchLongPress, bindTouchStart, bindTouchMove, bindTouchEnd, catchTouchStart, catchTouchMove, catchTouchEnd } = props
+  if (!bindTap && !catchTap && !bindLongPress && !catchLongPress && !bindTouchStart && !bindTouchMove && !bindTouchEnd && !catchTouchStart && !catchTouchMove && !catchTouchEnd) {
     return props
   }
   const ref = useRef({
@@ -177,18 +177,18 @@ const useInnerTouchable = props => {
         e.stopPropagation()
         ref.current.props.catchTouchStart(getDefaultEvent('touchstart', e, ref.current.props))
       }
-      if (ref.current.props.onTouchStart) {
-        ref.current.props.onTouchStart(getDefaultEvent('touchstart', e, ref.current.props))
+      if (ref.current.props.bindTouchStart) {
+        ref.current.props.bindTouchStart(getDefaultEvent('touchstart', e, ref.current.props))
       }
-      if (ref.current.props.catchLongPress || ref.current.props.onLongPress) {
+      if (ref.current.props.catchLongPress || ref.current.props.bindLongPress) {
         ref.current.startTimer = setTimeout(() => {
           ref.current.needPress = false
           if (ref.current.props.catchLongPress) {
             e.stopPropagation()
             ref.current.props.catchLongPress(getDefaultEvent('longpress', e, ref.current.props))
           }
-          if (ref.current.props.onLongPress) {
-            ref.current.props.onLongPress(getDefaultEvent('longpress', e, ref.current.props))
+          if (ref.current.props.bindLongPress) {
+            ref.current.props.bindLongPress(getDefaultEvent('longpress', e, ref.current.props))
           }
         }, 350)
       }
@@ -207,8 +207,8 @@ const useInnerTouchable = props => {
         e.stopPropagation()
         ref.current.props.catchTouchMove(getDefaultEvent('touchmove', e, ref.current.props))
       }
-      if (ref.current.props.onTouchMove) {
-        ref.current.props.onTouchMove(getDefaultEvent('touchmove', e, ref.current.props))
+      if (ref.current.props.bindTouchMove) {
+        ref.current.props.bindTouchMove(getDefaultEvent('touchmove', e, ref.current.props))
       }
     },
     onTouchEnd: (e) => {
@@ -217,16 +217,16 @@ const useInnerTouchable = props => {
         e.stopPropagation()
         ref.current.props.catchTouchEnd(getDefaultEvent('touchend', e, ref.current.props))
       }
-      if (ref.current.props.onTouchEnd) {
-        ref.current.props.onTouchEnd(getDefaultEvent('touchend', e, ref.current.props))
+      if (ref.current.props.bindTouchEnd) {
+        ref.current.props.bindTouchEnd(getDefaultEvent('touchend', e, ref.current.props))
       }
-      if ((ref.current.props.onPress || ref.current.props.catchPress) && ref.current.needPress) {
-        if (ref.current.props.catchPress) {
+      if ((ref.current.props.bindTap || ref.current.props.catchTap) && ref.current.needPress) {
+        if (ref.current.props.catchTap) {
           e.stopPropagation()
-          ref.current.props.catchPress(getDefaultEvent('tap', e, ref.current.props))
+          ref.current.props.catchTap(getDefaultEvent('tap', e, ref.current.props))
         }
-        if (ref.current.props.onPress) {
-          ref.current.props.onPress(getDefaultEvent('tap', e, ref.current.props))
+        if (ref.current.props.bindTap) {
+          ref.current.props.bindTap(getDefaultEvent('tap', e, ref.current.props))
         }
       }
     },
@@ -235,8 +235,8 @@ const useInnerTouchable = props => {
         e.stopPropagation()
         ref.current.props.catchTouchCancel(getDefaultEvent('touchcancel', e, ref.current.props))
       }
-      if (ref.current.props.onTouchCancel) {
-        ref.current.props.onTouchCancel(getDefaultEvent('touchcancel', e, ref.current.props))
+      if (ref.current.props.bindTouchCancel) {
+        ref.current.props.bindTouchCancel(getDefaultEvent('touchcancel', e, ref.current.props))
       }
     }
   }
