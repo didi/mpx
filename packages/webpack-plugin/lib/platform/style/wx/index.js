@@ -33,7 +33,11 @@ module.exports = function getSpec ({ warn, error }) {
     'font-weight': ['normal', 'bold', '100', '200', '300', '400', '500', '600', '700', '800', '900'],
     'text-decoration-line': ['none', 'underline', 'line-through', 'underline line-through'],
     'text-transform': ['none', 'uppercase', 'lowercase', 'capitalize'],
-    'user-select': ['auto', 'text', 'none', 'contain', 'all']
+    'user-select': ['auto', 'text', 'none', 'contain', 'all'],
+    'align-content': ['flex-start', 'flex-end', 'center', 'stretch', 'space-between', 'space-around'],
+    'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
+    'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
+    'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly' , 'none']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
