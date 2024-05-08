@@ -29,7 +29,6 @@ function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   })
 
   opts = Object.assign({}, opts, extraOpt)
-
   return opts
 }
 
@@ -50,15 +49,6 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
-function genFromMap () {
-  const result = {}
-  const platforms = ['wx', 'ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd']
-  platforms.forEach((platform) => {
-    result[`__mpx_src_mode_${platform}__`] = platform
-  })
-  return result
-}
-
 function getEnvObj () {
   switch (__mpx_mode__) {
     case 'wx':
@@ -77,6 +67,8 @@ function getEnvObj () {
       return qa
     case 'dd':
       return dd
+    case 'web':
+      return {}
   }
 }
 
@@ -86,6 +78,11 @@ function warn (msg) {
 
 function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
+}
+function envError (method) {
+  return () => {
+    console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+  }
 }
 
 function noop () {
@@ -100,15 +97,23 @@ function makeMap (arr) {
 
 const isBrowser = typeof window !== 'undefined'
 
+function throwSSRWarning (info) {
+  console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
+}
+
+const ENV_OBJ = getEnvObj()
+
 export {
   changeOpts,
   handleSuccess,
-  genFromMap,
   getEnvObj,
   error,
+  envError,
   warn,
   noop,
   makeMap,
   isBrowser,
-  hasOwn
+  hasOwn,
+  throwSSRWarning,
+  ENV_OBJ
 }

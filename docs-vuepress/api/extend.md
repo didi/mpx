@@ -9,52 +9,62 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
 
 ### fetch(config)
 >  正常的promisify风格的请求方法
-- **参数：**
-    - `{Object} config`
 
-        config 可指定以下属性：
-        - **url**
-        
-            类型：`string`
-        
-            设置请求url
-        - **method**
-    
-            类型：`string`
-        
-            设置请求方式，默认为GET
-        - **data**
-    
-            类型：`Object`
-        
-            设置请求参数
-        - **params**
-    
-            类型：`Object`
-        
-            设置请求参数，参数会以 Query String 的形式进行传递
-        - **timeout**
-                            
-            类型：`Number`
-                            
-            单位为毫秒。若不传，默认读取app.json文件中__networkTimeout属性。 对于超时的处理可在 catch 方法中进行
-        - **emulateJSON**
-        
-            类型：`Boolean`
-        
-            设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
-        - **usePre**
-            类型：`Boolean`
-            预请求开关，若设置为 true，则两次请求间隔在有效期内且请求参数和请求方式对比一致的情况下，会返回上一次的请求结果
-        - **cacheInvalidationTime**
-            类型： `number`
-            预请求缓存有效时长，单位 ms，默认为 5000ms。当两次请求时间间隔超过设置时长后再发起二次请求时，上一次的请求缓存会失效然后重新发起请求
-        - **ignorePreParamKeys**
-            类型： `array` | `string`
-            在判断缓存请求是否可用对比前后两次请求参数时，默认对比的是 options 传入的所有参数（包括 params 和 data ）。但在具体业务场景下某些参数不一致时的缓存结果依旧可使用（比如参数中带有时间戳），所以提供 ignorePreParamKeys 来设置对比参数过程中可忽略的参数的 key，支持字符串数组和字符串（字符串传多个 key 时使用英文逗号分隔）类型。
-            配置后在进行参数对比时，不会对比在 ignorePreParamKeys 设置的参数。
+- `{Object} config`
 
-- **示例：**
+    config 可指定以下属性：
+    - **url**
+    
+        `string`
+    
+        设置请求url
+    - **method**
+
+        `string`
+    
+        设置请求方式，默认为GET
+    - **data**
+
+        `object`
+    
+        设置请求参数
+    - **params**
+
+        `object`
+    
+        设置请求参数，参数会以 Query String 的形式进行传递
+    - **header**
+
+        `object`
+
+        设置请求的 header，header 中不能设置 Referer。
+        `content-type` 默认为 `application/json`
+    - **timeout**
+                        
+        `number`
+                        
+        单位为毫秒。若不传，默认读取app.json文件中__networkTimeout属性。 对于超时的处理可在 catch 方法中进行
+    - **emulateJSON**
+
+        `boolean`
+    
+        设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
+    - **usePre**
+
+        `boolean`
+
+        预请求开关，若设置为 true，则两次请求间隔在有效期内且请求参数和请求方式对比一致的情况下，会返回上一次的请求结果
+    - **cacheInvalidationTime**
+
+        `number`
+
+        预请求缓存有效时长，单位 ms，默认为 5000ms。当两次请求时间间隔超过设置时长后再发起二次请求时，上一次的请求缓存会失效然后重新发起请求
+    - **ignorePreParamKeys**
+
+        `array` | `string`
+
+        在判断缓存请求是否可用对比前后两次请求参数时，默认对比的是 options 传入的所有参数（包括 params 和 data ）。但在具体业务场景下某些参数不一致时的缓存结果依旧可使用（比如参数中带有时间戳），所以提供 ignorePreParamKeys 来设置对比参数过程中可忽略的参数的 key，支持字符串数组和字符串（字符串传多个 key 时使用英文逗号分隔）类型。
+        配置后在进行参数对比时，不会对比在 ignorePreParamKeys 设置的参数。
 
 ```js
 import mpx from '@mpxjs/core'
@@ -69,6 +79,9 @@ mpx.xfetch.fetch({
     },
     data: {
         name: 'test'
+    },
+    header: {
+      'content-type': 'application/x-www-form-urlencoded',
     },
     emulateJSON: true,
     usePre: true,
@@ -89,7 +102,6 @@ mpx.createApp({
 ### CancelToken
 命名导出，用于创建一个取消请求的凭证。
 
-- **示例**:
 ```js
 import { CancelToken } from '@mpxjs/fetch'
 const cancelToken = new CancelToken()
@@ -106,8 +118,6 @@ cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fa
 ### XFetch
 命名导出，用于创建一个新的mpx-fetch实例进行独立使用
 
-- **参数类型**:
-
 ```ts
 interface FetchOptions{
     useQueue: boolean // 是否开启队列功能
@@ -115,7 +125,6 @@ interface FetchOptions{
 }
 ```
 
-- **示例**:
 ```js
 import { XFetch } from '@mpxjs/fetch'
 const newFetch = new XFetch(options) // 生成新的mpx-fetch实例
@@ -124,7 +133,6 @@ const newFetch = new XFetch(options) // 生成新的mpx-fetch实例
 ### interceptors
 > 实例属性，用于添加拦截器，包含两个属性，request & response
 
-- **示例**:
 ```js
 mpx.xfetch.interceptors.request.use(function(config) {
     console.log(config)
@@ -144,16 +152,16 @@ mpx.xfetch.interceptors.response.use(function(res) {
 
 - **参数：**
 
-    类型： `{Array | Object}`
+    `{Array | Object}`
     - **test**
 
-        类型：`object`
+        `object`
 
         - url
 
-            类型：`string`
+            `string`
 
-            详细：全路径匹配，规则可以参考[path-to-regexp](https://www.npmjs.com/package/path-to-regexp)，也可参考下面的简单示例。
+            全路径匹配，规则可以参考[path-to-regexp](https://www.npmjs.com/package/path-to-regexp)，也可参考下面的简单示例。
 
             ::: warning
             如果设置了此项，则 protocol、host、port、path 规则不再生效。此项支持 path-to-regexp 匹配，protocol、host、port、path 为全等匹配。
@@ -161,57 +169,57 @@ mpx.xfetch.interceptors.response.use(function(res) {
 
         - protocol
 
-            类型：`string`
+            `string`
 
-            详细：待匹配的协议头
+            待匹配的协议头
 
         - host
 
-            类型：`string`
+            `string`
 
-            详细：不包含端口的 host
+            不包含端口的 host
 
         - port
 
-            类型：`string`
+            `string`
 
-            详细：待匹配的端口
+            待匹配的端口
 
         - path
 
-            类型：`string`
+            `string`
 
-            详细：待匹配的路径
+            待匹配的路径
 
         - params
 
-            类型：`object`
+            `object`
 
-            详细：同时匹配请求中的 `params` 和 `query`
+            同时匹配请求中的 `params` 和 `query`
 
         - data
 
-            类型：`object`
+            `object`
 
-            详细：匹配请求中的 `data`
+            匹配请求中的 `data`
 
         - header
 
-            类型：`object`
+            `object`
 
-            详细：匹配请求中的 `header`
+            匹配请求中的 `header`
 
         - method
 
-            类型：`Method | Method[]`
+            `Method | Method[]`
 
-            详细：匹配请求方法，不区分大小写，可以传一个方法，也可以传一个方法数组
+            匹配请求方法，不区分大小写，可以传一个方法，也可以传一个方法数组
 
         - custom
 
-            类型：`function`
+            `function`
 
-            详细：自定义匹配规则，参数会注入原始请求配置，结果需返回 `true` 或 `false`
+            自定义匹配规则，参数会注入原始请求配置，结果需返回 `true` 或 `false`
 
             ::: warning
             如果设置了此项，匹配结果以此项为准，以上规则均不再生效。
@@ -219,67 +227,67 @@ mpx.xfetch.interceptors.response.use(function(res) {
 
     - **proxy**
 
-        类型：`object`
+        `object`
 
         - url
 
-            类型：`string`
+            `string`
 
-            详细：代理的 url
+            代理的 url
 
         - protocol
 
-            类型：`string`
+            `string`
 
-            详细：修改原请求的协议头
+            修改原请求的协议头
 
         - host
 
-            类型：`string`
+            `string`
 
-            详细：代理的 host，不包含端口号
+            代理的 host，不包含端口号
 
         - port
 
-            类型：`string`
+            `string`
 
-            详细：修改端口号
+            修改端口号
 
         - path
 
-            类型：`string`
+            `string`
 
-            详细：修改原请求路径
+            修改原请求路径
 
         - params
 
-            类型：`object`
+            `object`
 
-            详细：合并原请求的 params
+            合并原请求的 params
 
         - data
 
-            类型：`object`
+            `object`
 
-            详细：合并原请求的 data
+            合并原请求的 data
 
         - header
 
-            类型：`object`
+            `object`
 
-            详细：合并原请求的 header
+            合并原请求的 header
 
         - method
 
-            类型：`Method`
+            `Method`
 
-            详细：替换原请求的方法
+            替换原请求的方法
 
         - custom
 
-            类型：`function`
+            `function`
 
-            详细：自定义代理规则，会注入两个参数，第一个是上一个匹配规则处理后的请求配置，第二个是 match 的参数对象，结果需返回要修改的请求配置对象。
+            自定义代理规则，会注入两个参数，第一个是上一个匹配规则处理后的请求配置，第二个是 match 的参数对象，结果需返回要修改的请求配置对象。
 
             ::: warning
             如果设置了此项，最终代理配置将以此项为准，其他配置规则均不再生效。
@@ -287,11 +295,10 @@ mpx.xfetch.interceptors.response.use(function(res) {
 
     - **waterfall**
 
-        类型：`boolean`
+        `boolean`
 
-        详细：默认为 `false`，为 `false` 时，命中当前规则处理完就直接返回；为 `true` 时，命中当前匹配规则处理完成后将结果传递给下面命中匹配规则继续处理。
+        默认为 `false`，为 `false` 时，命中当前规则处理完就直接返回；为 `true` 时，命中当前匹配规则处理完成后将结果传递给下面命中匹配规则继续处理。
 
-- **示例：**
 ```js
 mpx.xfetch.setProxy([{
     test: { // 此项匹配之后，会按下面 proxy 配置的修改请求配置
@@ -374,7 +381,6 @@ mpx.xfetch.setProxy([{
 #### prependProxy
 > 向前追加代理规则
 
-- **示例：**
 ```js
 mpx.xfetch.prependProxy({
 	test: {},
@@ -386,7 +392,6 @@ mpx.xfetch.prependProxy({
 #### appendProxy
 > 向后追加代理规则
 
-- **示例：**
 ```js
 mpx.xfetch.appendProxy({
 	test: {},
@@ -398,7 +403,6 @@ mpx.xfetch.appendProxy({
 #### getProxy
 > 查看已有的代理配置
 
-- **示例：**
 ```js
 console.log(mpx.xfetch.getProxy())
 ```
@@ -406,7 +410,6 @@ console.log(mpx.xfetch.getProxy())
 #### clearProxy
 > 解除所有的代理配置
 
-- **示例：**
 ```js
 mpx.xfetch.clearProxy()
 ```
@@ -420,7 +423,6 @@ useFetch(options?: FetchOptions):xfetch
 
 此外该方法可选择传入 `options` 参数，若传入参数，则会创建一个新的 XFetch 实例返回，若不传入参数，则默认将全局 `xfetch` 实例返回。
 
-示例：
 ```js
 // app.mpx
 import mpx from '@mpxjs/core'
@@ -611,23 +613,22 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
 
 - **server**
 
-  类型：`object`
+  `object`
 
-  详细：本地可视化服务相关配置
+  本地可视化服务相关配置
 
 - **filename**
 
-  类型：`string`
+  `string`
 
-  详细：构建生成的包体积详细输出文件地址
+  构建生成的包体积详细输出文件地址
 
 - **threshold**
 
-  类型：`object`
+  `object`
 
-  详细：配置项目总体积和分包体积阈值，包含两个字段，size 为项目总体积阈值，packages 为分包体积阈值
+  配置项目总体积和分包体积阈值，包含两个字段，size 为项目总体积阈值，packages 为分包体积阈值
 
-  示例:
   ```html
   {
      size: '16MB', // 项目总包体积限额 16M
@@ -637,23 +638,23 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
 
 - **groups**
 
-  类型：`Array<object>`
+  `Array<object>`
 
-  详细：配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+  配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
   
   - name
   
-    类型：`string`
+    `string`
 
-    详细：分组名称
+    分组名称
 
   - threshold
   
-    类型：`string | object`
+    `string | object`
 
-    详细：分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
+    分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
 
-    示例：
+    
     ```html
     // 分组体积限额 500KB
     threshold: '500KB'
@@ -668,14 +669,14 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
     
   - entryRules
   
-    类型：`object`
+    `object`
   
-    详细：配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
+    配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
   
       - include: 包含符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
     
-    示例：
+    
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
@@ -683,14 +684,14 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
     
   - noEntryRules
 
-    类型：`object`
+    `object`
 
-    详细：配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
+    配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
   
       - include: 包含符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
     
-    示例：
+    
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
@@ -698,27 +699,27 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
 
 - **reportPages**
 
-  类型：`boolean`
+  `boolean`
 
-  详细：是否收集页面维度体积详情，默认 false
+  是否收集页面维度体积详情，默认 false
 
 - **reportAssets**
 
-  类型：`boolean`
+  `boolean`
 
-  详细：是否收集资源维度体积详情，默认 false
+  是否收集资源维度体积详情，默认 false
 
 - **reportRedundance**
 
-  类型：`boolean`
+  `boolean`
 
-  详细：是否收集冗余资源，默认 false
+  是否收集冗余资源，默认 false
 
 - **showEntrysPackages**
 
-  类型：`Array<string>`
+  `Array<string>`
 
-  详细：展示某些分包资源的引用来源信息，例如 ['main'] 为查看主包资源的引用来源信息，默认为 []
+  展示某些分包资源的引用来源信息，例如 ['main'] 为查看主包资源的引用来源信息，默认为 []
 
 
 配置使用示例：
@@ -791,7 +792,7 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
 
 #### locale
 
-* **类型：** `Locale`
+`Locale`
 
 设置语言环境
 
@@ -799,13 +800,13 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
 
 #### fallbackLocale
 
-* **类型：** `Locale`
+`Locale`
 
 预设的语言环境，找不到语言环境时进行回退。
 
 #### messages
 
-* **类型：** `LocaleMessages`
+`LocaleMessages`
 
 本地化的语言环境信息。
 
@@ -814,46 +815,44 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
 -----
 
 #### locale
-* **类型：** `WritableComputedRef<Locale>`
+`WritableComputedRef<Locale>`
 
 可响应性的 ref 对象，表示当前 i18n 实例所使用的 locale。
 
 修改 ref 值会对局部或者全局语言集的 locale 进行更改，并触发翻译方法重新执行。
 
 #### fallbackRoot
-* **类型：** `Boolean`
+
+`boolean`
 
 本地化失败时是否回归到全局作用域。
 
 #### getLocaleMessage( locale )
 
-* **参数：**
-    * `{Locale} locale`
-* **返回值：** `LocaleMessageObject`
+```ts
+function getLocaleMessage (locale: string): LocaleMessageObject
+```
 
 获取语言环境的 `locale` 信息。
 
 #### setLocaleMessage( locale, message )
 
-* **参数：**
-
-    * `{Locale} locale`
-    * `{LocaleMessageObject} message`
+```ts
+function setLocaleMessage(locale: Locale, messages: LocaleMessageObject): void
+```
 
 设置语言环境的 `locale` 信息。
 
 #### mergeLocaleMessage( locale, message )
 
-* **参数：**
-
-    * `{Locale} locale`
-    * `{LocaleMessageObject} message`
+```ts
+function mergeLocaleMessage(locale: Locale, messages: LocaleMessageObject): void
+```
 
 将语言环境信息 `locale` 合并到已注册的语言环境信息中。
 
 #### messages
 
-* **类型：**
 ```ts
 readonly messages: ComputedRef<{
    [K in keyof Messages]: Messages[K];
@@ -865,21 +864,18 @@ readonly messages: ComputedRef<{
 局部或者全局的语言环境信息。
 
 #### isGlobal
-* **类型：**`Boolean`
+
+`boolean`
 
 是否是全局 i18n 实例。
 
 #### t
 
+```ts
+function t(key: string, choice?: number, values: Array | Object): TranslateResult
+```
+
 文案翻译函数
-
-* **参数：**
-
-    * {Path} key：必填
-    * {number} choice：可选
-    * {Array | Object} values：可选
-
-* **返回值：** TranslateResult
 
 根据传入的 key 以及当前 locale 环境获取对应文案，文案来源是全局作用域还是本地作用域取决于 `useI18n` 执行时是否传入对应的 `messages、locale` 等值。
 
@@ -949,9 +945,10 @@ readonly messages: ComputedRef<{
 ```
 
 #### te
-* **参数：**
 
-    * {Path} key：必填
-* **返回值：** boolean
+```ts
+function te(key: string): boolean
+```
+
 
 检查 key 是否存在。

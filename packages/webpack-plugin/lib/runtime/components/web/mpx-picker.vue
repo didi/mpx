@@ -138,6 +138,12 @@
       fields: {
         type: String,
         default: 'day'
+      },
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
       }
     },
     data () {
@@ -266,11 +272,11 @@
           default:
             value = this.selectedIndex[0]
         }
-        this.$emit('change', getCustomEvent('change', {value}))
+        this.$emit('change', getCustomEvent('change', {value}, this))
       },
       _cancel () {
         this.hide()
-        this.$emit('cancel', getCustomEvent('cancel'))
+        this.$emit('cancel', getCustomEvent('cancel', {}, this))
       },
       _isMoving () {
         return this.wheels.some((wheel) => {
@@ -311,7 +317,9 @@
                     wheelWrapperClass: 'wheel-scroll',
                     wheelItemClass: 'wheel-item'
                   },
-                  probeType: 3
+                  probeType: 3,
+                  bindToWrapper: true,
+                  ...this.scrollOptions
                 })
                 if (this.mode === 'time' || this.mode === 'date') {
                   this.wheels[i].on('scrollStart', function (i) {
@@ -327,7 +335,7 @@
                       this.$emit('columnchange', getCustomEvent('columnchange', {
                         column: i,
                         value: currentIndex
-                      }))
+                      }, this))
                     }
                   }
                   if (this.mode === 'time' || this.mode === 'date') {

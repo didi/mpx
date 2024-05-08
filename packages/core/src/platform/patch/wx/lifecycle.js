@@ -14,7 +14,8 @@ const APP_HOOKS = [
   'onError',
   'onPageNotFound',
   'onUnhandledRejection',
-  'onThemeChange'
+  'onThemeChange',
+  'onAppInit'
 ]
 
 const PAGE_HOOKS = [

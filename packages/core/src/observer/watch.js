@@ -1,7 +1,7 @@
 import { ReactiveEffect } from './effect'
 import { isRef } from './ref'
 import { isReactive } from './reactive'
-import { queuePreFlushCb, queuePostFlushCb } from './scheduler'
+import { queueJob, queuePostFlushCb } from './scheduler'
 import { currentInstance } from '../core/proxy'
 import {
   noop,
@@ -42,7 +42,7 @@ const processWatchOptionsCompat = (options) => {
 }
 
 export function watch (source, cb, options = {}) {
-  let { immediate, deep, flush, immediateAsync } = processWatchOptionsCompat(options)
+  let { immediate, deep, flush } = processWatchOptionsCompat(options)
   const instance = currentInstance
   let getter
   let isMultiSource = false
@@ -129,7 +129,9 @@ export function watch (source, cb, options = {}) {
     scheduler = () => queuePostFlushCb(job)
   } else {
     // default: 'pre'
-    scheduler = () => queuePreFlushCb(job)
+    job.pre = true
+    if (instance) job.id = instance.uid
+    scheduler = () => queueJob(job)
   }
 
   job.allowRecurse = !!cb
@@ -139,8 +141,6 @@ export function watch (source, cb, options = {}) {
   if (cb) {
     if (immediate) {
       job()
-    } else if (immediateAsync) {
-      queuePreFlushCb(job)
     } else {
       oldValue = effect.run()
     }

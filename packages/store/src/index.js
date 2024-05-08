@@ -1,4 +1,4 @@
-import Mpx, { reactive, computed } from '@mpxjs/core'
+import Mpx, { reactive, computed, effectScope } from '@mpxjs/core'
 import {
   getByPath,
   warn,
@@ -115,6 +115,7 @@ class Store {
     this.mutations = {}
     this.actions = {}
     this._subscribers = []
+    this._scope = effectScope(true)
     this.state = this.registerModule(options).state
     this.resetStoreVM()
     Object.assign(this, mapStore(this))
@@ -178,26 +179,28 @@ class Store {
   }
 
   resetStoreVM () {
-    if (__mpx_mode__ === 'web') {
-      const Vue = Mpx.__vue
-      const vm = new Vue({
-        data: {
-          __mpxState: this.state
-        },
-        computed: this.__wrappedGetters
-      })
-      const computedKeys = Object.keys(this.__wrappedGetters)
-      proxy(this.getters, vm, computedKeys)
-      proxy(this.getters, this.__depsGetters)
-    } else {
-      reactive(this.state)
-      const computedObj = {}
-      Object.entries(this.__wrappedGetters).forEach(([key, value]) => {
-        computedObj[key] = computed(value)
-      })
-      proxy(this.getters, computedObj)
-      proxy(this.getters, this.__depsGetters)
-    }
+    this._scope.run(() => {
+      if (__mpx_mode__ === 'web') {
+        const Vue = Mpx.__vue
+        const vm = new Vue({
+          data: {
+            __mpxState: this.state
+          },
+          computed: this.__wrappedGetters
+        })
+        const computedKeys = Object.keys(this.__wrappedGetters)
+        proxy(this.getters, vm, computedKeys)
+        proxy(this.getters, this.__depsGetters)
+      } else {
+        reactive(this.state)
+        const computedObj = {}
+        Object.entries(this.__wrappedGetters).forEach(([key, value]) => {
+          computedObj[key] = computed(value)
+        })
+        proxy(this.getters, computedObj)
+        proxy(this.getters, this.__depsGetters)
+      }
+    })
   }
 }
 
