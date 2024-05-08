@@ -1044,7 +1044,7 @@ function processStyleReact (el) {
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
-  
+
   let staticHoverClass = ''
   if (hoverClassReg.test(el.tag)) {
     staticHoverClass = getAndRemoveAttr(el, 'hover-class').val || ''

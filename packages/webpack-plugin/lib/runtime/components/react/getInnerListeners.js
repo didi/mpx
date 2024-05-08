@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { PanResponder } from 'react-native'
+// import { PanResponder } from 'react-native'
 
 const getDefaultEvent = (type = '', event = {}, props = {}) => {
   const nativeEvent = event.nativeEvent
