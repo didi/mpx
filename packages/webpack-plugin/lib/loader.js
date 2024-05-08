@@ -126,6 +126,24 @@ module.exports = function (content) {
           }
           try {
               const ret = JSON5.parse(jsonContent)
+              const rulesRunnerOptions = {
+                mode,
+                srcMode,
+                type: 'json',
+                waterfall: true,
+                warn: emitWarning,
+                error: emitError
+              }
+              if (ctorType !== 'app') {
+                rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+              }
+              const rulesRunner = getRulesRunner(rulesRunnerOptions)
+              try {
+                if (rulesRunner) rulesRunner(ret)
+              } catch (e) {
+                return finalCallback(e)
+              }
+
               if (ret.componentPlaceholder) {
                   componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
               }
@@ -133,7 +151,7 @@ module.exports = function (content) {
                   componentGenerics = Object.assign({}, ret.componentGenerics)
               }
               if (ret.usingComponents) {
-                  fixUsingComponent(ret.usingComponents, mode)
+                  // fixUsingComponent(ret.usingComponents, mode)
                   usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
                   async.eachOf(ret.usingComponents, (component, name, callback) => {
                       if (!isUrlRequest(component)) {
@@ -158,9 +176,8 @@ module.exports = function (content) {
               } else {
                   finalCallback(null)
               }
-
-          }catch (err) {
-              finalCallback(err)
+          } catch (err) {
+            finalCallback(err)
           }
       },
     (componentCorrelation, callback) => {
@@ -176,36 +193,6 @@ module.exports = function (content) {
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-
-      if (parts.json && parts.json.content) {
-        const rulesRunnerOptions = {
-          mode,
-          srcMode,
-          type: 'json',
-          waterfall: true,
-          warn: emitWarning,
-          error: emitError
-        }
-        if (ctorType !== 'app') {
-          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        }
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        try {
-          const ret = JSON5.parse(parts.json.content)
-          if (rulesRunner) rulesRunner(ret)
-          if (ret.usingComponents) {
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-          }
-          if (ret.componentPlaceholder) {
-            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-          }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
-        } catch (e) {
-          return callback(e)
-        }
-      }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {

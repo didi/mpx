@@ -6,7 +6,7 @@ const createHelpers = require('./helpers')
 const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
-const { JSON_JS_EXT, MPX_APP_MODULE_ID } = require('./utils/const')
+const { JSON_JS_EXT } = require('./utils/const')
 const getRulesRunner = require('./platform')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
@@ -188,8 +188,6 @@ module.exports = function (content) {
         const appName = getEntryName(this)
         if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
-
-      const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : mpx.pathHash(filePath)
 
       if (ctorType !== 'app') {
         rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
