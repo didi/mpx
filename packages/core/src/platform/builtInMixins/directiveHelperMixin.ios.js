@@ -7,8 +7,7 @@ export default function directiveHelperMixin () {
         if (typeof value === 'string' || typeof value === 'number') {
           return value
         } else {
-          warn(`wx:key\'s value should return a string or a number, received: ${type(value)}`, this.__mpxProxy.options.mpxFileResource);
-          return
+          warn(`wx:key's value should return a string or a number, received: ${type(value)}`, this.__mpxProxy.options.mpxFileResource)
         }
       }
     }
