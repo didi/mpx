@@ -1105,9 +1105,15 @@ class MpxWebpackPlugin {
               const { moduleId, type, content, dynamic, resourcePath, packageName } = extractedInfo
               if (dynamic) {
                 dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
-                dynamicAssets[moduleId][type] = type === 'template'
-                  ? mpx.changeHashNameForAstNode(JSON.parse(content), packageName, resourcePath)
-                  : JSON.parse(content)
+                if (type === 'template') {
+                  dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(JSON.parse(content), packageName, resourcePath)
+                } else if (type === 'styles') {
+                  // 合并多个style标签的样式代码
+                  const styleAssets = (dynamicAssets[moduleId][type] = dynamicAssets[moduleId][type] || [])
+                  styleAssets.push(...JSON.parse(content))
+                } else {
+                  dynamicAssets[moduleId][type] = JSON.parse(content)
+                }
                 continue
               }
               let extractedAssets = extractedAssetsMap.get(filename)
