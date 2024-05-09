@@ -1,10 +1,15 @@
 import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
+import * as reactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
-import { hasOwn, isFunction, noop, isObject } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, getByPath } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+
+function getNativeComponent (tagName) {
+  return getByPath(reactNative, tagName)
+}
 
 function createEffect (proxy, components) {
   const update = proxy.update = () => {
@@ -22,7 +27,7 @@ function createEffect (proxy, components) {
   }
   update.id = proxy.uid
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components)
+    return proxy.target.__injectedRender(createElement, components, getNativeComponent)
   }, () => queueJob(update), proxy.scope)
 }
 
