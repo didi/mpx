@@ -109,84 +109,84 @@ module.exports = function (content) {
         callback(null, content || '{}')
       })
     },
-      (jsonContent, callback) => {
-          if (!jsonContent) return callback(null, {})
-          let componentPlaceholder = []
-          let componentGenerics = {}
-          let currentUsingComponentsModuleId = {}
-          let usingComponents = [].concat(Object.keys(mpx.globalComponents))
-          const finalCallback = (err) => {
-              currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, mpx.globalComponentsModuleId)
-              callback(err, {
-                  componentPlaceholder,
-                  componentGenerics,
-                  currentUsingComponentsModuleId,
-                  usingComponents
-              })
-          }
-          try {
-              const ret = JSON5.parse(jsonContent)
-              const rulesRunnerOptions = {
-                mode,
-                srcMode,
-                type: 'json',
-                waterfall: true,
-                warn: emitWarning,
-                error: emitError
-              }
-              if (ctorType !== 'app') {
-                rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-              }
-              const rulesRunner = getRulesRunner(rulesRunnerOptions)
-              try {
-                if (rulesRunner) rulesRunner(ret)
-              } catch (e) {
-                return finalCallback(e)
-              }
+    (jsonContent, callback) => {
+      if (!jsonContent) return callback(null, {})
+      let componentPlaceholder = []
+      let componentGenerics = {}
+      let currentUsingComponentsModuleId = {}
+      let usingComponents = [].concat(Object.keys(mpx.globalComponents))
+      const finalCallback = (err) => {
+        currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, mpx.globalComponentsModuleId)
+        callback(err, {
+          componentPlaceholder,
+          componentGenerics,
+          currentUsingComponentsModuleId,
+          usingComponents
+        })
+      }
+      try {
+        const ret = JSON5.parse(jsonContent)
+        const rulesRunnerOptions = {
+          mode,
+          srcMode,
+          type: 'json',
+          waterfall: true,
+          warn: emitWarning,
+          error: emitError
+        }
+        if (ctorType !== 'app') {
+          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+        }
+        const rulesRunner = getRulesRunner(rulesRunnerOptions)
+        try {
+          if (rulesRunner) rulesRunner(ret)
+        } catch (e) {
+          return finalCallback(e)
+        }
 
-              if (ret.componentPlaceholder) {
-                  componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
+        if (ret.componentPlaceholder) {
+          componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
+        }
+        if (ret.componentGenerics) {
+          componentGenerics = Object.assign({}, ret.componentGenerics)
+        }
+        if (ret.usingComponents) {
+          // fixUsingComponent(ret.usingComponents, mode)
+          usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          async.eachOf(ret.usingComponents, (component, name, callback) => {
+            if (!isUrlRequest(component)) {
+              const moduleId = mpx.getModuleId(component, isApp)
+              if (!isApp) {
+                currentUsingComponentsModuleId[name] = moduleId
               }
-              if (ret.componentGenerics) {
-                  componentGenerics = Object.assign({}, ret.componentGenerics)
+              return callback()
+            }
+            resolve(this.context, component, loaderContext, (err, resource) => {
+              if (err) return callback(err)
+              const {rawResourcePath} = parseRequest(resource)
+              const moduleId = mpx.getModuleId(rawResourcePath, isApp)
+              if (!isApp) {
+                currentUsingComponentsModuleId[name] = moduleId
               }
-              if (ret.usingComponents) {
-                  // fixUsingComponent(ret.usingComponents, mode)
-                  usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-                  async.eachOf(ret.usingComponents, (component, name, callback) => {
-                      if (!isUrlRequest(component)) {
-                          const moduleId = mpx.getModuleId(component, isApp)
-                          if (!isApp) {
-                              currentUsingComponentsModuleId[name] = moduleId
-                          }
-                          return callback()
-                      }
-                      resolve(this.context, component, loaderContext, (err, resource) => {
-                          if (err) return callback(err)
-                          const { rawResourcePath } = parseRequest(resource)
-                          const moduleId = mpx.getModuleId(rawResourcePath, isApp)
-                          if (!isApp) {
-                              currentUsingComponentsModuleId[name] = moduleId
-                          }
-                          callback()
-                      })
-                  }, (err) => {
-                      finalCallback(err)
-                  })
-              } else {
-                  finalCallback(null)
-              }
-          } catch (err) {
+              callback()
+            })
+          }, (err) => {
             finalCallback(err)
-          }
-      },
+          })
+        } else {
+          finalCallback(null)
+        }
+      } catch (err) {
+        finalCallback(err)
+      }
+    },
     (componentCorrelation, callback) => {
-        const {
-            componentPlaceholder,
-            componentGenerics,
-            currentUsingComponentsModuleId,
-            usingComponents
-        } = componentCorrelation
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        currentUsingComponentsModuleId,
+        usingComponents
+      } = componentCorrelation
 
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
