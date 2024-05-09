@@ -93,7 +93,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
     },
     triggerEvent (eventName, eventDetail) {
       const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-      const handler = props && (props['on' + handlerName] || props['catch' + handlerName])
+      const handler = props && (props['bind' + handlerName] || props['catch' + handlerName] || props['capture-bind' + handlerName] || props['capture-catch' + handlerName])
       if (handler && typeof handler === 'function') {
         const timeStamp = +new Date()
         const dataset = collectDataset(props)
