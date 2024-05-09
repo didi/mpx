@@ -13,6 +13,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-swiper-item'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper-item'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper-item'
+    },
     props: [
       {
         test: /^(item-id)$/,

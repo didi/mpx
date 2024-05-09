@@ -7,7 +7,8 @@ export default function proxyEventMixin () {
       const eventObj = {
         type,
         detail: null,
-        ...rawEvent.nativeEvent
+        // ...rawEvent.nativeEvent,
+        ...rawEvent
       }
       if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {

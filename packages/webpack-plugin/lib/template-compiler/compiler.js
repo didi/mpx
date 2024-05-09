@@ -13,6 +13,7 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const shallowStringify = require('../utils/shallow-stringify')
+const { isReact } = require('../utils/env')
 
 const no = function () {
   return false
@@ -35,7 +36,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-
+const hoverClassReg = /^mpx-(((cover-)?view)|button|navigator)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -861,7 +862,7 @@ function postMoveBaseDirective (target, source, isDelete = true) {
   target.if = source.if
   target.elseif = source.elseif
   target.else = source.else
-  if (mode === 'react') {
+  if (isReact(mode)) {
     postProcessForReact(target)
     postProcessIfReact(target)
   } else {
@@ -1044,6 +1045,12 @@ function processStyleReact (el) {
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
 
+  let staticHoverClass = ''
+  if (hoverClassReg.test(el.tag)) {
+    staticHoverClass = getAndRemoveAttr(el, 'hover-class').val || ''
+    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
+  }
+
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
@@ -1063,6 +1070,15 @@ function processStyleReact (el) {
       value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
     }])
   }
+
+  if (staticHoverClass) {
+    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
+    addAttrs(el, [{
+      name: 'hoverStyle',
+      // runtime helper
+      value: `{{this.__getStyle(${staticClassExp})}}`
+    }])
+  }
 }
 
 function processEventReact (el, options, meta) {
@@ -1070,11 +1086,12 @@ function processEventReact (el, options, meta) {
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = parsedEvent.prefix + parsedEvent.eventName
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
+            eventName: parsedEvent.eventName,
             rawName: name,
             configs: []
           }
@@ -1087,7 +1104,7 @@ function processEventReact (el, options, meta) {
   let wrapper
 
   for (const type in eventConfigMap) {
-    let { configs, rawName } = eventConfigMap[type]
+    let { configs, rawName, eventName } = eventConfigMap[type]
     if (rawName) {
       // 清空原始事件绑定
       let has
@@ -1101,30 +1118,35 @@ function processEventReact (el, options, meta) {
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = rawName || config[mode].event.getEvent(type)
-    const value = `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
-
-    // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
-    if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
-      if (!wrapper) {
-        wrapper = createASTElement('TouchableWithoutFeedback')
-        wrapper.isBuiltIn = true
-        processBuiltInComponents(wrapper, meta)
+    const name = rawName || config[mode].event.getEvent(eventName)
+    const value = `{{(e)=>this.__invoke(e, ${stringify(eventName)}, [${configs}])}}`
+    addAttrs(el, [
+      {
+        name,
+        value
       }
-      addAttrs(wrapper, [
-        {
-          name,
-          value
-        }
-      ])
-    } else {
-      addAttrs(el, [
-        {
-          name,
-          value
-        }
-      ])
-    }
+    ])
+    // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
+    // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
+    //   if (!wrapper) {
+    //     wrapper = createASTElement('TouchableWithoutFeedback')
+    //     wrapper.isBuiltIn = true
+    //     processBuiltInComponents(wrapper, meta)
+    //   }
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // } else {
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // }
   }
 
   if (wrapper) {
@@ -1867,7 +1889,7 @@ function processText (el, meta) {
     addExp(el, parsed.result)
   }
   el.text = parsed.val
-  if (mode === 'react') {
+  if (isReact(mode)) {
     processWrapTextReact(el, meta)
   }
 }
@@ -2097,7 +2119,11 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      if (mode === 'android' || mode === 'ios') {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+      } else {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      }
     }
   }
 }
@@ -2416,7 +2442,7 @@ function processElement (el, root, options, meta) {
     return
   }
 
-  if (mode === 'react') {
+  if (isReact(mode)) {
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
@@ -2465,7 +2491,7 @@ function closeElement (el, meta, options) {
     postProcessIf(el)
     return
   }
-  if (mode === 'react') {
+  if (isReact(mode)) {
     postProcessForReact(el)
     postProcessIfReact(el)
     // flag component for react

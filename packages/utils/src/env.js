@@ -16,9 +16,13 @@ export function getEnvObj () {
       return qa
     case 'dd':
       return dd
+    default:
+      return {}
   }
 }
 
 export const isBrowser = typeof window !== 'undefined'
 
 export const isDev = process.env.NODE_ENV !== 'production'
+
+export const isReact = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android'

@@ -1,3 +1,53 @@
+const reactConfig = {
+  event: {
+    parseEvent (attr) {
+      const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+      if (match) {
+        return {
+          prefix: match[1],
+          eventName: match[2].replace(/^./, function (match) {
+            return match.toLowerCase()
+          }),
+          modifier: match[3]
+        }
+      }
+    },
+    getEvent (eventName, prefix = 'bind') {
+      return prefix + eventName.replace(/^./, (matched) => {
+        return matched.toUpperCase()
+      })
+    },
+    defaultModelProp: 'value',
+    defaultModelEvent: 'input',
+    defaultModelValuePath: 'value'
+  },
+  wxs: {
+    tag: 'wxs',
+    module: 'module',
+    src: 'src',
+    ext: '.wxs',
+    templatePrefix: 'module.exports = \n'
+  },
+  directive: {
+    if: 'wx:if',
+    elseif: 'wx:elif',
+    else: 'wx:else',
+    model: 'wx:model',
+    modelProp: 'wx:model-prop',
+    modelEvent: 'wx:model-event',
+    modelValuePath: 'wx:model-value-path',
+    modelFilter: 'wx:model-filter',
+    for: 'wx:for',
+    forIndex: 'wx:for-index',
+    forItem: 'wx:for-item',
+    key: 'wx:key',
+    dynamicClass: 'wx:class',
+    dynamicStyle: 'wx:style',
+    ref: 'wx:ref',
+    show: 'wx:show'
+  }
+}
+
 module.exports = {
   wx: {
     typeExtMap: {
@@ -469,53 +519,6 @@ module.exports = {
       show: 'dd:show'
     }
   },
-  react: {
-    event: {
-      parseEvent (attr) {
-        const match = /^(on)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
-        if (match) {
-          return {
-            prefix: match[1],
-            eventName: match[2].replace(/^./, function (match) {
-              return match.toLowerCase()
-            }),
-            modifier: match[3]
-          }
-        }
-      },
-      getEvent (eventName, prefix = 'on') {
-        return prefix + eventName.replace(/^./, (matched) => {
-          return matched.toUpperCase()
-        })
-      },
-      defaultModelProp: 'value',
-      defaultModelEvent: 'input',
-      defaultModelValuePath: 'value'
-    },
-    wxs: {
-      tag: 'wxs',
-      module: 'module',
-      src: 'src',
-      ext: '.wxs',
-      templatePrefix: 'module.exports = \n'
-    },
-    directive: {
-      if: 'wx:if',
-      elseif: 'wx:elif',
-      else: 'wx:else',
-      model: 'wx:model',
-      modelProp: 'wx:model-prop',
-      modelEvent: 'wx:model-event',
-      modelValuePath: 'wx:model-value-path',
-      modelFilter: 'wx:model-filter',
-      for: 'wx:for',
-      forIndex: 'wx:for-index',
-      forItem: 'wx:for-item',
-      key: 'wx:key',
-      dynamicClass: 'wx:class',
-      dynamicStyle: 'wx:style',
-      ref: 'wx:ref',
-      show: 'wx:show'
-    }
-  }
+  ios: reactConfig,
+  android: reactConfig
 }

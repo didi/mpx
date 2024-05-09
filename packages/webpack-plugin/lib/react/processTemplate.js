@@ -44,7 +44,7 @@ module.exports = function (template, {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans react mode temporarily, we will support it in the future!'))
+      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans react native mode temporarily, we will support it in the future!'))
     }
 
     if (template.content) {

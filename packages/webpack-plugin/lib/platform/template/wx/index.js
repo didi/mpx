@@ -8,7 +8,7 @@ const normalize = require('../../../utils/normalize')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'react'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android'],
     // props预处理
     preProps: [],
     // props后处理
@@ -394,13 +394,27 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        react ({ name, value }, { eventRules, el }) {
+        ios ({ name, value }, { eventRules, el }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'react' })
-          const rEventName = runRules(eventRules, eventName, { mode: 'react', data: { el } })
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ios' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ios', data: { el } })
+          return {
+            name: rPrefix + rEventName.replace(/^./, (matched) => {
+              return matched.toUpperCase()
+            }) + modifierStr,
+            value
+          }
+        },
+        android ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
           return {
             name: rPrefix + rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
@@ -458,17 +472,28 @@ module.exports = function getSpec ({ warn, error }) {
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
           },
-          react (prefix) {
-            const prefixMap = {
-              bind: 'on',
-              catch: 'on'
-            }
-            if (!prefixMap[prefix]) {
-              error(`react native environment does not support [${prefix}] event handling!`)
-              return
-            }
-            return prefixMap[prefix]
-          }
+          // ios (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // },
+          // android (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // }
         }
       ],
       rules: [
@@ -500,16 +525,36 @@ module.exports = function getSpec ({ warn, error }) {
               error(`Web environment does not support [${eventName}] event!`)
             }
           },
-          react (eventName) {
+          ios (eventName) {
             const eventMap = {
-              tap: 'press',
+              tap: 'tap',
               longtap: 'longPress',
-              longpress: 'longPress'
+              longpress: 'longPress',
+              touchstart: 'touchStart',
+              touchmove: 'touchMove',
+              touchend: 'touchEnd',
+              touchcancel: 'touchCancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
             } else {
-              error(`React Native environment does not support [${eventName}] event!`)
+              error(`React native environment does not support [${eventName}] event!`)
+            }
+          },
+          android (eventName) {
+            const eventMap = {
+              tap: 'tap',
+              longtap: 'longPress',
+              longpress: 'longPress',
+              touchstart: 'touchStart',
+              touchmove: 'touchMove',
+              touchend: 'touchEnd',
+              touchcancel: 'touchCancel'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React native environment does not support [${eventName}] event!`)
             }
           }
         },

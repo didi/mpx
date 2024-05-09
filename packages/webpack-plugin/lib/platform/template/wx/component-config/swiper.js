@@ -17,6 +17,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-swiper'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper'
+    },
     props: [
       {
         test: /^(display-multiple-items|skip-hidden-item-layout|easing-function)$/,
