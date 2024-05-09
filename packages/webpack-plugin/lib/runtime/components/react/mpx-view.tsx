@@ -1,3 +1,9 @@
+/**
+ * ✔ hover-class	
+ * ✘ hover-stop-propagation
+ * ✔ hover-start-time	
+ * ✔ hover-stay-time
+ */
 import { View, Text, StyleProp, ViewProps, ViewStyle, } from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
@@ -12,13 +18,31 @@ export interface _ViewProps extends ViewProps {
   hoverStyle: StyleProp<ViewStyle>;
 }
 
+const omit = (obj: any = {}, fields: string[] = []): { [key: string]: any } => {
+  const shallowCopy = { ...obj }
+  fields.forEach((key) => {
+    delete shallowCopy[key]
+  })
+  return shallowCopy
+}
+
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
-  const {
+  const { 
     style,
     children,
     hoverStyle,
-    ...otherProps
-  } = props
+    ...otherProps } = omit(props, [
+      'bindTap', 
+      'catchTap', 
+      'bindLongPress', 
+      'catchLongPress', 
+      'bindTouchStart', 
+      'bindTouchMove', 
+      'bindTouchEnd', 
+      'catchTouchStart', 
+      'catchTouchMove', 
+      'catchTouchEnd'
+  ])
   const [isHover, setIsHover] = React.useState(false)
 
   const dataRef = React.useRef<{
@@ -69,8 +93,10 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    touchstart: onTouchStart,
-    touchend: onTouchEnd
+    bindTouchStart: onTouchStart,
+    bindTouchEnd: onTouchEnd,
+    catchTouchStart: onTouchStart,
+    catchTouchEnd: onTouchEnd,
   });
 
   useImperativeHandle(ref, () => {

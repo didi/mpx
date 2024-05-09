@@ -1,3 +1,9 @@
+
+/**
+ * ✔ selectable
+ * ✘ space
+ * ✘ decode
+ */
 import { Text, TextProps } from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
@@ -20,7 +26,6 @@ const _Text: React.ForwardRefExoticComponent<_TextProps & React.RefAttributes<an
     selectable,
     userSelect,
     ...otherProps } = props
-    
     const innerTouchable = useInnerTouchable(props);
 
     useImperativeHandle(ref, () => {
