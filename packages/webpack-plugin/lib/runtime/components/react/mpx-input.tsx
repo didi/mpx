@@ -12,8 +12,8 @@ import {
   TextInputContentSizeChangeEventData,
   FlexStyle,
 } from 'react-native'
-import { Event } from '../types'
-import { parseInlineStyle, useUpdateEffect } from '../utils'
+import { Event } from './types'
+import { parseInlineStyle, useUpdateEffect } from './utils'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -269,5 +269,7 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
     />
   )
 }
+
+Input.displayName = 'MpxInput'
 
 export default Input
