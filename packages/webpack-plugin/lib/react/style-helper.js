@@ -4,7 +4,7 @@ const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
-
+const cssPrefixExp =  /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode }) {
   const classMap = {}
 
@@ -41,6 +41,7 @@ function getClassMap ({ content, filename, mode, srcMode }) {
     const classMapValue = {}
     // let isFlex = false, hasFlexDirection = false
     rule.walkDecls(({ prop, value }) => {
+      if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value })
       if (!newData.length) {
         newData = [newData]
