@@ -1,3 +1,4 @@
+import { warn, type } from '@mpxjs/utils'
 export default function directiveHelperMixin () {
   return {
     methods: {
@@ -6,7 +7,7 @@ export default function directiveHelperMixin () {
         if (typeof value === 'string' || typeof value === 'number') {
           return value
         } else {
-          console.warn('The type of [wx:key]\'s value is not string or number, this only supports string or number in React Native environment!');
+          warn(`wx:key\'s value should return a string or a number, received: ${type(value)}`, this.__mpxProxy.options.mpxFileResource);
           return
         }
       }
