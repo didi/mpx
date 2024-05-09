@@ -96,6 +96,60 @@ module.exports = function getSpec ({ warn, error }) {
       textDecorationLine: ValueType.default,
       textDecorationStyle: ValueType.default,
       textDecorationColor: ValueType.color
+    },
+    'flex': { // /* Three values: flex-grow | flex-shrink | flex-basis */
+      flexGrow: ValueType.number,
+      flexShrink: ValueType.number,
+      flexBasis: ValueType.number,
+    },
+    'margin': {
+      marginOne: ValueType.number,
+      marginTwo: ValueType.number,
+      marginThree: ValueType.number,
+      marginFour: ValueType.number,
+    }
+  }
+  
+
+  const formatBoxReviation = ({ prop, value}) => {
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    const suffix = ['Top', 'Right', 'Bottom', 'Left']
+    
+    // validate 
+    for (let i=0; i< values.length; i++) {
+      verifyValues({ prop, value: values[i], valueType: ValueType.number })
+    }
+
+    // format
+    switch(values.length) {
+      case 1:
+        return {prop, value}
+      case 2:        
+        return [{
+          prop: `${prop}Vertical`, 
+          value: values[0]
+        }, {
+          prop: `${prop}Horizontal`, 
+          value: values[1]
+        }]
+      case 3:
+        return [{
+          prop: `${prop}Top`, 
+          value: values[0]
+        }, {
+          prop: `${prop}Horizontal`, 
+          value: values[1]
+        }, {
+          prop: `${prop}Bottom`, 
+          value: values[2]
+        }]
+      case 4: 
+        return suffix.map((key, index) => {
+          return {
+            prop: `${prop}${key}`, 
+            value: values[index]
+          }
+        })
     }
   }
 
@@ -208,7 +262,11 @@ module.exports = function getSpec ({ warn, error }) {
         ios: getFontVariant,
         android: getFontVariant
       },
-      // Todo mark 值类型校验放最后，其他 rule 在上面编写
+      {
+        test: /.*(margin|padding).*/, // 
+        ios: formatBoxReviation,
+        android: formatBoxReviation
+      },
       { // color 颜色值校验
         test: /.*color.*/i,
         ios: checkCommonValue(ValueType.color),
