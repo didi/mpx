@@ -10,7 +10,7 @@ import {
   Animated,
   Easing,
 } from 'react-native'
-import { extracteTextStyle } from '../utils'
+import { extracteTextStyle } from './utils'
 
 export interface ButtonProps {
   size?: string
@@ -18,12 +18,13 @@ export interface ButtonProps {
   plain?: boolean
   disabled?: boolean
   loading?: boolean
-  hoverStyle?: StyleProp<ViewStyle & TextStyle>
-  hoverStartTime?: number
-  hoverStayTime?: number
+  'hover-class'?: 'none'
+  'hover-style'?: StyleProp<ViewStyle & TextStyle>
+  'hover-start-time'?: number
+  'hover-stay-time'?: number
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
-  onTap?: () => void
+  bindTap?: () => void
 }
 
 export type Type = 'default' | 'primary' | 'warn'
@@ -112,12 +113,13 @@ const Button = (props: ButtonProps): React.JSX.Element => {
     plain = false,
     disabled = false,
     loading = false,
-    hoverStyle = {},
-    hoverStartTime = 20,
-    hoverStayTime = 70,
+    'hover-class': hoverClass,
+    'hover-style': hoverStyle = {},
+    'hover-start-time': hoverStartTime = 20,
+    'hover-stay-time': hoverStayTime = 70,
     style = {},
     children,
-    onTap = () => {},
+    bindTap = () => {},
   } = props
 
   const ref = useRef<{
@@ -130,27 +132,37 @@ const Button = (props: ButtonProps): React.JSX.Element => {
     isPressEnd: false,
   })
 
-  const [isHover, setHover] = useState(false)
+  const [isHover, setIsHover] = useState(false)
 
   const isMiniSize = size === 'mini'
 
+  const applyHoverEffect = isHover && hoverClass !== 'none'
+
   const textStyle = extracteTextStyle(style)
 
-  const textHoverStyle = isHover ? extracteTextStyle(hoverStyle) : {}
+  const textHoverStyle = applyHoverEffect ? extracteTextStyle(hoverStyle) : {}
 
   const { viewStyle: presetViewStyle, textStyle: presetTextStyle } = useMemo<{
     viewStyle: ViewStyle
     textStyle: TextStyle
   }>(() => {
     const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
-    const normalBackgroundColor = disabled ? disabledColor : isHover || loading ? hoverColor : color
-    const plainBorderColor = disabled ? 'rgba(0, 0, 0, .2)' : isHover ? `rgba(${plainColor},.6)` : `rgb(${plainColor})`
+    const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
+    const plainBorderColor = disabled
+      ? 'rgba(0, 0, 0, .2)'
+      : applyHoverEffect
+      ? `rgba(${plainColor},.6)`
+      : `rgb(${plainColor})`
     const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
-    const plainTextColor = disabled ? 'rgba(0, 0, 0, .2)' : isHover ? `rgba(${plainColor}, .6)` : `rgb(${plainColor})`
+    const plainTextColor = disabled
+      ? 'rgba(0, 0, 0, .2)'
+      : applyHoverEffect
+      ? `rgba(${plainColor}, .6)`
+      : `rgb(${plainColor})`
     const normalTextColor =
       type === 'default'
-        ? `rgba(0, 0, 0, ${disabled ? 0.3 : isHover || loading ? 0.6 : 1})`
-        : `rgba(255 ,255 ,255 , ${disabled || isHover || loading ? 0.6 : 1})`
+        ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
+        : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
 
     return {
       viewStyle: {
@@ -163,11 +175,11 @@ const Button = (props: ButtonProps): React.JSX.Element => {
         color: plain ? plainTextColor : normalTextColor,
       },
     }
-  }, [type, plain, isHover, loading, disabled])
+  }, [type, plain, applyHoverEffect, loading, disabled])
 
   const stopHover = useCallback(() => {
     ref.current.preseeOutTimer = setTimeout(() => {
-      setHover(false)
+      setIsHover(false)
       clearTimeout(ref.current.preseeOutTimer)
     }, hoverStayTime)
   }, [hoverStayTime])
@@ -175,7 +187,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
   const onPressIn = () => {
     ref.current.isPressEnd = false
     ref.current.preseeInTimer = setTimeout(() => {
-      setHover(true)
+      setIsHover(true)
       clearTimeout(ref.current.preseeInTimer)
     }, hoverStartTime)
   }
@@ -186,7 +198,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
   }
 
   const onPress = () => {
-    !disabled && onTap()
+    !disabled && bindTap()
   }
 
   useEffect(() => {
@@ -202,7 +214,14 @@ const Button = (props: ButtonProps): React.JSX.Element => {
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       disabled={disabled}>
-      <View style={[styles.button, isMiniSize && styles.buttonMini, presetViewStyle, style, isHover && hoverStyle]}>
+      <View
+        style={[
+          styles.button,
+          isMiniSize && styles.buttonMini,
+          presetViewStyle,
+          style,
+          applyHoverEffect && hoverStyle,
+        ]}>
         {loading && <Loading alone={!React.Children.count(children)} />}
         {['string', 'number'].includes(typeof children) ? (
           <Text style={[styles.text, isMiniSize && styles.textMini, presetTextStyle, textStyle, textHoverStyle]}>
@@ -215,5 +234,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
     </TouchableWithoutFeedback>
   )
 }
+
+Button.displayName = 'MpxButton'
 
 export default Button
