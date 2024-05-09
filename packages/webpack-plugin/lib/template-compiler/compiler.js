@@ -1119,7 +1119,7 @@ function processEventReact (el, options, meta) {
       return item.expStr
     })
     const name = rawName || config[mode].event.getEvent(eventName)
-    const value = `{{(e)=>this.__invoke(e, ${stringify(eventName)}, [${configs}])}}`]
+    const value = `{{(e)=>this.__invoke(e, ${stringify(eventName)}, [${configs}])}}`
     addAttrs(el, [
       {
         name,
