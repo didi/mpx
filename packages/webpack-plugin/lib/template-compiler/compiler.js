@@ -1676,10 +1676,6 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-// function isRuntimeComponentNode (el, options) {
-//   return !!(options.componentInfo && options.componentInfo[el.tag] && options.componentInfo[el.tag].isRuntimeMode)
-// }
-
 function processAliExternalClassesHack (el, options) {
   const isComponent = isComponentNode(el, options)
   // 处理组件externalClass多层传递
