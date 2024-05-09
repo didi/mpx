@@ -1254,7 +1254,7 @@ function processEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${shallowStringify(eventConfigMap)}}}`
+      value: `{{${shallowStringify(eventConfigMap, true)}}}`
     }])
   }
 }
