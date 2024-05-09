@@ -17,7 +17,7 @@ const _createSelectorQuery = (runCb) => {
     selectAll: () => {
       warn('please use wx:ref to get NodesRef')
     },
-    selectViewport: () => { // scrollOffset -> 有点难实现，dimension 目前没有暴露相关 api
+    selectViewport: () => { // 有点难实现，dimension 目前没有暴露相关 api
       warn('please use wx:ref')
     }
   }
@@ -39,7 +39,7 @@ const wrapFn = (fn) => {
   }
 }
 
-const createMeasureObj = (nodeRef) => {
+const createMeasureObj = (nodeRef, props) => {
   const allProps = new Set()
   return {
     addProps (prop) {
@@ -49,22 +49,29 @@ const createMeasureObj = (nodeRef) => {
       prop.forEach(item => allProps.add(item))
     },
     measure () {
-      return new Promise((resolve) => {
-        nodeRef.measure(function (x, y, width, height, pageX, pageY) {
-          const rectAndSize = {
-            width,
-            height,
-            left: pageX,
-            top: pageY,
-            right: pageX + width,
-            bottom: pageY + height
-          }
-          const result = [...allProps].reduce((preVal, key) => {
-            return Object.assign(preVal, { [key]: rectAndSize[key] || 0 })
-          }, {})
-          resolve(result)
+      // 如果 nodeRef 部署了 measure 接口，优先使用 measure 去计算，否则从 style 上获取
+      if (nodeRef.measure) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            nodeRef.measure(function (x, y, width, height, pageX, pageY) {
+              const rectAndSize = {
+                width,
+                height,
+                left: pageX,
+                top: pageY,
+                right: pageX + width,
+                bottom: pageY + height
+              }
+              const result = [...allProps].reduce((preVal, key) => {
+                return Object.assign(preVal, { [key]: rectAndSize[key] || 0 })
+              }, {})
+              resolve(result)
+            })
+          }, 10)
         })
-      })
+      } else {
+        return getComputedStyle([...allProps], props, 0)()
+      }
     }
   }
 }
@@ -96,20 +103,21 @@ const getPlainProps = (config, props) => {
   })
 }
 
-const getComputedStyle = (config, props) => {
+const getComputedStyle = (config, props, defaultVal = '') => {
   // 从 props.style 上获取
   return wrapFn((resolve) => {
-    const styles = props.style
+    const styles = props.style || []
     const res = {}
     config.forEach((key) => {
       // 后序遍历，取到就直接返回
       let length = styles.length - 1
+      res[key] = defaultVal
       while (length >= 0) {
         const styleObj = styles[length--]
         // 取 style 的 key 是根据传入的 key 来设置，传什么设置什么，取值需要做兼容
         const humpKey = dash2hump(key)
-        res[key] = styleObj[key] || styleObj[humpKey] || ''
         if (hasOwn(styleObj, key) || hasOwn(styleObj, humpKey)) {
+          res[key] = styleObj[key] || styleObj[humpKey]
           break
         }
       }
@@ -147,7 +155,7 @@ export default function createNodesRef (props, instance) {
 
     const addMeasureProps = (prop) => {
       if (!measureObj) {
-        measureObj = createMeasureObj(nodeRef)
+        measureObj = createMeasureObj(nodeRef, props)
         fns.push(measureObj.measure)
       }
       measureObj.addProps(prop)
