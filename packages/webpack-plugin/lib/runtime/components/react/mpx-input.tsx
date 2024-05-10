@@ -11,6 +11,7 @@ import {
   TextInputKeyPressEventData,
   TextInputContentSizeChangeEventData,
   FlexStyle,
+  TextInputSelectionChangeEventData,
 } from 'react-native'
 import { Event } from './types'
 import { parseInlineStyle, useUpdateEffect } from './utils'
@@ -42,6 +43,11 @@ export type LineChangeEventData = {
   lineCount: number
 }
 
+type InputEventSelectionChangeEventData = {
+  selectionStart: number
+  selectionEnd: number
+}
+
 export interface InputProps {
   style?: StyleProp<InputStyle>
   value?: string
@@ -51,25 +57,26 @@ export interface InputProps {
   placeholder?: string
   disabled?: boolean
   maxlength?: number
-  autoFocus?: boolean
+  'auto-focus'?: boolean
   focus?: boolean
-  confirmType?: 'done' | 'send' | 'search' | 'next' | 'go'
-  confirmHold?: boolean
+  'confirm-type'?: 'done' | 'send' | 'search' | 'next' | 'go'
+  'confirm-hold'?: boolean
   cursor?: number
-  cursorColor?: string
-  selectionStart?: number
-  selectionEnd?: number
-  placeholderStyle?: string
+  'cursor-color'?: string
+  'selection-start'?: number
+  'selection-end'?: number
+  'placeholder-style'?: string
   placeholderTextColor?: string
   bindInput?: (evt: Event<InputEventCursorData>) => void
   bindFocus?: (evt: Event<InputEventValueData>) => void
   bindBlur?: (evt: Event<InputEventCursorData>) => void
   bindConfirm?: (evt: Event<InputEventValueData>) => void
+  bindSelectionChange?: (evt: Event<InputEventSelectionChangeEventData>) => void
 }
 
 export interface PrivateInputProps {
   multiline?: boolean
-  autoHeight?: boolean
+  'auto-height'?: boolean
   bindLineChange?: (evt: Event<LineChangeEventData>) => void
 }
 
@@ -90,24 +97,25 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
     type = 'text',
     value,
     password,
-    placeholderStyle,
+    'placeholder-style': placeholderStyle,
     disabled,
     maxlength = 140,
-    autoFocus,
+    'auto-focus': autoFocus,
     focus,
-    confirmType = 'done',
-    confirmHold = false,
+    'confirm-type': confirmType = 'done',
+    'confirm-hold': confirmHold = false,
     cursor,
-    cursorColor,
-    selectionStart = -1,
-    selectionEnd = -1,
+    'cursor-color': cursorColor,
+    'selection-start': selectionStart = -1,
+    'selection-end': selectionEnd = -1,
     bindInput,
     bindFocus,
     bindBlur,
     bindConfirm,
+    bindSelectionChange,
     // private
     multiline,
-    autoHeight,
+    'auto-height': autoHeight,
     bindLineChange,
     ...restProps
   } = props
@@ -223,6 +231,20 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
     [autoHeight, contentHeight, multiline, bindLineChange]
   )
 
+  const onSelectionChange = ({
+    nativeEvent: {
+      selection: { start, end },
+    },
+  }: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    bindSelectionChange &&
+      bindSelectionChange({
+        detail: {
+          selectionStart: start,
+          selectionEnd: end,
+        },
+      })
+  }
+
   useUpdateEffect(() => {
     if (!inputRef.current) {
       return
@@ -256,6 +278,7 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
       onKeyPress={onKeyPress}
       onSubmitEditing={onSubmitEditing}
       onContentSizeChange={onContentSizeChange}
+      onSelectionChange={onSelectionChange}
       style={[
         {
           padding: 0,

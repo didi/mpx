@@ -5,13 +5,13 @@ import Input, { InputProps, LineChangeEventData } from './mpx-input'
 import { omit } from './utils'
 
 export interface TextareProps extends InputProps {
-  autoHeight?: boolean
+  'auto-height'?: boolean
   bindLineChange?: (evt: Event<LineChangeEventData>) => void
 }
 
 const Textarea = (props: TextareProps): React.JSX.Element => {
-  const restProps = omit(props, ['type', 'password', 'multiline', 'confirmType', 'confirmHold'])
-  return <Input multiline confirmType="next" bindBlur={() => Keyboard.dismiss()} {...restProps} />
+  const restProps = omit(props, ['type', 'password', 'multiline', 'confirm-type', 'confirm-hold'])
+  return <Input multiline confirm-type="next" bindBlur={() => Keyboard.dismiss()} {...restProps} />
 }
 
 Textarea.displayName = 'MpxTextarea'
