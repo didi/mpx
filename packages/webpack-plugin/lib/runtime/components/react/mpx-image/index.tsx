@@ -1,3 +1,15 @@
+/**
+ * ✔ src
+ * - mode: Partially, Only SVG format do not support
+ * ✘ show-menu-by-longpress
+ * ✔ binderror
+ * ✔ bindload
+ * ✘ fade-in
+ * ✔ webp
+ * ✘ lazy-load
+ * ✔ bindtap
+ * ✔ DEFAULT_SIZE
+ */
 import React, { lazy, useCallback, useEffect, useMemo, useState, Suspense } from 'react'
 import {
   Image as RNImage,

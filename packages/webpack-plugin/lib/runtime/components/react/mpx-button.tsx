@@ -1,3 +1,39 @@
+/**
+ * ✔ size
+ * ✔ type
+ * ✔ plain
+ * ✔ disabled
+ * ✔ loading
+ * ✘ form-type
+ * ✘ open-type
+ * - hover-class Only support 'none'
+ * ✔ hover-style: Convert hoverClass to hoverStyle.
+ * ✘ hover-stop-propagation
+ * ✔ hover-start-time
+ * ✔ hover-stay-time
+ * ✘ lang
+ * ✘ session-from
+ * ✘ send-message-title
+ * ✘ send-message-path
+ * ✘ send-message-img
+ * ✘ app-parameter
+ * ✘ show-message-card
+ * ✘ phone-number-no-quota-toast
+ * ✘ bindgetuserinfo
+ * ✘ bindcontact
+ * ✘ createliveactivity
+ * ✘ bindgetphonenumber
+ * ✘ bindgetphonenumber
+ * ✘ bindgetrealtimephonenumber
+ * ✘ binderror
+ * ✘ bindopensetting
+ * ✘ bindlaunchapp
+ * ✘ bindlaunchapp
+ * ✘ bindchooseavatar
+ * ✘ bindchooseavatar
+ * ✘ bindagreeprivacyauthorization
+ * ✔ bindtap
+ */
 import React, { useEffect, useMemo, useRef, useState, ReactNode, useCallback } from 'react'
 import {
   TouchableWithoutFeedback,

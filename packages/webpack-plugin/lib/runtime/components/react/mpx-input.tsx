@@ -1,3 +1,42 @@
+/**
+ * ✔ value
+ * ✔ defaultValue
+ * - type: Partially. Not surpport safe-password、nickname
+ * ✔ password
+ * ✔ placeholder
+ * - placeholder-style: Only placeholderTextColor(RN).
+ * ✘ placeholder-class
+ * ✔ disabled
+ * ✔ maxlength
+ * ✘ cursor-spacing
+ * ✔ auto-focus
+ * ✔ focus
+ * ✔ confirm-type
+ * ✘ always-embed
+ * ✔ confirm-hold
+ * ✔ cursor
+ * ✔ selection-start
+ * ✔ selection-end
+ * ✘ adjust-position
+ * ✘ hold-keyboard
+ * ✘ safe-password-cert-path
+ * ✘ safe-password-length
+ * ✘ safe-password-time-stamp
+ * ✘ safe-password-nonce
+ * ✘ safe-password-salt
+ * ✘ safe-password-custom-hash
+ * - bindinput: No `keyCode` info.
+ * - bindfocus: No `height` info.
+ * - bindblur: No `encryptedValue`、`encryptError` info.
+ * ✔ bindconfirm
+ * ✘ bindkeyboardheightchange
+ * ✘ bindnicknamereview
+ * ✔ bind:selectionchange
+ * ✘ bind:keyboardcompositionstart
+ * ✘ bind:keyboardcompositionupdate
+ * ✘ bind:keyboardcompositionend
+ * ✘ bind:onkeyboardheightchange
+ */
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   KeyboardTypeOptions,
