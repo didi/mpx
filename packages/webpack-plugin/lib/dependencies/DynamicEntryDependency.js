@@ -199,8 +199,7 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     if (outputPath === 'custom-tab-bar/index') {
       // replace with true for custom-tab-bar
       replaceContent = JSON.stringify(true)
-    } else if (extraOptions.mpxCustomElement) {
-      // todo: 这部分的代码等合并 master 代码后优化
+    } else if (extraOptions.mpxCustomElement) { // todo: 这部分的代码等合并 master 代码后优化
       replaceContent = ''
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {

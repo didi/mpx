@@ -86,15 +86,14 @@ function processAttrsMap (vnode, config) {
   processDirectives(vnode, config)
 
   if (vnode.attrsList && vnode.attrsList.length) {
+    // 后序遍历，主要为了做剔除的操作
     for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
       const attr = vnode.attrsList[i]
       if (attr.name === 'class') {
         processClass(attr)
       } else if (attr.name === 'style') {
         processStyle(attr)
-      } else if (attr.name === 'data-eventconfigs') {
-        processBindEvent(attr)
-      } else if (config.event.parseEvent(attr.name)) { // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的
+      } else if (config.event.parseEvent(attr.name)) { // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
         vnode.attrsList.splice(i, 1)
       } else {
         const exps = getAttrExps(attr)
@@ -154,29 +153,6 @@ function getAttrExps (attr) {
   const parsed = parseMustache(attr.value)
   if (parsed.hasBinding && !attr.__exps) {
     return parseExp(parsed.result)
-  }
-}
-
-function processBindEvent (attr) {
-  if (attr.eventConfigMap) {
-    const exps = []
-    for (const eventName in attr.eventConfigMap) {
-      const configs = attr.eventConfigMap[eventName] || []
-      const eventExp = {
-        eventName,
-        exps: []
-      }
-
-      configs.forEach((item) => {
-        eventExp.exps.push(parseExp(item))
-      })
-
-      exps.push(eventExp)
-    }
-
-    attr.__exps = exps
-
-    delete attr.eventConfigMap
   }
 }
 
