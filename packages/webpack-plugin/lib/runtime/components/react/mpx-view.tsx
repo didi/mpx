@@ -69,15 +69,15 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }
 
   function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
-  const { bindTouchStart } = props;
-  bindTouchStart && bindTouchStart(e)
-  setStartTimer()
+    const { bindTouchStart } = props;
+    bindTouchStart && bindTouchStart(e)
+    setStartTimer()
   }
 
   function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>){
-  const { bindTouchEnd } = props;
-  bindTouchEnd && bindTouchEnd(e)
-  setStayTimer()
+    const { bindTouchEnd } = props;
+    bindTouchEnd && bindTouchEnd(e)
+    setStayTimer()
   }
 
   const innerTouchable = useInnerTouchable({
