@@ -137,7 +137,13 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
       return newState
     })
     internalsRef.current.isScrolling = false
-    props.onChange && props.onChange({ detail: { current: newIndex}})
+    props.onChange && props.onChange({
+      nativeEvent: {
+        detail: { 
+          current: newIndex
+        },
+        type: 'change'
+    }})
     // 更新完状态之后, 开启新的loop
   }
 

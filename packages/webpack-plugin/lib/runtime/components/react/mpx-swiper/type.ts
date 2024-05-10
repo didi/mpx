@@ -16,7 +16,6 @@ export interface SwiperProps {
   'previous-margin'?: string;
   'next-margin'?: string;
   onChange?:  (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  animationfinish?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
 export interface CarouseProps {
@@ -35,8 +34,6 @@ export interface CarouseProps {
   previousMargin?: string;
   nextMargin?: string;
   onChange: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  onTransition: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  onAnimationfinish: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
 export interface CarouseState {
