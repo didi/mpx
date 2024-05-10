@@ -62,9 +62,19 @@ function genNode (node) {
               exp += `${index === 0 ? '' : ','}${mapAttrName(name)}:`
               exp += attrExpMap[name] ? attrExpMap[name] : s(value)
             })
+            // Add event attributes
+            if (node.isRoot) {
+              exp += ','
+              exp += '...(listeners || {})'
+            }
             exp += '}'
           } else {
-            exp += ',null'
+            exp += ','
+            if (node.isRoot) {
+              exp += 'listeners ? { ...listeners } : null'
+            } else {
+              exp += 'null'
+            }
           }
 
           if (!node.unary && node.children.length) {

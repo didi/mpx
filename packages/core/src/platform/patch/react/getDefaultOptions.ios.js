@@ -11,7 +11,20 @@ function getNativeComponent (tagName) {
   return getByPath(reactNative, tagName)
 }
 
-function createEffect (proxy, components) {
+function getListeners (props) {
+  const listenerMap = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(key)
+      if (match) {
+        listenerMap[key] = props[key]
+      }
+    }
+  }
+  return listenerMap
+}
+
+function createEffect (proxy, components, listeners) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -27,7 +40,7 @@ function createEffect (proxy, components) {
   }
   update.id = proxy.uid
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent)
+    return proxy.target.__injectedRender(createElement, components, getNativeComponent, listeners)
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -93,7 +106,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components)
+        createEffect(proxy, components, getListeners(props))
         // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
@@ -110,7 +123,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components)
+    createEffect(proxy, components, getListeners(props))
   }
 
   return instance

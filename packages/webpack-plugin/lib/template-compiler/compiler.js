@@ -2211,6 +2211,17 @@ function getVirtualHostRoot (options, meta) {
         processElement(rootView, rootView, options, meta)
         return rootView
       }
+      if (isReact(mode) && !hasVirtualHost) {
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          }
+        ])
+        rootView.isRoot = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
     }
     if (mode === 'web' && ctorType === 'page') {
       return createASTElement('page')
