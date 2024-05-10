@@ -4,7 +4,7 @@
  * ✔ hover-start-time	
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, ViewProps, ViewStyle, } from 'react-native'
+import { View, Text, StyleProp, ViewProps, ViewStyle, NativeSyntheticEvent} from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
 
@@ -16,33 +16,18 @@ export interface _ViewProps extends ViewProps {
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
   hoverStyle: StyleProp<ViewStyle>;
+  bindTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
-const omit = (obj: any = {}, fields: string[] = []): { [key: string]: any } => {
-  const shallowCopy = { ...obj }
-  fields.forEach((key) => {
-    delete shallowCopy[key]
-  })
-  return shallowCopy
-}
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
   const { 
     style,
     children,
     hoverStyle,
-    ...otherProps } = omit(props, [
-      'bindTap', 
-      'catchTap', 
-      'bindLongPress', 
-      'catchLongPress', 
-      'bindTouchStart', 
-      'bindTouchMove', 
-      'bindTouchEnd', 
-      'catchTouchStart', 
-      'catchTouchMove', 
-      'catchTouchEnd'
-  ])
+    ...otherProps } = props
   const [isHover, setIsHover] = React.useState(false)
 
   const dataRef = React.useRef<{
@@ -83,20 +68,22 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     }
   }
 
-  function onTouchStart(){
-    setStartTimer()
+  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
+  const { bindTouchStart } = props;
+  bindTouchStart && bindTouchStart(e)
+  setStartTimer()
   }
 
-  function onTouchEnd(){
-    setStayTimer()
+  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>){
+  const { bindTouchEnd } = props;
+  bindTouchEnd && bindTouchEnd(e)
+  setStayTimer()
   }
 
   const innerTouchable = useInnerTouchable({
     ...props,
     bindTouchStart: onTouchStart,
-    bindTouchEnd: onTouchEnd,
-    catchTouchStart: onTouchStart,
-    catchTouchEnd: onTouchEnd,
+    bindTouchEnd: onTouchEnd
   });
 
   useImperativeHandle(ref, () => {
