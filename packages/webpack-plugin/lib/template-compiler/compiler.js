@@ -1614,7 +1614,7 @@ function processRefReact (el, meta) {
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${val}'${all ? ', true' : ''}) }}`
+      value: `{{ this.__getRefVal('${val}') }}`
     }])
   }
 }

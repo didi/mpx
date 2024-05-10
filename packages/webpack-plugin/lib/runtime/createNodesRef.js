@@ -1,4 +1,4 @@
-import { noop, isBoolean, isString, hasOwn, makeMap, dash2hump, hump2dash, warn } from '@mpxjs/utils'
+import { noop, isBoolean, hasOwn, dash2hump, warn } from '@mpxjs/utils'
 
 const _createSelectorQuery = (runCb) => {
   return {
@@ -39,47 +39,33 @@ const wrapFn = (fn) => {
   }
 }
 
-const createMeasureObj = (nodeRef, props) => {
-  const allProps = new Set()
-  return {
-    addProps (prop) {
-      if (isString(prop)) {
-        prop = [prop]
-      }
-      prop.forEach(item => allProps.add(item))
-    },
-    measure () {
-      // 如果 nodeRef 部署了 measure 接口，优先使用 measure 去计算，否则从 style 上获取
-      if (nodeRef.measure) {
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            nodeRef.measure(function (x, y, width, height, pageX, pageY) {
-              const rectAndSize = {
-                width,
-                height,
-                left: pageX,
-                top: pageY,
-                right: pageX + width,
-                bottom: pageY + height
-              }
-              const result = [...allProps].reduce((preVal, key) => {
-                return Object.assign(preVal, { [key]: rectAndSize[key] || 0 })
-              }, {})
-              resolve(result)
-            })
-          }, 10)
-        })
-      } else {
-        return getComputedStyle([...allProps], props, 0)()
-      }
-    }
-  }
+const getMeasureProps = (measureProps = [], nodeRef) => {
+  return wrapFn((resolve) => {
+    setTimeout(() => {
+      nodeRef.measure(function (x, y, width, height, pageX, pageY) {
+        const rectAndSize = {
+          width,
+          height,
+          left: pageX,
+          top: pageY,
+          right: pageX + width,
+          bottom: pageY + height
+        }
+        const result = measureProps.reduce((preVal, key) => {
+          return Object.assign(preVal, { [key]: rectAndSize[key] || 0 })
+        }, {})
+        resolve(result)
+      })
+    }, 10)
+  })
 }
 
-const datasetReg = /^data-(.+)$/
+// todo: 方便调试，后续改为连字符
+const datasetReg = /^data(.+)$/
 
 const getDataset = (props) => {
   return wrapFn((resolve) => {
+    props = props.current
     const dataset = {}
     for (const key in props) {
       if (hasOwn(props, key)) {
@@ -96,9 +82,10 @@ const getDataset = (props) => {
 const getPlainProps = (config, props) => {
   return wrapFn((resolve) => {
     const res = {}
-    for (const key in config) {
-      res[dash2hump(key)] = props[key] || props[hump2dash(key)]
-    }
+    config.forEach((key) => {
+      // todo 这个代码后续需要改动，现在属性默认不转驼峰
+      res[dash2hump(key)] = props.current[key] || props.current[dash2hump(key)]
+    })
     resolve(res)
   })
 }
@@ -106,7 +93,8 @@ const getPlainProps = (config, props) => {
 const getComputedStyle = (config, props, defaultVal = '') => {
   // 从 props.style 上获取
   return wrapFn((resolve) => {
-    const styles = props.style || []
+    config = new Set(config || [])
+    const styles = props.current.style || []
     const res = {}
     config.forEach((key) => {
       // 后序遍历，取到就直接返回
@@ -132,63 +120,69 @@ const getInstanceConfig = (config, instance) => {
   })
 }
 
-const getScrollOffsetFallback = (cb) => {
-  const res = {
-    scrollLeft: 0,
-    scrollTop: 0,
-    scrollHeight: 0,
-    scrollWidth: 0
-  }
-  cb(res)
+const defaultScrollOffset = {
+  scrollLeft: 0,
+  scrollTop: 0,
+  scrollHeight: 0,
+  scrollWidth: 0
 }
+
+const getScrollOffset = (instance) => {
+  return wrapFn((resolve) => {
+    resolve((instance.scrollOffset && instance.scrollOffset.current) || defaultScrollOffset)
+  })
+}
+
+// const getScrollOffsetFallback = (cb) => {
+//   const res = {
+//     scrollLeft: 0,
+//     scrollTop: 0,
+//     scrollHeight: 0,
+//     scrollWidth: 0
+//   }
+//   cb(res)
+// }
 
 const RECT = ['left', 'top', 'right', 'bottom']
 const SIZE = ['width', 'height']
 
 export default function createNodesRef (props, instance) {
-  const nodeRef = instance.nodeRef
+  const nodeRef = instance.nodeRef.current
 
   const fields = (config, cb = noop) => {
-    const plainProps = {}
+    const plainProps = []
+    const measureProps = []
+    const computedStyle = []
     const fns = []
-    let measureObj = null
-
-    const addMeasureProps = (prop) => {
-      if (!measureObj) {
-        measureObj = createMeasureObj(nodeRef, props)
-        fns.push(measureObj.measure)
-      }
-      measureObj.addProps(prop)
-    }
 
     for (const key in config) {
       const value = config[key]
       if (Array.isArray(value) && value.length) {
         if (key === 'properties') {
-          Object.assign(plainProps, makeMap(value))
+          plainProps.push(...value)
         } else if (key === 'computedStyle') {
           const computedStyle = config.computedStyle
           for (let i = computedStyle.length - 1; i >= 0; i--) {
             const style = computedStyle[i]
             if (RECT.includes(style) || SIZE.includes(style)) {
-              addMeasureProps(style)
+              measureProps.push(style)
               computedStyle.splice(i, 1)
             }
           }
           if (computedStyle.length) {
-            fns.push(getComputedStyle(computedStyle, props))
+            computedStyle.concat(computedStyle)
           }
         }
       } else if (isBoolean(value) && value) {
         switch (key) {
           case 'rect':
-            addMeasureProps(RECT)
+            measureProps.push(...RECT)
             break
           case 'size':
-            addMeasureProps(SIZE)
+            measureProps.push(...SIZE)
             break
           case 'scrollOffset':
-            fns.push(wrapFn(instance.scrollOffset || getScrollOffsetFallback))
+            fns.push(getScrollOffset(instance))
             break
           case 'dataset':
             fns.push(getDataset(props))
@@ -199,11 +193,24 @@ export default function createNodesRef (props, instance) {
             fns.push(getInstanceConfig(key, instance))
             break
           default:
-            plainProps[key] = value
-            fns.push(getPlainProps(plainProps, props))
+            plainProps.push(key)
             break
         }
       }
+    }
+
+    if (plainProps.length) {
+      fns.push(getPlainProps(plainProps, props))
+    }
+    if (measureProps.length) {
+      if (nodeRef.measure) {
+        fns.push(getMeasureProps(measureProps, nodeRef))
+      } else {
+        computedStyle.push(...measureProps)
+      }
+    }
+    if (computedStyle.length) {
+      fns.push(getComputedStyle(computedStyle, props))
     }
 
     const runCb = () => {
