@@ -61,16 +61,16 @@ export interface InputProps {
   selectionEnd?: number
   placeholderStyle?: string
   placeholderTextColor?: string
-  onInput?: (evt: Event<InputEventCursorData>) => void
-  onFocus?: (evt: Event<InputEventValueData>) => void
-  onBlur?: (evt: Event<InputEventCursorData>) => void
-  onConfirm?: (evt: Event<InputEventValueData>) => void
+  bindInput?: (evt: Event<InputEventCursorData>) => void
+  bindFocus?: (evt: Event<InputEventValueData>) => void
+  bindBlur?: (evt: Event<InputEventCursorData>) => void
+  bindConfirm?: (evt: Event<InputEventValueData>) => void
 }
 
 export interface PrivateInputProps {
   multiline?: boolean
   autoHeight?: boolean
-  onLineChange?: (evt: Event<LineChangeEventData>) => void
+  bindLineChange?: (evt: Event<LineChangeEventData>) => void
 }
 
 const keyboardTypeMap: Record<Type, string> = {
@@ -101,14 +101,14 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
     cursorColor,
     selectionStart = -1,
     selectionEnd = -1,
-    onInput,
-    onFocus,
-    onBlur,
-    onConfirm,
+    bindInput,
+    bindFocus,
+    bindBlur,
+    bindConfirm,
     // private
     multiline,
     autoHeight,
-    onLineChange,
+    bindLineChange,
     ...restProps
   } = props
 
@@ -134,7 +134,7 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
   }, [cursor, selectionStart, selectionEnd])
 
   const onTextInput = ({ nativeEvent }: NativeSyntheticEvent<TextInputTextInputEventData>) => {
-    if (!onInput && !onBlur) return
+    if (!bindInput && !bindBlur) return
     const {
       range: { start, end },
       text,
@@ -145,8 +145,8 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
   const onChangeText = useCallback(
     (text: string) => {
       tmpValue.current = text
-      if (!onInput) return
-      const result = onInput({
+      if (!bindInput) return
+      const result = bindInput({
         detail: {
           value: text,
           cursor: cursorIndex.current,
@@ -159,50 +159,50 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
         setInputValue(undefined)
       }
     },
-    [inputValue, onInput]
+    [inputValue, bindInput]
   )
 
   const onInputFocus = useCallback(() => {
-    if (!onFocus) return
-    onFocus({
+    if (!bindFocus) return
+    bindFocus({
       detail: {
         value: tmpValue.current || '',
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onFocus, inputValue])
+  }, [bindFocus, inputValue])
 
   const onInputBlur = useCallback(() => {
-    if (!onBlur) return
-    onBlur({
+    if (!bindBlur) return
+    bindBlur({
       detail: {
         value: tmpValue.current || '',
         cursor: cursorIndex.current,
       },
     })
-  }, [onBlur])
+  }, [bindBlur])
 
   const onKeyPress = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-      if (onConfirm && nativeEvent.key === 'Enter') {
-        onConfirm({
+      if (bindConfirm && nativeEvent.key === 'Enter') {
+        bindConfirm({
           detail: {
             value: tmpValue.current || '',
           },
         })
       }
     },
-    [onConfirm]
+    [bindConfirm]
   )
 
   const onSubmitEditing = useCallback(() => {
-    if (multiline || !onConfirm) return
-    onConfirm({
+    if (multiline || !bindConfirm) return
+    bindConfirm({
       detail: {
         value: tmpValue.current || '',
       },
     })
-  }, [multiline, onConfirm])
+  }, [multiline, bindConfirm])
 
   const onContentSizeChange = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
@@ -210,8 +210,8 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
       if (width && height) {
         if (!multiline || !autoHeight || height === contentHeight) return
         lineCount.current += height > contentHeight ? 1 : -1
-        onLineChange &&
-          onLineChange({
+        bindLineChange &&
+          bindLineChange({
             detail: {
               height,
               lineCount: lineCount.current,
@@ -220,7 +220,7 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
         setContentHeight(height)
       }
     },
-    [autoHeight, contentHeight, multiline, onLineChange]
+    [autoHeight, contentHeight, multiline, bindLineChange]
   )
 
   useUpdateEffect(() => {

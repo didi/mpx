@@ -6,12 +6,12 @@ import { omit } from './utils'
 
 export interface TextareProps extends InputProps {
   autoHeight?: boolean
-  onLineChange?: (evt: Event<LineChangeEventData>) => void
+  bindLineChange?: (evt: Event<LineChangeEventData>) => void
 }
 
 const Textarea = (props: TextareProps): React.JSX.Element => {
   const restProps = omit(props, ['type', 'password', 'multiline', 'confirmType', 'confirmHold'])
-  return <Input multiline confirmType="next" onBlur={() => Keyboard.dismiss()} {...restProps} />
+  return <Input multiline confirmType="next" bindBlur={() => Keyboard.dismiss()} {...restProps} />
 }
 
 Textarea.displayName = 'MpxTextarea'
