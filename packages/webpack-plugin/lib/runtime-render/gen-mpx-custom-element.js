@@ -3,7 +3,7 @@ const path = require('path')
 
 const content = `
 <template>
-  <wxs module="event" src="./event.wxs"/>
+  <wxs module="xs" src="./utils.wxs"/>
 </template>
 
 <script>
