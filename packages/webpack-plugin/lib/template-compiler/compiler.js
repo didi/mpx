@@ -2119,7 +2119,7 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      if (mode === 'android' || mode === 'ios') {
+      if (isReact(mode)) {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
@@ -2208,6 +2208,17 @@ function getVirtualHostRoot (options, meta) {
             value: '$listeners'
           }
         ])
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
+      if (isReact(mode) && !hasVirtualHost) {
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          }
+        ])
+        rootView.isRoot = true
         processElement(rootView, rootView, options, meta)
         return rootView
       }

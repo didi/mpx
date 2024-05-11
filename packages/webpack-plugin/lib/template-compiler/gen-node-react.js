@@ -51,20 +51,29 @@ function genNode (node) {
         } else {
           exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
           if (node.attrsList.length) {
-            exp += ',{'
             const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
               if (attrName) {
                 map[attrName] = exp
               }
               return map
             }, {})
-            node.attrsList.forEach(({ name, value }, index) => {
-              exp += `${index === 0 ? '' : ','}${mapAttrName(name)}:`
-              exp += attrExpMap[name] ? attrExpMap[name] : s(value)
+
+            const attrs = []
+            if (node.isRoot) {
+              attrs.push('...listeners')
+            }
+
+            node.attrsList.forEach(({ name, value }) => {
+              const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
+              attrs.push(`${mapAttrName(name)}: ${attrExp}`)
             })
-            exp += '}'
+            exp += `, { ${attrs.join(', ')} }`
           } else {
-            exp += ',null'
+            if (node.isRoot) {
+              exp += ', ...listeners '
+            } else {
+              exp += ', null'
+            }
           }
 
           if (!node.unary && node.children.length) {

@@ -1,6 +1,6 @@
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
 import Carouse from './carouse'
+import useInnerTouchable from '../getInnerListeners';
 
 /**
  * class="resource-banner-swiper-item"
@@ -31,22 +31,14 @@ export const SwiperWrapper = (props) => {
     previousMargin: props.previousMargin,
     nextMargin: props.nextMargin
   }
-  console.log('-----------luyongfang-swiperProp', swiperProp)
-  // 中滑线自动转驼峰再哪里实现的
-  // style={{height: 300, backgroundColor: '#ababab'}}
-  /*
-  {"autoplay": true,
-  "children": [<SwiperItem><View … /></SwiperItem>, <SwiperItem><View … /></SwiperItem>, <SwiperItem><View … /></SwiperItem>], 
-  "circular": true, 
-  "current": 0, 
-  "easingFunction": "easeOutCubic", 
-  "indicatorDots": true, 
-  "interval": 5000, 
-  "onChange": [Function onChange], 
-  "style": [{}], "test": "height: 150;background: red;"}     
-  */
+  const innerTouchable = useInnerTouchable({
+    ...props
+  });
   return (
-      <Carouse {...swiperProp}>
+      <Carouse
+        {...swiperProp}
+        {...innerTouchable}
+      >
         {children}
       </Carouse>
 
