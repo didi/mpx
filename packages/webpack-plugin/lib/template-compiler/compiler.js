@@ -1275,7 +1275,7 @@ function processEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${shallowStringify(eventConfigMap)}}}`
+      value: `{{${shallowStringify(eventConfigMap, true)}}}`
     }])
   }
 }
@@ -2211,6 +2211,17 @@ function getVirtualHostRoot (options, meta) {
         processElement(rootView, rootView, options, meta)
         return rootView
       }
+      if (isReact(mode) && !hasVirtualHost) {
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          }
+        ])
+        rootView.isRoot = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
     }
     if (mode === 'web' && ctorType === 'page') {
       return createASTElement('page')
@@ -2276,7 +2287,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)

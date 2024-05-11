@@ -32,13 +32,14 @@
  * ✔ bindscroll
  */
 
-import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent } from 'react-native';
+import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent, ViewStyle } from 'react-native';
 import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
 import useInnerTouchable, { extendEvent, getCustomEvent } from './getInnerListeners';
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
   bounces?: boolean;
+  style?: ViewStyle;
   'scroll-x'?: boolean;
   'scroll-y'?: boolean;
   'enable-back-to-top'?: boolean;
@@ -80,6 +81,7 @@ type ScrollElementProps = {
   pagingEnabled?: boolean;
   offsetLeft?: number;
   offsetTop?: number;
+  style?: ViewStyle;
 
 };
 const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {}, ref) {
@@ -87,6 +89,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     children,
     enhanced,
     bounces,
+    style,
     'scroll-x': scrollX,
     'scroll-y': scrollY,
     'enable-back-to-top': enableBackToTop,
@@ -325,7 +328,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     showsHorizontalScrollIndicator: !!(scrollX && showScrollBar),
     showsVerticalScrollIndicator: !!(scrollY && showScrollBar),
     scrollEnabled: scrollEnabled,
-    ref: scrollViewRef
+    ref: scrollViewRef,
+    style
   };
   if (enhanced) {
     scrollElementProps = {

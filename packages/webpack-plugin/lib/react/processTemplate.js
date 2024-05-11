@@ -110,12 +110,14 @@ module.exports = function (template, {
         try {
           const ignoreMap = Object.assign({
             createElement: true,
-            components: true
+            components: true,
+            getNativeComponent: true,
+            listeners: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
           })
-          output += `global.currentInject.render = function (createElement, components) {
+          output += `global.currentInject.render = function (createElement, components, getNativeComponent, listeners) {
   return ${bindResult.code}
 };\n`
         } catch (e) {

@@ -10,6 +10,8 @@ module.exports = function ({ print }) {
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -69,7 +71,14 @@ module.exports = function ({ print }) {
       {
         test: /^(transition)$/,
         swan: baiduEventLog,
-        jd: jdEventLog
+        jd: jdEventLog,
+        ios: iosEventLog,
+        android: androidEventLog
+      },
+      {
+        test: /^(animationfinish)$/,
+        ios: iosEventLog,
+        android: androidEventLog
       }
     ]
   }
