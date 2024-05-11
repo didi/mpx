@@ -150,8 +150,35 @@ export const getCustomEvent = (type, oe, { detail = {}, target = {} }, props = {
 // }
 
 const useInnerTouchable = props => {
-  const { bindtap, catchtap, bindlongpress, catchlongpress, bindtouchstart, bindtouchmove, bindtouchend, catchtouchstart, catchtouchmove, catchtouchend } = props
-  if (!bindtap && !catchtap && !bindlongpress && !catchlongpress && !bindtouchstart && !bindtouchmove && !bindtouchend && !catchtouchstart && !catchtouchmove && !catchtouchend) {
+  const eventProps = [
+    'bindtap',
+    'bindlongpress',
+    'bindtouchstart',
+    'bindtouchmove',
+    'bindtouchend',
+    'bindtouchcancel',
+    'catchtap',
+    'catchlongpress',
+    'catchtouchstart',
+    'catchtouchmove',
+    'catchtouchend',
+    'catchtouchcancel',
+    'capture-bindtap',
+    'capture-bindlongpress',
+    'capture-bindtouchstart',
+    'capture-bindtouchmove',
+    'capture-bindtouchend',
+    'capture-bindtouchcancel',
+    'capture-catchtap',
+    'capture-catchlongpress',
+    'capture-catchtouchstart',
+    'capture-catchtouchmove',
+    'capture-catchtouchend',
+    'capture-catchtouchcancel'
+  ]
+  const hasEventProps = eventProps.some(prop => props[prop])
+
+  if (!hasEventProps) {
     return props
   }
   const ref = useRef({
@@ -175,55 +202,107 @@ const useInnerTouchable = props => {
       }
     })
   }
+  function handleTouchstart (e, touchEvent, pressEvent) {
+    e.persist()
+    ref.current.startTimer = null
+    ref.current.needPress = true
+    const nativeEvent = e.nativeEvent
+    ref.current.mpxPressInfo.detail = {
+      x: nativeEvent.changedTouches[0].pageX,
+      y: nativeEvent.changedTouches[0].pageY
+    }
+    handleEmitEvent(touchEvent, 'touchstart', e)
+    if (ref.current.props.catchlongpress || ref.current.props.bindlongpress) {
+      ref.current.startTimer = setTimeout(() => {
+        ref.current.needPress = false
+        handleEmitEvent(pressEvent, 'longpress', e)
+      }, 350)
+    }
+  }
+
+  function handleTouchmove (e, touchEvent) {
+    const tapDetailInfo = ref.current.mpxPressInfo.detail || {}
+    const nativeEvent = e.nativeEvent
+    const currentPageX = nativeEvent.changedTouches[0].pageX
+    const currentPageY = nativeEvent.changedTouches[0].pageY
+    if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+      ref.current.needPress = false
+      ref.current.startTimer && clearTimeout(ref.current.startTimer)
+      ref.current.startTimer = null
+    }
+    handleEmitEvent(touchEvent, 'touchmove', e)
+  }
+
+  function handleTouchend (e, touchEvent, tapEvent) {
+    ref.current.startTimer && clearTimeout(ref.current.startTimer)
+    handleEmitEvent(touchEvent, 'touchend', e)
+    if (ref.current.needPress) {
+      handleEmitEvent(tapEvent, 'tap', e)
+    }
+  }
+
+  function handleTouchcancel (e, touchEvent) {
+    handleEmitEvent(touchEvent, 'touchcancel', e)
+  }
+
   const events = {
     onTouchStart: (e) => {
       e.persist()
-      ref.current.startTimer = null
-      ref.current.needPress = true
-      const nativeEvent = e.nativeEvent
-      ref.current.mpxPressInfo.detail = {
-        x: nativeEvent.changedTouches[0].pageX,
-        y: nativeEvent.changedTouches[0].pageY
-      }
-      handleEmitEvent(['catchtouchstart', 'bindtouchstart'], 'touchstart', e)
-      if (ref.current.props.catchlongpress || ref.current.props.bindlongpress) {
-        ref.current.startTimer = setTimeout(() => {
-          ref.current.needPress = false
-          handleEmitEvent(['catchlongpress', 'bindlongpress'], 'longpress', e)
-        }, 350)
-      }
+      handleTouchstart(e, ['catchtouchstart', 'bindtouchstart'], ['catchlongpress', 'bindlongpress'])
+      // ref.current.startTimer = null
+      // ref.current.needPress = true
+      // const nativeEvent = e.nativeEvent
+      // ref.current.mpxPressInfo.detail = {
+      //   x: nativeEvent.changedTouches[0].pageX,
+      //   y: nativeEvent.changedTouches[0].pageY
+      // }
+      // handleEmitEvent(['catchtouchstart', 'bindtouchstart'], 'touchstart', e)
+      // if (ref.current.props.catchlongpress || ref.current.props.bindlongpress) {
+      //   ref.current.startTimer = setTimeout(() => {
+      //     ref.current.needPress = false
+      //     handleEmitEvent(['catchlongpress', 'bindlongpress'], 'longpress', e)
+      //   }, 350)
+      // }
     },
     onTouchMove: (e) => {
-      const tapDetailInfo = ref.current.mpxPressInfo.detail || {}
-      const nativeEvent = e.nativeEvent
-      const currentPageX = nativeEvent.changedTouches[0].pageX
-      const currentPageY = nativeEvent.changedTouches[0].pageY
-      if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
-        ref.current.needPress = false
-        ref.current.startTimer && clearTimeout(ref.current.startTimer)
-        ref.current.startTimer = null
-      }
-      handleEmitEvent(['catchtouchmove', 'bindtouchmove'], 'touchmove', e)
+      handleTouchmove(e, ['catchtouchmove', 'bindtouchmove'])
+      // const tapDetailInfo = ref.current.mpxPressInfo.detail || {}
+      // const nativeEvent = e.nativeEvent
+      // const currentPageX = nativeEvent.changedTouches[0].pageX
+      // const currentPageY = nativeEvent.changedTouches[0].pageY
+      // if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+      //   ref.current.needPress = false
+      //   ref.current.startTimer && clearTimeout(ref.current.startTimer)
+      //   ref.current.startTimer = null
+      // }
+      // handleEmitEvent(['catchtouchmove', 'bindtouchmove'], 'touchmove', e)
     },
     onTouchEnd: (e) => {
-      ref.current.startTimer && clearTimeout(ref.current.startTimer)
-      handleEmitEvent(['catchtouchend', 'bindtouchend'], 'touchend', e)
-      if (ref.current.needPress) {
-        handleEmitEvent(['catchtap', 'bindtap'], 'tap', e)
-      }
+      handleTouchend(e, ['catchtouchend', 'bindtouchend'], ['catchtap', 'bindtap'])
+      // ref.current.startTimer && clearTimeout(ref.current.startTimer)
+      // handleEmitEvent(['catchtouchend', 'bindtouchend'], 'touchend', e)
+      // if (ref.current.needPress) {
+      //   handleEmitEvent(['catchtap', 'bindtap'], 'tap', e)
+      // }
     },
     onTouchCancel: (e) => {
-      handleEmitEvent(['catchtouchcancel', 'bindtouchcancel'], 'touchcancel', e)
+      handleTouchcancel(e, ['catchtouchcancel', 'bindtouchcancel'])
+      // handleEmitEvent(['catchtouchcancel', 'bindtouchcancel'], 'touchcancel', e)
+    },
+    onTouchStartCapture: (e) => {
+      e.persist()
+      handleTouchstart(e, ['capture-catchtouchstart', 'capture-bindtouchstart'], ['capture-catchlongpress', 'capture-bindlongpress'])
+    },
+    onTouchMoveCapture: (e) => {
+      handleTouchmove(e, ['capture-catchtouchmove', 'capture-bindtouchmove'])
+    },
+    onTouchEndCapture: (e) => {
+      handleTouchend(e, ['capture-catchtouchend', 'capture-bindtouchend'], ['capture-catchtap', 'capture-bindtap'])
+    },
+    onTouchCancelCapture: (e) => {
+      handleTouchcancel(e, ['capture-catchtouchcancel', 'capture-bindtouchcancel'])
     }
   }
-  const oe = ['onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture', 'onTouchCancelCapture']
-  oe.forEach(event => {
-    if (ref.current.props[event]) {
-      events[event] = (e) => {
-        ref.current.props[event]?.(e)
-      }
-    }
-  })
   return events
 }
 export default useInnerTouchable
