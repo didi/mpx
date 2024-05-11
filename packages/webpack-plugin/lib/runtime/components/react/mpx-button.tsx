@@ -37,6 +37,7 @@
 import React, { useEffect, useMemo, useRef, useState, ReactNode, useCallback, forwardRef } from 'react'
 import {
   TouchableWithoutFeedback,
+  GestureResponderEvent,
   View,
   Text,
   StyleSheet,
@@ -47,6 +48,7 @@ import {
   Easing,
 } from 'react-native'
 import { extracteTextStyle } from './utils'
+import useInnerTouchable from './getInnerListeners'
 
 export interface ButtonProps {
   size?: string
@@ -60,7 +62,8 @@ export interface ButtonProps {
   'hover-stay-time'?: number
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
-  bindTap?: () => void
+  bindTap?: (evt: GestureResponderEvent) => void
+  catchTap?: (evt: GestureResponderEvent) => void
 }
 
 export type Type = 'default' | 'primary' | 'warn'
@@ -156,6 +159,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     style = {},
     children,
     bindTap = () => {},
+    catchTap = () => {},
   } = props
 
   const refs = useRef<{
@@ -233,24 +237,34 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     stopHover()
   }
 
-  const onPress = () => {
-    !disabled && bindTap()
+  const onPress = (evt: GestureResponderEvent) => {
+    !disabled && bindTap(evt)
+  }
+
+  const catchPress = (evt: GestureResponderEvent) => {
+    !disabled && catchTap(evt)
   }
 
   useEffect(() => {
     isHover && refs.current.isPressEnd && stopHover()
   }, [isHover, stopHover])
 
+  const innerTouchable = useInnerTouchable({
+    ...props,
+    bindTap: () => {},
+    catchTap: catchPress,
+  })
+
   return (
     <TouchableWithoutFeedback
       testID="button"
       accessibilityRole="button"
       onPress={onPress}
-      onLongPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       disabled={disabled}>
       <View
+        {...innerTouchable}
         ref={ref}
         style={[
           styles.button,

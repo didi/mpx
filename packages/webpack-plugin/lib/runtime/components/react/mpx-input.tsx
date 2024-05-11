@@ -54,6 +54,7 @@ import {
 } from 'react-native'
 import { Event } from './types'
 import { parseInlineStyle, useUpdateEffect } from './utils'
+import useInnerTouchable from './getInnerListeners'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -291,6 +292,11 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     focus ? inputRef.current.focus() : inputRef.current.blur()
   }, [focus])
 
+
+  const innerTouchable = useInnerTouchable({
+    ...props
+  });
+
   useImperativeHandle(ref, () => {
     return {
       ...props,
@@ -312,6 +318,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   return (
     <TextInput
       {...restProps}
+      {...innerTouchable}
       ref={inputRef}
       keyboardType={keyboardType as KeyboardTypeOptions}
       secureTextEntry={!!password}
