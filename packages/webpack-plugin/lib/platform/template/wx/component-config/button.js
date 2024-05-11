@@ -30,10 +30,22 @@ module.exports = function ({ print }) {
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
     web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
+    },
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-button'
     },
@@ -143,6 +155,11 @@ module.exports = function ({ print }) {
       {
         test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|bindgetuserinfo|bindcontact|bindgetphonenumber|binderror|bindopensetting|bindlaunchapp)$/,
         qa: qaPropLog
+      },
+      {
+        test: /^(open-type|lang|from-type|hover-class|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|phone-number-no-quota-toast|bindgetuserinfo|bindcontact|createliveactivity|bindgetphonenumber|bindgetrealtimephonenumber|binderror|bindopensetting|bindlaunchapp|bindchooseavatar|bindagreeprivacyauthorization)$/,
+        ios: iosPropLog,
+        android: androidPropLog
       }
     ],
     event: [
@@ -175,6 +192,11 @@ module.exports = function ({ print }) {
       {
         test: /^(getuserinfo|contact|error|launchapp|opensetting|getphonenumber)$/,
         web: webEventLog
+      },
+      {
+        test: /^(getuserinfo|contact|getphonenumber|bindgetrealtimephonenumber|error|opensetting|launchapp|chooseavatar|agreeprivacyauthorization)$/,
+        ios: iosEventLog,
+        android: androidEventLog
       }
     ]
   }
