@@ -202,8 +202,12 @@ const useInnerTouchable = props => {
       }
     })
   }
-  function handleTouchstart (e, touchEvent, pressEvent) {
+  function handleTouchstart (e, type) {
     e.persist()
+    const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
+    const bubblePressEvent = ['catchlongpress', 'bindlongpress']
+    const captureTouchEvent = ['capture-catchtouchstart', 'capture-bindtouchstart']
+    const capturePressEvent = ['capture-catchlongpress', 'capture-bindlongpress']
     ref.current.startTimer = null
     ref.current.needPress = true
     const nativeEvent = e.nativeEvent
@@ -211,96 +215,84 @@ const useInnerTouchable = props => {
       x: nativeEvent.changedTouches[0].pageX,
       y: nativeEvent.changedTouches[0].pageY
     }
-    handleEmitEvent(touchEvent, 'touchstart', e)
-    if (ref.current.props.catchlongpress || ref.current.props.bindlongpress) {
+    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
+    const currentPressEvent = type === 'bubble' ? bubblePressEvent : capturePressEvent
+    handleEmitEvent(currentTouchEvent, 'touchstart', e)
+    const { catchlongpress, bindlongpress, 'capture-catchlongpress': captureCatchlongpress, 'capture-bindlongpress': captureBindlongpress } = ref.current.props
+    if (catchlongpress || bindlongpress || captureCatchlongpress || captureBindlongpress) {
       ref.current.startTimer = setTimeout(() => {
-        ref.current.needPress = false
-        handleEmitEvent(pressEvent, 'longpress', e)
+        if (ref.current.startTimer) {
+         ref.current.needPress = false
+          handleEmitEvent(currentPressEvent, 'longpress', e)
+        }
       }, 350)
     }
   }
 
-  function handleTouchmove (e, touchEvent) {
+  function handleTouchmove (e, type) {
+    const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
+    const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
     const tapDetailInfo = ref.current.mpxPressInfo.detail || {}
     const nativeEvent = e.nativeEvent
     const currentPageX = nativeEvent.changedTouches[0].pageX
     const currentPageY = nativeEvent.changedTouches[0].pageY
+    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
     if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
       ref.current.needPress = false
       ref.current.startTimer && clearTimeout(ref.current.startTimer)
       ref.current.startTimer = null
     }
-    handleEmitEvent(touchEvent, 'touchmove', e)
+    handleEmitEvent(currentTouchEvent, 'touchmove', e)
   }
 
-  function handleTouchend (e, touchEvent, tapEvent) {
+  function handleTouchend (e, type) {
+    const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
+    const bubbleTapEvent = ['catchtap', 'bindtap']
+    const captureTouchEvent = ['capture-catchtouchend', 'capture-bindtouchend']
+    const captureTapEvent = ['capture-catchtap', 'capture-bindtap']
+    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
+    const currentTapEvent = type === 'bubble' ? bubbleTapEvent : captureTapEvent
     ref.current.startTimer && clearTimeout(ref.current.startTimer)
-    handleEmitEvent(touchEvent, 'touchend', e)
+    ref.current.startTimer = null
+    handleEmitEvent(currentTouchEvent, 'touchend', e)
     if (ref.current.needPress) {
-      handleEmitEvent(tapEvent, 'tap', e)
+      handleEmitEvent(currentTapEvent, 'tap', e)
     }
   }
 
-  function handleTouchcancel (e, touchEvent) {
-    handleEmitEvent(touchEvent, 'touchcancel', e)
+  function handleTouchcancel (e, type) {
+    const bubbleTouchEvent = ['catchtouchcancel', 'bindtouchcancel']
+    const captureTouchEvent = ['capture-catchtouchcancel', 'capture-bindtouchcancel']
+    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
+    handleEmitEvent(currentTouchEvent, 'touchcancel', e)
   }
 
   const events = {
     onTouchStart: (e) => {
       e.persist()
-      handleTouchstart(e, ['catchtouchstart', 'bindtouchstart'], ['catchlongpress', 'bindlongpress'])
-      // ref.current.startTimer = null
-      // ref.current.needPress = true
-      // const nativeEvent = e.nativeEvent
-      // ref.current.mpxPressInfo.detail = {
-      //   x: nativeEvent.changedTouches[0].pageX,
-      //   y: nativeEvent.changedTouches[0].pageY
-      // }
-      // handleEmitEvent(['catchtouchstart', 'bindtouchstart'], 'touchstart', e)
-      // if (ref.current.props.catchlongpress || ref.current.props.bindlongpress) {
-      //   ref.current.startTimer = setTimeout(() => {
-      //     ref.current.needPress = false
-      //     handleEmitEvent(['catchlongpress', 'bindlongpress'], 'longpress', e)
-      //   }, 350)
-      // }
+      handleTouchstart(e, 'bubble')
     },
     onTouchMove: (e) => {
-      handleTouchmove(e, ['catchtouchmove', 'bindtouchmove'])
-      // const tapDetailInfo = ref.current.mpxPressInfo.detail || {}
-      // const nativeEvent = e.nativeEvent
-      // const currentPageX = nativeEvent.changedTouches[0].pageX
-      // const currentPageY = nativeEvent.changedTouches[0].pageY
-      // if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
-      //   ref.current.needPress = false
-      //   ref.current.startTimer && clearTimeout(ref.current.startTimer)
-      //   ref.current.startTimer = null
-      // }
-      // handleEmitEvent(['catchtouchmove', 'bindtouchmove'], 'touchmove', e)
+      handleTouchmove(e, 'bubble')
     },
     onTouchEnd: (e) => {
-      handleTouchend(e, ['catchtouchend', 'bindtouchend'], ['catchtap', 'bindtap'])
-      // ref.current.startTimer && clearTimeout(ref.current.startTimer)
-      // handleEmitEvent(['catchtouchend', 'bindtouchend'], 'touchend', e)
-      // if (ref.current.needPress) {
-      //   handleEmitEvent(['catchtap', 'bindtap'], 'tap', e)
-      // }
+      handleTouchend(e, 'bubble')
     },
     onTouchCancel: (e) => {
-      handleTouchcancel(e, ['catchtouchcancel', 'bindtouchcancel'])
-      // handleEmitEvent(['catchtouchcancel', 'bindtouchcancel'], 'touchcancel', e)
+      handleTouchcancel(e, 'bubble')
     },
     onTouchStartCapture: (e) => {
       e.persist()
-      handleTouchstart(e, ['capture-catchtouchstart', 'capture-bindtouchstart'], ['capture-catchlongpress', 'capture-bindlongpress'])
+      handleTouchstart(e, 'capture')
     },
     onTouchMoveCapture: (e) => {
-      handleTouchmove(e, ['capture-catchtouchmove', 'capture-bindtouchmove'])
+      handleTouchmove(e, 'capture')
     },
     onTouchEndCapture: (e) => {
-      handleTouchend(e, ['capture-catchtouchend', 'capture-bindtouchend'], ['capture-catchtap', 'capture-bindtap'])
+      handleTouchend(e, 'capture')
     },
     onTouchCancelCapture: (e) => {
-      handleTouchcancel(e, ['capture-catchtouchcancel', 'capture-bindtouchcancel'])
+      handleTouchcancel(e, 'capture')
     }
   }
   return events
