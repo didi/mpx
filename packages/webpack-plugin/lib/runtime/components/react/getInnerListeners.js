@@ -150,8 +150,8 @@ export const getCustomEvent = (type, oe, { detail = {}, target = {} }, props = {
 // }
 
 const useInnerTouchable = props => {
-  const { bindTap, catchTap, bindLongPress, catchLongPress, bindTouchStart, bindTouchMove, bindTouchEnd, catchTouchStart, catchTouchMove, catchTouchEnd } = props
-  if (!bindTap && !catchTap && !bindLongPress && !catchLongPress && !bindTouchStart && !bindTouchMove && !bindTouchEnd && !catchTouchStart && !catchTouchMove && !catchTouchEnd) {
+  const { bindtap, catchtap, bindlongpress, catchlongpress, bindtouchstart, bindtouchmove, bindtouchend, catchtouchstart, catchtouchmove, catchtouchend } = props
+  if (!bindtap && !catchtap && !bindlongpress && !catchlongpress && !bindtouchstart && !bindtouchmove && !bindtouchend && !catchtouchstart && !catchtouchmove && !catchtouchend) {
     return props
   }
   const ref = useRef({
@@ -185,11 +185,11 @@ const useInnerTouchable = props => {
         x: nativeEvent.changedTouches[0].pageX,
         y: nativeEvent.changedTouches[0].pageY
       }
-      handleEmitEvent(['catchTouchStart', 'bindTouchStart'], 'touchstart', e)
-      if (ref.current.props.catchLongPress || ref.current.props.bindLongPress) {
+      handleEmitEvent(['catchtouchstart', 'bindtouchstart'], 'touchstart', e)
+      if (ref.current.props.catchlongpress || ref.current.props.bindlongpress) {
         ref.current.startTimer = setTimeout(() => {
           ref.current.needPress = false
-          handleEmitEvent(['catchLongPress', 'bindLongPress'], 'longpress', e)
+          handleEmitEvent(['catchlongpress', 'bindlongpress'], 'longpress', e)
         }, 350)
       }
     },
@@ -203,17 +203,17 @@ const useInnerTouchable = props => {
         ref.current.startTimer && clearTimeout(ref.current.startTimer)
         ref.current.startTimer = null
       }
-      handleEmitEvent(['catchTouchMove', 'bindTouchMove'], 'touchmove', e)
+      handleEmitEvent(['catchtouchmove', 'bindtouchmove'], 'touchmove', e)
     },
     onTouchEnd: (e) => {
       ref.current.startTimer && clearTimeout(ref.current.startTimer)
-      handleEmitEvent(['catchTouchEnd', 'bindTouchEnd'], 'touchend', e)
+      handleEmitEvent(['catchtouchend', 'bindtouchend'], 'touchend', e)
       if (ref.current.needPress) {
-        handleEmitEvent(['catchTap', 'bindTap'], 'tap', e)
+        handleEmitEvent(['catchtap', 'bindtap'], 'tap', e)
       }
     },
     onTouchCancel: (e) => {
-      handleEmitEvent(['catchTouchCancel', 'bindTouchCancel'], 'touchcancel', e)
+      handleEmitEvent(['catchtouchcancel', 'bindtouchcancel'], 'touchcancel', e)
     }
   }
   const oe = ['onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture', 'onTouchCancelCapture']
