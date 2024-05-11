@@ -1,10 +1,10 @@
 module.exports = {
-  invoke: function (e, i) {
-    const type = e.type
-    const target = e.currentTarget || e.target
-    const eventConfigs = target.dataset.eventconfigs || {}
-    const curEventConfig = eventConfigs[type] || []
-    const stopPropagation = curEventConfig.every(function (config) {
+  invoke: function(e, i) {
+    var type = e.type
+    var target = e.currentTarget || e.target
+    var eventConfigs = target.dataset.eventconfigs || {}
+    var curEventConfig = eventConfigs[type] || []
+    var stopPropagation = curEventConfig.every(function(config) {
       return config[config.length - 1] !== '__mpx_catch'
     })
     i.callMethod('__invoke', e)
@@ -16,5 +16,5 @@ module.exports = {
       }
     }
   },
-  b: function (v, d) { return v === undefined ? d : v }
+  b: function(v, d) { return v === undefined ? d : v }
 }
