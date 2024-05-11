@@ -3,7 +3,7 @@
  *   Subtraction:
  *     type, password, confirm-hold
  *   Addition:
- *     - confirm-type: Not surpport `return`
+ *     - confirm-type: Not support `return`
  *     ✔ auto-height
  *     ✘ fixed
  *     ✘ show-confirm-bar
