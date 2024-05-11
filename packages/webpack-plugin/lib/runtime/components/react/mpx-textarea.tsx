@@ -25,6 +25,6 @@ const Textarea = (props: TextareProps): React.JSX.Element => {
   return <Input multiline confirm-type="next" bindBlur={() => Keyboard.dismiss()} {...restProps} />
 }
 
-Textarea.displayName = 'MpxTextarea'
+Textarea.displayName = '_Textarea'
 
 export default Textarea

@@ -332,6 +332,6 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
   )
 }
 
-Input.displayName = 'MpxInput'
+Input.displayName = '_Input'
 
 export default Input

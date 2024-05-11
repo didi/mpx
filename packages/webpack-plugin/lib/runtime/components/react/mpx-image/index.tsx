@@ -288,6 +288,6 @@ const Image = (props: ImageProps): React.JSX.Element => {
   )
 }
 
-Image.displayName = 'MpxImage'
+Image.displayName = '_Image'
 
 export default Image

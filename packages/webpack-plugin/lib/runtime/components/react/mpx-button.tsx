@@ -271,6 +271,6 @@ const Button = (props: ButtonProps): React.JSX.Element => {
   )
 }
 
-Button.displayName = 'MpxButton'
+Button.displayName = '_Button'
 
 export default Button
