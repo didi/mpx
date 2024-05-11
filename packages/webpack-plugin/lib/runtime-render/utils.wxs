@@ -15,5 +15,6 @@ module.exports = {
         e.stopPropagation()
       }
     }
-  }
+  },
+  b: function(v, d) { return v === undefined ? d : v }
 }
