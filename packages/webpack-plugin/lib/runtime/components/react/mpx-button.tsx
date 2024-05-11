@@ -34,7 +34,7 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, { useEffect, useMemo, useRef, useState, ReactNode, useCallback } from 'react'
+import React, { useEffect, useMemo, useRef, useState, ReactNode, useCallback, forwardRef } from 'react'
 import {
   TouchableWithoutFeedback,
   View,
@@ -142,7 +142,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LoadingImageUri }} />
 }
 
-const Button = (props: ButtonProps): React.JSX.Element => {
+const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -158,7 +158,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
     bindTap = () => {},
   } = props
 
-  const ref = useRef<{
+  const refs = useRef<{
     preseeInTimer: ReturnType<typeof setTimeout> | undefined
     preseeOutTimer: ReturnType<typeof setTimeout> | undefined
     isPressEnd: boolean
@@ -214,22 +214,22 @@ const Button = (props: ButtonProps): React.JSX.Element => {
   }, [type, plain, applyHoverEffect, loading, disabled])
 
   const stopHover = useCallback(() => {
-    ref.current.preseeOutTimer = setTimeout(() => {
+    refs.current.preseeOutTimer = setTimeout(() => {
       setIsHover(false)
-      clearTimeout(ref.current.preseeOutTimer)
+      clearTimeout(refs.current.preseeOutTimer)
     }, hoverStayTime)
   }, [hoverStayTime])
 
   const onPressIn = () => {
-    ref.current.isPressEnd = false
-    ref.current.preseeInTimer = setTimeout(() => {
+    refs.current.isPressEnd = false
+    refs.current.preseeInTimer = setTimeout(() => {
       setIsHover(true)
-      clearTimeout(ref.current.preseeInTimer)
+      clearTimeout(refs.current.preseeInTimer)
     }, hoverStartTime)
   }
 
   const onPressOut = () => {
-    ref.current.isPressEnd = true
+    refs.current.isPressEnd = true
     stopHover()
   }
 
@@ -238,7 +238,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
   }
 
   useEffect(() => {
-    isHover && ref.current.isPressEnd && stopHover()
+    isHover && refs.current.isPressEnd && stopHover()
   }, [isHover, stopHover])
 
   return (
@@ -251,6 +251,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
       onPressOut={onPressOut}
       disabled={disabled}>
       <View
+        ref={ref}
         style={[
           styles.button,
           isMiniSize && styles.buttonMini,
@@ -269,7 +270,7 @@ const Button = (props: ButtonProps): React.JSX.Element => {
       </View>
     </TouchableWithoutFeedback>
   )
-}
+})
 
 Button.displayName = '_Button'
 

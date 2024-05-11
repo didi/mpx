@@ -10,7 +10,7 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import React, { lazy, useCallback, useEffect, useMemo, useState, Suspense } from 'react'
+import React, { lazy, useCallback, useEffect, useMemo, useState, Suspense, forwardRef } from 'react'
 import {
   Image as RNImage,
   View,
@@ -114,7 +114,7 @@ const Fallback = (
   </View>
 )
 
-const Image = (props: ImageProps): React.JSX.Element => {
+const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element => {
   const {
     src = '',
     mode = 'scaleToFill',
@@ -267,6 +267,7 @@ const Image = (props: ImageProps): React.JSX.Element => {
       ]}
       onLayout={onViewLayout}>
       <RNImage
+        ref={ref}
         testID="image"
         source={source}
         resizeMode={resizeMode}
@@ -286,7 +287,7 @@ const Image = (props: ImageProps): React.JSX.Element => {
       />
     </View>
   )
-}
+})
 
 Image.displayName = '_Image'
 

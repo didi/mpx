@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { ForwardedRef, forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -130,7 +130,7 @@ const keyboardTypeMap: Record<Type, string> = {
     }) || '',
 }
 
-const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
+const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX.Element => {
   const {
     style,
     type = 'text',
@@ -164,7 +164,7 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
   const placeholderTextColor = props.placeholderTextColor || parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const inputRef = useRef<any>()
+  const inputRef = useRef<any>(null)
   const tmpValue = useRef<string>()
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(1)
@@ -285,11 +285,29 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
   }
 
   useUpdateEffect(() => {
-    if (!inputRef.current) {
+    if (!inputRef?.current) {
       return
     }
     focus ? inputRef.current.focus() : inputRef.current.blur()
   }, [focus])
+
+  useImperativeHandle(ref, () => {
+    return {
+      ...props,
+      focus() {
+        inputRef.current?.focus()
+      },
+      blur() {
+        inputRef.current?.blur()
+      },
+      clear() {
+        inputRef.current?.clear()
+      },
+      isFocused() {
+        inputRef.current?.isFocused()
+      },
+    }
+  })
 
   return (
     <TextInput
@@ -330,7 +348,7 @@ const Input = (props: InputProps & PrivateInputProps): React.JSX.Element => {
       ]}
     />
   )
-}
+})
 
 Input.displayName = '_Input'
 
