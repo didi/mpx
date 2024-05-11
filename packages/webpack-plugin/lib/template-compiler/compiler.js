@@ -2119,7 +2119,7 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      if (mode === 'android' || mode === 'ios') {
+      if (isReact(mode)) {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
