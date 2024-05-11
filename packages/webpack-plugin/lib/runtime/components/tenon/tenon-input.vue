@@ -141,6 +141,7 @@ export default {
       disabled: this.disabled,
       style: this.computedStyle,
       returnKeyType: this.confirmType,
+      value: this.value,
       ...getInnerListeners(this, { _input: true }),
     };
     return h("input", data, []);
