@@ -27,7 +27,7 @@ module.exports = function (raw) {
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
-  const moduleId = queryObj.moduleId || mpx.pathHash(resourcePath)
+  const moduleId = queryObj.moduleId || 'i' + mpx.pathHash(resourcePath)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
