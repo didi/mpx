@@ -95,13 +95,13 @@ export interface InputProps {
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindconfirm?: (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData | TextInputKeyPressEventData> | unknown) => void
-  bindselectionChange?: (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData> | unknown) => void
+  bindselectionchange?: (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData> | unknown) => void
 }
 
 export interface PrivateInputProps {
   multiline?: boolean
   'auto-height'?: boolean
-  bindlineChange?: (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData> | unknown) => void
+  bindlinechange?: (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData> | unknown) => void
 }
 
 const keyboardTypeMap: Record<Type, string> = {
@@ -136,11 +136,11 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     bindfocus,
     bindblur,
     bindconfirm,
-    bindselectionChange,
+    bindselectionchange,
     // private
     multiline,
     'auto-height': autoHeight,
-    bindlineChange,
+    bindlinechange,
     ...restProps
   } = props
 
@@ -271,10 +271,10 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
       if (!multiline || !autoHeight || height === contentHeight) return
       lineCount.current += height > contentHeight ? 1 : -1
       const lineHeight = lineCount.current === 0 ? 0 : height / lineCount.current
-      bindlineChange &&
-        bindlineChange(
+      bindlinechange &&
+        bindlinechange(
           getCustomEvent(
-            'lineChange',
+            'linechange',
             evt,
             {
               detail: {
@@ -291,10 +291,10 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   }
 
   const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    bindselectionChange &&
-      bindselectionChange(
+    bindselectionchange &&
+      bindselectionchange(
         getCustomEvent(
-          'selectionChange',
+          'selectionchange',
           evt,
           {
             detail: {
