@@ -94,9 +94,7 @@ export interface InputProps {
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
-  bindconfirm?: (
-    evt: NativeSyntheticEvent<TextInputSubmitEditingEventData | TextInputKeyPressEventData> | unknown
-  ) => void
+  bindconfirm?: (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData | TextInputKeyPressEventData> | unknown) => void
   bindselectionChange?: (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData> | unknown) => void
 }
 
@@ -340,43 +338,43 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
 
   return (
     <TextInput
-        {...restProps}
-        {...innerTouchable}
-        ref={inputRef}
-        keyboardType={keyboardType as KeyboardTypeOptions}
-        secureTextEntry={!!password}
-        defaultValue={defaultValue}
-        value={inputValue}
-        maxLength={maxlength === -1 ? undefined : maxlength}
-        editable={!disabled}
-        autoFocus={!!autoFocus || !!focus}
-        returnKeyType={confirmType}
-        selection={selection}
-        selectionColor={cursorColor}
-        blurOnSubmit={!confirmHold}
-        underlineColorAndroid="rgba(0,0,0,0)"
-        textAlignVertical={textAlignVertical}
-        placeholderTextColor={placeholderTextColor}
-        multiline={!!multiline}
-        onTextInput={onTextInput}
-        onChange={onChange}
-        onFocus={onInputFocus}
-        onBlur={onInputBlur}
-        onKeyPress={onKeyPress}
-        onSubmitEditing={onSubmitEditing}
-        onContentSizeChange={onContentSizeChange}
-        onSelectionChange={onSelectionChange}
-        style={[
-          {
-            padding: 0,
+      {...restProps}
+      {...innerTouchable}
+      ref={inputRef}
+      keyboardType={keyboardType as KeyboardTypeOptions}
+      secureTextEntry={!!password}
+      defaultValue={defaultValue}
+      value={inputValue}
+      maxLength={maxlength === -1 ? undefined : maxlength}
+      editable={!disabled}
+      autoFocus={!!autoFocus || !!focus}
+      returnKeyType={confirmType}
+      selection={selection}
+      selectionColor={cursorColor}
+      blurOnSubmit={!confirmHold}
+      underlineColorAndroid="rgba(0,0,0,0)"
+      textAlignVertical={textAlignVertical}
+      placeholderTextColor={placeholderTextColor}
+      multiline={!!multiline}
+      onTextInput={onTextInput}
+      onChange={onChange}
+      onFocus={onInputFocus}
+      onBlur={onInputBlur}
+      onKeyPress={onKeyPress}
+      onSubmitEditing={onSubmitEditing}
+      onContentSizeChange={onContentSizeChange}
+      onSelectionChange={onSelectionChange}
+      style={[
+        {
+          padding: 0,
+        },
+        style,
+        multiline &&
+          autoHeight && {
+            height: Math.max((style as any)?.minHeight || 35, contentHeight),
           },
-          style,
-          multiline &&
-            autoHeight && {
-              height: Math.max((style as any)?.minHeight || 35, contentHeight),
-            },
-        ]}
-      />
+      ]}
+    />
   )
 })
 
