@@ -179,7 +179,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     if (!bindinput) return
     const result = bindinput(
       getCustomEvent(
-        'change',
+        'input',
         evt,
         {
           detail: {

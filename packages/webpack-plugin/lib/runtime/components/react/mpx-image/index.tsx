@@ -209,7 +209,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     binderror &&
       binderror(
         getCustomEvent(
-          'load',
+          'error',
           evt,
           {
             detail: { errMsg: evt.nativeEvent.error },
