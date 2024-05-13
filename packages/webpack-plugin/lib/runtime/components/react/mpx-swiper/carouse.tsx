@@ -4,27 +4,28 @@
 import React, { forwardRef, useState, useRef, useEffect, ReactNode  } from 'react'
 import { View, ScrollView, Dimensions } from 'react-native'
 import { CarouseProps, CarouseState } from './type'
+import { getCustomEvent } from '../getInnerListeners'
 
 /**
  * 默认的Style类型
  */
 const styles = {
   container_x: {
-    backgroundColor: 'transparent',
+    // backgroundColor: '#fffffa',
     position: 'relative',
-    flex: 1
+    // flex: 1
   },
   container_y: {
-    backgroundColor: '#ebeaaa', // 测试用
+    // backgroundColor: '#fffffa', // 测试用
     position: 'relative',
   },
 
   wrapperIOS: {
-    backgroundColor: 'transparent'
+    // backgroundColor: 'transparent'
   },
 
   wrapperAndroid: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
     flex: 1
   },
 
@@ -37,7 +38,7 @@ const styles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent'
+    // backgroundColor: 'transparent'
   },
 
   pagination_y: {
@@ -49,7 +50,7 @@ const styles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent'
+    // backgroundColor: 'transparent'
   }
 }
 
@@ -127,6 +128,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
     // 存储当前的偏移量
     internalsRef.current.offset = scrollViewOffset
     // 这里需不需要区分是否loop，初始化？？？？
+    console.warn('---------------------------eventData：before')
     setState((preState) => {
       const newState =  {
         ...preState,
@@ -137,13 +139,10 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
       return newState
     })
     internalsRef.current.isScrolling = false
-    props.onChange && props.onChange({
-      nativeEvent: {
-        detail: { 
-          current: newIndex
-        },
-        type: 'change'
-    }})
+    // getCustomEvent
+    const eventData = getCustomEvent('change', {}, { detail: {current: newIndex }})
+    console.warn('---------------------------eventData', eventData)
+    props.bindchange && props.bindchange(eventData)
     // 更新完状态之后, 开启新的loop
   }
 
