@@ -10,8 +10,10 @@ module.exports = function ({ print }) {
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
-  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -55,7 +57,15 @@ module.exports = function ({ print }) {
       {
         test: /^(snap-to-edge|easing-function)$/,
         qa: qaPropLog
-      }
+      },
+      {
+        test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
+        ios: iosPropLog
+      },
+      {
+        test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
+        android: androidPropLog
+      },
     ],
     event: [
       {
