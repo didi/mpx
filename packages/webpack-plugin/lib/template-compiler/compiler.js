@@ -2131,13 +2131,13 @@ function closeElement (el, meta, options) {
     postProcessIf(el)
     return
   }
-  const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
-
+  // 此处pass不再进行判断isNative，跨端输出ali情况下，原生组件中的自定义组件根节点也需要处理 rootView
+  const pass = postProcessTemplate(el) || processingTemplate
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
-    } else {
+    } else if (!isNative) {
       el = postProcessComponentIs(el)
     }
   }
