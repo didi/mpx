@@ -1881,7 +1881,7 @@ function processShow (el, options, root) {
   let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
   if (has && show === undefined) {
-    error$1(`The value of ${config[mode].directive.show} should not be undefined `)
+    error$1(`Attrs ${config[mode].directive.show} should have a value `)
   }
   if (options.hasVirtualHost) {
     if (options.isComponent && el.parent === root && isRealNode(el)) {
