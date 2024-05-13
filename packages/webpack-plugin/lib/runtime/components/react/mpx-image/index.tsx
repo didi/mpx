@@ -24,10 +24,10 @@ import {
   ImageErrorEventData,
   LayoutChangeEvent,
   DimensionValue,
+  ImageLoadEventData,
 } from 'react-native'
-import type { Event } from '../types'
 import { omit } from '../utils'
-import useInnerTouchable from '../getInnerListeners'
+import useInnerTouchable, { getCustomEvent } from '../getInnerListeners'
 
 export type Mode =
   | 'scaleToFill'
@@ -45,17 +45,6 @@ export type Mode =
   | 'bottom left'
   | 'bottom right'
 
-type ImageErrorEvent = NativeSyntheticEvent<ImageErrorEventData>
-
-type LoadEventData = {
-  width: number
-  height: number
-}
-
-type LoadErrorData = {
-  errMsg: string
-}
-
 export type SvgNumberProp = string | number | undefined
 
 export interface ImageProps {
@@ -63,8 +52,8 @@ export interface ImageProps {
   mode?: Mode
   svg?: boolean
   style?: StyleProp<ImageStyle>
-  bindLoad?: (evt: Event<LoadEventData>) => void
-  bindError?: (evt: Event<LoadErrorData>) => void
+  bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
+  binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
 
 const DEFAULT_IMAGE_WIDTH = 240
@@ -120,8 +109,8 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     mode = 'scaleToFill',
     svg = false,
     style,
-    bindLoad,
-    bindError,
+    bindload,
+    binderror,
     ...restProps
   } = omit(props, ['source', 'resizeeMode'])
   const innerTouchable = useInnerTouchable(restProps)
@@ -186,27 +175,49 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     setViewHeight(height)
   }
 
-  const onImageLoad = useCallback(() => {
-    if (!bindLoad) return
+  const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
+    if (!bindload) return
     if (typeof src === 'string') {
       RNImage.getSize(src, (width: number, height: number) => {
-        bindLoad({ detail: { width, height } })
+        bindload(
+          getCustomEvent(
+            'load',
+            evt,
+            {
+              detail: { width, height },
+            },
+            props
+          )
+        )
       })
     } else {
       const { width = 0, height = 0 } = RNImage.resolveAssetSource(src) || {}
-      bindLoad({ detail: { width, height } })
+      bindload(
+        getCustomEvent(
+          'load',
+          evt,
+          {
+            detail: { width, height },
+          },
+          props
+        )
+      )
     }
-  }, [bindLoad, src])
+  }
 
-  const onImageError = useCallback(
-    ({ nativeEvent }: ImageErrorEvent) => {
-      if (!bindError) return
-      bindError({
-        detail: { errMsg: nativeEvent.error },
-      })
-    },
-    [bindError]
-  )
+  const onImageError = (evt: NativeSyntheticEvent<ImageErrorEventData>) => {
+    binderror &&
+      binderror(
+        getCustomEvent(
+          'load',
+          evt,
+          {
+            detail: { errMsg: evt.nativeEvent.error },
+          },
+          props
+        )
+      )
+  }
 
   const loadImage = useCallback((): void => {
     if (!isWidthFixMode && !isHeightFixMode && !isCropMode) return
