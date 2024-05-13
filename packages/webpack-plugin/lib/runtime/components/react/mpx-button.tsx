@@ -37,6 +37,7 @@
 import React, { useEffect, useMemo, useRef, useState, ReactNode, useCallback, forwardRef } from 'react'
 import {
   TouchableWithoutFeedback,
+  GestureResponderEvent,
   View,
   Text,
   StyleSheet,
@@ -47,6 +48,7 @@ import {
   Easing,
 } from 'react-native'
 import { extracteTextStyle } from './utils'
+import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
 
 export interface ButtonProps {
   size?: string
@@ -60,7 +62,8 @@ export interface ButtonProps {
   'hover-stay-time'?: number
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
-  bindTap?: () => void
+  bindtap?: (evt: GestureResponderEvent | unknown) => void
+  catchtap?: (evt: GestureResponderEvent | unknown) => void
 }
 
 export type Type = 'default' | 'primary' | 'warn'
@@ -155,7 +158,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     'hover-stay-time': hoverStayTime = 70,
     style = {},
     children,
-    bindTap = () => {},
+    bindtap = () => {},
+    catchtap = () => {},
   } = props
 
   const refs = useRef<{
@@ -233,24 +237,34 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     stopHover()
   }
 
-  const onPress = () => {
-    !disabled && bindTap()
+  const onPress = (evt: GestureResponderEvent) => {
+    !disabled && bindtap(getCustomEvent('tap', evt, {}, props))
+  }
+
+  const catchPress = (evt: GestureResponderEvent) => {
+    !disabled && catchtap(getCustomEvent('tap', evt, {}, props))
   }
 
   useEffect(() => {
     isHover && refs.current.isPressEnd && stopHover()
   }, [isHover, stopHover])
 
+  const innerTouchable = useInnerTouchable({
+    ...props,
+    bindtap: () => {},
+    catchtap: catchPress,
+  })
+
   return (
     <TouchableWithoutFeedback
       testID="button"
       accessibilityRole="button"
       onPress={onPress}
-      onLongPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       disabled={disabled}>
       <View
+        {...innerTouchable}
         ref={ref}
         style={[
           styles.button,

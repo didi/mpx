@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import React, { ForwardedRef, forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -51,9 +51,12 @@ import {
   TextInputContentSizeChangeEventData,
   FlexStyle,
   TextInputSelectionChangeEventData,
+  TextInputFocusEventData,
+  TextInputChangeEventData,
+  TextInputSubmitEditingEventData,
 } from 'react-native'
-import { Event } from './types'
 import { parseInlineStyle, useUpdateEffect } from './utils'
+import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -68,24 +71,6 @@ type InputStyle = Omit<
 >
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
-
-type InputEventValueData = {
-  value: string
-}
-
-type InputEventCursorData = InputEventValueData & {
-  cursor: number
-}
-
-export type LineChangeEventData = {
-  height: number
-  lineCount: number
-}
-
-type InputEventSelectionChangeEventData = {
-  selectionStart: number
-  selectionEnd: number
-}
 
 export interface InputProps {
   style?: StyleProp<InputStyle>
@@ -106,17 +91,17 @@ export interface InputProps {
   'selection-end'?: number
   'placeholder-style'?: string
   placeholderTextColor?: string
-  bindInput?: (evt: Event<InputEventCursorData>) => void
-  bindFocus?: (evt: Event<InputEventValueData>) => void
-  bindBlur?: (evt: Event<InputEventCursorData>) => void
-  bindConfirm?: (evt: Event<InputEventValueData>) => void
-  bindSelectionChange?: (evt: Event<InputEventSelectionChangeEventData>) => void
+  bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
+  bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
+  bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
+  bindconfirm?: (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData | TextInputKeyPressEventData> | unknown) => void
+  bindselectionchange?: (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData> | unknown) => void
 }
 
 export interface PrivateInputProps {
   multiline?: boolean
   'auto-height'?: boolean
-  bindLineChange?: (evt: Event<LineChangeEventData>) => void
+  bindlinechange?: (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData> | unknown) => void
 }
 
 const keyboardTypeMap: Record<Type, string> = {
@@ -147,15 +132,15 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     'cursor-color': cursorColor,
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
-    bindInput,
-    bindFocus,
-    bindBlur,
-    bindConfirm,
-    bindSelectionChange,
+    bindinput,
+    bindfocus,
+    bindblur,
+    bindconfirm,
+    bindselectionchange,
     // private
     multiline,
     'auto-height': autoHeight,
-    bindLineChange,
+    bindlinechange,
     ...restProps
   } = props
 
@@ -167,7 +152,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   const inputRef = useRef<any>(null)
   const tmpValue = useRef<string>()
   const cursorIndex = useRef<number>(0)
-  const lineCount = useRef<number>(1)
+  const lineCount = useRef<number>(0)
 
   const [inputValue, setInputValue] = useState()
   const [contentHeight, setContentHeight] = useState(0)
@@ -181,7 +166,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   }, [cursor, selectionStart, selectionEnd])
 
   const onTextInput = ({ nativeEvent }: NativeSyntheticEvent<TextInputTextInputEventData>) => {
-    if (!bindInput && !bindBlur) return
+    if (!bindinput && !bindblur) return
     const {
       range: { start, end },
       text,
@@ -189,99 +174,137 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     cursorIndex.current = start < end ? start : start + text.length
   }
 
-  const onChangeText = useCallback(
-    (text: string) => {
-      tmpValue.current = text
-      if (!bindInput) return
-      const result = bindInput({
-        detail: {
-          value: text,
-          cursor: cursorIndex.current,
-        },
-      })
-      if (typeof result === 'string') {
-        tmpValue.current = result
-        setInputValue(result)
-      } else if (inputValue) {
-        setInputValue(undefined)
-      }
-    },
-    [inputValue, bindInput]
-  )
-
-  const onInputFocus = useCallback(() => {
-    if (!bindFocus) return
-    bindFocus({
-      detail: {
-        value: tmpValue.current || '',
-      },
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bindFocus, inputValue])
-
-  const onInputBlur = useCallback(() => {
-    if (!bindBlur) return
-    bindBlur({
-      detail: {
-        value: tmpValue.current || '',
-        cursor: cursorIndex.current,
-      },
-    })
-  }, [bindBlur])
-
-  const onKeyPress = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-      if (bindConfirm && nativeEvent.key === 'Enter') {
-        bindConfirm({
+  const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData>) => {
+    tmpValue.current = evt.nativeEvent.text
+    if (!bindinput) return
+    const result = bindinput(
+      getCustomEvent(
+        'input',
+        evt,
+        {
           detail: {
-            value: tmpValue.current || '',
+            value: evt.nativeEvent.text,
+            cursor: cursorIndex.current,
           },
-        })
-      }
-    },
-    [bindConfirm]
-  )
-
-  const onSubmitEditing = useCallback(() => {
-    if (multiline || !bindConfirm) return
-    bindConfirm({
-      detail: {
-        value: tmpValue.current || '',
-      },
-    })
-  }, [multiline, bindConfirm])
-
-  const onContentSizeChange = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-      const { width, height } = nativeEvent.contentSize
-      if (width && height) {
-        if (!multiline || !autoHeight || height === contentHeight) return
-        lineCount.current += height > contentHeight ? 1 : -1
-        bindLineChange &&
-          bindLineChange({
-            detail: {
-              height,
-              lineCount: lineCount.current,
-            },
-          })
-        setContentHeight(height)
-      }
-    },
-    [autoHeight, contentHeight, multiline, bindLineChange]
-  )
-
-  const onSelectionChange = ({
-    nativeEvent: {
-      selection: { start, end },
-    },
-  }: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    bindSelectionChange &&
-      bindSelectionChange({
-        detail: {
-          selectionStart: start,
-          selectionEnd: end,
         },
-      })
+        props
+      )
+    )
+    if (typeof result === 'string') {
+      tmpValue.current = result
+      setInputValue(result)
+    } else if (inputValue) {
+      setInputValue(undefined)
+    }
+  }
+
+  const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    bindfocus &&
+      bindfocus(
+        getCustomEvent(
+          'focus',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current || '',
+            },
+          },
+          props
+        )
+      )
+  }
+
+  const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    bindblur &&
+      bindblur(
+        getCustomEvent(
+          'blur',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current || '',
+              cursor: cursorIndex.current,
+            },
+          },
+          props
+        )
+      )
+  }
+
+  const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+    bindconfirm &&
+      evt.nativeEvent.key === 'Enter' &&
+      bindconfirm(
+        getCustomEvent(
+          'confirm',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current || '',
+            },
+          },
+          props
+        )
+      )
+  }
+
+  const onSubmitEditing = (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
+    bindconfirm &&
+      multiline &&
+      bindconfirm(
+        getCustomEvent(
+          'confirm',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current || '',
+            },
+          },
+          props
+        )
+      )
+  }
+
+  const onContentSizeChange = (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+    const { width, height } = evt.nativeEvent.contentSize
+    if (width && height) {
+      if (!multiline || !autoHeight || height === contentHeight) return
+      lineCount.current += height > contentHeight ? 1 : -1
+      const lineHeight = lineCount.current === 0 ? 0 : height / lineCount.current
+      bindlinechange &&
+        bindlinechange(
+          getCustomEvent(
+            'linechange',
+            evt,
+            {
+              detail: {
+                height,
+                lineHeight,
+                lineCount: lineCount.current,
+              },
+            },
+            props
+          )
+        )
+      setContentHeight(height)
+    }
+  }
+
+  const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    bindselectionchange &&
+      bindselectionchange(
+        getCustomEvent(
+          'selectionchange',
+          evt,
+          {
+            detail: {
+              selectionStart: evt.nativeEvent.selection.start,
+              selectionEnd: evt.nativeEvent.selection.end,
+            },
+          },
+          props
+        )
+      )
   }
 
   useUpdateEffect(() => {
@@ -290,6 +313,10 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     }
     focus ? inputRef.current.focus() : inputRef.current.blur()
   }, [focus])
+
+  const innerTouchable = useInnerTouchable({
+    ...props,
+  })
 
   useImperativeHandle(ref, () => {
     return {
@@ -312,6 +339,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   return (
     <TextInput
       {...restProps}
+      {...innerTouchable}
       ref={inputRef}
       keyboardType={keyboardType as KeyboardTypeOptions}
       secureTextEntry={!!password}
@@ -329,7 +357,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
       placeholderTextColor={placeholderTextColor}
       multiline={!!multiline}
       onTextInput={onTextInput}
-      onChangeText={onChangeText}
+      onChange={onChange}
       onFocus={onInputFocus}
       onBlur={onInputBlur}
       onKeyPress={onKeyPress}
