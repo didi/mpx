@@ -80,8 +80,6 @@ type ScrollElementProps = {
   ref: React.RefObject<ScrollView>;
   bounces?: boolean;
   pagingEnabled?: boolean;
-  offsetLeft?: number;
-  offsetTop?: number;
   style?: ViewStyle;
 
 };
@@ -110,8 +108,10 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
-    offsetX: 0,
-    offsetY: 0,
+    offsetLeft: 0,
+    offsetTop: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
     visibleLength: 0,
   });
   const scrollViewRef = useRef<ScrollView>(null);
@@ -180,8 +180,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
               direction: scrollX ? 'left' : 'top',
             },
             target: {
-              offsetLeft: scrollOptions.current.offsetX || 0,
-              offsetTop: scrollOptions.current.offsetY || 0,
+              offsetLeft: scrollOptions.current.offsetLeft || 0,
+              offsetTop: scrollOptions.current.offsetTop || 0,
             },
           }, props),
         );
@@ -205,8 +205,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
               direction: scrollX ? 'right' : 'botttom',
             },
             target: {
-              offsetLeft: scrollOptions.current.offsetX || 0,
-              offsetTop: scrollOptions.current.offsetY || 0,
+              offsetLeft: scrollOptions.current.offsetLeft || 0,
+              offsetTop: scrollOptions.current.offsetTop || 0,
             },
           }, props),
         );
@@ -222,6 +222,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
 
   function onLayout(e: LayoutChangeEvent) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
+    scrollOptions.current.offsetLeft = e.nativeEvent.layout.x || 0
+    scrollOptions.current.offsetTop = e.nativeEvent.layout.y || 0
   }
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -236,12 +238,12 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollTop,
             scrollHeight,
             scrollWidth,
-            deltaX: scrollLeft - scrollOptions.current.offsetX,
-            deltaY: scrollTop - scrollOptions.current.offsetY,
+            deltaX: scrollLeft - scrollOptions.current.scrollLeft,
+            deltaY: scrollTop - scrollOptions.current.scrollTop,
           },
           target: {
-            offsetLeft: scrollLeft,
-            offsetTop: scrollTop,
+            offsetLeft: scrollOptions.current.offsetLeft,
+            offsetTop: scrollOptions.current.offsetTop,
           },
         }, props),
       );
@@ -250,10 +252,11 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     const contentLength = selectLength(e.nativeEvent.contentSize);
     const offset = selectOffset(e.nativeEvent.contentOffset);
     scrollOptions.current = {
+      ...scrollOptions.current,
       contentLength,
       offset,
-      offsetX: scrollLeft,
-      offsetY: scrollTop,
+      scrollLeft,
+      scrollTop,
       visibleLength,
     };
     onStartReached(e);
@@ -263,6 +266,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   function scrollToOffset(x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation });
+      scrollOptions.current.scrollLeft = x
+      scrollOptions.current.scrollTop = y
     }
   }
 
@@ -272,8 +277,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       bindrefresherrefresh(
         getCustomEvent('refresherrefresh', {}, {
           target: {
-            offsetLeft: scrollOptions.current.offsetX || 0,
-            offsetTop: scrollOptions.current.offsetY || 0,
+            offsetLeft: scrollOptions.current.offsetLeft || 0,
+            offsetTop: scrollOptions.current.offsetTop || 0,
           },
         }, props),
       );
@@ -286,8 +291,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       binddragstart(
         getCustomEvent('dragstart', e, {
           detail: {
-            scrollLeft: scrollOptions.current.offsetX || 0,
-            scrollTop: scrollOptions.current.offsetY || 0,
+            scrollLeft: scrollOptions.current.scrollLeft || 0,
+            scrollTop: scrollOptions.current.scrollTop || 0,
           },
         }),
       );
@@ -300,8 +305,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       binddragging(
         getCustomEvent('dragging', e, {
           detail: {
-            scrollLeft: scrollOptions.current.offsetX || 0,
-            scrollTop: scrollOptions.current.offsetY || 0,
+            scrollLeft: scrollOptions.current.scrollLeft || 0,
+            scrollTop: scrollOptions.current.scrollTop || 0,
           },
         }),
       );
@@ -314,8 +319,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       binddragend(
         getCustomEvent('dragend', e, {
           detail: {
-            scrollLeft: scrollOptions.current.offsetX || 0,
-            scrollTop: scrollOptions.current.offsetY || 0,
+            scrollLeft: scrollOptions.current.scrollLeft || 0,
+            scrollTop: scrollOptions.current.scrollTop || 0,
           },
         }),
       );
@@ -347,8 +352,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     bindtouchstart: onScrollTouchStart,
     bindtouchend: onScrollTouchEnd,
     bindtouchmove: onScrollTouchMove,
-    offsetLeft: scrollOptions.current.offsetX || 0,
-    offsetTop: scrollOptions.current.offsetY || 0
+    offsetLeft: scrollOptions.current.offsetLeft || 0,
+    offsetTop: scrollOptions.current.offsetTop || 0
   });
   const refreshColor = {
     'black': ['#000'],
@@ -360,7 +365,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     //   _props,
     //   {
     //     nodeRef: scrollViewRef,
-    //     scrollOffset: {},
+    //     scrollOffset: scrollOptions,
     //     node: {
     //       scrollEnabled,
     //       bounces: !!bounces,

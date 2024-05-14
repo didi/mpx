@@ -76,11 +76,11 @@ export const getDataSet = (props) => {
   return result
 }
 
-export const getCustomEvent = (type, oe, { detail = {}, target = {} }, props = {}) => {
+export const getCustomEvent = (type, oe = {}, { detail = {}, target = {} }, props = {}) => {
   return extendEvent(oe, {
     type,
     detail: {
-      ...(oe?.detail || {}),
+      ...(oe.detail || {}),
       ...detail
     },
     target: {
