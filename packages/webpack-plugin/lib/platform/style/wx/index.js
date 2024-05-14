@@ -57,7 +57,7 @@ module.exports = function getSpec ({ warn, error }) {
   // RN 不支持的颜色格式
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
 
-  function verifyValues ({ prop, value, valueType }) {
+  const verifyValues = ({ prop, value, valueType }) => {
     // 校验 value 枚举 是否支持
     unsupportedValueError({ prop: hump2dash(prop), value })
     switch (valueType) {
@@ -191,7 +191,7 @@ module.exports = function getSpec ({ warn, error }) {
     verifyValues({ prop, value, valueType })
   }
 
-  function getFontVariant ({ prop, value }) {
+  const getFontVariant = ({ prop, value }) => {
     if (/^(font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures)$/.test(prop)) {
       error(`Property [${prop}] is not supported in React Native environment, please replace [font-variant]!`)
     }
@@ -202,6 +202,11 @@ module.exports = function getSpec ({ warn, error }) {
       prop,
       value
     }
+  }
+
+  // 需要过滤的属性返回value=false
+  const needDelProps = ({ prop }) => {
+    return { prop, value: false }
   }
 
   const spec = {
@@ -260,6 +265,13 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatBoxReviation,
         android: formatBoxReviation
       },
+      // 需要过滤的属性返回value=false
+      {
+        test: /^-(webkit|moz|ms|o)-/,
+        ios: needDelProps,
+        android: needDelProps
+      },
+      // 值类型校验放到最后
       { // color 颜色值校验
         test: /.*color.*/i,
         ios: checkCommonValue(ValueType.color),
