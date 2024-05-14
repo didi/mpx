@@ -35,6 +35,7 @@
 import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent, ViewStyle } from 'react-native';
 import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
 import useInnerTouchable, { getCustomEvent } from './getInnerListeners';
+import { factory } from 'typescript';
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -93,7 +94,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     'scroll-x': scrollX,
     'scroll-y': scrollY,
     'enable-back-to-top': enableBackToTop,
-    'show-scrollbar': showScrollBar,
+    'show-scrollbar': showScrollbar,
     'paging-enabled': pagingEnabled,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
@@ -118,6 +119,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   const hasCallScrollToUpper = useRef(true);
   const hasCallScrollToLower = useRef(false);
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const _props = useRef(null)
+  _props.current = props
   useEffect(() => {
     if (
       snapScrollTop !== props['scroll-top'] ||
@@ -325,8 +328,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     onLayout: onLayout,
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: !!enableBackToTop,
-    showsHorizontalScrollIndicator: !!(scrollX && showScrollBar),
-    showsVerticalScrollIndicator: !!(scrollY && showScrollBar),
+    showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
+    showsVerticalScrollIndicator: !!(scrollY && showScrollbar),
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
     style
@@ -334,7 +337,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   if (enhanced) {
     scrollElementProps = {
       ...scrollElementProps,
-      bounces: bounces,
+      bounces: !!bounces,
       pagingEnabled: !!pagingEnabled,
     };
   }
@@ -353,14 +356,21 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   useImperativeHandle(ref, () => {
-    return {
-      type: 'scroll-view',
-      context: {
-        ...props,
-        scrollTo: scrollToOffset
-      },
-      nodeRef: scrollViewRef.current
-    }
+    // return createNodesRef(
+    //   _props,
+    //   {
+    //     nodeRef: scrollViewRef,
+    //     scrollOffset: {},
+    //     node: {
+    //       scrollEnabled,
+    //       bounces: !!bounces,
+    //       showScrollbar: !!showScrollbar,
+    //       pagingEnabled: !!pagingEnabled,
+    //       fastDeceleration: false,
+    //       decelerationDisabled: false,
+    //       scrollTo: scrollToOffset
+    //     }
+    //   })
   })
   return (
     <ScrollView

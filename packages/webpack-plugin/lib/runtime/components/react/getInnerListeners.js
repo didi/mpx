@@ -188,7 +188,12 @@ const useInnerTouchable = props => {
     props: props
   })
   useEffect(() => {
-    ref.current.props = props
+    ref.current = {
+      startTimer: null,
+      needPress: true,
+      mpxPressInfo: {},
+      props: props
+    }
   })
 
   function handleEmitEvent (events, type, oe) {
@@ -222,7 +227,7 @@ const useInnerTouchable = props => {
     if (catchlongpress || bindlongpress || captureCatchlongpress || captureBindlongpress) {
       ref.current.startTimer = setTimeout(() => {
         if (ref.current.startTimer) {
-         ref.current.needPress = false
+          ref.current.needPress = false
           handleEmitEvent(currentPressEvent, 'longpress', e)
         }
       }, 350)
