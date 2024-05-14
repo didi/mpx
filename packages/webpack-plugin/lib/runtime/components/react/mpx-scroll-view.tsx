@@ -356,21 +356,21 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   useImperativeHandle(ref, () => {
-    return createNodesRef(
-      _props,
-      {
-        nodeRef: scrollViewRef,
-        scrollOffset: {},
-        node: {
-          scrollEnabled,
-          bounces: !!bounces,
-          showScrollbar: !!showScrollbar,
-          pagingEnabled: !!pagingEnabled,
-          fastDeceleration: false,
-          decelerationDisabled: false,
-          scrollTo: scrollToOffset
-        }
-      })
+    // return createNodesRef(
+    //   _props,
+    //   {
+    //     nodeRef: scrollViewRef,
+    //     scrollOffset: {},
+    //     node: {
+    //       scrollEnabled,
+    //       bounces: !!bounces,
+    //       showScrollbar: !!showScrollbar,
+    //       pagingEnabled: !!pagingEnabled,
+    //       fastDeceleration: false,
+    //       decelerationDisabled: false,
+    //       scrollTo: scrollToOffset
+    //     }
+    //   })
   })
   return (
     <ScrollView
