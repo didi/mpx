@@ -216,7 +216,7 @@ module.exports = function (content) {
             }
             resolve(this.context, component, loaderContext, (err, resource) => {
               if (err) return callback(err)
-              const {rawResourcePath} = parseRequest(resource)
+              const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
               if (!isApp) {
                 currentUsingComponentsModuleId[name] = moduleId
@@ -226,14 +226,12 @@ module.exports = function (content) {
           }, (err) => {
             finalCallback(err)
           })
-
         } else {
           finalCallback(null)
         }
       } catch (e) {
         return finalCallback(e)
       }
-
     },
     (componentInfo, callback) => {
       const {

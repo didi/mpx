@@ -1778,7 +1778,6 @@ function processBuiltInComponents (el, meta) {
 }
 
 function processAliAddComponentRootView (el, options) {
-
   if (el.is && el.components) {
     el = postProcessComponentIs(el)
     el.children.forEach(item => {
