@@ -180,13 +180,13 @@ module.exports = function (content) {
         finalCallback(err)
       }
     },
-    (componentCorrelation, callback) => {
+    (componentInfo, callback) => {
       const {
         componentPlaceholder,
         componentGenerics,
         currentUsingComponentsModuleId,
         usingComponents
-      } = componentCorrelation
+      } = componentInfo
 
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs

@@ -1778,6 +1778,15 @@ function processBuiltInComponents (el, meta) {
 }
 
 function processAliAddComponentRootView (el, options) {
+
+  if (el.is && el.components) {
+    el = postProcessComponentIs(el)
+    el.children.forEach(item => {
+      item = processAliAddComponentRootView(item, options)
+    })
+    return el
+  }
+
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -1834,9 +1843,6 @@ function processAliAddComponentRootView (el, options) {
   processAppendRules(el)
   const componentWrapView = createASTElement('view', newElAttrs)
   moveBaseDirective(componentWrapView, el)
-  if (el.is && el.components) {
-    el = postProcessComponentIs(el)
-  }
 
   replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
