@@ -25,6 +25,14 @@ function getClassMap ({ content, filename, mode, srcMode }) {
     return needStringify ? JSON.stringify(value) : value
   }
 
+  function setFontSize (classMapValue) {
+    const lineHeight = classMapValue.lineHeight
+    const fontSize = classMapValue.fontSize
+    if (+lineHeight && !fontSize) {
+      classMapValue.fontSize = lineHeight * 16
+    }
+  }
+
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -60,6 +68,7 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         }
         classMapValue[prop] = value
       })
+      setFontSize(classMapValue)
       // 定义flex布局且未定义方向时设置默认row
       // if (isFlex && !hasFlexDirection) classMapValue['flexDirection'] = formatValue('row')
     })
