@@ -21,15 +21,10 @@ export interface _ViewProps extends ViewProps {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
-function getDefaultStyle(style: Array<ViewStyle> = []) {
-  const mergeStyle: ViewStyle = Object.assign({}, ...style)
-  if (mergeStyle.display === 'flex') {
-    mergeStyle.flexDirection = mergeStyle.flexDirection || 'row'
-    mergeStyle.flexShrink = mergeStyle.flexShrink || 1
-  }
-  return mergeStyle
+const DEFAULT_STYLE = {
+  flexDirection: 'row',
+  flexShrink: 1
 }
-
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
   const { 
@@ -39,7 +34,6 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     ...otherProps } = props
   const [isHover, setIsHover] = React.useState(false)
 
-  const mergeStyle: ViewStyle = style ? getDefaultStyle(style) : {}
   const dataRef = React.useRef<{
     startTimestamp: number,
     startTimer?: ReturnType<typeof setTimeout>
@@ -106,7 +100,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     <View
       ref={ref}
       {...{...otherProps, ...innerTouchable}}
-      style={ [ mergeStyle, isHover && hoverStyle ] }
+      style={ [ DEFAULT_STYLE, style, isHover && hoverStyle ] }
     >
       {children}
     </View>

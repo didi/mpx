@@ -65,7 +65,7 @@ module.exports = function ({ print }) {
       {
         test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
         android: androidPropLog
-      },
+      }
     ],
     event: [
       {
