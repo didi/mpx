@@ -465,7 +465,7 @@ module.exports = function getSpec ({ warn, error }) {
             const tempModifierStr = Object.keys(modifierMap).join('.')
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
-          },
+          }
           // ios (prefix) {
           //   const prefixMap = {
           //     bind: 'on',
