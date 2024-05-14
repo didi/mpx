@@ -6,14 +6,6 @@ const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
 
-function convertKeyReact ({ value }, { el }) {
-  const itemName = el.attrsMap['wx:for-item'] || 'item'
-  return {
-    name: 'key',
-    value: `{{this.__getWxKey(${itemName}, '${value}')}}`
-  }
-}
-
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android'],
@@ -117,9 +109,7 @@ module.exports = function getSpec ({ warn, error }) {
             name: ':key',
             value
           }
-        },
-        ios: convertKeyReact,
-        android: convertKeyReact
+        }
       },
       {
         // 在swan/web模式下删除for-index/for-item，转换为v/s-for表达式
