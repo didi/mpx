@@ -49,8 +49,7 @@ function genNode (node) {
         } else if (node.if && !node.ifProcessed) {
           exp += genIf(node)
         } else {
-          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : s(node.tag)}`
-          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
+          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
           if (node.attrsList.length) {
             exp += ',{'
             const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
