@@ -1,6 +1,6 @@
 const hasOwn = require('./has-own')
 
-module.exports = function shallowStringify (obj) {
+module.exports = function shallowStringify (obj, isTemplateExp) {
   const arr = []
   for (const key in obj) {
     if (hasOwn(obj, key)) {
@@ -8,10 +8,10 @@ module.exports = function shallowStringify (obj) {
       if (Array.isArray(value)) {
         value = `[${value.join(',')}]`
       } else if (typeof value === 'object') {
-        value = shallowStringify(value)
+        value = shallowStringify(value, isTemplateExp)
       }
-      arr.push(`'${key}':${value}`)
+      arr.push(isTemplateExp ? `${key}:${value}` : `'${key}':${value}`)
     }
   }
-  return `{${arr.join(',')}}`
+  return isTemplateExp ? `({${arr.join(',')}})` : `{${arr.join(',')}}`
 }
