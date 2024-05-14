@@ -23,8 +23,9 @@ export interface _ViewProps extends ViewProps {
 
 function getDefaultStyle(style: Array<ViewStyle> = []) {
   const mergeStyle: ViewStyle = Object.assign({}, ...style)
-  if (mergeStyle['display'] === 'flex') {
-    mergeStyle['flexDirection'] = mergeStyle['flexDirection'] || 'row'
+  if (mergeStyle.display === 'flex') {
+    mergeStyle.flexDirection = mergeStyle.flexDirection || 'row'
+    mergeStyle.flexShrink = mergeStyle.flexShrink || 1
   }
   return mergeStyle
 }
