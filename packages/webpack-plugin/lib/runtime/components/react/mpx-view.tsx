@@ -4,7 +4,7 @@
  * ✔ hover-start-time	
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, ViewProps, ViewStyle, NativeSyntheticEvent} from 'react-native'
+import { View, ViewProps, ViewStyle, NativeSyntheticEvent} from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
 
@@ -13,12 +13,20 @@ import useInnerTouchable from './getInnerListeners';
 
 
 export interface _ViewProps extends ViewProps {
-  style?: StyleProp<ViewStyle>;
+  style?: Array<ViewStyle>;
   children?: React.ReactNode;
-  hoverStyle: StyleProp<ViewStyle>;
-  bindTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  hoverStyle: Array<ViewStyle>;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+}
+
+function getDefaultStyle(style: Array<ViewStyle> = []) {
+  const mergeStyle: ViewStyle = Object.assign({}, ...style)
+  if (mergeStyle['display'] === 'flex') {
+    mergeStyle['flexDirection'] = mergeStyle['flexDirection'] || 'row'
+  }
+  return mergeStyle
 }
 
 
@@ -30,6 +38,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     ...otherProps } = props
   const [isHover, setIsHover] = React.useState(false)
 
+  const mergeStyle: ViewStyle = style ? getDefaultStyle(style) : {}
   const dataRef = React.useRef<{
     startTimestamp: number,
     startTimer?: ReturnType<typeof setTimeout>
@@ -69,21 +78,21 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }
 
   function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
-    const { bindTouchStart } = props;
-    bindTouchStart && bindTouchStart(e)
+    const { bindtouchstart } = props;
+    bindtouchstart && bindtouchstart(e)
     setStartTimer()
   }
 
   function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>){
-    const { bindTouchEnd } = props;
-    bindTouchEnd && bindTouchEnd(e)
+    const { bindtouchend } = props;
+    bindtouchend && bindtouchend(e)
     setStayTimer()
   }
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    bindTouchStart: onTouchStart,
-    bindTouchEnd: onTouchEnd
+    bindtouchstart: onTouchStart,
+    bindtouchend: onTouchEnd
   });
 
   useImperativeHandle(ref, () => {
@@ -96,7 +105,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     <View
       ref={ref}
       {...{...otherProps, ...innerTouchable}}
-      style={ [{ backgroundColor: 'transparent' }, style, isHover && hoverStyle] }
+      style={ [ mergeStyle, isHover && hoverStyle ] }
     >
       {children}
     </View>
