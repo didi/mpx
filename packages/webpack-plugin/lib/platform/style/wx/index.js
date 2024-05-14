@@ -37,7 +37,7 @@ module.exports = function getSpec ({ warn, error }) {
     'align-content': ['flex-start', 'flex-end', 'center', 'stretch', 'space-between', 'space-around'],
     'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
-    'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly' , 'none']
+    'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly', 'none']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
@@ -97,56 +97,49 @@ module.exports = function getSpec ({ warn, error }) {
       textDecorationStyle: ValueType.default,
       textDecorationColor: ValueType.color
     },
-    'flex': { // /* Three values: flex-grow | flex-shrink | flex-basis */
+    flex: { // /* Three values: flex-grow | flex-shrink | flex-basis */
       flexGrow: ValueType.number,
       flexShrink: ValueType.number,
-      flexBasis: ValueType.number,
-    },
-    'margin': {
-      marginOne: ValueType.number,
-      marginTwo: ValueType.number,
-      marginThree: ValueType.number,
-      marginFour: ValueType.number,
+      flexBasis: ValueType.number
     }
   }
-  
 
-  const formatBoxReviation = ({ prop, value}) => {
+  const formatBoxReviation = ({ prop, value }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const suffix = ['Top', 'Right', 'Bottom', 'Left']
-    
-    // validate 
-    for (let i=0; i< values.length; i++) {
+
+    // validate
+    for (let i = 0; i < values.length; i++) {
       verifyValues({ prop, value: values[i], valueType: ValueType.number })
     }
 
     // format
-    switch(values.length) {
+    switch (values.length) {
       case 1:
-        return {prop, value}
-      case 2:        
+        return { prop, value }
+      case 2:
         return [{
-          prop: `${prop}Vertical`, 
+          prop: `${prop}Vertical`,
           value: values[0]
         }, {
-          prop: `${prop}Horizontal`, 
+          prop: `${prop}Horizontal`,
           value: values[1]
         }]
       case 3:
         return [{
-          prop: `${prop}Top`, 
+          prop: `${prop}Top`,
           value: values[0]
         }, {
-          prop: `${prop}Horizontal`, 
+          prop: `${prop}Horizontal`,
           value: values[1]
         }, {
-          prop: `${prop}Bottom`, 
+          prop: `${prop}Bottom`,
           value: values[2]
         }]
-      case 4: 
+      case 4:
         return suffix.map((key, index) => {
           return {
-            prop: `${prop}${key}`, 
+            prop: `${prop}${key}`,
             value: values[index]
           }
         })
@@ -263,7 +256,7 @@ module.exports = function getSpec ({ warn, error }) {
         android: getFontVariant
       },
       {
-        test: /.*(margin|padding).*/, // 
+        test: /.*(margin|padding).*/,
         ios: formatBoxReviation,
         android: formatBoxReviation
       },
