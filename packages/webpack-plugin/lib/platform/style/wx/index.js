@@ -101,6 +101,10 @@ module.exports = function getSpec ({ warn, error }) {
       flexGrow: ValueType.number,
       flexShrink: ValueType.number,
       flexBasis: ValueType.number
+    },
+    'flex-flow': { // 仅支持 flex-flow: <'flex-direction'> or flex-flow: <'flex-direction'> and <'flex-wrap'>
+      flexDirection: ValueType.default,
+      flexWrap: ValueType.default
     }
   }
 
@@ -180,7 +184,6 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
 
-  const commonAbbreviationExp = /^(text-shadow|border)$/
   const getAbbreviation = ({ prop, value }) => {
     const keyMap = AbbreviationMap[prop]
     return formatAbbreviation({ prop, value, keyMap })
@@ -227,11 +230,6 @@ module.exports = function getSpec ({ warn, error }) {
         ios: unsupportedValueError,
         android: unsupportedValueError
       },
-      { // 通用的简写格式匹配
-        test: commonAbbreviationExp,
-        ios: getAbbreviation,
-        android: getAbbreviation
-      },
       {
         test: 'box-shadow',
         ios: getAbbreviation,
@@ -265,11 +263,17 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatBoxReviation,
         android: formatBoxReviation
       },
-      // 需要过滤的属性返回value=false
+      // 需要过滤的属性返回value=false Todo value 校验
       {
         test: /^-(webkit|moz|ms|o)-/,
         ios: needDelProps,
         android: needDelProps
+      },
+      // 通用的简写格式匹配
+      {
+        test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
+        ios: getAbbreviation,
+        android: getAbbreviation
       },
       // 值类型校验放到最后
       { // color 颜色值校验
