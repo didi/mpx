@@ -1,4 +1,4 @@
-import {envError, isBrowser, throwSSRWarning, webHandleSuccess} from '../../../common/js'
+import { envError, isBrowser, throwSSRWarning, webHandleSuccess } from '../../../common/js'
 
 function getSystemInfoSync () {
   if (!isBrowser) {

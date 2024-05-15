@@ -43,7 +43,8 @@ function getStorage (options) {
       webHandleFail(result, fail, complete)
       return
     }
-    let item, data = null
+    let item
+    let data = null
     try {
       item = JSON.parse(res)
     } catch (e) {

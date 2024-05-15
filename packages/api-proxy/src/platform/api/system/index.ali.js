@@ -1,5 +1,5 @@
-import {changeOpts, envError, handleSuccess} from '../../../common/js'
-
+import { changeOpts, envError, handleSuccess, getEnvObj } from '../../../common/js'
+const ENV_OBJ = getEnvObj()
 function getSystemInfo (options = {}) {
   const opts = changeOpts(options)
 

@@ -3,7 +3,7 @@ import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { webHandleSuccess, webHandleFail } from '../../../common/js/web'
 
-const getWindowInfo = function() {
+const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
   const dimensionsScreen = Dimensions.get('screen')
   return {
@@ -66,7 +66,7 @@ const getSystemInfo = function (options) {
   }
 }
 
-const getDeviceInfo = function() {
+const getDeviceInfo = function () {
   const androidInfo = {}
   if (Platform.OS === 'android') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
