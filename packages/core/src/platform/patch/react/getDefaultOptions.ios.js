@@ -31,7 +31,7 @@ function createEffect (proxy, components) {
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ props, refs, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ props, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData () {
     },
@@ -48,7 +48,6 @@ function createInstance ({ props, refs, type, rawOptions, currentInject, validPr
     },
     __render () {
     },
-    __refs: refs,
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
     // render helper
@@ -121,12 +120,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   return memo(forwardRef((props, ref) => {
-    const refs = useRef({})
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
-      instanceRef.current = createInstance({ props, refs, type, rawOptions, currentInject, validProps, components })
+      instanceRef.current = createInstance({ props, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
+    instance.__resetRefs()
     useImperativeHandle(ref, () => {
       return instance
     })

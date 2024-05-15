@@ -3,6 +3,7 @@ import { BEFORECREATE } from '../../core/innerLifecycle'
 export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
+      this._$refs = {}
       this.$refs = {}
       this.__getRefs()
     },
@@ -15,16 +16,19 @@ export default function getRefsMixin () {
             enumerable: true,
             configurable: true,
             get () {
-              return all ? target.__refs.current[key] : target.__refs.current[key][0]
+              return all ? target._$refs[key] : target._$refs[key][0]
             }
           })
         })
       },
       __getRefVal (key) {
-        if (!this.__refs.current[key]) {
-          this.__refs.current[key] = []
+        if (!this._$refs[key]) {
+          this._$refs[key] = []
         }
-        return (instance) => this.__refs.current[key].push(instance)
+        return (instance) => instance && this._$refs[key].push(instance)
+      },
+      __resetRefs () {
+        this._$refs = {}
       }
     }
   }

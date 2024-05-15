@@ -1,4 +1,5 @@
 import { noop, isBoolean, hasOwn, dash2hump, warn } from '@mpxjs/utils'
+import { StyleSheet } from 'react-native'
 
 const _createSelectorQuery = (runCb) => {
   return {
@@ -90,26 +91,18 @@ const getPlainProps = (config, props) => {
   })
 }
 
-const getComputedStyle = (config, props, defaultVal = '') => {
-  // 从 props.style 上获取
+const getComputedStyle = (config = [], props, defaultStyle = {}) => {
   return wrapFn((resolve) => {
-    config = new Set(config || [])
-    const styles = props.current.style || []
+    config = new Set(config)
     const res = {}
+    const styles = props.current.style || []
+    const computedStyle = StyleSheet.flatten([defaultStyle, ...styles])
     config.forEach((key) => {
-      // 后序遍历，取到就直接返回
-      let length = styles.length - 1
-      res[key] = defaultVal
-      while (length >= 0) {
-        const styleObj = styles[length--]
-        // 取 style 的 key 是根据传入的 key 来设置，传什么设置什么，取值需要做兼容
-        const humpKey = dash2hump(key)
-        if (hasOwn(styleObj, key) || hasOwn(styleObj, humpKey)) {
-          res[key] = styleObj[key] || styleObj[humpKey]
-          break
-        }
-      }
+      const humpKey = dash2hump(key)
+      // 取 style 的 key 是根据传入的 key 来设置，传什么设置什么 key，只不过取值需要做兼容
+      res[key] = computedStyle[key] || computedStyle[humpKey] || ''
     })
+
     resolve(res)
   })
 }
@@ -161,16 +154,16 @@ export default function createNodesRef (props, instance) {
         if (key === 'properties') {
           plainProps.push(...value)
         } else if (key === 'computedStyle') {
-          const computedStyle = config.computedStyle
-          for (let i = computedStyle.length - 1; i >= 0; i--) {
-            const style = computedStyle[i]
+          const _computedStyle = config.computedStyle
+          for (let i = _computedStyle.length - 1; i >= 0; i--) {
+            const style = _computedStyle[i]
             if (RECT.includes(style) || SIZE.includes(style)) {
               measureProps.push(style)
-              computedStyle.splice(i, 1)
+              _computedStyle.splice(i, 1)
             }
           }
-          if (computedStyle.length) {
-            computedStyle.concat(computedStyle)
+          if (_computedStyle.length) {
+            computedStyle.push(..._computedStyle)
           }
         }
       } else if (isBoolean(value) && value) {
@@ -210,7 +203,7 @@ export default function createNodesRef (props, instance) {
       }
     }
     if (computedStyle.length) {
-      fns.push(getComputedStyle(computedStyle, props))
+      fns.push(getComputedStyle(computedStyle, props, instance.defaultStyle))
     }
 
     const runCb = () => {
