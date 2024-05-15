@@ -8,6 +8,7 @@ class RecordGlobalComponentsDependency extends NullDependency {
     super()
     this.usingComponents = usingComponents
     this.context = context
+    // 缓存原始的usingComponents，为什么要加？
     this.rawUsingComponents = Object.assign({}, usingComponents)
   }
 

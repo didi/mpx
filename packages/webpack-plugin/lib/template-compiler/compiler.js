@@ -861,13 +861,8 @@ function postMoveBaseDirective (target, source, isDelete = true) {
   target.if = source.if
   target.elseif = source.elseif
   target.else = source.else
-  if (isReact(mode)) {
-    postProcessForReact(target)
-    postProcessIfReact(target)
-  } else {
-    postProcessFor(target)
-    postProcessIf(target)
-  }
+  postProcessFor(target)
+  postProcessIf(target)
   if (isDelete) {
     delete source.for
     delete source.if
@@ -1958,6 +1953,9 @@ function processBuiltInComponents (el, meta) {
 }
 
 function postProcessAliComponentRootView (el, options) {
+  if (el.is && el.components) {
+    return
+  }
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -2305,10 +2303,16 @@ function closeElement (el, meta, options) {
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
   if (!pass) {
+    postProcessComponentIs(el, (child) => {
+      if (!hasVirtualHost && mode === 'ali') {
+        postProcessAliComponentRootView(child, options)
+      } else {
+        postProcessIf(child)
+      }
+    })
     if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
       postProcessAliComponentRootView(el, options)
     }
-    postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)
@@ -2342,7 +2346,7 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el) {
+function postProcessComponentIs (el, callback) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2364,7 +2368,7 @@ function postProcessComponentIs (el) {
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
-      postProcessIf(newChild)
+      callback(newChild)
     })
 
     if (!el.parent) {
