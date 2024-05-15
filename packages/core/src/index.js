@@ -1,4 +1,4 @@
-import Vue from './vue'
+import Vue from './external/vue'
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 

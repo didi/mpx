@@ -44,7 +44,7 @@ module.exports = function (template, {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans react mode temporarily, we will support it in the future!'))
+      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans react native mode temporarily, we will support it in the future!'))
     }
 
     if (template.content) {
@@ -110,12 +110,13 @@ module.exports = function (template, {
         try {
           const ignoreMap = Object.assign({
             createElement: true,
-            components: true
+            components: true,
+            getNativeComponent: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
           })
-          output += `global.currentInject.render = function (createElement, components) {
+          output += `global.currentInject.render = function (createElement, components, getNativeComponent) {
   return ${bindResult.code}
 };\n`
         } catch (e) {
