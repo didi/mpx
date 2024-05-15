@@ -68,6 +68,8 @@ function getEnvObj () {
     case 'dd':
       return dd
     case 'web':
+    case 'ios':
+    case 'android':
       return {}
   }
 }

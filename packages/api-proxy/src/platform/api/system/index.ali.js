@@ -1,4 +1,4 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import {changeOpts, envError, handleSuccess} from '../../../common/js'
 
 function getSystemInfo (options = {}) {
   const opts = changeOpts(options)
@@ -32,7 +32,13 @@ function getSystemInfoSync () {
   return res
 }
 
+const getDeviceInfo = ENV_OBJ.getDeviceInfo || envError('getDeviceInfo')
+
+const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
+
 export {
   getSystemInfo,
-  getSystemInfoSync
+  getSystemInfoSync,
+  getDeviceInfo,
+  getWindowInfo
 }

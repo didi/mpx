@@ -91,7 +91,7 @@ class SocketTask {
       if (this._closeData) {
         this._closeCb(event)
       } else {
-        this._closeCb({ code: 2000, reason: `${event}` })
+        this._closeCb({ code: event.code, reason: event.reason })
       }
     }
   }

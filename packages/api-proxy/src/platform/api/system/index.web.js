@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning, webHandleSuccess } from '../../../common/js'
+import {envError, isBrowser, throwSSRWarning, webHandleSuccess} from '../../../common/js'
 
 function getSystemInfoSync () {
   if (!isBrowser) {
@@ -79,7 +79,13 @@ function getSystemInfo (options = {}) {
   webHandleSuccess(res, options.success, options.complete)
 }
 
+const getDeviceInfo = envError('getDeviceInfo')
+
+const getWindowInfo = envError('getWindowInfo')
+
 export {
   getSystemInfo,
-  getSystemInfoSync
+  getSystemInfoSync,
+  getDeviceInfo,
+  getWindowInfo
 }
