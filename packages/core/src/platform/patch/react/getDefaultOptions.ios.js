@@ -117,7 +117,7 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
           },
           detail: eventDetail
         }
-        handler.call(this, eventObj, '__customEvent')
+        handler.call(this, eventObj)
       }
     },
     selectComponent () {
