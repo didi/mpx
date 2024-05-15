@@ -6,7 +6,7 @@ import { hasOwn, isFunction, noop, isObject, error, getByPath } from '@mpxjs/uti
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
-import { queueJob, nextTick } from '../../../observer/scheduler'
+import { queueJob } from '../../../observer/scheduler'
 
 function getNativeComponent (tagName) {
   return getByPath(reactNative, tagName)
