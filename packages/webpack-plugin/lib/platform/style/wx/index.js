@@ -207,10 +207,10 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
-  // 需要过滤的属性返回value=false
-  const needDelProps = ({ prop }) => {
-    return { prop, value: false }
-  }
+  // // 需要过滤的属性返回value=false
+  // const needDelProps = ({ prop }) => {
+  //   return { prop, value: false }
+  // }
 
   const spec = {
     supportedModes: ['ios', 'android'],
@@ -263,12 +263,12 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatBoxReviation,
         android: formatBoxReviation
       },
-      // 需要过滤的属性返回value=false Todo value 校验
-      {
-        test: /^-(webkit|moz|ms|o)-/,
-        ios: needDelProps,
-        android: needDelProps
-      },
+      // // 需要过滤的属性返回value=false
+      // {
+      //   test: /^-(webkit|moz|ms|o)-/,
+      //   ios: needDelProps,
+      //   android: needDelProps
+      // },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
