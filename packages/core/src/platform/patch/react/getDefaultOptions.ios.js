@@ -51,10 +51,10 @@ function createInstance ({ props, ref, type, rawOptions, currentInject, validPro
   const instance = Object.create({
     setData (newData, callback) {
       Object.keys(newData).forEach((key) => {
+        // this 挂载 data 并响应性处理
         set(this, key, newData[key])
       })
-      this.__render()
-      nextTick(callback)
+      this.__mpxProxy.forceUpdate(callback)
     },
     __getProps () {
       const propsData = {}
