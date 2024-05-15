@@ -8,8 +8,6 @@ class RecordGlobalComponentsDependency extends NullDependency {
     super()
     this.usingComponents = usingComponents
     this.context = context
-    // 缓存原始的usingComponents，为什么要加？
-    this.rawUsingComponents = Object.assign({}, usingComponents)
   }
 
   get type () {
@@ -18,16 +16,15 @@ class RecordGlobalComponentsDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
-    const { usingComponents, rawUsingComponents, context } = this
+    const { usingComponents, context } = this
     const resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     Object.keys(usingComponents).forEach((key) => {
       const request = usingComponents[key]
-      const rawRequest = rawUsingComponents[key]
       if (!isUrlRequest) {
-        const moduleId = mpx.getModuleId(rawRequest, false)
+        const moduleId = mpx.getModuleId(request, false)
         mpx.globalComponentsModuleId[key] = moduleId
       } else {
-        resolver.resolve({}, this.context, rawRequest, {}, (err, resource) => {
+        resolver.resolve({}, this.context, request, {}, (err, resource) => {
           if (err) return
           const moduleId = mpx.getModuleId(resource, false)
           mpx.globalComponentsModuleId[key] = moduleId
