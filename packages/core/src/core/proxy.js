@@ -602,6 +602,20 @@ export default class MpxProxy {
       this.forceUpdateAll = true
     }
 
+    if (isReact) {
+      // rn中不需要setdata
+      this.forceUpdateData = {}
+      this.forceUpdateAll = false
+      if (this.update) {
+        options.sync ? this.update() : queueJob(this.update)
+      }
+      if (callback) {
+        callback = callback.bind(this.target)
+        options.sync ? callback() : nextTick(callback)
+      }
+      return
+    }
+
     if (this.effect) {
       options.sync ? this.effect.run() : this.effect.update()
     } else {
