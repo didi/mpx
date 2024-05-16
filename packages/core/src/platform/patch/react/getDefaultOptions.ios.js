@@ -31,12 +31,13 @@ function createEffect (proxy, components) {
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ props, ref, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ propsRef, ref, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData () {
     },
     __getProps () {
       const propsData = {}
+      const props = propsRef.current
       if (props) {
         Object.keys(props).forEach((key) => {
           if (hasOwn(validProps, key) && !isFunction(props[key])) {
@@ -122,18 +123,25 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   return memo((props, ref) => {
     const instanceRef = useRef(null)
+    const propsRef = useRef(props)
+    let isFirst = false
     if (!instanceRef.current) {
-      instanceRef.current = createInstance({ props, ref, type, rawOptions, currentInject, validProps, components })
+      isFirst = true
+      instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
     const proxy = instance.__mpxProxy
-    // 处理props更新
-    Object.keys(props).forEach(key => {
-      if (hasOwn(validProps, key) && !isFunction(props[key])) {
-        instance[key] = props[key]
-      }
-    })
-    proxy.propsUpdated()
+
+    if (!isFirst) {
+      // 处理props更新
+      propsRef.current = props
+      Object.keys(props).forEach(key => {
+        if (hasOwn(validProps, key) && !isFunction(props[key])) {
+          instance[key] = props[key]
+        }
+      })
+      proxy.propsUpdated()
+    }
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
