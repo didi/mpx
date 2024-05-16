@@ -69,7 +69,7 @@ const getMeasureProps = (measureProps = []) => {
         }, {})
         resolve(result)
       })
-    }, 30)
+    }, 30) // 延迟，等待组件在rn视图上真正渲染出来
   })
 }
 
