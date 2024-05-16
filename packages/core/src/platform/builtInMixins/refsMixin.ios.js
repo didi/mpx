@@ -224,7 +224,8 @@ function _createNodesRef (nodeRefs = []) {
 
     const runCb = () => {
       return flushRefFns(nodeRefs, fns).then((result) => {
-        cb(result)
+        // wx的数据格式：对于具体方法接受到的回调传参，如果获取的 nodeRef 只有一个，那么只需要返回一条数据而不是数组，但是 exec 里面统一都是数组
+        cb(result && result.length === 1 ? result[0] : result)
         return result
       })
     }

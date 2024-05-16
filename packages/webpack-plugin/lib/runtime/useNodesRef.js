@@ -1,6 +1,6 @@
 import { useRef, useEffect, useImperativeHandle } from 'react'
 
-export default function useNodesRef (ref, props, instance = {}) {
+export default function useNodesRef (props, ref, instance = {}) {
   const nodeRef = useRef(null)
   const _props = useRef(props)
 
