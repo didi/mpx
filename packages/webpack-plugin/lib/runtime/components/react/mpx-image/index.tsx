@@ -108,7 +108,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     src = '',
     mode = 'scaleToFill',
     svg = false,
-    style,
+    style = {},
     bindload,
     binderror,
     ...restProps
