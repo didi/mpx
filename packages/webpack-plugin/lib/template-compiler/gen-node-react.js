@@ -1,4 +1,4 @@
-const { dash2hump } = require('../utils/hump-dash')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 function genIf (node) {
   node.ifProcessed = true
@@ -26,7 +26,8 @@ const s = JSON.stringify
 
 function mapAttrName (name) {
   if (name === 'class') return 'className'
-  return dash2hump(name)
+  if (!isValidIdentifierStr(name)) return s(name)
+  return name
 }
 
 function genNode (node) {
@@ -48,7 +49,7 @@ function genNode (node) {
         } else if (node.if && !node.ifProcessed) {
           exp += genIf(node)
         } else {
-          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
+          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
           if (node.attrsList.length) {
             exp += ',{'
             const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {

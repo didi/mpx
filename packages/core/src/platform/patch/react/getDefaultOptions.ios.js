@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
 import * as reactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
-import { hasOwn, isFunction, noop, isObject, getByPath } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -31,12 +31,14 @@ function createEffect (proxy, components) {
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ props, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ propsRef, ref, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
-    setData () {
+    setData (data, callback) {
+      return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
     __getProps () {
       const propsData = {}
+      const props = propsRef.current
       if (props) {
         Object.keys(props).forEach((key) => {
           if (hasOwn(validProps, key) && !isFunction(props[key])) {
@@ -45,8 +47,6 @@ function createInstance ({ props, type, rawOptions, currentInject, validProps, c
         })
       }
       return propsData
-    },
-    __render () {
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
@@ -71,15 +71,42 @@ function createInstance ({ props, type, rawOptions, currentInject, validProps, c
       }
       return result
     },
-    triggerEvent () {
+    triggerEvent (eventName, eventDetail) {
+      const props = propsRef.current
+      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+      const handler = props && (props['bind' + handlerName] || props['catch' + handlerName] || props['capture-bind' + handlerName] || props['capture-catch' + handlerName])
+      if (handler && typeof handler === 'function') {
+        const timeStamp = +new Date()
+        const dataset = collectDataset(props)
+        const id = props.id || ''
+        const eventObj = {
+          type: eventName,
+          timeStamp,
+          target: {
+            id,
+            dataset,
+            targetDataset: dataset
+          },
+          currentTarget: {
+            id,
+            dataset
+          },
+          detail: eventDetail
+        }
+        handler.call(this, eventObj)
+      }
     },
     selectComponent () {
+      error('selectComponent is not supported in react native, please use ref instead')
     },
     selectAllComponents () {
+      error('selectAllComponents is not supported in react native, please use ref instead')
     },
     createSelectorQuery () {
+      error('createSelectorQuery is not supported in react native, please use ref instead')
     },
     createIntersectionObserver () {
+      error('createIntersectionObserver is not supported in react native, please use ref instead')
     },
     ...rawOptions.methods
   })
@@ -121,8 +148,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   return memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
+    const propsRef = useRef(props)
+    let isFirst = false
     if (!instanceRef.current) {
-      instanceRef.current = createInstance({ props, type, rawOptions, currentInject, validProps, components })
+      isFirst = true
+      instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
     instance.__resetRefs()
@@ -130,13 +160,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return instance
     })
     const proxy = instance.__mpxProxy
-    // 处理props更新
-    Object.keys(props).forEach(key => {
-      if (hasOwn(validProps, key) && !isFunction(props[key])) {
-        instance[key] = props[key]
-      }
-    })
-    proxy.propsUpdated()
+
+    if (!isFirst) {
+      // 处理props更新
+      propsRef.current = props
+      Object.keys(props).forEach(key => {
+        if (hasOwn(validProps, key) && !isFunction(props[key])) {
+          instance[key] = props[key]
+        }
+      })
+      proxy.propsUpdated()
+    }
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {

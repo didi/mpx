@@ -1,20 +1,5 @@
-import { setByPath, error, hasOwn, dash2hump } from '@mpxjs/utils'
+import { setByPath, error, dash2hump, collectDataset } from '@mpxjs/utils'
 import Mpx from '../../index'
-
-const datasetReg = /^data-(.+)$/
-
-function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
-}
 
 export default function proxyEventMixin () {
   const methods = {
