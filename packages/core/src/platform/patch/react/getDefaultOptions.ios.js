@@ -34,7 +34,7 @@ function createEffect (proxy, components) {
 function createInstance ({ propsRef, ref, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData (data, callback) {
-      this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+      return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
     __getProps () {
       const propsData = {}
