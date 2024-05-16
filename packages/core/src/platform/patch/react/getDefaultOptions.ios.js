@@ -24,10 +24,6 @@ function getListeners (props) {
   return listenerMap
 }
 
-function getTemplateAttrs (listener = {}, attrs = {}) {
-  return Object.assign(listener, attrs)
-}
-
 function createEffect (proxy, components, listeners) {
   const update = proxy.update = () => {
     // pre render for props update
@@ -44,7 +40,7 @@ function createEffect (proxy, components, listeners) {
   }
   update.id = proxy.uid
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent, listeners, getTemplateAttrs)
+    return proxy.target.__injectedRender(createElement, components, getNativeComponent, listeners)
   }, () => queueJob(update), proxy.scope)
 }
 
