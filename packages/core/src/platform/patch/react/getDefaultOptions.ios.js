@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
+import { useEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
 import * as reactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
@@ -49,8 +49,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
       return propsData
     },
     __injectedRender: currentInject.render || noop,
-    __getRefsData () {
-    },
+    __getRefsData: currentInject.getRefsData || noop,
     // render helper
     _i (val, fn) {
       let i, l, keys, key
@@ -147,7 +146,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  return memo((props, ref) => {
+  return memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(props)
     let isFirst = false
@@ -156,6 +155,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
+    instance.__resetRefs()
+    useImperativeHandle(ref, () => {
+      return instance
+    })
     const proxy = instance.__mpxProxy
 
     if (!isFirst) {
@@ -186,5 +189,5 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
     return proxy.effect.run()
-  })
+  }))
 }
