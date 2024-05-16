@@ -1,5 +1,5 @@
 import { BEFORECREATE } from '../../core/innerLifecycle'
-import { noop, isBoolean, hasOwn, dash2hump, warn } from '@mpxjs/utils'
+import { noop, isBoolean, dash2hump, warn, collectDataset, hump2dash } from '@mpxjs/utils'
 import { StyleSheet } from 'react-native'
 
 const _createSelectorQuery = (runCb) => {
@@ -69,26 +69,16 @@ const getMeasureProps = (measureProps = []) => {
         }, {})
         resolve(result)
       })
-    }, 10)
+    }, 30)
   })
 }
-
-// todo: 方便调试，后续改为连字符
-const datasetReg = /^data(.+)$/
 
 const getDataset = (props) => {
   return wrapFn((nodeRef, resolve) => {
     props = nodeRef.props.current
-    const dataset = {}
-    for (const key in props) {
-      if (hasOwn(props, key)) {
-        const matched = datasetReg.exec(key)
-        if (matched) {
-          dataset[matched[1]] = props[key]
-        }
-      }
-    }
-    resolve({ dataset })
+    resolve({
+      dataset: collectDataset(props)
+    })
   })
 }
 
@@ -97,8 +87,8 @@ const getPlainProps = (config) => {
     const res = {}
     const props = nodeRef.props.current
     config.forEach((key) => {
-      // todo 这个代码后续需要改动，现在属性默认不转驼峰
-      res[dash2hump(key)] = props[key] || props[dash2hump(key)]
+      // props 属性默认不转驼峰，用户写什么格式不会变化，取值做兼容
+      res[key] = props[key] || props[hump2dash(key)] || ''
     })
     resolve(res)
   })
@@ -166,7 +156,8 @@ function _createNodesRef (nodeRefs = []) {
       const value = config[key]
       if (Array.isArray(value) && value.length) {
         if (key === 'properties') {
-          plainProps.push(...value)
+          // wx 最终输出的 properties 字段都会转化为驼峰，所以在这里提前处理为最终的字段格式
+          plainProps.push(...value.map(v => dash2hump(v)))
         } else if (key === 'computedStyle') {
           const _computedStyle = config.computedStyle
           for (let i = _computedStyle.length - 1; i >= 0; i--) {
