@@ -1,7 +1,6 @@
 import { useEffect, useSyncExternalStore, useRef, createElement, memo } from 'react'
 import * as reactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
-import { set } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
