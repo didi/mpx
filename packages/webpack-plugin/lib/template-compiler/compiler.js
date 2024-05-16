@@ -2432,6 +2432,7 @@ function processElement (el, root, options, meta) {
     processFor(el)
     processStyleReact(el)
     processEventReact(el, options, meta)
+    processComponentIs(el, options)
     processAttrs(el, options)
     return
   }
