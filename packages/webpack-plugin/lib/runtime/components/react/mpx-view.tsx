@@ -6,11 +6,11 @@
  */
 import { View, ViewProps, ViewStyle, NativeSyntheticEvent} from 'react-native'
 import * as React from 'react'
-import { useImperativeHandle } from 'react'
 
 // @ts-ignore
-import useInnerTouchable from './getInnerListeners';
-
+import useInnerTouchable from './getInnerListeners'
+// @ts-ignore
+import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ViewStyle>;
@@ -92,15 +92,13 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     })
   })
 
-  useImperativeHandle(ref, () => {
-    return {
-      // todo
-    }
-  }, [])
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle: DEFAULT_STYLE
+  })
 
   return (
     <View
-      ref={ref}
+      ref={nodeRef}
       {...{...otherProps, ...innerTouchable}}
       style={ [ DEFAULT_STYLE, style, isHover && hoverStyle ] }
     >
