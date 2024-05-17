@@ -10,7 +10,7 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import React, { lazy, useCallback, useEffect, useMemo, useState, Suspense, forwardRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, forwardRef } from 'react'
 import {
   Image as RNImage,
   View,
@@ -95,7 +95,7 @@ const isNumber = (value: DimensionValue) => typeof value === 'number'
 
 const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize - imageSize) / 2
 
-const Svg = lazy(() => import('./svg'))
+// const Svg = lazy(() => import('./svg'))
 
 const Fallback = (
   <View style={styls.suspense}>
@@ -108,7 +108,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     src = '',
     mode = 'scaleToFill',
     svg = false,
-    style,
+    style = {},
     bindload,
     binderror,
     ...restProps
@@ -245,25 +245,25 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
 
   useEffect(() => loadImage(), [loadImage])
 
-  if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
-    return (
-      <Suspense fallback={Fallback} {...innerTouchable}>
-        <View {...innerTouchable}>
-          <Svg src={src} style={style} width={width as SvgNumberProp} height={height as SvgNumberProp} />
-        </View>
-      </Suspense>
-    )
-  }
+  // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
+  //   return (
+  //     <Suspense fallback={Fallback} {...innerTouchable}>
+  //       <View {...innerTouchable}>
+  //         <Svg src={src} style={style} width={width as SvgNumberProp} height={height as SvgNumberProp} />
+  //       </View>
+  //     </Suspense>
+  //   )
+  // }
 
-  if (svg) {
-    return (
-      <Suspense fallback={Fallback}>
-        <View {...innerTouchable}>
-          <Svg local src={src} style={style} width={width as SvgNumberProp} height={height as SvgNumberProp} />
-        </View>
-      </Suspense>
-    )
-  }
+  // if (svg) {
+  //   return (
+  //     <Suspense fallback={Fallback}>
+  //       <View {...innerTouchable}>
+  //         <Svg local src={src} style={style} width={width as SvgNumberProp} height={height as SvgNumberProp} />
+  //       </View>
+  //     </Suspense>
+  //   )
+  // }
 
   return (
     <View

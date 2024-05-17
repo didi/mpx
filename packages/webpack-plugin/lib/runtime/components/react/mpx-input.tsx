@@ -117,7 +117,7 @@ const keyboardTypeMap: Record<Type, string> = {
 
 const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX.Element => {
   const {
-    style,
+    style = {},
     type = 'text',
     value,
     password,
