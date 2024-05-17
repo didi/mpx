@@ -86,9 +86,11 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    bindtouchstart: onTouchStart,
-    bindtouchend: onTouchEnd
-  });
+    ...(hoverStyle && {
+      bindtouchstart: onTouchStart,
+      bindtouchend: onTouchEnd
+    })
+  })
 
   useImperativeHandle(ref, () => {
     return {
