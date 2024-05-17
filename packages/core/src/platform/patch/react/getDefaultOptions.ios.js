@@ -24,7 +24,7 @@ function getListeners (props) {
   return listenerMap
 }
 
-function createEffect (proxy, components, listeners) {
+function createEffect (proxy, components, props) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -40,7 +40,7 @@ function createEffect (proxy, components, listeners) {
   }
   update.id = proxy.uid
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent, listeners)
+    return proxy.target.__injectedRender(createElement, components, getNativeComponent, getListeners(props))
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -132,7 +132,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components, getListeners(props))
+        createEffect(proxy, components, propsRef.current)
         // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
@@ -149,7 +149,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components, getListeners(props))
+    createEffect(proxy, components, propsRef.current)
   }
 
   return instance
