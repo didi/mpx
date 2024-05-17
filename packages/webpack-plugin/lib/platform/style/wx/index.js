@@ -105,6 +105,12 @@ module.exports = function getSpec ({ warn, error }) {
     'flex-flow': { // 仅支持 flex-flow: <'flex-direction'> or flex-flow: <'flex-direction'> and <'flex-wrap'>
       flexDirection: ValueType.default,
       flexWrap: ValueType.default
+    },
+    'border-radius': {
+      borderTopLeftRadius: ValueType.default,
+      borderTopRightRadius: ValueType.default,
+      borderBottomRightRadius: ValueType.default,
+      borderBottomLeftRadius: ValueType.default
     }
   }
 
