@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 // import { PanResponder } from 'react-native'
 
-const getDefaultEvent = (type = '', event = {}, props = {}) => {
+const getTouchEvent = (type = '', event = {}, props = {}) => {
   const nativeEvent = event.nativeEvent
   const {
     timestamp,
@@ -123,23 +123,23 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, target = {} }, prop
 //       onShouldBlockNativeResponder: () => false,
 //       onPanResponderGrant: evt => {
 //         const { onTouchStart } = ref.current.props
-//         onTouchStart && onTouchStart(getDefaultEvent(evt))
+//         onTouchStart && onTouchStart(getTouchEvent(evt))
 //         ref.current.startTimestamp = evt.nativeEvent.timestamp
 //       },
 //       onPanResponderTerminationRequest: () => true,
 //       onPanResponderMove: (evt) => {
 //         const { onTouchMove } = ref.current.props
-//         onTouchMove && onTouchMove(getDefaultEvent(evt))
+//         onTouchMove && onTouchMove(getTouchEvent(evt))
 //       },
 //       onPanResponderRelease: (evt) => {
 //         const { onTap, onLongTap, onTouchEnd } = ref.current.props
-//         onTouchEnd && onTouchEnd(getDefaultEvent(evt))
+//         onTouchEnd && onTouchEnd(getTouchEvent(evt))
 //         const endTimestamp = evt.nativeEvent.timestamp
 //         const gapTime = endTimestamp - ref.current.startTimestamp
 //         if (gapTime <= 350) {
-//           onTap && onTap(getDefaultEvent(evt))
+//           onTap && onTap(getTouchEvent(evt))
 //         } else {
-//           onLongTap && onLongTap(getDefaultEvent(evt))
+//           onLongTap && onLongTap(getTouchEvent(evt))
 //         }
 //       }
 //     })
@@ -203,7 +203,7 @@ const useInnerTouchable = props => {
         if (match) {
           oe.stopPropagation()
         }
-        ref.current.props[event](getDefaultEvent(type, oe, ref.current.props))
+        ref.current.props[event](getTouchEvent(type, oe, ref.current.props))
       }
     })
   }

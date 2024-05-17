@@ -14,7 +14,7 @@ const reactConfig = {
     },
     getEvent (eventName, prefix = 'bind') {
       return prefix + eventName.replace(/^./, (matched) => {
-        return matched.toUpperCase()
+        return matched
       })
     },
     defaultModelProp: 'value',
