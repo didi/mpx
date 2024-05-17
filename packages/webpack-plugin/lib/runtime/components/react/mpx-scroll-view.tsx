@@ -33,9 +33,10 @@
  */
 
 import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent, ViewStyle } from 'react-native';
-import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
-import useInnerTouchable, { getCustomEvent } from './getInnerListeners';
-import { factory } from 'typescript';
+import React, { useRef, useState, useEffect, ReactNode, forwardRef } from 'react';
+import useInnerProps, { getCustomEvent } from './getInnerListeners';
+import useNodesRef from '../../useNodesRef'
+import { getRestProps } from './utils';
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -81,7 +82,7 @@ type ScrollElementProps = {
   bounces?: boolean;
   pagingEnabled?: boolean;
   style?: ViewStyle;
-
+  layoutRef: React.RefObject;
 };
 const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {}, ref) {
   const {
@@ -105,22 +106,20 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
-    offsetLeft: 0,
-    offsetTop: 0,
     scrollLeft: 0,
     scrollTop: 0,
     visibleLength: 0,
   });
-  const scrollViewRef = useRef<ScrollView>(null);
+
   const scrollEventThrottle = 50;
   const hasCallScrollToUpper = useRef(true);
   const hasCallScrollToLower = useRef(false);
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const _props = useRef(null)
-  _props.current = props
+
   useEffect(() => {
     if (
       snapScrollTop !== props['scroll-top'] ||
@@ -179,10 +178,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             detail: {
               direction: scrollX ? 'left' : 'top',
             },
-            target: {
-              offsetLeft: scrollOptions.current.offsetLeft || 0,
-              offsetTop: scrollOptions.current.offsetTop || 0,
-            },
+            layoutRef
           }, props),
         );
         hasCallScrollToUpper.current = true;
@@ -204,10 +200,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             detail: {
               direction: scrollX ? 'right' : 'botttom',
             },
-            target: {
-              offsetLeft: scrollOptions.current.offsetLeft || 0,
-              offsetTop: scrollOptions.current.offsetTop || 0,
-            },
+            layoutRef
           }, props),
         );
       }
@@ -222,8 +215,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
 
   function onLayout(e: LayoutChangeEvent) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
-    scrollOptions.current.offsetLeft = e.nativeEvent.layout.x || 0
-    scrollOptions.current.offsetTop = e.nativeEvent.layout.y || 0
+    layoutRef.current = e.nativeEvent.layout
   }
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -241,10 +233,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             deltaX: scrollLeft - scrollOptions.current.scrollLeft,
             deltaY: scrollTop - scrollOptions.current.scrollTop,
           },
-          target: {
-            offsetLeft: scrollOptions.current.offsetLeft,
-            offsetTop: scrollOptions.current.offsetTop,
-          },
+          layoutRef
         }, props),
       );
 
@@ -275,12 +264,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     const { bindrefresherrefresh } = props;
     bindrefresherrefresh &&
       bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, {
-          target: {
-            offsetLeft: scrollOptions.current.offsetLeft || 0,
-            offsetTop: scrollOptions.current.offsetTop || 0,
-          },
-        }, props),
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, props),
       );
   }
 
@@ -294,6 +278,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollLeft: scrollOptions.current.scrollLeft || 0,
             scrollTop: scrollOptions.current.scrollTop || 0,
           },
+          layoutRef
         }),
       );
   }
@@ -308,6 +293,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollLeft: scrollOptions.current.scrollLeft || 0,
             scrollTop: scrollOptions.current.scrollTop || 0,
           },
+          layoutRef
         }),
       );
   }
@@ -322,22 +308,38 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollLeft: scrollOptions.current.scrollLeft || 0,
             scrollTop: scrollOptions.current.scrollTop || 0,
           },
+          layoutRef
         }),
       );
   }
+
+  const { nodeRef: scrollViewRef  } = useNodesRef(props, ref, {
+    scrollOffset: scrollOptions,
+    node: {
+      scrollEnabled,
+      bounces: !!bounces,
+      showScrollbar: !!showScrollbar,
+      pagingEnabled: !!pagingEnabled,
+      fastDeceleration: false,
+      decelerationDisabled: false,
+      scrollTo: scrollToOffset
+    }
+  })
+
   let scrollElementProps: ScrollElementProps = {
     pinchGestureEnabled: false,
     horizontal: !!scrollX,
-    onScroll: onScroll,
-    onContentSizeChange: onContentSizeChange,
-    onLayout: onLayout,
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: !!enableBackToTop,
     showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
     showsVerticalScrollIndicator: !!(scrollY && showScrollbar),
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
-    style
+    style,
+    layoutRef,
+    onScroll: onScroll,
+    onContentSizeChange: onContentSizeChange,
+    onLayout: onLayout,
   };
   if (enhanced) {
     scrollElementProps = {
@@ -346,41 +348,40 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
       pagingEnabled: !!pagingEnabled,
     };
   }
-
-  const innerTouchable = useInnerTouchable({
-    ...props,
+  const innerProps = useInnerProps({
+    ...(getRestProps(scrollElementProps, props, [
+      'style',
+      'scroll-x',
+      'scroll-y',
+      'enable-back-to-top',
+      'paging-enabled',
+      'show-scrollbar',
+      'upper-threshold',
+      'lower-threshold',
+      'scroll-top',
+      'scroll-left',
+      'scroll-with-animation',
+      'refresher-triggered',
+      'refresher-enabled',
+      'refresher-default-style',
+      'refresher-background',
+      'children',
+      'enhanced',
+      'bounces',
+      'horizontal'
+    ])),
     bindtouchstart: onScrollTouchStart,
     bindtouchend: onScrollTouchEnd,
-    bindtouchmove: onScrollTouchMove,
-    offsetLeft: scrollOptions.current.offsetLeft || 0,
-    offsetTop: scrollOptions.current.offsetTop || 0
+    bindtouchmove: onScrollTouchMove
   });
   const refreshColor = {
     'black': ['#000'],
     'white': ['#fff']
   }
 
-  useImperativeHandle(ref, () => {
-    // return createNodesRef(
-    //   _props,
-    //   {
-    //     nodeRef: scrollViewRef,
-    //     scrollOffset: scrollOptions,
-    //     node: {
-    //       scrollEnabled,
-    //       bounces: !!bounces,
-    //       showScrollbar: !!showScrollbar,
-    //       pagingEnabled: !!pagingEnabled,
-    //       fastDeceleration: false,
-    //       decelerationDisabled: false,
-    //       scrollTo: scrollToOffset
-    //     }
-    //   })
-  })
   return (
     <ScrollView
-      {...scrollElementProps}
-      {...innerTouchable}
+      {...innerProps}
       refreshControl={refresherEnabled ? (
         <RefreshControl
           progressBackgroundColor={refresherBackground}

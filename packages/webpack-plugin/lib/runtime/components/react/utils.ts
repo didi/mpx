@@ -59,3 +59,11 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
     return Object.assign(styleObj, { [key]: v.trim() })
   }, {})
 }
+
+
+export const getRestProps = (transferProps: any = {}, originProps: any = {}, deleteProps: any = []) => {
+  return {
+    ...transferProps,
+    ...omit(originProps, deleteProps)
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { omit } from './utils'
 // import { PanResponder } from 'react-native'
 
 const getTouchEvent = (type = '', event = {}, props = {}) => {
@@ -10,7 +11,7 @@ const getTouchEvent = (type = '', event = {}, props = {}) => {
     touches = [],
     changedTouches = []
   } = nativeEvent
-  const { id, offsetLeft, offsetTop } = props
+  const { id, layoutRef = {} } = props
   return {
     ...event,
     type,
@@ -18,8 +19,8 @@ const getTouchEvent = (type = '', event = {}, props = {}) => {
     target: {
       id: id || '',
       dataset: getDataSet(props),
-      offsetLeft: offsetLeft || 0,
-      offsetTop: offsetTop || 0
+      offsetLeft: layoutRef.current?.x || 0,
+      offsetTop: layoutRef.current?.y || 0
     },
     detail: {
       ...(event.detail || {}),
@@ -76,7 +77,7 @@ export const getDataSet = (props) => {
   return result
 }
 
-export const getCustomEvent = (type, oe = {}, { detail = {}, target = {} }, props = {}) => {
+export const getCustomEvent = (type, oe = {}, { detail = {}, layoutRef = {} }, props = {}) => {
   return extendEvent(oe, {
     type,
     detail: {
@@ -86,7 +87,8 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, target = {} }, prop
     target: {
       id: props.id || '',
       dataset: getDataSet(props),
-      ...target
+      offsetLeft: layoutRef.current?.x || 0,
+      offsetTop: layoutRef.current?.y || 0
     }
   })
 }
@@ -149,7 +151,7 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, target = {} }, prop
 //   }
 // }
 
-const useInnerTouchable = props => {
+const useInnerProps = props => {
   const eventProps = [
     'bindtap',
     'bindlongpress',
@@ -300,6 +302,9 @@ const useInnerTouchable = props => {
       handleTouchcancel(e, 'capture')
     }
   }
-  return events
+  return {
+    ...events,
+    ...omit(ref.current.props, eventProps)
+  }
 }
-export default useInnerTouchable
+export default useInnerProps
