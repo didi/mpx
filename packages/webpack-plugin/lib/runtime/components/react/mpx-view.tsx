@@ -4,23 +4,27 @@
  * ✔ hover-start-time	
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, ViewProps, ViewStyle, NativeSyntheticEvent} from 'react-native'
+import { View, ViewProps, ViewStyle, NativeSyntheticEvent} from 'react-native'
 import * as React from 'react'
-import { useImperativeHandle } from 'react'
 
 // @ts-ignore
-import useInnerTouchable from './getInnerListeners';
-
+import useInnerTouchable from './getInnerListeners'
+// @ts-ignore
+import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 export interface _ViewProps extends ViewProps {
-  style?: StyleProp<ViewStyle>;
+  style?: Array<ViewStyle>;
   children?: React.ReactNode;
-  hoverStyle: StyleProp<ViewStyle>;
-  bindTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  hoverStyle: Array<ViewStyle>;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
+const DEFAULT_STYLE = {
+  flexDirection: 'row',
+  flexShrink: 1
+}
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
   const { 
@@ -69,34 +73,34 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }
 
   function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
-    const { bindTouchStart } = props;
-    bindTouchStart && bindTouchStart(e)
+    const { bindtouchstart } = props;
+    bindtouchstart && bindtouchstart(e)
     setStartTimer()
   }
 
   function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>){
-    const { bindTouchEnd } = props;
-    bindTouchEnd && bindTouchEnd(e)
+    const { bindtouchend } = props;
+    bindtouchend && bindtouchend(e)
     setStayTimer()
   }
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    bindTouchStart: onTouchStart,
-    bindTouchEnd: onTouchEnd
-  });
+    ...(hoverStyle && {
+      bindtouchstart: onTouchStart,
+      bindtouchend: onTouchEnd
+    })
+  })
 
-  useImperativeHandle(ref, () => {
-    return {
-      // todo
-    }
-  }, [])
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle: DEFAULT_STYLE
+  })
 
   return (
     <View
-      ref={ref}
+      ref={nodeRef}
       {...{...otherProps, ...innerTouchable}}
-      style={ [{ backgroundColor: 'transparent' }, style, isHover && hoverStyle] }
+      style={ [ DEFAULT_STYLE, style, isHover && hoverStyle ] }
     >
       {children}
     </View>

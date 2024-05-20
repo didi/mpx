@@ -11,6 +11,7 @@ import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
 import styleHelperMixin from './styleHelperMixin'
+import directiveHelperMixin from './directiveHelperMixin'
 import { isReact } from '@mpxjs/utils'
 
 export default function getBuiltInMixins (options, type) {
@@ -18,7 +19,9 @@ export default function getBuiltInMixins (options, type) {
   if (isReact) {
     bulitInMixins = [
       proxyEventMixin(),
-      styleHelperMixin()
+      directiveHelperMixin(),
+      styleHelperMixin(),
+      refsMixin()
     ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [

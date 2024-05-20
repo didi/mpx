@@ -36,7 +36,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const hoverClassReg = /^mpx-(((cover-)?view)|button|navigator)$/
+const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1119,7 +1119,7 @@ function processEventReact (el, options, meta) {
       return item.expStr
     })
     const name = rawName || config[mode].event.getEvent(eventName)
-    const value = `{{(e)=>this.__invoke(e, ${stringify(eventName)}, [${configs}])}}`
+    const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
     addAttrs(el, [
       {
         name,
@@ -1621,6 +1621,27 @@ function processFor (el) {
   }
 }
 
+function processRefReact (el, options, meta) {
+  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
+  const type = isComponentNode(el, options) ? 'component' : 'node'
+  if (val) {
+    if (!meta.refs) {
+      meta.refs = []
+    }
+    const all = !!forScopes.length
+    meta.refs.push({
+      key: val,
+      all,
+      type
+    })
+
+    addAttrs(el, [{
+      name: 'ref',
+      value: `{{ this.__getRefVal('${val}') }}`
+    }])
+  }
+}
+
 function processRef (el, options, meta) {
   const val = getAndRemoveAttr(el, config[mode].directive.ref).val
   const type = isComponentNode(el, options) ? 'component' : 'node'
@@ -1772,6 +1793,13 @@ function postProcessFor (el) {
 
 function postProcessForReact (el) {
   if (el.for) {
+    if (el.for.key) {
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)})`, false, 'key')
+      addAttrs(el, [{
+        name: 'key',
+        value: el.for.key
+      }])
+    }
     popForScopes()
   }
 }
@@ -2119,7 +2147,7 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      if (mode === 'android' || mode === 'ios') {
+      if (isReact(mode)) {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
@@ -2459,8 +2487,10 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
+    processRefReact(el, options, meta)
     processStyleReact(el)
     processEventReact(el, options, meta)
+    processComponentIs(el, options)
     processAttrs(el, options)
     return
   }

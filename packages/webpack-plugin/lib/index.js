@@ -348,15 +348,10 @@ class MpxWebpackPlugin {
       }
     }
 
-    if (isReact(this.options.mode)) {
-      // 输出react时暂时关闭代码分隔
-      optimization.splitChunks = false
-    }
-
     let splitChunksOptions = null
     let splitChunksPlugin = null
     // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
-    if (optimization.splitChunks !== false) {
+    if (optimization.splitChunks !== false && !isReact(this.options.mode)) {
       splitChunksOptions = Object.assign({
         chunks: 'all',
         usedExports: optimization.usedExports === true,

@@ -398,13 +398,10 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
-          const modifierStr = match[3] || ''
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ios' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ios', data: { el } })
           return {
-            name: rPrefix + rEventName.replace(/^./, (matched) => {
-              return matched.toUpperCase()
-            }) + modifierStr,
+            name: rPrefix + rEventName,
             value
           }
         },
@@ -412,13 +409,10 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
-          const modifierStr = match[3] || ''
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
           const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
           return {
-            name: rPrefix + rEventName.replace(/^./, (matched) => {
-              return matched.toUpperCase()
-            }) + modifierStr,
+            name: rPrefix + rEventName,
             value
           }
         }
@@ -471,7 +465,7 @@ module.exports = function getSpec ({ warn, error }) {
             const tempModifierStr = Object.keys(modifierMap).join('.')
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
-          },
+          }
           // ios (prefix) {
           //   const prefixMap = {
           //     bind: 'on',
@@ -528,12 +522,12 @@ module.exports = function getSpec ({ warn, error }) {
           ios (eventName) {
             const eventMap = {
               tap: 'tap',
-              longtap: 'longPress',
-              longpress: 'longPress',
-              touchstart: 'touchStart',
-              touchmove: 'touchMove',
-              touchend: 'touchEnd',
-              touchcancel: 'touchCancel'
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -544,12 +538,12 @@ module.exports = function getSpec ({ warn, error }) {
           android (eventName) {
             const eventMap = {
               tap: 'tap',
-              longtap: 'longPress',
-              longpress: 'longPress',
-              touchstart: 'touchStart',
-              touchmove: 'touchMove',
-              touchend: 'touchEnd',
-              touchcancel: 'touchCancel'
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]

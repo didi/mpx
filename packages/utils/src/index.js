@@ -61,6 +61,7 @@ export {
 } from './errorHandling'
 
 export {
+  collectDataset,
   walkChildren,
   parseSelector
 } from './element'

@@ -34,7 +34,8 @@
 
 import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent, ViewStyle } from 'react-native';
 import React, { useRef, useState, useEffect, ReactNode, forwardRef, useImperativeHandle } from 'react';
-import useInnerTouchable, { extendEvent, getCustomEvent } from './getInnerListeners';
+import useInnerTouchable, { getCustomEvent } from './getInnerListeners';
+import { factory } from 'typescript';
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -54,16 +55,16 @@ interface ScrollViewProps {
   'refresher-background'?: string;
   'scroll-top'?: number;
   'scroll-left'?: number;
-  bindScrolltoupper?: (event: any) => void;
-  bindScrolltolower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  bindScroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  bindRefresherrefresh?: (event: unknown) => void;
-  bindDragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  bindDragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  bindDragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  bindTouchStart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindTouchMove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindTouchEnd?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindscrolltoupper?: (event: any) => void;
+  bindscrolltolower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
+  bindscroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
+  bindrefresherrefresh?: (event: unknown) => void;
+  binddragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
+  binddragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
+  binddragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 type ScrollElementProps = {
   pinchGestureEnabled: boolean;
@@ -79,8 +80,6 @@ type ScrollElementProps = {
   ref: React.RefObject<ScrollView>;
   bounces?: boolean;
   pagingEnabled?: boolean;
-  offsetLeft?: number;
-  offsetTop?: number;
   style?: ViewStyle;
 
 };
@@ -93,7 +92,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     'scroll-x': scrollX,
     'scroll-y': scrollY,
     'enable-back-to-top': enableBackToTop,
-    'show-scrollbar': showScrollBar,
+    'show-scrollbar': showScrollbar,
     'paging-enabled': pagingEnabled,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
@@ -109,8 +108,10 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
-    offsetX: 0,
-    offsetY: 0,
+    offsetLeft: 0,
+    offsetTop: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
     visibleLength: 0,
   });
   const scrollViewRef = useRef<ScrollView>(null);
@@ -118,6 +119,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   const hasCallScrollToUpper = useRef(true);
   const hasCallScrollToLower = useRef(false);
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const _props = useRef(null)
+  _props.current = props
   useEffect(() => {
     if (
       snapScrollTop !== props['scroll-top'] ||
@@ -167,18 +170,18 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onStartReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { bindScrolltoupper } = props;
+    const { bindscrolltoupper } = props;
     const { offset } = scrollOptions.current;
-    if (bindScrolltoupper && (offset <= upperThreshold)) {
+    if (bindscrolltoupper && (offset <= upperThreshold)) {
       if (!hasCallScrollToUpper.current) {
-        bindScrolltoupper(
+        bindscrolltoupper(
           getCustomEvent('scrolltoupper', e, {
             detail: {
               direction: scrollX ? 'left' : 'top',
             },
             target: {
-              offsetLeft: scrollOptions.current.offsetX || 0,
-              offsetTop: scrollOptions.current.offsetY || 0,
+              offsetLeft: scrollOptions.current.offsetLeft || 0,
+              offsetTop: scrollOptions.current.offsetTop || 0,
             },
           }, props),
         );
@@ -190,20 +193,20 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   function onEndReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { bindScrolltolower } = props;
+    const { bindscrolltolower } = props;
     const { contentLength, visibleLength, offset } = scrollOptions.current;
     const distanceFromEnd = contentLength - visibleLength - offset;
-    if (bindScrolltolower && (distanceFromEnd < lowerThreshold)) {
+    if (bindscrolltolower && (distanceFromEnd < lowerThreshold)) {
       if (!hasCallScrollToLower.current) {
         hasCallScrollToLower.current = true;
-        bindScrolltolower(
+        bindscrolltolower(
           getCustomEvent('scrolltolower', e, {
             detail: {
               direction: scrollX ? 'right' : 'botttom',
             },
             target: {
-              offsetLeft: scrollOptions.current.offsetX || 0,
-              offsetTop: scrollOptions.current.offsetY || 0,
+              offsetLeft: scrollOptions.current.offsetLeft || 0,
+              offsetTop: scrollOptions.current.offsetTop || 0,
             },
           }, props),
         );
@@ -219,26 +222,28 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
 
   function onLayout(e: LayoutChangeEvent) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
+    scrollOptions.current.offsetLeft = e.nativeEvent.layout.x || 0
+    scrollOptions.current.offsetTop = e.nativeEvent.layout.y || 0
   }
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { bindScroll } = props;
+    const { bindscroll } = props;
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset;
     const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
-    bindScroll &&
-      bindScroll(
+    bindscroll &&
+      bindscroll(
         getCustomEvent('scroll', e, {
           detail: {
             scrollLeft,
             scrollTop,
             scrollHeight,
             scrollWidth,
-            deltaX: scrollLeft - scrollOptions.current.offsetX,
-            deltaY: scrollTop - scrollOptions.current.offsetY,
+            deltaX: scrollLeft - scrollOptions.current.scrollLeft,
+            deltaY: scrollTop - scrollOptions.current.scrollTop,
           },
           target: {
-            offsetLeft: scrollLeft,
-            offsetTop: scrollTop,
+            offsetLeft: scrollOptions.current.offsetLeft,
+            offsetTop: scrollOptions.current.offsetTop,
           },
         }, props),
       );
@@ -247,10 +252,11 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     const contentLength = selectLength(e.nativeEvent.contentSize);
     const offset = selectOffset(e.nativeEvent.contentOffset);
     scrollOptions.current = {
+      ...scrollOptions.current,
       contentLength,
       offset,
-      offsetX: scrollLeft,
-      offsetY: scrollTop,
+      scrollLeft,
+      scrollTop,
       visibleLength,
     };
     onStartReached(e);
@@ -260,59 +266,61 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   function scrollToOffset(x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation });
+      scrollOptions.current.scrollLeft = x
+      scrollOptions.current.scrollTop = y
     }
   }
 
   function onRefresh() {
-    const { bindRefresherrefresh } = props;
-    bindRefresherrefresh &&
-      bindRefresherrefresh(
+    const { bindrefresherrefresh } = props;
+    bindrefresherrefresh &&
+      bindrefresherrefresh(
         getCustomEvent('refresherrefresh', {}, {
           target: {
-            offsetLeft: scrollOptions.current.offsetX || 0,
-            offsetTop: scrollOptions.current.offsetY || 0,
+            offsetLeft: scrollOptions.current.offsetLeft || 0,
+            offsetTop: scrollOptions.current.offsetTop || 0,
           },
         }, props),
       );
   }
 
   function onScrollTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindDragstart, bindTouchStart } = props;
-    bindTouchStart && bindTouchStart(e);
-    bindDragstart &&
-      bindDragstart(
-        extendEvent(e, {
+    const { binddragstart, bindtouchstart } = props;
+    bindtouchstart && bindtouchstart(e);
+    binddragstart &&
+      binddragstart(
+        getCustomEvent('dragstart', e, {
           detail: {
-            scrollLeft: scrollOptions.current.offsetX || 0,
-            scrollTop: scrollOptions.current.offsetY || 0,
+            scrollLeft: scrollOptions.current.scrollLeft || 0,
+            scrollTop: scrollOptions.current.scrollTop || 0,
           },
         }),
       );
   }
 
   function onScrollTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindDragging, bindTouchMove } = props;
-    bindTouchMove && bindTouchMove(e);
-    bindDragging &&
-      bindDragging(
-        extendEvent(e, {
+    const { binddragging, bindtouchmove } = props;
+    bindtouchmove && bindtouchmove(e);
+    binddragging &&
+      binddragging(
+        getCustomEvent('dragging', e, {
           detail: {
-            scrollLeft: scrollOptions.current.offsetX || 0,
-            scrollTop: scrollOptions.current.offsetY || 0,
+            scrollLeft: scrollOptions.current.scrollLeft || 0,
+            scrollTop: scrollOptions.current.scrollTop || 0,
           },
         }),
       );
   }
 
   function onScrollTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindDragend, bindTouchEnd } = props;
-    bindTouchEnd && bindTouchEnd(e);
-    bindDragend &&
-      bindDragend(
-        extendEvent(e, {
+    const { binddragend, bindtouchend } = props;
+    bindtouchend && bindtouchend(e);
+    binddragend &&
+      binddragend(
+        getCustomEvent('dragend', e, {
           detail: {
-            scrollLeft: scrollOptions.current.offsetX || 0,
-            scrollTop: scrollOptions.current.offsetY || 0,
+            scrollLeft: scrollOptions.current.scrollLeft || 0,
+            scrollTop: scrollOptions.current.scrollTop || 0,
           },
         }),
       );
@@ -325,8 +333,8 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
     onLayout: onLayout,
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: !!enableBackToTop,
-    showsHorizontalScrollIndicator: !!(scrollX && showScrollBar),
-    showsVerticalScrollIndicator: !!(scrollY && showScrollBar),
+    showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
+    showsVerticalScrollIndicator: !!(scrollY && showScrollbar),
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
     style
@@ -334,18 +342,18 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   if (enhanced) {
     scrollElementProps = {
       ...scrollElementProps,
-      bounces: bounces,
+      bounces: !!bounces,
       pagingEnabled: !!pagingEnabled,
     };
   }
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    bindTouchStart: onScrollTouchStart,
-    bindTouchEnd: onScrollTouchEnd,
-    bindTouchMove: onScrollTouchMove,
-    offsetLeft: scrollOptions.current.offsetX || 0,
-    offsetTop: scrollOptions.current.offsetY || 0
+    bindtouchstart: onScrollTouchStart,
+    bindtouchend: onScrollTouchEnd,
+    bindtouchmove: onScrollTouchMove,
+    offsetLeft: scrollOptions.current.offsetLeft || 0,
+    offsetTop: scrollOptions.current.offsetTop || 0
   });
   const refreshColor = {
     'black': ['#000'],
@@ -353,14 +361,21 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   }
 
   useImperativeHandle(ref, () => {
-    return {
-      type: 'scroll-view',
-      context: {
-        ...props,
-        scrollTo: scrollToOffset
-      },
-      nodeRef: scrollViewRef.current
-    }
+    // return createNodesRef(
+    //   _props,
+    //   {
+    //     nodeRef: scrollViewRef,
+    //     scrollOffset: scrollOptions,
+    //     node: {
+    //       scrollEnabled,
+    //       bounces: !!bounces,
+    //       showScrollbar: !!showScrollbar,
+    //       pagingEnabled: !!pagingEnabled,
+    //       fastDeceleration: false,
+    //       decelerationDisabled: false,
+    //       scrollTo: scrollToOffset
+    //     }
+    //   })
   })
   return (
     <ScrollView

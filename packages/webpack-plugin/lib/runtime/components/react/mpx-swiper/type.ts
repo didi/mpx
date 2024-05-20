@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react'
+import { ReactNode } from 'react'
 import { NativeSyntheticEvent } from 'react-native'
 export interface SwiperProps {
   children?: ReactNode;
@@ -15,7 +15,7 @@ export interface SwiperProps {
   easingFunction?: string;
   'previous-margin'?: string;
   'next-margin'?: string;
-  onChange?:  (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindchange?:  (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
 export interface CarouseProps {
@@ -33,7 +33,7 @@ export interface CarouseProps {
   easingFunction?: string;
   previousMargin?: string;
   nextMargin?: string;
-  onChange: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindchange: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
 export interface CarouseState {

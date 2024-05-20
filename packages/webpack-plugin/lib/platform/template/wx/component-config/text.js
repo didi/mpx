@@ -45,7 +45,7 @@ module.exports = function ({ print }) {
       {
         test: /^(space|decode)$/,
         ios: iosPropLog,
-        android: androidPropLog,
+        android: androidPropLog
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,
