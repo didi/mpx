@@ -2,7 +2,7 @@ import cssSelect from './css-select'
 // todo: stringify wxs 模块只能放到逻辑层执行，主要还是因为生成 vdom tree 需要根据 class 去做匹配，需要看下这个代码从哪引入
 import stringify from '@mpxjs/webpack-plugin/lib/runtime/stringify.wxs'
 import Interpreter from './interpreter'
-import { dash2hump, isString } from '@mpxjs/utils'
+import { dash2hump, isString, error } from '@mpxjs/utils'
 
 const deepCloneNode = function (val) {
   return JSON.parse(JSON.stringify(val))
@@ -17,9 +17,11 @@ function simpleNormalizeChildren (children) {
   return children
 }
 
-export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId) {
+export default function _genVnodeTree (astData, contextScope, options) {
+  const { template = {}, styles = [] } = astData || {}
+  const { moduleId, location } = options || {}
   // 解除引用
-  vnodeAst = deepCloneNode(vnodeAst)
+  const templateAst = deepCloneNode(template)
   // 获取实例 uid
   const uid = contextScope[0]?.__mpxProxy?.uid || contextScope[0]?.uid
   // slots 通过上下文传递，相当于 props
@@ -62,9 +64,12 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     try {
       value = interpreter.eval(JSON.parse(JSON.stringify(exps)))
     } catch (e) {
-      // todo: 后续可以把错误往外抛，业务感知
-      console.warn('the exps is:', exps)
-      console.warn(e)
+      const errmsg = e.message
+      console.warn(errmsg)
+      error('interprete the expression wrong: ', location, {
+        errType: 'mpx-dynamic-interprete',
+        errmsg
+      })
     }
     return value
   }
@@ -263,7 +268,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
   }
 
   function genVnodeWithStaticCss (vnodeTree) {
-    cssList.forEach((item) => {
+    styles.forEach((item) => {
       const [selector, style] = item
       const nodes = cssSelect(selector, { moduleId })(vnodeTree)
       nodes?.forEach((node) => {
@@ -275,7 +280,7 @@ export default function _genVnodeTree (vnodeAst, contextScope, cssList, moduleId
     return vnodeTree
   }
 
-  const interpreteredVnodeTree = genVnodeTree(vnodeAst)
+  const interpreteredVnodeTree = genVnodeTree(templateAst)
 
   return genVnodeWithStaticCss(interpreteredVnodeTree)
 }
