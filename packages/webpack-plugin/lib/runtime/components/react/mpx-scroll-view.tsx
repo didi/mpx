@@ -36,7 +36,7 @@ import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, La
 import React, { useRef, useState, useEffect, ReactNode, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef from '../../useNodesRef'
-import { getRestProps } from './utils';
+
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -67,7 +67,7 @@ interface ScrollViewProps {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
-type ScrollElementProps = {
+type ScrollAdditionalProps = {
   pinchGestureEnabled: boolean;
   horizontal: boolean;
   onScroll: (event: NativeSyntheticEvent<ScrollEvent>) => void;
@@ -82,14 +82,15 @@ type ScrollElementProps = {
   bounces?: boolean;
   pagingEnabled?: boolean;
   style?: ViewStyle;
-  layoutRef: React.RefObject;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 };
 const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.ForwardedRef): React.JSX.Element => {
   const {
     children,
     enhanced,
     bounces,
-    style,
     'scroll-x': scrollX,
     'scroll-y': scrollY,
     'enable-back-to-top': enableBackToTop,
@@ -119,6 +120,20 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const hasCallScrollToUpper = useRef(true);
   const hasCallScrollToLower = useRef(false);
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measureTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
+    scrollOffset: scrollOptions,
+    node: {
+      scrollEnabled,
+      bounces: !!bounces,
+      showScrollbar: !!showScrollbar,
+      pagingEnabled: !!pagingEnabled,
+      fastDeceleration: false,
+      decelerationDisabled: false,
+      scrollTo: scrollToOffset
+    }
+  })
 
   useEffect(() => {
     if (
@@ -159,6 +174,18 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapScrollTop, snapScrollLeft]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      measureTimeout.current = scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    })
+    return () => {
+      measureTimeout.current && clearTimeout(measureTimeout.current);
+      measureTimeout.current = null
+    }
+  }, [scrollViewRef]);
 
   function selectLength(size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width;
@@ -313,20 +340,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       );
   }
 
-  const { nodeRef: scrollViewRef  } = useNodesRef(props, ref, {
-    scrollOffset: scrollOptions,
-    node: {
-      scrollEnabled,
-      bounces: !!bounces,
-      showScrollbar: !!showScrollbar,
-      pagingEnabled: !!pagingEnabled,
-      fastDeceleration: false,
-      decelerationDisabled: false,
-      scrollTo: scrollToOffset
-    }
-  })
-
-  let scrollElementProps: ScrollElementProps = {
+  let scrollAdditionalProps: ScrollAdditionalProps = {
     pinchGestureEnabled: false,
     horizontal: !!scrollX,
     scrollEventThrottle: scrollEventThrottle,
@@ -335,22 +349,21 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     showsVerticalScrollIndicator: !!(scrollY && showScrollbar),
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
-    style,
-    layoutRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
     onLayout: onLayout,
+    bindtouchstart: onScrollTouchStart,
+    bindtouchend: onScrollTouchEnd,
+    bindtouchmove: onScrollTouchMove,
   };
   if (enhanced) {
-    scrollElementProps = {
-      ...scrollElementProps,
+    scrollAdditionalProps = {
+      ...scrollAdditionalProps,
       bounces: !!bounces,
       pagingEnabled: !!pagingEnabled,
     };
   }
-  const innerProps = useInnerProps({
-    ...(getRestProps(scrollElementProps, props, [
-      'style',
+  const innerProps = useInnerProps(props, scrollAdditionalProps, [
       'scroll-x',
       'scroll-y',
       'enable-back-to-top',
@@ -369,11 +382,8 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       'enhanced',
       'bounces',
       'horizontal'
-    ])),
-    bindtouchstart: onScrollTouchStart,
-    bindtouchend: onScrollTouchEnd,
-    bindtouchmove: onScrollTouchMove
-  });
+  ], { layoutRef, touchable: true });
+
   const refreshColor = {
     'black': ['#000'],
     'white': ['#fff']

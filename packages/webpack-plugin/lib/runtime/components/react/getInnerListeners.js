@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { omit } from './utils'
 // import { PanResponder } from 'react-native'
 
-const getTouchEvent = (type = '', event = {}, props = {}) => {
+const getTouchEvent = (type = '', event = {}, props = {}, config) => {
   const nativeEvent = event.nativeEvent
   const {
     timestamp,
@@ -11,7 +11,8 @@ const getTouchEvent = (type = '', event = {}, props = {}) => {
     touches = [],
     changedTouches = []
   } = nativeEvent
-  const { id, layoutRef = {} } = props
+  const { id } = props
+  const { layoutRef = {} } = config
   return {
     ...event,
     type,
@@ -19,8 +20,8 @@ const getTouchEvent = (type = '', event = {}, props = {}) => {
     target: {
       id: id || '',
       dataset: getDataSet(props),
-      offsetLeft: layoutRef.current?.x || 0,
-      offsetTop: layoutRef.current?.y || 0
+      offsetLeft: layoutRef.current?.offsetLeft || 0,
+      offsetTop: layoutRef.current?.offsetTop || 0
     },
     detail: {
       ...(event.detail || {}),
@@ -87,8 +88,8 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, layoutRef = {} }, p
     target: {
       id: props.id || '',
       dataset: getDataSet(props),
-      offsetLeft: layoutRef.current?.x || 0,
-      offsetTop: layoutRef.current?.y || 0
+      offsetLeft: layoutRef.current?.offsetLeft || 0,
+      offsetTop: layoutRef.current?.offsetTop || 0
     }
   })
 }
@@ -151,19 +152,21 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, layoutRef = {} }, p
 //   }
 // }
 
-const useInnerProps = props => {
+const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], config = {}) => {
   const ref = useRef({
     startTimer: null,
     needPress: true,
     mpxPressInfo: {},
-    props: props
+    props: {},
+    config: {}
   })
   useEffect(() => {
     ref.current = {
       startTimer: null,
       needPress: true,
       mpxPressInfo: {},
-      props: props
+      props: { ...props, ...additionalProps },
+      config
     }
   })
 
@@ -194,10 +197,10 @@ const useInnerProps = props => {
     'capture-catchtouchcancel'
   ]
 
-  const hasEventProps = eventProps.some(prop => props[prop])
+  const hasEventProps = eventProps.some(prop => ref.current.props[prop])
 
-  if (!hasEventProps) {
-    return props
+  if (!hasEventProps || !config.touchable) {
+    return omit(ref.current.props, removeProps)
   }
 
   function handleEmitEvent (events, type, oe) {
@@ -207,7 +210,7 @@ const useInnerProps = props => {
         if (match) {
           oe.stopPropagation()
         }
-        ref.current.props[event](getTouchEvent(type, oe, ref.current.props))
+        ref.current.props[event](getTouchEvent(type, oe, ref.current.props, ref.current.config))
       }
     })
   }
@@ -304,7 +307,7 @@ const useInnerProps = props => {
   }
   return {
     ...events,
-    ...omit(ref.current.props, eventProps)
+    ...omit(ref.current.props, [...eventProps, ...removeProps])
   }
 }
 export default useInnerProps
