@@ -52,7 +52,7 @@ const getTouchEvent = (type = '', event = {}, props = {}) => {
 }
 
 export const extendEvent = (e = {}, extendObj = {}) => {
-  e && e.persist && e.persist()
+  // e && e.persist && e.persist()
   Object.keys(extendObj).forEach(key => {
     Object.defineProperty(e, key, {
       value: extendObj[key],
@@ -152,6 +152,21 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, layoutRef = {} }, p
 // }
 
 const useInnerProps = props => {
+  const ref = useRef({
+    startTimer: null,
+    needPress: true,
+    mpxPressInfo: {},
+    props: props
+  })
+  useEffect(() => {
+    ref.current = {
+      startTimer: null,
+      needPress: true,
+      mpxPressInfo: {},
+      props: props
+    }
+  })
+
   const eventProps = [
     'bindtap',
     'bindlongpress',
@@ -178,25 +193,12 @@ const useInnerProps = props => {
     'capture-catchtouchend',
     'capture-catchtouchcancel'
   ]
+
   const hasEventProps = eventProps.some(prop => props[prop])
 
   if (!hasEventProps) {
     return props
   }
-  const ref = useRef({
-    startTimer: null,
-    needPress: true,
-    mpxPressInfo: {},
-    props: props
-  })
-  useEffect(() => {
-    ref.current = {
-      startTimer: null,
-      needPress: true,
-      mpxPressInfo: {},
-      props: props
-    }
-  })
 
   function handleEmitEvent (events, type, oe) {
     events.forEach(event => {
@@ -276,7 +278,6 @@ const useInnerProps = props => {
 
   const events = {
     onTouchStart: (e) => {
-      e.persist()
       handleTouchstart(e, 'bubble')
     },
     onTouchMove: (e) => {
@@ -289,7 +290,6 @@ const useInnerProps = props => {
       handleTouchcancel(e, 'bubble')
     },
     onTouchStartCapture: (e) => {
-      e.persist()
       handleTouchstart(e, 'capture')
     },
     onTouchMoveCapture: (e) => {

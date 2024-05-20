@@ -61,9 +61,9 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
 }
 
 
-export const getRestProps = (transferProps: any = {}, originProps: any = {}, deleteProps: any = []) => {
+export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
   return {
     ...transferProps,
-    ...omit(originProps, deleteProps)
+    ...omit(originProps, deletePropsKey)
   }
 }

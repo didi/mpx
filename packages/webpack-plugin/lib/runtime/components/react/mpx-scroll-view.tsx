@@ -84,7 +84,7 @@ type ScrollElementProps = {
   style?: ViewStyle;
   layoutRef: React.RefObject;
 };
-const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {}, ref) {
+const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.ForwardedRef): React.JSX.Element => {
   const {
     children,
     enhanced,
@@ -234,7 +234,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             deltaY: scrollTop - scrollOptions.current.scrollTop,
           },
           layoutRef
-        }, props),
+        }, props)
       );
 
     const visibleLength = selectLength(e.nativeEvent.layoutMeasurement);
@@ -279,7 +279,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollTop: scrollOptions.current.scrollTop || 0,
           },
           layoutRef
-        }),
+        }, props)
       );
   }
 
@@ -294,7 +294,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollTop: scrollOptions.current.scrollTop || 0,
           },
           layoutRef
-        }),
+        }, props)
       );
   }
 
@@ -309,7 +309,7 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
             scrollTop: scrollOptions.current.scrollTop || 0,
           },
           layoutRef
-        }),
+        }, props)
       );
   }
 
@@ -396,6 +396,6 @@ const _ScrollView = forwardRef(function _ScrollView(props: ScrollViewProps = {},
   );
 })
 
-_ScrollView.displayName = '_ScrollView';
+_ScrollView.displayName = 'MpxScrollView';
 
-export default _ScrollView
+export default ScrollView
