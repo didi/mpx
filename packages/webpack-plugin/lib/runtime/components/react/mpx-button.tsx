@@ -163,13 +163,13 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   } = props
 
   const refs = useRef<{
-    preseeInTimer: ReturnType<typeof setTimeout> | undefined
-    preseeOutTimer: ReturnType<typeof setTimeout> | undefined
-    isPressEnd: boolean
+    touchStartTimer: ReturnType<typeof setTimeout> | undefined
+    touchEndTimer: ReturnType<typeof setTimeout> | undefined
+    isTouchEnd: boolean
   }>({
-    preseeInTimer: undefined,
-    preseeOutTimer: undefined,
-    isPressEnd: false,
+    touchStartTimer: undefined,
+    touchEndTimer: undefined,
+    isTouchEnd: false,
   })
 
   const [isHover, setIsHover] = useState(false)
@@ -218,71 +218,68 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   }, [type, plain, applyHoverEffect, loading, disabled])
 
   const stopHover = useCallback(() => {
-    refs.current.preseeOutTimer = setTimeout(() => {
+    refs.current.touchEndTimer = setTimeout(() => {
       setIsHover(false)
-      clearTimeout(refs.current.preseeOutTimer)
+      clearTimeout(refs.current.touchEndTimer)
     }, hoverStayTime)
   }, [hoverStayTime])
 
-  const onPressIn = () => {
-    refs.current.isPressEnd = false
-    refs.current.preseeInTimer = setTimeout(() => {
+  const onTouchStart = () => {
+    if (disabled) return
+    refs.current.isTouchEnd = false
+    refs.current.touchStartTimer = setTimeout(() => {
       setIsHover(true)
-      clearTimeout(refs.current.preseeInTimer)
+      clearTimeout(refs.current.touchStartTimer)
     }, hoverStartTime)
   }
 
-  const onPressOut = () => {
-    refs.current.isPressEnd = true
+  const onTouchEnd = () => {
+    if (disabled) return
+    refs.current.isTouchEnd = true
     stopHover()
   }
 
-  const onPress = (evt: GestureResponderEvent) => {
+  const onTap = (evt: GestureResponderEvent) => {
     !disabled && bindtap(getCustomEvent('tap', evt, {}, props))
   }
 
-  const catchPress = (evt: GestureResponderEvent) => {
+  const catchTap = (evt: GestureResponderEvent) => {
     !disabled && catchtap(getCustomEvent('tap', evt, {}, props))
   }
 
   useEffect(() => {
-    isHover && refs.current.isPressEnd && stopHover()
+    isHover && refs.current.isTouchEnd && stopHover()
   }, [isHover, stopHover])
 
   const innerTouchable = useInnerTouchable({
     ...props,
-    bindtap: () => {},
-    catchtap: catchPress,
+    bindtouchstart: onTouchStart,
+    bindtouchend: onTouchEnd,
+    bindtap: onTap,
+    catchtap: catchTap,
   })
 
   return (
-    <TouchableWithoutFeedback
+    <View
+      {...innerTouchable}
       testID="button"
-      accessibilityRole="button"
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      disabled={disabled}>
-      <View
-        {...innerTouchable}
-        ref={ref}
-        style={[
-          styles.button,
-          isMiniSize && styles.buttonMini,
-          presetViewStyle,
-          style,
-          applyHoverEffect && hoverStyle,
-        ]}>
-        {loading && <Loading alone={!React.Children.count(children)} />}
-        {['string', 'number'].includes(typeof children) ? (
-          <Text style={[styles.text, isMiniSize && styles.textMini, presetTextStyle, textStyle, textHoverStyle]}>
-            {children}
-          </Text>
-        ) : (
-          children
-        )}
-      </View>
-    </TouchableWithoutFeedback>
+      ref={ref}
+      style={[
+        styles.button,
+        isMiniSize && styles.buttonMini,
+        presetViewStyle,
+        style,
+        applyHoverEffect && hoverStyle,
+      ]}>
+      {loading && <Loading alone={!React.Children.count(children)} />}
+      {['string', 'number'].includes(typeof children) ? (
+        <Text style={[styles.text, isMiniSize && styles.textMini, presetTextStyle, textStyle, textHoverStyle]}>
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
+    </View>
   )
 })
 
