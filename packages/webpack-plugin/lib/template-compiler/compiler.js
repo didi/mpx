@@ -1361,13 +1361,6 @@ function processRef (el, options, meta) {
       all
     })
   }
-
-  if (type === 'component' && mode === 'ali') {
-    addAttrs(el, [{
-      name: 'onUpdateRef',
-      value: '__handleUpdateRef'
-    }])
-  }
 }
 
 function addWxsModule (meta, module, src) {
@@ -1895,9 +1888,11 @@ function getVirtualHostRoot (options, meta) {
 function processShow (el, options, root) {
   // 开启 virtualhost 全部走 props 传递处理
   // 未开启 virtualhost 直接绑定 display:none 到节点上
-  let show = getAndRemoveAttr(el, config[mode].directive.show).val
+  let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
-
+  if (has && show === undefined) {
+    error$1(`Attrs ${config[mode].directive.show} should have a value `)
+  }
   if (options.hasVirtualHost) {
     if (options.isComponent && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
@@ -1928,7 +1923,7 @@ function processShow (el, options, root) {
       oldStyle = oldStyle ? oldStyle + ';' : ''
       addAttrs(el, [{
         name: 'style',
-        value: `${oldStyle}{{${showExp}||${showExp}===undefined?'':'display:none;'}}`
+        value: `${oldStyle}{{${showExp}?'':'display:none;'}}`
       }])
     }
   }
@@ -2229,7 +2224,7 @@ function postProcessComponentIs (el) {
     }
     let range = []
     if (el.attrsMap.range) {
-      range = getAndRemoveAttr(el, 'range').val.split(',')
+      range = getAndRemoveAttr(el, 'range').val.split(',').map(item => item.trim())
     }
     el.components.forEach(function (component) {
       if (range.length > 0 && !range.includes(component)) return

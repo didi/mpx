@@ -1,7 +1,7 @@
 const path = require('path')
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, DYNAMIC_STYLE } = require('../utils/const')
+const { MPX_ROOT_VIEW, DYNAMIC_STYLE } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
@@ -16,7 +16,7 @@ module.exports = function (css, map) {
   const cb = this.async()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
-  const id = queryObj.moduleId || queryObj.mid || 'm' + mpx.pathHash(resourcePath)
+  const id = queryObj.moduleId || queryObj.mid || '_' + mpx.pathHash(resourcePath)
   const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
@@ -97,7 +97,7 @@ module.exports = function (css, map) {
       .then(result => {
         // ali环境添加全局样式抹平root差异
         if ((mode === 'ali' || mode === 'web') && isApp) {
-          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\n.${MPX_APP_MODULE_ID} { line-height: normal }`
+          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\npage { line-height: normal }`
         }
 
         for (const warning of result.warnings()) {

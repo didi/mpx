@@ -32,6 +32,7 @@ module.exports = {
     indent: 0
   },
   env: {
-    'jest/globals': true
+    'jest/globals': true,
+    'browser': true
   }
 }

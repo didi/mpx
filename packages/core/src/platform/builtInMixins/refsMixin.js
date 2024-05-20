@@ -1,5 +1,5 @@
-import { CREATED, BEFORECREATE, BEFOREUPDATE, UNMOUNTED } from '../../core/innerLifecycle'
-import { noop, error, getEnvObj } from '@mpxjs/utils'
+import { CREATED, BEFORECREATE, BEFOREUPDATE } from '../../core/innerLifecycle'
+import { noop, getEnvObj } from '@mpxjs/utils'
 import contextMap from '../../vnode/context'
 
 const envObj = getEnvObj()
@@ -40,6 +40,11 @@ export default function getRefsMixin () {
       this.__refCacheMap = new Map()
       this.__asyncRefCacheMap = new Map()
       this.__getRefs()
+
+      if (__mpx_mode__ === 'ali') {
+        this._originCreateSelectorQuery = this.createSelectorQuery
+        this.createSelectorQuery = this._createSelectorQuery
+      }
     },
     [BEFOREUPDATE] () {
       this.__refCacheMap.clear()
@@ -113,22 +118,14 @@ export default function getRefsMixin () {
         return {
           mpxCid: this.__mpxProxy.uid
         }
-      },
-      [CREATED] () {
-        this.__updateRef()
-      },
-      [UNMOUNTED] () {
-        // 销毁ref
-        this.__updateRef(true)
       }
     })
 
     const proxyMethods = ['boundingClientRect', 'scrollOffset']
 
     Object.assign(refsMixin.methods, {
-      // todo 支付宝基础库升级至2.7.4以上可去除
-      createSelectorQuery (...args) {
-        const selectorQuery = envObj.createSelectorQuery(...args)
+      _createSelectorQuery (...args) {
+        const selectorQuery = this._originCreateSelectorQuery(...args)
         const cbs = []
 
         proxyMethods.forEach((name) => {
@@ -149,61 +146,14 @@ export default function getRefsMixin () {
           }
           return originalExec.call(this, cb)
         }
+
         return selectorQuery
       },
-      // todo 支付宝基础库升级至2.7.4以上可去除
-      createIntersectionObserver (...args) {
-        return envObj.createIntersectionObserver(...args)
-      },
-      selectComponent (selector, all) {
-        const children = this.__children__ || []
-        const result = []
-        for (const child of children) {
-          if (child.identifiers.indexOf(selector) > -1) {
-            result.push(child.component)
-            if (!all) {
-              break
-            }
-          }
-        }
-        if (selector.lastIndexOf('.') > 0) {
-          const location = this.__mpxProxy.options.mpxFileResource
-          error('The selectComponent or selectAllComponents only supports the single selector, a composed selector is not supported.', location)
-        }
-        return all ? result : result[0]
+      selectComponent (selector) {
+        return this.$selectComponent(selector)
       },
       selectAllComponents (selector) {
-        return this.selectComponent(selector, true)
-      },
-      __updateRef (destroyed) {
-        this.triggerEvent && this.triggerEvent('updateRef', {
-          component: this,
-          destroyed
-        })
-      },
-      __handleUpdateRef (e) {
-        if (!this.__children__) {
-          this.__children__ = []
-        }
-        const component = e.detail.component
-        const destroyed = e.detail.destroyed
-        const className = component.props.className || component.className
-        const identifiers = className
-          ? className.trim().split(/\s+/).map(item => {
-            return `.${item}`
-          })
-          : []
-        if (component.props.id) {
-          identifiers.push(`#${component.props.id}`)
-        }
-        if (destroyed) {
-          this.__children__ = this.__children__.filter(item => item.component !== component)
-        } else {
-          this.__children__.push({
-            component,
-            identifiers
-          })
-        }
+        return this.$selectAllComponents(selector)
       }
     })
   }

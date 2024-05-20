@@ -88,13 +88,13 @@ module.exports = function (content) {
   if (isRuntimeMode) {
     this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
     const { request, outputPath } = genMpxCustomElement(packageName)
-    this._module.addPresentationalDependency(new DynamicEntryDependency(request, 'component', outputPath, packageRoot, '', '', [0, 0], { mpxCustomElement: true, postSubpackageEntry: true }))
+    this._module.addPresentationalDependency(new DynamicEntryDependency([0, 0], request, 'component', outputPath, packageRoot, '', '', { replaceContent: '', postSubpackageEntry: true }))
   }
 
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
     filePath,

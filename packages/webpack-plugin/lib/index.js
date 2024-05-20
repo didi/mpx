@@ -16,6 +16,7 @@ const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModule
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
+const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
@@ -177,7 +178,6 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
-    options.enableAliRequireAsync = options.enableAliRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
     options.dynamic = options.dynamic || {}// 运行时组件配置
     this.options = options
@@ -308,7 +308,7 @@ class MpxWebpackPlugin {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
-      if (this.options.optimizeSize) {
+      if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
         compiler.options.optimization.chunkIds = 'total-size'
         compiler.options.optimization.moduleIds = 'natural'
         compiler.options.optimization.mangleExports = 'size'
@@ -550,7 +550,10 @@ class MpxWebpackPlugin {
       })
     })
 
-    compiler.hooks.compilation.tap('MpxWebpackPlugin ', (compilation, { normalModuleFactory }) => {
+    compiler.hooks.compilation.tap({
+      name: 'MpxWebpackPlugin',
+      stage: 100
+    }, (compilation, { normalModuleFactory }) => {
       NormalModule.getCompilationHooks(compilation).loader.tap('MpxWebpackPlugin', (loaderContext) => {
         // 设置loaderContext的minimize
         if (isProductionLikeMode(compiler.options)) {
@@ -611,6 +614,8 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordJsonRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordJsonRuntimeInfoDependency, new RecordJsonRuntimeInfoDependency.Template())
+
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -686,7 +691,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || (this.options.mode === 'ali' && this.options.enableAliRequireAsync),
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || this.options.mode === 'ali',
           partialCompile: this.options.partialCompile,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1002,17 +1007,20 @@ class MpxWebpackPlugin {
       })
 
       compilation.hooks.finishModules.tap('MpxWebpackPlugin', (modules) => {
-        // 移除extractor抽取后的空模块
-        for (const module of modules) {
-          if (module.buildInfo.isEmpty) {
-            for (const connection of moduleGraph.getIncomingConnections(module)) {
-              if (connection.dependency.type === 'mpx cjs extract') {
-                connection.weak = true
-                connection.dependency.weak = true
+        // 移除extractor抽取后的空模块，只有生产模式且optimizeSize设置为true时开启
+        if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
+          for (const module of modules) {
+            if (module.buildInfo.isEmpty) {
+              for (const connection of moduleGraph.getIncomingConnections(module)) {
+                if (connection.dependency.type === 'mpx cjs extract') {
+                  connection.weak = true
+                  connection.dependency.weak = true
+                }
               }
             }
           }
         }
+
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
@@ -1167,7 +1175,7 @@ class MpxWebpackPlugin {
 
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
-          args.push(expr.range)
+          args.unshift(expr.range)
 
           const dep = new DynamicEntryDependency(...args)
           parser.state.current.addPresentationalDependency(dep)
@@ -1192,7 +1200,7 @@ class MpxWebpackPlugin {
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
-              // wx、ali(需开启enableAliRequireAsync)和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
+              // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (mpx.mode === 'web') {
                   const depBlock = new AsyncDependenciesBlock(
@@ -1207,7 +1215,7 @@ class MpxWebpackPlugin {
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
                 } else {
-                  const dep = new DynamicEntryDependency(request, 'export', '', tarRoot, '', context, range, {
+                  const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isRequireAsync: true,
                     retryRequireAsync: !!this.options.retryRequireAsync
                   })

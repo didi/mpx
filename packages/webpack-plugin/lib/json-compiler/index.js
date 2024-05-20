@@ -16,6 +16,7 @@ const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRunti
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
+const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -477,11 +478,11 @@ module.exports = function (content) {
         }
         const tarRoot = subPackage.tarRoot || subPackage.root || ''
         const srcRoot = subPackage.srcRoot || subPackage.root || ''
-        if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
+        if (!tarRoot) return callback()
 
         context = path.join(context, srcRoot)
         const otherConfig = getOtherConfig(subPackage)
-        subPackagesCfg[tarRoot] = {
+        subPackagesCfg[tarRoot] = subPackagesCfg[tarRoot] || {
           root: tarRoot,
           pages: []
         }
@@ -567,14 +568,23 @@ module.exports = function (content) {
     }
 
     const processCustomTabBar = (tabBar, context, callback) => {
-      if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err, entry) => {
+      const outputCustomKey = config[mode].tabBar.customKey
+      if (tabBar && tabBar[outputCustomKey]) {
+        const srcCustomKey = config[srcMode].tabBar.customKey
+        const srcPath = resolveTabBarPath(srcCustomKey)
+        const outputPath = resolveTabBarPath(outputCustomKey)
+        const dynamicEntryExtraOptions = {
+          // replace with true for custom-tab-bar
+          replaceContent: 'true'
+        }
+
+        processComponent(`./${srcPath}`, context, { outputPath, extraOptions: dynamicEntryExtraOptions }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
-            delete tabBar.custom
+            delete tabBar[srcCustomKey]
             return callback()
           }
           if (err) return callback(err)
-          tabBar.custom = entry // hack for javascript parser call hook.
+          tabBar[outputCustomKey] = entry // hack for javascript parser call hook.
           callback()
         })
       } else {
