@@ -1882,10 +1882,9 @@ function processText (el, meta) {
 
 // RN中文字需被Text包裹
 function processWrapTextReact (el, meta) {
-  if (el.parent.tag !== 'mpx-text') {
-    const wrapper = createASTElement('mpx-text')
-    wrapper.isBuiltIn = true
-    processBuiltInComponents(wrapper, meta)
+  const parentTag = el.parent.tag
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+    const wrapper = createASTElement('Text')
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
   }
