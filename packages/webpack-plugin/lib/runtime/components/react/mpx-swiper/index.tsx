@@ -1,7 +1,8 @@
-import React, { useRef, forwardRef, useImperativeHandle } from 'react'
+import React, { forwardRef } from 'react'
 import Carouse from './carouse'
 import { SwiperProps } from './type'
 import useInnerTouchable from '../getInnerListeners'
+import useNodesRef from '../../../useNodesRef'
 
 /**
  * ✔ indicator-dots
@@ -20,9 +21,7 @@ import useInnerTouchable from '../getInnerListeners'
  */
 const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
   const { children } = props
-  const SwiperRef = useRef<Carouse>(null);
   const swiperProp = {
-    ref: SwiperRef,
     circular: props.circular,
     index: props.current,
     autoplay: props.autoplay,
@@ -33,24 +32,18 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     activeDotColor: props['indicator-active-color'] || '#000000',
     horizontal: props.vertical !== undefined ? !props.vertical : true,
     style: props.style,
-    previousMargin: props['previous-margin'],
-    nextMargin: props['next-margin'],
+    previousMargin: props['previous-margin'] ? parseInt(props['previous-margin']) : 0,
+    nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
     bindchange: props.bindchange
   }
-  useImperativeHandle(ref, () => {
-    return {
-      type: 'swiper',
-      context: {
-        ...props
-      },
-      nodeRef: SwiperRef.current
-    }
+  const { nodeRef } = useNodesRef(props, ref, {
   })
   const innerTouchable = useInnerTouchable({
     ...props
   });
   return (
       <Carouse
+        ref={nodeRef}
         {...swiperProp}
         {...innerTouchable}>
         {children}

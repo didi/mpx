@@ -9,7 +9,8 @@ import * as React from 'react'
 import { useImperativeHandle } from 'react'
 // @ts-ignore
 import useInnerTouchable from './getInnerListeners';
-
+// @ts-ignore
+import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 interface _TextProps extends TextProps {
   style?: any;
@@ -20,12 +21,11 @@ interface _TextProps extends TextProps {
   useInherit?: boolean;
 }
 
-
 const DEFAULT_STYLE = {
   fontSize: 16
 }
 
-const _Text: React.ForwardRefExoticComponent<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>) => {
+const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>) => {
   const {
     style,
     children,
@@ -35,19 +35,15 @@ const _Text: React.ForwardRefExoticComponent<_TextProps & React.RefAttributes<an
     ...otherProps } = props
     const innerTouchable = useInnerTouchable(props);
 
-    useImperativeHandle(ref, () => {
-      return {
-        // todo
-      }
-    }, [])
-    // 1. useImperativehandle //
-    // 2. data-set
+    const { nodeRef } = useNodesRef(props, ref, {
+      defaultStyle: DEFAULT_STYLE
+    })
     return (
       <Text
         style={[ !useInherit && DEFAULT_STYLE, style ]}
-        ref={ref}
-        {...{...otherProps, ...innerTouchable}}
+        ref={nodeRef}
         selectable={!!selectable || !!userSelect}
+        {...{...otherProps, ...innerTouchable}}
       >
         {children}
       </Text>
@@ -57,5 +53,3 @@ const _Text: React.ForwardRefExoticComponent<_TextProps & React.RefAttributes<an
 _Text.displayName = '_Text'
 
 export default _Text
-
-
