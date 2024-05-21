@@ -80,17 +80,17 @@ module.exports = function (raw) {
     }
   }
 
+  const result = compiler.serialize(ast)
+
+  if (isNative) {
+    return result
+  }
+
   let resultSource = ''
 
   for (const module in meta.wxsModuleMap) {
     const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
-  }
-
-  const result = compiler.serialize(ast)
-
-  if (isNative) {
-    return result
   }
 
   resultSource += `
