@@ -40,10 +40,10 @@ function getDefaultStyle(style: ViewStyle = {}) {
 }
 
 function getMergeStyle(style: Array<ExtendedViewStyle> = []):ExtendedViewStyle {
-  const mergeStyle: ExtendedViewStyle = Object.assign({}, ...style)
+  const mergedStyle: ExtendedViewStyle = Object.assign({}, ...style)
   return {
-    ...getDefaultStyle(mergeStyle),
-    ...mergeStyle
+    ...getDefaultStyle(mergedStyle),
+    ...mergedStyle
   }
 }
 
