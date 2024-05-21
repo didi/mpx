@@ -12,7 +12,7 @@ import useInnerTouchable from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { extracteTextStyle, parseBgUrl, hasTextChild, hasElementType } from './utils'
+import { extractTextStlye, parseUrl, hasElementType } from './utils'
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage: string
@@ -47,6 +47,17 @@ function getMergeStyle(style: Array<ExtendedViewStyle> = []):ExtendedViewStyle {
   }
 }
 
+const hasTextChild = (children: React.ReactElement<any>) => {
+  let hasText = true
+
+  React.Children.forEach(children, (child) => {
+    if (!hasElementType(child, 'mpxText') || !hasElementType(child, 'Text')) {
+      hasText = false
+    }
+  })
+
+  return hasText
+}
 
 const processTextChildren = (children: React.ReactElement, textStyle:ViewStyle =  {}) => {
   return React.Children.map(children, (child) => {
@@ -61,13 +72,13 @@ const elementInheritChildren = (children: React.ReactElement, style:ViewStyle = 
   let textStyle = null
 
   if (hasElementType(children, 'mpxText')) {
-    textStyle = extracteTextStyle(style)
+    textStyle = extractTextStlye(style)
     return React.cloneElement(children, {
       ...children.props,
       style: [textStyle, children.props.style]
     })
   }else if (hasElementType(children, 'Text')) {
-    textStyle = extracteTextStyle(style)
+    textStyle = extractTextStlye(style)
     return React.cloneElement(children, {
       style: textStyle
     })
@@ -79,9 +90,9 @@ const elementInheritChildren = (children: React.ReactElement, style:ViewStyle = 
 const wrapperTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
   let textStyle = null
 
-  const hasText = hasTextChild(children, 'mpxText')
+  const hasText = hasTextChild(children)
   if (hasText) {
-    textStyle = extracteTextStyle(style)
+    textStyle = extractTextStlye(style)
   }
 
   return hasText ? <Text style={textStyle}> {processTextChildren(children, textStyle)} </Text> : children
@@ -183,7 +194,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 
 
   const image = React.useMemo(() => {
-    const image = parseBgUrl(finalStyle.backgroundImage)
+    const image = parseUrl(finalStyle.backgroundImage)
     return image
   }, [style])
 

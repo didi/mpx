@@ -18,7 +18,7 @@ export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
  * @param style 
  * @returns 
  */
-export const extracteTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
+export const extractTextStlye = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
   return Object.entries(StyleSheet.flatten(style)).reduce((textStyle, [key, value]) => {
     TEXT_STYLE_REGEX.test(key) && Object.assign(textStyle, { [key]: value })
     return textStyle
@@ -61,25 +61,12 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
   }, {})
 }
 
-export const parseBgUrl = (cssUrl: string = '') => {
+export const parseUrl = (cssUrl: string = '') => {
   if (!cssUrl) return 
 
-  const urlRegex = /url\(["']?(.*?)["']?\)/
-  const match = cssUrl.match(urlRegex)
+  const match = cssUrl.match(URL_REGEX)
    
   return match?.[1]
-}
-
-export const hasTextChild = (children: ReactElement<any>, type: string) => {
-  let hasText = true
-
-  Children.forEach(children, (child) => {
-    if (!hasElementType(child, type)) {
-      hasText = false
-    }
-  })
-
-  return hasText
 }
 
 export const hasElementType = (element: ReactElement<any>, type: string) => {
