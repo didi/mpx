@@ -62,7 +62,7 @@ const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) =>
         ...children.props,
         style: [textStyle, children.props.style]
       })
-    } if (hasElementType(children, 'Text')) {
+    } else if (hasElementType(children, 'Text')) {
       textStyle = extracteTextStyle(style)
       return React.cloneElement(children, {
         style: textStyle
