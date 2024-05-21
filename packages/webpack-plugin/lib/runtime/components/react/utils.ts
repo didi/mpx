@@ -64,15 +64,17 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
 export const parseBgUrl = (cssUrl: string = '') => {
   if (!cssUrl) return 
 
-  const match = cssUrl.match(URL_REGEX)
+  const urlRegex = /url\(["']?(.*?)["']?\)/
+  const match = cssUrl.match(urlRegex)
    
   return match?.[1]
 }
 
 export const hasTextChild = (children: ReactElement<any>, type: string) => {
   let hasText = true
+
   Children.forEach(children, (child) => {
-    if (hasElementType(child, type)) {
+    if (!hasElementType(child, type)) {
       hasText = false
     }
   })
@@ -83,4 +85,3 @@ export const hasTextChild = (children: ReactElement<any>, type: string) => {
 export const hasElementType = (element: ReactElement<any>, type: string) => {
   return (element.type as FunctionComponent)?.displayName === type
 }
-

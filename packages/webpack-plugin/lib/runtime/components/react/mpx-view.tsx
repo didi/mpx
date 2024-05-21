@@ -88,8 +88,8 @@ const wrapperTextChildren = (children: React.ReactElement, style:ViewStyle =  {}
 }
 
 const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  return !Array.isArray(children) || React.Children.only(children) ?
-    elementInheritChildren(children, style) : wrapperTextChildren(children, style)
+  return !Array.isArray(children) ? elementInheritChildren(children, style) : 
+    wrapperTextChildren(children, style)
 }
 
 
