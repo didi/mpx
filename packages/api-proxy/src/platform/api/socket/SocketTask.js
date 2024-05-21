@@ -84,9 +84,11 @@ class SocketTask {
     socket.onopen = event => {
       typeof this._openCb === 'function' && this._openCb(event)
     }
-    socket.onmessage = event => { typeof this._messageCb === 'function' && this._messageCb({
-      data: event.data
-    }) }
+    socket.onmessage = event => {
+      typeof this._messageCb === 'function' && this._messageCb({
+        data: event.data
+      })
+    }
     socket.onerror = event => {
       socketTasks.delete(this._socket)
       typeof this._errorCb === 'function' && this._errorCb(event)
