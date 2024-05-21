@@ -53,7 +53,6 @@ const getTouchEvent = (type = '', event = {}, props = {}, config) => {
 }
 
 export const extendEvent = (e = {}, extendObj = {}) => {
-  // e && e.persist && e.persist()
   Object.keys(extendObj).forEach(key => {
     Object.defineProperty(e, key, {
       value: extendObj[key],
@@ -157,8 +156,9 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     startTimer: null,
     needPress: true,
     mpxPressInfo: {},
-    props: {},
-    config: {}
+    props: { ...props, ...additionalProps },
+    config,
+    rawEventProps: []
   })
   useEffect(() => {
     ref.current = {
@@ -166,40 +166,73 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
       needPress: true,
       mpxPressInfo: {},
       props: { ...props, ...additionalProps },
-      config
+      config,
+      rawEventProps: []
     }
   })
 
-  const eventProps = [
-    'bindtap',
-    'bindlongpress',
-    'bindtouchstart',
-    'bindtouchmove',
-    'bindtouchend',
-    'bindtouchcancel',
-    'catchtap',
-    'catchlongpress',
-    'catchtouchstart',
-    'catchtouchmove',
-    'catchtouchend',
-    'catchtouchcancel',
-    'capture-bindtap',
-    'capture-bindlongpress',
-    'capture-bindtouchstart',
-    'capture-bindtouchmove',
-    'capture-bindtouchend',
-    'capture-bindtouchcancel',
-    'capture-catchtap',
-    'capture-catchlongpress',
-    'capture-catchtouchstart',
-    'capture-catchtouchmove',
-    'capture-catchtouchend',
-    'capture-catchtouchcancel'
+  // const eventProps = [
+  //   'bindtap',
+  //   'bindlongpress',
+  //   'bindtouchstart',
+  //   'bindtouchmove',
+  //   'bindtouchend',
+  //   'bindtouchcancel',
+  //   'catchtap',
+  //   'catchlongpress',
+  //   'catchtouchstart',
+  //   'catchtouchmove',
+  //   'catchtouchend',
+  //   'catchtouchcancel',
+  //   'capture-bindtap',
+  //   'capture-bindlongpress',
+  //   'capture-bindtouchstart',
+  //   'capture-bindtouchmove',
+  //   'capture-bindtouchend',
+  //   'capture-bindtouchcancel',
+  //   'capture-catchtap',
+  //   'capture-catchlongpress',
+  //   'capture-catchtouchstart',
+  //   'capture-catchtouchmove',
+  //   'capture-catchtouchend',
+  //   'capture-catchtouchcancel'
+  // ]
+  const eventPropsList = [
+    { bindtap: ['onTouchEnd'] },
+    { bindlongpress: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
+    { bindtouchstart: ['onTouchStart'] },
+    { bindtouchmove: ['onTouchMove'] },
+    { bindtouchend: ['onTouchEnd'] },
+    { bindtouchcancel: ['onTouchCancel'] },
+    { catchtap: ['onTouchEnd'] },
+    { catchlongpress: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
+    { catchtouchstart: ['onTouchStart'] },
+    { catchtouchmove: ['onTouchMove'] },
+    { catchtouchend: ['onTouchEnd'] },
+    { catchtouchcancel: ['onTouchCancel'] },
+    { 'capture-bindtap': ['onTouchStartCapture'] },
+    { 'capture-bindlongpress': ['onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture'] },
+    { 'capture-bindtouchstart': ['onTouchStartCapture'] },
+    { 'capture-bindtouchmove': ['onTouchMoveCapture'] },
+    { 'capture-bindtouchend': ['onTouchEndCapture'] },
+    { 'capture-bindtouchcancel': ['onTouchCancelCapture'] },
+    { 'capture-catchtap': ['onTouchStartCapture'] },
+    { 'capture-catchlongpress': ['onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture'] },
+    { 'capture-catchtouchstart': ['onTouchStartCapture'] },
+    { 'capture-catchtouchmove': ['onTouchMoveCapture'] },
+    { 'capture-catchtouchend': ['onTouchEndCapture'] },
+    { 'capture-catchtouchcancel': ['onTouchCancelCapture'] }
   ]
 
-  const hasEventProps = eventProps.some(prop => ref.current.props[prop])
+  eventPropsList.forEach(item => {
+    for (const key in item) {
+      if (ref.current.props[key]) {
+        ref.current.rawEventProps.push({ [key]: item[key] })
+      }
+    }
+  })
 
-  if (!hasEventProps || !config.touchable) {
+  if (!ref.current.rawEventProps.length || !config.touchable) {
     return omit(ref.current.props, removeProps)
   }
 
@@ -279,35 +312,74 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     handleEmitEvent(currentTouchEvent, 'touchcancel', e)
   }
 
-  const events = {
-    onTouchStart: (e) => {
-      handleTouchstart(e, 'bubble')
-    },
-    onTouchMove: (e) => {
-      handleTouchmove(e, 'bubble')
-    },
-    onTouchEnd: (e) => {
-      handleTouchend(e, 'bubble')
-    },
-    onTouchCancel: (e) => {
-      handleTouchcancel(e, 'bubble')
-    },
-    onTouchStartCapture: (e) => {
-      handleTouchstart(e, 'capture')
-    },
-    onTouchMoveCapture: (e) => {
-      handleTouchmove(e, 'capture')
-    },
-    onTouchEndCapture: (e) => {
-      handleTouchend(e, 'capture')
-    },
-    onTouchCancelCapture: (e) => {
-      handleTouchcancel(e, 'capture')
+  function mergeAndUnique (arrays) {
+    const result = []
+    const seen = new Set()
+
+    for (const array of arrays) {
+      for (const item of array) {
+        if (!seen.has(item)) {
+          seen.add(item)
+          result.push(item)
+        }
+      }
     }
+    return result
   }
+
+  function addTouchEvents () {
+    const eventProps = ref.current.rawEventProps.map(item => Object.values(item)[0])
+    const mergedEvents = mergeAndUnique(eventProps)
+    const events = {}
+    if (mergedEvents.includes('onTouchStart')) {
+      events.onTouchStart = (e) => {
+        handleTouchstart(e, 'bubble')
+      }
+    }
+    if (mergedEvents.includes('onTouchMove')) {
+      events.onTouchMove = (e) => {
+        handleTouchmove(e, 'bubble')
+      }
+    }
+    if (mergedEvents.includes('onTouchEnd')) {
+      events.onTouchEnd = (e) => {
+        handleTouchend(e, 'bubble')
+      }
+    }
+    if (mergedEvents.includes('onTouchCancel')) {
+      events.onTouchCancel = (e) => {
+        handleTouchcancel(e, 'bubble')
+      }
+    }
+    if (mergedEvents.includes('onTouchStartCapture')) {
+      events.onTouchStartCapture = (e) => {
+        handleTouchstart(e, 'capture')
+      }
+    }
+    if (mergedEvents.includes('onTouchMoveCapture')) {
+      events.onTouchMoveCapture = (e) => {
+        handleTouchmove(e, 'capture')
+      }
+    }
+    if (mergedEvents.includes('onTouchEndCapture')) {
+      events.onTouchEndCapture = (e) => {
+        handleTouchend(e, 'capture')
+      }
+    }
+    if (mergedEvents.includes('onTouchCancelCapture')) {
+      events.onTouchCancelCapture = (e) => {
+        handleTouchcancel(e, 'capture')
+      }
+    }
+    return events
+  }
+
+  const touchEvents = addTouchEvents()
+  const eventPropsKeys = ref.current.rawEventProps.map(item => Object.keys(item)[0])
+
   return {
-    ...events,
-    ...omit(ref.current.props, [...eventProps, ...removeProps])
+    ...touchEvents,
+    ...omit(ref.current.props, [...eventPropsKeys, ...removeProps])
   }
 }
 export default useInnerProps
