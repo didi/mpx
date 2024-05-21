@@ -119,47 +119,33 @@ module.exports = function getSpec ({ warn, error }) {
       borderBottomLeftRadius: ValueType.default
     }
   }
-
-  const formatBoxReviation = ({ prop, value }) => {
+  
+  const formatMargins = ({ prop, value }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
-    const suffix = ['Top', 'Right', 'Bottom', 'Left']
-
     // validate
     for (let i = 0; i < values.length; i++) {
       verifyValues({ prop, value: values[i], valueType: ValueType.number })
     }
-
     // format
+    let suffix = []
     switch (values.length) {
-      case 1:
-        return { prop, value }
+      // case 1:
       case 2:
-        return [{
-          prop: `${prop}Vertical`,
-          value: values[0]
-        }, {
-          prop: `${prop}Horizontal`,
-          value: values[1]
-        }]
+        suffix = ['Vertical', 'Horizontal']
+        break
       case 3:
-        return [{
-          prop: `${prop}Top`,
-          value: values[0]
-        }, {
-          prop: `${prop}Horizontal`,
-          value: values[1]
-        }, {
-          prop: `${prop}Bottom`,
-          value: values[2]
-        }]
+        suffix = ['Top', 'Horizontal', 'Bottom']
+        break
       case 4:
-        return suffix.map((key, index) => {
-          return {
-            prop: `${prop}${key}`,
-            value: values[index]
-          }
-        })
+        suffix = ['Top', 'Right', 'Bottom', 'Left']
+        break
     }
+    return values.map((value, index) => {
+      return {
+        prop: `${prop}${suffix[index] || ''}`,
+        value: value
+      }
+    })
   }
 
   const formatAbbreviation = ({ value, keyMap }) => {
@@ -279,10 +265,10 @@ module.exports = function getSpec ({ warn, error }) {
         ios: getFontVariant,
         android: getFontVariant
       },
-      {
+      { // margin padding 内外边距的处理
         test: /.*(margin|padding).*/,
-        ios: formatBoxReviation,
-        android: formatBoxReviation
+        ios: formatMargins,
+        android: formatMargins
       },
       // 通用的简写格式匹配
       {
