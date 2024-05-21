@@ -25,14 +25,6 @@ function getClassMap ({ content, filename, mode, srcMode }) {
     return needStringify ? JSON.stringify(value) : value
   }
 
-  function setFontSize (classMapValue) {
-    const lineHeight = classMapValue.lineHeight
-    const fontSize = classMapValue.fontSize
-    if (+lineHeight && !fontSize) {
-      classMapValue.fontSize = lineHeight * 16
-    }
-  }
-
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -45,18 +37,19 @@ function getClassMap ({ content, filename, mode, srcMode }) {
       console.error('[style compiler error]: ' + msg)
     }
   })
+
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
       if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value })
-      if (!newData.length) {
+      if (!newData) return
+      if (!Array.isArray(newData)) {
         newData = [newData]
       }
       newData.forEach(item => {
         prop = dash2hump(item.prop)
         value = item.value
-        if (!value) return
         if (typeof item.value === 'object') {
           for (const key in item.value) {
             item.value[key] = formatValue(item.value[key])
@@ -66,9 +59,6 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         }
         classMapValue[prop] = value
       })
-      setFontSize(classMapValue)
-      // 定义flex布局且未定义方向时设置默认row
-      // if (isFlex && !hasFlexDirection) classMapValue['flexDirection'] = formatValue('row')
     })
 
     const classMapKeys = []
@@ -85,7 +75,9 @@ function getClassMap ({ content, filename, mode, srcMode }) {
 
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
-        classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+        if (Object.keys(classMapValue).length) {
+          classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+        }
       })
     }
   })
