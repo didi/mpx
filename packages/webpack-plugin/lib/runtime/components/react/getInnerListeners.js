@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { omit } from './utils'
+import eventConfigList from './event.config'
 // import { PanResponder } from 'react-native'
 
 const getTouchEvent = (type = '', event = {}, props = {}, config) => {
@@ -158,7 +159,7 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     mpxPressInfo: {},
     props: { ...props, ...additionalProps },
     config,
-    rawEventProps: []
+    eventConfig: []
   })
   useEffect(() => {
     ref.current = {
@@ -167,72 +168,19 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
       mpxPressInfo: {},
       props: { ...props, ...additionalProps },
       config,
-      rawEventProps: []
+      eventConfig: []
     }
   })
 
-  // const eventProps = [
-  //   'bindtap',
-  //   'bindlongpress',
-  //   'bindtouchstart',
-  //   'bindtouchmove',
-  //   'bindtouchend',
-  //   'bindtouchcancel',
-  //   'catchtap',
-  //   'catchlongpress',
-  //   'catchtouchstart',
-  //   'catchtouchmove',
-  //   'catchtouchend',
-  //   'catchtouchcancel',
-  //   'capture-bindtap',
-  //   'capture-bindlongpress',
-  //   'capture-bindtouchstart',
-  //   'capture-bindtouchmove',
-  //   'capture-bindtouchend',
-  //   'capture-bindtouchcancel',
-  //   'capture-catchtap',
-  //   'capture-catchlongpress',
-  //   'capture-catchtouchstart',
-  //   'capture-catchtouchmove',
-  //   'capture-catchtouchend',
-  //   'capture-catchtouchcancel'
-  // ]
-  const eventPropsList = [
-    { bindtap: ['onTouchEnd'] },
-    { bindlongpress: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
-    { bindtouchstart: ['onTouchStart'] },
-    { bindtouchmove: ['onTouchMove'] },
-    { bindtouchend: ['onTouchEnd'] },
-    { bindtouchcancel: ['onTouchCancel'] },
-    { catchtap: ['onTouchEnd'] },
-    { catchlongpress: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
-    { catchtouchstart: ['onTouchStart'] },
-    { catchtouchmove: ['onTouchMove'] },
-    { catchtouchend: ['onTouchEnd'] },
-    { catchtouchcancel: ['onTouchCancel'] },
-    { 'capture-bindtap': ['onTouchStartCapture'] },
-    { 'capture-bindlongpress': ['onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture'] },
-    { 'capture-bindtouchstart': ['onTouchStartCapture'] },
-    { 'capture-bindtouchmove': ['onTouchMoveCapture'] },
-    { 'capture-bindtouchend': ['onTouchEndCapture'] },
-    { 'capture-bindtouchcancel': ['onTouchCancelCapture'] },
-    { 'capture-catchtap': ['onTouchStartCapture'] },
-    { 'capture-catchlongpress': ['onTouchStartCapture', 'onTouchMoveCapture', 'onTouchEndCapture'] },
-    { 'capture-catchtouchstart': ['onTouchStartCapture'] },
-    { 'capture-catchtouchmove': ['onTouchMoveCapture'] },
-    { 'capture-catchtouchend': ['onTouchEndCapture'] },
-    { 'capture-catchtouchcancel': ['onTouchCancelCapture'] }
-  ]
-
-  eventPropsList.forEach(item => {
+  eventConfigList.forEach(item => {
     for (const key in item) {
       if (ref.current.props[key]) {
-        ref.current.rawEventProps.push({ [key]: item[key] })
+        ref.current.eventConfig.push({ [key]: item[key] })
       }
     }
   })
 
-  if (!ref.current.rawEventProps.length || !config.touchable) {
+  if (!ref.current.eventConfig.length || !config.touchable) {
     return omit(ref.current.props, removeProps)
   }
 
@@ -312,61 +260,49 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     handleEmitEvent(currentTouchEvent, 'touchcancel', e)
   }
 
-  function mergeAndUnique (arrays) {
-    const result = []
-    const seen = new Set()
-
-    for (const array of arrays) {
-      for (const item of array) {
-        if (!seen.has(item)) {
-          seen.add(item)
-          result.push(item)
-        }
-      }
-    }
-    return result
-  }
-
   function addTouchEvents () {
-    const eventProps = ref.current.rawEventProps.map(item => Object.values(item)[0])
-    const mergedEvents = mergeAndUnique(eventProps)
+    const transformedEventKeys = []
+    ref.current.eventConfig.forEach(item => {
+      transformedEventKeys.push(...(Object.values(item)[0] || []))
+    })
+    const finalEventKeys = [...new Set(transformedEventKeys)]
     const events = {}
-    if (mergedEvents.includes('onTouchStart')) {
+    if (finalEventKeys.includes('onTouchStart')) {
       events.onTouchStart = (e) => {
         handleTouchstart(e, 'bubble')
       }
     }
-    if (mergedEvents.includes('onTouchMove')) {
+    if (finalEventKeys.includes('onTouchMove')) {
       events.onTouchMove = (e) => {
         handleTouchmove(e, 'bubble')
       }
     }
-    if (mergedEvents.includes('onTouchEnd')) {
+    if (finalEventKeys.includes('onTouchEnd')) {
       events.onTouchEnd = (e) => {
         handleTouchend(e, 'bubble')
       }
     }
-    if (mergedEvents.includes('onTouchCancel')) {
+    if (finalEventKeys.includes('onTouchCancel')) {
       events.onTouchCancel = (e) => {
         handleTouchcancel(e, 'bubble')
       }
     }
-    if (mergedEvents.includes('onTouchStartCapture')) {
+    if (finalEventKeys.includes('onTouchStartCapture')) {
       events.onTouchStartCapture = (e) => {
         handleTouchstart(e, 'capture')
       }
     }
-    if (mergedEvents.includes('onTouchMoveCapture')) {
+    if (finalEventKeys.includes('onTouchMoveCapture')) {
       events.onTouchMoveCapture = (e) => {
         handleTouchmove(e, 'capture')
       }
     }
-    if (mergedEvents.includes('onTouchEndCapture')) {
+    if (finalEventKeys.includes('onTouchEndCapture')) {
       events.onTouchEndCapture = (e) => {
         handleTouchend(e, 'capture')
       }
     }
-    if (mergedEvents.includes('onTouchCancelCapture')) {
+    if (finalEventKeys.includes('onTouchCancelCapture')) {
       events.onTouchCancelCapture = (e) => {
         handleTouchcancel(e, 'capture')
       }
@@ -375,11 +311,12 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
   }
 
   const touchEvents = addTouchEvents()
-  const eventPropsKeys = ref.current.rawEventProps.map(item => Object.keys(item)[0])
+
+  const rawEventKeys = ref.current.eventConfig.map(item => Object.keys(item)[0])
 
   return {
     ...touchEvents,
-    ...omit(ref.current.props, [...eventPropsKeys, ...removeProps])
+    ...omit(ref.current.props, [...rawEventKeys, ...removeProps])
   }
 }
 export default useInnerProps
