@@ -7,19 +7,18 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(box-sizing|white-space|text-overflow)$/ // box-sizing|white-space|text-overflow 替换用法待确认
+  // RN 仅支持backgroundColor，不支持其他背景相关的属性：/^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
+  // Todo background-image的处理
+  const unsupportedPropExp = /^(((?!(-color)).)*background((?!(-color)).)*|box-sizing|white-space|text-overflow)$/
   // React Native 下 android 不支持的 CSS property
-  const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color)$/
+  const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   // React Native IOS 不支持的 CSS property
   // const unsupportedPropIos = /^()$/
-  // property background 的校验  包含background且不包含background-color
-  const bgSuppotedExp = /^((?!(-color)).)*background((?!(-color)).)*$/
   const unsupportedPropError = ({ prop, platform }) => {
-    const content = `Property [${prop}] is not supported in React Native ${platform} environment!`
-    error(content)
+    error(`Property [${prop}] is not supported in React Native ${platform} environment!`)
   }
 
-  // react 某些属性仅支持部分枚举值
+  // React 某些属性仅支持部分枚举值
   const SUPPORTED_PROP_VAL_ARR = {
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
@@ -42,11 +41,21 @@ module.exports = function getSpec ({ warn, error }) {
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
   const unsupportedValueError = ({ prop, value }) => {
-    if (isIllegalValue({ prop, value })) {
-      const content = `Property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, the value [${value}] does not support!`
-      error(content)
-    }
+    error(`Property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, the value [${value}] does not support!`)
   }
+
+  // 过滤的不合法的属性
+  const delRule = ({ prop, value, platform }) => {
+    if (unsupportedPropExp.test(prop)) {
+      unsupportedPropError(({ prop, platform }))
+    }
+    if (isIllegalValue({ prop, value })) {
+      unsupportedValueError({ prop, value })
+    }
+    return false
+  }
+
+  // color & number 值校验
   const ValueType = {
     number: 'number',
     color: 'color',
@@ -56,17 +65,15 @@ module.exports = function getSpec ({ warn, error }) {
   const numberRegExp = /^\s*(\d+(\.\d+)?)(rpx|px|%)?\s*$/
   // RN 不支持的颜色格式
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
-
   const verifyValues = ({ prop, value, valueType }) => {
     // 校验 value 枚举 是否支持
-    unsupportedValueError({ prop: hump2dash(prop), value })
     switch (valueType) {
       case ValueType.color:
-        (numberRegExp.test(value)) && error(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
-        colorRegExp.test(value) && error('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
+        (numberRegExp.test(value)) && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
+        colorRegExp.test(value) && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
         return value
       case ValueType.number:
-        (!numberRegExp.test(value)) && error(`React Native property [${prop}] unit only supports [rpx,px,%]`)
+        (!numberRegExp.test(value)) && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
         return value
       default:
         return value
@@ -165,8 +172,14 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length && idx < props.length) {
       const prop = props[idx]
       const valueType = keyMap[prop]
+      const dashProp = hump2dash(prop)
+      // 校验 value 类型
       const value = verifyValues({ prop, value: values[idx], valueType })
-      if (prop.includes('.')) { // 多个属性值的prop
+      if (isIllegalValue({ prop: dashProp, value })) {
+        // 过滤不支持 value
+        unsupportedValueError({ prop: dashProp, value })
+      } else if (prop.includes('.')) {
+        // 多个属性值的prop
         const [main, sub] = prop.split('.')
         const cssData = cssMap.find(item => item.prop === main)
         if (cssData) { // 设置过
@@ -179,7 +192,8 @@ module.exports = function getSpec ({ warn, error }) {
             }
           })
         }
-      } else { // 单个值的属性
+      } else {
+        // 单个值的属性
         cssMap.push({
           prop,
           value
@@ -195,6 +209,20 @@ module.exports = function getSpec ({ warn, error }) {
     return formatAbbreviation({ prop, value, keyMap })
   }
 
+  // 简写过滤安卓不支持的类型
+  const getAbbreviationAndroid = ({ prop, value }) => {
+    const cssMap = getAbbreviation({ prop, value })
+    // android 不支持的 shadowOffset shadowOpacity shadowRadius textDecorationStyle 和 textDecorationStyle
+    return cssMap.filter(({ prop }) => { // 不支持的 prop 提示 & 过滤不支持的 prop
+      const dashProp = hump2dash(prop)
+      if (unsupportedPropAndroid.test(dashProp)) {
+        unsupportedPropError({ prop: dashProp, platform: Platform.android })
+        return false
+      }
+      return true
+    })
+  }
+
   // 统一校验 value type 值类型
   const checkCommonValue = (valueType) => ({ prop, value }) => {
     verifyValues({ prop, value, valueType })
@@ -206,58 +234,38 @@ module.exports = function getSpec ({ warn, error }) {
     }
     prop = 'font-variant'
     // 校验枚举值
-    unsupportedValueError({ prop, value }) // font-variant-caps font-variant-numeric
+    if (isIllegalValue({ prop, value })) {
+      unsupportedValueError({ prop, value })
+      return false
+    }
     return {
       prop,
       value
     }
   }
 
-  // // 需要过滤的属性返回value=false
-  // const needDelProps = ({ prop }) => {
-  //   return { prop, value: false }
-  // }
-
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
-      { // RN不支持的背景相关的属性(rn仅支持backgroundColor，所以这里单独匹配一下不支持的背景相关的样式来提示开发者)
-        test: bgSuppotedExp,
-        ios: unsupportedPropError,
-        android: unsupportedPropError
-      },
       { // RN 不支持的 CSS property
         test: unsupportedPropExp,
-        ios: unsupportedPropError,
-        android: unsupportedPropError
+        ios: delRule,
+        android: delRule
       },
       { // RN 支持的 CSS property value
         test: propValExp,
-        ios: unsupportedValueError,
-        android: unsupportedValueError
+        ios: delRule,
+        android: delRule
       },
       {
         test: 'box-shadow',
         ios: getAbbreviation,
-        // Todo android 阴影转换要单独写
-        android ({ prop, value }) {
-          return { prop, value }
-        }
+        android: getAbbreviationAndroid
       },
       {
         test: 'text-decoration',
         ios: getAbbreviation,
-        android ({ prop, value }) {
-          const cssMap = getAbbreviation({ prop, value })
-          // cssMap= [{ textDecorationLine: 'underline' },{ textDecorationStyle: dotted },{ textDecorationStyle: '#f00'}]
-          // Todo 这里处理 android 不支持的 textDecorationStyle 和 textDecorationStyle
-          // 可以找找有无对应的效果的 prop
-          // 没有的话可以 配置一个 android 不支持的  prop 编译报错提示
-          cssMap.forEach(({ prop, value }) => {
-            unsupportedPropAndroid.test(hump2dash(prop)) && unsupportedPropError({ prop, platform: Platform.android })
-          })
-          return cssMap
-        }
+        android: getAbbreviationAndroid
       },
       {
         test: /.*font-variant.*/,
@@ -269,12 +277,6 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatBoxReviation,
         android: formatBoxReviation
       },
-      // // 需要过滤的属性返回value=false
-      // {
-      //   test: /^-(webkit|moz|ms|o)-/,
-      //   ios: needDelProps,
-      //   android: needDelProps
-      // },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
