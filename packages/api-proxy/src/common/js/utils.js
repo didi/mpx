@@ -14,6 +14,10 @@
  */
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
+function type (n) {
+  return Object.prototype.toString.call(n).slice(8, -1)
+}
+
 function hasOwn (obj, key) {
   return hasOwnProperty.call(obj, key)
 }
@@ -97,6 +101,11 @@ function makeMap (arr) {
   }, {})
 }
 
+function nonsupportResRN (prop) {
+  warn(`${prop} property is only valid within wechat`)
+  return null
+}
+
 const isBrowser = typeof window !== 'undefined'
 
 function throwSSRWarning (info) {
@@ -113,5 +122,7 @@ export {
   makeMap,
   isBrowser,
   hasOwn,
-  throwSSRWarning
+  throwSSRWarning,
+  type,
+  nonsupportResRN
 }

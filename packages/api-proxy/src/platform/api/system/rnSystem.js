@@ -1,7 +1,7 @@
 import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { webHandleSuccess, webHandleFail } from '../../../common/js/web'
+import { webHandleSuccess, webHandleFail, nonsupportResRN } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
@@ -11,7 +11,8 @@ const getWindowInfo = function () {
     windowWidth: dimensionsWindow.width,
     windowHeight: dimensionsWindow.height,
     screenWidth: dimensionsScreen.width,
-    screenHeight: dimensionsScreen.height
+    screenHeight: dimensionsScreen.height,
+    screenTop: null
   }
 }
 
@@ -22,6 +23,12 @@ const getSystemInfoSync = function () {
   let { top = 0, bottom = 0 } = initialWindowMetrics?.insets || {}
   if (Platform.OS === 'android') {
     top = StatusBar.currentHeight || 0
+  }
+  const iosRes = {}
+  if (Platform.OS === 'ios') {
+    iosRes.notificationAlertAuthorized = nonsupportResRN('notificationAlertAuthorized')
+    iosRes.notificationBadgeAuthorized = nonsupportResRN('notificationBadgeAuthorized')
+    iosRes.notificationSoundAuthorized = nonsupportResRN('notificationSoundAuthorized')
   }
 
   try {
@@ -43,9 +50,28 @@ const getSystemInfoSync = function () {
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
+    statusBarHeight: top,
     fontSizeSetting: PixelRatio.getFontScale(),
     safeArea,
-    ...windowInfo
+    language: nonsupportResRN('language'),
+    version: nonsupportResRN('version'),
+    SDKVersion: nonsupportResRN('SDKVersion'),
+    benchmarkLevel: nonsupportResRN('benchmarkLevel'),
+    albumAuthorized: nonsupportResRN('albumAuthorized'),
+    cameraAuthorized: nonsupportResRN('cameraAuthorized'),
+    locationAuthorized: nonsupportResRN('locationAuthorized'),
+    microphoneAuthorized: nonsupportResRN('microphoneAuthorized'),
+    notificationAuthorized: nonsupportResRN('notificationAuthorized'),
+    phoneCalendarAuthorized: nonsupportResRN('phoneCalendarAuthorized'),
+    bluetoothEnabled: null,
+    locationEnabled: null,
+    wifiEnabled: null,
+    locationReducedAccuracy: null,
+    theme: null,
+    host: nonsupportResRN('host'),
+    enableDebug: nonsupportResRN('enableDebug'),
+    ...windowInfo,
+    ...iosRes
   }
 }
 
@@ -71,6 +97,9 @@ const getDeviceInfo = function () {
   if (Platform.OS === 'android') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     androidInfo.deviceAbi = deviceAbi[0] || null
+    androidInfo.abi = nonsupportResRN('abi')
+    androidInfo.benchmarkLevel = nonsupportResRN('benchmarkLevel')
+    androidInfo.cpuType = null
   }
   return {
     brand: DeviceInfo.getBrand(),
