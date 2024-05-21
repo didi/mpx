@@ -384,7 +384,14 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       'refresher-default-style',
       'refresher-background',
       'children',
-      'enhanced'
+      'enhanced',
+      'binddragstart',
+      'binddragging',
+      'binddragend',
+      'bindscroll',
+      'bindscrolltoupper',
+      'bindscrolltolower',
+      'bindrefresherrefresh'
   ], { layoutRef, touchable: true });
 
   const refreshColor = {
@@ -409,6 +416,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   );
 })
 
-_ScrollView.displayName = 'MpxScrollView';
+_ScrollView.displayName = 'mpx-scroll-view';
 
 export default _ScrollView
