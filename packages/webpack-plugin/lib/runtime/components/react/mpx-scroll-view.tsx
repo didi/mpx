@@ -92,7 +92,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     enhanced,
     bounces,
     'scroll-x': scrollX,
-    'scroll-y': scrollY,
     'enable-back-to-top': enableBackToTop,
     'show-scrollbar': showScrollbar,
     'paging-enabled': pagingEnabled,
@@ -296,48 +295,54 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   }
 
   function onScrollTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
-    const { binddragstart, bindtouchstart } = props;
-    bindtouchstart && bindtouchstart(e);
-    binddragstart &&
-      binddragstart(
-        getCustomEvent('dragstart', e, {
-          detail: {
-            scrollLeft: scrollOptions.current.scrollLeft || 0,
-            scrollTop: scrollOptions.current.scrollTop || 0,
-          },
-          layoutRef
-        }, props)
-      );
+    const { binddragstart, bindtouchstart, enhanced } = props;
+    bindtouchstart && bindtouchstart(e)
+    if (enhanced) {
+      binddragstart &&
+        binddragstart(
+          getCustomEvent('dragstart', e, {
+            detail: {
+              scrollLeft: scrollOptions.current.scrollLeft || 0,
+              scrollTop: scrollOptions.current.scrollTop || 0,
+            },
+            layoutRef
+          }, props)
+        )
+    }
   }
 
   function onScrollTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
-    const { binddragging, bindtouchmove } = props;
-    bindtouchmove && bindtouchmove(e);
-    binddragging &&
-      binddragging(
-        getCustomEvent('dragging', e, {
-          detail: {
-            scrollLeft: scrollOptions.current.scrollLeft || 0,
-            scrollTop: scrollOptions.current.scrollTop || 0,
-          },
-          layoutRef
-        }, props)
-      );
+    const { binddragging, bindtouchmove, enhanced } = props;
+    bindtouchmove && bindtouchmove(e)
+    if (enhanced) {
+      binddragging &&
+        binddragging(
+          getCustomEvent('dragging', e, {
+            detail: {
+              scrollLeft: scrollOptions.current.scrollLeft || 0,
+              scrollTop: scrollOptions.current.scrollTop || 0,
+            },
+            layoutRef
+          }, props)
+        )
+    }
   }
 
   function onScrollTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
-    const { binddragend, bindtouchend } = props;
+    const { binddragend, bindtouchend, enhanced } = props;
     bindtouchend && bindtouchend(e);
-    binddragend &&
-      binddragend(
-        getCustomEvent('dragend', e, {
-          detail: {
-            scrollLeft: scrollOptions.current.scrollLeft || 0,
-            scrollTop: scrollOptions.current.scrollTop || 0,
-          },
-          layoutRef
-        }, props)
-      );
+    if (enhanced) {
+      binddragend &&
+        binddragend(
+          getCustomEvent('dragend', e, {
+            detail: {
+              scrollLeft: scrollOptions.current.scrollLeft || 0,
+              scrollTop: scrollOptions.current.scrollTop || 0,
+            },
+            layoutRef
+          }, props)
+        )
+    }
   }
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
@@ -346,7 +351,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: !!enableBackToTop,
     showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
-    showsVerticalScrollIndicator: !!(scrollY && showScrollbar),
+    showsVerticalScrollIndicator: !!(!scrollX && showScrollbar),
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
     onScroll: onScroll,
