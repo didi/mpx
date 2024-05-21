@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, Children, ReactElement, FunctionComponent } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -68,3 +68,19 @@ export const parseBgUrl = (cssUrl: string = '') => {
    
   return match?.[1]
 }
+
+export const hasTextChild = (children: ReactElement<any>, type: string) => {
+  let hasText = true
+  Children.forEach(children, (child) => {
+    if (hasElementType(child, type)) {
+      hasText = false
+    }
+  })
+
+  return hasText
+}
+
+export const hasElementType = (element: ReactElement<any>, type: string) => {
+  return (element.type as FunctionComponent)?.displayName === type
+}
+

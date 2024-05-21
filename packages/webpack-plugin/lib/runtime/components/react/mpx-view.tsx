@@ -12,7 +12,7 @@ import useInnerTouchable from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { extracteTextStyle, parseBgUrl } from './utils'
+import { extracteTextStyle, parseBgUrl, hasTextChild, hasElementType } from './utils'
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ViewStyle>;
@@ -43,37 +43,26 @@ function getMergeStyle(style: Array<ViewStyle> = []) {
   }
 }
 
-const hasTextChild = (children, type) => {
-  let hasText = true
-  React.Children.forEach(children, (child) => {
-    if (child.type?.displayName !== type) {
-      hasText = false
-    }
-  })
-
-  return hasText
-}
-
-const processTextChildren = (children, textStyle) => {
+const processTextChildren = (children: React.ReactElement, textStyle:ViewStyle =  {}) => {
   return React.Children.map(children, (child) => {
     return React.cloneElement(child, {
-      ...child.props,
+      ...(child.props),
       style: [textStyle, child.props.style]
     })
   })
 }
 
-const processChildren = (children, style) => {
+const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
   let textStyle = null
 
   if (!Array.isArray(children) || React.Children.only(children)) {
-    if (children.type?.displayName === 'mpxText') {
+    if (hasElementType(children, 'mpxText')) {
       textStyle = extracteTextStyle(style)
       return React.cloneElement(children, {
         ...children.props,
         style: [textStyle, children.props.style]
       })
-    } if (children.type?.displayName === 'Text') {
+    } if (hasElementType(children, 'Text')) {
       textStyle = extracteTextStyle(style)
       return React.cloneElement(children, {
         style: textStyle
@@ -184,5 +173,6 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 _View.displayName = 'mpxView'
 
 export default _View
+
 
 
