@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
+const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
 export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = Object.assign({}, obj)
@@ -58,4 +59,12 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
     const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
     return Object.assign(styleObj, { [key]: v.trim() })
   }, {})
+}
+
+export const parseBgUrl = (cssUrl: string = '') => {
+  if (!cssUrl) return 
+
+  const match = cssUrl.match(URL_REGEX)
+   
+  return match?.[1]
 }
