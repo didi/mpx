@@ -1,21 +1,19 @@
 const { hump2dash } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
-  const Platform = {
-    ios: 'ios',
-    android: 'android'
-  }
-
   // React Native 双端都不支持的 CSS property
   // RN 仅支持backgroundColor，不支持其他背景相关的属性：/^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
   // Todo background-image的处理
   const unsupportedPropExp = /^(((?!(-color)).)*background((?!(-color)).)*|box-sizing|white-space|text-overflow)$/
-  // React Native 下 android 不支持的 CSS property
   const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
-  // React Native IOS 不支持的 CSS property
-  // const unsupportedPropIos = /^()$/
-  const unsupportedPropError = ({ prop, platform }) => {
-    error(`Property [${prop}] is not supported in React Native ${platform} environment!`)
+  const unsupportedPropMode = {
+    // React Native ios 不支持的 CSS property
+    ios: /^(vertical-align)$/,
+    // React Native android 不支持的 CSS property
+    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
+  }
+  const unsupportedPropError = ({ prop, mode }) => {
+    error(`Property [${prop}] is not supported in React Native ${mode} environment!`)
   }
 
   // React 某些属性仅支持部分枚举值
@@ -45,14 +43,15 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // 过滤的不合法的属性
-  const delRule = ({ prop, value, platform }) => {
-    if (unsupportedPropExp.test(prop)) {
-      unsupportedPropError(({ prop, platform }))
+  const delRule = ({ prop, value }, { mode }) => {
+    if (unsupportedPropExp.test(prop) || unsupportedPropMode[mode].test(prop)) {
+      unsupportedPropError({ prop, mode })
+      return false
     }
     if (isIllegalValue({ prop, value })) {
       unsupportedValueError({ prop, value })
+      return false
     }
-    return false
   }
 
   // color & number 值校验
@@ -210,13 +209,13 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // 简写过滤安卓不支持的类型
-  const getAbbreviationAndroid = ({ prop, value }) => {
+  const getAbbreviationAndroid = ({ prop, value }, { mode }) => {
     const cssMap = getAbbreviation({ prop, value })
     // android 不支持的 shadowOffset shadowOpacity shadowRadius textDecorationStyle 和 textDecorationStyle
     return cssMap.filter(({ prop }) => { // 不支持的 prop 提示 & 过滤不支持的 prop
       const dashProp = hump2dash(prop)
       if (unsupportedPropAndroid.test(dashProp)) {
-        unsupportedPropError({ prop: dashProp, platform: Platform.android })
+        unsupportedPropError({ prop: dashProp, mode })
         return false
       }
       return true
@@ -251,6 +250,14 @@ module.exports = function getSpec ({ warn, error }) {
         test: unsupportedPropExp,
         ios: delRule,
         android: delRule
+      },
+      { // React Native android 不支持的 CSS property
+        test: unsupportedPropMode.android,
+        android: delRule
+      },
+      { // React Native ios 不支持的 CSS property
+        test: unsupportedPropMode.ios,
+        ios: delRule
       },
       { // RN 支持的 CSS property value
         test: propValExp,
