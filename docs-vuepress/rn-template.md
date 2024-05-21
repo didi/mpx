@@ -78,9 +78,9 @@
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
-| binddragstart| 滑动开始事件|
-| binddragging| 滑动事件 |
-| binddragend| 滑动结束事件 |
+| binddragstart| 滑动开始事件，同时开启 enhanced 属性后生效|
+| binddragging| 滑动事件，同时开启 enhanced 属性后生效 |
+| binddragend| 滑动结束事件，同时开启 enhanced 属性后生效 |
 | bindscrolltoupper   | 滚动到顶部/左边触发 | 
 | bindscrolltolower   | 滚动到底部/右边触发 | 
 | bindscroll          | 滚动时触发         | 
