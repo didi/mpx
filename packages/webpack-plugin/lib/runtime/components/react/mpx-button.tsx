@@ -47,7 +47,7 @@ import {
   Animated,
   Easing,
 } from 'react-native'
-import { extracteTextStyle } from './utils'
+import { extractTextStlye } from './utils'
 import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
 
 export interface ButtonProps {
@@ -178,9 +178,9 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
-  const textStyle = extracteTextStyle(style)
+  const textStyle = extractTextStlye(style)
 
-  const textHoverStyle = applyHoverEffect ? extracteTextStyle(hoverStyle) : {}
+  const textHoverStyle = applyHoverEffect ? extractTextStlye(hoverStyle) : {}
 
   const { viewStyle: presetViewStyle, textStyle: presetTextStyle } = useMemo<{
     viewStyle: ViewStyle
