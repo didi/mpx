@@ -1,65 +1,42 @@
-const { getOptimizedComponentInfo } = require('@mpxjs/template-engine/dist/optimizer')
+const {
+  getOptimizedComponentInfo
+} = require('@mpxjs/template-engine/dist/optimizer')
 const mpxConfig = require('../config')
 
 function makeAttrsMap (attrKeys = []) {
-  return attrKeys.reduce((preVal, curVal) => Object.assign(preVal, { [curVal]: '' }), {})
+  return attrKeys.reduce(
+    (preVal, curVal) => Object.assign(preVal, { [curVal]: '' }),
+    {}
+  )
 }
 
-function setCustomEle (el, options, meta) {
-  const modeConfig = mpxConfig[options.mode]
-  const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
+module.exports = function setBaseWxml (el, options, meta) {
   const tag = el.tag
-  const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-
-  const eleAttrsMap = meta.runtimeInfo.customComponents
-  if (tag && !eleAttrsMap[tag]) {
-    eleAttrsMap[tag] = {}
-  }
-  Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
-}
-
-function setBaseEle (el, options, meta) {
-  const renderAttrsMap = {}
-  const rawTag = el.tag
-
   // 属性收集
   const modeConfig = mpxConfig[options.mode]
   const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
   const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
 
-  attrKeys.forEach(key => {
-    renderAttrsMap[key] = ''
-  })
-
-  const optimizedInfo = getOptimizedComponentInfo({
-    nodeType: rawTag,
-    attrs: renderAttrsMap
-  }, options.mode)
-
-  if (optimizedInfo) {
-    const { nodeType } = optimizedInfo
-    renderAttrsMap.rawTag = rawTag
-    el.tag = nodeType
+  if (!options.isCustomComponent) {
+    const optimizedInfo = getOptimizedComponentInfo(
+      {
+        nodeType: el.tag,
+        attrs: el.attrsMap
+      },
+      options.mode
+    )
+    if (optimizedInfo) {
+      el.tag = optimizedInfo.nodeType
+    }
   }
 
-  if (!meta.runtimeInfo.baseComponents[rawTag]) {
-    meta.runtimeInfo.baseComponents[rawTag] = {}
+  if (!meta.runtimeInfo.baseComponents[tag]) {
+    meta.runtimeInfo.baseComponents[tag] = {}
+  }
+  if (!meta.runtimeInfo.customComponents[tag]) {
+    meta.runtimeInfo.customComponents[tag] = {}
   }
 
-  Object.assign(meta.runtimeInfo.baseComponents[rawTag], renderAttrsMap)
-}
-
-module.exports = function setBaseWxml (el, options, meta) {
-  const set = options.isCustomComponent ? setCustomEle : setBaseEle
-  set(el, options, meta)
-
-  // const modeConfig = mpxConfig[options.mode]
-  // const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
-  // const tag = el.tag
-  // const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-  // const componentType = options.isCustomComponent ? 'customComponents' : 'baseComponents'
-  // if (!meta.rInfo[componentType][tag]) {
-  //   meta.rInfo[componentType][tag] = {}
-  // }
-  // Object.assign(meta.rInfo[componentType][tag], makeAttrsMap(attrKeys))
+  Object.assign(meta.runtimeInfo.customComponents[tag], makeAttrsMap(attrKeys))
+  Object.assign(meta.runtimeInfo.baseComponents[tag], makeAttrsMap(attrKeys))
 }
