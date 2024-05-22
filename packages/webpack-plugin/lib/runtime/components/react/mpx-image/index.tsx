@@ -58,7 +58,7 @@ export interface ImageProps {
 
 const DEFAULT_IMAGE_WIDTH = 320
 const DEFAULT_IMAGE_HEIGHT = 240
-const REMOTE_SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
+// const REMOTE_SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 
 const styls = StyleSheet.create({
   suspense: {
@@ -300,6 +300,6 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
   )
 })
 
-Image.displayName = '_Image'
+Image.displayName = 'mpx-image'
 
 export default Image

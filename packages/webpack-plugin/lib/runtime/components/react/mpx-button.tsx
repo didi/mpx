@@ -279,6 +279,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   )
 })
 
-Button.displayName = '_Button'
+Button.displayName = 'mpx-button'
 
 export default Button

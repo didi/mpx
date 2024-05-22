@@ -378,6 +378,6 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   )
 })
 
-Input.displayName = '_Input'
+Input.displayName = 'mpx-input'
 
 export default Input

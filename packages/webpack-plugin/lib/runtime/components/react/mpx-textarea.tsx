@@ -21,6 +21,6 @@ const Textarea = forwardRef<TextInput, TextareProps>((props, ref): React.JSX.Ele
   return <Input multiline confirm-type="next" bindblur={() => Keyboard.dismiss()} {...restProps} ref={ref} />
 })
 
-Textarea.displayName = '_Textarea'
+Textarea.displayName = 'mpx-textarea'
 
 export default Textarea
