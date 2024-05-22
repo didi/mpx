@@ -33,10 +33,8 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, { useEffect, useMemo, useRef, useState, ReactNode, useCallback, forwardRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState, ReactNode, forwardRef, SyntheticEvent } from 'react'
 import {
-  TouchableWithoutFeedback,
-  GestureResponderEvent,
   View,
   Text,
   StyleSheet,
@@ -47,7 +45,7 @@ import {
   Easing,
 } from 'react-native'
 import { extractTextStyle } from './utils'
-import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 export interface ButtonProps {
   size?: string
@@ -60,8 +58,10 @@ export interface ButtonProps {
   'hover-stay-time'?: number
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
-  bindtap?: (evt: GestureResponderEvent | unknown) => void
-  catchtap?: (evt: GestureResponderEvent | unknown) => void
+  bindtap?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
+  catchtap?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchstart?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchend?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
 }
 
 export type Type = 'default' | 'primary' | 'warn'
@@ -155,18 +155,18 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     'hover-stay-time': hoverStayTime = 70,
     style = [],
     children,
-    bindtap = () => {},
-    catchtap = () => {},
+    bindtap,
+    catchtap,
+    bindtouchstart,
+    bindtouchend,
   } = props
 
   const refs = useRef<{
-    touchStartTimer: ReturnType<typeof setTimeout> | undefined
-    touchEndTimer: ReturnType<typeof setTimeout> | undefined
-    isTouchEnd: boolean
+    hoverStartTimer: ReturnType<typeof setTimeout> | undefined
+    hoverStayTimer: ReturnType<typeof setTimeout> | undefined
   }>({
-    touchStartTimer: undefined,
-    touchEndTimer: undefined,
-    isTouchEnd: false,
+    hoverStartTimer: undefined,
+    hoverStayTimer: undefined,
   })
 
   const [isHover, setIsHover] = useState(false)
@@ -213,41 +213,43 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     }
   }, [type, plain, applyHoverEffect, loading, disabled, style])
 
-  const stopHover = useCallback(() => {
-    refs.current.touchEndTimer = setTimeout(() => {
+  const setStayTimer = () => {
+    clearTimeout(refs.current.hoverStayTimer)
+    refs.current.hoverStayTimer = setTimeout(() => {
       setIsHover(false)
-      clearTimeout(refs.current.touchEndTimer)
+      clearTimeout(refs.current.hoverStayTimer)
     }, hoverStayTime)
-  }, [hoverStayTime])
+  }
 
-  const onTouchStart = () => {
-    if (disabled) return
-    refs.current.isTouchEnd = false
-    refs.current.touchStartTimer = setTimeout(() => {
+  const setStartTimer = () => {
+    clearTimeout(refs.current.hoverStartTimer)
+    refs.current.hoverStartTimer = setTimeout(() => {
       setIsHover(true)
-      clearTimeout(refs.current.touchStartTimer)
+      clearTimeout(refs.current.hoverStartTimer)
     }, hoverStartTime)
   }
 
-  const onTouchEnd = () => {
+  const onTouchStart = (evt: SyntheticEvent<TouchEvent>) => {
+    bindtouchend && bindtouchend(evt)
     if (disabled) return
-    refs.current.isTouchEnd = true
-    stopHover()
+    setStartTimer()
   }
 
-  const onTap = (evt: GestureResponderEvent) => {
-    !disabled && bindtap(getCustomEvent('tap', evt, {}, props))
+  const onTouchEnd = (evt: SyntheticEvent<TouchEvent>) => {
+    bindtouchend && bindtouchend(evt)
+    if (disabled) return
+    setStayTimer()
   }
 
-  const catchTap = (evt: GestureResponderEvent) => {
-    !disabled && catchtap(getCustomEvent('tap', evt, {}, props))
+  const onTap = (evt: SyntheticEvent<TouchEvent>) => {
+    !disabled && bindtap && bindtap(getCustomEvent('tap', evt, {}, props))
   }
 
-  useEffect(() => {
-    isHover && refs.current.isTouchEnd && stopHover()
-  }, [isHover, stopHover])
+  const catchTap = (evt: SyntheticEvent<TouchEvent>) => {
+    !disabled && catchtap && catchtap(getCustomEvent('tap', evt, {}, props))
+  }
 
-  const innerTouchable = useInnerTouchable({
+  const innerTouchable = useInnerProps({
     ...props,
     bindtouchstart: onTouchStart,
     bindtouchend: onTouchEnd,
