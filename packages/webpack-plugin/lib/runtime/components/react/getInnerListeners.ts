@@ -1,9 +1,18 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { omit } from './utils'
 import eventConfigList from './event.config'
 // import { PanResponder } from 'react-native'
 
-const getTouchEvent = (type = '', event = {}, props = {}, config) => {
+type LayoutRef = React.MutableRefObject<any>
+
+type RNTouchEvent = React.TouchEvent<HTMLElement>
+
+const getTouchEvent = (
+  type: string = '', 
+  event: RNTouchEvent = {},
+  props: { id?: string; [key: string]: any } = {},
+  config: { layoutRef?: LayoutRef } = {}
+) => {
   const nativeEvent = event.nativeEvent
   const {
     timestamp,
@@ -25,7 +34,6 @@ const getTouchEvent = (type = '', event = {}, props = {}, config) => {
       offsetTop: layoutRef.current?.offsetTop || 0
     },
     detail: {
-      ...(event.detail || {}),
       x: pageX,
       y: pageY
     },
@@ -53,19 +61,7 @@ const getTouchEvent = (type = '', event = {}, props = {}, config) => {
   }
 }
 
-export const extendEvent = (e = {}, extendObj = {}) => {
-  Object.keys(extendObj).forEach(key => {
-    Object.defineProperty(e, key, {
-      value: extendObj[key],
-      enumerable: true,
-      configurable: true,
-      writable: true
-    })
-  })
-  return e
-}
-
-export const getDataSet = (props) => {
+export const getDataSet = (props: Record<string, any>): Record<string, any> => {
   const result = {}
 
   for (const key in props) {
@@ -78,20 +74,24 @@ export const getDataSet = (props) => {
   return result
 }
 
-export const getCustomEvent = (type, oe = {}, { detail = {}, layoutRef = {} }, props = {}) => {
-  return extendEvent(oe, {
-    type,
-    detail: {
-      ...(oe.detail || {}),
-      ...detail
-    },
-    target: {
-      id: props.id || '',
-      dataset: getDataSet(props),
-      offsetLeft: layoutRef.current?.offsetLeft || 0,
-      offsetTop: layoutRef.current?.offsetTop || 0
-    }
-  })
+export const getCustomEvent = (
+  type: string = '',
+  oe: Event,
+  { detail = {}, layoutRef = {} }: { detail?: CustomEventDetail; layoutRef?: LayoutRef },
+  props: { [key: string]: any } = {}
+) => {
+  return {
+    ...(oe || {}),
+      type,
+      detail,
+      target: {
+        id: props.id || '',
+        dataset: getDataSet(props),
+        offsetLeft: layoutRef.current?.offsetLeft || 0,
+        offsetTop: layoutRef.current?.offsetTop || 0
+      }
+
+  }
 }
 
 // const useInnerTouchable = props => {
@@ -152,8 +152,13 @@ export const getCustomEvent = (type, oe = {}, { detail = {}, layoutRef = {} }, p
 //   }
 // }
 
-const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], config = {}) => {
-  const ref = useRef({
+const useInnerProps = (
+  props: UseInnerPropsOptions['props'] = {},
+  additionalProps: UseInnerPropsOptions['additionalProps'] = {},
+  removeProps: UseInnerPropsOptions['removeProps'] = [],
+  config: UseInnerPropsOptions['config'] = {}
+) => {
+  const ref = useRef<InnerRef>({
     startTimer: null,
     needPress: true,
     mpxPressInfo: {},
@@ -184,7 +189,11 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     return omit(ref.current.props, removeProps)
   }
 
-  function handleEmitEvent (events, type, oe) {
+  function handleEmitEvent (
+    events: string[],
+    type: string,
+    oe: RNTouchEvent
+  ) {
     events.forEach(event => {
       if (ref.current.props[event]) {
         const match = /^(catch|capture-catch):?(.*?)(?:\.(.*))?$/.exec(event)
@@ -195,7 +204,7 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
       }
     })
   }
-  function handleTouchstart (e, type) {
+  function handleTouchstart(e: RNTouchEvent, type: 'bubble' | 'capture') {
     e.persist()
     const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
     const bubblePressEvent = ['catchlongpress', 'bindlongpress']
@@ -222,7 +231,7 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     }
   }
 
-  function handleTouchmove (e, type) {
+  function handleTouchmove(e: RNTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
     const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
     const tapDetailInfo = ref.current.mpxPressInfo.detail || {}
@@ -238,7 +247,7 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
   }
 
-  function handleTouchend (e, type) {
+  function handleTouchend(e: RNTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
     const bubbleTapEvent = ['catchtap', 'bindtap']
     const captureTouchEvent = ['capture-catchtouchend', 'capture-bindtouchend']
@@ -253,20 +262,21 @@ const useInnerProps = (props = {}, additionalProps = {}, removeProps = [], confi
     }
   }
 
-  function handleTouchcancel (e, type) {
+  function handleTouchcancel(e: RNTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchcancel', 'bindtouchcancel']
     const captureTouchEvent = ['capture-catchtouchcancel', 'capture-bindtouchcancel']
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
     handleEmitEvent(currentTouchEvent, 'touchcancel', e)
   }
 
-  function addTouchEvents () {
-    const transformedEventKeys = []
+  function addTouchEvents() {
+    const transformedEventKeys: string[] = []
     ref.current.eventConfig.forEach(item => {
-      transformedEventKeys.push(...(Object.values(item)[0] || []))
+      const eventValues = Object.values(item)[0] as string[];
+      transformedEventKeys.push(...eventValues)
     })
     const finalEventKeys = [...new Set(transformedEventKeys)]
-    const events = {}
+    const events: TouchEventHandlers = {}
     if (finalEventKeys.includes('onTouchStart')) {
       events.onTouchStart = (e) => {
         handleTouchstart(e, 'bubble')
