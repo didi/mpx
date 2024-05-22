@@ -46,6 +46,7 @@ import {
 } from 'react-native'
 import { extractTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useNodesRef from '../../useNodesRef'
 
 export interface ButtonProps {
   size?: string
@@ -161,6 +162,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     bindtouchend,
   } = props
 
+  const { nodeRef } = useNodesRef(props, ref)
+
   const refs = useRef<{
     hoverStartTimer: ReturnType<typeof setTimeout> | undefined
     hoverStayTimer: ReturnType<typeof setTimeout> | undefined
@@ -261,7 +264,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     <View
       {...innerTouchable}
       testID="button"
-      ref={ref}
+      ref={nodeRef}
       style={[
         styles.button,
         isMiniSize && styles.buttonMini,

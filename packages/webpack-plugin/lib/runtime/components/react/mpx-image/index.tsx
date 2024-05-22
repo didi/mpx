@@ -28,6 +28,7 @@ import {
 } from 'react-native'
 import { omit } from '../utils'
 import useInnerTouchable, { getCustomEvent } from '../getInnerListeners'
+import useNodesRef from '../../../useNodesRef'
 
 export type Mode =
   | 'scaleToFill'
@@ -113,7 +114,9 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     binderror,
     ...restProps
   } = omit(props, ['source', 'resizeeMode'])
+
   const innerTouchable = useInnerTouchable(restProps)
+  const { nodeRef } = useNodesRef(props, ref)
 
   const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = StyleSheet.flatten(style)
 
@@ -278,7 +281,8 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
       ]}
       onLayout={onViewLayout}>
       <RNImage
-        ref={ref}
+        {...innerTouchable}
+        ref={nodeRef}
         testID="image"
         source={source}
         resizeMode={resizeMode}
@@ -294,7 +298,6 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
             ...(isCropMode && cropModeStyle),
           },
         ]}
-        {...innerTouchable}
       />
     </View>
   )
