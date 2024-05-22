@@ -15,7 +15,8 @@ import useNodesRef from '../../useNodesRef' // 引入辅助函数
 import { extractTextStlye, parseUrl, hasElementType } from './utils'
 
 type ExtendedViewStyle = ViewStyle & {
-  backgroundImage: string
+  backgroundImage?: string
+  backgroundSize?: ImageResizeMode
 }
 
 export interface _ViewProps extends ExtendedViewStyle {
@@ -51,7 +52,7 @@ const hasTextChild = (children: React.ReactElement<any>) => {
   let hasText = true
 
   React.Children.forEach(children, (child) => {
-    if (!hasElementType(child, 'mpxText') || !hasElementType(child, 'Text')) {
+    if (!hasElementType(child, 'mpxText') && !hasElementType(child, 'Text')) {
       hasText = false
     }
   })
@@ -104,7 +105,7 @@ const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) =>
 }
 
 
-const processBackgroundChildren = (children, style, image) => {
+const processBackgroundChildren = (children: React.ReactElement, style:ExtendedViewStyle =  {}, image) => {
   let resizeMode:ImageResizeMode = 'stretch'
   if (bgSizeList.includes(style.backgroundSize)) {
     resizeMode = style.backgroundSize
