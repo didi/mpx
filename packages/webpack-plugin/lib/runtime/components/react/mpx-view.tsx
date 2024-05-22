@@ -69,16 +69,10 @@ const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
   })
 }
 
-const processTextChildren = (children: React.ReactElement, textStyle:ViewStyle =  {}) => {
-  return React.Children.map(children, (child) => {
-  return cloneElement(child, textStyle)
-})
-} 
-
 const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
   let textStyle = null
 
-  if (hasElementType(children, 'mpxText')) {
+  if (hasElementType(children, 'mpx-text')) {
     textStyle = extractTextStlye(style)
     return cloneElement(children, textStyle)
   }else if (hasElementType(children, 'Text')) {
@@ -96,7 +90,7 @@ const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) =
     textStyle = extractTextStlye(style)
   }
 
-  return hasText ? <Text style={textStyle}> {processTextChildren(children, textStyle)} </Text> : children
+  return hasText ? <Text style={textStyle}>{ children }</Text> : children
 }
 
 const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
