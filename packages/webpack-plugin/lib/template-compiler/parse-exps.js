@@ -142,7 +142,7 @@ module.exports = {
     if (!/^\(*\)$/.test(str)) {
       str = `(${str})`
     }
-    return walk.full(acorn.parse(str, { ecmaVersion: 'es5' }), visitor)
+    return walk.full(acorn.parse(str, { ecmaVersion: 5 }), visitor)
   },
   NODE_TYPE
 }

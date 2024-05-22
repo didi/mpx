@@ -51,17 +51,16 @@ packages|支持|支持|支持|支持|部分支持，无法分包
 如果你是自行搭建的mpx项目，你只需要进行简单的配置修改，打开项目的webpack配置，找到@mpxjs/webpack-plugin的声明位置，传入mode和srcMode参数即可，示例如下
 
 ```javascript
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
-    }
-  }
+// 下面的示例配置能够将mpx微信小程序源码编译为支付宝小程序
+new MpxwebpackPlugin({
+  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
+  mode: 'ali',
+  // srcMode为mpx编译的源码平台，目前仅支持wx   
+  srcMode: 'wx'
 })
 ```
 
-通过在 `npm script` 当中定义 `targets` 来设置mpx编译的目标平台
+使用 @mpxjs/cli 创建的项目，可以通过在 `npm script` 当中定义 `targets` 来设置编译的目标平台
 
 ```javascript
 // 项目 package.json

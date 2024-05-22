@@ -33,7 +33,7 @@ module.exports = function (raw) {
   const isNative = queryObj.isNative
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
-  const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
+  const moduleId = queryObj.moduleId || '_' + mpx.pathHash(resourcePath)
   const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0

@@ -5,9 +5,10 @@ const addQuery = require('../utils/add-query')
 const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
+const hasOwn = require('../utils/has-own')
 
 class DynamicEntryDependency extends NullDependency {
-  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range, extraOptions = {}) {
+  constructor (range, request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) {
     super()
     this.request = request
     this.entryType = entryType
@@ -16,6 +17,10 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = relativePath
     this.context = context
     this.range = range
+
+    if (typeof extraOptions === 'string') {
+      extraOptions = JSON.parse(extraOptions)
+    }
     this.extraOptions = extraOptions
   }
 
@@ -192,15 +197,12 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     module,
     chunkGraph
   }) {
-    const { resultPath, range, key, outputPath, publicPath, extraOptions } = dep
+    const { resultPath, range, key, publicPath, extraOptions } = dep
 
     let replaceContent = ''
 
-    if (outputPath === 'custom-tab-bar/index') {
-      // replace with true for custom-tab-bar
-      replaceContent = JSON.stringify(true)
-    } else if (extraOptions.mpxCustomElement) { // todo: 这部分的代码等合并 master 代码后优化
-      replaceContent = ''
+    if (hasOwn(extraOptions, 'replaceContent')) {
+      replaceContent = extraOptions.replaceContent
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
         let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
