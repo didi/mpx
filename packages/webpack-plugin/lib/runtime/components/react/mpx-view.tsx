@@ -59,29 +59,29 @@ const hasTextChild = (children: React.ReactElement<any>) => {
   return hasText
 }
 
-const processTextChildren = (children: React.ReactElement, textStyle:ViewStyle =  {}) => {
-  return React.Children.map(children, (child) => {
-    return React.cloneElement(child, {
-      ...child.props,
-      style: [textStyle, child.props.style]
-    })
+
+const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
+  const {style, ...otherProps} = child.props || {}
+  return React.cloneElement(child, {
+    ...otherProps,
+    style: [textStyle, style]
   })
 }
+
+const processTextChildren = (children: React.ReactElement, textStyle:ViewStyle =  {}) => {
+  return React.Children.map(children, (child) => {
+    return cloneElement(child, textStyle)
+  })
+} 
 
 const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
   let textStyle = null
 
   if (hasElementType(children, 'mpxText')) {
     textStyle = extractTextStlye(style)
-    return React.cloneElement(children, {
-      ...children.props,
-      style: [textStyle, children.props.style]
-    })
+    return cloneElement(children, textStyle)
   }else if (hasElementType(children, 'Text')) {
-    textStyle = extractTextStlye(style)
-    return React.cloneElement(children, {
-      style: textStyle
-    })
+    return cloneElement(children, textStyle)
   } else {
     return children
   }
@@ -192,12 +192,8 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     defaultStyle: getDefaultStyle(finalStyle)
   })
 
-
-  const image = React.useMemo(() => {
-    const image = parseUrl(finalStyle.backgroundImage)
-    return image
-  }, [style])
-
+  const image = parseUrl(finalStyle.backgroundImage)
+  
   return (
     <View
       ref={nodeRef}
