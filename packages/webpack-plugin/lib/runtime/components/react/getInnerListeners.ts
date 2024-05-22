@@ -76,7 +76,7 @@ export const getDataSet = (props: Record<string, any>): Record<string, any> => {
 
 export const getCustomEvent = (
   type: string = '',
-  oe: Event,
+  oe: Event | null,
   { detail = {}, layoutRef = {} }: { detail?: CustomEventDetail; layoutRef?: LayoutRef },
   props: { [key: string]: any } = {}
 ) => {
