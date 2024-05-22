@@ -47,7 +47,7 @@ import {
   Animated,
   Easing,
 } from 'react-native'
-import { extractTextStlye } from './utils'
+import { extractTextStyle } from './utils'
 import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
 
 export interface ButtonProps {
@@ -84,14 +84,16 @@ const TypeColorMap: Record<Type, TypeColor> = {
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: 'row',
+    width: '100%',
+    // flexDirection: 'row', css 默认 block
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    marginVertical: 14,
+    // paddingHorizontal: 14,
+    // marginVertical: 14,
     height: 46,
     borderRadius: 5,
     backgroundColor: '#F8F8F8',
+    marginHorizontal: 'auto' // 按钮默认居中
   },
   buttonMini: {
     height: 30,
@@ -156,7 +158,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     'hover-style': hoverStyle = {},
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
-    style = {},
+    style = [],
     children,
     bindtap = () => {},
     catchtap = () => {},
@@ -178,9 +180,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
-  const textStyle = extractTextStlye(style)
-
-  const textHoverStyle = applyHoverEffect ? extractTextStlye(hoverStyle) : {}
+  // mpx 处理后 style 是数组，这里先打平一下
+  const styleObj = Object.assign({}, ...style)
 
   const { viewStyle: presetViewStyle, textStyle: presetTextStyle } = useMemo<{
     viewStyle: ViewStyle
@@ -203,7 +204,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
       type === 'default'
         ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
         : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
-
+    // 从 view 中取 text 可继承的样式属性
+    const inheritTextStyle = extractTextStyle(applyHoverEffect ? [styleObj, hoverStyle] : styleObj)
     return {
       viewStyle: {
         borderWidth: 1,
@@ -213,9 +215,10 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
       },
       textStyle: {
         color: plain ? plainTextColor : normalTextColor,
-      },
+        ...inheritTextStyle
+      }
     }
-  }, [type, plain, applyHoverEffect, loading, disabled])
+  }, [type, plain, applyHoverEffect, loading, disabled, styleObj])
 
   const stopHover = useCallback(() => {
     refs.current.preseeOutTimer = setTimeout(() => {
@@ -270,12 +273,12 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
           styles.button,
           isMiniSize && styles.buttonMini,
           presetViewStyle,
-          style,
+          styleObj,
           applyHoverEffect && hoverStyle,
         ]}>
         {loading && <Loading alone={!React.Children.count(children)} />}
         {['string', 'number'].includes(typeof children) ? (
-          <Text style={[styles.text, isMiniSize && styles.textMini, presetTextStyle, textStyle, textHoverStyle]}>
+          <Text style={[styles.text, isMiniSize && styles.textMini, presetTextStyle]}>
             {children}
           </Text>
         ) : (

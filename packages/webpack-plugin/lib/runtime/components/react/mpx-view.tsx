@@ -1,10 +1,10 @@
 /**
- * ✔ hover-class  
+ * ✔ hover-class
  * ✘ hover-stop-propagation
- * ✔ hover-start-time 
+ * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewProps, ViewStyle, NativeSyntheticEvent, StyleProp, TextStyle, ImageBackground, ImageResizeMode} from 'react-native'
+import { View, Text, ViewStyle, NativeSyntheticEvent, ImageBackground, ImageResizeMode, StyleSheet } from 'react-native'
 import * as React from 'react'
 
 // @ts-ignore
@@ -12,7 +12,7 @@ import useInnerTouchable from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { extractTextStlye, parseUrl, hasElementType } from './utils'
+import { extractTextStyle, parseUrl, hasElementType } from './utils'
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
@@ -28,38 +28,16 @@ export interface _ViewProps extends ExtendedViewStyle {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
-
-const bgSizeList =  ['cover', 'contain', 'stretch']
-
-const DEFAULT_STYLE = {
-  flexDirection: 'row',
-  flexShrink: 1
-}
-
-function getDefaultStyle(style: ViewStyle = {}) {
-  return style.display === 'flex' ? DEFAULT_STYLE : {}
-}
-
-function getMergeStyle(style: Array<ExtendedViewStyle> = []):ExtendedViewStyle {
-  const mergedStyle: ExtendedViewStyle = Object.assign({}, ...style)
-  return {
-    ...getDefaultStyle(mergedStyle),
-    ...mergedStyle
-  }
-}
-
+// const bgSizeList =  ['cover', 'contain', 'stretch']
 const hasTextChild = (children: React.ReactElement<any>) => {
   let hasText = true
-
   React.Children.forEach(children, (child) => {
     if (!hasElementType(child, 'mpx-text') && !hasElementType(child, 'Text')) {
       hasText = false
     }
   })
-
   return hasText
 }
-
 
 const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
   const {style, ...otherProps} = child.props || {}
@@ -70,38 +48,36 @@ const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
 }
 
 const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  let textStyle = null
-
+  const inheritTextStyle = extractTextStyle(style)
   if (hasElementType(children, 'mpx-text')) {
-    textStyle = extractTextStlye(style)
-    return cloneElement(children, textStyle)
-  }else if (hasElementType(children, 'Text')) {
-    return cloneElement(children, textStyle)
+    return cloneElement(children, inheritTextStyle)
+  } else if (hasElementType(children, 'Text')) {
+    return cloneElement(children, {
+      // 原生 Text 组件增加默认样式
+      fontSize: 16,
+      ...inheritTextStyle
+    })
   } else {
     return children
   }
 }
 
 const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  let textStyle = null
-
   const hasText = hasTextChild(children)
-  if (hasText) {
-    textStyle = extractTextStlye(style)
+  const textStyle = {
+    fontSize: 16,
+    ...hasText && extractTextStyle(style)
   }
-
-  return hasText ? <Text style={textStyle}>{ children }</Text> : children
+  return hasText ? <Text style={textStyle}>{children}</Text> : children
 }
 
 const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  return !Array.isArray(children) ? elementInheritChildren(children, style) : 
-    wrapTextChildren(children, style)
+  return Array.isArray(children) ? wrapTextChildren(children, style) : elementInheritChildren(children, style)
 }
-
 
 const processBackgroundChildren = (children: React.ReactElement, style:ExtendedViewStyle =  {}, image) => {
   let resizeMode:ImageResizeMode = 'stretch'
-  if (bgSizeList.includes(style.backgroundSize)) {
+  if (['cover', 'contain', 'stretch'].includes(style.backgroundSize)) {
     resizeMode = style.backgroundSize
   }
 
@@ -116,14 +92,12 @@ const wrapChildren = (children, style, image) => {
 }
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
-  const { 
+  const {
     style,
     children,
     hoverStyle,
     ...otherProps } = props
   const [isHover, setIsHover] = React.useState(false)
-
-  const finalStyle:ExtendedViewStyle = getMergeStyle(style)
 
   const dataRef = React.useRef<{
     startTimestamp: number,
@@ -141,7 +115,6 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     }
   }, [dataRef])
-
 
   const setStartTimer = () => {
     const { hoverStyle, hoverStartTime = 50 } = dataRef.current.props
@@ -183,19 +156,36 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     })
   })
 
+  // 打平 style 数组
+  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
+  // 默认样式
+  const defaultStyle = {
+    // flex 布局相关的默认样式
+    ...styleObj.display === 'flex' && {
+      flexDirection: 'row',
+      flexBasis: 'auto',
+      flexShrink: 1,
+      flexWrap: 'nowrap'
+    }
+  }
+
   const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: getDefaultStyle(finalStyle)
+    defaultStyle
   })
 
-  const image = parseUrl(finalStyle.backgroundImage)
-  
+  const image = parseUrl(styleObj.backgroundImage)
+
   return (
     <View
       ref={nodeRef}
       {...{...otherProps, ...innerTouchable}}
-      style={ [ !image && finalStyle, isHover && hoverStyle ] }
+      style={{
+        ...defaultStyle,
+        ...!image && styleObj,
+        ...isHover && hoverStyle
+      }}
     >
-      {wrapChildren(children, finalStyle, image)}
+      {wrapChildren(children, { ...defaultStyle, ...styleObj }, image)}
     </View>
   )
 })
@@ -203,6 +193,3 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 _View.displayName = 'mpx-view'
 
 export default _View
-
-
-
