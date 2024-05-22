@@ -1,3 +1,4 @@
+const { getOptimizedComponentInfo } = require('@mpxjs/template-engine/dist/optimizer')
 const mpxConfig = require('../config')
 
 function makeAttrsMap (attrKeys = []) {
@@ -29,6 +30,15 @@ function setBaseEle (el, options, meta) {
   attrKeys.forEach(key => {
     renderAttrsMap[key] = ''
   })
+
+  const optimizedInfo = getOptimizedComponentInfo({
+    nodeType: rawTag,
+    attrs: renderAttrsMap
+  }, options.mode)
+
+  if (optimizedInfo) {
+    el.tag = optimizedInfo.nodeType
+  }
 
   if (!meta.runtimeInfo.baseComponents[rawTag]) {
     meta.runtimeInfo.baseComponents[rawTag] = {}
