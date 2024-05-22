@@ -10,11 +10,17 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import React, { useCallback, useEffect, useMemo, useState, forwardRef } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  forwardRef,
+  useRef,
+} from 'react'
 import {
   Image as RNImage,
   View,
-  Text,
   ImageStyle,
   StyleProp,
   ImageSourcePropType,
@@ -26,8 +32,7 @@ import {
   DimensionValue,
   ImageLoadEventData,
 } from 'react-native'
-import { omit } from '../utils'
-import useInnerTouchable, { getCustomEvent } from '../getInnerListeners'
+import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef from '../../../useNodesRef'
 
 export type Mode =
@@ -61,15 +66,15 @@ const DEFAULT_IMAGE_WIDTH = 320
 const DEFAULT_IMAGE_HEIGHT = 240
 // const REMOTE_SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 
-const styls = StyleSheet.create({
-  suspense: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-  },
-})
+// const styls = StyleSheet.create({
+//   suspense: {
+//     display: 'flex',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     width: '100%',
+//     height: '100%',
+//   },
+// })
 
 const cropMode: Mode[] = [
   'top',
@@ -98,11 +103,11 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize 
 
 // const Svg = lazy(() => import('./svg'))
 
-const Fallback = (
-  <View style={styls.suspense}>
-    <Text>loading ...</Text>
-  </View>
-)
+// const Fallback = (
+//   <View style={styls.suspense}>
+//     <Text>loading ...</Text>
+//   </View>
+// )
 
 const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element => {
   const {
@@ -111,12 +116,12 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     svg = false,
     style = {},
     bindload,
-    binderror,
-    ...restProps
-  } = omit(props, ['source', 'resizeeMode'])
+    binderror
+  } = props
 
-  const innerTouchable = useInnerTouchable(restProps)
   const { nodeRef } = useNodesRef(props, ref)
+
+  const layoutRef = useRef({})
 
   const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = StyleSheet.flatten(style)
 
@@ -169,15 +174,6 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     }
   }, [mode, viewWidth, viewHeight, imageWidth, imageHeight])
 
-  const onViewLayout = ({
-    nativeEvent: {
-      layout: { width, height },
-    },
-  }: LayoutChangeEvent) => {
-    setViewWidth(width)
-    setViewHeight(height)
-  }
-
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     if (!bindload) return
     if (typeof src === 'string') {
@@ -188,6 +184,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
             evt,
             {
               detail: { width, height },
+              layoutRef
             },
             props
           )
@@ -201,6 +198,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
           evt,
           {
             detail: { width, height },
+            layoutRef
           },
           props
         )
@@ -216,10 +214,24 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
           evt,
           {
             detail: { errMsg: evt.nativeEvent.error },
+            layoutRef
           },
           props
         )
       )
+  }
+
+  const onViewLayout = ({
+    nativeEvent: {
+      layout: { width, height },
+    },
+  }: LayoutChangeEvent) => {
+    setViewWidth(width)
+    setViewHeight(height)
+  }
+
+  const onImageLayout = (evt: LayoutChangeEvent) => {
+    layoutRef.current = evt.nativeEvent.layout
   }
 
   const loadImage = useCallback((): void => {
@@ -248,10 +260,20 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
 
   useEffect(() => loadImage(), [loadImage])
 
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef,
+    onLayout: onImageLayout
+  },
+  [],
+  {
+    layoutRef
+  }
+)
+
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
   //   return (
-  //     <Suspense fallback={Fallback} {...innerTouchable}>
-  //       <View {...innerTouchable}>
+  //     <Suspense fallback={Fallback} {...innerProps}>
+  //       <View {...innerProps}>
   //         <Svg src={src} style={style} width={width as SvgNumberProp} height={height as SvgNumberProp} />
   //       </View>
   //     </Suspense>
@@ -261,7 +283,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
   // if (svg) {
   //   return (
   //     <Suspense fallback={Fallback}>
-  //       <View {...innerTouchable}>
+  //       <View {...innerProps}>
   //         <Svg local src={src} style={style} width={width as SvgNumberProp} height={height as SvgNumberProp} />
   //       </View>
   //     </Suspense>
@@ -281,8 +303,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
       ]}
       onLayout={onViewLayout}>
       <RNImage
-        {...innerTouchable}
-        ref={nodeRef}
+        {...innerProps}
         testID="image"
         source={source}
         resizeMode={resizeMode}

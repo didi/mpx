@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import React, { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, useMemo, useRef, useState } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -54,9 +54,10 @@ import {
   TextInputFocusEventData,
   TextInputChangeEventData,
   TextInputSubmitEditingEventData,
+  LayoutChangeEvent,
 } from 'react-native'
 import { parseInlineStyle, useUpdateEffect } from './utils'
-import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from '../../useNodesRef'
 
 type InputStyle = Omit<
@@ -142,15 +143,16 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     multiline,
     'auto-height': autoHeight,
     bindlinechange,
-    ...restProps
   } = props
 
   const { nodeRef } = useNodesRef(props, ref)
+
   const keyboardType = keyboardTypeMap[type]
   const defaultValue = props.defaultValue ?? (type === 'number' && value ? value + '' : value)
   const placeholderTextColor = props.placeholderTextColor || parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
+  const layoutRef = useRef({})
   const tmpValue = useRef<string>()
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
@@ -187,6 +189,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             value: evt.nativeEvent.text,
             cursor: cursorIndex.current,
           },
+          layoutRef
         },
         props
       )
@@ -209,6 +212,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             detail: {
               value: tmpValue.current || '',
             },
+            layoutRef
           },
           props
         )
@@ -226,6 +230,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
               value: tmpValue.current || '',
               cursor: cursorIndex.current,
             },
+            layoutRef
           },
           props
         )
@@ -243,6 +248,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             detail: {
               value: tmpValue.current || '',
             },
+            layoutRef
           },
           props
         )
@@ -260,6 +266,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             detail: {
               value: tmpValue.current || '',
             },
+            layoutRef
           },
           props
         )
@@ -283,6 +290,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
                 lineHeight,
                 lineCount: lineCount.current,
               },
+              layoutRef
             },
             props
           )
@@ -302,10 +310,15 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
               selectionStart: evt.nativeEvent.selection.start,
               selectionEnd: evt.nativeEvent.selection.end,
             },
+            layoutRef
           },
           props
         )
       )
+  }
+
+  const onLayout = (evt: LayoutChangeEvent) => {
+    layoutRef.current = evt.nativeEvent.layout
   }
 
   useUpdateEffect(() => {
@@ -317,16 +330,19 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
       : (nodeRef.current as TextInput)?.blur()
   }, [focus])
 
-  const innerTouchable = useInnerTouchable({
-    ...props,
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef,
+    onLayout
+  },
+  [],
+  {
+    layoutRef
   })
 
 
   return (
     <TextInput
-      {...restProps}
-      {...innerTouchable}
-      ref={nodeRef}
+      {...innerProps}
       keyboardType={keyboardType as KeyboardTypeOptions}
       secureTextEntry={!!password}
       defaultValue={defaultValue}

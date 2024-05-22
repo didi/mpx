@@ -33,7 +33,15 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, { useEffect, useMemo, useRef, useState, ReactNode, forwardRef, SyntheticEvent } from 'react'
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  ReactNode,
+  forwardRef,
+  SyntheticEvent,
+} from 'react'
 import {
   View,
   Text,
@@ -43,6 +51,7 @@ import {
   TextStyle,
   Animated,
   Easing,
+  LayoutChangeEvent,
 } from 'react-native'
 import { extractTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -172,6 +181,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     hoverStayTimer: undefined,
   })
 
+  const layoutRef = useRef({})
+
   const [isHover, setIsHover] = useState(false)
 
   const isMiniSize = size === 'mini'
@@ -214,7 +225,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         ...inheritTextHoverStyle
       }
     }
-  }, [type, plain, applyHoverEffect, loading, disabled, style])
+  }, [type, plain, applyHoverEffect, loading, disabled, style, hoverStyle])
 
   const setStayTimer = () => {
     clearTimeout(refs.current.hoverStayTimer)
@@ -233,7 +244,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   }
 
   const onTouchStart = (evt: SyntheticEvent<TouchEvent>) => {
-    bindtouchend && bindtouchend(evt)
+    bindtouchstart && bindtouchstart(evt)
     if (disabled) return
     setStartTimer()
   }
@@ -245,26 +256,37 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   }
 
   const onTap = (evt: SyntheticEvent<TouchEvent>) => {
-    !disabled && bindtap && bindtap(getCustomEvent('tap', evt, {}, props))
+    !disabled && bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
   }
 
   const catchTap = (evt: SyntheticEvent<TouchEvent>) => {
-    !disabled && catchtap && catchtap(getCustomEvent('tap', evt, {}, props))
+    !disabled && catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
   }
 
-  const innerTouchable = useInnerProps({
-    ...props,
-    bindtouchstart: onTouchStart,
-    bindtouchend: onTouchEnd,
-    bindtap: onTap,
-    catchtap: catchTap,
-  })
+  const onLayout = (evt: LayoutChangeEvent) => {
+    layoutRef.current = evt.nativeEvent.layout
+  }
+
+  const innerProps = useInnerProps(
+    {
+      ...props,
+      bindtouchstart: onTouchStart,
+      bindtouchend: onTouchEnd,
+      bindtap: onTap,
+      catchtap: catchTap,
+    },
+    {
+      ref: nodeRef,
+      onLayout,
+    },
+    [],
+    { layoutRef }
+  );
 
   return (
     <View
-      {...innerTouchable}
+      {...innerProps}
       testID="button"
-      ref={nodeRef}
       style={[
         styles.button,
         isMiniSize && styles.buttonMini,
