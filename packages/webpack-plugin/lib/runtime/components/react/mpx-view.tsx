@@ -52,7 +52,7 @@ const hasTextChild = (children: React.ReactElement<any>) => {
   let hasText = true
 
   React.Children.forEach(children, (child) => {
-    if (!hasElementType(child, 'mpxText') && !hasElementType(child, 'Text')) {
+    if (!hasElementType(child, 'mpx-text') && !hasElementType(child, 'Text')) {
       hasText = false
     }
   })
@@ -71,8 +71,8 @@ const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
 
 const processTextChildren = (children: React.ReactElement, textStyle:ViewStyle =  {}) => {
   return React.Children.map(children, (child) => {
-    return cloneElement(child, textStyle)
-  })
+  return cloneElement(child, textStyle)
+})
 } 
 
 const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
@@ -88,7 +88,7 @@ const elementInheritChildren = (children: React.ReactElement, style:ViewStyle = 
   }
 }
 
-const wrapperTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
+const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
   let textStyle = null
 
   const hasText = hasTextChild(children)
@@ -101,7 +101,7 @@ const wrapperTextChildren = (children: React.ReactElement, style:ViewStyle =  {}
 
 const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
   return !Array.isArray(children) ? elementInheritChildren(children, style) : 
-    wrapperTextChildren(children, style)
+    wrapTextChildren(children, style)
 }
 
 
@@ -117,7 +117,7 @@ const processBackgroundChildren = (children: React.ReactElement, style:ExtendedV
   </ImageBackground>
 }
 
-const wrapperChilden = (children, style, image) => {
+const wrapChildren = (children, style, image) => {
   return image ? processBackgroundChildren(children, style, image) : processChildren(children, style)
 }
 
@@ -201,12 +201,12 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       {...{...otherProps, ...innerTouchable}}
       style={ [ !image && finalStyle, isHover && hoverStyle ] }
     >
-      {wrapperChilden(children, finalStyle, image)}
+      {wrapChildren(children, finalStyle, image)}
     </View>
   )
 })
 
-_View.displayName = 'mpxView'
+_View.displayName = 'mpx-view'
 
 export default _View
 
