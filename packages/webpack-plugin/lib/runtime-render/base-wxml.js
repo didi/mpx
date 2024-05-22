@@ -37,9 +37,7 @@ function setBaseEle (el, options, meta) {
   }, options.mode)
 
   if (optimizedInfo) {
-    const { nodeType } = optimizedInfo
-    renderAttrsMap.rawTag = rawTag
-    el.tag = nodeType
+    el.tag = optimizedInfo.nodeType
   }
 
   if (!meta.runtimeInfo.baseComponents[rawTag]) {
