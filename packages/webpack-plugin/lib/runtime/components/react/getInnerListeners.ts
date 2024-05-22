@@ -269,54 +269,62 @@ const useInnerProps = (
     handleEmitEvent(currentTouchEvent, 'touchcancel', e)
   }
 
+  const touchEventList = [{
+    eventName: 'onTouchStart',
+    handler: (e) => {
+      handleTouchstart(e, 'bubble')
+    }
+  }, {
+    eventName: 'onTouchMove',
+    handler: (e) => {
+      handleTouchmove(e, 'bubble')
+    }
+  }, {
+    eventName: 'onTouchEnd',
+    handler: (e) => {
+      handleTouchend(e, 'bubble')
+    }
+  }, {
+    eventName: 'onTouchCancel',
+    handler: (e) => {
+      handleTouchcancel(e, 'bubble')
+    }
+  }, {
+    eventName: 'onTouchStartCapture',
+    handler: (e) => {
+      handleTouchstart(e, 'capture')
+    }
+  }, {
+    eventName: 'onTouchMoveCapture',
+    handler: (e) => {
+      handleTouchmove(e, 'capture')
+    }
+  }, {
+    eventName: 'onTouchEndCapture',
+    handler: (e) => {
+      handleTouchend(e, 'capture')
+    }
+  }, {
+    eventName: 'onTouchCancelCapture',
+    handler: (e) => {
+      handleTouchcancel(e, 'capture')
+    }
+  }]
+
   function addTouchEvents() {
     const transformedEventKeys: string[] = []
     ref.current.eventConfig.forEach(item => {
-      const eventValues = Object.values(item)[0] as string[];
-      transformedEventKeys.push(...eventValues)
+      const eventKey = Object.values(item)[0] as string[];
+      transformedEventKeys.push(...eventKey)
     })
     const finalEventKeys = [...new Set(transformedEventKeys)]
     const events: TouchEventHandlers = {}
-    if (finalEventKeys.includes('onTouchStart')) {
-      events.onTouchStart = (e) => {
-        handleTouchstart(e, 'bubble')
+
+    touchEventList.forEach(item => {
+      if (finalEventKeys.includes(item.eventName)) {
+        events[item.eventName] = item.handler
       }
-    }
-    if (finalEventKeys.includes('onTouchMove')) {
-      events.onTouchMove = (e) => {
-        handleTouchmove(e, 'bubble')
-      }
-    }
-    if (finalEventKeys.includes('onTouchEnd')) {
-      events.onTouchEnd = (e) => {
-        handleTouchend(e, 'bubble')
-      }
-    }
-    if (finalEventKeys.includes('onTouchCancel')) {
-      events.onTouchCancel = (e) => {
-        handleTouchcancel(e, 'bubble')
-      }
-    }
-    if (finalEventKeys.includes('onTouchStartCapture')) {
-      events.onTouchStartCapture = (e) => {
-        handleTouchstart(e, 'capture')
-      }
-    }
-    if (finalEventKeys.includes('onTouchMoveCapture')) {
-      events.onTouchMoveCapture = (e) => {
-        handleTouchmove(e, 'capture')
-      }
-    }
-    if (finalEventKeys.includes('onTouchEndCapture')) {
-      events.onTouchEndCapture = (e) => {
-        handleTouchend(e, 'capture')
-      }
-    }
-    if (finalEventKeys.includes('onTouchCancelCapture')) {
-      events.onTouchCancelCapture = (e) => {
-        handleTouchcancel(e, 'capture')
-      }
-    }
+    })
     return events
   }
 
