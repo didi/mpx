@@ -18,7 +18,7 @@ const RecordVueContentDependency = require('./dependencies/RecordVueContentDepen
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const resolve = require('./utils/resolve')
-const isUrlRequest = require('./utils/is-url-request')
+const isUrlRequestRaw = require('./utils/is-url-request')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
@@ -51,6 +51,9 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const root = mpx.projectRoot
+
+  const isUrlRequest = r => isUrlRequestRaw(r, root)
 
   const emitWarning = (msg) => {
     this.emitWarning(

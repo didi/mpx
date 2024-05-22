@@ -20,14 +20,12 @@ class RecordGlobalComponentsDependency extends NullDependency {
     const resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     Object.keys(usingComponents).forEach((key) => {
       const request = usingComponents[key]
-      if (!isUrlRequest) {
-        const moduleId = mpx.getModuleId(request, false)
-        mpx.globalComponentsModuleId[key] = moduleId
+      if (!isUrlRequest(request, mpx.projectRoot)) {
+        mpx.globalComponentsModuleId[key] = mpx.getModuleId(request, false)
       } else {
         resolver.resolve({}, this.context, request, {}, (err, resource) => {
           if (err) return
-          const moduleId = mpx.getModuleId(resource, false)
-          mpx.globalComponentsModuleId[key] = moduleId
+          mpx.globalComponentsModuleId[key] = mpx.getModuleId(resource, false)
         })
       }
 

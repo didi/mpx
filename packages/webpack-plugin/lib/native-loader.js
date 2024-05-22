@@ -11,7 +11,7 @@ const getRulesRunner = require('./platform')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const isUrlRequest = require('./utils/is-url-request')
+const isUrlRequestRaw = require('./utils/is-url-request')
 const resolve = require('./utils/resolve')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
@@ -42,6 +42,9 @@ module.exports = function (content) {
   const typeExtMap = config[srcMode].typeExtMap
   const typeResourceMap = {}
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const root = mpx.projectRoot
+
+  const isUrlRequest = r => isUrlRequestRaw(r, root)
 
   const CSS_LANG_EXT_MAP = {
     less: '.less',
