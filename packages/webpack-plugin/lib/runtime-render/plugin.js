@@ -12,9 +12,11 @@ module.exports = class RuntimeRenderPlugin {
         // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
         mpx.runtimeInfoJson = {}
         mpx.runtimeInfoTemplate = {}
+        // 运行时组件依赖的运行时组件当中使用的基础组件 slot
+        mpx.dynamicSlotDependencies = {}
 
         // 注入到 mpx-custom-element-*.json 里面的组件路径
-        mpx.getPackageInjectedComponentsMapNew = function (packageName = 'main') {
+        mpx.getPackageInjectedComponentsMap = function (packageName = 'main') {
           const res = {}
           const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
           const componentsMap = mpx.componentsMap[packageName] || {}
@@ -39,11 +41,34 @@ module.exports = class RuntimeRenderPlugin {
             normalComponents: {}
           }
 
+          const componentsMap = mpx.componentsMap[packageName] || {}
+          const publicPath = compilation.outputOptions.publicPath || ''
           const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
 
+          // 包含了某个分包当中所有的运行时组件
           for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
-            const { customComponents = {}, baseComponents = {} } = mpx.runtimeInfoTemplate[packageName][resourcePath]
+            const {
+              customComponents = {},
+              baseComponents = {},
+              dynamicSlotDependencies = {}
+            } = mpx.runtimeInfoTemplate[packageName][resourcePath]
             const componentsJsonConfig = runtimeInfoJson[resourcePath]
+
+            // 满足运行时组件里面存在基础组件的情况
+            for (const componentName in dynamicSlotDependencies) {
+              const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
+              if (isDynamic) {
+                dynamicSlotDependencies[componentName].forEach(name => {
+                  const { resourcePath: path, isDynamic, hashName } = componentsJsonConfig[name]
+                  if (!isDynamic) {
+                    // 运行时组件依赖运行时的组件使用了 slot 普通组件才会被收集
+                    mpx.collectDynamicSlotDependencies(resourcePath, {
+                      [hashName]: publicPath + componentsMap[path]
+                    })
+                  }
+                })
+              }
+            }
 
             // 合并自定义组件的属性
             for (const componentName in customComponents) {
@@ -89,20 +114,10 @@ module.exports = class RuntimeRenderPlugin {
             const componentInfo = componentsMap[ast.tag]
             if (componentInfo) { // 自定义节点替换 hashName
               ast.tag = componentInfo.hashName
-              // todo：本地开发阶段可以加上方便查看组件名
-              // ast.aliasTag = componentInfo.hashName
               if (componentInfo.isDynamic) {
                 ast.dynamic = true
               }
-            } else { // 基础节点的优化
-              // const attrs = ast.attrsList || []
-              // const { nodeType } = getOptimizedComponentInfo({
-              //   nodeType: ast.tag,
-              //   attrs: attrs.map((item) => item.name)
-              // })
-              // ast.tag = nodeType
             }
-            // todo 后续看优化情况，simplify 阶段到底是在 template-compiler 还是在这个阶段做
             if (ast.children) {
               ast.children.forEach(child => iterateAst(child))
             }
@@ -114,6 +129,11 @@ module.exports = class RuntimeRenderPlugin {
           iterateAst(ast)
 
           return ast
+        }
+
+        mpx.collectDynamicSlotDependencies = function (resourcePath, extraUsingComponents) {
+          mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
+          Object.assign(mpx.dynamicSlotDependencies[resourcePath], extraUsingComponents)
         }
       }
     })

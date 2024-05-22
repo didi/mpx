@@ -21,6 +21,7 @@ module.exports.pitch = async function (remainingRequest) {
   const needBabel = queryObj.needBabel
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
+  const isDynamic = queryObj.isDynamic
 
   if (needBabel) {
     // 创建js request应用babel
@@ -67,6 +68,14 @@ module.exports.pitch = async function (remainingRequest) {
     content,
     // isStatic时不需要关注引用索引
     index: isStatic ? 0 : index
+  }
+
+  if (type === BLOCK_JSON && isDynamic) {
+    Object.assign(extractedInfo, {
+      dynamic: isDynamic,
+      type,
+      resourcePath
+    })
   }
 
   this.emitFile(file, '', undefined, {

@@ -24,7 +24,7 @@ export default function _genVnodeTree (astData, contextScope, options) {
   const templateAst = deepCloneNode(template)
   // 获取实例 uid
   const uid = contextScope[0]?.__mpxProxy?.uid || contextScope[0]?.uid
-  // slots 通过上下文传递，相当于 props
+  // 动态化组件 slots 通过上下文传递，相当于 props
   const slots = contextScope[0]?.slots || {}
 
   function createEmptyNode () {
@@ -45,12 +45,12 @@ export default function _genVnodeTree (astData, contextScope, options) {
       } else {
         const data = genData(node)
         let children = genChildren(node)
-        // 运行时组件的子组件都通过 slots 属性传递
+        // 运行时组件的子组件都通过 slots 属性传递，样式规则在当前组件内匹配后挂载
         if (node.dynamic) {
-          data.slots = resolveSlot(children.slice())
+          data.slots = resolveSlot(children.map(item => genVnodeWithStaticCss(deepCloneNode(item))))
           children = []
         }
-        return createNode(node.aliasTag || node.tag, data, children)
+        return createNode(node.tag, data, children)
       }
     } else if (node.type === 3) {
       return genText(node)
@@ -116,7 +116,7 @@ export default function _genVnodeTree (astData, contextScope, options) {
     if (children.length) {
       for (let i = 0; i < children.length; i++) {
         const child = children[i]
-        const name = child.data?.slot
+        const name = child.d?.slot
         if (name) {
           const slot = (slots[name] || (slots[name] = []))
           if (child.tag === 'template') {

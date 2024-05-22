@@ -1112,18 +1112,30 @@ class MpxWebpackPlugin {
             if (extractedInfo) {
               const { moduleId, type, content, dynamic, resourcePath, packageName } = extractedInfo
               if (dynamic) {
-                dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
-                const dynamicAsset = JSON.parse(content)
-                if (type === 'template') {
-                  dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(dynamicAsset, packageName, resourcePath)
-                } else if (type === 'styles') {
-                  // 合并多个style标签的样式代码
-                  const styleAssets = (dynamicAssets[moduleId][type] = dynamicAssets[moduleId][type] || [])
-                  styleAssets.push(...dynamicAsset)
+                if (type === 'json') {
+                  // 注入运行时组件依赖的slot基础组件
+                  if (mpx.dynamicSlotDependencies[resourcePath]) {
+                    const _content = JSON.parse(content)
+                    if (!_content.usingComponents) {
+                      _content.usingComponents = {}
+                    }
+                    Object.assign(_content.usingComponents, mpx.dynamicSlotDependencies[resourcePath])
+                    extractedInfo.content = JSON.stringify(_content)
+                  }
                 } else {
-                  dynamicAssets[moduleId][type] = dynamicAsset
+                  dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
+                  const dynamicAsset = JSON.parse(content)
+                  if (type === 'template') {
+                    dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(dynamicAsset, packageName, resourcePath)
+                  } else if (type === 'styles') {
+                    // 合并多个style标签的样式代码
+                    const styleAssets = (dynamicAssets[moduleId][type] = dynamicAssets[moduleId][type] || [])
+                    styleAssets.push(...dynamicAsset)
+                  } else {
+                    dynamicAssets[moduleId][type] = dynamicAsset
+                  }
+                  continue
                 }
-                continue
               }
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {

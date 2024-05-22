@@ -182,7 +182,7 @@ module.exports = function (content) {
     }
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     if (isMpxCustomElement) {
-      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMapNew(packageName))
+      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
     }
   }
 
