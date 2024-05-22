@@ -28,15 +28,8 @@ module.exports = function setBaseWxml (el, options, meta) {
     if (optimizedInfo) {
       el.tag = optimizedInfo.nodeType
     }
+    Object.assign(meta.runtimeInfo.baseComponents, { [tag]: makeAttrsMap(attrKeys) })
+  } else {
+    Object.assign(meta.runtimeInfo.customComponents, { [tag]: makeAttrsMap(attrKeys) })
   }
-
-  if (!meta.runtimeInfo.baseComponents[tag]) {
-    meta.runtimeInfo.baseComponents[tag] = {}
-  }
-  if (!meta.runtimeInfo.customComponents[tag]) {
-    meta.runtimeInfo.customComponents[tag] = {}
-  }
-
-  Object.assign(meta.runtimeInfo.customComponents[tag], makeAttrsMap(attrKeys))
-  Object.assign(meta.runtimeInfo.baseComponents[tag], makeAttrsMap(attrKeys))
 }
