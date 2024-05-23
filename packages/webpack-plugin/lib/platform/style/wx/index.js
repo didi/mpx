@@ -14,7 +14,7 @@ module.exports = function getSpec ({ warn, error }) {
     error(`Property [${prop}] is not supported in React Native ${mode} environment!`)
   }
 
-  // React 某些属性仅支持部分枚举值
+  // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
@@ -77,6 +77,10 @@ module.exports = function getSpec ({ warn, error }) {
         return value
     }
   }
+  // 统一校验 value type 值类型
+  const checkCommonValue = (valueType) => ({ prop, value }) => {
+    verifyValues({ prop, value, valueType })
+  }
 
   // 简写转换规则
   const AbbreviationMap = {
@@ -118,35 +122,6 @@ module.exports = function getSpec ({ warn, error }) {
       borderBottomLeftRadius: ValueType.default
     }
   }
-
-  const formatMargins = ({ prop, value }) => {
-    const values = value.trim().split(/\s(?![^()]*\))/)
-    // validate
-    for (let i = 0; i < values.length; i++) {
-      verifyValues({ prop, value: values[i], valueType: ValueType.number })
-    }
-    // format
-    let suffix = []
-    switch (values.length) {
-      // case 1:
-      case 2:
-        suffix = ['Vertical', 'Horizontal']
-        break
-      case 3:
-        suffix = ['Top', 'Horizontal', 'Bottom']
-        break
-      case 4:
-        suffix = ['Top', 'Right', 'Bottom', 'Left']
-        break
-    }
-    return values.map((value, index) => {
-      return {
-        prop: `${prop}${suffix[index] || ''}`,
-        value: value
-      }
-    })
-  }
-
   const formatAbbreviation = ({ value, keyMap }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
@@ -187,12 +162,10 @@ module.exports = function getSpec ({ warn, error }) {
     }
     return cssMap
   }
-
   const getAbbreviation = ({ prop, value }) => {
     const keyMap = AbbreviationMap[prop]
     return formatAbbreviation({ prop, value, keyMap })
   }
-
   // 简写过滤安卓不支持的类型
   const getAbbreviationAndroid = ({ prop, value }, { mode }) => {
     const cssMap = getAbbreviation({ prop, value })
@@ -207,9 +180,32 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
-  // 统一校验 value type 值类型
-  const checkCommonValue = (valueType) => ({ prop, value }) => {
-    verifyValues({ prop, value, valueType })
+  const formatMargins = ({ prop, value }) => {
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    // validate
+    for (let i = 0; i < values.length; i++) {
+      verifyValues({ prop, value: values[i], valueType: ValueType.number })
+    }
+    // format
+    let suffix = []
+    switch (values.length) {
+      // case 1:
+      case 2:
+        suffix = ['Vertical', 'Horizontal']
+        break
+      case 3:
+        suffix = ['Top', 'Horizontal', 'Bottom']
+        break
+      case 4:
+        suffix = ['Top', 'Right', 'Bottom', 'Left']
+        break
+    }
+    return values.map((value, index) => {
+      return {
+        prop: `${prop}${suffix[index] || ''}`,
+        value: value
+      }
+    })
   }
 
   const getFontVariant = ({ prop, value }) => {
@@ -227,6 +223,7 @@ module.exports = function getSpec ({ warn, error }) {
       value
     }
   }
+
   // background 相关属性的处理，仅支持以下属性，不支持其他背景相关的属性：/^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
   const checkBackgroundImage = ({ prop, value }, { mode }) => {
     const bgPropMap = {
