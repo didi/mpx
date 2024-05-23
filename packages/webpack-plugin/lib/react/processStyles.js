@@ -43,11 +43,13 @@ module.exports = function (styles, {
           mode,
           srcMode
         })
-        output += `global.currentInject.injectMethods = {
+        if (Object.keys(classMap).length) {
+          output += `global.currentInject.injectMethods = {
   __getClassMap: function() {
     return ${shallowStringify(classMap)};
   }
 };\n`
+        }
       } catch (e) {
         return callback(e)
       }
