@@ -1,27 +1,35 @@
 /**
- * ✔ hover-class  
+ * ✔ hover-class
  * ✘ hover-stop-propagation
- * ✔ hover-start-time 
+ * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewProps, ViewStyle, NativeSyntheticEvent, StyleProp, TextStyle, ImageBackground, ImageResizeMode} from 'react-native'
+import { View, Text, ViewStyle, NativeSyntheticEvent, ImageBackground, ImageResizeMode, StyleSheet, Image } from 'react-native'
 import * as React from 'react'
 
 // @ts-ignore
-import useInnerTouchable from './getInnerListeners'
+import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 import { parseUrl, hasElementType, TEXT_STYLE_REGEX } from './utils'
+
+type ElementNode = Exclude<React.ReactElement, string | number>
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
   backgroundSize?: ImageResizeMode
 }
 
-type ElementNode = Exclude<React.ReactElement, string | number>
+type ImageProps = {
+  resizeMode?: ImageResizeMode
+  source?: {
+    uri: string
+  }
+}
 
-export interface _ViewProps extends ViewProps {
+
+export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>
   children?: ElementNode
   hoverStyle: Array<ExtendedViewStyle>
@@ -30,52 +38,108 @@ export interface _ViewProps extends ViewProps {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
-const DEFAULT_STYLE = {
-  flexDirection: 'row',
-  flexShrink: 1
-}
+// function splitStyle(style: ExtendedViewStyle) {
+//   let textStyle = null
+//   let bjImage = null
+//   let innerStyle = {}
 
-function getDefaultStyle(style: ViewStyle = {}) {
-  return style.display === 'flex' ? DEFAULT_STYLE : {}
-}
+//   for (let key in style) {
+//     let val = style[key]
+//     if (TEXT_STYLE_REGEX.test(key)) {
+//       textStyle = textStyle ?? {}
+//       textStyle[key] = val
+//     }else if (['backgroundImage', 'backgroundSize'].includes(key)) {
+//       bjImage = bjImage ?? {
+//         resizeMode: 'stretch'
+//       }
+//       if (key === 'backgroundSize') {
+//         bjImage['resizeMode'] = val
+//       } else if (key === 'backgroundImage'){
+//         bjImage['source'] = {uri: parseUrl(val)}
+//       }
+//     } else {
+//       innerStyle[key] = val
+//     }
+//   }
+  
+//   return [
+//     textStyle,
+//     bjImage,
+//     innerStyle,
+//   ]
+// }
 
-function getMergeStyle(style: Array<ExtendedViewStyle> = [], hoverStyle: Array<ExtendedViewStyle> = []):ExtendedViewStyle {
-  const mergedStyle: ExtendedViewStyle = Object.assign({}, ...style, ...hoverStyle)
-  return {
-    ...getDefaultStyle(mergedStyle),
-    ...mergedStyle
-  }
-}
+// const splitStyle = (style, testExps) => {
+//   const originStyle = {
+//     ...style
+//   }
+//   const splitStyleArr = []
+//   Object.keys(StyleSheet.flatten(style)).forEach(prop => {
+//     testExps.forEach((exp, idx) => {
+//       if (exp.test(prop)) {
+//         if (splitStyleArr[idx]) {
+//           splitStyleArr[idx][prop] = style[prop]
+//         } else {
+//           splitStyleArr[idx] = { [prop]: style[prop] }
+//         }
+//         delete originStyle[prop]
+//       }
+//     })
+//   })
+//   splitStyleArr.push(originStyle)
+//   return splitStyleArr
+// }
 
-function splitStyle(style: ExtendedViewStyle) {
-  let textStyle = null
-  let bjImage = null
-  let innerStyle = {}
 
+type Obj = Record<string, any>
+
+
+function groupBy(style:Obj, callback: (key: string, val: string) => string ) {
+  let group:Obj = {}
   for (let key in style) {
     let val = style[key]
-    if (TEXT_STYLE_REGEX.test(key)) {
-      textStyle = textStyle ?? {}
-      textStyle[key] = val
-    }else if (['backgroundImage', 'backgroundSize'].includes(key)) {
-      bjImage = bjImage ?? {
-        resizeMode: 'stretch'
-      }
-      if (key === 'backgroundSize') {
-        bjImage['resizeMode'] = val
-      } else if (key === 'backgroundImage'){
-        bjImage['source'] = {uri: parseUrl(val)}
-      }
-    } else {
-      innerStyle[key] = val
+    let groupKey = callback(key, val)
+    if (!group[groupKey]) {
+      group[groupKey] = {}
     }
+    group[groupKey][key] = val
   }
-  
-  return [
-    textStyle,
-    bjImage,
-    innerStyle,
-  ]
+  return group
+}
+
+
+
+const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
+  if (!imageStyle)  return null
+  let bgImage:ImageProps = {
+    resizeMode: 'stretch'
+  }
+  if (imageStyle['backgroundSize']) {
+    bgImage['resizeMode'] = imageStyle['backgroundSize']
+  }
+  if (imageStyle['backgroundImage']){    
+    const url = parseUrl(imageStyle['backgroundImage'])
+    if (!url) return null
+    bgImage['source'] = {uri: url}
+  }
+
+  return bgImage
+}
+
+
+function splitStyle(style: ExtendedViewStyle) {
+  const { textStyle, imageStyle, innerStyle} = groupBy(style, (key) => {
+    if (TEXT_STYLE_REGEX.test(key))
+      return 'textStyle'
+    else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
+    return 'innerStyle'
+  })
+
+  return {
+    textStyle, 
+    bgImage: imageStyleToProps(imageStyle),
+    innerStyle
+  }
 }
 
 const isText = (children: ElementNode) => {
@@ -94,31 +158,14 @@ function every(children: ElementNode, callback: (children: ElementNode) => boole
   return hasSameElement
 }
 
-
-const wrapChildren = (children: ElementNode, textStyle, bgImage, innerStyle) => {
-  if (every(children, (child)=>isText(child))) {
-    children = <Text style={textStyle}>{children}</Text>
-  } else {
-    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
-  }
-
-  if(bgImage){
-    children = <ImageBackground {...bgImage} style={innerStyle} >{children}</ImageBackground>
-  }
-
-  return children
-}
-
-
-const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
-  const { 
+const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
+  let {
     style,
     children,
     hoverStyle,
-    ...otherProps } = props
+  } = props
   const [isHover, setIsHover] = React.useState(false)
-
-  const finalStyle:ExtendedViewStyle = getMergeStyle(style, isHover ? hoverStyle : [])
+  const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dataRef = React.useRef<{
     startTimestamp: number,
@@ -137,9 +184,8 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     }
   }, [dataRef])
 
-
   const setStartTimer = () => {
-    const { hoverStyle, hoverStartTime = 50 } = dataRef.current.props
+    const { hoverStyle, 'hover-start-time': hoverStartTime = 50 } = dataRef.current.props
     if (hoverStyle) {
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
       dataRef.current.startTimer = setTimeout(() => {
@@ -149,7 +195,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }
 
   const setStayTimer = () => {
-    const { hoverStyle, hoverStayTime = 400 } = dataRef.current.props
+    const { hoverStyle, 'hover-stay-time': hoverStayTime = 400 } = dataRef.current.props
     if (hoverStyle) {
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
       dataRef.current.stayTimer = setTimeout(() => {
@@ -170,31 +216,76 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     setStayTimer()
   }
 
-  const innerTouchable = useInnerTouchable({
-    ...props,
+  const innerProps = useInnerProps(props, {
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
     })
+  }, [
+    'style',
+    'children',
+    'hover-start-time',
+    'hover-stay-time',
+    'hoverStyle'
+  ], {
+    touchable: true
   })
+
+  // 打平 style 数组
+  const styleObj:ExtendedViewStyle = StyleSheet.flatten<ExtendedViewStyle>(style)
+  // 默认样式
+  const defaultStyle:ExtendedViewStyle = {
+    // flex 布局相关的默认样式
+    ...styleObj.display === 'flex' && {
+      flexDirection: 'row',
+      flexBasis: 'auto',
+      flexShrink: 1,
+      flexWrap: 'nowrap'
+    }
+  }
+  
+  const finalStyle:ExtendedViewStyle = {
+    ...defaultStyle,
+    ...styleObj,
+    ...isHover && StyleSheet.flatten(hoverStyle)
+  }
 
   const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: getDefaultStyle(finalStyle)
+    defaultStyle
   })
 
-  const [textStyle, bgImage, innerStyle] = splitStyle(finalStyle)
+  React.useEffect(() => {
+    setTimeout(() => {
+      nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+        nodeRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    })
+    return () => {
+      measureTimeout.current && clearTimeout(measureTimeout.current);
+      measureTimeout.current = null
+    }
+  }, [nodeRef])
 
-  return (<View
-    ref={nodeRef}
-    {...{...otherProps, ...innerTouchable}}
-    style={{...(!bgImage && innerStyle)}}
-  >
-    {wrapChildren(children, textStyle, bgImage, innerStyle)}
-  </View>)
+  const {textStyle, bgImage, innerStyle} = splitStyle(finalStyle)
+  if (every(children, (child)=>isText(child))) {
+    children = <Text style={textStyle}>{children}</Text>
+  } else {
+    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
+  }
+
+  return (
+    <View
+      ref={nodeRef}
+      {...innerProps}
+      style={innerStyle}
+    >
+      {bgImage && <Image style={[StyleSheet.absoluteFill, { width: innerStyle.width, height: innerStyle.height}]} {...bgImage} />}
+      {children}
+    </View>
+  )
 })
 
 _View.displayName = 'mpx-view'
 
 export default _View
-
 

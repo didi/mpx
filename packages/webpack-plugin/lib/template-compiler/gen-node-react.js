@@ -50,7 +50,7 @@ function genNode (node) {
           exp += genIf(node)
         } else {
           exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
-          if (node.attrsList.length) {
+          if (node.attrsList.length || node.isRoot) {
             const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
               if (attrName) {
                 map[attrName] = exp
@@ -62,17 +62,13 @@ function genNode (node) {
               attrs.push('...listeners')
             }
 
-            node.attrsList.forEach(({ name, value }) => {
+            node.attrsList && node.attrsList.forEach(({ name, value }) => {
               const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
               attrs.push(`${mapAttrName(name)}: ${attrExp}`)
             })
             exp += `, { ${attrs.join(', ')} }`
           } else {
-            if (node.isRoot) {
-              exp += ', ...listeners '
-            } else {
-              exp += ', null'
-            }
+            exp += ', null'
           }
 
           if (!node.unary && node.children.length) {

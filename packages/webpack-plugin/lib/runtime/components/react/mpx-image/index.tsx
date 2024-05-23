@@ -56,8 +56,8 @@ export interface ImageProps {
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
 
-const DEFAULT_IMAGE_WIDTH = 240
-const DEFAULT_IMAGE_HEIGHT = 320
+const DEFAULT_IMAGE_WIDTH = 320
+const DEFAULT_IMAGE_HEIGHT = 240
 const REMOTE_SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 
 const styls = StyleSheet.create({
