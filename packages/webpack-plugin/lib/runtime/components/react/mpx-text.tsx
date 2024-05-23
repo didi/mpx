@@ -8,7 +8,7 @@ import { Text, TextProps } from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
 // @ts-ignore
-import useInnerTouchable from './getInnerListeners';
+import useInnerProps from './getInnerListeners';
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
@@ -25,31 +25,56 @@ const DEFAULT_STYLE = {
   fontSize: 16
 }
 
-const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>) => {
+const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>):React.JSX.Element => {
   const {
     style,
     children,
     selectable,
     'user-select': userSelect,
     useInherit = false,
-    ...otherProps } = props
-    const innerTouchable = useInnerTouchable(props);
+    } = props
+
+    const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+
+    const innerProps = useInnerProps(props, {}, [
+      'style',
+      'children',
+      'selectable',
+      'user-select',
+      'useInherit'
+    ], {
+      touchable: true
+    })
 
     const { nodeRef } = useNodesRef(props, ref, {
       defaultStyle: DEFAULT_STYLE
     })
+    
+    React.useEffect(() => {
+      setTimeout(() => {
+        nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+          nodeRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        })
+      })
+      return () => {
+        measureTimeout.current && clearTimeout(measureTimeout.current);
+        measureTimeout.current = null
+      }
+    }, [nodeRef])
+
     return (
       <Text
         style={[ !useInherit && DEFAULT_STYLE, style ]}
         ref={nodeRef}
         selectable={!!selectable || !!userSelect}
-        {...{...otherProps, ...innerTouchable}}
+        {...innerProps}
       >
         {children}
       </Text>
     )
 })
 
-_Text.displayName = '_Text'
+_Text.displayName = 'mpx-text'
 
 export default _Text
