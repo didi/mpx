@@ -38,61 +38,7 @@ export interface _ViewProps extends ExtendedViewStyle {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
-// function splitStyle(style: ExtendedViewStyle) {
-//   let textStyle = null
-//   let bjImage = null
-//   let innerStyle = {}
-
-//   for (let key in style) {
-//     let val = style[key]
-//     if (TEXT_STYLE_REGEX.test(key)) {
-//       textStyle = textStyle ?? {}
-//       textStyle[key] = val
-//     }else if (['backgroundImage', 'backgroundSize'].includes(key)) {
-//       bjImage = bjImage ?? {
-//         resizeMode: 'stretch'
-//       }
-//       if (key === 'backgroundSize') {
-//         bjImage['resizeMode'] = val
-//       } else if (key === 'backgroundImage'){
-//         bjImage['source'] = {uri: parseUrl(val)}
-//       }
-//     } else {
-//       innerStyle[key] = val
-//     }
-//   }
-  
-//   return [
-//     textStyle,
-//     bjImage,
-//     innerStyle,
-//   ]
-// }
-
-// const splitStyle = (style, testExps) => {
-//   const originStyle = {
-//     ...style
-//   }
-//   const splitStyleArr = []
-//   Object.keys(StyleSheet.flatten(style)).forEach(prop => {
-//     testExps.forEach((exp, idx) => {
-//       if (exp.test(prop)) {
-//         if (splitStyleArr[idx]) {
-//           splitStyleArr[idx][prop] = style[prop]
-//         } else {
-//           splitStyleArr[idx] = { [prop]: style[prop] }
-//         }
-//         delete originStyle[prop]
-//       }
-//     })
-//   })
-//   splitStyleArr.push(originStyle)
-//   return splitStyleArr
-// }
-
-
 type Obj = Record<string, any>
-
 
 function groupBy(style:Obj, callback: (key: string, val: string) => string ) {
   let group:Obj = {}
@@ -106,8 +52,6 @@ function groupBy(style:Obj, callback: (key: string, val: string) => string ) {
   }
   return group
 }
-
-
 
 const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
   if (!imageStyle)  return null
