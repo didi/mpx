@@ -208,6 +208,18 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
+  const formatLineHeight = ({ prop, value }) => {
+    if (!numberRegExp.test(value)) {
+      verifyValues({ prop, value, valueType: ValueType.number })
+      return false
+    }
+
+    return {
+      prop,
+      value : !!Number(value) ? `${Math.round(value*100)}%` : value
+    }
+  }
+
   const getFontVariant = ({ prop, value }) => {
     if (/^(font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures)$/.test(prop)) {
       error(`Property [${prop}] is not supported in React Native environment, please replace [font-variant]!`)
@@ -345,6 +357,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: /.*color.*/i,
         ios: checkCommonValue(ValueType.color),
         android: checkCommonValue(ValueType.color)
+      },
+      { // color 颜色值校验
+        test: 'line-height',
+        ios: formatLineHeight,
+        android: formatLineHeight
       },
       { // number 值校验
         test: /.*width|height|left|right|top|bottom|radius|margin|padding|spacing|offset|size.*/i,

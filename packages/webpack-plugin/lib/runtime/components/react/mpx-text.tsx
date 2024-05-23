@@ -4,7 +4,7 @@
  * ✘ space
  * ✘ decode
  */
-import { Text, TextProps } from 'react-native'
+import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
 // @ts-ignore
@@ -12,8 +12,11 @@ import useInnerProps from './getInnerListeners';
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
+type ExtendedTextStyle = TextStyle & {
+  lineHeight: string | number
+};
 interface _TextProps extends TextProps {
-  style?: any;
+  style?: ExtendedTextStyle;
   children?: React.ReactNode;
   selectable?: boolean;
   ['user-select']?: boolean;
@@ -25,9 +28,20 @@ const DEFAULT_STYLE = {
   fontSize: 16
 }
 
+const NUMBER_REGX = /^\d+(\.\d+)?%$/
+
+const transformStyle = (styleObj: ExtendedTextStyle) => {
+  let lineHeight = styleObj.lineHeight
+  if (lineHeight) return
+  if (typeof lineHeight === 'string' && NUMBER_REGX.test(lineHeight)) {
+    lineHeight = ((lineHeight as any).replace('%', '')/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    styleObj['lineHeight'] = lineHeight
+  }
+}
+
 const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>):React.JSX.Element => {
   const {
-    style,
+    style = [],
     children,
     selectable,
     'user-select': userSelect,
@@ -36,6 +50,9 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+
+    const styleObj = StyleSheet.flatten(style)    
+    transformStyle(styleObj)    
 
     const innerProps = useInnerProps(props, {}, [
       'style',
@@ -65,7 +82,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     return (
       <Text
-        style={[ !useInherit && DEFAULT_STYLE, style ]}
+        style={{...useInherit && DEFAULT_STYLE, ...styleObj}}
         ref={nodeRef}
         selectable={!!selectable || !!userSelect}
         {...innerProps}
