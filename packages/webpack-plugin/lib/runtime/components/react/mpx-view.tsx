@@ -42,8 +42,7 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
-function groupBy(style:ExtendedViewStyle, callback: (key: string, val: string) => string ) {
-  let group:GroupData = {}
+function groupBy(style:ExtendedViewStyle, callback: (key: string, val: string) => string, group:GroupData = {}) {
   for (let key in style) {
     let val = style[key]
     let groupKey = callback(key, val)
@@ -73,13 +72,17 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
 }
 
 
-function splitStyle(style: ExtendedViewStyle) {
-  const { textStyle, imageStyle, innerStyle} = groupBy(style, (key) => {
-    if (TEXT_STYLE_REGEX.test(key))
-      return 'textStyle'
-    else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
-    return 'innerStyle'
+function splitStyle(styles: ExtendedViewStyle []) {
+  let group:GroupData = {}
+  styles.forEach(style => {
+    groupBy(style, (key) => {
+      if (TEXT_STYLE_REGEX.test(key))
+        return 'textStyle'
+      else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
+      return 'innerStyle'
+    }, group)
   })
+  const { textStyle, imageStyle, innerStyle } = group
 
   return {
     textStyle, 
@@ -201,12 +204,6 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       flexWrap: 'nowrap'
     }
   }
-  
-  const finalStyle:ExtendedViewStyle = {
-    ...defaultStyle,
-    ...styleObj,
-    ...isHover && StyleSheet.flatten(hoverStyle)
-  }
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
@@ -224,8 +221,11 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     }
   }, [nodeRef])
 
-  const {textStyle, bgImage, innerStyle} = splitStyle(finalStyle)
-
+  const {textStyle, bgImage, innerStyle} = splitStyle([
+    defaultStyle,
+    styleObj,
+    isHover ? StyleSheet.flatten(hoverStyle) : {}
+  ])
 
   return (
     <View
