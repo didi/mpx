@@ -105,7 +105,7 @@ function nonsupportPropsInRN (resObj, props) {
   const defineProps = {}
   props.forEach((item) => {
     defineProps[item] = {
-      get() {
+      get () {
         warn(`The ${item} attribute is not supported in React Native ${__mpx_mode__} environment`)
         return null
       }
@@ -132,5 +132,5 @@ export {
   hasOwn,
   throwSSRWarning,
   type,
-  nonsupportResRN
+  nonsupportPropsInRN
 }

@@ -105,7 +105,7 @@ const getDeviceInfo = function () {
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024),
+    memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
   })
   return deviceInfo
 }
