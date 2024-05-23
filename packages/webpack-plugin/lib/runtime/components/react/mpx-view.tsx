@@ -62,11 +62,9 @@ function splitStyle(style: ExtendedViewStyle) {
         resizeMode: 'stretch'
       }
       if (key === 'backgroundSize') {
-        bjImage['resizeMode'] = ['cover', 'contain', 'stretch'].includes(val) ? val : 'stretch'
-        continue
+        bjImage['resizeMode'] = val
       } else if (key === 'backgroundImage'){
         bjImage['source'] = {uri: parseUrl(val)}
-        continue
       }
     } else {
       innerStyle[key] = val
