@@ -156,7 +156,7 @@ const useInnerProps = (
   props: UseInnerPropsOptions['props'] = {},
   additionalProps: UseInnerPropsOptions['additionalProps'] = {},
   removeProps: UseInnerPropsOptions['removeProps'] = [],
-  config: UseInnerPropsOptions['config'] = {}
+  config: UseInnerPropsOptions['config'] = { touchable: true }
 ) => {
   const ref = useRef<InnerRef>({
     startTimer: null,

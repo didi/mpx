@@ -1071,7 +1071,7 @@ function processStyleReact (el) {
     }])
   }
 
-  if (staticHoverClass) {
+  if (staticHoverClass && staticHoverClass !== 'none') {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
       name: 'hoverStyle',

@@ -8,7 +8,7 @@ import { View, Text, ViewStyle, NativeSyntheticEvent, ImageBackground, ImageResi
 import * as React from 'react'
 
 // @ts-ignore
-import useInnerTouchable from './getInnerListeners'
+import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
@@ -91,13 +91,15 @@ const wrapChildren = (children, style, image) => {
   return image ? processBackgroundChildren(children, style, image) : processChildren(children, style)
 }
 
-const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
+const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
   const {
     style,
     children,
     hoverStyle,
     ...otherProps } = props
   const [isHover, setIsHover] = React.useState(false)
+
+  const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dataRef = React.useRef<{
     startTimestamp: number,
@@ -117,7 +119,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }, [dataRef])
 
   const setStartTimer = () => {
-    const { hoverStyle, hoverStartTime = 50 } = dataRef.current.props
+    const { hoverStyle, 'hover-start-time': hoverStartTime = 50 } = dataRef.current.props
     if (hoverStyle) {
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
       dataRef.current.startTimer = setTimeout(() => {
@@ -127,7 +129,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }
 
   const setStayTimer = () => {
-    const { hoverStyle, hoverStayTime = 400 } = dataRef.current.props
+    const { hoverStyle, 'hover-stay-time': hoverStayTime = 400 } = dataRef.current.props
     if (hoverStyle) {
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
       dataRef.current.stayTimer = setTimeout(() => {
@@ -148,12 +150,19 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     setStayTimer()
   }
 
-  const innerTouchable = useInnerTouchable({
-    ...props,
+  const innerProps = useInnerProps(props, {
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
     })
+  }, [
+    'style',
+    'children',
+    'hover-start-time',
+    'hover-stay-time',
+    'hoverStyle'
+  ], {
+    touchable: true
   })
 
   // 打平 style 数组
@@ -173,12 +182,25 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     defaultStyle
   })
 
+  React.useEffect(() => {
+    setTimeout(() => {
+      nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+        nodeRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    })
+    return () => {
+      measureTimeout.current && clearTimeout(measureTimeout.current);
+      measureTimeout.current = null
+    }
+  }, [nodeRef])
+
+
   const image = parseUrl(styleObj.backgroundImage)
 
   return (
     <View
       ref={nodeRef}
-      {...{...otherProps, ...innerTouchable}}
+      {...innerProps}
       style={{
         ...defaultStyle,
         ...!image && styleObj,
