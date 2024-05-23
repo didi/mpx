@@ -134,9 +134,6 @@ class DynamicEntryDependency extends NullDependency {
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (this.extraOptions.postSubpackageEntry) {
-      if (!mpx.postSubpackageEntriesMap) {
-        mpx.postSubpackageEntriesMap = {}
-      }
       if (!mpx.postSubpackageEntriesMap[packageRoot]) {
         mpx.postSubpackageEntriesMap[packageRoot] = [this]
       }

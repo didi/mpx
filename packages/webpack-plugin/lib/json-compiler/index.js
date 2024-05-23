@@ -253,12 +253,7 @@ module.exports = function (content) {
           }
           if (err) return callback(err)
           components[name] = entry
-          // todo: 运行时组件 usingComponents，能否在 json 生成阶段才去替换 hashName
           if (runtimeCompile) {
-            const hashName = 'm' + mpx.pathHash(resourcePath)
-            delete components[name]
-            components[hashName] = entry
-
             dependencyComponentsMap[resourcePath] = name
           }
           if (tarRoot) {

@@ -16,7 +16,6 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
-const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
@@ -86,7 +85,6 @@ module.exports = function (content) {
   }
 
   if (isRuntimeMode) {
-    this._module.addPresentationalDependency(new RuntimeRenderPackageDependency(packageName))
     const { request, outputPath } = genMpxCustomElement(packageName)
     this._module.addPresentationalDependency(new DynamicEntryDependency([0, 0], request, 'component', outputPath, packageRoot, '', '', { replaceContent: '', postSubpackageEntry: true }))
   }

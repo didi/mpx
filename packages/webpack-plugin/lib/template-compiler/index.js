@@ -5,7 +5,6 @@ const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
-const getDynamicTemplate = require('../runtime-render/getTemplate')
 const simplifyAstTemplate = require('./simplify-template')
 const { createTemplateEngine } = require('@mpxjs/template-engine')
 
@@ -198,7 +197,8 @@ global.currentInject.getRefsData = function () {
       skipEmit: true,
       extractedDynamicAsset: JSON.stringify(simpleAst)
     })
-    return getDynamicTemplate(packageName)
+    // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
+    return ''
   }
 
   return result

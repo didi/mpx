@@ -5,7 +5,7 @@ const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
 const addQuery = require('./utils/add-query')
 const normalize = require('./utils/normalize')
-const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE, DYNAMIC_TEMPLATE, DYNAMIC_STYLE, DYNAMIC, BLOCK_TEMPLATE, BLOCK_STYLES, BLOCK_JSON } = require('./utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE, DYNAMIC_TEMPLATE, DYNAMIC_STYLE, BLOCK_TEMPLATE, BLOCK_STYLES, BLOCK_JSON } = require('./utils/const')
 
 module.exports = content => content
 
@@ -22,6 +22,7 @@ module.exports.pitch = async function (remainingRequest) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
   const isDynamic = queryObj.isDynamic
+  // const isMpxCustomElement = queryObj.isMpxCustomElement
 
   if (needBabel) {
     // 创建js request应用babel
@@ -64,61 +65,61 @@ module.exports.pitch = async function (remainingRequest) {
 
   if (typeof content !== 'string') return resultSource
 
+  const { buildInfo } = this._module
+
+  const assetsInfo = buildInfo.assetsInfo
+  // 如果importModule子模块中包含动态特性，比如动态添加入口和静态资源输出路径，则当前extractor模块不可缓存
+  if (assetsInfo && assetsInfo.has(MPX_DISABLE_EXTRACTOR_CACHE)) {
+    this.cacheable(false)
+  }
+
+  const assetInfo = assetsInfo && assetsInfo.get(resourcePath)
+  if (assetInfo && assetInfo.extractedResultSource) {
+    resultSource = assetInfo.extractedResultSource
+  }
+
   const extractedInfo = {
     content,
     // isStatic时不需要关注引用索引
     index: isStatic ? 0 : index
   }
 
-  if (type === BLOCK_JSON && isDynamic) {
+  if (isDynamic) {
+    let dynamicType = ''
+    let dynamicAsset = null
+    if (type === BLOCK_STYLES) {
+      dynamicType = DYNAMIC_STYLE
+    } else if (type === BLOCK_TEMPLATE) {
+      dynamicType = DYNAMIC_TEMPLATE
+    }
+
+    if (dynamicType && assetsInfo.get(dynamicType)) {
+      dynamicAsset = assetsInfo.get(dynamicType).extractedDynamicAsset
+    }
+
     Object.assign(extractedInfo, {
       dynamic: isDynamic,
       type,
-      resourcePath
+      moduleId,
+      resourcePath,
+      packageName,
+      dynamicAsset
     })
   }
+
+  // todo 看后续 mpxCustomElement 是否使用相同的注入流程
+  // if (isMpxCustomElement) {
+  //   Object.assign(extractedInfo, {
+  //     isMpxCustomElement,
+  //     type,
+  //     packageName
+  //   })
+  // }
 
   this.emitFile(file, '', undefined, {
     skipEmit: true,
     extractedInfo
   })
-
-  const { buildInfo } = this._module
-
-  // 如果importModule子模块中包含动态特性，比如动态添加入口和静态资源输出路径，则当前extractor模块不可缓存
-  if (buildInfo.assetsInfo.has(MPX_DISABLE_EXTRACTOR_CACHE)) {
-    this.cacheable(false)
-  }
-
-  const assetInfo = buildInfo.assetsInfo && buildInfo.assetsInfo.get(resourcePath)
-  if (assetInfo && assetInfo.extractedResultSource) {
-    resultSource = assetInfo.extractedResultSource
-  }
-
-  let dynamicType = ''
-
-  if (type === BLOCK_TEMPLATE) {
-    dynamicType = DYNAMIC_TEMPLATE
-  }
-  if (type === BLOCK_STYLES) {
-    dynamicType = DYNAMIC_STYLE
-  }
-
-  if (dynamicType && buildInfo.assetsInfo?.get(dynamicType)) {
-    const dynamicAsset = buildInfo.assetsInfo.get(dynamicType).extractedDynamicAsset
-    this.emitFile(DYNAMIC, '', undefined, {
-      skipEmit: true,
-      extractedInfo: {
-        content: dynamicAsset,
-        dynamic: true,
-        type,
-        moduleId,
-        resourcePath,
-        packageName,
-        index: 0
-      }
-    })
-  }
 
   if (isStatic) {
     switch (type) {
