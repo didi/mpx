@@ -42,10 +42,15 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
-function groupBy(style:ExtendedViewStyle, callback: (key: string, val: string) => string, group:GroupData = {}) {
+function groupBy(style, callback, group = {}):GroupData {
+  let groupKey = ''
   for (let key in style) {
     let val = style[key]
-    let groupKey = callback(key, val)
+    if (typeof val === 'object') {
+      groupBy(style[key], callback, group)
+      continue
+    }
+    groupKey = callback(key, val)
     if (!group[groupKey]) {
       group[groupKey] = {}
     }
@@ -53,6 +58,7 @@ function groupBy(style:ExtendedViewStyle, callback: (key: string, val: string) =
   }
   return group
 }
+
 
 const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
   if (!imageStyle) return null
@@ -73,17 +79,12 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
 
 
 function splitStyle(styles: ExtendedViewStyle []) {
-  let group:GroupData = {}
-  styles.forEach(style => {
-    groupBy(style, (key) => {
-      if (TEXT_STYLE_REGEX.test(key))
-        return 'textStyle'
-      else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
-      return 'innerStyle'
-    }, group)
-  })
-  const { textStyle, imageStyle, innerStyle } = group
-
+  const {textStyle, imageStyle, innerStyle} = groupBy(styles, (key) => {
+    if (TEXT_STYLE_REGEX.test(key))
+      return 'textStyle'
+    else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
+    return 'innerStyle'
+  }, {})
   return {
     textStyle, 
     bgImage: imageStyleToProps(imageStyle),
