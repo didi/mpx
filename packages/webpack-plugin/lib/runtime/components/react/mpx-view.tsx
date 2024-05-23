@@ -38,10 +38,12 @@ export interface _ViewProps extends ExtendedViewStyle {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
-type Obj = Record<string, any>
+type GroupData = {
+  [key: string]: ExtendedViewStyle
+}
 
-function groupBy(style:Obj, callback: (key: string, val: string) => string ) {
-  let group:Obj = {}
+function groupBy(style:ExtendedViewStyle, callback: (key: string, val: string) => string ) {
+  let group:GroupData = {}
   for (let key in style) {
     let val = style[key]
     let groupKey = callback(key, val)
@@ -54,7 +56,7 @@ function groupBy(style:Obj, callback: (key: string, val: string) => string ) {
 }
 
 const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
-  if (!imageStyle)  return null
+  if (!imageStyle) return null
   let bgImage:ImageProps = {
     resizeMode: 'stretch'
   }
@@ -100,6 +102,18 @@ function every(children: ElementNode, callback: (children: ElementNode) => boole
   })
   
   return hasSameElement
+}
+
+function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {}, textStyle?: ExtendedViewStyle, bgImage?: ImageProps) {
+  if (every(children, (child)=>isText(child))) {
+    children = <Text style={textStyle}>{children}</Text>
+  } else {
+    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
+  }
+  return <>
+    {bgImage && <Image style={[StyleSheet.absoluteFill, { width: innerStyle.width, height: innerStyle.height}]} {...bgImage} />}
+    {children}
+  </>
 }
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
@@ -211,11 +225,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   }, [nodeRef])
 
   const {textStyle, bgImage, innerStyle} = splitStyle(finalStyle)
-  if (every(children, (child)=>isText(child))) {
-    children = <Text style={textStyle}>{children}</Text>
-  } else {
-    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
-  }
+
 
   return (
     <View
@@ -223,8 +233,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       {...innerProps}
       style={innerStyle}
     >
-      {bgImage && <Image style={[StyleSheet.absoluteFill, { width: innerStyle.width, height: innerStyle.height}]} {...bgImage} />}
-      {children}
+      {wrapChildren(children, innerStyle, textStyle, bgImage)}
     </View>
   )
 })
