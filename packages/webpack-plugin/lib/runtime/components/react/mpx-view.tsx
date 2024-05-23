@@ -118,7 +118,7 @@ function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {},
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
   let {
-    style,
+    style = [],
     children,
     hoverStyle,
   } = props
