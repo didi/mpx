@@ -101,9 +101,17 @@ function makeMap (arr) {
   }, {})
 }
 
-function nonsupportResRN (prop) {
-  warn(`${prop} property is only valid within wechat`)
-  return null
+function nonsupportPropsInRN (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get() {
+        warn(`The ${item} attribute is not supported in React Native ${__mpx_mode__} environment`)
+        return null
+      }
+    }
+  })
+  Object.defineProperties(resObj, defineProps)
 }
 
 const isBrowser = typeof window !== 'undefined'

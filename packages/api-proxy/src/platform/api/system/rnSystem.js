@@ -1,19 +1,20 @@
 import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { webHandleSuccess, webHandleFail, nonsupportResRN } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, nonsupportPropsInRN } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
   const dimensionsScreen = Dimensions.get('screen')
-  return {
+  const result = {
     pixelRatio: PixelRatio.get(),
     windowWidth: dimensionsWindow.width,
     windowHeight: dimensionsWindow.height,
     screenWidth: dimensionsScreen.width,
-    screenHeight: dimensionsScreen.height,
-    screenTop: null
+    screenHeight: dimensionsScreen.height
   }
+  nonsupportPropsInRN(result, ['screenTop'])
+  return result
 }
 
 const getSystemInfoSync = function () {
@@ -25,11 +26,6 @@ const getSystemInfoSync = function () {
     top = StatusBar.currentHeight || 0
   }
   const iosRes = {}
-  if (Platform.OS === 'ios') {
-    iosRes.notificationAlertAuthorized = nonsupportResRN('notificationAlertAuthorized')
-    iosRes.notificationBadgeAuthorized = nonsupportResRN('notificationBadgeAuthorized')
-    iosRes.notificationSoundAuthorized = nonsupportResRN('notificationSoundAuthorized')
-  }
 
   try {
     const width = Math.min(screenWidth, screenHeight)
@@ -44,7 +40,7 @@ const getSystemInfoSync = function () {
     }
   } catch (error) {
   }
-  return {
+  const result = {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
@@ -53,37 +49,42 @@ const getSystemInfoSync = function () {
     statusBarHeight: top,
     fontSizeSetting: PixelRatio.getFontScale(),
     safeArea,
-    language: nonsupportResRN('language'),
-    version: nonsupportResRN('version'),
-    SDKVersion: nonsupportResRN('SDKVersion'),
-    benchmarkLevel: nonsupportResRN('benchmarkLevel'),
-    albumAuthorized: nonsupportResRN('albumAuthorized'),
-    cameraAuthorized: nonsupportResRN('cameraAuthorized'),
-    locationAuthorized: nonsupportResRN('locationAuthorized'),
-    microphoneAuthorized: nonsupportResRN('microphoneAuthorized'),
-    notificationAuthorized: nonsupportResRN('notificationAuthorized'),
-    phoneCalendarAuthorized: nonsupportResRN('phoneCalendarAuthorized'),
-    bluetoothEnabled: null,
-    locationEnabled: null,
-    wifiEnabled: null,
-    locationReducedAccuracy: null,
-    theme: null,
-    host: nonsupportResRN('host'),
-    enableDebug: nonsupportResRN('enableDebug'),
     ...windowInfo,
     ...iosRes
   }
+  nonsupportPropsInRN(result, [
+    'language',
+    'version',
+    'SDKVersion',
+    'benchmarkLevel',
+    'albumAuthorized',
+    'cameraAuthorized',
+    'locationAuthorized',
+    'microphoneAuthorized',
+    'notificationAuthorized',
+    'phoneCalendarAuthorized',
+    'host',
+    'enableDebug',
+    'notificationAlertAuthorized',
+    'notificationBadgeAuthorized',
+    'notificationSoundAuthorized',
+    'bluetoothEnabled',
+    'locationEnabled',
+    'wifiEnabled',
+    'locationReducedAccuracy',
+    'theme'
+  ])
+  return result
 }
 
 const getSystemInfo = function (options) {
   const { success, fail, complete } = options
   try {
     const systemInfo = getSystemInfoSync()
-    const result = {
-      errMsg: 'setStorage:ok',
-      ...systemInfo
-    }
-    webHandleSuccess(result, success, complete)
+    Object.assign(systemInfo, {
+      errMsg: 'setStorage:ok'
+    })
+    webHandleSuccess(systemInfo, success, complete)
   } catch (err) {
     const result = {
       errMsg: `getSystemInfo:fail ${err}`
@@ -93,22 +94,20 @@ const getSystemInfo = function (options) {
 }
 
 const getDeviceInfo = function () {
-  const androidInfo = {}
+  const deviceInfo = {}
   if (Platform.OS === 'android') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
-    androidInfo.deviceAbi = deviceAbi[0] || null
-    androidInfo.abi = nonsupportResRN('abi')
-    androidInfo.benchmarkLevel = nonsupportResRN('benchmarkLevel')
-    androidInfo.cpuType = null
+    deviceInfo.deviceAbi = deviceAbi[0] || null
   }
-  return {
+  nonsupportPropsInRN(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
+  Object.assign(deviceInfo, {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024),
-    ...androidInfo
-  }
+  })
+  return deviceInfo
 }
 
 export {
