@@ -119,7 +119,7 @@ module.exports = function getSpec ({ warn, error }) {
       borderBottomLeftRadius: ValueType.default
     }
   }
-  
+
   const formatMargins = ({ prop, value }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     // validate
