@@ -112,12 +112,12 @@ module.exports = function (template, {
             createElement: true,
             components: true,
             getNativeComponent: true,
-            listeners: true
+            rootProps: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
           })
-          output += `global.currentInject.render = function (createElement, components, getNativeComponent, listeners) {
+          output += `global.currentInject.render = function (createElement, components, getNativeComponent, rootProps) {
   return ${bindResult.code}
 };\n`
         } catch (e) {
