@@ -4,7 +4,7 @@
  * ✘ space
  * ✘ decode
  */
-import { Text, TextProps } from 'react-native'
+import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import * as React from 'react'
 import { useImperativeHandle } from 'react'
 // @ts-ignore
@@ -13,12 +13,12 @@ import useInnerProps from './getInnerListeners';
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 interface _TextProps extends TextProps {
-  style?: any;
-  children?: React.ReactNode;
-  selectable?: boolean;
-  ['user-select']?: boolean;
-  userSelect?: boolean;
-  useInherit?: boolean;
+  style?: TextStyle
+  children?: React.ReactNode
+  selectable?: boolean
+  ['user-select']?: boolean
+  userSelect?: boolean
+  useInherit?: boolean
 }
 
 const DEFAULT_STYLE = {
@@ -27,7 +27,7 @@ const DEFAULT_STYLE = {
 
 const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>):React.JSX.Element => {
   const {
-    style,
+    style = [],
     children,
     selectable,
     'user-select': userSelect,
@@ -36,6 +36,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+    const styleObj = StyleSheet.flatten(style)
 
     const innerProps = useInnerProps(props, {}, [
       'style',
@@ -65,7 +66,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     return (
       <Text
-        style={[ !useInherit && DEFAULT_STYLE, style ]}
+        style={{...useInherit && DEFAULT_STYLE, ...styleObj}}
         ref={nodeRef}
         selectable={!!selectable || !!userSelect}
         {...innerProps}
