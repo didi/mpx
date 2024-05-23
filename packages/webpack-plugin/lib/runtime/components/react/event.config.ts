@@ -1,4 +1,8 @@
-const eventConfigList = [
+interface EventConfig {
+  [key: string]: string[];
+}
+
+const eventConfigList: EventConfig[] = [
   { bindtap: ['onTouchEnd'] },
   { bindlongpress: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
   { bindtouchstart: ['onTouchStart'] },

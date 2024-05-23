@@ -290,7 +290,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     const { bindrefresherrefresh } = props;
     bindrefresherrefresh &&
       bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, { layoutRef }, props),
+        getCustomEvent('refresherrefresh', null, { layoutRef }, props),
       );
   }
 
