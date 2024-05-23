@@ -40,7 +40,6 @@ import React, {
   useState,
   ReactNode,
   forwardRef,
-  SyntheticEvent,
 } from 'react'
 import {
   View,
@@ -52,6 +51,7 @@ import {
   Animated,
   Easing,
   LayoutChangeEvent,
+  NativeSyntheticEvent,
 } from 'react-native'
 import { extractTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -82,10 +82,10 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
-  bindtap?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
-  bindtouchstart?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
-  bindtouchend?: (evt: SyntheticEvent<TouchEvent> | unknown) => void
+  bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchstart?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchend?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const LOADING_IMAGE_URI =
@@ -301,25 +301,25 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     }, hoverStartTime)
   }
 
-  const onTouchStart = (evt: SyntheticEvent<TouchEvent>) => {
+  const onTouchStart = (evt: NativeSyntheticEvent<TouchEvent>) => {
     bindtouchstart && bindtouchstart(evt)
     if (disabled) return
     setStartTimer()
   }
 
-  const onTouchEnd = (evt: SyntheticEvent<TouchEvent>) => {
+  const onTouchEnd = (evt: NativeSyntheticEvent<TouchEvent>) => {
     bindtouchend && bindtouchend(evt)
     if (disabled) return
     setStayTimer()
   }
 
-  const onTap = (evt: SyntheticEvent<TouchEvent>) => {
+  const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
     handleOpenTypeEvent()
   }
 
-  const catchTap = (evt: SyntheticEvent<TouchEvent>) => {
+  const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
     handleOpenTypeEvent()
@@ -331,16 +331,14 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
 
   const innerProps = useInnerProps(
+    props,
     {
-      ...props,
+      ref: nodeRef,
+      onLayout,
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
       bindtap: onTap,
       catchtap: catchTap,
-    },
-    {
-      ref: nodeRef,
-      onLayout,
     },
     [],
     { 
