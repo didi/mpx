@@ -12,24 +12,23 @@ import useInnerTouchable from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { extractTextStlye, parseUrl, hasElementType } from './utils'
+import { parseUrl, hasElementType, TEXT_STYLE_REGEX } from './utils'
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
   backgroundSize?: ImageResizeMode
 }
 
-export interface _ViewProps extends ExtendedViewStyle {
-  style?: Array<ExtendedViewStyle>;
-  children?: React.ReactElement;
-  hoverStyle: Array<ExtendedViewStyle>;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+type ElementNode = Exclude<React.ReactElement, string | number>
+
+export interface _ViewProps extends ViewProps {
+  style?: Array<ExtendedViewStyle>
+  children?: ElementNode
+  hoverStyle: Array<ExtendedViewStyle>
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
-
-
-const bgSizeList =  ['cover', 'contain', 'stretch']
 
 const DEFAULT_STYLE = {
   flexDirection: 'row',
@@ -40,80 +39,78 @@ function getDefaultStyle(style: ViewStyle = {}) {
   return style.display === 'flex' ? DEFAULT_STYLE : {}
 }
 
-function getMergeStyle(style: Array<ExtendedViewStyle> = []):ExtendedViewStyle {
-  const mergedStyle: ExtendedViewStyle = Object.assign({}, ...style)
+function getMergeStyle(style: Array<ExtendedViewStyle> = [], hoverStyle: Array<ExtendedViewStyle> = []):ExtendedViewStyle {
+  const mergedStyle: ExtendedViewStyle = Object.assign({}, ...style, ...hoverStyle)
   return {
     ...getDefaultStyle(mergedStyle),
     ...mergedStyle
   }
 }
 
-const hasTextChild = (children: React.ReactElement<any>) => {
-  let hasText = true
+function splitStyle(style: ExtendedViewStyle) {
+  let textStyle = null
+  let bjImage = null
+  let innerStyle = {}
+
+  for (let key in style) {
+    let val = style[key]
+    if (TEXT_STYLE_REGEX.test(key)) {
+      textStyle = textStyle ?? {}
+      textStyle[key] = val
+    }else if (['backgroundImage', 'backgroundSize'].includes(key)) {
+      bjImage = bjImage ?? {
+        resizeMode: 'stretch'
+      }
+      if (key === 'backgroundSize') {
+        bjImage['resizeMode'] = ['cover', 'contain', 'stretch'].includes(val) ? val : 'stretch'
+        continue
+      } else if (key === 'backgroundImage'){
+        bjImage['source'] = {uri: parseUrl(val)}
+        continue
+      }
+    } else {
+      innerStyle[key] = val
+    }
+  }
+  
+  return [
+    textStyle,
+    bjImage,
+    innerStyle,
+  ]
+}
+
+const isText = (children: ElementNode) => {
+  return hasElementType(children, 'mpx-text') || hasElementType(children, 'Text')
+}
+
+function every(children: ElementNode, callback: (children: ElementNode) => boolean ) {
+  let hasSameElement = true
 
   React.Children.forEach(children, (child) => {
-    if (!hasElementType(child, 'mpx-text') && !hasElementType(child, 'Text')) {
-      hasText = false
+    if (!callback(child)) {
+      hasSameElement = false
     }
   })
-
-  return hasText
+  
+  return hasSameElement
 }
 
 
-const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
-  const {style, ...otherProps} = child.props || {}
-  return React.cloneElement(child, {
-    ...otherProps,
-    style: [textStyle, style]
-  })
-}
-
-const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  let textStyle = null
-
-  if (hasElementType(children, 'mpx-text')) {
-    textStyle = extractTextStlye(style)
-    return cloneElement(children, textStyle)
-  }else if (hasElementType(children, 'Text')) {
-    return cloneElement(children, textStyle)
+const wrapChildren = (children: ElementNode, textStyle, bgImage, innerStyle) => {
+  if (every(children, (child)=>isText(child))) {
+    children = <Text style={textStyle}>{children}</Text>
   } else {
-    return children
-  }
-}
-
-const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  let textStyle = null
-
-  const hasText = hasTextChild(children)
-  if (hasText) {
-    textStyle = extractTextStlye(style)
+    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
-  return hasText ? <Text style={textStyle}>{ children }</Text> : children
-}
-
-const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  return !Array.isArray(children) ? elementInheritChildren(children, style) : 
-    wrapTextChildren(children, style)
-}
-
-
-const processBackgroundChildren = (children: React.ReactElement, style:ExtendedViewStyle =  {}, image) => {
-  let resizeMode:ImageResizeMode = 'stretch'
-  if (bgSizeList.includes(style.backgroundSize)) {
-    resizeMode = style.backgroundSize
+  if(bgImage){
+    children = <ImageBackground {...bgImage} style={innerStyle} >{children}</ImageBackground>
   }
 
-  // 直接替换view,点击会时不时的不生效
-  return <ImageBackground source={{ uri: image }} style={style} resizeMode={resizeMode}>
-    { processChildren(children, style) }
-  </ImageBackground>
+  return children
 }
 
-const wrapChildren = (children, style, image) => {
-  return image ? processBackgroundChildren(children, style, image) : processChildren(children, style)
-}
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>) => {
   const { 
@@ -123,7 +120,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     ...otherProps } = props
   const [isHover, setIsHover] = React.useState(false)
 
-  const finalStyle:ExtendedViewStyle = getMergeStyle(style)
+  const finalStyle:ExtendedViewStyle = getMergeStyle(style, isHover ? hoverStyle : [])
 
   const dataRef = React.useRef<{
     startTimestamp: number,
@@ -187,22 +184,19 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     defaultStyle: getDefaultStyle(finalStyle)
   })
 
-  const image = parseUrl(finalStyle.backgroundImage)
-  
-  return (
-    <View
-      ref={nodeRef}
-      {...{...otherProps, ...innerTouchable}}
-      style={ [ !image && finalStyle, isHover && hoverStyle ] }
-    >
-      {wrapChildren(children, finalStyle, image)}
-    </View>
-  )
+  const [textStyle, bgImage, innerStyle] = splitStyle(finalStyle)
+
+  return (<View
+    ref={nodeRef}
+    {...{...otherProps, ...innerTouchable}}
+    style={{...(!bgImage && innerStyle)}}
+  >
+    {wrapChildren(children, textStyle, bgImage, innerStyle)}
+  </View>)
 })
 
 _View.displayName = 'mpx-view'
 
 export default _View
-
 
 

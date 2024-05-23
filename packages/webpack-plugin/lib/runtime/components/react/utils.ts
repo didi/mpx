@@ -1,7 +1,7 @@
 import { useEffect, useRef, Children, ReactElement, FunctionComponent } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
+export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
 export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
