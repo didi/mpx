@@ -1,7 +1,7 @@
 /**
  * ✔ value
  * ✔ defaultValue
- * - type: Partially. Not support safe-password、nickname
+ * - type: Partially. Not support `safe-password`、`nickname`
  * ✔ password
  * ✔ placeholder
  * - placeholder-style: Only placeholderTextColor(RN).
