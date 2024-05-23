@@ -236,10 +236,13 @@ module.exports = function getSpec ({ warn, error }) {
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
     switch (prop) {
-      case bgPropMap.color: // 背景色校验一下颜色值
+      case bgPropMap.color: {
+        // background-color 背景色校验一下颜色值
         verifyValues({ prop, value, valueType: ValueType.color })
         return { prop, value }
-      case bgPropMap.image: // background-image 仅支持背景图
+      }
+      case bgPropMap.image: {
+        // background-image 仅支持背景图
         const imgUrl = value.match(urlExp)?.[0]
         if (/.*linear-gradient*./.test(value)) {
           error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
@@ -250,13 +253,17 @@ module.exports = function getSpec ({ warn, error }) {
           error(`[${prop}] only support value <url()>`)
           return false
         }
-      case bgPropMap.size: // background-size 仅支持 cover contain
+      }
+      case bgPropMap.size: {
+        // background-size 仅支持 cover contain
         if (isIllegalValue({ prop, value })) {
           unsupportedValueError({ prop, value })
           return false
         }
         return { prop, value }
-      case bgPropMap.all: // background: 仅支持 background-image & background-color & background-size
+      }
+      case bgPropMap.all: {
+        // background: 仅支持 background-image & background-color & background-size
         const bgMap = []
         const values = value.trim().split(/\s(?![^()]*\))/)
         values.forEach(item => {
@@ -275,6 +282,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         })
         return bgMap.length ? bgMap : false
+      }
     }
     unsupportedPropError({ prop, mode })
     return false
