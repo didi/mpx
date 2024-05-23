@@ -65,7 +65,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     return (
       <Text
-        style={[ !useInherit && DEFAULT_STYLE, style ]}
+        style={[ useInherit && DEFAULT_STYLE, style ]}
         ref={nodeRef}
         selectable={!!selectable || !!userSelect}
         {...innerProps}

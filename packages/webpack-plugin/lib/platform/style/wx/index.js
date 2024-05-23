@@ -350,7 +350,14 @@ module.exports = function getSpec ({ warn, error }) {
         test: /.*width|height|left|right|top|bottom|radius|margin|padding|spacing|offset|size.*/i,
         ios: checkCommonValue(ValueType.number),
         android: checkCommonValue(ValueType.number)
-      }
+      },
+      { // color 颜色值校验
+        test: 'line-height',
+        ios: ({ prop, value }) => {
+          console.log(">>> prop, value", prop, value)
+        },
+        android: checkCommonValue(ValueType.color)
+      },
     ]
   }
   return spec
