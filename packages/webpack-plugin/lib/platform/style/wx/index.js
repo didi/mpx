@@ -3,7 +3,6 @@ const { hump2dash } = require('../../../utils/hump-dash')
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(box-sizing|white-space|text-overflow|animation|transition)$/
-  const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -172,7 +171,7 @@ module.exports = function getSpec ({ warn, error }) {
     // android 不支持的 shadowOffset shadowOpacity shadowRadius textDecorationStyle 和 textDecorationStyle
     return cssMap.filter(({ prop }) => { // 不支持的 prop 提示 & 过滤不支持的 prop
       const dashProp = hump2dash(prop)
-      if (unsupportedPropAndroid.test(dashProp)) {
+      if (unsupportedPropMode.android.test(dashProp)) {
         unsupportedPropError({ prop: dashProp, mode })
         return false
       }
