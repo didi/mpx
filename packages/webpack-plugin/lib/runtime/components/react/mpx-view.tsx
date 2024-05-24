@@ -85,6 +85,7 @@ function splitStyle(styles: ExtendedViewStyle []) {
     else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
     return 'innerStyle'
   }, {})
+  console.log(">>> textStyle, imageStyle, innerStyle", textStyle, imageStyle, innerStyle)
   return {
     textStyle, 
     bgImage: imageStyleToProps(imageStyle),
@@ -97,15 +98,7 @@ const isText = (children: ElementNode) => {
 }
 
 function every(children: ElementNode, callback: (children: ElementNode) => boolean ) {
-  let hasSameElement = true
-
-  React.Children.forEach(children, (child) => {
-    if (!callback(child)) {
-      hasSameElement = false
-    }
-  })
-  
-  return hasSameElement
+  return React.Children.toArray(children).every((child) => callback(child as ElementNode))
 }
 
 function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {}, textStyle?: ExtendedViewStyle, bgImage?: ImageProps) {
