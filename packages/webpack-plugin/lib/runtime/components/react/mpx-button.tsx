@@ -358,13 +358,9 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         applyHoverEffect && hoverStyle,
       ]}>
       {loading && <Loading alone={!React.Children.count(children)} />}
-      {['string', 'number'].includes(typeof children) ? (
-        <Text style={[styles.text, isMiniSize && styles.textMini, textStyle]}>
-          {children}
-        </Text>
-      ) : (
-        children
-      )}
+      <Text style={[styles.text, isMiniSize && styles.textMini, textStyle]}>
+        {children}
+      </Text>
     </View>
   )
 })
