@@ -21,7 +21,7 @@ export interface SwiperProps {
 export interface CarouseProps {
   children?: ReactNode;
   circular?: boolean;
-  index: number;
+  current: number;
   autoplay?: boolean;
   duration?: number;
   interval?: number;
@@ -34,6 +34,7 @@ export interface CarouseProps {
   previousMargin?: string;
   nextMargin?: string;
   bindchange: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  getInnerLayout: Function
 }
 
 export interface CarouseState {
