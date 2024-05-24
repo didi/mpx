@@ -85,7 +85,6 @@ function splitStyle(styles: ExtendedViewStyle []) {
     else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
     return 'innerStyle'
   }, {})
-  console.log(">>> textStyle, imageStyle, innerStyle", textStyle, imageStyle, innerStyle)
   return {
     textStyle, 
     bgImage: imageStyleToProps(imageStyle),
