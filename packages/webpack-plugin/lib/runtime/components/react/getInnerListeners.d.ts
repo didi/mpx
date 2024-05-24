@@ -39,9 +39,7 @@ interface InnerRef {
       y: number;
     };
   };
-  props: Record<string, any>;
-  config: any;
-  eventConfig: { [key: string]: string[] }[];
+  props: Record<string, any>
 }
 
 interface UseInnerPropsOptions {
