@@ -4,13 +4,93 @@
 
 
 
-## 事件编写方式（bind，内联传参，动态事件绑定）
+## 事件编写
+目前 Mpx 输出 React Native 的事件编写遵循小程序的事件编写规范，支持事件的冒泡及捕获
 
+普通事件绑定
+```js
+<view bindtap="handleTap">
+    Click here!
+</view>
+```
 
+绑定并阻止事件冒泡
+```js
+<view catchtap="handleTap">
+    Click here!
+</view>
+```
+
+事件捕获
+
+```js
+<view capture-bind:touchstart="handleTap1">
+  outer view
+  <view capture-bind:touchstart="handleTap2">
+    inner view
+  </view>
+</view>
+```
+
+中断捕获阶段和取消冒泡阶段
+
+```js
+<view capture-catch:touchstart="handleTap1">
+  outer view
+</view>
+
+```
+
+在此基础上也新增了事件处理内联传参的增强机制。
+
+```html
+<template>
+ <!--Mpx增强语法，模板内联传参，方便简洁-->
+ <view bindtap="handleTapInline('b')">b</view>
+ </template>
+ <script setup>
+  // 直接通过参数获取数据，直观方便
+  const handleTapInline = (name) => {
+    console.log('name:', name)
+  }
+  // ...
+</script>
+```
+
+除此之外，Mpx 也支持了动态事件绑定
+
+```html
+<template>
+ <!--动态事件绑定-->
+ <view wx:for="{{items}}" bindtap="handleTap_{{index}}">
+  {{item}}
+</view>
+ </template>
+ <script setup>
+  import { ref } from '@mpxjs/core'
+
+  const data = ref(['Item 1', 'Item 2', 'Item 3', 'Item 4'])
+  const handleTap_0 = (event) => {
+    console.log('Tapped on item 1');
+  },
+
+  const handleTap_1 = (event) => {
+    console.log('Tapped on item 2');
+  },
+
+  const handleTap_2 = (event) => {
+    console.log('Tapped on item 3');
+  },
+
+  const handleTap_3 = (event) => {
+    console.log('Tapped on item 4');
+  }
+</script>
+```
 
 ## 基础组件
 
-目前 Mpx 输出RN仅支持以下组件，具体使用范围可参考如下文档
+目前 Mpx 输出 React Native 仅支持以下组件，具体使用范围可参考如下文档
 
 ### view
 
@@ -87,3 +167,4 @@
 | bindrefresherrefresh| 自定义下拉刷新被触发 |  
 
 #### 注意事项
+目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
