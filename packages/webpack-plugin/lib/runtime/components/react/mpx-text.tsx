@@ -50,8 +50,8 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+    const styleObj = StyleSheet.flatten(style)
 
-    const styleObj = StyleSheet.flatten(style)    
     transformStyle(styleObj)    
 
     const innerProps = useInnerProps(props, {}, [
