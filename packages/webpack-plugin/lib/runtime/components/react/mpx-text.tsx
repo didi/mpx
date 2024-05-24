@@ -16,12 +16,12 @@ type ExtendedTextStyle = TextStyle & {
   lineHeight: string | number
 };
 interface _TextProps extends TextProps {
-  style?: ExtendedTextStyle;
-  children?: React.ReactNode;
-  selectable?: boolean;
-  ['user-select']?: boolean;
-  userSelect?: boolean;
-  useInherit?: boolean;
+  style?: ExtendedTextStyle
+  children?: React.ReactNode
+  selectable?: boolean
+  ['user-select']?: boolean
+  userSelect?: boolean
+  useInherit?: boolean
 }
 
 const DEFAULT_STYLE = {
