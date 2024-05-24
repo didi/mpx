@@ -184,7 +184,6 @@ global.currentInject.getRefsData = function () {
     result += '<template is="t_0_container" data="{{ i: r }}" wx:if="{{r && r.nt}}"></template>\n' + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
   }
 
-  // 运行时编译的组件直接返回基础模板的内容，并产出动态文本内容
   if (runtimeCompile) {
     let simpleAst = ''
     try {
@@ -196,7 +195,7 @@ global.currentInject.getRefsData = function () {
       skipEmit: true,
       extractedDynamicAsset: JSON.stringify(simpleAst)
     })
-    // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
+    // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入入口文件
     return ''
   }
 
