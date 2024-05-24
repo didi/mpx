@@ -216,7 +216,7 @@ module.exports = function getSpec ({ warn, error }) {
 
     return {
       prop,
-      value : !!Number(value) ? `${Math.round(value*100)}%` : value
+      value: isFinite(+value) ? `${Math.round(value * 100)}%` : value
     }
   }
 
