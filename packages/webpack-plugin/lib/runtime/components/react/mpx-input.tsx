@@ -317,8 +317,10 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
       )
   }
 
-  const onLayout = (evt: LayoutChangeEvent) => {
-    layoutRef.current = evt.nativeEvent.layout
+  const onLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
   }
 
   useUpdateEffect(() => {

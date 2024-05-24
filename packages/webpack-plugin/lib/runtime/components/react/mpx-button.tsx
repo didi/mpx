@@ -328,10 +328,11 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     handleOpenTypeEvent()
   }
 
-  const onLayout = (evt: LayoutChangeEvent) => {
-    layoutRef.current = evt.nativeEvent.layout
+  const onLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
   }
-
 
   const innerProps = useInnerProps(
     props,

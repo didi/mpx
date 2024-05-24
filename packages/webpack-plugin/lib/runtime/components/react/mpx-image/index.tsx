@@ -230,8 +230,10 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     setViewHeight(height)
   }
 
-  const onImageLayout = (evt: LayoutChangeEvent) => {
-    layoutRef.current = evt.nativeEvent.layout
+  const onImageLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
   }
 
   const loadImage = useCallback((): void => {
