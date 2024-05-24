@@ -44,9 +44,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
       'selectable',
       'user-select',
       'useInherit'
-    ], {
-      touchable: true
-    })
+    ], {})
 
     const { nodeRef } = useNodesRef(props, ref, {
       defaultStyle: DEFAULT_STYLE

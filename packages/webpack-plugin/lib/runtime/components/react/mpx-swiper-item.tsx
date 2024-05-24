@@ -12,7 +12,7 @@ const SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
   const { children, ...restProps } = props
   const { nodeRef } = useNodesRef(props, ref, {
   })
-  const innerProps = useInnerProps(props, {}, [], { touchable: true })
+  const innerProps = useInnerProps(props, {}, [], {})
 
   return (
     <View

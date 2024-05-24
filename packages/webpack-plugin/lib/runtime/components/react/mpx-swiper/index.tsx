@@ -46,7 +46,7 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     'indicator-active-color',
     'previous-margin',
     'next-margin'
-  ], { touchable: true })
+  ], {})
 
   const getInnerLayout = (layout) => {
     innerLayout = layout.current

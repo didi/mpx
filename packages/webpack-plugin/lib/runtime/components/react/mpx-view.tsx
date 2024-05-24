@@ -161,9 +161,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     'hover-start-time',
     'hover-stay-time',
     'hoverStyle'
-  ], {
-    touchable: true
-  })
+  ], {})
 
   // 打平 style 数组
   const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
