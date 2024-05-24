@@ -22,7 +22,7 @@ module.exports.pitch = async function (remainingRequest) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
   const isDynamic = queryObj.isDynamic
-  // const isMpxCustomElement = queryObj.isMpxCustomElement
+  // const mpxCustomElement = queryObj.mpxCustomElement
 
   if (needBabel) {
     // 创建js request应用babel
@@ -108,9 +108,9 @@ module.exports.pitch = async function (remainingRequest) {
   }
 
   // todo 看后续 mpxCustomElement 是否使用相同的注入流程
-  // if (isMpxCustomElement) {
+  // if (mpxCustomElement) {
   //   Object.assign(extractedInfo, {
-  //     isMpxCustomElement,
+  //     mpxCustomElement: true,
   //     type,
   //     packageName
   //   })

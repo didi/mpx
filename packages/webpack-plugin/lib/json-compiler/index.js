@@ -19,6 +19,7 @@ const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -177,6 +178,7 @@ module.exports = function (content) {
 
   const fillMpxCustomElement = () => {
     json.usingComponents = json.usingComponents || {}
+    json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
   }
 

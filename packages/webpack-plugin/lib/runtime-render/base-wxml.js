@@ -5,33 +5,72 @@ function makeAttrsMap (attrKeys = []) {
   return attrKeys.reduce((preVal, curVal) => Object.assign(preVal, { [curVal]: '' }), {})
 }
 
-module.exports = function setBaseWxml (el, options, meta) {
-  const tag = el.tag
-  // 属性收集
-  const modeConfig = mpxConfig[options.mode]
-  const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
-  const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-  const { baseComponents, customComponents } = meta.runtimeInfo
+// 部分节点类型不需要被收集
+const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
 
-  if (!options.isCustomComponent) {
-    const optimizedInfo = getOptimizedComponentInfo(
-      {
-        nodeType: el.tag,
-        attrs: el.attrsMap
-      },
-      options.mode
-    )
-    if (optimizedInfo) {
-      el.tag = optimizedInfo.nodeType
+function hasParentCustomComponent (el, isComponentNode, options) {
+  let parent = el.parent
+  while (parent) {
+    if (isComponentNode(parent, options)) {
+      return parent.tag
     }
-    if (!baseComponents[tag]) {
-      baseComponents[tag] = {}
+    parent = parent.parent
+  }
+  return false
+}
+
+module.exports = function setBaseWxml (el, config, meta) {
+  const { mode, isComponentNode, options } = config
+  if (RUNTIME_FILTER_NODES.includes(el.tag)) {
+    return
+  }
+
+  if (options.runtimeCompile) {
+    const isCustomComponent = isComponentNode(el, options)
+
+    if (!meta.runtimeInfo) {
+      meta.runtimeInfo = {
+        baseComponents: {},
+        customComponents: {},
+        dynamicSlotDependencies: {}
+      }
     }
-    Object.assign(baseComponents[tag], makeAttrsMap(attrKeys))
-  } else {
-    if (!customComponents[tag]) {
-      customComponents[tag] = {}
+
+    const tag = el.tag
+    // 属性收集
+    const modeConfig = mpxConfig[mode]
+    const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
+    const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
+    const componentType = isCustomComponent ? 'customComponents' : 'baseComponents'
+
+    if (!isCustomComponent) {
+      const optimizedInfo = getOptimizedComponentInfo(
+        {
+          nodeType: el.tag,
+          attrs: el.attrsMap
+        },
+        mode
+      )
+      if (optimizedInfo) {
+        el.tag = optimizedInfo.nodeType
+      }
+    } else {
+      // 收集运行时组件模版当中运行时组件使用普通组件作为slot的场景，主要因为普通组件被渲染时上下文发生了改变
+      const parentComponentTag = hasParentCustomComponent(el, isComponentNode, options)
+      if (parentComponentTag) {
+        const dynamicSlotDependencies = meta.runtimeInfo.dynamicSlotDependencies
+        if (!dynamicSlotDependencies[parentComponentTag]) {
+          dynamicSlotDependencies[parentComponentTag] = []
+        }
+        dynamicSlotDependencies[parentComponentTag].push(el.tag)
+      }
     }
-    Object.assign(customComponents[tag], makeAttrsMap(attrKeys))
+
+    const componentsConfig = meta.runtimeInfo[componentType]
+
+    if (!componentsConfig[tag]) {
+      componentsConfig[tag] = {}
+    }
+    Object.assign(componentsConfig[tag], makeAttrsMap(attrKeys))
   }
 }

@@ -1238,7 +1238,7 @@ class MpxWebpackPlugin {
                       }
                     }
                   }
-                  // 注入 element 容器组件
+                  // 注入 element 容器组件路径
                   _content.usingComponents.element = resolveMpxCustomElementPath(packageName)
                   extractedInfo.content = JSON.stringify(_content)
                 } else {
@@ -1257,6 +1257,7 @@ class MpxWebpackPlugin {
                   }
                 }
               }
+
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
                 extractedAssets = [new Map(), new Map()]

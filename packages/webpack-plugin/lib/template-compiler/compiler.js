@@ -2157,52 +2157,9 @@ function closeElement (el, meta, options) {
   postProcessIf(el)
 }
 
-// 部分节点类型不需要被收集
-const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
-
-function hasParentCustomComponent (el, options) {
-  let parent = el.parent
-  while (parent) {
-    if (isComponentNode(parent, options)) {
-      return parent.tag
-    }
-    parent = parent.parent
-  }
-  return false
-}
-
-// 节点收集，最终注入到 mpx-custom-element-*.wxml 中
+// 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中
 function postProcessRuntime (el, options, meta) {
-  if (RUNTIME_FILTER_NODES.includes(el.tag)) {
-    return
-  }
-
-  // 运行时的组件收集节点信息
-  if (options.runtimeCompile) {
-    const isCustomComponent = isComponentNode(el, options)
-
-    if (!meta.runtimeInfo) {
-      meta.runtimeInfo = {
-        baseComponents: {},
-        customComponents: {},
-        dynamicSlotDependencies: {}
-      }
-    }
-
-    if (isCustomComponent) {
-      const parentComponentTag = hasParentCustomComponent(el, options)
-      if (parentComponentTag) {
-        const dynamicSlotDependencies = meta.runtimeInfo.dynamicSlotDependencies
-        if (!dynamicSlotDependencies[parentComponentTag]) {
-          dynamicSlotDependencies[parentComponentTag] = []
-        }
-        dynamicSlotDependencies[parentComponentTag].push(el.tag)
-      }
-    }
-
-    // 按需收集节点属性信息，存储到 meta 后到外层处理
-    setBaseWxml(el, { mode, isCustomComponent }, meta)
-  }
+  setBaseWxml(el, { mode, isComponentNode, options }, meta)
 }
 
 function postProcessAtMode (el) {
