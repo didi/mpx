@@ -53,7 +53,7 @@ interface UseInnerPropsOptions {
   removeProps?: string[];
   config?: {
     layoutRef?: React.MutableRefObject<any>;
-    touchable?: boolean
+    disableTouch?: boolean
   };
 }
 

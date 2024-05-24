@@ -381,7 +381,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       'bindscrolltoupper',
       'bindscrolltolower',
       'bindrefresherrefresh'
-  ], { layoutRef, touchable: true });
+  ], { layoutRef });
 
   const refreshColor = {
     'black': ['#000'],
