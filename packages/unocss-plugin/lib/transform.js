@@ -39,16 +39,14 @@ function buildAliasTransformer (alias) {
   }
 }
 const regexCache = {}
-function makeRegexClassGroup(separators = ['-', ':']) {
+function makeRegexClassGroup (separators = ['-', ':']) {
   const key = separators.join('|')
   if (!regexCache[key]) regexCache[key] = new RegExp(`((?:[!@<~\\w+:_/-]|\\[&?>?:?\\S*\\])+?)(${key})\\(((?:[~!<>\\w\\s:/\\\\,%#.$?-]|\\[.*?\\])+?)\\)(?!\\s*?=>)`, 'gm')
   regexCache[key].lastIndex = 0
   return regexCache[key]
 }
 
-
-
-function transformGroups (source, options={}) {
+function transformGroups (source, options = {}) {
   source = getReplaceSource(source)
   const content = source.original().source()
   let match
