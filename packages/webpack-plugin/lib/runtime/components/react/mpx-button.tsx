@@ -6,7 +6,8 @@
  * ✔ loading
  * ✘ form-type
  * - open-type: Partially. Only support `share`、`getUserInfo`
- * ✔ hover-style: Convert hoverClass to hoverStyle.
+ * ✔ hover-class: Convert hoverClass to hoverStyle.
+ * ✔ hover-style
  * ✘ hover-stop-propagation
  * ✔ hover-start-time
  * ✔ hover-stay-time
@@ -74,6 +75,7 @@ export interface ButtonProps {
   plain?: boolean
   disabled?: boolean
   loading?: boolean
+  'hover-class'?: string
   'hover-style'?: StyleProp<ViewStyle & TextStyle>
   'hover-start-time'?: number
   'hover-stay-time'?: number
@@ -172,7 +174,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     plain = false,
     disabled = false,
     loading = false,
-    'hover-style': hoverStyle,
+    'hover-class': hoverClass,
+    'hover-style': hoverStyle = [],
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
@@ -202,7 +205,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   const isMiniSize = size === 'mini'
 
-  const applyHoverEffect = isHover && !!hoverStyle
+  const applyHoverEffect = isHover && hoverClass !== 'none'
 
   const { viewStyle, textStyle } = useMemo<{
     viewStyle: ViewStyle
@@ -226,7 +229,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
         : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
     const inheritTextStyle = extractTextStyle(style)
-    const inheritTextHoverStyle = extractTextStyle(applyHoverEffect ? hoverStyle: [])
+    const inheritTextHoverStyle = extractTextStyle(applyHoverEffect ? hoverStyle : [])
     return {
       viewStyle: {
         borderWidth: 1,
