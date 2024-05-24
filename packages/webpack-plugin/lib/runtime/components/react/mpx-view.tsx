@@ -14,7 +14,7 @@ import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 import { parseUrl, hasElementType, TEXT_STYLE_REGEX } from './utils'
 
-type ElementNode = Exclude<React.ReactElement, string | number>
+type ElementNode = React.ReactNode
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
