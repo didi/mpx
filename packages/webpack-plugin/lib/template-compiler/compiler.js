@@ -105,7 +105,7 @@ let env
 let platformGetTagNamespace
 let filePath
 let refId
-let haveOptionChain = false
+let hasOptionalChain = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -166,8 +166,8 @@ const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
-const optionsChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionsChainWxsName = '__oc__'
+const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
+const optionalChainWxsName = '__oc__'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -641,7 +641,7 @@ function parse (template, options) {
   forScopes = []
   forScopesMap = {}
   hasI18n = false
-  haveOptionChain = false
+  hasOptionalChain = false
 
   platformGetTagNamespace = options.getTagNamespace || no
 
@@ -767,8 +767,8 @@ function parse (template, options) {
     }
   }
 
-  if (haveOptionChain) {
-    injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
+  if (hasOptionalChain) {
+    injectWxs(meta, optionalChainWxsName, optionalChainWxsPath)
   }
 
   injectNodes.forEach((node) => {
@@ -1034,7 +1034,7 @@ function processBindEvent (el, options) {
       const type = parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
       const prefix = parsedEvent.prefix
-      // todo 后续为了方便拓展，对于传参的格式
+      // catch 场景下，下发的 eventconfig 里面包含特殊字符，用以运行时的判断
       const extraStr = options.runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr2(attr.value, extraStr)
       if (parsedFunc) {
@@ -1412,6 +1412,8 @@ function postProcessWxs (el, meta) {
   }
 }
 
+const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
+
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
@@ -1421,7 +1423,11 @@ function processAttrs (el, options) {
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
       const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
-      addExp(el, parsed.result, isProps)
+      let result = parsed.result
+      if (isTemplateData) {
+        result = result.replace(spreadREG, '$1')
+      }
+      addExp(el, result, isProps)
       if (parsed.replaced) {
         modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
       }
@@ -2118,15 +2124,12 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
+  processClass(el, meta)
+  processStyle(el, meta)
+  processBindEvent(el, options)
 
   if (!pass) {
-    processClass(el, meta)
-    processStyle(el, meta)
     processShow(el, options, root)
-  }
-
-  if (!pass) {
-    processBindEvent(el, options)
     processComponentIs(el, options)
   }
 
@@ -2419,7 +2422,7 @@ function genNode (node) {
  * @returns
  */
 function parseOptionChain (str) {
-  const wxsName = `${optionsChainWxsName}.g`
+  const wxsName = `${optionalChainWxsName}.g`
   let optionsRes
   while (optionsRes = /\?\./.exec(str)) {
     const strLength = str.length
@@ -2569,8 +2572,8 @@ function parseOptionChain (str) {
       chainKey += `,'${keyValue}'`
     }
     str = str.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + str.slice(rightIndex)
-    if (!haveOptionChain) {
-      haveOptionChain = true
+    if (!hasOptionalChain) {
+      hasOptionalChain = true
     }
   }
   return str

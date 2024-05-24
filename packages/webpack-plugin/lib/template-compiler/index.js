@@ -33,7 +33,6 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || '_' + mpx.pathHash(resourcePath)
-  const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -95,6 +94,12 @@ module.exports = function (raw) {
     }
   }
 
+  let result = compiler.serialize(ast)
+
+  if (isNative) {
+    return result
+  }
+
   let resultSource = ''
 
   for (const module in meta.wxsModuleMap) {
@@ -102,15 +107,9 @@ module.exports = function (raw) {
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
 
-  let result = compiler.serialize(ast)
-
-  if (isNative) {
-    return result
-  }
-
   resultSource += `
 global.currentInject = {
-  moduleId: ${moduleIdString}
+  moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
   if (runtimeCompile) {
