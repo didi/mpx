@@ -93,7 +93,7 @@ const wrapChildren = (children, style, image) => {
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
   const {
-    style,
+    style = [],
     children,
     hoverStyle,
     ...otherProps } = props

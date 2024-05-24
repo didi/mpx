@@ -70,6 +70,7 @@ export const parseUrl = (cssUrl: string = '') => {
 }
 
 export const hasElementType = (element: ReactElement<any>, type: string) => {
+  if (!element) return false
   return (element.type as FunctionComponent)?.displayName === type
 }
 
