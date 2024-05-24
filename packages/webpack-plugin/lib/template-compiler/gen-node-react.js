@@ -49,30 +49,24 @@ function genNode (node) {
         } else if (node.if && !node.ifProcessed) {
           exp += genIf(node)
         } else {
-          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
-          if (node.attrsList.length) {
-            const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
-              if (attrName) {
-                map[attrName] = exp
-              }
-              return map
-            }, {})
-            const attrs = []
-            if (node.isRoot) {
-              attrs.push('...listeners')
+          const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
+            if (attrName) {
+              map[attrName] = exp
             }
-
-            node.attrsList.forEach(({ name, value }) => {
+            return map
+          }, {})
+          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
+          if (node.isRoot) {
+            exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
+          } else if (node.attrsList.length) {
+            const attrs = []
+            node.attrsList && node.attrsList.forEach(({ name, value }) => {
               const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
               attrs.push(`${mapAttrName(name)}: ${attrExp}`)
             })
             exp += `, { ${attrs.join(', ')} }`
           } else {
-            if (node.isRoot) {
-              exp += ', ...listeners '
-            } else {
-              exp += ', null'
-            }
+            exp += ', null'
           }
 
           if (!node.unary && node.children.length) {

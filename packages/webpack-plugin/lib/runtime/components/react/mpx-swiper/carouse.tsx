@@ -5,6 +5,7 @@ import React, { forwardRef, useState, useRef, useEffect, ReactNode  } from 'reac
 import { View, ScrollView, Dimensions } from 'react-native'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
+import useNodesRef from '../../../useNodesRef'
 
 /**
  * 默认的Style类型
@@ -60,16 +61,20 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   const defaultHeight = 150
   const dir = props.horizontal === false ? 'y' : 'x'
   // state的offset默认值
-  const defaultX = width * (props.circular ? props.index + 1 : props.index) || 0
-  const defaultY = defaultHeight * (props.circular ? props.index + 1 : props.index) || 0
+  const defaultX = width * (props.circular ? props.current + 1 : props.current) || 0
+  const defaultY = defaultHeight * (props.circular ? props.current + 1 : props.current) || 0
   // 内部存储上一次的offset值
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   // 默认设置为初次渲染
   const initRenderRef = useRef(true)
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout>>(null)
   const loopJumpTimerRef = useRef<ReturnType <typeof setTimeout>>(null) 
-  const scrollViewRef = useRef<ScrollView>(null);
+  // const scrollViewRef = useRef<ScrollView>(null);
+  const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
+  })
   const autoplayEndRef = useRef(false)
+  // 存储layout布局信息
+  const layoutRef = useRef({})
   // 内部存储上一次的偏移量
   const internalsRef = useRef({
     offset: {
@@ -99,7 +104,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
     } else {
       startSwiperLoop()
     }
-  }, [props.autoplay, props.index, state.index]);
+  }, [props.autoplay, props.current, state.index]);
 
   /**
    * 更新index，以视图的offset计算当前的索引
@@ -128,7 +133,6 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
     // 存储当前的偏移量
     internalsRef.current.offset = scrollViewOffset
     // 这里需不需要区分是否loop，初始化？？？？
-    console.warn('---------------------------eventData：before')
     setState((preState) => {
       const newState =  {
         ...preState,
@@ -140,8 +144,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
     })
     internalsRef.current.isScrolling = false
     // getCustomEvent
-    const eventData = getCustomEvent('change', {}, { detail: {current: newIndex }})
-    console.warn('---------------------------eventData', eventData)
+    const eventData = getCustomEvent('change', {}, { detail: {current: newIndex, source: 'touch' }, layoutRef: layoutRef })
     props.bindchange && props.bindchange(eventData)
     // 更新完状态之后, 开启新的loop
   }
@@ -258,7 +261,13 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
    * 水平方向时，获取单个元素的布局，更新
   */
   function onWrapperLayout (event) {
-    const { width, height } = event.nativeEvent.layout
+    // const { width, height } = event.nativeEvent.layout
+    // layoutRef.current = event.nativeEvent.layout
+    scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      // console.log('--------------measure------', x, y, offsetLeft, offsetTop)
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
     if (state.dir === 'y') return
     if (!state.offset.x && !state.offset.y) {
       state.offset = internalsRef.current.offset

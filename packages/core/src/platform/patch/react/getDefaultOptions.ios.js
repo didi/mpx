@@ -11,17 +11,17 @@ function getNativeComponent (tagName) {
   return getByPath(reactNative, tagName)
 }
 
-function getListeners (props) {
-  const listenerMap = {}
+function getRootProps (props) {
+  const rootProps = {}
   for (const key in props) {
     if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(key)
+      const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
       if (match) {
-        listenerMap[key] = props[key]
+        rootProps[key] = props[key]
       }
     }
   }
-  return listenerMap
+  return rootProps
 }
 
 function createEffect (proxy, components, props) {
@@ -40,7 +40,7 @@ function createEffect (proxy, components, props) {
   }
   update.id = proxy.uid
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent, getListeners(props))
+    return proxy.target.__injectedRender(createElement, components, getNativeComponent, getRootProps(props))
   }, () => queueJob(update), proxy.scope)
 }
 
