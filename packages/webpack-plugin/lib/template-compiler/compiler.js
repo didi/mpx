@@ -2187,10 +2187,6 @@ function postProcessRuntime (el, options, meta) {
         customComponents: {},
         dynamicSlotDependencies: {}
       }
-      meta.rInfo = {
-        baseComponents: {},
-        customComponents: {}
-      }
     }
 
     if (isCustomComponent) {

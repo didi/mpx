@@ -66,6 +66,7 @@ const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 const getDynamicTemplate = require('./runtime-render/getTemplate')
+const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -1218,10 +1219,10 @@ class MpxWebpackPlugin {
                 if (type === 'json') {
                   // 注入运行时组件依赖的slot基础组件
                   const _content = JSON.parse(content)
+                  if (!_content.usingComponents) {
+                    _content.usingComponents = {}
+                  }
                   if (mpx.dynamicSlotDependencies[resourcePath]) {
-                    if (!_content.usingComponents) {
-                      _content.usingComponents = {}
-                    }
                     Object.assign(_content.usingComponents, mpx.dynamicSlotDependencies[resourcePath])
                   }
                   // 替换组件的 hashName
@@ -1237,6 +1238,8 @@ class MpxWebpackPlugin {
                       }
                     }
                   }
+                  // 注入 element 容器组件
+                  _content.usingComponents.element = resolveMpxCustomElementPath(packageName)
                   extractedInfo.content = JSON.stringify(_content)
                 } else {
                   dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}

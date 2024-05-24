@@ -15,7 +15,6 @@ const RecordIndependentDependency = require('../dependencies/RecordIndependentDe
 const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
-const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
@@ -176,26 +175,16 @@ module.exports = function (content) {
     }
   }
 
-  const fillMpxCustomElement = (isMpxCustomElement = false) => {
-    if (!json.usingComponents) {
-      json.usingComponents = {}
-    }
-    json.usingComponents.element = resolveMpxCustomElementPath(packageName)
-    if (isMpxCustomElement) {
-      Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
-    }
+  const fillMpxCustomElement = () => {
+    json.usingComponents = json.usingComponents || {}
+    Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
   }
 
   const dependencyComponentsMap = {}
 
-  if (queryObj.mpxCustomElement || runtimeCompile) {
-    // this.cacheable(false)
-  }
-
-  // todo cacheable 的设置
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
-    fillMpxCustomElement(true)
+    fillMpxCustomElement()
     callback()
     return
   }
@@ -722,7 +711,6 @@ module.exports = function (content) {
       (callback) => {
         if (runtimeCompile) {
           this._module.addPresentationalDependency(new RecordJsonRuntimeInfoDependency(packageName, resourcePath, dependencyComponentsMap))
-          fillMpxCustomElement()
         }
         callback()
       }

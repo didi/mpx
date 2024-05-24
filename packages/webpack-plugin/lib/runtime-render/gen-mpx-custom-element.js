@@ -48,7 +48,8 @@ createComponent({
 
 <script type="application/json">
 {
-  "component": true
+  "component": true,
+  "usingComponents": {}
 }
 </script>
 `
