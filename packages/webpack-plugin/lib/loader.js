@@ -124,7 +124,6 @@ module.exports = function (content) {
 
       let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       let componentPlaceholder = []
-
       let componentGenerics = {}
 
       if (parts.json && parts.json.content) {
@@ -311,7 +310,6 @@ module.exports = function (content) {
           moduleId,
           usingComponents,
           componentPlaceholder
-          // componentInfo: JSON.stringify(componentInfo)
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
           // needBabel: true
@@ -347,16 +345,7 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      const extraOptions = {
-        moduleId
-      }
-      if (json.src) {
-        Object.assign(extraOptions, {
-          ...queryObj,
-          resourcePath
-        })
-      }
-      output += getRequire('json', json, extraOptions) + '\n'
+      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
 
       // script
       output += '/* script */\n'
