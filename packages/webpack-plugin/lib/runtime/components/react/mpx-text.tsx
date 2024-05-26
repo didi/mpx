@@ -14,15 +14,11 @@ import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 interface _TextProps extends TextProps {
   style?: TextStyle
-  children?: React.ReactNode
+  children: React.ReactNode
   selectable?: boolean
   ['user-select']?: boolean
   userSelect?: boolean
-  useInherit?: boolean
-}
-
-const DEFAULT_STYLE = {
-  fontSize: 16
+  ['disable-default-style']?: boolean
 }
 
 const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>):React.JSX.Element => {
@@ -31,12 +27,18 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     children,
     selectable,
     'user-select': userSelect,
-    useInherit = false,
+    'disable-default-style': disableDefaultStyle = false
     } = props
 
     const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-
+    // 打平 style 数组
     const styleObj = StyleSheet.flatten(style)
+    // text的 默认样式
+    const defaultStyle = {
+      ...!disableDefaultStyle && {
+        fontSize: 16
+      }
+    }
 
     const innerProps = useInnerProps(props, {}, [
       'style',
@@ -49,7 +51,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     })
 
     const { nodeRef } = useNodesRef(props, ref, {
-      defaultStyle: DEFAULT_STYLE
+      defaultStyle
     })
     
     React.useEffect(() => {
@@ -63,10 +65,9 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
         measureTimeout.current = null
       }
     }, [nodeRef])
-
     return (
       <Text
-        style={{...useInherit && DEFAULT_STYLE, ...styleObj}}
+        style={{...defaultStyle, ...styleObj}}
         ref={nodeRef}
         selectable={!!selectable || !!userSelect}
         {...innerProps}

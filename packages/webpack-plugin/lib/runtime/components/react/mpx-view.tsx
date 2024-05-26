@@ -20,12 +20,13 @@ type ExtendedViewStyle = ViewStyle & {
 }
 
 export interface _ViewProps extends ExtendedViewStyle {
-  style?: Array<ExtendedViewStyle>;
-  children?: React.ReactElement;
-  hoverStyle: Array<ExtendedViewStyle>;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  style?: Array<ExtendedViewStyle>
+  children: React.ReactElement
+  hoverStyle?: Array<ExtendedViewStyle>
+  ['disable-default-style']?: boolean
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 // const bgSizeList =  ['cover', 'contain', 'stretch']
@@ -95,8 +96,9 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   const {
     style = [],
     children,
-    hoverStyle,
-    ...otherProps } = props
+    hoverStyle, 
+    'disable-default-style': disableDefaultStyle = false,
+    } = props
   const [isHover, setIsHover] = React.useState(false)
 
   const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -170,13 +172,14 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   // 默认样式
   const defaultStyle = {
     // flex 布局相关的默认样式
-    ...styleObj.display === 'flex' && {
+    ...!disableDefaultStyle ? styleObj.display === 'flex' && {
       flexDirection: 'row',
       flexBasis: 'auto',
       flexShrink: 1,
       flexWrap: 'nowrap'
-    }
+    } : {}
   }
+  console.log(">>> defaultStyle", defaultStyle)
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
