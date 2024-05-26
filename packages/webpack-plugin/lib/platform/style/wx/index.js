@@ -2,9 +2,7 @@ const { hump2dash } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  // RN 仅支持backgroundColor，不支持其他背景相关的属性：/^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
-  // Todo background-image的处理
-  const unsupportedPropExp = /^(((?!(-color)).)*background((?!(-color)).)*|box-sizing|white-space|text-overflow)$/
+  const unsupportedPropExp = /^(box-sizing|white-space|text-overflow|animation|transition)$/
   const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
@@ -16,7 +14,7 @@ module.exports = function getSpec ({ warn, error }) {
     error(`Property [${prop}] is not supported in React Native ${mode} environment!`)
   }
 
-  // React 某些属性仅支持部分枚举值
+  // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
@@ -34,7 +32,8 @@ module.exports = function getSpec ({ warn, error }) {
     'align-content': ['flex-start', 'flex-end', 'center', 'stretch', 'space-between', 'space-around'],
     'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
-    'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly', 'none']
+    'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly', 'none'],
+    'background-size': ['contain', 'cover']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
@@ -78,6 +77,10 @@ module.exports = function getSpec ({ warn, error }) {
         return value
     }
   }
+  // 统一校验 value type 值类型
+  const checkCommonValue = (valueType) => ({ prop, value }) => {
+    verifyValues({ prop, value, valueType })
+  }
 
   // 简写转换规则
   const AbbreviationMap = {
@@ -119,49 +122,6 @@ module.exports = function getSpec ({ warn, error }) {
       borderBottomLeftRadius: ValueType.default
     }
   }
-
-  const formatBoxReviation = ({ prop, value }) => {
-    const values = value.trim().split(/\s(?![^()]*\))/)
-    const suffix = ['Top', 'Right', 'Bottom', 'Left']
-
-    // validate
-    for (let i = 0; i < values.length; i++) {
-      verifyValues({ prop, value: values[i], valueType: ValueType.number })
-    }
-
-    // format
-    switch (values.length) {
-      case 1:
-        return { prop, value }
-      case 2:
-        return [{
-          prop: `${prop}Vertical`,
-          value: values[0]
-        }, {
-          prop: `${prop}Horizontal`,
-          value: values[1]
-        }]
-      case 3:
-        return [{
-          prop: `${prop}Top`,
-          value: values[0]
-        }, {
-          prop: `${prop}Horizontal`,
-          value: values[1]
-        }, {
-          prop: `${prop}Bottom`,
-          value: values[2]
-        }]
-      case 4:
-        return suffix.map((key, index) => {
-          return {
-            prop: `${prop}${key}`,
-            value: values[index]
-          }
-        })
-    }
-  }
-
   const formatAbbreviation = ({ value, keyMap }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
@@ -202,12 +162,10 @@ module.exports = function getSpec ({ warn, error }) {
     }
     return cssMap
   }
-
   const getAbbreviation = ({ prop, value }) => {
     const keyMap = AbbreviationMap[prop]
     return formatAbbreviation({ prop, value, keyMap })
   }
-
   // 简写过滤安卓不支持的类型
   const getAbbreviationAndroid = ({ prop, value }, { mode }) => {
     const cssMap = getAbbreviation({ prop, value })
@@ -222,9 +180,32 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
-  // 统一校验 value type 值类型
-  const checkCommonValue = (valueType) => ({ prop, value }) => {
-    verifyValues({ prop, value, valueType })
+  const formatMargins = ({ prop, value }) => {
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    // validate
+    for (let i = 0; i < values.length; i++) {
+      verifyValues({ prop, value: values[i], valueType: ValueType.number })
+    }
+    // format
+    let suffix = []
+    switch (values.length) {
+      // case 1:
+      case 2:
+        suffix = ['Vertical', 'Horizontal']
+        break
+      case 3:
+        suffix = ['Top', 'Horizontal', 'Bottom']
+        break
+      case 4:
+        suffix = ['Top', 'Right', 'Bottom', 'Left']
+        break
+    }
+    return values.map((value, index) => {
+      return {
+        prop: `${prop}${suffix[index] || ''}`,
+        value: value
+      }
+    })
   }
 
   const getFontVariant = ({ prop, value }) => {
@@ -243,9 +224,78 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  // background 相关属性的处理，仅支持以下属性，不支持其他背景相关的属性：/^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
+  const checkBackgroundImage = ({ prop, value }, { mode }) => {
+    const bgPropMap = {
+      image: 'background-image',
+      color: 'background-color',
+      size: 'background-size',
+      // repeat: 'background-repeat',
+      // position: 'background-position',
+      all: 'background'
+    }
+    const urlExp = /url\(["']?(.*?)["']?\)/
+    switch (prop) {
+      case bgPropMap.color: {
+        // background-color 背景色校验一下颜色值
+        verifyValues({ prop, value, valueType: ValueType.color })
+        return { prop, value }
+      }
+      case bgPropMap.image: {
+        // background-image 仅支持背景图
+        const imgUrl = value.match(urlExp)?.[0]
+        if (/.*linear-gradient*./.test(value)) {
+          error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
+        }
+        if (imgUrl) {
+          return { prop, value: imgUrl }
+        } else {
+          error(`[${prop}] only support value <url()>`)
+          return false
+        }
+      }
+      case bgPropMap.size: {
+        // background-size 仅支持 cover contain
+        if (isIllegalValue({ prop, value })) {
+          unsupportedValueError({ prop, value })
+          return false
+        }
+        return { prop, value }
+      }
+      case bgPropMap.all: {
+        // background: 仅支持 background-image & background-color & background-size
+        const bgMap = []
+        const values = value.trim().split(/\s(?![^()]*\))/)
+        values.forEach(item => {
+          const url = item.match(urlExp)?.[0]
+          if (url) {
+            bgMap.push({ prop: bgPropMap.image, value: url })
+          }
+          if (/^(#[0-9a-f]{3}$|#[0-9a-f]{6}$|rgb|rgba)/i.test(item)) {
+            bgMap.push({ prop: bgPropMap.color, value: item })
+          }
+          if (/.*linear-gradient*./.test(value)) {
+            error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
+          }
+          if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
+            bgMap.push({ prop: bgPropMap.size, value: item })
+          }
+        })
+        return bgMap.length ? bgMap : false
+      }
+    }
+    unsupportedPropError({ prop, mode })
+    return false
+  }
+
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
+      { // 背景相关属性的处理
+        test: /.*background*./,
+        ios: checkBackgroundImage,
+        android: checkBackgroundImage
+      },
       { // RN 不支持的 CSS property
         test: unsupportedPropExp,
         ios: delRule,
@@ -279,10 +329,10 @@ module.exports = function getSpec ({ warn, error }) {
         ios: getFontVariant,
         android: getFontVariant
       },
-      {
+      { // margin padding 内外边距的处理
         test: /.*(margin|padding).*/,
-        ios: formatBoxReviation,
-        android: formatBoxReviation
+        ios: formatMargins,
+        android: formatMargins
       },
       // 通用的简写格式匹配
       {

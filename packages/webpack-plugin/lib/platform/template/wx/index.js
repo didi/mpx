@@ -398,10 +398,14 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ios' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ios', data: { el } })
           return {
-            name: rPrefix + rEventName,
+            name: rPrefix + rEventName + meta.modifierStr,
             value
           }
         },
@@ -409,10 +413,14 @@ module.exports = function getSpec ({ warn, error }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
           const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
           return {
-            name: rPrefix + rEventName,
+            name: rPrefix + rEventName + meta.modifierStr,
             value
           }
         }

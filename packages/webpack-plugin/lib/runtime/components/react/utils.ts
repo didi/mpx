@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, Children, ReactElement, FunctionComponent } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -15,10 +15,10 @@ export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
 
 /**
  * 从 style 中提取 TextStyle
- * @param style 
- * @returns 
+ * @param style
+ * @returns
  */
-export const extracteTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
+export const extractTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
   return Object.entries(StyleSheet.flatten(style)).reduce((textStyle, [key, value]) => {
     TEXT_STYLE_REGEX.test(key) && Object.assign(textStyle, { [key]: value })
     return textStyle
@@ -50,7 +50,7 @@ export const useUpdateEffect = (effect: any, deps: any) => {
 /**
  * 解析行内样式
  * @param inlineStyle
- * @returns 
+ * @returns
  */
 export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
   return inlineStyle.split(';').reduce((styleObj, style) => {
@@ -61,10 +61,22 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
   }, {})
 }
 
-export const parseBgUrl = (cssUrl: string = '') => {
-  if (!cssUrl) return 
+export const parseUrl = (cssUrl: string = '') => {
+  if (!cssUrl) return
 
   const match = cssUrl.match(URL_REGEX)
-   
+
   return match?.[1]
+}
+
+export const hasElementType = (element: ReactElement<any>, type: string) => {
+  if (!element) return false
+  return (element.type as FunctionComponent)?.displayName === type
+}
+
+export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
+  return {
+    ...transferProps,
+    ...omit(originProps, deletePropsKey)
+  }
 }
