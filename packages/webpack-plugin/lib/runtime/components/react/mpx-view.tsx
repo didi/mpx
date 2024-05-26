@@ -179,7 +179,6 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       flexWrap: 'nowrap'
     } : {}
   }
-  console.log(">>> defaultStyle", defaultStyle)
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
