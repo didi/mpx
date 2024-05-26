@@ -1,4 +1,4 @@
-import { useEffect, useRef, Children, ReactElement, FunctionComponent } from 'react'
+import { useEffect, useRef, ReactNode } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -69,9 +69,9 @@ export const parseUrl = (cssUrl: string = '') => {
   return match?.[1]
 }
 
-export const hasElementType = (element: ReactElement<any>, type: string) => {
+export const hasElementType = (element: ReactNode, type: string) => {
   if (!element) return false
-  return (element.type as FunctionComponent)?.displayName === type
+  return (element as any)?.type?.displayName === type
 }
 
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
