@@ -21,7 +21,7 @@ type ExtendedViewStyle = ViewStyle & {
 
 export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>
-  children: React.ReactElement
+  children: React.ReactNode
   hoverStyle?: Array<ExtendedViewStyle>
   ['disable-default-style']?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -30,7 +30,7 @@ export interface _ViewProps extends ExtendedViewStyle {
 }
 
 // const bgSizeList =  ['cover', 'contain', 'stretch']
-const hasTextChild = (children: React.ReactElement<any>) => {
+const hasTextChild = (children: React.ReactNode<any>) => {
   let hasText = true
   React.Children.forEach(children, (child) => {
     if (!hasElementType(child, 'mpx-text') && !hasElementType(child, 'Text')) {
@@ -40,7 +40,7 @@ const hasTextChild = (children: React.ReactElement<any>) => {
   return hasText
 }
 
-const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
+const cloneElement = (child: React.ReactNode, textStyle:ViewStyle =  {}) => {
   const {style, ...otherProps} = child.props || {}
   return React.cloneElement(child, {
     ...otherProps,
@@ -48,7 +48,7 @@ const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
   })
 }
 
-const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
+const elementInheritChildren = (children: React.ReactNode, style:ViewStyle =  {}) => {
   const inheritTextStyle = extractTextStyle(style)
   if (hasElementType(children, 'mpx-text')) {
     return cloneElement(children, inheritTextStyle)
@@ -63,7 +63,7 @@ const elementInheritChildren = (children: React.ReactElement, style:ViewStyle = 
   }
 }
 
-const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
+const wrapTextChildren = (children: React.ReactNode, style:ViewStyle =  {}) => {
   const hasText = hasTextChild(children)
   const textStyle = {
     fontSize: 16,
@@ -72,11 +72,11 @@ const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) =
   return hasText ? <Text style={textStyle}>{children}</Text> : children
 }
 
-const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
+const processChildren = (children: React.ReactNode, style:ViewStyle =  {}) => {
   return Array.isArray(children) ? wrapTextChildren(children, style) : elementInheritChildren(children, style)
 }
 
-const processBackgroundChildren = (children: React.ReactElement, style:ExtendedViewStyle =  {}, image) => {
+const processBackgroundChildren = (children: React.ReactNode, style:ExtendedViewStyle =  {}, image) => {
   let resizeMode:ImageResizeMode = 'stretch'
   if (['cover', 'contain', 'stretch'].includes(style.backgroundSize)) {
     resizeMode = style.backgroundSize
