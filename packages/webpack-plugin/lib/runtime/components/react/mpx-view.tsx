@@ -7,9 +7,7 @@
 import { View, Text, ViewStyle, NativeSyntheticEvent, ImageBackground, ImageResizeMode, StyleSheet } from 'react-native'
 import * as React from 'react'
 
-// @ts-ignore
 import useInnerProps from './getInnerListeners'
-// @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 import { extractTextStyle, parseUrl, hasElementType } from './utils'
@@ -96,10 +94,29 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     style = [],
     children,
     hoverStyle,
-    ...otherProps } = props
+  } = props
   const [isHover, setIsHover] = React.useState(false)
 
   const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const layoutRef = React.useRef({})
+
+  // 打平 style 数组
+  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
+  // 默认样式
+  const defaultStyle = {
+    // flex 布局相关的默认样式
+    ...styleObj.display === 'flex' && {
+      flexDirection: 'row',
+      flexBasis: 'auto',
+      flexShrink: 1,
+      flexWrap: 'nowrap'
+    }
+  }
+
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle
+  })
 
   const dataRef = React.useRef<{
     startTimestamp: number,
@@ -150,7 +167,15 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     setStayTimer()
   }
 
+  const onLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
+  }
+
   const innerProps = useInnerProps(props, {
+    ref: nodeRef,
+    onLayout,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -161,43 +186,14 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     'hover-start-time',
     'hover-stay-time',
     'hoverStyle'
-  ], {})
-
-  // 打平 style 数组
-  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
-  // 默认样式
-  const defaultStyle = {
-    // flex 布局相关的默认样式
-    ...styleObj.display === 'flex' && {
-      flexDirection: 'row',
-      flexBasis: 'auto',
-      flexShrink: 1,
-      flexWrap: 'nowrap'
-    }
-  }
-
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle
+  ], {
+    layoutRef
   })
-
-  React.useEffect(() => {
-    setTimeout(() => {
-      nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-        nodeRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    })
-    return () => {
-      measureTimeout.current && clearTimeout(measureTimeout.current);
-      measureTimeout.current = null
-    }
-  }, [nodeRef])
-
 
   const image = parseUrl(styleObj.backgroundImage)
 
   return (
     <View
-      ref={nodeRef}
       {...innerProps}
       style={{
         ...defaultStyle,
