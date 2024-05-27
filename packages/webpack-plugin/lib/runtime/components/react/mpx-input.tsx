@@ -1,10 +1,9 @@
 /**
  * ✔ value
- * ✔ defaultValue
  * - type: Partially. Not support `safe-password`、`nickname`
  * ✔ password
  * ✔ placeholder
- * - placeholder-style: Only placeholderTextColor(RN).
+ * - placeholder-style: Only support color.
  * ✘ placeholder-class
  * ✔ disabled
  * ✔ maxlength
@@ -77,7 +76,6 @@ type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
   style?: StyleProp<InputStyle>
   value?: string
-  defaultValue?: string
   type?: Type
   password?: boolean
   placeholder?: string
@@ -92,7 +90,6 @@ export interface InputProps {
   'selection-start'?: number
   'selection-end'?: number
   'placeholder-style'?: string
-  placeholderTextColor?: string
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -119,7 +116,7 @@ const keyboardTypeMap: Record<Type, string> = {
 
 const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX.Element => {
   const {
-    style = {},
+    style = [],
     type = 'text',
     value,
     password,
@@ -148,8 +145,8 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   const { nodeRef } = useNodesRef(props, ref)
 
   const keyboardType = keyboardTypeMap[type]
-  const defaultValue = props.defaultValue ?? (type === 'number' && value ? value + '' : value)
-  const placeholderTextColor = props.placeholderTextColor || parseInlineStyle(placeholderStyle)?.color
+  const defaultValue = type === 'number' && value ? value + '' : value
+  const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
   const layoutRef = useRef({})

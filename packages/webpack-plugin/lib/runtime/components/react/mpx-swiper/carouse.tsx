@@ -12,24 +12,11 @@ import useNodesRef from '../../../useNodesRef'
  */
 const styles = {
   container_x: {
-    // backgroundColor: '#fffffa',
     position: 'relative',
-    // flex: 1
   },
   container_y: {
-    // backgroundColor: '#fffffa', // 测试用
     position: 'relative',
   },
-
-  wrapperIOS: {
-    // backgroundColor: 'transparent'
-  },
-
-  wrapperAndroid: {
-    // backgroundColor: 'transparent',
-    flex: 1
-  },
-
   pagination_x: {
     position: 'absolute',
     bottom: 25,
@@ -39,7 +26,6 @@ const styles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'transparent'
   },
 
   pagination_y: {
@@ -51,7 +37,6 @@ const styles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'transparent'
   }
 }
 
@@ -261,10 +246,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
    * 水平方向时，获取单个元素的布局，更新
   */
   function onWrapperLayout (event) {
-    // const { width, height } = event.nativeEvent.layout
-    // layoutRef.current = event.nativeEvent.layout
     scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-      // console.log('--------------measure------', x, y, offsetLeft, offsetTop)
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
       props.getInnerLayout && props.getInnerLayout(layoutRef)
     })
@@ -294,7 +276,6 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
       <ScrollView
         {...scrollElementProps}
         overScrollMode="always"
-        contentContainerStyle={[styles.wrapperIOS]}
         contentOffset={state.offset}
         onScrollBeginDrag={onScrollBegin}
         onMomentumScrollEnd={onScrollEnd}

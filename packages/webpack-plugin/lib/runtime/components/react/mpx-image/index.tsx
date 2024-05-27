@@ -113,8 +113,8 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
   const {
     src = '',
     mode = 'scaleToFill',
-    svg = false,
-    style = {},
+    // svg = false,
+    style = [],
     bindload,
     binderror
   } = props
@@ -306,7 +306,6 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
       onLayout={onViewLayout}>
       <RNImage
         {...innerProps}
-        testID="image"
         source={source}
         resizeMode={resizeMode}
         onLoad={onImageLoad}

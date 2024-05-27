@@ -93,7 +93,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     bounces,
     'scroll-x': scrollX,
     'enable-back-to-top': enableBackToTop,
-    'show-scrollbar': showScrollbar,
     'paging-enabled': pagingEnabled,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
@@ -106,6 +105,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [showScrollbar, setShowScrollbar] = useState(true);
   const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
@@ -125,7 +125,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     node: {
       scrollEnabled,
       bounces: !!bounces,
-      showScrollbar: !!showScrollbar,
+      showScrollbar,
       pagingEnabled: !!pagingEnabled,
       fastDeceleration: false,
       decelerationDisabled: false,
@@ -160,6 +160,15 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props['scroll-x'], props['scroll-y']]);
 
+  useEffect(() => {
+    if (props['show-scrollbar'] === undefined) {
+      setShowScrollbar(true)
+    } else{
+      setShowScrollbar(!!props['show-scrollbar'])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props['show-scrollbar']]);
+  
   useEffect(() => {
     if (snapScrollTop || snapScrollLeft) {
       initialTimeout.current = setTimeout(() => {
@@ -340,7 +349,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: !!enableBackToTop,
     showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
-    showsVerticalScrollIndicator: !!(!scrollX && showScrollbar),
+    showsVerticalScrollIndicator: !scrollX && showScrollbar,
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
     onScroll: onScroll,

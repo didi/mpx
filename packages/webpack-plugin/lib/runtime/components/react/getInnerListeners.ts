@@ -2,7 +2,6 @@ import React, {  useRef } from 'react'
 import { NativeSyntheticEvent  } from 'react-native'
 import { omit } from './utils'
 import eventConfigMap from './event.config'
-// import { PanResponder } from 'react-native'
 
 type LayoutRef = React.MutableRefObject<any>
 
@@ -68,7 +67,7 @@ export const getDataSet = (props: Record<string, any>): Record<string, any> => {
 
   for (const key in props) {
     if (key.indexOf('data-') === 0) {
-      const newKey = key.substr(5) // 去掉 'data-' 前缀
+      const newKey = key.substr(5)
       result[newKey] = props[key]
     }
   }
@@ -96,64 +95,6 @@ export const getCustomEvent = (
 
   }
 }
-
-// const useInnerTouchable = props => {
-//   const { onTap, onLongTap, onTouchStart, onTouchMove, onTouchEnd } = props
-//   if (!onTap && !onLongTap && !onTouchStart && !onTouchMove && !onTouchEnd) {
-//     return props
-//   }
-
-//   // eslint-disable-next-line react-hooks/rules-of-hooks
-//   const ref = useRef({
-//     startTimestamp: 0,
-//     props: props
-//   })
-//   // eslint-disable-next-line react-hooks/rules-of-hooks
-//   useEffect(() => {
-//     ref.current.props = props
-//   })
-//   // eslint-disable-next-line react-hooks/rules-of-hooks
-//   const panResponder = useRef(
-//     PanResponder.create({
-//       onStartShouldSetPanResponder: () => {
-//         const { onTap, onLongTap, onTouchStart, onTouchMove, onTouchEnd } =
-//           ref.current.props
-//         return !!(
-//           onTap ||
-//           onLongTap ||
-//           onTouchStart ||
-//           onTouchMove ||
-//           onTouchEnd
-//         )
-//       },
-//       onShouldBlockNativeResponder: () => false,
-//       onPanResponderGrant: evt => {
-//         const { onTouchStart } = ref.current.props
-//         onTouchStart && onTouchStart(getTouchEvent(evt))
-//         ref.current.startTimestamp = evt.nativeEvent.timestamp
-//       },
-//       onPanResponderTerminationRequest: () => true,
-//       onPanResponderMove: (evt) => {
-//         const { onTouchMove } = ref.current.props
-//         onTouchMove && onTouchMove(getTouchEvent(evt))
-//       },
-//       onPanResponderRelease: (evt) => {
-//         const { onTap, onLongTap, onTouchEnd } = ref.current.props
-//         onTouchEnd && onTouchEnd(getTouchEvent(evt))
-//         const endTimestamp = evt.nativeEvent.timestamp
-//         const gapTime = endTimestamp - ref.current.startTimestamp
-//         if (gapTime <= 350) {
-//           onTap && onTap(getTouchEvent(evt))
-//         } else {
-//           onLongTap && onLongTap(getTouchEvent(evt))
-//         }
-//       }
-//     })
-//   ).current
-//   return {
-//     ...panResponder.panHandlers
-//   }
-// }
 
 const useInnerProps = (
   props: UseInnerPropsOptions['props'] = {},
