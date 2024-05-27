@@ -111,6 +111,7 @@ let i18nInjectableComputed = []
 let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
+let hasOptionalChain = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -170,8 +171,8 @@ const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '__stringify__'
-const optionsChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionsChainWxsName = '__oc__'
+const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
+const optionalChainWxsName = '__oc__'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -775,7 +776,6 @@ function parse (template, options) {
 
   if (hasOptionalChaining) {
     injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
-  }
 
   injectNodes.forEach((node) => {
     addChild(root, node, true)
@@ -1582,6 +1582,8 @@ function postProcessWxs (el, meta) {
   }
 }
 
+const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
+
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
@@ -1591,7 +1593,11 @@ function processAttrs (el, options) {
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
       const isProps = isComponentNode(el, options) && !(attr.name === 'class' || attr.name === 'style')
-      addExp(el, parsed.result, isProps, attr.name)
+      let result = parsed.result
+      if (isTemplateData) {
+        result = result.replace(spreadREG, '$1')
+      }
+      addExp(el, result, isProps, attr.name)
       if (parsed.replaced) {
         modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
       }
@@ -2281,15 +2287,13 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
+  processClass(el, meta)
+  processStyle(el, meta)
+  processEvent(el, options)
+
 
   if (!pass) {
-    processClass(el, meta)
-    processStyle(el, meta)
     processShow(el, options, root)
-  }
-
-  if (!pass) {
-    processEvent(el, options)
     processComponentIs(el, options)
   }
 
