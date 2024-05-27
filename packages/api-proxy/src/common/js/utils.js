@@ -101,7 +101,7 @@ function makeMap (arr) {
   }, {})
 }
 
-function nonsupportPropsInRN (resObj, props) {
+function defineUnsupportedProps (resObj, props) {
   const defineProps = {}
   props.forEach((item) => {
     defineProps[item] = {
@@ -132,5 +132,5 @@ export {
   hasOwn,
   throwSSRWarning,
   type,
-  nonsupportPropsInRN
+  defineUnsupportedProps
 }

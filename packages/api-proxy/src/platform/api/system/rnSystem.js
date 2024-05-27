@@ -1,7 +1,7 @@
 import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { webHandleSuccess, webHandleFail, nonsupportPropsInRN } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
@@ -13,7 +13,7 @@ const getWindowInfo = function () {
     screenWidth: dimensionsScreen.width,
     screenHeight: dimensionsScreen.height
   }
-  nonsupportPropsInRN(result, ['screenTop'])
+  defineUnsupportedProps(result, ['screenTop'])
   return result
 }
 
@@ -52,7 +52,7 @@ const getSystemInfoSync = function () {
     ...windowInfo,
     ...iosRes
   }
-  nonsupportPropsInRN(result, [
+  defineUnsupportedProps(result, [
     'language',
     'version',
     'SDKVersion',
@@ -99,7 +99,7 @@ const getDeviceInfo = function () {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
-  nonsupportPropsInRN(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
+  defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
   Object.assign(deviceInfo, {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
