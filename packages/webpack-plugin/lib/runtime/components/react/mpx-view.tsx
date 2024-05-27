@@ -97,8 +97,6 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   } = props
   const [isHover, setIsHover] = React.useState(false)
 
-  const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const layoutRef = React.useRef({})
 
   // 打平 style 数组
