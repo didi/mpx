@@ -353,7 +353,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   return (
     <View
       {...innerProps}
-      testID="button"
       style={[
         styles.button,
         isMiniSize && styles.buttonMini,
