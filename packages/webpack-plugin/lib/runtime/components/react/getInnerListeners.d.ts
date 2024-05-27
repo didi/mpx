@@ -31,17 +31,20 @@ interface TouchEvent extends React.TouchEvent {
 }
 
 interface InnerRef {
-  startTimer: null | ReturnType<typeof setTimeout>;
-  needPress: boolean;
+  startTimer: {
+    bubble: null | ReturnType<typeof setTimeout>;
+    capture: null | ReturnType<typeof setTimeout>;
+  };
+  needPress: {
+    bubble: boolean;
+    capture: boolean;
+  };
   mpxPressInfo: {
     detail: {
       x: number;
       y: number;
     };
   };
-  props: Record<string, any>;
-  config: any;
-  eventConfig: { [key: string]: string[] }[];
 }
 
 interface UseInnerPropsOptions {
@@ -50,7 +53,7 @@ interface UseInnerPropsOptions {
   removeProps?: string[];
   config?: {
     layoutRef?: React.MutableRefObject<any>;
-    touchable?: boolean
+    disableTouch?: boolean
   };
 }
 

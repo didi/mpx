@@ -1047,7 +1047,7 @@ function processStyleReact (el) {
 
   let staticHoverClass = ''
   if (hoverClassReg.test(el.tag)) {
-    staticHoverClass = getAndRemoveAttr(el, 'hover-class').val || ''
+    staticHoverClass = el.attrsMap['hover-class'] || ''
     staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
   }
 

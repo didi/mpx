@@ -6,36 +6,32 @@
  */
 import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import * as React from 'react'
-import { useImperativeHandle } from 'react'
-// @ts-ignore
 import useInnerProps from './getInnerListeners';
-// @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-type ExtendedTextStyle = TextStyle & {
-  lineHeight: string | number
+type ExtendedTextStyle = Omit<TextStyle, 'lineHeight'>  & {
+  lineHeight?: string | number
 };
-interface _TextProps extends TextProps {
+interface _TextProps extends Omit<TextProps, 'style'> {
   style?: ExtendedTextStyle
   children?: React.ReactNode
   selectable?: boolean
   ['user-select']?: boolean
   userSelect?: boolean
-  useInherit?: boolean
+  ['disable-default-style']?: boolean
 }
 
 const DEFAULT_STYLE = {
   fontSize: 16
 }
 
-const NUMBER_REGX = /^\d+(\.\d+)?%$/
+const PERCENT_REGX = /%$/
 
 const transformStyle = (styleObj: ExtendedTextStyle) => {
-  let lineHeight = styleObj.lineHeight
-  if (lineHeight) return
-  if (typeof lineHeight === 'string' && NUMBER_REGX.test(lineHeight)) {
-    lineHeight = ((lineHeight as any).replace('%', '')/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
-    styleObj['lineHeight'] = lineHeight
+  let { lineHeight } = styleObj
+  if (typeof lineHeight === 'string' && PERCENT_REGX.test(lineHeight)) {
+    lineHeight = (+lineHeight.replace('%', '')/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    styleObj.lineHeight = lineHeight
   }
 }
 
@@ -45,33 +41,42 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     children,
     selectable,
     'user-select': userSelect,
-    useInherit = false,
+    'disable-default-style': disableDefaultStyle = false,
     } = props
 
     const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    const styleObj = StyleSheet.flatten(style)
+    const layoutRef = React.useRef({})
 
-    transformStyle(styleObj)    
+    const styleObj = StyleSheet.flatten<ExtendedTextStyle>(style)
 
-    const innerProps = useInnerProps(props, {}, [
+    let defaultStyle = {}
+
+    if (!disableDefaultStyle) {
+      defaultStyle = DEFAULT_STYLE
+      transformStyle(styleObj)
+    }
+
+    const { nodeRef } = useNodesRef(props, ref, {
+      defaultStyle
+    })
+
+    const innerProps = useInnerProps(props, {
+      ref: nodeRef
+    }, [
       'style',
       'children',
       'selectable',
       'user-select',
       'useInherit'
     ], {
-      touchable: true
-    })
-
-    const { nodeRef } = useNodesRef(props, ref, {
-      defaultStyle: DEFAULT_STYLE
+      layoutRef
     })
     
     React.useEffect(() => {
       setTimeout(() => {
         nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-          nodeRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         })
       })
       return () => {
@@ -82,8 +87,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
 
     return (
       <Text
-        style={{...useInherit && DEFAULT_STYLE, ...styleObj}}
-        ref={nodeRef}
+        style={{...defaultStyle, ...styleObj}}
         selectable={!!selectable || !!userSelect}
         {...innerProps}
       >
