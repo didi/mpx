@@ -151,7 +151,7 @@
 | refresher-background    | String  | `'#fff'`  | 设置自定义下拉刷新背景颜色，仅安卓支持                         |
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
-| show-scrollbar          | Number  | `false`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
+| show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
 
 
 #### 事件
@@ -167,7 +167,8 @@
 | bindrefresherrefresh| 自定义下拉刷新被触发 |  
 
 #### 注意事项
-目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
+1. Mpx 转 React native 时，使用 scroll-x 作为控制滚动方向的唯一依据，scroll-y 设置无效
+2. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
 
 ### swiper
 滑块视图容器。
