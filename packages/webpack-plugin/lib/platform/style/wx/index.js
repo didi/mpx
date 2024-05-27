@@ -71,22 +71,25 @@ module.exports = function getSpec ({ warn, error }) {
   const verifyValues = ({ prop, value, valueType }) => {
     // 校验 value 枚举 是否支持
     switch (valueType) {
-      case ValueType.color:
-        let isNumberType = numberRegExp.test(value)
-        let isColorType = colorRegExp.test(value)
+      case ValueType.color: {
+
+        const isNumberType = numberRegExp.test(value)
+        const isColorType = colorRegExp.test(value)
         isNumberType && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
         isColorType && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
         return {
           value,
           isValid: !isNumberType && !isColorType
         }
-      case ValueType.number:
-        let isNotNumer = !numberRegExp.test(value)
-        isNotNumer && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
+      }
+      case ValueType.number: {
+        const isNumberType = numberRegExp.test(value)
+        !isNumberType && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
         return {
           value,
-          isValid: !isNotNumer
+          isValid: isNumberType
         }
+      }
       default:
         return {
           value,
