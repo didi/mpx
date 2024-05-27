@@ -13,6 +13,7 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: React.ReactNode
   selectable?: boolean
+  ['enable-offset']?: boolean
   ['user-select']?: boolean
   userSelect?: boolean
   useInherit?: boolean
@@ -27,6 +28,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     style = [],
     children,
     selectable,
+    'enable-offset': enableOffset,
     'user-select': userSelect,
     useInherit = false,
     } = props
@@ -48,11 +50,12 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
       'children',
       'selectable',
       'user-select',
-      'useInherit'
+      'useInherit',
+      'enable-offset'
     ], {
       layoutRef
     })
-    
+  if (enableOffset) {
     React.useEffect(() => {
       setTimeout(() => {
         nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
@@ -63,7 +66,8 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
         measureTimeout.current && clearTimeout(measureTimeout.current);
         measureTimeout.current = null
       }
-    }, [nodeRef])
+    })
+  }
 
     return (
       <Text

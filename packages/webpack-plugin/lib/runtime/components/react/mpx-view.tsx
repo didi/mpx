@@ -19,6 +19,7 @@ export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>;
   children?: React.ReactElement;
   hoverStyle: Array<ExtendedViewStyle>;
+  ['enable-offset']?: boolean;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
@@ -29,6 +30,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     style = [],
     children,
     hoverStyle,
+    'enable-offset': enableOffset
   } = props
   const [isHover, setIsHover] = React.useState(false)
 
@@ -108,7 +110,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    onLayout,
+    ...(enableOffset ? { onLayout } : {}),
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -119,7 +121,8 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     'hover-start-time',
     'hover-stay-time',
     'hoverStyle',
-    'hover-class'
+    'hover-class',
+    'enable-offset'
   ], {
     layoutRef
   })

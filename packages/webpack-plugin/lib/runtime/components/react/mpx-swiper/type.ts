@@ -33,6 +33,7 @@ export interface CarouseProps {
   easingFunction?: string;
   previousMargin?: string;
   nextMargin?: string;
+  'enable-offset'?: boolean;
   bindchange: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   getInnerLayout: Function
 }
