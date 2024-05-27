@@ -53,6 +53,11 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+
+  function isNumber(val) {
+    return val && !isNaN(val)
+  }
+
   // color & number 值校验
   const ValueType = {
     number: 'number',
@@ -67,14 +72,26 @@ module.exports = function getSpec ({ warn, error }) {
     // 校验 value 枚举 是否支持
     switch (valueType) {
       case ValueType.color:
-        (numberRegExp.test(value)) && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
-        colorRegExp.test(value) && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
-        return value
+        let isNumberType = numberRegExp.test(value)
+        let isColorType = colorRegExp.test(value)
+        isNumberType && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
+        isColorType && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
+        return {
+          value,
+          isValid: !isNumberType && !isColorType
+        }
       case ValueType.number:
-        (!numberRegExp.test(value)) && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
-        return value
+        let isNotNumer = !numberRegExp.test(value)
+        isNotNumer && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
+        return {
+          value,
+          isValid: !isNotNumer
+        }
       default:
-        return value
+        return {
+          value,
+          isValid: true
+        }
     }
   }
   // 统一校验 value type 值类型
@@ -209,14 +226,11 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatLineHeight = ({ prop, value }) => {
-    if (!numberRegExp.test(value)) {
-      verifyValues({ prop, value, valueType: ValueType.number })
-      return false
-    }
+    if (!verifyValues({ prop, value, valueType: ValueType.number })) return false
 
     return {
       prop,
-      value: isFinite(+value) ? `${Math.round(value * 100)}%` : value
+      value: isNumber(value) ? `${Math.round(value * 100)}%` : value
     }
   }
 
