@@ -38,7 +38,6 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     bindchange: props.bindchange
   }
   const { nodeRef } = useNodesRef(props, ref, {
-    innerLayout
   })
   const innerProps = useInnerProps(props, {}, [
     'indicator-dots',
@@ -46,7 +45,7 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     'indicator-active-color',
     'previous-margin',
     'next-margin'
-  ], {})
+  ], { layoutRef: innerLayout.current })
 
   const getInnerLayout = (layout) => {
     innerLayout = layout.current

@@ -8,7 +8,7 @@ interface SwiperItemProps {
   children?: ReactNode;
 }
 
-const SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
+const _SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
   const { children, ...restProps } = props
   const { nodeRef } = useNodesRef(props, ref, {
   })
@@ -25,4 +25,6 @@ const SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
   )
 })
 
-export default SwiperItem
+_SwiperItem.displayName = 'mpx-swiper-item';
+
+export default _SwiperItem
