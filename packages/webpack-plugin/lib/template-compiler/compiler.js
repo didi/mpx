@@ -111,7 +111,6 @@ let i18nInjectableComputed = []
 let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
-let hasOptionalChain = false
 
 function updateForScopesMap () {
   forScopes.forEach((scope) => {
@@ -775,7 +774,8 @@ function parse (template, options) {
   }
 
   if (hasOptionalChaining) {
-    injectWxs(meta, optionsChainWxsName, optionsChainWxsPath)
+    injectWxs(meta, optionalChainWxsName, optionalChainWxsPath)
+  }
 
   injectNodes.forEach((node) => {
     addChild(root, node, true)
@@ -1161,7 +1161,7 @@ function wrapMustache (val) {
 }
 
 function parseOptionalChaining (str) {
-  const wxsName = `${optionsChainWxsName}.g`
+  const wxsName = `${optionalChainWxsName}.g`
   let optionsRes
   while (optionsRes = /\?\./.exec(str)) {
     const strLength = str.length
@@ -2290,7 +2290,6 @@ function processElement (el, root, options, meta) {
   processClass(el, meta)
   processStyle(el, meta)
   processEvent(el, options)
-
 
   if (!pass) {
     processShow(el, options, root)
