@@ -168,3 +168,38 @@
 
 #### 注意事项
 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
+
+### swiper
+滑块视图容器。
+
+#### 属性
+
+| 属性名                   | 类型     | 默认值              | 说明                                 |
+| ----------------------- | ------- | ------------------  | ------------------------------------|
+| indicator-dots          | Boolean | `false`             | 是否显示面板指示点                     |
+| indicator-color         | color   | `rgba(0, 0, 0, .3)` | 指示点颜色                            |
+| indicator-active-color  | color   | `#000000`           | 当前选中的指示点颜色                   |
+| autoplay                | Boolean | `false`             | 是否自动切换                          |
+| current                 | Number  | `0`                 | 当前所在滑块的 index                  |
+| interval                | Number  | `5000`              | 自动切换时间间隔                       |
+| duration                | Number  | `500`               | 滑动动画时长                          |
+| circular                | Boolean | `false`             | 是否采用衔接滑动                       |
+| vertical                | Boolean | `false`             | 滑动方向是否为纵向                      |
+| previous-margin         | String  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
+| next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
+
+
+#### 事件
+
+| 事件名           | 说明                |
+| ----------------| ------------------ |
+| bindchange| current 改变时会触发 change 事件，event.detail = {current, source}|
+
+### swiper-item
+仅可放置在swiper组件中，宽高自动设置为100%。
+
+#### 属性
+
+| 属性名                   | 类型     | 默认值              | 说明                                 |
+| ----------------------- | ------- | ------------------  | ------------------------------------|
+| item-id                 | string  | `无`             | 该 swiper-item 的标识符                  |
