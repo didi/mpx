@@ -837,16 +837,6 @@ function getAndRemoveAttr (el, name, removeFromMap = true) {
   }
 }
 
-function getAttr (el, name, val) {
-  el.attrsMap[name] = val
-  const list = el.attrsList
-  for (let i = 0, l = list.length; i < l; i++) {
-    if (list[i].name === name) {
-      return list[i].value
-    }
-  }
-}
-
 function addAttrs (el, attrs) {
   const list = el.attrsList
   const map = el.attrsMap
@@ -1057,7 +1047,7 @@ function processStyleReact (el) {
 
   let staticHoverClass = ''
   if (hoverClassReg.test(el.tag)) {
-    staticHoverClass = getAttr(el, 'hover-class') || ''
+    staticHoverClass =  el.attrsMap['hover-class'] || ''
     staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
   }
 

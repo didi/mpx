@@ -4,13 +4,11 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewStyle, NativeSyntheticEvent, ImageBackground, ImageResizeMode, StyleSheet } from 'react-native'
+import { View, ViewStyle, NativeSyntheticEvent, ImageResizeMode, StyleSheet } from 'react-native'
 import * as React from 'react'
 
 import useInnerProps from './getInnerListeners'
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
-
-import { extractTextStyle, parseUrl, hasElementType } from './utils'
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
@@ -24,69 +22,6 @@ export interface _ViewProps extends ExtendedViewStyle {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-}
-
-// const bgSizeList =  ['cover', 'contain', 'stretch']
-const hasTextChild = (children: React.ReactElement<any>) => {
-  let hasText = true
-  React.Children.forEach(children, (child) => {
-    if (!hasElementType(child, 'mpx-text') && !hasElementType(child, 'Text')) {
-      hasText = false
-    }
-  })
-  return hasText
-}
-
-const cloneElement = (child: React.ReactElement, textStyle:ViewStyle =  {}) => {
-  const {style, ...otherProps} = child.props || {}
-  return React.cloneElement(child, {
-    ...otherProps,
-    style: [textStyle, style]
-  })
-}
-
-const elementInheritChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  const inheritTextStyle = extractTextStyle(style)
-  if (hasElementType(children, 'mpx-text')) {
-    return cloneElement(children, inheritTextStyle)
-  } else if (hasElementType(children, 'Text')) {
-    return cloneElement(children, {
-      // 原生 Text 组件增加默认样式
-      fontSize: 16,
-      ...inheritTextStyle
-    })
-  } else {
-    return children
-  }
-}
-
-const wrapTextChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  const hasText = hasTextChild(children)
-  const textStyle = {
-    fontSize: 16,
-    ...hasText && extractTextStyle(style)
-  }
-  return hasText ? <Text style={textStyle}>{children}</Text> : children
-}
-
-const processChildren = (children: React.ReactElement, style:ViewStyle =  {}) => {
-  return Array.isArray(children) ? wrapTextChildren(children, style) : elementInheritChildren(children, style)
-}
-
-const processBackgroundChildren = (children: React.ReactElement, style:ExtendedViewStyle =  {}, image) => {
-  let resizeMode:ImageResizeMode = 'stretch'
-  if (['cover', 'contain', 'stretch'].includes(style.backgroundSize)) {
-    resizeMode = style.backgroundSize
-  }
-
-  // 直接替换view,点击会时不时的不生效
-  return <ImageBackground source={{ uri: image }} style={style} resizeMode={resizeMode}>
-    { processChildren(children, style) }
-  </ImageBackground>
-}
-
-const wrapChildren = (children, style, image) => {
-  return image ? processBackgroundChildren(children, style, image) : processChildren(children, style)
 }
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
@@ -183,23 +118,22 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     'children',
     'hover-start-time',
     'hover-stay-time',
-    'hoverStyle'
+    'hoverStyle',
+    'hover-class'
   ], {
     layoutRef
   })
-
-  const image = parseUrl(styleObj.backgroundImage)
 
   return (
     <View
       {...innerProps}
       style={{
         ...defaultStyle,
-        ...!image && styleObj,
+        ...styleObj,
         ...isHover && hoverStyle
       }}
     >
-      {wrapChildren(children, { ...defaultStyle, ...styleObj }, image)}
+      {children}
     </View>
   )
 })
