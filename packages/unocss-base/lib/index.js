@@ -11,7 +11,7 @@ module.exports = function presetMpx (options = {}) {
     name: '@mpxjs/unocss-base',
     theme: {
       ...uno.theme,
-      preflightRoot: ['page,view,text,::before,::after']
+      preflightRoot: ['page,view,text,::before,::after,::backdrop']
     },
     postprocess: (util) => {
       util.entries.forEach((i) => {
