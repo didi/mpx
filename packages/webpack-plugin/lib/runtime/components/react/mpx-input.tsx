@@ -14,6 +14,7 @@
  * ✘ always-embed
  * ✔ confirm-hold
  * ✔ cursor
+ * ✔ cursor-color
  * ✔ selection-start
  * ✔ selection-end
  * ✘ adjust-position
@@ -355,7 +356,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
       returnKeyType={confirmType}
       selection={selection}
       selectionColor={cursorColor}
-      blurOnSubmit={!confirmHold}
+      blurOnSubmit={!multiline && !confirmHold}
       underlineColorAndroid="rgba(0,0,0,0)"
       textAlignVertical={textAlignVertical}
       placeholderTextColor={placeholderTextColor}

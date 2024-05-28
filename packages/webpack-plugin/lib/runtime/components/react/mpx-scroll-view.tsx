@@ -102,12 +102,12 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     'refresher-default-style': refresherDefaultStyle,
     'refresher-background': refresherBackground,
     'enable-offset': enableOffset,
+    'show-scrollbar': showScrollbar = true
   } = props;
   const [snapScrollTop, setSnapScrollTop] = useState(0);
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const [showScrollbar, setShowScrollbar] = useState(true);
   const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
@@ -161,15 +161,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props['scroll-x'], props['scroll-y']]);
-
-  useEffect(() => {
-    if (props['show-scrollbar'] === undefined) {
-      setShowScrollbar(true)
-    } else{
-      setShowScrollbar(!!props['show-scrollbar'])
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props['show-scrollbar']]);
   
   useEffect(() => {
     if (snapScrollTop || snapScrollLeft) {

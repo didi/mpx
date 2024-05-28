@@ -13,9 +13,7 @@ const reactConfig = {
       }
     },
     getEvent (eventName, prefix = 'bind') {
-      return prefix + eventName.replace(/^./, (matched) => {
-        return matched
-      })
+      return prefix + eventName
     },
     defaultModelProp: 'value',
     defaultModelEvent: 'input',
