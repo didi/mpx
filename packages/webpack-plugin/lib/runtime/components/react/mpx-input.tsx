@@ -53,8 +53,7 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData,
-  LayoutChangeEvent,
+  TextInputSubmitEditingEventData
 } from 'react-native'
 import { parseInlineStyle, useUpdateEffect } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -91,6 +90,7 @@ export interface InputProps {
   'selection-start'?: number
   'selection-end'?: number
   'placeholder-style'?: string
+  'enable-offset'?: boolean,
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -132,6 +132,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     'cursor-color': cursorColor,
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
+    'enable-offset': enableOffset,
     bindinput,
     bindfocus,
     bindblur,
@@ -332,9 +333,11 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    onLayout
+    ...(enableOffset ? { onLayout } : {}),
   },
-  [],
+  [
+    'enable-offset'
+  ],
   {
     layoutRef
   })

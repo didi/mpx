@@ -246,10 +246,12 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
    * 水平方向时，获取单个元素的布局，更新
   */
   function onWrapperLayout (event) {
-    scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      props.getInnerLayout && props.getInnerLayout(layoutRef)
-    })
+    if (props['enable-offset']) {
+      scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        props.getInnerLayout && props.getInnerLayout(layoutRef)
+      })
+    }
     if (state.dir === 'y') return
     if (!state.offset.x && !state.offset.y) {
       state.offset = internalsRef.current.offset

@@ -56,6 +56,7 @@ interface ScrollViewProps {
   'refresher-background'?: string;
   'scroll-top'?: number;
   'scroll-left'?: number;
+  'enable-offset'?: boolean;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -72,7 +73,7 @@ type ScrollAdditionalProps = {
   horizontal: boolean;
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onContentSizeChange: (width: number, height: number) => void;
-  onLayout: (event: LayoutChangeEvent) => void;
+  onLayout?: (event: LayoutChangeEvent) => void;
   scrollEventThrottle: number;
   scrollsToTop: boolean;
   showsHorizontalScrollIndicator: boolean;
@@ -100,6 +101,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     'refresher-enabled': refresherEnabled,
     'refresher-default-style': refresherDefaultStyle,
     'refresher-background': refresherBackground,
+    'enable-offset': enableOffset,
     'show-scrollbar': showScrollbar = true
   } = props;
   const [snapScrollTop, setSnapScrollTop] = useState(0);
@@ -228,9 +230,11 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
 
   function onLayout(e) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
-    scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
+    if (enableOffset) {
+      scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    }
   }
 
   function onScroll(e) {
@@ -345,10 +349,10 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     ref: scrollViewRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
-    onLayout: onLayout,
     bindtouchstart: onScrollTouchStart,
     bindtouchend: onScrollTouchEnd,
     bindtouchmove: onScrollTouchMove,
+    onLayout
   };
   if (enhanced) {
     scrollAdditionalProps = {
@@ -358,6 +362,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     };
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
+      'enable-offset',
       'scroll-x',
       'scroll-y',
       'enable-back-to-top',

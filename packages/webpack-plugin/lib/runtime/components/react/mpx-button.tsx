@@ -51,7 +51,6 @@ import {
   TextStyle,
   Animated,
   Easing,
-  LayoutChangeEvent,
   NativeSyntheticEvent,
 } from 'react-native'
 import { extractTextStyle } from './utils'
@@ -81,6 +80,7 @@ export interface ButtonProps {
   'hover-stay-time'?: number
   'open-type'?: OpenType
   'data-shareInfo'?:  unknown
+  'enable-offset'?: boolean,
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
@@ -180,6 +180,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
     'data-shareInfo':  shareinfo,
+    'enable-offset': enableOffset,
     style = [],
     children,
     bindgetuserinfo,
@@ -338,13 +339,15 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     props,
     {
       ref: nodeRef,
-      onLayout,
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
       bindtap: onTap,
       catchtap: catchTap,
+      ...(enableOffset ? { onLayout } : {}),
     },
-    [],
+    [
+      'enable-offset'
+    ],
     { 
       layoutRef
     }

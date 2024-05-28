@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, ViewStyle, NativeSyntheticEvent, ImageResizeMode, StyleSheet } from 'react-native'
-import * as React from 'react'
+import React, { useRef, useState, useEffect, forwardRef } from 'react';
 
 import useInnerProps from './getInnerListeners'
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
@@ -19,20 +19,22 @@ export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>;
   children?: React.ReactElement;
   hoverStyle: Array<ExtendedViewStyle>;
+  'enable-offset'?: boolean;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
-const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
+const _View:React.FC<_ViewProps & React.RefAttributes<any>> = forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
   const {
     style = [],
     children,
     hoverStyle,
+    'enable-offset': enableOffset
   } = props
-  const [isHover, setIsHover] = React.useState(false)
+  const [isHover, setIsHover] = useState(false)
 
-  const layoutRef = React.useRef({})
+  const layoutRef = useRef({})
 
   // 打平 style 数组
   const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
@@ -51,7 +53,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     defaultStyle
   })
 
-  const dataRef = React.useRef<{
+  const dataRef = useRef<{
     startTimestamp: number,
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
@@ -61,7 +63,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     props: props
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
@@ -108,7 +110,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    onLayout,
+    ...(enableOffset ? { onLayout } : {}),
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -119,7 +121,8 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     'hover-start-time',
     'hover-stay-time',
     'hoverStyle',
-    'hover-class'
+    'hover-class',
+    'enable-offset'
   ], {
     layoutRef
   })
