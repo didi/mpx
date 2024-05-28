@@ -16,7 +16,7 @@ import { omit } from './utils'
 
 export type TextareProps = Omit<
   InputProps & PrivateInputProps,
-  'type' | 'password' | 'pass' | 'confirm-hold'
+  'type' | 'password' | 'multiline' | 'confirm-hold'
 >
 
 const Textarea = forwardRef<TextInput, TextareProps>(
