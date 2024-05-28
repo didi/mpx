@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewStyle, NativeSyntheticEvent, ImageBackground, ImageResizeMode, StyleSheet, Image } from 'react-native'
+import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image } from 'react-native'
 import * as React from 'react'
 
 // @ts-ignore
@@ -12,7 +12,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { parseUrl, hasElementType, TEXT_STYLE_REGEX } from './utils'
+import { parseUrl, hasElementType, TEXT_STYLE_REGEX, PERCENT_REGX } from './utils'
 
 type ElementNode = React.ReactNode
 
@@ -20,14 +20,6 @@ type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
   backgroundSize?: ImageResizeMode
 }
-
-type ImageProps = {
-  resizeMode?: ImageResizeMode
-  source?: {
-    uri: string
-  }
-}
-
 
 export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>
@@ -42,14 +34,15 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
+type Handlers = {
+  [key: string]: (val: string, innerStyle: ExtendedViewStyle) => void;
+}
+
+
 function groupBy(style, callback, group = {}):GroupData {
   let groupKey = ''
   for (let key in style) {
     let val = style[key]
-    if (typeof val === 'object') {
-      groupBy(style[key], callback, group)
-      continue
-    }
     groupKey = callback(key, val)
     if (!group[groupKey]) {
       group[groupKey] = {}
@@ -60,36 +53,101 @@ function groupBy(style, callback, group = {}):GroupData {
 }
 
 
-const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
-  if (!imageStyle) return null
-  let bgImage:ImageProps = {
-    resizeMode: 'stretch'
-  }
-  if (imageStyle['backgroundSize']) {
-    bgImage['resizeMode'] = imageStyle['backgroundSize']
-  }
-  if (imageStyle['backgroundImage']){    
-    const url = parseUrl(imageStyle['backgroundImage'])
-    if (!url) return null
-    bgImage['source'] = {uri: url}
-  }
 
-  return bgImage
+const applyHandlers = (imageStyle:ExtendedViewStyle, innerStyle:ExtendedViewStyle, handlers: Handlers , context: { props: ImageProps}) => {
+
+  for (let key in imageStyle) {
+    const handler = handlers[key]
+    const val = imageStyle[key]
+    if (handler && val && !handler.call(context, val, innerStyle)) {
+      break
+    }
+  }
 }
 
 
-function splitStyle(styles: ExtendedViewStyle []) {
-  const {textStyle, imageStyle, innerStyle} = groupBy(styles, (key) => {
+const imageStyleToProps = (imageStyle: ExtendedViewStyle, innerStyle: ExtendedViewStyle) => {
+  if (!imageStyle) return null
+  // 初始化
+  const context: {
+    props: ImageProps
+  } = {
+    props: {
+      resizeMode: 'stretch',
+      style: {
+        ...StyleSheet.absoluteFillObject
+      }
+    }
+  }
+
+  // background-size 转换
+  function backgroundSize (val, innerStyle) {
+    // 枚举值
+    if (['cover', 'contain'].includes(val)) {
+      this.props.resizeMode = val
+    } else {
+      let sizeList = val.trim().split(/\s+/)
+      //  归一化
+      if (sizeList.length === 1) {
+        sizeList.push(sizeList[0])
+      }
+
+      const style = sizeList.reduce((style, val, idx) => {
+        let { width, height } = innerStyle
+        // 百分比
+        if (PERCENT_REGX.test(val)) {
+          const decimal = parseFloat(val)/100
+          if (idx === 0) {
+            style.width = decimal * width
+          }else {
+            style.height = decimal * height
+          }
+        }else {
+          // 数字
+          if (idx === 0) {
+            style.width = val
+          }else {
+            style.height = val
+          }
+        }
+        return style
+      }, {})
+      
+      // 样式合并
+      this.props.style = [
+        ...this.props.style,
+        ...style
+      ]
+      
+    }
+    return true
+  }
+
+  // background-image 转换
+  function backgroundImage(val) {
+    const url = parseUrl(val)
+    if (!url) return null
+    this.props.source = {uri: url}
+    return true
+  }
+
+  applyHandlers(imageStyle, innerStyle, {
+    backgroundSize,
+    backgroundImage,
+  }, context)
+
+  if (!context?.props?.source) return null
+
+  return context.props
+}
+
+function splitStyle(styles: ExtendedViewStyle) {
+  return groupBy(styles, (key) => {
     if (TEXT_STYLE_REGEX.test(key))
       return 'textStyle'
     else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
     return 'innerStyle'
   }, {})
-  return {
-    textStyle, 
-    bgImage: imageStyleToProps(imageStyle),
-    innerStyle
-  }
 }
 
 const isText = (children: ElementNode) => {
@@ -100,16 +158,19 @@ function every(children: ElementNode, callback: (children: ElementNode) => boole
   return React.Children.toArray(children).every((child) => callback(child as ElementNode))
 }
 
-function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {}, textStyle?: ExtendedViewStyle, bgImage?: ImageProps) {
+function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {}, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
   if (every(children, (child)=>isText(child))) {
     children = <Text style={textStyle}>{children}</Text>
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
-  return <>
-    {bgImage && <Image style={[StyleSheet.absoluteFill, { width: innerStyle.width, height: innerStyle.height}]} {...bgImage} />}
-    {children}
-  </>
+
+  const bgImage = imageStyleToProps(imageStyle, innerStyle)
+
+  return [
+    bgImage && <Image {...bgImage} />,
+    children
+  ]
 }
 
 const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
@@ -214,11 +275,11 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     }
   }, [nodeRef])
 
-  const {textStyle, bgImage, innerStyle} = splitStyle([
+  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten([ 
     defaultStyle,
     styleObj,
-    isHover ? StyleSheet.flatten(hoverStyle) : {}
-  ])
+    ...(isHover ? hoverStyle : [])]
+  ))
 
   return (
     <View
@@ -226,7 +287,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       {...innerProps}
       style={innerStyle}
     >
-      {wrapChildren(children, innerStyle, textStyle, bgImage)}
+      {wrapChildren(children, innerStyle, textStyle, imageStyle)}
     </View>
   )
 })
