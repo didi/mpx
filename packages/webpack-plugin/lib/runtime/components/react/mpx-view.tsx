@@ -94,36 +94,26 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle, innerStyle: ExtendedVi
 
       const style = sizeList.reduce((style, val, idx) => {
         let { width, height } = innerStyle
-        // 百分比
-        if (PERCENT_REGX.test(val)) {
-          const decimal = parseFloat(val)/100
-          if (idx === 0) {
-            style.width = decimal * width
-          }else {
-            style.height = decimal * height
-          }
+
+        if (idx === 0) {
+          style.width = PERCENT_REGX.test(val) ? (parseFloat(val)/100)* width : val
         }else {
-          // 数字
-          if (idx === 0) {
-            style.width = val
-          }else {
-            style.height = val
-          }
+          style.height = PERCENT_REGX.test(val) ? (parseFloat(val)/100)* height : val
         }
         return style
       }, {})
       
       // 样式合并
-      this.props.style = [
+      this.props.style = {
         ...this.props.style,
         ...style
-      ]
+      }
       
     }
     return true
   }
 
-  // background-image 转换
+  // background-image
   function backgroundImage(val) {
     const url = parseUrl(val)
     if (!url) return null
