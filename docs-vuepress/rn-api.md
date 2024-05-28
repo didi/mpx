@@ -1,8 +1,33 @@
 # Mpx转RN API说明
 
-mpx转RN的对标微信api目前支持及部分的api转换，目前支持的能力可以参考 [api-proxy](./extend.md#XFetch)说明文档
+mpx转RN的对标微信api目前支持及部分的api转换，目前支持的能力可以参考下表：
 
-对于微信比较定制的能力比如说wx.getSystemInfo返回的response数据中，针对微信端的比如说albumAuthorized这类的值，在RN中都会返回null
+| 支持方法                   |
+|------------------------|
+| getSystemInfo          |
+| getSystemInfoSync      |
+| getDeviceInfo      |
+| getWindowInfo      |
+| request                |
+| setStorage             |
+| removeStorage          |
+| removeStorageSync      |
+| getStorage             |
+| getStorageInfo         |
+| clearStorage           |
+| clearStorageSync       |
+| setClipboardData       |
+| getClipboardData       |
+| makePhoneCall          |
+| onWindowResize         |
+| offWindowResize        |
+| arrayBufferToBase64    |
+| base64ToArrayBuffer    |
+| connectSocket          |
+| getNetworkType         |
+| onNetworkStatusChange  |
+| offNetworkStatusChange |
+
 
 对于一些api-proxy中没有提供的能力，用户可以搭配mpx对象方式传入custom使用即可示例如下：
 
@@ -31,3 +56,94 @@ mpx.showModal({
 })
 ```
 
+对于一些微信独有的返回结果，或者RN目前不能支持的入参/返回结果，在下面会有详细说明：
+
+### getSystemInfo/getSystemInfoSync
+
+| 不支持返回值                 |
+|------------------------|
+| language          |
+| version      |
+| SDKVersion          |
+| benchmarkLevel          |
+| albumAuthorized                |
+| cameraAuthorized             |
+| locationAuthorized          |
+| microphoneAuthorized          |
+| notificationAuthorized          |
+| phoneCalendarAuthorized          |
+| host          |
+| enableDebug          |
+| notificationAlertAuthorized          |
+| notificationBadgeAuthorized          |
+| notificationSoundAuthorized          |
+| bluetoothEnabled          |
+| locationEnabled          |
+| wifiEnabled          |
+| locationReducedAccuracy          |
+| theme          |
+
+### getDeviceInfo
+
+| 不支持返回值                 |
+|------------------------|
+| benchmarkLevel          |
+| abi      |
+| cpuType          |
+
+### getDeviceInfo
+
+| 不支持返回值                 |
+|------------------------|
+| screenTop          |
+
+### request
+
+| 不支持入参     |
+|-----------|
+| useHighPerformanceMode |
+| enableHttp2 |
+| enableProfile |
+| enableQuic |
+| enableCache |
+| enableHttpDNS |
+| httpDNSServiceId |
+| enableChunked |
+| forceCellularNetwork |
+| redirect |
+
+
+| 不支持返回值                 |
+|------------------------|
+| cookies |
+| profile            |
+| exception          |
+
+### setStorage/getStorage
+
+| 不支持入参     |
+|-----------|
+| encrypt |
+
+### getStorageInfo/getStorageInfoSync
+
+| 不支持返回值     |
+|-----------|
+| currentSize |
+| limitSize |
+
+### connectSocket
+
+| 不支持入参     |
+|-----------|
+| tcpNoDelay |
+| perMessageDeflate |
+| timeout |
+| forceCellularNetwork |
+
+### getNetworkType
+
+| 不支持返回值               |
+|----------------------|
+| signalStrength           |
+| hasSystemProxy    |
