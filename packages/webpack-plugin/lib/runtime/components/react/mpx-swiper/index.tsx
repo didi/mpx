@@ -1,7 +1,7 @@
-import React, { forwardRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import Carouse from './carouse'
 import { SwiperProps } from './type'
-import useInnerTouchable from '../getInnerListeners'
+import useInnerProps from '../getInnerListeners'
 import useNodesRef from '../../../useNodesRef'
 
 /**
@@ -21,9 +21,10 @@ import useNodesRef from '../../../useNodesRef'
  */
 const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
   const { children } = props
+  let innerLayout = useRef(true)
   const swiperProp = {
     circular: props.circular,
-    index: props.current,
+    current: props.current,
     autoplay: props.autoplay,
     duration: props.duration || 500,
     interval: props.interval || 5000,
@@ -38,19 +39,29 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
   }
   const { nodeRef } = useNodesRef(props, ref, {
   })
-  const innerTouchable = useInnerTouchable({
-    ...props
-  });
+  const innerProps = useInnerProps(props, {}, [
+    'indicator-dots',
+    'indicator-color',
+    'indicator-active-color',
+    'previous-margin',
+    'next-margin'
+  ], { layoutRef: innerLayout.current })
+
+  const getInnerLayout = (layout) => {
+    innerLayout = layout.current
+  }
+
   return (
       <Carouse
         ref={nodeRef}
+        getInnerLayout={getInnerLayout}
         {...swiperProp}
-        {...innerTouchable}>
+        {...innerProps}>
         {children}
       </Carouse>
 
   )
 })
-_SwiperWrapper.displayName = '_Swiper';
+_SwiperWrapper.displayName = 'mpx-swiper';
 
 export default _SwiperWrapper

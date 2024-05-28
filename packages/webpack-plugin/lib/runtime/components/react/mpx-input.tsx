@@ -1,10 +1,9 @@
 /**
  * ✔ value
- * ✔ defaultValue
- * - type: Partially. Not support safe-password、nickname
+ * - type: Partially. Not support `safe-password`、`nickname`
  * ✔ password
  * ✔ placeholder
- * - placeholder-style: Only placeholderTextColor(RN).
+ * - placeholder-style: Only support color.
  * ✘ placeholder-class
  * ✔ disabled
  * ✔ maxlength
@@ -15,6 +14,7 @@
  * ✘ always-embed
  * ✔ confirm-hold
  * ✔ cursor
+ * ✔ cursor-color
  * ✔ selection-start
  * ✔ selection-end
  * ✘ adjust-position
@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import React, { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, useMemo, useRef, useState } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -54,9 +54,11 @@ import {
   TextInputFocusEventData,
   TextInputChangeEventData,
   TextInputSubmitEditingEventData,
+  LayoutChangeEvent,
 } from 'react-native'
 import { parseInlineStyle, useUpdateEffect } from './utils'
-import useInnerTouchable, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useNodesRef from '../../useNodesRef'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -75,7 +77,6 @@ type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
   style?: StyleProp<InputStyle>
   value?: string
-  defaultValue?: string
   type?: Type
   password?: boolean
   placeholder?: string
@@ -90,7 +91,6 @@ export interface InputProps {
   'selection-start'?: number
   'selection-end'?: number
   'placeholder-style'?: string
-  placeholderTextColor?: string
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -117,7 +117,7 @@ const keyboardTypeMap: Record<Type, string> = {
 
 const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX.Element => {
   const {
-    style = {},
+    style = [],
     type = 'text',
     value,
     password,
@@ -141,15 +141,16 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
     multiline,
     'auto-height': autoHeight,
     bindlinechange,
-    ...restProps
   } = props
 
+  const { nodeRef } = useNodesRef(props, ref)
+
   const keyboardType = keyboardTypeMap[type]
-  const defaultValue = props.defaultValue ?? (type === 'number' && value ? value + '' : value)
-  const placeholderTextColor = props.placeholderTextColor || parseInlineStyle(placeholderStyle)?.color
+  const defaultValue = type === 'number' && value ? value + '' : value
+  const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const inputRef = useRef<any>(null)
+  const layoutRef = useRef({})
   const tmpValue = useRef<string>()
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
@@ -186,6 +187,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             value: evt.nativeEvent.text,
             cursor: cursorIndex.current,
           },
+          layoutRef
         },
         props
       )
@@ -208,6 +210,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             detail: {
               value: tmpValue.current || '',
             },
+            layoutRef
           },
           props
         )
@@ -225,6 +228,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
               value: tmpValue.current || '',
               cursor: cursorIndex.current,
             },
+            layoutRef
           },
           props
         )
@@ -242,6 +246,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             detail: {
               value: tmpValue.current || '',
             },
+            layoutRef
           },
           props
         )
@@ -259,6 +264,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
             detail: {
               value: tmpValue.current || '',
             },
+            layoutRef
           },
           props
         )
@@ -282,6 +288,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
                 lineHeight,
                 lineCount: lineCount.current,
               },
+              layoutRef
             },
             props
           )
@@ -301,46 +308,41 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
               selectionStart: evt.nativeEvent.selection.start,
               selectionEnd: evt.nativeEvent.selection.end,
             },
+            layoutRef
           },
           props
         )
       )
   }
 
+  const onLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
+  }
+
   useUpdateEffect(() => {
-    if (!inputRef?.current) {
+    if (!nodeRef?.current) {
       return
     }
-    focus ? inputRef.current.focus() : inputRef.current.blur()
+    focus
+      ? (nodeRef.current as TextInput)?.focus()
+      : (nodeRef.current as TextInput)?.blur()
   }, [focus])
 
-  const innerTouchable = useInnerTouchable({
-    ...props,
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef,
+    onLayout
+  },
+  [],
+  {
+    layoutRef
   })
 
-  useImperativeHandle(ref, () => {
-    return {
-      ...props,
-      focus() {
-        inputRef.current?.focus()
-      },
-      blur() {
-        inputRef.current?.blur()
-      },
-      clear() {
-        inputRef.current?.clear()
-      },
-      isFocused() {
-        inputRef.current?.isFocused()
-      },
-    }
-  })
 
   return (
     <TextInput
-      {...restProps}
-      {...innerTouchable}
-      ref={inputRef}
+      {...innerProps}
       keyboardType={keyboardType as KeyboardTypeOptions}
       secureTextEntry={!!password}
       defaultValue={defaultValue}
@@ -351,7 +353,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
       returnKeyType={confirmType}
       selection={selection}
       selectionColor={cursorColor}
-      blurOnSubmit={!confirmHold}
+      blurOnSubmit={!multiline && !confirmHold}
       underlineColorAndroid="rgba(0,0,0,0)"
       textAlignVertical={textAlignVertical}
       placeholderTextColor={placeholderTextColor}
@@ -378,6 +380,6 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   )
 })
 
-Input.displayName = '_Input'
+Input.displayName = 'mpx-input'
 
 export default Input

@@ -14,13 +14,32 @@ import { Keyboard, TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
 import { omit } from './utils'
 
-export type TextareProps = Omit<InputProps & PrivateInputProps, 'type' | 'password' | 'pass' | 'confirm-hold'>
+export type TextareProps = Omit<
+  InputProps & PrivateInputProps,
+  'type' | 'password' | 'multiline' | 'confirm-hold'
+>
 
-const Textarea = forwardRef<TextInput, TextareProps>((props, ref): React.JSX.Element => {
-  const restProps = omit(props, ['type', 'password', 'multiline', 'confirm-hold'])
-  return <Input multiline confirm-type="next" bindblur={() => Keyboard.dismiss()} {...restProps} ref={ref} />
-})
+const Textarea = forwardRef<TextInput, TextareProps>(
+  (props, ref): React.JSX.Element => {
+    const restProps = omit(props, [
+      'ref',
+      'type',
+      'password',
+      'multiline',
+      'confirm-hold',
+    ])
+    return (
+      <Input
+        ref={ref}
+        multiline
+        confirm-type='next'
+        bindblur={() => Keyboard.dismiss()}
+        {...restProps}
+      />
+    )
+  }
+)
 
-Textarea.displayName = '_Textarea'
+Textarea.displayName = 'mpx-textarea'
 
 export default Textarea
