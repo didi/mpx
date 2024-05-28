@@ -137,7 +137,8 @@
 
 | 属性名                   | 类型     | 默认值     | 说明                                               |
 | ----------------------- | ------- | --------- | -------------------------------------------------- |
-| scroll-x                | Boolean | `false`   | 控制当前滚动方向，默认纵向滚动                          |
+| scroll-x                | Boolean | `false`   | 允许横向滚动动 |
+| scroll-y                | Boolean | `false`   | 允许纵向滚动  |
 | upper-threshold         | Number  | `50`      | 距顶部/左边多远时(单位 px),触发 scrolltoupper 事件      |
 | lower-threshold         | Number  | `50`      | 距底部/右边多远时(单位 px),触发 scrolltolower 事件      |
 | scroll-top              | Number  | `0`       | 设置纵向滚动条位置                                    |
@@ -152,6 +153,7 @@
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
+| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 
 #### 事件
@@ -167,8 +169,7 @@
 | bindrefresherrefresh| 自定义下拉刷新被触发 |  
 
 #### 注意事项
-1. Mpx 转 React native 时，使用 scroll-x 作为控制滚动方向的唯一依据，scroll-y 设置无效
-2. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
+1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
 
 ### swiper
 滑块视图容器。
@@ -188,6 +189,7 @@
 | vertical                | Boolean | `false`             | 滑动方向是否为纵向                      |
 | previous-margin         | String  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
+| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 
 #### 事件
