@@ -53,11 +53,6 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
-
-  function isNumber(val) {
-    return val && !isNaN(val)
-  }
-
   // color & number 值校验
   const ValueType = {
     number: 'number',
@@ -68,6 +63,7 @@ module.exports = function getSpec ({ warn, error }) {
   const numberRegExp = /^\s*(\d+(\.\d+)?)(rpx|px|%)?\s*$/
   // RN 不支持的颜色格式
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
+
   const verifyValues = ({ prop, value, valueType }) => {
     // 校验 value 枚举 是否支持
     switch (valueType) {
@@ -79,7 +75,7 @@ module.exports = function getSpec ({ warn, error }) {
         isColorType && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
         return {
           value,
-          isValid: !isNumberType && !isColorType
+          valid: !isNumberType && !isColorType
         }
       }
       case ValueType.number: {
@@ -87,13 +83,13 @@ module.exports = function getSpec ({ warn, error }) {
         !isNumberType && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
         return {
           value,
-          isValid: isNumberType
+          valid: isNumberType
         }
       }
       default:
         return {
           value,
-          isValid: true
+          valid: true
         }
     }
   }
@@ -153,7 +149,7 @@ module.exports = function getSpec ({ warn, error }) {
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
       // 校验 value 类型
-      const value = verifyValues({ prop, value: values[idx], valueType })
+      const value = verifyValues({ prop, value: values[idx], valueType }).value
       if (isIllegalValue({ prop: dashProp, value })) {
         // 过滤不支持 value
         unsupportedValueError({ prop: dashProp, value })
@@ -229,11 +225,11 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatLineHeight = ({ prop, value }) => {
-    if (!verifyValues({ prop, value, valueType: ValueType.number })) return false
+    if (!verifyValues({ prop, value, valueType: ValueType.number }).value) return false
 
     return {
       prop,
-      value: isNumber(value) ? `${Math.round(value * 100)}%` : value
+      value: /\d+(\.\d+)?$/.test(value) ? `${Math.round(value * 100)}%` : value
     }
   }
 
