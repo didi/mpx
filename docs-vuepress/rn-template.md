@@ -111,6 +111,7 @@
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | src                     | String  | `false`       | 图片资源地址，支持本地图片资源及 base64 格式数据，暂不支持 svg 格式 |
 | mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，适配微信 image 所有 mode 格式              |
+| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 #### 事件
 | 事件名           | 说明                                                 |
@@ -143,6 +144,7 @@
 | cursor-color            | String  |               | 光标颜色                                                    |
 | selection-start         | Number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
 | selection-end           | Number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
+| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 #### 事件
 | 事件名                | 说明                                                                               |
@@ -187,6 +189,7 @@
 | cursor-color            | String  |               | 光标颜色                                                    |
 | selection-start         | Number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
 | selection-end           | Number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
+| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 #### 事件
 | 事件名                | 说明                                                                               |
@@ -224,6 +227,7 @@
 | hover-class             | String  |               | 指定按钮按下去的样式类。当 hover-class="none" 时，没有点击态效果  |
 | hover-start-time        | Number  |  `20`         | 按住后多久出现点击态，单位毫秒                                  |
 | hover-stay-time         | Number  |  `70`         | 手指松开后点击态保留时间，单位毫秒                               |
+| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 #### 事件
 #### 注意事项
