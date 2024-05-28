@@ -58,7 +58,7 @@ const applyHandlers = (handlers: Handler[] , options) => {
   const [ imageStyle, imageProps ] = options
   for (let key in handlers) {
     const handler = handlers[key]
-    const val = imageStyle[handler?.name]
+    const val = imageStyle[handler.name]
     handler && val && handler(val, imageProps)
   }
 }
@@ -108,9 +108,10 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
     imageProps.source = {uri: url}
   }
 
-  applyHandlers([ backgroundSize, backgroundImage ], [imageStyle, imageProps])
+  applyHandlers([ backgroundSize, backgroundImage ],[imageStyle, imageProps])
 
-  if (!imageProps?.source) return null
+  if (!imageProps?.source) return null  
+  
   return imageProps
 }
 
@@ -140,8 +141,11 @@ function wrapChildren(children: ElementNode, textStyle?: ExtendedViewStyle, imag
 
   const bgImage = imageStyleToProps(imageStyle)
 
+  console.log(">>> bgImage", bgImage)
+
+
   return [
-    bgImage && <Image {...bgImage} />,
+    bgImage && <Image {...bgImage}/>,
     children
   ]
 }
@@ -165,7 +169,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   // 打平 style 数组
   const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
   // 默认样式
-  const defaultStyle = {
+  const defaultStyle:ExtendedViewStyle = {
     // flex 布局相关的默认样式
     ...styleObj.display === 'flex' && {
       flexDirection: 'row',
@@ -182,8 +186,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   const dataRef = useRef<{
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
-    props: any
-  }>({})
+  }>()
 
   useEffect(() => {
     return () => {
@@ -253,7 +256,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     }
   }, [nodeRef])
 
-  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten([ 
+  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
     defaultStyle,
     styleObj,
     ...(isHover ? hoverStyle : [])]
