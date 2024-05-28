@@ -68,7 +68,6 @@ module.exports = function getSpec ({ warn, error }) {
     // 校验 value 枚举 是否支持
     switch (valueType) {
       case ValueType.color: {
-
         const isNumberType = numberRegExp.test(value)
         const isColorType = colorRegExp.test(value)
         isNumberType && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)

@@ -58,7 +58,7 @@ const applyHandlers = (handlers: Handler[] , options) => {
   const [ imageStyle, imageProps ] = options
   for (let key in handlers) {
     const handler = handlers[key]
-    const val = imageStyle[handler.name]
+    const val = imageStyle[handler?.name]
     handler && val && handler(val, imageProps)
   }
 }
@@ -110,7 +110,7 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
 
   applyHandlers([ backgroundSize, backgroundImage ], [imageStyle, imageProps])
 
-  if (!imageProps?.source) return null  
+  if (!imageProps?.source) return null
   return imageProps
 }
 
