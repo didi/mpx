@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
 
 function request (options = { url: '' }) {
@@ -69,6 +69,7 @@ function request (options = { url: '' }) {
       statusCode: res.status,
       header: res.headers
     }
+    defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
     webHandleSuccess(result, success, complete)
     return result
   }).catch(err => {

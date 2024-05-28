@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../../../common/js'
+import { webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../../common/js'
 import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
 
 let _unsubscribe = null
@@ -20,6 +20,7 @@ const getNetworkType = function (options) {
       networkType: getConnectionType(connectionInfo),
       errMsg: 'getNetworkType:ok'
     }
+    defineUnsupportedProps(result, ['signalStrength', 'hasSystemProxy'])
     webHandleSuccess(result, success, complete)
   }).catch((err) => {
     const result = {

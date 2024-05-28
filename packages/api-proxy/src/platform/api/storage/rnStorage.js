@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { envError, webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
+import { envError, webHandleSuccess, webHandleFail, hasOwn, defineUnsupportedProps } from '../../../common/js'
 import { loop } from '@mpxjs/utils'
 function setStorage (options) {
   const { key, data, success, fail, complete } = options
@@ -76,6 +76,7 @@ function getStorageInfo (options) {
       keys,
       errMsg: 'getStorageInfo:ok'
     }
+    defineUnsupportedProps(result, ['currentSize', 'limitSize'])
     webHandleSuccess(result, success, complete)
   })
 }
