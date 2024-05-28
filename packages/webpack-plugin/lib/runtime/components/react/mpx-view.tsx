@@ -25,6 +25,9 @@ export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>
   children?: ElementNode
   hoverStyle: Array<ExtendedViewStyle>
+  ['hover-start-time']: number
+  ['hover-stay-time']: number
+  'enable-offset'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -34,9 +37,7 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
-type Handlers = {
-  [key: string]: (val: string, innerStyle: ExtendedViewStyle) => void;
-}
+type Handler = (val: string, imageProps: ImageProps) => void
 
 const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
@@ -53,36 +54,30 @@ function groupBy(style, callback, group = {}):GroupData {
   return group
 }
 
-const applyHandlers = (imageStyle:ExtendedViewStyle, innerStyle:ExtendedViewStyle, handlers: Handlers , context: { props: ImageProps}) => {
-
-  for (let key in imageStyle) {
+const applyHandlers = (handlers: Handler[] , options) => {
+  const [ imageStyle, imageProps ] = options
+  for (let key in handlers) {
     const handler = handlers[key]
-    const val = imageStyle[key]
-    if (handler && val && !handler.call(context, val, innerStyle)) {
-      break
-    }
+    const val = imageStyle[handler.name]
+    handler && val && handler(val, imageProps)
   }
 }
 
-const imageStyleToProps = (imageStyle: ExtendedViewStyle, innerStyle: ExtendedViewStyle) => {
+const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
   if (!imageStyle) return null
   // 初始化
-  const context: {
-    props: ImageProps
-  } = {
-    props: {
-      resizeMode: 'stretch',
-      style: {
-        ...StyleSheet.absoluteFillObject
-      }
+  const imageProps: ImageProps = {
+    style: {
+      resizeMode: 'cover',
+      ...StyleSheet.absoluteFillObject
     }
   }
 
   // background-size 转换
-  function backgroundSize (val, innerStyle) {
+  function backgroundSize (val, imageProps) {
     // 枚举值
     if (['cover', 'contain'].includes(val)) {
-      this.props.resizeMode = val
+      imageProps.style.resizeMode = val
     } else {
       let sizeList = val.trim().split(/\s+/)
       //  归一化
@@ -91,42 +86,32 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle, innerStyle: ExtendedVi
       }
 
       const style = sizeList.reduce((style, val, idx) => {
-        let { width, height } = innerStyle
-
         if (idx === 0) {
-          style.width = PERCENT_REGX.test(val) ? (parseFloat(val)/100)* width : val
+          style.width =  PERCENT_REGX.test(val) ? val : +val
         }else {
-          style.height = PERCENT_REGX.test(val) ? (parseFloat(val)/100)* height : val
+          style.height = PERCENT_REGX.test(val) ? val : +val
         }
         return style
       }, {})
       
       // 样式合并
-      this.props.style = {
-        ...this.props.style,
+      imageProps.style = {
+        ...imageProps.style,
         ...style
       }
-      
     }
-    return true
   }
-
-  // background-image
-  function backgroundImage(val) {
+  // background-image转换为source
+  function backgroundImage(val, imageProps) {
     const url = parseUrl(val)
     if (!url) return null
-    this.props.source = {uri: url}
-    return true
+    imageProps.source = {uri: url}
   }
 
-  applyHandlers(imageStyle, innerStyle, {
-    backgroundSize,
-    backgroundImage,
-  }, context)
+  applyHandlers([ backgroundSize, backgroundImage ], [imageStyle, imageProps])
 
-  if (!context?.props?.source) return null
-
-  return context.props
+  if (!imageProps?.source) return null  
+  return imageProps
 }
 
 function splitStyle(styles: ExtendedViewStyle) {
@@ -146,14 +131,14 @@ function every(children: ElementNode, callback: (children: ElementNode) => boole
   return Children.toArray(children).every((child) => callback(child as ElementNode))
 }
 
-function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {}, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
+function wrapChildren(children: ElementNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
   if (every(children, (child)=>isText(child))) {
     children = <Text style={textStyle}>{children}</Text>
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
-  const bgImage = imageStyleToProps(imageStyle, innerStyle)
+  const bgImage = imageStyleToProps(imageStyle)
 
   return [
     bgImage && <Image {...bgImage} />,
@@ -166,6 +151,8 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     style = [],
     children,
     hoverStyle,
+    'hover-start-time': hoverStartTime = 50,
+    'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset
   } = props
 
@@ -193,40 +180,30 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   })
 
   const dataRef = useRef<{
-    startTimestamp: number,
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
     props: any
-  }>({
-    startTimestamp: 0,
-    props: props
-  })
+  }>({})
 
   useEffect(() => {
     return () => {
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     }
-  }, [dataRef])
+  }, [])
 
   const setStartTimer = () => {
-    const { hoverStyle, 'hover-start-time': hoverStartTime = 50 } = dataRef.current.props
-    if (hoverStyle) {
-      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-      dataRef.current.startTimer = setTimeout(() => {
-        setIsHover(() => true)
-      }, hoverStartTime)
-    }
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.startTimer = setTimeout(() => {
+      setIsHover(() => true)
+    }, hoverStartTime)
   }
 
   const setStayTimer = () => {
-    const { hoverStyle, 'hover-stay-time': hoverStayTime = 400 } = dataRef.current.props
-    if (hoverStyle) {
-      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-      dataRef.current.stayTimer = setTimeout(() => {
-        setIsHover(() => false)
-      }, hoverStayTime)
-    }
+    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    dataRef.current.stayTimer = setTimeout(() => {
+      setIsHover(() => false)
+    }, hoverStayTime)
   }
 
   function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
@@ -262,9 +239,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     'hoverStyle',
     'hover-class',
     'enable-offset'
-  ], {
-    touchable: true
-  })
+  ])
 
   React.useEffect(() => {
     setTimeout(() => {
@@ -290,7 +265,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
       {...innerProps}
       style={innerStyle}
     >
-      {wrapChildren(children, innerStyle, textStyle, imageStyle)}
+      {wrapChildren(children, textStyle, imageStyle)}
     </View>
   )
 })

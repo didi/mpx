@@ -8,6 +8,7 @@ import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import React, { useRef, useEffect, forwardRef, ReactNode, ForwardedRef } from 'react';
 import useInnerProps from './getInnerListeners';
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
+import { PERCENT_REGX } from './utils'
 
 type ExtendedTextStyle = Omit<TextStyle, 'lineHeight'>  & {
   lineHeight?: string | number
@@ -26,7 +27,6 @@ const DEFAULT_STYLE = {
   fontSize: 16
 }
 
-const PERCENT_REGX = /%$/
 
 const transformStyle = (styleObj: ExtendedTextStyle) => {
   let { lineHeight } = styleObj
