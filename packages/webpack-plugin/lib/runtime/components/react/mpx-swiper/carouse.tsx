@@ -245,8 +245,8 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   /**
    * 水平方向时，获取单个元素的布局，更新
   */
-  function onWrapperLayout (event) {
-    if (props['enable-offset']) {
+  function onWrapperLayout () {
+    if (props.enableOffset) {
       scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         props.getInnerLayout && props.getInnerLayout(layoutRef)
@@ -339,7 +339,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
 
   function renderPages () {
     const { width, height, total, children } = state
-    const { circular, previousMargin, nextMargin } = props
+    const { circular, previousMargin, nextMargin, innerProps } = props
     const pageStyle = { width: width, height: height }
     if (total > 1 && Array.isArray(children)) {
       let pages: (Array<ReactNode>) = []
@@ -387,11 +387,16 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   }
   let pages = renderPages()
   const strStyle = 'container_' + state.dir
+  const eventProps = props.innerProps || {}
+  console.log('-------------luyongfang-innerProps', eventProps)
   return (
-    <View style={[styles[strStyle], vStyle]} onLayout={onWrapperLayout}>
-    {renderScrollView(pages)}
-    {props.showsPagination && renderPagination()}
-  </View>)
+    <View
+      style={[styles[strStyle], vStyle]}
+      {...eventProps}
+      onLayout={onWrapperLayout}>
+      {renderScrollView(pages)}
+      {props.showsPagination && renderPagination()}
+    </View>)
   
 })
 
