@@ -1163,12 +1163,13 @@ function processEvent (el, options) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = parsedEvent.prefix + parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
+            eventName: parsedEvent.eventName,
             rawName: name,
             configs: []
           }
@@ -1232,7 +1233,7 @@ function processEvent (el, options) {
 
   for (const type in eventConfigMap) {
     let needBind = false
-    let { configs, rawName, proxy } = eventConfigMap[type]
+    let { configs, rawName, proxy, eventName } = eventConfigMap[type]
     delete eventConfigMap[type]
     if (proxy) {
       needBind = true
@@ -1262,7 +1263,7 @@ function processEvent (el, options) {
 
       addAttrs(el, [
         {
-          name: rawName || config[mode].event.getEvent(type),
+          name: rawName || config[mode].event.getEvent(eventName),
           value: '__invoke'
         }
       ])
