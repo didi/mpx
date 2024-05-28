@@ -5,7 +5,7 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
-import * as React from 'react'
+import React, { useRef, useEffect, forwardRef } from 'react';
 import useInnerProps from './getInnerListeners';
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
@@ -23,7 +23,7 @@ const DEFAULT_STYLE = {
   fontSize: 16
 }
 
-const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef((props: _TextProps, ref: React.ForwardedRef<any>):React.JSX.Element => {
+const _Text: React.FC<_TextProps & React.RefAttributes<any>> = forwardRef((props: _TextProps, ref: React.ForwardedRef<any>):React.JSX.Element => {
   const {
     style = [],
     children,
@@ -33,7 +33,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     useInherit = false,
     } = props
 
-    const layoutRef = React.useRef({})
+    const layoutRef = useRef({})
 
     const styleObj = StyleSheet.flatten(style)
 
@@ -54,7 +54,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
       layoutRef
     })
 
-    React.useEffect(() => {
+    useEffect(() => {
       let measureTimeout: ReturnType<typeof setTimeout> | null = null
       if (enableOffset) {
         measureTimeout = setTimeout(() => {
@@ -69,7 +69,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
           }
         }
       }
-    })
+    }, [])
 
 
     return (

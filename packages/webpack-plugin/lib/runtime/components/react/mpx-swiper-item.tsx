@@ -11,7 +11,7 @@ interface SwiperItemProps {
 
 const _SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
   const { children, 'enable-offset': enableOffset } = props
-  const layoutRef = React.useRef({})
+  const layoutRef = useRef({})
   const { nodeRef } = useNodesRef(props, ref, {})
 
   const onLayout = () => {
