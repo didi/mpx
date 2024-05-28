@@ -30,7 +30,7 @@ const PERCENT_REGX = /%$/
 const transformStyle = (styleObj: ExtendedTextStyle) => {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGX.test(lineHeight)) {
-    lineHeight = (+lineHeight.replace('%', '')/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    lineHeight = (parseFloat(lineHeight)/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
     styleObj.lineHeight = lineHeight
   }
 }
