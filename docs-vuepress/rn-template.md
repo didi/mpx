@@ -107,25 +107,124 @@
 ### image
 
 #### 属性
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| src                     | String  | `false`       | 图片资源地址，支持本地图片资源及 base64 格式数据，暂不支持 svg 格式 |
+| mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，适配微信 image 所有 mode 格式              |
+
 #### 事件
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| binderror       | 当错误发生时触发，event.detail = { errMsg }            |
+| bindload        | 当图片载入完毕时触发，event.detail = { height, width }  |
+
+#### 注意事项
+1. image 组件默认宽度320px、高度240px
+2. image 组件进行缩放时，计算出来的宽高可能带有小数，在不同webview内核下渲染可能会被抹去小数部分
+
+### input
+
+#### 属性
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| value                   | String  |               | 输入框的初始内容                                              |
+| type                    | String  | `text`        | input 的类型，不支持 `safe-password`、`nickname`              |
+| password                | Boolean | `false`       | 是否是密码类型                                               |
+| placeholder             | String  |               | 输入框为空时占位符                                            |
+| placeholder-class       | String  |               | 指定 placeholder 的样式类，仅支持 color 属性                   |
+| placeholder-style       | String  |               | 指定 placeholder 的样式，仅支持 color 属性                    |
+| disabled                | Boolean | `false`       | 是否禁用                                                    |
+| maxlength               | Number  | `140`         | 最大输入长度，设置为 -1 的时候不限制最大长度                     |
+| auto-focus              | Boolean | `false`       | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘                  |
+| focus                   | Boolean | `false`       | 获取焦点                                                    |
+| confirm-type            | String  | `done`        | 设置键盘右下角按钮的文字，仅在 type='text' 时生效               |
+| confirm-hold            | Boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
+| cursor                  | Number  |               | 指定 focus 时的光标位置                                      |
+| cursor-color            | String  |               | 光标颜色                                                    |
+| selection-start         | Number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
+| selection-end           | Number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
+
+#### 事件
+| 事件名                | 说明                                                                               |
+| ---------------------| ---------------------------------------------------------------------------------- |
+| bindinput            | 键盘输入时触发，event.detail = { value, cursor }，不支持 `keyCode`                     |
+| bindfocus            | 输入框聚焦时触发，event.detail = { value }，不支持 `height`                            |
+| bindblur             | 输入框失去焦点时触发，event.detail = { value }，不支持 `encryptedValue`、`encryptError` |
+| bindconfirm          | 点击完成按钮时触发，event.detail = { value }                                          |
+| bind:selectionchange | 选区改变事件, event.detail = { selectionStart, selectionEnd }                        |
+
+#### 方法
+可通过 `ref` 方式调用以下组件实例方法
+
+| 方法名                | 说明                                 |
+| ---------------------| ----------------------------------- |
+| focus                | 使输入框得到焦点                       |
+| blur                 | 使输入框失去焦点                       |
+| clear                | 清空输入框的内容                       |
+| isFocused            | 返回值表明当前输入框是否获得了焦点        |
+
 #### 注意事项
 
 
 ### textarea
 
 #### 属性
-#### 事件
-#### 注意事项
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| value                   | String  |               | 输入框内容                                                   |
+| type                    | String  | `text`        | input 的类型，不支持 `safe-password`、`nickname`              |
+| placeholder             | String  |               | 输入框为空时占位符                                            |
+| placeholder-class       | String  |               | 指定 placeholder 的样式类，仅支持 color 属性                   |
+| placeholder-style       | String  |               | 指定 placeholder 的样式，仅支持 color 属性                    |
+| disabled                | Boolean | `false`       | 是否禁用                                                    |
+| maxlength               | Number  | `140`         | 最大输入长度，设置为 -1 的时候不限制最大长度                     |
+| auto-focus              | Boolean | `false`       | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘                  |
+| focus                   | Boolean | `false`       | 获取焦点                                                    |
+| auto-height             | Boolean | `false`       | 是否自动增高，设置 auto-height 时，style.height不生效          |
+| confirm-type            | String  | `done`        | 设置键盘右下角按钮的文字，不支持 `return`                       |
+| confirm-hold            | Boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
+| cursor                  | Number  |               | 指定 focus 时的光标位置                                      |
+| cursor-color            | String  |               | 光标颜色                                                    |
+| selection-start         | Number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
+| selection-end           | Number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
 
-### input
-
-#### 属性
 #### 事件
+| 事件名                | 说明                                                                               |
+| ---------------------| ---------------------------------------------------------------------------------- |
+| bindinput            | 键盘输入时触发，event.detail = { value, cursor }，不支持 `keyCode`                     |
+| bindfocus            | 输入框聚焦时触发，event.detail = { value }，不支持 `height`                            |
+| bindblur             | 输入框失去焦点时触发，event.detail = { value }，不支持 `encryptedValue`、`encryptError` |
+| bindconfirm          | 点击完成按钮时触发，event.detail = { value }                                          |
+| bindlinechange       | 输入框行数变化时调用，event.detail = { height: 0, lineCount: 0 }，不支持 `heightRpx`    |
+| bind:selectionchange | 选区改变事件, {selectionStart, selectionEnd}                                         |
+
+#### 方法
+可通过 `ref` 方式调用以下组件实例方法
+
+| 方法名                | 说明                                 |
+| ---------------------| ----------------------------------- |
+| focus                | 使输入框得到焦点                       |
+| blur                 | 使输入框失去焦点                       |
+| clear                | 清空输入框的内容                       |
+| isFocused            | 返回值表明当前输入框是否获得了焦点        |
+
 #### 注意事项
 
 ### button
 
 #### 属性
+| 属性名                   | 类型     | 默认值         | 说明                                                      |
+| ----------------------- | ------- | ------------- | --------------------------------------------------------- |
+| size                    | String  | `default`     | 按钮的大小                                                  |
+| type                    | String  | `default`     | 按钮的样式类型                                               |
+| plain                   | Boolean | `false`       | 按钮是否镂空，背景色透明                                       |
+| disabled                | Boolean | `false`       | 是否禁用                                                    |
+| loading                 | Boolean | `false`       | 名称前是否带 loading 图标                                     |
+| open-type               | String  |               | 微信开放能力，当前仅支持 `share`                               |
+| hover-class             | String  |               | 指定按钮按下去的样式类。当 hover-class="none" 时，没有点击态效果  |
+| hover-start-time        | Number  |  `20`         | 按住后多久出现点击态，单位毫秒                                  |
+| hover-stay-time         | Number  |  `70`         | 手指松开后点击态保留时间，单位毫秒                               |
+
 #### 事件
 #### 注意事项
 
@@ -151,7 +250,7 @@
 | refresher-background    | String  | `'#fff'`  | 设置自定义下拉刷新背景颜色，仅安卓支持                         |
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
-| show-scrollbar          | Number  | `false`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
+| show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
 
 
 #### 事件
@@ -167,4 +266,40 @@
 | bindrefresherrefresh| 自定义下拉刷新被触发 |  
 
 #### 注意事项
-目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
+1. Mpx 转 React native 时，使用 scroll-x 作为控制滚动方向的唯一依据，scroll-y 设置无效
+2. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
+
+### swiper
+滑块视图容器。
+
+#### 属性
+
+| 属性名                   | 类型     | 默认值              | 说明                                 |
+| ----------------------- | ------- | ------------------  | ------------------------------------|
+| indicator-dots          | Boolean | `false`             | 是否显示面板指示点                     |
+| indicator-color         | color   | `rgba(0, 0, 0, .3)` | 指示点颜色                            |
+| indicator-active-color  | color   | `#000000`           | 当前选中的指示点颜色                   |
+| autoplay                | Boolean | `false`             | 是否自动切换                          |
+| current                 | Number  | `0`                 | 当前所在滑块的 index                  |
+| interval                | Number  | `5000`              | 自动切换时间间隔                       |
+| duration                | Number  | `500`               | 滑动动画时长                          |
+| circular                | Boolean | `false`             | 是否采用衔接滑动                       |
+| vertical                | Boolean | `false`             | 滑动方向是否为纵向                      |
+| previous-margin         | String  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
+| next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
+
+
+#### 事件
+
+| 事件名           | 说明                |
+| ----------------| ------------------ |
+| bindchange| current 改变时会触发 change 事件，event.detail = {current, source}|
+
+### swiper-item
+仅可放置在swiper组件中，宽高自动设置为100%。
+
+#### 属性
+
+| 属性名                   | 类型     | 默认值              | 说明                                 |
+| ----------------------- | ------- | ------------------  | ------------------------------------|
+| item-id                 | string  | `无`             | 该 swiper-item 的标识符                  |
