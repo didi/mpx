@@ -58,7 +58,7 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     React.useEffect(() => {
       if (enableOffset) {
         setTimeout(() => {
-          nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+          nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
             layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
           })
         })
