@@ -221,7 +221,6 @@
 | disabled                | Boolean | `false`       | 是否禁用                                                    |
 | loading                 | Boolean | `false`       | 名称前是否带 loading 图标                                     |
 | open-type               | String  |               | 微信开放能力，当前仅支持 `share`                               |
-| data-shareInfo          | Unknown |               | 触发 onShareAppMessage 时，将会以其作为参数                    |
 | hover-class             | String  |               | 指定按钮按下去的样式类。当 hover-class="none" 时，没有点击态效果  |
 | hover-start-time        | Number  |  `20`         | 按住后多久出现点击态，单位毫秒                                  |
 | hover-stay-time         | Number  |  `70`         | 手指松开后点击态保留时间，单位毫秒                               |
