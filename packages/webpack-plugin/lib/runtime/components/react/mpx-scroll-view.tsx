@@ -32,13 +32,13 @@
  * ✔ bindscroll
  */
 
-import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ScrollEvent, ViewStyle } from 'react-native';
-import React, { useRef, useState, useEffect, ReactNode, forwardRef } from 'react';
+import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
+import React, { useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef from '../../useNodesRef'
 
 interface ScrollViewProps {
-  children?: ReactNode;
+  children?: Array<HTMLElement>;
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
@@ -56,21 +56,21 @@ interface ScrollViewProps {
   'refresher-background'?: string;
   'scroll-top'?: number;
   'scroll-left'?: number;
-  bindscrolltoupper?: (event: any) => void;
-  bindscrolltolower?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  bindscroll?: (event: NativeSyntheticEvent<ScrollEvent> | unknown) => void;
-  bindrefresherrefresh?: (event: unknown) => void;
-  binddragstart?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  binddragging?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  binddragend?: (event: NativeSyntheticEvent<DragEvent> | unknown) => void;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  bindrefresherrefresh?: (event: NativeSyntheticEvent<unknown>) => void;
+  binddragstart?: (event: NativeSyntheticEvent<DragEvent>) => void;
+  binddragging?: (event: NativeSyntheticEvent<DragEvent>) => void;
+  binddragend?: (event: NativeSyntheticEvent<DragEvent>) => void;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 }
 type ScrollAdditionalProps = {
   pinchGestureEnabled: boolean;
   horizontal: boolean;
-  onScroll: (event: NativeSyntheticEvent<ScrollEvent>) => void;
+  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onContentSizeChange: (width: number, height: number) => void;
   onLayout: (event: LayoutChangeEvent) => void;
   scrollEventThrottle: number;
@@ -82,9 +82,9 @@ type ScrollAdditionalProps = {
   bounces?: boolean;
   pagingEnabled?: boolean;
   style?: ViewStyle;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 };
 const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.ForwardedRef): React.JSX.Element => {
   const {
@@ -93,7 +93,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     bounces,
     'scroll-x': scrollX,
     'enable-back-to-top': enableBackToTop,
-    'show-scrollbar': showScrollbar,
     'paging-enabled': pagingEnabled,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
@@ -106,6 +105,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [showScrollbar, setShowScrollbar] = useState(true);
   const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
@@ -118,15 +118,14 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const scrollEventThrottle = 50;
   const hasCallScrollToUpper = useRef(true);
   const hasCallScrollToLower = useRef(false);
-  const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const measureTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialTimeout = useRef(null)
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
     node: {
       scrollEnabled,
       bounces: !!bounces,
-      showScrollbar: !!showScrollbar,
+      showScrollbar,
       pagingEnabled: !!pagingEnabled,
       fastDeceleration: false,
       decelerationDisabled: false,
@@ -162,6 +161,15 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   }, [props['scroll-x'], props['scroll-y']]);
 
   useEffect(() => {
+    if (props['show-scrollbar'] === undefined) {
+      setShowScrollbar(true)
+    } else{
+      setShowScrollbar(!!props['show-scrollbar'])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props['show-scrollbar']]);
+  
+  useEffect(() => {
     if (snapScrollTop || snapScrollLeft) {
       initialTimeout.current = setTimeout(() => {
         scrollToOffset(snapScrollLeft, snapScrollTop);
@@ -173,18 +181,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapScrollTop, snapScrollLeft]);
-
-  useEffect(() => {
-    setTimeout(() => {
-      measureTimeout.current = scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    })
-    return () => {
-      measureTimeout.current && clearTimeout(measureTimeout.current);
-      measureTimeout.current = null
-    }
-  }, [scrollViewRef]);
 
   function selectLength(size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width;
@@ -239,12 +235,14 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     scrollOptions.current.contentLength = selectLength({ height, width });
   }
 
-  function onLayout(e: LayoutChangeEvent) {
+  function onLayout(e) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
-    layoutRef.current = e.nativeEvent.layout
+    scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
   }
 
-  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onScroll(e) {
     const { bindscroll } = props;
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset;
     const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
@@ -290,7 +288,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     const { bindrefresherrefresh } = props;
     bindrefresherrefresh &&
       bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', null, { layoutRef }, props),
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, props),
       );
   }
 
@@ -351,7 +349,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: !!enableBackToTop,
     showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
-    showsVerticalScrollIndicator: !!(!scrollX && showScrollbar),
+    showsVerticalScrollIndicator: !scrollX && showScrollbar,
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
     onScroll: onScroll,
@@ -392,7 +390,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       'bindscrolltoupper',
       'bindscrolltolower',
       'bindrefresherrefresh'
-  ], { layoutRef, touchable: true });
+  ], { layoutRef });
 
   const refreshColor = {
     'black': ['#000'],

@@ -60,10 +60,7 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
-        ios: iosPropLog
-      },
-      {
-        test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
+        ios: iosPropLog,
         android: androidPropLog
       }
     ],

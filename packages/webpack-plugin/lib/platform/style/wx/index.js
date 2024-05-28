@@ -53,6 +53,11 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+
+  function isNumber(val) {
+    return val && !isNaN(val)
+  }
+
   // color & number 值校验
   const ValueType = {
     number: 'number',
@@ -66,15 +71,30 @@ module.exports = function getSpec ({ warn, error }) {
   const verifyValues = ({ prop, value, valueType }) => {
     // 校验 value 枚举 是否支持
     switch (valueType) {
-      case ValueType.color:
-        (numberRegExp.test(value)) && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
-        colorRegExp.test(value) && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
-        return value
-      case ValueType.number:
-        (!numberRegExp.test(value)) && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
-        return value
+      case ValueType.color: {
+
+        const isNumberType = numberRegExp.test(value)
+        const isColorType = colorRegExp.test(value)
+        isNumberType && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
+        isColorType && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
+        return {
+          value,
+          isValid: !isNumberType && !isColorType
+        }
+      }
+      case ValueType.number: {
+        const isNumberType = numberRegExp.test(value)
+        !isNumberType && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
+        return {
+          value,
+          isValid: isNumberType
+        }
+      }
       default:
-        return value
+        return {
+          value,
+          isValid: true
+        }
     }
   }
   // 统一校验 value type 值类型
@@ -206,6 +226,15 @@ module.exports = function getSpec ({ warn, error }) {
         value: value
       }
     })
+  }
+
+  const formatLineHeight = ({ prop, value }) => {
+    if (!verifyValues({ prop, value, valueType: ValueType.number })) return false
+
+    return {
+      prop,
+      value: isNumber(value) ? `${Math.round(value * 100)}%` : value
+    }
   }
 
   const getFontVariant = ({ prop, value }) => {
@@ -345,6 +374,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: /.*color.*/i,
         ios: checkCommonValue(ValueType.color),
         android: checkCommonValue(ValueType.color)
+      },
+      { // color 颜色值校验
+        test: 'line-height',
+        ios: formatLineHeight,
+        android: formatLineHeight
       },
       { // number 值校验
         test: /.*width|height|left|right|top|bottom|radius|margin|padding|spacing|offset|size.*/i,
