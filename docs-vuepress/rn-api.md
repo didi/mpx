@@ -91,7 +91,7 @@ mpx.showModal({
 | abi      |
 | cpuType          |
 
-### getDeviceInfo
+### getWindowInfo
 
 | 不支持返回值                 |
 |------------------------|
@@ -125,7 +125,7 @@ mpx.showModal({
 |-----------|
 | encrypt |
 
-### getStorageInfo/getStorageInfoSync
+### getStorageInfo
 
 | 不支持返回值     |
 |-----------|
