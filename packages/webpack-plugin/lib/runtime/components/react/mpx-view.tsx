@@ -38,6 +38,7 @@ type Handlers = {
   [key: string]: (val: string, innerStyle: ExtendedViewStyle) => void;
 }
 
+const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
 function groupBy(style, callback, group = {}):GroupData {
   let groupKey = ''
@@ -52,8 +53,6 @@ function groupBy(style, callback, group = {}):GroupData {
   return group
 }
 
-
-
 const applyHandlers = (imageStyle:ExtendedViewStyle, innerStyle:ExtendedViewStyle, handlers: Handlers , context: { props: ImageProps}) => {
 
   for (let key in imageStyle) {
@@ -64,7 +63,6 @@ const applyHandlers = (imageStyle:ExtendedViewStyle, innerStyle:ExtendedViewStyl
     }
   }
 }
-
 
 const imageStyleToProps = (imageStyle: ExtendedViewStyle, innerStyle: ExtendedViewStyle) => {
   if (!imageStyle) return null
@@ -135,7 +133,7 @@ function splitStyle(styles: ExtendedViewStyle) {
   return groupBy(styles, (key) => {
     if (TEXT_STYLE_REGEX.test(key))
       return 'textStyle'
-    else if (['backgroundImage', 'backgroundSize'].includes(key)) return 'imageStyle'
+    else if (IMAGE_STYLE_REGEX.test(key)) return 'imageStyle'
     return 'innerStyle'
   }, {})
 }
