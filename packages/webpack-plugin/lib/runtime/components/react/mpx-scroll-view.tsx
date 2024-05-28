@@ -38,7 +38,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef from '../../useNodesRef'
 
 interface ScrollViewProps {
-  children?: Array<HTMLElement>;
+  children?: React.ReactNode;
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
@@ -90,11 +90,12 @@ type ScrollAdditionalProps = {
 const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.ForwardedRef): React.JSX.Element => {
   const {
     children,
-    enhanced,
-    bounces,
-    'scroll-x': scrollX,
-    'enable-back-to-top': enableBackToTop,
-    'paging-enabled': pagingEnabled,
+    enhanced = false,
+    bounces = true,
+    'scroll-x': scrollX = false,
+    'scroll-y': scrollY = false,
+    'enable-back-to-top': enableBackToTop = false,
+    'paging-enabled': pagingEnabled = false,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
     'scroll-with-animation': scrollWithAnimation,
@@ -126,9 +127,9 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     scrollOffset: scrollOptions,
     node: {
       scrollEnabled,
-      bounces: !!bounces,
+      bounces,
       showScrollbar,
-      pagingEnabled: !!pagingEnabled,
+      pagingEnabled,
       fastDeceleration: false,
       decelerationDisabled: false,
       scrollTo: scrollToOffset
@@ -143,14 +144,12 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       setSnapScrollTop(props['scroll-top'] || 0);
       setSnapScrollLeft(props['scroll-left'] || 0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props['scroll-top'], props['scroll-left']]);
 
   useEffect(() => {
     if (refreshing !== props['refresher-triggered']) {
       setRefreshing(!!props['refresher-triggered']);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props['refresher-triggered']]);
 
   useEffect(() => {
@@ -159,7 +158,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     } else {
       setScrollEnabled(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props['scroll-x'], props['scroll-y']]);
   
   useEffect(() => {
@@ -172,7 +170,6 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     return () => {
       initialTimeout.current && clearTimeout(initialTimeout.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapScrollTop, snapScrollLeft]);
 
   function selectLength(size: { height: number; width: number }) {
@@ -340,11 +337,11 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
     pinchGestureEnabled: false,
-    horizontal: !!scrollX,
+    horizontal: scrollX || !scrollY,
     scrollEventThrottle: scrollEventThrottle,
-    scrollsToTop: !!enableBackToTop,
-    showsHorizontalScrollIndicator: !!(scrollX && showScrollbar),
-    showsVerticalScrollIndicator: !scrollX && showScrollbar,
+    scrollsToTop: enableBackToTop,
+    showsHorizontalScrollIndicator: scrollX && showScrollbar,
+    showsVerticalScrollIndicator: scrollY && showScrollbar,
     scrollEnabled: scrollEnabled,
     ref: scrollViewRef,
     onScroll: onScroll,
@@ -357,8 +354,8 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   if (enhanced) {
     scrollAdditionalProps = {
       ...scrollAdditionalProps,
-      bounces: !!bounces,
-      pagingEnabled: !!pagingEnabled,
+      bounces,
+      pagingEnabled,
     };
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
