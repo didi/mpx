@@ -33,8 +33,6 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     useInherit = false,
     } = props
 
-    const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-
     const layoutRef = React.useRef({})
 
     const styleObj = StyleSheet.flatten(style)
@@ -55,16 +53,20 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     ], {
       layoutRef
     })
+
     React.useEffect(() => {
+      let measureTimeout: ReturnType<typeof setTimeout> | null = null
       if (enableOffset) {
-        setTimeout(() => {
+        measureTimeout = setTimeout(() => {
           nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
             layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
           })
         })
         return () => {
-          measureTimeout.current && clearTimeout(measureTimeout.current);
-          measureTimeout.current = null
+          if (measureTimeout) {
+            clearTimeout(measureTimeout)
+            measureTimeout = null
+          }
         }
       }
     })
