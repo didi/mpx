@@ -13,8 +13,8 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: React.ReactNode
   selectable?: boolean
-  ['enable-offset']?: boolean
-  ['user-select']?: boolean
+  'enable-offset'?: boolean
+  'user-select'?: boolean
   userSelect?: boolean
   useInherit?: boolean
 }
