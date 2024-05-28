@@ -4,21 +4,33 @@ import useInnerProps from './getInnerListeners'
 import useNodesRef from '../../useNodesRef'
 
 interface SwiperItemProps {
-  'item-id'?: string
+  'item-id'?: string;
+  ['enable-offset']?: boolean;
   children?: ReactNode;
 }
 
 const _SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
-  const { children, ...restProps } = props
-  const { nodeRef } = useNodesRef(props, ref, {
-  })
-  const innerProps = useInnerProps(props, {}, [], {})
+  const { children, 'enable-offset': enableOffset } = props
+  const layoutRef = React.useRef({})
+  const { nodeRef } = useNodesRef(props, ref, {})
+
+  const onLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
+  }
+
+  const innerProps = useInnerProps(props, {
+    ...(enableOffset ? { onLayout } : {}),
+  }, [
+    'children',
+    'enable-offset'
+  ], { layoutRef })
 
   return (
     <View
       ref={nodeRef}
       data-itemId={props['item-id']}
-      {...restProps}
       {...innerProps}>
       {children}
     </View>
