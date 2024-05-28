@@ -5,7 +5,7 @@ import useNodesRef from '../../useNodesRef'
 
 interface SwiperItemProps {
   'item-id'?: string;
-  ['enable-offset']?: boolean;
+  'enable-offset'?: boolean;
   children?: ReactNode;
 }
 

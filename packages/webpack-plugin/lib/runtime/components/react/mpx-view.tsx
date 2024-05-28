@@ -19,7 +19,7 @@ export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>;
   children?: React.ReactElement;
   hoverStyle: Array<ExtendedViewStyle>;
-  ['enable-offset']?: boolean;
+  'enable-offset'?: boolean;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
