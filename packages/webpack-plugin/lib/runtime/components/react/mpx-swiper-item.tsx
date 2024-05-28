@@ -6,7 +6,7 @@ import useNodesRef from '../../useNodesRef'
 interface SwiperItemProps {
   'item-id'?: string;
   'enable-offset'?: boolean;
-  children?: ReactNode;
+  children?: React.ReactNode;
 }
 
 const _SwiperItem = forwardRef((props: SwiperItemProps, ref) => {
