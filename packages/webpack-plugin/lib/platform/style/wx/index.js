@@ -115,10 +115,10 @@ module.exports = function getSpec ({ warn, error }) {
       flexWrap: ValueType.default
     },
     'border-radius': {
-      borderTopLeftRadius: ValueType.default,
-      borderTopRightRadius: ValueType.default,
-      borderBottomRightRadius: ValueType.default,
-      borderBottomLeftRadius: ValueType.default
+      borderTopLeftRadius: ValueType.number,
+      borderTopRightRadius: ValueType.number,
+      borderBottomRightRadius: ValueType.number,
+      borderBottomLeftRadius: ValueType.number
     }
   }
   const formatAbbreviation = ({ value, keyMap }) => {
@@ -287,6 +287,16 @@ module.exports = function getSpec ({ warn, error }) {
     return false
   }
 
+  const getBorderRadius = ({ prop, value }) => {
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    if (values.length === 1) {
+      verifyValues({ prop, value, valueType: ValueType.number })
+      return { prop, value }
+    } else {
+      return getAbbreviation({ prop, value })
+    }
+  }
+
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
@@ -327,6 +337,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: /.*font-variant.*/,
         ios: getFontVariant,
         android: getFontVariant
+      },
+      {
+        test: 'border-radius',
+        ios: getBorderRadius,
+        android: getBorderRadius
       },
       { // margin padding 内外边距的处理
         test: /.*(margin|padding).*/,
