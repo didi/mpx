@@ -35,6 +35,7 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     style: props.style,
     previousMargin: props['previous-margin'] ? parseInt(props['previous-margin']) : 0,
     nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
+    enableOffset: props['enable-offset'],
     bindchange: props.bindchange
   }
   const { nodeRef } = useNodesRef(props, ref, {
@@ -45,16 +46,17 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     'indicator-active-color',
     'previous-margin',
     'next-margin'
-  ], { layoutRef: innerLayout.current })
+  ], { layoutRef: innerLayout })
 
   const getInnerLayout = (layout) => {
-    innerLayout = layout.current
+    innerLayout = layout
   }
 
   return (
       <Carouse
         ref={nodeRef}
         getInnerLayout={getInnerLayout}
+        innerProps={innerProps}
         {...swiperProp}
         {...innerProps}>
         {children}

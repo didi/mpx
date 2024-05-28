@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image } from 'react-native'
-import * as React from 'react'
+import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef } from 'react'
 
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
@@ -143,7 +143,7 @@ const isText = (children: ElementNode) => {
 }
 
 function every(children: ElementNode, callback: (children: ElementNode) => boolean ) {
-  return React.Children.toArray(children).every((child) => callback(child as ElementNode))
+  return Children.toArray(children).every((child) => callback(child as ElementNode))
 }
 
 function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {}, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
@@ -161,16 +161,38 @@ function wrapChildren(children: ElementNode, innerStyle: ExtendedViewStyle = {},
   ]
 }
 
-const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((props: _ViewProps, ref: React.ForwardedRef<any>): React.JSX.Element => {
+const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.Element => {
   const {
     style = [],
     children,
     hoverStyle,
+    'enable-offset': enableOffset
   } = props
-  const [isHover, setIsHover] = React.useState(false)
+
+  const [isHover, setIsHover] = useState(false)
   const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const dataRef = React.useRef<{
+
+  const layoutRef = useRef({})
+
+  // 打平 style 数组
+  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
+  // 默认样式
+  const defaultStyle = {
+    // flex 布局相关的默认样式
+    ...styleObj.display === 'flex' && {
+      flexDirection: 'row',
+      flexBasis: 'auto',
+      flexShrink: 1,
+      flexWrap: 'nowrap'
+    }
+  }
+
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle
+  })
+
+  const dataRef = useRef<{
     startTimestamp: number,
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
@@ -180,7 +202,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     props: props
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
@@ -219,7 +241,15 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     setStayTimer()
   }
 
+  const onLayout = () => {
+    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    })
+  }
+
   const innerProps = useInnerProps(props, {
+    ref: nodeRef,
+    ...(enableOffset ? { onLayout } : {}),
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -229,26 +259,11 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
     'children',
     'hover-start-time',
     'hover-stay-time',
-    'hoverStyle'
+    'hoverStyle',
+    'hover-class',
+    'enable-offset'
   ], {
     touchable: true
-  })
-
-  // 打平 style 数组
-  const styleObj:ExtendedViewStyle = StyleSheet.flatten<ExtendedViewStyle>(style)
-  // 默认样式
-  const defaultStyle:ExtendedViewStyle = {
-    // flex 布局相关的默认样式
-    ...styleObj.display === 'flex' && {
-      flexDirection: 'row',
-      flexBasis: 'auto',
-      flexShrink: 1,
-      flexWrap: 'nowrap'
-    }
-  }
-
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle
   })
 
   React.useEffect(() => {

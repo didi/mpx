@@ -58,6 +58,7 @@ export interface ImageProps {
   mode?: Mode
   svg?: boolean
   style?: StyleProp<ImageStyle>
+  'enable-offset'?: boolean;
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
@@ -115,6 +116,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     mode = 'scaleToFill',
     // svg = false,
     style = [],
+    'enable-offset': enableOffset,
     bindload,
     binderror
   } = props
@@ -264,9 +266,11 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    onLayout: onImageLayout
+    ...(enableOffset ? { onLayout: onImageLayout } : {})
   },
-  [],
+  [
+    'enable-offset'
+  ],
   {
     layoutRef
   }
