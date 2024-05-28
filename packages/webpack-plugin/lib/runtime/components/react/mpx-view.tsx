@@ -110,8 +110,8 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
 
   applyHandlers([ backgroundSize, backgroundImage ],[imageStyle, imageProps])
 
-  if (!imageProps?.source) return null  
-  
+  if (!imageProps?.source) return null
+
   return imageProps
 }
 
@@ -140,9 +140,6 @@ function wrapChildren(children: ElementNode, textStyle?: ExtendedViewStyle, imag
   }
 
   const bgImage = imageStyleToProps(imageStyle)
-
-  console.log(">>> bgImage", bgImage)
-
 
   return [
     bgImage && <Image {...bgImage}/>,
