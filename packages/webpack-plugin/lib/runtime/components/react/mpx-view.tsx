@@ -171,13 +171,11 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
   const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dataRef = React.useRef<{
-    startTimestamp: number,
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
-    props: any
   }>({
-    startTimestamp: 0,
-    props: props
+    startTimer: 0,
+    stayTimer: 0
   })
 
   React.useEffect(() => {
@@ -185,7 +183,7 @@ const _View:React.FC<_ViewProps & React.RefAttributes<any>> = React.forwardRef((
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
       dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     }
-  }, [dataRef])
+  }, [])
 
   const setStartTimer = () => {
     const { hoverStyle, 'hover-start-time': hoverStartTime = 50 } = dataRef.current.props
