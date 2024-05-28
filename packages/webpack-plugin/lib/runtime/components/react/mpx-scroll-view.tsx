@@ -38,7 +38,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef from '../../useNodesRef'
 
 interface ScrollViewProps {
-  children?: Array<HTMLElement>;
+  children?: React.ReactNode;
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
