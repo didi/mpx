@@ -1091,7 +1091,6 @@ function processEventReact (el, options, meta) {
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            rawName: name,
             configs: []
           }
         }
