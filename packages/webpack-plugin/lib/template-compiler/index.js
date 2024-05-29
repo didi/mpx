@@ -6,7 +6,7 @@ const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
-const { createTemplateEngine } = require('@mpxjs/template-engine')
+const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -181,7 +181,7 @@ global.currentInject.getRefsData = function () {
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
     const templateEngine = createTemplateEngine(mode)
-    result += '<template is="t_0_container" data="{{ i: r }}" wx:if="{{r && r.nt}}"></template>\n' + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
+    result += `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
   }
 
   if (runtimeCompile) {
