@@ -65,7 +65,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
-const getDynamicTemplate = require('./runtime-render/getTemplate')
+const genDynamicTemplate = require('./runtime-render/gen-dynamic-template')
 const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
 require('./utils/check-core-version-match')
 
@@ -970,21 +970,24 @@ class MpxWebpackPlugin {
             const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
 
             for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
-              const { dynamicSlotDependencies = {} } = mpx.runtimeInfoTemplate[packageName][resourcePath]
+              const { dynamicSlotDependencies = [] } = mpx.runtimeInfoTemplate[packageName][resourcePath]
               const componentsJsonConfig = runtimeInfoJson[resourcePath]
 
-              for (const componentName in dynamicSlotDependencies) {
-                const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
-                if (isDynamic) {
-                  dynamicSlotDependencies[componentName].forEach(name => {
-                    const { resourcePath: path, hashName } = componentsJsonConfig[name]
+              dynamicSlotDependencies.forEach((slotDependencies) => {
+                let lastNeedInjectNode = slotDependencies[0]
+                for (let i = 1; i <= slotDependencies.length - 1; i++) {
+                  const componentName = slotDependencies[i]
+                  const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
+                  if (isDynamic) {
+                    const { resourcePath: path, hashName } = componentsJsonConfig[lastNeedInjectNode]
                     mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
                     Object.assign(mpx.dynamicSlotDependencies[resourcePath], {
                       [hashName]: publicPath + componentsMap[path]
                     })
-                  })
+                    lastNeedInjectNode = slotDependencies[i]
+                  }
                 }
-              }
+              })
             }
           }
         }
@@ -1247,7 +1250,7 @@ class MpxWebpackPlugin {
                   const _dynamicAsset = JSON.parse(dynamicAsset)
                   if (type === 'template') {
                     // 动态注入运行时组件的模版内容
-                    extractedInfo.content = getDynamicTemplate(packageName)
+                    extractedInfo.content = genDynamicTemplate(packageName)
                     dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(_dynamicAsset, packageName, resourcePath)
                   } else if (type === 'styles') {
                     // 合并多个style标签的样式代码

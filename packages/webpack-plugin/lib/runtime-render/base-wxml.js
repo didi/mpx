@@ -8,15 +8,17 @@ function makeAttrsMap (attrKeys = []) {
 // 部分节点类型不需要被收集
 const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
 
-function hasParentCustomComponent (el, isComponentNode, options) {
+function collectParentCustomComponent (el, isComponentNode, options) {
+  const res = []
   let parent = el.parent
   while (parent) {
     if (isComponentNode(parent, options)) {
-      return parent.tag
+      if (!res.length) res.push(el.tag)
+      res.push(parent.tag)
     }
     parent = parent.parent
   }
-  return false
+  return res
 }
 
 module.exports = function setBaseWxml (el, config, meta) {
@@ -32,7 +34,7 @@ module.exports = function setBaseWxml (el, config, meta) {
       meta.runtimeInfo = {
         baseComponents: {},
         customComponents: {},
-        dynamicSlotDependencies: {}
+        dynamicSlotDependencies: []
       }
     }
 
@@ -55,14 +57,11 @@ module.exports = function setBaseWxml (el, config, meta) {
         el.tag = optimizedInfo.nodeType
       }
     } else {
-      // 收集运行时组件模版当中运行时组件使用普通组件作为slot的场景，主要因为普通组件被渲染时上下文发生了改变
-      const parentComponentTag = hasParentCustomComponent(el, isComponentNode, options)
-      if (parentComponentTag) {
+      // 收集运行时组件模版当中运行时组件使用 slot 的场景，主要因为运行时组件渲染slot时组件上下文发生了变化
+      const slotDependencies = collectParentCustomComponent(el, isComponentNode, options)
+      if (slotDependencies.length) {
         const dynamicSlotDependencies = meta.runtimeInfo.dynamicSlotDependencies
-        if (!dynamicSlotDependencies[parentComponentTag]) {
-          dynamicSlotDependencies[parentComponentTag] = []
-        }
-        dynamicSlotDependencies[parentComponentTag].push(el.tag)
+        dynamicSlotDependencies.push(slotDependencies)
       }
     }
 
