@@ -1,4 +1,3 @@
-
 /**
  * ✔ selectable
  * ✘ space
@@ -13,7 +12,8 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: React.ReactNode
   selectable?: boolean
-  ['user-select']?: boolean
+  'enable-offset'?: boolean
+  'user-select'?: boolean
   userSelect?: boolean
   useInherit?: boolean
 }
@@ -27,11 +27,10 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
     style = [],
     children,
     selectable,
+    'enable-offset': enableOffset,
     'user-select': userSelect,
     useInherit = false,
     } = props
-
-    const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const layoutRef = React.useRef({})
 
@@ -48,22 +47,29 @@ const _Text: React.FC<_TextProps & React.RefAttributes<any>> = React.forwardRef(
       'children',
       'selectable',
       'user-select',
-      'useInherit'
+      'useInherit',
+      'enable-offset'
     ], {
       layoutRef
     })
-    
+
     React.useEffect(() => {
-      setTimeout(() => {
-        nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      let measureTimeout: ReturnType<typeof setTimeout> | null = null
+      if (enableOffset) {
+        measureTimeout = setTimeout(() => {
+          nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          })
         })
-      })
-      return () => {
-        measureTimeout.current && clearTimeout(measureTimeout.current);
-        measureTimeout.current = null
+        return () => {
+          if (measureTimeout) {
+            clearTimeout(measureTimeout)
+            measureTimeout = null
+          }
+        }
       }
-    }, [nodeRef])
+    })
+
 
     return (
       <Text
