@@ -37,7 +37,7 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
-type Handler = (val: string, imageProps: ImageProps) => void
+type Handler = ([imageStyle, imageProps]: [ExtendedViewStyle, ImageProps]) => void
 
 const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
@@ -54,12 +54,9 @@ function groupBy(style, callback, group = {}):GroupData {
   return group
 }
 
-const applyHandlers = (handlers: Handler[] , options) => {
-  const [ imageStyle, imageProps ] = options
-  for (let key in handlers) {
-    const handler = handlers[key]
-    const val = imageStyle[handler.name]
-    handler && val && handler(val, imageProps)
+const applyHandlers = (handlers: Handler[] , args) => {
+  for (let handler of handlers) {
+    handler(args)
   }
 }
 
@@ -74,7 +71,9 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
   }
 
   // background-size 转换
-  function backgroundSize (val, imageProps) {
+  function backgroundSize ([imageStyle, imageProps]) {
+    let val = imageStyle.backgroundSize
+    if (!val) return
     // 枚举值
     if (['cover', 'contain'].includes(val)) {
       imageProps.style.resizeMode = val
@@ -102,7 +101,9 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
     }
   }
   // background-image转换为source
-  function backgroundImage(val, imageProps) {
+  function backgroundImage([imageStyle, imageProps]) {
+    let val = imageStyle.backgroundImage
+    if (!val) return 
     const url = parseUrl(val)
     if (!url) return null
     imageProps.source = {uri: url}
