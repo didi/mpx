@@ -5,7 +5,13 @@ React Native的样式的支持基本为web样式的一个子集，同时还有�
 
 ## 布局说明 尚群峰
 ### flex布局
+在React Native中，可以通过Flexbox规则来布局组件元素。基于yoga布局引擎实现，可查看[文档](https://github.com/facebook/yoga)。
+
+注：RN中View标签的主轴是column，和css不一致，使用mpx开发会进行磨平，默认的主轴方向是row。
+
 ### position布局
+在RN中position仅支持relative（默认）和 absolute。可[参考文档](https://reactnative.dev/docs/layout-props#position)。
+
 
 ## 选择器  胡曼
 
@@ -19,7 +25,7 @@ React Native的样式的支持基本为web样式的一个子集，同时还有�
 
 ### 样式增强
 #### text  尚群峰
-##### 文本节点说明 
+##### 文本节点说明
 ##### 文本节点text与样式继承
 ##### view标签内的文本添加text包裹
 ##### view内设定的文本类样式会下沉设置到text标签内
