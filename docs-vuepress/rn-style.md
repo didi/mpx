@@ -128,7 +128,7 @@ balabala我是一波介绍
 |background-color|支持的颜色值类型参见【单位支持】的 color 部分|
 |background-size|支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto；支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度；值类型支持枚举值 cover contain auto 以及number类型单位 rpx px %；不支持逗号分隔的多个值：设置多重背景!!!|
 |background-repeat|仅支持 no-repeat|
-|background|该简写属性仅支持以上属性，需要注意的是在 background 简写中仅支持 background-size 的枚举值 contain、cover、rpx、px、%number类型值不支持|
+|background|该简写属性仅支持以上属性，需要注意的是在 background 简写中仅支持 background-size 的枚举值 contain、cover、auto，rpx、px、% number类型值不支持|
 ### 阴影  胡曼
 
 ### 文本相关 群峰
