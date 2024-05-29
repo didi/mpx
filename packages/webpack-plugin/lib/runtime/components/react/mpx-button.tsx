@@ -106,7 +106,7 @@ const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
 const styles = StyleSheet.create({
   button: {
     width: '100%',
-    // flexDirection: 'row', css 默认 block
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     height: 46,
@@ -211,8 +211,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     bindtouchend,
   } = props
 
-  const { nodeRef } = useNodesRef(props, ref)
-
   const refs = useRef<{
     hoverStartTimer: ReturnType<typeof setTimeout> | undefined
     hoverStayTimer: ReturnType<typeof setTimeout> | undefined
@@ -228,6 +226,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   const isMiniSize = size === 'mini'
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
+
+  const textHoverStyle = extractTextStyle(hoverStyle)
 
   const { viewStyle, textStyle } = useMemo<{
     viewStyle: ViewStyle
@@ -251,7 +251,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
         : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
     const inheritTextStyle = extractTextStyle(style)
-    const inheritTextHoverStyle = extractTextStyle(applyHoverEffect ? hoverStyle : [])
     return {
       viewStyle: {
         borderWidth: 1,
@@ -261,11 +260,20 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
       },
       textStyle: {
         color: plain ? plainTextColor : normalTextColor,
-        ...inheritTextStyle,
-        ...inheritTextHoverStyle
+        ...inheritTextStyle
       }
     }
-  }, [type, plain, applyHoverEffect, loading, disabled, style, hoverStyle])
+  }, [type, plain, applyHoverEffect, loading, disabled, style])
+
+  const defaultViewStyle = [
+    styles.button,
+    isMiniSize && styles.buttonMini,
+    viewStyle,
+  ]
+
+  const defaultTextStyle = [
+    styles.text, isMiniSize && styles.textMini, textStyle
+  ]
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (!openType) return
@@ -326,6 +334,14 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     handleOpenTypeEvent(evt)
   }
 
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle: StyleSheet.flatten([
+      ...defaultViewStyle,
+      ...defaultTextStyle,
+    ])
+  })
+
+
   const onLayout = () => {
     nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -354,14 +370,16 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     <View
       {...innerProps}
       style={[
-        styles.button,
-        isMiniSize && styles.buttonMini,
-        viewStyle,
+        ...defaultViewStyle,
         style,
         applyHoverEffect && hoverStyle,
       ]}>
       {loading && <Loading alone={!React.Children.count(children)} />}
-      <Text style={[styles.text, isMiniSize && styles.textMini, textStyle]}>
+      <Text 
+        style={[
+          ...defaultTextStyle,
+          applyHoverEffect && textHoverStyle,
+        ]}>
         {children}
       </Text>
     </View>

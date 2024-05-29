@@ -121,7 +121,12 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     binderror
   } = props
 
-  const { nodeRef } = useNodesRef(props, ref)
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle: {
+      width: DEFAULT_IMAGE_WIDTH,
+      height: DEFAULT_IMAGE_HEIGHT
+    }
+  })
 
   const layoutRef = useRef({})
 
