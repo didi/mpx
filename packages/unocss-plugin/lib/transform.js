@@ -1,34 +1,13 @@
 const MagicString = require('magic-string')
 const transformerDirectives = require('@unocss/transformer-directives').default
 const { getReplaceSource } = require('./source')
+const escapedReg = /\\(.)/g
 
-const escapeMap = {
-  '(': '_pl_',
-  ')': '_pr_',
-  '[': '_bl_',
-  ']': '_br_',
-  '{': '_cl_',
-  '}': '_cr_',
-  '#': '_h_',
-  '!': '_i_',
-  '/': '_s_',
-  '.': '_d_',
-  ':': '_c_',
-  '2c ': '_2c_',
-  '%': '_p_',
-  '\'': '_q_',
-  '"': '_dq_',
-  '+': '_a_',
-  $: '_si_'
-}
-
-const escapedReg = /\\(2c\s|.)/g
-
-function mpEscape (str) {
+function mpEscape (str, escapeMap = {}) {
   return str.replace(escapedReg, (_, p1) => {
-    if (escapeMap[p1]) { return escapeMap[p1] }
+    if (escapeMap[p1]) return escapeMap[p1]
     // unknown escaped
-    return '_u_'
+    return escapeMap.unknown
   })
 }
 
@@ -37,7 +16,9 @@ function escapeKey (str) {
 }
 
 function buildAliasTransformer (alias) {
-  if (!alias || !Object.keys(alias).length) { return s => getReplaceSource(s) }
+  if (!alias || !Object.keys(alias).length) {
+    return s => getReplaceSource(s)
+  }
 
   const keys = Object.keys(alias).sort((a, b) => b.length - a.length).map(i => escapeKey(i)).join('|')
   const regexText = `\\*(?:${keys})(?<=[^w-])`

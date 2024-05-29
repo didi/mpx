@@ -124,7 +124,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'wx:model',
         web ({ value }, { el }) {
-          el.hasEvent = true
+          el.hasModel = true
           const attrsMap = el.attrsMap
           const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
           const stringify = JSON.stringify
@@ -190,15 +190,7 @@ module.exports = function getSpec ({ warn, error }) {
           el.isStyleParsed = true
           el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
             const parsed = parseMustacheWithContext(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parsed.result)
-              } else {
-                styleBinding.push(JSON.stringify(item.value))
-              }
-            } else if (item.name === 'wx:style') {
-              styleBinding.push(parsed.result)
-            }
+            styleBinding.push(parsed.result)
           })
           return {
             name: ':style',
@@ -208,12 +200,31 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         // 样式类名绑定
-        test: /^wx:(class)$/,
-        web ({ value }) {
-          const parsed = parseMustacheWithContext(value)
-          return {
-            name: ':class',
-            value: parsed.result
+        test: /^(class|wx:class)$/,
+        web ({ name, value }, { el }) {
+          if (el.classMerged) return false
+          const classBinding = []
+          el.attrsList.filter(item => this.test.test(item.name)).forEach(({ name, value }) => {
+            const parsed = parseMustacheWithContext(value)
+            if (name === 'wx:class') {
+              classBinding.push(parsed.result)
+            } else if (name === 'class' && parsed.hasBinding === true) {
+              el.classMerged = true
+              classBinding.push(parsed.result)
+            }
+          })
+
+          if (el.classMerged) {
+            return {
+              name: ':class',
+              value: `[${classBinding}]`
+            }
+          } else if (name === 'wx:class') {
+            // 对于纯静态class不做合并转换
+            return {
+              name: ':class',
+              value: classBinding[0]
+            }
           }
         }
       },
@@ -363,10 +374,10 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        web ({ name, value }, { eventRules, el }) {
-          if (parseMustacheWithContext(value).hasBinding) {
-            error('Web environment does not support mustache binding in event props!')
-            return
+        web ({ name, value }, { eventRules, el, usingComponents }) {
+          const parsed = parseMustacheWithContext(value)
+          if (parsed.hasBinding) {
+            value = '__invokeHandler(' + parsed.result + ', $event)'
           }
           const match = this.test.exec(name)
           const prefix = match[1]
@@ -375,10 +386,9 @@ module.exports = function getSpec ({ warn, error }) {
           const meta = {
             modifierStr
           }
-          // 记录event监听信息用于后续判断是否需要使用内置基础组件
-          el.hasEvent = true
+          const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -448,7 +458,11 @@ module.exports = function getSpec ({ warn, error }) {
               touchcancel: 'touchCancel',
               tap: 'tap',
               longtap: 'longTap',
-              longpress: 'longTap'
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -459,6 +473,16 @@ module.exports = function getSpec ({ warn, error }) {
           web (eventName) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
+            }
+          }
+        },
+        // 特殊web事件
+        {
+          test: /^click$/,
+          web (eventName, data) {
+            // 自定义组件根节点
+            if (data.isComponent) {
+              return '_' + eventName
             }
           }
         }

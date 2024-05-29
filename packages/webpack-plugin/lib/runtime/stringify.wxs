@@ -137,7 +137,7 @@ function stringifyDynamicClass (value) {
   }
 
   if (typeof value === 'string') {
-    return mpEscape(value)
+    return value
   } else {
     return ''
   }
@@ -245,7 +245,7 @@ module.exports = {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
-    return concat(staticClass, stringifyDynamicClass(dynamicClass))
+    return concat(staticClass, mpEscape(stringifyDynamicClass(dynamicClass)))
   },
   stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)

@@ -28,9 +28,11 @@ module.exports = {
   },
   rules: {
     'no-cond-assign': 0,
-    camelcase: 0
+    camelcase: 0,
+    indent: 0
   },
   env: {
-    'jest/globals': true
+    'jest/globals': true,
+    'browser': true
   }
 }

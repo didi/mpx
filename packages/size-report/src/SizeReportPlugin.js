@@ -90,7 +90,7 @@ class SizeReportPlugin {
             // We skip connections without Module pointer
             if (!m) continue
             // We skip weak connections
-            if (connection.weak) continue
+            if (connection.weak && d.type !== 'mpx cjs extract') continue
             // Use undefined runtime
             const state = connection.getActiveState(/* runtime */)
             // We skip inactive connections
@@ -160,7 +160,7 @@ class SizeReportPlugin {
       const moduleEntriesMap = new Map()
 
       function setModuleEntries (module, entryModule, noEntry) {
-        getModuleEntries(module, noEntry).add(entryModule)
+        getModuleEntries(module, noEntry).add(entryModule.rootModule || entryModule)
       }
 
       function getModuleEntries (module, noEntry) {
@@ -210,7 +210,7 @@ class SizeReportPlugin {
           // 处理ConcatenatedModule
           const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
           if (resource && reportGroup.entryRules && matchCondition(parseRequest(resource).resourcePath, reportGroup.entryRules)) {
-            reportGroup.entryModules.add(entryModule)
+            reportGroup.entryModules.add(entryModule.rootModule || entryModule)
           }
         })
       }
@@ -222,7 +222,7 @@ class SizeReportPlugin {
             const resource = module.resource || (module.rootModule && module.rootModule.resource)
             if (resource && matchCondition(parseRequest(resource).resourcePath, reportGroup.noEntryRules)) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
-              reportGroup.noEntryModules.add(module)
+              reportGroup.noEntryModules.add(module.rootModule || module)
               walkEntry(module, (module, noEntryModule) => {
                 setModuleEntries(module, noEntryModule, true)
               })
@@ -247,8 +247,7 @@ class SizeReportPlugin {
         const sharedSet = new Set()
         const otherSelfEntryModules = new Set()
         entryModules.forEach((entryModule) => {
-          // 处理ConcatenatedModule
-          const entryNode = mpx.getEntryNode(entryModule.rootModule || entryModule)
+          const entryNode = mpx.getEntryNode(entryModule)
           if (entryNode) {
             selfSet.add(entryNode)
           } else {
@@ -500,7 +499,8 @@ class SizeReportPlugin {
         totalSize: 0,
         staticSize: 0,
         chunkSize: 0,
-        copySize: 0
+        copySize: 0,
+        webpackTemplateSize: 0
       }
 
       function fillPackagesSizeInfo (packageName, size) {
@@ -598,7 +598,6 @@ class SizeReportPlugin {
             packageName,
             size,
             modules: []
-            // webpackTemplateSize: 0
           }
           assetsSizeInfo.assets.push(chunkAssetInfo)
           fillPackagesSizeInfo(packageName, size)
@@ -636,8 +635,7 @@ class SizeReportPlugin {
             chunkAssetInfo.modules.push(moduleData)
             size -= moduleSize
           }
-
-          // chunkAssetInfo.webpackTemplateSize = size
+          sizeSummary.webpackTemplateSize += size
           // filter sourcemap
         } else if (!/\.m?js\.map$/i.test(name)) {
           // static copy assets such as project.config.json
@@ -666,15 +664,15 @@ class SizeReportPlugin {
 
       function checkThreshold (threshold, size, sizeInfo, reportGroupName) {
         const sizeThreshold = normalizeThreshold(threshold.size || threshold)
-        const preWarningThreshold = normalizeThreshold(threshold.preWarningSize || threshold)
+        const preWarningSize = threshold.preWarningSize
         const packagesThreshold = threshold.packages
         const prefix = reportGroupName ? `${reportGroupName}体积分组` : '总包'
 
         if (sizeThreshold && size && size > sizeThreshold) {
           compilation.errors.push(`${prefix}的总体积（${size}B）超过设定阈值（${sizeThreshold}B），共${(size - sizeThreshold) / 1024}kb，请检查！`)
         }
-        if (preWarningThreshold && size && size > preWarningThreshold) {
-          compilation.warnings.push(`${prefix}的总体积（${size}B）超过设定预警阈值（${preWarningThreshold}B），共${(size - preWarningThreshold) / 1024}kb，请注意！`)
+        if (preWarningSize && size && size < sizeThreshold) {
+          compilation.warnings.push(`当前${prefix}的总体积 ${size / 1024}kb，${prefix}的体积阈值为${sizeThreshold / 1024}kb, 共剩余${(sizeThreshold - size) / 1024}kb，请注意！`)
         }
 
         if (packagesThreshold && sizeInfo) {
@@ -775,7 +773,7 @@ class SizeReportPlugin {
       assetsSizeInfo.assets.forEach((asset) => {
         if (asset.modules) sortAndFormat(asset.modules)
       })
-      'totalSize|staticSize|chunkSize|copySize'.split('|').forEach((key) => {
+      'totalSize|staticSize|chunkSize|copySize|webpackTemplateSize'.split('|').forEach((key) => {
         sizeSummary[key] = formatSize(sizeSummary[key])
       })
 

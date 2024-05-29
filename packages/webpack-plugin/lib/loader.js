@@ -50,7 +50,6 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -64,14 +63,11 @@ module.exports = function (content) {
     )
   }
 
-  let ctorType = 'app'
-  if (pagesMap[resourcePath]) {
-    // page
-    ctorType = 'page'
-  } else if (componentsMap[resourcePath]) {
-    // component
-    ctorType = 'component'
-  }
+  let ctorType = pagesMap[resourcePath]
+    ? 'page'
+    : componentsMap[resourcePath]
+      ? 'component'
+      : 'app'
 
   // 支持资源query传入isPage或isComponent支持页面/组件单独编译
   if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
@@ -87,7 +83,7 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
 
   const parts = parseComponent(content, {
     filePath,
@@ -130,7 +126,7 @@ module.exports = function (content) {
           warn: emitWarning,
           error: emitError
         }
-        if (!isApp) {
+        if (ctorType !== 'app') {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
         }
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -222,10 +218,6 @@ module.exports = function (content) {
             output += templateRes.output
             output += stylesRes.output
             output += jsonRes.output
-            if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
-              mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
-            }
-
             processScript(parts.script, {
               loaderContext,
               ctorType,
@@ -282,17 +274,12 @@ module.exports = function (content) {
       }
 
       // 注入构造函数
-      let ctor = 'App'
-      if (ctorType === 'page') {
-        // swan也默认使用Page构造器
-        if (mpx.forceUsePageCtor || mode === 'ali' || mode === 'swan') {
-          ctor = 'Page'
-        } else {
-          ctor = 'Component'
-        }
-      } else if (ctorType === 'component') {
-        ctor = 'Component'
-      }
+      const ctor = ctorType === 'page'
+        ? (mpx.forceUsePageCtor || mode === 'ali') ? 'Page' : 'Component'
+        : ctorType === 'component'
+          ? 'Component'
+          : 'App'
+
       output += `global.currentCtor = ${ctor}\n`
       output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()

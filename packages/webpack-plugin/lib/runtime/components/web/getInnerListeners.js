@@ -1,6 +1,3 @@
-import { isEmptyObject } from '../../utils'
-import { isBrowser } from '../../env'
-
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
@@ -44,80 +41,6 @@ function mergeListeners (listeners, otherListeners, options = {}) {
   })
 }
 
-function processTap (listeners, context) {
-  const listenerMap = {}
-  const tapEvents = ['tap', 'longpress', 'longtap']
-  const isTouchDevice = isBrowser ? document && ('ontouchstart' in document.documentElement) : true
-  tapEvents.forEach((eventName) => {
-    if (listeners[eventName]) {
-      listenerMap[eventName] = true
-      delete listeners[eventName]
-    }
-  })
-  if (isEmptyObject(listenerMap)) return
-  context.__mpxTapInfo = context.__mpxTapInfo || {}
-  let events
-  if (isTouchDevice) {
-    events = {
-      touchstart (e) {
-        context.__mpxTapInfo.detail = {
-          x: e.changedTouches[0].pageX,
-          y: e.changedTouches[0].pageY
-        }
-        context.__mpxTapInfo.startTimer = null
-        context.__mpxTapInfo.needTap = true
-        if (listenerMap.longpress || listenerMap.longtap) {
-          context.__mpxTapInfo.startTimer = setTimeout(() => {
-            context.__mpxTapInfo.needTap = false
-            if (listenerMap.longpress) {
-              const re = inheritEvent('longpress', e, context.__mpxTapInfo.detail)
-              context.$emit('longpress', re)
-            }
-            if (listenerMap.longtap) {
-              const re = inheritEvent('longtap', e, context.__mpxTapInfo.detail)
-              context.$emit('longtap', re)
-            }
-          }, 350)
-        }
-      },
-      touchmove (e) {
-        const tapDetailInfo = context.__mpxTapInfo.detail || {}
-        const currentPageX = e.changedTouches[0].pageX
-        const currentPageY = e.changedTouches[0].pageY
-        if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
-          context.__mpxTapInfo.needTap = false
-          context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-          context.__mpxTapInfo.startTimer = null
-        }
-      },
-      touchend (e) {
-        context.__mpxTapInfo.startTimer && clearTimeout(context.__mpxTapInfo.startTimer)
-        if (listenerMap.tap && context.__mpxTapInfo.needTap) {
-          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-          context.$emit('tap', re)
-        }
-      }
-    }
-  } else {
-    events = {
-      click (e) {
-        if (listenerMap.tap) {
-          context.__mpxTapInfo.detail = {
-            x: e.pageX,
-            y: e.pageY
-          }
-          const re = inheritEvent('tap', e, context.__mpxTapInfo.detail)
-          context.$emit('tap', re)
-        }
-      }
-    }
-  }
-
-  mergeListeners(listeners, events, {
-    force: true
-  })
-}
-
 export function extendEvent (e, extendObj = {}) {
   Object.keys(extendObj).forEach((key) => {
     Object.defineProperty(e, key, {
@@ -143,20 +66,8 @@ export function inheritEvent (type, oe, detail = {}) {
 }
 
 export function getCustomEvent (type, detail = {}, target = null) {
-  const targetInfo = {}
-  if (target) {
-    const targetEl = target.$el || {}
-    const info = {
-      id: targetEl.id || '',
-      dataset: targetEl.dataset || {},
-      offsetTop: targetEl.offsetTop || 0,
-      offsetLeft: targetEl.offsetLeft || 0
-    }
-    Object.assign(targetInfo, {
-      target: info,
-      currentTarget: info
-    })
-  }
+  const targetEl = (target && target.$el) || null
+  const targetInfo = targetEl ? { target: targetEl, currentTarget: targetEl } : {}
   return {
     type,
     detail,
@@ -193,7 +104,6 @@ export default function getInnerListeners (context, options = {}) {
   }
 
   processModel(listeners, context)
-  processTap(listeners, context)
   mergeListeners(listeners, mergeBefore, mergeBeforeOptions)
   mergeListeners(listeners, mergeAfter, mergeAfterOptions)
   ignoredListeners.forEach((key) => {

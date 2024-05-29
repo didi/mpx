@@ -12,7 +12,7 @@ module.exports = function ({ print }) {
     //   return 'a:view'
     // },
     web (tag, { el }) {
-      if (el.hasEvent) {
+      if (el.hasModel) {
         el.isBuiltIn = true
       }
       if (el.isBuiltIn) {
@@ -41,18 +41,7 @@ module.exports = function ({ print }) {
     // 快应用通用事件有touchstart|touchmove|touchend|touchcancel|longpress|click|focus|blur
     event: [
       {
-        // 支付宝中的view组件额外支持了transitionEnd|animationStart|animationIteration|animationEnd，故在此声明了组件事件转换逻辑
         test: /^(transitionend|animationstart|animationiteration|animationend)$/,
-        //
-        ali (eventName) {
-          const eventMap = {
-            transitionend: 'transitionEnd',
-            animationstart: 'animationStart',
-            animationiteration: 'animationIteration',
-            animationend: 'animationEnd'
-          }
-          return eventMap[eventName]
-        },
         qa: qaEventLogError
       }
     ]

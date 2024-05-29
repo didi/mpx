@@ -5,102 +5,90 @@ sidebarDepth: 2
 **注意：** 以下 API 在 **2.8** 版本后无法通过全局应用实例 `mpx` 访问。若项目中有类似 mpx.createStore 的用法，在升级到 **2.8** 版本后请进行修改。
 
 ## createStore
+
+```ts
+function createStore(options: Object): Store
+```
+
 > 创建一个全局状态管理容器，实现复杂场景下的组件通信需求
-- **用法：**
-    ```js
-    createStore({ ...options })
-    ```
-- **参数：**
-    - `{Object} options`
 
-      options 可指定以下属性：
-        - **state**
+- `options`
 
-          类型：`Object`
+  options 可指定以下属性：
+    - **state**: `Object`
 
-          store的根 state 对象。
+      store的根 state 对象。
 
-          [详细介绍](../guide/advance/store.html#state)
+      [详细介绍](../guide/advance/store.html#state)
 
-        - **mutations**
+    - **mutations**: `{ [type: string]: Function }`
 
-          类型：`{ [type: string]: Function }`
+      在 store 上注册 mutation，处理函数总是接受 state 作为第一个参数（如果定义在模块中，则为模块的局部状态），payload 作为第二个参数（可选）。
 
-          在 store 上注册 mutation，处理函数总是接受 state 作为第一个参数（如果定义在模块中，则为模块的局部状态），payload 作为第二个参数（可选）。
+      [详细介绍](../guide/advance/store.html#mutation)
 
-          [详细介绍](../guide/advance/store.html#mutation)
+    - **actions**: `{ [type: string]: Function }`
 
-        - **actions**
+      在 store 上注册 action。处理函数总是接受 context 作为第一个参数，payload 作为第二个参数（可选）。
 
-          类型：`{ [type: string]: Function }`
+      context 对象包含以下属性：
+          ```js
+          {
+            state,      // 等同于 `store.state`
+            commit,     // 等同于 `store.commit`
+            dispatch,   // 等同于 `store.dispatch`
+            getters     // 等同于 `store.getters`
+          }
+          ```
+      同时如果有第二个参数 payload 的话也能够接收。
 
-          在 store 上注册 action。处理函数总是接受 context 作为第一个参数，payload 作为第二个参数（可选）。
+      [详细介绍](../guide/advance/store.html#action)
 
-          context 对象包含以下属性：
-             ```js
-              {
-                state,      // 等同于 `store.state`
-                commit,     // 等同于 `store.commit`
-                dispatch,   // 等同于 `store.dispatch`
-                getters     // 等同于 `store.getters`
-              }
-             ```
-          同时如果有第二个参数 payload 的话也能够接收。
+    - **getters**：`{[key: string]: Function }`
 
-          [详细介绍](../guide/advance/store.html#action)
+      在 store 上注册 getter，getter 方法接受以下参数：
+        ```js
+        {
+          state,     // 如果在模块中定义则为模块的局部状态
+          getters   // 等同于 store.getters
+        }
+        ```
+      注册的 getter 暴露为 store.getters。
 
-        - **getters**
+      [详细介绍](../guide/advance/store.html#getter)
 
-          类型：`{[key: string]: Function }`
+    - **modules**：`Object`
 
-          在 store 上注册 getter，getter 方法接受以下参数：
-            ```js
-            {
-              state,     // 如果在模块中定义则为模块的局部状态
-              getters   // 等同于 store.getters
-            }
-            ```
-          注册的 getter 暴露为 store.getters。
+      包含了子模块的对象，会被合并到 store，大概长这样：
+      
+        ```js
+        {
+          key: {
+            state,
+            mutations,
+            actions?,
+            getters?,
+            modules?
+            },
+            // ...
+        }
+        ```
 
-          [详细介绍](../guide/advance/store.html#getter)
+      与根模块的选项一样，每个模块也包含 state 和 mutations 选项。模块的状态使用 key 关联到 store 的根状态。模块的 mutation 和 getter 只会接收 module 的局部状态作为第一个参数，而不是根状态，并且模块 action 的 context.state 同样指向局部状态。
 
-        - **modules**
+      [详细介绍](../guide/advance/store.html#modules)
 
-          类型：`Object`
+    - **deps**：`Object`
 
-          包含了子模块的对象，会被合并到 store，大概长这样：
-          
-            ```js
-            {
-              key: {
-                state,
-                mutations,
-                actions?,
-                getters?,
-                modules?
-               },
-               // ...
-            }
-            ```
+      包含了当前store依赖的第三方store：
+        ```js
+        {
+          store1: storeA,
+          store2: storeB
+        }
+        ```
+      [详细介绍](../guide/advance/store.html#modules)
 
-          与根模块的选项一样，每个模块也包含 state 和 mutations 选项。模块的状态使用 key 关联到 store 的根状态。模块的 mutation 和 getter 只会接收 module 的局部状态作为第一个参数，而不是根状态，并且模块 action 的 context.state 同样指向局部状态。
-
-          [详细介绍](../guide/advance/store.html#modules)
-
-        - **deps**
-
-          类型：`Object`
-
-          包含了当前store依赖的第三方store：
-            ```js
-            {
-              store1: storeA,
-              store2: storeB
-            }
-            ```
-          [详细介绍](../guide/advance/store.html#modules)
-
-- **示例：**
 
 ```js
 import {createStore} from '@mpxjs/core'
@@ -125,14 +113,9 @@ const store2 = createStore({ ...options })
 
 ### **Store 实例属性**
 
-* **state**
-    - 类型：`Object`
-
+* **state**：`Object`
     根状态。
-*  **getters**
-
-   - 类型：`Object`
-
+*  **getters**：`Object`
    暴露出注册的 getter。
 
 ### **Store 实例方法**
@@ -191,22 +174,16 @@ mapGettersToRefs(maps: Array<string> | Object): {
 
 ## createStoreWithThis
 
+```ts
+function createStoreWithThis(store: Store): Store
+```
+
 > createStoreWithThis 为 createStore 的变种方法，主要为了在 `Typescript` 环境中，可以更好地支持 store 中的类型推导。<br>
 其主要变化在于定义 getters， mutations 和 actions 时，
 自身的 state，getters 等属性不再通过参数传入，而是会挂载到函数的执行上下文 this 当中，通过 this.state 或 this.getters 的方式进行访问。
 由于TS的能力限制，getters/mutations/actions 只有使用对象字面量的方式直接传入 createStoreWithThis 时
 才能正确推导出 this 的类型，当需要将 getters/mutations/actions 拆解为对象编写时，需要用户显式地声明 this 类型，无法直接推导得出。
-- **用法：**
-```js
-createStoreWithThis(store)
-```
 
-- **参数：**
-    - `{Object} store`
-
-      接收一个 store 对象。
-
-- **示例：**
 ```js
 
 import {createComponent, getMixin, createStoreWithThis} from '@mpxjs/core'
@@ -275,128 +252,113 @@ createComponent({
 
 ## createStateWithThis
 
+```ts
+function createStateWithThis(state: Object): Object
+```
+
 > createStateWithThis 为创建 state 提供了类型推导，对于基本类型可以由 TypeScript 自行推导，使用其他类型时，推荐使用 as 进行约束
 
-- **用法：**
-    ```js
-    createStateWithThis(state)
-    ```
-- **参数：**
-    - `{Object} state`
+  ```js
+  import { createStateWithThis } from '@mpxjs/core'
 
-      需要定义的 state 对象键值对。
+  export type StatusType = 'start' | 'running' | 'stop'
 
-- **示例：**
-
-    ```js
-    import { createStateWithThis } from '@mpxjs/core'
-
-    export type StatusType = 'start' | 'running' | 'stop'
-
-    export default createStateWithThis({
-      status: 'running' as StatusType
-    })
-    ```
+  export default createStateWithThis({
+    status: 'running' as StatusType
+  })
+  ```
 
 ## createGettersWithThis
 
-- **用法：**
-    ```js
-    createGettersWithThis(getters, options?)
-    ```
-- **参数：**
-    - `{Object} getters`
+```ts
+function createGettersWithThis(getters: Object, options: Object):Object
+```
 
-      需要定义的 getters 对象。
-    - `{Object} options`（可选参数）
+- getters
 
-      在 options 中可以传入 state，getters，deps。由于 getter 的类型推论需要基于 state，所以导出 getters 时，需要将 state 进行传入。deps 是作为一个扩展存在，getters 可以通过 deps 中传入的其他 store 来获取值，当 store 没有其他需要依赖的 deps 时可以不传。createMutationsWithThis 和 createActionsWithThis 同理。
+  需要定义的 getters 对象。
+- options（可选参数）
 
-- **示例：**
-    ```js
-    import { createGettersWithThis, createStoreWithThis } from '@mpxjs/core'
+  在 options 中可以传入 state，getters，deps。由于 getter 的类型推论需要基于 state，所以导出 getters 时，需要将 state 进行传入。deps 是作为一个扩展存在，getters 可以通过 deps 中传入的其他 store 来获取值，当 store 没有其他需要依赖的 deps 时可以不传。createMutationsWithThis 和 createActionsWithThis 同理。
 
-    export default createGettersWithThis({
-      isStart () {
-        return this.state.status === 'start'
+```js
+import { createGettersWithThis, createStoreWithThis } from '@mpxjs/core'
+
+export default createGettersWithThis({
+  isStart () {
+    return this.state.status === 'start'
+  },
+  getNum () {
+    return this.state.base.test + this.getters.base.getTest
+  }
+}, {
+  state,
+  deps: {
+    base: createStoreWithThis({
+      state: {
+        testNum: 0
       },
-      getNum () {
-        return this.state.base.test + this.getters.base.getTest
+      getters: {
+        getTest () {
+          return this.state.testNum * 2
+        }
       }
-    }, {
-      state,
-      deps: {
-        base: createStoreWithThis({
-          state: {
-            testNum: 0
-          },
-          getters: {
-            getTest () {
-              return this.state.testNum * 2
-            }
-          }
-        })
-    }})
-    ```
+    })
+}})
+```
 
 ## createMutationsWithThis
 
-- **用法：**
-    ```js
-    createMutationsWithThis(mutations, options?)
-    ```
-- **参数：**
-    - `{Object} mutations`
+```ts
+function createMutationsWithThis(mutations: Object, options: Object): Object
+```
 
-      需要定义的 mutations 对象。
-    - `{Object} options`（可选参数）
+- mutations
 
-      在 options 中可以传入 state，deps。
+  需要定义的 mutations 对象。
+- options（可选参数）
 
-- **示例：**
+  在 options 中可以传入 state，deps。
 
-    ```js
-    import { createMutationsWithThis } from '@mpxjs/core'
+```js
+import { createMutationsWithThis } from '@mpxjs/core'
 
-    export default createMutationsWithThis({
-      setCurrentStatus (payload: StatusType) {
-        this.state.status = payload
-      }
-    }, { state })
-    ```
+export default createMutationsWithThis({
+  setCurrentStatus (payload: StatusType) {
+    this.state.status = payload
+  }
+}, { state })
+```
 
 ## createActionsWithThis
 
-- **用法：**
-    ```js
-    createActionsWithThis(actions, options?)
-    ```
-- **参数：**
-    - `{Object} actions`
+```ts
+function createActionsWithThis(actions: Object, options: Object): Object
+```
 
-      需要定义的 actions 对象。
-    - `{Object} options`（可选参数）
+- actions
 
-      由于action 可以同时调用 getters、mutations，所以需要将这些都传入，以便进行类型推导。因此 options 可以传入 state、getters、mutations、deps。
+  需要定义的 actions 对象。
+- options（可选参数）
 
-- **示例：**
+  由于action 可以同时调用 getters、mutations，所以需要将这些都传入，以便进行类型推导。因此 options 可以传入 state、getters、mutations、deps。
 
-    ```js
-    import { createActionsWithThis } from '@mpxjs/core'
-    import state, { StatusType } from './state'
-    import getters from './getters'
-    import mutations from './mutations'
+```js
+import { createActionsWithThis } from '@mpxjs/core'
+import state, { StatusType } from './state'
+import getters from './getters'
+import mutations from './mutations'
 
-    export default createActionsWithThis({
-      testActions (payload: StatusType) {
-        return Promise.resolve(() => {
-          this.commit('setCurrentStatus', payload)
-        })
-      }
-    }, {
-      state,
-      getters,
-      mutations
+export default createActionsWithThis({
+  testActions (payload: StatusType) {
+    return Promise.resolve(() => {
+      this.commit('setCurrentStatus', payload)
     })
-    ```
+  }
+}, {
+  state,
+  getters,
+  mutations
+})
+```
 

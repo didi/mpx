@@ -2,10 +2,11 @@ import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
 import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
+import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import Mpx from '../index'
 
-const webAppHooksMap = makeMap(webLifecycle.LIFECYCLE.APP_HOOKS)
+const webAppHooksMap = makeMap(mergeLifecycle(webLifecycle.LIFECYCLE).app)
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -43,6 +44,7 @@ export default function createApp (option, config = {}) {
           shareTicket: '',
           referrerInfo: {}
         }
+        global.__mpxEnterOptions = options
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
@@ -84,7 +86,6 @@ export default function createApp (option, config = {}) {
     global.getApp = function () {
       if (!isBrowser) {
         console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
-        return
       }
       return appData
     }

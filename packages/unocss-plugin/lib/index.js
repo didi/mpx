@@ -1,11 +1,16 @@
 const path = require('path')
-const minimatch = require('minimatch')
+const { minimatch } = require('minimatch')
 const unoConfig = require('@unocss/config')
 const core = require('@unocss/core')
 const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
 const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
+const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
+const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
+const UnoCSSWebpackPlugin = require('./web-plugin')
+const transformerDirectives = require('@unocss/transformer-directives').default
+const transformerVariantGroup = require('@unocss/transformer-variant-group')
 const {
   parseClasses,
   parseStrings,
@@ -23,26 +28,45 @@ const {
   cssRequiresTransform
 } = require('./transform')
 const platformPreflightsMap = require('./platform')
-const loadersPath = path.resolve(__dirname, './loaders')
-const transAppLoader = path.resolve(loadersPath, 'unocss-app.js')
-
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
   const { include = [], exclude = [] } = scan
-  for (const pattern of exclude) {
-    if (minimatch(file, pattern)) {
+  for (const rule of exclude) {
+    if (rule.test(file)) {
       return false
     }
   }
 
-  for (const pattern of include) {
-    if (!minimatch(file, pattern)) {
-      return false
+  for (const rule of include) {
+    if (rule.test(file)) {
+      return true
     }
   }
 
-  return true
+  return !include.length
+}
+
+function normalizeRules (rules, root) {
+  if (!rules) return
+  if (!Array.isArray(rules)) {
+    rules = [rules]
+  }
+  return rules.map((rule) => {
+    if (typeof rule.test === 'function') {
+      return rule
+    }
+    if (typeof rule === 'string') {
+      if (!(path.isAbsolute(rule) || rule.startsWith('**'))) {
+        rule = path.join(root, rule)
+      }
+      rule = toPosix(rule)
+      return {
+        test: (file) => minimatch(file, rule)
+      }
+    }
+    return false
+  }).filter(i => i)
 }
 
 function normalizeOptions (options) {
@@ -51,35 +75,69 @@ function normalizeOptions (options) {
     unoFile = 'styles/uno',
     styleIsolation = 'isolated',
     minCount = 2,
-    scan = {},
+    scan = {
+      include: [
+        'src/**/*'
+      ]
+    },
+    escapeMap = {},
     // 公共的配置
     root = process.cwd(),
     config,
     configFiles,
-    transformCSS = true,
-    transformGroups = true,
+    transformCSS,
+    transformGroups,
     webOptions = {}
   } = options
-  // web配置，剔除小程序的配置，防影响
+  // web配置
+  // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
-    include: [
-      'src/**/*',
-      ...(scan.include || [])
-    ],
+    include: scan.include || [],
     exclude: scan.exclude || [],
+    transformers: [
+      ...transformGroups ? [transformerVariantGroup()] : [],
+      ...transformCSS ? [transformerDirectives()] : []
+    ],
     ...webOptions
   }
+
+  escapeMap = {
+    '(': '_pl_',
+    ')': '_pr_',
+    '[': '_bl_',
+    ']': '_br_',
+    '{': '_cl_',
+    '}': '_cr_',
+    '#': '_h_',
+    '!': '_i_',
+    '/': '_s_',
+    '.': '_d_',
+    ':': '_c_',
+    ',': '_2c_',
+    '%': '_p_',
+    '\'': '_q_',
+    '"': '_dq_',
+    '+': '_a_',
+    $: '_si_',
+    unknown: '_u_',
+    ...escapeMap
+  }
+
+  scan.include = normalizeRules(scan.include, root)
+  scan.exclude = normalizeRules(scan.exclude, root)
+
   return {
     unoFile,
-    root,
     styleIsolation,
     minCount,
     scan,
+    escapeMap,
+    root,
+    config,
+    configFiles,
     transformCSS,
     transformGroups,
-    webOptions,
-    configFiles,
-    config
+    webOptions
   }
 }
 
@@ -123,7 +181,7 @@ class MpxUnocssPlugin {
   async generateStyle (uno, classes = [], options = {}) {
     const tokens = new Set(classes)
     const result = await uno.generate(tokens, options)
-    return mpEscape(result.css)
+    return mpEscape(result.css, this.options.escapeMap)
   }
 
   getSafeListClasses (safelist) {
@@ -175,51 +233,47 @@ class MpxUnocssPlugin {
     }
     const mode = this.mode = mpxPluginInstance.options.mode
     if (mode === 'web') {
-      const UnoCSSWebpackPlugin = require('@unocss/webpack').default
-      const transformerDirectives = require('@unocss/transformer-directives').default
-      const transformerVariantGroup = require('@unocss/transformer-variant-group')
-      const { webOptions, scan, transformGroups, transformCSS } = this.options
-
+      const { webOptions } = this.options
       if (!getPlugin(compiler, UnoCSSWebpackPlugin)) {
-        compiler.options.plugins.push(new UnoCSSWebpackPlugin({
-          include: [
-            'src/**/*',
-            ...(scan.include || [])
-          ],
-          exclude: scan.exclude || [],
-          transformers: [
-            ...transformGroups ? [transformerVariantGroup()] : [],
-            ...transformCSS ? [transformerDirectives()] : []
-          ],
-          ...webOptions
-        }))
+        // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
+        compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
       }
-      // 给app注入unocss模块
-      compiler.options.module.rules.push({
-        test: /\.mpx$/,
-        resourceQuery: /isApp/,
-        enforce: 'pre',
-        use: [transAppLoader]
+      compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
+        for (const dep of compilation.fileDependencies) {
+          if (dep.includes('__uno.css')) {
+            // 移除虚拟模块产生的fileDeps避免初始watch执行两次
+            compilation.fileDependencies.delete(dep)
+          }
+        }
       })
-      return
     }
-    compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
+    compiler.hooks.thisCompilation.tap({
+      name: PLUGIN_NAME,
+      // 确保在MpxWebpackPlugin后执行，获取mpx对象
+      stage: 1000
+    }, (compilation) => {
+      const { __mpx__: mpx } = compilation
+      mpx.hasUnoCSS = true
+      if (mode === 'web') return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
-        const { __mpx__: mpx } = compilation
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
         }
         // const warn = (msg) => {
         //   compilation.warnings.push(new Error(msg))
         // }
-        const { mode, dynamicEntryInfo, appInfo } = mpx
+        const { mode, dynamicEntryInfo, appInfo, assetsModulesMap } = mpx
         const uno = await this.createContext(compilation, mode)
         const config = uno.config
 
-        const generateOptions = { preflights: false, safelist: false, minify: this.minify }
+        const generateOptions = {
+          preflights: false,
+          safelist: false,
+          minify: this.minify
+        }
         // 包相关
         const packages = Object.keys(dynamicEntryInfo)
 
@@ -293,7 +347,7 @@ class MpxUnocssPlugin {
             } else if (!mainClassesMap[className]) {
               currentClassesMap[className] = true
             }
-            return mpEscape(cssEscape(className))
+            return mpEscape(cssEscape(className), this.options.escapeMap)
           }
           parseClasses(content).forEach(({ result, start, end }) => {
             let { replaced, val } = parseMustache(result, (exp) => {
@@ -327,14 +381,22 @@ class MpxUnocssPlugin {
         }
 
         await Promise.all(Object.entries(assets).map(([file, source]) => {
-          if (!filterFile(file, this.options.scan)) {
-            return Promise.resolve()
-          }
-          if (this.options.transformCSS && file.endsWith(styleExt)) {
-            return processStyle(file, source)
-          }
-          if (file.endsWith(templateExt)) {
-            return processTemplate(file, source)
+          if (file.endsWith(styleExt) || file.endsWith(templateExt)) {
+            const assetModules = assetsModulesMap.get(file)
+            if (has(assetModules, (module) => {
+              if (module.resource) {
+                const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
+                return filterFile(resourcePath, this.options.scan)
+              }
+              return false
+            })) {
+              if (this.options.transformCSS && file.endsWith(styleExt)) {
+                return processStyle(file, source)
+              }
+              if (file.endsWith(templateExt)) {
+                return processTemplate(file, source)
+              }
+            }
           }
           return Promise.resolve()
         }))
@@ -357,23 +419,38 @@ class MpxUnocssPlugin {
         }
 
         if (mainUnoFile) {
-          const appStyleFile = appInfo.name + styleExt
-          const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainUnoFile)), mode)
-
-          const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-          appStyleSource.add(assets[appStyleFile] || '')
-          assets[appStyleFile] = appStyleSource
-          dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
-            const commentConfig = commentConfigMap[filename] || {}
-            const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
-            if (styleIsolation === 'isolated' && entryType === 'component') {
-              const componentStyleFile = filename + styleExt
-              const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
-              const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-              componentStyleSource.add(assets[componentStyleFile] || '')
-              assets[componentStyleFile] = componentStyleSource
-            }
-          })
+          if (this.options.styleIsolation === 'isolated') {
+            // isolated模式下无需全局样式注入
+            dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename, resource }) => {
+              if (entryType === 'page' || entryType === 'component') {
+                const resourcePath = toPosix(parseRequest(resource).resourcePath)
+                if (filterFile(resourcePath, this.options.scan)) {
+                  const entryStyleFile = filename + styleExt
+                  const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
+                  const entryStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+                  entryStyleSource.add(assets[entryStyleFile] || '')
+                  assets[entryStyleFile] = entryStyleSource
+                }
+              }
+            })
+          } else {
+            const appStyleFile = appInfo.name + styleExt
+            const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainUnoFile)), mode)
+            const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+            appStyleSource.add(assets[appStyleFile] || '')
+            assets[appStyleFile] = appStyleSource
+            dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
+              const commentConfig = commentConfigMap[filename] || {}
+              const styleIsolation = commentConfig.styleIsolation
+              if (styleIsolation === 'isolated' && entryType === 'component') {
+                const componentStyleFile = filename + styleExt
+                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
+                const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+                componentStyleSource.add(assets[componentStyleFile] || '')
+                assets[componentStyleFile] = componentStyleSource
+              }
+            })
+          }
         }
         // 生成分包uno.css
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
@@ -388,33 +465,55 @@ class MpxUnocssPlugin {
             assets[unoFile] = getRawSource(unoFileContent)
           }
 
-          dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
-            if (unoFile && entryType === 'page') {
-              const pageStyleFile = filename + styleExt
-              const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), unoFile)), mode)
-              const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-              pageStyleSource.add(assets[pageStyleFile] || '')
-              assets[pageStyleFile] = pageStyleSource
-            }
-
-            const commentConfig = commentConfigMap[filename] || {}
-            const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
-            if (styleIsolation === 'isolated' && entryType === 'component') {
-              const componentStyleFile = filename + styleExt
-              const componentStyleSource = getConcatSource('')
-
-              if (mainUnoFile) {
-                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
-                componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
+          dynamicEntryInfo[packageRoot] && dynamicEntryInfo[packageRoot].entries.forEach(({
+            entryType,
+            filename,
+            resource
+          }) => {
+            if (this.options.styleIsolation === 'isolated') {
+              // isolated模式下无需全局样式注入
+              if (entryType === 'page' || entryType === 'component') {
+                const resourcePath = toPosix(parseRequest(resource).resourcePath)
+                if (filterFile(resourcePath, this.options.scan)) {
+                  const entryStyleFile = filename + styleExt
+                  const entryStyleSource = getConcatSource('')
+                  if (mainUnoFile) {
+                    const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
+                    entryStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
+                  }
+                  if (unoFile) {
+                    const relativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), unoFile)), mode)
+                    entryStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
+                  }
+                  entryStyleSource.add(assets[entryStyleFile] || '')
+                  assets[entryStyleFile] = entryStyleSource
+                }
+              }
+            } else {
+              if (entryType === 'page' && unoFile) {
+                const pageStyleFile = filename + styleExt
+                const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), unoFile)), mode)
+                const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
+                pageStyleSource.add(assets[pageStyleFile] || '')
+                assets[pageStyleFile] = pageStyleSource
               }
 
-              if (unoFile) {
-                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), unoFile)), mode)
-                componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
+              const commentConfig = commentConfigMap[filename] || {}
+              const styleIsolation = commentConfig.styleIsolation
+              if (styleIsolation === 'isolated' && entryType === 'component') {
+                const componentStyleFile = filename + styleExt
+                const componentStyleSource = getConcatSource('')
+                if (mainUnoFile) {
+                  const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
+                  componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
+                }
+                if (unoFile) {
+                  const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), unoFile)), mode)
+                  componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
+                }
+                componentStyleSource.add(assets[componentStyleFile] || '')
+                assets[componentStyleFile] = componentStyleSource
               }
-
-              componentStyleSource.add(assets[componentStyleFile] || '')
-              assets[componentStyleFile] = componentStyleSource
             }
           })
         }))
