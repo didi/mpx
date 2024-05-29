@@ -196,14 +196,14 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.startTimer = setTimeout(() => {
       setIsHover(() => true)
-    }, hoverStartTime)
+    }, +hoverStartTime)
   }
 
   const setStayTimer = () => {
     dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     dataRef.current.stayTimer = setTimeout(() => {
       setIsHover(() => false)
-    }, hoverStayTime)
+    }, +hoverStayTime)
   }
 
   function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
