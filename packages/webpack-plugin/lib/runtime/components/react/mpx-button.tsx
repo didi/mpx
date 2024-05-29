@@ -79,7 +79,6 @@ export interface ButtonProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
-  'data-shareInfo'?:  unknown
   'enable-offset'?: boolean,
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
@@ -131,6 +130,29 @@ const styles = StyleSheet.create({
   },
 })
 
+const getOpenTypeEvent = (openType: OpenType) => {
+  // @ts-ignore
+  if (!global?.__mpx?.config?.rnConfig) {
+    console.warn('Environment not supported')
+    return
+  }
+
+  const eventName = OpenTypeEventsMap.get(openType)
+  if (!eventName) {
+    console.warn(`open-type not support ${openType}`)
+    return
+  }
+
+  // @ts-ignore
+  const event = global.__mpx.config.rnConfig?.openTypeHandler?.[eventName]
+  if (!event) {
+    console.warn(`Unregistered ${eventName} event`)
+    return
+  }
+
+  return event
+}
+
 const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
 
@@ -179,7 +201,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
-    'data-shareInfo':  shareinfo,
     'enable-offset': enableOffset,
     style = [],
     children,
@@ -246,43 +267,19 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     }
   }, [type, plain, applyHoverEffect, loading, disabled, style, hoverStyle])
 
-  const getOpenTypeEvent = () => {
+  const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (!openType) return
-    if (!global?.__mpx?.config?.rnConfig) {
-      console.warn('Environment not supported')
-      return
-    }
+    const handleEvent = getOpenTypeEvent(openType)
 
-    const eventName = OpenTypeEventsMap.get(openType)
-    if (!eventName) {
-      console.warn(`open-type not support ${openType}`)
-      return
-    }
-
-    const event = global?.__mpx?.config?.rnConfig?.[eventName]
-    if (!event) {
-      console.warn(`Unregistered ${eventName} event`)
-      return
-    }
-
-    return event
-  }
-
-  const handleOpenTypeEvent = () => {
-    if (!openType) return
     if (openType === 'share') {
-      const onShareAppMessage = getOpenTypeEvent()
-      onShareAppMessage && onShareAppMessage({
+      handleEvent && handleEvent({
         from: 'button',
-        target: {
-          dataset: { shareinfo }
-        }
+        target: getCustomEvent('tap', evt, { layoutRef }, props).target,
       })
     }
 
     if (openType === 'getUserInfo') {
-      const onUserInfo = getOpenTypeEvent()
-      const userInfo = onUserInfo && onUserInfo()
+      const userInfo = handleEvent && handleEvent()
       if (typeof userInfo === 'object') {
         bindgetuserinfo && bindgetuserinfo(userInfo)
       }
@@ -320,13 +317,13 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent()
+    handleOpenTypeEvent(evt)
   }
 
   const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent()
+    handleOpenTypeEvent(evt)
   }
 
   const onLayout = () => {
