@@ -32,7 +32,8 @@ module.exports = function getSpec ({ warn, error }) {
     'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly', 'none'],
-    'background-size': ['contain', 'cover']
+    'background-size': ['contain', 'cover', 'auto'],
+    'background-repeat': ['no-repeat']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
@@ -229,7 +230,7 @@ module.exports = function getSpec ({ warn, error }) {
       image: 'background-image',
       color: 'background-color',
       size: 'background-size',
-      // repeat: 'background-repeat',
+      repeat: 'background-repeat',
       // position: 'background-position',
       all: 'background'
     }
@@ -254,7 +255,28 @@ module.exports = function getSpec ({ warn, error }) {
         }
       }
       case bgPropMap.size: {
-        // background-size 仅支持 cover contain
+        // background-size
+        // 不支持逗号分隔的多个值：设置多重背景!!!
+        // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
+        // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
+        if (value.includes(',')) { // commas are not allowed in values
+          error(`background size value[${value}] does not support commas in React Native ${mode} environment!`)
+          return false
+        }
+        const values = []
+        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+          if (SUPPORTED_PROP_VAL_ARR[prop]?.includes(value) || numberRegExp.test(item)) {
+            // 支持 container cover auto 枚举 + number 值
+            values.push(item)
+          } else {
+            error(`background size value[${value}] does not support in React Native ${mode} environment!`)
+          }
+        })
+        // value 无有效值时返回false
+        return values.length === 0 ? false : { prop, value: values }
+      }
+      case bgPropMap.repeat: {
+        // background-repeat 仅支持 no-repeat
         if (isIllegalValue({ prop, value })) {
           unsupportedValueError({ prop, value })
           return false
