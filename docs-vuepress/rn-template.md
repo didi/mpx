@@ -301,8 +301,6 @@
 | hover-stay-time         | Number  |  `70`         | 手指松开后点击态保留时间，单位毫秒                               |
 | enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
-事件
-
 
 ### scroll-view
 可滚动视图区域。
