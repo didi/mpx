@@ -265,8 +265,8 @@ module.exports = function getSpec ({ warn, error }) {
         }
         const values = []
         value.trim().split(/\s(?![^()]*\))/).forEach(item => {
-          if (SUPPORTED_PROP_VAL_ARR[prop]?.includes(value) || numberRegExp.test(item)) {
-            // 支持 container cover auto 枚举 + number 值
+          if (numberRegExp.test(item) || !isIllegalValue({ prop, value })) {
+            // 支持 number 值 / container cover auto 枚举
             values.push(item)
           } else {
             error(`background size value[${value}] does not support in React Native ${mode} environment!`)
