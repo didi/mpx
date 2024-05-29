@@ -152,8 +152,14 @@ rn支持的枚举值映射如下表，其他不支持的枚举值会被 mpx 编�
 }
 ```
 #### view 尚群峰
-图片
-为实现和小程序类似的效果，我们会进行对View进行包裹，
+
+ 为了对齐rn和web的展示效果，当`display`为`flex`时，会添加如下的默认属性:
+ ```js
+  flexDirection: 'row',
+  flexBasis: 'auto',
+  flexShrink: 1,
+  flexWrap: 'nowrap'
+ ```
 
 
 ## 各属性支持情况

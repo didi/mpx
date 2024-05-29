@@ -155,7 +155,6 @@
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
 | disable-default-style             | boolean  | `false`       |  会内置默认样式，比如fontSize为16。设置`true`可以禁止默认的内置样式。 |
-| enable-offset		  | Number  |     false    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 
 事件
