@@ -1,4 +1,6 @@
+const { createSetupTemplate } = require('@mpxjs/template-engine')
+
 module.exports = function (packageName) {
   const basePath = packageName === 'main' ? '' : `/${packageName}`
-  return `<import src="${basePath}/mpx-custom-element-${packageName}"/><template is="t_0_container" data="{{ i: r }}" wx:if="{{r && r.nt}}"></template>`
+  return `<import src="${basePath}/mpx-custom-element-${packageName}"/>${createSetupTemplate()}`
 }
