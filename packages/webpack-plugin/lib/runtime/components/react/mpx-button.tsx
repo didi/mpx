@@ -79,7 +79,6 @@ export interface ButtonProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
-  'data-shareInfo'?:  unknown
   'enable-offset'?: boolean,
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
@@ -107,7 +106,7 @@ const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
 const styles = StyleSheet.create({
   button: {
     width: '100%',
-    // flexDirection: 'row', css 默认 block
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     height: 46,
@@ -130,6 +129,29 @@ const styles = StyleSheet.create({
     height: 20,
   },
 })
+
+const getOpenTypeEvent = (openType: OpenType) => {
+  // @ts-ignore
+  if (!global?.__mpx?.config?.rnConfig) {
+    console.warn('Environment not supported')
+    return
+  }
+
+  const eventName = OpenTypeEventsMap.get(openType)
+  if (!eventName) {
+    console.warn(`open-type not support ${openType}`)
+    return
+  }
+
+  // @ts-ignore
+  const event = global.__mpx.config.rnConfig?.openTypeHandler?.[eventName]
+  if (!event) {
+    console.warn(`Unregistered ${eventName} event`)
+    return
+  }
+
+  return event
+}
 
 const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
@@ -179,7 +201,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
-    'data-shareInfo':  shareinfo,
     'enable-offset': enableOffset,
     style = [],
     children,
@@ -189,8 +210,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     bindtouchstart,
     bindtouchend,
   } = props
-
-  const { nodeRef } = useNodesRef(props, ref)
 
   const refs = useRef<{
     hoverStartTimer: ReturnType<typeof setTimeout> | undefined
@@ -207,6 +226,8 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   const isMiniSize = size === 'mini'
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
+
+  const textHoverStyle = extractTextStyle(hoverStyle)
 
   const { viewStyle, textStyle } = useMemo<{
     viewStyle: ViewStyle
@@ -230,7 +251,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
         : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
     const inheritTextStyle = extractTextStyle(style)
-    const inheritTextHoverStyle = extractTextStyle(applyHoverEffect ? hoverStyle : [])
     return {
       viewStyle: {
         borderWidth: 1,
@@ -240,49 +260,34 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
       },
       textStyle: {
         color: plain ? plainTextColor : normalTextColor,
-        ...inheritTextStyle,
-        ...inheritTextHoverStyle
+        ...inheritTextStyle
       }
     }
-  }, [type, plain, applyHoverEffect, loading, disabled, style, hoverStyle])
+  }, [type, plain, applyHoverEffect, loading, disabled, style])
 
-  const getOpenTypeEvent = () => {
+  const defaultViewStyle = [
+    styles.button,
+    isMiniSize && styles.buttonMini,
+    viewStyle,
+  ]
+
+  const defaultTextStyle = [
+    styles.text, isMiniSize && styles.textMini, textStyle
+  ]
+
+  const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (!openType) return
-    if (!global?.__mpx?.config?.rnConfig) {
-      console.warn('Environment not supported')
-      return
-    }
+    const handleEvent = getOpenTypeEvent(openType)
 
-    const eventName = OpenTypeEventsMap.get(openType)
-    if (!eventName) {
-      console.warn(`open-type not support ${openType}`)
-      return
-    }
-
-    const event = global?.__mpx?.config?.rnConfig?.[eventName]
-    if (!event) {
-      console.warn(`Unregistered ${eventName} event`)
-      return
-    }
-
-    return event
-  }
-
-  const handleOpenTypeEvent = () => {
-    if (!openType) return
     if (openType === 'share') {
-      const onShareAppMessage = getOpenTypeEvent()
-      onShareAppMessage && onShareAppMessage({
+      handleEvent && handleEvent({
         from: 'button',
-        target: {
-          dataset: { shareinfo }
-        }
+        target: getCustomEvent('tap', evt, { layoutRef }, props).target,
       })
     }
 
     if (openType === 'getUserInfo') {
-      const onUserInfo = getOpenTypeEvent()
-      const userInfo = onUserInfo && onUserInfo()
+      const userInfo = handleEvent && handleEvent()
       if (typeof userInfo === 'object') {
         bindgetuserinfo && bindgetuserinfo(userInfo)
       }
@@ -320,14 +325,22 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent()
+    handleOpenTypeEvent(evt)
   }
 
   const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent()
+    handleOpenTypeEvent(evt)
   }
+
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle: StyleSheet.flatten([
+      ...defaultViewStyle,
+      ...defaultTextStyle,
+    ])
+  })
+
 
   const onLayout = () => {
     nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
@@ -357,14 +370,16 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     <View
       {...innerProps}
       style={[
-        styles.button,
-        isMiniSize && styles.buttonMini,
-        viewStyle,
+        ...defaultViewStyle,
         style,
         applyHoverEffect && hoverStyle,
       ]}>
       {loading && <Loading alone={!React.Children.count(children)} />}
-      <Text style={[styles.text, isMiniSize && styles.textMini, textStyle]}>
+      <Text 
+        style={[
+          ...defaultTextStyle,
+          applyHoverEffect && textHoverStyle,
+        ]}>
         {children}
       </Text>
     </View>
