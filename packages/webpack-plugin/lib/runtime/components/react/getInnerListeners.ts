@@ -108,8 +108,8 @@ const useInnerProps = (
       capture: null
     },
     needPress: {
-      bubble: true,
-      capture: true
+      bubble: false,
+      capture: false
     },
     mpxPressInfo: {}
   })
