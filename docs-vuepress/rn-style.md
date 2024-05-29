@@ -18,10 +18,63 @@ React Native的样式的支持基本为web样式的一个子集，同时还有�
 ## 样式规则
 这块做一个说明 （胡曼）
 
-### 样式转换 华静文
-编译转换
+### 样式转换规则
+mpx 主要处理了以下几种样式转换规则：
+1. 属性名称由中划线-转为驼峰
+2. rpx 单位的转换
+3. css 简写的转换
+4. 不支持的属性过滤（会被 mpx 编译处理时丢弃，有编译 error提示）
+    - 双端都不支持的 prop <br/>
+    box-sizing|white-space|text-overflow|animation|transition|
+    - ios 不支持的 prop <br/>
+    vertical-align
+    - android 不支持的 prop <br/>
+    text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius
+5. 属性不支持的枚举值过滤
+rn支持的枚举值映射如下表，其他不支持的枚举值会被 mpx 编译处理时丢弃，设置无效
+
+    |prop|value 枚举|
+    | --- | --- |
+    |overflow|visible hidden scroll|
+    |border-style|solid dotted dashed|
+    |display|flex none|
+    |pointer-events|auto none|
+    |position|relative absolute|
+    |vertical-align|auto top bottom center|
+    |font-variant|small-caps oldstyle-nums lining-nums tabular-nums proportional-nums
+    |text-align|left right center justify|
+    |font-style|normal italic|
+    |font-weight|normal bold 100-900|
+    |text-decoration-line|none underline line-through 'underline line-through'|
+    |text-transform|none uppercase lowercase capitalize|
+    |user-select|auto text none contain all|
+    |align-content|flex-start flex-end none center stretch space-between space-around|
+    |align-items|flex-start flex-end center stretch baseline|
+    |align-self|auto flex-start flex-end center stretch baseline|
+    |justify-content|flex-start flex-end center space-between space-around space-evenly none|
+    |background-repeat|no-repeat|
 #### 单位支持
+- number
+  - 大小宽高类数值型单位支持 px rpx % 三种
+- color
+  - 支持的 color 值的类型参考rn文档 https://reactnative.dev/docs/colors
 #### 缩写支持
+- text-decoration
+  - 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种顺序，值以空格分隔按顺序赋值
+- margin|padding
+  - 支持 margin: 0/margin: 0 auto/margin: 0 auto 10px/margin: 0 10px 10px 20px/这四种格式
+- text-shadow
+  - 仅支持 offset-x | offset-y | blur-radius | color 排序，值以空格分隔按顺序赋值
+- border
+  - 仅支持 width | style | color 这种排序，值以空格分隔按顺序赋值
+- box-shadow
+  - 仅支持 offset-x | offset-y | blur-radius | color 排序，值以空格分隔按顺序赋值
+- flex
+  - 仅支持 flex-grow | flex-shrink | flex-basis 这种顺序，值以空格分隔按顺序赋值
+- flex-flow
+  - 仅支持 flex-flow: flex-direction flex-wrap 这种顺序，值以空格分隔按顺序赋值
+- border-radius
+  - 仅支持 border-radius 0px/border-radius 0px 0px 0px 0px（值以空格分隔按顺序赋值）
 
 ### 样式增强
 #### text  尚群峰
@@ -77,6 +130,27 @@ React Native的样式的支持基本为web样式的一个子集，同时还有�
 
 #### 图片 华静文
 #### button 华静文
+#### 图片
+为了对齐rn和web的展示效果，我们给 Image 组件增加了以下默认样式：
+```javascript
+{
+    width: 320px,
+    height: 240px
+}
+```
+#### button
+为了对齐rn和web的展示效果，我们给 button 组件增加了以下默认样式：
+```javascript
+{
+    width: 100%,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 46,
+    borderRadius: 5,
+    backgroundColor: '#F8F8F8',
+    marginHorizontal: 'auto' // 按钮默认居中
+}
+```
 #### view 尚群峰
 图片
 为实现和小程序类似的效果，我们会进行对View进行包裹，
@@ -112,11 +186,19 @@ balabala我是一波介绍
 |z-index|number| 
 
 
-### 图片 华静文
+### 背景相关 群峰再补充一下
+在 view 组件上可以定义一下 background 相关属性：
 
+|属性|支持的value|
+| --- | --- |
+|background-image|仅支持 <url()>|
+|background-color|支持的颜色值类型参见【单位支持】的 color 部分|
+|background-size|支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto；支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度；值类型支持枚举值 cover contain auto 以及number类型单位 rpx px %；不支持逗号分隔的多个值：设置多重背景!!!|
+|background-repeat|仅支持 no-repeat|
+|background|该简写属性仅支持以上属性，需要注意的是在 background 简写中仅支持 background-size 的枚举值 contain、cover、auto，rpx、px、% number类型值不支持|
 ### 阴影  胡曼
 
-### 文本 群峰
+### 文本相关 群峰
 
 |属性|支持的value|
 | --- | --- | 
