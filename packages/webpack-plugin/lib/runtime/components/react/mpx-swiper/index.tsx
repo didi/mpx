@@ -49,7 +49,7 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
   ], { layoutRef: innerLayout })
 
   const getInnerLayout = (layout) => {
-    innerLayout = layout
+    innerLayout.current = layout.current
   }
 
   return (
