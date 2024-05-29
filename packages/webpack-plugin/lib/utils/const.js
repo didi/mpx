@@ -9,6 +9,7 @@ module.exports = {
   DYNAMIC: 'dynamic',
   DYNAMIC_TEMPLATE: 'dynamic_template',
   DYNAMIC_STYLE: 'dynamic_style',
+  DYNAMIC_JSON: 'dynamic_json',
   BLOCK_TEMPLATE: 'template',
   BLOCK_STYLES: 'styles',
   BLOCK_JSON: 'json'

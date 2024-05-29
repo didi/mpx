@@ -2,12 +2,13 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordTemplateRuntimeInfoDependency extends NullDependency {
-  constructor (packageName, resourcePath, { baseComponents, customComponents } = {}) {
+  constructor (packageName, resourcePath, { baseComponents, customComponents, dynamicSlotDependencies } = {}) {
     super()
     this.packageName = packageName
     this.resourcePath = resourcePath
     this.baseComponents = baseComponents
     this.customComponents = customComponents
+    this.dynamicSlotDependencies = dynamicSlotDependencies
   }
 
   get type () {
@@ -21,7 +22,8 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     }
     mpx.runtimeInfoTemplate[this.packageName][this.resourcePath] = {
       baseComponents: {},
-      customComponents: {}
+      customComponents: {},
+      dynamicSlotDependencies: this.dynamicSlotDependencies
     }
 
     this.mergeTemplateUsingComponents(mpx)
@@ -48,6 +50,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     write(this.resourcePath)
     write(this.baseComponents)
     write(this.customComponents)
+    write(this.dynamicSlotDependencies)
     super.serialize(context)
   }
 
@@ -57,6 +60,7 @@ class RecordTemplateRuntimeInfoDependency extends NullDependency {
     this.resourcePath = read()
     this.baseComponents = read()
     this.customComponents = read()
+    this.dynamicSlotDependencies = read()
     super.deserialize(context)
   }
 }

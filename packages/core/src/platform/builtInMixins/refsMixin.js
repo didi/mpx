@@ -51,8 +51,7 @@ export default function getRefsMixin () {
       this.__asyncRefCacheMap.clear()
     },
     [CREATED] () {
-      // todo 需要确认下这部分的逻辑，如果是在 beforeCreate 钩子里面执行，部分数据取不到
-      // 如果是在运行时组件的上下文渲染
+      // 处理ref场景，如果是在容器组件的上下文渲染
       if (this.mpxCustomElement) {
         this.__getRuntimeRefs()
       }

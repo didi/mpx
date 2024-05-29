@@ -1,7 +1,6 @@
 'use strict'
 
 const path = require('path')
-const { AsyncSeriesHook } = require('tapable')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
 const InjectDependency = require('./dependencies/InjectDependency')
@@ -41,11 +40,9 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
-const RuntimeRenderPackageDependency = require('./dependencies/RuntimeRenderPackageDependency')
 const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
 const RecordJsonRuntimeInfoDependency = require('./dependencies/RecordJsonRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
-const RuntimeRenderPlugin = require('./runtime-render/plugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
@@ -68,6 +65,8 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
+const getDynamicTemplate = require('./runtime-render/getTemplate')
+const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -323,7 +322,6 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    new RuntimeRenderPlugin().apply(compiler)
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
@@ -502,19 +500,7 @@ class MpxWebpackPlugin {
         const subpackagesEntriesMap = mpx.subpackagesEntriesMap
         // 执行分包队列前清空mpx.subpackagesEntriesMap
         mpx.subpackagesEntriesMap = {}
-        async.eachOfSeries(subpackagesEntriesMap, (deps, packageRoot, callback) => {
-          mpx.currentPackageRoot = packageRoot
-          mpx.componentsMap[packageRoot] = mpx.componentsMap[packageRoot] || {}
-          mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
-          mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
-          async.each(deps, (dep, callback) => {
-            dep.addEntry(compilation, (err, result) => {
-              if (err) return callback(err)
-              dep.resultPath = mpx.replacePathMap[dep.key] = result.resultPath
-              callback()
-            })
-          }, callback)
-        }, (err) => {
+        runSubpackageEntriesMap(subpackagesEntriesMap, compilation, (err) => {
           if (err) return callback(err)
           // 如果执行完当前队列后产生了新的分包执行队列（一般由异步分包组件造成），则继续执行
           processSubpackagesEntriesMap(compilation, callback)
@@ -522,6 +508,7 @@ class MpxWebpackPlugin {
       } else if (mpx && !isEmptyObject(mpx.postSubpackageEntriesMap)) {
         const postSubpackageEntriesMap = mpx.postSubpackageEntriesMap
         mpx.postSubpackageEntriesMap = {}
+        // postSubpackageEntiesMap 处理完后直接返回
         runSubpackageEntriesMap(postSubpackageEntriesMap, compilation, callback)
       } else {
         callback()
@@ -606,9 +593,6 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
 
-      compilation.dependencyFactories.set(RuntimeRenderPackageDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RuntimeRenderPackageDependency, new RuntimeRenderPackageDependency.Template())
-
       compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
 
@@ -647,6 +631,7 @@ class MpxWebpackPlugin {
           // 记录独立分包
           independentSubpackagesMap: {},
           subpackagesEntriesMap: {},
+          postSubpackageEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
           // 记录动态添加入口的分包信息
@@ -878,8 +863,128 @@ class MpxWebpackPlugin {
               })
             }
           },
-          hooks: {
-            finishSubpackagesMake: new AsyncSeriesHook(['compilation'])
+          // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
+          runtimeInfoJson: {},
+          runtimeInfoTemplate: {},
+          // 记录运行时组件依赖的运行时组件当中使用的基础组件 slot，最终依据依赖关系注入到运行时组件的 json 配置当中
+          dynamicSlotDependencies: {},
+          // 依据 package 注入到 mpx-custom-element-*.json 里面的组件路径
+          getPackageInjectedComponentsMap: (packageName = 'main') => {
+            const res = {}
+            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+            const componentsMap = mpx.componentsMap[packageName] || {}
+            const publicPath = compilation.outputOptions.publicPath || ''
+            for (const componentPath in runtimeInfoJson) {
+              Object.values(runtimeInfoJson[componentPath]).forEach(({ hashName, resourcePath }) => {
+                const outputPath = componentsMap[resourcePath]
+                if (outputPath) {
+                  res[hashName] = publicPath + outputPath
+                }
+              })
+            }
+            return res
+          },
+          // 获取生成基础递归渲染模版的节点配置信息
+          getPackageInjectedTemplateConfig: (packageName = 'main') => {
+            const res = {
+              baseComponents: {
+                block: {}
+              },
+              runtimeComponents: {},
+              normalComponents: {}
+            }
+
+            const componentsMap = mpx.componentsMap[packageName] || {}
+            const publicPath = compilation.outputOptions.publicPath || ''
+            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+
+            // 包含了某个分包当中所有的运行时组件
+            for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
+              const {
+                customComponents = {},
+                baseComponents = {},
+                dynamicSlotDependencies = {}
+              } = mpx.runtimeInfoTemplate[packageName][resourcePath]
+              const componentsJsonConfig = runtimeInfoJson[resourcePath]
+
+              // 满足运行时组件里面存在基础组件的情况
+              for (const componentName in dynamicSlotDependencies) {
+                const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
+                if (isDynamic) {
+                  dynamicSlotDependencies[componentName].forEach(name => {
+                    const { resourcePath: path, isDynamic, hashName } = componentsJsonConfig[name]
+                    if (!isDynamic) {
+                      mpx.collectDynamicSlotDependencies(resourcePath, {
+                        [hashName]: publicPath + componentsMap[path]
+                      })
+                    }
+                  })
+                }
+              }
+
+              // 合并自定义组件的属性
+              for (const componentName in customComponents) {
+                const extraAttrs = {}
+                const attrsMap = customComponents[componentName]
+                const { hashName, isDynamic } = componentsJsonConfig[componentName] || {}
+                let componentType = 'normalComponents'
+                if (isDynamic) {
+                  componentType = 'runtimeComponents'
+                  extraAttrs.slots = ''
+                }
+                if (!res[componentType][hashName]) {
+                  res[componentType][hashName] = {}
+                }
+
+                Object.assign(res[componentType][hashName], {
+                  ...attrsMap,
+                  ...extraAttrs
+                })
+              }
+
+              // 合并基础节点的属性
+              for (const componentName in baseComponents) {
+                const attrsMap = baseComponents[componentName]
+                if (!res.baseComponents[componentName]) {
+                  res.baseComponents[componentName] = {}
+                }
+                Object.assign(res.baseComponents[componentName], attrsMap)
+              }
+            }
+
+            return res
+          },
+          changeHashNameForAstNode: (ast, packageName, resourcePath) => {
+            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+            const componentsMap = runtimeInfoJson[resourcePath] || {}
+
+            const iterateAst = (ast = {}) => {
+              if (typeof ast !== 'object') {
+                return
+              }
+              const componentInfo = componentsMap[ast.tag]
+              if (componentInfo) { // 自定义节点替换 hashName
+                ast.tag = componentInfo.hashName
+                if (componentInfo.isDynamic) {
+                  ast.dynamic = true
+                }
+              }
+              if (ast.children) {
+                ast.children.forEach(child => iterateAst(child))
+              }
+              if (ast.ifConditions) {
+                ast.ifConditions.forEach(child => iterateAst(child.block))
+              }
+            }
+
+            iterateAst(ast)
+
+            return ast
+          },
+          // 运行时组件依赖运行时的组件使用了 slot 普通组件才会被收集
+          collectDynamicSlotDependencies: (resourcePath, extraUsingComponents) => {
+            mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
+            Object.assign(mpx.dynamicSlotDependencies[resourcePath], extraUsingComponents)
           }
         }
       }
@@ -1104,27 +1209,55 @@ class MpxWebpackPlugin {
 
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
-        // todo 可以通过插件的机制来解耦这部分的逻辑
         const dynamicAssets = {}
         for (const module of compilation.modules) {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
           for (const [filename, { extractedInfo } = {}] of assetsInfo) {
             if (extractedInfo) {
-              const { moduleId, type, content, dynamic, resourcePath, packageName } = extractedInfo
-              if (dynamic) {
-                dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
-                const dynamicAsset = JSON.parse(content)
-                if (type === 'template') {
-                  dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(dynamicAsset, packageName, resourcePath)
-                } else if (type === 'styles') {
-                  // 合并多个style标签的样式代码
-                  const styleAssets = (dynamicAssets[moduleId][type] = dynamicAssets[moduleId][type] || [])
-                  styleAssets.push(...dynamicAsset)
+              if (extractedInfo.dynamic) {
+                const { moduleId, type, content, resourcePath, packageName, dynamicAsset } = extractedInfo
+                if (type === 'json') {
+                  // 注入运行时组件依赖的slot基础组件
+                  const _content = JSON.parse(content)
+                  if (!_content.usingComponents) {
+                    _content.usingComponents = {}
+                  }
+                  if (mpx.dynamicSlotDependencies[resourcePath]) {
+                    Object.assign(_content.usingComponents, mpx.dynamicSlotDependencies[resourcePath])
+                  }
+                  // 替换组件的 hashName
+                  const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+                  if (runtimeInfoJson[resourcePath]) {
+                    const dependencyComponentConfig = runtimeInfoJson[resourcePath]
+                    for (const rawComponentName in dependencyComponentConfig) {
+                      const outputPath = _content.usingComponents[rawComponentName]
+                      if (outputPath) {
+                        const { hashName } = dependencyComponentConfig[rawComponentName]
+                        _content.usingComponents[hashName] = outputPath
+                        delete _content.usingComponents[rawComponentName]
+                      }
+                    }
+                  }
+                  // 注入 element 容器组件路径
+                  _content.usingComponents.element = resolveMpxCustomElementPath(packageName)
+                  extractedInfo.content = JSON.stringify(_content)
                 } else {
-                  dynamicAssets[moduleId][type] = dynamicAsset
+                  dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
+                  const _dynamicAsset = JSON.parse(dynamicAsset)
+                  if (type === 'template') {
+                    // 动态注入运行时组件的模版内容
+                    extractedInfo.content = getDynamicTemplate(packageName)
+                    dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(_dynamicAsset, packageName, resourcePath)
+                  } else if (type === 'styles') {
+                    // 合并多个style标签的样式代码
+                    const styleAssets = (dynamicAssets[moduleId][type] = dynamicAssets[moduleId][type] || [])
+                    styleAssets.push(..._dynamicAsset)
+                  } else {
+                    dynamicAssets[moduleId][type] = _dynamicAsset
+                  }
                 }
-                continue
               }
+
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
                 extractedAssets = [new Map(), new Map()]

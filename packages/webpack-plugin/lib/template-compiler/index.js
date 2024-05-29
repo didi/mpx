@@ -5,7 +5,6 @@ const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
-const getDynamicTemplate = require('../runtime-render/getTemplate')
 const simplifyAstTemplate = require('./simplify-template')
 const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 
@@ -34,7 +33,6 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || '_' + mpx.pathHash(resourcePath)
-  const moduleIdString = JSON.stringify(moduleId)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -82,7 +80,7 @@ module.exports = function (raw) {
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
 
-  if (meta.runtimeInfo || runtimeCompile) {
+  if (runtimeCompile) {
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
     // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
@@ -96,6 +94,12 @@ module.exports = function (raw) {
     }
   }
 
+  let result = compiler.serialize(ast)
+
+  if (isNative) {
+    return result
+  }
+
   let resultSource = ''
 
   for (const module in meta.wxsModuleMap) {
@@ -103,15 +107,9 @@ module.exports = function (raw) {
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
 
-  let result = compiler.serialize(ast)
-
-  if (isNative) {
-    return result
-  }
-
   resultSource += `
 global.currentInject = {
-  moduleId: ${moduleIdString}
+  moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
   if (runtimeCompile) {
@@ -186,7 +184,6 @@ global.currentInject.getRefsData = function () {
     result += `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
   }
 
-  // 运行时编译的组件直接返回基础模板的内容，并产出动态文本内容
   if (runtimeCompile) {
     let simpleAst = ''
     try {
@@ -198,7 +195,8 @@ global.currentInject.getRefsData = function () {
       skipEmit: true,
       extractedDynamicAsset: JSON.stringify(simpleAst)
     })
-    return getDynamicTemplate(packageName)
+    // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入入口文件
+    return ''
   }
 
   return result

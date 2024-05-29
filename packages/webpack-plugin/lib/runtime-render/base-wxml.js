@@ -5,59 +5,72 @@ function makeAttrsMap (attrKeys = []) {
   return attrKeys.reduce((preVal, curVal) => Object.assign(preVal, { [curVal]: '' }), {})
 }
 
-function setCustomEle (el, options, meta) {
-  const modeConfig = mpxConfig[options.mode]
-  const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
-  const tag = el.tag
-  const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
+// 部分节点类型不需要被收集
+const RUNTIME_FILTER_NODES = ['import', 'template', 'wxs', 'component', 'slot']
 
-  const eleAttrsMap = meta.runtimeInfo.customComponents
-  if (tag && !eleAttrsMap[tag]) {
-    eleAttrsMap[tag] = {}
+function hasParentCustomComponent (el, isComponentNode, options) {
+  let parent = el.parent
+  while (parent) {
+    if (isComponentNode(parent, options)) {
+      return parent.tag
+    }
+    parent = parent.parent
   }
-  Object.assign(eleAttrsMap[tag], makeAttrsMap(attrKeys))
+  return false
 }
 
-function setBaseEle (el, options, meta) {
-  const renderAttrsMap = {}
-  const rawTag = el.tag
-
-  // 属性收集
-  const modeConfig = mpxConfig[options.mode]
-  const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
-  const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-
-  attrKeys.forEach(key => {
-    renderAttrsMap[key] = ''
-  })
-
-  const optimizedInfo = getOptimizedComponentInfo({
-    nodeType: rawTag,
-    attrs: renderAttrsMap
-  }, options.mode)
-
-  if (optimizedInfo) {
-    el.tag = optimizedInfo.nodeType
+module.exports = function setBaseWxml (el, config, meta) {
+  const { mode, isComponentNode, options } = config
+  if (RUNTIME_FILTER_NODES.includes(el.tag)) {
+    return
   }
 
-  if (!meta.runtimeInfo.baseComponents[rawTag]) {
-    meta.runtimeInfo.baseComponents[rawTag] = {}
+  if (options.runtimeCompile) {
+    const isCustomComponent = isComponentNode(el, options)
+
+    if (!meta.runtimeInfo) {
+      meta.runtimeInfo = {
+        baseComponents: {},
+        customComponents: {},
+        dynamicSlotDependencies: {}
+      }
+    }
+
+    const tag = el.tag
+    // 属性收集
+    const modeConfig = mpxConfig[mode]
+    const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
+    const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
+    const componentType = isCustomComponent ? 'customComponents' : 'baseComponents'
+
+    if (!isCustomComponent) {
+      const optimizedInfo = getOptimizedComponentInfo(
+        {
+          nodeType: el.tag,
+          attrs: el.attrsMap
+        },
+        mode
+      )
+      if (optimizedInfo) {
+        el.tag = optimizedInfo.nodeType
+      }
+    } else {
+      // 收集运行时组件模版当中运行时组件使用普通组件作为slot的场景，主要因为普通组件被渲染时上下文发生了改变
+      const parentComponentTag = hasParentCustomComponent(el, isComponentNode, options)
+      if (parentComponentTag) {
+        const dynamicSlotDependencies = meta.runtimeInfo.dynamicSlotDependencies
+        if (!dynamicSlotDependencies[parentComponentTag]) {
+          dynamicSlotDependencies[parentComponentTag] = []
+        }
+        dynamicSlotDependencies[parentComponentTag].push(el.tag)
+      }
+    }
+
+    const componentsConfig = meta.runtimeInfo[componentType]
+
+    if (!componentsConfig[tag]) {
+      componentsConfig[tag] = {}
+    }
+    Object.assign(componentsConfig[tag], makeAttrsMap(attrKeys))
   }
-
-  Object.assign(meta.runtimeInfo.baseComponents[rawTag], renderAttrsMap)
-}
-
-module.exports = function setBaseWxml (el, options, meta) {
-  const set = options.isCustomComponent ? setCustomEle : setBaseEle
-  set(el, options, meta)
-
-  // const modeConfig = mpxConfig[options.mode]
-  // const directives = new Set([...Object.values(modeConfig.directive), 'slot'])
-  // const tag = el.tag
-  // const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
-  // const componentType = options.isCustomComponent ? 'customComponents' : 'baseComponents'
-  // if (!meta.rInfo[componentType][tag]) {
-  //   meta.rInfo[componentType][tag] = {}
-  // }
-  // Object.assign(meta.rInfo[componentType][tag], makeAttrsMap(attrKeys))
 }

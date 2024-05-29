@@ -14,8 +14,6 @@ const language = cssauron({
     return node.children
   },
   parent: function (node) {
-    // todo 不能返回默认值，会导致 cssauron 匹配过程找父节点出现死循环
-    // return node.parent || {}
     return node.parent
   },
   contents: function (node) {
