@@ -35,7 +35,7 @@ module.exports = class PackageEntryPlugin {
         relativePath: './' + toPosix(relativePath),
         miniprogram: true
       })
-
+      if (obj.path === request.path) return callback()
       resolver.doResolve(target, obj, 'add miniprogram dist: ' + miniprogram, resolveContext, callback)
     })
   }
