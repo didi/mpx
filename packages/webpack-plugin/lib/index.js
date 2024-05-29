@@ -894,33 +894,15 @@ class MpxWebpackPlugin {
               normalComponents: {}
             }
 
-            const componentsMap = mpx.componentsMap[packageName] || {}
-            const publicPath = compilation.outputOptions.publicPath || ''
             const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
 
             // 包含了某个分包当中所有的运行时组件
             for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
               const {
                 customComponents = {},
-                baseComponents = {},
-                dynamicSlotDependencies = {}
+                baseComponents = {}
               } = mpx.runtimeInfoTemplate[packageName][resourcePath]
               const componentsJsonConfig = runtimeInfoJson[resourcePath]
-
-              // 满足运行时组件里面存在基础组件的情况
-              for (const componentName in dynamicSlotDependencies) {
-                const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
-                if (isDynamic) {
-                  dynamicSlotDependencies[componentName].forEach(name => {
-                    const { resourcePath: path, isDynamic, hashName } = componentsJsonConfig[name]
-                    if (!isDynamic) {
-                      mpx.collectDynamicSlotDependencies(resourcePath, {
-                        [hashName]: publicPath + componentsMap[path]
-                      })
-                    }
-                  })
-                }
-              }
 
               // 合并自定义组件的属性
               for (const componentName in customComponents) {
@@ -981,10 +963,29 @@ class MpxWebpackPlugin {
 
             return ast
           },
-          // 运行时组件依赖运行时的组件使用了 slot 普通组件才会被收集
-          collectDynamicSlotDependencies: (resourcePath, extraUsingComponents) => {
-            mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
-            Object.assign(mpx.dynamicSlotDependencies[resourcePath], extraUsingComponents)
+          // 运行时组件的 slot 收集
+          collectDynamicSlotDependencies: (packageName = 'main') => {
+            const componentsMap = mpx.componentsMap[packageName] || {}
+            const publicPath = compilation.outputOptions.publicPath || ''
+            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+
+            for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
+              const { dynamicSlotDependencies = {} } = mpx.runtimeInfoTemplate[packageName][resourcePath]
+              const componentsJsonConfig = runtimeInfoJson[resourcePath]
+
+              for (const componentName in dynamicSlotDependencies) {
+                const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
+                if (isDynamic) {
+                  dynamicSlotDependencies[componentName].forEach(name => {
+                    const { resourcePath: path, hashName } = componentsJsonConfig[name]
+                    mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
+                    Object.assign(mpx.dynamicSlotDependencies[resourcePath], {
+                      [hashName]: publicPath + componentsMap[path]
+                    })
+                  })
+                }
+              }
+            }
           }
         }
       }

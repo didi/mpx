@@ -180,6 +180,7 @@ module.exports = function (content) {
     json.usingComponents = json.usingComponents || {}
     json.usingComponents.element = resolveMpxCustomElementPath(packageName)
     Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
+    mpx.collectDynamicSlotDependencies(packageName)
   }
 
   const dependencyComponentsMap = {}
