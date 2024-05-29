@@ -1163,18 +1163,16 @@ function processEvent (el, options) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
     if (parsedEvent) {
-      const type = parsedEvent.prefix + parsedEvent.eventName
+      const type = parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            eventName: parsedEvent.eventName,
-            rawName: name,
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(parsedFunc)
+        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
@@ -1233,7 +1231,7 @@ function processEvent (el, options) {
 
   for (const type in eventConfigMap) {
     let needBind = false
-    let { configs, rawName, proxy, eventName } = eventConfigMap[type]
+    const { configs, proxy } = eventConfigMap[type]
     delete eventConfigMap[type]
     if (proxy) {
       needBind = true
@@ -1251,19 +1249,25 @@ function processEvent (el, options) {
     }
 
     if (needBind) {
-      if (rawName) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, rawName).has
-        } while (has)
-        // 清除修饰符
-        rawName = rawName.replace(/\..*/, '')
-      }
+      let resultName
+      configs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+
+          if (!resultName) {
+            // 清除修饰符
+            resultName = name.replace(/\..*/, '')
+          }
+        }
+      })
 
       addAttrs(el, [
         {
-          name: rawName || config[mode].event.getEvent(eventName),
+          name: resultName || config[mode].event.getEvent(type),
           value: '__invoke'
         }
       ])
