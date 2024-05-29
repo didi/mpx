@@ -289,17 +289,16 @@ module.exports = function getSpec ({ warn, error }) {
         const values = value.trim().split(/\s(?![^()]*\))/)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
-          if (url) {
-            bgMap.push({ prop: bgPropMap.image, value: url })
-          }
-          if (/^(#[0-9a-f]{3}$|#[0-9a-f]{6}$|rgb|rgba)/i.test(item)) {
-            bgMap.push({ prop: bgPropMap.color, value: item })
-          }
-          if (/.*linear-gradient*./.test(value)) {
+          if (/.*linear-gradient*./.test(item)) {
             error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
-          }
-          if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
+          } else if (url) {
+            bgMap.push({ prop: bgPropMap.image, value: url })
+          } else if (/^(#[0-9a-f]{3}$|#[0-9a-f]{6}$|rgb|rgba)/i.test(item)) {
+            bgMap.push({ prop: bgPropMap.color, value: item })
+          } else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
             bgMap.push({ prop: bgPropMap.size, value: item })
+          } else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.repeat].includes(item)) {
+            bgMap.push({ prop: bgPropMap.repeat, value: item })
           }
         })
         return bgMap.length ? bgMap : false
