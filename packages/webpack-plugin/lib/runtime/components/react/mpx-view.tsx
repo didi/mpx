@@ -160,7 +160,6 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   const [isHover, setIsHover] = useState(false)
   const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-
   const layoutRef = useRef({})
 
   // 打平 style 数组
@@ -183,7 +182,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   const dataRef = useRef<{
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
-  }>()
+  }>({})
 
   useEffect(() => {
     return () => {
