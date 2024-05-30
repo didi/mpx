@@ -265,7 +265,7 @@ module.exports = function getSpec ({ warn, error }) {
         }
         const values = []
         value.trim().split(/\s(?![^()]*\))/).forEach(item => {
-          if (numberRegExp.test(item) || !isIllegalValue({ prop, value })) {
+          if (numberRegExp.test(item) || !isIllegalValue({ prop, value: item })) {
             // 支持 number 值 / container cover auto 枚举
             values.push(item)
           } else {
