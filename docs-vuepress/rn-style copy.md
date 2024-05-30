@@ -262,21 +262,6 @@ flex 1
 
 ```
 
-#### flex-grow
-
-设置子盒子的放大比例
-
-**值支持类型**
-
-    numner
-
-**语法**
-
-``` css
-
-flex-grow: 1;
-```
-
 #### flex-shrink
 
 设置子盒子的缩放比例。
@@ -293,105 +278,42 @@ flex-shrink: 1;
 
 ```
 
-#### flex-basis
 
-设置在分配多余空间之前，子盒子的初始主轴尺寸。
 
-**值支持类型**
 
-    flex-shrink: px/rpx
 
-**语法**
 
-``` css
 
-flex-shrink: 10px;
 
-```
 
-#### flex-direction
 
-设置主轴的方向。
 
-**值支持类型**
 
-    enum: row, row-reverse, column, column-reverse
 
-**语法**
 
-``` css
 
-flex-direction: column;
-
-```
-
-#### flex-wrap
-
-设置元素是否换行。
-
-**值支持类型**
-
-    enum: wrap, nowrap, wrap-reverse
-
-**语法**
-
-``` css
-
-flex-wrap: wrap;
-
-```
+|属性|支持的value|
+| --- | --- | 
+|display|仅支持 `none`, `flex`| 
+|align-content|仅支持 `flex-end`, `center`, `stretch`, `space-between`, `space-around`| 
+|align-items| 仅支持 `flex-start`, `flex-end`, `center`, `stretch`, `baseline`|
+|align-self| 仅支持 `auto`, `flex-start`, `flex-end`, `center`, `stretch`, `baseline` | 
+|flex |  支持`flex 1`; 也可 `flex 1 20 10px`，内部会进行转换为flexGrow,flexShrink,flexBasis  |
+|flex-shrink| `number`  |
+|flex-basis| 支持`px`，`rpx`单位 | 
+|flex-direction| `row`, `row-reverse`, `column`, `column-reverse` | 
+|flex-grow| `number` | 
+|flex-wrap	| 仅支持`wrap`, `nowrap`, `wrap-reverse`, `注意`： wrap时，alignItems：center不生效。 |
 
 ### position布局 群峰
 
-
-
-#### position
-
-设置元素的定位样式
-
-**值支持类型**
-
-    enum: absolute, relative， 默认relative。
-
-**语法**
-
-``` css
-
-position: absolute;
-
-```
-
-#### top/right/left/bottom/
-
-设置元素的不同方向的偏移量。
-
-**值支持类型**
-
-    enum: px,rpx,%
-
-**语法**
-
-``` css
-
-top: 10px
-
-```
-
-#### z-index
-
-控制着元素的堆叠覆盖顺序。
-
-**值支持类型**
-
-    numner
-
-**语法**
-
-``` css
-
-z-index: 2;
-
-```
+|属性|支持的value|
+| --- | --- | 
+|position|仅支持`absolute`, `relative`， 默认是relative| 
+|top|number| 
+|right|number| 
+|bottom|number| 
+|z-index|number| 
 
 ### 背景相关 群峰再补充一下
 在 view 组件上可以定义一下 background 相关属性：
@@ -416,162 +338,21 @@ z-index: 2;
 ### 文本相关 群峰
 
 
-#### color
-margin是margin-top、margin-right、margin-left、margin-bottom的缩写模式, 目前仅支持四种缩写模式。
 
-**值支持类型**
-  color: 参考[Color](https://reactnative.dev/docs/colors)
+|属性|支持的value|
+| --- | --- | 
+|color| 支持英文颜色，rgb，rgba等可参考[这里](https://reactnative.dev/docs/colors) |
+|font-family| 可设置系统字体，引入字体文件，暂时不支持。| 
+|font-size	| 支持`px`,`rpx` | 
+|font-style	| 支持 `normal`，`italic` | 
+|font-weight| 仅支持`100`, `200`, `300`, `400`, `500`, `600`, `800`, `900` | 
+|font-variant	| 支持 `small-caps`, `oldstyle-nums`, `lining-nums`, `tabular-nums`, `proportional-nums` | 
+|letter-spacing	| `number` | 
+|line-height	| 支持 `px`,`rpx`,`number`,`%` | 
+|text-align	| 支持 `auto`, `left`, `right`, `center`, `justify` | 
+|text-decoration-line	| 支持 `none`, `underline`, `line-through`, `underline line-through` | 
+|text-transform	| `none`, `uppercase`, `lowercase`, `capitalize` | 
 
-**语法**
-
-``` css
-
-color: orange;
-
-color: #fff;
-```
-
-#### font-family
-可设置系统字体，引入字体文件，暂时不支持。
-
-**值支持类型**
-  string
-
-**语法**
-
-``` css
-
-font-family: "PingFangSC-Regular"
-```
-
-#### font-size
-可设置字体的大小
-
-**值支持类型**
-  px,rpx
-
-**语法**
-
-``` css
-
-font-size: 12px;
-```
-
-
-#### font-style
-设置文本的字体样式。
-
-**值支持类型**
-    enum: normal，italic
-
-**语法**
-
-``` css
-
-font-style: italic;
-```
-
-#### font-weight
-设置文字的权重。
-
-**值支持类型**
-    enum: 100，200，300，400，500，600，800，900
-
-**语法**
-
-``` css
-
-font-weight: 500;
-```
-
-
-#### font-variant
-设置文本的字体变体
-
-**值支持类型**
-    enum: small-caps, oldstyle-nums, lining-nums, tabular-nums, proportional-nums
-
-**语法**
-
-``` css
-
-font-variant: lining-nums;
-```
-
-#### letter-spacing
-定义字符之间的间距
-
-**值支持类型**
-    px,rpx
-
-**语法**
-
-``` css
-
-letter-spacing: 2px;
-```
-
-#### line-height
-
-设置行高。
-
-**值支持类型**
-  px,rpx,%
-
-**语法**
-
-``` css
-
-line-height: 16px
-
-```
-
-#### text-align
-
-设置文本的水平对齐方式。
-
-**值支持类型**
-  enum: auto, left, right, center, justify
-
-**语法**
-
-``` css
-
-text-align: center;
-
-```
-
-
-#### text-decoration-line
-
-设置文本的装饰线样式。
-
-**值支持类型**
-  enum: none, underline, line-through, underline line-through
-
-**语法**
-
-``` css
-
-text-decoration-line: underline;
-
-```
-
-
-#### text-transform
-
-设置文本的大小写转换。
-
-**值支持类型**
-  enum: none, uppercase, lowercase, capitalize
-
-**语法**
-
-``` css
-
-text-transform: uppercase;
-
-```
 
 ### 边距与border
 
