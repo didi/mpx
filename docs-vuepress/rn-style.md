@@ -23,7 +23,7 @@ RN仅支持以下类选择器，且不支持组合选择器。
 ```
 
 ## 样式规则
-Mpx框架为了尽可能的将小程序/Web上编写的样式转换为适配RN的样式，进行了一系列的样式转换规则。同时RN在很多样式属性的默认值上与Web并未对齐，因此框架也支持了部分属性的默认值与Web对齐的工作。
+Mpx框架为了尽可能的将小程序/Web上编写的样式转换为适配RN的样式，进行了一系列的样式转换。同时RN在很多样式属性的默认值上与Web并未对齐，因此框架也支持了部分属性的默认值与Web对齐的工作。
 
 ### 转换规则
 mpx 主要处理了以下几种样式转换规则：
@@ -460,13 +460,24 @@ background-size: 50%, 25%, 25%;
 background-repeat: repeat; 
 ```
 ### 阴影
-|属性|支持的value|
-| --- | --- |
-|background-image|仅支持 <url()>|
-|background-color|支持的颜色值类型参见【单位支持】的 color 部分|
-|background-size|支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto；支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度；值类型支持枚举值 cover contain auto 以及number类型单位 rpx px %；不支持逗号分隔的多个值：设置多重背景!!!|
-|background-repeat|仅支持 no-repeat|
-|background|该简写属性仅支持以上属性，需要注意的是在 background 简写中仅支持 background-size 的枚举值 contain、cover、auto，rpx、px、% number类型值不支持|
+
+#### box-shadow 
+此属性是阴影颜色、阴影的偏移量，阴影模糊半径的缩写
+**值支持类型**
+
+    number: px rpx
+
+**语法**
+```css
+/* offset-x | offset-y | blur-radius | color */
+box-shadow: 0 1px 3px rgba(139,0,0,0.32);
+```
+**语法**
+``` css
+/* all */
+border-radius: 2px;
+/* top-left | top-right | bottom-right | bottom-left */
+border-radius: 10px 10px 10px 0;
 
 ### 文本相关 群峰
 
