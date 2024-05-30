@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image } from 'react-native'
+import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image, ImageURISource, ImageStyle } from 'react-native'
 import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef } from 'react'
 
 // @ts-ignore
@@ -37,7 +37,7 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
-type Handler = ([imageStyle, imageProps]: [ExtendedViewStyle, ImageProps]) => void
+type Handler = ([imageStyle, imageProps, originImage, layoutInfo]: [ExtendedViewStyle, ImageProps, any, any]) => void
 
 const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
@@ -60,7 +60,13 @@ const applyHandlers = (handlers: Handler[] , args) => {
   }
 }
 
-const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
+const isLayout = (style: ExtendedViewStyle = {}) => {
+  if (!style?.backgroundImage) return false
+  const [width, height] = style.backgroundSize || []
+  return (PERCENT_REGX.test(height) && width === 'auto') || (PERCENT_REGX.test(width) && height === 'auto')
+}
+
+const imageStyleToProps = (imageStyle: ExtendedViewStyle, originImage, layoutInfo) => {
   if (!imageStyle) return null
   // 初始化
   const imageProps: ImageProps = {
@@ -71,37 +77,69 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
   }
 
   // background-size 转换
-  function backgroundSize ([imageStyle, imageProps]) {
+  function backgroundSize ([imageStyle, imageProps, originImage, layoutInfo]) {
     let val = imageStyle.backgroundSize
     if (!val) return
     // 枚举值
-    if (['cover', 'contain'].includes(val)) {
+    
+    if (['cover', 'contain'].includes(val[0])) {
       imageProps.style.resizeMode = val
-    } else {
-      let sizeList = val.trim().split(/\s+/)
+    } else{
+      let sizeList = val.slice()
       //  归一化
       if (sizeList.length === 1) {
         sizeList.push(sizeList[0])
       }
+      const [width, height] = sizeList
+      let newWidth = 0, newHeight = 0
 
-      const style = sizeList.reduce((style, val, idx) => {
-        if (idx === 0) {
-          style.width =  PERCENT_REGX.test(val) ? val : +val
-        }else {
-          style.height = PERCENT_REGX.test(val) ? val : +val
+      const { width: originWidth, height: originHeight } = originImage || {}
+
+      // 若background-size为auto 则不设置宽高
+    //  if (width === 'auto' && height === 'auto') return
+      if (width === 'auto' && height === 'auto' && originImage) {
+      newHeight = originHeight
+      newWidth = originWidth
+      } else if (width === 'auto' && originImage) {
+        // 1. auto % - 真实的宽度
+        if (PERCENT_REGX.test(height)) {
+          if (!layoutInfo) return 
+          const { height: layoutHeight} = layoutInfo
+
+          newHeight = (parseFloat(height) / 100) * layoutHeight
+          newWidth = newHeight * originWidth / originHeight
+        } else { // 2. auto px/rpx - 根据比例计算
+          newHeight = height
+          newWidth = newHeight * originWidth / originHeight
         }
-        return style
-      }, {})
-      
+      }else if (height === 'auto' && originImage) { // 10px auto
+        // 1. % auto - 真实的宽度
+        if (PERCENT_REGX.test(width)) {
+          if (!layoutInfo) return
+          const { width: layoutWidth} = layoutInfo
+          newWidth = (parseFloat(width) / 100) * layoutWidth
+          newHeight = newWidth * originHeight / originWidth
+        } else { // 2. px/rpx auto - 根据比例计算
+          newWidth = width
+          newHeight = newWidth * originHeight / originWidth
+          }        
+      } else {
+        // 数值类型设置为 stretch
+        imageProps.style.resizeMode = 'stretch'
+        newWidth = width === 'auto' ? (originImage?.width || width) : PERCENT_REGX.test(width) ? width : +width
+        newHeight = height === 'auto' ? (originImage?.height || height) : PERCENT_REGX.test(height) ? height : +height
+      }
+    
       // 样式合并
       imageProps.style = {
         ...imageProps.style,
-        ...style
+        width: newWidth,
+        height: newHeight
       }
     }
   }
   // background-image转换为source
-  function backgroundImage([imageStyle, imageProps]) {
+  function backgroundImage([imageStyle, imageProps, ...others]) {
     let val = imageStyle.backgroundImage
     if (!val) return 
     const url = parseUrl(val)
@@ -109,12 +147,51 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle) => {
     imageProps.source = {uri: url}
   }
 
-  applyHandlers([ backgroundSize, backgroundImage ],[imageStyle, imageProps])
+  applyHandlers([ backgroundSize, backgroundImage ],[imageStyle, imageProps, originImage, layoutInfo])
 
   if (!imageProps?.source) return null
 
   return imageProps
 }
+
+function wrapImage(imageStyle, layoutInfo) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [originImage, setOriginImage] = useState(null);
+
+  const bgImage = imageStyleToProps(imageStyle, originImage, layoutInfo)
+  if (!imageStyle) return null
+
+  useEffect(() => {
+    const { style, source } = bgImage
+    let { uri } = (source || {}) as ImageURISource
+    let { height, width  } = (style || {}) as ImageStyle
+  
+    if (!uri) return;
+  //  if ((height=== 'auto' && width === 'auto') ||  ![height, width].includes('auto')) return 
+    if (![height, width].includes('auto')) return 
+    setIsLoading(true)
+    Image.getSize(uri, (width, height) => {
+      setIsLoading(false)      
+      setOriginImage({
+        width,
+        height
+      })
+    }, () => {
+      setIsLoading(false)
+      setOriginImage(null)
+    })
+    return () => {
+      setIsLoading(false)
+      setOriginImage(null)
+    }
+  }, [imageStyle.backgroundImage, imageStyle.backgroundSize])
+  
+
+  return bgImage && !isLoading && <View style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
+  <Image {...bgImage}/>
+</View>
+}
+
 
 function splitStyle(styles: ExtendedViewStyle) {
   return groupBy(styles, (key) => {
@@ -133,17 +210,14 @@ function every(children: ElementNode, callback: (children: ElementNode) => boole
   return Children.toArray(children).every((child) => callback(child as ElementNode))
 }
 
-function wrapChildren(children: ElementNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
+function wrapChildren(children: ElementNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle, layoutInfo?: any) {
   if (every(children, (child)=>isText(child))) {
     children = <Text style={textStyle}>{children}</Text>
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
-  const bgImage = imageStyleToProps(imageStyle)
-
-  return [
-    bgImage && <Image {...bgImage}/>,
+  return [wrapImage(imageStyle, layoutInfo),
     children
   ]
 }
@@ -159,7 +233,8 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   } = props
 
   const [isHover, setIsHover] = useState(false)
-  const measureTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [layoutInfo, setLayoutInfo] = useState(null)
 
   const layoutRef = useRef({})
 
@@ -218,15 +293,27 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     setStayTimer()
   }
 
-  const onLayout = () => {
+  const onLayout = (res) => {
+    const layout  = res?.nativeEvent?.layout
+    layout && setLayoutInfo({
+      height: layout.height,
+      width: layout.width
+    })
     nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
 
+  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
+    defaultStyle,
+    styleObj,
+    ...(isHover ? hoverStyle : [])]
+  ))
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...(enableOffset ? { onLayout } : {}),
+    onLayout,
+    ...((enableOffset || isLayout(imageStyle)) ? { onLayout } : {}),
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -241,31 +328,13 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     'enable-offset'
   ])
 
-  React.useEffect(() => {
-    setTimeout(() => {
-      nodeRef.current = nodeRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
-        nodeRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    })
-    return () => {
-      measureTimeout.current && clearTimeout(measureTimeout.current);
-      measureTimeout.current = null
-    }
-  }, [nodeRef])
-
-  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
-    defaultStyle,
-    styleObj,
-    ...(isHover ? hoverStyle : [])]
-  ))
-
   return (
     <View
       ref={nodeRef}
       {...innerProps}
       style={innerStyle}
     >
-      {wrapChildren(children, textStyle, imageStyle)}
+      {wrapChildren(children, textStyle, imageStyle, layoutInfo)}
     </View>
   )
 })
