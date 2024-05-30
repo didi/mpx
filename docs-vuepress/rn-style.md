@@ -239,59 +239,163 @@ rn支持的枚举值映射如下表，其他不支持的枚举值会被 mpx 编�
 
 ### 边距与border
 
-|属性|支持的value|
-| --- | --- | 
-|margin| number,string |
-|margin-top| 支持 | 
-|margin-left|支持| 
-|margin-bottom| 支持| 
-|margin-right| 支持| 
-|padding| 支持 |
-|padding-top| 支持| 
-|padding-left| 支持| 
-|padding-bottom| 支持| 
-|border-bottom-color| 支持| 
-|border-bottom-width| 支持| 
-|border-left-color|支持 | 
-|border-left-width| 支持| 
-|border-right-color|支持 | 
-|border-right-width| 支持| 
-|border-top-color|支持 | 
-|border-top-width| 支持| 
-|border-color |仅支持设置 color 不支持缩写|
-|border-style |仅支持设置 'solid', 'dotted', 'dashed',不支持缩写|
-|border-width |仅支持number，不支持缩写|
-|border |支持 width style color的缩写模式 |
-|border-radius| 支持width, 支持一个缩写模式|
-
-
 #### margin
-#### margin-top
-#### margin-bottom
-#### margin-left
-#### margin-right
-#### padding
-#### padding-top
-#### padding-bottom
-#### padding-left
-#### padding-right
+margin是margin-top、margin-right、margin-left、margin-bottom的缩写模式, 目前仅支持四种缩写模式。
 
-#### border
-border是border-width、border-style、border-color的缩写模式, 目前仅支持一种缩写模式
+**值支持类型**
 
-__语法__
+    string: 'auto'
+    number: rpx，px, %
+
+**语法**
 
 ``` css
-/* width | style | color */
-border: 1px solid red;
+/* all */
+margin: 2px;
+
+/* top and bottom | left and right */
+margin: 5% auto;
+
+/* top | left and right | bottom */
+margin: 1rpx auto 2rpx;
+
+/* top | right | bottom | left */
+margin: 1rpx 2rpx 2rpx ;
+```
+#### margin-top/margin-bottom/margin-right/margin-left
+**值支持类型**
+
+    number: rpx，px, %
+
+**语法**
+``` css
+margin-top: 2px;
+margin-top: 2rpx;
+margin-top: 10%;
+```
+
+#### padding
+padding是padding-left、padding-right、padding-left、padding-bottom的缩写模式, 目前仅支持四种缩写模式。
+
+**值支持类型**
+
+    string: 'auto'
+    number: rpx，px, %
+
+**语法**
+
+``` css
+/* all */
+padding: 2px;
+
+/* top and bottom | left and right */
+padding: 5% auto;
+
+/* top | left and right | bottom */
+padding: 1rpx auto 2rpx;
+
+/* top | right | bottom | left */
+padding: 1rpx 2rpx 2rpx ;
+```
+#### padding-top/padding-bottom/padding-left/padding-right
+**值支持类型**
+
+    number: rpx，px, %
+
+**语法**
+``` css
+padding-top: 2px;
+padding-top: 2rpx;
+padding-top: 10%;
 ```
 
 #### border
 border是border-width、border-style、border-color的缩写模式, 目前仅支持一种缩写模式。
 
-__语法__
-
 ``` css
 /* width | style | color */
 border: 1px solid red;
+```
+#### border-color
+设置边框的颜色, 目前只支持统一设置，不支持缩写。
+
+**值支持类型**
+
+color: 参考[Color](https://reactnative.dev/docs/colors)
+
+**语法**
+``` css
+/* all border */
+border-color: red;
+```
+
+#### border-style
+设置边框的样式, 目前只支持统一设置，不支持缩写。
+
+**值支持类型**
+
+  string: 'solid', 'dotted', 'dashed'
+
+**语法**
+
+``` css
+/* all border */
+border-color: 'solid';
+```
+#### border-width
+设置边框的宽度，目前只支持统一设置，不支持缩写。
+
+**值支持类型**
+
+    number: px rpx %
+
+**语法**
+
+``` css
+/* all border */
+border-width: 2px;
+```
+#### border-top-color/border-bottom-color/border-left-color/border-right-color
+设置各边框的颜色
+
+**值支持类型**
+
+color: 参考[Color](https://reactnative.dev/docs/colors)
+
+**语法**
+``` css
+border-top-color: red;
+```
+#### border-top-width/border-bottom-width/border-left-width/border-right-width
+设置各边框的宽度
+
+**值支持类型**
+
+    number: px rpx
+
+**语法**
+``` css
+border-top-width: 2px;
+```
+#### border-radius
+设置border的圆角格式，支持一种缩写方式
+**值支持类型**
+
+    number: px rpx
+
+**语法**
+``` css
+/* all */
+border-radius: 2px;
+/* top-left | top-right | bottom-right | bottom-left */
+border-radius: 10px 10px 10px 0;
+```
+#### border-bottom-left-radius/border-bottom-right-radius/border-top-left-radius/border-top-right-radius
+**值支持类型**
+
+    number: px rpx
+
+**语法**
+``` css
+border-bottom-left-radius: 2px;
 ```
