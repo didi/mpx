@@ -224,7 +224,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatLineHeight = ({ prop, value }) => {
-    if (!verifyValues({ prop, value, valueType: ValueType.number }).value) return false
+    if (!verifyValues({ prop, value, valueType: ValueType.number }).valid) return false
 
     return {
       prop,
