@@ -2,11 +2,11 @@
 
 React Native的样式的支持基本为web样式的一个子集，同时还有一些属性并未与Web对齐，因此跨平台输出RN时，为了保障多端输出样式一致，可参考本文针对样式在RN上的支持情况来进行样式编写。
 
-## 布局说明 尚群峰
+## 布局说明
 ### flex布局
 在React Native中，可以通过Flexbox规则来布局组件元素。基于yoga布局引擎实现，可查看[文档](https://github.com/facebook/yoga)。
 
-注：RN中View标签的主轴是column，和css不一致，使用mpx开发会进行磨平，默认的主轴方向是row。
+注：RN中View标签的主轴是column，和css不一致，使用mpx开发会进行抹平，默认的主轴方向是row。
 
 ### position布局
 在RN中position仅支持relative（默认）和 absolute。可[参考文档](https://reactnative.dev/docs/layout-props#position)。
@@ -428,7 +428,7 @@ z-index: 2;
 
 ```
 
-### 背景相关 群峰再补充一下
+### 图片背景
 在 view 组件上可以定义一下 background 相关属性：
 
 |属性|支持的value|
