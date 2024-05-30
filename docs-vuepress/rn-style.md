@@ -272,7 +272,7 @@ flex 1
 
 **语法**
 
-``` css
+```css
 
 flex-grow: 1;
 ```
@@ -287,7 +287,7 @@ flex-grow: 1;
 
 **语法**
 
-``` css
+```css
 
 flex-shrink: 1;
 
@@ -420,6 +420,7 @@ z-index: 2;
 margin是margin-top、margin-right、margin-left、margin-bottom的缩写模式, 目前仅支持四种缩写模式。
 
 **值支持类型**
+
   color: 参考[Color](https://reactnative.dev/docs/colors)
 
 **语法**
@@ -448,6 +449,7 @@ font-family: "PingFangSC-Regular"
 可设置字体的大小
 
 **值支持类型**
+
   px,rpx
 
 **语法**
@@ -462,6 +464,7 @@ font-size: 12px;
 设置文本的字体样式。
 
 **值支持类型**
+
     enum: normal，italic
 
 **语法**
@@ -475,6 +478,7 @@ font-style: italic;
 设置文字的权重。
 
 **值支持类型**
+
     enum: 100，200，300，400，500，600，800，900
 
 **语法**
@@ -489,6 +493,7 @@ font-weight: 500;
 设置文本的字体变体
 
 **值支持类型**
+
     enum: small-caps, oldstyle-nums, lining-nums, tabular-nums, proportional-nums
 
 **语法**
@@ -502,6 +507,7 @@ font-variant: lining-nums;
 定义字符之间的间距
 
 **值支持类型**
+
     px,rpx
 
 **语法**
@@ -516,6 +522,7 @@ letter-spacing: 2px;
 设置行高。
 
 **值支持类型**
+
   px,rpx,%
 
 **语法**
@@ -531,6 +538,7 @@ line-height: 16px
 设置文本的水平对齐方式。
 
 **值支持类型**
+
   enum: auto, left, right, center, justify
 
 **语法**
@@ -547,6 +555,7 @@ text-align: center;
 设置文本的装饰线样式。
 
 **值支持类型**
+
   enum: none, underline, line-through, underline line-through
 
 **语法**
@@ -563,6 +572,7 @@ text-decoration-line: underline;
 设置文本的大小写转换。
 
 **值支持类型**
+
   enum: none, uppercase, lowercase, capitalize
 
 **语法**
