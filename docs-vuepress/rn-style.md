@@ -31,12 +31,13 @@ mpx 主要处理了以下几种样式转换规则：
 2. rpx 单位的转换
 3. css 简写的转换
 4. 不支持的属性过滤（会被 mpx 编译处理时丢弃，有编译 error提示）
-    - 双端都不支持的 prop <br/>
-    box-sizing|white-space|text-overflow|animation|transition|
-    - ios 不支持的 prop <br/>
-    vertical-align
-    - android 不支持的 prop <br/>
-    text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius
+    
+    | 描述             | 不支持的属性                                                                          |
+    | -------------- | ------------------------------------------------------------------------------------------|
+    | 双端都不支持    | box-sizing/white-space/text-overflow/animation/transition|                            |
+    | ios 不支持     | vertical-align                                                                         |
+    | android 不支持 | text-decoration-style/text-decoration-color/shadow-offset/shadow-opacity/shadow-radius |
+        
 5. 属性不支持的枚举值过滤
 rn支持的枚举值映射如下表，其他不支持的枚举值会被 mpx 编译处理时丢弃，设置无效
 
@@ -66,22 +67,59 @@ rn支持的枚举值映射如下表，其他不支持的枚举值会被 mpx 编�
 - color
   - 支持的 color 值的类型参考rn文档 https://reactnative.dev/docs/colors
 #### 缩写支持
-- text-decoration
-  - 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种顺序，值以空格分隔按顺序赋值
-- margin|padding
-  - 支持 margin: 0/margin: 0 auto/margin: 0 auto 10px/margin: 0 10px 10px 20px/这四种格式
-- text-shadow
-  - 仅支持 offset-x | offset-y | blur-radius | color 排序，值以空格分隔按顺序赋值
-- border
-  - 仅支持 width | style | color 这种排序，值以空格分隔按顺序赋值
-- box-shadow
-  - 仅支持 offset-x | offset-y | blur-radius | color 排序，值以空格分隔按顺序赋值
-- flex
-  - 仅支持 flex-grow | flex-shrink | flex-basis 这种顺序，值以空格分隔按顺序赋值
-- flex-flow
-  - 仅支持 flex-flow: flex-direction flex-wrap 这种顺序，值以空格分隔按顺序赋值
-- border-radius
-  - 仅支持 border-radius 0px/border-radius 0px 0px 0px 0px（值以空格分隔按顺序赋值）
+- text-decoration <br/>
+仅支持 text-decoration-line text-decoration-style text-decoration-color 这种顺序，值以空格分隔按顺序赋值
+```css
+text-decoration: underline dotted red;
+```
+- margin|padding <br/>
+支持 margin: 0/margin: 0 auto/margin: 0 auto 10px/margin: 0 10px 10px 20px/这四种格式
+```css
+/* 单个值：上下左右 */
+margin: 10px;
+/* 两个值：上下 左右 */
+margin: 0 10px;
+/* 三个值：上 左右 下 */
+margin: 0 10px 0;
+/* 四个值：上 右 下 左 */
+margin: 0 10px 0 10px;
+```
+- text-shadow <br/>
+仅支持 offset-x | offset-y | blur-radius | color 排序，值以空格分隔按顺序赋值
+```css
+text-shadow: 1rpx 3rpx 0 #2E0C02;
+```
+- border <br/>
+仅支持 width | style | color 这种排序，值以空格分隔按顺序赋值
+```css
+border: 1px;
+border: 1px solid;
+border: 1px double pink;
+```
+- box-shadow <br/>
+仅支持 offset-x | offset-y | blur-radius | color 排序，值以空格分隔按顺序赋值
+```css
+box-shadow: 0 1px 3px rgba(139,0,0,0.32);
+```
+- flex <br/>
+仅支持 flex-grow | flex-shrink | flex-basis 这种顺序，值以空格分隔按顺序赋值
+```css
+flex: 0 1 1;
+flex: 1;
+flex: 1 0;
+```
+- flex-flow <br/>
+仅支持 flex-flow: flex-direction flex-wrap 这种顺序，值以空格分隔按顺序赋值
+```css
+flex-flow: row;
+flex-flow: row no-wrap;
+```
+- border-radius <br/>
+仅支持 border-radius 0px/border-radius 0px 0px 0px 0px（值以空格分隔按顺序赋值）
+```css
+border-radius: 10px;
+border-radius: 0 0 0 10px;
+```
 
 ### 样式增强
 #### text  尚群峰
@@ -134,9 +172,6 @@ rn支持的枚举值映射如下表，其他不支持的枚举值会被 mpx 编�
   <Text style="{{ fontSize: 15, fontWeight: 700}}">Hello World!<Text>
 </View>
 ```
-
-#### 图片 华静文
-#### button 华静文
 #### 图片
 为了对齐rn和web的展示效果，我们给 Image 组件增加了以下默认样式：
 ```javascript
@@ -404,6 +439,26 @@ z-index: 2;
 |background-repeat|仅支持 no-repeat|
 |background|该简写属性仅支持以上属性，需要注意的是在 background 简写中仅支持 background-size 的枚举值 contain、cover、auto，rpx、px、% number类型值不支持|
 
+```css
+/* 支持 */
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink contain no-repeat;
+background: #000;
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink;
+background-size: 50%;
+background-size: 50% 25%;
+background-size: contain;
+background-size: cover;
+background-size: auto;
+background-size: 20px auto;
+background-repeat: no-repeat;
+background-color: pink;
+background-image: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg");
+/* 不支持 */
+background: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
+background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
+background-size: 50%, 25%, 25%;
+background-repeat: repeat; 
+```
 ### 阴影
 |属性|支持的value|
 | --- | --- |
