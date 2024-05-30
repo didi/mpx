@@ -19,7 +19,6 @@ const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
-const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -176,20 +175,11 @@ module.exports = function (content) {
     }
   }
 
-  const fillMpxCustomElement = () => {
-    json.usingComponents = json.usingComponents || {}
-    json.usingComponents.element = resolveMpxCustomElementPath(packageName)
-    Object.assign(json.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
-    mpx.collectDynamicSlotDependencies(packageName)
-  }
-
   const dependencyComponentsMap = {}
 
   if (queryObj.mpxCustomElement) {
     this.cacheable(false)
-    fillMpxCustomElement()
-    callback()
-    return
+    mpx.collectDynamicSlotDependencies(packageName)
   }
 
   // 快应用补全json配置，必填项
@@ -272,7 +262,12 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, callback)
+      }, () => {
+        if (runtimeCompile) {
+          this._module.addPresentationalDependency(new RecordJsonRuntimeInfoDependency(packageName, resourcePath, dependencyComponentsMap))
+        }
+        callback()
+      })
     } else {
       callback()
     }
@@ -710,12 +705,6 @@ module.exports = function (content) {
       },
       (callback) => {
         processGenerics(json.componentGenerics, this.context, callback)
-      },
-      (callback) => {
-        if (runtimeCompile) {
-          this._module.addPresentationalDependency(new RecordJsonRuntimeInfoDependency(packageName, resourcePath, dependencyComponentsMap))
-        }
-        callback()
       }
     ], (err) => {
       callback(err, processDynamicEntry)

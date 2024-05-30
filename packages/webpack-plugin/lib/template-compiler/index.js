@@ -6,7 +6,6 @@ const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
 const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
-const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -86,7 +85,7 @@ module.exports = function (raw) {
     }
   }
 
-  let result = compiler.serialize(ast)
+  const result = compiler.serialize(ast)
 
   if (isNative) {
     return result
@@ -169,12 +168,6 @@ global.currentInject.getRefsData = function () {
     skipEmit: true,
     extractedResultSource: resultSource
   })
-
-  if (queryObj.mpxCustomElement) {
-    this.cacheable(false)
-    const templateEngine = createTemplateEngine(mode)
-    result += `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
-  }
 
   // 运行时编译的组件直接返回基础模板的内容，并产出动态文本内容
   if (runtimeCompile) {

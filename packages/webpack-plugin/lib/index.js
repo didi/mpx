@@ -67,6 +67,7 @@ const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/con
 const isEmptyObject = require('./utils/is-empty-object')
 const genDynamicTemplate = require('./runtime-render/gen-dynamic-template')
 const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
+const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -1218,6 +1219,7 @@ class MpxWebpackPlugin {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
           for (const [filename, { extractedInfo } = {}] of assetsInfo) {
             if (extractedInfo) {
+              // 动态化组件的静态内容抽离和注入
               if (extractedInfo.dynamic) {
                 const { moduleId, type, content, resourcePath, packageName, dynamicAsset } = extractedInfo
                 if (type === 'json') {
@@ -1259,6 +1261,21 @@ class MpxWebpackPlugin {
                   } else {
                     dynamicAssets[moduleId][type] = _dynamicAsset
                   }
+                }
+              }
+
+              // 动态化容器组件的 template/json 动态注入
+              if (extractedInfo.mpxCustomElement) {
+                const { type, packageName, content } = extractedInfo
+                if (type === 'json') {
+                  const _content = JSON.parse(content)
+                  _content.usingComponents = _content.usingComponents || {}
+                  _content.usingComponents.element = resolveMpxCustomElementPath(packageName)
+                  Object.assign(_content.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
+                  extractedInfo.content = JSON.stringify(_content)
+                } else if (type === 'template') {
+                  const templateEngine = createTemplateEngine(mpx.mode)
+                  extractedInfo.content = content + `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
                 }
               }
 
