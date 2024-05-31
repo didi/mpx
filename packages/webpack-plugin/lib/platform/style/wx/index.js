@@ -148,7 +148,8 @@ module.exports = function getSpec ({ warn, error }) {
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
       // 校验 value 类型
-      const value = verifyValues({ prop, value: values[idx], valueType }).value
+      verifyValues({ prop, value: values[idx], valueType })
+      const value = values[idx]
       if (isIllegalValue({ prop: dashProp, value })) {
         // 过滤不支持 value
         unsupportedValueError({ prop: dashProp, value })
