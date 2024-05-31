@@ -227,43 +227,44 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
+  const inheritTextStyle = extractTextStyle(style)
+
   const textHoverStyle = extractTextStyle(hoverStyle)
 
-  const { viewStyle, textStyle } = useMemo<{
-    viewStyle: ViewStyle
-    textStyle: TextStyle
-  }>(() => {
-    const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
-    const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
-    const plainBorderColor = disabled
-      ? 'rgba(0, 0, 0, .2)'
-      : applyHoverEffect
-      ? `rgba(${plainColor},.6)`
-      : `rgb(${plainColor})`
-    const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
-    const plainTextColor = disabled
-      ? 'rgba(0, 0, 0, .2)'
-      : applyHoverEffect
-      ? `rgba(${plainColor}, .6)`
-      : `rgb(${plainColor})`
-    const normalTextColor =
-      type === 'default'
-        ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
-        : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
-    const inheritTextStyle = extractTextStyle(style)
-    return {
-      viewStyle: {
-        borderWidth: 1,
-        borderStyle: 'solid',
-        borderColor: plain ? plainBorderColor : normalBorderColor,
-        backgroundColor: plain ? 'transparent' : normalBackgroundColor,
-      },
-      textStyle: {
-        color: plain ? plainTextColor : normalTextColor,
-        ...inheritTextStyle
-      }
-    }
-  }, [type, plain, applyHoverEffect, loading, disabled, style])
+  const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
+
+  const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
+
+  const plainBorderColor = disabled
+    ? 'rgba(0, 0, 0, .2)'
+    : applyHoverEffect
+    ? `rgba(${plainColor},.6)`
+    : `rgb(${plainColor})`
+
+  const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
+
+  const plainTextColor = disabled
+    ? 'rgba(0, 0, 0, .2)'
+    : applyHoverEffect
+    ? `rgba(${plainColor}, .6)`
+    : `rgb(${plainColor})`
+
+  const normalTextColor =
+    type === 'default'
+      ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
+      : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
+
+  const viewStyle = {
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: plain ? plainBorderColor : normalBorderColor,
+    backgroundColor: plain ? 'transparent' : normalBackgroundColor,
+  }
+
+  const textStyle = {
+    color: plain ? plainTextColor : normalTextColor,
+    ...inheritTextStyle
+  }
 
   const defaultViewStyle = [
     styles.button,
@@ -340,7 +341,6 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
       ...defaultTextStyle,
     ])
   })
-
 
   const onLayout = () => {
     nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
