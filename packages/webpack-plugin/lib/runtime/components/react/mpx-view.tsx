@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image, ImageURISource, ImageStyle } from 'react-native'
-import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef } from 'react'
+import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef, ReactNode } from 'react'
 
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
@@ -14,7 +14,6 @@ import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX } from './utils'
 
-type ElementNode = React.ReactNode
 
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
@@ -23,7 +22,7 @@ type ExtendedViewStyle = ViewStyle & {
 
 export interface _ViewProps extends ExtendedViewStyle {
   style?: Array<ExtendedViewStyle>
-  children?: ElementNode
+  children?: ReactNode
   hoverStyle: Array<ExtendedViewStyle>
   ['hover-start-time']: number
   ['hover-stay-time']: number
@@ -237,16 +236,16 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-const isText = (ele: ElementNode) => {
+const isText = (ele: ReactNode) => {
   const displayName = ele?.type?.displayName
   return displayName === 'mpx-text' || displayName === 'Text'
 }
 
-function every(children: ElementNode, callback: (children: ElementNode) => boolean ) {
-  return Children.toArray(children).every((child) => callback(child as ElementNode))
+function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
+  return Children.toArray(children).every((child) => callback(child as ReactNode))
 }
 
-function wrapChildren(children: ElementNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
+function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
   if (every(children, (child)=>isText(child))) {
     children = <Text style={textStyle}>{children}</Text>
   } else {
