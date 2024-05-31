@@ -121,6 +121,8 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     binderror
   } = props
 
+  const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = StyleSheet.flatten(style)
+
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: {
       width: DEFAULT_IMAGE_WIDTH,
@@ -129,8 +131,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
   })
 
   const layoutRef = useRef({})
-
-  const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = StyleSheet.flatten(style)
+  const preSrc = useRef<string | undefined>()
 
   const resizeMode: ImageResizeMode = ModeMap.get(mode) || 'stretch'
   const isWidthFixMode = mode === 'widthFix'
@@ -144,6 +145,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
   const [imageWidth, setImageWidth] = useState(0)
   const [imageHeight, setImageHeight] = useState(0)
   const [ratio, setRatio] = useState(0)
+  const [loaded, setLoaded] = useState(false)
 
   const fixedHeight = useMemo(() => {
     const fixed = viewWidth * ratio
@@ -243,8 +245,16 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     })
   }
 
-  const loadImage = useCallback((): void => {
-    if (!isWidthFixMode && !isHeightFixMode && !isCropMode) return
+  useEffect(() => {
+    if (!isWidthFixMode && !isHeightFixMode && !isCropMode) {
+      setLoaded(true)
+      return
+    }
+
+    const changed = preSrc.current !== src
+    preSrc.current = src
+    changed && setLoaded(false)
+
     if (typeof src === 'string') {
       RNImage.getSize(src, (width: number, height: number) => {
         if (isWidthFixMode || isHeightFixMode) {
@@ -254,6 +264,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
           setImageWidth(width)
           setImageHeight(height)
         }
+        changed && setLoaded(true)
       })
     } else {
       const { width = 0, height = 0 } = RNImage.resolveAssetSource(src) || {}
@@ -264,10 +275,9 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
         setImageWidth(width)
         setImageHeight(height)
       }
+      changed && setLoaded(true)
     }
   }, [isWidthFixMode, isHeightFixMode, isCropMode, src])
-
-  useEffect(() => loadImage(), [loadImage])
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -313,23 +323,25 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
         { overflow: 'hidden' },
       ]}
       onLayout={onViewLayout}>
-      <RNImage
-        {...innerProps}
-        source={source}
-        resizeMode={resizeMode}
-        onLoad={onImageLoad}
-        onError={onImageError}
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            width: !isCropMode ? '100%' : imageWidth,
-            height: !isCropMode ? '100%' : imageHeight,
-          },
-          {
-            ...(isCropMode && cropModeStyle),
-          },
-        ]}
-      />
+      {
+        loaded && <RNImage
+          {...innerProps}
+          source={source}
+          resizeMode={resizeMode}
+          onLoad={onImageLoad}
+          onError={onImageError}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              width: !isCropMode ? '100%' : imageWidth,
+              height: !isCropMode ? '100%' : imageHeight,
+            },
+            {
+              ...(isCropMode && cropModeStyle),
+            },
+          ]}
+        />
+      }
     </View>
   )
 })
