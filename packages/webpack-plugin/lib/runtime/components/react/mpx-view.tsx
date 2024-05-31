@@ -73,7 +73,6 @@ const isLayoutEvent = (style) => {
 function calculateSize(h, lh, ratio) {
   let height, width
   if (PERCENT_REGX.test(h)) { // auto  px/rpx 
-    if (!lh) return null
     height = (parseFloat(h) / 100) * lh
     width = height * ratio
   } else { // 2. auto px/rpx - 根据比例计算
@@ -116,12 +115,10 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle, imageSize, layoutInfo,
         newWidth = imageSizeWidth
       } else if (width === 'auto' && imageSize) { // auto px/rpx/%
         const dimensions = calculateSize(height, layoutInfo?.height, imageSizeWidth / imageSizeHeight)
-        if (!dimensions) return null
         newWidth = dimensions.width
         newHeight = dimensions.height
       }else if (height === 'auto' && imageSize) { // auto px/rpx/%
         const dimensions = calculateSize(width, layoutInfo?.width,  imageSizeHeight / imageSizeWidth)
-        if (!dimensions) return null
         newHeight = dimensions.width
         newWidth = dimensions.height
       } else { // 数值类型
