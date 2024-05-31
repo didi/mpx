@@ -449,7 +449,7 @@ useFetch().fetch({
 })
 ```
 
-* **注意：** options 参数同 [api-proxy](./extend.md#api-proxy) 章节。
+* **注意：** options 参数同 [xFetch](./extend.md#xFetch) 章节。
 
 
 ## api-proxy
