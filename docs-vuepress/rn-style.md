@@ -483,6 +483,7 @@ border-radius: 10px 10px 10px 0;
 
 
 #### color
+
 margin是margin-top、margin-right、margin-left、margin-bottom的缩写模式, 目前仅支持四种缩写模式。
 
 **值支持类型**
