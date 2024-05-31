@@ -122,7 +122,7 @@ border-radius: 0 0 0 10px;
 ```
 
 ### 样式增强
-#### text  尚群峰
+#### text
 ##### 文本节点说明
 
 在RN中，文本节点通常用来显示文本内容，可以通过 <Text> 组件来创建文本节点。文本节点可以包含文字、数字等内容，并且支持一些样式属性来调整文本的外观。可通过`style`属性设置样式。文本的样式列表可[参考这里](https://reactnative.dev/docs/layout-props#position)
@@ -193,7 +193,7 @@ border-radius: 0 0 0 10px;
     marginHorizontal: 'auto' // 按钮默认居中
 }
 ```
-#### view 尚群峰
+#### view
 
  为了对齐rn和web的展示效果，当`display`为`flex`时，会添加如下的默认属性:
  ```js
@@ -209,7 +209,7 @@ border-radius: 0 0 0 10px;
 
 > tips:不支持转换的属性在编译输出阶段会进行warning提示
 
-### flex布局 群峰
+### flex布局
 
 #### display
 
@@ -376,7 +376,7 @@ flex-wrap: wrap;
 
 ```
 
-### position布局 群峰
+### position布局
 
 
 
