@@ -479,8 +479,9 @@ border-radius: 2px;
 /* top-left | top-right | bottom-right | bottom-left */
 border-radius: 10px 10px 10px 0;
 
-### 文本相关 群峰
+```
 
+### 文本相关
 
 #### color
 
