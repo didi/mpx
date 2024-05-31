@@ -106,7 +106,7 @@ function defineUnsupportedProps (resObj, props) {
   props.forEach((item) => {
     defineProps[item] = {
       get () {
-        warn(`The ${item} attribute is not supported in React Native ${__mpx_mode__} environment`)
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`)
         return null
       }
     }
