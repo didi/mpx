@@ -72,24 +72,15 @@ module.exports = function getSpec ({ warn, error }) {
         const isUnsupporttedColor = colorRegExp.test(value)
         isNumber && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
         isUnsupporttedColor && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
-        return {
-          value,
-          valid: !isNumber && !isUnsupporttedColor
-        }
+        return !isNumber && !isUnsupporttedColor
       }
       case ValueType.number: {
         const isNumber = numberRegExp.test(value)
         !isNumber && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
-        return {
-          value,
-          valid: isNumber
-        }
+        return isNumber
       }
       default:
-        return {
-          value,
-          valid: true
-        }
+        return true
     }
   }
   // 统一校验 value type 值类型
@@ -225,7 +216,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatLineHeight = ({ prop, value }) => {
-    if (!verifyValues({ prop, value, valueType: ValueType.number }).valid) return false
+    if (!verifyValues({ prop, value, valueType: ValueType.number })) return false
 
     return {
       prop,
