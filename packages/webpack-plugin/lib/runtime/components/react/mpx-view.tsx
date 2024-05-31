@@ -59,7 +59,7 @@ const applyHandlers = (handlers: Handler[] , args) => {
   }
 }
 
-const isLayoutEvent = (style) => {  
+const checkNeedLayout = (style) => {  
   const [width, height] = style.sizeList || []
   return (PERCENT_REGX.test(height) && width === 'auto') || (PERCENT_REGX.test(width) && height === 'auto')
 }
@@ -72,6 +72,7 @@ const isLayoutEvent = (style) => {
 function calculateSize(h, lh, ratio) {
   let height, width
   if (PERCENT_REGX.test(h)) { // auto  px/rpx 
+    if (!lh) return null
     height = (parseFloat(h) / 100) * lh
     width = height * ratio
   } else { // 2. auto px/rpx - 根据比例计算
@@ -85,6 +86,52 @@ function calculateSize(h, lh, ratio) {
   }
 }
 
+// background-size 转换
+function backgroundSize (imageProps, preImageInfo, imageSize, layoutInfo) {
+  let sizeList = preImageInfo.sizeList
+  if (!sizeList) return
+  // 枚举值
+  if (['cover', 'contain'].includes(sizeList[0])) {
+    imageProps.style.resizeMode = sizeList[0]
+  } else {
+    const [width, height] = sizeList
+    let newWidth = 0, newHeight = 0
+
+    const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
+
+    if (width === 'auto' && height === 'auto' && imageSize) { // 均为auto
+      newHeight = imageSizeHeight
+      newWidth = imageSizeWidth
+    } else if (width === 'auto' && imageSize) { // auto px/rpx/%
+      const dimensions = calculateSize(height, layoutInfo?.height, imageSizeWidth / imageSizeHeight)
+      if (!dimensions) return
+      newWidth = dimensions.width
+      newHeight = dimensions.height
+    }else if (height === 'auto' && imageSize) { // auto px/rpx/%
+      const dimensions = calculateSize(width, layoutInfo?.width,  imageSizeHeight / imageSizeWidth)
+      if (!dimensions) return
+      newHeight = dimensions.width
+      newWidth = dimensions.height
+    } else { // 数值类型
+      // 数值类型设置为 stretch
+      imageProps.style.resizeMode = 'stretch'
+      newWidth = PERCENT_REGX.test(width) ? width : +width
+      newHeight = PERCENT_REGX.test(height) ? height : +height
+    }
+    // 样式合并
+    imageProps.style = {
+      ...imageProps.style,
+      width: newWidth,
+      height: newHeight
+    }
+  }
+}
+
+// background-image转换为source
+function backgroundImage(imageProps, preImageInfo) {
+  imageProps.src = preImageInfo.src
+}
+
 const imageStyleToProps = (imageStyle: ExtendedViewStyle, imageSize, layoutInfo, preImageInfo) => {
   if (!imageStyle) return null
   // 初始化
@@ -95,67 +142,18 @@ const imageStyleToProps = (imageStyle: ExtendedViewStyle, imageSize, layoutInfo,
     }
   }
 
-  // background-size 转换
-  function backgroundSize (imageStyle, imageProps, preImageInfo, imageSize, layoutInfo) {
-    let sizeList = preImageInfo.sizeList
-    if (!sizeList) return
-    // 枚举值
-    
-    if (['cover', 'contain'].includes(sizeList[0])) {
-      imageProps.style.resizeMode = sizeList[0]
-    } else {
-      const [width, height] = sizeList
-      let newWidth = 0, newHeight = 0
-
-      const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
-
-      if (width === 'auto' && height === 'auto' && imageSize) { // 均为auto
-        newHeight = imageSizeHeight
-        newWidth = imageSizeWidth
-      } else if (width === 'auto' && imageSize) { // auto px/rpx/%
-        const dimensions = calculateSize(height, layoutInfo?.height, imageSizeWidth / imageSizeHeight)
-        newWidth = dimensions.width
-        newHeight = dimensions.height
-      }else if (height === 'auto' && imageSize) { // auto px/rpx/%
-        const dimensions = calculateSize(width, layoutInfo?.width,  imageSizeHeight / imageSizeWidth)
-        newHeight = dimensions.width
-        newWidth = dimensions.height
-      } else { // 数值类型
-        // 数值类型设置为 stretch
-        imageProps.style.resizeMode = 'stretch'
-        newWidth = PERCENT_REGX.test(width) ? width : +width
-        newHeight = PERCENT_REGX.test(height) ? height : +height
-      }
-      // 样式合并
-      imageProps.style = {
-        ...imageProps.style,
-        width: newWidth,
-        height: newHeight
-      }
-    }
-  }
-  
-  // background-image转换为source
-  function backgroundImage(imageStyle, imageProps, preImageInfo) {
-    let val = imageStyle.backgroundImage
-    let src = preImageInfo.src ?  preImageInfo.src : parseUrl(val)
-    if (!src) return null
-    imageProps.src = src
-  }
-
-  applyHandlers([ backgroundSize, backgroundImage ],[imageStyle, imageProps, preImageInfo, imageSize, layoutInfo])
+  applyHandlers([ backgroundSize, backgroundImage ],[imageProps, preImageInfo, imageSize, layoutInfo])
   if (!imageProps?.src) return null
-
   return imageProps
 }
 
 
 function preParseImage(imageStyle:ExtendedViewStyle) {
-  const { backgroundImage, backgroundSize = [] } = imageStyle
+  const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle
   const src = parseUrl(backgroundImage)
   if (!src) return null
 
-  let sizeList = backgroundSize.slice()
+  let sizeList = backgroundSize.slice() as string []
 
   sizeList.length === 1 &&  sizeList.push(sizeList[0])
 
@@ -167,7 +165,7 @@ function preParseImage(imageStyle:ExtendedViewStyle) {
 
 function wrapImage(imageStyle) {
   const [show, setShow] = useState(false)
-  const [imageSize, setImageSize] = useState(null);
+  const [imageSize, setImageSize] = useState(null)
   const [layoutInfo, setLayoutInfo] = useState(null)
 
   // 预解析
@@ -176,16 +174,10 @@ function wrapImage(imageStyle) {
   if (!preImageInfo) return null
 
   // 判断是否可挂载onLayout
-  const isViewLayout = isLayoutEvent(preImageInfo)
-
-  let bgImage = null
-
-  if (show) {
-    bgImage = imageStyleToProps(imageStyle, imageSize, layoutInfo, preImageInfo)
-  }
+  const needLayout = checkNeedLayout(preImageInfo)
 
   useEffect(() => {
-    const { src, sizeList = [] } = preImageInfo
+    const { src, sizeList } = preImageInfo
 
     if (!src) return
     if (!sizeList.includes('auto')) {
@@ -195,37 +187,27 @@ function wrapImage(imageStyle) {
     Image.getSize(src, (width, height) => {
       setImageSize({ width, height });
       //1. 当需要绑定onLayout 2. 获取到布局信息
-      (!isViewLayout || layoutInfo) && setShow(true)
-    }, () => {
-      setShow(false)
-      setImageSize(null)
-      setLayoutInfo(null)
+      (!needLayout || layoutInfo) && setShow(true)
     })
     return () => {
       setShow(false)
       setImageSize(null)
       setLayoutInfo(null)
     }
-  }, [imageStyle.backgroundImage])
-  
+  }, [preImageInfo.src])
 
   const onLayout = (res) => {
-    const layout  = res?.nativeEvent?.layout
+    const layout  = res?.nativeEvent?.layout || {}
     setLayoutInfo({
       height: layout.height,
       width: layout.width
     })
     imageSize && setShow(true)
   }
-
-  const props = isViewLayout ? {
-    onLayout
-  } : {}
-  return <View {...props}  style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
-  {show && <Image {...bgImage}/>}
+  return <View {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
+  {show && <Image  {...imageStyleToProps(imageStyle, imageSize, layoutInfo, preImageInfo)} />}
 </View>
 }
-
 
 function splitStyle(styles: ExtendedViewStyle) {
   return groupBy(styles, (key) => {
