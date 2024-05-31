@@ -72,11 +72,6 @@ export const parseUrl = (cssUrl: string = '') => {
   return match?.[1]
 }
 
-export const hasElementType = (element: ReactNode, type: string) => {
-  if (!element) return false
-  return (element as any)?.type?.displayName === type
-}
-
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
   return {
     ...transferProps,

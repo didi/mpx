@@ -12,7 +12,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { parseUrl, hasElementType, TEXT_STYLE_REGEX, PERCENT_REGX } from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX } from './utils'
 
 type ElementNode = React.ReactNode
 
@@ -237,8 +237,9 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-const isText = (children: ElementNode) => {
-  return hasElementType(children, 'mpx-text') || hasElementType(children, 'Text')
+const isText = (ele: ElementNode) => {
+  const displayName = ele?.type?.displayName
+  return displayName === 'mpx-text' || displayName === 'Text'
 }
 
 function every(children: ElementNode, callback: (children: ElementNode) => boolean ) {
