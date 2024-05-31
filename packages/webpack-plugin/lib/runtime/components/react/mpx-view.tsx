@@ -132,8 +132,7 @@ function backgroundImage(imageProps, preImageInfo) {
   imageProps.src = preImageInfo.src
 }
 
-const imageStyleToProps = (imageStyle: ExtendedViewStyle, imageSize, layoutInfo, preImageInfo) => {
-  if (!imageStyle) return null
+const imageStyleToProps = (preImageInfo, imageSize, layoutInfo) => {
   // 初始化
   const imageProps: ImageProps = {
     style: {
@@ -205,8 +204,8 @@ function wrapImage(imageStyle) {
     imageSize && setShow(true)
   }
   return <View {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
-  {show && <Image  {...imageStyleToProps(imageStyle, imageSize, layoutInfo, preImageInfo)} />}
-</View>
+    {show && <Image  {...imageStyleToProps(preImageInfo, imageSize, layoutInfo)} />}
+  </View>
 }
 
 function splitStyle(styles: ExtendedViewStyle) {
