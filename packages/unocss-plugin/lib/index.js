@@ -86,16 +86,18 @@ function normalizeOptions (options) {
     config,
     configFiles,
     transformCSS,
-    transformGroups,
+    transformGroups, // false | true | { separators: [':','-'] }
     webOptions = {}
   } = options
+  // 是否兼容为true的写法
+  if (transformGroups) transformGroups = transformGroups instanceof Object ? transformGroups : {}
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
     include: scan.include || [],
     exclude: scan.exclude || [],
     transformers: [
-      ...transformGroups ? [transformerVariantGroup()] : [],
+      ...transformGroups ? [transformerVariantGroup(transformGroups)] : [],
       ...transformCSS ? [transformerDirectives()] : []
     ],
     ...webOptions
@@ -321,7 +323,7 @@ class MpxUnocssPlugin {
           // pre process
           source = transformAlias(source)
           if (this.options.transformGroups) {
-            source = transformGroups(source)
+            source = transformGroups(source, this.options.transformGroups)
           }
           const content = source.source()
           // escape & fill classesMap
