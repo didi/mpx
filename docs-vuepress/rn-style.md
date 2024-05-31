@@ -568,7 +568,7 @@ RN 仅支持部分常用的缩写形式，具体参加下表：
 |margin|margin: 0;margin: 0 auto;margin: 0 auto 10px;margin: 0 10px 10px 20px;|-|
 |padding|padding: 0;padding: 0 auto;padding: 0 auto 10px;padding: 0 10px 10px 20px;|-|
 |text-shadow|仅支持 offset-x offset-y blur-radius color 排序|顺序固定，值以空格分隔后按按顺序赋值|
-|border|仅支持 width style color|顺序固定，值以空格分隔后按按顺序赋值|
+|border|仅支持 border-width border-style border-color|顺序固定，值以空格分隔后按按顺序赋值|
 |box-shadow|仅支持 offset-x offset-y blur-radius color|顺序固定，值以空格分隔后按按顺序赋值|
 |flex|仅支持 flex-grow flex-shrink flex-basis|顺序固定，值以空格分隔后按按顺序赋值|
 |flex-flow|仅支持 flex-direction flex-wrap|顺序固定，值以空格分隔后按按顺序赋值|
