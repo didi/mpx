@@ -6,7 +6,8 @@ React Native的样式的支持基本为web样式的一个子集，同时还有�
 ### flex布局
 在React Native中，可以通过Flexbox规则来布局组件元素。基于yoga布局引擎实现，可查看[文档](https://github.com/facebook/yoga)。
 
-注：RN中View标签的主轴是column，和css不一致，使用mpx开发会进行抹平，默认的主轴方向是row。
+注：在React Native（RN）中，View标签的主轴默认是 column，这与CSS的默认行为不同。在mpx中，当你设置`display: flex`时，主轴默认设定为row。
+
 
 ### position布局
 在RN中position仅支持relative（默认）和 absolute。可[参考文档](https://reactnative.dev/docs/layout-props#position)。
