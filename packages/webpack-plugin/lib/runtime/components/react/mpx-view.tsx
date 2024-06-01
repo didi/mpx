@@ -99,20 +99,23 @@ function backgroundSize (imageProps, preImageInfo, imageSize, layoutInfo) {
 
     const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
 
-    if (width === 'auto' && height === 'auto' && imageSize) { // 均为auto
+    if (width === 'auto' && height === 'auto') { // 均为auto
+      if (!imageSize) return
       newHeight = imageSizeHeight
       newWidth = imageSizeWidth
-    } else if (width === 'auto' && imageSize) { // auto px/rpx/%
+    } else if (width === 'auto') { // auto px/rpx/%
+      if (!imageSize) return
       const dimensions = calculateSize(height, layoutInfo?.height, imageSizeWidth / imageSizeHeight)
       if (!dimensions) return
       newWidth = dimensions.width
       newHeight = dimensions.height
-    }else if (height === 'auto' && imageSize) { // auto px/rpx/%
+    }else if (height === 'auto') { // auto px/rpx/%
+      if (!imageSize) return
       const dimensions = calculateSize(width, layoutInfo?.width,  imageSizeHeight / imageSizeWidth)
       if (!dimensions) return
       newHeight = dimensions.width
       newWidth = dimensions.height
-    } else { // 数值类型
+    } else { // 数值类型      
       // 数值类型设置为 stretch
       imageProps.style.resizeMode = 'stretch'
       newWidth = PERCENT_REGX.test(width) ? width : +width
