@@ -172,7 +172,7 @@ function wrapImage(imageStyle) {
   const show = useRef(false)
   const imageSize = useRef(null)
   const layoutInfo = useRef(null)
-  const [_, forceUpdate] = useState({})
+  const [_, forceUpdate] = useState({}) // 用于布局变化，图片变化时，重新渲染。
 
   // 预解析
   const preImageInfo = preParseImage(imageStyle)
@@ -201,6 +201,7 @@ function wrapImage(imageStyle) {
     }
   }, [preImageInfo?.src])
 
+  // 避免hook数量不一致引起的报错
   if (!preImageInfo) return null
 
   if (!sizeList.includes('auto')) {
@@ -213,6 +214,8 @@ function wrapImage(imageStyle) {
       height: layout.height,
       width: layout.width
     }
+    //  布局变化时，要重新的渲染
+    // show为useState时，这里无法重新的渲染
     if (imageSize.current) {
       show.current = true
       forceUpdate({})
