@@ -91,6 +91,8 @@ enum: absolute, relative， 默认relative。
 ##### 语法
 ``` css
 position: absolute;
+position: relative;
+
 ```
 #### top|right|left|bottom
 设置元素的不同方向的偏移量
@@ -99,9 +101,8 @@ number: px,rpx,%
 ##### 语法
 ``` css
 top: 10px;
-left: 10px;
-bottom: 10px;
-right: 10px;
+top: 10rpx;
+top: 10%;
 ```
 #### z-index
 控制着元素的堆叠覆盖顺序。
