@@ -109,6 +109,21 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
       error('createIntersectionObserver is not supported in react native, please use ref instead')
     },
     ...rawOptions.methods
+  }, {
+    dataset: {
+      get () {
+        const props = propsRef.current
+        return collectDataset(props)
+      },
+      enumerable: true
+    },
+    id: {
+      get () {
+        const props = propsRef.current
+        return props.id
+      },
+      enumerable: true
+    }
   })
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
