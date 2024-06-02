@@ -48,7 +48,7 @@ RN中的文本必须用Text节点包裹。mpx做一定的优化，可以在view�
 
 #### view内设定的文本类样式会下沉到第一层text标签
 
-Mpx会把view标签上的文本样式设置到第一层的子节点上，文本样式主要有`color`、`font开头`、`text开头`、`line-height`和`letterSpacing`等。可适用于以下的场景:
+Mpx会把view标签上的文本样式设置到第一层的子节点上，文本样式的主要样式有`color`、`font开头`、`text开头`、`line-height`和`letterSpacing`等。可适用于以下的场景:
 1. view标签下直接写文本
 2. view标签下写文本标签
 3. view标签下的多文本节点
