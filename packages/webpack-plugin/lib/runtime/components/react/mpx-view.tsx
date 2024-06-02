@@ -60,6 +60,7 @@ const applyHandlers = (handlers: Handler[] , args) => {
 }
 
 const checkNeedLayout = (style) => {  
+  if (!style) return false
   const [width, height] = style.sizeList || []
   return (PERCENT_REGX.test(height) && width === 'auto') || (PERCENT_REGX.test(width) && height === 'auto')
 }
@@ -151,6 +152,8 @@ const imageStyleToProps = (preImageInfo, imageSize, layoutInfo) => {
 
 
 function preParseImage(imageStyle:ExtendedViewStyle) {
+  if (!imageStyle) return null
+
   const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle
   const src = parseUrl(backgroundImage)
   if (!src) return null
@@ -166,48 +169,58 @@ function preParseImage(imageStyle:ExtendedViewStyle) {
 }
 
 function wrapImage(imageStyle) {
-  const [show, setShow] = useState(false)
-  const [imageSize, setImageSize] = useState(null)
-  const [layoutInfo, setLayoutInfo] = useState(null)
+  const show = useRef(false)
+  const imageSize = useRef(null)
+  const layoutInfo = useRef(null)
+  const [_, forceUpdate] = useState({})
 
   // 预解析
   const preImageInfo = preParseImage(imageStyle)
 
-  if (!preImageInfo) return null
 
   // 判断是否可挂载onLayout
   const needLayout = checkNeedLayout(preImageInfo)
+  const { src, sizeList = [] } = preImageInfo || {}
 
   useEffect(() => {
-    const { src, sizeList } = preImageInfo
-
-    if (!src) return
-    if (!sizeList.includes('auto')) {
-      setShow(true)
-      return
-    }
+    if (!src || sizeList.length === 0 || !sizeList.includes('auto')) return
+  
     Image.getSize(src, (width, height) => {
-      setImageSize({ width, height });
+
+      imageSize.current = {width, height}
       //1. 当需要绑定onLayout 2. 获取到布局信息
-      (!needLayout || layoutInfo) && setShow(true)
+      if (!needLayout || layoutInfo.current) {
+        show.current = true
+        forceUpdate({})
+      }
     })
     return () => {
-      setShow(false)
-      setImageSize(null)
-      setLayoutInfo(null)
+      show.current = false
+      imageSize.current = null
+      layoutInfo.current = null
     }
-  }, [preImageInfo.src])
+  }, [preImageInfo?.src])
+
+  if (!preImageInfo) return null
+
+  if (!sizeList.includes('auto')) {
+    show.current = true
+  }
 
   const onLayout = (res) => {
     const layout  = res?.nativeEvent?.layout || {}
-    setLayoutInfo({
+    layoutInfo.current = {
       height: layout.height,
       width: layout.width
-    })
-    imageSize && setShow(true)
+    }
+    if (imageSize.current) {
+      show.current = true
+      forceUpdate({})
+    }
   }
+
   return <View {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
-    {show && <Image  {...imageStyleToProps(preImageInfo, imageSize, layoutInfo)} />}
+    {show.current && <Image  {...imageStyleToProps(preImageInfo, imageSize.current, layoutInfo.current)} />}
   </View>
 }
 
@@ -236,7 +249,7 @@ function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageS
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
-  return [imageStyle && wrapImage(imageStyle),
+  return [wrapImage(imageStyle),
     children
   ]
 }
