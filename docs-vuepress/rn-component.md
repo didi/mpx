@@ -7,23 +7,23 @@
 
 ### 组件定义属性说明
 
-| 属性       | 类型             | RN 是否支持 | 描述                                       |
-|------------|------------------|---------|------------------------------------------|
-| properties | Object Map       | 是       | 组件的对外属性，是属性名到属性设置的映射表                    |
-| data       | Object           | 是       | 组件的内部数据，和 `properties` 一同用于组件的模板渲染       |
-| observers  | Object           | 是       | 组件数据字段监听器，用于监听 `properties` 和 `data` 的变化 |
-| methods    | Object           | 是       | 组件的方法，包括事件响应函数和任意的自定义方法，关于事件响应函数的使用      |
-| behaviors  | String Array     | 否       | 输出 RN 不支持                                |
-| created    | Function         | 是       | 组件生命周期函数-在组件实例刚刚被创建时执行，注意此时不能调用 `setData` |
-| attached   | Function         | 是       | 组件生命周期函数-在组件实例进入页面节点树时执行                 |
-| ready      | Function         | 是       | 组件生命周期函数-在组件布局完成后执行                      |
-| moved      | Function         | 否       | RN 不支持，组件生命周期函数-在组件实例被移动到节点树另一个位置时执行     |
-| detached   | Function         | 是       | 组件生命周期函数-在组件实例被从页面节点树移除时执行               |
-| relations  | Object           | 否       | 输出 RN 不支持                    |
-| externalClasses | String Array | 否       | 输出 RN 不支持                    |
-| options    | Object Map       | 是       | 一些选项（在输出RN时具体支持的有：xxxxx TODO）            |
-| lifetimes  | Object           | 是       | 组件生命周期声明对象                               |
-| pageLifetimes | Object       | 是       | 组件所在页面的生命周期声明对象                          |
+| 属性       | 类型             | RN 是否支持 | 描述                                                                        |
+|------------|------------------|---------|---------------------------------------------------------------------------|
+| properties | Object Map       | 是       | 组件的对外属性，是属性名到属性设置的映射表                                                     |
+| data       | Object           | 是       | 组件的内部数据，和 `properties` 一同用于组件的模板渲染                                        |
+| observers  | Object           | 是       | 组件数据字段监听器，用于监听 `properties` 和 `data` 的变化                                  |
+| methods    | Object           | 是       | 组件的方法，包括事件响应函数和任意的自定义方法，关于事件响应函数的使用                                       |
+| behaviors  | String Array     | 否       | 输出 RN 不支持                                                                 |
+| created    | Function         | 是       | 组件生命周期函数-在组件实例刚刚被创建时执行，注意此时不能调用 `setData`                                 |
+| attached   | Function         | 是       | 组件生命周期函数-在组件实例进入页面节点树时执行                                                  |
+| ready      | Function         | 是       | 组件生命周期函数-在组件布局完成后执行                                                       |
+| moved      | Function         | 否       | RN 不支持，组件生命周期函数-在组件实例被移动到节点树另一个位置时执行                                      |
+| detached   | Function         | 是       | 组件生命周期函数-在组件实例被从页面节点树移除时执行                                                |
+| relations  | Object           | 否       | 输出 RN 不支持                                                                 |
+| externalClasses | String Array | 否       | 输出 RN 不支持                                                                 |
+| options    | Object Map       | 否       | 输出 RN 不支持，一些选项，诸如 multipleSlots、virtualHost、pureDataPattern，这些功能输出 RN 不支持 |
+| lifetimes  | Object           | 是       | 组件生命周期声明对象                                                                |
+| pageLifetimes | Object       | 是       | 组件所在页面的生命周期声明对象                                                           |
 
 ### 组件实例属性与方法
 生成的组件实例可以在组件的方法、生命周期函数中通过 this 访问。组件包含一些通用属性和方法。
