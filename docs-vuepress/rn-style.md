@@ -237,7 +237,7 @@ flex-wrap: nowrap;
 flex-wrap: wrap-reverse;
 ```
 #### flex-flow
-flex-direction flex-wrap 缩写，仅支持 flex-flow: flex-direction flex-wrap 这种顺序，值以空格分隔按顺序赋值
+是flex-direction flex-wrap 缩写，仅支持 flex-flow: flex-direction flex-wrap 这种顺序，值以空格分隔按顺序赋值
 ```css
 /* flex-direction */
 flex-flow: row;
@@ -328,8 +328,19 @@ border-color: red;
 enum: solid|dotted|dashed
 ##### 语法
 ``` css
+/** 支持 **/
 /* all border */
 border-color: 'solid';
+border-color: 'dotted';
+border-color: 'dashed';
+
+/** 不支持 **/
+border-style: double;
+border-style: groove;
+border-style: ridge;
+border-style: dotted solid;
+border-style: hidden double dashed;
+border-style: none solid dotted dashed;
 ```
 #### border-width
 设置边框的宽度，目前只支持统一设置，不支持缩写。
