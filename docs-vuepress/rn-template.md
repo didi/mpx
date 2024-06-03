@@ -142,9 +142,6 @@
 | ----------------| --------------------------------------------------- |
 | bindtap       |  点击的时候触发   
 
-注意事项
-
-1. 未包裹text标签的文本，会自动包裹text标签。
 
 ### text
 文本。
@@ -166,7 +163,8 @@
 | bindtap       |  点击的时候触发         
 
 注意事项
-text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
+1. 未包裹 text 标签的文本，会自动包裹 text 标签。
+2. text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 ### image
 图片。
