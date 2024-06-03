@@ -53,7 +53,7 @@ import {
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { extractTextStyle } from './utils'
+import { extractTextStyle, isText, every } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from '../../useNodesRef'
 
@@ -335,6 +335,16 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     handleOpenTypeEvent(evt)
   }
 
+  function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
+    if (every(children, (child)=>isText(child))) {
+      children = <Text style={textStyle}>{children}</Text>
+    } else {
+      if(textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
+    }
+  
+    return children
+  }
+
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: StyleSheet.flatten([
       ...defaultViewStyle,
@@ -375,13 +385,15 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         applyHoverEffect && hoverStyle,
       ]}>
       {loading && <Loading alone={!React.Children.count(children)} />}
-      <Text 
-        style={[
-          ...defaultTextStyle,
-          applyHoverEffect && textHoverStyle,
-        ]}>
-        {children}
-      </Text>
+      {
+        wrapChildren(
+          children, 
+          [
+            ...defaultTextStyle,
+            applyHoverEffect && textHoverStyle,
+          ]
+        )
+      }
     </View>
   )
 })
