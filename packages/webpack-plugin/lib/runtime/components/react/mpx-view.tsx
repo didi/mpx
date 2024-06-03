@@ -60,8 +60,7 @@ const applyHandlers = (handlers: Handler[] , args) => {
 }
 
 const checkNeedLayout = (style) => {  
-  if (!style) return false
-  const [width, height] = style.sizeList || []
+  const [width, height] = style.sizeList
   return (PERCENT_REGX.test(height) && width === 'auto') || (PERCENT_REGX.test(width) && height === 'auto')
 }
 
@@ -152,11 +151,9 @@ const imageStyleToProps = (preImageInfo, imageSize, layoutInfo) => {
 
 
 function preParseImage(imageStyle:ExtendedViewStyle) {
-  if (!imageStyle) return null
 
-  const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle
+  const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle || {}
   const src = parseUrl(backgroundImage)
-  if (!src) return null
 
   let sizeList = backgroundSize.slice() as string []
 
@@ -169,10 +166,13 @@ function preParseImage(imageStyle:ExtendedViewStyle) {
 }
 
 function wrapImage(imageStyle) {
-  const show = useRef(false)
-  const imageSize = useRef(null)
+  const [show, setShow] = useState(false)
+  const [, setImageSizeWidth] = useState(null)
+  const [, setImageSizeHeight] = useState(null)
+  const [, setLayoutInfoWidth] = useState(null)
+  const [, setLayoutInfoHeight] = useState(null)
+  const sizeInfo = useRef(null)
   const layoutInfo = useRef(null)
-  const [_, forceUpdate] = useState({}) // 用于布局变化，图片变化时，重新渲染。
 
   // 预解析
   const preImageInfo = preParseImage(imageStyle)
@@ -180,50 +180,57 @@ function wrapImage(imageStyle) {
 
   // 判断是否可挂载onLayout
   const needLayout = checkNeedLayout(preImageInfo)
-  const { src, sizeList = [] } = preImageInfo || {}
+  const { src, sizeList } = preImageInfo
 
   useEffect(() => {
-    if (!src || sizeList.length === 0 || !sizeList.includes('auto')) return
+    if(!src) {
+      setShow(false)
+      sizeInfo.current = null
+      layoutInfo.current = null
+      return 
+    }
   
+    if (!sizeList.includes('auto')) {
+      setShow(true)
+      return
+    }
     Image.getSize(src, (width, height) => {
-
-      imageSize.current = {width, height}
+      sizeInfo.current = {
+        width,
+        height
+      }
       //1. 当需要绑定onLayout 2. 获取到布局信息
       if (!needLayout || layoutInfo.current) {
-        show.current = true
-        forceUpdate({})
+        setImageSizeWidth(width)
+        setImageSizeHeight(height)
+        if(layoutInfo.current) {
+          setLayoutInfoWidth(layoutInfo.current.width)
+          setLayoutInfoHeight(layoutInfo.current.height)
+        }
+        setShow(true)
       }
     })
-    return () => {
-      show.current = false
-      imageSize.current = null
-      layoutInfo.current = null
-    }
   }, [preImageInfo?.src])
 
-  // 避免hook数量不一致引起的报错
-  if (!preImageInfo) return null
-
-  if (!sizeList.includes('auto')) {
-    show.current = true
-  }
+  if (!preImageInfo?.src) return null
 
   const onLayout = (res) => {
-    const layout  = res?.nativeEvent?.layout || {}
+    const {width, height} = res?.nativeEvent?.layout || {}
     layoutInfo.current = {
-      height: layout.height,
-      width: layout.width
+      width,
+      height
     }
-    //  布局变化时，要重新的渲染
-    // show为useState时，这里无法重新的渲染
-    if (imageSize.current) {
-      show.current = true
-      forceUpdate({})
+    if (sizeInfo.current) {
+      setImageSizeWidth(sizeInfo.current.width)
+      setImageSizeHeight(sizeInfo.current.height)
+      setLayoutInfoWidth(width)
+      setLayoutInfoHeight(height) 
+      setShow(true)
     }
   }
-
+  
   return <View {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
-    {show.current && <Image  {...imageStyleToProps(preImageInfo, imageSize.current, layoutInfo.current)} />}
+    {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current)} />}
   </View>
 }
 
