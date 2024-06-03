@@ -1,4 +1,4 @@
-# Mpx转RN API说明
+# API支持列表
 
 mpx转RN的对标微信api目前支持及部分的api转换，目前支持的能力可以参考下表：
 
@@ -28,6 +28,7 @@ mpx转RN的对标微信api目前支持及部分的api转换，目前支持的能
 | onNetworkStatusChange  |
 | offNetworkStatusChange |
 
+# 使用说明
 
 对于一些api-proxy中没有提供的能力，用户可以搭配mpx对象方式传入custom使用即可示例如下：
 
@@ -55,6 +56,8 @@ mpx.showModal({
   }
 })
 ```
+
+# API抹平差异详情
 
 对于一些微信独有的返回结果，或者RN目前不能支持的入参/返回结果，在下面会有详细说明：
 
