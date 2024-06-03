@@ -38,7 +38,8 @@ RN 支持的 color 值的类型参考 RN 文档 https://reactnative.dev/docs/col
 ### text
 #### 文本节点说明
 在RN中，文本节点通常用来显示文本内容，可以通过 <Text> 组件来创建文本节点。文本节点可以包含文字、数字等内容，并且支持一些样式属性来调整文本的外观。可通过`style`属性设置样式。文本的样式列表可[参考这里](https://reactnative.dev/docs/layout-props#position)
-使用mpx开发RN时，需注意文本继承和view下面包裹text的副作用。
+
+使用mpx开发RN时，文本标签必须是小写的`text`，不能是`Text`。其次需注意文本继承和view下面包裹text的副作用。
 
 #### 文本节点text与样式继承
 在RN环境中，文本父节点的样式可以继承到子节点，mpx会默认对文本节点设置默认样式(`font-size:16px`)。默认样式会对继承有一定的副作用，若关闭默认样式，可设置`disable-default-style`为`true`。
