@@ -55,33 +55,53 @@ Mpx会把view标签上的文本样式设置到第一层的子节点上，文本�
 3. view标签下的多文本节点
 
 ### view
-为了对齐 RN 和 web 的展示效果，当`display`为`flex`时，会添加如下的默认属性:
- ```css
-flex-direction: row;
-flex-basis: auto;
-flex-shrink: 1;
-flex-wrap: nowrap;
- ```
 
-### image
-为了对齐 RN 和 web 的展示效果，我们给 image 组件增加了以下默认样式：
-```css
-width: 320px;
-height: 240px;
+View标签下支持的background、background-image、background-size、background-repeat、backfround-color。其中background-color在其他标签上也支持。
+
+**各属性支持的类型**
+
+* background-image - 仅支持 <url()>
+* background-size - 支持px|rpx|%，也支持枚举值 contain|cover|auto； 不支持两个以上的值进行设置。
+* backgroundno-repeat - 仅支持值为norepeat
+* backfround-color - 参考[Color](https://reactnative.dev/docs/colors)
+
+
+**支持的语法**
+
+
+``` css
+/** background-image **/
+/* 支持 */
+background-image: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg");
+/* 不支持 */
+background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
+
+
+
+/** background-size **/
+/* 支持 */
+background-size: 50%;
+background-size: 50% 25%;
+background-size: contain;
+background-size: cover;
+background-size: auto;
+background-size: 20px auto;
+
+/ * 不支持 * /
+background-size: 50%, 25%, 25%;
+
+
+/** background-repeat **/
+/* 支持 */
+background-repeat: no-repeat;
+
+/* 不支持 */
+background-repeat: repeat;
 ```
 
-### button
-为了对齐 RN 和 web 的展示效果，我们给 button 组件增加了以下默认样式：
-```css
-width: 100%;
-justifyContent: 'center';
-alignItems: 'center';
-height: 46;
-borderRadius: 5;
-backgroundColor: '#F8F8F8';
-/* 按钮默认居中 */
-marginHorizontal: 'auto';
-```
+
+
+
 
 ## 样式参考
 ### Layout Style
@@ -540,7 +560,7 @@ text-shadow: 1rpx 3rpx 0 #2E0C02;
 ### Background Style
 背景相关的属性
 #### background-color
-背景色
+表示背景色，可以在任何标签上使用。
 ##### 值支持类型
 color: 参考[Color](https://reactnative.dev/docs/colors)
 ##### 语法
@@ -549,7 +569,7 @@ color: 参考[Color](https://reactnative.dev/docs/colors)
 background-color: red;
 ```
 #### background-image
-背景图
+表示背景图，只能在view上使用
 ##### 值支持类型
 仅支持 <url()>
 ##### 语法
@@ -560,7 +580,7 @@ background-image: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jp
 background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
 ```
 #### background-size
-背景大小
+表示背景大小，只能在view上使用
 ##### 值支持类型
 number 支持 px|rpx|%，枚举值支持 contain|cover|auto；
 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto；
@@ -580,7 +600,7 @@ background-size: 20px auto;
 background-size: 50%, 25%, 25%;
 ```
 #### background-repeat
-背景图是否重复
+表示背景图是否重复，只能在view上使用
 ##### 值支持类型
 enum: no-repeat
 ##### 语法
@@ -591,7 +611,7 @@ background-repeat: no-repeat;
 background-repeat: repeat; 
 ```
 #### background
-背景
+表示背景的组合属性，只能在view上使用
 ##### 值支持类型
 仅支持 background-image | background-color | background-size | background-repeat，具体每个属性的支持情况参见上面具体属性支持的文档
 ##### 语法
