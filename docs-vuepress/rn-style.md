@@ -2,6 +2,7 @@
 RN 的样式的支持基本为 web 样式的一个子集，同时还有一些属性并未与 web 对齐，因此跨平台输出 RN 时，为了保障多端输出样式一致，可参考本文针对样式在RN上的支持情况来进行样式编写。
 
 ## 样式编写限制
+
 ### 选择器
 RN仅支持以下类选择器，且不支持组合选择器。
 ``` css
@@ -12,10 +13,6 @@ RN仅支持以下类选择器，且不支持组合选择器。
 .test1, .test2 {
     color: red
 }
-/* 不支持 */
-.A-test .a-test{
-    color: red
-}
 ```
 
 ### 布局限制
@@ -24,6 +21,7 @@ RN仅支持以下类选择器，且不支持组合选择器。
 在RN中，常规的组件元素可以用过 flex 布局来实现，[参考文档](https://reactnative.dev/docs/layout-props#flex)。
 
 **注**：RN中view标签的主轴是column，和css不一致，使用mpx开发设置`dispay:flex`时，会默认的主轴方向是row。
+
 #### relative/absolute
 在 RN 中 position 仅支持 relative（默认）和 absolute，可[参考文档](https://reactnative.dev/docs/layout-props#position)。
 
@@ -34,25 +32,35 @@ RN 环境中，number 数值型单位支持 px rpx % 三种，web 下的 vw em r
 RN 支持的 color 值的类型参考 RN 文档 https://reactnative.dev/docs/colors
 
 ## 组件样式规则
-（特定组件我们添加的默认样式及样式增强，如 view/text/image 等）
+在web和RN下组件的渲染会存在一些差异的地方，比如默认样式不一致、继承的关系不一致等。框架针对这些不一致进行了抹平工作，但是仍旧存在一些使用限制，具体参考以下组件节点的介绍。
+
 ### text
-#### 文本节点说明
-在RN中，文本节点通常用来显示文本内容，可以通过 <Text> 组件来创建文本节点。文本节点可以包含文字、数字等内容，并且支持一些样式属性来调整文本的外观。可通过`style`属性设置样式。文本的样式列表可[参考这里](https://reactnative.dev/docs/layout-props#position)
+RN中，文本节点需要通过 <Text> 组件来创建文本节点。文本节点需要给Text组件来设定[属性](https://reactnative.dev/docs/text-style-props)来调整文本的外观。
 
-使用mpx开发RN时，需注意文本继承和view下面包裹text的副作用。
+Web/小程序中，文本节点可以通过<div>/<view>节点进行直接包裹，在div/view标签上设定对应文本样式即可。不需单独包裹text节点。
 
-#### 文本节点text与样式继承
-在RN环境中，文本父节点的样式可以继承到子节点，mpx会默认对文本节点设置默认样式(`font-size:16px`)。默认样式会对继承有一定的副作用，若关闭默认样式，可设置`disable-default-style`为`true`。
+框架抹平了此部分的差异，但仍因受限于RN内text的样式[继承原则的限制](https://reactnative.dev/docs/text#limited-style-inheritance)，通过在祖先节点来设置文本节点的样式仍旧无法生效。具体例子说明如下
 
-#### view标签支持text节点
-RN中的文本必须用Text节点包裹。mpx做一定的优化，可以在view标签下直接写文本不需要包裹text节点。也可在view标签下直接写多个子节点。
+``` html
+<view class="wrapper">
+    <view class="content">我是文本</view>
+</view>
 
-#### view内设定的文本类样式会下沉到第一层text标签
+.wrapper {
+    font-size: 20px;
+}
+.content {
+    text-align: right;
+}
+/** 以上例子中
+web渲染效果: 字体的大小为20px，文字居右 
+转RN之后渲染效果: 字体大小为默认大小，文字居右
+*/
 
-Mpx会把view标签上的文本样式设置到第一层的子节点上，文本样式的主要样式有`color`、`font开头`、`text开头`、`line-height`和`letterSpacing`等。可适用于以下的场景:
-1. view标签下直接写文本
-2. view标签下写文本标签
-3. view标签下的多文本节点
+```
+**限制与使用说明**
+1. 无法通过设置祖先节点的样式来修改文本节点的样式，只可通过修改直接包裹文本的节点来修改文本的样式。
+2. 框架处理将文本节点样式的默认值与web进行了对齐，如果需要按照RN的默认值来进行渲染，可设置`disable-default-style`为`true`
 
 ### view
 
@@ -60,9 +68,10 @@ View标签下支持的background、background-image、background-size、backgrou
 
 **各属性支持的类型**
 
-* background-image - 仅支持 <url()>
+* background - 仅支持 background-image | background-color | background-size | background-repeat，每个属性支持情况，可参考下面的介绍。
+* background-image - 仅支持 <url()>。
 * background-size - 支持px|rpx|%，也支持枚举值 contain|cover|auto； 不支持两个以上的值进行设置。
-* backgroundno-repeat - 仅支持值为norepeat
+* backgroundno-repeat - 仅支持值为norepeat。
 * backfround-color - 参考[Color](https://reactnative.dev/docs/colors)
 
 
@@ -70,15 +79,25 @@ View标签下支持的background、background-image、background-size、backgrou
 
 
 ``` css
-/** background-image **/
+
+/** 1. background **/
+/* 支持 */
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink contain no-repeat;
+background: #000;
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink;
+
+/* 不支持 */
+background: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
+
+
+/** 2. background-image **/
 /* 支持 */
 background-image: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg");
 /* 不支持 */
 background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
 
 
-
-/** background-size **/
+/** 3. background-size **/
 /* 支持 */
 background-size: 50%;
 background-size: 50% 25%;
@@ -91,17 +110,17 @@ background-size: 20px auto;
 background-size: 50%, 25%, 25%;
 
 
-/** background-repeat **/
+/** 4. background-repeat **/
 /* 支持 */
 background-repeat: no-repeat;
 
 /* 不支持 */
 background-repeat: repeat;
+
+
+/** 5. background-color **/
+background-repeat: red;
 ```
-
-
-
-
 
 ## 样式参考
 ### Layout Style
