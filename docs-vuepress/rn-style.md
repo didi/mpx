@@ -64,7 +64,7 @@ web渲染效果: 字体的大小为20px，文字居右
 
 ### view
 
-View标签下支持的background、background-image、background-size、background-repeat、backfround-color。其中background-color在其他标签上也支持。
+background、background-image、background-size、background-repeat仅在view标签下支持，background-color在其他标签上也支持。
 
 **各属性支持的类型**
 
