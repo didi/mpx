@@ -114,6 +114,7 @@ let processingTemplate = false
 const rulesResultMap = new Map()
 
 function updateForScopesMap () {
+  forScopesMap = {}
   forScopes.forEach((scope) => {
     forScopesMap[scope.index] = 'index'
     forScopesMap[scope.item] = 'item'
