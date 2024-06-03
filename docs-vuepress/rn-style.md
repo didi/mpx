@@ -4,18 +4,18 @@ RN 的样式的支持基本为 web 样式的一个子集，同时还有一些属
 ## 样式编写限制
 
 ### 选择器
-RN仅支持以下类选择器，且不支持组合选择器。
+RN 环境下仅支持以下类名选择器，不支持逗号之外的组合选择器。
 ``` css
 /* 支持 */
 .classname {
   color: red
 }
-.test1, .test2 {
+.classA, .classB {
     color: red
 }
 ```
 
-### 布局限制
+### 布局
 在 RN 中布局方式有限制，像 block inline inline-block 和 fixed 等都不支持，支持的布局方式如下：
 #### flex
 在RN中，常规的组件元素可以用过 flex 布局来实现，[参考文档](https://reactnative.dev/docs/layout-props#flex)。
@@ -25,11 +25,11 @@ RN仅支持以下类选择器，且不支持组合选择器。
 #### relative/absolute
 在 RN 中 position 仅支持 relative（默认）和 absolute，可[参考文档](https://reactnative.dev/docs/layout-props#position)。
 
-### 样式单位限制
+### 样式单位
 #### number 类型值
 RN 环境中，number 数值型单位支持 px rpx % 三种，web 下的 vw em rem 等不支持。
 #### color 类型值
-RN 支持的 color 值的类型参考 RN 文档 https://reactnative.dev/docs/colors
+RN 环境支持大部分 css 中 color 定义方式，仅少量不支持，详情参考 RN 文档 https://reactnative.dev/docs/colors
 
 ## 组件样式规则
 在web和RN下组件的渲染会存在一些差异的地方，比如默认样式不一致、继承的关系不一致等。框架针对这些不一致进行了抹平工作，但是仍旧存在一些使用限制，具体参考以下组件节点的介绍。
