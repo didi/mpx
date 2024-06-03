@@ -71,12 +71,11 @@ background、background-image、background-size、background-repeat仅在view标
 * background - 仅支持 background-image | background-color | background-size | background-repeat，每个属性支持情况，可参考下面的介绍。
 * background-image - 仅支持 <url()>。
 * background-size - 支持px|rpx|%，也支持枚举值 contain|cover|auto； 不支持两个以上的值进行设置。
-* backgroundno-repeat - 仅支持值为norepeat。
+* backgroundno-repeat - 仅支持值为no-repeat。
 * backfround-color - 参考[Color](https://reactnative.dev/docs/colors)
 
 
 **支持的语法**
-
 
 ``` css
 
