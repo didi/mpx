@@ -47,7 +47,7 @@
 | hasBehavior         | 否      | Object behavior                           | 检查组件是否具有 behavior        |
 | triggerEvent        | 是      | String name, Object detail, Object options| 触发事件                     |
 | createSelectorQuery| 否      |                                           | 输出 RN 暂不支持，未来支持，建议使用 ref |
-| createIntersectionObserver| 否      |                                           | 输出 RN 暂不支持，未来支持，建议使用 ref       |
+| createIntersectionObserver| 否      |                                           | 输出 RN 暂不支持       |
 | selectComponent     | 否      | String selector                          | 输出 RN 暂不支持，未来支持，建议使用 ref       |
 | selectAllComponents| 否      | String selector                          | 输出 RN 暂不支持，未来支持，建议使用 ref       |
 | selectOwnerComponent| 否      |                                           | 输出 RN 不支持                |
