@@ -3,7 +3,6 @@ const { hump2dash } = require('../../../utils/hump-dash')
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(box-sizing|white-space|text-overflow|animation|transition)$/
-  const unsupportedPropAndroid = /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -33,7 +32,8 @@ module.exports = function getSpec ({ warn, error }) {
     'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly', 'none'],
-    'background-size': ['contain', 'cover']
+    'background-size': ['contain', 'cover', 'auto'],
+    'background-repeat': ['no-repeat']
   }
   const propValExp = new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')
   const isIllegalValue = ({ prop, value }) => SUPPORTED_PROP_VAL_ARR[prop]?.length > 0 && !SUPPORTED_PROP_VAL_ARR[prop].includes(value)
@@ -116,10 +116,10 @@ module.exports = function getSpec ({ warn, error }) {
       flexWrap: ValueType.default
     },
     'border-radius': {
-      borderTopLeftRadius: ValueType.default,
-      borderTopRightRadius: ValueType.default,
-      borderBottomRightRadius: ValueType.default,
-      borderBottomLeftRadius: ValueType.default
+      borderTopLeftRadius: ValueType.number,
+      borderTopRightRadius: ValueType.number,
+      borderBottomRightRadius: ValueType.number,
+      borderBottomLeftRadius: ValueType.number
     }
   }
   const formatAbbreviation = ({ value, keyMap }) => {
@@ -172,7 +172,7 @@ module.exports = function getSpec ({ warn, error }) {
     // android 不支持的 shadowOffset shadowOpacity shadowRadius textDecorationStyle 和 textDecorationStyle
     return cssMap.filter(({ prop }) => { // 不支持的 prop 提示 & 过滤不支持的 prop
       const dashProp = hump2dash(prop)
-      if (unsupportedPropAndroid.test(dashProp)) {
+      if (unsupportedPropMode.android.test(dashProp)) {
         unsupportedPropError({ prop: dashProp, mode })
         return false
       }
@@ -230,7 +230,7 @@ module.exports = function getSpec ({ warn, error }) {
       image: 'background-image',
       color: 'background-color',
       size: 'background-size',
-      // repeat: 'background-repeat',
+      repeat: 'background-repeat',
       // position: 'background-position',
       all: 'background'
     }
@@ -255,7 +255,28 @@ module.exports = function getSpec ({ warn, error }) {
         }
       }
       case bgPropMap.size: {
-        // background-size 仅支持 cover contain
+        // background-size
+        // 不支持逗号分隔的多个值：设置多重背景!!!
+        // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
+        // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
+        if (value.includes(',')) { // commas are not allowed in values
+          error(`background size value[${value}] does not support commas in React Native ${mode} environment!`)
+          return false
+        }
+        const values = []
+        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+          if (numberRegExp.test(item) || !isIllegalValue({ prop, value: item })) {
+            // 支持 number 值 / container cover auto 枚举
+            values.push(item)
+          } else {
+            error(`background size value[${value}] does not support in React Native ${mode} environment!`)
+          }
+        })
+        // value 无有效值时返回false
+        return values.length === 0 ? false : { prop, value: values }
+      }
+      case bgPropMap.repeat: {
+        // background-repeat 仅支持 no-repeat
         if (isIllegalValue({ prop, value })) {
           unsupportedValueError({ prop, value })
           return false
@@ -268,17 +289,16 @@ module.exports = function getSpec ({ warn, error }) {
         const values = value.trim().split(/\s(?![^()]*\))/)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
-          if (url) {
-            bgMap.push({ prop: bgPropMap.image, value: url })
-          }
-          if (/^(#[0-9a-f]{3}$|#[0-9a-f]{6}$|rgb|rgba)/i.test(item)) {
-            bgMap.push({ prop: bgPropMap.color, value: item })
-          }
-          if (/.*linear-gradient*./.test(value)) {
+          if (/.*linear-gradient*./.test(item)) {
             error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
-          }
-          if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
+          } else if (url) {
+            bgMap.push({ prop: bgPropMap.image, value: url })
+          } else if (/^(#[0-9a-f]{3}$|#[0-9a-f]{6}$|rgb|rgba)/i.test(item)) {
+            bgMap.push({ prop: bgPropMap.color, value: item })
+          } else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
             bgMap.push({ prop: bgPropMap.size, value: item })
+          } else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.repeat].includes(item)) {
+            bgMap.push({ prop: bgPropMap.repeat, value: item })
           }
         })
         return bgMap.length ? bgMap : false
@@ -286,6 +306,16 @@ module.exports = function getSpec ({ warn, error }) {
     }
     unsupportedPropError({ prop, mode })
     return false
+  }
+
+  const getBorderRadius = ({ prop, value }) => {
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    if (values.length === 1) {
+      verifyValues({ prop, value, valueType: ValueType.number })
+      return { prop, value }
+    } else {
+      return getAbbreviation({ prop, value })
+    }
   }
 
   const spec = {
@@ -328,6 +358,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: /.*font-variant.*/,
         ios: getFontVariant,
         android: getFontVariant
+      },
+      {
+        test: 'border-radius',
+        ios: getBorderRadius,
+        android: getBorderRadius
       },
       { // margin padding 内外边距的处理
         test: /.*(margin|padding).*/,
