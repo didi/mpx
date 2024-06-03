@@ -35,9 +35,9 @@ RN 支持的 color 值的类型参考 RN 文档 https://reactnative.dev/docs/col
 在web和RN下组件的渲染会存在一些差异的地方，比如默认样式不一致、继承的关系不一致等。框架针对这些不一致进行了抹平工作，但是仍旧存在一些使用限制，具体参考以下组件节点的介绍。
 
 ### text
-RN中，文本节点需要通过 <Text> 组件来创建文本节点。文本节点需要给Text组件来设定[属性](https://reactnative.dev/docs/text-style-props)来调整文本的外观。
+RN中，文本节点需要通过Text组件来创建文本节点。文本节点需要给Text组件来设定[属性](https://reactnative.dev/docs/text-style-props)来调整文本的外观。
 
-Web/小程序中，文本节点可以通过<div>/<view>节点进行直接包裹，在div/view标签上设定对应文本样式即可。不需单独包裹text节点。
+Web/小程序中，文本节点可以通过div/view节点进行直接包裹，在div/view标签上设定对应文本样式即可。不需单独包裹text节点。
 
 框架抹平了此部分的差异，但仍因受限于RN内text的样式[继承原则的限制](https://reactnative.dev/docs/text#limited-style-inheritance)，通过在祖先节点来设置文本节点的样式仍旧无法生效。具体例子说明如下
 
