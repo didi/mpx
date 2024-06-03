@@ -50,9 +50,11 @@ function getClassMap ({ content, filename, mode, srcMode }) {
       newData.forEach(item => {
         prop = dash2hump(item.prop)
         value = item.value
-        if (typeof item.value === 'object') {
-          for (const key in item.value) {
-            item.value[key] = formatValue(item.value[key])
+        if (Array.isArray(value)) {
+          value = value.map(item => formatValue(item))
+        } else if (typeof value === 'object') {
+          for (const key in value) {
+            value[key] = formatValue(value[key])
           }
         } else {
           value = formatValue(value)
