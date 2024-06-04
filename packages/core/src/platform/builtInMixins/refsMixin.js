@@ -94,8 +94,25 @@ export default function getRefsMixin () {
 
     Object.assign(refsMixin.methods, {
       _createSelectorQuery (...args) {
-        const selectorQuery = this._originCreateSelectorQuery(...args)
+        let selectorQuery = this._originCreateSelectorQuery(...args)
         const cbs = []
+
+        if (typeof selectorQuery === 'undefined') {
+          // 兜底 selectorQuery 在ali为 undefined 情况
+          // 调用 createSelectorQuery时，组件实例已经被销毁，ali this._originCreateSelectorQuery 返回 undefined。导致后续 selectorQuery[name] 报错
+          // 方案：对齐微信，微信实例销毁时，其他调用正常，仅 createSelectorQuery.exec 不执行回调
+          // 复现：setTimeout 中调用，倒计时未回调时切换页面
+          selectorQuery = {}
+          // ['boundingClientRect', 'context', 'exec', 'fields', 'in', 'node', 'scrollOffset', 'select', 'selectAll', 'selectViewport', 'toImage']
+          const backupMethodKeys = Object.keys(envObj.createSelectorQuery())
+          const backupFn = function () {
+            return selectorQuery
+          }
+          backupMethodKeys.forEach(key => {
+            selectorQuery[key] = backupFn
+          })
+          return selectorQuery
+        }
 
         proxyMethods.forEach((name) => {
           const originalMethod = selectorQuery[name]
