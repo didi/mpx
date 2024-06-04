@@ -53,7 +53,7 @@ import {
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { extractTextStyle } from './utils'
+import { extractTextStyle, isText, every } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from '../../useNodesRef'
 
@@ -227,43 +227,44 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
+  const inheritTextStyle = extractTextStyle(style)
+
   const textHoverStyle = extractTextStyle(hoverStyle)
 
-  const { viewStyle, textStyle } = useMemo<{
-    viewStyle: ViewStyle
-    textStyle: TextStyle
-  }>(() => {
-    const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
-    const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
-    const plainBorderColor = disabled
-      ? 'rgba(0, 0, 0, .2)'
-      : applyHoverEffect
-      ? `rgba(${plainColor},.6)`
-      : `rgb(${plainColor})`
-    const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
-    const plainTextColor = disabled
-      ? 'rgba(0, 0, 0, .2)'
-      : applyHoverEffect
-      ? `rgba(${plainColor}, .6)`
-      : `rgb(${plainColor})`
-    const normalTextColor =
-      type === 'default'
-        ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
-        : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
-    const inheritTextStyle = extractTextStyle(style)
-    return {
-      viewStyle: {
-        borderWidth: 1,
-        borderStyle: 'solid',
-        borderColor: plain ? plainBorderColor : normalBorderColor,
-        backgroundColor: plain ? 'transparent' : normalBackgroundColor,
-      },
-      textStyle: {
-        color: plain ? plainTextColor : normalTextColor,
-        ...inheritTextStyle
-      }
-    }
-  }, [type, plain, applyHoverEffect, loading, disabled, style])
+  const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
+
+  const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
+
+  const plainBorderColor = disabled
+    ? 'rgba(0, 0, 0, .2)'
+    : applyHoverEffect
+    ? `rgba(${plainColor},.6)`
+    : `rgb(${plainColor})`
+
+  const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
+
+  const plainTextColor = disabled
+    ? 'rgba(0, 0, 0, .2)'
+    : applyHoverEffect
+    ? `rgba(${plainColor}, .6)`
+    : `rgb(${plainColor})`
+
+  const normalTextColor =
+    type === 'default'
+      ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
+      : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
+
+  const viewStyle = {
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: plain ? plainBorderColor : normalBorderColor,
+    backgroundColor: plain ? 'transparent' : normalBackgroundColor,
+  }
+
+  const textStyle = {
+    color: plain ? plainTextColor : normalTextColor,
+    ...inheritTextStyle
+  }
 
   const defaultViewStyle = [
     styles.button,
@@ -334,13 +335,22 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
     handleOpenTypeEvent(evt)
   }
 
+  function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
+    if (every(children, (child)=>isText(child))) {
+      children = <Text style={textStyle}>{children}</Text>
+    } else {
+      if(textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
+    }
+  
+    return children
+  }
+
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: StyleSheet.flatten([
       ...defaultViewStyle,
       ...defaultTextStyle,
     ])
   })
-
 
   const onLayout = () => {
     nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
@@ -375,13 +385,15 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         applyHoverEffect && hoverStyle,
       ]}>
       {loading && <Loading alone={!React.Children.count(children)} />}
-      <Text 
-        style={[
-          ...defaultTextStyle,
-          applyHoverEffect && textHoverStyle,
-        ]}>
-        {children}
-      </Text>
+      {
+        wrapChildren(
+          children, 
+          [
+            ...defaultTextStyle,
+            applyHoverEffect && textHoverStyle,
+          ]
+        )
+      }
     </View>
   )
 })
