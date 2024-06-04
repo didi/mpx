@@ -12,7 +12,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX } from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX, isText} from './utils'
 
 
 type ExtendedViewStyle = ViewStyle & {
@@ -241,11 +241,6 @@ function splitStyle(styles: ExtendedViewStyle) {
     else if (IMAGE_STYLE_REGEX.test(key)) return 'imageStyle'
     return 'innerStyle'
   }, {})
-}
-
-const isText = (ele: ReactElement) => {
-  const displayName = (ele?.type as FunctionComponent)?.displayName
-  return displayName === 'mpx-text' || displayName === 'Text'
 }
 
 function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
