@@ -12,7 +12,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX } from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX, isText } from './utils'
 
 
 type ExtendedViewStyle = ViewStyle & {
@@ -36,11 +36,11 @@ type GroupData = {
   [key: string]: ExtendedViewStyle
 }
 
-type Handler = (...args: any []) => void
+type Handler = (...args: any[]) => void
 
 const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
-function groupBy(style, callback, group = {}):GroupData {
+function groupBy(style, callback, group = {}): GroupData {
   let groupKey = ''
   for (let key in style) {
     let val = style[key]
@@ -53,13 +53,13 @@ function groupBy(style, callback, group = {}):GroupData {
   return group
 }
 
-const applyHandlers = (handlers: Handler[] , args) => {
+const applyHandlers = (handlers: Handler[], args) => {
   for (let handler of handlers) {
     handler(...args)
   }
 }
 
-const checkNeedLayout = (style) => {  
+const checkNeedLayout = (style) => {
   const [width, height] = style.sizeList
   return (PERCENT_REGX.test(height) && width === 'auto') || (PERCENT_REGX.test(width) && height === 'auto')
 }
@@ -82,12 +82,12 @@ function calculateSize(h, lh, ratio) {
 
   return {
     width,
-    height 
+    height
   }
 }
 
 // background-size 转换
-function backgroundSize (imageProps, preImageInfo, imageSize, layoutInfo) {
+function backgroundSize(imageProps, preImageInfo, imageSize, layoutInfo) {
   let sizeList = preImageInfo.sizeList
   if (!sizeList) return
   // 枚举值
@@ -109,9 +109,9 @@ function backgroundSize (imageProps, preImageInfo, imageSize, layoutInfo) {
       if (!dimensions) return
       newWidth = dimensions.width
       newHeight = dimensions.height
-    }else if (height === 'auto') { // auto px/rpx/%
+    } else if (height === 'auto') { // auto px/rpx/%
       if (!imageSize) return
-      const dimensions = calculateSize(width, layoutInfo?.width,  imageSizeHeight / imageSizeWidth)
+      const dimensions = calculateSize(width, layoutInfo?.width, imageSizeHeight / imageSizeWidth)
       if (!dimensions) return
       newHeight = dimensions.width
       newWidth = dimensions.height
@@ -144,20 +144,20 @@ const imageStyleToProps = (preImageInfo, imageSize, layoutInfo) => {
     }
   }
 
-  applyHandlers([ backgroundSize, backgroundImage ],[imageProps, preImageInfo, imageSize, layoutInfo])
+  applyHandlers([backgroundSize, backgroundImage], [imageProps, preImageInfo, imageSize, layoutInfo])
   if (!imageProps?.src) return null
   return imageProps
 }
 
 
-function preParseImage(imageStyle:ExtendedViewStyle) {
+function preParseImage(imageStyle: ExtendedViewStyle) {
 
-  const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle || {}
+  const { backgroundImage, backgroundSize = ["auto"] } = imageStyle || {}
   const src = parseUrl(backgroundImage)
 
-  let sizeList = backgroundSize.slice() as string []
+  let sizeList = backgroundSize.slice() as string[]
 
-  sizeList.length === 1 &&  sizeList.push(sizeList[0])
+  sizeList.length === 1 && sizeList.push(sizeList[0])
 
   return {
     src,
@@ -183,13 +183,13 @@ function wrapImage(imageStyle) {
   const { src, sizeList } = preImageInfo
 
   useEffect(() => {
-    if(!src) {
+    if (!src) {
       setShow(false)
       sizeInfo.current = null
       layoutInfo.current = null
-      return 
+      return
     }
-  
+
     if (!sizeList.includes('auto')) {
       setShow(true)
       return
@@ -203,7 +203,7 @@ function wrapImage(imageStyle) {
       if (!needLayout || layoutInfo.current) {
         setImageSizeWidth(width)
         setImageSizeHeight(height)
-        if(layoutInfo.current) {
+        if (layoutInfo.current) {
           setLayoutInfoWidth(layoutInfo.current.width)
           setLayoutInfoHeight(layoutInfo.current.height)
         }
@@ -215,7 +215,7 @@ function wrapImage(imageStyle) {
   if (!preImageInfo?.src) return null
 
   const onLayout = (res) => {
-    const {width, height} = res?.nativeEvent?.layout || {}
+    const { width, height } = res?.nativeEvent?.layout || {}
     layoutInfo.current = {
       width,
       height
@@ -224,12 +224,12 @@ function wrapImage(imageStyle) {
       setImageSizeWidth(sizeInfo.current.width)
       setImageSizeHeight(sizeInfo.current.height)
       setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height) 
+      setLayoutInfoHeight(height)
       setShow(true)
     }
   }
-  
-  return <View {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
+
+  return <View {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
     {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current)} />}
   </View>
 }
@@ -243,20 +243,15 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-const isText = (ele: ReactElement) => {
-  const displayName = (ele?.type as FunctionComponent)?.displayName
-  return displayName === 'mpx-text' || displayName === 'Text'
-}
-
-function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
+function every(children: ReactNode, callback: (children: ReactNode) => boolean) {
   return Children.toArray(children).every((child) => callback(child as ReactNode))
 }
 
 function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
-  if (every(children, (child)=>isText(child as ReactElement))) {
+  if (every(children, (child) => isText(child as ReactElement))) {
     children = <Text style={textStyle}>{children}</Text>
   } else {
-    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
+    if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
   return [wrapImage(imageStyle),
@@ -279,9 +274,9 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
   const layoutRef = useRef({})
 
   // 打平 style 数组
-  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
+  const styleObj: ExtendedViewStyle = StyleSheet.flatten(style)
   // 默认样式
-  const defaultStyle:ExtendedViewStyle = {
+  const defaultStyle: ExtendedViewStyle = {
     // flex 布局相关的默认样式
     ...styleObj.display === 'flex' && {
       flexDirection: 'row',
@@ -322,26 +317,26 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<any>): React.JSX.
     }, +hoverStayTime)
   }
 
-  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
-    const { bindtouchstart } = props;
+  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
+    const { bindtouchstart } = props
     bindtouchstart && bindtouchstart(e)
     setStartTimer()
   }
 
-  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>){
-    const { bindtouchend } = props;
+  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
+    const { bindtouchend } = props
     bindtouchend && bindtouchend(e)
     setStayTimer()
   }
 
   const onLayout = () => {
-  
+
     nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
 
-  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
+  const { textStyle, imageStyle, innerStyle } = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([
     defaultStyle,
     styleObj,
     ...(isHover ? hoverStyle : [])]
