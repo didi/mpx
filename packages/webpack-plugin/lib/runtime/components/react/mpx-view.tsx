@@ -4,8 +4,8 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image, ImageURISource, ImageStyle } from 'react-native'
-import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef, ReactNode } from 'react'
+import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image } from 'react-native'
+import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef, ReactNode, FunctionComponent, ReactElement } from 'react'
 
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
@@ -243,8 +243,8 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-const isText = (ele: ReactNode) => {
-  const displayName = ele?.type?.displayName
+const isText = (ele: ReactElement) => {
+  const displayName = (ele?.type as FunctionComponent)?.displayName
   return displayName === 'mpx-text' || displayName === 'Text'
 }
 
@@ -253,7 +253,7 @@ function every(children: ReactNode, callback: (children: ReactNode) => boolean )
 }
 
 function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
-  if (every(children, (child)=>isText(child))) {
+  if (every(children, (child)=>isText(child as ReactElement))) {
     children = <Text style={textStyle}>{children}</Text>
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
