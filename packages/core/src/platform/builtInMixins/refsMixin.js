@@ -105,7 +105,7 @@ export default function getRefsMixin () {
           selectorQuery = {}
           // ['boundingClientRect', 'context', 'exec', 'fields', 'in', 'node', 'scrollOffset', 'select', 'selectAll', 'selectViewport', 'toImage']
           const backupMethodKeys = Object.keys(envObj.createSelectorQuery())
-          const backupFn = function() {
+          const backupFn = function () {
             return selectorQuery
           }
           backupMethodKeys.forEach(key => {
