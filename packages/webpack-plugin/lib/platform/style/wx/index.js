@@ -63,18 +63,24 @@ module.exports = function getSpec ({ warn, error }) {
   const numberRegExp = /^\s*(\d+(\.\d+)?)(rpx|px|%)?\s*$/
   // RN 不支持的颜色格式
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
+
   const verifyValues = ({ prop, value, valueType }) => {
     // 校验 value 枚举 是否支持
     switch (valueType) {
-      case ValueType.color:
-        (numberRegExp.test(value)) && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
-        colorRegExp.test(value) && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
-        return value
-      case ValueType.number:
-        (!numberRegExp.test(value)) && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
-        return value
+      case ValueType.color: {
+        const isNumber = numberRegExp.test(value)
+        const isUnsupporttedColor = colorRegExp.test(value)
+        isNumber && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
+        isUnsupporttedColor && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
+        return !isNumber && !isUnsupporttedColor
+      }
+      case ValueType.number: {
+        const isNumber = numberRegExp.test(value)
+        !isNumber && warn(`React Native property [${prop}] unit only supports [rpx,px,%]`)
+        return isNumber
+      }
       default:
-        return value
+        return true
     }
   }
   // 统一校验 value type 值类型
@@ -133,7 +139,8 @@ module.exports = function getSpec ({ warn, error }) {
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
       // 校验 value 类型
-      const value = verifyValues({ prop, value: values[idx], valueType })
+      verifyValues({ prop, value: values[idx], valueType })
+      const value = values[idx]
       if (isIllegalValue({ prop: dashProp, value })) {
         // 过滤不支持 value
         unsupportedValueError({ prop: dashProp, value })
@@ -206,6 +213,15 @@ module.exports = function getSpec ({ warn, error }) {
         value: value
       }
     })
+  }
+
+  const formatLineHeight = ({ prop, value }) => {
+    if (!verifyValues({ prop, value, valueType: ValueType.number })) return false
+
+    return {
+      prop,
+      value: /\d+(\.\d+)?$/.test(value) ? `${Math.round(value * 100)}%` : value
+    }
   }
 
   const getFontVariant = ({ prop, value }) => {
@@ -380,6 +396,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: /.*color.*/i,
         ios: checkCommonValue(ValueType.color),
         android: checkCommonValue(ValueType.color)
+      },
+      { // color 颜色值校验
+        test: 'line-height',
+        ios: formatLineHeight,
+        android: formatLineHeight
       },
       { // number 值校验
         test: /.*width|height|left|right|top|bottom|radius|margin|padding|spacing|offset|size.*/i,

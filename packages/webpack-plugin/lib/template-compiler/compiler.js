@@ -36,7 +36,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-
+const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1046,6 +1046,12 @@ function processStyleReact (el) {
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
 
+  let staticHoverClass = ''
+  if (hoverClassReg.test(el.tag)) {
+    staticHoverClass = el.attrsMap['hover-class'] || ''
+    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
+  }
+
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
@@ -1065,6 +1071,15 @@ function processStyleReact (el) {
       value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
     }])
   }
+
+  if (staticHoverClass && staticHoverClass !== 'none') {
+    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
+    addAttrs(el, [{
+      name: 'hoverStyle',
+      // runtime helper
+      value: `{{this.__getStyle(${staticClassExp})}}`
+    }])
+  }
 }
 
 function processEventReact (el, options, meta) {
@@ -1077,11 +1092,10 @@ function processEventReact (el, options, meta) {
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            rawName: name,
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(parsedFunc)
+        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
       }
     }
   })
@@ -1089,44 +1103,55 @@ function processEventReact (el, options, meta) {
   let wrapper
 
   for (const type in eventConfigMap) {
-    let { configs, rawName } = eventConfigMap[type]
-    if (rawName) {
-      // 清空原始事件绑定
-      let has
-      do {
-        has = getAndRemoveAttr(el, rawName).has
-      } while (has)
-      // 清除修饰符
-      rawName = rawName.replace(/\..*/, '')
-    }
+    let { configs } = eventConfigMap[type]
 
+    let resultName
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, name).has
+        } while (has)
+
+        if (!resultName) {
+          // 清除修饰符
+          resultName = name.replace(/\..*/, '')
+        }
+      }
+    })
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = rawName || config[mode].event.getEvent(type)
-    const value = `{{(e)=>this.__invoke(e, ${stringify(type)}, [${configs}])}}`
-
-    // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
-    if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
-      if (!wrapper) {
-        wrapper = createASTElement('TouchableWithoutFeedback')
-        wrapper.isBuiltIn = true
-        processBuiltInComponents(wrapper, meta)
+    const name = resultName || config[mode].event.getEvent(type)
+    const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
+    addAttrs(el, [
+      {
+        name,
+        value
       }
-      addAttrs(wrapper, [
-        {
-          name,
-          value
-        }
-      ])
-    } else {
-      addAttrs(el, [
-        {
-          name,
-          value
-        }
-      ])
-    }
+    ])
+    // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
+    // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
+    //   if (!wrapper) {
+    //     wrapper = createASTElement('TouchableWithoutFeedback')
+    //     wrapper.isBuiltIn = true
+    //     processBuiltInComponents(wrapper, meta)
+    //   }
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // } else {
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // }
   }
 
   if (wrapper) {
@@ -1149,11 +1174,10 @@ function processEvent (el, options) {
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            rawName: name,
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(parsedFunc)
+        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
@@ -1212,7 +1236,7 @@ function processEvent (el, options) {
 
   for (const type in eventConfigMap) {
     let needBind = false
-    let { configs, rawName, proxy } = eventConfigMap[type]
+    const { configs, proxy } = eventConfigMap[type]
     delete eventConfigMap[type]
     if (proxy) {
       needBind = true
@@ -1230,19 +1254,25 @@ function processEvent (el, options) {
     }
 
     if (needBind) {
-      if (rawName) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, rawName).has
-        } while (has)
-        // 清除修饰符
-        rawName = rawName.replace(/\..*/, '')
-      }
+      let resultName
+      configs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+
+          if (!resultName) {
+            // 清除修饰符
+            resultName = name.replace(/\..*/, '')
+          }
+        }
+      })
 
       addAttrs(el, [
         {
-          name: rawName || config[mode].event.getEvent(type),
+          name: resultName || config[mode].event.getEvent(type),
           value: '__invoke'
         }
       ])
@@ -2126,7 +2156,11 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      if (isReact(mode)) {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+      } else {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      }
     }
   }
 }
@@ -2211,6 +2245,17 @@ function getVirtualHostRoot (options, meta) {
             value: '$listeners'
           }
         ])
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
+      if (isReact(mode) && !hasVirtualHost) {
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          }
+        ])
+        rootView.isRoot = true
         processElement(rootView, rootView, options, meta)
         return rootView
       }

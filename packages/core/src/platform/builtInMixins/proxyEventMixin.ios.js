@@ -3,10 +3,10 @@ import Mpx from '../../index'
 
 export default function proxyEventMixin () {
   const methods = {
-    __invoke (eventObj, type, eventConfig = []) {
+    __invoke (rawEvent, eventConfig = []) {
       if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {
-          Mpx.config.proxyEventHandler(eventObj)
+          Mpx.config.proxyEventHandler(rawEvent)
         } catch (e) {
         }
       }
@@ -19,12 +19,12 @@ export default function proxyEventMixin () {
           const params = item.length > 1
             ? item.slice(1).map(item => {
               if (item === '__mpx_event__') {
-                return eventObj
+                return rawEvent
               } else {
                 return item
               }
             })
-            : [eventObj]
+            : [rawEvent]
           if (typeof this[callbackName] === 'function') {
             returnedValue = this[callbackName].apply(this, params)
           } else {
