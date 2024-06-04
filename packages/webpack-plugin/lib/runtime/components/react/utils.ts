@@ -1,7 +1,10 @@
-import { useEffect, useRef, Children, ReactElement, FunctionComponent, ReactNode } from 'react'
+import { useEffect, useRef, Children, ReactNode } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
+export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
+
+export const PERCENT_REGX = /\d+(\.\d+)?%$/
+
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
 export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
@@ -67,11 +70,6 @@ export const parseUrl = (cssUrl: string = '') => {
   const match = cssUrl.match(URL_REGEX)
 
   return match?.[1]
-}
-
-export const hasElementType = (element: ReactElement<any>, type: string) => {
-  if (!element) return false
-  return (element.type as FunctionComponent)?.displayName === type
 }
 
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
