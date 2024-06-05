@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, Children, ForwardedRef, ReactNode, ReactElement, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, ReactElement, JSX } from 'react'
 
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
@@ -249,7 +249,7 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
     }
   }
   
-  return <View {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
+  return <View key='viewBgImg' {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
     {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
@@ -263,19 +263,20 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
-  return Children.toArray(children).every((child) => callback(child as ReactNode))
+function every(children: ReactNode, callback: (children: ReactNode) => boolean) {
+  return children.every((child) => callback(child as ReactNode))
 }
 
 function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
   if (every(children, (child)=>isText(child as ReactElement))) {
-    children = <Text style={textStyle}>{children}</Text>
+    children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
-  return [wrapImage(imageStyle),
-    children
+  return [
+    wrapImage(imageStyle),
+    ...children
   ]
 }
 
