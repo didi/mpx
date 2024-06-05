@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, ViewStyle, NativeSyntheticEvent, ImageProps, ImageResizeMode, StyleSheet, Image } from 'react-native'
-import React, { useRef, useState, useEffect, forwardRef, Children, ForwardedRef, ReactNode, FunctionComponent, ReactElement } from 'react'
+import React, { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, FunctionComponent, ReactElement } from 'react'
 
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
@@ -248,7 +248,7 @@ function every(children: ReactNode, callback: (children: ReactNode) => boolean) 
 }
 
 function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
-  children = Children.toArray(children)
+  children = Array.isArray(children) ? children : [children]
   if (every(children, (child) => isText(child as ReactElement))) {
     children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
   } else {
