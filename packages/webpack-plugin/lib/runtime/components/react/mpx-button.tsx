@@ -36,7 +36,6 @@
  */
 import React, {
   useEffect,
-  useMemo,
   useRef,
   useState,
   ReactNode,
@@ -337,7 +336,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
     if (every(children, (child)=>isText(child))) {
-      children = <Text style={textStyle}>{children}</Text>
+      children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
     } else {
       if(textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
     }
@@ -384,7 +383,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
         style,
         applyHoverEffect && hoverStyle,
       ]}>
-      {loading && <Loading alone={!React.Children.count(children)} />}
+      {loading && <Loading alone={!children} />}
       {
         wrapChildren(
           children, 
