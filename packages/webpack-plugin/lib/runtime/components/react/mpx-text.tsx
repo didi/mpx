@@ -5,8 +5,9 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
-import React, { useRef, useEffect, forwardRef, ReactNode, ForwardedRef } from 'react';
-import useInnerProps from './getInnerListeners';
+import { useRef, useEffect, forwardRef, ReactNode, ForwardedRef, JSX } from 'react';
+import useInnerProps from './getInnerListeners'
+// @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
 import { PERCENT_REGX } from './utils'
 
@@ -36,7 +37,7 @@ const transformStyle = (styleObj: ExtendedTextStyle) => {
   }
 }
 
-const _Text = forwardRef((props: _TextProps, ref: ForwardedRef<any>): React.JSX.Element => {
+const _Text = forwardRef((props: _TextProps, ref: ForwardedRef<Text>): JSX.Element => {
   const {
     style = [],
     children,
