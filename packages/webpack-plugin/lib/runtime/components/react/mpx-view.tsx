@@ -4,9 +4,9 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, ReactElement, JSX } from 'react'
-
+// @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef from '../../useNodesRef' // 引入辅助函数
@@ -83,10 +83,10 @@ const checkNeedLayout = (style: PreImageInfo) => {
 }
 
 /**
-* h - 用户设置的高度
-* lh - 容器的高度
-* ratio - 原始图片的宽高比
-* **/
+ * h - 用户设置的高度
+ * lh - 容器的高度
+ * ratio - 原始图片的宽高比
+ * **/
 function calculateSize(h: number, lh: number, ratio: number) {
   let height, width
   if (PERCENT_REGX.test(`${h}`)) { // auto  px/rpx 
@@ -234,11 +234,9 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
-    if (layoutInfo.current) {
-      layoutInfo.current = {
-        width,
-        height
-      }
+    layoutInfo.current = {
+      width,
+      height
     }
     if (sizeInfo.current) {
       setImageSizeWidth(sizeInfo.current.width)
@@ -263,12 +261,13 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-function every(children: ReactNode, callback: (children: ReactNode) => boolean) {
+function every(children: ReactNode [], callback: (children: ReactNode) => boolean) {
   return children.every((child) => callback(child as ReactNode))
 }
 
-function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
-  if (every(children, (child)=>isText(child as ReactElement))) {
+function wrapChildren(children: ReactNode , textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
+  children = Array.isArray(children) ? children : [children]
+  if (every(children as ReactNode[], (child)=>isText(child))) {
     children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
