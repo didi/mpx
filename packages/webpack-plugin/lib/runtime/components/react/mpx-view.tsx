@@ -229,7 +229,7 @@ function wrapImage(imageStyle) {
     }
   }
 
-  return <View {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
+  return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
     {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current)} />}
   </View>
 }
@@ -244,18 +244,20 @@ function splitStyle(styles: ExtendedViewStyle) {
 }
 
 function every(children: ReactNode, callback: (children: ReactNode) => boolean) {
-  return Children.toArray(children).every((child) => callback(child as ReactNode))
+  return children.every((child) => callback(child as ReactNode))
 }
 
 function wrapChildren(children: ReactNode, textStyle?: ExtendedViewStyle, imageStyle?: ExtendedViewStyle) {
+  children = Children.toArray(children)
   if (every(children, (child) => isText(child as ReactElement))) {
-    children = <Text style={textStyle}>{children}</Text>
+    children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
   } else {
     if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
-  return [wrapImage(imageStyle),
-    children
+  return [
+    wrapImage(imageStyle),
+    ...children
   ]
 }
 

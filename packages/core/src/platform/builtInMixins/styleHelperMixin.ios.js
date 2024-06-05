@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction } from '@mpxjs/utils'
 import { Dimensions } from 'react-native'
 
 function concat (a, b) {
@@ -108,7 +108,7 @@ export default function styleHelperMixin () {
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
         const result = []
-        if (staticClass || dynamicClass) {
+        if ((staticClass || dynamicClass) && isFunction(this.__getClassMap)) {
           const classMap = this.__getClassMap()
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(' ').forEach((className) => {
