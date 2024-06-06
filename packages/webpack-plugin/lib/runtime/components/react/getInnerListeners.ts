@@ -1,14 +1,13 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import { omit } from '@mpxjs/webpack-plugin/lib/runtime/components/react/utils'
 import eventConfigMap from '@mpxjs/webpack-plugin/lib/runtime/components/react/event.config'
 import {
   CustomEventDetail,
+  RNTouchEvent,
   TouchEventHandlers,
   UseInnerPropsOptions,
   InnerRef,
-  EventWithNativeEvent,
   LayoutRef,
-  RNTouchEvent,
   TouchItem,
   SetTimeoutReturnType,
   DataSetMap
@@ -16,7 +15,7 @@ import {
 
 const getTouchEvent = (
   type: string = '',
-  event: EventWithNativeEvent = {} as EventWithNativeEvent,
+  event: any = {},
   props: { id?: string;[key: string]: any } = {},
   config: { layoutRef?: LayoutRef } = {}
 ) => {
@@ -84,7 +83,7 @@ export const getDataSet = (props: Record<string, any>): Record<string, any> => {
 
 export const getCustomEvent = (
   type: string = '',
-  oe: EventWithNativeEvent = {} as EventWithNativeEvent,
+  oe: any = {},
   { detail = {}, layoutRef = {} }: { detail?: CustomEventDetail; layoutRef?: LayoutRef },
   props: { [key: string]: any } = {}
 ) => {
@@ -145,7 +144,7 @@ const useInnerProps = (
   function handleEmitEvent(
     events: string[],
     type: string,
-    oe: RNTouchEvent
+    oe: any
   ) {
     events.forEach(event => {
       if (propsRef.current[event]) {
@@ -224,42 +223,42 @@ const useInnerProps = (
 
   const touchEventList = [{
     eventName: 'onTouchStart',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchstart(e, 'bubble')
     }
   }, {
     eventName: 'onTouchMove',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchmove(e, 'bubble')
     }
   }, {
     eventName: 'onTouchEnd',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchend(e, 'bubble')
     }
   }, {
     eventName: 'onTouchCancel',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchcancel(e, 'bubble')
     }
   }, {
     eventName: 'onTouchStartCapture',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchstart(e, 'capture')
     }
   }, {
     eventName: 'onTouchMoveCapture',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchmove(e, 'capture')
     }
   }, {
     eventName: 'onTouchEndCapture',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchend(e, 'capture')
     }
   }, {
     eventName: 'onTouchCancelCapture',
-    handler: (e) => {
+    handler: (e: RNTouchEvent) => {
       handleTouchcancel(e, 'capture')
     }
   }]
@@ -274,7 +273,7 @@ const useInnerProps = (
   const finalEventKeys = [...new Set(transformedEventKeys)]
 
 
-  touchEventList.forEach(item => {
+  touchEventList.forEach((item) => {
     if (finalEventKeys.includes(item.eventName)) {
       events[item.eventName] = item.handler
     }

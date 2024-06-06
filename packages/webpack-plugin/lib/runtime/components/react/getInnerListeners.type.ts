@@ -5,9 +5,6 @@ type LayoutRef = {
   current?: HTMLElement | null;
 }
 
-type RNTouchEvent = React.TouchEvent<HTMLElement>
-
-
 type TouchItem = {
   identifier: number;
   pageX: number;
@@ -29,6 +26,8 @@ interface TouchPoint {
   pageY: number;
   clientX: number;
   clientY: number;
+  locationX?: number;
+  locationY?: number;
 }
 
 interface TouchEvent extends React.TouchEvent {
@@ -40,6 +39,13 @@ interface TouchEvent extends React.TouchEvent {
     offsetLeft: number;
     offsetTop: number;
   };
+  nativeEvent: {
+    timestamp: number;
+    pageX: number;
+    pageY: number;
+    touches: TouchPoint[];
+    changedTouches: TouchPoint[];
+  },
   detail: TouchEventDetail;
   touches: TouchPoint[];
   changedTouches: TouchPoint[];
@@ -86,6 +92,10 @@ interface TouchEventHandlers {
   onTouchCancelCapture?: (e: React.TouchEvent<HTMLElement>) => void;
 }
 
+interface CustomEventType {
+  [key: string]: any;
+}
+
 interface CustomEventDetail {
   [key: string]: any;
 }
@@ -94,23 +104,10 @@ interface DataSetMap {
   [key: string]: any;
 }
 
-interface EventWithNativeEvent extends NativeSyntheticEvent<{
-  timestamp: number;
-  pageX: number;
-  pageY: number;
-  touches: TouchItem[];
-  changedTouches: TouchItem[];
-}> {
-  nativeEvent: {
-    timestamp: number;
-    pageX: number;
-    pageY: number;
-    touches: TouchItem[];
-    changedTouches: TouchItem[];
-  };
-}
-
+type RNTouchEvent = NativeSyntheticEvent<TouchEvent>
 export {
+  RNTouchEvent,
+  CustomEventType,
   CustomEventDetail,
   TouchEventHandlers,
   UseInnerPropsOptions,
@@ -118,9 +115,7 @@ export {
   TouchEvent,
   TouchPoint,
   TouchEventDetail,
-  EventWithNativeEvent,
   LayoutRef,
-  RNTouchEvent,
   TouchItem,
   SetTimeoutReturnType,
   DataSetMap
