@@ -1,4 +1,5 @@
 import React from 'react'
+import { NativeSyntheticEvent } from 'react-native'
 
 type LayoutRef = {
   current?: HTMLElement | null;
@@ -25,6 +26,8 @@ interface TouchPoint {
   pageY: number;
   clientX: number;
   clientY: number;
+  locationX?: number;
+  locationY?: number;
 }
 
 interface TouchEvent extends React.TouchEvent {
@@ -36,6 +39,13 @@ interface TouchEvent extends React.TouchEvent {
     offsetLeft: number;
     offsetTop: number;
   };
+  nativeEvent: {
+    timestamp: number;
+    pageX: number;
+    pageY: number;
+    touches: TouchPoint[];
+    changedTouches: TouchPoint[];
+  },
   detail: TouchEventDetail;
   touches: TouchPoint[];
   changedTouches: TouchPoint[];
@@ -86,12 +96,19 @@ interface CustomEventType {
   [key: string]: any;
 }
 
+interface CustomEventDetail {
+  [key: string]: any;
+}
+
 interface DataSetMap {
   [key: string]: any;
 }
 
+type RNTouchEvent = NativeSyntheticEvent<TouchEvent>
 export {
+  RNTouchEvent,
   CustomEventType,
+  CustomEventDetail,
   TouchEventHandlers,
   UseInnerPropsOptions,
   InnerRef,
