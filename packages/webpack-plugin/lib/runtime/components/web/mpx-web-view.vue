@@ -71,6 +71,7 @@
       window.addEventListener('message', this.messageCallback)
     },
     deactivated () {
+      window.removeEventListener('message', this.messageCallback)
       if (!this.messageList.length) {
         return
       }
