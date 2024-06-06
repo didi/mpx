@@ -8,7 +8,7 @@ import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import { useRef, useEffect, forwardRef, ReactNode, ForwardedRef, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
-import useNodesRef from '../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
 import { PERCENT_REGX } from './utils'
 
 type ExtendedTextStyle = Omit<TextStyle, 'lineHeight'>  & {
@@ -37,7 +37,7 @@ const transformStyle = (styleObj: ExtendedTextStyle) => {
   }
 }
 
-const _Text = forwardRef((props: _TextProps, ref: ForwardedRef<Text>): JSX.Element => {
+const _Text = forwardRef<HandlerRef, _TextProps>((props, ref): JSX.Element => {
   const {
     style = [],
     children,
@@ -58,7 +58,7 @@ const _Text = forwardRef((props: _TextProps, ref: ForwardedRef<Text>): JSX.Eleme
       transformStyle(styleObj)
     }
 
-    const { nodeRef } = useNodesRef(props, ref, {
+    const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
       defaultStyle
     })
 
@@ -79,7 +79,7 @@ const _Text = forwardRef((props: _TextProps, ref: ForwardedRef<Text>): JSX.Eleme
       let measureTimeout: ReturnType<typeof setTimeout> | null = null
       if (enableOffset) {
         measureTimeout = setTimeout(() => {
-          nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+          nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
             layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
           })
         })
