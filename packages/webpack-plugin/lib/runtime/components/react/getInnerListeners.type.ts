@@ -16,8 +16,8 @@ type TouchItem = {
 type SetTimeoutReturnType = ReturnType<typeof setTimeout>
 
 interface TouchEventDetail {
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
 }
 
 interface TouchPoint {
@@ -30,7 +30,7 @@ interface TouchPoint {
   locationY?: number;
 }
 
-interface TouchEvent extends React.TouchEvent {
+interface TouchEvent {
   type: string;
   timeStamp: number;
   target: {
@@ -43,12 +43,12 @@ interface TouchEvent extends React.TouchEvent {
     timestamp: number;
     pageX: number;
     pageY: number;
-    touches: TouchPoint[];
-    changedTouches: TouchPoint[];
+    touches: React.TouchList;
+    changedTouches: React.TouchList;
   },
   detail: TouchEventDetail;
-  touches: TouchPoint[];
-  changedTouches: TouchPoint[];
+  touches: React.TouchList;
+  changedTouches: React.TouchList;
   persist: () => void;
   stopPropagation: () => void;
   preventDefault: () => void;
@@ -81,17 +81,6 @@ interface UseInnerPropsOptions {
   };
 }
 
-interface TouchEventHandlers {
-  onTouchStart?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchMove?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchEnd?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchCancel?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchStartCapture?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchMoveCapture?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchEndCapture?: (e: React.TouchEvent<HTMLElement>) => void;
-  onTouchCancelCapture?: (e: React.TouchEvent<HTMLElement>) => void;
-}
-
 interface CustomEventType {
   [key: string]: any;
 }
@@ -109,7 +98,6 @@ export {
   RNTouchEvent,
   CustomEventType,
   CustomEventDetail,
-  TouchEventHandlers,
   UseInnerPropsOptions,
   InnerRef,
   TouchEvent,

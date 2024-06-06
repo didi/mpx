@@ -33,7 +33,7 @@ import {
   ImageLoadEventData,
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import useNodesRef from '../../../useNodesRef'
+import useNodesRef, { HandlerRef } from '../../../useNodesRef'
 
 export type Mode =
   | 'scaleToFill'
@@ -110,7 +110,7 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize 
 //   </View>
 // )
 
-const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element => {
+const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): React.JSX.Element => {
   const {
     src = '',
     mode = 'scaleToFill',

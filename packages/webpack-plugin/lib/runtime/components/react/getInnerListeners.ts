@@ -4,7 +4,6 @@ import eventConfigMap from '@mpxjs/webpack-plugin/lib/runtime/components/react/e
 import {
   CustomEventDetail,
   RNTouchEvent,
-  TouchEventHandlers,
   UseInnerPropsOptions,
   InnerRef,
   LayoutRef,
@@ -84,7 +83,9 @@ export const getDataSet = (props: Record<string, any>): Record<string, any> => {
 export const getCustomEvent = (
   type: string = '',
   oe: any = {},
-  { detail = {}, layoutRef = {} }: { detail?: CustomEventDetail; layoutRef?: LayoutRef },
+  { detail = {}, layoutRef = {
+    current: { offsetLeft: 0, offsetTop: 0 }
+  } }: { detail?: CustomEventDetail; layoutRef?: React.MutableRefObject<any> },
   props: { [key: string]: any } = {}
 ) => {
   return {
@@ -263,7 +264,7 @@ const useInnerProps = (
     }
   }]
 
-  const events: TouchEventHandlers = {}
+  const events: Record<string, (e: any) => void> = {}
 
   const transformedEventKeys: string[] = []
   for (const key in eventConfig) {
@@ -273,7 +274,7 @@ const useInnerProps = (
   const finalEventKeys = [...new Set(transformedEventKeys)]
 
 
-  touchEventList.forEach((item) => {
+  touchEventList.forEach(item => {
     if (finalEventKeys.includes(item.eventName)) {
       events[item.eventName] = item.handler
     }

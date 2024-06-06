@@ -35,7 +35,7 @@
 import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
 import React, { useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
-import useNodesRef from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from '../../useNodesRef'
 
 interface ScrollViewProps {
   children?: React.ReactNode;
@@ -87,7 +87,7 @@ type ScrollAdditionalProps = {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 };
-const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.ForwardedRef): React.JSX.Element => {
+const _ScrollView = forwardRef<HandlerRef<ScrollView, ScrollViewProps>, ScrollViewProps>((props = {}, ref): React.JSX.Element => {
   const {
     children,
     enhanced = false,
@@ -109,16 +109,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const layoutRef = useRef<{
-    current?: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-      offsetLeft: number;
-      offsetTop: number;
-    }
-  }>({})
+  const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
@@ -237,7 +228,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   function onLayout(e: LayoutChangeEvent) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
     if (enableOffset) {
-      scrollViewRef.current.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
       })
     }
@@ -409,7 +400,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
           onRefresh={onRefresh}
           {...(refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : {})}
         />
-      ) : null}
+      ) : undefined}
     >
       {children}
     </ScrollView>
