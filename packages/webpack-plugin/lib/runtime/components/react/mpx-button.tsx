@@ -54,7 +54,7 @@ import {
 } from 'react-native'
 import { extractTextStyle, isText, every } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from '../../useNodesRef'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -188,7 +188,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => {
+const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): React.JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -267,7 +267,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
 
   const defaultViewStyle = [
     styles.button,
-    isMiniSize && styles.buttonMini,
+    isMiniSize && styles.buttonMini || {},
     viewStyle,
   ]
 
@@ -352,7 +352,7 @@ const Button = forwardRef<View, ButtonProps>((props, ref): React.JSX.Element => 
   })
 
   const onLayout = () => {
-    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }

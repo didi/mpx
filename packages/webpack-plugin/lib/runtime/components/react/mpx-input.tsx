@@ -57,7 +57,7 @@ import {
 } from 'react-native'
 import { parseInlineStyle, useUpdateEffect } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from '../../useNodesRef'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -72,7 +72,6 @@ type InputStyle = Omit<
 >
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
-
 export interface InputProps {
   style?: StyleProp<InputStyle>
   value?: string
@@ -104,6 +103,8 @@ export interface PrivateInputProps {
   bindlinechange?: (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData> | unknown) => void
 }
 
+type FinalInputProps = InputProps & PrivateInputProps
+
 const keyboardTypeMap: Record<Type, string> = {
   text: 'default',
   number: 'numeric',
@@ -115,7 +116,7 @@ const keyboardTypeMap: Record<Type, string> = {
     }) || '',
 }
 
-const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX.Element => {
+const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): React.JSX.Element => {
   const {
     style = [],
     type = 'text',
@@ -317,7 +318,7 @@ const Input = forwardRef((props: InputProps & PrivateInputProps, ref): React.JSX
   }
 
   const onLayout = () => {
-    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }

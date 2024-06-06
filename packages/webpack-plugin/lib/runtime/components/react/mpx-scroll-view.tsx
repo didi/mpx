@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 
-import { ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
+import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
 import React, { useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
@@ -87,7 +87,7 @@ type ScrollAdditionalProps = {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 };
-const _ScrollView = forwardRef<HandlerRef<ScrollView, ScrollViewProps>, ScrollViewProps>((props = {}, ref): React.JSX.Element => {
+const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props = {}, ref): React.JSX.Element => {
   const {
     children,
     enhanced = false,
