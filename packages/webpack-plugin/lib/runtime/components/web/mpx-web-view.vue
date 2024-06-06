@@ -67,7 +67,7 @@
     beforeCreate () {
       this.messageList = []
     },
-    mounted () {
+    activated () {
       window.addEventListener('message', this.messageCallback)
     },
     deactivated () {
