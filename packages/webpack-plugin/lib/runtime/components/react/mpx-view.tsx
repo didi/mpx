@@ -279,7 +279,7 @@ function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp
   ]
 }
 
-const _View = forwardRef<HandlerRef, _ViewProps>((props, ref): JSX.Element => {
+const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
   const {
     style = [],
     children,
