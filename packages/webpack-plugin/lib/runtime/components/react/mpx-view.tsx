@@ -377,7 +377,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hoverStyle',
     'hover-class',
     'enable-offset'
-  ])
+  ], {
+    layoutRef
+  })
 
   return (
     <View

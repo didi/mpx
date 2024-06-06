@@ -48,7 +48,7 @@ interface InnerRef {
   };
 }
 interface UseInnerPropsConfig {
-  layoutRef?: LayoutRef;
+  layoutRef: LayoutRef;
   disableTouch?: boolean
 }
 interface DataSetType {

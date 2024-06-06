@@ -14,10 +14,10 @@ import {
 } from './getInnerListeners.type'
 
 const getTouchEvent = (
-  type: string = '',
+  type: string,
   event: NativeTouchEvent,
-  props: Props = {},
-  config: UseInnerPropsConfig = {}
+  props: Props,
+  config: UseInnerPropsConfig
 ) => {
   const nativeEvent = event.nativeEvent
   const {
@@ -106,7 +106,7 @@ const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
   removeProps: RemoveProps = [],
-  rawConfig: UseInnerPropsConfig = {}
+  rawConfig: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
     startTimer: {
@@ -127,7 +127,7 @@ const useInnerProps = (
 
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
-  const config = rawConfig
+  const config = rawConfig || {}
 
   propsRef.current = { ...props, ...additionalProps }
 
