@@ -1,4 +1,5 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
+import { NativeSyntheticEvent } from 'react-native'
 import { omit } from '@mpxjs/webpack-plugin/lib/runtime/components/react/utils'
 import eventConfigMap from '@mpxjs/webpack-plugin/lib/runtime/components/react/event.config'
 import {
@@ -6,9 +7,7 @@ import {
   TouchEventHandlers,
   UseInnerPropsOptions,
   InnerRef,
-  EventWithNativeEvent,
   LayoutRef,
-  RNTouchEvent,
   TouchItem,
   SetTimeoutReturnType,
   DataSetMap
@@ -16,7 +15,7 @@ import {
 
 const getTouchEvent = (
   type: string = '',
-  event: EventWithNativeEvent = {} as EventWithNativeEvent,
+  event: NativeSyntheticEvent<TouchEvent>,
   props: { id?: string;[key: string]: any } = {},
   config: { layoutRef?: LayoutRef } = {}
 ) => {
@@ -84,7 +83,7 @@ export const getDataSet = (props: Record<string, any>): Record<string, any> => {
 
 export const getCustomEvent = (
   type: string = '',
-  oe: EventWithNativeEvent = {} as EventWithNativeEvent,
+  oe: CustomEventType = {},
   { detail = {}, layoutRef = {} }: { detail?: CustomEventDetail; layoutRef?: LayoutRef },
   props: { [key: string]: any } = {}
 ) => {
@@ -145,7 +144,7 @@ const useInnerProps = (
   function handleEmitEvent(
     events: string[],
     type: string,
-    oe: RNTouchEvent
+    oe: NativeSyntheticEvent<TouchEvent>
   ) {
     events.forEach(event => {
       if (propsRef.current[event]) {
@@ -157,7 +156,7 @@ const useInnerProps = (
       }
     })
   }
-  function handleTouchstart(e: RNTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchstart(e: NativeSyntheticEvent<TouchEvent>, type: 'bubble' | 'capture') {
     e.persist()
     const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
     const bubblePressEvent = ['catchlongpress', 'bindlongpress']
@@ -182,7 +181,7 @@ const useInnerProps = (
     }
   }
 
-  function handleTouchmove(e: RNTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchmove(e: NativeSyntheticEvent<TouchEvent>, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
     const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
     const tapDetailInfo = ref.current.mpxPressInfo.detail || { x: 0, y: 0 }
@@ -198,7 +197,7 @@ const useInnerProps = (
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
   }
 
-  function handleTouchend(e: RNTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchend(e: NativeSyntheticEvent<TouchEvent>, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
     const bubbleTapEvent = ['catchtap', 'bindtap']
     const captureTouchEvent = ['capture-catchtouchend', 'capture-bindtouchend']
@@ -213,7 +212,7 @@ const useInnerProps = (
     }
   }
 
-  function handleTouchcancel(e: RNTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchcancel(e: NativeSyntheticEvent<TouchEvent>, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchcancel', 'bindtouchcancel']
     const captureTouchEvent = ['capture-catchtouchcancel', 'capture-bindtouchcancel']
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
@@ -224,42 +223,42 @@ const useInnerProps = (
 
   const touchEventList = [{
     eventName: 'onTouchStart',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchstart(e, 'bubble')
     }
   }, {
     eventName: 'onTouchMove',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchmove(e, 'bubble')
     }
   }, {
     eventName: 'onTouchEnd',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchend(e, 'bubble')
     }
   }, {
     eventName: 'onTouchCancel',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchcancel(e, 'bubble')
     }
   }, {
     eventName: 'onTouchStartCapture',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchstart(e, 'capture')
     }
   }, {
     eventName: 'onTouchMoveCapture',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchmove(e, 'capture')
     }
   }, {
     eventName: 'onTouchEndCapture',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchend(e, 'capture')
     }
   }, {
     eventName: 'onTouchCancelCapture',
-    handler: (e) => {
+    handler: (e: NativeSyntheticEvent<TouchEvent>) => {
       handleTouchcancel(e, 'capture')
     }
   }]

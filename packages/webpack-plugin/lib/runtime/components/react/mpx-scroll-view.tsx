@@ -109,7 +109,16 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const [snapScrollLeft, setSnapScrollLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const layoutRef = useRef({})
+  const layoutRef = useRef<{
+    current?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      offsetLeft: number;
+      offsetTop: number;
+    }
+  }>({})
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
@@ -121,7 +130,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   const scrollEventThrottle = 50;
   const hasCallScrollToUpper = useRef(true);
   const hasCallScrollToLower = useRef(false);
-  const initialTimeout = useRef(null)
+  const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,

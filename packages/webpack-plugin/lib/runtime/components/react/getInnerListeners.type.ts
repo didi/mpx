@@ -1,12 +1,8 @@
 import React from 'react'
-import { NativeSyntheticEvent } from 'react-native'
 
 type LayoutRef = {
   current?: HTMLElement | null;
 }
-
-type RNTouchEvent = React.TouchEvent<HTMLElement>
-
 
 type TouchItem = {
   identifier: number;
@@ -86,7 +82,7 @@ interface TouchEventHandlers {
   onTouchCancelCapture?: (e: React.TouchEvent<HTMLElement>) => void;
 }
 
-interface CustomEventDetail {
+interface CustomEventType {
   [key: string]: any;
 }
 
@@ -94,33 +90,15 @@ interface DataSetMap {
   [key: string]: any;
 }
 
-interface EventWithNativeEvent extends NativeSyntheticEvent<{
-  timestamp: number;
-  pageX: number;
-  pageY: number;
-  touches: TouchItem[];
-  changedTouches: TouchItem[];
-}> {
-  nativeEvent: {
-    timestamp: number;
-    pageX: number;
-    pageY: number;
-    touches: TouchItem[];
-    changedTouches: TouchItem[];
-  };
-}
-
 export {
-  CustomEventDetail,
+  CustomEventType,
   TouchEventHandlers,
   UseInnerPropsOptions,
   InnerRef,
   TouchEvent,
   TouchPoint,
   TouchEventDetail,
-  EventWithNativeEvent,
   LayoutRef,
-  RNTouchEvent,
   TouchItem,
   SetTimeoutReturnType,
   DataSetMap
