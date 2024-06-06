@@ -54,7 +54,7 @@ export interface CarouseState {
   // 是否结束自动轮播，手动设置滚动到具体位置时结束
   autoplayEnd: boolean;
   loopJump: boolean;
-  dir: string;
+  dir: 'x' | 'y';
 }
 
 export interface ScrollElementProps {
