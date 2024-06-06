@@ -11,11 +11,9 @@ import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
 import { PERCENT_REGX } from './utils'
 
-type ExtendedTextStyle = Omit<TextStyle, 'lineHeight'>  & {
-  lineHeight?: string | number
-};
-interface _TextProps extends Omit<TextProps, 'style'> {
-  style?: ExtendedTextStyle
+
+interface _TextProps extends TextProps {
+  style?: TextStyle
   children?: ReactNode
   selectable?: boolean
   'enable-offset'?: boolean
@@ -28,8 +26,7 @@ const DEFAULT_STYLE = {
   fontSize: 16
 }
 
-
-const transformStyle = (styleObj: ExtendedTextStyle) => {
+const transformStyle = (styleObj: TextStyle) => {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGX.test(lineHeight)) {
     lineHeight = (parseFloat(lineHeight)/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
@@ -49,7 +46,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
 
     const layoutRef = useRef({})
 
-    const styleObj = StyleSheet.flatten<ExtendedTextStyle>(style)
+    const styleObj: TextStyle = StyleSheet.flatten<TextStyle>(style)
 
     let defaultStyle = {}
 
