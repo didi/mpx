@@ -16,7 +16,7 @@ export interface SwiperProps {
   'previous-margin'?: string;
   'next-margin'?: string;
   'enable-offset'?: boolean;
-  bindchange?:  (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
 export interface CarouseProps {
@@ -32,10 +32,10 @@ export interface CarouseProps {
   horizontal?: boolean;
   style?: string;
   easingFunction?: string;
-  previousMargin?: string;
-  nextMargin?: string;
+  previousMargin?: number;
+  nextMargin?: number;
   enableOffset?: boolean;
-  bindchange: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   getInnerLayout: Function,
   innerProps: Object;
 }
