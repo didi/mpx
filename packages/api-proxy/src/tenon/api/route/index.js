@@ -34,7 +34,7 @@ function redirectTo (options = {}) {
         {
           url,
           animated: false,
-          params: query,
+          params: Object.assign({}, query, options.query || {}),
           closeSelf: true
         },
         // 执行环境变了 得不到执行的机会 故回调无效
@@ -61,7 +61,7 @@ function navigateTo (options = {}) {
       Navigator.openPage({
         url,
         animated: true,
-        params: query
+        params: Object.assign({}, query, options.query || {})
       }, () => {})
       const res = { errMsg: 'redirectTo:ok', eventChannel }
       webHandleSuccess(res, options.success, options.complete)
