@@ -1,4 +1,4 @@
-import { useEffect, useRef, Children, ReactNode, isValidElement, FunctionComponent } from 'react'
+import { useEffect, useRef, Children, ReactNode, FunctionComponent, isValidElement } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/

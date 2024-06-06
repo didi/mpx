@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, ReactElement, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX } from 'react'
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
@@ -21,7 +21,7 @@ type ExtendedViewStyle = ViewStyle & {
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ExtendedViewStyle>
-  children?: ReactNode
+  children?: ReactNode | ReactNode []
   hoverStyle: Array<ExtendedViewStyle>
   ['hover-start-time']: number
   ['hover-stay-time']: number
@@ -262,10 +262,10 @@ function splitStyle(styles: ExtendedViewStyle) {
 }
 
 function every(children: ReactNode [], callback: (children: ReactNode) => boolean) {
-  return children.every((child) => callback(child as ReactNode))
+  return children.every((child) => callback(child))
 }
 
-function wrapChildren(children: ReactNode , textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
+function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
   children = Array.isArray(children) ? children : [children]
   if (every(children as ReactNode[], (child)=>isText(child))) {
     children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
