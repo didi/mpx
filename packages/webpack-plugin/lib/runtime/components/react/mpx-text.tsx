@@ -79,7 +79,7 @@ const _Text = forwardRef((props: _TextProps, ref: ForwardedRef<Text>): JSX.Eleme
       let measureTimeout: ReturnType<typeof setTimeout> | null = null
       if (enableOffset) {
         measureTimeout = setTimeout(() => {
-          nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+          nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
             layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
           })
         })

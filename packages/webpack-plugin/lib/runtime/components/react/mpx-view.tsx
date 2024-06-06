@@ -351,7 +351,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<View>): JSX.Eleme
 
   const onLayout = () => {
   
-    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
