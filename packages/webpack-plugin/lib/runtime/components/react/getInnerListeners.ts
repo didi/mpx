@@ -44,7 +44,7 @@ const getTouchEvent = (
       x: pageX,
       y: pageY
     },
-    touches: touches.map((item) => {
+    touches: touches.map(item => {
       return {
         identifier: item.identifier,
         pageX: item.pageX,
