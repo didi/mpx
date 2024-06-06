@@ -1,6 +1,6 @@
 import { useRef } from 'react'
-import { omit } from '@mpxjs/webpack-plugin/lib/runtime/components/react/utils'
-import eventConfigMap from '@mpxjs/webpack-plugin/lib/runtime/components/react/event.config'
+import { omit } from './utils'
+import eventConfigMap from './event.config'
 import {
   Props,
   AdditionalProps,
