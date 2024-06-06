@@ -1,9 +1,9 @@
+import { View } from 'react-native'
 import React, { forwardRef, useRef } from 'react'
-import Carouse from './carouse'
+import { default as Carouse } from './carouse'
 import { SwiperProps } from './type'
 import useInnerProps from '../getInnerListeners'
-import useNodesRef from '../../../useNodesRef'
-
+import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -19,7 +19,7 @@ import useNodesRef from '../../../useNodesRef'
  * ✔ next-margin
  * ✘ snap-to-edge
  */
-const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
+const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref) => {
   const { children } = props
   let innerLayout = useRef(true)
   const swiperProp = {
@@ -38,7 +38,7 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
     enableOffset: props['enable-offset'],
     bindchange: props.bindchange
   }
-  const { nodeRef } = useNodesRef(props, ref, {
+  const { nodeRef } = useNodesRef<View, SwiperProps>(props, ref, {
   })
   const innerProps = useInnerProps(props, {}, [
     'indicator-dots',
@@ -51,6 +51,7 @@ const _SwiperWrapper = forwardRef((props: SwiperProps, ref) => {
   const getInnerLayout = (layout) => {
     innerLayout.current = layout.current
   }
+  console.log('----------------children', children)
 
   return (
       <Carouse
