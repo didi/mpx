@@ -1,4 +1,22 @@
 import React from 'react'
+import { NativeSyntheticEvent } from 'react-native'
+
+type LayoutRef = {
+  current?: HTMLElement | null;
+}
+
+type RNTouchEvent = React.TouchEvent<HTMLElement>
+
+
+type TouchItem = {
+  identifier: number;
+  pageX: number;
+  pageY: number;
+  locationX: number;
+  locationY: number;
+};
+
+type SetTimeoutReturnType = ReturnType<typeof setTimeout>
 
 interface TouchEventDetail {
   x: number;
@@ -70,4 +88,40 @@ interface TouchEventHandlers {
 
 interface CustomEventDetail {
   [key: string]: any;
+}
+
+interface DataSetMap {
+  [key: string]: any;
+}
+
+interface EventWithNativeEvent extends NativeSyntheticEvent<{
+  timestamp: number;
+  pageX: number;
+  pageY: number;
+  touches: TouchItem[];
+  changedTouches: TouchItem[];
+}> {
+  nativeEvent: {
+    timestamp: number;
+    pageX: number;
+    pageY: number;
+    touches: TouchItem[];
+    changedTouches: TouchItem[];
+  };
+}
+
+export {
+  CustomEventDetail,
+  TouchEventHandlers,
+  UseInnerPropsOptions,
+  InnerRef,
+  TouchEvent,
+  TouchPoint,
+  TouchEventDetail,
+  EventWithNativeEvent,
+  LayoutRef,
+  RNTouchEvent,
+  TouchItem,
+  SetTimeoutReturnType,
+  DataSetMap
 }

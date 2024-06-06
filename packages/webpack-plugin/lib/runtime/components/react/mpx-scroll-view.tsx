@@ -159,7 +159,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
       setScrollEnabled(true);
     }
   }, [props['scroll-x'], props['scroll-y']]);
-  
+
   useEffect(() => {
     if (snapScrollTop || snapScrollLeft) {
       initialTimeout.current = setTimeout(() => {
@@ -228,7 +228,7 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
   function onLayout(e) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout);
     if (enableOffset) {
-      scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      scrollViewRef.current.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
       })
     }
@@ -359,30 +359,30 @@ const _ScrollView = forwardRef((props: ScrollViewProps = {}, ref: React.Forwarde
     };
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
-      'enable-offset',
-      'scroll-x',
-      'scroll-y',
-      'enable-back-to-top',
-      'paging-enabled',
-      'show-scrollbar',
-      'upper-threshold',
-      'lower-threshold',
-      'scroll-top',
-      'scroll-left',
-      'scroll-with-animation',
-      'refresher-triggered',
-      'refresher-enabled',
-      'refresher-default-style',
-      'refresher-background',
-      'children',
-      'enhanced',
-      'binddragstart',
-      'binddragging',
-      'binddragend',
-      'bindscroll',
-      'bindscrolltoupper',
-      'bindscrolltolower',
-      'bindrefresherrefresh'
+    'enable-offset',
+    'scroll-x',
+    'scroll-y',
+    'enable-back-to-top',
+    'paging-enabled',
+    'show-scrollbar',
+    'upper-threshold',
+    'lower-threshold',
+    'scroll-top',
+    'scroll-left',
+    'scroll-with-animation',
+    'refresher-triggered',
+    'refresher-enabled',
+    'refresher-default-style',
+    'refresher-background',
+    'children',
+    'enhanced',
+    'binddragstart',
+    'binddragging',
+    'binddragend',
+    'bindscroll',
+    'bindscrolltoupper',
+    'bindscrolltolower',
+    'bindrefresherrefresh'
   ], { layoutRef });
 
   const refreshColor = {
