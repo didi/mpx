@@ -55,27 +55,32 @@ function genNode (node) {
             }
             return map
           }, {})
-          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
-          if (node.isRoot) {
-            exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
-          } else if (node.attrsList.length) {
-            const attrs = []
-            node.attrsList && node.attrsList.forEach(({ name, value }) => {
-              const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
-              attrs.push(`${mapAttrName(name)}: ${attrExp}`)
-            })
-            exp += `, { ${attrs.join(', ')} }`
+          if (node.slot) {
+            const name = node.slot.name
+            exp += `__getSlot(${name ? s(name) : ''})`
           } else {
-            exp += ', null'
-          }
+            exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
+            if (node.isRoot) {
+              exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
+            } else if (node.attrsList.length) {
+              const attrs = []
+              node.attrsList && node.attrsList.forEach(({ name, value }) => {
+                const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
+                attrs.push(`${mapAttrName(name)}: ${attrExp}`)
+              })
+              exp += `, { ${attrs.join(', ')} }`
+            } else {
+              exp += ', null'
+            }
 
-          if (!node.unary && node.children.length) {
-            exp += ','
-            node.children.forEach(function (child, index) {
-              exp += `${index === 0 ? '' : ','}${genNode(child)}`
-            })
+            if (!node.unary && node.children.length) {
+              exp += ','
+              node.children.forEach(function (child, index) {
+                exp += `${index === 0 ? '' : ','}${genNode(child)}`
+              })
+            }
+            exp += ')'
           }
-          exp += ')'
         }
       } else {
         node.children.forEach(function (child, index) {

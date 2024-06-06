@@ -277,7 +277,7 @@ function _createNodesRef (nodeRefs = []) {
 export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
-      this._$refs = {}
+      this.__refs = {}
       this.$refs = {}
       this.__getRefs()
     },
@@ -290,7 +290,7 @@ export default function getRefsMixin () {
             enumerable: true,
             configurable: true,
             get () {
-              const refs = target._$refs[key] || []
+              const refs = target.__refs[key] || []
               if (type === 'component') {
                 return all ? refs : refs[0]
               } else {
@@ -301,13 +301,10 @@ export default function getRefsMixin () {
         })
       },
       __getRefVal (key) {
-        if (!this._$refs[key]) {
-          this._$refs[key] = []
+        if (!this.__refs[key]) {
+          this.__refs[key] = []
         }
-        return (instance) => instance && this._$refs[key].push(instance)
-      },
-      __resetRefs () {
-        this._$refs = {}
+        return (instance) => instance && this.__refs[key].push(instance)
       }
     }
   }

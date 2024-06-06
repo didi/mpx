@@ -61,6 +61,32 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
       }
       return propsData
     },
+    __getSlot (name) {
+      const { children } = propsRef.current || {}
+      if (children) {
+        const result = []
+        if (Array.isArray(children)) {
+          children.forEach(child => {
+            if (child && child.props && child.props.slot === name) {
+              result.push(child)
+            }
+          })
+        } else {
+          if (children && children.props && children.props.slot === name) {
+            result.push(children)
+          }
+        }
+        return result.filter(item => {
+          if (this.__dispatchedSlotSet.has(item)) {
+            return false
+          } else {
+            this.__dispatchedSlotSet.add(item)
+            return true
+          }
+        })
+      }
+      return null
+    },
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
     // render helper
@@ -183,7 +209,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
-    instance.__resetRefs()
+    // reset instance
+    instance.__refs = {}
+    instance.__dispatchedSlotSet = new WeakSet()
     useImperativeHandle(ref, () => {
       return instance
     })

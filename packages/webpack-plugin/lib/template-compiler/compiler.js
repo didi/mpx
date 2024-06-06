@@ -1290,6 +1290,14 @@ function processEvent (el, options) {
   }
 }
 
+function processSlotReact (el) {
+  if (el.tag === 'slot') {
+    el.slot = {
+      name: getAndRemoveAttr(el, 'name').val
+    }
+  }
+}
+
 function wrapMustache (val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
 }
@@ -2500,6 +2508,7 @@ function processElement (el, root, options, meta) {
     processStyleReact(el)
     processEventReact(el, options, meta)
     processComponentIs(el, options)
+    processSlotReact(el)
     processAttrs(el, options)
     return
   }
