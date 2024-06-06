@@ -1,5 +1,5 @@
+import { View } from 'react-native'
 import React, { forwardRef, useRef } from 'react'
-import { View } from 'react-native';
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
 

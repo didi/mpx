@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { View, ScrollView } from 'react-native'
 import React, { forwardRef, useRef } from 'react'
 import { default as Carouse } from './carouse'
 import { SwiperProps } from './type'
@@ -19,13 +19,13 @@ import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助�
  * ✔ next-margin
  * ✘ snap-to-edge
  */
-const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref) => {
+const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperProps>((props: SwiperProps, ref): React.JSX.Element => {
   const { children } = props
-  let innerLayout = useRef(true)
+  let innerLayout = useRef({})
   const swiperProp = {
-    circular: props.circular,
-    current: props.current,
-    autoplay: props.autoplay,
+    circular: props.circular || false,
+    current: props.current || 0,
+    autoplay: props.autoplay || false,
     duration: props.duration || 500,
     interval: props.interval || 5000,
     showsPagination: props['indicator-dots'],
@@ -35,12 +35,14 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     style: props.style,
     previousMargin: props['previous-margin'] ? parseInt(props['previous-margin']) : 0,
     nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
-    enableOffset: props['enable-offset'],
+    enableOffset: props['enable-offset'] || false,
     bindchange: props.bindchange
   }
-  const { nodeRef } = useNodesRef<View, SwiperProps>(props, ref, {
+  const { nodeRef } = useNodesRef<ScrollView, SwiperProps>(props, ref, {
   })
-  const innerProps = useInnerProps(props, {}, [
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef
+  }, [
     'indicator-dots',
     'indicator-color',
     'indicator-active-color',
@@ -48,22 +50,18 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     'next-margin'
   ], { layoutRef: innerLayout })
 
-  const getInnerLayout = (layout) => {
+  const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
-  console.log('----------------children', children)
 
-  return (
-      <Carouse
-        ref={nodeRef}
-        getInnerLayout={getInnerLayout}
-        innerProps={innerProps}
-        {...swiperProp}
-        {...innerProps}>
-        {children}
-      </Carouse>
+  return <Carouse
+    getInnerLayout={getInnerLayout}
+    innerProps={innerProps}
+    {...swiperProp}
+    {...innerProps}>
+    {children}
+  </Carouse>
 
-  )
 })
 _SwiperWrapper.displayName = 'mpx-swiper';
 

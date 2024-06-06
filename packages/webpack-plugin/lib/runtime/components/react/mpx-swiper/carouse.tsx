@@ -1,8 +1,8 @@
 /**
  * swiper 实现
  */
-import { View, ScrollView, Dimensions, LayoutChangeEvent, ScrollEvent } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect, ReactNode,  } from 'react'
+import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
+import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
@@ -41,7 +41,7 @@ const styles: { [key: string]: Object } = {
 }
 
 
-const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props: CarouseProps, ref): React.JSX.Element => {
+const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props , ref): React.JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
   const defaultHeight = 150
@@ -53,9 +53,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   // 默认设置为初次渲染
   const initRenderRef = useRef(true)
-  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout>>(null)
-  const loopJumpTimerRef = useRef<ReturnType <typeof setTimeout>>(null) 
-  // const scrollViewRef = useRef<ScrollView>(null);
+  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
+  let loopJumpTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null) 
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
   const autoplayEndRef = useRef(false)
@@ -95,7 +94,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 更新index，以视图的offset计算当前的索引
   */
-  function updateIndex (scrollViewOffset: { x: number, y: number, animated: false }) {
+  function updateIndex (scrollViewOffset: NativeScrollPoint) {
     const diff = scrollViewOffset[dir] - internalsRef.current.offset[state.dir]
     if (!diff) return
 
@@ -186,7 +185,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       internalsRef.current.isScrolling = true
 
       autoplayEndRef.current = false
-      updateIndex({ x, y, animated: false })
+      updateIndex({ x, y })
     }, props.interval || 5000)
   }
 
@@ -196,9 +195,9 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   function onScrollBegin () {
     internalsRef.current.isScrolling = true
   }
-
-  function onScrollEnd (event: ScrollEvent) {
+  function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
     internalsRef.current.isScrolling = false
+    
     // 用户手动滑动更新索引后，如果开启了自动轮播等重新开始
     updateIndex(event.nativeEvent.contentOffset)
   }
@@ -206,7 +205,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 当拖拽结束时，检测是否可滚动
   */
-  function onScrollEndDrag (event: ScrollEvent) {
+  function onScrollEndDrag (event: NativeSyntheticEvent<NativeScrollEvent>) {
     const { contentOffset } = event.nativeEvent
     const { index, total } = state
 
@@ -248,7 +247,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   */
   function onWrapperLayout () {
     if (props.enableOffset) {
-      scrollViewRef.current.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      // @ts-ignore
+      scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         props.getInnerLayout && props.getInnerLayout(layoutRef)
       })
