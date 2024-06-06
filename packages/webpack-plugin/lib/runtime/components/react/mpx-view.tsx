@@ -9,7 +9,7 @@ import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX }
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
-import useNodesRef from '../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX, isText} from './utils'
 
@@ -279,7 +279,7 @@ function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp
   ]
 }
 
-const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<View>): JSX.Element => {
+const _View = forwardRef<HandlerRef, _ViewProps>((props, ref): JSX.Element => {
   const {
     style = [],
     children,
@@ -306,7 +306,7 @@ const _View = forwardRef((props: _ViewProps, ref: ForwardedRef<View>): JSX.Eleme
     }
   }
 
-  const { nodeRef } = useNodesRef(props, ref, {
+  const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
     defaultStyle
   })
 
