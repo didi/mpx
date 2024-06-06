@@ -1,12 +1,17 @@
-import { useRef, useEffect, useImperativeHandle, ForwardedRef } from 'react'
+import { useRef, useEffect, useImperativeHandle, RefObject, ForwardedRef } from 'react'
 
-export type HandlerRef = {
-  getNodeInstance(): any
-}
 
 type Obj = Record<string, any>
 
-export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef>, instance:Obj = {} ) {
+export type HandlerRef<T, P> = {
+  getNodeInstance(): {
+    props: RefObject<P>,
+    nodeRef: RefObject<T>,
+    instance: Obj
+  }
+}
+
+export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {} ) {
   const nodeRef = useRef<T>(null)
   const _props = useRef<P | null>(props)
 

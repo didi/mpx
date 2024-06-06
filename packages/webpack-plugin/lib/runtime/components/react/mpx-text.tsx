@@ -37,7 +37,7 @@ const transformStyle = (styleObj: ExtendedTextStyle) => {
   }
 }
 
-const _Text = forwardRef<HandlerRef, _TextProps>((props, ref): JSX.Element => {
+const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const {
     style = [],
     children,
