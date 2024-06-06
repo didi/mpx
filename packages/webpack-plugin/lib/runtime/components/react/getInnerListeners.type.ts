@@ -1,23 +1,24 @@
 import React from 'react'
 import { NativeSyntheticEvent } from 'react-native'
 
-type LayoutRef = {
-  current?: HTMLElement | null;
-}
-
-type TouchItem = {
-  identifier: number;
-  pageX: number;
-  pageY: number;
-  locationX: number;
-  locationY: number;
-};
+type LayoutRef = React.MutableRefObject<any>
 
 type SetTimeoutReturnType = ReturnType<typeof setTimeout>
 
-interface TouchEventDetail {
-  x?: number;
-  y?: number;
+type Props = Record<string, any>
+
+type AdditionalProps = Record<string, any>;
+
+type RemoveProps = string[];
+
+type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
+
+interface NativeEvent {
+  timestamp: number;
+  pageX: number;
+  pageY: number;
+  touches: TouchPoint[]
+  changedTouches: TouchPoint[]
 }
 
 interface TouchPoint {
@@ -28,30 +29,6 @@ interface TouchPoint {
   clientY: number;
   locationX?: number;
   locationY?: number;
-}
-
-interface TouchEvent {
-  type: string;
-  timeStamp: number;
-  target: {
-    id: string;
-    dataset: Record<string, string>;
-    offsetLeft: number;
-    offsetTop: number;
-  };
-  nativeEvent: {
-    timestamp: number;
-    pageX: number;
-    pageY: number;
-    touches: React.TouchList;
-    changedTouches: React.TouchList;
-  },
-  detail: TouchEventDetail;
-  touches: React.TouchList;
-  changedTouches: React.TouchList;
-  persist: () => void;
-  stopPropagation: () => void;
-  preventDefault: () => void;
 }
 
 interface InnerRef {
@@ -70,41 +47,22 @@ interface InnerRef {
     };
   };
 }
-
-interface UseInnerPropsOptions {
-  props?: Record<string, any>;
-  additionalProps?: Record<string, any>;
-  removeProps?: string[];
-  config?: {
-    layoutRef?: React.MutableRefObject<any>;
-    disableTouch?: boolean
-  };
+interface UseInnerPropsConfig {
+  layoutRef?: LayoutRef;
+  disableTouch?: boolean
+}
+interface DataSetType {
+  [key: string]: string;
 }
 
-interface CustomEventType {
-  [key: string]: any;
-}
-
-interface CustomEventDetail {
-  [key: string]: any;
-}
-
-interface DataSetMap {
-  [key: string]: any;
-}
-
-type RNTouchEvent = NativeSyntheticEvent<TouchEvent>
 export {
-  RNTouchEvent,
-  CustomEventType,
-  CustomEventDetail,
-  UseInnerPropsOptions,
+  NativeTouchEvent,
+  Props,
+  AdditionalProps,
+  RemoveProps,
+  UseInnerPropsConfig,
   InnerRef,
-  TouchEvent,
-  TouchPoint,
-  TouchEventDetail,
   LayoutRef,
-  TouchItem,
   SetTimeoutReturnType,
-  DataSetMap
+  DataSetType
 }
