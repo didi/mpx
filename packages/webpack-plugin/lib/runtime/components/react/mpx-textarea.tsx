@@ -13,13 +13,14 @@ import React, { forwardRef } from 'react'
 import { Keyboard, TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
 import { omit } from './utils'
+import { HandlerRef } from '../../useNodesRef'
 
 export type TextareProps = Omit<
   InputProps & PrivateInputProps,
   'type' | 'password' | 'multiline' | 'confirm-hold'
 >
 
-const Textarea = forwardRef<TextInput, TextareProps>(
+const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
   (props, ref): React.JSX.Element => {
     const restProps = omit(props, [
       'ref',

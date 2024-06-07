@@ -1,16 +1,16 @@
 /**
  * swiper 实现
  */
-import React, { forwardRef, useState, useRef, useEffect, ReactNode  } from 'react'
-import { View, ScrollView, Dimensions } from 'react-native'
+import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
+import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
-import useNodesRef from '../../../useNodesRef'
+import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
 
 /**
  * 默认的Style类型
  */
-const styles = {
+const styles: { [key: string]: Object } = {
   container_x: {
     position: 'relative',
   },
@@ -40,7 +40,8 @@ const styles = {
   }
 }
 
-const _Carouse = forwardRef((props: CarouseProps, ref) => {
+
+const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props , ref): React.JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
   const defaultHeight = 150
@@ -52,10 +53,9 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   // 默认设置为初次渲染
   const initRenderRef = useRef(true)
-  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout>>(null)
-  const loopJumpTimerRef = useRef<ReturnType <typeof setTimeout>>(null) 
-  // const scrollViewRef = useRef<ScrollView>(null);
-  const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
+  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
+  let loopJumpTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null) 
+  const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
   const autoplayEndRef = useRef(false)
   // 存储layout布局信息
@@ -94,7 +94,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   /**
    * 更新index，以视图的offset计算当前的索引
   */
-  function updateIndex (scrollViewOffset) {
+  function updateIndex (scrollViewOffset: NativeScrollPoint) {
     const diff = scrollViewOffset[dir] - internalsRef.current.offset[state.dir]
     if (!diff) return
 
@@ -185,7 +185,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
       internalsRef.current.isScrolling = true
 
       autoplayEndRef.current = false
-      updateIndex({ x, y, animated: false})
+      updateIndex({ x, y })
     }, props.interval || 5000)
   }
 
@@ -195,9 +195,9 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   function onScrollBegin () {
     internalsRef.current.isScrolling = true
   }
-
-  function onScrollEnd (event) {
+  function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
     internalsRef.current.isScrolling = false
+    
     // 用户手动滑动更新索引后，如果开启了自动轮播等重新开始
     updateIndex(event.nativeEvent.contentOffset)
   }
@@ -205,9 +205,9 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   /**
    * 当拖拽结束时，检测是否可滚动
   */
-  function onScrollEndDrag (event) {
+  function onScrollEndDrag (event: NativeSyntheticEvent<NativeScrollEvent>) {
     const { contentOffset } = event.nativeEvent
-    const { children, index, total } = state
+    const { index, total } = state
 
     const internalOffset = internalsRef.current.offset
     const previousOffset = props.horizontal ? internalOffset.x : internalOffset.y
@@ -220,7 +220,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   /**
    * 垂直方向时，获取单个元素的布局，更新
   */
-  function onItemLayout (event) {
+  function onItemLayout (event: LayoutChangeEvent) {
     if (!initRenderRef.current || state.dir === 'x') return
     const { width, height } = event.nativeEvent.layout
     if (state.total > 1) {
@@ -247,7 +247,8 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   */
   function onWrapperLayout () {
     if (props.enableOffset) {
-      scrollViewRef.current.measure((x, y, width, height, offsetLeft, offsetTop) => {
+      // @ts-ignore
+      scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         props.getInnerLayout && props.getInnerLayout(layoutRef)
       })
@@ -342,14 +343,15 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
     const { circular, previousMargin, nextMargin, innerProps } = props
     const pageStyle = { width: width, height: height }
     if (total > 1 && Array.isArray(children)) {
-      let pages: (Array<ReactNode>) = []
-      pages = Array.isArray(children) && Object.keys(children) || []
+      let arrElements: (Array<ReactNode>) = []
+      // pages = ["2", "0", "1", "2", "0"]
+      let pages = Array.isArray(children) && Object.keys(children) || []
       /* 无限循环的时候 */
       if (circular) {
         pages.unshift(total - 1 + '')
         pages.push('0')
       }
-      pages = pages.map((page, i) => {
+      arrElements = pages.map((page, i) => {
         let pageStyle2 = { width: width, height: height }
         const extraStyle = {} as {
           left? : number;
@@ -367,7 +369,7 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
         }
         return (
           <View style={[pageStyle2, extraStyle]} key={ 'page' + i} onLayout={onItemLayout}>
-            {children[page]}
+            {children[+page]}
           </View>
         )
       })
@@ -385,10 +387,10 @@ const _Carouse = forwardRef((props: CarouseProps, ref) => {
   if (dir === 'y') {
     vStyle.height = defaultHeight
   }
-  let pages = renderPages()
-  const strStyle = 'container_' + state.dir
+  const pages: Array<ReactNode> | ReactNode = renderPages()
+  const strStyle: string = 'container_' + state.dir
   const eventProps = props.innerProps || {}
-  console.log('-------------luyongfang-innerProps', eventProps)
+
   return (
     <View
       style={[styles[strStyle], vStyle]}

@@ -33,7 +33,7 @@ import {
   ImageLoadEventData,
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import useNodesRef from '../../../useNodesRef'
+import useNodesRef, { HandlerRef } from '../../../useNodesRef'
 
 export type Mode =
   | 'scaleToFill'
@@ -110,7 +110,7 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize 
 //   </View>
 // )
 
-const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element => {
+const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): React.JSX.Element => {
   const {
     src = '',
     mode = 'scaleToFill',
@@ -240,7 +240,7 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
   }
 
   const onImageLayout = () => {
-    nodeRef.current?.measure((x, y, width, height, offsetLeft, offsetTop) => {
+    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
@@ -283,13 +283,13 @@ const Image = forwardRef<RNImage, ImageProps>((props, ref): React.JSX.Element =>
     ref: nodeRef,
     ...(enableOffset ? { onLayout: onImageLayout } : {})
   },
-  [
-    'enable-offset'
-  ],
-  {
-    layoutRef
-  }
-)
+    [
+      'enable-offset'
+    ],
+    {
+      layoutRef
+    }
+  )
 
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
   //   return (
