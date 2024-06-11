@@ -55,6 +55,9 @@
               if (this.$refs.mpxIframe && this.mpxIframe != this.$refs.mpxIframe) {
                 this.mpxIframe = this.$refs.mpxIframe
                 this.mpxIframe.addEventListener('load', (event) => {
+                  this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
+                    webviewUid: this._uid
+                  }, this.host)
                   this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
                 })
               }
@@ -67,11 +70,10 @@
     beforeCreate () {
       this.messageList = []
     },
-    activated () {
+    mounted () {
       window.addEventListener('message', this.messageCallback)
     },
     deactivated () {
-      window.removeEventListener('message', this.messageCallback)
       if (!this.messageList.length) {
         return
       }
@@ -96,6 +98,9 @@
       messageCallback (event) {
         const hostValidate = this.hostValidate(event.origin)
         const data = event.data
+        if (typeof data.clientUid === 'number' && data.clientUid !== this._uid) {
+          return
+        }
         let value = data.payload
         if (!hostValidate) {
           return
