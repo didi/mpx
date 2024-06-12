@@ -18,6 +18,7 @@ module.exports = function (template, {
   const mpx = loaderContext.getMpx()
   const {
     mode,
+    env,
     defs,
     wxsContentMap,
     decodeHTMLText,
@@ -77,6 +78,7 @@ module.exports = function (template, {
           isComponent: ctorType === 'component',
           isPage: ctorType === 'page',
           mode,
+          env,
           srcMode: templateSrcMode,
           defs,
           decodeHTMLText,
