@@ -89,9 +89,13 @@ function MpxEvent (layer) {
     this.addListener()
 }
 
-if (isBrowser) {
-    document.addEventListener('DOMContentLoaded', function () {
-        // eslint-disable-next-line no-new
-        new MpxEvent(document.body)
-    }, false)
+export function createEvent () {
+    if (global.__mpxCreatedEvent) return
+    if (isBrowser) {
+        global.__mpxCreatedEvent = true
+        document.addEventListener('DOMContentLoaded', function () {
+            // eslint-disable-next-line no-new
+            new MpxEvent(document.body)
+        }, false)
+    }
 }
