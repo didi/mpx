@@ -167,7 +167,6 @@ function buildGlobalParams ({
       return page || { route: item.path.slice(1) }
     })
   }
-  global.__mpxOptionsMap = {}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
     if (globalTabBar) {
       content += globalTabBar
@@ -176,6 +175,7 @@ function buildGlobalParams ({
   if (isMain || (!isMain && !hasApp)) {
     content += `global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
     global.__mpxGenericsMap = {}
+    global.__mpxOptionsMap = {}
     global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
     global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
   }
