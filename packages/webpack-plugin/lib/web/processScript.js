@@ -18,7 +18,7 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo } = loaderContext.getMpx()
+  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
@@ -73,7 +73,7 @@ module.exports = function (script, {
           })
       }
 
-      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, hasApp })
+      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, jsonConfig, webConfig, hasApp })
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
   export default processComponentOption({
