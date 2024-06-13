@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import { buildUrl, getEnvObj, serialize, transformRes } from './util'
 
-export default function request (config, mpx) {
+export default function request (config, mpx, mode) {
   return new Promise((resolve, reject) => {
     const paramsSerializer = config.paramsSerializer || serialize
     const bodySerializer = config.bodySerializer || paramsSerializer
@@ -40,7 +40,10 @@ export default function request (config, mpx) {
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
     }
-    const envObj = getEnvObj()
+
+
+
+    const envObj = getEnvObj(mode)
 
     if (envObj && typeof envObj.request === 'function') {
       requestTask = envObj.request(config)
