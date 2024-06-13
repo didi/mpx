@@ -93,9 +93,14 @@ export function createEvent () {
     if (global.__mpxCreatedEvent) return
     if (isBrowser) {
         global.__mpxCreatedEvent = true
-        document.addEventListener('DOMContentLoaded', function () {
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
             // eslint-disable-next-line no-new
             new MpxEvent(document.body)
-        }, false)
+        } else {
+            document.addEventListener('DOMContentLoaded', function () {
+                // eslint-disable-next-line no-new
+                new MpxEvent(document.body)
+            }, false)
+        }
     }
 }
