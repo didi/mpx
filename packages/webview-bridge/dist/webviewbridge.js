@@ -111,23 +111,19 @@
       url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
     }
   }, window.sdkUrlMap);
-  function getQueryObj() {
-    var search = location.search.substring(1);
-    var searchObj = {};
-    var searchArr = search.split('&');
-    searchArr.forEach(function (item) {
-      if (item) {
-        var paramsArr = item.split('=');
-        if (paramsArr.length > 1) {
-          searchObj[paramsArr[0]] = paramsArr[1];
-        }
-      }
-    });
-    return searchObj;
+  function getMpxWebViewId() {
+    var href = location.href;
+    var reg = /(?<=mpx_webview_id=)\d*/g;
+    var matchVal = href.match(reg);
+    var result;
+    if (matchVal[0]) {
+      result = +matchVal[0];
+    }
+    return result;
   }
   var env = null;
   var callbackId = 0;
-  var clientUid = +getQueryObj()._mpx_webview_id || undefined;
+  var clientUid = getMpxWebViewId();
   var callbacks = {};
   // 环境判断逻辑
   var systemUA = navigator.userAgent;
@@ -211,12 +207,22 @@
         }
         delete callbacks[currentCallbackId];
       };
-      window.parent.postMessage && window.parent.postMessage({
-        type: type,
-        callbackId: callbackId,
-        clientUid: clientUid,
-        payload: filterData(data)
-      }, '*');
+      var postParams;
+      if (typeof clientUid !== 'undefined') {
+        postParams = {
+          type: type,
+          callbackId: callbackId,
+          clientUid: clientUid,
+          payload: filterData(data)
+        };
+      } else {
+        postParams = {
+          type: type,
+          callbackId: callbackId,
+          payload: filterData(data)
+        };
+      }
+      window.parent.postMessage && window.parent.postMessage(postParams, '*');
     } else {
       data({
         webapp: true

@@ -18,23 +18,19 @@ const SDK_URL_MAP = {
   },
   ...window.sdkUrlMap
 }
-function getQueryObj () {
-  const search = location.search.substring(1)
-  const searchObj = {}
-  const searchArr = search.split('&')
-  searchArr.forEach((item) => {
-    if (item) {
-      const paramsArr = item.split('=')
-      if (paramsArr.length > 1) {
-        searchObj[paramsArr[0]] = paramsArr[1]
-      }
-    }
-  })
-  return searchObj
+function getMpxWebViewId () {
+  const href = location.href
+  const reg = /(?<=mpx_webview_id=)\d*/g
+  const matchVal = href.match(reg)
+  let result
+  if (matchVal[0]) {
+    result = +matchVal[0]
+  }
+  return result
 }
 let env = null
 let callbackId = 0
-let clientUid = +getQueryObj()._mpx_webview_id || undefined
+const clientUid = getMpxWebViewId()
 const callbacks = {}
 // 环境判断逻辑
 const systemUA = navigator.userAgent
@@ -119,12 +115,22 @@ function postMessage (type, data = {}) {
       }
       delete callbacks[currentCallbackId]
     }
-    window.parent.postMessage && window.parent.postMessage({
-      type,
-      callbackId,
-      clientUid,
-      payload: filterData(data)
-    }, '*')
+    let postParams
+    if (typeof clientUid !== 'undefined') {
+      postParams = {
+        type,
+        callbackId,
+        clientUid,
+        payload: filterData(data)
+      }
+    } else {
+      postParams = {
+        type,
+        callbackId,
+        payload: filterData(data)
+      }
+    }
+    window.parent.postMessage && window.parent.postMessage(postParams, '*')
   } else {
     data({
       webapp: true

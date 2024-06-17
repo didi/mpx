@@ -147,10 +147,9 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           mpxStackPath = JSON.parse(sessionStorage.getItem('_mpx_stack_path_'))
         }
       } catch (e) {
-        mpxStackPath = []
       }
     }
-    global.__mpxRouter.stack = mpxStackPath || []
+    global.__mpxRouter.stack = mpxStackPath
     global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []

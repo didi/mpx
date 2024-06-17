@@ -37,9 +37,9 @@
         const srcQueryIndex = this.src.indexOf('?')
         // webview与被打开页面通过_uid确定关联关系
         if (srcQueryIndex > -1) {
-          src = `${this.src.substring(0, srcQueryIndex + 1)}_mpx_webview_id=${this._uid}&${this.src.substring(srcQueryIndex + 1)}`
+          src = `${this.src.substring(0, srcQueryIndex + 1)}mpx_webview_id=${this._uid}&${this.src.substring(srcQueryIndex + 1)}`
         } else {
-          src = `${this.src}?_mpx_webview_id=${this._uid}`
+          src = `${this.src}?mpx_webview_id=${this._uid}`
         }
         return src
       },
@@ -104,7 +104,7 @@
         const hostValidate = this.hostValidate(event.origin)
         const data = event.data
         // 判断number类型，防止undefined导致触发return逻辑
-        if (typeof data.clientUid === 'number' && data.clientUid !== this._uid) {
+        if (typeof data.clientUid !== 'undefined' && +data.clientUid !== this._uid) {
           return
         }
         let value = data.payload
