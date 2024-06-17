@@ -41,7 +41,7 @@ export default function getBuiltInMixins (options, type) {
         renderHelperMixin(),
         showMixin(type),
         i18nMixin()
-      ].filter(Boolean))
+      ])
     }
   }
   return bulitInMixins.filter(item => item)

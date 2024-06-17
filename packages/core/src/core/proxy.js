@@ -572,7 +572,7 @@ export default class MpxProxy {
     const _c = this.target._c.bind(this.target)
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
-    const _g = this.target._g ? this.target._g.bind(this.target) : noop
+    const _g = this.target._g?.bind(this.target)
     const __getAst = this.target.__getAst?.bind(this.target)
     const moduleId = this.target.__moduleId
     const dynamicTarget = this.target.__dynamic
