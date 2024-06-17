@@ -340,7 +340,6 @@ class MpxWebpackPlugin {
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
-    compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
     compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
@@ -699,9 +698,6 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
-          checkIsRuntimeMode: (queryObj) => {
-            return (queryObj && queryObj.isDynamic)
-          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1769,7 +1765,7 @@ try {
 
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
-        const { queryObj, resourcePath } = parseRequest(createData.request)
+        const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
@@ -1822,11 +1818,6 @@ try {
             })
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-        }
-
-        if (matchCondition(resourcePath, this.options.dynamicComponentRules)) {
-          createData.resource = addQuery(createData.resource, { isDynamic: true })
-          createData.request = addQuery(createData.request, { isDynamic: true })
         }
 
         if (mpx.mode === 'web') {

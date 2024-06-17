@@ -34,7 +34,7 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
       dependencyComponentConfig[componentName] = {
         hashName,
         resourcePath,
-        isDynamic: mpx.checkIsRuntimeMode(query)
+        isDynamic: query.isDynamic
       }
     }
   }
