@@ -44,7 +44,7 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
-import contextMap from '../vnode/context'
+import contextMap from '../dynamic/context'
 
 let uid = 0
 
@@ -572,8 +572,8 @@ export default class MpxProxy {
     const _c = this.target._c.bind(this.target)
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
-    const _g = this.target._g.bind(this.target)
-    const _getAst = this.target._getAst?.bind(this.target)
+    const _g = this.target._g ? this.target._g.bind(this.target) : noop
+    const __getAst = this.target.__getAst?.bind(this.target)
     const moduleId = this.target.__moduleId
     const dynamicTarget = this.target.__dynamic
 
@@ -582,13 +582,13 @@ export default class MpxProxy {
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
       }
-      if (dynamicTarget || _getAst) {
-        const ast = (_getAst && isFunction(_getAst)) ? _getAst() : dynamic.getAst(moduleId)
+      if (dynamicTarget || __getAst) {
+        const ast = (__getAst && isFunction(__getAst)) ? __getAst() : dynamic.getAst(moduleId)
         return _r(false, _g(ast, moduleId))
       }
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender(_i, _c, _r, _sc, _g)
+          return this.target.__injectedRender(_i, _c, _r, _sc)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()

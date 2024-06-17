@@ -1,6 +1,6 @@
 import { CREATED, BEFORECREATE, BEFOREUPDATE } from '../../core/innerLifecycle'
 import { noop, getEnvObj } from '@mpxjs/utils'
-import contextMap from '../../vnode/context'
+import contextMap from '../../dynamic/vnode/context'
 
 const envObj = getEnvObj()
 

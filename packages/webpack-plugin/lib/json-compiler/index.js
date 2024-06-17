@@ -228,7 +228,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -236,7 +236,10 @@ module.exports = function (content) {
           if (err) return callback(err)
           components[name] = entry
           if (runtimeCompile) {
-            dependencyComponentsMap[resourcePath] = name
+            dependencyComponentsMap[resourcePath] = {
+              name,
+              query: queryObj
+            }
           }
           if (tarRoot) {
             if (placeholder) {

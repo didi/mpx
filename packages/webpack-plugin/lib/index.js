@@ -68,6 +68,7 @@ const isEmptyObject = require('./utils/is-empty-object')
 const genDynamicTemplate = require('./runtime-render/gen-dynamic-template')
 const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
 const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
+const DynamicPlugin = require('./resolver/DynamicPlugin')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -179,7 +180,7 @@ class MpxWebpackPlugin {
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
-    options.dynamic = options.dynamic || {}// 运行时组件配置
+    options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -326,6 +327,9 @@ class MpxWebpackPlugin {
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
+
+    const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
+
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
@@ -336,6 +340,8 @@ class MpxWebpackPlugin {
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
+    compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
+    compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
     if (this.options.mode !== 'web') {
@@ -693,8 +699,8 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
-          checkIsRuntimeMode: (resource, queryObj) => {
-            return (queryObj && queryObj.isDynamic) || matchCondition(resource, this.options.dynamic)
+          checkIsRuntimeMode: (queryObj) => {
+            return (queryObj && queryObj.isDynamic)
           },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1818,8 +1824,9 @@ try {
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
-        if (matchCondition(resourcePath, this.options.dynamic)) {
+        if (matchCondition(resourcePath, this.options.dynamicComponentRules)) {
           createData.resource = addQuery(createData.resource, { isDynamic: true })
+          createData.request = addQuery(createData.request, { isDynamic: true })
         }
 
         if (mpx.mode === 'web') {

@@ -27,13 +27,14 @@ class RecordJsonRuntimeInfoDependency extends NullDependency {
 
   mergeResource (mpx) {
     for (const resourcePath in this.usingComponents) {
-      const componentName = this.usingComponents[resourcePath]
+      const componentName = this.usingComponents[resourcePath].name
+      const query = this.usingComponents[resourcePath].query
       const hashName = 'm' + mpx.pathHash(resourcePath)
       const dependencyComponentConfig = mpx.runtimeInfoJson[this.packageName][this.resourcePath]
       dependencyComponentConfig[componentName] = {
         hashName,
         resourcePath,
-        isDynamic: mpx.checkIsRuntimeMode(resourcePath)
+        isDynamic: mpx.checkIsRuntimeMode(query)
       }
     }
   }
