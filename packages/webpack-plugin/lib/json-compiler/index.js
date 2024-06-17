@@ -241,16 +241,15 @@ module.exports = function (content) {
           if (err) return callback(err)
           components[name] = entry
           if (runtimeCompile) {
-            dependencyComponentsMap[resourcePath] = {
-              name,
-              query: queryObj
-            }
             // 替换组件的 hashName，并删除原有的组件配置
             const hashName = 'm' + mpx.pathHash(resourcePath)
             components[hashName] = entry
             delete components[name]
             // todo: queryObj -> isDynamic 的判断
-            dependencyComponentsMap[resourcePath] = name
+            dependencyComponentsMap[resourcePath] = {
+              name,
+              query: queryObj
+            }
           }
           if (tarRoot) {
             if (placeholder) {
