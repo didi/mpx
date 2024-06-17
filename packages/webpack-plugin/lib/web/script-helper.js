@@ -167,16 +167,18 @@ function buildGlobalParams ({
       return page || { route: item.path.slice(1) }
     })
   }
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
+  global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+  global.__mpxGenericsMap = {}
+  global.__mpxOptionsMap = {}
+  global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
     if (globalTabBar) {
       content += globalTabBar
     }
-  }
-  if (isMain || (!isMain && !hasApp)) {
-    content += `global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-    global.__mpxGenericsMap = {}
+  } else if (!hasApp) {
+    content += `global.__mpxGenericsMap = {}
     global.__mpxOptionsMap = {}
-    global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
     global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`

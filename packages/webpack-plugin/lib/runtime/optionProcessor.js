@@ -4,6 +4,8 @@ import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 import { createEvent } from './components/web/event'
 
+createEvent()
+
 export function processComponentOption (
   {
     option,
@@ -18,7 +20,6 @@ export function processComponentOption (
   }
 ) {
   // 局部注册页面和组件中依赖的组件
-  createEvent()
   for (const componentName in componentsMap) {
     if (hasOwn(componentsMap, componentName)) {
       const component = componentsMap[componentName]

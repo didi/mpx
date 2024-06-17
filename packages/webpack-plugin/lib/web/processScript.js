@@ -73,7 +73,7 @@ module.exports = function (script, {
           })
       }
 
-      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, jsonConfig, webConfig, hasApp })
+      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
   export default processComponentOption({

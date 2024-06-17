@@ -90,8 +90,7 @@ function MpxEvent (layer) {
 }
 
 export function createEvent () {
-    if (global.__mpxCreatedEvent) return
-    if (isBrowser) {
+    if (isBrowser && !global.__mpxCreatedEvent) {
         global.__mpxCreatedEvent = true
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             // eslint-disable-next-line no-new
