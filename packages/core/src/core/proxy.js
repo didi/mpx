@@ -588,7 +588,7 @@ export default class MpxProxy {
       }
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender(_i, _c, _r, _sc, _g)
+          return this.target.__injectedRender(_i, _c, _r, _sc)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()

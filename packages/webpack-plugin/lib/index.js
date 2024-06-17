@@ -40,8 +40,7 @@ const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
-const RecordTemplateRuntimeInfoDependency = require('./dependencies/RecordTemplateRuntimeInfoDependency')
-const RecordJsonRuntimeInfoDependency = require('./dependencies/RecordJsonRuntimeInfoDependency')
+const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -65,9 +64,6 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
-const genDynamicTemplate = require('./runtime-render/gen-dynamic-template')
-const resolveMpxCustomElementPath = require('./utils/resolve-mpx-custom-element-path')
-const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -594,11 +590,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
 
-      compilation.dependencyFactories.set(RecordTemplateRuntimeInfoDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordTemplateRuntimeInfoDependency, new RecordTemplateRuntimeInfoDependency.Template())
-
-      compilation.dependencyFactories.set(RecordJsonRuntimeInfoDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordJsonRuntimeInfoDependency, new RecordJsonRuntimeInfoDependency.Template())
+      compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
@@ -865,18 +858,17 @@ class MpxWebpackPlugin {
             }
           },
           // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
-          runtimeInfoJson: {},
-          runtimeInfoTemplate: {},
+          runtimeInfo: {},
           // 记录运行时组件依赖的运行时组件当中使用的基础组件 slot，最终依据依赖关系注入到运行时组件的 json 配置当中
           dynamicSlotDependencies: {},
           // 依据 package 注入到 mpx-custom-element-*.json 里面的组件路径
           getPackageInjectedComponentsMap: (packageName = 'main') => {
             const res = {}
-            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+            const runtimeInfo = mpx.runtimeInfo[packageName] || {}
             const componentsMap = mpx.componentsMap[packageName] || {}
             const publicPath = compilation.outputOptions.publicPath || ''
-            for (const componentPath in runtimeInfoJson) {
-              Object.values(runtimeInfoJson[componentPath]).forEach(({ hashName, resourcePath }) => {
+            for (const componentPath in runtimeInfo) {
+              Object.values(runtimeInfo[componentPath].json).forEach(({ hashName, resourcePath }) => {
                 const outputPath = componentsMap[resourcePath]
                 if (outputPath) {
                   res[hashName] = publicPath + outputPath
@@ -895,21 +887,19 @@ class MpxWebpackPlugin {
               normalComponents: {}
             }
 
-            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+            const runtimeInfo = mpx.runtimeInfo[packageName] || {}
 
             // 包含了某个分包当中所有的运行时组件
-            for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
-              const {
-                customComponents = {},
-                baseComponents = {}
-              } = mpx.runtimeInfoTemplate[packageName][resourcePath]
-              const componentsJsonConfig = runtimeInfoJson[resourcePath]
+            for (const resourcePath in runtimeInfo) {
+              const { json, template } = runtimeInfo[resourcePath]
+              const customComponents = template.customComponents || {}
+              const baseComponents = template.baseComponents || {}
 
               // 合并自定义组件的属性
               for (const componentName in customComponents) {
                 const extraAttrs = {}
                 const attrsMap = customComponents[componentName]
-                const { hashName, isDynamic } = componentsJsonConfig[componentName] || {}
+                const { hashName, isDynamic } = json[componentName] || {}
                 let componentType = 'normalComponents'
                 if (isDynamic) {
                   componentType = 'runtimeComponents'
@@ -937,50 +927,46 @@ class MpxWebpackPlugin {
 
             return res
           },
-          changeHashNameForAstNode: (ast, packageName, resourcePath) => {
-            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
-            const componentsMap = runtimeInfoJson[resourcePath] || {}
-
-            const iterateAst = (ast = {}) => {
-              if (typeof ast !== 'object') {
-                return
-              }
-              const componentInfo = componentsMap[ast.tag]
-              if (componentInfo) { // 自定义节点替换 hashName
-                ast.tag = componentInfo.hashName
-                if (componentInfo.isDynamic) {
-                  ast.dynamic = true
-                }
-              }
-              if (ast.children) {
-                ast.children.forEach(child => iterateAst(child))
-              }
-              if (ast.ifConditions) {
-                ast.ifConditions.forEach(child => iterateAst(child.block))
-              }
-            }
-
-            iterateAst(ast)
-
-            return ast
+          injectDynamicSlotDependencies: (usingComponents, resourcePath) => {
+            const dynamicSlotReg = /"mpx_dynamic_slot":\s*""*/
+            const content = mpx.dynamicSlotDependencies[resourcePath] ? JSON.stringify(mpx.dynamicSlotDependencies[resourcePath]).slice(1, -1) : ''
+            const result = usingComponents.replace(dynamicSlotReg, content).replace(/,\s*(\}|\])/g, '$1')
+            return result
           },
-          // 运行时组件的 slot 收集
+          changeHashNameForAstNode: (templateAst, componentsMap) => {
+            const nameReg = /"tag":\s*"([^"]*)",?/g
+
+            // 替换 astNode hashName
+            const result = templateAst.replace(nameReg, function (match, tag) {
+              if (componentsMap[tag]) {
+                const { hashName, isDynamic } = componentsMap[tag]
+                let content = `"tag": "${hashName}",`
+                if (isDynamic) {
+                  content += '"dynamic": true,'
+                }
+                return content
+              }
+              return match
+            }).replace(/,\s*(\}|\])/g, '$1')
+
+            return result
+          },
           collectDynamicSlotDependencies: (packageName = 'main') => {
             const componentsMap = mpx.componentsMap[packageName] || {}
             const publicPath = compilation.outputOptions.publicPath || ''
-            const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
+            const runtimeInfo = mpx.runtimeInfo[packageName]
 
-            for (const resourcePath in mpx.runtimeInfoTemplate[packageName]) {
-              const { dynamicSlotDependencies = [] } = mpx.runtimeInfoTemplate[packageName][resourcePath]
-              const componentsJsonConfig = runtimeInfoJson[resourcePath]
+            for (const resourcePath in runtimeInfo) {
+              const { template, json } = runtimeInfo[resourcePath]
+              const dynamicSlotDependencies = template.dynamicSlotDependencies || []
 
               dynamicSlotDependencies.forEach((slotDependencies) => {
                 let lastNeedInjectNode = slotDependencies[0]
                 for (let i = 1; i <= slotDependencies.length - 1; i++) {
                   const componentName = slotDependencies[i]
-                  const { resourcePath, isDynamic } = componentsJsonConfig[componentName] || {}
+                  const { resourcePath, isDynamic } = json[componentName] || {}
                   if (isDynamic) {
-                    const { resourcePath: path, hashName } = componentsJsonConfig[lastNeedInjectNode]
+                    const { resourcePath: path, hashName } = json[lastNeedInjectNode]
                     mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
                     Object.assign(mpx.dynamicSlotDependencies[resourcePath], {
                       [hashName]: publicPath + componentsMap[path]
@@ -1214,71 +1200,10 @@ class MpxWebpackPlugin {
 
       compilation.hooks.beforeModuleAssets.tap('MpxWebpackPlugin', () => {
         const extractedAssetsMap = new Map()
-        const dynamicAssets = {}
         for (const module of compilation.modules) {
           const assetsInfo = module.buildInfo.assetsInfo || new Map()
           for (const [filename, { extractedInfo } = {}] of assetsInfo) {
             if (extractedInfo) {
-              // 动态化组件的静态内容抽离和注入
-              if (extractedInfo.dynamic) {
-                const { moduleId, type, content, resourcePath, packageName, dynamicAsset } = extractedInfo
-                if (type === 'json') {
-                  // 注入运行时组件依赖的slot基础组件
-                  const _content = JSON.parse(content)
-                  if (!_content.usingComponents) {
-                    _content.usingComponents = {}
-                  }
-                  if (mpx.dynamicSlotDependencies[resourcePath]) {
-                    Object.assign(_content.usingComponents, mpx.dynamicSlotDependencies[resourcePath])
-                  }
-                  // 替换组件的 hashName
-                  const runtimeInfoJson = mpx.runtimeInfoJson[packageName] || {}
-                  if (runtimeInfoJson[resourcePath]) {
-                    const dependencyComponentConfig = runtimeInfoJson[resourcePath]
-                    for (const rawComponentName in dependencyComponentConfig) {
-                      const outputPath = _content.usingComponents[rawComponentName]
-                      if (outputPath) {
-                        const { hashName } = dependencyComponentConfig[rawComponentName]
-                        _content.usingComponents[hashName] = outputPath
-                        delete _content.usingComponents[rawComponentName]
-                      }
-                    }
-                  }
-                  // 注入 element 容器组件路径
-                  _content.usingComponents.element = resolveMpxCustomElementPath(packageName)
-                  extractedInfo.content = JSON.stringify(_content)
-                } else {
-                  dynamicAssets[moduleId] = dynamicAssets[moduleId] || {}
-                  const _dynamicAsset = JSON.parse(dynamicAsset)
-                  if (type === 'template') {
-                    // 动态注入运行时组件的模版内容
-                    extractedInfo.content = genDynamicTemplate(packageName)
-                    dynamicAssets[moduleId][type] = mpx.changeHashNameForAstNode(_dynamicAsset, packageName, resourcePath)
-                  } else if (type === 'styles') {
-                    // 合并多个style标签的样式代码
-                    const styleAssets = (dynamicAssets[moduleId][type] = dynamicAssets[moduleId][type] || [])
-                    styleAssets.push(..._dynamicAsset)
-                  } else {
-                    dynamicAssets[moduleId][type] = _dynamicAsset
-                  }
-                }
-              }
-
-              // 动态化容器组件的 template/json 动态注入
-              if (extractedInfo.mpxCustomElement) {
-                const { type, packageName, content } = extractedInfo
-                if (type === 'json') {
-                  const _content = JSON.parse(content)
-                  _content.usingComponents = _content.usingComponents || {}
-                  _content.usingComponents.element = resolveMpxCustomElementPath(packageName)
-                  Object.assign(_content.usingComponents, mpx.getPackageInjectedComponentsMap(packageName))
-                  extractedInfo.content = JSON.stringify(_content)
-                } else if (type === 'template') {
-                  const templateEngine = createTemplateEngine(mpx.mode)
-                  extractedInfo.content = content + `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
-                }
-              }
-
               let extractedAssets = extractedAssetsMap.get(filename)
               if (!extractedAssets) {
                 extractedAssets = [new Map(), new Map()]
@@ -1288,12 +1213,6 @@ class MpxWebpackPlugin {
               compilation.hooks.moduleAsset.call(module, filename)
             }
           }
-        }
-
-        if (!isEmptyObject(dynamicAssets)) {
-          const dynamicSource = new RawSource(JSON.stringify(dynamicAssets))
-          // todo 暂时写死输出到一个静态文件，后续看是否通过分包拆分
-          compilation.emitAsset('dynamic.json', dynamicSource)
         }
 
         for (const [filename, [pre, normal]] of extractedAssetsMap) {
@@ -1311,6 +1230,34 @@ class MpxWebpackPlugin {
             }
           })
           compilation.emitAsset(filename, source)
+        }
+      })
+
+      compilation.hooks.processAssets.tap({
+        name: 'MpxWebpackPlugin'
+      }, (assets) => {
+        const dynamicAssets = {}
+        for (const packageName in mpx.runtimeInfo) {
+          for (const resourcePath in mpx.runtimeInfo[packageName]) {
+            const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
+            const value = mpx.changeHashNameForAstNode(template.templateAst, json)
+            dynamicAssets[moduleId] = {
+              template: JSON.parse(value),
+              styles: style
+            }
+
+            // 注入 dynamic slot dependency
+            const outputPath = mpx.componentsMap[packageName][resourcePath]
+            if (outputPath) {
+              const jsonAsset = outputPath + '.json'
+              const jsonContent = compilation.assets[jsonAsset].source()
+              compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+            }
+          }
+        }
+        if (!isEmptyObject(dynamicAssets)) {
+          // 产出 jsonAst 静态产物
+          compilation.assets['dynamic.json'] = new RawSource(JSON.stringify(dynamicAssets))
         }
       })
 

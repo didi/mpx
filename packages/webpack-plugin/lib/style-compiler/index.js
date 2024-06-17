@@ -1,7 +1,7 @@
 const path = require('path')
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW, DYNAMIC_STYLE } = require('../utils/const')
+const { MPX_ROOT_VIEW } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
@@ -10,6 +10,7 @@ const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
+const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 
 module.exports = function (css, map) {
   this.cacheable()
@@ -24,6 +25,7 @@ module.exports = function (css, map) {
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
   const runtimeCompile = queryObj.isDynamic
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
 
   const transRpxFn = mpx.webConfig.transRpxFn
   const testResolveRange = (include = () => true, exclude) => {
@@ -136,10 +138,7 @@ module.exports = function (css, map) {
         }
 
         if (runtimeCompile) {
-          this.emitFile(DYNAMIC_STYLE, '', undefined, {
-            skipEmit: true,
-            extractedDynamicAsset: JSON.stringify(cssList)
-          })
+          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { styleInfo: { cssList } }))
           return cb(null, '')
         }
 

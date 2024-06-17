@@ -5,7 +5,7 @@ const toPosix = require('./utils/to-posix')
 const fixRelative = require('./utils/fix-relative')
 const addQuery = require('./utils/add-query')
 const normalize = require('./utils/normalize')
-const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE, DYNAMIC_TEMPLATE, DYNAMIC_STYLE, BLOCK_TEMPLATE, BLOCK_STYLES, BLOCK_JSON } = require('./utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, DEFAULT_RESULT_SOURCE } = require('./utils/const')
 
 module.exports = content => content
 
@@ -19,10 +19,6 @@ module.exports.pitch = async function (remainingRequest) {
   const issuerResource = queryObj.issuerResource
   const fromImport = queryObj.fromImport
   const needBabel = queryObj.needBabel
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-  const moduleId = queryObj.moduleId || 'm' + mpx.pathHash(resourcePath)
-  const isDynamic = queryObj.isDynamic
-  const mpxCustomElement = queryObj.mpxCustomElement
 
   if (needBabel) {
     // 创建js request应用babel
@@ -84,37 +80,6 @@ module.exports.pitch = async function (remainingRequest) {
     index: isStatic ? 0 : index
   }
 
-  if (isDynamic) {
-    let dynamicType = ''
-    let dynamicAsset = null
-    if (type === BLOCK_STYLES) {
-      dynamicType = DYNAMIC_STYLE
-    } else if (type === BLOCK_TEMPLATE) {
-      dynamicType = DYNAMIC_TEMPLATE
-    }
-
-    if (dynamicType && assetsInfo.get(dynamicType)) {
-      dynamicAsset = assetsInfo.get(dynamicType).extractedDynamicAsset
-    }
-
-    Object.assign(extractedInfo, {
-      dynamic: isDynamic,
-      type,
-      moduleId,
-      resourcePath,
-      packageName,
-      dynamicAsset
-    })
-  }
-
-  if (mpxCustomElement) {
-    Object.assign(extractedInfo, {
-      mpxCustomElement: true,
-      type,
-      packageName
-    })
-  }
-
   this.emitFile(file, '', undefined, {
     skipEmit: true,
     extractedInfo
@@ -124,7 +89,7 @@ module.exports.pitch = async function (remainingRequest) {
     switch (type) {
       // styles为static就两种情况，一种是.mpx中使用src引用样式，第二种为css-loader中处理@import
       // 为了支持持久化缓存，.mpx中使用src引用样式对issueFile asset产生的副作用迁移到ExtractDependency中处理
-      case BLOCK_STYLES:
+      case 'styles':
         if (issuerResource) {
           const issuerFile = mpx.getExtractedFile(issuerResource)
           let relativePath = toPosix(path.relative(path.dirname(issuerFile), file))
@@ -143,10 +108,10 @@ module.exports.pitch = async function (remainingRequest) {
           }
         }
         break
-      case BLOCK_TEMPLATE:
+      case 'template':
         resultSource += `module.exports = __webpack_public_path__ + ${JSON.stringify(file)};\n`
         break
-      case BLOCK_JSON:
+      case 'json':
         // 目前json为static时只有处理theme.json一种情况，该情况下返回的路径只能为不带有./或../开头的相对路径，否则微信小程序预览构建会报错，issue#622
         resultSource += `module.exports = ${JSON.stringify(file)};\n`
         break
