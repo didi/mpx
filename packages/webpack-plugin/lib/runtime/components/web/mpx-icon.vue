@@ -24,6 +24,21 @@
         default: 23
       }
     },
+    created() {
+      if (global.__style === 'v2') {
+        defaultColor = {
+          success: '#07c160',
+          'success_no_circle': '#07c160',
+          info: '#10AEFF',
+          warn: '#F76260',
+          waiting: '#10AEFF',
+          cancel: '#F43530',
+          download: '#13bf69',
+          search: '#7d7979',
+          clear: '#B2B2B2'
+        }
+      }
+    },
     computed: {
       _size () {
         return processSize(this.size)
@@ -51,17 +66,6 @@
               color: color,
               width: sizeStr,
               height: sizeStr
-            }
-            defaultColor = {
-              success: '#07c160',
-              'success_no_circle': '#07c160',
-              info: '#10AEFF',
-              warn: '#F76260',
-              waiting: '#10AEFF',
-              cancel: '#F43530',
-              download: '#13bf69',
-              search: '#7d7979',
-              clear: '#B2B2B2'
             }
         }
       }
