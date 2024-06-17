@@ -138,14 +138,16 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       ...webRouteConfig,
       routes: routes
     })
-    const sessionStorage = window.sessionStorage
     let mpxStackPath = []
-    try {
-      if (sessionStorage) {
-        mpxStackPath = JSON.parse(sessionStorage.getItem('_mpx_stack_path_'))
+    if (isBrowser) {
+      const sessionStorage = window.sessionStorage
+      try {
+        if (sessionStorage) {
+          mpxStackPath = JSON.parse(sessionStorage.getItem('_mpx_stack_path_'))
+        }
+      } catch (e) {
+        mpxStackPath = []
       }
-    } catch (e) {
-      mpxStackPath = []
     }
     global.__mpxRouter.stack = mpxStackPath || []
     global.__mpxRouter.lastStack = null
@@ -261,13 +263,16 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             global.__mpxRouter.needCache = insertItem
           }
       }
-      if (sessionStorage) {
-        const stackStorage = global.__mpxRouter.stack.map((item) => {
-          return {
-            path: item.path
-          }
-        })
-        sessionStorage.setItem('_mpx_stack_path_', JSON.stringify(stackStorage))
+      if (isBrowser) {
+        const sessionStorage = window.sessionStorage
+        if (sessionStorage) {
+          const stackStorage = global.__mpxRouter.stack.slice(0, global.__mpxRouter.stack.length - 1).map((item) => {
+            return {
+              path: item.path
+            }
+          })
+          sessionStorage.setItem('_mpx_stack_path_', JSON.stringify(stackStorage))
+        }
       }
       next()
     })

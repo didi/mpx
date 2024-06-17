@@ -105,9 +105,23 @@ var SDK_URL_MAP = _objectSpread2({
     url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
   }
 }, window.sdkUrlMap);
+function getQueryObj() {
+  var search = location.search.substring(1);
+  var searchObj = {};
+  var searchArr = search.split('&');
+  searchArr.forEach(function (item) {
+    if (item) {
+      var paramsArr = item.split('=');
+      if (paramsArr.length > 1) {
+        searchObj[paramsArr[0]] = paramsArr[1];
+      }
+    }
+  });
+  return searchObj;
+}
 var env = null;
 var callbackId = 0;
-var clientUid;
+var clientUid = +getQueryObj()._mpx_webview_id || undefined;
 var callbacks = {};
 // 环境判断逻辑
 var systemUA = navigator.userAgent;
@@ -126,11 +140,7 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
     var _event$data = event.data,
       callbackId = _event$data.callbackId,
       error = _event$data.error,
-      result = _event$data.result,
-      webviewUid = _event$data.webviewUid;
-    if (typeof webviewUid === 'number') {
-      clientUid = webviewUid;
-    }
+      result = _event$data.result;
     if (callbackId !== undefined && callbacks[callbackId]) {
       if (error) {
         callbacks[callbackId](error);

@@ -62,10 +62,23 @@ const SDK_URL_MAP = {
   },
   ...window.sdkUrlMap
 };
-
+function getQueryObj () {
+  const search = location.search.substring(1);
+  const searchObj = {};
+  const searchArr = search.split('&');
+  searchArr.forEach((item) => {
+    if (item) {
+      const paramsArr = item.split('=');
+      if (paramsArr.length > 1) {
+        searchObj[paramsArr[0]] = paramsArr[1];
+      }
+    }
+  });
+  return searchObj
+}
 let env = null;
 let callbackId = 0;
-let clientUid;
+let clientUid = +getQueryObj()._mpx_webview_id || undefined;
 const callbacks = {};
 // 环境判断逻辑
 const systemUA = navigator.userAgent;
@@ -81,10 +94,7 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'web';
   window.addEventListener('message', (event) => {
     // 接收web-view的回调
-    const { callbackId, error, result, webviewUid } = event.data;
-    if (typeof webviewUid === 'number') {
-      clientUid = webviewUid;
-    }
+    const { callbackId, error, result } = event.data;
     if (callbackId !== undefined && callbacks[callbackId]) {
       if (error) {
         callbacks[callbackId](error);
