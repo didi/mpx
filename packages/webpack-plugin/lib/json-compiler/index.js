@@ -12,13 +12,14 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
-const RecordJsonRuntimeInfoDependency = require('../dependencies/RecordJsonRuntimeInfoDependency')
+const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -182,6 +183,10 @@ module.exports = function (content) {
     mpx.collectDynamicSlotDependencies(packageName)
   }
 
+  if (runtimeCompile) {
+    json.usingComponents = json.usingComponents || {}
+  }
+
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
@@ -228,7 +233,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}, queryObj = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -240,6 +245,12 @@ module.exports = function (content) {
               name,
               query: queryObj
             }
+            // 替换组件的 hashName，并删除原有的组件配置
+            const hashName = 'm' + mpx.pathHash(resourcePath)
+            components[hashName] = entry
+            delete components[name]
+            // todo: queryObj -> isDynamic 的判断
+            dependencyComponentsMap[resourcePath] = name
           }
           if (tarRoot) {
             if (placeholder) {
@@ -266,8 +277,16 @@ module.exports = function (content) {
           }
         })
       }, () => {
+        const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
         if (runtimeCompile) {
-          this._module.addPresentationalDependency(new RecordJsonRuntimeInfoDependency(packageName, resourcePath, dependencyComponentsMap))
+          components.element = mpxCustomElementPath
+          components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
+
+          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { jsonInfo: dependencyComponentsMap }))
+        }
+        if (queryObj.mpxCustomElement) {
+          components.element = mpxCustomElementPath
+          Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
         }
         callback()
       })

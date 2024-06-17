@@ -132,14 +132,14 @@ class DynamicEntryDependency extends NullDependency {
     this.publicPath = compilation.outputOptions.publicPath || ''
     const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
-    // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
+    // post 分包队列在 sub 分包队列构建完毕后进行
     if (this.extraOptions.postSubpackageEntry) {
-      if (!mpx.postSubpackageEntriesMap[packageRoot]) {
-        mpx.postSubpackageEntriesMap[packageRoot] = [this]
-      }
+      mpx.postSubpackageEntriesMap[packageRoot] = mpx.postSubpackageEntriesMap[packageRoot] || []
+      mpx.postSubpackageEntriesMap[packageRoot].push(this)
       callback()
       return
     }
+    // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []
       mpx.subpackagesEntriesMap[packageRoot].push(this)

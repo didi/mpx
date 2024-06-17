@@ -2,7 +2,7 @@ class DynamicAstCache {
   #astCache = {}
 
   getAst (id) {
-    return this.#astCache[id]
+    return Object.values(this.#astCache[id] || {})[0]
   }
 
   setAst (id, ast) {

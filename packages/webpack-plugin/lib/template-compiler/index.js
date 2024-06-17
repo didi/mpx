@@ -3,9 +3,10 @@ const bindThis = require('./bind-this')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
-const { MPX_DISABLE_EXTRACTOR_CACHE, DYNAMIC_TEMPLATE } = require('../utils/const')
-const RecordTemplateRuntimeInfoDependency = require('../dependencies/RecordTemplateRuntimeInfoDependency')
+const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
+const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const simplifyAstTemplate = require('./simplify-template')
+const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -85,7 +86,7 @@ module.exports = function (raw) {
     }
   }
 
-  const result = compiler.serialize(ast)
+  let result = compiler.serialize(ast)
 
   if (isNative) {
     return result
@@ -170,12 +171,16 @@ global.currentInject.getRefsData = function () {
     extractedResultSource: resultSource
   })
 
+  if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
+    const templateEngine = createTemplateEngine(mpx.mode)
+    result += `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
+  }
+
   // 运行时编译的组件直接返回基础模板的内容，并产出动态文本内容
   if (runtimeCompile) {
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
-    // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
-    this._module.addPresentationalDependency(new RecordTemplateRuntimeInfoDependency(packageName, resourcePath, meta.runtimeInfo))
 
     let simpleAst = ''
     try {
@@ -183,10 +188,14 @@ global.currentInject.getRefsData = function () {
     } catch (e) {
       error(`simplify the runtime component ast node fail, please check!\n Error Detail: ${e.stack}`)
     }
-    this.emitFile(DYNAMIC_TEMPLATE, '', undefined, {
-      skipEmit: true,
-      extractedDynamicAsset: JSON.stringify(simpleAst)
-    })
+
+    const templateInfo = {
+      templateAst: JSON.stringify(simpleAst),
+      ...meta.runtimeInfo
+    }
+
+    // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
+    this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { templateInfo }))
     // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
     return ''
   }
