@@ -4,7 +4,7 @@ import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
-import Mpx, { dynamic } from '../index'
+import Mpx from '../index'
 import {
   noop,
   type,
@@ -45,6 +45,7 @@ import {
   ONRESIZE
 } from './innerLifecycle'
 import contextMap from '../dynamic/context'
+import { getAst } from '../dynamic/astCache'
 
 let uid = 0
 
@@ -583,7 +584,7 @@ export default class MpxProxy {
         this.updatePreRender()
       }
       if (dynamicTarget || __getAst) {
-        const ast = (__getAst && isFunction(__getAst)) ? __getAst() : dynamic.getAst(moduleId)
+        const ast = getAst(__getAst, moduleId)
         return _r(false, _g(ast, moduleId))
       }
       if (this.target.__injectedRender) {

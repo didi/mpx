@@ -104,7 +104,7 @@ global.currentInject = {
   moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
-  if (runtimeCompile) {
+  if (runtimeCompile || queryObj.dynamicRuntime) {
     resultSource += 'global.currentInject.dynamic = true;\n'
     resultSource += 'require("@mpxjs/core/src/dynamic/renderHelperMixin");\n'
   }
