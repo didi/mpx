@@ -1,12 +1,12 @@
 import { View } from 'react-native'
-import React, { forwardRef, useRef } from 'react'
+import { ReactNode, forwardRef, useRef } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
 
 interface SwiperItemProps {
   'item-id'?: string;
   'enable-offset'?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {

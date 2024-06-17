@@ -5,7 +5,7 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
-import { useRef, useEffect, forwardRef, ReactNode, ForwardedRef, JSX } from 'react';
+import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数

@@ -2,7 +2,7 @@
  * swiper 实现
  */
 import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
+import React, { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
@@ -41,7 +41,7 @@ const styles: { [key: string]: Object } = {
 }
 
 
-const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props , ref): React.JSX.Element => {
+const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props , ref): JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
   const defaultHeight = 150

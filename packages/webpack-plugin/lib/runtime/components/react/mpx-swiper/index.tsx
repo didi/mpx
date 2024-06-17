@@ -1,5 +1,5 @@
-import { View, ScrollView } from 'react-native'
-import React, { forwardRef, useRef } from 'react'
+import { ScrollView } from 'react-native'
+import { JSX, MutableRefObject, forwardRef, useRef } from 'react'
 import { default as Carouse } from './carouse'
 import { SwiperProps } from './type'
 import useInnerProps from '../getInnerListeners'
@@ -19,7 +19,7 @@ import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助�
  * ✔ next-margin
  * ✘ snap-to-edge
  */
-const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperProps>((props: SwiperProps, ref): React.JSX.Element => {
+const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const { children } = props
   let innerLayout = useRef({})
   const swiperProp = {
@@ -50,7 +50,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     'next-margin'
   ], { layoutRef: innerLayout })
 
-  const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
+  const getInnerLayout = (layout: MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
 

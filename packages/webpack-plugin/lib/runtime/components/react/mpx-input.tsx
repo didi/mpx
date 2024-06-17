@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import React, { forwardRef, useMemo, useRef, useState } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -116,7 +116,7 @@ const keyboardTypeMap: Record<Type, string> = {
     }) || '',
 }
 
-const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): React.JSX.Element => {
+const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
     style = [],
     type = 'text',

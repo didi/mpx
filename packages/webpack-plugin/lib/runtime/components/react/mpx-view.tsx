@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore

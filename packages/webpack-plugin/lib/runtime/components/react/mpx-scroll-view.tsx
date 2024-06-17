@@ -33,12 +33,12 @@
  */
 
 import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
-import React, { useRef, useState, useEffect, forwardRef } from 'react';
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
 
 interface ScrollViewProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
@@ -79,7 +79,7 @@ type ScrollAdditionalProps = {
   showsHorizontalScrollIndicator: boolean;
   showsVerticalScrollIndicator: boolean;
   scrollEnabled: boolean;
-  ref: React.RefObject<ScrollView>;
+  ref: RefObject<ScrollView>;
   bounces?: boolean;
   pagingEnabled?: boolean;
   style?: ViewStyle;
@@ -87,7 +87,7 @@ type ScrollAdditionalProps = {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 };
-const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): React.JSX.Element => {
+const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
   const {
     children,
     enhanced = false,

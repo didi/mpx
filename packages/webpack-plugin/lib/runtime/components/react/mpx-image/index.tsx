@@ -10,8 +10,8 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import React, {
-  useCallback,
+import {
+  JSX,
   useEffect,
   useMemo,
   useState,
@@ -110,7 +110,7 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize 
 //   </View>
 // )
 
-const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): React.JSX.Element => {
+const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): JSX.Element => {
   const {
     src = '',
     mode = 'scaleToFill',

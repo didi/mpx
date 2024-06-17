@@ -34,7 +34,8 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, {
+import {
+  JSX,
   useEffect,
   useRef,
   useState,
@@ -152,7 +153,7 @@ const getOpenTypeEvent = (openType: OpenType) => {
   return event
 }
 
-const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
+const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
 
   const rotate = image.interpolate({
@@ -188,7 +189,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): React.JSX.Element => {
+const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): JSX.Element => {
   const {
     size = 'default',
     type = 'default',
