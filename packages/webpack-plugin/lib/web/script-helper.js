@@ -177,8 +177,8 @@ function buildGlobalParams ({
       content += globalTabBar
     }
   } else if (!hasApp) {
-    content += `global.__mpxGenericsMap = {}
-    global.__mpxOptionsMap = {}
+    content += `global.__mpxGenericsMap = global.__mpxGenericsMap || {}
+    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
     global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
