@@ -61,6 +61,17 @@ module.exports.pitch = async function (remainingRequest) {
 
   if (typeof content !== 'string') return resultSource
 
+  const extractedInfo = {
+    content,
+    // isStatic时不需要关注引用索引
+    index: isStatic ? 0 : index
+  }
+
+  this.emitFile(file, '', undefined, {
+    skipEmit: true,
+    extractedInfo
+  })
+
   const { buildInfo } = this._module
 
   const assetsInfo = buildInfo.assetsInfo
@@ -73,17 +84,6 @@ module.exports.pitch = async function (remainingRequest) {
   if (assetInfo && assetInfo.extractedResultSource) {
     resultSource = assetInfo.extractedResultSource
   }
-
-  const extractedInfo = {
-    content,
-    // isStatic时不需要关注引用索引
-    index: isStatic ? 0 : index
-  }
-
-  this.emitFile(file, '', undefined, {
-    skipEmit: true,
-    extractedInfo
-  })
 
   if (isStatic) {
     switch (type) {
