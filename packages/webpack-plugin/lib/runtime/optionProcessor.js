@@ -140,6 +140,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     })
     let mpxStackPath = []
     if (isBrowser) {
+      // 解决webview被刷新导致路由栈丢失后产生错乱问题
       const sessionStorage = window.sessionStorage
       try {
         if (sessionStorage) {
