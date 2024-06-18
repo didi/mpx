@@ -10,9 +10,8 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
-import dynamicSlotMixin from './dynamicSlotMixin'
 
-export default function getBuiltInMixins (options, type, currentInject) {
+export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
   if (__mpx_mode__ === 'web') {
     bulitInMixins = [
@@ -43,9 +42,6 @@ export default function getBuiltInMixins (options, type, currentInject) {
         showMixin(type),
         i18nMixin()
       ])
-    }
-    if (currentInject && currentInject.dynamic) {
-      bulitInMixins = bulitInMixins.concat([dynamicSlotMixin()])
     }
   }
   return bulitInMixins.filter(item => item)

@@ -248,6 +248,7 @@ module.exports = function (content) {
             // todo: queryObj -> isDynamic 的判断
             dependencyComponentsMap[resourcePath] = {
               name,
+              hashName,
               query: queryObj
             }
           }
