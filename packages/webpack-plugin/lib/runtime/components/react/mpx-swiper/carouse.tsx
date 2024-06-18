@@ -292,41 +292,32 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   function renderPagination () {
     if (state.total <= 1) return null
     let dots: Array<ReactNode> = []
-    const ActiveDot = (
-      <View
-        style={[
-          {
-            backgroundColor: props.activeDotColor || '#007aff',
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            marginLeft: 3,
-            marginRight: 3,
-            marginTop: 3,
-            marginBottom: 3
-          }
-        ]}
-      />
-    )
-    const Dot = (
-      <View
-        style={[
-          {
-            backgroundColor: props.dotColor || 'rgba(0,0,0,.2)',
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            marginLeft: 3,
-            marginRight: 3,
-            marginTop: 3,
-            marginBottom: 3
-          }
-        ]}
-      />
-    )
+    const activeDotStyle = [          {
+      backgroundColor: props.activeDotColor || '#007aff',
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginLeft: 3,
+      marginRight: 3,
+      marginTop: 3,
+      marginBottom: 3
+    }]
+    const dotStyle = [{
+      backgroundColor: props.dotColor || 'rgba(0,0,0,.2)',
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginLeft: 3,
+      marginRight: 3,
+      marginTop: 3,
+      marginBottom: 3
+    }]
     for (let i = 0; i < state.total; i++) {
-      let curDot = (i === state.index ? React.cloneElement(ActiveDot, { key: i }) : React.cloneElement(Dot, { key: i }))
-      dots.push(curDot)
+      if (i === state.index) {
+        dots.push(<View style={activeDotStyle} key={i}></View>)
+      } else {
+        dots.push(<View style={dotStyle} key={i}></View>)
+      }
     }
     return (
       <View
@@ -373,7 +364,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
           </View>
         )
       })
-      return pages
+      return arrElements
     } else {
       return (
         <View style={pageStyle} key={0}>
