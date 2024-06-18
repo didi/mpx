@@ -37,7 +37,6 @@ export default function getBuiltInMixins (options, type) {
     // 此为纯增强类mixins，原生模式下不需要注入
     if (!options.__nativeRender__) {
       bulitInMixins = bulitInMixins.concat([
-        // eslint-disable-next-line no-undef
         renderHelperMixin(),
         showMixin(type),
         i18nMixin()
