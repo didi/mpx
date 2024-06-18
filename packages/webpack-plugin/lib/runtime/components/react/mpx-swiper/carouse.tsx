@@ -1,7 +1,7 @@
 /**
  * swiper 实现
  */
-import { View, Text, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
+import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
@@ -314,9 +314,9 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     }]
     for (let i = 0; i < state.total; i++) {
       if (i === state.index) {
-        dots.push(<View style={activeDotStyle} key={i}><Text></Text></View>)
+        dots.push(<View style={activeDotStyle} key={i}></View>)
       } else {
-        dots.push(<View style={dotStyle} key={i}><Text></Text></View>)
+        dots.push(<View style={dotStyle} key={i}></View>)
       }
     }
     return (
