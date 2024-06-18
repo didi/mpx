@@ -24,7 +24,7 @@ createComponent({
       const data = this.r.d || {}
       return data
     },
-    // 当前组件的 uid
+    // 真实的组件上下文 uid
     uid () {
       return this.vnodeData.uid
     }

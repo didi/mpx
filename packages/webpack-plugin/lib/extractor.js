@@ -49,7 +49,6 @@ module.exports.pitch = async function (remainingRequest) {
   }
 
   let content = await this.importModule(`!!${request}`)
-
   // 处理wxss-loader的返回
   if (Array.isArray(content)) {
     content = content.map((item) => {
@@ -74,13 +73,12 @@ module.exports.pitch = async function (remainingRequest) {
 
   const { buildInfo } = this._module
 
-  const assetsInfo = buildInfo.assetsInfo
   // 如果importModule子模块中包含动态特性，比如动态添加入口和静态资源输出路径，则当前extractor模块不可缓存
-  if (assetsInfo && assetsInfo.has(MPX_DISABLE_EXTRACTOR_CACHE)) {
+  if (buildInfo.assetsInfo.has(MPX_DISABLE_EXTRACTOR_CACHE)) {
     this.cacheable(false)
   }
 
-  const assetInfo = assetsInfo && assetsInfo.get(resourcePath)
+  const assetInfo = buildInfo.assetsInfo && buildInfo.assetsInfo.get(resourcePath)
   if (assetInfo && assetInfo.extractedResultSource) {
     resultSource = assetInfo.extractedResultSource
   }
