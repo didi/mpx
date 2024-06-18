@@ -2152,6 +2152,7 @@ function closeElement (el, meta, options) {
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
+      postProcessRuntime(el, options, meta)
     } else {
       el = postProcessComponentIs(el)
     }
