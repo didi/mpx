@@ -233,7 +233,7 @@ module.exports = function (content) {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath } = {}, queryObj = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
