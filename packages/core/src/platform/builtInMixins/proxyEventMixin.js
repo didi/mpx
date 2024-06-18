@@ -1,6 +1,6 @@
 import { setByPath, error, hasOwn, dash2hump } from '@mpxjs/utils'
 import Mpx from '../../index'
-import contextMap from '../../vnode/context'
+import contextMap from '../../dynamic/vnode/context'
 
 const datasetReg = /^data-(.+)$/
 

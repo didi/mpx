@@ -52,7 +52,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const isRuntimeMode = mpx.checkIsRuntimeMode(resourcePath, queryObj)
+  const isRuntimeMode = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(

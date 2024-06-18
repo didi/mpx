@@ -4,7 +4,7 @@ import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
-import Mpx, { dynamic } from '../index'
+import Mpx from '../index'
 import {
   noop,
   type,
@@ -44,7 +44,8 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
-import contextMap from '../vnode/context'
+import contextMap from '../dynamic/context'
+import { getAst } from '../dynamic/astCache'
 
 let uid = 0
 
@@ -572,8 +573,8 @@ export default class MpxProxy {
     const _c = this.target._c.bind(this.target)
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
-    const _g = this.target._g.bind(this.target)
-    const _getAst = this.target._getAst?.bind(this.target)
+    const _g = this.target._g?.bind(this.target)
+    const __getAst = this.target.__getAst?.bind(this.target)
     const moduleId = this.target.__moduleId
     const dynamicTarget = this.target.__dynamic
 
@@ -582,8 +583,8 @@ export default class MpxProxy {
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
       }
-      if (dynamicTarget || _getAst) {
-        const ast = (_getAst && isFunction(_getAst)) ? _getAst() : dynamic.getAst(moduleId)
+      if (dynamicTarget || __getAst) {
+        const ast = getAst(__getAst, moduleId)
         return _r(false, _g(ast, moduleId))
       }
       if (this.target.__injectedRender) {

@@ -62,12 +62,11 @@ class RecordRuntimeInfoDependency extends NullDependency {
   collectJsonInfo (mpx) {
     const jsonInfo = this.getInfoConfig(mpx, 'json')
     for (const resourcePath in this.jsonInfo) {
-      const componentName = this.jsonInfo[resourcePath]
-      const hashName = 'm' + mpx.pathHash(resourcePath)
-      jsonInfo[componentName] = {
-        hashName,
+      const info = this.jsonInfo[resourcePath]
+      jsonInfo[info.name] = {
+        hashName: info.hashName,
         resourcePath,
-        isDynamic: mpx.checkIsRuntimeMode(resourcePath)
+        isDynamic: info.query.isDynamic
       }
     }
   }

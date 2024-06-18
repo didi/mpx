@@ -14,10 +14,6 @@ export default function transferOptions (options, type, needConvert = true) {
   if (!options.__nativeRender__) {
     options = mergeInjectedMixins(options, type)
   }
-  if (currentInject && currentInject.dynamic) {
-    // 动态化组件注入 slots 属性
-    options.properties = options.props = Object.assign({}, options.properties, options.props, { slots: { type: Object } })
-  }
   if (currentInject && currentInject.injectComputed) {
     // 编译计算属性注入
     options.computed = Object.assign({}, currentInject.injectComputed, options.computed)

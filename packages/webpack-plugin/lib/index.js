@@ -64,6 +64,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
+const DynamicPlugin = require('./resolver/DynamicPlugin')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -175,7 +176,7 @@ class MpxWebpackPlugin {
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
-    options.dynamic = options.dynamic || {}// 运行时组件配置
+    options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -322,6 +323,9 @@ class MpxWebpackPlugin {
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
+
+    const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
+
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
@@ -332,6 +336,7 @@ class MpxWebpackPlugin {
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
+    compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
     if (this.options.mode !== 'web') {
@@ -686,9 +691,6 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
-          checkIsRuntimeMode: (resource, queryObj) => {
-            return (queryObj && queryObj.isDynamic) || matchCondition(resource, this.options.dynamic)
-          },
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -1710,7 +1712,7 @@ try {
 
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
-        const { queryObj, resourcePath } = parseRequest(createData.request)
+        const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
@@ -1763,10 +1765,6 @@ try {
             })
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
-        }
-
-        if (matchCondition(resourcePath, this.options.dynamic)) {
-          createData.resource = addQuery(createData.resource, { isDynamic: true })
         }
 
         if (mpx.mode === 'web') {
