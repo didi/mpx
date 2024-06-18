@@ -19,7 +19,7 @@ const methodMixin = {
   }
 }
 
-function renderHelperMixin () {
+function dynamicRenderMixin () {
   if (__mpx_mode__ === 'ali') {
     return {
       props: { slots: {} },
@@ -33,6 +33,6 @@ function renderHelperMixin () {
   }
 }
 
-mpx.injectMixins(renderHelperMixin(), {
+mpx.injectMixins(dynamicRenderMixin(), {
   types: ['component']
 })

@@ -245,7 +245,6 @@ module.exports = function (content) {
             const hashName = 'm' + mpx.pathHash(resourcePath)
             components[hashName] = entry
             delete components[name]
-            // todo: queryObj -> isDynamic 的判断
             dependencyComponentsMap[resourcePath] = {
               name,
               hashName,

@@ -44,7 +44,7 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
-import contextMap from '../dynamic/context'
+import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
 
 let uid = 0

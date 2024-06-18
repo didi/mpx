@@ -106,7 +106,7 @@ global.currentInject = {
 
   if (runtimeCompile || queryObj.dynamicRuntime) {
     resultSource += 'global.currentInject.dynamic = true;\n'
-    resultSource += 'require("@mpxjs/core/src/dynamic/renderHelperMixin");\n'
+    resultSource += 'require("@mpxjs/core/src/dynamic/dynamicRenderMixin");\n'
   }
 
   const rawCode = runtimeCompile ? '' : compiler.genNode(ast)
