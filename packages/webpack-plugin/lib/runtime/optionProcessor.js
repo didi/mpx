@@ -2,6 +2,9 @@ import { hasOwn, isEmptyObject } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
+import { createEvent } from './components/web/event'
+
+createEvent()
 
 export function processComponentOption (
   {
