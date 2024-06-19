@@ -113,11 +113,11 @@
   }, window.sdkUrlMap);
   function getMpxWebViewId() {
     var href = location.href;
-    var reg = /(?<=mpx_webview_id=)\d*/g;
-    var matchVal = href.match(reg);
+    var reg = /mpx_webview_id=(\d+)/g;
+    var matchVal = reg.exec(href);
     var result;
-    if (matchVal[0]) {
-      result = +matchVal[0];
+    if (matchVal && matchVal[1]) {
+      result = +matchVal[1];
     }
     return result;
   }
@@ -207,20 +207,13 @@
         }
         delete callbacks[currentCallbackId];
       };
-      var postParams;
-      if (typeof clientUid !== 'undefined') {
-        postParams = {
-          type: type,
-          callbackId: callbackId,
-          clientUid: clientUid,
-          payload: filterData(data)
-        };
-      } else {
-        postParams = {
-          type: type,
-          callbackId: callbackId,
-          payload: filterData(data)
-        };
+      var postParams = {
+        type: type,
+        callbackId: callbackId,
+        payload: filterData(data)
+      };
+      if (clientUid !== 'undefined') {
+        postParams.clientUid = clientUid;
       }
       window.parent.postMessage && window.parent.postMessage(postParams, '*');
     } else {
