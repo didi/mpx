@@ -138,7 +138,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         <Icon
           type='success_no_circle'
           size={18}
-          color={color}
+          color={disabled ? '#ADADAD' : color}
           style={isChecked ? styles.iconChecked : styles.icon}
         />
       </View>
