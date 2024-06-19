@@ -182,17 +182,13 @@ global.currentInject.getRefsData = function () {
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
-    try {
-      const templateInfo = {
-        templateAst: dynamic.stringify(ast),
-        ...meta.runtimeInfo
-      }
-
-      // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
-      this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { templateInfo }))
-    } catch (error) {
-
+    const templateInfo = {
+      templateAst: dynamic.stringify(ast),
+      ...meta.runtimeInfo
     }
+
+    // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
+    this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { templateInfo }))
     // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
   }
 
