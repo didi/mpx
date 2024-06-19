@@ -2167,6 +2167,13 @@ function closeElement (el, meta, options) {
 
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+      if (options.runtimeCompile) {
+        const dynamic = require('./dynamic')
+        dynamic.postProcessIf(el, config[mode])
+        dynamic.postProcessFor(el, config[mode])
+        dynamic.postProcessDirectives(el, config[mode])
+        dynamic.postProcessAttrsMap(el, config[mode])
+      }
       el = processAliAddComponentRootView(el, options)
       postProcessRuntime(el, options, meta)
     } else {
@@ -2175,6 +2182,7 @@ function closeElement (el, meta, options) {
   }
   postProcessFor(el)
   postProcessIf(el)
+
   if (options.runtimeCompile) {
     const dynamic = require('./dynamic')
     dynamic.postProcessIf(el, config[mode])
