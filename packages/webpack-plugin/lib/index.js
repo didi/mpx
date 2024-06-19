@@ -1244,6 +1244,7 @@ class MpxWebpackPlugin {
               template: JSON.parse(value),
               styles: style
             }
+
             // 注入 dynamic slot dependency
             const outputPath = mpx.componentsMap[packageName][resourcePath]
             if (outputPath) {
