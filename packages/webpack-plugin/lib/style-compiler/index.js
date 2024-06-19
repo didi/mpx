@@ -1,7 +1,7 @@
 const path = require('path')
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const pluginCondStrip = require('./plugins/conditional-strip')
@@ -138,6 +138,8 @@ module.exports = function (css, map) {
         }
 
         if (runtimeCompile) {
+          // 包含了运行时组件的 style 模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
+          this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
           this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { styleInfo: { cssList } }))
           return cb(null, '')
         }

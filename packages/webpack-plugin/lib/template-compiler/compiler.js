@@ -1168,7 +1168,7 @@ function parseMustacheWithContext (raw = '') {
   return parseMustache(raw, (exp) => {
     if (defs) {
       // eval处理的话，和别的判断条件，比如运行时的判断混用情况下得不到一个结果，还是正则替换
-      const defKeys = Object.keys(defs || {})
+      const defKeys = Object.keys(defs)
       defKeys.forEach((defKey) => {
         const defRE = new RegExp(`\\b${defKey}\\b`)
         const defREG = new RegExp(`\\b${defKey}\\b`, 'g')
