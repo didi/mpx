@@ -20,11 +20,11 @@ const SDK_URL_MAP = {
 }
 function getMpxWebViewId () {
   const href = location.href
-  const reg = /(?<=mpx_webview_id=)\d*/g
-  const matchVal = href.match(reg)
+  const reg = /mpx_webview_id=(\d+)/g
+  const matchVal = reg.exec(href)
   let result
-  if (matchVal[0]) {
-    result = +matchVal[0]
+  if (matchVal && matchVal[1]) {
+    result = +matchVal[1]
   }
   return result
 }
@@ -115,20 +115,13 @@ function postMessage (type, data = {}) {
       }
       delete callbacks[currentCallbackId]
     }
-    let postParams
+    const postParams = {
+      type,
+      callbackId,
+      payload: filterData(data)
+    }
     if (typeof clientUid !== 'undefined') {
-      postParams = {
-        type,
-        callbackId,
-        clientUid,
-        payload: filterData(data)
-      }
-    } else {
-      postParams = {
-        type,
-        callbackId,
-        payload: filterData(data)
-      }
+      postParams.clientUid = clientUid
     }
     window.parent.postMessage && window.parent.postMessage(postParams, '*')
   } else {

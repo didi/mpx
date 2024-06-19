@@ -122,11 +122,8 @@
     &.mpx-icon-waiting-v2,
     &.mpx-icon-search-v2,
     &.mpx-icon-clear-v2,
-    &.mpx-icon-success_no_circle-v2,
-    &.mpx-icon-download-v2
+    &.mpx-icon-success_no_circle-v2
       display: inline-block
-      width: 64px
-      height: 64px
       mask-position: 50% 50%
       -webkit-mask-position: 50% 50%
       -webkit-mask-repeat: no-repeat
