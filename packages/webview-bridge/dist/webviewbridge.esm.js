@@ -206,7 +206,7 @@ function postMessage(type) {
       callbackId: callbackId,
       payload: filterData(data)
     };
-    if (clientUid !== 'undefined') {
+    if (clientUid !== undefined) {
       postParams.clientUid = clientUid;
     }
     window.parent.postMessage && window.parent.postMessage(postParams, '*');

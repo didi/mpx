@@ -104,7 +104,7 @@
         const hostValidate = this.hostValidate(event.origin)
         const data = event.data
         // 判断number类型，防止undefined导致触发return逻辑
-        if (data.clientUid !== 'undefined' && +data.clientUid !== this._uid) {
+        if (data.clientUid !== undefined && +data.clientUid !== this._uid) {
           return
         }
         let value = data.payload
