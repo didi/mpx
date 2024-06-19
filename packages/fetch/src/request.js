@@ -40,7 +40,10 @@ export default function request (config, mpx) {
       typeof rawFail === 'function' && rawFail.call(this, err)
       reject(err)
     }
-    const envObj = getEnvObj()
+
+
+
+    const envObj = getEnvObj(mode)
 
     if (envObj && typeof envObj.request === 'function') {
       requestTask = envObj.request(config)

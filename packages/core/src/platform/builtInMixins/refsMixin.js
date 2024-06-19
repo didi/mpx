@@ -22,8 +22,8 @@ const setComponentRef = function (target, ref, isAsync) {
     enumerable: true,
     configurable: true,
     get () {
-      // wx由于分包异步化的存在，每次访问refs都需要重新执行selectComponent，避免一直拿到缓存中的placeholder
-      if (__mpx_mode__ === 'wx' || !cacheMap.get(key)) {
+      // wx与ali由于分包异步化的存在，每次访问refs都需要重新执行selectComponent，避免一直拿到缓存中的placeholder
+      if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || !cacheMap.get(key)) {
         cacheMap.set(key, target.__getRefNode(ref, isAsync))
       }
       return cacheMap.get(key)
