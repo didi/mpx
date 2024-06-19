@@ -479,39 +479,29 @@ class MpxWebpackPlugin {
       }
     }
 
-    const runSubpackageEntriesMap = (entriesMap, compilation, callback) => {
+    const processSubpackagesEntriesMap = (subPackageEntriesType, compilation, callback) => {
       const mpx = compilation.__mpx__
-      async.eachOfSeries(entriesMap, (deps, packageRoot, callback) => {
-        mpx.currentPackageRoot = packageRoot
-        mpx.componentsMap[packageRoot] = mpx.componentsMap[packageRoot] || {}
-        mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
-        mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
-        async.each(deps, (dep, callback) => {
-          dep.addEntry(compilation, (err, result) => {
-            if (err) return callback(err)
-            dep.resultPath = mpx.replacePathMap[dep.key] = result.resultPath
-            callback()
-          })
-        }, callback)
-      }, callback)
-    }
-
-    const processSubpackagesEntriesMap = (compilation, callback) => {
-      const mpx = compilation.__mpx__
-      if (mpx && !isEmptyObject(mpx.subpackagesEntriesMap)) {
-        const subpackagesEntriesMap = mpx.subpackagesEntriesMap
-        // 执行分包队列前清空mpx.subpackagesEntriesMap
-        mpx.subpackagesEntriesMap = {}
-        runSubpackageEntriesMap(subpackagesEntriesMap, compilation, (err) => {
+      if (mpx && !isEmptyObject(mpx[subPackageEntriesType])) {
+        const subpackagesEntriesMap = mpx[subPackageEntriesType]
+        // 执行分包队列前清空 mpx[subPackageEntriesType]
+        mpx[subPackageEntriesType] = {}
+        async.eachOfSeries(subpackagesEntriesMap, (deps, packageRoot, callback) => {
+          mpx.currentPackageRoot = packageRoot
+          mpx.componentsMap[packageRoot] = mpx.componentsMap[packageRoot] || {}
+          mpx.staticResourcesMap[packageRoot] = mpx.staticResourcesMap[packageRoot] || {}
+          mpx.subpackageModulesMap[packageRoot] = mpx.subpackageModulesMap[packageRoot] || {}
+          async.each(deps, (dep, callback) => {
+            dep.addEntry(compilation, (err, result) => {
+              if (err) return callback(err)
+              dep.resultPath = mpx.replacePathMap[dep.key] = result.resultPath
+              callback()
+            })
+          }, callback)
+        }, (err) => {
           if (err) return callback(err)
           // 如果执行完当前队列后产生了新的分包执行队列（一般由异步分包组件造成），则继续执行
-          processSubpackagesEntriesMap(compilation, callback)
+          processSubpackagesEntriesMap(subPackageEntriesType, compilation, callback)
         })
-      } else if (mpx && !isEmptyObject(mpx.postSubpackageEntriesMap)) {
-        const postSubpackageEntriesMap = mpx.postSubpackageEntriesMap
-        mpx.postSubpackageEntriesMap = {}
-        // postSubpackageEntiesMap 处理完后直接返回
-        runSubpackageEntriesMap(postSubpackageEntriesMap, compilation, callback)
       } else {
         callback()
       }
@@ -522,7 +512,14 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, (err) => {
+      async.waterfall([
+        (callback) => {
+          processSubpackagesEntriesMap('subpackagesEntriesMap', compilation, callback)
+        },
+        (callback) => {
+          processSubpackagesEntriesMap('postSubpackageEntriesMap', compilation, callback)
+        }
+      ], (err) => {
         if (err) return callback(err)
         const checkDynamicEntryInfo = () => {
           for (const packageName in mpx.dynamicEntryInfo) {
