@@ -13,6 +13,7 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
+const dynamic = require('./dynamic')
 
 const no = function () {
   return false
@@ -740,7 +741,6 @@ function parse (template, options) {
           children.push(el)
           processText(el)
           if (options.runtimeCompile) {
-            const dynamic = require('./dynamic')
             dynamic.processText(el, config[mode])
           }
         }
@@ -778,7 +778,6 @@ function parse (template, options) {
   injectNodes.forEach((node) => {
     addChild(root, node, true)
     if (options.runtimeCompile) {
-      const dynamic = require('./dynamic')
       dynamic.processWxs(node, config[mode])
     }
   })
@@ -2144,7 +2143,6 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 
   if (options.runtimeCompile) {
-    const dynamic = require('./dynamic')
     dynamic.processFor(el, config[mode])
     dynamic.processAttrsMap(el, config[mode])
     dynamic.processText(el, config[mode])
@@ -2169,7 +2167,6 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
       if (options.runtimeCompile) {
-        const dynamic = require('./dynamic')
         dynamic.processFor(el, config[mode])
         dynamic.processAttrsMap(el, config[mode])
         dynamic.processText(el, config[mode])
@@ -2188,7 +2185,6 @@ function closeElement (el, meta, options) {
   postProcessIf(el)
 
   if (options.runtimeCompile) {
-    const dynamic = require('./dynamic')
     dynamic.postProcessIf(el, config[mode])
     dynamic.postProcessFor(el, config[mode])
     dynamic.postProcessDirectives(el, config[mode])
