@@ -83,6 +83,7 @@ export interface ButtonProps {
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchstart?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -204,6 +205,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     children,
     bindgetuserinfo,
     bindtap,
+    catchtap,
     bindtouchstart,
     bindtouchend,
   } = props
@@ -326,6 +328,11 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     handleOpenTypeEvent(evt)
   }
 
+  const catchTap= (evt: NativeSyntheticEvent<TouchEvent>) => {
+    if (disabled) return
+    catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
+  }
+
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
     if (every(children, (child)=>isText(child))) {
       children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
@@ -356,6 +363,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
       bindtap: onTap,
+      catchtap: catchTap,
       ...(enableOffset ? { onLayout } : {}),
     },
     [
