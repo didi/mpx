@@ -182,13 +182,14 @@ global.currentInject.getRefsData = function () {
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
     const uselessAttrs = ['parent', 'exps', 'unary', 'attrsMap']
+    const uselessArrAttrs = ['children', 'attrsList']
 
     try {
       const templateInfo = {
         templateAst: JSON.stringify(ast, (k, v) => {
           if (uselessAttrs.includes(k)) return undefined
+          if (uselessArrAttrs.includes(k) && v && !v.length) return undefined
           if (k === 'tag' && v === 'temp-node') return 'block'
-          if ((k === 'children' || k === 'attrsList') && v && !v.length) return undefined
           return v
         }),
         ...meta.runtimeInfo
