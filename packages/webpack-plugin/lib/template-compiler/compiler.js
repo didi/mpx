@@ -739,6 +739,10 @@ function parse (template, options) {
           }
           children.push(el)
           processText(el)
+          if (options.runtimeCompile) {
+            const dynamic = require('./dynamic')
+            dynamic.processText(el, config[mode])
+          }
         }
       }
     },
@@ -773,6 +777,10 @@ function parse (template, options) {
 
   injectNodes.forEach((node) => {
     addChild(root, node, true)
+    if (options.runtimeCompile) {
+      const dynamic = require('./dynamic')
+      dynamic.processWxs(node, config[mode])
+    }
   })
 
   rulesResultMap.forEach((val) => {
@@ -2134,6 +2142,14 @@ function processElement (el, root, options, meta) {
   }
 
   processAttrs(el, options)
+
+  if (options.runtimeCompile) {
+    const dynamic = require('./dynamic')
+    dynamic.processFor(el, config[mode])
+    dynamic.processAttrsMap(el, config[mode])
+    dynamic.processText(el, config[mode])
+    dynamic.postProcessTempNode(el, config[mode])
+  }
 }
 
 function closeElement (el, meta, options) {
@@ -2159,6 +2175,13 @@ function closeElement (el, meta, options) {
   }
   postProcessFor(el)
   postProcessIf(el)
+  if (options.runtimeCompile) {
+    const dynamic = require('./dynamic')
+    dynamic.postProcessIf(el, config[mode])
+    dynamic.postProcessFor(el, config[mode])
+    dynamic.postProcessDirectives(el, config[mode])
+    dynamic.postProcessAttrsMap(el, config[mode])
+  }
 }
 
 // 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中

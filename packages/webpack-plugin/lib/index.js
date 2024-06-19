@@ -1242,18 +1242,22 @@ class MpxWebpackPlugin {
         for (const packageName in mpx.runtimeInfo) {
           for (const resourcePath in mpx.runtimeInfo[packageName]) {
             const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
-            const value = mpx.changeHashNameForAstNode(template.templateAst, json)
-            dynamicAssets[moduleId] = {
-              template: JSON.parse(value),
-              styles: style
-            }
+            try {
+              const value = mpx.changeHashNameForAstNode(template.templateAst, json)
+              dynamicAssets[moduleId] = {
+                template: JSON.parse(value),
+                styles: style
+              }
 
-            // 注入 dynamic slot dependency
-            const outputPath = mpx.componentsMap[packageName][resourcePath]
-            if (outputPath) {
-              const jsonAsset = outputPath + '.json'
-              const jsonContent = compilation.assets[jsonAsset].source()
-              compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+              // 注入 dynamic slot dependency
+              const outputPath = mpx.componentsMap[packageName][resourcePath]
+              if (outputPath) {
+                const jsonAsset = outputPath + '.json'
+                const jsonContent = compilation.assets[jsonAsset].source()
+                compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+              }
+            } catch (error) {
+              compilation.errors.push(new Error(`emit dynamic asset ${resourcePath} error: ` + error.mssage))
             }
           }
         }
