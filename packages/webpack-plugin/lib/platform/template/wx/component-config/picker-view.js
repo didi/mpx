@@ -13,6 +13,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-picker-view'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
     props: [
       {
         test: /^(indicator-class|mask-class)$/,
