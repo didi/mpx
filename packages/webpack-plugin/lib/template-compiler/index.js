@@ -181,7 +181,7 @@ global.currentInject.getRefsData = function () {
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
-    const uselessAttrs = ['parent', 'exps', 'unary']
+    const uselessAttrs = ['parent', 'exps', 'unary', 'attrsMap']
 
     try {
       const templateInfo = {
@@ -189,7 +189,6 @@ global.currentInject.getRefsData = function () {
           if (uselessAttrs.includes(k)) return undefined
           if (k === 'tag' && v === 'temp-node') return 'block'
           if ((k === 'children' || k === 'attrsList') && v && !v.length) return undefined
-          if (k === 'attrsMap') return undefined
           return v
         }),
         ...meta.runtimeInfo
