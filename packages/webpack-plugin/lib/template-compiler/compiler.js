@@ -2167,14 +2167,18 @@ function closeElement (el, meta, options) {
 
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
+      el = processAliAddComponentRootView(el, options)
       if (options.runtimeCompile) {
         const dynamic = require('./dynamic')
-        dynamic.postProcessIf(el, config[mode])
-        dynamic.postProcessFor(el, config[mode])
-        dynamic.postProcessDirectives(el, config[mode])
-        dynamic.postProcessAttrsMap(el, config[mode])
+        dynamic.processFor(el, config[mode])
+        dynamic.processAttrsMap(el, config[mode])
+        dynamic.processText(el, config[mode])
+        dynamic.postProcessTempNode(el, config[mode])
+        dynamic.postProcessIf(el.children[0], config[mode])
+        dynamic.postProcessFor(el.children[0], config[mode])
+        dynamic.postProcessDirectives(el.children[0], config[mode])
+        dynamic.postProcessAttrsMap(el.children[0], config[mode])
       }
-      el = processAliAddComponentRootView(el, options)
       postProcessRuntime(el, options, meta)
     } else {
       el = postProcessComponentIs(el)
