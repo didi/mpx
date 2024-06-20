@@ -1958,12 +1958,10 @@ function processShow (el, options, root) {
       const showExp = parseMustacheWithContext(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
-      const attr = {
+      addAttrs(el, [{
         name: 'style',
         value: `${oldStyle}{{${showExp}?'':'display:none;'}}`
-      }
-      dynamic.processStyle(attr)
-      addAttrs(el, [attr])
+      }])
     }
   }
 }
