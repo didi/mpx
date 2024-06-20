@@ -149,7 +149,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       } catch (e) {
       }
     }
-    global.__mpxRouter.stack = mpxStackPath
+    global.__mpxRouter.stack = mpxStackPath || []
     global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
