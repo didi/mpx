@@ -6,7 +6,7 @@ const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
-const dynamic = require('./dynamic')
+const { stringify } = require('./dynamic')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -183,7 +183,7 @@ global.currentInject.getRefsData = function () {
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
     const templateInfo = {
-      templateAst: dynamic.stringify(ast),
+      templateAst: stringify(ast),
       ...meta.runtimeInfo
     }
 
