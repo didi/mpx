@@ -31,7 +31,8 @@ function showActionSheet (options) {
       position: 'absolute',
       bottom: 0,
       backgroundColor: '#ffffff',
-      borderRadius: ''
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10
     },
     itemStyle: {
       paddingTop: 15,
@@ -62,7 +63,7 @@ function showActionSheet (options) {
   }
   const cancelAction = function () {
     const result = {
-      errMsg: 'showActionSheet:fail'
+      errMsg: 'showActionSheet:fail cancel'
     }
     webHandleFail(result, fail, complete)
     rootSiblingsObj.destroy()
