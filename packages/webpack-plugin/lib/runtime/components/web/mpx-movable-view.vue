@@ -115,6 +115,13 @@
         }
         this.currentX = newVal
         this.bs.scrollTo(newVal, this.bs.y, this.speed)
+        setTimeout(() => {
+          this.$emit('change', getCustomEvent('change', {
+            x: newVal,
+            y: this.bs.y,
+            source: this.source
+          }, this))
+        }, this.speed)
       },
       y (newVal) {
         this.source = ''
@@ -126,6 +133,13 @@
         }
         this.currentY = newVal
         this.bs.scrollTo(this.bs.x, newVal, this.speed)
+        setTimeout(() => {
+          this.$emit('change', getCustomEvent('change', {
+            x: this.bs.x,
+            y: newVal,
+            source: this.source
+          }, this))
+        }, this.speed)
       },
       scaleValue (newVal) {
         this.isZooming = true
