@@ -72,19 +72,15 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       )
     }
 
-    const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
+    const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       childRef.current?.change(evt)
     }
 
-    const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-      onChange(evt)
-    }
-
-    function wrapChildren(
+    const wrapChildren = (
       children: ReactNode,
       textStyle?: StyleProp<TextStyle>
-    ) {
+    ) => {
       if (every(children, (child) => isText(child))) {
         children = [
           <Text key='labelTextWrap' style={textStyle}>
@@ -94,19 +90,16 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
         return children
       }
       return Children.toArray(children).map((child) => {
-        if (child && isText(child)) {
-          return cloneElement(child as ReactElement, {
-            style: [...((child as ReactElement).props.style ?? []), textStyle]
-          })
-        }
-        if (!childRef.current && isEmbedded(child)) {
-          return cloneElement(child as ReactElement, {
-            ref: (ref) => {
-              childRef.current = ref?.getNodeInstance()?.instance
-            }
-          })
-        }
-        return child
+        return cloneElement(child as ReactElement, {
+          style: [...((child as ReactElement).props.style ?? []), textStyle],
+          ...(isEmbedded(child)
+            ? {
+                ref: (ref) => {
+                  childRef.current = ref?.getNodeInstance()?.instance
+                }
+              }
+            : {})
+        })
       })
     }
 
