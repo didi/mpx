@@ -1,6 +1,5 @@
 import { hasOwn, isObject, error } from '@mpxjs/utils'
 import genVnodeTree from './vnode/render'
-import mpx from '@mpxjs/core'
 
 const methodMixin = {
   methods: {
@@ -33,6 +32,6 @@ function dynamicRenderMixin () {
   }
 }
 
-mpx.injectMixins(dynamicRenderMixin(), {
-  types: ['component']
-})
+export {
+  dynamicRenderMixin
+}

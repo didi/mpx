@@ -138,7 +138,8 @@ class MpxWebpackPlugin {
     options.defs = Object.assign({}, options.defs, {
       __mpx_mode__: options.mode,
       __mpx_src_mode__: options.srcMode,
-      __mpx_env__: options.env
+      __mpx_env__: options.env,
+      __mpx_dynamic_runtime__: options.dynamicRuntime
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
