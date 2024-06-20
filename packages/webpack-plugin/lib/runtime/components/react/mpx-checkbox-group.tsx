@@ -11,7 +11,13 @@ import React, {
   FunctionComponent,
   isValidElement
 } from 'react'
-import { View, NativeSyntheticEvent } from 'react-native'
+import {
+  View,
+  NativeSyntheticEvent,
+  StyleProp,
+  ViewStyle,
+  StyleSheet
+} from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
 
@@ -21,6 +27,7 @@ interface Selection {
 }
 
 export interface CheckboxGroupProps {
+  style?: StyleProp<ViewStyle>
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -30,7 +37,12 @@ const CheckboxGroup = forwardRef<
   HandlerRef<View, CheckboxGroupProps>,
   CheckboxGroupProps
 >((props, ref): JSX.Element => {
-  const { 'enable-offset': enableOffset, children, bindchange } = props
+  const {
+    style = [],
+    'enable-offset': enableOffset,
+    children,
+    bindchange
+  } = props
 
   const layoutRef = useRef({})
 
@@ -39,7 +51,15 @@ const CheckboxGroup = forwardRef<
     selections: []
   })
 
-  const { nodeRef } = useNodesRef(props, ref)
+  const defaultStyle = {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    ...StyleSheet.flatten(style)
+  }
+
+  const { nodeRef } = useNodesRef(props, ref, {
+    defaultStyle
+  })
 
   const onLayout = () => {
     nodeRef.current?.measure(
@@ -86,7 +106,7 @@ const CheckboxGroup = forwardRef<
       )
   }
 
-  function wrapChildren(children: ReactNode) {
+  const wrapChildren = (children: ReactNode) => {
     return Children.toArray(children).map((child) => {
       if (!isValidElement(child)) return child
 
@@ -113,6 +133,7 @@ const CheckboxGroup = forwardRef<
     props,
     {
       ref: nodeRef,
+      style: defaultStyle,
       ...(enableOffset ? { onLayout } : {})
     },
     ['enable-offset'],

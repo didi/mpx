@@ -4,17 +4,27 @@
  * ✔ checked
  * ✔ color
  */
-import React, { JSX, useRef, useState, forwardRef } from 'react'
+import React, {
+  JSX,
+  useRef,
+  useState,
+  forwardRef,
+  useEffect,
+  ReactNode
+} from 'react'
 import {
   View,
+  Text,
   StyleSheet,
   StyleProp,
   ViewStyle,
-  NativeSyntheticEvent
+  NativeSyntheticEvent,
+  TextStyle
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
 import Icon from './mpx-icon'
+import { every, extractTextStyle, isText } from './utils'
 
 interface Selection {
   value?: string
@@ -26,6 +36,7 @@ export interface CheckboxProps extends Selection {
   color?: string
   style?: StyleProp<ViewStyle>
   'enable-offset'?: boolean
+  children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   _onChange?: (
@@ -35,6 +46,10 @@ export interface CheckboxProps extends Selection {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -66,20 +81,23 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       color = '#09BB07',
       style = [],
       'enable-offset': enableOffset,
+      children,
       bindtap,
       catchtap,
       _onChange
     } = props
 
-    const defaultStyle = StyleSheet.flatten([
-      styles.wrapper,
-      disabled && styles.wrapperDisabled,
-      StyleSheet.flatten(style)
-    ])
-
     const layoutRef = useRef({})
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
+
+    const textStyle = extractTextStyle(style)
+
+    const defaultStyle = StyleSheet.flatten([
+      styles.wrapper,
+      disabled && styles.wrapperDisabled,
+      style
+    ])
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
@@ -118,11 +136,31 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       )
     }
 
+    const wrapChildren = (
+      children: ReactNode,
+      textStyle?: StyleProp<TextStyle>
+    ) => {
+      if (every(children, (child) => isText(child))) {
+        children = [
+          <Text key='checkboxTextWrap' style={textStyle}>
+            {children}
+          </Text>
+        ]
+      } else {
+        if (textStyle)
+          console.warn(
+            'Text style will be ignored unless every child of the Checkbox is Text node!'
+          )
+      }
+
+      return children
+    }
+
     const innerProps = useInnerProps(
       props,
       {
         ref: nodeRef,
-        style: defaultStyle,
+        style: [styles.container],
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
@@ -133,14 +171,21 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       }
     )
 
+    useEffect(() => {
+      checked !== isChecked && setIsChecked(checked)
+    }, [checked])
+
     return (
       <View {...innerProps}>
-        <Icon
-          type='success_no_circle'
-          size={18}
-          color={disabled ? '#ADADAD' : color}
-          style={isChecked ? styles.iconChecked : styles.icon}
-        />
+        <View style={defaultStyle}>
+          <Icon
+            type='success_no_circle'
+            size={18}
+            color={disabled ? '#ADADAD' : color}
+            style={isChecked ? styles.iconChecked : styles.icon}
+          />
+        </View>
+        {wrapChildren(children, textStyle)}
       </View>
     )
   }
