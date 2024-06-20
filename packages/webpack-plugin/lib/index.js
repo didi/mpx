@@ -512,7 +512,7 @@ class MpxWebpackPlugin {
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      async.waterfall([
+      async.series([
         (callback) => {
           processSubpackagesEntriesMap('subpackagesEntriesMap', compilation, callback)
         },
@@ -1239,10 +1239,13 @@ class MpxWebpackPlugin {
         for (const packageName in mpx.runtimeInfo) {
           for (const resourcePath in mpx.runtimeInfo[packageName]) {
             const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
-            const value = mpx.changeHashNameForAstNode(template.templateAst, json)
+            const templateAst = mpx.changeHashNameForAstNode(template.templateAst, json)
             dynamicAssets[moduleId] = {
-              template: JSON.parse(value),
-              styles: style
+              template: JSON.parse(templateAst),
+              styles: style.reduce((preV, curV) => {
+                preV.push(...curV)
+                return preV
+              }, [])
             }
 
             // 注入 dynamic slot dependency

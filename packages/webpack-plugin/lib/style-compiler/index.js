@@ -25,6 +25,7 @@ module.exports = function (css, map) {
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
   const runtimeCompile = queryObj.isDynamic
+  const index = queryObj.index || 0
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
 
   const transRpxFn = mpx.webConfig.transRpxFn
@@ -140,7 +141,7 @@ module.exports = function (css, map) {
         if (runtimeCompile) {
           // 包含了运行时组件的 style 模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
           this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
-          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { styleInfo: { cssList } }))
+          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'style', info: cssList, index }))
           return cb(null, '')
         }
 
