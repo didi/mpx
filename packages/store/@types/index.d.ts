@@ -65,7 +65,7 @@ type DepsSymbol = typeof DEPS_SYMBOL
 type StateSymbol = typeof STATE_SYMBOL
 type GettersSymbol = typeof GETTERS_SYMBOL
 
-interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+export interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   [DEPS_SYMBOL]: D
   [STATE_SYMBOL]: S
