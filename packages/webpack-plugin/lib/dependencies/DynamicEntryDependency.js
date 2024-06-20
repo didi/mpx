@@ -34,7 +34,7 @@ class DynamicEntryDependency extends NullDependency {
 
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
-    let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
+    let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver, extraOptions } = this
 
     async.waterfall([
       (callback) => {
@@ -112,7 +112,8 @@ class DynamicEntryDependency extends NullDependency {
             resource,
             packageName,
             filename,
-            entryType
+            entryType,
+            isRequireAsync: extraOptions.isRequireAsync
           })
         }
       }
