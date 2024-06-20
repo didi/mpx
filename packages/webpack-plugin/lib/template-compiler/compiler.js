@@ -13,11 +13,31 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
-const dynamic = require('./dynamic')
+const { createDynamic } = require('./dynamic')
 
 const no = function () {
   return false
 }
+
+const compiler = {
+  parseComponent,
+  parse,
+  serialize,
+  genNode,
+  makeAttrsMap,
+  stringifyAttr,
+  parseMustache,
+  parseMustacheWithContext,
+  stringifyWithResolveComputed,
+  addAttrs,
+  getAndRemoveAttr,
+  findPrevNode,
+  removeNode,
+  replaceNode,
+  createASTElement
+}
+
+const dynamic = createDynamic(compiler)
 
 /*!
  * HTML Parser By John Resig (ejohn.org)
@@ -2146,7 +2166,6 @@ function processElement (el, root, options, meta) {
     dynamic.processFor(el, config[mode])
     dynamic.processAttrsMap(el, config[mode])
     dynamic.processText(el, config[mode])
-    dynamic.postProcessTempNode(el, config[mode])
   }
 }
 
@@ -2169,8 +2188,7 @@ function closeElement (el, meta, options) {
       if (options.runtimeCompile) {
         dynamic.processFor(el, config[mode])
         dynamic.processAttrsMap(el, config[mode])
-        dynamic.processText(el, config[mode])
-        dynamic.postProcessTempNode(el, config[mode])
+
         dynamic.postProcessIf(el.children[0], config[mode])
         dynamic.postProcessFor(el.children[0], config[mode])
         dynamic.postProcessDirectives(el.children[0], config[mode])
@@ -2611,20 +2629,4 @@ function parseOptionChain (str) {
   return str
 }
 
-module.exports = {
-  parseComponent,
-  parse,
-  serialize,
-  genNode,
-  makeAttrsMap,
-  stringifyAttr,
-  parseMustache,
-  parseMustacheWithContext,
-  stringifyWithResolveComputed,
-  addAttrs,
-  getAndRemoveAttr,
-  findPrevNode,
-  removeNode,
-  replaceNode,
-  createASTElement
-}
+module.exports = compiler
