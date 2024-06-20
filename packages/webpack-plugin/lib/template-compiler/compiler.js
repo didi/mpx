@@ -759,10 +759,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          processText(el)
-          if (options.runtimeCompile) {
-            dynamic.processText(el, config[mode])
-          }
+          processText(el, options)
         }
       }
     },
@@ -1585,7 +1582,7 @@ function postProcessIf (el) {
   }
 }
 
-function processText (el) {
+function processText (el, options) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -1594,6 +1591,9 @@ function processText (el) {
     addExp(el, parsed.result)
   }
   el.text = parsed.val
+  if (options.runtimeCompile) {
+    dynamic.processText(el, parsed, config[mode])
+  }
 }
 
 // function injectComputed (el, meta, type, body) {
@@ -1626,7 +1626,7 @@ function injectWxs (meta, module, src) {
   injectNodes.push(wxsNode)
 }
 
-function processClass (el, meta) {
+function processClass (el, options, meta) {
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
@@ -1638,13 +1638,15 @@ function processClass (el, meta) {
     const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
-    addAttrs(el, [{
+    const attr = {
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`,
-      staticClassExp,
-      dynamicClassExp
-    }])
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+    }
+    if (options.runtimeCompile) {
+      dynamic.processClass(attr, staticClassExp, dynamicClassExp)
+    }
+    addAttrs(el, [attr])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
     addAttrs(el, [{
@@ -1665,7 +1667,7 @@ function processClass (el, meta) {
   }
 }
 
-function processStyle (el, meta) {
+function processStyle (el, options, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
@@ -1674,12 +1676,14 @@ function processStyle (el, meta) {
   if (dynamicStyle) {
     const staticStyleExp = parseMustacheWithContext(staticStyle).result
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
-    addAttrs(el, [{
+    const attr = {
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`,
-      staticStyleExp,
-      dynamicStyleExp
-    }])
+      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+    }
+    if (options.runtimeCompile) {
+      dynamic.processStyle(attr, staticStyleExp, dynamicStyleExp)
+    }
+    addAttrs(el, [attr])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
     addAttrs(el, [{
@@ -1954,10 +1958,12 @@ function processShow (el, options, root) {
       const showExp = parseMustacheWithContext(show).result
       let oldStyle = getAndRemoveAttr(el, 'style').val
       oldStyle = oldStyle ? oldStyle + ';' : ''
-      addAttrs(el, [{
+      const attr = {
         name: 'style',
         value: `${oldStyle}{{${showExp}?'':'display:none;'}}`
-      }])
+      }
+      dynamic.processStyle(attr)
+      addAttrs(el, [attr])
     }
   }
 }
@@ -2151,8 +2157,8 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
-  processClass(el, meta)
-  processStyle(el, meta)
+  processClass(el, options, meta)
+  processStyle(el, options, meta)
   processBindEvent(el, options)
 
   if (!pass) {
@@ -2161,12 +2167,6 @@ function processElement (el, root, options, meta) {
   }
 
   processAttrs(el, options)
-
-  if (options.runtimeCompile) {
-    dynamic.processFor(el, config[mode])
-    dynamic.processAttrsMap(el, config[mode])
-    dynamic.processText(el, config[mode])
-  }
 }
 
 function closeElement (el, meta, options) {
@@ -2186,9 +2186,6 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
       if (options.runtimeCompile) {
-        dynamic.processFor(el, config[mode])
-        dynamic.processAttrsMap(el, config[mode])
-
         dynamic.postProcessIf(el.children[0], config[mode])
         dynamic.postProcessFor(el.children[0], config[mode])
         dynamic.postProcessDirectives(el.children[0], config[mode])
@@ -2199,15 +2196,18 @@ function closeElement (el, meta, options) {
       el = postProcessComponentIs(el)
     }
   }
-  postProcessFor(el)
-  postProcessIf(el)
 
+  // post process if, process for
   if (options.runtimeCompile) {
     dynamic.postProcessIf(el, config[mode])
     dynamic.postProcessFor(el, config[mode])
     dynamic.postProcessDirectives(el, config[mode])
     dynamic.postProcessAttrsMap(el, config[mode])
+    return
   }
+
+  postProcessFor(el)
+  postProcessIf(el)
 }
 
 // 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中

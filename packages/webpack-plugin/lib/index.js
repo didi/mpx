@@ -1238,7 +1238,8 @@ class MpxWebpackPlugin {
         const dynamicAssets = {}
         for (const packageName in mpx.runtimeInfo) {
           for (const resourcePath in mpx.runtimeInfo[packageName]) {
-            const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
+            try {
+              const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
             const value = mpx.changeHashNameForAstNode(template.templateAst, json)
             dynamicAssets[moduleId] = {
               template: JSON.parse(value),
@@ -1251,6 +1252,9 @@ class MpxWebpackPlugin {
               const jsonAsset = outputPath + '.json'
               const jsonContent = compilation.assets[jsonAsset].source()
               compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+            }
+            } catch (error) {
+
             }
           }
         }
