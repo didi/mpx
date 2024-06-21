@@ -2,7 +2,6 @@ import { hasOwn, isObject, error } from '@mpxjs/utils'
 import genVnodeTree from './vnode/render'
 import contextMap from './vnode/context'
 import { CREATED } from '../core/innerLifecycle'
-import mpx from '@mpxjs/core'
 
 function dynamicRefsMixin () {
   return {
@@ -71,6 +70,8 @@ function dynamicRenderHelperMixin () {
   }
 }
 
-mpx.injectMixins([dynamicRefsMixin(), dynamicSlotMixin(), dynamicRenderHelperMixin()], {
-  types: ['component']
-})
+export {
+  dynamicRefsMixin,
+  dynamicSlotMixin,
+  dynamicRenderHelperMixin
+}
