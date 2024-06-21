@@ -2659,7 +2659,6 @@ function processDynamicClass (el, meta) {
     })
     const attr = {
       name: targetType,
-      dynamic: true,
       staticClassExp,
       dynamicClassExp
     }
@@ -2683,7 +2682,6 @@ function processDynamicStyle (el, meta) {
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     const attr = {
       name: targetType,
-      dynamic: true,
       staticStyleExp,
       dynamicStyleExp
     }
@@ -2714,12 +2712,11 @@ function processDynamicWxs (vnode, config) {
 }
 
 function postProcessDynamicClass (attr) {
-  if (attr.dynamic) {
+  if (attr.dynamicClassExp || attr.staticClassExp) {
     const { staticClassExp, dynamicClassExp } = attr
     attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
     delete attr.staticClassExp
     delete attr.dynamicClassExp
-    delete attr.dynamic
   } else {
     const exps = getAttrExps(attr)
     if (exps) {
@@ -2729,7 +2726,7 @@ function postProcessDynamicClass (attr) {
 }
 
 function postProcessDynamicStyle (attr) {
-  if (attr.dynamic) {
+  if (attr.dynamicStyleExp || attr.staticStyleExp) {
     const { staticStyleExp, dynamicStyleExp } = attr
     attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
     delete attr.staticStyleExp
