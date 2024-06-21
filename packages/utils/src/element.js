@@ -1,3 +1,5 @@
+import { hasOwn } from './object'
+
 function parseSelector (selector) {
   const groups = selector.split(',')
   return groups.map((item) => {
@@ -50,7 +52,23 @@ function walkChildren (vm, selectorGroups, context, result, all) {
   }
 }
 
+const datasetReg = /^data-(.+)$/
+
+function collectDataset (props, needParse = false) {
+  const dataset = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const matched = datasetReg.exec(key)
+      if (matched) {
+        dataset[matched[1]] = needParse ? JSON.parse(props[key]) : props[key]
+      }
+    }
+  }
+  return dataset
+}
+
 export {
+  collectDataset,
   walkChildren,
   parseSelector
 }

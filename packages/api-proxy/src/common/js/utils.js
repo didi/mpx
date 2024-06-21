@@ -95,6 +95,16 @@ function makeMap (arr) {
   }, {})
 }
 
+function parseDataset (dataset) {
+  const parsed = {}
+  for (const key in dataset) {
+    if (hasOwn(dataset, key)) {
+      parsed[key] = JSON.parse(dataset[key])
+    }
+  }
+  return parsed
+}
+
 const isBrowser = typeof window !== 'undefined'
 
 function throwSSRWarning (info) {
@@ -115,5 +125,6 @@ export {
   isBrowser,
   hasOwn,
   throwSSRWarning,
-  ENV_OBJ
+  ENV_OBJ,
+  parseDataset
 }
