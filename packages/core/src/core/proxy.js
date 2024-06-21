@@ -584,8 +584,18 @@ export default class MpxProxy {
         this.updatePreRender()
       }
       if (dynamicTarget || __getAst) {
-        const ast = getAst(__getAst, moduleId)
-        return _r(false, _g(ast, moduleId))
+        try {
+          const ast = getAst(__getAst, moduleId)
+          return _r(false, _g(ast, moduleId))
+        } catch (e) {
+          e.errType = 'mpx-dynamic-render'
+          e.errmsg = e.message
+          if (!__mpx_dynamic_runtime__) {
+            return error('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.', this.options.mpxFileResource, e)
+          } else {
+            return error('Dynamic rendering error', this.options.mpxFileResource, e)
+          }
+        }
       }
       if (this.target.__injectedRender) {
         try {
