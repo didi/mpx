@@ -2150,7 +2150,7 @@ function processElement (el, root, options, meta) {
 
 function closeElement (el, meta, options) {
   postProcessAtMode(el)
-  postProcessRuntime(el, options, meta)
+  collectDynamicInfo(el, options, meta)
 
   if (mode === 'web') {
     postProcessWxs(el, meta)
@@ -2164,7 +2164,7 @@ function closeElement (el, meta, options) {
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
-      postProcessRuntime(el, options, meta)
+      collectDynamicInfo(el, options, meta)
     } else {
       el = postProcessComponentIs(el)
     }
@@ -2180,7 +2180,7 @@ function closeElement (el, meta, options) {
 }
 
 // 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中
-function postProcessRuntime (el, options, meta) {
+function collectDynamicInfo (el, options, meta) {
   setBaseWxml(el, { mode, isComponentNode, options }, meta)
 }
 
