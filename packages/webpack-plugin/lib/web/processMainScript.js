@@ -2,7 +2,7 @@
 const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const eventPath = normalize.lib('runtime/components/web/event')
+
 const {
   buildComponentsMap,
   buildPagesMap,
@@ -65,8 +65,6 @@ module.exports = function (script, {
     isMain: true,
     globalTabBar
   })
-
-  output += `\n  require(${stringifyRequest(loaderContext, eventPath)})\n`
 
   output += `\n  var App = require(${stringifyRequest(loaderContext, addQuery(resource, { isApp: true }))}).default\n`
 

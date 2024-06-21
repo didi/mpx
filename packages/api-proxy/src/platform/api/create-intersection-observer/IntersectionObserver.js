@@ -1,4 +1,5 @@
 import { nextTick } from '../next-tick'
+import { parseDataset } from '../../../common/js'
 
 let isInit = true
 
@@ -27,14 +28,16 @@ class WebIntersectionObserver {
         if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (this._minThreshold <= entry.intersectionRatio)))) {
           Object.defineProperties(entry, {
             id: {
-              value: entry.target.getAttribute('id') || '',
-              writable: false,
+              get () {
+                return entry.target.id || ''
+              },
               enumerable: true,
               configurable: true
             },
             dataset: {
-              value: entry.target.dataset || {},
-              writable: false,
+              get () {
+                return parseDataset(entry.target.dataset)
+              },
               enumerable: true,
               configurable: true
             },

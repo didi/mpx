@@ -79,6 +79,7 @@ function warn (msg) {
 function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
+
 function envError (method) {
   return () => {
     console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
@@ -93,6 +94,20 @@ function makeMap (arr) {
     obj[item] = true
     return obj
   }, {})
+}
+
+function parseDataset (dataset) {
+  const parsed = {}
+  for (const key in dataset) {
+    if (hasOwn(dataset, key)) {
+      try {
+        parsed[key] = JSON.parse(dataset[key])
+      } catch (e) {
+        parsed[key] = dataset[key]
+      }
+    }
+  }
+  return parsed
 }
 
 const isBrowser = typeof window !== 'undefined'
@@ -115,5 +130,6 @@ export {
   isBrowser,
   hasOwn,
   throwSSRWarning,
-  ENV_OBJ
+  ENV_OBJ,
+  parseDataset
 }

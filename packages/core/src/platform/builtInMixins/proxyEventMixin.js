@@ -1,4 +1,4 @@
-import { setByPath, error, hasOwn, dash2hump } from '@mpxjs/utils'
+import { setByPath, error, dash2hump, collectDataset } from '@mpxjs/utils'
 import Mpx from '../../index'
 import contextMap from '../../dynamic/vnode/context'
 
