@@ -34,7 +34,8 @@ const compiler = {
   findPrevNode,
   removeNode,
   replaceNode,
-  createASTElement
+  createASTElement,
+  popForScopes
 }
 
 const dynamic = createDynamic(compiler)
@@ -2184,10 +2185,7 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
       if (options.runtimeCompile) {
-        dynamic.postProcessIf(el.children[0], config[mode])
-        dynamic.postProcessFor(el.children[0], config[mode])
-        dynamic.postProcessDirectives(el.children[0], config[mode])
-        dynamic.postProcessAttrsMap(el.children[0], config[mode])
+        dynamic.postProcess(el.children[0], config[mode])
       }
       postProcessRuntime(el, options, meta)
     } else {
@@ -2197,10 +2195,7 @@ function closeElement (el, meta, options) {
 
   // post process if, process for
   if (options.runtimeCompile) {
-    dynamic.postProcessIf(el, config[mode])
-    dynamic.postProcessFor(el, config[mode])
-    dynamic.postProcessDirectives(el, config[mode])
-    dynamic.postProcessAttrsMap(el, config[mode])
+    dynamic.postProcess(el, config[mode])
     return
   }
 

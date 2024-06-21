@@ -106,6 +106,7 @@ module.exports.createDynamic = function createDynamic (compiler) {
   }
 
   function postProcessAttrsMap (vnode, config) {
+    const directives = Object.values(config.directive)
     if (vnode.attrsList && vnode.attrsList.length) {
       // 后序遍历，主要为了做剔除的操作
       for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
@@ -126,18 +127,10 @@ module.exports.createDynamic = function createDynamic (compiler) {
         if (attr.__exps) {
           delete attr.value
         }
-      }
-    }
-  }
-
-  function postProcessDirectives (vnode, config) {
-    const directives = Object.values(config.directive)
-    if (vnode.attrsMap) {
-      Object.keys(vnode.attrsMap).forEach(item => {
-        if (directives.includes(item)) {
-          compiler.getAndRemoveAttr(vnode, item)
+        if (directives.includes(attr.name)) {
+          compiler.getAndRemoveAttr(vnode, attr.name)
         }
-      })
+      }
     }
   }
 
@@ -177,7 +170,14 @@ module.exports.createDynamic = function createDynamic (compiler) {
       vnode.for.__exps = parseExp(vnode.for.exp)
       delete vnode.for.raw
       delete vnode.for.exp
+      compiler.popForScopes()
     }
+  }
+
+  function postProcess (el, config) {
+    postProcessIf(el, config)
+    postProcessFor(el, config)
+    postProcessAttrsMap(el, config)
   }
 
   return {
@@ -186,9 +186,9 @@ module.exports.createDynamic = function createDynamic (compiler) {
     processText,
     processWxs,
     postProcessIf,
-    postProcessDirectives,
     postProcessAttrsMap,
-    postProcessFor
+    postProcessFor,
+    postProcess
   }
 }
 
