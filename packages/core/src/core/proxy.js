@@ -584,6 +584,9 @@ export default class MpxProxy {
         this.updatePreRender()
       }
       if (dynamicTarget || __getAst) {
+        if (!__mpx_dynamic_runtime__) {
+          error('MpxWebpackPlugin supports dynamic render only when dynamicRuntime is set to true')
+        }
         const ast = getAst(__getAst, moduleId)
         return _r(false, _g(ast, moduleId))
       }
