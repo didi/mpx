@@ -1618,12 +1618,11 @@ function processClass (el, meta) {
     const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
-    const attr = {
+    addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
       value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
-    }
-    addAttrs(el, [attr])
+    }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
     addAttrs(el, [{
@@ -1653,11 +1652,10 @@ function processStyle (el, meta) {
   if (dynamicStyle) {
     const staticStyleExp = parseMustacheWithContext(staticStyle).result
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
-    const attr = {
+    addAttrs(el, [{
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
-    }
-    addAttrs(el, [attr])
+    }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
     addAttrs(el, [{
