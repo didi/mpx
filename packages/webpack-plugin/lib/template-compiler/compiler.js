@@ -2667,7 +2667,6 @@ function processDynamicClass (el, meta) {
       dynamicClassExp
     }
     addAttrs(el, [attr])
-    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
     addAttrs(el, [{
       name: targetType,
@@ -2692,7 +2691,6 @@ function processDynamicStyle (el, meta) {
       dynamicStyleExp
     }
     addAttrs(el, [attr])
-    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
