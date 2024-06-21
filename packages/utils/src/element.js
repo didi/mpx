@@ -60,7 +60,15 @@ function collectDataset (props, needParse = false) {
     if (hasOwn(props, key)) {
       const matched = datasetReg.exec(key)
       if (matched) {
-        dataset[matched[1]] = needParse ? JSON.parse(props[key]) : props[key]
+        if (needParse) {
+          try {
+            dataset[matched[1]] = JSON.parse(props[key])
+          } catch (e) {
+            dataset[matched[1]] = props[key]
+          }
+        } else {
+          dataset[matched[1]] = props[key]
+        }
       }
     }
   }
