@@ -2,21 +2,6 @@ import { setByPath, error, dash2hump, collectDataset } from '@mpxjs/utils'
 import Mpx from '../../index'
 import contextMap from '../../dynamic/vnode/context'
 
-const datasetReg = /^data-(.+)$/
-
-function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
-}
-
 function logCallbackNotFound (context, callbackName) {
   const location = context.__mpxProxy && context.__mpxProxy.options.mpxFileResource
   error(`Instance property [${callbackName}] is not function, please check.`, location)
