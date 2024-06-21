@@ -5,8 +5,8 @@ const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
 const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
-const simplifyAstTemplate = require('./simplify-template')
 const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
+const { stringify } = require('./dynamic')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -86,7 +86,7 @@ module.exports = function (raw) {
     }
   }
 
-  let result = compiler.serialize(ast)
+  let result = runtimeCompile ? '' : compiler.serialize(ast)
 
   if (isNative) {
     return result
@@ -181,22 +181,14 @@ global.currentInject.getRefsData = function () {
     // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
-    let simpleAst = ''
-    try {
-      simpleAst = simplifyAstTemplate(ast, mode)
-    } catch (e) {
-      error(`simplify the runtime component ast node fail, please check!\n Error Detail: ${e.stack}`)
-    }
-
     const templateInfo = {
-      templateAst: JSON.stringify(simpleAst),
+      templateAst: stringify(ast),
       ...meta.runtimeInfo
     }
 
     // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
     this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'template', info: templateInfo }))
     // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
-    return ''
   }
 
   return result
