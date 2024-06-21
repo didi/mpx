@@ -125,6 +125,9 @@ class MpxWebpackPlugin {
     if (options.mode === 'web' && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
+    if (options.optimizeRenderRules && !options.dynamicRuntime) {
+      errors.push('MpxWebpackPlugin supports dynamic render only when dynamicRuntime is set to true')
+    }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
