@@ -2129,8 +2129,13 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
-  options.runtimeCompile ? processDynamicClass(el, meta) : processClass(el, meta)
-  options.runtimeCompile ? processDynamicStyle(el, meta) : processStyle(el, meta)
+  if (options.runtimeCompile) {
+    processDynamicClass(el, meta)
+    processDynamicStyle(el, meta)
+  } else {
+    processClass(el, meta)
+    processStyle(el, meta)
+  }
   processBindEvent(el, options)
 
   if (!pass) {
@@ -2158,7 +2163,7 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
       if (options.runtimeCompile) {
-        postDynamicProcess(el.children[0], config[mode])
+        postProcessDynamic(el.children[0], config[mode])
       }
       postProcessRuntime(el, options, meta)
     } else {
@@ -2168,7 +2173,7 @@ function closeElement (el, meta, options) {
 
   // post process if, process for
   if (options.runtimeCompile) {
-    postDynamicProcess(el, config[mode])
+    postProcessDynamic(el, config[mode])
     return
   }
 
@@ -2713,7 +2718,7 @@ function processDynamicWxs (vnode, config) {
   return null
 }
 
-function postDynamicProcessClass (attr) {
+function postProcessDynamicClass (attr) {
   if (attr.dynamic) {
     const { staticClassExp, dynamicClassExp } = attr
     attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
@@ -2728,7 +2733,7 @@ function postDynamicProcessClass (attr) {
   }
 }
 
-function postDynamicProcessStyle (attr) {
+function postProcessDynamicStyle (attr) {
   if (attr.dynamic) {
     const { staticStyleExp, dynamicStyleExp } = attr
     attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
@@ -2743,16 +2748,16 @@ function postDynamicProcessStyle (attr) {
   }
 }
 
-function postDynamicProcessAttrsMap (vnode, config) {
+function postProcessDynamicAttrsMap (vnode, config) {
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {
     // 后序遍历，主要为了做剔除的操作
     for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
       const attr = vnode.attrsList[i]
       if (attr.name === 'class') {
-        postDynamicProcessClass(attr)
+        postProcessDynamicClass(attr)
       } else if (attr.name === 'style') {
-        postDynamicProcessStyle(attr)
+        postProcessDynamicStyle(attr)
       } else if (config.event.parseEvent(attr.name)) {
         // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
         vnode.attrsList.splice(i, 1)
@@ -2772,7 +2777,7 @@ function postDynamicProcessAttrsMap (vnode, config) {
   }
 }
 
-function postDynamicProcessIf (vnode, config) {
+function postProcessDynamicIf (vnode, config) {
   delete vnode.ifProcessed
   if (vnode.if) {
     const parsedExp = vnode.if.exp
@@ -2803,7 +2808,7 @@ function postDynamicProcessIf (vnode, config) {
   }
 }
 
-function postDynamicProcessFor (vnode) {
+function postProcessDynamicFor (vnode) {
   if (vnode.for) {
     vnode.for.__exps = parseExp(vnode.for.exp)
     delete vnode.for.raw
@@ -2812,10 +2817,10 @@ function postDynamicProcessFor (vnode) {
   }
 }
 
-function postDynamicProcess (el, config) {
-  postDynamicProcessIf(el, config)
-  postDynamicProcessFor(el, config)
-  postDynamicProcessAttrsMap(el, config)
+function postProcessDynamic (el, config) {
+  postProcessDynamicIf(el, config)
+  postProcessDynamicFor(el, config)
+  postProcessDynamicAttrsMap(el, config)
 }
 
 module.exports = {
