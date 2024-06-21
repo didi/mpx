@@ -2731,7 +2731,6 @@ function postProcessDynamicStyle (attr) {
     attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
     delete attr.staticStyleExp
     delete attr.dynamicStyleExp
-    delete attr.dynamic
   } else {
     const exps = getAttrExps(attr)
     if (exps) {
