@@ -194,7 +194,7 @@ global.currentInject.getRefsData = function () {
     }
 
     // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
-    this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { templateInfo }))
+    this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'template', info: templateInfo }))
     // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
     return ''
   }

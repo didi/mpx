@@ -1,6 +1,5 @@
-import { CREATED, BEFORECREATE, BEFOREUPDATE } from '../../core/innerLifecycle'
+import { BEFORECREATE, BEFOREUPDATE } from '../../core/innerLifecycle'
 import { noop, getEnvObj } from '@mpxjs/utils'
-import contextMap from '../../dynamic/vnode/context'
 
 const envObj = getEnvObj()
 
@@ -50,12 +49,6 @@ export default function getRefsMixin () {
       this.__refCacheMap.clear()
       this.__asyncRefCacheMap.clear()
     },
-    [CREATED] () {
-      // 处理ref场景，如果是在容器组件的上下文渲染
-      if (this.mpxCustomElement) {
-        this.__getRuntimeRefs()
-      }
-    },
     methods: {
       __getRefs () {
         if (this.__getRefsData) {
@@ -82,29 +75,6 @@ export default function getRefsMixin () {
             })
           } else {
             return ref.all ? this.selectAllComponents(selector) : this.selectComponent(selector)
-          }
-        }
-      },
-      __getRuntimeRefs () {
-        const vnodeContext = contextMap.get(this.uid)
-        if (vnodeContext) {
-          const refsArr = vnodeContext.__getRefsData && vnodeContext.__getRefsData()
-          if (Array.isArray(refsArr)) {
-            refsArr.forEach((ref) => {
-              const all = ref.all
-              if (!vnodeContext.$refs[ref.key] || (all && !vnodeContext.$refs[ref.key].length)) {
-                const refNode = this.__getRefNode(ref)
-                if ((all && refNode.length) || refNode) {
-                  Object.defineProperty(vnodeContext.$refs, ref.key, {
-                    enumerable: true,
-                    configurable: true,
-                    get: () => {
-                      return refNode
-                    }
-                  })
-                }
-              }
-            })
           }
         }
       }

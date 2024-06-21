@@ -245,10 +245,10 @@ module.exports = function (content) {
             const hashName = 'm' + mpx.pathHash(resourcePath)
             components[hashName] = entry
             delete components[name]
-            dependencyComponentsMap[resourcePath] = {
-              name,
+            dependencyComponentsMap[name] = {
               hashName,
-              query: queryObj
+              resourcePath,
+              isDynamic: queryObj.isDynamic
             }
           }
           if (tarRoot) {
@@ -281,7 +281,7 @@ module.exports = function (content) {
           components.element = mpxCustomElementPath
           components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
 
-          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { jsonInfo: dependencyComponentsMap }))
+          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
         }
         if (queryObj.mpxCustomElement) {
           components.element = mpxCustomElementPath

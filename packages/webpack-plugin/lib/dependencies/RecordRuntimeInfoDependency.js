@@ -2,13 +2,13 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordRuntimeInfoDependency extends NullDependency {
-  constructor (packageName, resourcePath, { templateInfo, jsonInfo, styleInfo } = {}) {
+  constructor (packageName, resourcePath, { type, info, index } = {}) {
     super()
     this.packageName = packageName
     this.resourcePath = resourcePath
-    this.templateInfo = templateInfo
-    this.jsonInfo = jsonInfo
-    this.styleInfo = styleInfo
+    this.blockType = type
+    this.info = info
+    this.index = index
   }
 
   get type () {
@@ -18,77 +18,31 @@ class RecordRuntimeInfoDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
 
-    mpx.runtimeInfo[this.packageName] = mpx.runtimeInfo[this.packageName] || {}
-    mpx.runtimeInfo[this.packageName][this.resourcePath] = mpx.runtimeInfo[this.packageName][this.resourcePath] || {
+    const runtimeInfoPackage = mpx.runtimeInfo[this.packageName] = mpx.runtimeInfo[this.packageName] || {}
+    const componentInfo = runtimeInfoPackage[this.resourcePath] = runtimeInfoPackage[this.resourcePath] || {
       template: {},
       json: {},
       style: [],
       moduleId: '_' + mpx.pathHash(this.resourcePath)
     }
 
-    if (this.templateInfo) {
-      this.collectTemplateInfo(mpx)
-    } else if (this.jsonInfo) {
-      this.collectJsonInfo(mpx)
-    } else if (this.styleInfo) {
-      this.collectStyleInfo(mpx)
+    const infoConfig = componentInfo[this.blockType]
+    if (this.blockType === 'style') { // 多 style block 的场景
+      infoConfig[this.index] = this.info
+    } else {
+      Object.assign(infoConfig, this.info)
     }
 
     return callback()
-  }
-
-  collectTemplateInfo (mpx) {
-    const templateInfo = this.getInfoConfig(mpx, 'template')
-
-    Object.assign(templateInfo, {
-      baseComponents: {},
-      customComponents: {},
-      dynamicSlotDependencies: this.templateInfo.dynamicSlotDependencies,
-      templateAst: this.templateInfo.templateAst
-    })
-
-    const componentTypes = ['baseComponents', 'customComponents']
-    componentTypes.forEach(type => {
-      const attrsMap = templateInfo[type]
-      for (const tag in this.templateInfo[type]) {
-        if (!attrsMap[tag]) {
-          attrsMap[tag] = {}
-        }
-        Object.assign(attrsMap[tag], this.templateInfo[type][tag])
-      }
-    })
-  }
-
-  collectJsonInfo (mpx) {
-    const jsonInfo = this.getInfoConfig(mpx, 'json')
-    for (const resourcePath in this.jsonInfo) {
-      const info = this.jsonInfo[resourcePath]
-      jsonInfo[info.name] = {
-        hashName: info.hashName,
-        resourcePath,
-        isDynamic: info.query.isDynamic
-      }
-    }
-  }
-
-  collectStyleInfo (mpx) {
-    const styleInfo = this.getInfoConfig(mpx, 'style')
-    if (this.styleInfo.cssList && this.styleInfo.cssList.length > 0) {
-      styleInfo.push(...this.styleInfo.cssList)
-    }
-  }
-
-  getInfoConfig (mpx, type) {
-    return mpx.runtimeInfo[this.packageName][this.resourcePath][type]
   }
 
   serialize (context) {
     const { write } = context
     write(this.packageName)
     write(this.resourcePath)
-    write(this.templateInfo)
-    write(this.jsonInfo)
-    write(this.styleInfo)
+    write(this.blockType)
+    write(this.info)
+    write(this.index)
     super.serialize(context)
   }
 
@@ -96,14 +50,14 @@ class RecordRuntimeInfoDependency extends NullDependency {
     const { read } = context
     this.packageName = read()
     this.resourcePath = read()
-    this.templateInfo = read()
-    this.jsonInfo = read()
-    this.styleInfo = read()
+    this.blockType = read()
+    this.info = read()
+    this.index = read()
     super.deserialize(context)
   }
 }
 
-RecordRuntimeInfoDependency.Template = class RecordModuleTemplateDependencyTemplate {
+RecordRuntimeInfoDependency.Template = class RecordRuntimeInfoDependencyTemplate {
   apply () {}
 }
 

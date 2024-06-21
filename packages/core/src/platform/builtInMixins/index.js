@@ -10,7 +10,7 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
-import { dynamicRenderMixin } from '../../dynamic/dynamicRenderMixin'
+import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '../../dynamic/dynamicRenderMixin'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins = []
@@ -39,10 +39,16 @@ export default function getBuiltInMixins (options, type) {
     if (!options.__nativeRender__) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
-        __mpx_dynamic_runtime__ ? dynamicRenderMixin() : false,
         showMixin(type),
         i18nMixin()
       ])
+      if (__mpx_dynamic_runtime__) {
+        bulitInMixins = bulitInMixins.concat([
+          dynamicRenderHelperMixin(),
+          dynamicSlotMixin(),
+          dynamicRefsMixin()
+        ])
+      }
     }
   }
   return bulitInMixins.filter(item => item)
