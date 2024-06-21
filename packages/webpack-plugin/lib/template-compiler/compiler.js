@@ -13,32 +13,11 @@ const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
-const { createDynamic } = require('./dynamic')
+const { parseExp } = require('./parse-exps')
 
 const no = function () {
   return false
 }
-
-const compiler = {
-  parseComponent,
-  parse,
-  serialize,
-  genNode,
-  makeAttrsMap,
-  stringifyAttr,
-  parseMustache,
-  parseMustacheWithContext,
-  stringifyWithResolveComputed,
-  addAttrs,
-  getAndRemoveAttr,
-  findPrevNode,
-  removeNode,
-  replaceNode,
-  createASTElement,
-  popForScopes
-}
-
-const dynamic = createDynamic(compiler)
 
 /*!
  * HTML Parser By John Resig (ejohn.org)
@@ -796,7 +775,7 @@ function parse (template, options) {
   injectNodes.forEach((node) => {
     addChild(root, node, true)
     if (options.runtimeCompile) {
-      dynamic.processWxs(node, config[mode])
+      processDynamicWxs(node, config[mode])
     }
   })
 
@@ -1593,7 +1572,7 @@ function processText (el, options) {
   }
   el.text = parsed.val
   if (options.runtimeCompile) {
-    dynamic.processText(el, parsed, config[mode])
+    processDynamicText(el, parsed, config[mode])
   }
 }
 
@@ -1627,7 +1606,7 @@ function injectWxs (meta, module, src) {
   injectNodes.push(wxsNode)
 }
 
-function processClass (el, options, meta) {
+function processClass (el, meta) {
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
@@ -1643,9 +1622,6 @@ function processClass (el, options, meta) {
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
       value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
-    }
-    if (options.runtimeCompile) {
-      dynamic.processClass(attr, staticClassExp, dynamicClassExp)
     }
     addAttrs(el, [attr])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
@@ -1668,7 +1644,7 @@ function processClass (el, options, meta) {
   }
 }
 
-function processStyle (el, options, meta) {
+function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
@@ -1680,9 +1656,6 @@ function processStyle (el, options, meta) {
     const attr = {
       name: targetType,
       value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
-    }
-    if (options.runtimeCompile) {
-      dynamic.processStyle(attr, staticStyleExp, dynamicStyleExp)
     }
     addAttrs(el, [attr])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
@@ -2156,8 +2129,8 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
-  processClass(el, options, meta)
-  processStyle(el, options, meta)
+  options.runtimeCompile ? processDynamicClass(el, meta) : processClass(el, meta)
+  options.runtimeCompile ? processDynamicStyle(el, meta) : processStyle(el, meta)
   processBindEvent(el, options)
 
   if (!pass) {
@@ -2185,7 +2158,7 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
       if (options.runtimeCompile) {
-        dynamic.postProcess(el.children[0], config[mode])
+        postDynamicProcess(el.children[0], config[mode])
       }
       postProcessRuntime(el, options, meta)
     } else {
@@ -2195,7 +2168,7 @@ function closeElement (el, meta, options) {
 
   // post process if, process for
   if (options.runtimeCompile) {
-    dynamic.postProcess(el, config[mode])
+    postDynamicProcess(el, config[mode])
     return
   }
 
@@ -2622,4 +2595,243 @@ function parseOptionChain (str) {
   return str
 }
 
-module.exports = compiler
+function addDynamicIfCondition (el, condition) {
+  if (!el.ifConditions) {
+    el.ifConditions = []
+  }
+  el.ifConditions.push(condition)
+}
+
+function findDynamicPrevIfNode (el) {
+  const prevNode = findPrevNode(el)
+  if (!prevNode) {
+    return null
+  }
+
+  if (prevNode._tempIf) {
+    return findDynamicPrevIfNode(prevNode)
+  } else if (prevNode.if) {
+    return prevNode
+  } else {
+    return null
+  }
+}
+
+function getAttrExps (attr) {
+  // 属性为单值的写法 <scroll-view enhenced></scroll-view>
+  // 默认置为 true
+  if (attr.value == null) {
+    attr.value = '{{ true }}'
+  }
+  const parsed = parseMustache(attr.value)
+  if (parsed.hasBinding && !attr.__exps) {
+    return parseExp(parsed.result)
+  }
+}
+
+function processDynamicIfConditions (el) {
+  const prev = findDynamicPrevIfNode(el)
+  if (prev) {
+    addDynamicIfCondition(prev, {
+      ifExp: !!el.elseif,
+      block: el,
+      __exps: el.elseif ? parseExp(el.elseif.exp) : ''
+    })
+
+    const tempNode = createASTElement('block', [])
+    tempNode._tempIf = true // 创建一个临时的节点，后续遍历会删除
+    replaceNode(el, tempNode)
+  }
+}
+
+function processDynamicClass (el, meta) {
+  const type = 'class'
+  const targetType = type
+  const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
+  let staticClass = getAndRemoveAttr(el, type).val || ''
+  staticClass = staticClass.replace(/\s+/g, ' ')
+  if (dynamicClass) {
+    const staticClassExp = parseMustacheWithContext(staticClass).result
+    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
+      error: error$1
+    })
+    const attr = {
+      name: targetType,
+      dynamic: true,
+      staticClassExp,
+      dynamicClassExp
+    }
+    addAttrs(el, [attr])
+    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+  } else if (staticClass) {
+    addAttrs(el, [{
+      name: targetType,
+      value: staticClass
+    }])
+  }
+}
+
+function processDynamicStyle (el, meta) {
+  const type = 'style'
+  const targetType = type
+  const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
+  let staticStyle = getAndRemoveAttr(el, type).val || ''
+  staticStyle = staticStyle.replace(/\s+/g, ' ')
+  if (dynamicStyle) {
+    const staticStyleExp = parseMustacheWithContext(staticStyle).result
+    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
+    const attr = {
+      name: targetType,
+      dynamic: true,
+      staticStyleExp,
+      dynamicStyleExp
+    }
+    addAttrs(el, [attr])
+    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+  } else if (staticStyle) {
+    addAttrs(el, [{
+      name: targetType,
+      value: staticStyle
+    }])
+  }
+}
+
+function processDynamicText (vnode, parsed, config) {
+  if (parsed.hasBinding) {
+    vnode.__exps = parseExp(parsed.result)
+    delete vnode.text
+  }
+  delete vnode.exps
+}
+
+function processDynamicWxs (vnode, config) {
+  if (vnode.tag === config.wxs.tag) {
+    const tempNode = createASTElement('block', [])
+    replaceNode(vnode, tempNode)
+    return tempNode
+  }
+  return null
+}
+
+function postDynamicProcessClass (attr) {
+  if (attr.dynamic) {
+    const { staticClassExp, dynamicClassExp } = attr
+    attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
+    delete attr.staticClassExp
+    delete attr.dynamicClassExp
+    delete attr.dynamic
+  } else {
+    const exps = getAttrExps(attr)
+    if (exps) {
+      attr.__exps = [exps]
+    }
+  }
+}
+
+function postDynamicProcessStyle (attr) {
+  if (attr.dynamic) {
+    const { staticStyleExp, dynamicStyleExp } = attr
+    attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
+    delete attr.staticStyleExp
+    delete attr.dynamicStyleExp
+    delete attr.dynamic
+  } else {
+    const exps = getAttrExps(attr)
+    if (exps) {
+      attr.__exps = [exps]
+    }
+  }
+}
+
+function postDynamicProcessAttrsMap (vnode, config) {
+  const directives = Object.values(config.directive)
+  if (vnode.attrsList && vnode.attrsList.length) {
+    // 后序遍历，主要为了做剔除的操作
+    for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
+      const attr = vnode.attrsList[i]
+      if (attr.name === 'class') {
+        postDynamicProcessClass(attr)
+      } else if (attr.name === 'style') {
+        postDynamicProcessStyle(attr)
+      } else if (config.event.parseEvent(attr.name)) {
+        // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
+        vnode.attrsList.splice(i, 1)
+      } else {
+        const exps = getAttrExps(attr)
+        if (exps) {
+          attr.__exps = exps
+        }
+      }
+      if (attr.__exps) {
+        delete attr.value
+      }
+      if (directives.includes(attr.name)) {
+        getAndRemoveAttr(vnode, attr.name)
+      }
+    }
+  }
+}
+
+function postDynamicProcessIf (vnode, config) {
+  delete vnode.ifProcessed
+  if (vnode.if) {
+    const parsedExp = vnode.if.exp
+    addDynamicIfCondition(vnode, {
+      ifExp: true,
+      block: 'self',
+      __exps: parseExp(parsedExp)
+    })
+    getAndRemoveAttr(vnode, config.directive.if)
+    vnode.if = true
+  } else if (vnode.elseif || vnode.else) {
+    const directive = vnode.elseif
+      ? config.directive.elseif
+      : config.directive.else
+    getAndRemoveAttr(vnode, directive)
+    processDynamicIfConditions(vnode)
+    delete vnode.elseif
+    delete vnode.else
+  }
+  // 删除遍历过程中 if 替换的临时节点以及明确不会被渲染出来的 if 节点（即 {{ false }}）
+  const children = vnode.children
+  if (children && children.length) {
+    for (let i = children.length - 1; i >= 0; i--) {
+      if (children[i]._tempIf || children[i]._if === false) {
+        children.splice(i, 1)
+      }
+    }
+  }
+}
+
+function postDynamicProcessFor (vnode) {
+  if (vnode.for) {
+    vnode.for.__exps = parseExp(vnode.for.exp)
+    delete vnode.for.raw
+    delete vnode.for.exp
+    popForScopes()
+  }
+}
+
+function postDynamicProcess (el, config) {
+  postDynamicProcessIf(el, config)
+  postDynamicProcessFor(el, config)
+  postDynamicProcessAttrsMap(el, config)
+}
+
+module.exports = {
+  parseComponent,
+  parse,
+  serialize,
+  genNode,
+  makeAttrsMap,
+  stringifyAttr,
+  parseMustache,
+  parseMustacheWithContext,
+  stringifyWithResolveComputed,
+  addAttrs,
+  getAndRemoveAttr,
+  findPrevNode,
+  removeNode,
+  replaceNode,
+  createASTElement
+}
