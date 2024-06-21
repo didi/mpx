@@ -101,8 +101,9 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
-      setIsChecked(!isChecked)
-      _onChange && _onChange(evt, { value, checked: !isChecked })
+      const checked = !isChecked
+      setIsChecked(checked)
+      _onChange && _onChange(evt, { value, checked })
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
