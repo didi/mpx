@@ -1857,6 +1857,10 @@ function processAliAddComponentRootView (el, options) {
     el = postProcessComponentIs(el)
   }
 
+  if (options.runtimeCompile) {
+    postProcessDynamic(el, config[mode])
+  }
+
   replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
   return componentWrapView
@@ -2162,23 +2166,19 @@ function closeElement (el, meta, options) {
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
       el = processAliAddComponentRootView(el, options)
-      if (options.runtimeCompile) {
-        postProcessDynamic(el.children[0], config[mode])
-      }
       postProcessRuntime(el, options, meta)
     } else {
       el = postProcessComponentIs(el)
     }
   }
 
+  postProcessFor(el)
+  postProcessIf(el)
+
   // post process if, process for
   if (options.runtimeCompile) {
     postProcessDynamic(el, config[mode])
-    return
   }
-
-  postProcessFor(el)
-  postProcessIf(el)
 }
 
 // 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中
@@ -2206,10 +2206,9 @@ function cloneNode (el) {
 }
 
 function cloneAttrsList (attrsList) {
-  return attrsList.map(({ name, value }) => {
+  return attrsList.map((v) => {
     return {
-      name,
-      value
+      ...v
     }
   })
 }
@@ -2811,7 +2810,6 @@ function postProcessDynamicFor (vnode) {
     vnode.for.__exps = parseExp(vnode.for.exp)
     delete vnode.for.raw
     delete vnode.for.exp
-    popForScopes()
   }
 }
 
