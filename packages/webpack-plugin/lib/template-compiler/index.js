@@ -3,6 +3,7 @@ const bindThis = require('./bind-this')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
+const { generatorVariableNameBySource } = require('../utils/get-compress-key')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -73,6 +74,33 @@ module.exports = function (raw) {
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
   })
+
+  // 组件名压缩
+  if (this.mode === 'production' && mode !== 'web') {
+    function walkNode(root, callback) {
+      if (!root) return
+      callback(root)
+      if (Array.isArray(root.children) && root.children.length) {
+        for (const node of root.children) {
+          if (!node) continue
+          walkNode(node, callback)
+        }
+      }
+    }
+    // 记录所有原生组件（判断条件：usingComponents中不存在的组件）
+    const nativeTags = new Set()
+    walkNode(ast, (node) => {
+      if (node.tag && usingComponents.indexOf(node.tag) === -1) {
+        nativeTags.add(node.tag)
+      }
+    })
+    walkNode(ast, (node) => {
+      // 只有自定义组件才替换（判断条件：在usingComponents中的组件），并且新组件名不允许出现原生组件名
+      if (node.tag && usingComponents.indexOf(node.tag) !== -1) {
+        node.tag = generatorVariableNameBySource(node.tag, resourcePath + 'componentName', [...nativeTags])
+      }
+    })
+  }
 
   if (meta.wxsContentMap) {
     for (const module in meta.wxsContentMap) {

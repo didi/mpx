@@ -18,6 +18,7 @@ const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const { generatorVariableNameBySource } = require('../utils/get-compress-key')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -170,6 +171,32 @@ module.exports = function (content) {
     // component
     if (json.component !== true) {
       json.component = true
+    }
+  }
+
+  if (this.mode === 'production' && mode !== 'web') {
+    // placeholder 替换
+    if (json.componentPlaceholder) {
+      const newComponentPlaceholder = {}
+      for (const [name, value] of Object.entries(json.componentPlaceholder)) {
+        const newName = generatorVariableNameBySource(name, this.resourcePath + 'componentName')
+        newComponentPlaceholder[newName] = json.componentPlaceholder[name]
+        delete json.componentPlaceholder[name]
+        if (value in json.usingComponents) {
+          newComponentPlaceholder[newName] = generatorVariableNameBySource(value, this.resourcePath + 'componentName')
+        }
+      }
+      Object.assign(json.componentPlaceholder, newComponentPlaceholder)
+    }
+    // usingComponents 替换
+    if (json.usingComponents) {
+      const newUsingComponents = {}
+      for (const name of Object.keys(json.usingComponents)) {
+        const newName = generatorVariableNameBySource(name, this.resourcePath + 'componentName')
+        newUsingComponents[newName] = json.usingComponents[name]
+        delete json.usingComponents[name]
+      }
+      Object.assign(json.usingComponents, newUsingComponents)
     }
   }
 
