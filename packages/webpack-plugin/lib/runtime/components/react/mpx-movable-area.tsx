@@ -5,6 +5,7 @@
 import { View, LayoutChangeEvent } from 'react-native';
 import { JSX, useState, useEffect, forwardRef, ReactNode } from 'react';
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import { MovableAreaContext } from './context'
 
 interface MovableAreaProps {
   style?: Record<string, any>;
@@ -35,13 +36,15 @@ const MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaPr
   }
 
   return (
-    <View
-      ref={movableViewRef}
-      style={[{ height: areaHeight, width: areaWidth, overflow: 'hidden' }, style]}
-      onLayout={_onLayout}
-    >
-      {children}
+    <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>
+      <View
+        ref={movableViewRef}
+        style={[{ height: areaHeight, width: areaWidth, overflow: 'hidden' }, style]}
+        onLayout={_onLayout}
+      >
+        {children}
     </View>
+    </MovableAreaContext.Provider>
   );
 })
 
