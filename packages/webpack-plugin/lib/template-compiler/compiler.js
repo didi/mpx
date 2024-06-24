@@ -739,7 +739,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          processText(el, options)
+          options.runtimeCompile ? processTextDynamic(el) : processText(el)
         }
       }
     },
@@ -774,9 +774,6 @@ function parse (template, options) {
 
   injectNodes.forEach((node) => {
     addChild(root, node, true)
-    if (options.runtimeCompile) {
-      processDynamicWxs(node, config[mode])
-    }
   })
 
   rulesResultMap.forEach((val) => {
@@ -1562,7 +1559,7 @@ function postProcessIf (el) {
   }
 }
 
-function processText (el, options) {
+function processText (el) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -1571,9 +1568,6 @@ function processText (el, options) {
     addExp(el, parsed.result)
   }
   el.text = parsed.val
-  if (options.runtimeCompile) {
-    processDynamicText(el, parsed, config[mode])
-  }
 }
 
 // function injectComputed (el, meta, type, body) {
@@ -1589,7 +1583,7 @@ function processText (el, options) {
 //   }])
 // }
 
-function injectWxs (meta, module, src) {
+function injectWxs (meta, module, src, options) {
   if (addWxsModule(meta, module, src)) {
     return
   }
@@ -1603,6 +1597,9 @@ function injectWxs (meta, module, src) {
       value: src
     }
   ])
+  if (options && options.runtimeCompile) {
+    processWxsDynamic(wxsNode, config[mode])
+  }
   injectNodes.push(wxsNode)
 }
 
@@ -1856,6 +1853,7 @@ function processAliAddComponentRootView (el, options) {
   }
 
   if (options.runtimeCompile) {
+    componentWrapView.dynamicInfo = el.dynamicInfo
     postProcessDynamic(el, config[mode])
   }
 
@@ -2061,11 +2059,11 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (el, meta) {
+function processInjectWxs (el, meta, options) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
-      injectWxs(meta, injectWxsModuleName, injectWxsPath)
+      injectWxs(meta, injectWxsModuleName, injectWxsPath, options)
     })
   }
 }
@@ -2103,7 +2101,7 @@ function processElement (el, root, options, meta) {
 
   processMpxTagName(el)
 
-  processInjectWxs(el, meta)
+  processInjectWxs(el, meta, options)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 
@@ -2132,8 +2130,8 @@ function processElement (el, root, options, meta) {
   processFor(el)
   processRef(el, options, meta)
   if (options.runtimeCompile) {
-    processDynamicClass(el, meta)
-    processDynamicStyle(el, meta)
+    processClassDynamic(el, meta)
+    processStyleDynamic(el, meta)
   } else {
     processClass(el, meta)
     processStyle(el, meta)
@@ -2170,12 +2168,11 @@ function closeElement (el, meta, options) {
     }
   }
 
-  postProcessFor(el)
-  postProcessIf(el)
-
-  // post process if, process for
   if (options.runtimeCompile) {
     postProcessDynamic(el, config[mode])
+  } else {
+    postProcessFor(el)
+    postProcessIf(el)
   }
 }
 
@@ -2204,9 +2201,10 @@ function cloneNode (el) {
 }
 
 function cloneAttrsList (attrsList) {
-  return attrsList.map((v) => {
+  return attrsList.map(({ name, value }) => {
     return {
-      ...v
+      name,
+      value
     }
   })
 }
@@ -2597,21 +2595,21 @@ function parseOptionChain (str) {
   return str
 }
 
-function addDynamicIfCondition (el, condition) {
+function addIfConditionDynamic (el, condition) {
   if (!el.ifConditions) {
     el.ifConditions = []
   }
   el.ifConditions.push(condition)
 }
 
-function findDynamicPrevIfNode (el) {
+function findPrevIfNodeDynamic (el) {
   const prevNode = findPrevNode(el)
   if (!prevNode) {
     return null
   }
 
   if (prevNode._tempIf) {
-    return findDynamicPrevIfNode(prevNode)
+    return findPrevIfNodeDynamic(prevNode)
   } else if (prevNode.if) {
     return prevNode
   } else {
@@ -2631,10 +2629,10 @@ function getAttrExps (attr) {
   }
 }
 
-function processDynamicIfConditions (el) {
-  const prev = findDynamicPrevIfNode(el)
+function processIfConditionsDynamic (el) {
+  const prev = findPrevIfNodeDynamic(el)
   if (prev) {
-    addDynamicIfCondition(prev, {
+    addIfConditionDynamic(prev, {
       ifExp: !!el.elseif,
       block: el,
       __exps: el.elseif ? parseExp(el.elseif.exp) : ''
@@ -2646,21 +2644,20 @@ function processDynamicIfConditions (el) {
   }
 }
 
-function processDynamicClass (el, meta) {
+function processClassDynamic (el, meta) {
   const type = 'class'
   const targetType = type
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, type).val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
-    const staticClassExp = parseMustacheWithContext(staticClass).result
-    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
+    const dynamicInfo = el.dynamicInfo = el.dynamicInfo || {}
+    dynamicInfo.staticClassExp = parseMustacheWithContext(staticClass).result
+    dynamicInfo.dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
     const attr = {
-      name: targetType,
-      staticClassExp,
-      dynamicClassExp
+      name: targetType
     }
     addAttrs(el, [attr])
   } else if (staticClass) {
@@ -2671,19 +2668,18 @@ function processDynamicClass (el, meta) {
   }
 }
 
-function processDynamicStyle (el, meta) {
+function processStyleDynamic (el, meta) {
   const type = 'style'
   const targetType = type
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
-    const staticStyleExp = parseMustacheWithContext(staticStyle).result
-    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
+    const dynamicInfo = el.dynamicInfo = el.dynamicInfo || {}
+    dynamicInfo.staticStyleExp = parseMustacheWithContext(staticStyle).result
+    dynamicInfo.dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     const attr = {
-      name: targetType,
-      staticStyleExp,
-      dynamicStyleExp
+      name: targetType
     }
     addAttrs(el, [attr])
   } else if (staticStyle) {
@@ -2694,15 +2690,18 @@ function processDynamicStyle (el, meta) {
   }
 }
 
-function processDynamicText (vnode, parsed, config) {
+function processTextDynamic (vnode) {
+  if (vnode.type !== 3 || vnode.isComment) {
+    return
+  }
+  const parsed = parseMustacheWithContext(vnode.text)
   if (parsed.hasBinding) {
     vnode.__exps = parseExp(parsed.result)
     delete vnode.text
   }
-  delete vnode.exps
 }
 
-function processDynamicWxs (vnode, config) {
+function processWxsDynamic (vnode, config) {
   if (vnode.tag === config.wxs.tag) {
     const tempNode = createASTElement('block', [])
     replaceNode(vnode, tempNode)
@@ -2711,12 +2710,11 @@ function processDynamicWxs (vnode, config) {
   return null
 }
 
-function postProcessDynamicClass (attr) {
-  if (attr.dynamicClassExp || attr.staticClassExp) {
-    const { staticClassExp, dynamicClassExp } = attr
+function postProcessClassDynamic (vnode, attr) {
+  const dynamicInfo = vnode.dynamicInfo
+  if (dynamicInfo && (dynamicInfo.dynamicClassExp || dynamicInfo.staticClassExp)) {
+    const { staticClassExp, dynamicClassExp } = dynamicInfo
     attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
-    delete attr.staticClassExp
-    delete attr.dynamicClassExp
   } else {
     const exps = getAttrExps(attr)
     if (exps) {
@@ -2725,12 +2723,11 @@ function postProcessDynamicClass (attr) {
   }
 }
 
-function postProcessDynamicStyle (attr) {
-  if (attr.dynamicStyleExp || attr.staticStyleExp) {
-    const { staticStyleExp, dynamicStyleExp } = attr
+function postProcessStyleDynamic (vnode, attr) {
+  const dynamicInfo = vnode.dynamicInfo
+  if (dynamicInfo && (dynamicInfo.dynamicStyleExp || dynamicInfo.staticStyleExp)) {
+    const { staticStyleExp, dynamicStyleExp } = dynamicInfo
     attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
-    delete attr.staticStyleExp
-    delete attr.dynamicStyleExp
   } else {
     const exps = getAttrExps(attr)
     if (exps) {
@@ -2739,16 +2736,16 @@ function postProcessDynamicStyle (attr) {
   }
 }
 
-function postProcessDynamicAttrsMap (vnode, config) {
+function postProcessAttrsMapDynamic (vnode, config) {
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {
     // 后序遍历，主要为了做剔除的操作
     for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
       const attr = vnode.attrsList[i]
       if (attr.name === 'class') {
-        postProcessDynamicClass(attr)
+        postProcessClassDynamic(vnode, attr)
       } else if (attr.name === 'style') {
-        postProcessDynamicStyle(attr)
+        postProcessStyleDynamic(vnode, attr)
       } else if (config.event.parseEvent(attr.name)) {
         // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
         vnode.attrsList.splice(i, 1)
@@ -2766,13 +2763,14 @@ function postProcessDynamicAttrsMap (vnode, config) {
       }
     }
   }
+  delete vnode.dynamicInfo
 }
 
-function postProcessDynamicIf (vnode, config) {
+function postProcessIfDynamic (vnode, config) {
   delete vnode.ifProcessed
   if (vnode.if) {
     const parsedExp = vnode.if.exp
-    addDynamicIfCondition(vnode, {
+    addIfConditionDynamic(vnode, {
       ifExp: true,
       block: 'self',
       __exps: parseExp(parsedExp)
@@ -2784,7 +2782,7 @@ function postProcessDynamicIf (vnode, config) {
       ? config.directive.elseif
       : config.directive.else
     getAndRemoveAttr(vnode, directive)
-    processDynamicIfConditions(vnode)
+    processIfConditionsDynamic(vnode)
     delete vnode.elseif
     delete vnode.else
   }
@@ -2799,18 +2797,19 @@ function postProcessDynamicIf (vnode, config) {
   }
 }
 
-function postProcessDynamicFor (vnode) {
+function postProcessForDynamic (vnode) {
   if (vnode.for) {
     vnode.for.__exps = parseExp(vnode.for.exp)
     delete vnode.for.raw
     delete vnode.for.exp
+    popForScopes()
   }
 }
 
 function postProcessDynamic (el, config) {
-  postProcessDynamicIf(el, config)
-  postProcessDynamicFor(el, config)
-  postProcessDynamicAttrsMap(el, config)
+  postProcessIfDynamic(el, config)
+  postProcessForDynamic(el, config)
+  postProcessAttrsMapDynamic(el, config)
 }
 
 module.exports = {
