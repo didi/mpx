@@ -16,7 +16,12 @@ module.exports = function getSpec ({ warn, error }) {
       {
         web ({ name, value }) {
           const parsed = parseMustacheWithContext(value)
-          if (parsed.hasBinding) {
+          if (name.startsWith('data-')) {
+            return {
+              name: ':' + name,
+              value: `JSON.stringify(${parsed.result})`
+            }
+          } else if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-animation' : ':' + name,
               value: parsed.result
