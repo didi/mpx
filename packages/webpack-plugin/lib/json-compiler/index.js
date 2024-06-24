@@ -18,7 +18,11 @@ const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
-const { generatorVariableNameBySource } = require('../utils/get-compress-key')
+const { generateVariableNameBySource } = require('../utils/get-compress-key')
+
+const isProductionLikeMode = options => {
+  return options.mode === 'production' || !options.mode
+}
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -174,16 +178,16 @@ module.exports = function (content) {
     }
   }
 
-  if (this.mode === 'production' && mode !== 'web') {
+  if (this.options.optimizeSize && isProductionLikeMode(compiler.options) && mode !== 'web') {
     // placeholder 替换
     if (json.componentPlaceholder) {
       const newComponentPlaceholder = {}
       for (const [name, value] of Object.entries(json.componentPlaceholder)) {
-        const newName = generatorVariableNameBySource(name, this.resourcePath + 'componentName')
+        const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
         newComponentPlaceholder[newName] = json.componentPlaceholder[name]
         delete json.componentPlaceholder[name]
         if (value in json.usingComponents) {
-          newComponentPlaceholder[newName] = generatorVariableNameBySource(value, this.resourcePath + 'componentName')
+          newComponentPlaceholder[newName] = generateVariableNameBySource(value, this.resourcePath + 'componentName')
         }
       }
       Object.assign(json.componentPlaceholder, newComponentPlaceholder)
@@ -192,7 +196,7 @@ module.exports = function (content) {
     if (json.usingComponents) {
       const newUsingComponents = {}
       for (const name of Object.keys(json.usingComponents)) {
-        const newName = generatorVariableNameBySource(name, this.resourcePath + 'componentName')
+        const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
         newUsingComponents[newName] = json.usingComponents[name]
         delete json.usingComponents[name]
       }

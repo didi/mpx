@@ -63,7 +63,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
-const generatorVariableNameBySource = require('./utils/get-compress-key')
+const generateVariableNameBySource = require('./utils/get-compress-key')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -704,7 +704,7 @@ class MpxWebpackPlugin {
             if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext).replace(/^\//, '')
             if (type === 'component') {
               if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
-                const pathHash = generatorVariableNameBySource(resourcePath, 'componentPath')
+                const pathHash = generateVariableNameBySource(resourcePath, 'componentPath')
                 return path.join('c', pathHash, 'i' + ext)
               } else {
                 return path.join('c', name + hash, 'i' + ext)

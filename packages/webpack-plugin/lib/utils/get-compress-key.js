@@ -1,6 +1,6 @@
 class CompressName {
-    constructor(chars, allowStartChars) {
-        this._arr = []
+    constructor (chars, allowStartChars) {
+        this._arr = [0]
         //   this._occupiedNames = new Set()
         this._compressMap = new Map()
         // 允许使用的字符, 需要去重
@@ -16,7 +16,8 @@ class CompressName {
         }
     }
 
-    _findStartCharIndex(startIndex) {
+    // 用于获取符合首字母规则的字符的下标
+    _findStartCharIndex (startIndex) {
         for (let i = startIndex; i < this.chars.length; i++) {
             if (this.allowStartChars.indexOf(this.chars[i]) !== -1) {
                 return i
@@ -25,66 +26,75 @@ class CompressName {
         return -1
     }
 
-    _generatorName() {
+    _generateName () {
         if (this._arr.length === 0) {
+            // 首次生成，获取首字母
             this._arr[0] = this._findStartCharIndex(0)
         } else {
             if (this._arr.length === 1) {
+                // 只有一个字母，从当前位置往后获取首字母
                 this._arr[0] = this._findStartCharIndex(this._arr[0] + 1)
+                // 如果获取不到，则直接设置到最大值，后面在来做进位处理
                 if (this._arr[0] === -1) this._arr[0] = this.chars.length
             } else {
+                // 最后一个字母（非首字母），+1即可
                 this._arr[this._arr.length - 1]++
             }
+
+            // 进位处理，如果数组中某一位 = chars.length，则前一项+1，当前项为0
             for (let i = this._arr.length - 1; i >= 0; i--) {
                 if (this._arr[i] === this.chars.length) {
                     this._arr[i] = 0
-                    if (i == 0) {
+                    if (i === 0) {
+                        // 当前为第一位，则再补充一个最小的首位： [10,0] -> [1,0,0]
                         this._arr.unshift(this._findStartCharIndex(0))
-                    } else if (i == 1) {
+                    } else if (i === 1) {
+                        // 当前为第二位，进位会影响首位，也需要findStartCharIndex
                         this._arr[i - 1] = this._findStartCharIndex(this._arr[i - 1] + 1)
                         if (this._arr[i - 1] === -1) this._arr[i - 1] = this.chars.length
                     } else {
+                        // 其他情况，正常进位即可
                         this._arr[i - 1]++
                     }
                 }
             }
         }
+        // 获取每一位对应的字符拼接
         return this._arr.map(num => this.chars[num]).join('')
     }
 
     // 指定不允许使用的key
     // occupiedKey: string[] | string
-    _occupiedGeneratorName(occupiedKey) {
-        let key = this._generatorName()
+    _occupiedGenerateName (occupiedKey) {
+        let key = this._generateName()
 
         if (!occupiedKey) return key
         if (typeof occupiedKey === 'string') occupiedKey = [occupiedKey]
 
         while (occupiedKey.indexOf(key) !== -1) {
-            key = this._generatorName()
+            key = this._generateName()
         }
         return key
     }
 
-    compress(source, occupiedKey) {
+    compress (source, occupiedKey) {
         if (!this._compressMap.has(source)) {
-            this._compressMap.set(source, this._occupiedGeneratorName(occupiedKey))
+            this._compressMap.set(source, this._occupiedGenerateName(occupiedKey))
             // this._occupiedNames.add(this._compressMap.get(source))
         }
         return this._compressMap.get(source)
     }
 }
 
-
 const namespaces = {}
-function generatorVariableNameBySource(source, namespace, occupiedKey) {
+function generateVariableNameBySource (source, namespace, occupiedKey) {
     if (!namespaces[namespace]) {
         // 限制只能字母开头
-        namespaces[namespace] = new CompressName('abcdefghijklmnopqrstuvwxyz_-0123456789', 'abcdefghijklmnopqrstuvwxyz')
+        namespaces[namespace] = new CompressName('abcdefghijklmnopqrstuvwxyz_0123456789', 'abcdefghijklmnopqrstuvwxyz')
     }
-    return namespaces[namespace].compress(source)
+    return namespaces[namespace].compress(source, occupiedKey)
 }
 
 module.exports = {
-    generatorVariableNameBySource
+    generateVariableNameBySource
 }
