@@ -113,7 +113,7 @@ class DynamicEntryDependency extends NullDependency {
             packageName,
             filename,
             entryType,
-            isAsync: extraOptions.isAsync
+            isAsync: extraOptions.isAsync || false
           })
         }
       }
