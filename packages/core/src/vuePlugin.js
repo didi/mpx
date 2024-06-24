@@ -1,4 +1,4 @@
-import { walkChildren, parseSelector, error, hasOwn } from '@mpxjs/utils'
+import { walkChildren, parseSelector, error, hasOwn, collectDataset } from '@mpxjs/utils'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { EffectScope } from 'vue'
 import { PausedState } from './helper/const'
@@ -55,22 +55,25 @@ const hackEffectScope = () => {
   }
 }
 
-const datasetReg = /^data-(.+)$/
-
-function collectDataset (attrs) {
-  const dataset = {}
-  for (const key in attrs) {
-    if (hasOwn(attrs, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = attrs[key]
+export default function install (Vue) {
+  Object.defineProperties(Vue.prototype, {
+    data: {
+      get () {
+        return Object.assign({}, this.$props, this.$data)
+      }
+    },
+    dataset: {
+      get () {
+        return collectDataset(this.$attrs, true)
+      }
+    },
+    id: {
+      get () {
+        return this.$attrs.id || ''
       }
     }
-  }
-  return dataset
-}
+  })
 
-export default function install (Vue) {
   Vue.prototype.triggerEvent = function (eventName, eventDetail) {
     // 输出Web时自定义组件绑定click事件会和web原生事件冲突，组件内部triggerEvent时会导致事件执行两次，将click事件改为_click来规避此问题
     const escapeEvents = ['click']
@@ -78,8 +81,8 @@ export default function install (Vue) {
       eventName = '_' + eventName
     }
     let eventObj = {}
-    const dataset = collectDataset(this.$attrs)
-    const id = this.$attrs.id || ''
+    const dataset = this.dataset
+    const id = this.id
     const timeStamp = +new Date()
     eventObj = {
       type: eventName,

@@ -147,7 +147,10 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       const sessionStorage = window.sessionStorage
       try {
         if (sessionStorage) {
-          mpxStackPath = JSON.parse(sessionStorage.getItem('_mpx_stack_path_'))
+          const stackPath = JSON.parse(sessionStorage.getItem('_mpx_stack_path_'))
+          if (Array.isArray(stackPath)) {
+            mpxStackPath = stackPath
+          }
         }
       } catch (e) {
       }
