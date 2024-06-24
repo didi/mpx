@@ -18,11 +18,7 @@ const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
-const { generateVariableNameBySource } = require('../utils/get-compress-key')
-
-const isProductionLikeMode = options => {
-  return options.mode === 'production' || !options.mode
-}
+const { generateVariableNameBySource, isProductionLikeMode } = require('../utils/optimize-compress')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -178,32 +174,6 @@ module.exports = function (content) {
     }
   }
 
-  if (this.options.optimizeSize && isProductionLikeMode(compiler.options) && mode !== 'web') {
-    // placeholder 替换
-    if (json.componentPlaceholder) {
-      const newComponentPlaceholder = {}
-      for (const [name, value] of Object.entries(json.componentPlaceholder)) {
-        const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
-        newComponentPlaceholder[newName] = json.componentPlaceholder[name]
-        delete json.componentPlaceholder[name]
-        if (value in json.usingComponents) {
-          newComponentPlaceholder[newName] = generateVariableNameBySource(value, this.resourcePath + 'componentName')
-        }
-      }
-      Object.assign(json.componentPlaceholder, newComponentPlaceholder)
-    }
-    // usingComponents 替换
-    if (json.usingComponents) {
-      const newUsingComponents = {}
-      for (const name of Object.keys(json.usingComponents)) {
-        const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
-        newUsingComponents[newName] = json.usingComponents[name]
-        delete json.usingComponents[name]
-      }
-      Object.assign(json.usingComponents, newUsingComponents)
-    }
-  }
-
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
@@ -285,6 +255,35 @@ module.exports = function (content) {
     } else {
       callback()
     }
+  }
+
+  const processOptimizeSize = (json, callback) => {
+    if (mpx.optimizeSize && isProductionLikeMode(this)) {
+      // placeholder 替换
+      if (json.componentPlaceholder) {
+        const newComponentPlaceholder = {}
+        for (const [name, value] of Object.entries(json.componentPlaceholder)) {
+          const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
+          newComponentPlaceholder[newName] = json.componentPlaceholder[name]
+          delete json.componentPlaceholder[name]
+          if (value in json.usingComponents) {
+            newComponentPlaceholder[newName] = generateVariableNameBySource(value, this.resourcePath + 'componentName')
+          }
+        }
+        Object.assign(json.componentPlaceholder, newComponentPlaceholder)
+      }
+      // usingComponents 替换
+      if (json.usingComponents) {
+        const newUsingComponents = {}
+        for (const name of Object.keys(json.usingComponents)) {
+          const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
+          newUsingComponents[newName] = json.usingComponents[name]
+          delete json.usingComponents[name]
+        }
+        Object.assign(json.usingComponents, newUsingComponents)
+      }
+    }
+    callback()
   }
 
   if (isApp) {
@@ -637,6 +636,9 @@ module.exports = function (content) {
 
     async.parallel([
       (callback) => {
+        processOptimizeSize(json, callback)
+      },
+      (callback) => {
         // 添加首页标识
         if (json.pages && json.pages[0]) {
           if (typeof json.pages[0] !== 'string') {
@@ -714,6 +716,9 @@ module.exports = function (content) {
       }
     }
     async.parallel([
+      (callback) => {
+        processOptimizeSize(json, callback)
+      },
       (callback) => {
         processComponents(json.usingComponents, this.context, callback)
       },

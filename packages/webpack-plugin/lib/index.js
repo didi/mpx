@@ -63,12 +63,8 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
-const generateVariableNameBySource = require('./utils/get-compress-key')
+const { generateVariableNameBySource, isProductionLikeMode } = require('./utils/optimize-compress')
 require('./utils/check-core-version-match')
-
-const isProductionLikeMode = options => {
-  return options.mode === 'production' || !options.mode
-}
 
 const isStaticModule = module => {
   if (!module.resource) return false
@@ -671,6 +667,7 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
+          optimizeSize: this.options.optimizeSize,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))

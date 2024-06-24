@@ -1,6 +1,6 @@
 class CompressName {
     constructor (chars, allowStartChars) {
-        this._arr = [0]
+        this._arr = []
         //   this._occupiedNames = new Set()
         this._compressMap = new Map()
         // 允许使用的字符, 需要去重
@@ -95,6 +95,11 @@ function generateVariableNameBySource (source, namespace, occupiedKey) {
     return namespaces[namespace].compress(source, occupiedKey)
 }
 
+const isProductionLikeMode = options => {
+    return options.mode === 'production' || !options.mode
+}
+
 module.exports = {
-    generateVariableNameBySource
+    generateVariableNameBySource,
+    isProductionLikeMode
 }
