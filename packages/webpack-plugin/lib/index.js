@@ -63,6 +63,7 @@ const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource'
 const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
+const generatorVariableNameBySource = require('./utils/get-compress-key')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -701,7 +702,15 @@ class MpxWebpackPlugin {
             const customOutputPath = this.options.customOutputPath
             if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
             if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext).replace(/^\//, '')
-            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+            if (type === 'component') {
+              if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
+                const pathHash = generatorVariableNameBySource(resourcePath, 'componentPath')
+                return path.join('c', pathHash, 'i' + ext)
+              } else {
+                return path.join('c', name + hash, 'i' + ext)
+              }
+            }
+            if (type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
           },
           extractedFilesCache: new Map(),
