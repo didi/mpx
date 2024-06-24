@@ -22,9 +22,10 @@ type ExtendedViewStyle = ViewStyle & {
 export interface _ViewProps extends ViewProps {
   style?: Array<ExtendedViewStyle>
   children?: ReactNode | ReactNode []
-  hoverStyle: Array<ExtendedViewStyle>
-  ['hover-start-time']: number
-  ['hover-stay-time']: number
+  hoverStyle?: Array<ExtendedViewStyle>
+  ['hover-start-time']?: number
+  ['hover-stay-time']?: number
+  ['disable-default-style']?: boolean
   'enable-offset'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -359,7 +360,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
     defaultStyle,
     styleObj,
-    ...(isHover ? hoverStyle : [])]
+    ...(isHover ? hoverStyle as Array<ExtendedViewStyle> : [])]
   ))
 
   const innerProps = useInnerProps(props, {

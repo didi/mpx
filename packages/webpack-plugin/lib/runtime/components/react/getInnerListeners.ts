@@ -106,7 +106,7 @@ const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
   removeProps: RemoveProps = [],
-  rawConfig: UseInnerPropsConfig
+  rawConfig?: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
     startTimer: {
