@@ -127,7 +127,7 @@ function checkDelAndGetPath (path) {
     }
 
     if (t.isMemberExpression(parent) && parent.computed) {
-      if (key === 'property') {
+      if (key === 'property' && !t.isMemberExpression(current.parentPath.parent)) {
         replace = true
       } else {
         canDel = false
