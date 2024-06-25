@@ -1587,6 +1587,9 @@ function injectWxs (meta, module, src, options) {
   if (addWxsModule(meta, module, src)) {
     return
   }
+  if (options && options.runtimeCompile) {
+    return
+  }
   const wxsNode = createASTElement(config[mode].wxs.tag, [
     {
       name: config[mode].wxs.module,
@@ -1597,9 +1600,6 @@ function injectWxs (meta, module, src, options) {
       value: src
     }
   ])
-  if (options && options.runtimeCompile) {
-    processWxsDynamic(wxsNode, config[mode])
-  }
   injectNodes.push(wxsNode)
 }
 
@@ -2608,9 +2608,7 @@ function findPrevIfNodeDynamic (el) {
     return null
   }
 
-  if (prevNode._tempIf) {
-    return findPrevIfNodeDynamic(prevNode)
-  } else if (prevNode.if) {
+  if (prevNode.if) {
     return prevNode
   } else {
     return null
@@ -2637,10 +2635,7 @@ function processIfConditionsDynamic (el) {
       block: el,
       __exps: el.elseif ? parseExp(el.elseif.exp) : ''
     })
-
-    const tempNode = createASTElement('block', [])
-    tempNode._tempIf = true // 创建一个临时的节点，后续遍历会删除
-    replaceNode(el, tempNode)
+    removeNode(el)
   }
 }
 
@@ -2699,15 +2694,6 @@ function processTextDynamic (vnode) {
     vnode.__exps = parseExp(parsed.result)
     delete vnode.text
   }
-}
-
-function processWxsDynamic (vnode, config) {
-  if (vnode.tag === config.wxs.tag) {
-    const tempNode = createASTElement('block', [])
-    replaceNode(vnode, tempNode)
-    return tempNode
-  }
-  return null
 }
 
 function postProcessClassDynamic (vnode, attr) {
@@ -2786,14 +2772,8 @@ function postProcessIfDynamic (vnode, config) {
     delete vnode.elseif
     delete vnode.else
   }
-  // 删除遍历过程中 if 替换的临时节点以及明确不会被渲染出来的 if 节点（即 {{ false }}）
-  const children = vnode.children
-  if (children && children.length) {
-    for (let i = children.length - 1; i >= 0; i--) {
-      if (children[i]._tempIf || children[i]._if === false) {
-        children.splice(i, 1)
-      }
-    }
+  if (vnode._if === false) {
+    removeNode(vnode)
   }
 }
 
