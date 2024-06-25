@@ -2602,19 +2602,6 @@ function addIfConditionDynamic (el, condition) {
   el.ifConditions.push(condition)
 }
 
-function findPrevIfNodeDynamic (el) {
-  const prevNode = findPrevNode(el)
-  if (!prevNode) {
-    return null
-  }
-
-  if (prevNode.if) {
-    return prevNode
-  } else {
-    return null
-  }
-}
-
 function getAttrExps (attr) {
   // 属性为单值的写法 <scroll-view enhenced></scroll-view>
   // 默认置为 true
@@ -2628,9 +2615,9 @@ function getAttrExps (attr) {
 }
 
 function processIfConditionsDynamic (el) {
-  const prev = findPrevIfNodeDynamic(el)
-  if (prev) {
-    addIfConditionDynamic(prev, {
+  const prevNode = findPrevNode(el)
+  if (prevNode && prevNode.if) {
+    addIfConditionDynamic(prevNode, {
       ifExp: !!el.elseif,
       block: el,
       __exps: el.elseif ? parseExp(el.elseif.exp) : ''
