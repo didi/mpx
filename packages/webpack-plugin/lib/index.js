@@ -656,7 +656,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || this.options.mode === 'ali',
           partialCompile: this.options.partialCompile,
-          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, isAsync }) => {
+          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,
               entries: []
@@ -666,7 +666,7 @@ class MpxWebpackPlugin {
               entryType,
               resource,
               filename,
-              isAsync
+              hasAsync
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,

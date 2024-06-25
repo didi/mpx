@@ -88,10 +88,10 @@ class DynamicEntryDependency extends NullDependency {
               originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
             })
           }
-          if (mpx.dynamicEntryInfo[packageName]) {
+          if (mpx.dynamicEntryInfo[packageName] && extraOptions.isAsync) {
             mpx.dynamicEntryInfo[packageName].entries.forEach(entry => {
-              if (entry.resource === resource && entry.filename === filename) {
-                if (extraOptions.isAsync) entry.isAsync = true
+              if (entry.resource === resource && entry.filename === filename && entry.entryType === entryType) {
+                entry.hasAsync = true
               }
               return entry
             })
@@ -121,7 +121,7 @@ class DynamicEntryDependency extends NullDependency {
             packageName,
             filename,
             entryType,
-            isAsync: extraOptions.isAsync || false
+            hasAsync: extraOptions.isAsync || false
           })
         }
       }

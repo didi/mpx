@@ -831,7 +831,7 @@ class SizeReportPlugin {
             const subpackageInfo = mpx.dynamicEntryInfo[skylineSubpackage]
             if (subpackageInfo.entries) {
               subpackageInfo.entries.forEach((entry) => {
-                if (entry.isAsync) {
+                if (entry.hasAsync) {
                   // 报错提示skyline分包不可被其他分包异步引用
                   compilation.errors.push(new Error(`skylineSubpackages ${skylineSubpackage} can not be required async\n
                     resource: ${entry.resource}\n
