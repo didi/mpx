@@ -2772,9 +2772,6 @@ function postProcessIfDynamic (vnode, config) {
     delete vnode.elseif
     delete vnode.else
   }
-  if (vnode._if === false) {
-    removeNode(vnode)
-  }
 }
 
 function postProcessForDynamic (vnode) {
