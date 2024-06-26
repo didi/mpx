@@ -152,7 +152,7 @@ export default function _genVnodeTree (astData, contextScope, options) {
           const [staticItem, dynamicItem, wxShowStyleObj] = valueArr
           let lastDynamicItem = dynamicItem
           if (wxShowStyleObj) {
-            if (typeof dynamicClass === 'string') {
+            if (typeof dynamicItem === 'string') {
               lastDynamicItem = dynamicItem + ';' + Object.entries(wxShowStyleObj).map(([k, v]) => `${k}:${v}`).join(';')
             } else {
               lastDynamicItem = Array.isArray(dynamicItem) ? [...dynamicItem, wxShowStyleObj] : [dynamicItem, wxShowStyleObj]
