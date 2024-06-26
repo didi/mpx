@@ -1793,7 +1793,7 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
-function processAliAddComponentRootView (el, options) {
+function processAliAddComponentRootView (el, options, meta) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -1854,7 +1854,8 @@ function processAliAddComponentRootView (el, options) {
 
   if (options.runtimeCompile) {
     postProcessDynamic(el, config[mode])
-    componentWrapView.exps = el.exps
+    processAttrsDynamic(componentWrapView, config[mode])
+    collectDynamicInfo(componentWrapView, options, meta)
   }
 
   replaceNode(el, componentWrapView, true)
@@ -2165,8 +2166,7 @@ function closeElement (el, meta, options) {
 
   if (!pass) {
     if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
-      el = processAliAddComponentRootView(el, options)
-      collectDynamicInfo(el, options, meta)
+      el = processAliAddComponentRootView(el, options, meta)
     } else {
       el = postProcessComponentIs(el)
     }
