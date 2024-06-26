@@ -1854,6 +1854,7 @@ function processAliAddComponentRootView (el, options) {
 
   if (options.runtimeCompile) {
     postProcessDynamic(el, config[mode])
+    componentWrapView.exps = el.exps
   }
 
   replaceNode(el, componentWrapView, true)
