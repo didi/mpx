@@ -195,11 +195,16 @@ module.exports = function (content) {
     error: emitError,
     data: {
       // polyfill global usingComponents & record globalComponents
-      globalComponents: mpx.usingComponents
+      globalComponents: mpx.globalComponents
     }
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+      // polyfill global usingComponents
+      // todo 传入rulesRunner中进行按平台转换
+      rulesRunnerOptions.data = {
+          globalComponents: mpx.globalComponents
+      }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -209,11 +214,11 @@ module.exports = function (content) {
   }
 
   if (isApp) {
-    Object.assign(mpx.usingComponents, json.usingComponents)
+    Object.assign(mpx.globalComponents, json.usingComponents)
     // 在 rulesRunner 运行后保存全局注册组件
     // todo 其余地方在使用mpx.usingComponents时存在缓存问题，要规避该问题需要在所有使用mpx.usingComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
     // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
-    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
+    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, this.context))
   }
 
   const processComponents = (components, context, callback) => {

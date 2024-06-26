@@ -14,7 +14,6 @@
 
 <script type="application/json">
   {
-    "component": true,
-    "componentGenerics": { "mp-view": true }
+    "component": true
   }
 </script>

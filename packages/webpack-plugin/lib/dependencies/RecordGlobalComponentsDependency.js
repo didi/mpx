@@ -1,6 +1,7 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 const addQuery = require('../utils/add-query')
+const isUrlRequest = require('../utils/is-url-request')
 
 class RecordGlobalComponentsDependency extends NullDependency {
   constructor (usingComponents, context) {
@@ -16,9 +17,19 @@ class RecordGlobalComponentsDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const { usingComponents, context } = this
+    const resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
     Object.keys(usingComponents).forEach((key) => {
       const request = usingComponents[key]
-      mpx.usingComponents[key] = addQuery(request, {
+      if (!isUrlRequest(request, mpx.projectRoot)) {
+        mpx.globalComponentsModuleId[key] = mpx.getModuleId(request, false)
+      } else {
+        resolver.resolve({}, this.context, request, {}, (err, resource) => {
+          if (err) return
+          mpx.globalComponentsModuleId[key] = mpx.getModuleId(resource, false)
+        })
+      }
+
+      mpx.globalComponents[key] = addQuery(request, {
         context
       })
     })

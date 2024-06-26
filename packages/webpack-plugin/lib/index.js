@@ -61,7 +61,7 @@ const async = require('async')
 const { parseQuery } = require('loader-utils')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_APP_MODULE_ID } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 require('./utils/check-core-version-match')
 
@@ -165,6 +165,7 @@ class MpxWebpackPlugin {
       include: () => true
     }
     options.customOutputPath = options.customOutputPath || null
+    options.customComponentModuleId = options.customComponentModuleId || null
     options.nativeConfig = Object.assign({
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
@@ -620,7 +621,8 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
-          usingComponents: {},
+          globalComponents: {},
+          globalComponentsModuleId: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
           addEntryPromiseMap: new Map(),
@@ -681,6 +683,14 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
+            getModuleId: (filePath, isApp = false) => {
+                const customComponentModuleId = this.options.customComponentModuleId
+                if (typeof customComponentModuleId === 'function') {
+                    const customModuleId = customComponentModuleId(filePath, isApp)
+                    if (customModuleId) return customModuleId
+                }
+                return isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+            },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
             let entryNode = entryNodeModulesMap.get(module)

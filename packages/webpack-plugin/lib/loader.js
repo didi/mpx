@@ -17,7 +17,8 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
+const resolve = require('./utils/resolve')
+const isUrlRequestRaw = require('./utils/is-url-request')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
@@ -50,6 +51,9 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const root = mpx.projectRoot
+
+  const isUrlRequest = r => isUrlRequestRaw(r, root)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -75,15 +79,16 @@ module.exports = function (content) {
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
+  const isApp = ctorType === 'app'
 
-  if (ctorType === 'app') {
+  if (isApp) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
+  const moduleId = mpx.getModuleId(resourcePath, isApp)
 
   const parts = parseComponent(content, {
     filePath,
@@ -104,20 +109,26 @@ module.exports = function (content) {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        callback()
+        callback(null, content || '{}')
       })
     },
-    (callback) => {
-      const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
-      const templateAttrs = parts.template && parts.template.attrs
-      const hasComment = templateAttrs && templateAttrs.comments
-      const isNative = false
-
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+    (jsonContent, callback) => {
+      if (!jsonContent) return callback(null, {})
       let componentPlaceholder = []
       let componentGenerics = {}
-
-      if (parts.json && parts.json.content) {
+      let currentUsingComponentsModuleId = {}
+      let usingComponents = [].concat(Object.keys(mpx.globalComponents))
+      const finalCallback = (err) => {
+        currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, mpx.globalComponentsModuleId)
+        callback(err, {
+          componentPlaceholder,
+          componentGenerics,
+          currentUsingComponentsModuleId,
+          usingComponents
+        })
+      }
+      try {
+        const ret = JSON5.parse(jsonContent)
         const rulesRunnerOptions = {
           mode,
           srcMode,
@@ -131,21 +142,60 @@ module.exports = function (content) {
         }
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
         try {
-          const ret = JSON5.parse(parts.json.content)
           if (rulesRunner) rulesRunner(ret)
-          if (ret.usingComponents) {
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-          }
-          if (ret.componentPlaceholder) {
-            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-          }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
         } catch (e) {
-          return callback(e)
+          return finalCallback(e)
         }
+
+        if (ret.componentPlaceholder) {
+          componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
+        }
+        if (ret.componentGenerics) {
+          componentGenerics = Object.assign({}, ret.componentGenerics)
+        }
+        if (ret.usingComponents) {
+          // fixUsingComponent(ret.usingComponents, mode)
+          usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          async.eachOf(ret.usingComponents, (component, name, callback) => {
+            if (!isUrlRequest(component)) {
+              const moduleId = mpx.getModuleId(component, isApp)
+              if (!isApp) {
+                currentUsingComponentsModuleId[name] = moduleId
+              }
+              return callback()
+            }
+            resolve(this.context, component, loaderContext, (err, resource) => {
+              if (err) return callback(err)
+              const { rawResourcePath } = parseRequest(resource)
+              const moduleId = mpx.getModuleId(rawResourcePath, isApp)
+              if (!isApp) {
+                currentUsingComponentsModuleId[name] = moduleId
+              }
+              callback()
+            })
+          }, (err) => {
+            finalCallback(err)
+          })
+        } else {
+          finalCallback(null)
+        }
+      } catch (err) {
+        finalCallback(err)
       }
+    },
+    (componentInfo, callback) => {
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        currentUsingComponentsModuleId,
+        usingComponents
+      } = componentInfo
+
+      const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
+      const templateAttrs = parts.template && parts.template.attrs
+      const hasComment = templateAttrs && templateAttrs.comments
+      const isNative = false
+
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
         if (ctorType === 'app' && !queryObj.isApp) {
@@ -255,7 +305,7 @@ module.exports = function (content) {
       }
 
       // 为app注入i18n
-      if (i18n && ctorType === 'app') {
+      if (i18n && isApp) {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
@@ -300,6 +350,7 @@ module.exports = function (content) {
           isNative,
           moduleId,
           usingComponents,
+          usingComponentsModuleId: currentUsingComponentsModuleId,
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
@@ -328,7 +379,7 @@ module.exports = function (content) {
         })
       }
 
-      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
+      if (parts.styles.filter(style => !style.src).length === 0 && isApp && mode === 'ali') {
         output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 

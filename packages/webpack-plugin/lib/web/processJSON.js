@@ -98,7 +98,7 @@ module.exports = function (json, {
       error: emitError,
       data: {
         // polyfill global usingComponents & record globalComponents
-        globalComponents: mpx.usingComponents
+        globalComponents: mpx.globalComponents
       }
     }
 
@@ -113,9 +113,9 @@ module.exports = function (json, {
     }
     if (isApp) {
       // 收集全局组件
-      Object.assign(mpx.usingComponents, jsonObj.usingComponents)
+      Object.assign(mpx.globalComponents, jsonObj.usingComponents)
       // 在 rulesRunner 运行后保存全局注册组件
-      loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, loaderContext.context))
+      loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, loaderContext.context))
     }
   } catch (e) {
     return callback(e)
