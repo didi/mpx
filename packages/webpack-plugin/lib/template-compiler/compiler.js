@@ -2641,11 +2641,10 @@ function processClassDynamic (el, meta) {
     const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
-    const attr = {
+    addAttrs(el, [{
       name: targetType,
       value: `{{[${staticClassExp},${dynamicClassExp}]}}`
-    }
-    addAttrs(el, [attr])
+    }])
   } else if (staticClass) {
     addAttrs(el, [{
       name: targetType,
