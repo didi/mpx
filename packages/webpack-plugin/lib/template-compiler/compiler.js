@@ -2690,14 +2690,7 @@ function processAttrsDynamic (vnode, config) {
     // 后序遍历，主要为了做剔除的操作
     for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
       const attr = vnode.attrsList[i]
-      if (config.event.parseEvent(attr.name)) {
-        //
-      } else if (attr.name === 'class' || attr.name === 'style') {
-        const exps = getAttrExps(attr)
-        if (exps) {
-          addExp(vnode, exps, false, attr.name)
-        }
-      } else {
+      if (!config.event.parseEvent(attr.name)) {
         const exps = getAttrExps(attr)
         if (exps) {
           addExp(vnode, exps, false, attr.name)
