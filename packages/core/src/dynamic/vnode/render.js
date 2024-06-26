@@ -147,10 +147,8 @@ export default function _genVnodeTree (astData, contextScope, options) {
         const helper = attr.name === 'class' ? stringify.stringifyClass : stringify.stringifyStyle
         let value = ''
         if (attr.__exps) {
-          const valueArr = attr.__exps.reduce((preVal, curExpression) => {
-            preVal.push(evalExps(curExpression))
-            return preVal
-          }, [])
+          let valueArr = evalExps(attr.__exps)
+          valueArr = Array.isArray(valueArr) ? valueArr : [valueArr]
           value = helper(...valueArr)
         } else {
           value = attr.value

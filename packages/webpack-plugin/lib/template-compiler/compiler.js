@@ -1251,12 +1251,12 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
   }
 }
 
-function addExp (el, exp, isProps) {
+function addExp (el, exp, isProps, attrName) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
     }
-    el.exps.push({ exp, isProps })
+    el.exps.push({ exp, isProps, attrName })
   }
 }
 
@@ -1853,7 +1853,6 @@ function processAliAddComponentRootView (el, options) {
   }
 
   if (options.runtimeCompile) {
-    componentWrapView.dynamicInfo = el.dynamicInfo
     postProcessDynamic(el, config[mode])
   }
 
@@ -2143,7 +2142,11 @@ function processElement (el, root, options, meta) {
     processComponentIs(el, options)
   }
 
-  processAttrs(el, options)
+  if (options.runtimeCompile) {
+    processAttrsDynamic(el, config[mode])
+  } else {
+    processAttrs(el, options)
+  }
 }
 
 function closeElement (el, meta, options) {
@@ -2608,7 +2611,7 @@ function getAttrExps (attr) {
   if (attr.value == null) {
     attr.value = '{{ true }}'
   }
-  const parsed = parseMustache(attr.value)
+  const parsed = parseMustacheWithContext(attr.value)
   if (parsed.hasBinding && !attr.__exps) {
     return parseExp(parsed.result)
   }
@@ -2633,13 +2636,13 @@ function processClassDynamic (el, meta) {
   let staticClass = getAndRemoveAttr(el, type).val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
-    const dynamicInfo = el.dynamicInfo = el.dynamicInfo || {}
-    dynamicInfo.staticClassExp = parseMustacheWithContext(staticClass).result
-    dynamicInfo.dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
+    const staticClassExp = parseMustacheWithContext(staticClass).result
+    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
       error: error$1
     })
     const attr = {
-      name: targetType
+      name: targetType,
+      value: `{{[${staticClassExp},${dynamicClassExp}]}}`
     }
     addAttrs(el, [attr])
   } else if (staticClass) {
@@ -2657,13 +2660,12 @@ function processStyleDynamic (el, meta) {
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
-    const dynamicInfo = el.dynamicInfo = el.dynamicInfo || {}
-    dynamicInfo.staticStyleExp = parseMustacheWithContext(staticStyle).result
-    dynamicInfo.dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
-    const attr = {
-      name: targetType
-    }
-    addAttrs(el, [attr])
+    const staticStyleExp = parseMustacheWithContext(staticStyle).result
+    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
+    addAttrs(el, [{
+      name: targetType,
+      value: `{{[${staticStyleExp},${dynamicStyleExp}]}}`
+    }])
   } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
@@ -2683,60 +2685,26 @@ function processTextDynamic (vnode) {
   }
 }
 
-function postProcessClassDynamic (vnode, attr) {
-  const dynamicInfo = vnode.dynamicInfo
-  if (dynamicInfo && (dynamicInfo.dynamicClassExp || dynamicInfo.staticClassExp)) {
-    const { staticClassExp, dynamicClassExp } = dynamicInfo
-    attr.__exps = [parseExp(staticClassExp), parseExp(dynamicClassExp)]
-  } else {
-    const exps = getAttrExps(attr)
-    if (exps) {
-      attr.__exps = [exps]
-    }
-  }
-}
-
-function postProcessStyleDynamic (vnode, attr) {
-  const dynamicInfo = vnode.dynamicInfo
-  if (dynamicInfo && (dynamicInfo.dynamicStyleExp || dynamicInfo.staticStyleExp)) {
-    const { staticStyleExp, dynamicStyleExp } = dynamicInfo
-    attr.__exps = [parseExp(staticStyleExp), parseExp(dynamicStyleExp)]
-  } else {
-    const exps = getAttrExps(attr)
-    if (exps) {
-      attr.__exps = [exps]
-    }
-  }
-}
-
-function postProcessAttrsMapDynamic (vnode, config) {
-  const directives = Object.values(config.directive)
+function processAttrsDynamic (vnode, config) {
   if (vnode.attrsList && vnode.attrsList.length) {
     // 后序遍历，主要为了做剔除的操作
     for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
       const attr = vnode.attrsList[i]
-      if (attr.name === 'class') {
-        postProcessClassDynamic(vnode, attr)
-      } else if (attr.name === 'style') {
-        postProcessStyleDynamic(vnode, attr)
-      } else if (config.event.parseEvent(attr.name)) {
-        // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
-        vnode.attrsList.splice(i, 1)
+      if (config.event.parseEvent(attr.name)) {
+        //
+      } else if (attr.name === 'class' || attr.name === 'style') {
+        const exps = getAttrExps(attr)
+        if (exps) {
+          addExp(vnode, exps, false, attr.name)
+        }
       } else {
         const exps = getAttrExps(attr)
         if (exps) {
-          attr.__exps = exps
+          addExp(vnode, exps, false, attr.name)
         }
-      }
-      if (attr.__exps) {
-        delete attr.value
-      }
-      if (directives.includes(attr.name)) {
-        getAndRemoveAttr(vnode, attr.name)
       }
     }
   }
-  delete vnode.dynamicInfo
 }
 
 function postProcessIfDynamic (vnode, config) {
@@ -2770,10 +2738,36 @@ function postProcessForDynamic (vnode) {
   }
 }
 
+function postProcessAttrsDynamic (vnode, config) {
+  const expsMap = Object.fromEntries(vnode.exps?.map(v => ([v.attrName, v])) || [])
+  const directives = Object.values(config.directive)
+  if (vnode.attrsList && vnode.attrsList.length) {
+    // 后序遍历，主要为了做剔除的操作
+    for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
+      const attr = vnode.attrsList[i]
+      if (config.event.parseEvent(attr.name)) {
+        // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
+        vnode.attrsList.splice(i, 1)
+      } else {
+        const expInfo = expsMap[attr.name]
+        if (expInfo && expInfo.exp) {
+          attr.__exps = expInfo.exp
+        }
+      }
+      if (attr.__exps) {
+        delete attr.value
+      }
+      if (directives.includes(attr.name)) {
+        getAndRemoveAttr(vnode, attr.name)
+      }
+    }
+  }
+}
+
 function postProcessDynamic (el, config) {
   postProcessIfDynamic(el, config)
   postProcessForDynamic(el, config)
-  postProcessAttrsMapDynamic(el, config)
+  postProcessAttrsDynamic(el, config)
 }
 
 module.exports = {
