@@ -1553,31 +1553,23 @@ function postProcessWxs (el, meta) {
   if (el.tag === config[mode].wxs.tag) {
     const module = el.attrsMap[config[mode].wxs.module]
     if (module) {
-      let src, content
+      let src
       if (el.attrsMap[config[mode].wxs.src]) {
         src = el.attrsMap[config[mode].wxs.src]
       } else {
-        content = el.children.filter((child) => {
+        const content = el.children.filter((child) => {
           return child.type === 3 && !child.isComment
         }).map(child => child.text).join('\n')
+        addWxsContent(meta, module, content)
 
         const fakeRequest = filePath + config[mode].wxs.ext
-
         src = addQuery(`~${fakeRequest}!=!${filePath}`, {
           wxsModule: module
         })
-
-        addAttrs(el, [{
-          name: config[mode].wxs.src,
-          value: src
-        }])
-        el.children = []
       }
-      src && addWxsModule(meta, module, src)
-      content && addWxsContent(meta, module, content)
       // wxs hoist
+      injectWxs(meta, module, src)
       removeNode(el, true)
-      injectNodes.push(el)
     }
   }
 }
