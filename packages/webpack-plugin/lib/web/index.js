@@ -4,7 +4,7 @@ const processMainScript = require('./processMainScript')
 const processTemplate = require('./processTemplate')
 const processStyles = require('./processStyles')
 const processScript = require('./processScript')
-const RecordVueContentDependency = require('../dependencies/RecordVueContentDependency')
+const RecordLoaderContentDependency = require('../dependencies/RecordLoaderContentDependency')
 
 module.exports = function ({
   parts,
@@ -24,12 +24,12 @@ module.exports = function ({
   autoScope,
   callback
 }) {
-  const mpx = loaderContext.getMpx()
   if (ctorType === 'app' && !queryObj.isApp) {
     return async.waterfall([
       (callback) => {
         processJSON(parts.json, {
           loaderContext,
+          ctorType,
           pagesMap,
           componentsMap
         }, callback)
@@ -37,7 +37,6 @@ module.exports = function ({
       (jsonRes, callback) => {
         processMainScript(parts.script, {
           loaderContext,
-          ctorType,
           srcMode,
           moduleId,
           isProduction,
@@ -56,8 +55,9 @@ module.exports = function ({
       return callback(null, scriptRes.output)
     })
   }
-  // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-  const cacheContent = mpx.vueContentCache.get(loaderContext.resourcePath)
+  const mpx = loaderContext.getMpx()
+  // 通过RecordLoaderContentDependency和loaderContentCache确保子request不再重复生成loaderContent
+  const cacheContent = mpx.loaderContentCache.get(loaderContext.resourcePath)
   if (cacheContent) return callback(null, cacheContent)
   let output = ''
   return async.waterfall([
@@ -86,6 +86,7 @@ module.exports = function ({
         (callback) => {
           processJSON(parts.json, {
             loaderContext,
+            ctorType,
             pagesMap,
             componentsMap
           }, callback)
@@ -116,7 +117,7 @@ module.exports = function ({
   ], (err, scriptRes) => {
     if (err) return callback(err)
     output += scriptRes.output
-    loaderContext._module.addPresentationalDependency(new RecordVueContentDependency(loaderContext.resourcePath, output))
+    loaderContext._module.addPresentationalDependency(new RecordLoaderContentDependency(loaderContext.resourcePath, output))
     callback(null, output)
   })
 }

@@ -143,15 +143,15 @@ function buildGlobalParams ({
   let content = ''
   if (isMain) {
     content += `
-  global.getApp = function(){}
+  global.getApp = function () {}
   global.getCurrentPages = function () {
     if (!(typeof window !== 'undefined')) {
       console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
     var router = global.__mpxRouter
-    if(!router) return []
+    if (!router) return []
     // @ts-ignore
-    return (router.lastStack || router.stack).map(function(item){
+    return (router.lastStack || router.stack).map(function (item) {
       var page
       var vnode = item.vnode
       if (vnode && vnode.componentInstance) {

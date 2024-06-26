@@ -1,9 +1,10 @@
 const async = require('async')
 const processJSON = require('./processJSON')
+const processMainScript = require('./processMainScript')
 const processTemplate = require('./processTemplate')
 const processStyles = require('./processStyles')
 const processScript = require('./processScript')
-const RecordVueContentDependency = require('../dependencies/RecordVueContentDependency')
+const RecordLoaderContentDependency = require('../dependencies/RecordLoaderContentDependency')
 
 module.exports = function ({
   parts,
@@ -23,9 +24,18 @@ module.exports = function ({
   autoScope,
   callback
 }) {
+  if (ctorType === 'app' && !queryObj.isApp) {
+    return processMainScript(parts.script, {
+      loaderContext
+    }, (err, scriptRes) => {
+      if (err) return callback(err)
+      loaderContext.loaderIndex = -1
+      return callback(null, scriptRes.output)
+    })
+  }
   const mpx = loaderContext.getMpx()
-  // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-  const cacheContent = mpx.vueContentCache.get(loaderContext.resourcePath)
+  // 通过RecordLoaderContentDependency和loaderContentCache确保子request不再重复生成loaderContent
+  const cacheContent = mpx.loaderContentCache.get(loaderContext.resourcePath)
   if (cacheContent) return callback(null, cacheContent)
   let output = ''
   return async.waterfall([
@@ -56,6 +66,7 @@ module.exports = function ({
         (callback) => {
           processJSON(parts.json, {
             loaderContext,
+            ctorType,
             pagesMap,
             componentsMap
           }, callback)
@@ -86,7 +97,7 @@ module.exports = function ({
   ], (err, scriptRes) => {
     if (err) return callback(err)
     output += scriptRes.output
-    loaderContext._module.addPresentationalDependency(new RecordVueContentDependency(loaderContext.resourcePath, output))
+    loaderContext._module.addPresentationalDependency(new RecordLoaderContentDependency(loaderContext.resourcePath, output))
     callback(null, output)
   })
 }

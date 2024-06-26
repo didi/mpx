@@ -66,9 +66,6 @@ export default function createApp (option, config = {}) {
       }
     })
   } else {
-    if (option.onAppInit) {
-      option.onAppInit()
-    }
     builtInMixins.push({
       onLaunch () {
         Object.assign(this, Mpx.prototype)
@@ -90,6 +87,7 @@ export default function createApp (option, config = {}) {
       return appData
     }
   } else {
+    defaultOptions.onAppInit && defaultOptions.onAppInit()
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)
   }

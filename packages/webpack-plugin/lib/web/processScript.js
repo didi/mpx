@@ -65,16 +65,8 @@ module.exports = function (script, {
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
-        const uselessOptions = new Set([
-          'usingComponents',
-          'style',
-          'singlePage'
-        ])
-        Object.keys(jsonConfig)
-          .filter(key => !uselessOptions.has(key))
-          .forEach(key => {
-            pageConfig[key] = jsonConfig[key]
-          })
+        Object.assign(pageConfig, jsonConfig)
+        delete pageConfig.usingComponents
       }
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
