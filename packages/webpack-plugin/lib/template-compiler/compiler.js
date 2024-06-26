@@ -2139,14 +2139,14 @@ function processElement (el, root, options, meta) {
   }
   processBindEvent(el, options)
 
-  if (!pass) {
-    processShow(el, options, root)
-    processComponentIs(el, options)
-  }
-
   if (options.runtimeCompile) {
+    processShowDynamic(el, options, root)
     processAttrsDynamic(el, config[mode])
   } else {
+    if (!pass) {
+      processShow(el, options, root)
+      processComponentIs(el, options)
+    }
     processAttrs(el, options)
   }
 }
@@ -2659,17 +2659,12 @@ function processStyleDynamic (el, meta) {
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
-  if (dynamicStyle) {
+  if (dynamicStyle || staticStyle) {
     const staticStyleExp = parseMustacheWithContext(staticStyle).result
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
       value: `{{[${staticStyleExp},${dynamicStyleExp}]}}`
-    }])
-  } else if (staticStyle) {
-    addAttrs(el, [{
-      name: targetType,
-      value: staticStyle
     }])
   }
 }
@@ -2753,6 +2748,29 @@ function postProcessAttrsDynamic (vnode, config) {
       if (directives.includes(attr.name)) {
         getAndRemoveAttr(vnode, attr.name)
       }
+    }
+  }
+}
+
+function processShowDynamic (el, options, root) {
+  let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
+  if (mode === 'swan') show = wrapMustache(show)
+  if (has && show === undefined) {
+    error$1(`Attrs ${config[mode].directive.show} should have a value `)
+  }
+
+  processShowStyle()
+
+  function processShowStyle () {
+    if (show !== undefined) {
+      const showExp = parseMustacheWithContext(show).result
+      const oldStyle = getAndRemoveAttr(el, 'style').val
+      const displayExp = `${showExp}? {} : { display: "none" }`
+      const value = oldStyle?.replace(']}}', `,${displayExp}]}}`)
+      addAttrs(el, [{
+        name: 'style',
+        value: value
+      }])
     }
   }
 }
