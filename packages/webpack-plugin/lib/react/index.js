@@ -91,7 +91,8 @@ module.exports = function ({
         builtInComponentsMap: templateRes.builtInComponentsMap,
         genericsInfo: templateRes.genericsInfo,
         wxsModuleMap: templateRes.wxsModuleMap,
-        localComponentsMap: jsonRes.localComponentsMap
+        localComponentsMap: jsonRes.localComponentsMap,
+        localPagesMap: jsonRes.localPagesMap
       }, callback)
     }
   ], (err, scriptRes) => {
