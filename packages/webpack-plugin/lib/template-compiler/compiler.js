@@ -859,13 +859,20 @@ function modifyAttr (el, name, val) {
   }
 }
 
-function postMoveBaseDirective (target, source, isDelete = true) {
+function postMoveBaseDirective (target, source, options, isDelete = true) {
   target.for = source.for
   target.if = source.if
   target.elseif = source.elseif
   target.else = source.else
-  postProcessFor(target)
-  postProcessIf(target)
+
+  if (options.runtimeCompile) {
+    postProcessForDynamic(target, config[mode])
+    postProcessIfDynamic(target, config[mode])
+  } else {
+    postProcessFor(target)
+    postProcessIf(target)
+  }
+
   if (isDelete) {
     delete source.for
     delete source.if
@@ -2012,15 +2019,15 @@ function postProcessAliComponentRootView (el, options, meta) {
   processAppendRules(el)
   const componentWrapView = createASTElement('view', newAttrs)
 
+  replaceNode(el, componentWrapView, true)
+  addChild(componentWrapView, el)
+  postMoveBaseDirective(componentWrapView, el, options)
+
   if (options.runtimeCompile) {
     processAttrs(componentWrapView, options)
     collectDynamicInfo(componentWrapView, options, meta)
-    postProcessDynamic(componentWrapView, config[mode])
+    postProcessAttrsDynamic(componentWrapView, config[mode])
   }
-
-  replaceNode(el, componentWrapView, true)
-  addChild(componentWrapView, el)
-  postMoveBaseDirective(componentWrapView, el)
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
@@ -2333,7 +2340,9 @@ function closeElement (el, meta, options) {
   }
 
   if (options.runtimeCompile) {
-    postProcessDynamic(el, config[mode])
+    postProcessForDynamic(el, config[mode])
+    postProcessIfDynamic(el, config[mode])
+    postProcessAttrsDynamic(el, config[mode])
   } else {
     postProcessFor(el)
     postProcessIf(el)
@@ -2734,12 +2743,6 @@ function processShowStyleDynamic (el, show) {
       value: value
     }])
   }
-}
-
-function postProcessDynamic (el, config) {
-  postProcessIfDynamic(el, config)
-  postProcessForDynamic(el, config)
-  postProcessAttrsDynamic(el, config)
 }
 
 module.exports = {
