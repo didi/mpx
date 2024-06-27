@@ -2708,7 +2708,8 @@ function postProcessForDynamic (vnode) {
 }
 
 function postProcessAttrsDynamic (vnode, config) {
-  const expsMap = Object.fromEntries(vnode.exps?.map(v => ([v.attrName, v])) || [])
+  const exps = vnode.exps?.filter(v => v.attrName) || []
+  const expsMap = Object.fromEntries(exps.map(v => ([v.attrName, v])))
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {
     // 后序遍历，主要为了做剔除的操作
@@ -2716,10 +2717,9 @@ function postProcessAttrsDynamic (vnode, config) {
       const attr = vnode.attrsList[i]
       if (config.event.parseEvent(attr.name)) {
         // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
-        vnode.attrsList.splice(i, 1)
+        getAndRemoveAttr(vnode, attr.name)
       } else if (attr.value == null) {
-        const exp = parseMustacheWithContext('{{ true }}').result
-        attr.__exps = parseExp(exp)
+        attr.__exps = parseExp('true')
       } else {
         const expInfo = expsMap[attr.name]
         if (expInfo && expInfo.exp) {
