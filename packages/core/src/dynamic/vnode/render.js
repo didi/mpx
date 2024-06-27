@@ -146,8 +146,8 @@ export default function _genVnodeTree (astData, contextScope, options) {
         // class/style 的表达式为数组形式，class/style的计算过程需要放到逻辑层，主要是因为有逻辑匹配的过程去生成 vnodeTree
         const helper = attr.name === 'class' ? stringify.stringifyClass : stringify.stringifyStyle
         let value = ''
-        if (attr.__exps) {
-          let valueArr = evalExps(attr.__exps)
+        if (attr.__exp) {
+          let valueArr = evalExps(attr.__exp)
           valueArr = Array.isArray(valueArr) ? valueArr : [valueArr]
           value = helper(...valueArr)
           // dynamic style + wx:show
@@ -160,8 +160,8 @@ export default function _genVnodeTree (astData, contextScope, options) {
         }
         res[attr.name] = value
       } else {
-        res[dash2hump(attr.name)] = attr.__exps
-          ? evalExps(attr.__exps)
+        res[dash2hump(attr.name)] = attr.__exp
+          ? evalExps(attr.__exp)
           : attr.value
       }
     })
@@ -195,7 +195,7 @@ export default function _genVnodeTree (astData, contextScope, options) {
   function genText (node) {
     return {
       nt: '#text',
-      ct: node.__exps ? evalExps(node.__exps) : node.text
+      ct: node.__exp ? evalExps(node.__exp) : node.text
     }
   }
 
@@ -210,7 +210,7 @@ export default function _genVnodeTree (astData, contextScope, options) {
     }
     const forExp = node.for
     const res = []
-    let forValue = evalExps(forExp.__exps)
+    let forValue = evalExps(forExp.__exp)
 
     // 和微信的模版渲染策略保持一致：当 wx:for 的值为字符串时，会将字符串解析成字符串数组
     if (isString(forValue)) {
@@ -250,7 +250,7 @@ export default function _genVnodeTree (astData, contextScope, options) {
       const condition = ifConditions[i]
       // 非 else 节点
       if (condition.ifExp) {
-        const identifierValue = evalExps(condition.__exps)
+        const identifierValue = evalExps(condition.__exp)
         if (identifierValue) {
           res = genVnodeTree(condition.block === 'self' ? node : condition.block)
           break
