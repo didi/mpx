@@ -1428,7 +1428,7 @@ function processAttrs (el, options) {
       if (isTemplateData) {
         result = result.replace(spreadREG, '$1')
       }
-      addExp(el, result, isProps)
+      addExp(el, result, isProps, attr.name)
       if (parsed.replaced) {
         modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
       }
@@ -1854,7 +1854,7 @@ function processAliAddComponentRootView (el, options, meta) {
 
   if (options.runtimeCompile) {
     postProcessDynamic(el, config[mode])
-    processAttrsDynamic(componentWrapView, config[mode])
+    processAttrs(componentWrapView, options)
     collectDynamicInfo(componentWrapView, options, meta)
   }
 
@@ -1925,27 +1925,27 @@ function processShow (el, options, root) {
       if (options.runtimeCompile) {
         processShowStyleDynamic(el, show)
       } else {
-        processShowStyle()
+        processShowStyle(el, show)
       }
     }
   } else {
     if (options.runtimeCompile) {
       processShowStyleDynamic(el, show)
     } else {
-      processShowStyle()
+      processShowStyle(el, show)
     }
   }
+}
 
-  function processShowStyle () {
-    if (show !== undefined) {
-      const showExp = parseMustacheWithContext(show).result
-      let oldStyle = getAndRemoveAttr(el, 'style').val
-      oldStyle = oldStyle ? oldStyle + ';' : ''
-      addAttrs(el, [{
-        name: 'style',
-        value: `${oldStyle}{{${showExp}?'':'display:none;'}}`
-      }])
-    }
+function processShowStyle (el, show) {
+  if (show !== undefined) {
+    const showExp = parseMustacheWithContext(show).result
+    let oldStyle = getAndRemoveAttr(el, 'style').val
+    oldStyle = oldStyle ? oldStyle + ';' : ''
+    addAttrs(el, [{
+      name: 'style',
+      value: `${oldStyle}{{${showExp}?'':'display:none;'}}`
+    }])
   }
 }
 
@@ -2152,11 +2152,7 @@ function processElement (el, root, options, meta) {
     processComponentIs(el, options)
   }
 
-  if (options.runtimeCompile) {
-    processAttrsDynamic(el, config[mode])
-  } else {
-    processAttrs(el, options)
-  }
+  processAttrs(el, options)
 }
 
 function closeElement (el, meta, options) {
@@ -2614,18 +2610,6 @@ function addIfConditionDynamic (el, condition) {
   el.ifConditions.push(condition)
 }
 
-function getAttrExps (attr) {
-  // 属性为单值的写法 <scroll-view enhenced></scroll-view>
-  // 默认置为 true
-  if (attr.value == null) {
-    attr.value = '{{ true }}'
-  }
-  const parsed = parseMustacheWithContext(attr.value)
-  if (parsed.hasBinding && !attr.__exps) {
-    return parseExp(parsed.result)
-  }
-}
-
 function processIfConditionsDynamic (el) {
   const prevNode = findPrevNode(el)
   if (prevNode && prevNode.if) {
@@ -2693,21 +2677,6 @@ function processTextDynamic (vnode) {
   }
 }
 
-function processAttrsDynamic (vnode, config) {
-  if (vnode.attrsList && vnode.attrsList.length) {
-    // 后序遍历，主要为了做剔除的操作
-    for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
-      const attr = vnode.attrsList[i]
-      if (!config.event.parseEvent(attr.name)) {
-        const exps = getAttrExps(attr)
-        if (exps) {
-          addExp(vnode, exps, false, attr.name)
-        }
-      }
-    }
-  }
-}
-
 function postProcessIfDynamic (vnode, config) {
   if (vnode.if) {
     const parsedExp = vnode.if.exp
@@ -2748,10 +2717,13 @@ function postProcessAttrsDynamic (vnode, config) {
       if (config.event.parseEvent(attr.name)) {
         // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
         vnode.attrsList.splice(i, 1)
+      } else if (attr.value == null) {
+        const exp = parseMustacheWithContext('{{ true }}').result
+        attr.__exps = parseExp(exp)
       } else {
         const expInfo = expsMap[attr.name]
         if (expInfo && expInfo.exp) {
-          attr.__exps = expInfo.exp
+          attr.__exps = parseExp(expInfo.exp)
         }
       }
       if (attr.__exps) {
