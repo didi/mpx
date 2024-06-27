@@ -307,6 +307,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
+          ctorType,
           moduleId,
           usingComponents,
           componentPlaceholder
