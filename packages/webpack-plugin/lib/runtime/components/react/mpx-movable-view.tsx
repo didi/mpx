@@ -16,7 +16,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useState, useRef, useEffect, forwardRef, ReactNode, useContext } from 'react';
+import { useRef, useEffect, forwardRef, ReactNode, useContext } from 'react';
 import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder } from 'react-native';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import { MovableAreaContext } from './context'
@@ -162,6 +162,10 @@ const MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewPr
             }, props));
           }
         } else if (gestureState.numberActiveTouches === 1) {
+          if (initialDistance) {
+            return; // Skip processing if it's switching from a double touch
+          }
+
           Animated.event(
             [
               null,
@@ -197,17 +201,27 @@ const MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewPr
         isFirstTouch = true;
         initialDistance = 0;
 
-        const x = pan.x._value > MovableAreaLayout.width - layoutRef.current.width
-          ? MovableAreaLayout.width - layoutRef.current.width
-          : pan.x._value < 0
-            ? 0
-            : pan.x._value;
+        // Calculate scaled element size
+        const scaledWidth = layoutRef.current.width * scaleValue._value;
+        const scaledHeight = layoutRef.current.height * scaleValue._value;
 
-        const y = pan.y._value > MovableAreaLayout.height - layoutRef.current.height
-          ? MovableAreaLayout.height - layoutRef.current.height
-          : pan.y._value < 0
-            ? 0
-            : pan.y._value;
+        // Calculate the boundary limits
+        let x = pan.x._value;
+        let y = pan.y._value;
+
+        // Correct x coordinate
+        if (x < 0) {
+          x = 0;
+        } else if (x > MovableAreaLayout.width - scaledWidth) {
+          x = MovableAreaLayout.width - scaledWidth;
+        }
+
+        // Correct y coordinate
+        if (y < 0) {
+          y = 0;
+        } else if (y > MovableAreaLayout.height - scaledHeight) {
+          y = MovableAreaLayout.height - scaledHeight;
+        }
 
         const needChange = x !== pan.x._value || y !== pan.y._value;
 
@@ -249,7 +263,7 @@ const MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewPr
         friction,
         useNativeDriver: false,
       }).start(() => {
-        onLayout()
+
         bindscale && bindscale(getCustomEvent('change', {}, {
           detail: {
             x: pan.x._value,
