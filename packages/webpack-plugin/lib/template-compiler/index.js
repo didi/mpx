@@ -21,6 +21,7 @@ module.exports = function (raw) {
   const decodeHTMLText = mpx.decodeHTMLText
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
   const usingComponents = queryObj.usingComponents || []

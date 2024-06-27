@@ -1047,7 +1047,7 @@ function processEvent (el, options) {
       const prefix = parsedEvent.prefix
       // catch 场景下，下发的 eventconfig 里面包含特殊字符，用以运行时的判断
       const extraStr = options.runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
-      const parsedFunc = parseFuncStr(attr.value, extraStr)
+      const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
