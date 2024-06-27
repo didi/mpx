@@ -149,16 +149,12 @@ export default function _genVnodeTree (astData, contextScope, options) {
         if (attr.__exps) {
           let valueArr = evalExps(attr.__exps)
           valueArr = Array.isArray(valueArr) ? valueArr : [valueArr]
-          const [staticItem, dynamicItem, wxShowStyleObj] = valueArr
-          let lastDynamicItem = dynamicItem
-          if (wxShowStyleObj) {
-            if (typeof dynamicItem === 'string') {
-              lastDynamicItem = dynamicItem + ';' + Object.entries(wxShowStyleObj).map(([k, v]) => `${k}:${v}`).join(';')
-            } else {
-              lastDynamicItem = Array.isArray(dynamicItem) ? [...dynamicItem, wxShowStyleObj] : [dynamicItem, wxShowStyleObj]
-            }
+          value = helper(...valueArr)
+          // dynamic style + wx:show
+          const showStyle = valueArr[2]
+          if (showStyle) {
+            value = value + ';' + showStyle
           }
-          value = helper(staticItem, lastDynamicItem)
         } else {
           value = attr.value
         }
