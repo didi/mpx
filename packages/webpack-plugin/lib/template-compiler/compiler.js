@@ -2616,7 +2616,7 @@ function processIfConditionsDynamic (el) {
     addIfConditionDynamic(prevNode, {
       ifExp: !!el.elseif,
       block: el,
-      __exps: el.elseif ? parseExp(el.elseif.exp) : ''
+      __exp: el.elseif ? parseExp(el.elseif.exp) : ''
     })
     removeNode(el)
   }
@@ -2672,7 +2672,7 @@ function processTextDynamic (vnode) {
   }
   const parsed = parseMustacheWithContext(vnode.text)
   if (parsed.hasBinding) {
-    vnode.__exps = parseExp(parsed.result)
+    vnode.__exp = parseExp(parsed.result)
     delete vnode.text
   }
 }
@@ -2683,7 +2683,7 @@ function postProcessIfDynamic (vnode, config) {
     addIfConditionDynamic(vnode, {
       ifExp: true,
       block: 'self',
-      __exps: parseExp(parsedExp)
+      __exp: parseExp(parsedExp)
     })
     getAndRemoveAttr(vnode, config.directive.if)
     vnode.if = true
@@ -2700,7 +2700,7 @@ function postProcessIfDynamic (vnode, config) {
 
 function postProcessForDynamic (vnode) {
   if (vnode.for) {
-    vnode.for.__exps = parseExp(vnode.for.exp)
+    vnode.for.__exp = parseExp(vnode.for.exp)
     delete vnode.for.raw
     delete vnode.for.exp
     popForScopes()
@@ -2719,14 +2719,14 @@ function postProcessAttrsDynamic (vnode, config) {
         // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
         getAndRemoveAttr(vnode, attr.name)
       } else if (attr.value == null) {
-        attr.__exps = parseExp('true')
+        attr.__exp = parseExp('true')
       } else {
         const expInfo = expsMap[attr.name]
         if (expInfo && expInfo.exp) {
-          attr.__exps = parseExp(expInfo.exp)
+          attr.__exp = parseExp(expInfo.exp)
         }
       }
-      if (attr.__exps) {
+      if (attr.__exp) {
         delete attr.value
       }
       if (directives.includes(attr.name)) {
