@@ -101,6 +101,26 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.moduleId) {
+      Object.defineProperties(context, {
+        __moduleId: {
+          get () {
+            return currentInject.moduleId
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.dynamic) {
+      Object.defineProperties(context, {
+        __dynamic: {
+          get () {
+            return currentInject.dynamic
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 

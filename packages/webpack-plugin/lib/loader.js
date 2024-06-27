@@ -16,11 +16,13 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
+const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
 module.exports = function (content) {
   this.cacheable()
@@ -50,6 +52,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const isRuntimeMode = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -80,6 +83,12 @@ module.exports = function (content) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
+
+  if (isRuntimeMode) {
+    const { request, outputPath } = genMpxCustomElement(packageName)
+    this._module.addPresentationalDependency(new DynamicEntryDependency([0, 0], request, 'component', outputPath, packageRoot, '', '', { replaceContent: '', postSubpackageEntry: true }))
+  }
+
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
