@@ -1,10 +1,8 @@
 const TAG_NAME = 'movable-area'
 
 module.exports = function ({ print }) {
-  // const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
-  // const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
-  // const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
-  // const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -18,6 +16,13 @@ module.exports = function ({ print }) {
     ios (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-movable-area'
-    }
+    },
+    props: [
+      {
+        test: /^(scale-area)$/,
+        ios: iosPropLog,
+        android: androidPropLog
+      }
+    ],
   }
 }
