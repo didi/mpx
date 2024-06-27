@@ -24,12 +24,13 @@ module.exports = function (script, {
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native'
+import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createNavigationContainerRef: createNavigationContainerRef,
-  createNativeStackNavigator: createNativeStackNavigator
+  createNativeStackNavigator: createNativeStackNavigator,
+  StackActions: StackActions
 }\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,

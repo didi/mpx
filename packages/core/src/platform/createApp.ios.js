@@ -49,8 +49,22 @@ export default function createApp (option, config = {}) {
       component: item
     })
   })
-
+  global.__navigationRef = navigationRef
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+  const onStateChange = () => {
+    if (global.__navigationHelper.lastSuccessCallback) {
+      global.__navigationHelper.lastSuccessCallback()
+      global.__navigationHelper.lastSuccessCallback = null
+    }
+  }
+  const onUnhandledAction = (action) => {
+    const payload = action.payload
+    const message = `The action '${action.type}'${payload ? ` with payload ${JSON.stringify(action.payload)}` : ''} was not handled by any navigator.`
+    if (global.__navigationHelper.lastFailCallback) {
+      global.__navigationHelper.lastFailCallback(message)
+      global.__navigationHelper.lastFailCallback = null
+    }
+  }
   global.__mpxOptionsMap[currentInject.moduleId] = memo(() => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
@@ -58,10 +72,9 @@ export default function createApp (option, config = {}) {
     }
     const instance = instanceRef.current
     useEffect(() => {
-      const state = navigationRef.getRootState()
-      const current = state?.routes?.[state?.index] || {}
+      const current = navigationRef.getCurrentRoute() || {}
       const options = {
-        path: current.name && current.name.replace(/^\//, ''),
+        path: current.name,
         query: current.params,
         scene: 0,
         shareTicket: '',
@@ -70,7 +83,7 @@ export default function createApp (option, config = {}) {
       global.__mpxEnterOptions = options
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
     }, [])
-    return createElement(NavigationContainer, { ref: navigationRef }, createElement(Stack.Navigator, { initialRouteName: firstPage }, ...pageScreens))
+    return createElement(NavigationContainer, { ref: navigationRef, onStateChange, onUnhandledAction }, createElement(Stack.Navigator, { initialRouteName: firstPage }, ...pageScreens))
   })
   global.getApp = function () {
     return appData
