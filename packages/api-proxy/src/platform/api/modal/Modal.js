@@ -1,4 +1,4 @@
-import { createDom, getRootElement, webHandleSuccess } from '../../../common/js'
+import { createDom, getRootElement, successHandle } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -80,7 +80,7 @@ export default class Modal {
         cancel: true,
         confirm: false
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
     }
     this.confirmBtn.onclick = () => {
       this.hide()
@@ -89,7 +89,7 @@ export default class Modal {
         cancel: false,
         confirm: true
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
     }
 
     this.modal.classList.add('show')

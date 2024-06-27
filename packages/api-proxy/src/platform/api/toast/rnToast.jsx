@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native'
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import RootSiblings from 'react-native-root-siblings'
 import successPng from './success.png'
 import errorPng from './error.png'
@@ -7,33 +7,30 @@ import errorPng from './error.png'
 let rootSiblingsObj
 let isLoading
 const styles = StyleSheet.create({
-  noMaskContent: {
-    width: 150,
-    height: 100,
+  toastContent: {
+    minWdth: 150,
+    maxWidth: '60%',
     backgroundColor: 'rgba(20, 20, 20, 0.7)',
     paddingTop: 15,
     paddingBottom: 15,
-    paddingLeft: 6,
-    paddingRight: 6,
+    paddingLeft: 20,
+    paddingRight: 20,
     borderRadius: 5,
-    top: '50%',
-    left: '50%',
-    zIndex: 10000,
-    position: 'absolute',
-    marginLeft: -75,
-    marginTop: -50,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center'
   },
-  toastContent: {
+  toastWrap: {
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
     zIndex: 10000,
-    position: "absolute"
+    position: "absolute",
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   toastImg: {
     width: 40,
@@ -45,7 +42,6 @@ const styles = StyleSheet.create({
   toastText: {
     textAlign: 'center',
     color: '#ffffff',
-    width: 100,
     fontSize: 14,
     lineHeight: 18,
     height: 18,
@@ -53,23 +49,24 @@ const styles = StyleSheet.create({
   }
 })
 function showToast (options) {
-  const { title, icon, image, duration = 1500, mask = false, success, fail, complete, isShowLoading } = options
+  const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isShowLoading } = options
   let ToastView
   const iconImg = {
     success: successPng,
     fail: errorPng
   }
+  const pointerEvents = mask ? 'auto' : 'none'
   isLoading = isShowLoading
   if (image || icon === 'success' || icon === 'error') {
-    ToastView = <View style={mask ? styles.toastContent : styles.noMaskContent}>
-      <View style={mask ? styles.noMaskContent : {}}>
+    ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
+      <View style={styles.toastContent}>
         <Image source={image || iconImg[icon]} style={styles.toastImg}></Image>
         <Text style={styles.toastText}>{title}</Text>
       </View>
     </View>
   } else if (icon === 'loading') {
-    ToastView = <View style={mask ? styles.toastContent : styles.noMaskContent}>
-      <View style={mask ? styles.noMaskContent : {}}>
+    ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
+      <View style={styles.toastContent}>
         <ActivityIndicator
           animating
           style={{ marginBottom: 10 }}
@@ -80,11 +77,11 @@ function showToast (options) {
       </View>
     </View>
   }  else  {
-    ToastView = <View style={mask ? styles.toastContent : styles.noMaskContent}>
-      <View style={mask ? styles.noMaskContent : {}}>
-        <Text style={{ ...styles.toastText, ...(icon === 'none' ? {
-          height: 36
-        } : {}) }}>{title}</Text>
+    ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
+      <View style={styles.toastContent}>
+        <Text numberOfLines={2} style={{ ...styles.toastText, ...(icon === 'none' ? {
+            height: 36
+          } : {}) }}>{title}</Text>
       </View>
     </View>
   }
@@ -103,12 +100,12 @@ function showToast (options) {
     const result = {
       errMsg: 'showToast:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   } catch (e) {
     const result = {
       errMsg: `showToast:fail invalid ${e}`
     }
-    webHandleSuccess(result, fail, complete)
+    failHandle(result, fail, complete)
   }
 }
 
@@ -121,12 +118,12 @@ function hideToast(options) {
     const result = {
       errMsg: 'hideToast:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   } catch (e) {
     const result = {
       errMsg: `hideToast:fail invalid ${e}`
     }
-    webHandleSuccess(result, fail, complete)
+    failHandle(result, fail, complete)
   }
 }
 
@@ -144,13 +141,13 @@ function showLoading (options) {
       const result = {
         errMsg: 'showLoading:ok'
       }
-      webHandleSuccess(result, success, complete)
+      successHandle(result, success, complete)
     },
     fail (res) {
       const result = {
         errMsg: res.errMsg.replace('showToast', 'showLoading')
       }
-      webHandleSuccess(result, success, complete)
+      failHandle(result, success, complete)
     }
   })
 }
@@ -168,12 +165,12 @@ function hideLoading (options) {
     const result = {
       errMsg: 'hideLoading:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   } catch (e) {
     const result = {
       errMsg: `hideLoading:fail invalid ${e}`
     }
-    webHandleSuccess(result, fail, complete)
+    failHandle(result, fail, complete)
   }
 }
 

@@ -1,5 +1,5 @@
 import SystemSetting from 'react-native-system-setting'
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 
 function getScreenBrightness (options) {
   const { success, fail, complete } = options
@@ -8,12 +8,12 @@ function getScreenBrightness (options) {
       errMsg: 'getScreenBrightness:ok',
       value
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   }).catch(() => {
     const result = {
       errMsg: 'getScreenBrightness:fail'
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
   })
 }
 
@@ -23,12 +23,12 @@ function setScreenBrightness (options) {
     const result = {
       errMsg: 'setScreenBrightness:ok',
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   }).catch(() => {
     const result = {
       errMsg: 'setScreenBrightness:fail'
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
   })
 }
 

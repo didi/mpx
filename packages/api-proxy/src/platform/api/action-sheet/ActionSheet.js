@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, createDom, bindTap, getRootElement } from '../../../common/js'
+import { successHandle, failHandle, createDom, bindTap, getRootElement } from '../../../common/js'
 import '../../../common/stylus/ActionSheet.styl'
 
 export default class ActionSheet {
@@ -44,7 +44,7 @@ export default class ActionSheet {
           errMsg: 'showActionSheet:ok',
           tapIndex: index
         }
-        webHandleSuccess(res, opts.success, opts.complete)
+        successHandle(res, opts.success, opts.complete)
         // this.toPromiseResolve(res)
       }))
       list.appendChild(sheet)
@@ -57,7 +57,7 @@ export default class ActionSheet {
     this.tempListeners.push(bindTap(this.cancelBtn, () => {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
-      webHandleFail(err, opts.fail, opts.complete)
+      failHandle(err, opts.fail, opts.complete)
       // !opts.fail && this.toPromiseReject(err)
     }))
     // make transition next frame

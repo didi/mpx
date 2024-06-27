@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
 
 function request (options = { url: '' }) {
@@ -70,11 +70,11 @@ function request (options = { url: '' }) {
       header: res.headers
     }
     defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
     return result
   }).catch(err => {
     const res = { errMsg: `request:fail ${err}` }
-    webHandleFail(res, fail, complete)
+    failHandle(res, fail, complete)
     if (!fail) {
       return Promise.reject(res)
     }

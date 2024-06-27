@@ -1,9 +1,27 @@
-import { View, TouchableHighlight, Text, StyleSheet, Button, TouchableWithoutFeedback } from 'react-native'
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
+import { successHandle, failHandle } from '../../../common/js'
 import RootSiblings from 'react-native-root-siblings'
 function showActionSheet (options) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   let rootSiblingsObj
+  const slideAnim = new Animated.Value(500)
+  const slideIn = () => {
+    // Will change fadeAnim value to 1 in 5 seconds
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start()
+  }
+  const slideOut = () => {
+    // Will change fadeAnim value to 1 in 5 seconds
+    Animated.timing(slideAnim, {
+      toValue: 500,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+    })
+  }
   if (itemList.length === 0 || itemList.length > 6) {
     const result = {
       errMsg: 'showActionSheet:fail parameter error: itemList should not be large than 6'
@@ -12,7 +30,7 @@ function showActionSheet (options) {
       result.errno = 1001
       result.errMsg = 'showActionSheet:fail parameter error: parameter.itemList should have at least 1 item;'
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
     return
   }
   const styles = StyleSheet.create({
@@ -32,7 +50,10 @@ function showActionSheet (options) {
       bottom: 0,
       backgroundColor: '#ffffff',
       borderTopLeftRadius: 10,
-      borderTopRightRadius: 10
+      borderTopRightRadius: 10,
+      transform: [{
+        translateY: -500
+      }]
     },
     itemStyle: {
       paddingTop: 15,
@@ -57,35 +78,47 @@ function showActionSheet (options) {
       errMsg: 'showActionSheet:ok',
       tapIndex: index
     }
-    webHandleSuccess(result, success, complete)
-    rootSiblingsObj.destroy()
-    rootSiblingsObj = null
+    slideOut()
+    successHandle(result, success, complete)
+    setTimeout(() => {
+      rootSiblingsObj.destroy()
+      rootSiblingsObj = null
+    }, 5000)
   }
   const cancelAction = function () {
     const result = {
       errMsg: 'showActionSheet:fail cancel'
     }
-    webHandleFail(result, fail, complete)
-    rootSiblingsObj.destroy()
-    rootSiblingsObj = null
+    slideOut()
+    failHandle(result, fail, complete)
+    setTimeout(() => {
+      rootSiblingsObj.destroy()
+      rootSiblingsObj = null
+    }, 200)
   }
   let alertTextList = []
   if (alertText) {
     alertTextList = [alertText]
   }
   const ActionSheetView = <TouchableHighlight underlayColor="rgba(0,0,0,0.6)" onPress={cancelAction} style={styles.actionActionMask}>
-    <View
-      style={styles.actionSheetContent}>
-      { alertTextList.map((item, index) => <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{item}</Text></View>) }
+    <Animated.View
+      style={[
+        styles.actionSheetContent,
+        {
+          transform: [{translateY: slideAnim}]
+        }
+      ]}>
+      { alertTextList.map((item, index) => <View key={index} style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{item}</Text></View>) }
       { itemList.map((item, index) => <TouchableHighlight key={index} underlayColor="#ececec" onPress={() => selectAction(index)} style={ [styles.itemStyle, itemList.length -1 === index ? {
         borderBottomWidth: 6,
         borderBottomStyle: 'solid',
         borderBottomColor: '#f7f7f7'
       } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></TouchableHighlight>) }
       <View style={styles.buttonStyle}><Button color={'#000000'} title={'取消'} onPress={cancelAction}></Button></View>
-    </View>
+    </Animated.View>
   </TouchableHighlight>
   rootSiblingsObj = new RootSiblings(ActionSheetView)
+  slideIn()
 }
 
 export {

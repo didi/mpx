@@ -1,5 +1,5 @@
 import { View, Dimensions, Text, StyleSheet, Button, ScrollView } from 'react-native'
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import RootSiblings from 'react-native-root-siblings'
 const { width, height } = Dimensions.get('window')
 const showModal = function (options) {
@@ -138,7 +138,7 @@ const showModal = function (options) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
   }
 }
 
