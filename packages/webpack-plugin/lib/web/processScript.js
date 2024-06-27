@@ -50,7 +50,7 @@ module.exports = function (script, {
         hasApp = false
       }
       // 注入wxs模块
-      content += '  const wxsModules = {}\n'
+      content += '  var wxsModules = {}\n'
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach((module) => {
           const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)

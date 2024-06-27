@@ -5,8 +5,6 @@ import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
 
@@ -35,6 +33,8 @@ function createAppInstance (appData) {
 
 export default function createApp (option, config = {}) {
   const appData = {}
+
+  const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)

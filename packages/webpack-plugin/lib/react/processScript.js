@@ -1,7 +1,6 @@
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessorReact')
 const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
-const shallowStringify = require('../utils/shallow-stringify')
 
 module.exports = function (script, {
   loaderContext,
@@ -23,20 +22,25 @@ module.exports = function (script, {
 
   let output = '/* script */\n'
   if (ctorType === 'app') {
-    output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
-
+    output += `
+import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+global.__navigationHelper = {
+  NavigationContainer: NavigationContainer,
+  createNavigationContainerRef: createNavigationContainerRef,
+  createNativeStackNavigator: createNativeStackNavigator
+}\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
       jsonConfig
     })
-
     const componentsMap = buildComponentsMap({
       localComponentsMap,
       loaderContext,
       jsonConfig
     })
-
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
@@ -44,7 +48,6 @@ module.exports = function (script, {
     // RN环境暂不支持异步加载
     // output += 'import { lazy } from \'react\'\n'
     output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
-
     // 获取组件集合
     const componentsMap = buildComponentsMap({
       localComponentsMap,
