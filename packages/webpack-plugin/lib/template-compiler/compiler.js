@@ -2768,7 +2768,7 @@ function processShowStyleDynamic (el, show) {
   if (show !== undefined) {
     const showExp = parseMustacheWithContext(show).result
     const oldStyle = getAndRemoveAttr(el, 'style').val
-    const displayExp = `${showExp}? '' : "display:none"`
+    const displayExp = `${showExp}? '' : "display:none;"`
     const isArray = oldStyle?.endsWith(']}}')
     const value = isArray ? oldStyle?.replace(']}}', `,${displayExp}]}}`) : `${oldStyle ? `${oldStyle};` : ''}{{${displayExp}}}`
     addAttrs(el, [{
