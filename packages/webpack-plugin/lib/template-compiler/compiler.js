@@ -12,7 +12,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
-
+const shallowStringify = require('../utils/shallow-stringify')
 const no = function () {
   return false
 }
@@ -34,7 +34,6 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -62,7 +61,7 @@ function makeAttrsMap (attrs) {
   return map
 }
 
-function createASTElement (tag, attrs, parent) {
+function createASTElement (tag, attrs = [], parent = null) {
   return {
     type: 1,
     tag: tag,
@@ -75,11 +74,11 @@ function createASTElement (tag, attrs, parent) {
 
 function isForbiddenTag (el) {
   return (
-    el.tag === 'style' ||
-    (el.tag === 'script' && (
-      !el.attrsMap.type ||
-      el.attrsMap.type === 'text/javascript'
-    ))
+      el.tag === 'style' ||
+      (el.tag === 'script' && (
+          !el.attrsMap.type ||
+          el.attrsMap.type === 'text/javascript'
+      ))
   )
 }
 
@@ -88,25 +87,31 @@ function isForbiddenTag (el) {
 let warn$1
 let error$1
 let mode
+let env
 let defs
 let i18n
 let srcMode
-let processingTemplate
+let ctorType
+let moduleId
 let isNative
+let hasScoped
+let hasVirtualHost
 let rulesRunner
 let currentEl
 let injectNodes = []
 let forScopes = []
 let forScopesMap = {}
-let hasI18n = false
-let i18nInjectableComputed = []
-let env
 let platformGetTagNamespace
 let filePath
 let refId
-let hasOptionalChain = false
+let hasI18n = false
+let i18nInjectableComputed = []
+let hasOptionalChaining = false
+let processingTemplate = false
+const rulesResultMap = new Map()
 
 function updateForScopesMap () {
+  forScopesMap = {}
   forScopes.forEach((scope) => {
     forScopesMap[scope.index] = 'index'
     forScopesMap[scope.item] = 'item'
@@ -126,7 +131,6 @@ function popForScopes () {
   return scope
 }
 
-const rulesResultMap = new Map()
 const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
   Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
@@ -278,8 +282,8 @@ function parseHTML (html, options) {
         endTagLength = endTag.length
         if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
           text = text
-            .replace(/<!--([\s\S]*?)-->/g, '$1')
-            .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1')
+              .replace(/<!--([\s\S]*?)-->/g, '$1')
+              .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1')
         }
         if (shouldIgnoreFirstNewline(stackedTag, text)) {
           text = text.slice(1)
@@ -418,7 +422,7 @@ function parseHTML (html, options) {
       for (let i = stack.length - 1; i >= pos; i--) {
         if ((i > pos || !tagName) && options.warn) {
           options.warn(
-            ('tag <' + (stack[i].tag) + '> has no matching end tag.')
+              ('tag <' + (stack[i].tag) + '> has no matching end tag.')
           )
         }
         if (options.end) {
@@ -595,10 +599,30 @@ function parseComponent (content, options) {
 }
 
 function parse (template, options) {
-  rulesResultMap.clear()
+  // global var init
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
+  mode = options.mode || 'wx'
+  env = options.env
+  defs = options.defs || {}
+  srcMode = options.srcMode || mode
+  ctorType = options.ctorType
+  moduleId = options.moduleId
+  isNative = options.isNative
+  hasScoped = options.hasScoped
+  hasVirtualHost = options.hasVirtualHost
+  filePath = options.filePath
+  i18n = options.i18n
+  platformGetTagNamespace = options.getTagNamespace || no
+  refId = 0
+  injectNodes = []
+  forScopes = []
+  forScopesMap = {}
+  hasI18n = false
   i18nInjectableComputed = []
+  hasOptionalChaining = false
+  processingTemplate = false
+  rulesResultMap.clear()
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -615,15 +639,6 @@ function parse (template, options) {
     currentElementRuleResult.errorArray.push(content)
   }
 
-  mode = options.mode || 'wx'
-  env = options.env
-  defs = options.defs || {}
-  srcMode = options.srcMode || mode
-  isNative = options.isNative
-  filePath = options.filePath
-  i18n = options.i18n
-  refId = 0
-
   rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -635,14 +650,6 @@ function parse (template, options) {
     warn: _warn,
     error: _error
   })
-
-  injectNodes = []
-  forScopes = []
-  forScopesMap = {}
-  hasI18n = false
-  hasOptionalChain = false
-
-  platformGetTagNamespace = options.getTagNamespace || no
 
   const stack = []
   let root
@@ -677,9 +684,9 @@ function parse (template, options) {
       if (isForbiddenTag(element)) {
         element.forbidden = true
         warn$1(
-          'Templates should only be responsible for mapping the state to the ' +
-          'UI. Avoid placing tags with side-effects in your templates, such as ' +
-          '<' + tag + '>' + ', as they will not be parsed.'
+            'Templates should only be responsible for mapping the state to the ' +
+            'UI. Avoid placing tags with side-effects in your templates, such as ' +
+            '<' + tag + '>' + ', as they will not be parsed.'
         )
       }
 
@@ -736,7 +743,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          processText(el)
+          processText(el, meta, options)
         }
       }
     },
@@ -765,7 +772,7 @@ function parse (template, options) {
     }
   }
 
-  if (hasOptionalChain) {
+  if (hasOptionalChaining) {
     injectWxs(meta, optionalChainWxsName, optionalChainWxsPath)
   }
 
@@ -785,7 +792,7 @@ function parse (template, options) {
         arr.push(item)
       }
     })
-    arr.length && warn$1(`\n ${options.filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
+    arr.length && warn$1(`\n ${filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
   }
 
   return {
@@ -795,7 +802,7 @@ function parse (template, options) {
 }
 
 function getTempNode () {
-  return createASTElement('temp-node', [])
+  return createASTElement('temp-node')
 }
 
 function addChild (parent, newChild, before) {
@@ -848,16 +855,18 @@ function modifyAttr (el, name, val) {
   }
 }
 
-function moveBaseDirective (target, from, isDelete = true) {
-  target.for = from.for
-  target.if = from.if
-  target.elseif = from.elseif
-  target.else = from.else
+function postMoveBaseDirective (target, source, isDelete = true) {
+  target.for = source.for
+  target.if = source.if
+  target.elseif = source.elseif
+  target.else = source.else
+  postProcessFor(target)
+  postProcessIf(target)
   if (isDelete) {
-    delete from.for
-    delete from.if
-    delete from.elseif
-    delete from.else
+    delete source.for
+    delete source.if
+    delete source.elseif
+    delete source.else
   }
 }
 
@@ -895,7 +904,7 @@ function stringify (str) {
 
 const genericRE = /^generic:(.+)$/
 
-function processComponentGenericsForWeb (el, options, meta) {
+function processComponentGenericsWeb (el, options, meta) {
   if (options.componentGenerics && options.componentGenerics[el.tag]) {
     const generic = dash2hump(el.tag)
     el.tag = 'component'
@@ -907,7 +916,7 @@ function processComponentGenericsForWeb (el, options, meta) {
 
   let hasGeneric = false
 
-  const genericHash = options.moduleId
+  const genericHash = moduleId
 
   el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
@@ -944,10 +953,10 @@ function processComponentIs (el, options) {
     return
   }
 
-  options = options || {}
-  el.components = options.usingComponents
-  if (!el.components) {
-    warn$1('Component in which <component> tag is used must have a nonblank usingComponents field')
+  const isInRange = makeMap(getAndRemoveAttr(el, 'range').val || '')
+  el.components = (options.usingComponents || []).filter(i => isInRange(i))
+  if (!el.components.length) {
+    warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
 
   const is = getAndRemoveAttr(el, 'is').val
@@ -960,7 +969,7 @@ function processComponentIs (el, options) {
 
 const eventIdentifier = '__mpx_event__'
 
-function parseFuncStr2 (str) {
+function parseFuncStr (str) {
   const funcRE = /^([^()]+)(\((.*)\))?/
   const match = funcRE.exec(str)
   if (match) {
@@ -1023,23 +1032,22 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processBindEvent (el, options) {
+function processEvent (el, options) {
   const eventConfigMap = {}
-  el.attrsList.forEach(function (attr) {
-    const parsedEvent = config[mode].event.parseEvent(attr.name)
+  el.attrsList.forEach(function ({ name, value }) {
+    const parsedEvent = config[mode].event.parseEvent(name)
 
     if (parsedEvent) {
       const type = parsedEvent.eventName
       const modifiers = (parsedEvent.modifier || '').split('.')
-      const parsedFunc = parseFuncStr2(attr.value)
+      const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            rawName: attr.name,
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(parsedFunc)
+        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
@@ -1098,7 +1106,7 @@ function processBindEvent (el, options) {
 
   for (const type in eventConfigMap) {
     let needBind = false
-    let { configs, rawName, proxy } = eventConfigMap[type]
+    const { configs, proxy } = eventConfigMap[type]
     delete eventConfigMap[type]
     if (proxy) {
       needBind = true
@@ -1116,19 +1124,25 @@ function processBindEvent (el, options) {
     }
 
     if (needBind) {
-      if (rawName) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, rawName).has
-        } while (has)
-        // 清除修饰符
-        rawName = rawName.replace(/\..*/, '')
-      }
+      let resultName
+      configs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+
+          if (!resultName) {
+            // 清除修饰符
+            resultName = name.replace(/\..*/, '')
+          }
+        }
+      })
 
       addAttrs(el, [
         {
-          name: rawName || config[mode].event.getEvent(type),
+          name: resultName || config[mode].event.getEvent(type),
           value: '__invoke'
         }
       ])
@@ -1141,13 +1155,171 @@ function processBindEvent (el, options) {
   if (!isEmptyObject(eventConfigMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${config[mode].event.shallowStringify(eventConfigMap)}}}`
+      value: `{{${shallowStringify(eventConfigMap, true)}}}`
     }])
   }
 }
 
 function wrapMustache (val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
+}
+
+function parseOptionalChaining (str) {
+  const wxsName = `${optionalChainWxsName}.g`
+  let optionsRes
+  while (optionsRes = /\?\./.exec(str)) {
+    const strLength = str.length
+    const grammarMap = {
+      init () {
+        const initKey = [
+          {
+            mapKey: '[]',
+            mapValue: [
+              {
+                key: '[',
+                value: 1
+              },
+              {
+                key: ']',
+                value: -1
+              }
+            ]
+          },
+          {
+            mapKey: '()',
+            mapValue: [
+              {
+                key: '(',
+                value: 1
+              },
+              {
+                key: ')',
+                value: -1
+              }
+            ]
+          }
+        ]
+        this.count = {}
+        initKey.forEach(({ mapKey, mapValue }) => {
+          mapValue.forEach(({ key, value }) => {
+            this[key] = this.changeState(mapKey, value)
+          })
+        })
+      },
+      changeState (key, value) {
+        if (!this.count[key]) {
+          this.count[key] = 0
+        }
+        return () => {
+          this.count[key] = this.count[key] + value
+          return this.count[key]
+        }
+      },
+      checkState () {
+        return Object.values(this.count).find(i => i)
+      }
+    }
+    let leftIndex = optionsRes.index
+    let rightIndex = leftIndex + 2
+    let haveNotGetValue = true
+    let chainValue = ''
+    let chainKey = ''
+    let notCheck = false
+    grammarMap.init()
+    // 查 ?. 左边值
+    while (haveNotGetValue && leftIndex > 0) {
+      const left = str[leftIndex - 1]
+      const grammar = grammarMap[left]
+      if (notCheck) {
+        // 处于表达式内
+        chainValue = left + chainValue
+        if (grammar) {
+          grammar()
+          if (!grammarMap.checkState()) {
+            // 表达式结束
+            notCheck = false
+          }
+        }
+      } else if (~[']', ')'].indexOf(left)) {
+        // 命中表达式，开始记录表达式
+        chainValue = left + chainValue
+        notCheck = true
+        grammar()
+      } else if (left !== ' ') {
+        if (!/[A-Za-z0-9_$.]/.test(left)) {
+          // 结束
+          haveNotGetValue = false
+          leftIndex++
+        } else {
+          // 正常语法
+          chainValue = left + chainValue
+        }
+      }
+      leftIndex--
+    }
+    if (grammarMap.checkState() && haveNotGetValue) {
+      // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+      throw new Error('[optionChain] option value illegal!!!')
+    }
+    haveNotGetValue = true
+    let keyValue = ''
+    // 查 ?. 右边key
+    while (haveNotGetValue && rightIndex < strLength) {
+      const right = str[rightIndex]
+      const grammar = grammarMap[right]
+      if (notCheck) {
+        // 处于表达式内
+        if (grammar) {
+          grammar()
+          if (grammarMap.checkState()) {
+            keyValue += right
+          } else {
+            // 表达式结束
+            notCheck = false
+            chainKey += `,${keyValue}`
+            keyValue = ''
+          }
+        } else {
+          keyValue += right
+        }
+      } else if (~['[', '('].indexOf(right)) {
+        // 命中表达式，开始记录表达式
+        grammar()
+        if (keyValue) {
+          chainKey += `,'${keyValue}'`
+          keyValue = ''
+        }
+        notCheck = true
+      } else if (!/[A-Za-z0-9_$.?]/.test(right)) {
+        // 结束
+        haveNotGetValue = false
+        rightIndex--
+      } else if (right !== '?') {
+        // 正常语法
+        if (right === '.') {
+          if (keyValue) {
+            chainKey += `,'${keyValue}'`
+          }
+          keyValue = ''
+        } else {
+          keyValue += right
+        }
+      }
+      rightIndex++
+    }
+    if (grammarMap.checkState() && haveNotGetValue) {
+      // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
+      throw new Error('[optionChain] option key illegal!!!')
+    }
+    if (keyValue) {
+      chainKey += `,'${keyValue}'`
+    }
+    str = str.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + str.slice(rightIndex)
+    if (!hasOptionalChaining) {
+      hasOptionalChaining = true
+    }
+  }
+  return str
 }
 
 function parseMustacheWithContext (raw = '') {
@@ -1163,8 +1335,9 @@ function parseMustacheWithContext (raw = '') {
         }
       })
     }
+    // 处理可选链表达式
+    exp = parseOptionalChaining(exp)
 
-    exp = parseOptionChain(exp)
     if (i18n) {
       for (const i18nFuncName of i18nFuncNames) {
         const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
@@ -1244,12 +1417,12 @@ function parseMustache (raw = '', expHandler = exp => exp, strHandler = str => s
   }
 }
 
-function addExp (el, exp, isProps) {
+function addExp (el, exp, isProps, attrName) {
   if (exp) {
     if (!el.exps) {
       el.exps = []
     }
-    el.exps.push({ exp, isProps })
+    el.exps.push({ exp, isProps, attrName })
   }
 }
 
@@ -1274,7 +1447,7 @@ function processIf (el) {
   }
 }
 
-function processIfForWeb (el) {
+function processIfWeb (el) {
   let val = getAndRemoveAttr(el, config[mode].directive.if).val
   if (val) {
     el.if = {
@@ -1413,7 +1586,7 @@ function processAttrs (el, options) {
       if (isTemplateData) {
         result = result.replace(spreadREG, '$1')
       }
-      addExp(el, result, isProps)
+      addExp(el, result, isProps, attr.name)
       if (parsed.replaced) {
         modifyAttr(el, attr.name, needWrap ? parsed.val.slice(1, -1) : parsed.val)
       }
@@ -1428,7 +1601,7 @@ function postProcessFor (el) {
       这个操作主要是因为百度小程序不支持这两个directive在同级使用
      */
     if (el.if && mode === 'swan') {
-      const block = createASTElement('block', [])
+      const block = createASTElement('block')
       replaceNode(el, block, true)
       block.for = el.for
       delete el.for
@@ -1544,7 +1717,7 @@ function postProcessIf (el) {
   }
 }
 
-function processText (el) {
+function processText (el, meta) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -1675,13 +1848,13 @@ function processAliExternalClassesHack (el, options) {
     }
   })
 
-  if (options.hasScoped && isComponent) {
+  if (hasScoped && isComponent) {
     options.externalClasses.forEach((className) => {
       const externalClass = getAndRemoveAttr(el, className).val
       if (externalClass) {
         addAttrs(el, [{
           name: className,
-          value: `${externalClass} ${options.moduleId}`
+          value: `${externalClass} ${moduleId}`
         }])
       }
     })
@@ -1749,10 +1922,9 @@ function processWebExternalClassesHack (el, options) {
   }
 }
 
-function processScoped (el, options) {
-  if (options.hasScoped && isRealNode(el)) {
-    const moduleId = options.moduleId
-    const rootModuleId = options.isComponent ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
+function processScoped (el) {
+  if (hasScoped && isRealNode(el)) {
+    const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
@@ -1770,12 +1942,12 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}.vue`
+      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
     }
   }
 }
 
-function processAliAddComponentRootView (el, options) {
+function postProcessAliComponentRootView (el, options) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -1789,25 +1961,25 @@ function processAliAddComponentRootView (el, options) {
     { condition: /^slot$/, action: 'move' }
   ]
   const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${options.moduleId}` }
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${moduleId}` }
   ]
-  const newElAttrs = []
+  const newAttrs = []
   const allAttrs = cloneAttrsList(el.attrsList)
 
   function processClone (attr) {
-    newElAttrs.push(attr)
+    newAttrs.push(attr)
   }
 
   function processMove (attr) {
     getAndRemoveAttr(el, attr.name)
-    newElAttrs.push(attr)
+    newAttrs.push(attr)
   }
 
   function processAppendRules (el) {
     processAppendAttrsRules.forEach((rule) => {
       const getNeedAppendAttrValue = el.attrsMap[rule.name]
       const value = getNeedAppendAttrValue ? getNeedAppendAttrValue + ' ' + rule.value : rule.value
-      newElAttrs.push({
+      newAttrs.push({
         name: rule.name,
         value
       })
@@ -1828,32 +2000,27 @@ function processAliAddComponentRootView (el, options) {
   })
 
   processAppendRules(el)
-  const componentWrapView = createASTElement('view', newElAttrs)
-  moveBaseDirective(componentWrapView, el)
-  if (el.is && el.components) {
-    el = postProcessComponentIs(el)
-  }
-
+  const componentWrapView = createASTElement('view', newAttrs)
   replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
-  return componentWrapView
+  postMoveBaseDirective(componentWrapView, el)
 }
 
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
-    if (options.isComponent) {
-      if ((mode === 'wx') && options.hasVirtualHost) {
+    if (ctorType === 'component') {
+      if (mode === 'wx' && hasVirtualHost) {
         // wx组件注入virtualHost配置
         !meta.options && (meta.options = {})
         meta.options.virtualHost = true
       }
-      if ((mode === 'web') && !options.hasVirtualHost) {
+      if (mode === 'web' && !hasVirtualHost) {
         // ali组件根节点实体化
         const rootView = createASTElement('view', [
           {
             name: 'class',
-            value: `${MPX_ROOT_VIEW} host-${options.moduleId}`
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
           },
           {
             name: 'v-on',
@@ -1864,10 +2031,8 @@ function getVirtualHostRoot (options, meta) {
         return rootView
       }
     }
-    if (options.isPage) {
-      if (mode === 'web') {
-        return createASTElement('page', [])
-      }
+    if (mode === 'web' && ctorType === 'page') {
+      return createASTElement('page')
     }
   }
   return getTempNode()
@@ -1881,8 +2046,8 @@ function processShow (el, options, root) {
   if (has && show === undefined) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
   }
-  if (options.hasVirtualHost) {
-    if (options.isComponent && el.parent === root && isRealNode(el)) {
+  if (hasVirtualHost) {
+    if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
       if (show !== undefined) {
         show = `{{${parseMustacheWithContext(show).result}&&mpxShow}}`
       } else {
@@ -2086,9 +2251,9 @@ function processElement (el, root, options, meta) {
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
-    processIfForWeb(el)
+    processIfWeb(el)
     processWebExternalClassesHack(el, options)
-    processComponentGenericsForWeb(el, options, meta)
+    processComponentGenericsWeb(el, options, meta)
     return
   }
 
@@ -2096,7 +2261,7 @@ function processElement (el, root, options, meta) {
 
   // 仅ali平台需要scoped模拟样式隔离
   if (mode === 'ali') {
-    processScoped(el, options)
+    processScoped(el)
   }
 
   if (transAli) {
@@ -2108,7 +2273,7 @@ function processElement (el, root, options, meta) {
   processRef(el, options, meta)
   processClass(el, meta)
   processStyle(el, meta)
-  processBindEvent(el, options)
+  processEvent(el, options)
 
   if (!pass) {
     processShow(el, options, root)
@@ -2128,13 +2293,11 @@ function closeElement (el, meta, options) {
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
   postProcessWxs(el, meta)
-
   if (!pass) {
-    if (isComponentNode(el, options) && !options.hasVirtualHost && mode === 'ali') {
-      el = processAliAddComponentRootView(el, options)
-    } else {
-      el = postProcessComponentIs(el)
+    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
+      postProcessAliComponentRootView(el, options)
     }
+    postProcessComponentIs(el)
   }
   postProcessFor(el)
   postProcessIf(el)
@@ -2172,17 +2335,14 @@ function postProcessComponentIs (el) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
-      tempNode = createASTElement('block', [])
-      moveBaseDirective(tempNode, el)
+      tempNode = createASTElement('block')
     } else {
       tempNode = getTempNode()
     }
-    let range = []
-    if (el.attrsMap.range) {
-      range = getAndRemoveAttr(el, 'range').val.split(',').map(item => item.trim())
-    }
+    replaceNode(el, tempNode, true)
+    postMoveBaseDirective(tempNode, el)
+
     el.components.forEach(function (component) {
-      if (range.length > 0 && !range.includes(component)) return
       const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
@@ -2199,10 +2359,9 @@ function postProcessComponentIs (el) {
     if (!el.parent) {
       error$1('Dynamic component can not be the template root, considering wrapping it with <view> or <text> tag!')
     } else {
-      el = replaceNode(el, tempNode, true) || el
+      replaceNode(el, tempNode, true)
     }
   }
-  return el
 }
 
 function stringifyAttr (val) {
@@ -2282,8 +2441,8 @@ function findPrevNode (node) {
   }
 }
 
-function replaceNode (node, newNode, reserveNode) {
-  if (!reserveNode) deleteErrorInResultMap(node)
+function replaceNode (node, newNode, reserveError) {
+  if (!reserveError) deleteErrorInResultMap(node)
   const parent = node.parent
   if (parent) {
     const index = parent.children.indexOf(node)
@@ -2295,8 +2454,8 @@ function replaceNode (node, newNode, reserveNode) {
   }
 }
 
-function removeNode (node, reserveNode) {
-  if (!reserveNode) deleteErrorInResultMap(node)
+function removeNode (node, reserveError) {
+  if (!reserveError) deleteErrorInResultMap(node)
   const parent = node.parent
   if (parent) {
     const index = parent.children.indexOf(node)
@@ -2389,169 +2548,6 @@ function genNode (node) {
     }
   }
   return exp
-}
-
-/**
- * 处理可选链用法
- * @param str
- * @returns
- */
-function parseOptionChain (str) {
-  const wxsName = `${optionalChainWxsName}.g`
-  let optionsRes
-  while (optionsRes = /\?\./.exec(str)) {
-    const strLength = str.length
-    const grammarMap = {
-      init () {
-        const initKey = [
-          {
-            mapKey: '[]',
-            mapValue: [
-              {
-                key: '[',
-                value: 1
-              },
-              {
-                key: ']',
-                value: -1
-              }
-            ]
-          },
-          {
-            mapKey: '()',
-            mapValue: [
-              {
-                key: '(',
-                value: 1
-              },
-              {
-                key: ')',
-                value: -1
-              }
-            ]
-          }
-        ]
-        this.count = {}
-        initKey.forEach(({ mapKey, mapValue }) => {
-          mapValue.forEach(({ key, value }) => {
-            this[key] = this.changeState(mapKey, value)
-          })
-        })
-      },
-      changeState (key, value) {
-        if (!this.count[key]) {
-          this.count[key] = 0
-        }
-        return () => {
-          this.count[key] = this.count[key] + value
-          return this.count[key]
-        }
-      },
-      checkState () {
-        return Object.values(this.count).find(i => i)
-      }
-    }
-    let leftIndex = optionsRes.index
-    let rightIndex = leftIndex + 2
-    let haveNotGetValue = true
-    let chainValue = ''
-    let chainKey = ''
-    let notCheck = false
-    grammarMap.init()
-    // 查 ?. 左边值
-    while (haveNotGetValue && leftIndex > 0) {
-      const left = str[leftIndex - 1]
-      const grammar = grammarMap[left]
-      if (notCheck) {
-        // 处于表达式内
-        chainValue = left + chainValue
-        if (grammar) {
-          grammar()
-          if (!grammarMap.checkState()) {
-            // 表达式结束
-            notCheck = false
-          }
-        }
-      } else if (~[']', ')'].indexOf(left)) {
-        // 命中表达式，开始记录表达式
-        chainValue = left + chainValue
-        notCheck = true
-        grammar()
-      } else if (left !== ' ') {
-        if (!/[A-Za-z0-9_$.]/.test(left)) {
-          // 结束
-          haveNotGetValue = false
-          leftIndex++
-        } else {
-          // 正常语法
-          chainValue = left + chainValue
-        }
-      }
-      leftIndex--
-    }
-    if (grammarMap.checkState() && haveNotGetValue) {
-      // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-      throw new Error('[optionChain] option value illegal!!!')
-    }
-    haveNotGetValue = true
-    let keyValue = ''
-    // 查 ?. 右边key
-    while (haveNotGetValue && rightIndex < strLength) {
-      const right = str[rightIndex]
-      const grammar = grammarMap[right]
-      if (notCheck) {
-        // 处于表达式内
-        if (grammar) {
-          grammar()
-          if (grammarMap.checkState()) {
-            keyValue += right
-          } else {
-            // 表达式结束
-            notCheck = false
-            chainKey += `,${keyValue}`
-            keyValue = ''
-          }
-        } else {
-          keyValue += right
-        }
-      } else if (~['[', '('].indexOf(right)) {
-        // 命中表达式，开始记录表达式
-        grammar()
-        if (keyValue) {
-          chainKey += `,'${keyValue}'`
-          keyValue = ''
-        }
-        notCheck = true
-      } else if (!/[A-Za-z0-9_$.?]/.test(right)) {
-        // 结束
-        haveNotGetValue = false
-        rightIndex--
-      } else if (right !== '?') {
-        // 正常语法
-        if (right === '.') {
-          if (keyValue) {
-            chainKey += `,'${keyValue}'`
-          }
-          keyValue = ''
-        } else {
-          keyValue += right
-        }
-      }
-      rightIndex++
-    }
-    if (grammarMap.checkState() && haveNotGetValue) {
-      // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-      throw new Error('[optionChain] option key illegal!!!')
-    }
-    if (keyValue) {
-      chainKey += `,'${keyValue}'`
-    }
-    str = str.slice(0, leftIndex) + `${wxsName}(${chainValue},[${chainKey.slice(1)}])` + str.slice(rightIndex)
-    if (!hasOptionalChain) {
-      hasOptionalChain = true
-    }
-  }
-  return str
 }
 
 module.exports = {
