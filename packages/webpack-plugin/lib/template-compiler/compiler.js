@@ -2336,7 +2336,7 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
       postProcessAliComponentRootView(el, options, meta)
     }
-    postProcessComponentIs(el)
+    postProcessComponentIs(el, options)
   }
 
   if (options.runtimeCompile) {
@@ -2382,7 +2382,7 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el) {
+function postProcessComponentIs (el, options) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2391,7 +2391,7 @@ function postProcessComponentIs (el) {
       tempNode = getTempNode()
     }
     replaceNode(el, tempNode, true)
-    postMoveBaseDirective(tempNode, el)
+    postMoveBaseDirective(tempNode, el, options)
 
     el.components.forEach(function (component) {
       const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
