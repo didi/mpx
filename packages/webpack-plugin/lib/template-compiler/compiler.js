@@ -2674,7 +2674,7 @@ function processStyleDynamic (el, meta) {
       name: targetType,
       value: `{{[${staticStyleExp},${dynamicStyleExp}]}}`
     }])
-  } else {
+  } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
       value: staticStyle
