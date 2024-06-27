@@ -2715,7 +2715,7 @@ function postProcessAttrsDynamic (vnode, config) {
     // 后序遍历，主要为了做剔除的操作
     for (let i = vnode.attrsList.length - 1; i >= 0; i--) {
       const attr = vnode.attrsList[i]
-      if (config.event.parseEvent(attr.name)) {
+      if (config.event.parseEvent(attr.name) || directives.includes(attr.name)) {
         // 原本的事件代理直接剔除，主要是基础模版的事件直接走代理形式，事件绑定名直接写死的，优化 astJson 体积
         getAndRemoveAttr(vnode, attr.name)
       } else if (attr.value == null) {
@@ -2728,9 +2728,6 @@ function postProcessAttrsDynamic (vnode, config) {
       }
       if (attr.__exp) {
         delete attr.value
-      }
-      if (directives.includes(attr.name)) {
-        getAndRemoveAttr(vnode, attr.name)
       }
     }
   }
