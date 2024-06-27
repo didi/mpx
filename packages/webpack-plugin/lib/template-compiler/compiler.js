@@ -2709,7 +2709,6 @@ function processAttrsDynamic (vnode, config) {
 }
 
 function postProcessIfDynamic (vnode, config) {
-  delete vnode.ifProcessed
   if (vnode.if) {
     const parsedExp = vnode.if.exp
     addIfConditionDynamic(vnode, {
