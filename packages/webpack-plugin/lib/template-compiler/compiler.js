@@ -2271,15 +2271,12 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
+  processClass(el, meta)
+  processStyle(el, meta)
+  processEvent(el, options)
 
   if (!pass) {
-    processClass(el, meta)
-    processStyle(el, meta)
     processShow(el, options, root)
-  }
-
-  if (!pass) {
-    processEvent(el, options)
     processComponentIs(el, options)
   }
 
