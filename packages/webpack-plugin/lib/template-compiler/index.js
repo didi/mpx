@@ -21,15 +21,13 @@ module.exports = function (raw) {
   const decodeHTMLText = mpx.decodeHTMLText
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
-  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-  const componentsMap = mpx.componentsMap[packageName]
-  const pagesMap = mpx.pagesMap
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
   const usingComponents = queryObj.usingComponents || []
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
+  const ctorType = queryObj.ctorType
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || '_' + mpx.pathHash(resourcePath)
@@ -61,8 +59,7 @@ module.exports = function (raw) {
     componentPlaceholder,
     hasComment,
     isNative,
-    isComponent: !!componentsMap[resourcePath],
-    isPage: !!pagesMap[resourcePath],
+    ctorType,
     mode,
     env,
     srcMode: localSrcMode || globalSrcMode,
