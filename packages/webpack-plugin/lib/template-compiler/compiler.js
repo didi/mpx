@@ -2021,10 +2021,10 @@ function postProcessAliComponentRootView (el, options, meta) {
 
   replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
+  processAttrs(componentWrapView, options)
   postMoveBaseDirective(componentWrapView, el, options)
 
   if (options.runtimeCompile) {
-    processAttrs(componentWrapView, options)
     collectDynamicInfo(componentWrapView, options, meta)
     postProcessAttrsDynamic(componentWrapView, config[mode])
   }
