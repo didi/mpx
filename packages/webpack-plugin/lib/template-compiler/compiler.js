@@ -964,8 +964,9 @@ function processComponentIs (el, options) {
     return
   }
 
-  const isInRange = makeMap(getAndRemoveAttr(el, 'range').val || '')
-  el.components = (options.usingComponents || []).filter(i => isInRange(i))
+  // const isInRange = makeMap(getAndRemoveAttr(el, 'range').val || '')
+  // el.components = (options.usingComponents || []).filter(i => isInRange(i))
+  el.components = options.usingComponents || []
   if (!el.components.length) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
@@ -2393,7 +2394,12 @@ function postProcessComponentIs (el, options) {
     replaceNode(el, tempNode, true)
     postMoveBaseDirective(tempNode, el, options)
 
+    let range = []
+    if (el.attrsMap.range) {
+      range = getAndRemoveAttr(el, 'range').val.split(',').map(item => item.trim())
+    }
     el.components.forEach(function (component) {
+      if (range.length > 0 && !range.includes(component)) return
       const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
         raw: `{{${el.is} === ${stringify(component)}}}`,
