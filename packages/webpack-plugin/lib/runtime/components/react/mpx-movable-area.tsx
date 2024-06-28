@@ -14,7 +14,7 @@ interface MovableAreaProps {
   height?: number;
 }
 
-const MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
+const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
   const { children, style } = props;
   const [areaWidth, setAreaWidth] = useState(0);
   const [areaHeight, setAreaHeight] = useState(0);
@@ -48,6 +48,6 @@ const MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaPr
   );
 })
 
-MovableArea.displayName = 'mpx-movable-area';
+_MovableArea.displayName = 'mpx-movable-area';
 
-export default MovableArea
+export default _MovableArea

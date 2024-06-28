@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
 })
 
-const MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
+const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
   const {
     children,
     friction = 7,
@@ -336,6 +336,6 @@ const MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewPr
   );
 })
 
-MovableView.displayName = 'mpx-movable-view'
+_MovableView.displayName = 'mpx-movable-view'
 
-export default MovableView
+export default _MovableView
