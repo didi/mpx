@@ -41,7 +41,10 @@ export default function request (config, mpx, mode) {
       reject(err)
     }
 
-
+    if (mode === 'web') {
+      const { request } = require('@mpxjs/api-proxy/src/platform/api/request/index.web.js')
+      return request(config)
+    }
 
     const envObj = getEnvObj(mode)
 
