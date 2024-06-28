@@ -111,10 +111,14 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       global.currentInject.render = function (_i, _c, _r, _sc) {
         a.b
         if (a['b']) {}
+
         c;
         a[c];
+        a[c].d;
+
         c.d;
         a.b[c.d];
+        a.b[c.d].e;
         e;
         e[0].name
       }`
@@ -123,10 +127,11 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   if (_c("a.b")) {}
 
-  _sc("c");
-
   _sc("a")[""];
+  _sc("a")[_sc("c")].d;
+
   _c("a.b")[""];
+  _c("a.b")[_c("c.d")].e;
 
   _sc("e");
 };`
