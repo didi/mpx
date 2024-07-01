@@ -248,24 +248,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { useSafeAreaInsets } = global.__navigationHelper
-    const pageContainer = () => {
-      const insets = useSafeAreaInsets()
+    const Page = (props) => {
       return createElement(ReactNative.ScrollView,
         {
           style: {
-            ...ReactNative.StyleSheet.absoluteFillObject,
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            paddingLeft: insets.left,
-            paddingRight: insets.right
-          }
+            ...ReactNative.StyleSheet.absoluteFillObject
+          },
+          showsVerticalScrollIndicator: false
         },
-        defaultOptions
+        createElement(defaultOptions)
       )
     }
-    pageContainer.displayName = 'PageContainer'
-    return pageContainer
+    return Page
   }
 
   return defaultOptions
