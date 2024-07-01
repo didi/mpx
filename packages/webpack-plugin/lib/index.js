@@ -38,7 +38,7 @@ const RecordIndependentDependency = require('./dependencies/RecordIndependentDep
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
-const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
+const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -149,6 +149,7 @@ class MpxWebpackPlugin {
       return externalsMap[external] || external
     })
     options.projectRoot = options.projectRoot || process.cwd()
+    options.projectName = options.projectName || 'AwesomeProject'
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
@@ -575,8 +576,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(CommonJsExtractDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsExtractDependency, new CommonJsExtractDependency.Template())
 
-      compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+      compilation.dependencyFactories.set(RecordLoaderContentDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordLoaderContentDependency, new RecordLoaderContentDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -631,6 +632,7 @@ class MpxWebpackPlugin {
           env: this.options.env,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
+          projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
           transRpxRules: this.options.transRpxRules,
@@ -640,7 +642,7 @@ class MpxWebpackPlugin {
           nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
-          vueContentCache: new Map(),
+          loaderContentCache: new Map(),
           tabBarMap: {},
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,

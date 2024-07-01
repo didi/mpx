@@ -20,7 +20,8 @@ export default function getBuiltInMixins (options, type) {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
-      styleHelperMixin()
+      styleHelperMixin(type),
+      refsMixin()
     ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [

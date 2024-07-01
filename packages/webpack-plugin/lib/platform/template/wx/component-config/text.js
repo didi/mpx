@@ -6,6 +6,8 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -39,6 +41,11 @@ module.exports = function ({ print }) {
         tt: ttPropLog,
         qq: qqPropLog,
         qa: qaPropLog
+      },
+      {
+        test: /^(space|decode)$/,
+        ios: iosPropLog,
+        android: androidPropLog
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,

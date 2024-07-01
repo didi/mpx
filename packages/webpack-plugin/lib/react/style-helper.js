@@ -1,30 +1,66 @@
 const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
+const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
-
-function getClassMap (content, filename) {
+const cssPrefixExp = /^-(webkit|moz|ms|o)-/
+function getClassMap ({ content, filename, mode, srcMode }) {
   const classMap = {}
+
   const root = postcss.parse(content, {
     from: filename
   })
+
+  function formatValue (value) {
+    let matched
+    let needStringify = true
+    if ((matched = pxRegExp.exec(value))) {
+      value = matched[1]
+      needStringify = false
+    } else if ((matched = rpxRegExp.exec(value))) {
+      value = `this.__rpx(${matched[1]})`
+      needStringify = false
+    }
+    return needStringify ? JSON.stringify(value) : value
+  }
+
+  const rulesRunner = getRulesRunner({
+    mode,
+    srcMode,
+    type: 'style',
+    testKey: 'prop',
+    warn: (msg) => {
+      console.warn('[style compiler warn]: ' + msg)
+    },
+    error: (msg) => {
+      console.error('[style compiler error]: ' + msg)
+    }
+  })
+
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
-      // todo 检测不支持的prop
-      prop = dash2hump(prop)
-      let matched
-      let needStringify = true
-      if ((matched = pxRegExp.exec(value))) {
-        value = matched[1]
-        needStringify = false
-      } else if ((matched = rpxRegExp.exec(value))) {
-        value = `this.__rpx(${matched[1]})`
-        needStringify = false
+      if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
+      let newData = rulesRunner({ prop, value })
+      if (!newData) return
+      if (!Array.isArray(newData)) {
+        newData = [newData]
       }
-      // todo 检测不支持的value
-      classMapValue[prop] = needStringify ? JSON.stringify(value) : value
+      newData.forEach(item => {
+        prop = dash2hump(item.prop)
+        value = item.value
+        if (Array.isArray(value)) {
+          value = value.map(item => formatValue(item))
+        } else if (typeof value === 'object') {
+          for (const key in value) {
+            value[key] = formatValue(value[key])
+          }
+        } else {
+          value = formatValue(value)
+        }
+        classMapValue[prop] = value
+      })
     })
 
     const classMapKeys = []
@@ -41,7 +77,9 @@ function getClassMap (content, filename) {
 
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
-        classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+        if (Object.keys(classMapValue).length) {
+          classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+        }
       })
     }
   })

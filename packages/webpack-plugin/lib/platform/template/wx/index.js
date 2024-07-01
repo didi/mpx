@@ -399,12 +399,13 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ios' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ios', data: { el } })
           return {
-            name: rPrefix + rEventName.replace(/^./, (matched) => {
-              return matched.toUpperCase()
-            }) + modifierStr,
+            name: rPrefix + rEventName + meta.modifierStr,
             value
           }
         },
@@ -413,12 +414,13 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
           const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
           return {
-            name: rPrefix + rEventName.replace(/^./, (matched) => {
-              return matched.toUpperCase()
-            }) + modifierStr,
+            name: rPrefix + rEventName + meta.modifierStr,
             value
           }
         }
@@ -471,29 +473,29 @@ module.exports = function getSpec ({ warn, error }) {
             const tempModifierStr = Object.keys(modifierMap).join('.')
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
-          },
-          ios (prefix) {
-            const prefixMap = {
-              bind: 'on',
-              catch: 'on'
-            }
-            if (!prefixMap[prefix]) {
-              error(`React native environment does not support [${prefix}] event handling!`)
-              return
-            }
-            return prefixMap[prefix]
-          },
-          android (prefix) {
-            const prefixMap = {
-              bind: 'on',
-              catch: 'on'
-            }
-            if (!prefixMap[prefix]) {
-              error(`React native environment does not support [${prefix}] event handling!`)
-              return
-            }
-            return prefixMap[prefix]
           }
+          // ios (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // },
+          // android (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // }
         }
       ],
       rules: [
@@ -527,9 +529,13 @@ module.exports = function getSpec ({ warn, error }) {
           },
           ios (eventName) {
             const eventMap = {
-              tap: 'press',
-              longtap: 'longPress',
-              longpress: 'longPress'
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -539,9 +545,13 @@ module.exports = function getSpec ({ warn, error }) {
           },
           android (eventName) {
             const eventMap = {
-              tap: 'press',
-              longtap: 'longPress',
-              longpress: 'longPress'
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]

@@ -5,6 +5,7 @@ const shallowStringify = require('../utils/shallow-stringify')
 
 module.exports = function (styles, {
   loaderContext,
+  srcMode,
   ctorType,
   autoScope,
   moduleId
@@ -13,6 +14,7 @@ module.exports = function (styles, {
   let content = ''
   let output = '/* styles */\n'
   if (styles.length) {
+    const { mode } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -35,12 +37,23 @@ module.exports = function (styles, {
     }, (err) => {
       if (err) return callback(err)
       try {
-        const classMap = getClassMap(content, loaderContext.resourcePath)
-        output += `global.currentInject.injectMethods = {
-  __getClassMap: function() {
-    return ${shallowStringify(classMap)};
-  }
-};\n`
+        const classMap = getClassMap({
+          content,
+          filename: loaderContext.resourcePath,
+          mode,
+          srcMode
+        })
+        if (ctorType === 'app') {
+          output += `global.__getAppClassMap = function() {
+            return ${shallowStringify(classMap)};
+          };\n`
+        } else {
+          output += `global.currentInject.injectMethods = {
+            __getClassMap: function() {
+              return ${shallowStringify(classMap)};
+            }
+          };\n`
+        }
       } catch (e) {
         return callback(e)
       }

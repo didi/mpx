@@ -1,4 +1,5 @@
-import { isObject, isArray, dash2hump } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction, isEmptyObject } from '@mpxjs/utils'
+import { Dimensions } from 'react-native'
 
 function concat (a, b) {
   return a ? b ? (a + ' ' + b) : a : (b || '')
@@ -96,16 +97,25 @@ function transformStyleObj (context, styleObj) {
   return transformed
 }
 
-export default function styleHelperMixin () {
+export default function styleHelperMixin (type) {
   return {
     methods: {
       __rpx (value) {
-        return value
+        const { width } = Dimensions.get('screen')
+        // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
+        // px = rpx * (750 / 屏幕宽度)
+        return value * width / 750
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
         const result = []
-        if (staticClass || dynamicClass) {
-          const classMap = this.__getClassMap()
+        const classMap = {}
+        if (type === 'page' && isFunction(global.__getAppClassMap)) {
+          Object.assign(classMap, global.__getAppClassMap.call(this))
+        }
+        if (isFunction(this.__getClassMap)) {
+          Object.assign(classMap, this.__getClassMap())
+        }
+        if ((staticClass || dynamicClass) && !isEmptyObject(classMap)) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(' ').forEach((className) => {
             if (classMap[className]) {

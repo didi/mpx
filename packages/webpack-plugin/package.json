@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.18",
+  "version": "2.9.19-react.0",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -78,7 +78,11 @@
   },
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",
-    "@types/babel-types": "^7.0.4"
+    "@types/babel-types": "^7.0.4",
+    "@types/react": "^18.2.79",
+    "react": "^18.2.0",
+    "react-native": "^0.74.0",
+    "react-native-svg": "^15.2.0"
   },
   "engines": {
     "node": ">=14.14.0"

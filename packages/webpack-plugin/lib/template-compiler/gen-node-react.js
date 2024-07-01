@@ -1,4 +1,4 @@
-const { dash2hump } = require('../utils/hump-dash')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 function genIf (node) {
   node.ifProcessed = true
@@ -26,7 +26,8 @@ const s = JSON.stringify
 
 function mapAttrName (name) {
   if (name === 'class') return 'className'
-  return dash2hump(name)
+  if (!isValidIdentifierStr(name)) return s(name)
+  return name
 }
 
 function genNode (node) {
@@ -48,31 +49,38 @@ function genNode (node) {
         } else if (node.if && !node.ifProcessed) {
           exp += genIf(node)
         } else {
-          exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
-          if (node.attrsList.length) {
-            exp += ',{'
-            const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
-              if (attrName) {
-                map[attrName] = exp
-              }
-              return map
-            }, {})
-            node.attrsList.forEach(({ name, value }, index) => {
-              exp += `${index === 0 ? '' : ','}${mapAttrName(name)}:`
-              exp += attrExpMap[name] ? attrExpMap[name] : s(value)
-            })
-            exp += '}'
+          const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
+            if (attrName) {
+              map[attrName] = exp
+            }
+            return map
+          }, {})
+          if (node.slot) {
+            const name = node.slot.name
+            exp += `__getSlot(${name ? s(name) : ''})`
           } else {
-            exp += ',null'
-          }
+            exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
+            if (node.isRoot) {
+              exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
+            } else if (node.attrsList.length) {
+              const attrs = []
+              node.attrsList && node.attrsList.forEach(({ name, value }) => {
+                const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
+                attrs.push(`${mapAttrName(name)}: ${attrExp}`)
+              })
+              exp += `, { ${attrs.join(', ')} }`
+            } else {
+              exp += ', null'
+            }
 
-          if (!node.unary && node.children.length) {
-            exp += ','
-            node.children.forEach(function (child, index) {
-              exp += `${index === 0 ? '' : ','}${genNode(child)}`
-            })
+            if (!node.unary && node.children.length) {
+              exp += ','
+              node.children.forEach(function (child, index) {
+                exp += `${index === 0 ? '' : ','}${genNode(child)}`
+              })
+            }
+            exp += ')'
           }
-          exp += ')'
         }
       } else {
         node.children.forEach(function (child, index) {

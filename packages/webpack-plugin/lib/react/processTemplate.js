@@ -21,6 +21,7 @@ module.exports = function (template, {
   const {
     projectRoot,
     mode,
+    env,
     defs,
     wxsContentMap,
     decodeHTMLText,
@@ -67,6 +68,7 @@ module.exports = function (template, {
         isNative,
         ctorType,
         mode,
+        env,
         srcMode: templateSrcMode,
         defs,
         decodeHTMLText,
@@ -111,12 +113,13 @@ module.exports = function (template, {
           const ignoreMap = Object.assign({
             createElement: true,
             components: true,
-            getNativeComponent: true
+            getNativeComponent: true,
+            rootProps: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
           })
-          output += `global.currentInject.render = function (createElement, components, getNativeComponent) {
+          output += `global.currentInject.render = function (createElement, components, getNativeComponent, rootProps) {
   return ${bindResult.code}
 };\n`
         } catch (e) {
