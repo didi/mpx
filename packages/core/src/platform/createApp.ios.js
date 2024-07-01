@@ -34,7 +34,7 @@ function createAppInstance (appData) {
 export default function createApp (option, config = {}) {
   const appData = {}
 
-  const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator } = global.__navigationHelper
+  const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
@@ -83,7 +83,22 @@ export default function createApp (option, config = {}) {
       global.__mpxEnterOptions = options
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
     }, [])
-    return createElement(NavigationContainer, { ref: navigationRef, onStateChange, onUnhandledAction }, createElement(Stack.Navigator, { initialRouteName: firstPage }, ...pageScreens))
+    return createElement(SafeAreaProvider,
+      null,
+      createElement(NavigationContainer,
+        {
+          ref: navigationRef,
+          onStateChange,
+          onUnhandledAction
+        },
+        createElement(Stack.Navigator,
+          {
+            initialRouteName: firstPage
+          },
+          ...pageScreens
+        )
+      )
+    )
   })
   global.getApp = function () {
     return appData
