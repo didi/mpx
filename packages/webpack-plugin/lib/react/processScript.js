@@ -26,14 +26,13 @@ module.exports = function (script, {
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RootSiblingParent } from 'react-native-root-siblings'
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createNavigationContainerRef: createNavigationContainerRef,
   createNativeStackNavigator: createNativeStackNavigator,
   StackActions: StackActions,
-  SafeAreaProvider: SafeAreaProvider,
-  useSafeAreaInsets: useSafeAreaInsets
+  RootSiblingParent: RootSiblingParent
 }\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,

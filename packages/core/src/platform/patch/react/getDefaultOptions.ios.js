@@ -198,6 +198,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
+  const { RootSiblingParent } = global.__navigationHelper
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
@@ -248,15 +249,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const Page = (props) => {
-      return createElement(ReactNative.ScrollView,
-        {
-          style: {
-            ...ReactNative.StyleSheet.absoluteFillObject
+    const Page = () => {
+      return createElement(RootSiblingParent,
+        null,
+        createElement(ReactNative.ScrollView,
+          {
+            style: {
+              ...ReactNative.StyleSheet.absoluteFillObject
+            },
+            showsVerticalScrollIndicator: false
           },
-          showsVerticalScrollIndicator: false
-        },
-        createElement(defaultOptions)
+          createElement(defaultOptions)
+        )
       )
     }
     return Page
