@@ -31,7 +31,7 @@ export interface CheckboxGroupProps {
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  _setGroupData?: (values: string[]) => void
+  _setGroupData?: (value: string[]) => void
 }
 
 const CheckboxGroup = forwardRef<
