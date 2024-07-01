@@ -966,9 +966,10 @@ function processComponentIs (el, options) {
 
   const range = getAndRemoveAttr(el, 'range').val
   const isInRange = makeMap(range || '')
-  el.components = range
-      ? (options.usingComponents || []).filter(i => isInRange(i))
-      : options.usingComponents || []
+  el.components = (options.usingComponents || []).filter(i => {
+    if (!range) return true
+    return isInRange(i)
+  })
   if (!el.components.length) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
