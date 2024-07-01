@@ -31,6 +31,7 @@ export interface CheckboxGroupProps {
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  _setGroupData?: (values: string[]) => void
 }
 
 const CheckboxGroup = forwardRef<
@@ -41,7 +42,8 @@ const CheckboxGroup = forwardRef<
     style = [],
     'enable-offset': enableOffset,
     children,
-    bindchange
+    bindchange,
+    _setGroupData
   } = props
 
   const layoutRef = useRef({})
@@ -76,19 +78,22 @@ const CheckboxGroup = forwardRef<
     )
   }
 
-  const onChange = (
-    evt: NativeSyntheticEvent<TouchEvent>,
-    selection: Selection,
-    index: number
-  ) => {
-    refs.current.selections[index] = selection
-    const values = refs.current.selections.reduce<string[]>(
+  const getSelectionValue = (): string[] => {
+    return refs.current.selections.reduce<string[]>(
       (acc, { value, checked }) => {
         checked && acc.push(value)
         return acc
       },
       []
     )
+  }
+
+  const onChange = (
+    evt: NativeSyntheticEvent<TouchEvent>,
+    selection: Selection,
+    index: number
+  ) => {
+    refs.current.selections[index] = selection
 
     bindchange &&
       bindchange(
@@ -98,7 +103,7 @@ const CheckboxGroup = forwardRef<
           {
             layoutRef,
             detail: {
-              values
+              value: getSelectionValue()
             }
           },
           props
@@ -141,6 +146,8 @@ const CheckboxGroup = forwardRef<
       layoutRef
     }
   )
+
+  _setGroupData && _setGroupData(getSelectionValue())
 
   return <View {...innerProps}>{wrapChildren(children)}</View>
 })
