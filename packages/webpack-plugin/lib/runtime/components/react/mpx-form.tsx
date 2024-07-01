@@ -6,7 +6,7 @@
  */
 
 import { View, LayoutChangeEvent } from 'react-native';
-import React, { JSX, useRef, cloneElement, forwardRef, ReactNode } from 'react';
+import React, { JSX, useRef, forwardRef, ReactNode, Children } from 'react';
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
@@ -29,7 +29,9 @@ const isFormTypeElement = (typeName: string): boolean => {
     'mpx-slider',
     'mpx-picker',
     'mpx-checkbox-group',
-    'mpx-radio-group'
+    'mpx-radio-group',
+    'mpx-checkbox',
+    'mpx-radio'
   ].includes(typeName)
 }
 
@@ -37,7 +39,7 @@ const isFormTypeElement = (typeName: string): boolean => {
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormProps, ref): JSX.Element => {
   const { children, style } = props;
   const layoutRef = useRef(null)
-  const formValues = useRef('')
+  const formValues = useRef({})
 
   const { nodeRef: formRef } = useNodesRef(props, ref, {
     node: {}
@@ -50,60 +52,65 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   }
 
   const getFormValue = (child) => {
-    const childTypeName = child.type && child.type.displayName
+    const childDisplayName = child.type && child.type.displayName
     const childPropsName = child.props.name
-    const valueChangeCbName = childTypeName === 'mpx-input' || childTypeName === 'mpx-textarea' ? 'bindblur' : 'bindchange'
-    const tmpProps = { ...child.props }
-    if (['mpx-input', 'mpx-textarea', 'mpx-slider', 'mpx-picker'].includes(childTypeName)) {
+    const proxyChangeEvent = childDisplayName === 'mpx-input' || childDisplayName === 'mpx-textarea' ? 'bindinput' : 'bindchange'
+    const childProps = { ...child.props }
+    if (['mpx-input', 'mpx-textarea', 'mpx-slider', 'mpx-picker'].includes(childDisplayName)) {
       if (child.props.value !== undefined) {
         formValues.current[childPropsName] = child.props.value
       }
-    } else if (childTypeName === 'mpx-switch') {
+    } else if (childDisplayName === 'mpx-switch') {
       if (child.props.checked !== undefined) {
         formValues.current.formValues[childPropsName] = !!child.props.checked
       }
     } else {
-      tmpProps.setGroupData = (value: any) => {
+      childProps._setGroupData = (value: any) => {
         formValues.current.formValues[childPropsName] = value
       }
     }
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    tmpProps[valueChangeCbName] = (event: any) => {
-      const valueChangeCb = child.props[valueChangeCbName]
+    childProps[proxyChangeEvent] = (event: any) => {
+      const changeEvent = child.props[proxyChangeEvent]
       formValues.current[childPropsName] = event.detail.value
-      // eslint-disable-next-line prefer-rest-params
-      valueChangeCb && valueChangeCb(...arguments)
+      changeEvent && changeEvent(event)
     }
-    return cloneElement(child, tmpProps, child.props.children)
+    return <child.type
+      key={`${child.type}-${child.props.name}`}
+      {...childProps}
+    />
   }
 
   const travelChildren = (children: React.ReactNode): React.ReactNode => {
-    const result = React.Children.toArray(children).map((child: any) => {
+    const result = Children.toArray(children).map((child: any, index: number) => {
       const childTypeName = child.type && child.type.displayName
       if (!child.type) return child
       if (childTypeName === 'mpx-button' && ['submit', 'reset'].indexOf(child.props['form-type']) >= 0) {
         const bindtap = child.props.bindtap
         const formType = child.props['form-type']
-        return React.cloneElement(child, {
-          ...child.props,
-          bindtap: () => {
+        return <child.type
+          key={`button-${formType}-${index}`}
+          {...child.props}
+          bindtap={() => {
             switch (formType) {
               case 'submit':
-                submit()
+                submit();
                 break;
               case 'reset':
-                reset()
+                reset();
                 break;
               default:
                 break;
             }
             bindtap && bindtap()
-          }
-        })
+          }}
+        />
       }
       return isFormTypeElement(childTypeName) && child.props.name
         ? getFormValue(child)
-        : React.cloneElement(child, { ...child.props }, travelChildren(child.props.children))
+        : <child.type
+          key={`child-${index}`}
+          {...child.props}
+        >{travelChildren(child.props.children)}</child.type>
     })
     return result.length ? result : null
   }
@@ -125,6 +132,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
 
   const reset = () => {
     const { bindreset } = props
+    formRef.current = {}
     bindreset && bindreset()
   }
   const innerProps = useInnerProps(props, {
