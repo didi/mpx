@@ -27,6 +27,7 @@ export interface radioGroupProps {
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  _setGroupData?: (value: string) => void
 }
 
 const radioGroup = forwardRef<
@@ -37,7 +38,8 @@ const radioGroup = forwardRef<
     style = [],
     'enable-offset': enableOffset,
     children,
-    bindchange
+    bindchange,
+    _setGroupData
   } = props
 
   const layoutRef = useRef({})
@@ -96,6 +98,11 @@ const radioGroup = forwardRef<
 
       if (displayName === 'mpx-radio') {
         const { value, checked } = child.props
+
+        if (!checkedValue && checked && _setGroupData) {
+          _setGroupData(value)
+        }
+
         return cloneElement(child, {
           ...child.props,
           checked: checkedValue ? checkedValue === value : !!checked,
