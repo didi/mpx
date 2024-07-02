@@ -87,6 +87,14 @@ export const isText = (ele: ReactNode) => {
   return false
 }
 
+export const isEmbedded = (ele: ReactNode) => {
+  if (isValidElement(ele)) {
+    const displayName = (ele.type as FunctionComponent)?.displayName
+    return displayName && ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName) 
+  }
+  return false
+}
+
 export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
   return Children.toArray(children).every((child) => callback(child as ReactNode))
 }
