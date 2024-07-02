@@ -85,7 +85,7 @@ module.exports = function (raw) {
     }
   }
 
-  const result = runtimeCompile ? '' : compiler.serialize(root)
+  let result = runtimeCompile ? '' : compiler.serialize(root)
   if (isNative) {
     return result
   }
@@ -171,7 +171,7 @@ ${e.stack}`)
     this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
 
     const templateInfo = {
-      templateAst: stringify(ast),
+      templateAst: stringify(root),
       ...meta.runtimeInfo
     }
 
