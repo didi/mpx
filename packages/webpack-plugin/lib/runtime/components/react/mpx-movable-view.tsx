@@ -92,28 +92,41 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   let initialDistance = 0;
   let isLayoutChanged = false
 
+  const setOffsetPosition = ({ clampedScale, width, height }: { clampedScale: number; width: number; height: number }) => {
+    const scaledWidth = width * clampedScale;
+    const scaledHeight = height * clampedScale
+    offsetPosition.current = {
+      x: (scaledWidth - width) / 2 || 0,
+      y: (scaledHeight - width) / 2 || 0
+    }
+    return {
+      scaledWidth,
+      scaledHeight
+    }
+  }
   const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+    nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
       if (!isLayoutChanged) {
         isLayoutChanged = true
-        const scaledWidth = width * originScaleValue;
-        const scaledHeight = height * originScaleValue
-        offsetPosition.current = {
-          x: (scaledWidth - width) / 2 || 0,
-          y: (scaledHeight - width) / 2 || 0
-        }
+        const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue));
+        setOffsetPosition({
+          clampedScale,
+          width,
+          height
+        })
         Animated.spring(pan, {
           toValue: { x: Number(props.x) + offsetPosition.current.x, y: Number(props.y) + offsetPosition.current.y },
           useNativeDriver: false,
           friction
         }).start(() => {
+          movablePosition.current = { x: Number(props.x), y: Number(props.y) }
           bindchange &&
             bindchange(
               getCustomEvent('change', {}, {
                 detail: {
-                  x: pan.x,
-                  y: pan.y,
+                  x: movablePosition.current.x,
+                  y: movablePosition.current.y,
                   source: ''
                 },
                 layoutRef
@@ -184,7 +197,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               friction: 7,
               useNativeDriver: false
             }).start();
-
             bindscale && bindscale(getCustomEvent('change', e, {
               detail: {
                 x: pan.x._value,
@@ -199,6 +211,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             return; // Skip processing if it's switching from a double touch
           }
 
+          if (isFirstTouch) {
+            touchEvent = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove';
+            isFirstTouch = false;
+          }
           Animated.event(
             [
               null,
@@ -212,16 +228,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }
           )(e, gestureState);
 
-          if (isFirstTouch) {
-            touchEvent = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove';
-            isFirstTouch = false;
+          movablePosition.current = {
+            x: pan.x.__getValue() - offsetPosition.current.x,
+            y: pan.y.__getValue() - offsetPosition.current.y,
           }
-
           bindchange && bindchange(
             getCustomEvent('change', e, {
               detail: {
-                x: pan.x._value,
-                y: pan.y._value,
+                x: movablePosition.current.x,
+                y: movablePosition.current.y,
                 source: 'touch'
               },
               layoutRef
@@ -235,13 +250,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         initialDistance = 0;
 
         // Calculate scaled element size
-        const scaledWidth = layoutRef.current.width * scaleValue._value;
-        const scaledHeight = layoutRef.current.height * scaleValue._value;
-
-        offsetPosition.current = {
-          x: (scaledWidth - layoutRef.current.width) / 2 || 0,
-          y: (scaledHeight - layoutRef.current.height) / 2 || 0
-        }
+        const { scaledWidth, scaledHeight } = setOffsetPosition({
+          clampedScale: scaleValue._value,
+          width: layoutRef.current.width,
+          height: layoutRef.current.height
+        })
 
         // Calculate the boundary limits
         let x = pan.x._value;
@@ -281,8 +294,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             bindchange && bindchange(
               getCustomEvent('change', e, {
                 detail: {
-                  x,
-                  y,
+                  x: movablePosition.current.x,
+                  y: movablePosition.current.y,
                   source: 'out-of-bounds'
                 },
                 layoutRef
@@ -313,8 +326,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }).start(() => {
         bindscale && bindscale(getCustomEvent('change', {}, {
           detail: {
-            x: pan.x._value,
-            y: pan.y._value,
+            x: pan.x._value - offsetPosition.current.x,
+            y: pan.y._value - offsetPosition.current.y,
             scale: clampedScale
           },
           layoutRef
@@ -336,8 +349,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           bindchange(
             getCustomEvent('change', {}, {
               detail: {
-                x: pan.x,
-                y: pan.y,
+                x: movablePosition.current.x,
+                y: movablePosition.current.y,
                 source: ''
               },
               layoutRef
@@ -348,6 +361,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [x, y])
 
   const [translateX, translateY] = [pan.x, pan.y];
+
   const childrenStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue }] };
 
   const hasTouchmove = () => !!props.bindhtouchmove || !!props.bindvtouchmove || !!props.bindtouchmove;
