@@ -100,6 +100,8 @@ function preProcessRenderData (renderData) {
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
+    // 兼容 getCurrentInstance.proxy
+    this.proxy = target
     this.reCreated = reCreated
     this.uid = uid++
     this.name = options.name || ''
@@ -690,7 +692,7 @@ export default class MpxProxy {
 export let currentInstance = null
 
 export const getCurrentInstance = () => {
-  return currentInstance && { proxy: currentInstance?.target }
+  return currentInstance
 }
 
 export const setCurrentInstance = (instance) => {
