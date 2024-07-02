@@ -86,18 +86,16 @@ function normalizeOptions (options) {
     config,
     configFiles,
     transformCSS,
-    transformGroups, // false | true | { separators: [':','-'] }
+    transformGroups,
     webOptions = {}
   } = options
-  // 是否兼容为true的写法
-  if (transformGroups) transformGroups = transformGroups instanceof Object ? transformGroups : {}
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
     include: scan.include || [],
     exclude: scan.exclude || [],
     transformers: [
-      ...transformGroups ? [transformerVariantGroup(transformGroups)] : [],
+      ...transformGroups ? [transformerVariantGroup()] : [],
       ...transformCSS ? [transformerDirectives()] : []
     ],
     ...webOptions
@@ -323,7 +321,7 @@ class MpxUnocssPlugin {
           // pre process
           source = transformAlias(source)
           if (this.options.transformGroups) {
-            source = transformGroups(source, this.options.transformGroups)
+            source = transformGroups(source)
           }
           const content = source.source()
           // escape & fill classesMap
@@ -421,38 +419,23 @@ class MpxUnocssPlugin {
         }
 
         if (mainUnoFile) {
-          if (this.options.styleIsolation === 'isolated') {
-            // isolated模式下无需全局样式注入
-            dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename, resource }) => {
-              if (entryType === 'page' || entryType === 'component') {
-                const resourcePath = toPosix(parseRequest(resource).resourcePath)
-                if (filterFile(resourcePath, this.options.scan)) {
-                  const entryStyleFile = filename + styleExt
-                  const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
-                  const entryStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-                  entryStyleSource.add(assets[entryStyleFile] || '')
-                  assets[entryStyleFile] = entryStyleSource
-                }
-              }
-            })
-          } else {
-            const appStyleFile = appInfo.name + styleExt
-            const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainUnoFile)), mode)
-            const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-            appStyleSource.add(assets[appStyleFile] || '')
-            assets[appStyleFile] = appStyleSource
-            dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
-              const commentConfig = commentConfigMap[filename] || {}
-              const styleIsolation = commentConfig.styleIsolation
-              if (styleIsolation === 'isolated' && entryType === 'component') {
-                const componentStyleFile = filename + styleExt
-                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
-                const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
-                componentStyleSource.add(assets[componentStyleFile] || '')
-                assets[componentStyleFile] = componentStyleSource
-              }
-            })
-          }
+          const appStyleFile = appInfo.name + styleExt
+          const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(appStyleFile), mainUnoFile)), mode)
+
+          const appStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+          appStyleSource.add(assets[appStyleFile] || '')
+          assets[appStyleFile] = appStyleSource
+          dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename }) => {
+            const commentConfig = commentConfigMap[filename] || {}
+            const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
+            if (styleIsolation === 'isolated' && entryType === 'component') {
+              const componentStyleFile = filename + styleExt
+              const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
+              const componentStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
+              componentStyleSource.add(assets[componentStyleFile] || '')
+              assets[componentStyleFile] = componentStyleSource
+            }
+          })
         }
         // 生成分包uno.css
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
@@ -467,55 +450,33 @@ class MpxUnocssPlugin {
             assets[unoFile] = getRawSource(unoFileContent)
           }
 
-          dynamicEntryInfo[packageRoot] && dynamicEntryInfo[packageRoot].entries.forEach(({
-            entryType,
-            filename,
-            resource
-          }) => {
-            if (this.options.styleIsolation === 'isolated') {
-              // isolated模式下无需全局样式注入
-              if (entryType === 'page' || entryType === 'component') {
-                const resourcePath = toPosix(parseRequest(resource).resourcePath)
-                if (filterFile(resourcePath, this.options.scan)) {
-                  const entryStyleFile = filename + styleExt
-                  const entryStyleSource = getConcatSource('')
-                  if (mainUnoFile) {
-                    const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
-                    entryStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
-                  }
-                  if (unoFile) {
-                    const relativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), unoFile)), mode)
-                    entryStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
-                  }
-                  entryStyleSource.add(assets[entryStyleFile] || '')
-                  assets[entryStyleFile] = entryStyleSource
-                }
-              }
-            } else {
-              if (entryType === 'page' && unoFile) {
-                const pageStyleFile = filename + styleExt
-                const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), unoFile)), mode)
-                const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
-                pageStyleSource.add(assets[pageStyleFile] || '')
-                assets[pageStyleFile] = pageStyleSource
+          dynamicEntryInfo[packageRoot] && dynamicEntryInfo[packageRoot].entries.forEach(({ entryType, filename }) => {
+            if (unoFile && entryType === 'page') {
+              const pageStyleFile = filename + styleExt
+              const relativePath = fixRelative(toPosix(path.relative(path.dirname(pageStyleFile), unoFile)), mode)
+              const pageStyleSource = getConcatSource(`@import ${JSON.stringify(relativePath)};\n`)
+              pageStyleSource.add(assets[pageStyleFile] || '')
+              assets[pageStyleFile] = pageStyleSource
+            }
+
+            const commentConfig = commentConfigMap[filename] || {}
+            const styleIsolation = commentConfig.styleIsolation || this.options.styleIsolation
+            if (styleIsolation === 'isolated' && entryType === 'component') {
+              const componentStyleFile = filename + styleExt
+              const componentStyleSource = getConcatSource('')
+
+              if (mainUnoFile) {
+                const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
+                componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
               }
 
-              const commentConfig = commentConfigMap[filename] || {}
-              const styleIsolation = commentConfig.styleIsolation
-              if (styleIsolation === 'isolated' && entryType === 'component') {
-                const componentStyleFile = filename + styleExt
-                const componentStyleSource = getConcatSource('')
-                if (mainUnoFile) {
-                  const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
-                  componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
-                }
-                if (unoFile) {
-                  const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), unoFile)), mode)
-                  componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
-                }
-                componentStyleSource.add(assets[componentStyleFile] || '')
-                assets[componentStyleFile] = componentStyleSource
+              if (unoFile) {
+                const relativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), unoFile)), mode)
+                componentStyleSource.add(`@import ${JSON.stringify(relativePath)};\n`)
               }
+
+              componentStyleSource.add(assets[componentStyleFile] || '')
+              assets[componentStyleFile] = componentStyleSource
             }
           })
         }))

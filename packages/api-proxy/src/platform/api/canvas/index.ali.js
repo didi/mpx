@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, envError, handleSuccess } from '../../../common/js'
+import { changeOpts, envError, handleSuccess } from '../../../common/js'
 
 function canvasToTempFilePath (options = {}) {
   handleSuccess(options, res => {
@@ -8,11 +8,13 @@ function canvasToTempFilePath (options = {}) {
     )
   })
 
-  return ENV_OBJ.canvasToTempFilePath(options)
+  my.canvasToTempFilePath(options)
 }
+const createCanvasContext = envError('createCanvasContext')
 const canvasGetImageData = envError('canvasGetImageData')
 
 export {
+  createCanvasContext,
   canvasToTempFilePath,
   canvasGetImageData
 }

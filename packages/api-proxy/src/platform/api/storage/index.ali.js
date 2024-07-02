@@ -1,50 +1,48 @@
-import { ENV_OBJ } from '../../../common/js'
-
 function setStorage (options) {
-  return ENV_OBJ.setStorage(options)
+  my.setStorage(options)
 }
 
 function setStorageSync (key, data) {
-  return ENV_OBJ.setStorageSync({
+  my.setStorageSync({
     key,
     data
   })
 }
 
 function getStorage (options) {
-  return ENV_OBJ.getStorage(options)
+  my.getStorage(options)
 }
 
 function getStorageSync (key) {
-  return ENV_OBJ.getStorageSync({
+  return my.getStorageSync({
     key
   }).data
 }
 
 function getStorageInfo (options) {
-  return ENV_OBJ.getStorageInfo(options)
+  return my.getStorageInfo(options)
 }
 
 function getStorageInfoSync () {
-  return ENV_OBJ.getStorageInfoSync()
+  return my.getStorageInfoSync()
 }
 
 function removeStorage (options) {
-  return ENV_OBJ.removeStorage(options)
+  return my.removeStorage(options)
 }
 
 function removeStorageSync (key) {
-  return ENV_OBJ.removeStorageSync({
+  my.removeStorageSync({
     key
   })
 }
 
 function clearStorage (options) {
-  return ENV_OBJ.clearStorage(options)
+  my.clearStorage(options)
 }
 
 function clearStorageSync (options) {
-  return ENV_OBJ.clearStorageSync(options)
+  my.clearStorageSync(options)
 }
 
 export {

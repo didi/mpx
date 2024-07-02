@@ -1,4 +1,6 @@
-import { ENV_OBJ, envError } from '../../../common/js'
+import { getEnvObj, envError } from '../../../common/js'
+
+const ENV_OBJ = getEnvObj()
 
 const getUserInfo = ENV_OBJ.getUserInfo || envError('getUserInfo')
 

@@ -19,7 +19,7 @@ export * from './api/base'
 // closeBLEConnection, createBLEConnection, onBLEConnectionStateChange
 export * from './api/ble-connection'
 
-// canvasToTempFilePath, canvasGetImageData
+// createCanvasContext, canvasToTempFilePath, canvasGetImageData
 export * from './api/canvas'
 
 // checkSession

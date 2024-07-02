@@ -1,5 +1,4 @@
-import { ENV_OBJ, changeOpts, noop } from '../../../common/js'
-
+import { changeOpts, noop } from '../../../common/js'
 function showActionSheet (options = {}) {
   const opts = changeOpts(options, {
     itemList: 'items'
@@ -21,7 +20,7 @@ function showActionSheet (options = {}) {
     }
   }
 
-  return ENV_OBJ.showActionSheet(opts)
+  my.showActionSheet(opts)
 }
 
 export {

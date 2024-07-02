@@ -14,6 +14,10 @@
  */
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
+function type (n) {
+  return Object.prototype.toString.call(n).slice(8, -1)
+}
+
 function hasOwn (obj, key) {
   return hasOwnProperty.call(obj, key)
 }
@@ -68,6 +72,8 @@ function getEnvObj () {
     case 'dd':
       return dd
     case 'web':
+    case 'ios':
+    case 'android':
       return {}
   }
 }
@@ -79,7 +85,6 @@ function warn (msg) {
 function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
-
 function envError (method) {
   return () => {
     console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
@@ -96,18 +101,17 @@ function makeMap (arr) {
   }, {})
 }
 
-function parseDataset (dataset) {
-  const parsed = {}
-  for (const key in dataset) {
-    if (hasOwn(dataset, key)) {
-      try {
-        parsed[key] = JSON.parse(dataset[key])
-      } catch (e) {
-        parsed[key] = dataset[key]
+function defineUnsupportedProps (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get () {
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`)
+        return null
       }
     }
-  }
-  return parsed
+  })
+  Object.defineProperties(resObj, defineProps)
 }
 
 const isBrowser = typeof window !== 'undefined'
@@ -115,9 +119,6 @@ const isBrowser = typeof window !== 'undefined'
 function throwSSRWarning (info) {
   console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
 }
-
-const ENV_OBJ = getEnvObj()
-
 export {
   changeOpts,
   handleSuccess,
@@ -130,6 +131,6 @@ export {
   isBrowser,
   hasOwn,
   throwSSRWarning,
-  ENV_OBJ,
-  parseDataset
+  type,
+  defineUnsupportedProps
 }

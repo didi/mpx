@@ -1,4 +1,4 @@
-import { ENV_OBJ, warn } from '../../../common/js'
+import { warn } from '../../../common/js'
 
 const TIPS_NAME = '支付宝环境 mpx'
 
@@ -10,7 +10,7 @@ function getUserInfo (options = {}) {
     warn(`支付宝不支持在 ${TIPS_NAME}.getUserInfo 中使用 lang 参数`)
   }
 
-  return ENV_OBJ.getOpenUserInfo(options)
+  my.getOpenUserInfo(options)
 }
 
 export {

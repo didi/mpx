@@ -14,8 +14,9 @@ const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
-
 const shallowStringify = require('../utils/shallow-stringify')
+const { isReact } = require('../utils/env')
+
 const no = function () {
   return false
 }
@@ -37,6 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
+const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -77,11 +79,11 @@ function createASTElement (tag, attrs = [], parent = null) {
 
 function isForbiddenTag (el) {
   return (
-      el.tag === 'style' ||
-      (el.tag === 'script' && (
-          !el.attrsMap.type ||
-          el.attrsMap.type === 'text/javascript'
-      ))
+    el.tag === 'style' ||
+    (el.tag === 'script' && (
+      !el.attrsMap.type ||
+      el.attrsMap.type === 'text/javascript'
+    ))
   )
 }
 
@@ -285,8 +287,8 @@ function parseHTML (html, options) {
         endTagLength = endTag.length
         if (!isPlainTextElement(stackedTag) && stackedTag !== 'noscript') {
           text = text
-              .replace(/<!--([\s\S]*?)-->/g, '$1')
-              .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1')
+            .replace(/<!--([\s\S]*?)-->/g, '$1')
+            .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '$1')
         }
         if (shouldIgnoreFirstNewline(stackedTag, text)) {
           text = text.slice(1)
@@ -425,7 +427,7 @@ function parseHTML (html, options) {
       for (let i = stack.length - 1; i >= pos; i--) {
         if ((i > pos || !tagName) && options.warn) {
           options.warn(
-              ('tag <' + (stack[i].tag) + '> has no matching end tag.')
+            ('tag <' + (stack[i].tag) + '> has no matching end tag.')
           )
         }
         if (options.end) {
@@ -688,9 +690,9 @@ function parse (template, options) {
       if (isForbiddenTag(element)) {
         element.forbidden = true
         warn$1(
-            'Templates should only be responsible for mapping the state to the ' +
-            'UI. Avoid placing tags with side-effects in your templates, such as ' +
-            '<' + tag + '>' + ', as they will not be parsed.'
+          'Templates should only be responsible for mapping the state to the ' +
+          'UI. Avoid placing tags with side-effects in your templates, such as ' +
+          '<' + tag + '>' + ', as they will not be parsed.'
         )
       }
 
@@ -747,7 +749,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          options.runtimeCompile ? processTextDynamic(el) : processText(el)
+          options.runtimeCompile ? processTextDynamic(el) : processText(el, meta)
         }
       }
     },
@@ -864,15 +866,16 @@ function postMoveBaseDirective (target, source, options, isDelete = true) {
   target.if = source.if
   target.elseif = source.elseif
   target.else = source.else
-
-  if (options.runtimeCompile) {
+  if (isReact(mode)) {
+    postProcessForReact(target)
+    postProcessIfReact(target)
+  } else if (options.runtimeCompile) {
     postProcessForDynamic(target, config[mode])
     postProcessIfDynamic(target, config[mode])
   } else {
     postProcessFor(target)
     postProcessIf(target)
   }
-
   if (isDelete) {
     delete source.for
     delete source.if
@@ -1047,6 +1050,128 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
+function processStyleReact (el) {
+  // process class/wx:class/style/wx:style/wx:show for react native
+  const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
+  let staticClass = getAndRemoveAttr(el, 'class').val || ''
+  staticClass = staticClass.replace(/\s+/g, ' ')
+
+  let staticHoverClass = ''
+  if (hoverClassReg.test(el.tag)) {
+    staticHoverClass = el.attrsMap['hover-class'] || ''
+    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
+  }
+
+  const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
+  let staticStyle = getAndRemoveAttr(el, 'style').val || ''
+  staticStyle = staticStyle.replace(/\s+/g, ' ')
+
+  const show = getAndRemoveAttr(el, config[mode].directive.show).val
+
+  if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
+    const staticClassExp = parseMustacheWithContext(staticClass).result
+    const dynamicClassExp = parseMustacheWithContext(dynamicClass).result
+    const staticStyleExp = parseMustacheWithContext(staticStyle).result
+    const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
+    const showExp = parseMustacheWithContext(show).result
+
+    addAttrs(el, [{
+      name: 'style',
+      // runtime helper
+      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+    }])
+  }
+
+  if (staticHoverClass && staticHoverClass !== 'none') {
+    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
+    addAttrs(el, [{
+      name: 'hoverStyle',
+      // runtime helper
+      value: `{{this.__getStyle(${staticClassExp})}}`
+    }])
+  }
+}
+
+function processEventReact (el, options, meta) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    const parsedEvent = config[mode].event.parseEvent(name)
+    if (parsedEvent) {
+      const type = parsedEvent.eventName
+      const parsedFunc = parseFuncStr(value)
+      if (parsedFunc) {
+        if (!eventConfigMap[type]) {
+          eventConfigMap[type] = {
+            configs: []
+          }
+        }
+        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+      }
+    }
+  })
+
+  let wrapper
+
+  for (const type in eventConfigMap) {
+    let { configs } = eventConfigMap[type]
+
+    let resultName
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, name).has
+        } while (has)
+
+        if (!resultName) {
+          // 清除修饰符
+          resultName = name.replace(/\..*/, '')
+        }
+      }
+    })
+    configs = configs.map((item) => {
+      return item.expStr
+    })
+    const name = resultName || config[mode].event.getEvent(type)
+    const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
+    addAttrs(el, [
+      {
+        name,
+        value
+      }
+    ])
+    // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
+    // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
+    //   if (!wrapper) {
+    //     wrapper = createASTElement('TouchableWithoutFeedback')
+    //     wrapper.isBuiltIn = true
+    //     processBuiltInComponents(wrapper, meta)
+    //   }
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // } else {
+    //   addAttrs(el, [
+    //     {
+    //       name,
+    //       value
+    //     }
+    //   ])
+    // }
+  }
+
+  if (wrapper) {
+    replaceNode(el, wrapper, true)
+    addChild(wrapper, el)
+    processAttrs(wrapper, options)
+    postMoveBaseDirective(wrapper, el)
+  }
+}
+
 function processEvent (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
@@ -1175,6 +1300,14 @@ function processEvent (el, options) {
       name: 'data-eventconfigs',
       value: `{{${shallowStringify(eventConfigMap, true)}}}`
     }])
+  }
+}
+
+function processSlotReact (el) {
+  if (el.tag === 'slot') {
+    el.slot = {
+      name: getAndRemoveAttr(el, 'name').val
+    }
   }
 }
 
@@ -1519,6 +1652,27 @@ function processFor (el) {
   }
 }
 
+function processRefReact (el, options, meta) {
+  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
+  const type = isComponentNode(el, options) ? 'component' : 'node'
+  if (val) {
+    if (!meta.refs) {
+      meta.refs = []
+    }
+    const all = !!forScopes.length
+    meta.refs.push({
+      key: val,
+      all,
+      type
+    })
+
+    addAttrs(el, [{
+      name: 'ref',
+      value: `{{ this.__getRefVal('${val}') }}`
+    }])
+  }
+}
+
 function processRef (el, options, meta) {
   const val = getAndRemoveAttr(el, config[mode].directive.ref).val
   const type = isComponentNode(el, options) ? 'component' : 'node'
@@ -1659,6 +1813,19 @@ function postProcessFor (el) {
   }
 }
 
+function postProcessForReact (el) {
+  if (el.for) {
+    if (el.for.key) {
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)})`, false, 'key')
+      addAttrs(el, [{
+        name: 'key',
+        value: el.for.key
+      }])
+    }
+    popForScopes()
+  }
+}
+
 function evalExp (exp) {
   let result = { success: false }
   try {
@@ -1735,6 +1902,34 @@ function postProcessIf (el) {
   }
 }
 
+function addIfCondition (el, condition) {
+  if (!el.ifConditions) {
+    el.ifConditions = []
+  }
+  el.ifConditions.push(condition)
+}
+
+function postProcessIfReact (el) {
+  let prevNode
+  if (el.if) {
+    addIfCondition(el, {
+      exp: el.if.exp,
+      block: el
+    })
+  } else if (el.elseif || el.else) {
+    prevNode = findPrevNode(el)
+    if (prevNode && prevNode.if) {
+      addIfCondition(prevNode, {
+        exp: el.elseif && el.elseif.exp,
+        block: el
+      })
+      removeNode(el, true)
+    } else {
+      warn$1(`wx:${el.elseif ? `elif="${el.elseif.raw}"` : 'else'} used on element [${el.tag}] without corresponding wx:if.`)
+    }
+  }
+}
+
 function processText (el, meta) {
   if (el.type !== 3 || el.isComment) {
     return
@@ -1744,6 +1939,19 @@ function processText (el, meta) {
     addExp(el, parsed.result)
   }
   el.text = parsed.val
+  if (isReact(mode)) {
+    processWrapTextReact(el, meta)
+  }
+}
+
+// RN中文字需被Text包裹
+function processWrapTextReact (el, meta) {
+  const parentTag = el.parent.tag
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+    const wrapper = createASTElement('Text')
+    replaceNode(el, wrapper, true)
+    addChild(wrapper, el)
+  }
 }
 
 // function injectComputed (el, meta, type, body) {
@@ -1963,7 +2171,11 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
-      meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      if (isReact(mode)) {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+      } else {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
+      }
     }
   }
 }
@@ -2058,6 +2270,17 @@ function getVirtualHostRoot (options, meta) {
         processElement(rootView, rootView, options, meta)
         return rootView
       }
+      if (isReact(mode) && !hasVirtualHost) {
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          }
+        ])
+        rootView.isRoot = true
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
     }
     if (mode === 'web' && ctorType === 'page') {
       return createASTElement('page')
@@ -2133,7 +2356,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)
@@ -2261,6 +2484,12 @@ function processMpxTagName (el) {
   }
 }
 
+function postProcessComponent (el, options) {
+  if (isComponentNode(el, options)) {
+    el.isComponent = true
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2290,6 +2519,21 @@ function processElement (el, root, options, meta) {
     processIfWeb(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsWeb(el, options, meta)
+    return
+  }
+
+  if (isReact(mode)) {
+    // 收集内建组件
+    processBuiltInComponents(el, meta)
+    // 预处理代码维度条件编译
+    processIf(el)
+    processFor(el)
+    processRefReact(el, options, meta)
+    processStyleReact(el)
+    processEventReact(el, options, meta)
+    processComponentIs(el, options)
+    processSlotReact(el)
+    processAttrs(el, options)
     return
   }
 
@@ -2332,6 +2576,13 @@ function closeElement (el, meta, options) {
     postProcessWxs(el, meta)
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
+    return
+  }
+  if (isReact(mode)) {
+    postProcessForReact(el)
+    postProcessIfReact(el)
+    // flag component for react
+    postProcessComponent(el, options)
     return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate

@@ -1,4 +1,6 @@
-import { ENV_OBJ, envError } from '../../../common/js'
+import { getEnvObj, envError } from '../../../common/js'
+
+const ENV_OBJ = getEnvObj()
 
 const previewImage = ENV_OBJ.previewImage || envError('previewImage')
 

@@ -1,11 +1,11 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
-
+import { changeOpts, envError, handleSuccess, getEnvObj } from '../../../common/js'
+const ENV_OBJ = getEnvObj()
 function getSystemInfo (options = {}) {
   const opts = changeOpts(options)
 
   handleSuccess(opts, res => {
     res.system = `${res.platform} ${res.system}`
-    res.SDKVersion = ENV_OBJ.SDKVersion
+    res.SDKVersion = my.SDKVersion
 
     // 支付宝 windowHeight 可能为 0
     if (!res.windowHeight) {
@@ -15,14 +15,14 @@ function getSystemInfo (options = {}) {
     return res
   })
 
-  return ENV_OBJ.getSystemInfo(opts)
+  my.getSystemInfo(opts)
 }
 
 function getSystemInfoSync () {
-  const res = ENV_OBJ.getSystemInfoSync() || {}
+  const res = my.getSystemInfoSync() || {}
 
   res.system = `${res.platform} ${res.system}`
-  res.SDKVersion = ENV_OBJ.SDKVersion
+  res.SDKVersion = my.SDKVersion
 
   // 支付宝 windowHeight 可能为 0
   if (!res.windowHeight) {
@@ -32,7 +32,13 @@ function getSystemInfoSync () {
   return res
 }
 
+const getDeviceInfo = ENV_OBJ.getDeviceInfo || envError('getDeviceInfo')
+
+const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
+
 export {
   getSystemInfo,
-  getSystemInfoSync
+  getSystemInfoSync,
+  getDeviceInfo,
+  getWindowInfo
 }

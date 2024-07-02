@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function setScreenBrightness (options = {}) {
   const opts = changeOpts(options, {
@@ -7,7 +7,7 @@ function setScreenBrightness (options = {}) {
   handleSuccess(opts, res => {
     return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
   })
-  return ENV_OBJ.setScreenBrightness(opts)
+  my.setScreenBrightness(opts)
 }
 
 function getScreenBrightness (options = {}) {
@@ -17,7 +17,7 @@ function getScreenBrightness (options = {}) {
     return changeOpts(res, { brightness: 'value' }, { errMsg: 'getScreenBrightness:ok' })
   })
 
-  return ENV_OBJ.getScreenBrightness(opts)
+  my.getScreenBrightness(opts)
 }
 
 export {

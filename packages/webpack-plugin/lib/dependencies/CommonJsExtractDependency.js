@@ -7,11 +7,6 @@ class CommonJsExtractDependency extends ModuleDependency {
     this.range = range
   }
 
-  updateHash (hash, context) {
-    hash.update(this.weak + '')
-    super.updateHash(hash, context)
-  }
-
   get type () {
     return 'mpx cjs extract'
   }

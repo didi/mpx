@@ -38,8 +38,7 @@ describe('json should transform app json correct', function () {
             pagePath: 'pages/logs/index',
             name: '日志'
           }
-        ],
-        customize: true
+        ]
       }
     })
     expect(warnFn).toHaveBeenCalled()

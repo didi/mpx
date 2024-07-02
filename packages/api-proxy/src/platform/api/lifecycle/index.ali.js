@@ -1,7 +1,5 @@
-import { ENV_OBJ } from '../../../common/js'
-
 function getEnterOptionsSync () {
-  return ENV_OBJ.getEnterOptionsSync()
+  my.getEnterOptionsSync()
 }
 
 export {

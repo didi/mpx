@@ -54,21 +54,13 @@ function walkChildren (vm, selectorGroups, context, result, all) {
 
 const datasetReg = /^data-(.+)$/
 
-function collectDataset (props, needParse = false) {
+function collectDataset (props) {
   const dataset = {}
   for (const key in props) {
     if (hasOwn(props, key)) {
       const matched = datasetReg.exec(key)
       if (matched) {
-        if (needParse) {
-          try {
-            dataset[matched[1]] = JSON.parse(props[key])
-          } catch (e) {
-            dataset[matched[1]] = props[key]
-          }
-        } else {
-          dataset[matched[1]] = props[key]
-        }
+        dataset[matched[1]] = props[key]
       }
     }
   }

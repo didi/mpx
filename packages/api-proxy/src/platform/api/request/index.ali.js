@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
+import { changeOpts, handleSuccess } from '../../../common/js'
 
 function request (options = {}) {
   const opts = changeOpts(options, {
@@ -14,10 +14,10 @@ function request (options = {}) {
 
   // request 在 1.11.0 以上版本才支持
   // httpRequest 即将被废弃，钉钉端仍需要使用
-  if (ENV_OBJ.canIUse('request')) {
-    return ENV_OBJ.request(opts)
+  if (my.canIUse('request')) {
+    return my.request(opts)
   } else {
-    return ENV_OBJ.httpRequest(opts)
+    return my.httpRequest(opts)
   }
 }
 

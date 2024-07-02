@@ -10,6 +10,7 @@ const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
+const isReact = require('../utils/env').isReact
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 
 module.exports = function (css, map) {
@@ -52,7 +53,7 @@ module.exports = function (css, map) {
       plugins.push(transSpecial({ id }))
     }
 
-    if (mode === 'web') {
+    if (mode === 'web' || isReact(mode)) {
       plugins.push(transSpecial({ id }))
     }
 
