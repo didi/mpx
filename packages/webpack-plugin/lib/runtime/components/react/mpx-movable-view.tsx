@@ -80,14 +80,47 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
+  const offsetPosition = useRef({ x: 0, y: 0 })
+
+  const movablePosition = useRef({
+    x: Number(x),
+    y: Number(y)
+  })
+
   let isFirstTouch = true
   let touchEvent = ''
   let initialDistance = 0;
-
+  let isLayoutChanged = false
 
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      if (!isLayoutChanged) {
+        isLayoutChanged = true
+        const scaledWidth = width * originScaleValue;
+        const scaledHeight = height * originScaleValue
+        offsetPosition.current = {
+          x: (scaledWidth - width) / 2 || 0,
+          y: (scaledHeight - width) / 2 || 0
+        }
+        Animated.spring(pan, {
+          toValue: { x: Number(props.x) + offsetPosition.current.x, y: Number(props.y) + offsetPosition.current.y },
+          useNativeDriver: false,
+          friction
+        }).start(() => {
+          bindchange &&
+            bindchange(
+              getCustomEvent('change', {}, {
+                detail: {
+                  x: pan.x,
+                  y: pan.y,
+                  source: ''
+                },
+                layoutRef
+              }, props)
+            );
+        })
+      }
     })
   }
   const onTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
@@ -205,24 +238,38 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         const scaledWidth = layoutRef.current.width * scaleValue._value;
         const scaledHeight = layoutRef.current.height * scaleValue._value;
 
+        offsetPosition.current = {
+          x: (scaledWidth - layoutRef.current.width) / 2 || 0,
+          y: (scaledHeight - layoutRef.current.height) / 2 || 0
+        }
+
         // Calculate the boundary limits
         let x = pan.x._value;
         let y = pan.y._value;
 
+        let needCorrectX = false
+        let needCorrectY = false
         // Correct x coordinate
         if (x < 0) {
-          x = 0;
+          x = 0 + offsetPosition.current.x
+          needCorrectX = true
         } else if (x > MovableAreaLayout.width - scaledWidth) {
-          x = MovableAreaLayout.width - scaledWidth;
+          x = MovableAreaLayout.width - scaledWidth + offsetPosition.current.x
+          needCorrectX = true
         }
 
         // Correct y coordinate
         if (y < 0) {
-          y = 0;
+          y = 0 + offsetPosition.current.x
+          needCorrectY = true
         } else if (y > MovableAreaLayout.height - scaledHeight) {
-          y = MovableAreaLayout.height - scaledHeight;
+          y = MovableAreaLayout.height - scaledHeight + offsetPosition.current.x
+          needCorrectY = true
         }
-
+        movablePosition.current = {
+          x: needCorrectX ? x - offsetPosition.current.x : x,
+          y: needCorrectY ? y - offsetPosition.current.x : y
+        }
         const needChange = x !== pan.x._value || y !== pan.y._value;
 
         Animated.spring(pan, {
@@ -258,17 +305,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   useEffect(() => {
     if (scaleValue._value !== originScaleValue) {
+      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue));
       Animated.spring(scaleValue, {
-        toValue: originScaleValue,
+        toValue: clampedScale,
         friction,
         useNativeDriver: false,
       }).start(() => {
-
         bindscale && bindscale(getCustomEvent('change', {}, {
           detail: {
             x: pan.x._value,
             y: pan.y._value,
-            scale: originScaleValue
+            scale: clampedScale
           },
           layoutRef
         }, props)
@@ -278,23 +325,26 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [originScaleValue]);
 
   useEffect(() => {
-    Animated.spring(pan, {
-      toValue: { x: Number(x), y: Number(y) },
-      useNativeDriver: false,
-      friction
-    }).start(() => {
-      bindchange &&
-        bindchange(
-          getCustomEvent('change', {}, {
-            detail: {
-              x: pan.x,
-              y: pan.y,
-              source: ''
-            },
-            layoutRef
-          }, props)
-        );
-    })
+    if (movablePosition.current.x !== Number(x) || movablePosition.current.y !== Number(y)) {
+      movablePosition.current = { x: Number(x), y: Number(y) }
+      Animated.spring(pan, {
+        toValue: { x: Number(x) + offsetPosition.current.x, y: Number(y) + offsetPosition.current.y },
+        useNativeDriver: false,
+        friction
+      }).start(() => {
+        bindchange &&
+          bindchange(
+            getCustomEvent('change', {}, {
+              detail: {
+                x: pan.x,
+                y: pan.y,
+                source: ''
+              },
+              layoutRef
+            }, props)
+          );
+      })
+    }
   }, [x, y])
 
   const [translateX, translateY] = [pan.x, pan.y];
