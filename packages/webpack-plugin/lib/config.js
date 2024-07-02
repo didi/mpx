@@ -1,3 +1,51 @@
+const reactConfig = {
+  event: {
+    parseEvent (attr) {
+      const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+      if (match) {
+        return {
+          prefix: match[1],
+          eventName: match[2].replace(/^./, function (match) {
+            return match.toLowerCase()
+          }),
+          modifier: match[3]
+        }
+      }
+    },
+    getEvent (eventName, prefix = 'bind') {
+      return prefix + eventName
+    },
+    defaultModelProp: 'value',
+    defaultModelEvent: 'input',
+    defaultModelValuePath: 'value'
+  },
+  wxs: {
+    tag: 'wxs',
+    module: 'module',
+    src: 'src',
+    ext: '.wxs',
+    templatePrefix: 'module.exports = \n'
+  },
+  directive: {
+    if: 'wx:if',
+    elseif: 'wx:elif',
+    else: 'wx:else',
+    model: 'wx:model',
+    modelProp: 'wx:model-prop',
+    modelEvent: 'wx:model-event',
+    modelValuePath: 'wx:model-value-path',
+    modelFilter: 'wx:model-filter',
+    for: 'wx:for',
+    forIndex: 'wx:for-index',
+    forItem: 'wx:for-item',
+    key: 'wx:key',
+    dynamicClass: 'wx:class',
+    dynamicStyle: 'wx:style',
+    ref: 'wx:ref',
+    show: 'wx:show'
+  }
+}
+
 module.exports = {
   wx: {
     typeExtMap: {
@@ -7,7 +55,6 @@ module.exports = {
       styles: '.wxss'
     },
     tabBar: {
-      customKey: 'custom',
       itemKey: 'list',
       iconKey: 'iconPath',
       activeIconKey: 'selectedIconPath'
@@ -28,18 +75,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'wxs',
@@ -75,7 +111,6 @@ module.exports = {
       styles: '.acss'
     },
     tabBar: {
-      customKey: 'customize',
       itemKey: 'items',
       iconKey: 'icon',
       activeIconKey: 'activeIcon'
@@ -85,7 +120,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        const match = /^(on|catch|capture-on|capture-catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],
@@ -103,18 +138,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'import-sjs',
@@ -171,18 +195,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'import-sjs',
@@ -218,7 +231,6 @@ module.exports = {
       styles: '.qss'
     },
     tabBar: {
-      customKey: 'custom',
       itemKey: 'list',
       iconKey: 'iconPath',
       activeIconKey: 'selectedIconPath'
@@ -239,18 +251,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return `({${arr.join(',')}})`
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'qs',
@@ -306,18 +307,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'sjs',
@@ -367,7 +357,6 @@ module.exports = {
       styles: '.css'
     },
     tabBar: {
-      customKey: 'custom',
       itemKey: 'list',
       iconKey: 'iconPath',
       activeIconKey: 'selectedIconPath'
@@ -388,18 +377,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'qjs',
@@ -455,18 +433,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'jds',
@@ -522,18 +489,7 @@ module.exports = {
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'dds',
@@ -560,5 +516,7 @@ module.exports = {
       ref: 'dd:ref',
       show: 'dd:show'
     }
-  }
+  },
+  ios: reactConfig,
+  android: reactConfig
 }

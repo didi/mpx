@@ -8,8 +8,8 @@ function processModel (listeners, context) {
   if (modelEvent) {
     // 对于modelEvent，内部获得时间后向外部转发，触发外部listener的同时转发为mpxModel事件
     listeners[modelEvent] = function (e) {
-      context.$emit('mpxModel', e)
       context.$emit(modelEvent, e)
+      context.$emit('mpxModel', e)
     }
     // 内部listener不需要mpxModel
     delete listeners.mpxModel

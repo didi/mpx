@@ -252,7 +252,7 @@
           this.lastY = y
         }, 30, {
           leading: true,
-          trailing: true
+          trailing: false
         }))
         this.bs.on('scrollEnd', () => {
           this.currentX = -this.bs.x

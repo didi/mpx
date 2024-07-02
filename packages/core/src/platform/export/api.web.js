@@ -1,4 +1,4 @@
-import Vue from '../../vue'
+import Vue from 'vue'
 import { injectMixins } from '../../core/injectMixins'
 
 const vm = new Vue()

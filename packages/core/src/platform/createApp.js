@@ -66,9 +66,6 @@ export default function createApp (option, config = {}) {
       }
     })
   } else {
-    if (option.onAppInit) {
-      option.onAppInit()
-    }
     builtInMixins.push({
       onLaunch () {
         Object.assign(this, Mpx.prototype)
@@ -76,13 +73,13 @@ export default function createApp (option, config = {}) {
     })
   }
   // app选项目前不需要进行转换
-  const { rawOptions } = transferOptions(option, 'app', false)
+  const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web') {
     global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-    global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
+    global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     global.getApp = function () {
       if (!isBrowser) {
         console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
@@ -90,6 +87,7 @@ export default function createApp (option, config = {}) {
       return appData
     }
   } else {
+    defaultOptions.onAppInit && defaultOptions.onAppInit()
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)
   }

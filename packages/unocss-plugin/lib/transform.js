@@ -38,24 +38,20 @@ function buildAliasTransformer (alias) {
     return source
   }
 }
-const regexCache = {}
-function makeRegexClassGroup (separators = ['-', ':']) {
-  const key = separators.join('|')
-  if (!regexCache[key]) regexCache[key] = new RegExp(`((?:[!@<~\\w+:_/-]|\\[&?>?:?\\S*\\])+?)(${key})\\(((?:[~!<>\\w\\s:/\\\\,%#.$?-]|\\[.*?\\])+?)\\)(?!\\s*?=>)`, 'gm')
-  regexCache[key].lastIndex = 0
-  return regexCache[key]
-}
 
-function transformGroups (source, options = {}) {
+const groupReg = /([!\w+-<@][\w+:_/-]*?\w):\(((?:[!\w\s:/\\,%#.$-]|\[.*?\])*?)\)/gm
+
+function transformGroups (source) {
   source = getReplaceSource(source)
   const content = source.original().source()
   let match
-  const groupReg = makeRegexClassGroup(options.separators)
+  groupReg.lastIndex = 0
   while (match = groupReg.exec(content)) {
     const start = match.index
-    const [text, a, spread, b] = match
-    const end = start + text.length - 1
-    const replacement = b.split(/\s+/g).filter(Boolean).map(i => i.replace(/^(!?)(.*)/, `$1${a}${spread}$2`)).join(' ')
+    const end = start + match[0].length - 1
+    const a = match[1]
+    const b = match[2]
+    const replacement = b.split(/\s+/g).filter(Boolean).map(i => i.replace(/^(!?)(.*)/, `$1${a}:$2`)).join(' ')
     source.replace(start, end, replacement)
   }
   return source

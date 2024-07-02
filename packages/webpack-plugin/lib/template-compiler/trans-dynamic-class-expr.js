@@ -2,34 +2,6 @@ const babylon = require('@babel/parser')
 const t = require('@babel/types')
 const traverse = require('@babel/traverse').default
 const generate = require('@babel/generator').default
-const escapeReg = /[()[\]{}#!.:,%'"+$]/g
-const escapeMap = {
-  '(': '_pl_',
-  ')': '_pr_',
-  '[': '_bl_',
-  ']': '_br_',
-  '{': '_cl_',
-  '}': '_cr_',
-  '#': '_h_',
-  '!': '_i_',
-  '/': '_s_',
-  '.': '_d_',
-  ':': '_c_',
-  ',': '_2c_',
-  '%': '_p_',
-  "'": '_q_',
-  '"': '_dq_',
-  '+': '_a_',
-  $: '_si_'
-}
-
-function mpEscape (str) {
-  return str.replace(escapeReg, function (match) {
-    if (escapeMap[match]) return escapeMap[match]
-    // unknown escaped
-    return '_u_'
-  })
-}
 
 module.exports = function transDynamicClassExpr (expr, { error } = {}) {
   try {
@@ -42,10 +14,13 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
       ObjectExpression (path) {
         path.node.properties.forEach((property) => {
           if (t.isObjectProperty(property) && !property.computed) {
-            let propertyName = property.key.name || property.key.value
-            propertyName = mpEscape(propertyName)
+            const propertyName = property.key.name || property.key.value
             if (/-/.test(propertyName)) {
-              property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
+              if (/\$/.test(propertyName)) {
+                error && error(`Dynamic classname [${propertyName}] is not supported, which includes [-] char and [$] char at the same time.`)
+              } else {
+                property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
+              }
             } else {
               property.key = t.identifier(propertyName)
             }

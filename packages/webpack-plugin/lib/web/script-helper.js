@@ -1,27 +1,14 @@
-const hasOwn = require('../utils/has-own')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const createHelpers = require('../helpers')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 const addQuery = require('../utils/add-query')
+const parseRequest = require('../utils/parse-request')
+const shallowStringify = require('../utils/shallow-stringify')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
-}
-
-function shallowStringify (obj) {
-  const arr = []
-  for (const key in obj) {
-    if (hasOwn(obj, key)) {
-      let value = obj[key]
-      if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
-      }
-      arr.push(`'${key}':${value}`)
-    }
-  }
-  return `{${arr.join(',')}}`
 }
 
 function getAsyncChunkName (chunkName) {
@@ -128,10 +115,17 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   }
 }
 
-function getRequireScript ({ ctorType, script, loaderContext }) {
+function getRequireScript ({ script, ctorType, loaderContext }) {
   let content = '  /** script content **/\n'
-  const extraOptions = { ctorType, lang: script.lang || 'js' }
   const { getRequire } = createHelpers(loaderContext)
+  const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
+  const extraOptions = {
+    ...script.src
+      ? { ...queryObj, resourcePath }
+      : null,
+    ctorType,
+    lang: script.lang || 'js'
+  }
   content += `  ${getRequire('script', script, extraOptions)}\n`
   return content
 }
@@ -144,21 +138,20 @@ function buildGlobalParams ({
   jsonConfig,
   webConfig,
   isMain,
-  globalTabBar,
-  hasApp
+  globalTabBar
 }) {
   let content = ''
   if (isMain) {
     content += `
-  global.getApp = function(){}
+  global.getApp = function () {}
   global.getCurrentPages = function () {
     if (!(typeof window !== 'undefined')) {
       console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
     var router = global.__mpxRouter
-    if(!router) return []
+    if (!router) return []
     // @ts-ignore
-    return (router.lastStack || router.stack).map(function(item){
+    return (router.lastStack || router.stack).map(function (item) {
       var page
       var vnode = item.vnode
       if (vnode && vnode.componentInstance) {
@@ -176,11 +169,6 @@ function buildGlobalParams ({
     if (globalTabBar) {
       content += globalTabBar
     }
-  } else if (!hasApp) {
-    content += `
-  global.__mpxGenericsMap = global.__mpxGenericsMap || {}
-  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-  global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
@@ -223,8 +211,6 @@ module.exports = {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  shallowStringify,
-  getAsyncChunkName,
   stringifyRequest,
   buildI18n
 }

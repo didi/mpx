@@ -39,6 +39,28 @@ function isEmptyObject (obj) {
   return true
 }
 
+function forEach (obj, fn) {
+  if (obj === null || typeof obj === 'undefined') {
+    return
+  }
+
+  if (typeof obj !== 'object') {
+    obj = [obj]
+  }
+
+  if (isArray(obj)) {
+    for (let i = 0, l = obj.length; i < l; i++) {
+      fn(obj[i], i, obj)
+    }
+  } else {
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn(obj[key], key, obj)
+      }
+    }
+  }
+}
+
 function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
@@ -112,5 +134,6 @@ export {
   dash2hump,
   hump2dash,
   def,
-  hasChanged
+  hasChanged,
+  forEach
 }

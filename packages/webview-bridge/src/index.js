@@ -18,19 +18,9 @@ const SDK_URL_MAP = {
   },
   ...window.sdkUrlMap
 }
-function getMpxWebViewId () {
-  const href = location.href
-  const reg = /mpx_webview_id=(\d+)/g
-  const matchVal = reg.exec(href)
-  let result
-  if (matchVal && matchVal[1]) {
-    result = +matchVal[1]
-  }
-  return result
-}
+
 let env = null
 let callbackId = 0
-const clientUid = getMpxWebViewId()
 const callbacks = {}
 // 环境判断逻辑
 const systemUA = navigator.userAgent
@@ -115,15 +105,11 @@ function postMessage (type, data = {}) {
       }
       delete callbacks[currentCallbackId]
     }
-    const postParams = {
+    window.parent.postMessage && window.parent.postMessage({
       type,
       callbackId,
       payload: filterData(data)
-    }
-    if (clientUid !== undefined) {
-      postParams.clientUid = clientUid
-    }
-    window.parent.postMessage && window.parent.postMessage(postParams, '*')
+    }, '*')
   } else {
     data({
       webapp: true

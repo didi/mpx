@@ -225,7 +225,6 @@ module.exports = function (content) {
               usingComponents,
               componentPlaceholder
             })
-            // if (template.src) extraOptions.resourcePath = resourcePath
             break
           case 'styles':
             if (cssLang) part.lang = cssLang
