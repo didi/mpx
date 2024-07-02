@@ -72,7 +72,7 @@ export default function createApp (option, config = {}) {
     }
     const instance = instanceRef.current
     useEffect(() => {
-      const current = navigationRef.getCurrentRoute() || {}
+      const current = navigationRef.isReady() ? navigationRef.getCurrentRoute() : {}
       const options = {
         path: current.name,
         query: current.params,

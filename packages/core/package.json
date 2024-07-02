@@ -29,7 +29,41 @@
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
-    "vue-i18n-bridge": "^9.2.2"
+    "vue-i18n-bridge": "^9.2.2",
+    "react": "^18.3.1",
+    "react-native": "^0.74.3",
+    "@react-navigation/native": "^6.1.17",
+    "@react-navigation/native-stack": "^6.9.26",
+    "react-native-root-siblings": "^5.0.1"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
+    "vue-demi": {
+      "optional": true
+    },
+    "vue-i18n": {
+      "optional": true
+    },
+    "vue-i18n-bridge": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    },
+    "@react-navigation/native": {
+      "optional": true
+    },
+    "@react-navigation/native-stack": {
+      "optional": true
+    },
+    "react-native-root-siblings": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
