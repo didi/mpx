@@ -1,4 +1,4 @@
-import { changeOpts, warn } from '../../../common/js'
+import { ENV_OBJ, changeOpts, warn } from '../../../common/js'
 
 const TIPS_NAME = '支付宝环境 mpx'
 
@@ -7,28 +7,28 @@ function showToast (options = {}) {
     title: 'content',
     icon: 'type'
   })
-  my.showToast(opts)
+  return ENV_OBJ.showToast(opts)
 }
 
 function hideToast (options = {}) {
   if (options.success || options.fail || options.complete) {
     warn(`${TIPS_NAME}.hideToast 不支持 success/fail/complete 参数`)
   }
-  my.hideToast(options)
+  return ENV_OBJ.hideToast(options)
 }
 
 function showLoading (options = {}) {
   const opts = changeOpts(options, {
     title: 'content'
   })
-  my.showLoading(opts)
+  return ENV_OBJ.showLoading(opts)
 }
 
 function hideLoading (options = {}) {
   if (options.success || options.fail || options.complete) {
     warn(`${TIPS_NAME}.hideLoading 不支持 success/fail/complete 参数`)
   }
-  my.hideLoading(options)
+  return ENV_OBJ.hideLoading(options)
 }
 
 export {

@@ -90,6 +90,10 @@ function isArray (arr) {
   }
 }
 
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
 var escapeMap = {
   '(': '_pl_',
   ')': '_pr_',
@@ -141,11 +145,11 @@ function stringifyDynamicClass (value) {
 
 function stringifyArray (value) {
   var res = ''
-  var classString
+  var stringified
   for (var i = 0; i < value.length; i++) {
-    if ((classString = stringifyDynamicClass(value[i]))) {
+    if (isDef(stringified = stringifyDynamicClass(value[i])) && stringified !== '') {
       if (res) res += ' '
-      res += classString
+      res += stringified
     }
   }
   return res

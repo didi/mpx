@@ -1,6 +1,4 @@
-import { getEnvObj, envError } from '../../../common/js'
-
-const ENV_OBJ = getEnvObj()
+import { ENV_OBJ, envError } from '../../../common/js'
 
 const setScreenBrightness = ENV_OBJ.setScreenBrightness || envError('setScreenBrightness')
 
