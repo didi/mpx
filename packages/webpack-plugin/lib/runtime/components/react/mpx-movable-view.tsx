@@ -276,19 +276,35 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     let x = positionX
     let y = positionY
 
+    // Correct y coordinate
+    if (scaledHeight > MovableAreaLayout.height) {
+      if (y >= 0) {
+        y = 0
+      } else if (y < MovableAreaLayout.height - scaledHeight) {
+        y = MovableAreaLayout.height - scaledHeight
+      }
+    } else {
+      if (y < 0) {
+        y = 0
+      } else if (y > MovableAreaLayout.height - scaledHeight) {
+        y = MovableAreaLayout.height - scaledHeight
+      }
+    }
     // Correct x coordinate
-    if (x < 0) {
-      x = 0
-    } else if (x > MovableAreaLayout.width - scaledWidth) {
-      x = MovableAreaLayout.width - scaledWidth
+    if (scaledWidth > MovableAreaLayout.width) {
+      if (x >= 0) {
+        x = 0
+      } else if (x < MovableAreaLayout.width - scaledWidth) {
+        x = MovableAreaLayout.width - scaledWidth
+      }
+    } else {
+      if (x < 0) {
+        x = 0
+      } else if (x > MovableAreaLayout.width - scaledWidth) {
+        x = MovableAreaLayout.width - scaledWidth
+      }
     }
 
-    // Correct y coordinate
-    if (y < 0) {
-      y = 0
-    } else if (y > MovableAreaLayout.height - scaledHeight) {
-      y = MovableAreaLayout.height - scaledHeight
-    }
     return {
       x,
       y
