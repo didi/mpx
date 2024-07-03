@@ -55,6 +55,7 @@ module.exports = {
       styles: '.wxss'
     },
     tabBar: {
+      customKey: 'custom',
       itemKey: 'list',
       iconKey: 'iconPath',
       activeIconKey: 'selectedIconPath'
@@ -111,6 +112,7 @@ module.exports = {
       styles: '.acss'
     },
     tabBar: {
+      customKey: 'customize',
       itemKey: 'items',
       iconKey: 'icon',
       activeIconKey: 'activeIcon'
@@ -120,7 +122,7 @@ module.exports = {
     },
     event: {
       parseEvent (attr) {
-        const match = /^(on|catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
+        const match = /^(on|catch|capture-on|capture-catch)([A-Z].*?)(?:\.(.*))?$/.exec(attr)
         if (match) {
           return {
             prefix: match[1],

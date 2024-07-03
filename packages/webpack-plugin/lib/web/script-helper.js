@@ -138,7 +138,8 @@ function buildGlobalParams ({
   jsonConfig,
   webConfig,
   isMain,
-  globalTabBar
+  globalTabBar,
+  hasApp
 }) {
   let content = ''
   if (isMain) {
@@ -169,6 +170,11 @@ function buildGlobalParams ({
     if (globalTabBar) {
       content += globalTabBar
     }
+  } else if (!hasApp) {
+    content += `
+  global.__mpxGenericsMap = global.__mpxGenericsMap || {}
+  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
