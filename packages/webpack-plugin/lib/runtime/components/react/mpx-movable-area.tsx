@@ -15,22 +15,22 @@ interface MovableAreaProps {
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { children, style } = props;
+  const { children, style, width = 10, height = 10 } = props;
   const [areaWidth, setAreaWidth] = useState(0);
   const [areaHeight, setAreaHeight] = useState(0);
 
 
   useEffect(() => {
-    setAreaWidth(props.width || 100)
-    setAreaHeight(props.height || 100)
-  }, []);
+    setAreaWidth(width)
+    setAreaHeight(height)
+  }, [width, height])
 
   const { nodeRef: movableViewRef } = useNodesRef(props, ref, {
     node: {}
   })
 
-  function _onLayout(e: LayoutChangeEvent) {
-    const { width, height } = e.nativeEvent.layout
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width = 10, height = 10 } = e.nativeEvent.layout
     setAreaWidth(width)
     setAreaHeight(height)
   }
@@ -40,10 +40,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       <View
         ref={movableViewRef}
         style={[{ height: areaHeight, width: areaWidth, overflow: 'hidden' }, style]}
-        onLayout={_onLayout}
+        onLayout={onLayout}
       >
         {children}
-    </View>
+      </View>
     </MovableAreaContext.Provider>
   );
 })

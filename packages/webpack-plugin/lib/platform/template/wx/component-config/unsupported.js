@@ -12,7 +12,7 @@ const JD_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher',
 const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image']
 // RN不支持的标签集合
 const RN_UNSUPPORTED_TAG_NAME_ARR = ['open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image',
-  'checkbox', 'checkbox-group', 'radio', 'radio-group', 'switch', 'movable-area', 'movable-view', 'icon', 'progress', 'rich-text', 'label', 'picker', 'picker-view', 'picker-view-column', 'slider',
+  'checkbox', 'checkbox-group', 'radio', 'radio-group', 'switch', 'icon', 'progress', 'rich-text', 'label', 'picker', 'picker-view', 'picker-view-column', 'slider',
   'audio', 'camera', 'video', 'canvas', 'match-media', 'page-container', 'root-portal', 'editor', 'keyboard-accessory', 'navigator', 'map']
 
 /**
