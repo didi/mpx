@@ -1,4 +1,4 @@
-import { getEnvObj, noop } from './utils'
+import { getEnvObj } from './utils'
 
 const envObj = getEnvObj()
 
