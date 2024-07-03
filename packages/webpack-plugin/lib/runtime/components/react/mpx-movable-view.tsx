@@ -68,16 +68,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindchange
   } = props
 
-  const [transformOrigin, setTransformOrigin] = useState('0% 0%')
   const pan = useRef<any>(new Animated.ValueXY()).current
   const baseScale = useRef<any>(new Animated.Value(1)).current
   const scaleValue = useRef<any>(new Animated.Value(1)).current
+  const [transformOrigin, setTransformOrigin] = useState('0% 0%')
   const panResponder: any = useRef({})
 
 
   const disabled = useRef(false);
-  const layoutRef = useRef<any>({})
 
+  const layoutRef = useRef<any>({})
   const MovableAreaLayout = useContext(MovableAreaContext)
 
   const movablePosition = useRef({
@@ -93,56 +93,63 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   let touchEvent = ''
   let initialDistance = 0
 
-  const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
-      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue))
-      const { x: newX, y: nexY } = checkBoundaryPosition({
-        clampedScale,
-        width,
-        height,
-        positionX: movablePosition.current.x,
-        positionY: movablePosition.current.y
-      })
+  useEffect(() => {
+    if (disabled.current !== props.disabled) {
+      disabled.current = !!props.disabled
+      createPanResponder()
+    }
+  }, [props.disabled])
 
+  useEffect(() => {
+    if (scale && (scaleValue._value !== originScaleValue)) {
+      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue))
+      Animated.spring(scaleValue, {
+        toValue: clampedScale,
+        friction,
+        useNativeDriver: false,
+      }).start(() => {
+        bindscale && bindscale(getCustomEvent('scale', {}, {
+          detail: {
+            x: pan.x._value,
+            y: pan.y._value,
+            scale: clampedScale
+          },
+          layoutRef
+        }, props)
+        )
+      })
+    }
+  }, [originScaleValue]);
+
+  useEffect(() => {
+    if (movablePosition.current.x !== Number(x) || movablePosition.current.y !== Number(y)) {
+      const { x: newX, y: newY } = checkBoundaryPosition({
+        clampedScale: scaleValue._value,
+        width: layoutRef.current.width,
+        height: layoutRef.current.height,
+        positionX: Number(x),
+        positionY: Number(y)
+      })
+      movablePosition.current = { x: newX, y: newY }
       Animated.spring(pan, {
-        toValue: { x: newX, y: nexY },
+        toValue: { x: newX, y: newY },
         useNativeDriver: false,
         friction
       }).start(() => {
-        movablePosition.current = { x: newX, y: nexY }
         bindchange &&
           bindchange(
             getCustomEvent('change', {}, {
               detail: {
                 x: newX,
-                y: nexY,
+                y: newY,
                 source: ''
               },
               layoutRef
             }, props)
           );
       })
-    })
-  }
-  const onTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
-    const { bindhtouchmove, bindvtouchmove, bindtouchmove } = props
-    if (touchEvent === 'htouchmove') {
-      bindhtouchmove && bindhtouchmove(e)
-    } else if (touchEvent === 'vtouchmove') {
-      bindvtouchmove && bindvtouchmove(e)
     }
-    bindtouchmove && bindtouchmove(e)
-  }
-  const onCatchTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
-    const { catchhtouchmove, catchvtouchmove, catchtouchmove } = props
-    if (touchEvent === 'htouchmove') {
-      catchhtouchmove && catchhtouchmove(e)
-    } else if (touchEvent === 'vtouchmove') {
-      catchvtouchmove && catchvtouchmove(e)
-    }
-    catchtouchmove && catchtouchmove(e)
-  }
+  }, [x, y])
 
   const createPanResponder = () => {
     panResponder.current = PanResponder.create({
@@ -168,13 +175,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           const touch2 = e.nativeEvent.touches[1];
           const currentTouchDistance = Math.sqrt(
             Math.pow(touch1.pageX - touch2.pageX, 2) + Math.pow(touch1.pageY - touch2.pageY, 2)
-          );
+          )
 
           if (!initialDistance) {
             initialDistance = currentTouchDistance;
           } else {
-            const newScale = (baseScale._value * currentTouchDistance) / initialDistance;
-            const clampedScale = Math.min(scaleMax, Math.max(scaleMin, newScale));
+            const newScale = (baseScale._value * currentTouchDistance) / initialDistance
+            const clampedScale = Math.min(scaleMax, Math.max(scaleMin, newScale))
 
 
             Animated.spring(scaleValue, {
@@ -197,7 +204,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
           setTransformOrigin('0% 0%')
           if (isFirstTouch) {
-            touchEvent = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove';
+            touchEvent = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove'
             isFirstTouch = false;
           }
           Animated.event(
@@ -226,13 +233,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               },
               layoutRef
             }, props)
-          );
+          )
         }
       },
-      onPanResponderRelease: (e) => {
-        pan.flattenOffset();
-        isFirstTouch = true;
-        initialDistance = 0;
+      onPanResponderRelease: () => {
+        pan.flattenOffset()
+        isFirstTouch = true
+        initialDistance = 0
         const { x, y } = checkBoundaryPosition({
           clampedScale: scaleValue._value,
           width: layoutRef.current.width,
@@ -244,7 +251,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x,
           y
         }
-        const needChange = x !== pan.x._value || y !== pan.y._value;
+        const needChange = x !== pan.x._value || y !== pan.y._value
 
         Animated.spring(pan, {
           toValue: { x, y },
@@ -253,7 +260,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }).start(() => {
           if (needChange) {
             bindchange && bindchange(
-              getCustomEvent('change', e, {
+              getCustomEvent('change', {}, {
                 detail: {
                   x,
                   y,
@@ -261,12 +268,68 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 },
                 layoutRef
               }, props)
-            );
+            )
           }
-        });
+        })
       }
-    });
+    })
   }
+
+  createPanResponder()
+  
+  const onLayout = () => {
+    nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
+      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue))
+      const { x: newX, y: nexY } = checkBoundaryPosition({
+        clampedScale,
+        width,
+        height,
+        positionX: movablePosition.current.x,
+        positionY: movablePosition.current.y
+      })
+
+      Animated.spring(pan, {
+        toValue: { x: newX, y: nexY },
+        useNativeDriver: false,
+        friction
+      }).start(() => {
+        movablePosition.current = { x: newX, y: nexY }
+        bindchange &&
+          bindchange(
+            getCustomEvent('change', {}, {
+              detail: {
+                x: newX,
+                y: nexY,
+                source: ''
+              },
+              layoutRef
+            }, props)
+          )
+      })
+    })
+  }
+
+  const onTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove } = props
+    if (touchEvent === 'htouchmove') {
+      bindhtouchmove && bindhtouchmove(e)
+    } else if (touchEvent === 'vtouchmove') {
+      bindvtouchmove && bindvtouchmove(e)
+    }
+    bindtouchmove && bindtouchmove(e)
+  }
+
+  const onCatchTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
+    const { catchhtouchmove, catchvtouchmove, catchtouchmove } = props
+    if (touchEvent === 'htouchmove') {
+      catchhtouchmove && catchhtouchmove(e)
+    } else if (touchEvent === 'vtouchmove') {
+      catchvtouchmove && catchvtouchmove(e)
+    }
+    catchtouchmove && catchtouchmove(e)
+  }
+
   const checkBoundaryPosition = ({ clampedScale, width, height, positionX, positionY }: { clampedScale: number; width: number; height: number; positionX: number; positionY: number }) => {
     // Calculate scaled element size
     const scaledWidth = width * clampedScale
@@ -310,74 +373,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       y
     }
   }
-  createPanResponder()
-
-  useEffect(() => {
-    if (disabled.current !== props.disabled) {
-      disabled.current = !!props.disabled
-      createPanResponder()
-    }
-  }, [props.disabled]);
-
-
-  useEffect(() => {
-    if (scale && (scaleValue._value !== originScaleValue)) {
-      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue));
-      Animated.spring(scaleValue, {
-        toValue: clampedScale,
-        friction,
-        useNativeDriver: false,
-      }).start(() => {
-        bindscale && bindscale(getCustomEvent('scale', {}, {
-          detail: {
-            x: pan.x._value,
-            y: pan.y._value,
-            scale: clampedScale
-          },
-          layoutRef
-        }, props)
-        );
-      });
-    }
-  }, [originScaleValue]);
-
-  useEffect(() => {
-    if (movablePosition.current.x !== Number(x) || movablePosition.current.y !== Number(y)) {
-      const { x: newX, y: newY } = checkBoundaryPosition({
-        clampedScale: scaleValue._value,
-        width: layoutRef.current.width,
-        height: layoutRef.current.height,
-        positionX: Number(x),
-        positionY: Number(y)
-      })
-      movablePosition.current = { x: newX, y: newY }
-      Animated.spring(pan, {
-        toValue: { x: newX, y: newY },
-        useNativeDriver: false,
-        friction
-      }).start(() => {
-        bindchange &&
-          bindchange(
-            getCustomEvent('change', {}, {
-              detail: {
-                x: newX,
-                y: newY,
-                source: ''
-              },
-              layoutRef
-            }, props)
-          );
-      })
-    }
-  }, [x, y])
 
   const [translateX, translateY] = [pan.x, pan.y];
 
-  const childrenStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue }], transformOrigin: transformOrigin };
+  const childrenStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue }], transformOrigin: transformOrigin }
 
-  const hasTouchmove = () => !!props.bindhtouchmove || !!props.bindvtouchmove || !!props.bindtouchmove;
+  const hasTouchmove = () => !!props.bindhtouchmove || !!props.bindvtouchmove || !!props.bindtouchmove
 
-  const hasCatchTouchmove = () => !!props.catchhtouchmove || !!props.catchvtouchmove || !!props.catchtouchmove;
+  const hasCatchTouchmove = () => !!props.catchhtouchmove || !!props.catchvtouchmove || !!props.catchtouchmove
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -400,7 +403,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'bindscale',
     'htouchmove',
     'vtouchmove'
-  ], { layoutRef });
+  ], { layoutRef })
+
   return (
     <Animated.View
       {...innerProps}
