@@ -39,7 +39,7 @@ const RecordIndependentDependency = require('./dependencies/RecordIndependentDep
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
-const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
+const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
@@ -65,6 +65,7 @@ const emitFile = require('./utils/emit-file')
 const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
+const { isReact, isWeb } = require('./utils/env')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -122,8 +123,11 @@ class MpxWebpackPlugin {
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
-    if (options.mode === 'web' && options.srcMode !== 'wx') {
+    if (isWeb(options.mode) && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
+    }
+    if (isReact(options.mode) && options.srcMode !== 'wx') {
+      errors.push('MpxWebpackPlugin supports mode to be "ios" or "android" only when srcMode is set to "wx"!')
     }
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
@@ -152,6 +156,7 @@ class MpxWebpackPlugin {
       return externalsMap[external] || external
     })
     options.projectRoot = options.projectRoot || process.cwd()
+    options.projectName = options.projectName || 'AwesomeProject'
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
@@ -175,7 +180,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
-    options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
@@ -299,7 +304,7 @@ class MpxWebpackPlugin {
     // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
     new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
-    if (this.options.mode !== 'web') {
+    if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
@@ -327,7 +332,6 @@ class MpxWebpackPlugin {
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
-
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
@@ -343,7 +347,7 @@ class MpxWebpackPlugin {
     compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
-    if (this.options.mode !== 'web') {
+    if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       optimization.runtimeChunk = {
         name: (entrypoint) => {
           for (const packageName in mpx.independentSubpackagesMap) {
@@ -359,7 +363,7 @@ class MpxWebpackPlugin {
     let splitChunksOptions = null
     let splitChunksPlugin = null
     // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
-    if (optimization.splitChunks !== false) {
+    if (optimization.splitChunks !== false && !isReact(this.options.mode)) {
       splitChunksOptions = Object.assign({
         chunks: 'all',
         usedExports: optimization.usedExports === true,
@@ -417,7 +421,7 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompile) {
+    if (this.options.partialCompileRules) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
@@ -435,7 +439,7 @@ class MpxWebpackPlugin {
               if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
                 return callback(null, obj)
               }
-              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
+              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompileRules)) {
                 const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
                 obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
@@ -593,8 +597,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(CommonJsExtractDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsExtractDependency, new CommonJsExtractDependency.Template())
 
-      compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+      compilation.dependencyFactories.set(RecordLoaderContentDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordLoaderContentDependency, new RecordLoaderContentDependency.Template())
 
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
@@ -655,6 +659,7 @@ class MpxWebpackPlugin {
           env: this.options.env,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
+          projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
           transRpxRules: this.options.transRpxRules,
@@ -664,7 +669,7 @@ class MpxWebpackPlugin {
           nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
-          vueContentCache: new Map(),
+          loaderContentCache: new Map(),
           tabBarMap: {},
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
@@ -676,8 +681,8 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || this.options.mode === 'ali',
-          partialCompile: this.options.partialCompile,
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || isWeb(this.options.mode),
+          partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,
@@ -1123,7 +1128,7 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (mpx.mode === 'web') {
+          if (isWeb(mpx.mode)) {
             // web独立处理splitChunk
             if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
@@ -1157,7 +1162,7 @@ class MpxWebpackPlugin {
 
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
         // 处理dll产生的external模块
-        if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
+        if (module.external && module.userRequest.startsWith('dll-reference ') && !isWeb(mpx.mode) && !isReact(mpx.mode)) {
           const chunk = renderContext.chunk
           const request = module.request
           let relativePath = toPosix(path.relative(path.dirname(chunk.name), request))
@@ -1309,7 +1314,7 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
-                if (mpx.mode === 'web') {
+                if (isWeb(mpx.mode)) {
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot
@@ -1514,8 +1519,8 @@ class MpxWebpackPlugin {
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
               transGlobalObject(expr.callee)
             })
-            if (mpx.mode === 'ali' || mpx.mode === 'web') {
-              // 支付宝和web不支持Behaviors
+            if (mpx.mode === 'ali' || isWeb(mpx.mode) || isReact(mpx.mode)) {
+              // 支付宝、web和react不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
                 transGlobalObject(expr.callee)
               })
@@ -1532,7 +1537,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (mpx.mode === 'web') return
+        if (isWeb(mpx.mode) || isReact(mpx.mode)) return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -1771,7 +1776,7 @@ try {
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
-        if (mpx.mode === 'web') {
+        if (isWeb(mpx.mode)) {
           const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')

@@ -194,7 +194,6 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
 |@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
 |@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
-|@mpxjs/mock|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmock.svg)](https://badge.fury.io/js/%40mpxjs%2Fmock)|结合mockjs提供数据mock能力|
 |@mpxjs/utils|[![npm version](https://badge.fury.io/js/%40mpxjs%2Futils.svg)](https://badge.fury.io/js/%40mpxjs%2Futils)|mpx运行时工具库|
 |@mpxjs/babel-plugin-inject-page-events|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events.svg)](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events)|组合式API页面事件处理插件|
 |@mpxjs/mpx-cube-ui|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmpx-cube-ui.svg)](https://badge.fury.io/js/%40mpxjs%2Fmpx-cube-ui)|基于 Mpx 的移动端基础组件库|

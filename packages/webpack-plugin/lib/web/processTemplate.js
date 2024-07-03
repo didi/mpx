@@ -60,18 +60,19 @@ module.exports = function (template, {
       }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
-
+        const warn = (msg) => {
+          loaderContext.emitWarning(
+            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+          )
+        }
+        const error = (msg) => {
+          loaderContext.emitError(
+            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+          )
+        }
         const { root, meta } = templateCompiler.parse(template.content, {
-          warn: (msg) => {
-            loaderContext.emitWarning(
-              new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-            )
-          },
-          error: (msg) => {
-            loaderContext.emitError(
-              new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-            )
-          },
+          warn,
+          error,
           usingComponents,
           hasComment,
           isNative,
@@ -115,7 +116,7 @@ module.exports = function (template, {
         return templateCompiler.serialize(root)
       }
     })
-    output += '\n\n'
+    output += '\n'
   }
 
   callback(null, {
