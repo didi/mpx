@@ -198,7 +198,6 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const { RootSiblingParent } = global.__navigationHelper
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
@@ -249,6 +248,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
+    const { RootSiblingParent } = global.__navigationHelper
     const Page = () => {
       return createElement(RootSiblingParent,
         null,
