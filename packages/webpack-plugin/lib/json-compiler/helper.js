@@ -28,10 +28,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
 
   let dynamicEntryCount = 0
 
-  const getDynamicEntry = (request, type, outputPath = '', packageRoot = '', relativePath = '', context = '') => {
+  const getDynamicEntry = (request, type, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) => {
     if (typeof customGetDynamicEntry === 'function') return customGetDynamicEntry(request, type, outputPath, packageRoot, relativePath, context)
     const key = `mpx_dynamic_entry_${dynamicEntryCount++}`
-    const value = `__mpx_dynamic_entry__( ${JSON.stringify(request)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)},${JSON.stringify(context)})`
+    const value = `__mpx_dynamic_entry__( ${JSON.stringify(request)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)},${JSON.stringify(context)},'${JSON.stringify(extraOptions)}')`
     dynamicEntryMap.set(key, value)
     return key
   }
@@ -43,7 +43,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     })
   }
 
-  const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '' }, callback) => {
+  const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '', extraOptions = {} }, callback) => {
     if (!isUrlRequest(component)) return callback(null, component)
     if (resolveMode === 'native') {
       component = urlToRequest(component)
@@ -96,7 +96,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         resource = `!!${nativeLoaderPath}!${resource}`
       }
 
-      const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
+      const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath, '', extraOptions)
       callback(null, entry, {
         tarRoot,
         placeholder,

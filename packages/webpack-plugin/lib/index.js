@@ -180,7 +180,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
-    options.partialCompileRule = options.partialCompileRule || {}
+    options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
@@ -421,7 +421,7 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompileRule && this.options.partialCompileRule.include) {
+    if (this.options.partialCompileRules) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
@@ -439,7 +439,7 @@ class MpxWebpackPlugin {
               if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
                 return callback(null, obj)
               }
-              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompileRule)) {
+              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompileRules)) {
                 const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
                 obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
@@ -682,7 +682,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || isWeb(this.options.mode),
-          partialCompileRule: this.options.partialCompileRule,
+          partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,

@@ -101,6 +101,7 @@ let moduleId
 let isNative
 let hasScoped
 let hasVirtualHost
+let runtimeCompile
 let rulesRunner
 let currentEl
 let injectNodes = []
@@ -618,6 +619,7 @@ function parse (template, options) {
   hasVirtualHost = options.hasVirtualHost
   filePath = options.filePath
   i18n = options.i18n
+  runtimeCompile = options.runtimeCompile
   platformGetTagNamespace = options.getTagNamespace || no
   refId = 0
   injectNodes = []
@@ -749,7 +751,7 @@ function parse (template, options) {
             parent: currentParent
           }
           children.push(el)
-          options.runtimeCompile ? processTextDynamic(el) : processText(el, meta)
+          runtimeCompile ? processTextDynamic(el) : processText(el)
         }
       }
     },
@@ -861,7 +863,7 @@ function modifyAttr (el, name, val) {
   }
 }
 
-function postMoveBaseDirective (target, source, options, isDelete = true) {
+function postMoveBaseDirective (target, source, isDelete = true) {
   target.for = source.for
   target.if = source.if
   target.elseif = source.elseif
@@ -869,7 +871,7 @@ function postMoveBaseDirective (target, source, options, isDelete = true) {
   if (isReact(mode)) {
     postProcessForReact(target)
     postProcessIfReact(target)
-  } else if (options.runtimeCompile) {
+  } else if (runtimeCompile) {
     postProcessForDynamic(target, config[mode])
     postProcessIfDynamic(target, config[mode])
   } else {
@@ -1182,7 +1184,7 @@ function processEvent (el, options) {
       const modifiers = (parsedEvent.modifier || '').split('.')
       const prefix = parsedEvent.prefix
       // catch 场景下，下发的 eventconfig 里面包含特殊字符，用以运行时的判断
-      const extraStr = options.runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
+      const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1930,7 +1932,7 @@ function postProcessIfReact (el) {
   }
 }
 
-function processText (el, meta) {
+function processText (el) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -1940,12 +1942,12 @@ function processText (el, meta) {
   }
   el.text = parsed.val
   if (isReact(mode)) {
-    processWrapTextReact(el, meta)
+    processWrapTextReact(el)
   }
 }
 
 // RN中文字需被Text包裹
-function processWrapTextReact (el, meta) {
+function processWrapTextReact (el) {
   const parentTag = el.parent.tag
   if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
     const wrapper = createASTElement('Text')
@@ -1967,13 +1969,11 @@ function processWrapTextReact (el, meta) {
 //   }])
 // }
 
-function injectWxs (meta, module, src, options) {
-  if (addWxsModule(meta, module, src)) {
+function injectWxs (meta, module, src) {
+  if (runtimeCompile || addWxsModule(meta, module, src)) {
     return
   }
-  if (options && options.runtimeCompile) {
-    return
-  }
+
   const wxsNode = createASTElement(config[mode].wxs.tag, [
     {
       name: config[mode].wxs.module,
@@ -2238,9 +2238,9 @@ function postProcessAliComponentRootView (el, options, meta) {
   replaceNode(el, componentWrapView, true)
   addChild(componentWrapView, el)
   processAttrs(componentWrapView, options)
-  postMoveBaseDirective(componentWrapView, el, options)
+  postMoveBaseDirective(componentWrapView, el)
 
-  if (options.runtimeCompile) {
+  if (runtimeCompile) {
     collectDynamicInfo(componentWrapView, options, meta)
     postProcessAttrsDynamic(componentWrapView, config[mode])
   }
@@ -2314,14 +2314,14 @@ function processShow (el, options, root) {
         value: show
       }])
     } else {
-      if (options.runtimeCompile) {
+      if (runtimeCompile) {
         processShowStyleDynamic(el, show)
       } else {
         processShowStyle(el, show)
       }
     }
   } else {
-    if (options.runtimeCompile) {
+    if (runtimeCompile) {
       processShowStyleDynamic(el, show)
     } else {
       processShowStyle(el, show)
@@ -2464,7 +2464,7 @@ function processInjectWxs (el, meta, options) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
-      injectWxs(meta, injectWxsModuleName, injectWxsPath, options)
+      injectWxs(meta, injectWxsModuleName, injectWxsPath)
     })
   }
 }
@@ -2551,7 +2551,7 @@ function processElement (el, root, options, meta) {
   processIf(el)
   processFor(el)
   processRef(el, options, meta)
-  if (options.runtimeCompile) {
+  if (runtimeCompile) {
     processClassDynamic(el, meta)
     processStyleDynamic(el, meta)
   } else {
@@ -2591,10 +2591,10 @@ function closeElement (el, meta, options) {
     if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
       postProcessAliComponentRootView(el, options, meta)
     }
-    postProcessComponentIs(el, options)
+    postProcessComponentIs(el)
   }
 
-  if (options.runtimeCompile) {
+  if (runtimeCompile) {
     postProcessForDynamic(el, config[mode])
     postProcessIfDynamic(el, config[mode])
     postProcessAttrsDynamic(el, config[mode])
@@ -2637,7 +2637,7 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el, options) {
+function postProcessComponentIs (el) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2646,7 +2646,7 @@ function postProcessComponentIs (el, options) {
       tempNode = getTempNode()
     }
     replaceNode(el, tempNode, true)
-    postMoveBaseDirective(tempNode, el, options)
+    postMoveBaseDirective(tempNode, el)
 
     el.components.forEach(function (component) {
       const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)

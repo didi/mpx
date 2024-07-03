@@ -90,6 +90,10 @@ function isArray (arr) {
   }
 }
 
+function isDef (v) {
+  return v !== undefined && v !== null
+}
+
 var escapeMap = {
   '(': '_pl_',
   ')': '_pr_',
@@ -133,7 +137,7 @@ function stringifyDynamicClass (value) {
   }
 
   if (typeof value === 'string') {
-    return mpEscape(value)
+    return value
   } else {
     return ''
   }
@@ -141,11 +145,11 @@ function stringifyDynamicClass (value) {
 
 function stringifyArray (value) {
   var res = ''
-  var classString
+  var stringified
   for (var i = 0; i < value.length; i++) {
-    if ((classString = stringifyDynamicClass(value[i]))) {
+    if (isDef(stringified = stringifyDynamicClass(value[i])) && stringified !== '') {
       if (res) res += ' '
-      res += classString
+      res += stringified
     }
   }
   return res
@@ -241,7 +245,7 @@ module.exports = {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
-    return concat(staticClass, stringifyDynamicClass(dynamicClass))
+    return concat(staticClass, mpEscape(stringifyDynamicClass(dynamicClass)))
   },
   stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)

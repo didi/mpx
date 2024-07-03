@@ -24,7 +24,7 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo } = loaderContext.getMpx()
+  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
 
   let output = '/* script */\n'
 
@@ -69,7 +69,7 @@ module.exports = function (script, {
         delete pageConfig.usingComponents
       }
 
-      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
+      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
   export default processComponentOption({
