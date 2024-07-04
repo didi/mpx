@@ -62,11 +62,11 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
       }
     } else if (childDisplayName === 'mpx-switch') {
       if (child.props.checked !== undefined) {
-        formValues.current.formValues[childPropsName] = !!child.props.checked
+        formValues.current[childPropsName] = !!child.props.checked
       }
     } else {
       childProps._setGroupData = (value: any) => {
-        formValues.current.formValues[childPropsName] = value
+        formValues.current[childPropsName] = value
       }
     }
     childProps[proxyChangeEvent] = (event: any) => {
