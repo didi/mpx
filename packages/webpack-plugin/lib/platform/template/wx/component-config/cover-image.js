@@ -13,19 +13,11 @@ module.exports = function ({ print }) {
     tt () {
       return 'image'
     },
-    ios(tag, { el }) {
+    ios (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-image'
     },
-    android(tag, { el }) {
-      el.isBuiltIn = true
-      return 'mpx-image'
-    },
-    ios(tag, { el }) {
-      el.isBuiltIn = true
-      return 'mpx-image'
-    },
-    android(tag, { el }) {
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-image'
     },
