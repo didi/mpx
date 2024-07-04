@@ -1,4 +1,4 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
 
 function setClipboardData (options = {}) {
   const opts = changeOpts(options, {
@@ -11,7 +11,7 @@ function setClipboardData (options = {}) {
       errMsg: 'setClipboardData:ok'
     })
   })
-  my.setClipboard(opts)
+  return ENV_OBJ.setClipboard(opts)
 }
 
 function getClipboardData (options = {}) {
@@ -21,7 +21,7 @@ function getClipboardData (options = {}) {
     return changeOpts(res, { text: 'data' })
   })
 
-  my.getClipboard(opts)
+  return ENV_OBJ.getClipboard(opts)
 }
 
 export {

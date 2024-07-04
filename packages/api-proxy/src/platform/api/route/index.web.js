@@ -69,7 +69,7 @@ function navigateTo (options = {}) {
         webHandleSuccess(res, options.success, options.complete)
       },
       err => {
-        const res = { errMsg: err }
+        const res = { errMsg: `navigateTo:fail ${err}` }
         webHandleFail(res, options.fail, options.complete)
       }
     )
@@ -130,7 +130,7 @@ function reLaunch (options = {}) {
           webHandleSuccess(res, options.success, options.complete)
         },
         err => {
-          const res = { errMsg: err }
+          const res = { errMsg: `reLaunch:fail ${err}` }
           webHandleFail(res, options.fail, options.complete)
         }
       )
@@ -174,7 +174,7 @@ function switchTab (options = {}) {
             webHandleSuccess(res, options.success, options.complete)
           },
           err => {
-            const res = { errMsg: err }
+            const res = { errMsg: `switchTab:fail ${err}` }
             webHandleFail(res, options.fail, options.complete)
           }
         )

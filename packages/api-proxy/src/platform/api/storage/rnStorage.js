@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { envError, webHandleSuccess, webHandleFail, hasOwn, defineUnsupportedProps } from '../../../common/js'
-import { loop } from '@mpxjs/utils'
 function setStorage (options) {
   const { key, data, success, fail, complete } = options
   let obj = {}
@@ -101,7 +100,7 @@ function removeStorage (options) {
 }
 
 function removeStorageSync (key) {
-  AsyncStorage.removeItem([key], loop)
+  AsyncStorage.removeItem(key)
 }
 
 function clearStorage (options) {
@@ -122,7 +121,7 @@ function clearStorage (options) {
 }
 
 function clearStorageSync () {
-  AsyncStorage.clear(loop)
+  AsyncStorage.clear()
 }
 
 export {
