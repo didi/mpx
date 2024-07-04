@@ -173,8 +173,6 @@ export default class XFetch {
     if (responsePromise) {
       return responsePromise
     }
-
-    config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
     let promise = Promise.resolve(config)
