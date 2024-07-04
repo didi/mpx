@@ -23,6 +23,6 @@ module.exports = function ({ print }) {
         ios: iosPropLog,
         android: androidPropLog
       }
-    ],
+    ]
   }
 }

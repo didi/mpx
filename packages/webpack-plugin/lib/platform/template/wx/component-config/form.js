@@ -17,11 +17,11 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-form'
     },
-    ios(tag, { el }) {
+    ios (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-form'
     },
-    android(tag, { el }) {
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-form'
     },
