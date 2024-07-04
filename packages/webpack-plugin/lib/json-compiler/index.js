@@ -275,7 +275,8 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, () => {
+      }, (err) => {
+        if (err) return callback(err)
         const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
         if (runtimeCompile) {
           components.element = mpxCustomElementPath
