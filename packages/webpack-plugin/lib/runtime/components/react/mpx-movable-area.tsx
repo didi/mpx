@@ -4,7 +4,7 @@
 
 import { View, LayoutChangeEvent } from 'react-native';
 import { JSX, useState, useEffect, forwardRef, ReactNode } from 'react';
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 
 interface MovableAreaProps {
