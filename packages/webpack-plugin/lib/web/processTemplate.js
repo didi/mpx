@@ -18,6 +18,7 @@ module.exports = function (template, {
   const mpx = loaderContext.getMpx()
   const {
     mode,
+    env,
     defs,
     wxsContentMap,
     decodeHTMLText,
@@ -34,7 +35,7 @@ module.exports = function (template, {
 
   if (ctorType === 'app') {
     const { el } = webConfig
-    const idName = el?.match(/#(.*)/)?.[1] || 'app'
+    const idName = (el && el.match(/#(.*)/) && el.match(/#(.*)/)[1]) || 'app'
     template = {
       tag: 'template',
       content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
@@ -77,6 +78,7 @@ module.exports = function (template, {
           isNative,
           ctorType,
           mode,
+          env,
           srcMode: templateSrcMode,
           defs,
           decodeHTMLText,

@@ -2,6 +2,9 @@ import { hasOwn, isEmptyObject } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
+import { createEvent } from './components/web/event'
+
+createEvent()
 
 export function processComponentOption (
   {
@@ -138,7 +141,21 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       ...webRouteConfig,
       routes: routes
     })
-    global.__mpxRouter.stack = []
+    let mpxStackPath = []
+    if (isBrowser) {
+      // 解决webview被刷新导致路由栈丢失后产生错乱问题
+      const sessionStorage = window.sessionStorage
+      try {
+        if (sessionStorage) {
+          const stackPath = JSON.parse(sessionStorage.getItem('_mpx_stack_path_'))
+          if (Array.isArray(stackPath)) {
+            mpxStackPath = stackPath
+          }
+        }
+      } catch (e) {
+      }
+    }
+    global.__mpxRouter.stack = mpxStackPath
     global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
@@ -252,6 +269,17 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             global.__mpxRouter.needCache = insertItem
           }
       }
+      if (isBrowser) {
+        const sessionStorage = window.sessionStorage
+        if (sessionStorage) {
+          const stackStorage = global.__mpxRouter.stack.slice(0, global.__mpxRouter.stack.length - 1).map((item) => {
+            return {
+              path: item.path
+            }
+          })
+          sessionStorage.setItem('_mpx_stack_path_', JSON.stringify(stackStorage))
+        }
+      }
       next()
     })
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
@@ -308,7 +336,9 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
   }
 
   if (App.onAppInit) {
+    global.__mpxAppInit = true
     Object.assign(option, App.onAppInit() || {})
+    global.__mpxAppInit = false
   }
 
   if (isBrowser && global.__mpxPinia) {

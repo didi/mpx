@@ -22,7 +22,6 @@ import mpx from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
 const pinia = createPinia()
-mpx.use(pinia)
 ```
 
 如果你的应用想使用 SSR 渲染模式，请将 pinia 的创建放在 `onAppInit` 钩子中执行
@@ -36,7 +35,6 @@ createApp({
   // ...
   onAppInit () {
     const pinia = createPinia()
-    mpx.use(pinia)
     return {
       pinia
     }
@@ -204,5 +202,4 @@ import { onStoreAction } from 'xxx/onStoreAction'
 
 const pinia = createPinia()
 pinia.use(onStoreAction)
-mpx.use(pinia)
 ```
