@@ -57,7 +57,7 @@ import {
 } from 'react-native'
 import { parseInlineStyle, useUpdateEffect } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,

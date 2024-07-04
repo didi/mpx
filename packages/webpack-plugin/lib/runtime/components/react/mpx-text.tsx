@@ -8,7 +8,7 @@ import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import { useRef, useEffect, forwardRef, ReactNode, ForwardedRef, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
-import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { PERCENT_REGX } from './utils'
 
 

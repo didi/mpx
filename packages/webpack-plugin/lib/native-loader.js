@@ -188,7 +188,7 @@ module.exports = function (content) {
         if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
       }
 
-      const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+      const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
 
       if (ctorType !== 'app') {
         rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'

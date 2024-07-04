@@ -23,6 +23,7 @@ module.exports = {
     App: 'readonly',
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
+    __mpx_dynamic_runtime__: 'readonly',
     getRegExp: 'readonly',
     getCurrentPages: 'readonly'
   },
@@ -32,6 +33,7 @@ module.exports = {
     indent: 0
   },
   env: {
-    'jest/globals': true
+    'jest/globals': true,
+    browser: true
   }
 }

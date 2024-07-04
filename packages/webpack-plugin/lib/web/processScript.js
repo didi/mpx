@@ -24,7 +24,7 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo } = loaderContext.getMpx()
+  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
 
   let output = '/* script */\n'
 
@@ -50,7 +50,7 @@ module.exports = function (script, {
         hasApp = false
       }
       // 注入wxs模块
-      content += '  const wxsModules = {}\n'
+      content += '  var wxsModules = {}\n'
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach((module) => {
           const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)
@@ -65,19 +65,11 @@ module.exports = function (script, {
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
-        const uselessOptions = new Set([
-          'usingComponents',
-          'style',
-          'singlePage'
-        ])
-        Object.keys(jsonConfig)
-          .filter(key => !uselessOptions.has(key))
-          .forEach(key => {
-            pageConfig[key] = jsonConfig[key]
-          })
+        Object.assign(pageConfig, jsonConfig)
+        delete pageConfig.usingComponents
       }
 
-      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
+      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
   export default processComponentOption({
