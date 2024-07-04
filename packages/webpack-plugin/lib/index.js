@@ -1244,31 +1244,35 @@ class MpxWebpackPlugin {
       compilation.hooks.processAssets.tap({
         name: 'MpxWebpackPlugin'
       }, (assets) => {
-        const dynamicAssets = {}
-        for (const packageName in mpx.runtimeInfo) {
-          for (const resourcePath in mpx.runtimeInfo[packageName]) {
-            const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
-            const templateAst = mpx.changeHashNameForAstNode(template.templateAst, json)
-            dynamicAssets[moduleId] = {
-              template: JSON.parse(templateAst),
-              styles: style.reduce((preV, curV) => {
-                preV.push(...curV)
-                return preV
-              }, [])
-            }
+        try {
+          const dynamicAssets = {}
+          for (const packageName in mpx.runtimeInfo) {
+            for (const resourcePath in mpx.runtimeInfo[packageName]) {
+              const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
+              const templateAst = mpx.changeHashNameForAstNode(template.templateAst, json)
+              dynamicAssets[moduleId] = {
+                template: JSON.parse(templateAst),
+                styles: style.reduce((preV, curV) => {
+                  preV.push(...curV)
+                  return preV
+                }, [])
+              }
 
-            // 注入 dynamic slot dependency
-            const outputPath = mpx.componentsMap[packageName][resourcePath]
-            if (outputPath) {
-              const jsonAsset = outputPath + '.json'
-              const jsonContent = compilation.assets[jsonAsset].source()
-              compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+              // 注入 dynamic slot dependency
+              const outputPath = mpx.componentsMap[packageName][resourcePath]
+              if (outputPath) {
+                const jsonAsset = outputPath + '.json'
+                const jsonContent = compilation.assets[jsonAsset].source()
+                compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+              }
             }
           }
-        }
-        if (!isEmptyObject(dynamicAssets)) {
-          // 产出 jsonAst 静态产物
-          compilation.assets['dynamic.json'] = new RawSource(JSON.stringify(dynamicAssets))
+          if (!isEmptyObject(dynamicAssets)) {
+            // 产出 jsonAst 静态产物
+            compilation.assets['dynamic.json'] = new RawSource(JSON.stringify(dynamicAssets))
+          }
+        } catch (error) {
+          compilation.errors.push(error)
         }
       })
 
