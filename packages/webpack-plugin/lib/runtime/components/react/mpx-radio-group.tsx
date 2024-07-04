@@ -20,7 +20,7 @@ import {
   StyleSheet
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 export interface radioGroupProps {
   style?: StyleProp<ViewStyle>

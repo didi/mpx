@@ -20,7 +20,7 @@ import {
   TextStyle
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, extractTextStyle, isEmbedded, isText } from './utils'
 
 export interface LabelProps {

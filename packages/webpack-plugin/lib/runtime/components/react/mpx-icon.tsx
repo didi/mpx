@@ -6,7 +6,7 @@
 import React, { JSX, useRef, forwardRef } from 'react'
 import { Text, StyleProp, TextStyle, Image} from 'react-native'
 import useInnerProps from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 export type IconType =
   | 'success'
