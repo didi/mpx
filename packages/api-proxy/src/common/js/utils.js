@@ -1,3 +1,5 @@
+import { hasOwn, noop, getEnvObj } from '@mpxjs/utils'
+
 /**
  *
  * @param {Object} options 原参数
@@ -12,16 +14,6 @@
  *  d: 4 // 增加 d
  * })
  */
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-function type (n) {
-  return Object.prototype.toString.call(n).slice(8, -1)
-}
-
-function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
-}
-
 function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   let opts = {}
 
@@ -53,31 +45,6 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
-function getEnvObj () {
-  switch (__mpx_mode__) {
-    case 'wx':
-      return wx
-    case 'ali':
-      return my
-    case 'swan':
-      return swan
-    case 'qq':
-      return qq
-    case 'tt':
-      return tt
-    case 'jd':
-      return jd
-    case 'qa':
-      return qa
-    case 'dd':
-      return dd
-    case 'web':
-    case 'ios':
-    case 'android':
-      return {}
-  }
-}
-
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
@@ -89,16 +56,6 @@ function envError (method) {
   return () => {
     console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
   }
-}
-
-function noop () {
-}
-
-function makeMap (arr) {
-  return arr.reduce((obj, item) => {
-    obj[item] = true
-    return obj
-  }, {})
 }
 
 function parseDataset (dataset) {
@@ -139,17 +96,12 @@ const ENV_OBJ = getEnvObj()
 export {
   changeOpts,
   handleSuccess,
-  getEnvObj,
   error,
   envError,
   warn,
-  noop,
-  makeMap,
   isBrowser,
-  hasOwn,
   throwSSRWarning,
   ENV_OBJ,
   parseDataset,
-  type,
   defineUnsupportedProps
 }

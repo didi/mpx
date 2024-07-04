@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { envError, webHandleSuccess, webHandleFail, hasOwn, defineUnsupportedProps } from '../../../common/js'
+import { hasOwn } from '@mpxjs/utils'
+import { envError, webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
 function setStorage (options) {
   const { key, data, success, fail, complete } = options
   let obj = {}

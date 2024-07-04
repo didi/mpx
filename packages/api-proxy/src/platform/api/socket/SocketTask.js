@@ -1,4 +1,5 @@
-import { webHandleSuccess, webHandleFail, type } from '../../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { type } from '@mpxjs/utils'
 
 const socketTasks = new Set()
 

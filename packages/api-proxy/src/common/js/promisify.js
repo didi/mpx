@@ -1,6 +1,4 @@
-import { getEnvObj } from './utils'
-
-const envObj = getEnvObj()
+import { ENV_OBJ } from './utils'
 
 // 特别指定的不进行Promise封装的方法
 const blackList = [
@@ -71,14 +69,14 @@ function promisify (listObj, whiteList, customBlackList) {
       const obj = args[0] || {}
       // 不需要转换 or 用户已定义回调，则不处理
       if (!promisifyFilter(key) || obj.success || obj.fail) {
-        return listObj[key].apply(envObj, args)
+        return listObj[key].apply(ENV_OBJ, args)
       } else { // 其他情况进行转换
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
           obj.success = resolve
           obj.fail = reject
-          returned = listObj[key].apply(envObj, args)
+          returned = listObj[key].apply(ENV_OBJ, args)
         })
         promise.__returned = returned
         return promise
