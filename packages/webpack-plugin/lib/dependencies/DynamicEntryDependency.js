@@ -5,9 +5,10 @@ const addQuery = require('../utils/add-query')
 const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
+const hasOwn = require('../utils/has-own')
 
 class DynamicEntryDependency extends NullDependency {
-  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range, extraOptions = {}) {
+  constructor (range, request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) {
     super()
     this.request = request
     this.entryType = entryType
@@ -16,6 +17,10 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = relativePath
     this.context = context
     this.range = range
+
+    if (typeof extraOptions === 'string') {
+      extraOptions = JSON.parse(extraOptions)
+    }
     this.extraOptions = extraOptions
   }
 
@@ -127,6 +132,13 @@ class DynamicEntryDependency extends NullDependency {
     this.publicPath = compilation.outputOptions.publicPath || ''
     const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
+    // post 分包队列在 sub 分包队列构建完毕后进行
+    if (this.extraOptions.postSubpackageEntry) {
+      mpx.postSubpackageEntriesMap[packageRoot] = mpx.postSubpackageEntriesMap[packageRoot] || []
+      mpx.postSubpackageEntriesMap[packageRoot].push(this)
+      callback()
+      return
+    }
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []
@@ -182,13 +194,12 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     module,
     chunkGraph
   }) {
-    const { resultPath, range, key, outputPath, publicPath, extraOptions } = dep
+    const { resultPath, range, key, publicPath, extraOptions } = dep
 
     let replaceContent = ''
 
-    if (outputPath === 'custom-tab-bar/index') {
-      // replace with true for custom-tab-bar
-      replaceContent = JSON.stringify(true)
+    if (hasOwn(extraOptions, 'replaceContent')) {
+      replaceContent = extraOptions.replaceContent
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
         let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))

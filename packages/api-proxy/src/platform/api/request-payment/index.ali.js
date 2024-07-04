@@ -1,4 +1,4 @@
-import { changeOpts, error, noop } from '../../../common/js'
+import { ENV_OBJ, changeOpts, error, noop } from '../../../common/js'
 
 const TIPS_NAME = '支付宝环境 mpx'
 
@@ -37,7 +37,7 @@ function requestPayment (options = {}) {
     }
   }
 
-  my.tradePay(opts)
+  return ENV_OBJ.tradePay(opts)
 }
 
 export {

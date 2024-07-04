@@ -59,16 +59,13 @@ function MpxEvent (layer) {
         this.sendEvent(this.targetElement, 'tap', event)
     }
     this.sendEvent = (targetElement, type, event) => {
-        // eslint-disable-next-line no-undef
-        const touchEvent = new TouchEvent(type, {
-            view: window,
+        const touchEvent = new CustomEvent(type, {
             bubbles: true,
             cancelable: true
         })
         const changedTouches = event.changedTouches || []
         extendEvent(touchEvent, {
             timeStamp: event.timeStamp,
-            currentTarget: event.target,
             changedTouches,
             touches: changedTouches,
             detail: {
@@ -92,9 +89,17 @@ function MpxEvent (layer) {
     this.addListener()
 }
 
-if (isBrowser) {
-    document.addEventListener('DOMContentLoaded', function () {
-        // eslint-disable-next-line no-new
-        new MpxEvent(document.body)
-    }, false)
+export function createEvent () {
+    if (isBrowser && !global.__mpxCreatedEvent) {
+        global.__mpxCreatedEvent = true
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            // eslint-disable-next-line no-new
+            new MpxEvent(document.body)
+        } else {
+            document.addEventListener('DOMContentLoaded', function () {
+                // eslint-disable-next-line no-new
+                new MpxEvent(document.body)
+            }, false)
+        }
+    }
 }

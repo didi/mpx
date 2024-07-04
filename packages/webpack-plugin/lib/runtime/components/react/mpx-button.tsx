@@ -55,7 +55,7 @@ import {
 } from 'react-native'
 import { extractTextStyle, isText, every } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 export type Type = 'default' | 'primary' | 'warn'
 
