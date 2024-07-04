@@ -21,6 +21,7 @@ module.exports = function (template, {
   const {
     projectRoot,
     mode,
+    env,
     defs,
     wxsContentMap,
     decodeHTMLText,
@@ -67,6 +68,7 @@ module.exports = function (template, {
         isNative,
         ctorType,
         mode,
+        env,
         srcMode: templateSrcMode,
         defs,
         decodeHTMLText,

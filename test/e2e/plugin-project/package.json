@@ -43,6 +43,7 @@
     "@mpxjs/miniprogram-simulate": "^1.4.17",
     "@mpxjs/mpx-jest": "0.0.27",
     "@mpxjs/webpack-plugin": "^2.7.2",
+    "@mpxjs/template-engine": "^2.8.7",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "autoprefixer": "^6.3.1",

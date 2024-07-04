@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import { ReactNode, forwardRef, useRef } from 'react'
 import useInnerProps from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
 interface SwiperItemProps {
   'item-id'?: string;
