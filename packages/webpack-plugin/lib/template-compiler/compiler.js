@@ -1949,7 +1949,7 @@ function processText (el) {
 // RN中文字需被Text包裹
 function processWrapTextReact (el) {
   const parentTag = el.parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('Text')
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
@@ -2579,6 +2579,7 @@ function closeElement (el, meta, options) {
     return
   }
   if (isReact(mode)) {
+    postProcessWxs(el, meta)
     postProcessForReact(el)
     postProcessIfReact(el)
     // flag component for react
