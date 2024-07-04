@@ -1,6 +1,6 @@
 const normalize = require('../utils/normalize')
-const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
+const optionProcessorPath = normalize.lib('runtime/optionProcessorReact')
+const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -8,13 +8,10 @@ module.exports = function (script, {
   srcMode,
   moduleId,
   isProduction,
-  componentGenerics,
   jsonConfig,
-  outputPath,
   builtInComponentsMap,
-  genericsInfo,
-  wxsModuleMap,
-  localComponentsMap
+  localComponentsMap,
+  localPagesMap
 }, callback) {
   let scriptSrcMode = srcMode
   if (script) {
@@ -24,15 +21,48 @@ module.exports = function (script, {
   }
 
   let output = '/* script */\n'
-  output += 'import { lazy } from \'react\'\n'
-  output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+  if (ctorType === 'app') {
+    output += `
+import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { RootSiblingParent } from 'react-native-root-siblings'
+global.__navigationHelper = {
+  NavigationContainer: NavigationContainer,
+  createNavigationContainerRef: createNavigationContainerRef,
+  createNativeStackNavigator: createNativeStackNavigator,
+  StackActions: StackActions,
+  RootSiblingParent: RootSiblingParent
+}\n`
+    const { pagesMap, firstPage } = buildPagesMap({
+      localPagesMap,
+      loaderContext,
+      jsonConfig
+    })
+    const componentsMap = buildComponentsMap({
+      localComponentsMap,
+      loaderContext,
+      jsonConfig
+    })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += getRequireScript({ ctorType, script, loaderContext })
+    output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+  } else {
+    // RN环境暂不支持异步加载
+    // output += 'import { lazy } from \'react\'\n'
+    output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+    // 获取组件集合
+    const componentsMap = buildComponentsMap({
+      localComponentsMap,
+      builtInComponentsMap,
+      loaderContext,
+      jsonConfig
+    })
 
-  // 获取组件集合
-  const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
-
-  output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, componentsMap })
-  output += getRequireScript({ ctorType, script, loaderContext })
-  output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, componentsMap })
+    output += getRequireScript({ ctorType, script, loaderContext })
+    output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+  }
 
   callback(null, {
     output

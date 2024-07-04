@@ -73,7 +73,13 @@ function request (options = { url: '' }) {
     successHandle(result, success, complete)
     return result
   }).catch(err => {
-    const res = { errMsg: `request:fail ${err}` }
+    const response = err?.response || {}
+    const res = {
+      errMsg: `request:fail ${err}`,
+      statusCode: response.status,
+      header: response.headers,
+      data: response.data
+    }
     failHandle(res, fail, complete)
     if (!fail) {
       return Promise.reject(res)

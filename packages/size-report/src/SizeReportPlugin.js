@@ -160,7 +160,7 @@ class SizeReportPlugin {
       const moduleEntriesMap = new Map()
 
       function setModuleEntries (module, entryModule, noEntry) {
-        getModuleEntries(module, noEntry).add(entryModule)
+        getModuleEntries(module, noEntry).add(entryModule.rootModule || entryModule)
       }
 
       function getModuleEntries (module, noEntry) {
@@ -210,7 +210,7 @@ class SizeReportPlugin {
           // 处理ConcatenatedModule
           const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
           if (resource && reportGroup.entryRules && matchCondition(parseRequest(resource).resourcePath, reportGroup.entryRules)) {
-            reportGroup.entryModules.add(entryModule)
+            reportGroup.entryModules.add(entryModule.rootModule || entryModule)
           }
         })
       }
@@ -222,7 +222,7 @@ class SizeReportPlugin {
             const resource = module.resource || (module.rootModule && module.rootModule.resource)
             if (resource && matchCondition(parseRequest(resource).resourcePath, reportGroup.noEntryRules)) {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
-              reportGroup.noEntryModules.add(module)
+              reportGroup.noEntryModules.add(module.rootModule || module)
               walkEntry(module, (module, noEntryModule) => {
                 setModuleEntries(module, noEntryModule, true)
               })
@@ -247,8 +247,7 @@ class SizeReportPlugin {
         const sharedSet = new Set()
         const otherSelfEntryModules = new Set()
         entryModules.forEach((entryModule) => {
-          // 处理ConcatenatedModule
-          const entryNode = mpx.getEntryNode(entryModule.rootModule || entryModule)
+          const entryNode = mpx.getEntryNode(entryModule)
           if (entryNode) {
             selfSet.add(entryNode)
           } else {

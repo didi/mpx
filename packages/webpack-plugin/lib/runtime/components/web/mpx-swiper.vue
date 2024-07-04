@@ -205,6 +205,7 @@
           momentum: false,
           bounce: false,
           probeType: 3,
+          bindToWrapper: true,
           stopPropagation: true
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)

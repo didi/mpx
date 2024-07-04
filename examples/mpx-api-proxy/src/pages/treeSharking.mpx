@@ -1,0 +1,1067 @@
+<template>
+  <view>
+    <view class="api-proxy-block">
+      <view class="title">actionSheet</view>
+      <button bindtap="showActionSheet">showActionSheet</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">addPhoneContact</view>
+      <button bindtap="addPhoneContact">addPhoneContact</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">animation</view>
+      <view class="page-section-title">createAnimation</view>
+      <view class="page-section-demo">
+        <view class="animation-element" animation="{{animationData}}"></view>
+      </view>
+      <view class="page-section-btns">
+        <view type="primary" bindtap="rotate">旋转</view>
+        <view type="primary" bindtap="scale"> 缩放</view>
+        <view type="primary" bindtap="translate">移动</view>
+      </view>
+      <view class="page-section-btns">
+        <view type="primary" bindtap="skew">倾斜</view>
+        <view type="primary" bindtap="rotateAndScale">旋转并缩放</view>
+        <view type="primary" bindtap="rotateThenScale">旋转后缩放</view>
+      </view>
+      <view class="page-section-btns">
+        <view type="primary" bindtap="all">同时展示全部</view>
+        <view type="primary" bindtap="allInQueue">顺序展示全部</view>
+        <view type="primary" bindtap="reset">还原</view>
+      </view>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">app</view>
+      <button bindtap="offAppShow">offAppShow</button>
+      <button bindtap="offAppHide">offAppHide</button>
+      <button bindtap="offError">offError</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">audio</view>
+      <button bindtap="audioHandle">createInnerAudioContext</button>
+      <button bindtap="pauseHandle">pause</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">base</view>
+      <button bindtap="base64ToArrayBuffer">base64ToArrayBuffer</button>
+      <button bindtap="arrayBufferToBase64">arrayBufferToBase64</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">BLEConnection</view>
+      待补充
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">canvas</view>
+      <canvas canvas-id="myCanvas"></canvas>
+      <button bindtap="canvasToTempFilePathHandle">canvasToTempFilePath</button>
+      <button bindtap="canvasGetImageDataHandle">canvasGetImageData</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">checkSession</view>
+      <button bindtap="checkSession">checkSession</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">ClipboardData</view>
+      <button bindtap="setClipboardData">setClipboardData</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">createIntersectionObserver</view>
+      <view class="logo">logo</view>
+      <button bindtap="createIntersectionObserver">createIntersectionObserver</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">createSelectorQuery</view>
+      <button bindtap="createSelectorQuery">createSelectorQuery</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">network</view>
+      <button bindtap="getNetworkTypeHandle">getNetworkType</button>
+      <button bindtap="onNetworkStatusChangeHandle">onNetworkStatusChange</button>
+      <button bindtap="offNetworkStatusChangeHandle">offNetworkStatusChange</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">file</view>
+      <button bindtap="downloadFileHandle">downloadFile</button>
+      <button bindtap="uploadFileHandle">uploadFile</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">getUserInfo</view>
+      <button bindtap="getUserInfo">getUserInfo</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">image</view>
+      <button bindtap="previewImage">previewImage</button>
+      <button bindtap="compressImage">compressImage</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">lifecycle</view>
+      <button bindtap="getEnterOptionsSyncHandle">getEnterOptionsSync</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">login</view>
+      <button bindtap="login">login</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">makePhoneCall</view>
+      <button bindtap="makePhoneCall">makePhoneCall</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">Modal</view>
+      <button bindtap="showModal">showModal</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">nextTick</view>
+      <button bindtap="nextTick">nextTick</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">pageScrollTo</view>
+      <button bindtap="pageScrollTo">pageScrollTo</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">PullDown</view>
+      <button bindtap="stopPullDownRefresh">stopPullDownRefresh</button>
+      <button bindtap="startPullDownRefresh">startPullDownRefresh</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">request</view>
+      <button bindtap="request">request</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">requestPayment</view>
+      <button bindtap="requestPayment">requestPayment</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">route</view>
+      <button bindtap="navigateToHandle">navigateTo</button>
+      <button bindtap="redirectToHandle">redirectTo</button>
+      <button bindtap="reLaunchHandle">reLaunch</button>
+      <button bindtap="switchTabHandle">switchTab</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">scanCode</view>
+      <button bindtap="scanCode">scanCode</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">ScreenBrightness</view>
+      <button bindtap="getScreenBrightness">getScreenBrightness</button>
+      <button bindtap="setScreenBrightness">setScreenBrightness</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">NavigationBar</view>
+      <button bindtap="setNavigationBarTitle">setNavigationBarTitle</button>
+      <button bindtap="setNavigationBarColor">setNavigationBarColor</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">connectSocket</view>
+      <button bindtap="connectSocket">connectSocket</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">storage</view>
+      <button bindtap="setStorage">setStorage</button>
+      <button bindtap="setStorageSync">setStorageSync</button>
+      <button bindtap="getStorage">getStorage</button>
+      <button bindtap="getStorageSync">getStorageSync</button>
+      <button bindtap="getStorageInfo">getStorageInfo</button>
+      <button bindtap="getStorageInfoSync">getStorageInfoSync</button>
+      <button bindtap="removeStorage">removeStorage</button>
+      <button bindtap="removeStorageSync">removeStorageSync</button>
+      <button bindtap="clearStorage">clearStorage</button>
+      <button bindtap="clearStorageSync">clearStorageSync</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">System</view>
+      <button bindtap="getSystemInfo">getSystemInfo</button>
+      <button bindtap="getSystemInfoSync">getSystemInfoSync</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">setTab</view>
+      <button bindtap="setTabBarItem">setTabBarItem</button>
+      <button bindtap="setTabBarStyle">setTabBarStyle</button>
+      <button bindtap="showTabBar">showTabBar</button>
+      <button bindtap="hideTabBar">hideTabBar</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">Toast</view>
+      <button bindtap="showToast">showToast</button>
+      <button bindtap="hideToast">hideToast</button>
+      <button bindtap="showLoading">showLoading</button>
+      <button bindtap="hideLoading">hideLoading</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">Video</view>
+      <video
+        id="myVideo"
+        src="https://media.w3.org/2010/05/sintel/trailer.mp4"
+      ></video>
+      <button bindtap="bindPlayVideo">PlayVideo</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">Window</view>
+      <button bindtap="offWindowResize">offWindowResize</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import {
+  showActionSheet,
+  addPhoneContact,
+  createAnimation,
+  onAppShow,
+  onAppHide,
+  offAppShow,
+  offAppHide,
+  onError,
+  offError,
+  createInnerAudioContext,
+  base64ToArrayBuffer,
+  arrayBufferToBase64,
+  canvasToTempFilePath,
+  canvasGetImageData,
+  setClipboardData,
+  getClipboardData,
+  createIntersectionObserver,
+  createSelectorQuery,
+  getNetworkType,
+  onNetworkStatusChange,
+  offNetworkStatusChange,
+  downloadFile,
+  uploadFile,
+  getUserInfo,
+  previewImage,
+  checkSession,
+  compressImage,
+  getEnterOptionsSync,
+  login,
+  request,
+  makePhoneCall,
+  showModal,
+  nextTick,
+  pageScrollTo,
+  startPullDownRefresh,
+  stopPullDownRefresh,
+  requestPayment,
+  redirectTo,
+  navigateTo,
+  reLaunch,
+  switchTab,
+  scanCode,
+  getScreenBrightness,
+  setScreenBrightness,
+  setNavigationBarTitle,
+  setNavigationBarColor,
+  connectSocket,
+  getSystemInfo,
+  getSystemInfoSync,
+  setTabBarItem,
+  setTabBarStyle,
+  showTabBar,
+  hideTabBar,
+  showToast,
+  hideToast,
+  showLoading,
+  hideLoading,
+  createVideoContext,
+  onWindowResize,
+  offWindowResize,
+  setStorage,
+  setStorageSync,
+  getStorage,
+  getStorageSync,
+  getStorageInfo,
+  getStorageInfoSync,
+  removeStorage,
+  removeStorageSync,
+  clearStorage,
+  clearStorageSync
+} from '@mpxjs/api-proxy'
+const onAppShowHandler = (res) => {
+  console.log('onAppShow:', res)
+}
+const onAppHideHandler = () => {
+  console.log('onAppHide')
+}
+const errorHandle = (error, stack) => {
+  console.log('onError error', error)
+  console.log('onError stack', stack)
+}
+const listener = function (res) { console.log(res, 'Change:test') }
+const resizeListener = (res) => {
+  console.log(res, 'onWindowResize:data')
+}
+createPage({
+  data: {
+    animationData: {},
+    videoContext: null,
+    animation: null
+  },
+  ready() {
+    this.animation = createAnimation({
+      duration: 400,
+      timingFunction: 'linear',
+      transformOrigin: '50% 50% 0'
+    })
+    onError(errorHandle)
+    onAppShow(onAppShowHandler)
+    onAppHide(onAppHideHandler)
+    this.videoContext = createVideoContext('myVideo')
+    onWindowResize(resizeListener)
+    onNetworkStatusChange(listener)
+  },
+  methods: {
+    showActionSheet() {
+      showActionSheet({
+        itemList: ['A', 'B', 'C'],
+        success: (res) => {
+          console.log(res, '=========showActionSheet:success')
+        },
+        fail: (res) => {
+          console.log(res, '=========showActionSheet:fail')
+        }
+      })
+    },
+    setTabBarItem() {
+      setTabBarItem({
+        index: 1,
+        text: 'text',
+        success(res) {
+          console.log(res, '=====setTabBarItem: success')
+        },
+        fail(res) {
+          console.log(res, '=====setTabBarItem: fail')
+        }
+      })
+    },
+    setTabBarStyle() {
+      setTabBarStyle({
+        color: '#bb00ff',
+        selectedColor: '#00FFFF',
+        backgroundColor: '#0000FF',
+        borderStyle: 'white'
+      })
+    },
+    showTabBar() {
+      showTabBar({
+        success(res) {
+          console.log(res, '=====showTabBar: success')
+        },
+        fail(res) {
+          console.log(res, '=====showTabBar: fail')
+        }
+      })
+    },
+    hideTabBar() {
+      hideTabBar({
+        success(res) {
+          console.log(res, '=====hideTabBar: success')
+        },
+        fail(res) {
+          console.log(res, '=====hideTabBar: fail')
+        }
+      })
+    },
+    showToast() {
+      showToast({
+        title: '成功',
+        icon: 'success',
+        duration: 2000
+      })
+    },
+    audioHandle() {
+      this.innerAudioContext = createInnerAudioContext({
+        useWebAudioImplement: false // 是否使用 WebAudio 作为底层音频驱动，默认关闭。对于短音频、播放频繁的音频建议开启此选项，开启后将获得更优的性能表现。由于开启此选项后也会带来一定的内存增长，因此对于长音频建议关闭此选项
+      })
+      this.innerAudioContext.src = 'http://downsc.chinaz.net/Files/DownLoad/sound1/201906/11582.mp3'
+      this.innerAudioContext.play()
+    },
+    pauseHandle() {
+      this.innerAudioContext.pause()
+    },
+    offWindowResize() {
+      offWindowResize(resizeListener)
+    },
+    hideToast() {
+      hideToast({
+        success(res) {
+          console.log(res, '==========hideToast:success')
+        },
+        fail(res) {
+          console.log(res, '==========hideToast:fail')
+        }
+      })
+    },
+    hideLoading() {
+      console.log(hideLoading, '=======')
+      hideLoading({
+        success(res) {
+          console.log(res, '==========hideToast:success')
+        },
+        fail(res) {
+          console.log(res, '==========hideToast:fail')
+        }
+      })
+    },
+    showLoading() {
+      showLoading({
+        title: '加载中',
+        mask: true,
+        success(res) {
+          console.log(res, '=======showLoading: success')
+        },
+        fail(res) {
+          console.log(res, '=======showLoading: fail')
+        }
+      })
+      setTimeout(() => {
+        console.log('-----------')
+        hideLoading({
+          success(res) {
+            console.log(res, '==========hideToast:success')
+          },
+          fail(res) {
+            console.log(res, '==========hideToast:fail')
+          }
+        })
+      }, 2000)
+    },
+    addPhoneContact() {
+      addPhoneContact({
+        photoFilePath: '/sdcard/DCIM/Camera/a.jpg',
+        nickName: '七月流火',
+        lastName: 'Last',
+        middleName: 'Middle',
+        firstName: 'First',
+        remark: '这里是备注',
+        mobilePhoneNumber: '13800000000',
+        homePhoneNumber: '11111115',
+        workPhoneNumber: '11111112',
+        homeFaxNumber: '11111114',
+        workFaxNumber: '11111111',
+        hostNumber: '11111113',
+        weChatNumber: 'liuhuo',
+        alipayAccount: 'alipay@alipay.com',
+        addressCountry: 'US',
+        addressState: 'California',
+        addressCity: 'San Francisco',
+        addressStreet: 'Mountain View',
+        addressPostalCode: '94016',
+        workAddressCountry: 'China',
+        workAddressState: 'Zhejiang',
+        workAddressCity: 'Hangzhou',
+        workAddressStreet: 'Tianmushan Road',
+        workAddressPostalCode: '361005',
+        homeAddressCountry: 'Canada',
+        homeAddressState: 'Ontairo',
+        homeAddressCity: 'Toronto',
+        homeAddressStreet: 'No.234 Road',
+        homeAddressPostalCode: '123456',
+        organization: 'AntFin',
+        title: 'Developer',
+        email: 'liuhuo01@sina.com',
+        url: 'www.alipay.com',
+        success(res) {
+          this.addPhoneContactSuccess = res
+        },
+        fail(err) {
+          this.addPhoneContactFail = err
+        }
+      })
+    },
+    canvasToTempFilePathHandle() {
+      canvasToTempFilePath({
+        x: 100,
+        y: 200,
+        width: 50,
+        height: 50,
+        destWidth: 100,
+        destHeight: 100,
+        canvasId: 'myCanvas',
+        success(res) {
+          console.log(res.tempFilePath)
+        }
+      })
+    },
+    canvasGetImageDataHandle() {
+      canvasGetImageData({
+        canvasId: 'myCanvas',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        success(res) {
+          console.log(res.width) // 100
+          console.log(res.height) // 100
+          console.log(res.data instanceof Uint8ClampedArray) // true
+          console.log(res.data.length) // 100 * 100 * 4
+        }
+      })
+    },
+    setStorage() {
+      setStorage({
+        key: 'test-storage-1',
+        data: 'test-1',
+        success: (res) => {
+          console.log('setStorage: ', setStorage)
+        }
+      })
+    },
+    setStorageSync() {
+      const setStorageSyncVal = setStorageSync('test-storage-2', 'test-2')
+      console.log(setStorageSyncVal, '=======setStorageSync')
+    },
+    getStorage() {
+      getStorage({
+        key: 'test-storage-1',
+        success: (res) => {
+          console.log(res, '========getStorage')
+        },
+        fail: (res) => {
+          console.log(res, '========getStoragefail')
+        }
+      })
+    },
+    getStorageSync() {
+      const getStorageSyncVal = getStorageSync('test-storage-2')
+      console.log(getStorageSyncVal, '=========getStorageSync')
+    },
+    getStorageInfo() {
+      getStorageInfo({
+        success: (res) => {
+          console.log(res, '=========getStorageSync')
+        }
+      })
+    },
+    getStorageInfoSync() {
+      const getStorageInfoSyncVal = getStorageInfoSync()
+      console.log(getStorageInfoSyncVal, '=========getStorageInfoSync')
+    },
+    removeStorage() {
+      removeStorage({
+        key: 'test-storage-1',
+        success: (res) => {
+          this.removeStorageVal = res
+          console.log(res, '=========removeStorage')
+        }
+      })
+      this.removeStorageSyncVal = removeStorageSync('key')
+    },
+    removeStorageSync() {
+      const value = removeStorageSync('test-storage-1')
+      console.log(value, '========removeStorageSync')
+    },
+    getSystemInfo() {
+      getSystemInfo({
+        success(res) {
+          console.log(res, '============getSystemInfo:success')
+        },
+        fail(res) {
+          console.log(res, '============getSystemInfo:fail')
+        }
+      })
+    },
+    getSystemInfoSync() {
+      const info = getSystemInfoSync()
+      console.log(info, '============getSystemInfoSync')
+    },
+    clearStorage() {
+      clearStorage({
+        success: (res) => {
+          this.clearStorageVal = JSON.stringify(res)
+          console.log(this.clearStorageVal, '=======clearStorage')
+        }
+      })
+    },
+    clearStorageSync() {
+      const clearStorageSyncVal = clearStorageSync()
+      console.log(clearStorageSyncVal, '=======clearStorageSync')
+    },
+    animationHandle() {
+      this.animation.backgroundColor('red').step()
+      this.animationData = this.animation.export()
+    },
+    offAppShow() {
+      offAppShow(onAppShowHandler)
+    },
+    offAppHide() {
+      offAppHide(onAppHideHandler)
+    },
+    offError() {
+      offError(errorHandle)
+    },
+    getLocation() {
+      getLocation()
+    },
+    bindPlayVideo() {
+      this.videoContext.play()
+    },
+    base64ToArrayBuffer() {
+      const base64 = 'CxYh'
+      const arrayBuffer = base64ToArrayBuffer(base64)
+      console.log(arrayBuffer, arrayBuffer[0], 'arrayBuffer value')
+    },
+    arrayBufferToBase64() {
+      const arrayBuffer = new Uint8Array([11, 22, 33])
+      const base64 = arrayBufferToBase64(arrayBuffer)
+      console.log(base64)
+    },
+    canvasToTempFilePath() {
+      canvasToTempFilePath({
+        x: 100,
+        y: 200,
+        width: 50,
+        height: 50,
+        destWidth: 100,
+        destHeight: 100,
+        canvasId: 'myCanvas',
+        success(res) {
+          console.log(res)
+        }
+      })
+    },
+    checkSession() {
+      checkSession({
+        success(res) {
+          console.log(res, 'checkSession:success')
+        },
+        fail(res) {
+          console.log(res, 'checkSession:fail')
+        }
+      })
+    },
+    setClipboardData() {
+      setClipboardData({
+        data: 'data',
+        success(res) {
+          console.log(res, 'setClipboardData:success')
+          getClipboardData({
+            success(res1) {
+              console.log(res1, 'getClipboardData:success') // data
+            },
+            fail(res1) {
+              console.log(res1, 'getClipboardData:fail') // data
+            }
+          })
+        },
+        fail(res) {
+          console.log(res1, 'setClipboardData:fail') // data
+        }
+      })
+    },
+    createIntersectionObserver() {
+      createIntersectionObserver(this, {
+        // 设置 0.25,0.5两个阈值，这些阈值都是相交区域占目标节点面积的比例。当相交区域占目标节点面积的比例大于等于这些阈值中的任何一项时，就会触发相交事件。
+        threshold: [0.25, 0.5]
+      })
+        .relativeToViewport({ top: 100, bottom: 100 })
+        .observe('.logo', (res) => {
+          console.log(res, 'intersectionObserver')
+          console.log(res.intersectionRatio, '######') // 相交区域占目标节点的布局区域的比例
+          console.log(res.intersectionRect) // 相交区域
+          console.log(res.relativeRect) // 参照区域的边界
+          console.log(res.boundingClientRect) // 目标边界
+          console.log(res.time) // 时间戳
+          console.log(res.id)
+        })
+    },
+    createSelectorQuery() {
+      const query = createSelectorQuery()
+      query.select('.logo').boundingClientRect()
+      query.selectViewport().scrollOffset()
+      query.exec(function (res) {
+        console.log(res[0].top)
+        console.log(res[1].scrollTop)
+      })
+    },
+    getNetworkTypeHandle() {
+      getNetworkType({
+        success(res) {
+          console.log(res, 'getNetworkType:success')
+        },
+        fail(res) {
+          console.log(res, 'getNetworkType:fail')
+        }
+      })
+    },
+    onNetworkStatusChangeHandle() {
+      onNetworkStatusChange(function (res) {
+        console.log(res.isConnected)
+        console.log(res.networkType)
+      })
+    },
+    offNetworkStatusChangeHandle() {
+      offNetworkStatusChange(listener)
+    },
+    downloadFileHandle() {
+      downloadFile({
+        url: 'https://ut-static.udache.com/webapp/passenger/apps/bus-station-v2/static/img/empty.5ac07e3.png',
+        success(res) {
+          console.log(res, '======downloadFile:success')
+        },
+        fail(res) {
+          console.log(res, '======downloadFile:fail')
+        }
+      })
+    },
+    uploadFileHandle() {
+      uploadFile({
+        url: 'https://httpbin.org/post',
+        filePath: 'http://tmp/VH8WGlFPmp9e37fdb9e4dcd2e4480b1f67e3acb1b2a3.jpeg',
+        name: 'file',
+        formData: {
+          user: 'test'
+        },
+        success(res) {
+          const data = res.data
+          console.log(data, '========uploadFile:success')
+        },
+        complete(res) {
+          console.log(res, '========uploadFile:fail')
+        }
+      })
+    },
+    getUserInfo() {
+      getUserInfo({
+        success(res) {
+          console.log(res, '========getUserInfo: success')
+        },
+        fail(res) {
+          console.log(res, '========getUserInfo: fail')
+        }
+      })
+    },
+    previewImage() {
+      previewImage({
+        current: 'https://img.warting.com/allimg/2016/0310/vjdgdpgll2f-741.jpg',
+        urls: [
+          'https://pic.616pic.com/photoone/00/03/96/618ce5441d6a75161.jpg',
+          'https://pic1.win4000.com/mobile/2018-06-04/5b14cdd4c4462.jpg',
+          'https://img.warting.com/allimg/2016/0310/vjdgdpgll2f-741.jpg'
+        ]
+      })
+    },
+    compressImage() {
+      compressImage({
+        src: 'https://pic.616pic.com/photoone/00/03/96/618ce5441d6a75161.jpg',
+        quality: 80,
+        success(res) {
+          console.log(res, '===========compressImage:success')
+        },
+        fail(res) {
+          console.log(res, '===========compressImage:fail')
+        }
+      })
+      // chooseImage({
+      //   success(res) {
+      //     const tempFilePaths = res.tempFilePaths
+      //     console.log(tempFilePaths, '~~~~~~~~')
+      //     compressImage({
+      //       src: tempFilePaths[0],
+      //       quality: 80,
+      //       success(res) {
+      //         console.log(res, 'compressImage: res')
+      //       },
+      //       complete(res) {
+      //         console.log(res, 'compressImage: complete')
+      //       }
+      //     })
+      //   }
+      // })
+    },
+    getEnterOptionsSyncHandle() {
+      const getEnterOption = getEnterOptionsSync()
+      console.log(getEnterOption)
+    },
+    login() {
+      login({
+        success(res) {
+          console.log(res, 'res')
+          if (res.code) {
+            // 发起网络请求
+            request({
+              url: 'https://example.com/onLogin',
+              data: {
+                code: res.code
+              }
+            })
+          } else {
+            console.log('登录失败！' + res.errMsg)
+          }
+        },
+        fail(res) {
+          console.log(res, 'login:fail')
+        }
+      })
+    },
+    makePhoneCall() {
+      makePhoneCall({
+        phoneNumber: '0571336378',
+        success(res) {
+          console.log(res, '========makePhoneCall:success')
+        },
+        fail(res) {
+          console.log(res, '========makePhoneCall:fail')
+        }
+      })
+    },
+    showModal() {
+      showModal({
+        title: '提示',
+        content: '这是一个模态弹窗',
+        success(res) {
+          if (res.confirm) {
+            console.log('用户点击确定')
+          } else if (res.cancel) {
+            console.log('用户点击取消')
+          }
+        }
+      })
+    },
+    nextTick() {
+      nextTick(() => {
+        console.log('这里是nextTick回调')
+      })
+    },
+    pageScrollTo() {
+      pageScrollTo({
+        scrollTop: 0,
+        duration: 300
+      })
+    },
+    startPullDownRefresh() {
+      startPullDownRefresh({
+        success(res) {
+          console.log(res)
+        },
+        fail(err) {
+          console.log(err)
+        }
+      })
+    },
+    stopPullDownRefresh() {
+      stopPullDownRefresh({
+        success(res) {
+          console.log(res, 'stopPullDownRefresh:success')
+        },
+        fail(err) {
+          console.log(err, 'stopPullDownRefresh:fail')
+        }
+      })
+    },
+    request() {
+      request({
+        url: 'https://api.udache.com/gulfstream/passenger-center/v2/other/PGetTakeBusQrCodeDetail',
+        data: {
+          x: '1',
+          y: '2'
+        },
+        header: {
+          'content-type': 'application/json'
+        },
+        success(res) {
+          console.log(res.data)
+        },
+        fail(res) {
+          console.log(res)
+        }
+      })
+    },
+    requestPayment() {
+      requestPayment({
+        timeStamp: '',
+        nonceStr: '',
+        package: '',
+        signType: 'MD5',
+        paySign: '',
+        tradeNO: '201711152100110410533667792',
+        success(res) {
+          console.log(res)
+        },
+        fail(res) {
+          console.log(res)
+        }
+      })
+    },
+    navigateToHandle() {
+      navigateTo({ url: './notTreeSharking' })
+    },
+    redirectToHandle() {
+      redirectTo({ url: './notTreeSharking' })
+    },
+    reLaunchHandle() {
+      reLaunch({ url: './notTreeSharking' })
+    },
+    switchTabHandle() {
+      switchTab({ url: './notTreeSharking' })
+    },
+    scanCode() {
+      scanCode({
+        success(res) {
+          console.log(res)
+        }
+      })
+    },
+    getScreenBrightness() {
+      getScreenBrightness({
+        success(res) {
+          console.log(res, 'getScreenBrightness: success')
+        }
+      })
+    },
+    setScreenBrightness() {
+      setScreenBrightness({
+        value: 1,
+        success(res) {
+          console.log(res, 'setScreenBrightness: success')
+        }
+      })
+    },
+    setNavigationBarTitle() {
+      setNavigationBarTitle({
+        title: '页面标题222',
+        success(res) {
+          console.log(res, '~~~~~~')
+        }
+      })
+    },
+    setNavigationBarColor() {
+      setNavigationBarColor({
+        frontColor: '#ffffff',
+        backgroundColor: '#000000',
+        success(res) {
+          console.log(res, '~~~~~~')
+        }
+      })
+    },
+    connectSocket() {
+      connectSocket({
+        url: 'wss://example.qq.com',
+        header: {
+          'content-type': 'application/json'
+        },
+        protocols: ['protocol1'],
+        complete(res) {
+          console.log(res, '~~~~~~~')
+        }
+      })
+    },
+    rotate() {
+      console.log(this.animation)
+      this.animation.rotate(Math.random() * 720 - 360).step()
+      this.animationData = this.animation.export()
+    },
+    scale() {
+      console.log(this.animation)
+      this.animation.scale(Math.random() * 2).step()
+      this.animationData = this.animation.export()
+    },
+    translate() {
+      this.animation.translate(Math.random() * 100 - 50, Math.random() * 100 - 50).step()
+      this.animationData = this.animation.export()
+    },
+    skew() {
+      this.animation.skew(Math.random() * 90, Math.random() * 90).step()
+      this.animationData = this.animation.export()
+    },
+    rotateAndScale() {
+      this.animation.rotate(Math.random() * 720 - 360)
+        .scale(Math.random() * 2)
+        .step()
+      this.animationData = this.animation.export()
+    },
+    rotateThenScale() {
+      this.animation.rotate(Math.random() * 720 - 360).step()
+        .scale(Math.random() * 2).step()
+      this.animationData = this.animation.export()
+    },
+    all() {
+      this.animation.rotate(Math.random() * 720 - 360)
+        .scale(Math.random() * 2)
+        .translate(Math.random() * 100 - 50, Math.random() * 100 - 50)
+        .skew(Math.random() * 90, Math.random() * 90)
+        .step()
+      this.animationData = this.animation.export()
+    },
+    allInQueue() {
+      this.animation.rotate(Math.random() * 720 - 360).step()
+        .scale(Math.random() * 2).step()
+        .translate(Math.random() * 100 - 50, Math.random() * 100 - 50).step()
+        .skew(Math.random() * 90, Math.random() * 90).step()
+      this.animationData = this.animation.export()
+    },
+    reset() {
+      this.animation.rotate3d(0, 0, 0, 0)
+        .rotateX(0)
+        .rotateY(0)
+        .rotateZ(0)
+        .scale(1)
+        .translate(0, 0)
+        .skew(0, 0)
+        .step({ duration: 0 })
+      this.animationData = this.animation.export()
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "tabBar": {
+    "custom": true,
+    "color": "#000000",
+    "selectedColor": "#000000",
+    "backgroundColor": "#000000",
+    "list": [{
+      "pagePath": "./index",
+      "text": "组件"
+    }, {
+      "pagePath": "./notTreeSharking",
+      "text": "接口"
+    }]
+  }
+}
+</script>
+
+<style lang="stylus">
+@import "../style/index.styl"
+.animation-element {
+  width: 200rpx;
+  height: 200rpx;
+  background-color: #108ee9;
+  transform: scaleX(1) scaleY(1);
+}
+.page-section-btns
+  display flex
+  justify-content space-between
+  view
+    border: 1px solid #108ee9
+    flex 1
+    text-align center
+</style>

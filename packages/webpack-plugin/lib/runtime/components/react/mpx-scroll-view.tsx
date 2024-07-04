@@ -35,7 +35,7 @@
 import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
 import React, { useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 interface ScrollViewProps {
   children?: React.ReactNode;
