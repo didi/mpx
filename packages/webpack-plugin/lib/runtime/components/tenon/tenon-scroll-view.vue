@@ -9,7 +9,7 @@ export default {
     scrollX: Boolean,
     // 允许纵向滚动
     scrollY: Boolean,
-    // 滚动方向
+    // 滚动方向-默认竖向滚动
     scrollDirection: {
       type: String,
       default: "vertical",
