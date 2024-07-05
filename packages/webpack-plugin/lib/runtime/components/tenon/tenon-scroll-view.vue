@@ -12,7 +12,7 @@ export default {
     // 滚动方向
     scrollDirection: {
       type: String,
-      default: "horizontal",
+      default: "vertical",
     },
     // 距顶部/左边多远时，触发 scrolltoupper 事件
     upperThreshold: {
