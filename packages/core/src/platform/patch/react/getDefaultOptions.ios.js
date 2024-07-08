@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
@@ -249,13 +249,24 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
   if (type === 'page') {
     const { RootSiblingParent } = global.__navigationHelper
-    const Page = () => {
+    const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
+    const Page = ({ navigation }) => {
+      useLayoutEffect(() => {
+        navigation.setOptions({
+          headerTitle: pageConfig.navigationBarTitleText || '',
+          headerStyle: {
+            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          },
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        })
+      }, [])
       return createElement(RootSiblingParent,
         null,
         createElement(ReactNative.ScrollView,
           {
             style: {
-              ...ReactNative.StyleSheet.absoluteFillObject
+              ...ReactNative.StyleSheet.absoluteFillObject,
+              backgroundColor: pageConfig.backgroundColor || '#ffffff'
             },
             showsVerticalScrollIndicator: false
           },
