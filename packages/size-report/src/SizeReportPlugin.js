@@ -164,10 +164,10 @@ class SizeReportPlugin {
       }
 
       function getModuleEntries (module, noEntry) {
-        const entries = moduleEntriesMap.get(module) || []
+        const entries = moduleEntriesMap.get(module.rootModule || module) || []
         const index = noEntry ? 1 : 0
         entries[index] = entries[index] || new Set()
-        moduleEntriesMap.set(module, entries)
+        moduleEntriesMap.set(module.rootModule || module, entries)
         return entries[index]
       }
 
