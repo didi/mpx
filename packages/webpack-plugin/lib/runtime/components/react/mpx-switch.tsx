@@ -38,7 +38,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const layoutRef = useRef({})
 
-  const changeHanlder = bindchange || catchchange
+  const changeHandler = bindchange || catchchange
 
   useEffect(() => {
     setIsChecked(checked)
@@ -46,13 +46,13 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const { nodeRef } = useNodesRef<Switch, _SwitchProps>(props, ref)
 
-  const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked: boolean }) => {
+  const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked?: boolean } = {}) => {
     if (type === 'switch') {
       setIsChecked(evt as boolean)
-      changeHanlder && changeHanlder(getCustomEvent('change', {}, { layoutRef, detail: {value: evt} }, props))
+      changeHandler && changeHandler(getCustomEvent('change', {}, { layoutRef, detail: {value: evt} }, props))
     } else {
       setIsChecked(checked)
-      changeHanlder && changeHanlder(getCustomEvent('change', evt, { layoutRef, detail: {value: checked} }, props))
+      changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: {value: checked} }, props))
     }
   }
 
