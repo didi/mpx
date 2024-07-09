@@ -26,13 +26,13 @@ module.exports = function (script, {
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { RootSiblingParent } from 'react-native-root-siblings'
+import { Provider } from '@ant-design/react-native'
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createNavigationContainerRef: createNavigationContainerRef,
   createNativeStackNavigator: createNativeStackNavigator,
   StackActions: StackActions,
-  RootSiblingParent: RootSiblingParent
+  Provider: Provider
 }\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,

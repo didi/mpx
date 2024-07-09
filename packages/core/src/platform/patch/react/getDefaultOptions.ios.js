@@ -248,7 +248,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { RootSiblingParent } = global.__navigationHelper
+    const { Provider } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation }) => {
       useLayoutEffect(() => {
@@ -260,7 +260,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
       }, [])
-      return createElement(RootSiblingParent,
+      return createElement(Provider,
         null,
         createElement(ReactNative.ScrollView,
           {
