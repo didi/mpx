@@ -1,11 +1,12 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+import { useIsFocused, useRoute } from '@react-navigation/native'
 
 function getNativeComponent (tagName) {
   return getByPath(ReactNative, tagName)
@@ -196,17 +197,41 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
   return instance
 }
 
+// todo resize api
+function usePageStatus(mpxProxy) {
+  const route = useRoute()
+  const { pageStatusContext } = global.__navigationHelper
+  const { pageStatus } = useContext(pageStatusContext[route.name])
+  useEffect(() => {
+    mpxProxy.callHook(pageStatus ? ONSHOW : ONHIDE)
+    const pageLifetimes = mpxProxy.options.pageLifetimes
+    if (pageLifetimes) {
+      const instance = mpxProxy.target
+      if (pageStatus) {
+        pageLifetimes.show.call(instance)
+      } else {
+        pageLifetimes.hide.call(instance)
+      }
+    }
+  }, [pageStatus])
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
+    const route = useRoute()
     const instanceRef = useRef(null)
     const propsRef = useRef(props)
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
       instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
+      if (type === 'page') {
+        const params = route.params || {}
+        instanceRef.current.__mpxProxy.callHook(ONLOAD, [params])
+      }
     }
     const instance = instanceRef.current
     // reset instance
@@ -227,6 +252,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       })
       proxy.propsUpdated()
     }
+
+    usePageStatus(proxy)
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
@@ -250,7 +277,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (type === 'page') {
     const { Provider } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
+    const pageStatusContext = createContext(null)
     const Page = ({ navigation }) => {
+      const isFocused = useIsFocused()
+      const { name } = useRoute()
+      global.__navigationHelper.pageStatusContext = global.__navigationHelper.pageStatusContext || {}
+      if (!global.__navigationHelper.pageStatusContext[name]) {
+        global.__navigationHelper.pageStatusContext[name] = pageStatusContext
+      }
       useLayoutEffect(() => {
         navigation.setOptions({
           headerTitle: pageConfig.navigationBarTitleText || '',
@@ -270,7 +304,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             },
             showsVerticalScrollIndicator: false
           },
-          createElement(defaultOptions)
+          createElement(pageStatusContext.Provider,
+            {
+              value: { pageStatus: isFocused }
+            },
+            createElement(defaultOptions)
+          )
         )
       )
     }
