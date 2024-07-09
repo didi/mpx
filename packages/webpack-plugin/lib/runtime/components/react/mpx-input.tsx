@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState, useContext } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -58,6 +58,7 @@ import {
 import { parseInlineStyle, useUpdateEffect } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { FormContext } from './context'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -73,6 +74,7 @@ type InputStyle = Omit<
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
+  name?: string
   style?: StyleProp<InputStyle>
   value?: string
   type?: Type
@@ -145,6 +147,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     bindlinechange,
   } = props
 
+  const { formValuesMap } = useContext(FormContext)
   const { nodeRef } = useNodesRef(props, ref)
 
   const keyboardType = keyboardTypeMap[type]
@@ -160,6 +163,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const [inputValue, setInputValue] = useState()
   const [contentHeight, setContentHeight] = useState(0)
 
+  
   const selection = useMemo(() => {
     if (selectionStart >= 0 && selectionEnd >= 0) {
       return { start: selectionStart, end: selectionEnd }
@@ -197,8 +201,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     if (typeof result === 'string') {
       tmpValue.current = result
       setInputValue(result)
-    } else if (inputValue) {
-      setInputValue(undefined)
+    } else {
+      setInputValue(tmpValue.current);
     }
   }
 
@@ -321,6 +325,22 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
+  }
+
+  const setValue = ({ value = '', type }) => {
+    if (type === 'reset') {
+      setInputValue('')
+    } else {
+      setInputValue(value)
+    }
+  }
+
+  const getValue = () => {
+    return inputValue
+  }
+
+  if (props.name) {
+    formValuesMap.current.set(props.name, { getValue, setValue })
   }
 
   useUpdateEffect(() => {

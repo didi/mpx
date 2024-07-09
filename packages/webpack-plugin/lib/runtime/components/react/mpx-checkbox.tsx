@@ -35,6 +35,7 @@ export interface CheckboxProps extends Selection {
   disabled?: boolean
   color?: string
   style?: StyleProp<ViewStyle>
+  groupValue?: Array<string>
   'enable-offset'?: boolean
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -175,6 +176,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     useEffect(() => {
       checked !== isChecked && setIsChecked(checked)
     }, [checked])
+
+    useEffect(() => {
+      if (props.groupValue === null) {
+        setIsChecked(false)
+      }
+    }, [props.groupValue])
 
     return (
       <View {...innerProps}>

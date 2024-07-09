@@ -9,7 +9,9 @@ import React, {
   Children,
   cloneElement,
   FunctionComponent,
-  isValidElement
+  isValidElement,
+  useContext,
+  useState
 } from 'react'
 import {
   View,
@@ -18,6 +20,7 @@ import {
   ViewStyle,
   StyleSheet
 } from 'react-native'
+import { FormContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from '../../useNodesRef'
 
@@ -27,11 +30,11 @@ interface Selection {
 }
 
 export interface CheckboxGroupProps {
+  name: string
   style?: StyleProp<ViewStyle>
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  _setGroupData?: (value: string[]) => void
 }
 
 const CheckboxGroup = forwardRef<
@@ -42,11 +45,12 @@ const CheckboxGroup = forwardRef<
     style = [],
     'enable-offset': enableOffset,
     children,
-    bindchange,
-    _setGroupData
+    bindchange
   } = props
 
   const layoutRef = useRef({})
+  const { formValuesMap } = useContext(FormContext)
+  const [groupValue, setGroupValue] = useState([])
 
   const refs = useRef<{ index: number; selections: Selection[] }>({
     index: 0,
@@ -88,13 +92,21 @@ const CheckboxGroup = forwardRef<
     )
   }
 
+  const setGroupData = ({ value = null, type }) => {
+    setGroupValue(value)
+    if (type === 'reset') {
+      refs.current.selections = []
+    }
+  }
+  formValuesMap.current.set(props.name, { getValue: getSelectionValue, setValue: setGroupData })
+
   const onChange = (
     evt: NativeSyntheticEvent<TouchEvent>,
     selection: Selection,
     index: number
   ) => {
     refs.current.selections[index] = selection
-
+    setGroupValue(getSelectionValue())
     bindchange &&
       bindchange(
         getCustomEvent(
@@ -123,6 +135,7 @@ const CheckboxGroup = forwardRef<
         refs.current.selections[index] = { value, checked: !!checked }
         return cloneElement(child, {
           ...child.props,
+          groupValue,
           _onChange: (
             evt: NativeSyntheticEvent<TouchEvent>,
             selection: Selection
@@ -146,8 +159,6 @@ const CheckboxGroup = forwardRef<
       layoutRef
     }
   )
-
-  _setGroupData && _setGroupData(getSelectionValue())
 
   return <View {...innerProps}>{wrapChildren(children)}</View>
 })
