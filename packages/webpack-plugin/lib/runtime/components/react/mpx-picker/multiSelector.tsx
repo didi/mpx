@@ -2,7 +2,7 @@ import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import AntPicker, { PickerProps, PickerValue } from '@ant-design/react-native/lib/picker'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { MultiSelectorProps, EventType } from './type'
-import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 function convertToObj(item?: any, rangeKey = ''): any {
   if (typeof item === 'object') {

@@ -6,7 +6,7 @@ import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react
 import AntPicker, { PickerProps, PickerColumn, PickerValue, PickerColumnItem } from '@ant-design/react-native/lib/picker'
 import { PickerViewPropsType } from '@ant-design/react-native/lib/picker-view/PropsType'
 import { SelectorProps, Obj } from './type'
-import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 type RangeItemType = Obj | number | string
 

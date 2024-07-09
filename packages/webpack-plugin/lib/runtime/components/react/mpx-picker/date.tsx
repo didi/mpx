@@ -1,7 +1,7 @@
 import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import AntDatePicker from '@ant-design/react-native/lib/date-picker'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { DateProps } from './type'
 
 function formatTimeStr(time = ''): Date {

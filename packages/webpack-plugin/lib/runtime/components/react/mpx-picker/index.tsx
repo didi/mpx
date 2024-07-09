@@ -32,7 +32,7 @@ import { View, Text } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import useInnerProps from '../getInnerListeners'
 import { getCustomEvent } from '../getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import Selector from './selector'
 import TimeSelector from './time'
 import DateSelector from './date'

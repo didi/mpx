@@ -2,7 +2,7 @@ import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import AntPicker from '@ant-design/react-native/lib/picker'
 import { regionData } from './regionData'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { RegionProps, RegionObj, PickerData } from './type'
 
 function formateRegionData(clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerData[] {
