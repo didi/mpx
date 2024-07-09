@@ -3,102 +3,77 @@
  */
 import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
-import { SelectorProps } from '@mpxjs/webpack-plugin/lib/runtime/components/react/mpx-picker/type'
-import useNodesRef, { HandlerRef } from '@mpxjs/webpack-plugin/lib/runtime/useNodesRef' // 引入辅助函数
-import { default as PickerView } from '@mpxjs/webpack-plugin/lib/runtime/components/react/mpx-picker-view'
-import { default as PickerViewColumn } from '@mpxjs/webpack-plugin/lib/runtime/components/react/mpx-picker-view-column'
-import { InnerSelectorProps } from './type'
+import AntPicker, { PickerProps, PickerColumn, PickerValue, PickerColumnItem } from '@ant-design/react-native/lib/picker'
+import { PickerViewPropsType } from '@ant-design/react-native/lib/picker-view/PropsType'
+import { SelectorProps, Obj } from './type'
+import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+
+type RangeItemType = Obj | number | string
 
 const styles: { [key: string]: Object } = {
-  centeredView: {
-    position: 'absolute',
-    bottom: 0,
-    width: "100%",
-    overflow: 'scroll'
-  },
-  btnLine: {
-    width: "100%",
+  outerStyle: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderColor: 20,
-    borderBottomWidth: 1
+    width: "100%"
   },
-  cancel: {
-    height: 50,
-    display: "flex",
-    justifyContent: 'center'
-  },
-  ok: {
-    height: 50,
-    display: "flex",
-    justifyContent: 'center'
-  },
-  oktext: {
-    color: 'rgb(255, 0, 0)'
+  pickerViewStyle: {
+    width: "100%",
+    flex: 1
   }
 }
 
-const _SelectorPicker = forwardRef<HandlerRef<View, InnerSelectorProps>, InnerSelectorProps>((props: InnerSelectorProps, ref) => {
-  const { mode, range, rangeKey, handlePickerConfirm,  handlePickerCancel, value } = props
-
-  const [innerValue, setInnerValue] = useState({
-    detail: {
-      value: [value]
+const  formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
+  let newRange: Object[] = []
+  newRange = (range || []).map((item: RangeItemType, index) => {
+    if (typeof item === 'object') {
+      return { value: index, label: item[rangeKey as string] }
+    } else {
+      return { value: index, label: item }
     }
   })
-  const handleCancel = () => {
-    handlePickerCancel && handlePickerCancel()
-  }
-  const handleOk = () => {
-    handlePickerConfirm && handlePickerConfirm(innerValue)
-  }
-  const handleInnerPickerChange = (e) => {
-    setInnerValue(e)
-    console.log('--------handleInnerPickerChange-----', e)
-  }
+  return newRange as PickerColumn
+}
 
-  const renderChild = () => {
-    if (mode === 'selector') {
-      return  (
-        <PickerViewColumn>
-          {range.map((item) => {
-            console.log('--------------item', item)
-            const showText = typeof item === 'object' ? item[rangeKey] + '' : item
-            return <View><Text>{showText}</Text></View>
-          })}
-        </PickerViewColumn>
-      )
-    } else if (mode === 'multiSelector') {
-      const multiColumns = range.map((arrItem) => {
-        const childItem = arrItem.map((item) => {
-          const showText = typeof item === 'object' ? item[rangeKey] + '' : item
-          return <View><Text>{showText}</Text></View>
-        })
-        return <PickerViewColumn>{childItem}</PickerViewColumn>
-      })
-      return multiColumns
+const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProps>((props: SelectorProps, ref): React.JSX.Element => {
+  const { range, children, value, disabled, bindchange, bindcancel } = props
+  // 格式化数据为Array<*>
+  let formatRange: PickerColumn = formatRangeFun(range, props['range-key'])
+  // 选中的索引值
+  const [selected, setSelected] = useState<PickerValue>(value || 0)
+  // range数据源
+  const [data, setData] = useState(formatRange || [])
+
+  useEffect(() => {
+    if (range) {
+      const newFormatRange = formatRangeFun(range, props['range-key'])
+      setData(newFormatRange)
     }
+    value && setSelected(value)
+  }, [range, value])
+  const defaultValue = [value]
+  
+  const onChange = (value: PickerValue[]) => {
+    bindchange && bindchange({
+      detail: {
+        value: value && value[0]
+      }
+    })
   }
-
+  const antPickerProps = {
+    data,
+    value: [selected],
+    cols: 1,
+    defaultValue,
+    itemHeight: 40,
+    onChange,
+    onDismiss: bindcancel && bindcancel
+  } as PickerViewPropsType
   return (
-    <View style={styles.centeredView}>
-      <View style={styles.btnLine}>
-        <View style={styles.cancel}>
-          <TouchableWithoutFeedback onPress={handleCancel}> 
-            <Text>取消</Text>
-          </TouchableWithoutFeedback>
-        </View>
-        <View style={styles.ok}>
-          <TouchableWithoutFeedback onPress={handleOk}> 
-            <Text style={styles.oktext}>确定</Text>
-          </TouchableWithoutFeedback>
-        </View>
-      </View>
-      <PickerView bindchange={handleInnerPickerChange}>
-        {renderChild()}
-      </PickerView>
-    </View>
+    <AntPicker
+      {...antPickerProps}>
+        <TouchableWithoutFeedback>
+          {children}
+        </TouchableWithoutFeedback>
+    </AntPicker>
   )
 })
 

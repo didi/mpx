@@ -27,80 +27,67 @@
  *
  * @hint Picker 里面嵌套的子组件要支持绑定 onPress 事件才能弹出选择框
  */
-
-import { View, Text, Modal, StyleSheet, TouchableWithoutFeedback } from 'react-native'
+// https://rn.mobile.ant.design/docs/react/introduce-cn
+import { View, Text } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
-import useInnerProps from '@mpxjs/webpack-plugin/lib/runtime/components/react/getInnerListeners'
-import { getCustomEvent } from '@mpxjs/webpack-plugin/lib/runtime/components/react/getInnerListeners'
-import useNodesRef, { HandlerRef } from '@mpxjs/webpack-plugin/lib/runtime/useNodesRef' // 引入辅助函数
-import { default as PickerView } from '@mpxjs/webpack-plugin/lib/runtime/components/react/mpx-picker-view'
-import { default as PickerViewColumn } from '@mpxjs/webpack-plugin/lib/runtime/components/react/mpx-picker-view-column'
+import useInnerProps from '../getInnerListeners'
+import { getCustomEvent } from '../getInnerListeners'
+import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import Selector from './selector'
+import TimeSelector from './time'
+import DateSelector from './date'
+import MultiSelector from './multiSelector'
+import RegionSelector from './region'
+import { PickerProps } from './type'
 
-import { PickerProps } from '@mpxjs/webpack-plugin/lib/runtime/components/react/mpx-picker/type'
-import { default as SelectorPicker } from './selector'
 
-
-const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref) => {
+const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
   const { mode = 'selector', value, bindcancel, bindchange, children } = props
-
-  const [visible, setVisible] = useState(false)
-  console.log('---------------visible---', visible)
-  const handleModalStatus = (status: boolean) => {
-    setVisible(status)
-  }
-
-  const handleConfirm = (e) => {
-    handleModalStatus(false)
-    bindchange && bindchange(e)
-  }
-
-  const handleCancel = () => {
-    handleModalStatus(false)
-    bindcancel && bindcancel()
-  }
-
-  const handleChildClick = () => {
-    handleModalStatus(true)
+  const commonProps = {
+    mode,
+    value,
+    children,
+    bindchange,
+    bindcancel
   }
 
   const selectorProps = {
-    mode,
-    value,
+    ...commonProps,
     range: props['range'],
-    rangeKey: props['range-key'],
-    handlePickerConfirm: handleConfirm,
-    handlePickerCancel: handleCancel
+    'range-key': props['range-key']
   }
 
-
-  const renderChildren = () => {
-    return <View>
-      <TouchableWithoutFeedback onPress={handleChildClick}>
-        {children}
-      </TouchableWithoutFeedback>
-    </View>
+  const timeProps = {
+    ...commonProps,
+    start: props['start'],
+    end: props['end']
   }
 
-  const renderModalChildren = () => {
-    if (['selector', 'multiSelector'].includes(mode)) {
-      return <SelectorPicker
-        {...selectorProps}
-      ></SelectorPicker>
-    } else {
-      return null
-    }
+  const dateProps = {
+    ...commonProps,
+    start: props['start'],
+    end: props['end'],
+    fileds: props.fields || 'day'
   }
 
-  return (<>
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-     >
-      {renderModalChildren()}
-     </Modal>
-     {renderChildren()}
-  </>)
+  const regionProps = {
+    ...commonProps,
+    level: props.level || 'sub-district'
+  }
+
+  if (mode === 'selector') {
+    return <Selector {...selectorProps}></Selector>
+  } else if (mode === 'multiSelector') {
+    return <MultiSelector {...selectorProps}></MultiSelector>
+  } else if (mode === 'time') {
+    return <TimeSelector {...timeProps}></TimeSelector>
+  } else if (mode === 'date') {
+    return <DateSelector {...dateProps}></DateSelector>
+  } else if (mode === 'region') {
+    return <RegionSelector {...regionProps}></RegionSelector>
+  } else {
+    return <View>只支持selector, multiSelector, time, date, region 这些类型</View>
+  }
 })
 
 _Picker.displayName = 'mpx-picker';
