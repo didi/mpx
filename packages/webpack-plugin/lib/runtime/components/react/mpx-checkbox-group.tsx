@@ -22,7 +22,7 @@ import {
 } from 'react-native'
 import { FormContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 interface Selection {
   value: string

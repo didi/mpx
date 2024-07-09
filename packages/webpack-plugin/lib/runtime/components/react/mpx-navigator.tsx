@@ -7,7 +7,7 @@
  * ✔ url
  * ✔ delta
  */
-import {  View } from 'react-native'
+import { View } from 'react-native'
 import { useCallback, forwardRef, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 
