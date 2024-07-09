@@ -138,20 +138,21 @@ function buildGlobalParams ({
   jsonConfig,
   webConfig,
   isMain,
-  globalTabBar
+  globalTabBar,
+  hasApp
 }) {
   let content = ''
   if (isMain) {
     content += `
-  global.getApp = function(){}
+  global.getApp = function () {}
   global.getCurrentPages = function () {
     if (!(typeof window !== 'undefined')) {
       console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
     var router = global.__mpxRouter
-    if(!router) return []
+    if (!router) return []
     // @ts-ignore
-    return (router.lastStack || router.stack).map(function(item){
+    return (router.lastStack || router.stack).map(function (item) {
       var page
       var vnode = item.vnode
       if (vnode && vnode.componentInstance) {
@@ -169,6 +170,11 @@ function buildGlobalParams ({
     if (globalTabBar) {
       content += globalTabBar
     }
+  } else if (!hasApp) {
+    content += `
+  global.__mpxGenericsMap = global.__mpxGenericsMap || {}
+  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
   }
   content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`

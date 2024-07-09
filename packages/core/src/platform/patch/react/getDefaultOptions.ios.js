@@ -1,5 +1,5 @@
-import { useEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
-import * as reactNative from 'react-native'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
@@ -8,7 +8,7 @@ import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 
 function getNativeComponent (tagName) {
-  return getByPath(reactNative, tagName)
+  return getByPath(ReactNative, tagName)
 }
 
 function getRootProps (props) {
@@ -200,7 +200,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = currentInject.getComponents() || {}
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  return memo(forwardRef((props, ref) => {
+  const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(props)
     let isFirst = false
@@ -246,4 +246,36 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     return proxy.effect.run()
   }))
+
+  if (type === 'page') {
+    const { Provider } = global.__navigationHelper
+    const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
+    const Page = ({ navigation }) => {
+      useLayoutEffect(() => {
+        navigation.setOptions({
+          headerTitle: pageConfig.navigationBarTitleText || '',
+          headerStyle: {
+            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          },
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        })
+      }, [])
+      return createElement(Provider,
+        null,
+        createElement(ReactNative.ScrollView,
+          {
+            style: {
+              ...ReactNative.StyleSheet.absoluteFillObject,
+              backgroundColor: pageConfig.backgroundColor || '#ffffff'
+            },
+            showsVerticalScrollIndicator: false
+          },
+          createElement(defaultOptions)
+        )
+      )
+    }
+    return Page
+  }
+
+  return defaultOptions
 }

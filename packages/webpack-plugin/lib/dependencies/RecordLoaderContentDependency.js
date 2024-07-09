@@ -1,7 +1,7 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
-class RecordVueContentDependency extends NullDependency {
+class RecordLoaderContentDependency extends NullDependency {
   constructor (resourcePath, content) {
     super()
     this.resourcePath = resourcePath
@@ -14,7 +14,7 @@ class RecordVueContentDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
-    mpx.vueContentCache.set(this.resourcePath, this.content)
+    mpx.loaderContentCache.set(this.resourcePath, this.content)
     return callback()
   }
 
@@ -33,11 +33,11 @@ class RecordVueContentDependency extends NullDependency {
   }
 }
 
-RecordVueContentDependency.Template = class RecordVueContentDependencyTemplate {
+RecordLoaderContentDependency.Template = class RecordLoaderContentDependencyTemplate {
   apply () {
   }
 }
 
-makeSerializable(RecordVueContentDependency, '@mpxjs/webpack-plugin/lib/dependencies/RecordVueContentDependency')
+makeSerializable(RecordLoaderContentDependency, '@mpxjs/webpack-plugin/lib/dependencies/RecordLoaderContentDependency')
 
-module.exports = RecordVueContentDependency
+module.exports = RecordLoaderContentDependency

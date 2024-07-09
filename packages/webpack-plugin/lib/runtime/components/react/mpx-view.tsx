@@ -9,7 +9,7 @@ import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX }
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
-import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX, isText} from './utils'
 

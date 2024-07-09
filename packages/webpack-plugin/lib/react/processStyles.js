@@ -14,7 +14,7 @@ module.exports = function (styles, {
   let content = ''
   let output = '/* styles */\n'
   if (styles.length) {
-    const { mode } = loaderContext.getMpx() || {}
+    const { mode } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -43,11 +43,17 @@ module.exports = function (styles, {
           mode,
           srcMode
         })
-        output += `global.currentInject.injectMethods = {
-  __getClassMap: function() {
-    return ${shallowStringify(classMap)};
-  }
-};\n`
+        if (ctorType === 'app') {
+          output += `global.__getAppClassMap = function() {
+            return ${shallowStringify(classMap)};
+          };\n`
+        } else {
+          output += `global.currentInject.injectMethods = {
+            __getClassMap: function() {
+              return ${shallowStringify(classMap)};
+            }
+          };\n`
+        }
       } catch (e) {
         return callback(e)
       }

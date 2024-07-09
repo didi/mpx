@@ -18,6 +18,12 @@ export default function proxyEventMixin () {
         const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
         const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' && this[filterMethod]) : originValue
         setByPath(this, expr, value)
+      },
+      __invokeHandler (eventName, $event) {
+        const handler = this[eventName]
+        if (handler && typeof handler === 'function') {
+          handler.call(this, $event)
+        }
       }
     }
   }

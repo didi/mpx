@@ -8,38 +8,25 @@ function objectKeys (obj) {
       '[': ']',
       '(': ')'
     }
-    var shiftMap = {
-      'n': '\n',
-      'b': '\b',
-      'f': '\f',
-      'r': '\r',
-      't': '\t'
-    }
     if (typeof obj === 'object') {
       var objStr = JSON.stringify(obj)
       if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
-        var key = ''
         var inKey = true
         var stack = []
-        var shift = false
+        var keyStart = 0
+        var keyEnd = 0
         for (var i = 1; i < objStr.length - 1; i++) {
           var item = objStr[i]
           var lastItem = objStr[i - 1]
           if (inKey) {
-            if (item === ':' && lastItem === '"') {
-              keys.push(key.slice(1, -1))
-              key = ''
+            if (item === ':' && keyEnd === i - 1) {
+              keys.push(objStr.slice(keyStart + 1, keyEnd))
               inKey = false
             } else {
-              if (shift === false && item === '\\') {
-                shift = true
-                continue
+              if (item === '"' && lastItem !== '\\') {
+                keyStart = keyEnd
+                keyEnd = i
               }
-              if (shift) {
-                item = shiftMap[item] || item
-                shift = false
-              }
-              key += item
             }
           } else {
             if (stackMap[item]) {
@@ -124,7 +111,6 @@ function mpEscape (str) {
   })
 }
 
-
 function stringifyDynamicClass (value) {
   if (isArray(value)) {
     value = stringifyArray(value)
@@ -133,7 +119,7 @@ function stringifyDynamicClass (value) {
   }
 
   if (typeof value === 'string') {
-    return mpEscape(value)
+    return value
   } else {
     return ''
   }
@@ -241,7 +227,7 @@ module.exports = {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
-    return concat(staticClass, stringifyDynamicClass(dynamicClass))
+    return concat(staticClass, mpEscape(stringifyDynamicClass(dynamicClass)))
   },
   stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)

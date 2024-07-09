@@ -635,7 +635,7 @@ background-repeat: repeat;
 ##### 语法
 ```css
 /* 支持 */
-background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink contain no-repeat;
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink no-repeat;
 background: #000;
 background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink;
 
@@ -703,4 +703,4 @@ RN 仅支持部分常用的缩写形式，具体参加下表：
 |flex|仅支持 flex-grow flex-shrink flex-basis|顺序固定，值以空格分隔后按按顺序赋值|
 |flex-flow|仅支持 flex-direction flex-wrap|顺序固定，值以空格分隔后按按顺序赋值|
 |border-radius|支持 border-top-left-radius border-top-right-radius border-bottom-right-radius border-bottom-left-radius|顺序固定，值以空格分隔后按按顺序赋值；当设置 border-radius: 0 相当于同时设置了4个方向|
-|background|仅支持 background-image  background-color background-size background-repeat|顺序不固定，具体每个属性的支持情况参见上面具体属性支持的文档；background-size 缩写仅支持枚举值不支持 number 值
+|background|仅支持 background-image  background-color background-repeat|顺序不固定，具体每个属性的支持情况参见上面具体属性支持的文档；

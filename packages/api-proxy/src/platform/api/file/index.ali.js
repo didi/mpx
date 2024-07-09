@@ -1,4 +1,4 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
 
 function downloadFile (options = {}) {
   const opts = changeOpts(options)
@@ -7,13 +7,13 @@ function downloadFile (options = {}) {
     return changeOpts(res, { apFilePath: 'tempFilePath' })
   })
 
-  return my.downloadFile(opts)
+  return ENV_OBJ.downloadFile(opts)
 }
 
 function uploadFile (options = {}) {
   const opts = changeOpts(options, { name: 'fileName' })
 
-  return my.uploadFile(opts)
+  return ENV_OBJ.uploadFile(opts)
 }
 
 function saveFile (options = {}) {
@@ -25,7 +25,7 @@ function saveFile (options = {}) {
     return changeOpts(res, { apFilePath: 'savedFilePath' })
   })
 
-  my.saveFile(opts)
+  return ENV_OBJ.saveFile(opts)
 }
 
 export {
