@@ -52,21 +52,13 @@ const CheckboxGroup = forwardRef<
   const { formValuesMap } = useContext(FormContext)
   const [resetCount, setResetCount] = useState(0)
 
-  const values: any = useRef([])
-
-  const finishReset = useRef(true)
-
-  const refs = useRef<{ index: number; selections: Selection[] }>({
-    index: 0,
-    selections: []
-  })
+  const selections: Record<string, Selection> = useRef({}).current
 
   const defaultStyle = {
     flexDirection: 'row',
     flexWrap: 'wrap',
     ...StyleSheet.flatten(style)
   }
-
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
   })
@@ -87,27 +79,21 @@ const CheckboxGroup = forwardRef<
   }
 
   const getSelectionValue = (): string[] => {
-    return refs.current.selections.reduce<string[]>(
-      (acc, { value, checked }) => {
-        checked && acc.push(value)
-        return acc
-      },
-      []
-    )
+    return Object.values(selections).reduce<string[]>((acc, { value, checked }) => {
+      checked && acc.push(value)
+      return acc
+    }, [])
   }
 
   const getValue = () => {
-    return values.current
+    return getSelectionValue()
   }
 
   const setValue = ({ newVal = [], type }) => {
-    values.current = newVal
     if (type === 'reset') {
-      refs.current = {
-        index: 0,
-        selections: []
-      }
-      finishReset.current = false
+      Object.keys(selections).forEach((key) => {
+        selections[key].checked = false
+      })
       refresh()
     }
   }
@@ -121,11 +107,10 @@ const CheckboxGroup = forwardRef<
 
   const onChange = (
     evt: NativeSyntheticEvent<TouchEvent>,
-    selection: Selection,
-    index: number
+    selection: Selection
   ) => {
-    refs.current.selections[index] = selection
-    values.current = getSelectionValue()
+    const { value, checked } = selection
+    selections[value] = { value, checked }
     bindchange &&
       bindchange(
         getCustomEvent(
@@ -134,7 +119,7 @@ const CheckboxGroup = forwardRef<
           {
             layoutRef,
             detail: {
-              value: values.current
+              value: getSelectionValue()
             }
           },
           props
@@ -149,24 +134,26 @@ const CheckboxGroup = forwardRef<
       const displayName = (child.type as FunctionComponent)?.displayName
 
       if (displayName === 'mpx-checkbox') {
-        const index = refs.current.index++
-        const { value, checked } = child.props
-        const isChecked = finishReset.current ? !!checked : false
-        refs.current.selections[index] = { value, checked: isChecked }
+        const { value, checked = false } = child.props
+        let selection: any = {}
+        if (selections[value]) {
+          selection = selections[value]
+        } else {
+          selection = { value, checked }
+          selections[value] = selection
+        }
         return cloneElement(child, {
           ...child.props,
-          checked: isChecked,
+          checked: selection.checked,
           _onChange: (
             evt: NativeSyntheticEvent<TouchEvent>,
             selection: Selection
-          ) => onChange(evt, selection, index)
+          ) => onChange(evt, selection)
         })
       } else {
         return cloneElement(child, {}, wrapChildren(child.props.children))
       }
     })
-    finishReset.current = true
-    values.current = getSelectionValue()
     return newChild
   }
 
