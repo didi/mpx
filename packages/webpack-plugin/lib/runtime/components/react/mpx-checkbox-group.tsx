@@ -54,6 +54,8 @@ const CheckboxGroup = forwardRef<
 
   const values: any = useRef([])
 
+  const finishReset = useRef(true)
+
   const refs = useRef<{ index: number; selections: Selection[] }>({
     index: 0,
     selections: []
@@ -105,6 +107,7 @@ const CheckboxGroup = forwardRef<
         index: 0,
         selections: []
       }
+      finishReset.current = false
       refresh()
     }
   }
@@ -148,9 +151,11 @@ const CheckboxGroup = forwardRef<
       if (displayName === 'mpx-checkbox') {
         const index = refs.current.index++
         const { value, checked } = child.props
-        refs.current.selections[index] = { value, checked: !!checked }
+        const isChecked = finishReset.current ? !!checked : false
+        refs.current.selections[index] = { value, checked: isChecked }
         return cloneElement(child, {
           ...child.props,
+          checked: isChecked,
           _onChange: (
             evt: NativeSyntheticEvent<TouchEvent>,
             selection: Selection
@@ -160,6 +165,7 @@ const CheckboxGroup = forwardRef<
         return cloneElement(child, {}, wrapChildren(child.props.children))
       }
     })
+    finishReset.current = true
     values.current = getSelectionValue()
     return newChild
   }
