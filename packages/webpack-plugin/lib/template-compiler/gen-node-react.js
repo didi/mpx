@@ -43,7 +43,7 @@ function genNode (node) {
       }
     }
     if (node.tag === 'wxs') {
-      return '""'
+      return 'null'
     }
     if (node.type === 1) {
       if (node.tag !== 'temp-node') {
