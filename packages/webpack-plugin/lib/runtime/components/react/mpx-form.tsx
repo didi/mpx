@@ -7,7 +7,7 @@
 
 import { View, LayoutChangeEvent } from 'react-native';
 import React, { JSX, useRef, forwardRef, ReactNode, Children } from 'react';
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
 
