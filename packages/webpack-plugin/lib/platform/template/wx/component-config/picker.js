@@ -14,6 +14,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-picker'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker'
+    },
     props: [
       {
         test: 'mode',

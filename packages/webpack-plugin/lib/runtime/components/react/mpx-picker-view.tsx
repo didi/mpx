@@ -3,7 +3,7 @@ import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react
 import AntPickerView from '@ant-design/react-native/lib/picker-view'
 import useInnerProps from './getInnerListeners'
 import { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
 interface PickerViewProps {
   children: React.ReactNode
