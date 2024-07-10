@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 import { buildUrl, getEnvObj, serialize, transformRes } from './util'
+import { request } from '@mpxjs/api-proxy'
 
 export default function request (config, mpx, mode) {
   return new Promise((resolve, reject) => {
@@ -41,30 +42,6 @@ export default function request (config, mpx, mode) {
       reject(err)
     }
 
-    if (mode === 'web') {
-      const { request } = require('@mpxjs/api-proxy/src/platform/api/request/index.web.js')
-      return request(config)
-    }
-
-    const envObj = getEnvObj(mode)
-
-    if (envObj && typeof envObj.request === 'function') {
-      requestTask = envObj.request(config)
-      return
-    }
-
-    if (__mpx_mode__ === 'ali' && typeof envObj.httpRequest === 'function') {
-      requestTask = envObj.httpRequest(config)
-      return
-    }
-
-    mpx = mpx || global.__mpx
-    if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
-      // mpx
-      const res = mpx.request(config)
-      requestTask = res.__returned || res
-      return
-    }
-    console.error('no available request adapter for current platform')
+    return request(config)
   })
 }
