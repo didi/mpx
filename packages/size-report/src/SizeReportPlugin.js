@@ -64,14 +64,19 @@ class SizeReportPlugin {
 
       // 简化identifier
       function getSuccinctIdentifier (module) {
-        const identifier = module.readableIdentifier(compilation.requestShortener)
+        let identifier = module.readableIdentifier(compilation.requestShortener)
         let query = ''
         const resource = module.resource || (module.rootModule && module.rootModule.resource)
         if (resource) {
           const { queryObj } = parseRequest(resource)
           query = queryObj.packageRoot ? '?packageRoot=' + queryObj.packageRoot : ''
         }
-        return identifier.split(/\?|!/)[0] + query
+        identifier = identifier.split(/\?|!/)[0] + query
+        const match = identifier.match(/\.pnpm\/[^/]+\/(node_modules\/.*)/)
+        if (match) {
+          identifier = match[1]
+        }
+        return identifier
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -164,10 +169,10 @@ class SizeReportPlugin {
       }
 
       function getModuleEntries (module, noEntry) {
-        const entries = moduleEntriesMap.get(module.rootModule || module) || []
+        const entries = moduleEntriesMap.get(module) || []
         const index = noEntry ? 1 : 0
         entries[index] = entries[index] || new Set()
-        moduleEntriesMap.set(module.rootModule || module, entries)
+        moduleEntriesMap.set(module, entries)
         return entries[index]
       }
 
@@ -203,7 +208,7 @@ class SizeReportPlugin {
               }
             }
           }
-          setModuleEntries(module, entryModule)
+          setModuleEntries(module.rootModule || module, entryModule)
         })
         reportGroups.forEach((reportGroup) => {
           reportGroup.entryModules = reportGroup.entryModules || new Set()
@@ -224,7 +229,7 @@ class SizeReportPlugin {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module.rootModule || module)
               walkEntry(module, (module, noEntryModule) => {
-                setModuleEntries(module, noEntryModule, true)
+                setModuleEntries(module.rootModule || module, noEntryModule, true)
               })
             }
           })
@@ -326,7 +331,7 @@ class SizeReportPlugin {
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
-              const _entryModules = getModuleEntries(noEntryModule)
+              const _entryModules = getModuleEntries(noEntryModule.rootModule || noEntryModule)
               return reportGroup.noEntryModules.has(noEntryModule) && every(entryModules, (entryModule) => {
                 return _entryModules.has(entryModule)
               })
@@ -523,8 +528,8 @@ class SizeReportPlugin {
 
           assetModules.forEach((module) => {
             // 循环 modules，存储到 entryModules 和 noEntryModules 中
-            const _entryModules = getModuleEntries(module)
-            const _noEntryModules = getModuleEntries(module, true)
+            const _entryModules = getModuleEntries(module.rootModule || module)
+            const _noEntryModules = getModuleEntries(module.rootModule || module, true)
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
@@ -608,8 +613,8 @@ class SizeReportPlugin {
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))
             const identifier = getSuccinctIdentifier(module)
-            const entryModules = getModuleEntries(module)
-            const noEntryModules = getModuleEntries(module, true)
+            const entryModules = getModuleEntries(module.rootModule || module)
+            const noEntryModules = getModuleEntries(module.rootModule || module, true)
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
               identifier,
