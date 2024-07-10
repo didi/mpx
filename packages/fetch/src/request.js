@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-import { buildUrl, getEnvObj, serialize, transformRes } from './util'
-import { request } from '@mpxjs/api-proxy'
+import { buildUrl, serialize, transformRes } from './util'
+import { request as requestApi } from '@mpxjs/api-proxy/src/platform/api/request'
 
 export default function request (config, mpx, mode) {
   return new Promise((resolve, reject) => {
@@ -42,6 +42,6 @@ export default function request (config, mpx, mode) {
       reject(err)
     }
 
-    return request(config)
+    return requestApi(config)
   })
 }
