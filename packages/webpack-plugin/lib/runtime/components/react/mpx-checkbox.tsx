@@ -177,12 +177,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       checked !== isChecked && setIsChecked(checked)
     }, [checked])
 
-    useEffect(() => {
-      if (props.groupValue === null) {
-        setIsChecked(false)
-      }
-    }, [props.groupValue])
-
     return (
       <View {...innerProps}>
         <View style={defaultStyle}>

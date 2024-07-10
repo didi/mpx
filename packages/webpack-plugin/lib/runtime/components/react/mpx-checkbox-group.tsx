@@ -50,7 +50,9 @@ const CheckboxGroup = forwardRef<
 
   const layoutRef = useRef({})
   const { formValuesMap } = useContext(FormContext)
-  const [groupValue, setGroupValue] = useState([])
+  const [resetCount, setResetCount] = useState(0)
+
+  const values: any = useRef([])
 
   const refs = useRef<{ index: number; selections: Selection[] }>({
     index: 0,
@@ -92,13 +94,27 @@ const CheckboxGroup = forwardRef<
     )
   }
 
-  const setGroupData = ({ value = null, type }) => {
-    setGroupValue(value)
+  const getValue = () => {
+    return values.current
+  }
+
+  const setValue = ({ newVal = [], type }) => {
+    values.current = newVal
     if (type === 'reset') {
-      refs.current.selections = []
+      refs.current = {
+        index: 0,
+        selections: []
+      }
+      refresh()
     }
   }
-  formValuesMap.current.set(props.name, { getValue: getSelectionValue, setValue: setGroupData })
+
+  const refresh = () => {
+    setResetCount((count) => {
+      return count + 1
+    })
+  }
+  formValuesMap.current.set(props.name, { getValue, setValue })
 
   const onChange = (
     evt: NativeSyntheticEvent<TouchEvent>,
@@ -106,7 +122,7 @@ const CheckboxGroup = forwardRef<
     index: number
   ) => {
     refs.current.selections[index] = selection
-    setGroupValue(getSelectionValue())
+    values.current = getSelectionValue()
     bindchange &&
       bindchange(
         getCustomEvent(
@@ -115,7 +131,7 @@ const CheckboxGroup = forwardRef<
           {
             layoutRef,
             detail: {
-              value: getSelectionValue()
+              value: values.current
             }
           },
           props
@@ -124,7 +140,7 @@ const CheckboxGroup = forwardRef<
   }
 
   const wrapChildren = (children: ReactNode) => {
-    return Children.toArray(children).map((child) => {
+    const newChild = Children.toArray(children).map((child) => {
       if (!isValidElement(child)) return child
 
       const displayName = (child.type as FunctionComponent)?.displayName
@@ -135,7 +151,6 @@ const CheckboxGroup = forwardRef<
         refs.current.selections[index] = { value, checked: !!checked }
         return cloneElement(child, {
           ...child.props,
-          groupValue,
           _onChange: (
             evt: NativeSyntheticEvent<TouchEvent>,
             selection: Selection
@@ -145,6 +160,8 @@ const CheckboxGroup = forwardRef<
         return cloneElement(child, {}, wrapChildren(child.props.children))
       }
     })
+    values.current = getSelectionValue()
+    return newChild
   }
 
   const innerProps = useInnerProps(
@@ -160,7 +177,7 @@ const CheckboxGroup = forwardRef<
     }
   )
 
-  return <View {...innerProps}>{wrapChildren(children)}</View>
+  return <View {...innerProps} key={resetCount}>{wrapChildren(children)}</View>
 })
 
 CheckboxGroup.displayName = 'mpx-checkbox-group'
