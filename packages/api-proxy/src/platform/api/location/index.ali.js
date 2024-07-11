@@ -1,6 +1,6 @@
 import { ENV_OBJ, changeOpts, handleSuccess, defineUnsupportedProps } from '../../../common/js'
 
-function getLocation(options = {}) {
+function getLocation (options = {}) {
   const opts = Object.assign(options, {
     type: 0 // 只获取经纬与微信拉齐
   })
@@ -15,8 +15,8 @@ function getLocation(options = {}) {
   return ENV_OBJ.getLocation(opts)
 }
 
-function openLocation(options = {}) {
-  const opts = Object.assign( {
+function openLocation (options = {}) {
+  const opts = Object.assign({
     scale: 15
   }, options)
   return ENV_OBJ.openLocation(opts)

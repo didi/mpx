@@ -1,6 +1,6 @@
 import { envError, noop, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 
-const getLocation = function(options) {
+const getLocation = function (options) {
   const { isHighAccuracy = false, success = noop, fail = noop, complete = noop } = options
   if (navigator.geolocation.getCurrentPosition) {
     navigator.geolocation.getCurrentPosition((res = {}) => {

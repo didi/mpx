@@ -3,7 +3,7 @@ import { successHandle, failHandle } from '../../../common/js'
 
 function getScreenBrightness (options) {
   const { success, fail, complete } = options
-  SystemSetting.getBrightness().then((value)=>{
+  SystemSetting.getBrightness().then(value => {
     const result = {
       errMsg: 'getScreenBrightness:ok',
       value
@@ -19,9 +19,9 @@ function getScreenBrightness (options) {
 
 function setScreenBrightness (options) {
   const { value, success, fail, complete } = options
-  SystemSetting.setBrightnessForce(value).then(()=>{
+  SystemSetting.setBrightnessForce(value).then(() => {
     const result = {
-      errMsg: 'setScreenBrightness:ok',
+      errMsg: 'setScreenBrightness:ok'
     }
     successHandle(result, success, complete)
   }).catch(() => {

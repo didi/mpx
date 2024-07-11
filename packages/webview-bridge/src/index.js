@@ -52,7 +52,7 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
       if (typeof data === 'string') {
         msgData = JSON.parse(data)
       }
-    } catch(e) {
+    } catch (e) {
     }
     const { callbackId, error, result } = msgData
     if (callbackId !== undefined && callbacks[callbackId]) {
