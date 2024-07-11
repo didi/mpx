@@ -2961,7 +2961,7 @@ function postProcessForDynamic (vnode) {
 }
 
 function postProcessAttrsDynamic (vnode, config) {
-  const exps = vnode.exps?.filter(v => v.attrName) || []
+  const exps = (vnode.exps && vnode.exps.filter(v => v.attrName)) || []
   const expsMap = Object.fromEntries(exps.map(v => ([v.attrName, v])))
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {
