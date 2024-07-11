@@ -58,11 +58,13 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 目前只有微信支持分包异步化
         if (supportRequireAsync) {
           tarRoot = queryObj.root
+          extraOptions.isAsync = true
         }
       } else if (!queryObj.root && asyncSubpackageRules && supportRequireAsync) {
         for (const item of asyncSubpackageRules) {
           if (matchCondition(resourcePath, item)) {
             tarRoot = item.root
+            extraOptions.isAsync = true
             placeholder = item.placeholder
             break
           }

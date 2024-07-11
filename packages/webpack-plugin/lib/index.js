@@ -683,7 +683,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || isWeb(this.options.mode),
           partialCompileRules: this.options.partialCompileRules,
-          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
+          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,
               entries: []
@@ -692,7 +692,8 @@ class MpxWebpackPlugin {
             curInfo.entries.push({
               entryType,
               resource,
-              filename
+              filename,
+              hasAsync
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
@@ -1332,6 +1333,7 @@ class MpxWebpackPlugin {
                   parser.state.current.addBlock(depBlock)
                 } else {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
+                    isAsync: true,
                     isRequireAsync: true,
                     retryRequireAsync: !!this.options.retryRequireAsync
                   })
