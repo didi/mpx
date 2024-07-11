@@ -8,19 +8,11 @@ function objectKeys (obj) {
       '[': ']',
       '(': ')'
     }
-    var shiftMap = {
-      'n': '\n',
-      'b': '\b',
-      'f': '\f',
-      'r': '\r',
-      't': '\t'
-    }
     if (typeof obj === 'object') {
       var objStr = JSON.stringify(obj)
       if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
         var inKey = true
         var stack = []
-        var shift = false
         var keyStart = 0
         var keyEnd = 0
         for (var i = 1; i < objStr.length - 1; i++) {
@@ -31,14 +23,6 @@ function objectKeys (obj) {
               keys.push(objStr.slice(keyStart + 1, keyEnd))
               inKey = false
             } else {
-              if (shift === false && item === '\\') {
-                shift = true
-                continue
-              }
-              if (shift) {
-                item = shiftMap[item] || item
-                shift = false
-              }
               if (item === '"' && lastItem !== '\\') {
                 keyStart = keyEnd
                 keyEnd = i
