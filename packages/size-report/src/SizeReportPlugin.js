@@ -64,14 +64,19 @@ class SizeReportPlugin {
 
       // 简化identifier
       function getSuccinctIdentifier (module) {
-        const identifier = module.readableIdentifier(compilation.requestShortener)
+        let identifier = module.readableIdentifier(compilation.requestShortener)
         let query = ''
         const resource = module.resource || (module.rootModule && module.rootModule.resource)
         if (resource) {
           const { queryObj } = parseRequest(resource)
           query = queryObj.packageRoot ? '?packageRoot=' + queryObj.packageRoot : ''
         }
-        return identifier.split(/\?|!/)[0] + query
+        identifier = identifier.split(/\?|!/)[0] + query
+        const match = identifier.match(/\.pnpm\/[^/]+\/(node_modules\/.*)/)
+        if (match) {
+          identifier = match[1]
+        }
+        return identifier
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -160,10 +165,12 @@ class SizeReportPlugin {
       const moduleEntriesMap = new Map()
 
       function setModuleEntries (module, entryModule, noEntry) {
-        getModuleEntries(module, noEntry).add(entryModule.rootModule || entryModule)
+        entryModule = entryModule.rootModule || entryModule
+        getModuleEntries(module, noEntry).add(entryModule)
       }
 
       function getModuleEntries (module, noEntry) {
+        module = module.rootModule || module
         const entries = moduleEntriesMap.get(module) || []
         const index = noEntry ? 1 : 0
         entries[index] = entries[index] || new Set()
