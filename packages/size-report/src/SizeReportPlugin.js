@@ -165,10 +165,13 @@ class SizeReportPlugin {
       const moduleEntriesMap = new Map()
 
       function setModuleEntries (module, entryModule, noEntry) {
-        getModuleEntries(module, noEntry).add(entryModule.rootModule || entryModule)
+        module = module.rootModule || module
+        entryModule = entryModule.rootModule || entryModule
+        getModuleEntries(module, noEntry).add(entryModule)
       }
 
       function getModuleEntries (module, noEntry) {
+        module = module.rootModule || module
         const entries = moduleEntriesMap.get(module) || []
         const index = noEntry ? 1 : 0
         entries[index] = entries[index] || new Set()
@@ -208,7 +211,7 @@ class SizeReportPlugin {
               }
             }
           }
-          setModuleEntries(module.rootModule || module, entryModule)
+          setModuleEntries(module, entryModule)
         })
         reportGroups.forEach((reportGroup) => {
           reportGroup.entryModules = reportGroup.entryModules || new Set()
@@ -229,7 +232,7 @@ class SizeReportPlugin {
               reportGroup.noEntryModules = reportGroup.noEntryModules || new Set()
               reportGroup.noEntryModules.add(module.rootModule || module)
               walkEntry(module, (module, noEntryModule) => {
-                setModuleEntries(module.rootModule || module, noEntryModule, true)
+                setModuleEntries(module, noEntryModule, true)
               })
             }
           })
@@ -331,7 +334,7 @@ class SizeReportPlugin {
         reportGroups.forEach((reportGroup) => {
           if (reportGroup.noEntryModules && noEntryModules && noEntryModules.size) {
             if (has(noEntryModules, (noEntryModule) => {
-              const _entryModules = getModuleEntries(noEntryModule.rootModule || noEntryModule)
+              const _entryModules = getModuleEntries(noEntryModule)
               return reportGroup.noEntryModules.has(noEntryModule) && every(entryModules, (entryModule) => {
                 return _entryModules.has(entryModule)
               })
@@ -528,8 +531,8 @@ class SizeReportPlugin {
 
           assetModules.forEach((module) => {
             // 循环 modules，存储到 entryModules 和 noEntryModules 中
-            const _entryModules = getModuleEntries(module.rootModule || module)
-            const _noEntryModules = getModuleEntries(module.rootModule || module, true)
+            const _entryModules = getModuleEntries(module)
+            const _noEntryModules = getModuleEntries(module, true)
             if (_entryModules) {
               _entryModules.forEach((entryModule) => {
                 const resource = entryModule.resource || (entryModule.rootModule && entryModule.rootModule.resource)
@@ -613,8 +616,8 @@ class SizeReportPlugin {
             const { start, end } = parsedLocations[id]
             const moduleSize = Buffer.byteLength(content.slice(start, end))
             const identifier = getSuccinctIdentifier(module)
-            const entryModules = getModuleEntries(module.rootModule || module)
-            const noEntryModules = getModuleEntries(module.rootModule || module, true)
+            const entryModules = getModuleEntries(module)
+            const noEntryModules = getModuleEntries(module, true)
             fillSizeReportGroups(entryModules, noEntryModules, packageName, 'modules', {
               name,
               identifier,
