@@ -81,6 +81,7 @@ export default function createApp (option, config = {}) {
         referrerInfo: {}
       }
       global.__mpxEnterOptions = options
+      // todo relaunch时会重复执行，需check
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
     }, [])
     return createElement(NavigationContainer,

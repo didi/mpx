@@ -39,7 +39,8 @@ Mpx具有以下功能特性：
 * [E2E测试](https://www.mpxjs.cn/guide/tool/e2e-test.html)
 * [原子类](https://mpxjs.cn/guide/advance/utility-first-css.html)
 * [SSR](https://mpxjs.cn/guide/advance/ssr.html)
-* [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
+* 运行时渲染方案
+* 跨端输出RN（即将到来）
 
 ## 快速开始
 
