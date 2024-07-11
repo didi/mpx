@@ -180,6 +180,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
+    options.rnConfig = options.rnConfig || {}
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
@@ -669,6 +670,8 @@ class MpxWebpackPlugin {
           nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
+          // 输出rn专用配置
+          rnConfig: this.options.rnConfig,
           loaderContentCache: new Map(),
           tabBarMap: {},
           defs: processDefs(this.options.defs),

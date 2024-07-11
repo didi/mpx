@@ -2484,12 +2484,6 @@ function processMpxTagName (el) {
   }
 }
 
-function postProcessComponent (el, options) {
-  if (isComponentNode(el, options)) {
-    el.isComponent = true
-  }
-}
-
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2581,8 +2575,6 @@ function closeElement (el, meta, options) {
   if (isReact(mode)) {
     postProcessForReact(el)
     postProcessIfReact(el)
-    // flag component for react
-    postProcessComponent(el, options)
     return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate

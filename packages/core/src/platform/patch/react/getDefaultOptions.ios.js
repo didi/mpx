@@ -7,10 +7,6 @@ import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 
-function getNativeComponent (tagName) {
-  return getByPath(ReactNative, tagName)
-}
-
 function getRootProps (props) {
   const rootProps = {}
   for (const key in props) {
@@ -39,8 +35,11 @@ function createEffect (proxy, components, props) {
     proxy.onStoreChange && proxy.onStoreChange()
   }
   update.id = proxy.uid
+  const getComponent = (tagName) => {
+    return components[tagName] || getByPath(ReactNative, tagName)
+  }
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent, getRootProps(props))
+    return proxy.target.__injectedRender(createElement, getComponent, getRootProps(props))
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -198,7 +197,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const components = currentInject.getComponents() || {}
+  const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
