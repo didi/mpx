@@ -4,7 +4,7 @@
  * ✔ checked
  * ✔ color
  */
-import React, {
+import {
   JSX,
   useRef,
   useState,
@@ -103,7 +103,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
       const checked = !isChecked
-      setIsChecked(checked)
+      // setIsChecked(checked)
       _onChange && _onChange(evt, { value, checked })
     }
 
@@ -184,7 +184,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             type='success_no_circle'
             size={18}
             color={disabled ? '#ADADAD' : color}
-            style={isChecked ? styles.iconChecked : styles.icon}
+            style={checked ? styles.iconChecked : styles.icon}
           />
         </View>
         {wrapChildren(children, textStyle)}

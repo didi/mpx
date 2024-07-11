@@ -6,7 +6,7 @@
  */
 
 import { View, LayoutChangeEvent } from 'react-native';
-import React, { JSX, useRef, forwardRef, ReactNode, Children } from 'react';
+import { JSX, useRef, forwardRef, ReactNode, Children } from 'react';
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
@@ -37,7 +37,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
     })
   }
 
-  const travelChildren = (children: React.ReactNode): React.ReactNode => {
+  const travelChildren = (children: ReactNode): ReactNode => {
     const result = Children.toArray(children).map((child: any, index: number) => {
       const childTypeName = child.type && child.type.displayName
       if (!child.type) return child
