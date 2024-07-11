@@ -20,7 +20,7 @@ import {
   ViewStyle,
   StyleSheet
 } from 'react-native'
-import { FormContext, CheckboxGroupContext } from './context'
+import { FormContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
@@ -50,8 +50,9 @@ const CheckboxGroup = forwardRef<
 
   const layoutRef = useRef({})
   const { formValuesMap } = useContext(FormContext)
+  const [resetCount, setResetCount] = useState(0)
 
-  const groupValue = useRef({}).current
+  const selections: Record<string, Selection> = useRef({}).current
 
   const defaultStyle = {
     flexDirection: 'row',
@@ -78,13 +79,10 @@ const CheckboxGroup = forwardRef<
   }
 
   const getSelectionValue = (): string[] => {
-    const arr: any = []
-    for (let key in groupValue) {
-      if (groupValue[key].checked) {
-        arr.push(key)
-      }
-    }
-    return arr
+    return Object.values(selections).reduce<string[]>((acc, { value, checked }) => {
+      checked && acc.push(value)
+      return acc
+    }, [])
   }
 
   const getValue = () => {
@@ -93,18 +91,26 @@ const CheckboxGroup = forwardRef<
 
   const setValue = ({ newVal = [], type }) => {
     if (type === 'reset') {
-      Object.keys(groupValue).forEach((key) => {
-        groupValue[key].checked = false
-        groupValue[key].setValue(false)
+      Object.keys(selections).forEach((key) => {
+        selections[key].checked = false
       })
+      refresh()
     }
   }
 
+  const refresh = () => {
+    setResetCount((count) => {
+      return count + 1
+    })
+  }
   formValuesMap.current.set(props.name, { getValue, setValue })
 
-  const notifyChange = (
-    evt: NativeSyntheticEvent<TouchEvent>
+  const onChange = (
+    evt: NativeSyntheticEvent<TouchEvent>,
+    selection: Selection
   ) => {
+    const { value, checked } = selection
+    selections[value] = { value, checked }
     bindchange &&
       bindchange(
         getCustomEvent(
@@ -124,11 +130,25 @@ const CheckboxGroup = forwardRef<
   const wrapChildren = (children: ReactNode) => {
     const newChild = Children.toArray(children).map((child) => {
       if (!isValidElement(child)) return child
+
       const displayName = (child.type as FunctionComponent)?.displayName
 
       if (displayName === 'mpx-checkbox') {
+        const { value, checked = false } = child.props
+        let selection: any = {}
+        if (selections[value]) {
+          selection = selections[value]
+        } else {
+          selection = { value, checked }
+          selections[value] = selection
+        }
         return cloneElement(child, {
-          ...child.props
+          ...child.props,
+          checked: selection.checked,
+          _onChange: (
+            evt: NativeSyntheticEvent<TouchEvent>,
+            selection: Selection
+          ) => onChange(evt, selection)
         })
       } else {
         return cloneElement(child, {}, wrapChildren(child.props.children))
@@ -150,13 +170,7 @@ const CheckboxGroup = forwardRef<
     }
   )
 
-  return (
-    <View {...innerProps}>
-      <CheckboxGroupContext.Provider value={{ groupValue, notifyChange }}>
-        {wrapChildren(children)}
-      </CheckboxGroupContext.Provider>
-    </View>
-  )
+  return <View {...innerProps} key={resetCount}>{wrapChildren(children)}</View>
 })
 
 CheckboxGroup.displayName = 'mpx-checkbox-group'

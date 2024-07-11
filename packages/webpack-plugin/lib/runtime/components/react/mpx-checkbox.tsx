@@ -10,7 +10,8 @@ import {
   useState,
   forwardRef,
   useEffect,
-  ReactNode
+  ReactNode,
+  useContext
 } from 'react'
 import {
   View,
@@ -25,6 +26,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { every, extractTextStyle, isText } from './utils'
+import { CheckboxGroupContext } from './context'
 
 interface Selection {
   value?: string
@@ -94,6 +96,8 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const textStyle = extractTextStyle(style)
 
+    const { groupValue, notifyChange } = useContext(CheckboxGroupContext)
+
     const defaultStyle = StyleSheet.flatten([
       styles.wrapper,
       disabled && styles.wrapperDisabled,
@@ -103,8 +107,9 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
       const checked = !isChecked
-      // setIsChecked(checked)
-      _onChange && _onChange(evt, { value, checked })
+      groupValue[props.value].checked = checked
+      setIsChecked(checked)
+      notifyChange && notifyChange(evt)
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -174,7 +179,20 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     )
 
     useEffect(() => {
-      checked !== isChecked && setIsChecked(checked)
+      groupValue[props.value] = {
+        checked: props.checked,
+        setValue: setIsChecked
+      }
+      return () => {
+        groupValue[props.value].checked = false
+      }
+    }, [])
+
+    useEffect(() => {
+      if (checked !== isChecked) {
+        setIsChecked(checked)
+        groupValue[props.value].checked = checked
+      }
     }, [checked])
 
     return (
@@ -184,7 +202,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             type='success_no_circle'
             size={18}
             color={disabled ? '#ADADAD' : color}
-            style={checked ? styles.iconChecked : styles.icon}
+            style={isChecked ? styles.iconChecked : styles.icon}
           />
         </View>
         {wrapChildren(children, textStyle)}
