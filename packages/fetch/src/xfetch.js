@@ -14,11 +14,11 @@ export default class XFetch {
     // 当存在 useQueue 配置时，才使用 this.queue 变量
     if (options && options.useQueue && typeof options.useQueue === 'object') {
       this.queue = new RequestQueue({
-        adapter: (config) => requestAdapter(config, MPX, options.mode),
+        adapter: (config) => requestAdapter(config, MPX),
         ...options.useQueue
       })
     } else {
-      this.requestAdapter = (config) => requestAdapter(config, MPX, options.mode)
+      this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
     if (options && options.proxy) this.setProxy(options.proxy)
     this.interceptors = {

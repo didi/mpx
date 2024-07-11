@@ -2,7 +2,7 @@
 import { buildUrl, serialize, transformRes } from './util'
 import { request as requestApi } from '@mpxjs/api-proxy/src/platform/api/request'
 
-export default function request (config, mpx, mode) {
+export default function request (config) {
   return new Promise((resolve, reject) => {
     const paramsSerializer = config.paramsSerializer || serialize
     const bodySerializer = config.bodySerializer || paramsSerializer
