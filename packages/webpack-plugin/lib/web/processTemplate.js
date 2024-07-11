@@ -12,7 +12,7 @@ module.exports = function (template, {
   srcMode,
   moduleId,
   ctorType,
-  usingComponents,
+  usingComponentsNameMap,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -72,7 +72,7 @@ module.exports = function (template, {
               new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
             )
           },
-          usingComponents,
+          usingComponentsNameMap,
           hasComment,
           isNative,
           isComponent: ctorType === 'component',

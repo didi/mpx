@@ -21,6 +21,7 @@ const { MPX_APP_MODULE_ID } = require('./utils/const')
 const path = require('path')
 const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
+const { CompressName } = require('./utils/optimize-compress.js')
 
 module.exports = function (content) {
   this.cacheable()
@@ -50,6 +51,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
+  const compressName = new CompressName()
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -113,7 +115,11 @@ module.exports = function (content) {
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
+      let usingComponentsNameMap = {}
+      for (const name in mpx.usingComponents) {
+        usingComponentsNameMap[name] = name //compressName._generateName()
+      }
+      // let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       let componentPlaceholder = []
       let componentGenerics = {}
 
@@ -134,7 +140,10 @@ module.exports = function (content) {
           const ret = JSON5.parse(parts.json.content)
           if (rulesRunner) rulesRunner(ret)
           if (ret.usingComponents) {
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+            for (const name in ret.usingComponents) {
+              usingComponentsNameMap[name] = compressName._generateName()
+            }
+            // usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           }
           if (ret.componentPlaceholder) {
             componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
@@ -192,7 +201,7 @@ module.exports = function (content) {
                   srcMode,
                   moduleId,
                   ctorType,
-                  usingComponents,
+                  usingComponentsNameMap,
                   componentGenerics
                 }, callback)
               },
@@ -302,7 +311,7 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          usingComponents,
+          usingComponentsNameMap,
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
@@ -339,7 +348,7 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
+      output += getRequire('json', json, json.src && { ...queryObj, resourcePath, usingComponentsNameMap }) + '\n'
 
       // script
       output += '/* script */\n'

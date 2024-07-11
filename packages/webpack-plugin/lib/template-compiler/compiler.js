@@ -624,6 +624,7 @@ function parse (template, options) {
   filePath = options.filePath
   i18n = options.i18n
   refId = 0
+  const usingComponents = Object.keys(options.usingComponentsNameMap)
 
   rulesRunner = getRulesRunner({
     mode,
@@ -631,7 +632,7 @@ function parse (template, options) {
     type: 'template',
     testKey: 'tag',
     data: {
-      usingComponents: options.usingComponents
+      usingComponents
     },
     warn: _warn,
     error: _error
@@ -781,7 +782,7 @@ function parse (template, options) {
 
   if (!tagNames.has('component') && options.checkUsingComponents) {
     const arr = []
-    options.usingComponents.forEach((item) => {
+    usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
         arr.push(item)
       }
@@ -950,7 +951,7 @@ function processComponentIs (el, options) {
   }
 
   options = options || {}
-  el.components = options.usingComponents
+  el.components = Object.keys(options.usingComponentsNameMap)
   if (!el.components) {
     warn$1('Component in which <component> tag is used must have a nonblank usingComponents field')
   }
@@ -1666,7 +1667,7 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el, options) {
-  return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+  return options.usingComponentsNameMap[el.tag] || el.tag === 'component'
 }
 
 function processAliExternalClassesHack (el, options) {
@@ -2219,7 +2220,7 @@ function postProcessComponentIs (el) {
 }
 
 function processOptimizeSize (root, options) {
-  const { usingComponents, filePath } = options
+  const { usingComponentsNameMap } = options
   function walkNode (root, callback) {
     if (!root) return
     callback(root)
@@ -2233,14 +2234,20 @@ function processOptimizeSize (root, options) {
   // 记录所有原生组件（判断条件：usingComponents中不存在的组件）
   const nativeTags = new Set()
   walkNode(root, (node) => {
-    if (node.tag && usingComponents.indexOf(node.tag) === -1) {
+    if (node.tag && !usingComponentsNameMap[node.tag]) {
       nativeTags.add(node.tag)
     }
   })
+  // 校验压缩后的组件名是否与原生组件冲突
+  for (const name of Object.values(usingComponentsNameMap)) {
+    if (nativeTags.has(name)) {
+      error$1(`压缩后组件与原生组件 <${name}> 冲突，请在配置中添加白名单`)
+    }
+  }
   walkNode(root, (node) => {
     // 只有自定义组件才替换（判断条件：在usingComponents中的组件），并且新组件名不允许出现原生组件名
-    if (node.tag && usingComponents.indexOf(node.tag) !== -1) {
-      node.tag = generateVariableNameBySource(node.tag, filePath + 'componentName', [...nativeTags])
+    if (node.tag && usingComponentsNameMap[node.tag]) {
+      node.tag = usingComponentsNameMap[node.tag]
     }
   })
 }

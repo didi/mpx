@@ -44,6 +44,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const projectRoot = mpx.projectRoot
+  const usingComponentsNameMap = queryObj.usingComponentsNameMap
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -263,11 +264,11 @@ module.exports = function (content) {
       if (json.componentPlaceholder) {
         const newComponentPlaceholder = {}
         for (const [name, value] of Object.entries(json.componentPlaceholder)) {
-          const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
+          const newName = usingComponentsNameMap[name]
           newComponentPlaceholder[newName] = json.componentPlaceholder[name]
           delete json.componentPlaceholder[name]
           if (value in json.usingComponents) {
-            newComponentPlaceholder[newName] = generateVariableNameBySource(value, this.resourcePath + 'componentName')
+            newComponentPlaceholder[newName] = usingComponentsNameMap[value]
           }
         }
         Object.assign(json.componentPlaceholder, newComponentPlaceholder)
@@ -276,7 +277,7 @@ module.exports = function (content) {
       if (json.usingComponents) {
         const newUsingComponents = {}
         for (const name of Object.keys(json.usingComponents)) {
-          const newName = generateVariableNameBySource(name, this.resourcePath + 'componentName')
+          const newName = usingComponentsNameMap[name]
           newUsingComponents[newName] = json.usingComponents[name]
           delete json.usingComponents[name]
         }
