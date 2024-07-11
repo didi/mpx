@@ -87,7 +87,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       children,
       bindtap,
       catchtap,
-      _onChange
     } = props
 
     const layoutRef = useRef({})
@@ -107,8 +106,10 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
       const checked = !isChecked
-      groupValue[props.value].checked = checked
       setIsChecked(checked)
+      if (groupValue) {
+        groupValue[value].checked = checked
+      }
       notifyChange && notifyChange(evt)
     }
 
@@ -121,6 +122,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
       catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
+      onChange(evt)
     }
 
     const { nodeRef } = useNodesRef(props, ref, {
@@ -179,19 +181,25 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     )
 
     useEffect(() => {
-      groupValue[props.value] = {
-        checked: props.checked,
-        setValue: setIsChecked
+      if (groupValue) {
+        groupValue[value] = {
+          checked: checked,
+          setValue: setIsChecked
+        }
       }
       return () => {
-        groupValue[props.value].checked = false
+        if (groupValue) {
+          delete groupValue[value]
+        }
       }
     }, [])
 
     useEffect(() => {
       if (checked !== isChecked) {
         setIsChecked(checked)
-        groupValue[props.value].checked = checked
+        if (groupValue) {
+          groupValue[value].checked = checked
+        }
       }
     }, [checked])
 
