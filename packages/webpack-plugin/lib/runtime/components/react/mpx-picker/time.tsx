@@ -3,7 +3,7 @@ import AntDatePicker from '@ant-design/react-native/lib/date-picker'
 import { DatePickerPropsType } from '@ant-design/react-native/lib/date-picker/PropsType'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { TimeProps } from './type'
+import { TimeProps, LayoutType } from './type'
 
 function formatTimeStr(time = ''): Date {
   const now = new Date()
@@ -18,6 +18,10 @@ function formatTimeStr(time = ''): Date {
 const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: TimeProps, ref): React.JSX.Element => {
   const { children, start, end, value, bindchange, bindcancel, disabled } = props
   const [timevalue, setTimeValue] = useState(value)
+  // 存储layout布局信息
+  const layoutRef = useRef({})
+  const { nodeRef: viewRef } = useNodesRef<View, TimeProps>(props, ref, {
+  })
 
   useEffect(() => {
     value && setTimeValue(value)
@@ -34,6 +38,14 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   const onDismiss = (): void => {
     bindcancel && bindcancel()
   }
+
+  const onElementLayout = (layout: LayoutType) => {
+    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
+  }
+
   /*
   const renderLabel = (type, data) => {
     console.log('-------------------renderLable', type, data)
@@ -55,9 +67,16 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   onDismiss: onDismiss,
   disabled: disabled
  } as DatePickerPropsType
+
+ const touchProps = {
+  onLayout: onElementLayout,
+  ref: viewRef
+}
   return (
     <AntDatePicker {...timeProps}>
-      <TouchableWithoutFeedback>{children}</TouchableWithoutFeedback>
+      <TouchableWithoutFeedback>
+        <View {...touchProps}>{children}</View>
+      </TouchableWithoutFeedback>
     </AntDatePicker>
   )
 })

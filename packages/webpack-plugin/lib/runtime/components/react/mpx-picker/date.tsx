@@ -2,7 +2,7 @@ import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import AntDatePicker from '@ant-design/react-native/lib/date-picker'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { DateProps } from './type'
+import { DateProps, LayoutType } from './type'
 
 function formatTimeStr(time = ''): Date {
   let [year, month, day]: any = time.split('-')
@@ -30,6 +30,10 @@ function dateToString (date: Date, fields: 'day' | 'month' | 'year' = 'day'): st
 const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: DateProps, ref):  React.JSX.Element => {
   const { children, start = '1970-01-01', end = '2999-01-01', value, bindchange, bindcancel, disabled, fields } = props
   const [datevalue, setDateValue] = useState(value)
+  // 存储layout布局信息
+  const layoutRef = useRef({})
+  const { nodeRef: viewRef } = useNodesRef<View, DateProps>(props, ref, {
+  })
 
   useEffect(() => {
     value && setDateValue(value)
@@ -46,6 +50,13 @@ const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: D
     bindcancel && bindcancel()
   }
 
+  const onElementLayout = (layout: LayoutType) => {
+    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
+  }
+
   const dateProps = {
     precision: fields,
     value: formatTimeStr(datevalue),
@@ -55,10 +66,14 @@ const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: D
     onDismiss,
     disabled
   }
+  const touchProps = {
+    onLayout: onElementLayout,
+    ref: viewRef
+  }
   return (
     <AntDatePicker {...dateProps}>
       <TouchableWithoutFeedback>
-        {children}
+        <View {...touchProps}>{children}</View>
       </TouchableWithoutFeedback>
     </AntDatePicker>
   )

@@ -1,54 +1,41 @@
-/**
- * All:
- *   ✔ value
- *   ✔ onChange
- *   ✔ onCancel
- * Selector:
- *   ✔ range
- *   ✔ rangeKey
- *   ✔ disabled
- * MultiSelector:
- *   ✔ range
- *   ✔ rangeKey
- *   ✔ disabled
- *   ✔ onColumnChange
- * Time:
- *   ✔ start
- *   ✔ end
- *   ✔ disabled
- * Date:
- *   ✔ start
- *   ✔ end
- *   ✘ fields
- *   ✔ disabled
- * Region:
- *   ✔ customItem
- *   ✔ disabled
- *
- * @hint Picker 里面嵌套的子组件要支持绑定 onPress 事件才能弹出选择框
- */
-// https://rn.mobile.ant.design/docs/react/introduce-cn
 import { View, Text } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
-import useInnerProps from '../getInnerListeners'
-import { getCustomEvent } from '../getInnerListeners'
+import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import Selector from './selector'
 import TimeSelector from './time'
 import DateSelector from './date'
 import MultiSelector from './multiSelector'
 import RegionSelector from './region'
-import { PickerProps } from './type'
+import { PickerProps, EventType } from './type'
 
 
 const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
   const { mode = 'selector', value, bindcancel, bindchange, children } = props
+  let innerLayout = useRef({})
+  const { nodeRef } = useNodesRef<View, PickerProps>(props, ref, {
+  })
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef
+  }, [], { layoutRef: innerLayout })
+
+  const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
+    innerLayout.current = layout.current
+  }
+
+  const onChange = (event: EventType) => {
+    const eventData = getCustomEvent('change', {}, { detail: event.detail, layoutRef: innerLayout })
+    bindchange && bindchange(eventData)
+  }
+
   const commonProps = {
+    ...{innerProps},
     mode,
     value,
     children,
-    bindchange,
-    bindcancel
+    bindchange: onChange,
+    bindcancel,
+    getInnerLayout
   }
 
   const selectorProps = {

@@ -5,7 +5,7 @@ import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import AntPicker, { PickerProps, PickerColumn, PickerValue, PickerColumnItem } from '@ant-design/react-native/lib/picker'
 import { PickerViewPropsType } from '@ant-design/react-native/lib/picker-view/PropsType'
-import { SelectorProps, Obj } from './type'
+import { SelectorProps, Obj, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 type RangeItemType = Obj | number | string
@@ -41,6 +41,10 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   const [selected, setSelected] = useState<PickerValue>(value || 0)
   // range数据源
   const [data, setData] = useState(formatRange || [])
+  // 存储layout布局信息
+  const layoutRef = useRef({})
+  const { nodeRef: viewRef } = useNodesRef<View, SelectorProps>(props, ref, {
+  })
 
   useEffect(() => {
     if (range) {
@@ -58,6 +62,14 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
       }
     })
   }
+
+  const onElementLayout = (layout: LayoutType) => {
+    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
+  }
+
   const antPickerProps = {
     data,
     value: [selected],
@@ -67,11 +79,18 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     onChange,
     onDismiss: bindcancel && bindcancel
   } as PickerViewPropsType
+
+  const touchProps = {
+    onLayout: onElementLayout,
+    ref: viewRef
+  }
   return (
     <AntPicker
       {...antPickerProps}>
         <TouchableWithoutFeedback>
-          {children}
+          <View {...touchProps}>
+            {children}
+          </View>
         </TouchableWithoutFeedback>
     </AntPicker>
   )

@@ -3,7 +3,7 @@ import AntPicker from '@ant-design/react-native/lib/picker'
 import { regionData } from './regionData'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { RegionProps, RegionObj, PickerData } from './type'
+import { RegionProps, RegionObj, PickerData, LayoutType } from './type'
 
 function formateRegionData(clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerData[] {
   const l = depth
@@ -42,6 +42,10 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   let formatRegionData = formateRegionData(regionData, props['custom-item'])
 
   const [regionvalue, setRegionValue] = useState(value)
+  // 存储layout布局信息
+  const layoutRef = useRef({})
+  const { nodeRef: viewRef } = useNodesRef<View, RegionProps>(props, ref, {
+  })
 
   const onChange = (value: string[]): void => {
     // 通过 value 查找 code
@@ -64,17 +68,31 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
       detail
     })
   }
+
+  const onElementLayout = (layout: LayoutType) => {
+    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
+  }
+  
   const regionProps = {
     data: formatRegionData,
     value: regionvalue,
     onChange,
     disabled
   }
+
+  const touchProps = {
+    onLayout: onElementLayout,
+    ref: viewRef
+  }
+
   return (
     // @ts-ignore
     <AntPicker {...regionProps}>
       <TouchableWithoutFeedback>
-        {children}
+        <View {...touchProps}>{children}</View>
       </TouchableWithoutFeedback>
     </AntPicker>
   )

@@ -1,7 +1,7 @@
 import { View, Text, TouchableWithoutFeedback } from 'react-native'
 import AntPicker, { PickerProps, PickerValue } from '@ant-design/react-native/lib/picker'
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
-import { MultiSelectorProps, EventType } from './type'
+import { MultiSelectorProps, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 function convertToObj(item?: any, rangeKey = ''): any {
@@ -61,6 +61,11 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
   const [selected, setSelected] = useState(initValue)
   // range数据源
   const [data, setData] = useState(formatRange || [])
+  // 存储layout布局信息
+  const layoutRef = useRef({})
+  const { nodeRef: viewRef } = useNodesRef<View, MultiSelectorProps>(props, ref, {
+  })
+
 
   useEffect(() => {
     if (range) {
@@ -80,6 +85,14 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
       }
     })
   }
+
+  const onElementLayout = (layout: LayoutType) => {
+    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
+  }
+
   const antPickerProps = {
     data,
     value: selected,
@@ -91,9 +104,16 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     onDismiss: bindcancel && bindcancel,
   } as PickerProps
 
+  const touchProps = {
+    onLayout: onElementLayout,
+    ref: viewRef
+  }
+
   return (<AntPicker {...antPickerProps}>
       <TouchableWithoutFeedback>
-        {children}
+        <View {...touchProps}>
+          {children}
+        </View>
       </TouchableWithoutFeedback>
     </AntPicker>
   )

@@ -14,6 +14,7 @@ export type SelectorProps = {
   range: Array<number|string|Obj>,
   // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性
   'range-key': string,
+  getInnerLayout: Function
   // bindcolumnchange?: Function
 }
 
@@ -29,6 +30,7 @@ export type MultiSelectorProps = {
   range: Array<Array<any>>,
   // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性
   'range-key': string,
+  getInnerLayout: Function
 }
 
 export type TimeProps =  {
@@ -40,7 +42,8 @@ export type TimeProps =  {
   bindcancel?: Function,
   bindchange: Function,
   start: string,
-  end: string
+  end: string,
+  getInnerLayout: Function
 }
 
 export type DateProps = {
@@ -53,7 +56,8 @@ export type DateProps = {
   bindcancel?: Function,
   bindchange: Function,
   start: string,
-  end: string
+  end: string,
+  getInnerLayout: Function
 }
 
 export type RegionProps = {
@@ -65,7 +69,8 @@ export type RegionProps = {
   disabled?: boolean,
   children: ReactNode,
   bindcancel?: Function,
-  bindchange: Function
+  bindchange: Function,
+  getInnerLayout: Function
 }
 
 export type RegionObj = {
@@ -84,6 +89,12 @@ export type PickerData = {
 export type EventType = {
   detail: {
     value: PickerValue[]
+  }
+}
+
+export type LayoutType = {
+  nativeEvent: {
+    layout: Obj
   }
 }
 
