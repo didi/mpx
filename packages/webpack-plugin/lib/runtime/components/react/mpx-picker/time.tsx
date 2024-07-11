@@ -1,6 +1,5 @@
-import { View, Text, TouchableWithoutFeedback } from 'react-native'
-import AntDatePicker from '@ant-design/react-native/lib/date-picker'
-import { DatePickerPropsType } from '@ant-design/react-native/lib/date-picker/PropsType'
+import { View, TouchableWithoutFeedback } from 'react-native'
+import { DatePicker } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { TimeProps, LayoutType } from './type'
@@ -46,18 +45,6 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
     })
   }
 
-  /*
-  const renderLabel = (type, data) => {
-    console.log('-------------------renderLable', type, data)
-    let arrElement = []
-    if (type === 'hour') {
-      arrElement.push(<Text>{data}</Text>)
-    } else if (type === 'minute') {
-      arrElement.push(<Text>{data}</Text>)
-    }
-    return <View>{arrElement}</View>
-  }
-  */
  const timeProps = {
   value: formatTimeStr(timevalue),
   precision: 'minute',
@@ -66,18 +53,18 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   onChange: onChange,
   onDismiss: onDismiss,
   disabled: disabled
- } as DatePickerPropsType
+ } as Object
 
  const touchProps = {
   onLayout: onElementLayout,
   ref: viewRef
 }
   return (
-    <AntDatePicker {...timeProps}>
+    <DatePicker {...timeProps}>
       <TouchableWithoutFeedback>
         <View {...touchProps}>{children}</View>
       </TouchableWithoutFeedback>
-    </AntDatePicker>
+    </DatePicker>
   )
 })
 

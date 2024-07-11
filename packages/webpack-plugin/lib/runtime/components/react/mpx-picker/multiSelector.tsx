@@ -1,6 +1,6 @@
-import { View, Text, TouchableWithoutFeedback } from 'react-native'
-import AntPicker, { PickerProps, PickerValue } from '@ant-design/react-native/lib/picker'
-import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
+import { View, TouchableWithoutFeedback } from 'react-native'
+import { Picker, PickerValue } from '@ant-design/react-native'
+import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import { MultiSelectorProps, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
@@ -102,20 +102,20 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     itemHeight: 40,
     onChange,
     onDismiss: bindcancel && bindcancel,
-  } as PickerProps
+  } as any
 
   const touchProps = {
     onLayout: onElementLayout,
     ref: viewRef
   }
 
-  return (<AntPicker {...antPickerProps}>
+  return (<Picker {...antPickerProps}>
       <TouchableWithoutFeedback>
         <View {...touchProps}>
           {children}
         </View>
       </TouchableWithoutFeedback>
-    </AntPicker>
+    </Picker>
   )
 })
 

@@ -1,7 +1,7 @@
-import { View, Text, TouchableWithoutFeedback } from 'react-native'
-import AntPicker from '@ant-design/react-native/lib/picker'
+import { View, TouchableWithoutFeedback } from 'react-native'
+import { Picker } from '@ant-design/react-native'
 import { regionData } from './regionData'
-import React, { forwardRef, useState, useRef, useEffect } from 'react'
+import React, { forwardRef, useState, useRef } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { RegionProps, RegionObj, PickerData, LayoutType } from './type'
 
@@ -90,11 +90,11 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
 
   return (
     // @ts-ignore
-    <AntPicker {...regionProps}>
+    <Picker {...regionProps}>
       <TouchableWithoutFeedback>
         <View {...touchProps}>{children}</View>
       </TouchableWithoutFeedback>
-    </AntPicker>
+    </Picker>
   )
 
 })

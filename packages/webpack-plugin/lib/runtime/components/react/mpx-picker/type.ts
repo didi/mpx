@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import AntPicker, { PickerColumn, PickerColumnItem, PickerValue, PickerValueExtend } from '@ant-design/react-native/lib/picker'
+import { PickerValue } from '@ant-design/react-native'
 
 export type Obj = Record<string, any>
 export type SelectorProps = {

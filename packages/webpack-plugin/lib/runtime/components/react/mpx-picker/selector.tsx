@@ -1,10 +1,9 @@
 /**
  * 普通选择器，range可以是Array<Obj> 也可以是Array
  */
-import { View, Text, TouchableWithoutFeedback } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
-import AntPicker, { PickerProps, PickerColumn, PickerValue, PickerColumnItem } from '@ant-design/react-native/lib/picker'
-import { PickerViewPropsType } from '@ant-design/react-native/lib/picker-view/PropsType'
+import { View, TouchableWithoutFeedback } from 'react-native'
+import React, { forwardRef, useState, useRef, useEffect } from 'react'
+import { Picker, PickerColumn, PickerValue } from '@ant-design/react-native'
 import { SelectorProps, Obj, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
@@ -70,6 +69,7 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     })
   }
 
+
   const antPickerProps = {
     data,
     value: [selected],
@@ -78,21 +78,21 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     itemHeight: 40,
     onChange,
     onDismiss: bindcancel && bindcancel
-  } as PickerViewPropsType
+  }  as any
 
   const touchProps = {
     onLayout: onElementLayout,
     ref: viewRef
   }
   return (
-    <AntPicker
+    <Picker
       {...antPickerProps}>
         <TouchableWithoutFeedback>
           <View {...touchProps}>
             {children}
           </View>
         </TouchableWithoutFeedback>
-    </AntPicker>
+    </Picker>
   )
 })
 

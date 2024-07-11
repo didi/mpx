@@ -1,5 +1,5 @@
-import { View, Text } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
+import { View } from 'react-native'
+import React, { forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import Selector from './selector'

@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
-import AntPickerView from '@ant-design/react-native/lib/picker-view'
+import React, { forwardRef, useState, useRef, useEffect } from 'react'
+import { PickerView } from '@ant-design/react-native'
 import useInnerProps from './getInnerListeners'
 import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
@@ -32,8 +32,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
 
   const onChange = (val: Array<number>): void => {
     const eventData = getCustomEvent('change', {}, { detail: {value: val, source: 'touch' }, layoutRef: layoutRef })
-    console.log('----------value', val)
-    console.log('--------aaaa', eventData)
     setValue(val)
     props.bindchange && props.bindchange(eventData)
   }
@@ -74,11 +72,9 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       return item
     }
   })
-  
-  console.log('------------columns', columns)
 
   return (
-    <AntPickerView
+    <PickerView
     {...restProps}
     cols={columns}
     // 默认选中项
