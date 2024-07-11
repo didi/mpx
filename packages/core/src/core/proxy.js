@@ -27,7 +27,8 @@ import {
   callWithErrorHandling,
   warn,
   error,
-  getEnvObj
+  getEnvObj,
+  isReact
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -128,6 +129,8 @@ export default class MpxProxy {
       this.forceUpdateAll = false
       this.currentRenderTask = null
       this.propsUpdatedFlag = false
+      // react专用，正确触发updated钩子
+      this.pendingUpdatedFlag = false
     }
     this.initApi()
   }
@@ -150,7 +153,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && !isReact) {
       this.initRender()
     }
 
@@ -172,9 +175,9 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
-      this.state = MOUNTED
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
+      this.state = MOUNTED
       this.callHook(MOUNTED)
       this.currentRenderTask && this.currentRenderTask.resolve()
     }
@@ -199,8 +202,8 @@ export default class MpxProxy {
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
-    this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
+    this.callHook(UNMOUNTED)
   }
 
   isUnmounted () {
@@ -236,7 +239,12 @@ export default class MpxProxy {
   }
 
   initProps () {
-    this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
+    if (isReact) {
+      // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
+      this.props = this.target.__getProps()
+    } else {
+      this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
+    }
     reactive(this.props)
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
@@ -640,6 +648,20 @@ export default class MpxProxy {
       this.forceUpdateData = data
     } else {
       this.forceUpdateAll = true
+    }
+
+    if (isReact) {
+      // rn中不需要setdata
+      this.forceUpdateData = {}
+      this.forceUpdateAll = false
+      if (this.update) {
+        options.sync ? this.update() : queueJob(this.update)
+      }
+      if (callback) {
+        callback = callback.bind(this.target)
+        options.sync ? callback() : nextTick(callback)
+      }
+      return
     }
 
     if (this.effect) {

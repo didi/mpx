@@ -73,11 +73,11 @@ module.exports = function (content) {
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
       const placeholderMap = mode === 'ali'
-      ? {
-        view: { name: 'mpx-view', resource: mpxViewPath },
-        text: { name: 'mpx-text', resource: mpxTextPath }
-      }
-      : {}
+        ? {
+          view: { name: 'mpx-view', resource: mpxViewPath },
+          text: { name: 'mpx-text', resource: mpxTextPath }
+        }
+        : {}
       placeholder = placeholderMap[placeholder] || { name: placeholder }
     }
     if (!placeholder.name) {
@@ -275,7 +275,8 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, () => {
+      }, (err) => {
+        if (err) return callback(err)
         const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
         if (runtimeCompile) {
           components.element = mpxCustomElementPath
@@ -325,7 +326,8 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, () => {
+        }, (err) => {
+          if (err) return callback(err)
           if (tarRoot && subPackagesCfg) {
             if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
               subPackagesCfg[tarRoot].pages.push(pagesCache[0])

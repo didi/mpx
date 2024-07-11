@@ -455,63 +455,73 @@ useFetch().fetch({
 ## api-proxy
  Mpx目前已经支持的API转换列表，供参考
 
-| 方法/平台      | wx         | ali    | web    |
-| ------------- |:-----:| :-----:| :-----: |
-| getSystemInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getSystemInfoSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| nextTick |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| hideToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showModal |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| hideLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showActionSheet |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showNavigationBarLoading |:white_check_mark:|:white_check_mark:|:x:|
-| hideNavigationBarLoading  |:white_check_mark:|:white_check_mark:|:x:|
-| setNavigationBarTitle |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| setNavigationBarColor |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| request |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| downloadFile  |:white_check_mark:|:white_check_mark:|:x:|
-| uploadFile |:white_check_mark:|:white_check_mark:|:x:|
-| setStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| removeStorageSync |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| saveImageToPhotosAlbum  |:white_check_mark:|:white_check_mark:|:x:|
-| previewImage |:white_check_mark:|:white_check_mark:|:x:|
-| compressImage |:white_check_mark:|:white_check_mark:|:x:|
-| chooseImage |:white_check_mark:|:white_check_mark:|:x:|
-| getLocation |:white_check_mark:|:white_check_mark:|:x:|
-| saveFile |:white_check_mark:|:white_check_mark:|:x:|
-| removeSavedFile |:white_check_mark:|:white_check_mark:|:x:|
-| getSavedFileList |:white_check_mark:|:white_check_mark:|:x:|
-| getSavedFileInfo |:white_check_mark:|:white_check_mark:|:x:|
-| addPhoneContact |:white_check_mark:|:white_check_mark:|:x:|
-| setClipboardData |:white_check_mark:|:white_check_mark:|:x:|
-| getClipboardData |:white_check_mark:|:white_check_mark:|:x:|
-| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|
-| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|
-| makePhoneCall |:white_check_mark:|:white_check_mark:|:x:|
-| stopAccelerometer |:white_check_mark:|:white_check_mark:|:x:|
-| startAccelerometer |:white_check_mark:|:white_check_mark:|:x:|
-| stopCompass |:white_check_mark:|:white_check_mark:|:x:|
-| startCompass |:white_check_mark:|:white_check_mark:|:x:|
-| stopGyroscope |:white_check_mark:|:white_check_mark:|:x:|
-| startGyroscope |:white_check_mark:|:white_check_mark:|:x:|
-| scanCode |:white_check_mark:|:white_check_mark:|:x:|
-| login |:white_check_mark:|:white_check_mark:|:x:|
-| checkSession |:white_check_mark:|:white_check_mark:|:x:|
-| getUserInfo |:white_check_mark:|:white_check_mark:|:x:|
-| requestPayment |:white_check_mark:|:white_check_mark:|:x:|
-| createCanvasContext |:white_check_mark:|:white_check_mark:|:x:|
-| canvasToTempFilePath |:white_check_mark:|:white_check_mark:|:x:|
-| canvasPutImageData |:white_check_mark:|:white_check_mark:|:x:|
-| canvasGetImageData |:white_check_mark:|:white_check_mark:|:x:|
-| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| arrayBufferToBase64 |:x:|:x:|:white_check_mark:|
-| base64ToArrayBuffer |:x:|:x:|:white_check_mark:|
-
+| 方法/平台      | wx         | ali    | web    | RN  |
+| ------------- |:-----:| :-----:| :-----: | :-----:  |
+| getSystemInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getSystemInfoSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| nextTick |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| showToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| hideToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| showModal |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| showLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| hideLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| showActionSheet |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| showNavigationBarLoading |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| hideNavigationBarLoading  |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| setNavigationBarTitle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| setNavigationBarColor |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| request |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| downloadFile  |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|:x:|
+| uploadFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| setStorage  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| setStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| removeStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| removeStorageSync |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| getStorageInfo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getStorageInfoSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| clearStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| clearStorageSync |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| saveImageToPhotosAlbum  |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| previewImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| compressImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| chooseImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| saveFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| removeSavedFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getSavedFileList |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getSavedFileInfo |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| addPhoneContact |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| setClipboardData |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| getClipboardData |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| makePhoneCall |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| stopAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| startAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| stopCompass |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| startCompass |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| stopGyroscope |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| startGyroscope |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| scanCode |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| login |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| checkSession |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getUserInfo |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| requestPayment |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| createCanvasContext |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| canvasToTempFilePath |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| canvasPutImageData |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| canvasGetImageData |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| onWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| offWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| arrayBufferToBase64 |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| base64ToArrayBuffer |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| connectSocket |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getNetworkType |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| onNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| offNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 ## webview-bridge
 Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
 

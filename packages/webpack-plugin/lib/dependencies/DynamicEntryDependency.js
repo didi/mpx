@@ -154,9 +154,9 @@ class DynamicEntryDependency extends NullDependency {
       mpx.subpackagesEntriesMap[packageRoot].push(this)
       callback()
     } else {
-      this.addEntry(compilation, (err, { resultPath }) => {
+      this.addEntry(compilation, (err, result) => {
         if (err) return callback(err)
-        this.resultPath = resultPath
+        this.resultPath = result.resultPath
         callback()
       })
     }

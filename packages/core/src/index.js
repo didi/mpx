@@ -1,4 +1,4 @@
-import Vue from './vue'
+import Vue from './external/vue'
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 
@@ -145,7 +145,11 @@ Mpx.config = {
     hostWhitelists Array 类型 支持h5域名白名单安全校验
     apiImplementations webview JSSDK接口 例如getlocation
    */
-  webviewConfig: {}
+  webviewConfig: {},
+   /**
+   * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
+   */
+  rnConfig: {}
 }
 
 global.__mpx = Mpx
