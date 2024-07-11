@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.17
+ * mpxjs webview bridge v2.9.41-react.0
  * (c) 2024 @mpxjs team
  * @license Apache
  */
@@ -139,10 +139,17 @@
     env = 'web';
     window.addEventListener('message', function (event) {
       // 接收web-view的回调
-      var _event$data = event.data,
-        callbackId = _event$data.callbackId,
-        error = _event$data.error,
-        result = _event$data.result;
+      var data = event.data;
+      var msgData = data;
+      try {
+        if (typeof data === 'string') {
+          msgData = JSON.parse(data);
+        }
+      } catch (e) {}
+      var _msgData = msgData,
+        callbackId = _msgData.callbackId,
+        error = _msgData.error,
+        result = _msgData.result;
       if (callbackId !== undefined && callbacks[callbackId]) {
         if (error) {
           callbacks[callbackId](error);
@@ -215,7 +222,11 @@
       if (clientUid !== undefined) {
         postParams.clientUid = clientUid;
       }
-      window.parent.postMessage && window.parent.postMessage(postParams, '*');
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams));
+      } else {
+        window.parent.postMessage && window.parent.postMessage(postParams, '*');
+      }
     } else {
       data({
         webapp: true
