@@ -165,7 +165,6 @@ class SizeReportPlugin {
       const moduleEntriesMap = new Map()
 
       function setModuleEntries (module, entryModule, noEntry) {
-        module = module.rootModule || module
         entryModule = entryModule.rootModule || entryModule
         getModuleEntries(module, noEntry).add(entryModule)
       }
