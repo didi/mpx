@@ -1,6 +1,6 @@
 import { View, Dimensions, Text, StyleSheet, Button, ScrollView } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import RootSiblings from 'react-native-root-siblings'
+import { Portal } from '@ant-design/react-native'
 const { width, height } = Dimensions.get('window')
 const showModal = function (options) {
   const {
@@ -77,7 +77,7 @@ const showModal = function (options) {
       borderStyle: 'solid',
     }
   })
-  let rootSiblingsObj
+  let modalKey
   let ModalView
   let modalTitle = []
   let modalContent = []
@@ -88,8 +88,8 @@ const showModal = function (options) {
     color: 'rgb(87, 107, 149)'
   }]
   const closeModal = function (buttonInfo) {
-    rootSiblingsObj && rootSiblingsObj.destroy()
-    rootSiblingsObj = null
+    Portal.remove(modalKey)
+    modalKey = null
     const result = {
       errMsg: 'showModal:ok'
     }
@@ -133,7 +133,7 @@ const showModal = function (options) {
     </View>
   }
   try {
-    rootSiblingsObj = new RootSiblings(ModalView)
+    modalKey = Portal.add(ModalView)
   } catch (e) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`

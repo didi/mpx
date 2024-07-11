@@ -1,9 +1,11 @@
 import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
+import { Portal } from '@ant-design/react-native'
 import RootSiblings from 'react-native-root-siblings'
 function showActionSheet (options) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   let rootSiblingsObj
+  let actionSheetKey
   const slideAnim = new Animated.Value(500)
   const slideIn = () => {
     // Will change fadeAnim value to 1 in 5 seconds
@@ -73,28 +75,29 @@ function showActionSheet (options) {
       paddingBottom: 10
     }
   })
+  const remove = function () {
+    if (actionSheetKey) {
+      slideOut()
+      setTimeout(() => {
+        Portal.remove(actionSheetKey)
+        actionSheetKey = null
+      }, 200)
+    }
+  }
   const selectAction = function (index) {
     const result = {
       errMsg: 'showActionSheet:ok',
       tapIndex: index
     }
-    slideOut()
     successHandle(result, success, complete)
-    setTimeout(() => {
-      rootSiblingsObj.destroy()
-      rootSiblingsObj = null
-    }, 5000)
+    remove()
   }
   const cancelAction = function () {
     const result = {
       errMsg: 'showActionSheet:fail cancel'
     }
-    slideOut()
     failHandle(result, fail, complete)
-    setTimeout(() => {
-      rootSiblingsObj.destroy()
-      rootSiblingsObj = null
-    }, 200)
+    remove()
   }
   let alertTextList = []
   if (alertText) {
@@ -117,7 +120,8 @@ function showActionSheet (options) {
       <View style={styles.buttonStyle}><Button color={'#000000'} title={'取消'} onPress={cancelAction}></Button></View>
     </Animated.View>
   </TouchableHighlight>
-  rootSiblingsObj = new RootSiblings(ActionSheetView)
+  // rootSiblingsObj = new RootSiblings(ActionSheetView)
+  actionSheetKey = Portal.add(ActionSheetView)
   slideIn()
 }
 

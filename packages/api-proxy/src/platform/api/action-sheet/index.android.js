@@ -1,1 +1,1 @@
-import * from './rnActionSheet'
+export * from './rnActionSheet'

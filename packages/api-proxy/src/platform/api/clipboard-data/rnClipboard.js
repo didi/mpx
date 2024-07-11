@@ -1,5 +1,5 @@
 import Clipboard from '@react-native-clipboard/clipboard'
-import { successHandle, failHandle } from '../../../common/js/web'
+import { successHandle, failHandle } from '../../../common/js'
 import { type } from '@mpxjs/utils'
 const setClipboardData = function (options) {
   const { data, success, fail, complete } = options

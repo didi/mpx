@@ -1,12 +1,24 @@
-import { envError, noop, successHandle, failHandle } from '../../../common/js'
+import { envError, noop, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 
 const getLocation = function(options) {
   const { isHighAccuracy = false, success = noop, fail = noop, complete = noop } = options
   if (navigator.geolocation.getCurrentPosition) {
-    navigator.geolocation.getCurrentPosition((res) => {
-      successHandle(res, success, complete)
+    navigator.geolocation.getCurrentPosition((res = {}) => {
+      const coords = res.coords || {}
+      const result = {
+        accuracy: coords.accuracy,
+        errMsg: 'getLocation:ok',
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        speed: coords.accuracy
+      }
+      defineUnsupportedProps(result, ['horizontalAccuracy', 'verticalAccuracy'])
+      successHandle(result, success, complete)
     }, (err) => {
-      failHandle(err, fail, complete)
+      const result = {
+        errMsg: `getLocation:fail ${err}`
+      }
+      failHandle(result, fail, complete)
     }, {
       enableHighAccuracy: isHighAccuracy
     })

@@ -1,1 +1,1 @@
-import * from './rnModal'
+export * from './rnModal'

@@ -1,1 +1,1 @@
-import * from './rnToast'
+export * from './rnToast'

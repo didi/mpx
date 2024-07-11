@@ -1,8 +1,16 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess, defineUnsupportedProps } from '../../../common/js'
 
 function getLocation(options = {}) {
   const opts = Object.assign(options, {
-    type: 0
+    type: 0 // 只获取经纬与微信拉齐
+  })
+  handleSuccess(opts, res => {
+    const result = changeOpts(
+      res,
+      { errMsg: 'getLocation:ok' }
+    )
+    defineUnsupportedProps(result, ['speed'])
+    return result
   })
   return ENV_OBJ.getLocation(opts)
 }

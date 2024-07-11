@@ -1,10 +1,10 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import RootSiblings from 'react-native-root-siblings'
+import { Portal } from '@ant-design/react-native'
 import successPng from './success.png'
 import errorPng from './error.png'
 
-let rootSiblingsObj
+let toastKey
 let isLoading
 const styles = StyleSheet.create({
   toastContent: {
@@ -86,15 +86,14 @@ function showToast (options) {
     </View>
   }
   try {
-    if (!rootSiblingsObj) {
-      rootSiblingsObj = new RootSiblings(ToastView)
-    } else {
-      rootSiblingsObj.destroy()
-      rootSiblingsObj.update(ToastView)
+    if (toastKey) {
+      Portal.remove(toastKey)
     }
+    toastKey = Portal.add(ToastView)
     if (!isShowLoading) {
       setTimeout(() => {
-        rootSiblingsObj && rootSiblingsObj.destroy()
+        Portal.remove(toastKey)
+        toastKey = null
       }, duration)
     }
     const result = {
@@ -112,8 +111,9 @@ function showToast (options) {
 function hideToast(options) {
   const { success, fail, complete } = options
   try {
-    if (rootSiblingsObj) {
-      rootSiblingsObj.destroy()
+    if (toastKey) {
+      Portal.remove(toastKey)
+      toastKey = null
     }
     const result = {
       errMsg: 'hideToast:ok'
@@ -159,8 +159,9 @@ function hideLoading (options) {
   isLoading = false
   const { success, fail, complete } = options
   try {
-    if (rootSiblingsObj) {
-      rootSiblingsObj.destroy()
+    if (toastKey) {
+      Portal.remove(toastKey)
+      toastKey = null
     }
     const result = {
       errMsg: 'hideLoading:ok'
