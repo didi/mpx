@@ -1,32 +1,17 @@
-import { BEFORECREATE, BEFOREUPDATE } from '../../core/innerLifecycle'
+import { BEFORECREATE } from '../../core/innerLifecycle'
 import { noop, getEnvObj } from '@mpxjs/utils'
 
 const envObj = getEnvObj()
 
-const setNodeRef = function (target, ref) {
-  Object.defineProperty(target.$refs, ref.key, {
-    enumerable: true,
-    configurable: true,
-    get () {
-      // for nodes, every time being accessed, returns as a new selector.
-      return target.__getRefNode(ref)
-    }
-  })
-}
-
-const setComponentRef = function (target, ref, isAsync) {
+const setRef = function (target, ref, isAsync) {
   const targetRefs = isAsync ? target.$asyncRefs : target.$refs
-  const cacheMap = isAsync ? target.__asyncRefCacheMap : target.__refCacheMap
-  const key = ref.key
-  Object.defineProperty(targetRefs, key, {
+  Object.defineProperty(targetRefs, ref.key, {
     enumerable: true,
     configurable: true,
     get () {
-      // wx由于分包异步化的存在，每次访问refs都需要重新执行selectComponent，避免一直拿到缓存中的placeholder
-      if (__mpx_mode__ === 'wx' || !cacheMap.get(key)) {
-        cacheMap.set(key, target.__getRefNode(ref, isAsync))
-      }
-      return cacheMap.get(key)
+      // 对于组件，由于分包异步化的存在，每次都需要重新执行selectComponent，避免一直获取到placeholder
+      // 对于节点，每次都需要获取全新的selectorQuery
+      return target.__getRefNode(ref, isAsync)
     }
   })
 }
@@ -36,8 +21,6 @@ export default function getRefsMixin () {
     [BEFORECREATE] () {
       this.$refs = {}
       this.$asyncRefs = {}
-      this.__refCacheMap = new Map()
-      this.__asyncRefCacheMap = new Map()
       this.__getRefs()
 
       if (__mpx_mode__ === 'ali') {
@@ -45,19 +28,14 @@ export default function getRefsMixin () {
         this.createSelectorQuery = this._createSelectorQuery
       }
     },
-    [BEFOREUPDATE] () {
-      this.__refCacheMap.clear()
-      this.__asyncRefCacheMap.clear()
-    },
     methods: {
       __getRefs () {
         if (this.__getRefsData) {
           const refs = this.__getRefsData()
           refs.forEach(ref => {
-            const setRef = ref.type === 'node' ? setNodeRef : setComponentRef
             setRef(this, ref)
             if (__mpx_mode__ === 'tt' && ref.type === 'component') {
-              setComponentRef(this, ref, true)
+              setRef(this, ref, true)
             }
           })
         }

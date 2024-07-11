@@ -1,164 +1,28 @@
 import { match } from 'path-to-regexp'
 
+import { type, isFunction, isArray, isString, serialize, buildUrl, parseUrl, getEnvObj, hasOwn, forEach } from '@mpxjs/utils'
+
 const toString = Object.prototype.toString
 
-// 是否为一个对象
-export function isObject (val) {
-  return toString.call(val) === '[object Object]'
+function isObject (val) {
+  return type(val) === 'Object'
 }
 
-// 是否为一个数组
-export function isArray (val) {
-  return toString.call(val) === '[object Array]'
-}
-
-// 是否为一个字符串
-export function isString (val) {
-  return toString.call(val) === '[object String]'
-}
-
-// 是否为 Date
-export function isDate (val) {
-  return toString.call(val) === '[object Date]'
-}
-
-// 是否为 Function
-export function isFunction (val) {
-  return toString.call(val) === '[object Function]'
-}
-
-export function isThenable (obj) {
+function isThenable (obj) {
   return obj && typeof obj.then === 'function'
 }
 
 // 不为空对象
-export function isNotEmptyObject (obj) {
+function isNotEmptyObject (obj) {
   return obj && isObject(obj) && Object.keys(obj).length > 0
 }
 
 // 不为空数组
-export function isNotEmptyArray (ary) {
+function isNotEmptyArray (ary) {
   return ary && isArray(ary) && ary.length > 0
 }
 
-export function isURLSearchParams (val) {
-  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams
-}
-
-export function encode (val) {
-  return encodeURIComponent(val).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/g, '$').replace(/%2C/gi, ',').replace(/%5B/gi, '[').replace(/%5D/gi, ']')
-}
-
-export function decode (val) {
-  return decodeURIComponent(val)
-}
-
-export function forEach (obj, fn) {
-  if (obj === null || typeof obj === 'undefined') {
-    return
-  }
-
-  if (typeof obj !== 'object') {
-    obj = [obj]
-  }
-
-  if (isArray(obj)) {
-    for (let i = 0, l = obj.length; i < l; i++) {
-      fn(obj[i], i, obj)
-    }
-  } else {
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        fn(obj[key], key, obj)
-      }
-    }
-  }
-}
-
-export function serialize (params) {
-  if (isURLSearchParams(params)) {
-    return params.toString()
-  }
-  const parts = []
-  forEach(params, (val, key) => {
-    if (typeof val === 'undefined' || val === null) {
-      return
-    }
-
-    if (isArray(val)) {
-      key = key + '[]'
-    }
-
-    if (!isArray(val)) {
-      val = [val]
-    }
-
-    forEach(val, function parseValue (v) {
-      if (isDate(v)) {
-        v = v.toISOString()
-      } else if (isObject(v)) {
-        v = JSON.stringify(v)
-      }
-      parts.push(encode(key) + '=' + encode(v))
-    })
-  })
-
-  return parts.join('&')
-}
-
-export function buildUrl (url, params = {}, serializer) {
-  if (!serializer) {
-    serializer = serialize
-  }
-  const serializedParams = serializer(params)
-  if (serializedParams) {
-    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams
-  }
-
-  return url
-}
-
-// 解析拆分 url 参数
-export function parseUrl (url) {
-  const match = /^(.*?)(\?.*?)?(#.*?)?$/.exec(url)
-  const [fullUrl, baseUrl = '', search = '', hash = ''] = match
-
-  const u1 = baseUrl.split('//') // 分割出协议
-  const protocolReg = /^\w+:$/
-  const protocol = protocolReg.test(u1[0]) ? u1[0] : ''
-  const u2 = u1[1] || u1[0] // 可能没有协议
-  const i = u2.indexOf('/')
-  const host = i > -1 ? u2.substring(0, i) : u2 // 分割出主机名和端口号
-  const path = i > -1 ? u2.substring(i) : '' // 分割出路径
-  const u3 = host.split(':')
-  const hostname = u3[0]
-  const port = u3[1] || ''
-
-  return { fullUrl, baseUrl, protocol, hostname, port, host, path, search, hash }
-}
-
-export function getEnvObj (mode) {
-  switch (mode || __mpx_mode__) {
-    case 'wx':
-      return wx
-    case 'ali':
-      return my
-    case 'swan':
-      return swan
-    case 'qq':
-      return qq
-    case 'tt':
-      return tt
-    case 'jd':
-      return jd
-    case 'qa':
-      return qa
-    case 'dd':
-      return dd
-  }
-}
-
-export function transformReq (config) {
+function transformReq (config) {
   // 抹平wx & ali 请求参数
   let header = config.header || config.headers
   const descriptor = {
@@ -177,7 +41,7 @@ export function transformReq (config) {
   })
 }
 
-export function transformRes (res) {
+function transformRes (res) {
   // 抹平wx & ali 响应数据
   if (res.status === undefined) {
     res.status = res.statusCode
@@ -193,7 +57,7 @@ export function transformRes (res) {
   return res
 }
 
-export function deepMerge () {
+function deepMerge () {
   const result = {}
 
   function assignValue (val, key) {
@@ -208,10 +72,6 @@ export function deepMerge () {
     forEach(arguments[i], assignValue)
   }
   return result
-}
-
-export function type (a) {
-  return toString.call(a).slice(8, -1)
 }
 
 /**
@@ -245,7 +105,7 @@ function attrMatch (test = {}, input = {}) {
  * @param test 匹配配置
  * @returns {{matchParams, matched: boolean}}
  */
-export function doTest (config, test) {
+function doTest (config, test) {
   const { url, params = {}, data = {}, header = {}, method = 'GET' } = config
   const {
     url: tUrl = '',
@@ -333,18 +193,18 @@ export function doTest (config, test) {
   }
 }
 
-export function formatCacheKey (url) {
+function formatCacheKey (url) {
   if (typeof url !== 'string' || !url.includes('//')) return url
   return url.split('//')[1].split('?')[0]
 }
 
-export function checkCacheConfig (thisConfig, catchData) {
+function checkCacheConfig (thisConfig, catchData) {
   return compareParams(thisConfig.params, catchData.params, thisConfig.ignorePreParamKeys) &&
     compareParams(thisConfig.data, catchData.data, thisConfig.ignorePreParamKeys) &&
     thisConfig.method === catchData.method
 }
 
-export function compareParams (params, cacheParams, ignoreParamKeys = []) {
+function compareParams (params, cacheParams, ignoreParamKeys = []) {
   // 类型不一致
   if (toString.call(params) !== toString.call(cacheParams)) {
     return false
@@ -386,8 +246,23 @@ export function compareParams (params, cacheParams, ignoreParamKeys = []) {
   })
 }
 
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-export function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
+export {
+  isThenable,
+  isFunction,
+  parseUrl,
+  deepMerge,
+  doTest,
+  buildUrl,
+  getEnvObj,
+  serialize,
+  transformRes,
+  isString,
+  isArray,
+  isObject,
+  type,
+  isNotEmptyArray,
+  isNotEmptyObject,
+  transformReq,
+  formatCacheKey,
+  checkCacheConfig
 }

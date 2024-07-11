@@ -101,6 +101,26 @@ function transformApiForProxy (context, currentInject) {
         }
       })
     }
+    if (currentInject.moduleId) {
+      Object.defineProperties(context, {
+        __moduleId: {
+          get () {
+            return currentInject.moduleId
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.dynamic) {
+      Object.defineProperties(context, {
+        __dynamic: {
+          get () {
+            return currentInject.dynamic
+          },
+          configurable: false
+        }
+      })
+    }
   }
 }
 
@@ -141,7 +161,7 @@ export function initProxy (context, rawOptions, currentInject) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
+export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   let hookNames = ['attached', 'ready', 'detached']
   // 当用户传入page作为构造器构造页面时，修改所有关键hooks
   if (rawOptions.__pageCtor__) {
