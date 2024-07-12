@@ -10,8 +10,7 @@ import {
   cloneElement,
   FunctionComponent,
   isValidElement,
-  useContext,
-  useState
+  useContext
 } from 'react'
 import {
   View,
@@ -100,7 +99,13 @@ const CheckboxGroup = forwardRef<
     }
   }
 
-  formValuesMap.current.set(props.name, { getValue, setValue })
+  if (formValuesMap) {
+    if (!props.name) {
+      console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      return
+    }
+    formValuesMap.set(props.name, { getValue, setValue })
+  }
 
   const notifyChange = (
     evt: NativeSyntheticEvent<TouchEvent>

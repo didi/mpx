@@ -6,7 +6,7 @@
  */
 
 import { View, LayoutChangeEvent } from 'react-native';
-import { JSX, useRef, forwardRef, ReactNode, Children } from 'react';
+import { JSX, useRef, forwardRef, ReactNode, Children, cloneElement } from 'react';
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
@@ -25,7 +25,7 @@ interface FormProps {
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormProps, ref): JSX.Element => {
   const { children, style } = props;
   const layoutRef = useRef(null)
-  const formValuesMap = useRef(new Map())
+  const formValuesMap = useRef(new Map()).current
 
   const { nodeRef: formRef } = useNodesRef(props, ref, {
     node: {}
@@ -43,29 +43,33 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
       if (!child.type) return child
       if (childTypeName === 'mpx-button' && ['submit', 'reset'].indexOf(child.props['form-type']) >= 0) {
         const bindtap = child.props.bindtap
+        const catchtap = child.props.catchtap
         const formType = child.props['form-type']
-        return <child.type
-          key={`button-${formType}-${index}`}
-          {...child.props}
-          bindtap={() => {
-            switch (formType) {
-              case 'submit':
-                submit();
-                break;
-              case 'reset':
-                reset();
-                break;
-              default:
-                break;
-            }
+        const triggerFormEvent = () => {
+          switch (formType) {
+            case 'submit':
+              submit();
+              break;
+            case 'reset':
+              reset();
+              break;
+            default:
+              break;
+          }
+        }
+        return cloneElement(child, {
+          ...child.props,
+          bindtap: () => {
+            triggerFormEvent()
             bindtap && bindtap()
-          }}
-        />
+          },
+          catchtap: () => {
+            triggerFormEvent()
+            catchtap && catchtap()
+          }
+        })
       }
-      return <child.type
-        key={`child-${index}`}
-        {...child.props}
-      >{travelChildren(child.props.children)}</child.type>
+      return cloneElement(child, { ...child.props }, travelChildren(child.props.children))
     })
     return result.length ? result : null
   }
@@ -73,9 +77,9 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   const submit = () => {
     const { bindsubmit } = props
     const formValue: Record<string, any> = {}
-    for (let name of formValuesMap.current.keys()) {
-      if (formValuesMap.current.get(name).getValue) {
-        formValue[name] = formValuesMap.current.get(name).getValue()
+    for (let name of formValuesMap.keys()) {
+      if (formValuesMap.get(name).getValue) {
+        formValue[name] = formValuesMap.get(name).getValue()
       }
     }
     bindsubmit && bindsubmit(getCustomEvent(
@@ -94,7 +98,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   const reset = () => {
     const { bindreset } = props
     bindreset && bindreset()
-    formValuesMap.current.forEach(item => item.setValue({ type: 'reset' }))
+    formValuesMap.forEach(item => item.setValue({ type: 'reset' }))
   }
 
   const innerProps = useInnerProps(props, {
