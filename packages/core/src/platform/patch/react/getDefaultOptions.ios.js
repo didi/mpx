@@ -261,13 +261,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
       return createElement(Provider,
         null,
-        createElement(ReactNative.ScrollView,
+        createElement(ReactNative.View,
           {
             style: {
               ...ReactNative.StyleSheet.absoluteFillObject,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
-            },
-            showsVerticalScrollIndicator: false
+            }
           },
           createElement(defaultOptions)
         )
