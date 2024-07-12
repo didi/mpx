@@ -80,7 +80,8 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
     data: formatRegionData,
     value: regionvalue,
     onChange,
-    disabled
+    disabled,
+    onDismiss: bindcancel && bindcancel
   }
 
   const touchProps = {

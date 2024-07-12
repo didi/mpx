@@ -26,6 +26,7 @@ export type MultiSelectorProps = {
   children: ReactNode,
   bindcancel?: Function,
   bindchange: Function,
+  bindcolumnchange?: Function,
   // mode 为 selector 或 multiSelector 时，range 有效
   range: Array<Array<any>>,
   // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性

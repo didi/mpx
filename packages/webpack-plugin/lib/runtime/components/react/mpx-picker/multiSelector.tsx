@@ -52,9 +52,32 @@ function getInnerValueByIndex(range: any[] = [], value: any[] = []): string[] {
     return current
   })
 }
+// column = 1 value = ['无脊柱动物', '扁性动物', '吸血虫'] 根据column 和value 获取到当前列变动选择的值所在当前列的索引
+function getColumnIndexByValue(range: any[] = [], column: number, value: any[] = []): number {
+  let curRange = range
+  let changeIndex = 0
+  let tmpRange: any[] = []
+  value.map((item, index) => {
+    if (column === index) {
+      curRange.map((ritem, rindex) => {
+        if (ritem.value === item) {
+          changeIndex = rindex
+        }
+      })
+    } else {
+    curRange.map((citem, cindex) => {
+        if (citem.value === item) {
+          tmpRange = citem.children
+        }
+    })
+    curRange = tmpRange
+    }
+  })
+  return changeIndex
+}
 
 const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, MultiSelectorProps>((props: MultiSelectorProps, ref): React.JSX.Element => {
-  const { range, value, disabled, bindchange, bindcancel, children } = props
+  const { range, value, disabled, bindchange, bindcancel, children, bindcolumnchange } = props
   let formatRange = formatRangeFun(range, props['range-key'])
   let initValue = getInnerValueByIndex(formatRange, value)
   // 选中的索引值
@@ -65,7 +88,6 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
   const layoutRef = useRef({})
   const { nodeRef: viewRef } = useNodesRef<View, MultiSelectorProps>(props, ref, {
   })
-
 
   useEffect(() => {
     if (range) {
@@ -86,7 +108,13 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     })
   }
 
-  const onElementLayout = (layout: LayoutType) => {
+  const onPickerChange = (value: PickerValue[], column: number) => {
+    // onPickerChange--- ["无脊柱动物", "节肢动物", "吸血虫"] 1  拿着column
+    const changeIndex = getColumnIndexByValue(data, column, value)
+    bindcolumnchange && bindcolumnchange(changeIndex, column)
+  }
+
+  const onElementLayout = () => {
     viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
       props.getInnerLayout && props.getInnerLayout(layoutRef)
@@ -102,6 +130,7 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     itemHeight: 40,
     onChange,
     onDismiss: bindcancel && bindcancel,
+    onPickerChange: onPickerChange
   } as any
 
   const touchProps = {

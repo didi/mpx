@@ -4,11 +4,22 @@ import { PickerView } from '@ant-design/react-native'
 import useInnerProps from './getInnerListeners'
 import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+/**
+ * ✔ value
+ * ✔ bindchange
+ * ✘ bindpickstart
+ * ✘ bindpickend
+ * ✘ mask-class
+ * ✘ indicator-style
+ * ✘ indicator-class
+ * ✘ mask-style
+ * ✘ immediate-change
+ */
 
 interface PickerViewProps {
   children: React.ReactNode
   // 初始的defaultValue数组中的数字依次表示 picker-view 内的 picker-view-column 选择的第几项（下标从 0 开始），数字大于 picker-view-column 可选项长度时，选择最后一项。
-  value?: Array<number>;
+  value?: Array<number>
   bindchange?: Function
 }
 
