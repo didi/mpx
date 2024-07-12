@@ -3,10 +3,11 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { useIsFocused, useRoute } from '@react-navigation/native'
+import { OrientationContext } from './orientationContext'
 
 function getNativeComponent (tagName) {
   return getByPath(ReactNative, tagName)
@@ -197,11 +198,11 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
   return instance
 }
 
-// todo resize api
+const pageStatusContextMap = {}
+
 function usePageStatus(mpxProxy) {
   const route = useRoute()
-  const { pageStatusContext } = global.__navigationHelper
-  const { pageStatus } = useContext(pageStatusContext[route.name])
+  const { pageStatus } = useContext(pageStatusContextMap[route.name])
   useEffect(() => {
     mpxProxy.callHook(pageStatus ? ONSHOW : ONHIDE)
     const pageLifetimes = mpxProxy.options.pageLifetimes
@@ -209,11 +210,36 @@ function usePageStatus(mpxProxy) {
       const instance = mpxProxy.target
       if (pageStatus) {
         pageLifetimes.show.call(instance)
+        // isFunction(pageLifetimes.show) && pageLifetimes.show.call(instance)
       } else {
         pageLifetimes.hide.call(instance)
+        // isFunction(pageLifetimes.hide) && pageLifetimes.hide.call(instance)
       }
     }
   }, [pageStatus])
+}
+
+function useWindowSize(mpxProxy) {
+  const { orientation } = useContext(OrientationContext)
+  useEffect(() => {
+    const windowSize = ReactNative.Dimensions.get('window')
+    const screenSize = ReactNative.Dimensions.get('screen')
+    const systemInfo = {
+      deviceOrientation: orientation,
+      size: {
+        screenWidth: screenSize.width,
+        screenHeight: screenSize.height,
+        windowWidth: windowSize.width,
+        windowHeight: windowSize.height
+      }
+    }
+    const target = mpxProxy.target
+    // todo: 页面事件的 options 合并&调用方式
+    // mpxProxy.callHook(ONRESIZE, [systemInfo])
+    target.onResize && target.onResize.call(target, systemInfo)
+    const pageLifetimes = mpxProxy.options.pageLifetimes
+    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
+  }, [orientation])
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -255,6 +281,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     usePageStatus(proxy)
 
+    useWindowSize(proxy)
+
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
@@ -281,9 +309,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const Page = ({ navigation }) => {
       const isFocused = useIsFocused()
       const { name } = useRoute()
-      global.__navigationHelper.pageStatusContext = global.__navigationHelper.pageStatusContext || {}
-      if (!global.__navigationHelper.pageStatusContext[name]) {
-        global.__navigationHelper.pageStatusContext[name] = pageStatusContext
+      if (!pageStatusContextMap[name]) {
+        pageStatusContextMap[name] = pageStatusContext
       }
       useLayoutEffect(() => {
         navigation.setOptions({
