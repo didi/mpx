@@ -9,17 +9,6 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 type RangeItemType = Obj | number | string
 
-const styles: { [key: string]: Object } = {
-  outerStyle: {
-    flex: 1,
-    width: "100%"
-  },
-  pickerViewStyle: {
-    width: "100%",
-    flex: 1
-  }
-}
-
 const  formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
   let newRange: Object[] = []
   newRange = (range || []).map((item: RangeItemType, index) => {
