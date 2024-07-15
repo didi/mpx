@@ -127,7 +127,7 @@ const useInnerProps = (
 
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
-  const config = rawConfig || {}
+  const config = rawConfig || { disableTouch: false }
 
   propsRef.current = { ...props, ...additionalProps }
 

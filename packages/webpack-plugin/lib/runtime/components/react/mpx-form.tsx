@@ -24,7 +24,7 @@ interface FormProps {
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormProps, ref): JSX.Element => {
   const { children, style } = props;
-  const layoutRef = useRef(null)
+  const layoutRef = useRef({})
   const formValuesMap = useRef(new Map()).current
 
   const { nodeRef: formRef } = useNodesRef(props, ref, {
