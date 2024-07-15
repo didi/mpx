@@ -1,4 +1,4 @@
-import { View, Text, Modal, TouchableWithoutFeedback, Dimensions } from 'react-native'
+import { View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
 import { PickerView } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
@@ -15,11 +15,11 @@ const styles: { [key: string]: Object } = {
     backgroundColor: "black",
     opacity: 0.5,
     position: "absolute",
-    top: 0,
     width: "100%"
   },
   hideModal: {
-    opacity: 1
+    opacity: 1,
+    height: 0
   },
   modal: {
     backgroundColor: "black",
@@ -39,8 +39,8 @@ const styles: { [key: string]: Object } = {
     borderColor: 20,
     borderBottomWidth: 1,
     backgroundColor: "white",
-    paddingLeft: 20,
-    paddingRight: 20
+    paddingLeft: 40,
+    paddingRight: 40
   },
   cancel: {
     height: 50,
@@ -52,8 +52,9 @@ const styles: { [key: string]: Object } = {
     display: "flex",
     justifyContent: 'center'
   },
-  oktext: {
-    color: 'rgb(255, 0, 0)'
+  btntext: {
+    color: '#0ae',
+    fontSize: 18
   }
 }
 
@@ -62,7 +63,7 @@ function formatStrToInt(timestr: string) {
   return [parseInt(start), parseInt(end)]
 }
 // [9, 59] to 09:59
-function formatStr(arr) {
+function formatStr(arr: any[]) {
   let [hour, minute] = arr
   if (hour < 10) {
     hour = '0' + hour
@@ -72,13 +73,12 @@ function formatStr(arr) {
   }
   return hour + ':' + minute
 }
-function generateMinute(sminute: number, eminute: number) {
-  let startminute = sminute || 1
 
+function generateMinute() {
   let arrMinute: any[] = []
-  for (let i = startminute; i <= eminute; i++) {
+  for (let i = 0; i <= 59; i++) {
     let obj = {
-      label: i,
+      label: toSingleStr(i),
       value: i,
       children: []
     }
@@ -86,25 +86,35 @@ function generateMinute(sminute: number, eminute: number) {
   }
   return arrMinute
 }
-
-function generateColumns(start: string, end: string): any[] {
-  let [starthour, startminute]: any = formatStrToInt(start)
-  let [endhour, endminute]: any = formatStrToInt(end)
+function generateColumns(): any[] {
   let pickData: any[] = []
-  for (let i = starthour; i <=endhour; i++) {
-    let curEndMinute = 59
-    if (i === endhour) {
-      curEndMinute = endminute
-    }
+  for (let i = 0; i <= 23; i++) {
     let obj = {
-      label: i,
+      label: toSingleStr(i),
       value: i,
-      children: generateMinute(i === starthour ? startminute : '', curEndMinute)
+      children: generateMinute()
     }
     pickData.push(obj)
   }
 
   return pickData
+}
+
+function toSingleStr(str: number) {
+  return str < 10 ? '0' + str : str
+}
+
+function toStr(time: string): string {
+  const [hour, minute]: any = formatStrToInt(time)
+  const newHour = toSingleStr(hour)
+  const newMinute = toSingleStr(minute) 
+  return '' + newHour + newMinute
+}
+
+function checkSelectedIsValid(strStart: string, strEnd: string, selected: number[]): Boolean {
+  const strSel = '' + toSingleStr(selected[0]) + toSingleStr(selected[1])
+  if (strSel < strStart || strSel > strEnd) return false
+  return true 
 }
 /**
  * [{label:'', value: '', key: '', children: []}]
@@ -113,6 +123,7 @@ function generateColumns(start: string, end: string): any[] {
   key?: string | number
   children?: PickerColumnItem[]
 */
+// start="02:10" end = 23:01
 
 const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: TimeProps, ref): React.JSX.Element => {
   const { children, start, end, value, bindchange, bindcancel, disabled } = props
@@ -129,12 +140,14 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   const modalLayoutRef = useRef({})
   const { nodeRef: modalRef } = useNodesRef<View, TimeProps>(props, ref, {})
   const [visible, setVisible] = useState(false)
-  const columnData = generateColumns(start || defaultProps.start, end || defaultProps.end)
+  const columnData = generateColumns()
   const [data, setData] = useState(columnData)
   const [offsetTop, setOffsetTop] = useState(0)
+  const strStart = toStr(start)
+  const strEnd = toStr(end)
 
   useEffect(() => {
-    const newColumnData = generateColumns(start, end)
+    const newColumnData = generateColumns()
     setData(newColumnData)
   }, [start, end])
 
@@ -168,14 +181,19 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   }
 
   const handlePickChange = (date: number[]): void => {
-    // [9, 13]
-    setTimeValue(date)
-    const strDate = formatStr(date)
-    bindchange && bindchange({
-      detail: {
-        value: strDate
-      }
-    })
+    // 不是有效的值
+    if (!checkSelectedIsValid(strStart, strEnd, date)) {
+      setTimeValue(timevalue)
+    } else {
+      // [9, 13]
+      setTimeValue(date)
+      const strDate = formatStr(date)
+      bindchange && bindchange({
+        detail: {
+          value: strDate
+        }
+      })
+    }
   }
 
 
@@ -207,12 +225,12 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
         <View style={styles.btnLine}>
           <View style={styles.cancel}>
             <TouchableWithoutFeedback onPress={handleCancel}> 
-              <Text>取消</Text>
+              <Text style={styles.btntext}>取消</Text>
             </TouchableWithoutFeedback>
           </View>
           <View style={styles.ok}>
             <TouchableWithoutFeedback onPress={handleConfirm}> 
-              <Text style={styles.oktext}>确定</Text>
+              <Text style={styles.btntext}>确定</Text>
             </TouchableWithoutFeedback>
           </View>
         </View>
@@ -234,8 +252,10 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   }
   const strStyle = visible ? styles['showModal'] : styles['hideModal']
   const mheight = Math.floor(offsetTop)
+
+  // Animated.View
   return (<>
-      <View style={[strStyle, { height: mheight, bottom: 0 }]}>
+      <View style={[strStyle, { height: visible ? mheight : 0, bottom: 0 }]}>
         <Modal
           animationType="slide"
           transparent={true}
