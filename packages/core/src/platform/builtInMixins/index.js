@@ -50,15 +50,11 @@ export default function getBuiltInMixins (options, type) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
         showMixin(type),
-        i18nMixin()
+        i18nMixin(),
+        dynamicRenderHelperMixin(),
+        dynamicSlotMixin(),
+        dynamicRefsMixin()
       ])
-      if (__mpx_dynamic_runtime__) {
-        bulitInMixins = bulitInMixins.concat([
-          dynamicRenderHelperMixin(),
-          dynamicSlotMixin(),
-          dynamicRefsMixin()
-        ])
-      }
     }
   }
   return bulitInMixins.filter(item => item)

@@ -27,6 +27,7 @@ const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
+const DynamicRuntimePlugin = require('./resolver/DynamicRuntimePlugin')
 const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -341,6 +342,9 @@ class MpxWebpackPlugin {
     }
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
+    }
+    if (!this.options.dynamicRuntime) {
+      compiler.options.resolve.plugins.push(new DynamicRuntimePlugin('before-file', 'file'))
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
