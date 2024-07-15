@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { webHandleSuccess, webHandleFail, type } from '../../../common/js'
 
 const socketTasks = new Set()
 
@@ -41,7 +41,11 @@ class SocketTask {
 
   send (options) {
     const { data = '', success, fail, complete } = options
-
+    if (typeof data !== 'string' || type(data) !== 'ArrayBuffer') {
+      const res = { errMsg: 'sendSocketMessage:fail Unsupported data type' }
+      webHandleFail(res, fail, complete)
+      return
+    }
     if (this._socket.readyState === 1) {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
@@ -77,8 +81,14 @@ class SocketTask {
   }
 
   addListener (socket) {
-    socket.onOpen = event => { typeof this._openCb === 'function' && this._openCb(event) }
-    socket.onmessage = event => { typeof this._messageCb === 'function' && this._messageCb(event) }
+    socket.onopen = event => {
+      typeof this._openCb === 'function' && this._openCb(event)
+    }
+    socket.onmessage = event => {
+      typeof this._messageCb === 'function' && this._messageCb({
+        data: event.data
+      })
+    }
     socket.onerror = event => {
       socketTasks.delete(this._socket)
       typeof this._errorCb === 'function' && this._errorCb(event)
@@ -91,7 +101,7 @@ class SocketTask {
       if (this._closeData) {
         this._closeCb(event)
       } else {
-        this._closeCb({ code: 2000, reason: `${event}` })
+        this._closeCb({ code: event.code, reason: event.reason })
       }
     }
   }

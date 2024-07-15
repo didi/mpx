@@ -16,6 +16,7 @@ const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalCo
 
 module.exports = function (json, {
   loaderContext,
+  ctorType,
   pagesMap,
   componentsMap
 }, rawCallback) {
@@ -79,8 +80,7 @@ module.exports = function (json, {
     })
   }
 
-  const { resourcePath } = parseRequest(loaderContext.resource)
-  const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
+  const isApp = ctorType === 'app'
 
   if (!json) {
     return callback()
@@ -103,7 +103,7 @@ module.exports = function (json, {
     }
 
     if (!isApp) {
-      rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
+      rulesRunnerOptions.mainKey = ctorType
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
