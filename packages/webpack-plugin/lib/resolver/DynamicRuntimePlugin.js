@@ -20,8 +20,9 @@ module.exports = class DynamicRuntimePlugin {
       if (matchCondition(resourcePath, matcher)) {
         request.path = addInfix(request.path, 'empty', extname)
         resolver.doResolve(target, request, 'resolve dynamicRenderMixin empty file', resolveContext, callback)
+      } else {
+        callback()
       }
-      callback()
     })
   }
 }
