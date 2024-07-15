@@ -209,11 +209,9 @@ function usePageStatus(mpxProxy) {
     if (pageLifetimes) {
       const instance = mpxProxy.target
       if (pageStatus) {
-        pageLifetimes.show.call(instance)
-        // isFunction(pageLifetimes.show) && pageLifetimes.show.call(instance)
+        isFunction(pageLifetimes.show) && pageLifetimes.show.call(instance)
       } else {
-        pageLifetimes.hide.call(instance)
-        // isFunction(pageLifetimes.hide) && pageLifetimes.hide.call(instance)
+        isFunction(pageLifetimes.hide) && pageLifetimes.hide.call(instance)
       }
     }
   }, [pageStatus])
@@ -234,8 +232,6 @@ function useWindowSize(mpxProxy) {
       }
     }
     const target = mpxProxy.target
-    // todo: 页面事件的 options 合并&调用方式
-    // mpxProxy.callHook(ONRESIZE, [systemInfo])
     target.onResize && target.onResize.call(target, systemInfo)
     const pageLifetimes = mpxProxy.options.pageLifetimes
     pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
