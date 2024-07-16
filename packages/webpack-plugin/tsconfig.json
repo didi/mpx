@@ -1,9 +1,11 @@
 {
+  "include": [
+    "./lib/runtime/components/react"
+  ],
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
     "outDir": "./lib/runtime/components/react/dist",
-    "rootDir": "./lib/runtime/components/react",
     "allowJs": true,
     "noImplicitThis": true,
     "noImplicitAny": false,
@@ -11,7 +13,7 @@
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "lib": [
       "esnext",
       "dom",
