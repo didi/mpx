@@ -7,12 +7,12 @@ const matcher = {
 }
 
 module.exports = class DynamicRuntimePlugin {
-  constructor(source, target) {
+  constructor (source, target) {
     this.source = source
     this.target = target
   }
 
-  apply(resolver) {
+  apply (resolver) {
     const target = resolver.ensureHook(this.target)
     resolver.getHook(this.source).tapAsync('DynamicRuntimePlugin', (request, resolveContext, callback) => {
       const resourcePath = request.path
