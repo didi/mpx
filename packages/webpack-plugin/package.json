@@ -7,11 +7,12 @@
   ],
   "author": "donghongping",
   "license": "Apache-2.0",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "directories": {
     "lib": "lib"
   },
   "files": [
+    "dist",
     "lib"
   ],
   "dependencies": {
@@ -75,7 +76,8 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc"
   },
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",
