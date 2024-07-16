@@ -300,7 +300,7 @@ module.exports = function getSpec ({ warn, error }) {
         return { prop, value }
       }
       case bgPropMap.all: {
-        // background: 仅支持 background-image & background-color & background-size
+        // background: 仅支持 background-image & background-color & background-repeat
         const bgMap = []
         const values = value.trim().split(/\s(?![^()]*\))/)
         values.forEach(item => {
@@ -311,11 +311,12 @@ module.exports = function getSpec ({ warn, error }) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (/^(#[0-9a-f]{3}$|#[0-9a-f]{6}$|rgb|rgba)/i.test(item)) {
             bgMap.push({ prop: bgPropMap.color, value: item })
-          } else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
-            bgMap.push({ prop: bgPropMap.size, value: item })
           } else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.repeat].includes(item)) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
           }
+          // else if (SUPPORTED_PROP_VAL_ARR[bgPropMap.size].includes(item)) {
+          //   bgMap.push({ prop: bgPropMap.size, value: item })
+          // }
         })
         return bgMap.length ? bgMap : false
       }

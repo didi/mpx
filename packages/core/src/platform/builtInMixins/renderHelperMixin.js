@@ -36,8 +36,8 @@ export default function renderHelperMixin () {
       _sc (key) {
         return (this.__mpxProxy.renderData[key] = this[key])
       },
-      _r (skipPre) {
-        this.__mpxProxy.renderWithData(skipPre)
+      _r (skipPre, vnode) {
+        this.__mpxProxy.renderWithData(skipPre, vnode)
       }
     }
   }

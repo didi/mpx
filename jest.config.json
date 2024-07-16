@@ -10,5 +10,8 @@
   "testMatch": [
     "**/packages/**/?(*.)+(spec|test).[jt]s?(x)"
   ],
-  "testPathIgnorePatterns": ["dist", "node_modules"]
+  "testPathIgnorePatterns": ["dist", "node_modules"],
+  "projects": [
+    "<rootDir>/packages/*/jest.config.json"
+  ]
 }
