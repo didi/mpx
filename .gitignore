@@ -10,4 +10,4 @@ yarn.lock
 .DS_Store
 docs-vuepress/.vuepress/dist
 elevate/
-packages/webpack-plugin/dist/
+packages/webpack-plugin/lib/runtime/components/react/dist/

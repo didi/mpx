@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "outDir": "./dist/lib",
-    "rootDir": "./lib",
+    "outDir": "./lib/runtime/components/react/dist",
+    "rootDir": "./lib/runtime/components/react",
     "allowJs": true,
     "noImplicitThis": true,
     "noImplicitAny": false,
