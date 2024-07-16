@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { useIsFocused, useRoute } from '@react-navigation/native'
@@ -200,7 +200,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
 
 const pageStatusContextMap = {}
 
-function usePageStatus(mpxProxy) {
+function usePageStatus (mpxProxy) {
   const route = useRoute()
   const { pageStatus } = useContext(pageStatusContextMap[route.name])
   useEffect(() => {
@@ -217,7 +217,7 @@ function usePageStatus(mpxProxy) {
   }, [pageStatus])
 }
 
-function useWindowSize(mpxProxy) {
+function useWindowSize (mpxProxy) {
   const { orientation } = useContext(OrientationContext)
   useEffect(() => {
     const windowSize = ReactNative.Dimensions.get('window')
@@ -232,7 +232,7 @@ function useWindowSize(mpxProxy) {
       }
     }
     const target = mpxProxy.target
-    target.onResize && target.onResize.call(target, systemInfo)
+    target.onResize && target.onResize(systemInfo)
     const pageLifetimes = mpxProxy.options.pageLifetimes
     pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
   }, [orientation])
