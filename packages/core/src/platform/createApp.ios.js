@@ -49,7 +49,6 @@ export default function createApp (option, config = {}) {
       component: item
     })
   })
-  global.__navigationRef = navigationRef
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
   const onStateChange = () => {
     if (global.__navigationHelper.lastSuccessCallback) {
@@ -81,7 +80,6 @@ export default function createApp (option, config = {}) {
         referrerInfo: {}
       }
       global.__mpxEnterOptions = options
-      // todo relaunch时会重复执行，需check
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
     }, [])
     return createElement(NavigationContainer,
@@ -100,5 +98,14 @@ export default function createApp (option, config = {}) {
   })
   global.getApp = function () {
     return appData
+  }
+  global.getCurrentPages = function () {
+    const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+    if (navigation) {
+      return navigation.getState().routes.map((route) => {
+        return global.__mpxPagesMap[route.key] && global.__mpxPagesMap[route.key][0]
+      }).filter(item => item)
+    }
+    return []
   }
 }
