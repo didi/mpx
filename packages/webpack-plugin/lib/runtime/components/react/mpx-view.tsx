@@ -6,6 +6,7 @@
  */
 import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX } from 'react'
+import useAnimationHooks from './useAnimationHooks'
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
@@ -65,7 +66,7 @@ function groupBy(style: Obj, callback: (key: string, val: string) => string, gro
       if (!group[groupKey]) {
         group[groupKey] = {}
       }
-      group[groupKey][key] = val  
+      group[groupKey][key] = val
     }
   }
   return group
@@ -77,7 +78,7 @@ const applyHandlers = (handlers: Handler[] , args: any [] ) => {
   }
 }
 
-const checkNeedLayout = (style: PreImageInfo) => {  
+const checkNeedLayout = (style: PreImageInfo) => {
   const [width, height] = style.sizeList
   return (PERCENT_REGX.test(`${height}`) && width === 'auto') || (PERCENT_REGX.test(`${width}`) && height === 'auto')
 }
@@ -89,7 +90,7 @@ const checkNeedLayout = (style: PreImageInfo) => {
  * **/
 function calculateSize(h: number, lh: number, ratio: number) {
   let height, width
-  if (PERCENT_REGX.test(`${h}`)) { // auto  px/rpx 
+  if (PERCENT_REGX.test(`${h}`)) { // auto  px/rpx
     if (!lh) return null
     height = (parseFloat(`${h}`) / 100) * lh
     width = height * ratio
@@ -100,7 +101,7 @@ function calculateSize(h: number, lh: number, ratio: number) {
 
   return {
     width,
-    height 
+    height
   }
 }
 
@@ -205,9 +206,9 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       setShow(false)
       sizeInfo.current = null
       layoutInfo.current = null
-      return 
+      return
     }
-  
+
     if (!sizeList.includes('auto')) {
       setShow(true)
       return
@@ -242,11 +243,11 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       setImageSizeWidth(sizeInfo.current.width)
       setImageSizeHeight(sizeInfo.current.height)
       setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height) 
+      setLayoutInfoHeight(height)
       setShow(true)
     }
   }
-  
+
   return <View key='viewBgImg' {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
     {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
@@ -286,7 +287,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
-    'enable-offset': enableOffset
+    'enable-offset': enableOffset,
+    animation = []
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -350,13 +352,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   }
 
   const onLayout = () => {
-  
+
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
 
-  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
+  const { textStyle, imageStyle, innerStyle } = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([
     defaultStyle,
     styleObj,
     ...(isHover ? hoverStyle : [])]
@@ -381,7 +383,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
-  return (
+  const animationStyle = useAnimationHooks(props)
+
+  return animation.length ? (
+    <Animated.View
+      {...innerProps}
+      style={{...innerStyle, ...animationStyle}}
+    >
+      {wrapChildren(children, textStyle, imageStyle)}
+    </Animated.View>
+  ) : (
     <View
       {...innerProps}
       style={innerStyle}
