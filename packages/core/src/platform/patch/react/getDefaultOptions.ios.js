@@ -217,27 +217,27 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
 
 const pageStatusContext = createContext(null)
 
+const triggerPageStatusHook = (mpxProxy, event) => {
+  mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
+  const pageLifetimes = mpxProxy.options.pageLifetimes
+  if (pageLifetimes) {
+    const instance = mpxProxy.target
+    isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
+  }
+}
+
 function usePageStatus (mpxProxy) {
   const { pageStatus } = useContext(pageStatusContext) || {}
 
-  const triggerPageStatusHook = (event) => {
-    mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
-    const pageLifetimes = mpxProxy.options.pageLifetimes
-    if (pageLifetimes) {
-      const instance = mpxProxy.target
-      isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
-    }
-  }
-
   useEffect(() => {
     if (!isBoolean(pageStatus)) return
-    triggerPageStatusHook(pageStatus ? 'show' : 'hide')
+    triggerPageStatusHook(mpxProxy, pageStatus ? 'show' : 'hide')
 
     const subscription = ReactNative.AppState.addEventListener('change', (currentState) => {
       if (currentState === 'active') {
-        pageStatus && triggerPageStatusHook('show')
+        pageStatus && triggerPageStatusHook(mpxProxy, 'show')
       } else if (currentState === 'background') {
-        pageStatus && triggerPageStatusHook('hide')
+        pageStatus && triggerPageStatusHook(mpxProxy, 'hide')
       }
     })
     return () => {
@@ -246,28 +246,28 @@ function usePageStatus (mpxProxy) {
   }, [pageStatus])
 }
 
+const triggerResizeEvent = (mpxProxy) => {
+  const systemInfo = getSystemInfo()
+  const target = mpxProxy.target
+  target.onResize && target.onResize(systemInfo)
+  const pageLifetimes = mpxProxy.options.pageLifetimes
+  pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
+}
+
 function useWindowSize (mpxProxy) {
   const { pageStatus } = useContext(pageStatusContext) || {}
-
-  const triggerResizeEvent = () => {
-    const systemInfo = getSystemInfo()
-    const target = mpxProxy.target
-    target.onResize && target.onResize(systemInfo)
-    const pageLifetimes = mpxProxy.options.pageLifetimes
-    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
-  }
 
   useEffect(() => {
     let lastOrientation = getOrientation()
     const isShow = isBoolean(pageStatus) && pageStatus
     if (isShow) {
-      triggerResizeEvent()
+      triggerResizeEvent(mpxProxy)
     }
 
     const subscription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
       const orientation = getOrientation(window)
       if (orientation === lastOrientation || !isShow) return
-      triggerResizeEvent()
+      triggerResizeEvent(mpxProxy)
       lastOrientation = orientation
     })
     return () => {
