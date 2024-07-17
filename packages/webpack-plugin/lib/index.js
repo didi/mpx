@@ -343,7 +343,7 @@ class MpxWebpackPlugin {
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
-    if (!this.options.dynamicRuntime) {
+    if (this.options.dynamicRuntime) {
       compiler.options.resolve.plugins.push(new DynamicRuntimePlugin('before-file', 'file'))
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
