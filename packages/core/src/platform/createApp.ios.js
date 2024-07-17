@@ -4,9 +4,7 @@ import { makeMap, spreadProp } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import Mpx from '../index'
-import { createElement, memo, useRef, useEffect, useState } from 'react'
-import { Dimensions } from 'react-native'
-import { OrientationContext, getOrientation } from '../platform/patch/react/orientationContext'
+import { createElement, memo, useRef, useEffect } from 'react'
 
 const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
 
@@ -69,20 +67,11 @@ export default function createApp (option, config = {}) {
   }
 
   global.__mpxOptionsMap[currentInject.moduleId] = memo(() => {
-    const [orientation, setOrientation] = useState(getOrientation())
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
       instanceRef.current = createAppInstance(appData)
     }
     const instance = instanceRef.current
-    useEffect(() => {
-      const listener = Dimensions.addEventListener('change', ({ window }) => {
-        setOrientation(getOrientation(window))
-      })
-      return () => {
-        listener && listener.remove()
-      }
-    }, [])
     useEffect(() => {
       const current = navigationRef.isReady() ? navigationRef.getCurrentRoute() : {}
       const options = {
@@ -96,22 +85,18 @@ export default function createApp (option, config = {}) {
       // todo relaunch时会重复执行，需check
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
     }, [])
-    return createElement(OrientationContext.Provider,
+
+    return createElement(NavigationContainer,
       {
-        value: { orientation }
+        ref: navigationRef,
+        onStateChange,
+        onUnhandledAction
       },
-      createElement(NavigationContainer,
+      createElement(Stack.Navigator,
         {
-          ref: navigationRef,
-          onStateChange,
-          onUnhandledAction
+          initialRouteName: firstPage
         },
-        createElement(Stack.Navigator,
-          {
-            initialRouteName: firstPage
-          },
-          ...pageScreens
-        )
+        ...pageScreens
       )
     )
   })
