@@ -1,4 +1,4 @@
-import { View, Dimensions, Text, StyleSheet, Button, ScrollView } from 'react-native'
+import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
 const { width, height } = Dimensions.get('window')
@@ -65,11 +65,12 @@ const showModal = function (options) {
       flex: 1,
       textAlign: 'center',
       paddingTop: 10,
-      paddingBottom: 10
+      paddingBottom: 10,
     },
     modalButton: {
       width: '100%',
-      fontWeight: 'bold'
+      fontWeight: 'bold',
+      textAlign: 'center'
     },
     cancelStyle: {
       borderRightWidth: StyleSheet.hairlineWidth,
@@ -105,6 +106,7 @@ const showModal = function (options) {
         cancel: true
       })
     }
+    successHandle(result, success, complete)
   }
   if (title) {
     modalTitle.push(title)
@@ -112,7 +114,7 @@ const showModal = function (options) {
   if (!editable && content) {
     modalContent.push(content)
   }
-  if (!showCancel) {
+  if (showCancel) {
     modalButton.unshift({
       text: cancelText,
       cancelColor,
@@ -127,7 +129,7 @@ const showModal = function (options) {
         {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
         {modalContent.map((item, index) => <ScrollView key={index} style={styles.contentBox}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
         <View style={styles.modalBtnBox}>
-          {modalButton.map((item, index) => <View style={[ styles.modalBtn, item.style ]}><Button style={styles.modalButton} color={item.color} key={index} title={item.text} onPress={() => closeModal(item)}></Button></View>)}
+          {modalButton.map((item, index) => <TouchableOpacity key={index} style={[ styles.modalBtn, item.style ]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
         </View>
       </View>
     </View>
