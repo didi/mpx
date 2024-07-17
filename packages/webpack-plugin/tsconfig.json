@@ -13,7 +13,7 @@
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "lib": [
       "esnext",
       "dom",

@@ -10,7 +10,7 @@
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
     "docs:build": "vuepress build docs-vuepress",
-    "plugin:build": "npm --workspace=./packages/webpack-plugin run build"
+    "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
   },
   "workspaces": [
     "packages/*"
