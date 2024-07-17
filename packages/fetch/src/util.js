@@ -1,8 +1,13 @@
 import { match } from 'path-to-regexp'
 
-import { type, isFunction, isArray, isString, serialize, buildUrl, parseUrl, getEnvObj, hasOwn, forEach } from '@mpxjs/utils'
+import { type, isFunction, isArray, isString, forEach } from '@mpxjs/utils/src/base'
+import { serialize, buildUrl, parseUrl } from '@mpxjs/utils/src/url'
 
 const toString = Object.prototype.toString
+const hasOwnProperty = Object.prototype.hasOwnProperty
+function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
 
 function isObject (val) {
   return type(val) === 'Object'
@@ -253,7 +258,6 @@ export {
   deepMerge,
   doTest,
   buildUrl,
-  getEnvObj,
   serialize,
   transformRes,
   isString,
