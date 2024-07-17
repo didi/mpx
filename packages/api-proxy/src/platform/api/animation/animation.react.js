@@ -240,3 +240,5 @@ class Animation {
     return this.createAnimationData()
   }
 }
+
+export default Animation

@@ -1,6 +1,6 @@
 import { createAnimation as createAnimationApi } from './animation'
 import { useRef, useState, useEffect } from 'react'
-import { Animated, Easing } from 'react-native'
+import { Animated, Easing, StyleSheet } from 'react-native'
 // 微信 timingFunction 和 RN Easing 对应关系
 const EasingKey = {
   linear: Easing.linear,
@@ -43,9 +43,10 @@ export default function useAnimationHooks<T, P>(props: P) {
   // 动画属性Val
   let rulesMap = new Map()
   const {
-    style = {},
+    style = [],
     animation = []
   } = props
+  const styleObj = StyleSheet.flatten(style)
   if (!animation.length) return animationStyle
 
   // 测试模拟兜底 start
@@ -68,7 +69,7 @@ export default function useAnimationHooks<T, P>(props: P) {
   /** format rules */
   const formatRules = (rules, { delay, duration, timingFunction }, isTransform = false) => {
     return [...rules.entries()].reduce((arr, [key, value]) => {
-      const initialVal = style[key] === undefined ? InitialValue[key] : style[key]
+      const initialVal = styleObj[key] === undefined ? InitialValue[key] : styleObj[key]
       if (initialVal === undefined) {
         console.error(`style rule ${key} 初始值为空`)
         return arr
@@ -127,7 +128,6 @@ export default function useAnimationHooks<T, P>(props: P) {
       console.error('is finished ?', finished) // Todo
     });
   }
-  createAnimation()
   // animation 变更后清空之前的动画属性
   useEffect(() => {
     steps = []
