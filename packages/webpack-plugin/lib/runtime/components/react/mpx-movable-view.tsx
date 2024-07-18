@@ -19,7 +19,7 @@
 import { useRef, useState, useEffect, forwardRef, ReactNode, useContext } from 'react';
 import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from 'react-native';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
-import useNodesRef, { HandlerRef } from '../../useNodesRef'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 
 interface MovableViewProps {
