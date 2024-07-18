@@ -8,7 +8,7 @@ class Animation {
       duration = 400,
       delay = 0,
       timingFunction = 'linear',
-      transformOrigin = '50% 50% 0',
+      transformOrigin = '50% 50% 0'
       // unit = 'px'
     } = {}
   ) {
@@ -42,6 +42,7 @@ class Animation {
     this.transform.set('matrix', [a, b, c, d, tx, ty])
     return this
   }
+
   matrix3d (a1, b1, c1, d1,
             a2, b2, c2, d2,
             a3, b3, c3, d3,
@@ -209,7 +210,7 @@ class Animation {
       duration = DEFAULT.duration,
       delay = DEFAULT.delay,
       timingFunction = DEFAULT.timingFunction,
-      transformOrigin = DEFAULT.transformOrigin,
+      transformOrigin = DEFAULT.transformOrigin
     } = arg
 
     this.steps.push({
