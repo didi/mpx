@@ -93,10 +93,11 @@ function buildGlobalParams ({
   if (ctorType === 'app') {
     content += `
 global.getApp = function () {}
-global.getCurrentPages = function () {}
+global.getCurrentPages = function () { return [] }
 global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
 global.__mpxGenericsMap = {}
 global.__mpxOptionsMap = {}
+global.__mpxPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__getAppComponents = function () {
