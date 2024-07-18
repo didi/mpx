@@ -21,10 +21,10 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     // if (pageCfg.async) {
-    //   pagesMap[pagePath] = `lazy(function(){return import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(function(res){return getComponent(res, {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "page"})})})`
+    //   pagesMap[pagePath] = `lazy(function(){return import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(function(res){return getComponent(res, {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})})})`
     // } else {
     // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-    pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "page"})`
+    pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
     // }
     if (pagePath === jsonConfig.entryPagePath) {
       firstPage = pagePath
@@ -93,10 +93,11 @@ function buildGlobalParams ({
   if (ctorType === 'app') {
     content += `
 global.getApp = function () {}
-global.getCurrentPages = function () {}
+global.getCurrentPages = function () { return [] }
 global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
 global.__mpxGenericsMap = {}
 global.__mpxOptionsMap = {}
+global.__mpxPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__getAppComponents = function () {

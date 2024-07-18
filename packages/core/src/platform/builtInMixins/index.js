@@ -10,6 +10,7 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
+import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '../../dynamic/dynamicRenderMixin.empty'
 import styleHelperMixin from './styleHelperMixin'
 import directiveHelperMixin from './directiveHelperMixin'
 import { isReact } from '@mpxjs/utils'
@@ -49,7 +50,10 @@ export default function getBuiltInMixins (options, type) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
         showMixin(type),
-        i18nMixin()
+        i18nMixin(),
+        dynamicRenderHelperMixin(),
+        dynamicSlotMixin(),
+        dynamicRefsMixin()
       ])
     }
   }

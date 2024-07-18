@@ -110,7 +110,7 @@
       this.debounceRefresh = debounce(function () {
         this.refresh()
       }, 200, {
-        leading: false,
+        leading: true,
         trailing: true
       })
       this.dispatchScrollTo = throttle(function (direction) {
@@ -252,7 +252,7 @@
           this.lastY = y
         }, 30, {
           leading: true,
-          trailing: false
+          trailing: true
         }))
         this.bs.on('scrollEnd', () => {
           this.currentX = -this.bs.x

@@ -3,7 +3,7 @@ const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const shallowStringify = require('../utils/shallow-stringify')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const eventPath = normalize.lib('runtime/components/web/event')
+
 const {
   buildComponentsMap,
   buildPagesMap,
@@ -67,8 +67,6 @@ Vue.use(VueRouter)\n`
     isMain: true,
     globalTabBar
   })
-
-  output += `require(${stringifyRequest(loaderContext, eventPath)})\n`
 
   output += `var App = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default\n`
 

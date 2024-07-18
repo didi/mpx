@@ -59,7 +59,7 @@ function genNode (node) {
             const name = node.slot.name
             exp += `__getSlot(${name ? s(name) : ''})`
           } else {
-            exp += `createElement(${node.isComponent || node.isBuiltIn ? `components[${node.is || s(node.tag)}]` : `getNativeComponent(${s(node.tag)})`}`
+            exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
             if (node.isRoot) {
               exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
             } else if (node.attrsList.length) {

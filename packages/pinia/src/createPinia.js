@@ -1,11 +1,15 @@
 import { effectScope, ref, markRaw } from '@mpxjs/core'
-import { setActivePinia } from './util'
+import { setActivePinia, getActivePinia } from './util'
 
 /**
  * @description: create pinia instance, only called once through entire lifecycle of miniApp
  * @return {*} pinia
  */
 export function createPinia () {
+  const activePinia = getActivePinia()
+  if (activePinia) {
+    return activePinia
+  }
   const scope = effectScope(true)
   // create ref state
   const state = scope.run(() => ref({}))

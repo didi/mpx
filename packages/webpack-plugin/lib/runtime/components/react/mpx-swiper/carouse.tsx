@@ -5,7 +5,7 @@ import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, 
 import React, { forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
-import useNodesRef, { HandlerRef } from '../../../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 /**
  * 默认的Style类型

@@ -33,7 +33,15 @@
           console.error('访问页面域名不符合domainWhiteLists白名单配置，请确认是否正确配置该域名白名单')
           return ''
         }
-        return this.src
+        let src
+        const srcQueryIndex = this.src.indexOf('?')
+        // webview与被打开页面通过_uid确定关联关系
+        if (srcQueryIndex > -1) {
+          src = `${this.src.substring(0, srcQueryIndex + 1)}mpx_webview_id=${this._uid}&${this.src.substring(srcQueryIndex + 1)}`
+        } else {
+          src = `${this.src}?mpx_webview_id=${this._uid}`
+        }
+        return src
       },
       loadData () {
         return {
@@ -95,6 +103,10 @@
       messageCallback (event) {
         const hostValidate = this.hostValidate(event.origin)
         const data = event.data
+        // 判断number类型，防止undefined导致触发return逻辑
+        if (data.clientUid !== undefined && +data.clientUid !== this._uid) {
+          return
+        }
         let value = data.payload
         if (!hostValidate) {
           return
