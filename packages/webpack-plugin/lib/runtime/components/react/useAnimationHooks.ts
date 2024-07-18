@@ -75,12 +75,12 @@ export default function useAnimationHooks<T, P>(props: P) {
         return arr
       }
       if (!rulesMap.has(key)) {
-        const animatedRef = useRef(new Animated.Value(initialVal)).current
-        rulesMap.set(key, animatedRef)
-        const styleVal = isDeg(key) ?  animatedRef.interpolate({
+        const animated = new Animated.Value(initialVal) // useRef().current
+        rulesMap.set(key, animated)
+        const styleVal = isDeg(key) ?  animated.interpolate({
           inputRange: [0, 360],
           outputRange: ['0deg', '360deg']
-        }) : animatedRef
+        }) : animated
         if (isTransform) {
           const transformStyle = animationStyle.transform || []
           transformStyle.push({
@@ -96,8 +96,8 @@ export default function useAnimationHooks<T, P>(props: P) {
           })
         }
       }
-      const animatedRef = rulesMap.get(key)
-      arr.push(Animated.timing(animatedRef, {
+      const animated = rulesMap.get(key)
+      arr.push(Animated.timing(animated, {
         toValue: value,
         duration,
         delay,
@@ -128,9 +128,10 @@ export default function useAnimationHooks<T, P>(props: P) {
       console.error('is finished ?', finished) // Todo
     });
   }
+  createAnimation()
   // animation 变更后清空之前的动画属性
-  useEffect(() => {
-    steps = []
-  }, [animation])
+  // useEffect(() => {
+  //   steps = []
+  // }, [animation])
   return animationStyle
 }

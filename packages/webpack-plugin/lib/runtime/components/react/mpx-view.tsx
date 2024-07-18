@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Animated } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX } from 'react'
 import useAnimationHooks from './useAnimationHooks'
 // @ts-ignore
