@@ -110,7 +110,7 @@
       this.debounceRefresh = debounce(function () {
         this.refresh()
       }, 200, {
-        leading: false,
+        leading: true,
         trailing: true
       })
       this.dispatchScrollTo = throttle(function (direction) {
