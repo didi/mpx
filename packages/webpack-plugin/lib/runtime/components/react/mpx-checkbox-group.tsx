@@ -19,7 +19,7 @@ import {
   ViewStyle,
   StyleSheet
 } from 'react-native'
-import { FormContext, CheckboxGroupContext } from './context'
+import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
@@ -48,9 +48,15 @@ const CheckboxGroup = forwardRef<
   } = props
 
   const layoutRef = useRef({})
-  const { formValuesMap } = useContext(FormContext)
+  const context = useContext(FormContext)
 
-  const groupValue = useRef({}).current
+  let formValuesMap: Map<string, FormFieldValue> | undefined;
+
+  if (context) {
+    formValuesMap = context.formValuesMap
+  }
+
+  const groupValue: GroupValue = useRef({}).current
 
   const defaultStyle = {
     flexDirection: 'row',
@@ -77,7 +83,7 @@ const CheckboxGroup = forwardRef<
   }
 
   const getSelectionValue = (): string[] => {
-    const arr: any = []
+    const arr: string[] = []
     for (let key in groupValue) {
       if (groupValue[key].checked) {
         arr.push(key)
@@ -90,7 +96,7 @@ const CheckboxGroup = forwardRef<
     return getSelectionValue()
   }
 
-  const setValue = ({ newVal = [], type }) => {
+  const setValue = ({ value, type }: { value?: boolean; type?: string }) => {
     if (type === 'reset') {
       Object.keys(groupValue).forEach((key) => {
         groupValue[key].checked = false
@@ -102,9 +108,9 @@ const CheckboxGroup = forwardRef<
   if (formValuesMap) {
     if (!props.name) {
       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
-      return
+    } else {
+      formValuesMap.set(props.name, { getValue, setValue })
     }
-    formValuesMap.set(props.name, { getValue, setValue })
   }
 
   const notifyChange = (
@@ -126,8 +132,8 @@ const CheckboxGroup = forwardRef<
       )
   }
 
-  const wrapChildren = (children: ReactNode) => {
-    const newChild = Children.toArray(children).map((child) => {
+  const wrapChildren = (children: ReactNode): ReactNode[] => {
+    return Children.toArray(children).map((child) => {
       if (!isValidElement(child)) return child
       const displayName = (child.type as FunctionComponent)?.displayName
 
@@ -139,7 +145,6 @@ const CheckboxGroup = forwardRef<
         return cloneElement(child, {}, wrapChildren(child.props.children))
       }
     })
-    return newChild
   }
 
   const innerProps = useInnerProps(

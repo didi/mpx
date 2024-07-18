@@ -11,7 +11,9 @@ import {
   forwardRef,
   useEffect,
   ReactNode,
-  useContext
+  useContext,
+  Dispatch,
+  SetStateAction
 } from 'react'
 import {
   View,
@@ -29,7 +31,7 @@ import { every, extractTextStyle, isText } from './utils'
 import { CheckboxGroupContext } from './context'
 
 interface Selection {
-  value?: string
+  value: string
   checked?: boolean
 }
 
@@ -42,10 +44,6 @@ export interface CheckboxProps extends Selection {
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  _onChange?: (
-    evt: NativeSyntheticEvent<TouchEvent> | unknown,
-    selection: Selection
-  ) => void
 }
 
 const styles = StyleSheet.create({
@@ -95,7 +93,15 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const textStyle = extractTextStyle(style)
 
-    const { groupValue, notifyChange } = useContext(CheckboxGroupContext)
+    const context = useContext(CheckboxGroupContext)
+
+    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
+    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void | undefined;
+
+    if (context) {
+      groupValue = context.groupValue
+      notifyChange = context.notifyChange
+    }
 
     const defaultStyle = StyleSheet.flatten([
       styles.wrapper,

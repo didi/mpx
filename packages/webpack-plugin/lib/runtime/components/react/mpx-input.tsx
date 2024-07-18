@@ -58,7 +58,7 @@ import {
 import { parseInlineStyle, useUpdateEffect } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { FormContext } from './context'
+import { FormContext, FormFieldValue } from './context'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -147,7 +147,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     bindlinechange,
   } = props
 
-  const { formValuesMap } = useContext(FormContext)
+  const context = useContext(FormContext)
+
+  let formValuesMap: Map<string, FormFieldValue> | undefined
+
+  if (context) {
+    formValuesMap = context.formValuesMap
+  }
+
   const { nodeRef } = useNodesRef(props, ref)
 
   const keyboardType = keyboardTypeMap[type]
@@ -160,10 +167,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
 
-  const [inputValue, setInputValue] = useState()
+  const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
 
-  
+
   const selection = useMemo(() => {
     if (selectionStart >= 0 && selectionEnd >= 0) {
       return { start: selectionStart, end: selectionEnd }
@@ -202,7 +209,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       tmpValue.current = result
       setInputValue(result)
     } else {
-      setInputValue(tmpValue.current);
+      setInputValue(tmpValue.current)
     }
   }
 
@@ -327,7 +334,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     })
   }
 
-  const setValue = ({ value = '', type }) => {
+  const setValue = ({ value = '', type }: { value?: string; type?: string }) => {
     if (type === 'reset') {
       setInputValue('')
     } else {
@@ -342,9 +349,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   if (formValuesMap) {
     if (!props.name) {
       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
-      return
+    } else {
+      formValuesMap.set(props.name, { getValue, setValue })
     }
-    formValuesMap.set(props.name, { getValue, setValue })
   }
 
   useUpdateEffect(() => {
@@ -366,7 +373,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   {
     layoutRef
   })
-
 
   return (
     <TextInput
