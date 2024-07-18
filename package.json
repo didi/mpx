@@ -12,6 +12,9 @@
     "docs:build": "vuepress build docs-vuepress",
     "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
   },
+  "workspaces": [
+    "packages/webpack-plugin"
+  ],
   "devDependencies": {
     "@babel/core": "^7.8.7",
     "@babel/eslint-parser": "^7.18.9",
