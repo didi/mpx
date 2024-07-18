@@ -81,7 +81,7 @@
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
-    "@types/react": "^18.3.3",
+    "@types/react": "^18.2.79",
     "@types/react-native": "^0.73.0"
   },
   "engines": {
