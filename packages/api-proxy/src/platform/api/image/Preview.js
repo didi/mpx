@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, createDom, warn, bindTap, getRootElement } from '../../../common/js'
+import { successHandle, failHandle, createDom, warn, bindTap, getRootElement } from '../../../common/js'
 import '../../../common/stylus/Preview.styl'
 /**
  * Preview class for displaying images in a slideshow format.
@@ -67,9 +67,9 @@ export default class Preview {
       }))))
       this.maxIndex = urls.length
       this.updateTextTip()
-      webHandleSuccess({ errMsg: 'previewImage:ok' }, success, complete)
+      successHandle({ errMsg: 'previewImage:ok' }, success, complete)
     } catch (e) {
-      webHandleFail({ errMsg: 'previewImage:fail', err: e }, fail, complete)
+      failHandle({ errMsg: 'previewImage:fail', err: e }, fail, complete)
     }
   }
 

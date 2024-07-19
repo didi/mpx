@@ -1,5 +1,5 @@
 import Clipboard from '@react-native-clipboard/clipboard'
-import { webHandleSuccess, webHandleFail } from '../../../common/js/web'
+import { successHandle, failHandle } from '../../../common/js'
 import { type } from '@mpxjs/utils'
 const setClipboardData = function (options) {
   const { data, success, fail, complete } = options
@@ -9,14 +9,14 @@ const setClipboardData = function (options) {
       errno: 1001,
       errMsg: errStr
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
     return
   }
   Clipboard.setString(data)
   const result = {
     errMsg: 'setClipboardData:ok'
   }
-  webHandleSuccess(result, success, complete)
+  successHandle(result, success, complete)
 }
 
 const getClipboardData = function (options) {
@@ -26,12 +26,12 @@ const getClipboardData = function (options) {
       data,
       errMsg: 'getClipboardData:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   }).catch(() => {
     const result = {
       errMsg: 'setClipboardData:fail'
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
   })
 }
 

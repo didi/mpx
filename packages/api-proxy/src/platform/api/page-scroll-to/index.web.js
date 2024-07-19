@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, isBrowser, throwSSRWarning } from '../../../common/js'
+import { successHandle, failHandle, isBrowser, throwSSRWarning } from '../../../common/js'
 import { nextTick } from '../next-tick'
 
 export function pageScrollTo (options) {
@@ -11,13 +11,13 @@ export function pageScrollTo (options) {
     const { success, fail, complete } = options
 
     if (!ms) {
-      return webHandleFail({
+      return failHandle({
         errMsg: 'pageScrollTo:fail'
       }, fail, complete)
     }
 
     ms.pageScrollTo(options)
-    webHandleSuccess({
+    successHandle({
       errMsg: 'pageScrollTo:ok'
     }, success, complete)
   })

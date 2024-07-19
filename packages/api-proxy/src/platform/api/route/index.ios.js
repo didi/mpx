@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import { parseQuery } from '@mpxjs/utils'
 
 function parseUrl (url) {
@@ -58,11 +58,11 @@ function navigateTo (options = {}) {
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateTo:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }
@@ -77,11 +77,11 @@ function redirectTo (options = {}) {
     navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'redirectTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `redirectTo:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }
@@ -93,11 +93,11 @@ function navigateBack (options = {}) {
     navigation.pop(options.delta || 1)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateBack:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateBack:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }
@@ -120,11 +120,11 @@ function reLaunch (options = {}) {
     })
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'redirectTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `redirectTo:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }

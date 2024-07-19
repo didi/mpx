@@ -134,6 +134,16 @@ function throwSSRWarning (info) {
   console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
 }
 
+function successHandle (result, success, complete) {
+  typeof success === 'function' && success(result)
+  typeof complete === 'function' && complete(result)
+}
+
+function failHandle (result, fail, complete) {
+  typeof fail === 'function' && fail(result)
+  typeof complete === 'function' && complete(result)
+}
+
 const ENV_OBJ = getEnvObj()
 
 export {
@@ -151,5 +161,7 @@ export {
   ENV_OBJ,
   parseDataset,
   type,
-  defineUnsupportedProps
+  defineUnsupportedProps,
+  successHandle,
+  failHandle
 }

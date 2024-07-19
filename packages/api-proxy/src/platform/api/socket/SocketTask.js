@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, type } from '../../../common/js'
+import { successHandle, failHandle, type } from '../../../common/js'
 
 const socketTasks = new Set()
 
@@ -43,17 +43,17 @@ class SocketTask {
     const { data = '', success, fail, complete } = options
     if (typeof data !== 'string' || type(data) !== 'ArrayBuffer') {
       const res = { errMsg: 'sendSocketMessage:fail Unsupported data type' }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
       return
     }
     if (this._socket.readyState === 1) {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
-      webHandleSuccess(res, success, complete)
+      successHandle(res, success, complete)
       return Promise.resolve(res)
     } else {
       const res = { errMsg: 'sendSocketMessage:fail' }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
       if (!fail) {
         return Promise.reject(res)
       }
@@ -69,11 +69,11 @@ class SocketTask {
     try {
       this._socket.close()
       const res = { errMsg: 'closeSocket:ok' }
-      webHandleSuccess(res, success, complete)
+      successHandle(res, success, complete)
       return Promise.resolve(res)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
       if (!fail) {
         return Promise.reject(res)
       }

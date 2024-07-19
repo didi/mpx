@@ -2,16 +2,16 @@
 
 type AddPromise<W> = {
   [K in keyof W]: W[K] extends (...args: any) => any
-    ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]
-      ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R>
+      ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]
+          ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R>
+          : W[K]
       : W[K]
-    : W[K]
 }
 
 type AddParam<O, V extends (...args: any) => any> =
-  Parameters<V> extends [{ success?: (res: infer R) => any }, ...any[]]
-    ? (options: O) => ReturnType<V> & Promise<R>
-    : (options: O) => ReturnType<V>
+    Parameters<V> extends [{ success?: (res: infer R) => any }, ...any[]]
+        ? (options: O) => ReturnType<V> & Promise<R>
+        : (options: O) => ReturnType<V>
 // @ts-ignore
 type PickApiValue<T extends keyof WechatMiniprogram.Wx> = Pick<WechatMiniprogram.Wx, T>[T]
 // @ts-ignore
@@ -33,7 +33,7 @@ declare module '@mpxjs/core' {
 
 export const getProxy: (...args: any) => void
 
-export const promisify: (listObj: object, whiteList: string[], customBlackList: string[]) => object
+export const promisify: (listObj: object, whiteList?: string[], customBlackList?: string[]) => Record<string, any>
 
 export const showActionSheet: WechatMiniprogram.Wx['showActionSheet']
 export const addPhoneContact: WechatMiniprogram.Wx['addPhoneContact']
