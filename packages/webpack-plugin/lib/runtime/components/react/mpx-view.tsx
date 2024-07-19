@@ -280,6 +280,8 @@ function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp
   ]
 }
 
+const { createAnimation } = useAnimationHooks()
+
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
   const {
     style = [],
@@ -383,7 +385,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
-  const animationStyle = useAnimationHooks(props)
+  const animationStyle = createAnimation(props)
 
   return animation.length ? (
     <Animated.View
@@ -405,4 +407,3 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
 _View.displayName = 'mpx-view'
 
 export default _View
-

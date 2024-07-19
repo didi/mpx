@@ -36,40 +36,15 @@ const InitialValue = {
   // left
 }
 
-export default function useAnimationHooks<T, P>(props: P) {
-  let animationStyle = useRef({}).current
-  // 分步动画
-  let steps = []
-  // 动画属性Val
+export default function useAnimationHooks<T, P>() {
   let rulesMap = new Map()
-  const {
-    style = [],
-    animation = []
-  } = props
-  const styleObj = StyleSheet.flatten(style)
-  if (!animation.length) return animationStyle
-
-  // 测试模拟兜底 start
-  // const animationInstance = createAnimationApi({
-  //   duration: 500,
-  //   style: {
-  //     width: 10,
-  //     height: 10,
-  //     opacity: 0
-  //   }
-  // })
-  // animationInstance.width(100).width(200).height(200).rotateZ(360).step().width(100).height(100).rotateZ(-360).opacity(1).step();
-  // animationInstance.width(100).width(200).height(200).rotateZ(-90).step().width(100).height(100).rotateZ(-180).opacity(1).step();
-  // animationInstance.width(100).height(100).opacity(1).rotateZ(-90).step().translateX(100).rotateY(180).step();
-  // const animation = animationInstance.export()
-  // 测试模拟兜底 end
 
   const isDeg = (key) => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY'].includes(key)
 
   /** format rules */
-  const formatRules = (rules, { delay, duration, timingFunction }, isTransform = false) => {
+  const formatRules = ({ rules, animatedOption: { delay, duration, timingFunction }, isTransform = false }, style, animationStyle) => {
     return [...rules.entries()].reduce((arr, [key, value]) => {
-      const initialVal = styleObj[key] === undefined ? InitialValue[key] : styleObj[key]
+      const initialVal = style[key] === undefined ? InitialValue[key] : style[key]
       if (initialVal === undefined) {
         console.error(`style rule ${key} 初始值为空`)
         return arr
@@ -108,7 +83,17 @@ export default function useAnimationHooks<T, P>(props: P) {
   }
 
   /** 创建动画 */
-  const createAnimation = () => {
+  const createAnimation = (props) => {
+    // 动画样式
+    let animationStyle = useRef({}).current
+    // 分步动画
+    let steps = []
+    const {
+      style = [],
+      animation = []
+    } = props
+    const styleObj = StyleSheet.flatten(style)
+    if (!animation.length) return animationStyle
     if (!steps.length) {
       steps =  animation.map(({ animatedOption, rules, transform }) => {
         // 设置 transformOrigin
@@ -117,9 +102,9 @@ export default function useAnimationHooks<T, P>(props: P) {
         })
         // 获取属性动画实例
         const parallels = [];
-        const styleAnimation = formatRules(rules, animatedOption)
+        const styleAnimation = formatRules({ rules, animatedOption }, styleObj, animationStyle)
         parallels.push(...styleAnimation)
-        const transformAnimation = formatRules(transform, animatedOption, true)
+        const transformAnimation = formatRules({ rules: transform, animatedOption, isTransform: true }, styleObj, animationStyle)
         parallels.push(...transformAnimation)
         return Animated.parallel(parallels)
       })
@@ -127,11 +112,10 @@ export default function useAnimationHooks<T, P>(props: P) {
     Animated.sequence(steps).start(({ finished }) => {
       console.error('is finished ?', finished) // Todo
     });
+    return animationStyle
   }
-  createAnimation()
-  // animation 变更后清空之前的动画属性
-  // useEffect(() => {
-  //   steps = []
-  // }, [animation])
-  return animationStyle
+
+  return {
+    createAnimation
+  }
 }
