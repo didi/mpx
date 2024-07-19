@@ -1,7 +1,6 @@
+import { Dimensions } from 'react-native'
+
 class Animation {
-  // unit: string
-  // id: number
-  // DEFAULT: IAnimationAttr
 
   constructor (
     {
@@ -13,21 +12,34 @@ class Animation {
     } = {}
   ) {
     // 默认值
-    this.setDefault(duration, delay, timingFunction, transformOrigin)
-    // this.unit = unit
+    this._setDefault(duration, delay, timingFunction, transformOrigin)
   }
 
-  // transformUnit (...args) { // Todo 单位换算
-  //   // const ret: string[] = []
-  //   const ret = []
-  //   args.forEach(each => {
-  //     ret.push(isNaN(each) ? each : `${each}${this.unit}`)
-  //   })
-  //   return ret
-  // }
+  __rpx (value) {
+    const { width } = Dimensions.get('screen')
+    return value * width / 750
+  }
+  
+  _transformUnit (...args) {
+    const ret = []
+    args.forEach(each => {
+      if (isNaN(each)) {
+        if (!/(\d+)(px|rpx)/.test(each)) {
+          console.error('animation api 数据单位仅支持 px、rpx')
+        } else {
+          const [,val,unit] = each.match(/(\d+)(px|rpx)/)
+          ret.push(unit === 'rpx' ? this.__rpx(+val) : +val)
+        }
+      } else {
+        // 纯数字
+        ret.push(each)
+      }
+    })
+    return ret
+  }
 
   // 设置默认值
-  setDefault (duration, delay, timingFunction, transformOrigin) {
+  _setDefault (duration, delay, timingFunction, transformOrigin) {
     this.DEFAULT = { duration, delay, timingFunction, transformOrigin }
   }
 
@@ -128,31 +140,31 @@ class Animation {
   }
 
   translate (x, y) {
-    // [x, y] = this.transformUnit(x, y)
+    [x, y] = this._transformUnit(x, y)
     this.transform.set('translate', [x, y])
     return this
   }
 
   translate3d (x, y, z) {
-    // [x, y, z] = this.transformUnit(x, y, z)
+    [x, y, z] = this._transformUnit(x, y, z)
     this.transform.set('translate3d', [x, y, z])
     return this
   }
 
   translateX (translate) {
-    // [translate] = this.transformUnit(translate)
+    [translate] = this._transformUnit(translate)
     this.transform.set('translateX', translate)
     return this
   }
 
   translateY (translate) {
-    // [translate] = this.transformUnit(translate)
+    [translate] = this._transformUnit(translate)
     this.transform.set('translateY', translate)
     return this
   }
 
   translateZ (translate) {
-    // [translate] = this.transformUnit(translate)
+    [translate] = this._transformUnit(translate)
     this.transform.set('translateZ', translate)
     return this
   }
@@ -168,37 +180,37 @@ class Animation {
   }
 
   width (value) {
-    // [value] = this.transformUnit(value)
+    [value] = this._transformUnit(value)
     this.rules.set('width', value)
     return this
   }
 
   height (value) {
-    // [value] = this.transformUnit(value)
+    [value] = this._transformUnit(value)
     this.rules.set('height', value)
     return this
   }
 
   top (value) {
-    // [value] = this.transformUnit(value)
+    [value] = this._transformUnit(value)
     this.rules.set('top', value)
     return this
   }
 
   right (value) {
-    // [value] = this.transformUnit(value)
+    [value] = this._transformUnit(value)
     this.rules.set('right', value)
     return this
   }
 
   bottom (value) {
-    // [value] = this.transformUnit(value)
+    [value] = this._transformUnit(value)
     this.rules.set('bottom', value)
     return this
   }
 
   left (value) {
-    // [value] = this.transformUnit(value)
+    [value] = this._transformUnit(value)
     this.rules.set('left', value)
     return this
   }
