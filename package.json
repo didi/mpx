@@ -13,7 +13,7 @@
     "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
   },
   "workspaces": [
-    "packages/webpack-plugin"
+    "packages/*"
   ],
   "devDependencies": {
     "@babel/core": "^7.8.7",
