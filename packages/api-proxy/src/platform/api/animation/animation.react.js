@@ -50,7 +50,7 @@ class Animation {
   // 组合动画
   steps = []
 
-  matrix (a, b, c, d, tx, ty) {
+  matrix (a, b, c, d, tx, ty) { // Todo
     this.transform.set('matrix', [a, b, c, d, tx, ty])
     return this
   }
@@ -60,7 +60,7 @@ class Animation {
             a3, b3, c3, d3,
             a4, b4, c4, d4
   ) {
-    this.transform.set('matrix3d', [
+    this.transform.set('matrix3d', [ // Todo
       a1, b1, c1, d1,
       a2, b2, c2, d2,
       a3, b3, c3, d3,
@@ -69,8 +69,8 @@ class Animation {
     return this
   }
 
-  rotate (angle) {
-    this.transform.set('matrix3d', angle)
+  rotate (angle) { // 旋转变换
+    this.transform.set('rotate', angle)
     return this
   }
 
@@ -78,7 +78,11 @@ class Animation {
     if (typeof y !== 'number') {
       this.transform.set('rotate3d', x)
     } else {
-      this.transform.set('rotate3d', [x, y, z, angle]) // Todo
+      // this.transform.set('rotate3d', [x, y, z, angle])
+      this.rotateX(x)
+      this.rotateY(y)
+      this.rotateZ(z)
+      this.rotate(angle)
     }
     return this
   }
@@ -100,12 +104,18 @@ class Animation {
 
   scale (x, y) {
     const scaleY = (typeof y !== 'undefined' && y !== null) ? y : x
-    this.transform.set('scale', [x, scaleY])
+    this.scaleX(x)
+    this.scaleY(scaleY)
+    // this.transform.set('scale', [x, scaleY])
     return this
   }
 
   scale3d (x, y, z) {
-    this.transform.set('scale3d', [x, y, z])
+    // this.transform.set('scale3d', [x, y, z])
+    this.scaleX(x)
+    this.scaleY(y)
+    // Invariant Violation: Invalid transform scaleZ: {"scaleZ":0} Todo
+    this.scaleZ(z)
     return this
   }
 
@@ -120,12 +130,15 @@ class Animation {
   }
 
   scaleZ (scale) {
+    // Invariant Violation: Invalid transform scaleZ: {"scaleZ":0} Todo
     this.transform.set('scaleZ', scale)
     return this
   }
 
   skew (x, y) {
-    this.transform.set('skew', [x, y])
+    // this.transform.set('skew', [x, y])
+    this.skewX(x)
+    this.skewY(y)
     return this
   }
 
@@ -141,13 +154,18 @@ class Animation {
 
   translate (x, y) {
     [x, y] = this._transformUnit(x, y)
-    this.transform.set('translate', [x, y])
+    // this.transform.set('translate', [x, y])
+    this.translateX(x)
+    this.translateY(y)
     return this
   }
 
-  translate3d (x, y, z) {
+  translate3d (x, y, z) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
     [x, y, z] = this._transformUnit(x, y, z)
-    this.transform.set('translate3d', [x, y, z])
+    // this.transform.set('translate3d', [x, y, z])
+    this.translateX(x)
+    this.translateY(y)
+    this.translateZ(z)
     return this
   }
 
@@ -163,7 +181,7 @@ class Animation {
     return this
   }
 
-  translateZ (translate) {
+  translateZ (translate) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
     [translate] = this._transformUnit(translate)
     this.transform.set('translateZ', translate)
     return this
@@ -174,7 +192,7 @@ class Animation {
     return this
   }
 
-  backgroundColor (value) {
+  backgroundColor (value) { // Todo
     this.rules.set('backgroundColor', value)
     return this
   }

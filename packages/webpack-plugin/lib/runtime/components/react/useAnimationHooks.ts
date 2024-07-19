@@ -13,27 +13,34 @@ const EasingKey = {
 }
 // 动画默认初始值
 const InitialValue = {
-  translateX: 0,
-  translateY: 0,
-  translateZ: 0,
+  matrix: 0,
+  // matrix3d: 0, // Todo
+  rotate: 0,
   rotateX: 0,
   rotateY: 0,
   rotateZ: 0,
-  scaleX: 0,
-  scaleY: 0,
-  scaleZ: 0,
+  // rotate3d:[0,0,0]
+  scale: 1,
+  // scale3d: [1, 1, 1],
+  scaleX: 1,
+  scaleY: 1,
+  scaleZ: 1,
+  skew: 0,
   skewX: 0,
-  skewY: 0
-  // matrix
-  // matrix3d
-  // opacity: 1,
-  // backgroundColor
-  // width
-  // height
-  // top
-  // right
-  // bottom
-  // left
+  skewY: 0,
+  translate: 0,
+  // translate3d: 0,
+  translateX: 0,
+  translateY: 0,
+  translateZ: 0,
+  opacity: 0,
+  // backgroundColor: 0,
+  width: 0,
+  height: 0,
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0
 }
 
 export default function useAnimationHooks<T, P>() {
@@ -52,6 +59,7 @@ export default function useAnimationHooks<T, P>() {
       if (!rulesMap.has(key)) {
         const animated = new Animated.Value(initialVal) // useRef().current
         rulesMap.set(key, animated)
+        // Todo 非数字单位的支持 deg turn rad
         const styleVal = isDeg(key) ?  animated.interpolate({
           inputRange: [0, 360],
           outputRange: ['0deg', '360deg']
