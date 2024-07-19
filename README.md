@@ -39,7 +39,8 @@ Mpx具有以下功能特性：
 * [E2E测试](https://www.mpxjs.cn/guide/tool/e2e-test.html)
 * [原子类](https://mpxjs.cn/guide/advance/utility-first-css.html)
 * [SSR](https://mpxjs.cn/guide/advance/ssr.html)
-* [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
+* 运行时渲染方案
+* 跨端输出RN（即将到来）
 
 ## 快速开始
 
@@ -192,6 +193,8 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |@mpxjs/store|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fstore.svg)](https://badge.fury.io/js/%40mpxjs%2Fstore)|类vuex store|
 |@mpxjs/pinia|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fpinia.svg)](https://badge.fury.io/js/%40mpxjs%2Fpinia)|mpx pinia store|
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
+|@mpxjs/unocss-plugin|[![npm version](https://badge.fury.io/js/@mpxjs%2Funocss-plugin.svg)](https://badge.fury.io/js/@mpxjs%2Funocss-plugin)|mpx unocss插件，支持使用unocss原子类|
+|@mpxjs/unocss-base|[![npm version](https://badge.fury.io/js/@mpxjs%2Funocss-base.svg)](https://badge.fury.io/js/@mpxjs%2Funocss-base)|mpx unocss预设|
 |@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
 |@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
 |@mpxjs/utils|[![npm version](https://badge.fury.io/js/%40mpxjs%2Futils.svg)](https://badge.fury.io/js/%40mpxjs%2Futils)|mpx运行时工具库|
