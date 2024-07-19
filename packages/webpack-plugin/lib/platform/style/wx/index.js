@@ -70,8 +70,8 @@ module.exports = function getSpec ({ warn, error }) {
       case ValueType.color: {
         const isNumber = numberRegExp.test(value)
         const isUnsupporttedColor = colorRegExp.test(value)
-        isNumber && warn(`React Native property [${prop}]'s valueType is ${valueType}, we does not set type number`)
-        isUnsupporttedColor && warn('React Native color does not support type [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark]')
+        isNumber && warn(`Property [${prop}] receives a valid color as value, not a number.`)
+        isUnsupporttedColor && warn('React Native\'s supported color format does not contain [lab,lch,oklab,oklch,color-mix,color,hwb,lch,light-dark].')
         return !isNumber && !isUnsupporttedColor
       }
       case ValueType.number: {
