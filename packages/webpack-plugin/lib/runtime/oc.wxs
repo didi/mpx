@@ -1,15 +1,14 @@
 // 可选链wxs
 module.exports.g = function (val, valKeyArr) {
     var res = val
-    if (typeof val !== 'object') {
-        return undefined
-    }
     var len = valKeyArr.length
     var i = 0
     while (i < len) {
-        if ((res = res[valKeyArr[i]]) === undefined) {
+        if (typeof res !== 'object' || res === null) {
+            res = undefined
             break
         }
+        res = res[valKeyArr[i]]
         i++
     }
     return res

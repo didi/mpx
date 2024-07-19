@@ -40,7 +40,7 @@ function stringifyDynamicClass (value) {
 }
 
 const listDelimiter = /;(?![^(]*[)])/g
-const propertyDelimiter = /':(.+)'/
+const propertyDelimiter = /:(.+)/
 const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
 

@@ -27,6 +27,7 @@ const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
+const DynamicRuntimePlugin = require('./resolver/DynamicRuntimePlugin')
 const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
@@ -180,6 +181,7 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
+    options.rnConfig = options.rnConfig || {}
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
@@ -341,6 +343,9 @@ class MpxWebpackPlugin {
     }
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
+    }
+    if (this.options.dynamicRuntime) {
+      compiler.options.resolve.plugins.push(new DynamicRuntimePlugin('before-file', 'file'))
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
@@ -669,6 +674,8 @@ class MpxWebpackPlugin {
           nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
+          // 输出rn专用配置
+          rnConfig: this.options.rnConfig,
           loaderContentCache: new Map(),
           tabBarMap: {},
           defs: processDefs(this.options.defs),
@@ -683,7 +690,7 @@ class MpxWebpackPlugin {
           forceProxyEventRules: this.options.forceProxyEventRules,
           supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || isWeb(this.options.mode),
           partialCompileRules: this.options.partialCompileRules,
-          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
+          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,
               entries: []
@@ -692,7 +699,8 @@ class MpxWebpackPlugin {
             curInfo.entries.push({
               entryType,
               resource,
-              filename
+              filename,
+              hasAsync
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
@@ -1332,6 +1340,7 @@ class MpxWebpackPlugin {
                   parser.state.current.addBlock(depBlock)
                 } else {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
+                    isAsync: true,
                     isRequireAsync: true,
                     retryRequireAsync: !!this.options.retryRequireAsync
                   })
