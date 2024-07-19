@@ -1654,9 +1654,10 @@ function processFor (el) {
   }
 }
 
-function processRefReact (el, options, meta) {
+function processRefReact (el, meta) {
   const val = getAndRemoveAttr(el, config[mode].directive.ref).val
-  const type = isComponentNode(el, options) ? 'component' : 'node'
+  // rn中只有内建组件能被作为node ref处理
+  const type = el.isBuiltIn ? 'node' : 'component'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
@@ -2522,7 +2523,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processRefReact(el, options, meta)
+    processRefReact(el, meta)
     processStyleReact(el)
     processEventReact(el, options, meta)
     processComponentIs(el, options)
