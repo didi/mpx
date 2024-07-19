@@ -1970,7 +1970,7 @@ function processWrapTextReact (el) {
 // }
 
 function injectWxs (meta, module, src) {
-  if (runtimeCompile || addWxsModule(meta, module, src)) {
+  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode)) {
     return
   }
 
