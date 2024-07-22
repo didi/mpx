@@ -4,6 +4,11 @@ import {
 } from '../../src/platform/api/action-sheet/index.web'
 import { dispatchTap } from '../../../../test/utils/touch'
 
+jest.mock('@mpxjs/core', () => ({
+  isRef: jest.fn(),
+  isReactive: jest.fn()
+}))
+
 describe('test toast', () => {
   afterAll(() => {
     document.body.lastChild && document.body.lastChild.remove()

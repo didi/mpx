@@ -4,6 +4,11 @@ import {
   showModal
 } from '../../src/platform/api/modal/index.web'
 
+jest.mock('@mpxjs/core', () => ({
+  isRef: jest.fn(),
+  isReactive: jest.fn()
+}))
+
 describe('test modal', () => {
   afterAll(() => {
     document.body.lastChild && document.body.lastChild.remove()

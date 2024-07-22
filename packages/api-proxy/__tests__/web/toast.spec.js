@@ -3,6 +3,11 @@ import {
   showToast, hideToast
 } from '../../src/platform/api/toast/index.web'
 
+jest.mock('@mpxjs/core', () => ({
+  isRef: jest.fn(),
+  isReactive: jest.fn()
+}))
+
 describe('test toast', () => {
   afterAll(() => {
     document.body.lastChild && document.body.lastChild.remove()
