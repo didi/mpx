@@ -2,6 +2,7 @@ const babylon = require('@babel/parser')
 const t = require('@babel/types')
 const traverse = require('@babel/traverse').default
 const generate = require('@babel/generator').default
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
   '(': '_pl_',
@@ -31,6 +32,12 @@ function mpEscape (str) {
   })
 }
 
+function keyEscape (str) {
+  let result = str.replace(/-/g, '_da_').replace(/\s+/g, '_sp_')
+  if (result !== str) result += 'MpxEscape'
+  return result
+}
+
 module.exports = function transDynamicClassExpr (expr, { error } = {}) {
   try {
     const ast = babylon.parse(expr, {
@@ -42,10 +49,10 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
       ObjectExpression (path) {
         path.node.properties.forEach((property) => {
           if (t.isObjectProperty(property) && !property.computed) {
-            let propertyName = property.key.name || property.key.value
-            propertyName = mpEscape(propertyName)
-            if (/-/.test(propertyName)) {
-              property.key = t.identifier(propertyName.replace(/-/g, '$$') + 'MpxDash')
+            const rawPropertyName = property.key.name || property.key.value
+            const propertyName = keyEscape(mpEscape(rawPropertyName))
+            if (!isValidIdentifierStr(propertyName)) {
+              error && error(`Dynamic classname [${rawPropertyName}] can not be escaped as a valid identifier, which is not supported.`)
             } else {
               property.key = t.identifier(propertyName)
             }
