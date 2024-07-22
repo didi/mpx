@@ -36,7 +36,7 @@ export interface CheckboxProps extends Selection {
   color?: string
   style?: StyleProp<ViewStyle>
   'enable-offset'?: boolean
-  children: ReactNode
+  children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   _onChange?: (
