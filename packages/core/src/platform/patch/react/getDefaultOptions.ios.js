@@ -286,9 +286,11 @@ function usePageStatus (mpxProxy, rawOptions) {
 
       resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
         const orientation = getOrientation(window)
-        if (orientation === lastOrientation || !pageStatus) return
-        triggerResizeEvent(mpxProxy)
+        if (orientation === lastOrientation) return
         lastOrientation = orientation
+        if (pageStatus) {
+          triggerResizeEvent(mpxProxy)
+        }
       })
     }
 
