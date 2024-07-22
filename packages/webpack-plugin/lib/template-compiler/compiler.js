@@ -1654,9 +1654,10 @@ function processFor (el) {
   }
 }
 
-function processRefReact (el, options, meta) {
+function processRefReact (el, meta) {
   const val = getAndRemoveAttr(el, config[mode].directive.ref).val
-  const type = isComponentNode(el, options) ? 'component' : 'node'
+  // rn中只有内建组件能被作为node ref处理
+  const type = el.isBuiltIn ? 'node' : 'component'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
@@ -1949,7 +1950,7 @@ function processText (el) {
 // RN中文字需被Text包裹
 function processWrapTextReact (el) {
   const parentTag = el.parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('Text')
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
@@ -1970,7 +1971,7 @@ function processWrapTextReact (el) {
 // }
 
 function injectWxs (meta, module, src) {
-  if (runtimeCompile || addWxsModule(meta, module, src)) {
+  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode)) {
     return
   }
 
@@ -2522,7 +2523,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processRefReact(el, options, meta)
+    processRefReact(el, meta)
     processStyleReact(el)
     processEventReact(el, options, meta)
     processComponentIs(el, options)
@@ -2573,6 +2574,7 @@ function closeElement (el, meta, options) {
     return
   }
   if (isReact(mode)) {
+    postProcessWxs(el, meta)
     postProcessForReact(el)
     postProcessIfReact(el)
     return
