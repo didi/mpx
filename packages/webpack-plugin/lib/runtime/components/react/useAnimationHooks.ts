@@ -6,14 +6,14 @@ const EasingKey = {
   ease: Easing.ease,
   'ease-in': Easing.in(Easing.ease),
   'ease-in-out': Easing.inOut(Easing.ease),
-  'ease-out': Easing.out(Easing.ease)
-  // 'step-start': '', // Todo
-  // 'step-end': ''
+  'ease-out': Easing.out(Easing.ease),
+  'step-start': '',
+  'step-end': ''
 }
 // 动画默认初始值
 const InitialValue = {
-  matrix: 0,
-  // matrix3d: 0, // Todo
+  // matrix: 0,
+  // matrix3d: 0,
   rotate: 0,
   rotateX: 0,
   rotateY: 0,
@@ -23,7 +23,7 @@ const InitialValue = {
   // scale3d: [1, 1, 1],
   scaleX: 1,
   scaleY: 1,
-  scaleZ: 1,
+  // scaleZ: 1,
   skew: 0,
   skewX: 0,
   skewY: 0,
@@ -31,7 +31,7 @@ const InitialValue = {
   // translate3d: 0,
   translateX: 0,
   translateY: 0,
-  translateZ: 0,
+  // translateZ: 0,
   opacity: 0,
   // backgroundColor: 0,
   width: 0,
@@ -45,7 +45,9 @@ const InitialValue = {
 export default function useAnimationHooks<T, P>() {
   let rulesMap = new Map()
 
-  const isDeg = (key) => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY'].includes(key)
+  const isDeg = key => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY'].includes(key)
+
+  const isBg = key => key === 'backgroundColor'
 
   /** format rules */
   const formatRules = ({ rules, animatedOption: { delay, duration, timingFunction }, isTransform = false }, style, animationStyle) => {
@@ -56,18 +58,27 @@ export default function useAnimationHooks<T, P>() {
         return arr
       }
       if (!rulesMap.has(key)) {
-        const animated = new Animated.Value(initialVal) // useRef().current
+        const animated = new Animated.Value(isBg(key) ? 0 : initialVal)
         rulesMap.set(key, animated)
-        const styleVal = isDeg(key) ?  animated.interpolate({
-          inputRange: [0, 360],
-          outputRange: ['0deg', '360deg']
-        }) : animated
+        const styleVal = isBg
+          // 背景色映射
+          ? animated.interpolate({
+            inputRange: [0, 1],
+            outputRange: [initialVal, value]
+          })
+          : isDeg(key)
+            // deg 角度值映射
+            ? animated.interpolate({
+              inputRange: [0, 360],
+              outputRange: ['0deg', '360deg']
+            })
+            : animated
+        // transform
         if (isTransform) {
           const transformStyle = animationStyle.transform || []
           transformStyle.push({
             [key]: styleVal
           })
-          // animationStyle.transform = transformStyle
           Object.assign(animationStyle, {
             transform: transformStyle
           })
@@ -78,11 +89,14 @@ export default function useAnimationHooks<T, P>() {
         }
       }
       const animated = rulesMap.get(key)
+      if (!EasingKey[timingFunction]) {
+        console.error(`React Native 不支持 timingFunction = ${timingFunction}，请重新设置`)
+      }
       arr.push(Animated.timing(animated, {
-        toValue: value,
+        toValue: isBg(key) ? 1 : value,
         duration,
         delay,
-        easing: EasingKey[timingFunction]
+        ...EasingKey[timingFunction] ? { easing: EasingKey[timingFunction] } : {}
       }))
       return arr
     }, [])

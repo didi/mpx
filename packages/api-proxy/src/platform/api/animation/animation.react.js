@@ -193,9 +193,8 @@ class Animation {
     return this
   }
 
-  backgroundColor (value) { // Todo
-    console.error('React Native 不支持 backgroundColor 动画')
-    // this.rules.set('backgroundColor', value)
+  backgroundColor (value) {
+    this.rules.set('backgroundColor', value)
     return this
   }
 
