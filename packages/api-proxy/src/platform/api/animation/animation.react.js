@@ -1,14 +1,12 @@
 import { Dimensions } from 'react-native'
 
 class Animation {
-
   constructor (
     {
       duration = 400,
       delay = 0,
       timingFunction = 'linear',
       transformOrigin = '50% 50% 0'
-      // unit = 'px'
     } = {}
   ) {
     // 默认值
@@ -51,7 +49,8 @@ class Animation {
   steps = []
 
   matrix (a, b, c, d, tx, ty) { // Todo
-    this.transform.set('matrix', [a, b, c, d, tx, ty])
+    console.error('React Native 不支持 matrix 动画')
+    // this.transform.set('matrix', [a, b, c, d, tx, ty])
     return this
   }
 
@@ -60,12 +59,13 @@ class Animation {
             a3, b3, c3, d3,
             a4, b4, c4, d4
   ) {
-    this.transform.set('matrix3d', [ // Todo
-      a1, b1, c1, d1,
-      a2, b2, c2, d2,
-      a3, b3, c3, d3,
-      a4, b4, c4, d4
-    ])
+    console.error('React Native 不支持 matrix3d 动画')
+    // this.transform.set('matrix3d', [ // Todo
+    //   a1, b1, c1, d1,
+    //   a2, b2, c2, d2,
+    //   a3, b3, c3, d3,
+    //   a4, b4, c4, d4
+    // ])
     return this
   }
 
@@ -110,15 +110,6 @@ class Animation {
     return this
   }
 
-  scale3d (x, y, z) {
-    // this.transform.set('scale3d', [x, y, z])
-    this.scaleX(x)
-    this.scaleY(y)
-    // Invariant Violation: Invalid transform scaleZ: {"scaleZ":0} Todo
-    this.scaleZ(z)
-    return this
-  }
-
   scaleX (scale) {
     this.transform.set('scaleX', scale)
     return this
@@ -129,9 +120,17 @@ class Animation {
     return this
   }
 
-  scaleZ (scale) {
-    // Invariant Violation: Invalid transform scaleZ: {"scaleZ":0} Todo
-    this.transform.set('scaleZ', scale)
+  scaleZ (scale) { // Todo Invariant Violation: Invalid transform scaleZ: {"scaleZ":0}
+    console.error('React Native 不支持 transform scaleZ')
+    // this.transform.set('scaleZ', scale)
+    return this
+  }
+
+  scale3d (x, y, z) { // Todo Invariant Violation: Invalid transform scaleZ: {"scaleZ":0}
+    console.error('React Native 不支持 transform scaleZ，故不支持 scale3d')
+    // this.scaleX(x)
+    // this.scaleY(y)
+    // this.scaleZ(z)
     return this
   }
 
@@ -160,15 +159,6 @@ class Animation {
     return this
   }
 
-  translate3d (x, y, z) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
-    [x, y, z] = this._transformUnit(x, y, z)
-    // this.transform.set('translate3d', [x, y, z])
-    this.translateX(x)
-    this.translateY(y)
-    this.translateZ(z)
-    return this
-  }
-
   translateX (translate) {
     [translate] = this._transformUnit(translate)
     this.transform.set('translateX', translate)
@@ -182,8 +172,19 @@ class Animation {
   }
 
   translateZ (translate) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
-    [translate] = this._transformUnit(translate)
-    this.transform.set('translateZ', translate)
+    console.error('React Native 不支持 transform translateZ')
+    // [translate] = this._transformUnit(translate)
+    // this.transform.set('translateZ', translate)
+    return this
+  }
+
+  translate3d (x, y, z) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
+    console.error('React Native 不支持 transform translateZ，故无法支持 translate3d')
+    // [x, y, z] = this._transformUnit(x, y, z)
+    // // this.transform.set('translate3d', [x, y, z])
+    // this.translateX(x)
+    // this.translateY(y)
+    // this.translateZ(z)
     return this
   }
 
@@ -193,7 +194,8 @@ class Animation {
   }
 
   backgroundColor (value) { // Todo
-    this.rules.set('backgroundColor', value)
+    console.error('React Native 不支持 backgroundColor 动画')
+    // this.rules.set('backgroundColor', value)
     return this
   }
 

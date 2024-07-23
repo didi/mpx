@@ -1,5 +1,4 @@
-import { createAnimation as createAnimationApi } from './animation'
-import { useRef, useState, useEffect } from 'react'
+import { useRef } from 'react'
 import { Animated, Easing, StyleSheet } from 'react-native'
 // 微信 timingFunction 和 RN Easing 对应关系
 const EasingKey = {
@@ -59,7 +58,6 @@ export default function useAnimationHooks<T, P>() {
       if (!rulesMap.has(key)) {
         const animated = new Animated.Value(initialVal) // useRef().current
         rulesMap.set(key, animated)
-        // Todo 非数字单位的支持 deg turn rad
         const styleVal = isDeg(key) ?  animated.interpolate({
           inputRange: [0, 360],
           outputRange: ['0deg', '360deg']
