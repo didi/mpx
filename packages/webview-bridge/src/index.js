@@ -8,7 +8,7 @@ const SDK_URL_MAP = {
     url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
   },
   my: {
-    url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.31.js'
+    url: 'https://appx/web-view.min.js'
   },
   swan: {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
