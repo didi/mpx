@@ -45,7 +45,7 @@ const InitialValue = {
 export default function useAnimationHooks<T, P>() {
   let rulesMap = new Map()
 
-  const isDeg = key => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY'].includes(key)
+  const isDeg = key => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY', 'rotate'].includes(key)
 
   const isBg = key => key === 'backgroundColor'
 
@@ -60,7 +60,7 @@ export default function useAnimationHooks<T, P>() {
       if (!rulesMap.has(key)) {
         const animated = new Animated.Value(isBg(key) ? 0 : initialVal)
         rulesMap.set(key, animated)
-        const styleVal = isBg
+        const styleVal = isBg(key)
           // 背景色映射
           ? animated.interpolate({
             inputRange: [0, 1],
@@ -110,12 +110,13 @@ export default function useAnimationHooks<T, P>() {
     let steps = []
     const {
       style = [],
-      animation = []
+      animation = {}
     } = props
+    const actions = animation.actions || []
     const styleObj = StyleSheet.flatten(style)
-    if (!animation.length) return animationStyle
+    if (!actions.length) return animationStyle
     if (!steps.length) {
-      steps =  animation.map(({ animatedOption, rules, transform }) => {
+      steps = actions.map(({ animatedOption, rules, transform }) => {
         // 设置 transformOrigin
         Object.assign(animationStyle, {
           transformOrigin: animatedOption.transformOrigin

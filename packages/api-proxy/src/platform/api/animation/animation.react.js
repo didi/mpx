@@ -269,7 +269,9 @@ class Animation {
 
   // 动画数据产出
   export () {
-    return this.createAnimationData()
+    return {
+      actions: this.createAnimationData()
+    }
   }
 }
 

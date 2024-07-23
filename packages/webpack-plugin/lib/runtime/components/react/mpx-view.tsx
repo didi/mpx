@@ -290,7 +290,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset,
-    animation = []
+    animation = {}
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -387,7 +387,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
 
   const animationStyle = createAnimation(props)
 
-  return animation.length ? (
+  return animation.actions?.length ? (
     <Animated.View
       {...innerProps}
       style={{...innerStyle, ...animationStyle}}
