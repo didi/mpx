@@ -8,13 +8,13 @@ const SDK_URL_MAP = {
     url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
   },
   my: {
-    url: 'https://appx/web-view.min.js'
+    url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.31.js'
   },
   swan: {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
-    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+    url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
   },
   ...window.sdkUrlMap
 }
@@ -262,7 +262,8 @@ const getWebviewApi = () => {
       'postMessage',
       'getLoadError',
       'getLocation'
-    ]
+    ],
+    tt: []
   }
   const multiApi = multiApiMap[env] || {}
   const singleApi = singleApiMap[env] || {}
