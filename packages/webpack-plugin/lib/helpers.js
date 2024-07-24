@@ -19,7 +19,7 @@ module.exports = function createHelpers (loaderContext) {
 
   const { mode, env } = loaderContext.getMpx() || {}
 
-  function getRequire (type, part, extraOptions, index) {
+  function getRequire (type, part, extraOptions = {}, index = 0) {
     let extract = false
     switch (type) {
       // eslint-disable-next-line no-fallthrough
@@ -28,6 +28,8 @@ module.exports = function createHelpers (loaderContext) {
       case 'template':
         extract = true
     }
+    // 允许外部强制关闭extract
+    if (extraOptions.extract === false) extract = false
     return (extract ? 'require.extract(' : 'require(') + getRequestString(type, part, extraOptions, index) + ')'
   }
 
@@ -70,6 +72,8 @@ module.exports = function createHelpers (loaderContext) {
       case 'template':
         options.extract = true
     }
+    // 允许外部强制关闭extract
+    if (extraOptions.extract === false) delete options.extract
 
     if (part.mode) options.mode = part.mode
 

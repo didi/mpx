@@ -14,6 +14,10 @@
  */
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
+function type (n) {
+  return Object.prototype.toString.call(n).slice(8, -1)
+}
+
 function hasOwn (obj, key) {
   return hasOwnProperty.call(obj, key)
 }
@@ -68,6 +72,8 @@ function getEnvObj () {
     case 'dd':
       return dd
     case 'web':
+    case 'ios':
+    case 'android':
       return {}
   }
 }
@@ -95,6 +101,33 @@ function makeMap (arr) {
   }, {})
 }
 
+function parseDataset (dataset) {
+  const parsed = {}
+  for (const key in dataset) {
+    if (hasOwn(dataset, key)) {
+      try {
+        parsed[key] = JSON.parse(dataset[key])
+      } catch (e) {
+        parsed[key] = dataset[key]
+      }
+    }
+  }
+  return parsed
+}
+
+function defineUnsupportedProps (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get () {
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`)
+        return null
+      }
+    }
+  })
+  Object.defineProperties(resObj, defineProps)
+}
+
 const isBrowser = typeof window !== 'undefined'
 
 function throwSSRWarning (info) {
@@ -115,5 +148,8 @@ export {
   isBrowser,
   hasOwn,
   throwSSRWarning,
-  ENV_OBJ
+  ENV_OBJ,
+  parseDataset,
+  type,
+  defineUnsupportedProps
 }
