@@ -73,29 +73,17 @@ registered in parent context!`)
     option.componentPath = '/' + outputPath
   }
   if (ctorType === 'app') {
-    option.data = function() {
+    option.data = function () {
       return {
         transitionName: ''
       }
     }
     option.watch = {
       $route: {
-        handler (to, from) {
-          let action = global.__mpxRouter.__mpxAction
-          // 处理人为操作
-          if (!action) {
-            if (to.path && !from) {
-              action = {
-                type: 'to'
-              }
-            } else {
-              action = {
-                type: 'back',
-                delta: 1
-              }
-            }
-          }
-          switch (action.type) {
+        handler () {
+          const actionType = global.__mpxRouter.currentActionType
+
+          switch (actionType) {
             case 'to':
               this.transitionName = 'mpx-slide-left'
               break
@@ -184,6 +172,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
     global.__mpxRouter.eventChannelMap = {}
+    global.__mpxRouter.currentActionType = null
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
       let action = global.__mpxRouter.__mpxAction
@@ -202,7 +191,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           }
         }
       }
-
+      global.__mpxRouter.currentActionType = action.type
       const pageInRoutes = routes.some(item => item.path === to.path)
       if (!pageInRoutes) {
         if (stack.length < 1) {
