@@ -93,10 +93,6 @@ registered in parent context!`)
             case 'back':
               this.transitionName = 'mpx-slide-right'
               break
-            case 'reLaunch':
-            case 'redirect':
-              this.transitionName = ''
-              break
             default:
               this.transitionName = ''
           }
