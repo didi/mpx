@@ -64,6 +64,7 @@ export default function createApp (option, config = {}) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
+
   global.__mpxOptionsMap[currentInject.moduleId] = memo(() => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
@@ -82,6 +83,7 @@ export default function createApp (option, config = {}) {
       global.__mpxEnterOptions = options
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
     }, [])
+
     return createElement(NavigationContainer,
       {
         ref: navigationRef,

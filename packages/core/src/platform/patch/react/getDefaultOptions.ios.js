@@ -1,11 +1,51 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
+import { watch } from '../../../observer/watch'
+import { reactive, set } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, UPDATED, ONLOAD } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+import { useIsFocused } from '@react-navigation/native'
+
+function getOrientation (window = ReactNative.Dimensions.get('window')) {
+  return window.width > window.height ? 'landscape' : 'portrait'
+}
+
+function getSystemInfo () {
+  const window = ReactNative.Dimensions.get('window')
+  const screen = ReactNative.Dimensions.get('screen')
+  return {
+    deviceOrientation: getOrientation(),
+    size: {
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      windowWidth: window.width,
+      windowHeight: window.height
+    }
+  }
+}
+
+function hasPageHook (mpxProxy, hooks = [], componentHooks = [], pageHooks = []) {
+  if (hooks.some(h => mpxProxy.hasHook(h))) {
+    return true
+  }
+  const options = mpxProxy.options
+  const type = options.__type__
+  if (type === 'page') {
+    return pageHooks.some(h => {
+      if (h === 'onResize') {
+        return isFunction(options.methods[h])
+      } else {
+        return mpxProxy.hasHook(h)
+      }
+    })
+  } else if (type === 'component') {
+    return componentHooks.some(h => options.pageLifetimes && isFunction(options.pageLifetimes[h]))
+  }
+}
 
 function getRootProps (props) {
   const rootProps = {}
@@ -207,6 +247,85 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   return instance
 }
 
+const routeContext = createContext(null)
+
+const triggerPageStatusHook = (mpxProxy, event) => {
+  mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
+  const pageLifetimes = mpxProxy.options.pageLifetimes
+  if (pageLifetimes) {
+    const instance = mpxProxy.target
+    isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
+  }
+}
+
+function usePageStatus (mpxProxy) {
+  const { routeName } = useContext(routeContext) || {}
+
+  useEffect(() => {
+    let chnageSubscription
+    let resizeSubScription
+    let pageStatus
+
+    const watcher = watch(() => pageStatusContext[routeName], (newVal) => {
+      pageStatus = newVal
+      triggerPageStatusHook(mpxProxy, pageStatus ? 'show' : 'hide')
+    }, { immediate: true })
+
+    if (hasPageHook(mpxProxy, [ONSHOW, ONHIDE], ['show', 'hide'])) {
+      chnageSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
+        if (currentState === 'active') {
+          pageStatus && triggerPageStatusHook(mpxProxy, 'show')
+        } else if (currentState === 'background') {
+          pageStatus && triggerPageStatusHook(mpxProxy, 'hide')
+        }
+      })
+    }
+
+    if (hasPageHook(mpxProxy, [ONRESIZE], ['resize'], ['onResize'])) {
+      let lastOrientation = getOrientation()
+      if (pageStatus) {
+        triggerResizeEvent(mpxProxy)
+      }
+
+      resizeSubScription = ReactNative.Dimensions.addEventListener(
+        'change',
+        ({ window }) => {
+          const orientation = getOrientation(window)
+          if (orientation === lastOrientation) return
+          lastOrientation = orientation
+          if (pageStatus) {
+            triggerResizeEvent(mpxProxy)
+          }
+        }
+      )
+    }
+
+    return () => {
+      chnageSubscription && chnageSubscription.remove()
+      resizeSubScription && resizeSubScription.remove()
+      watcher && watcher()
+    }
+  }, [])
+}
+
+const triggerResizeEvent = (mpxProxy) => {
+  const type = mpxProxy.options.__type__
+  const systemInfo = getSystemInfo()
+  const target = mpxProxy.target
+  mpxProxy.callHook(ONRESIZE, [systemInfo])
+  if (type === 'page') {
+    target.onResize && target.onResize(systemInfo)
+  } else {
+    const pageLifetimes = mpxProxy.options.pageLifetimes
+    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
+  }
+}
+
+const pageStatusContext = reactive({})
+function setPageStatus (routeName, val) {
+  set(pageStatusContext, routeName, val)
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -239,6 +358,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.propsUpdated()
     }
 
+    usePageStatus(proxy)
+
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
@@ -265,6 +386,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
+      setPageStatus(route.name, useIsFocused())
       useLayoutEffect(() => {
         navigation.setOptions({
           headerTitle: pageConfig.navigationBarTitleText || '',
@@ -284,7 +406,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
           },
-          createElement(defaultOptions, { navigation, route, pageConfig })
+          createElement(routeContext.Provider,
+            {
+              value: { routeName: route.name }
+            },
+            createElement(defaultOptions,
+              {
+                navigation,
+                route,
+                pageConfig
+              }
+            )
+          )
         )
       )
     }
