@@ -1,7 +1,7 @@
 /**
  * ✔ bindchange
  */
-import React, {
+import {
   JSX,
   useRef,
   forwardRef,
@@ -90,7 +90,7 @@ const radioGroup = forwardRef<
       )
   }
 
-  const wrapChildren = (children: ReactNode) => {
+  const wrapChildren = (children: ReactNode): ReactNode[] => {
     return Children.toArray(children).map((child) => {
       if (!isValidElement(child)) return child
 

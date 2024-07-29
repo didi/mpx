@@ -4,14 +4,7 @@
  * ✔ checked
  * ✔ color
  */
-import React, {
-  JSX,
-  useRef,
-  useState,
-  forwardRef,
-  useEffect,
-  ReactNode
-} from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode } from 'react'
 import {
   View,
   Text,
