@@ -23,7 +23,7 @@ module.exports = function (raw) {
   const pagesMap = mpx.pagesMap
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
-  const usingComponents = queryObj.usingComponents || []
+  const usingComponentsNameMap = JSON.parse(queryObj.usingComponentsNameMap)
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
@@ -52,7 +52,7 @@ module.exports = function (raw) {
   const { root: ast, meta } = compiler.parse(raw, {
     warn,
     error,
-    usingComponents,
+    usingComponentsNameMap,
     componentPlaceholder,
     hasComment,
     isNative,

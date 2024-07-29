@@ -624,6 +624,7 @@ function parse (template, options) {
   filePath = options.filePath
   i18n = options.i18n
   refId = 0
+  options.usingComponentsNameMap = options.usingComponentsNameMap || {}
   const usingComponents = Object.keys(options.usingComponentsNameMap)
 
   rulesRunner = getRulesRunner({

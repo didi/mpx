@@ -44,7 +44,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const projectRoot = mpx.projectRoot
-  const usingComponentsNameMap = queryObj.usingComponentsNameMap
+  const usingComponentsNameMap = JSON.parse(queryObj.usingComponentsNameMap)
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''

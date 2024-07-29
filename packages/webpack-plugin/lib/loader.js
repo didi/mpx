@@ -119,7 +119,6 @@ module.exports = function (content) {
       for (const name in mpx.usingComponents) {
         usingComponentsNameMap[name] = name //compressName._generateName()
       }
-      // let usingComponents = [].concat(Object.keys(mpx.usingComponents))
       let componentPlaceholder = []
       let componentGenerics = {}
 
@@ -141,9 +140,9 @@ module.exports = function (content) {
           if (rulesRunner) rulesRunner(ret)
           if (ret.usingComponents) {
             for (const name in ret.usingComponents) {
-              usingComponentsNameMap[name] = compressName._generateName()
+              // 压缩组件名，禁止与全局组件同名
+              usingComponentsNameMap[name] = ctorType === 'app' ? name : compressName._occupiedGenerateName([...mpx.usingComponents])
             }
-            // usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           }
           if (ret.componentPlaceholder) {
             componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
@@ -311,7 +310,7 @@ module.exports = function (content) {
           hasComment,
           isNative,
           moduleId,
-          usingComponentsNameMap,
+          usingComponentsNameMap: JSON.stringify(usingComponentsNameMap),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
@@ -348,7 +347,13 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { ...queryObj, resourcePath, usingComponentsNameMap }) + '\n'
+      output += getRequire('json', json, {
+        ...(json.src ? {
+          ...queryObj,
+          resourcePath
+        } : null),
+        usingComponentsNameMap: JSON.stringify(usingComponentsNameMap)
+      }) + '\n'
 
       // script
       output += '/* script */\n'
