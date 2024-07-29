@@ -140,8 +140,9 @@ module.exports = function (content) {
           if (rulesRunner) rulesRunner(ret)
           if (ret.usingComponents) {
             for (const name in ret.usingComponents) {
-              // 压缩组件名，禁止与全局组件同名
-              usingComponentsNameMap[name] = ctorType === 'app' ? name : compressName._occupiedGenerateName([...mpx.usingComponents])
+              // Object.keys(mpx.usingComponents): 压缩组件名，禁止与全局组件同名
+              // mpx.reservedComponentName 禁止与保留组件名重复(如 text/view/ad 等)
+              usingComponentsNameMap[name] = ctorType === 'app' ? name : compressName._occupiedGenerateName([...Object.keys(mpx.usingComponents), ...mpx.reservedComponentName])
             }
           }
           if (ret.componentPlaceholder) {

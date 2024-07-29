@@ -171,6 +171,11 @@ class MpxWebpackPlugin {
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
+    // 保留组件名（压缩后组件名不允许出现）
+    if (typeof options.reservedComponentName === 'object') {
+      options.reservedComponentName = options.reservedComponentName[options.mode]
+    }
+    options.reservedComponentName = options.reservedComponentName || []
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -668,6 +673,7 @@ class MpxWebpackPlugin {
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           optimizeSize: this.options.optimizeSize,
+          reservedComponentName: this.options.reservedComponentName,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
