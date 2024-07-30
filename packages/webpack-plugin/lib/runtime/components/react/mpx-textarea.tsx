@@ -9,7 +9,7 @@
  *     ✘ show-confirm-bar
  *     ✔ bindlinechange: No `heightRpx` info.
  */
-import React, { forwardRef } from 'react'
+import { forwardRef } from 'react'
 import { Keyboard, TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
 import { omit } from './utils'
