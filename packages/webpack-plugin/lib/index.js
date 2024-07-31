@@ -67,6 +67,8 @@ const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/con
 const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
+const { log } = require('console')
+const diffObj = require('./utils/diff-obj')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -1274,6 +1276,48 @@ class MpxWebpackPlugin {
                 compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
               }
             }
+            try {
+              if (!isProductionLikeMode(this.options)) {
+                const packageInjectedTemplateConfig = mpx.getPackageInjectedTemplateConfig(packageName)
+                const { BaseTemplate } = require('@mpxjs/template-engine/dist/baseTemplate')
+                const base = new BaseTemplate()
+                base.normalizeInputOptions(this.options.dynamicTemplateEngineOptions)
+                const getAttrArr = attrs => Object.keys(attrs).map(a => `${a}`)
+                const normalizeDiffObj = o => {
+                  return Object.fromEntries(
+                    o
+                      .map(v => [v.nodeType, getAttrArr(v.attrs).sort()])
+                      .filter(v => !(v[0].startsWith('pure') || v[0].startsWith('static')))
+                  )
+                }
+                const normalizeTemplateConfig = config => {
+                  return normalizeDiffObj(
+                    Object.keys(config).map(v => {
+                      return {
+                        nodeType: v,
+                        attrs: config[v]
+                      }
+                    })
+                  )
+                }
+                const inputConfig = {
+                  baseComponents: normalizeDiffObj(base.buildOptions.baseComponents),
+                  normalComponents: normalizeDiffObj(base.buildOptions.normalComponents)
+                }
+                const collectedConfig = {
+                  baseComponents: normalizeTemplateConfig(
+                    packageInjectedTemplateConfig.baseComponents
+                  ),
+                  normalComponents: normalizeTemplateConfig(
+                    packageInjectedTemplateConfig.normalComponents
+                  )
+                }
+                const noConfig = diffObj(collectedConfig, inputConfig)
+                console.log(noConfig);
+                const noConfigString = Object.entries(noConfig.baseComponents || {}).map(([k,v])=> `nodeType: ${k}, attrs: ${v}`).join('\n')
+                compilation.warnings.push(`template engine missing config, the following elements or attributes will not be rendered: \n${noConfigString}`)
+              }
+            } catch (error) {}
           }
           if (!isEmptyObject(dynamicAssets)) {
             // 产出 jsonAst 静态产物
