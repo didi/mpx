@@ -1277,18 +1277,39 @@ class MpxWebpackPlugin {
               }
             }
             try {
-              if (!isProductionLikeMode(this.options) && this.options.dynamicTemplateEngineOptions) {
+              if (
+                !isProductionLikeMode(this.options) &&
+                this.options.dynamicTemplateEngineOptions
+              ) {
+                const srcModeConfig = config['wx']
+                const modeConfig = config[mpx.mode]
                 const packageInjectedTemplateConfig = mpx.getPackageInjectedTemplateConfig(packageName)
                 const { BaseTemplate } = require('@mpxjs/template-engine/dist/baseTemplate')
                 const base = new BaseTemplate()
                 base.normalizeInputOptions(this.options.dynamicTemplateEngineOptions)
-                const getAttrArr = attrs => Object.keys(attrs).map(a => `${a}`)
+                const getAttrArr = attrs => {
+                  return Object.keys(attrs)
+                    .map(a => {
+                      const parseEvent = srcModeConfig.event.parseEvent(a)
+                      if (parseEvent) {
+                        // event需要转换为对应平台的，否则传入的是wx，但是收集的是ali的，会始终对应不上
+                        return `${modeConfig.event.getEvent(parseEvent.eventName)}`
+                      }
+                      return `${a}`
+                    })
+                    .filter(v => {
+                      return v !== 'data-mpxuid' || v !== 'data-eventconfigs' // 排除不需要diff的属性
+                    })
+                }
                 const normalizeDiffObj = o => {
-                  return Object.fromEntries(
-                    o
-                      .map(v => [v.nodeType, getAttrArr(v.attrs).sort()])
-                      .filter(v => !(v[0].startsWith('pure') || v[0].startsWith('static')))
-                  )
+                  return o.reduce((res, b) => {
+                    const nodeType = b.nodeType.replace(/pure-|static-/, '') // 合并pure，static的属性
+                    res[nodeType] = res[nodeType] || []
+                    res[nodeType] = [
+                      ...new Set([...res[nodeType], ...getAttrArr(b.attrs).sort()]) // 去重
+                    ]
+                    return res
+                  }, {})
                 }
                 const normalizeTemplateConfig = config => {
                   return normalizeDiffObj(
@@ -1307,17 +1328,25 @@ class MpxWebpackPlugin {
                 const collectedConfig = {
                   baseComponents: normalizeTemplateConfig(
                     packageInjectedTemplateConfig.baseComponents
-                  ),
-                  normalComponents: normalizeTemplateConfig(
-                    packageInjectedTemplateConfig.normalComponents
                   )
                 }
-                const noConfig = diffObj(collectedConfig, inputConfig)
-                console.log(noConfig);
-                const noConfigString = Object.entries(noConfig.baseComponents || {}).map(([k,v])=> `nodeType: ${k}, attrs: ${v}`).join('\n')
-                compilation.warnings.push(`template engine missing config, the following elements or attributes will not be rendered: \n${noConfigString}`)
+                // diff收集的信息和配置是否存在不同，返回不同的键值
+                const noConfig = diffObj(collectedConfig.baseComponents, {
+                  ...inputConfig.baseComponents,
+                  ...inputConfig.normalComponents
+                })
+                if (Object.keys(noConfig).length) {
+                  const noConfigString = Object.entries(noConfig || {})
+                    .map(([k, v]) => `nodeType: ${k}, attrs: ${v}`)
+                    .join('\n')
+                  compilation.warnings.push(
+                    `template engine missing config, the following elements or attributes will not be rendered: \n${noConfigString}`
+                  )
+                }
               }
-            } catch (error) {}
+            } catch (error) {
+              console.error(error)
+            }
           }
           if (!isEmptyObject(dynamicAssets)) {
             // 产出 jsonAst 静态产物
