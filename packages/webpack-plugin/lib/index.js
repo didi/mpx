@@ -1281,7 +1281,7 @@ class MpxWebpackPlugin {
                 !isProductionLikeMode(this.options) &&
                 this.options.dynamicTemplateEngineOptions
               ) {
-                const srcModeConfig = config['wx']
+                const srcModeConfig = config[mpx.srcMode]
                 const modeConfig = config[mpx.mode]
                 const packageInjectedTemplateConfig = mpx.getPackageInjectedTemplateConfig(packageName)
                 const { BaseTemplate } = require('@mpxjs/template-engine/dist/baseTemplate')
