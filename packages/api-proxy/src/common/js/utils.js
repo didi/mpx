@@ -87,7 +87,7 @@ function error (msg) {
 }
 function envError (method) {
   return () => {
-    console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+    throw Error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
   }
 }
 
