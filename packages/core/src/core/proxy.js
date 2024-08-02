@@ -202,8 +202,8 @@ export default class MpxProxy {
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
-    this.state = UNMOUNTED
     this.callHook(UNMOUNTED)
+    this.state = UNMOUNTED
   }
 
   isUnmounted () {
