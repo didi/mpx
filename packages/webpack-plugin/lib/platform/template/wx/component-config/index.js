@@ -37,6 +37,7 @@ const unsupported = require('./unsupported')
 const video = require('./video')
 const view = require('./view')
 const webView = require('./web-view')
+const label = require('./label')
 const wxs = require('./wxs')
 const component = require('./component')
 const fixComponentName = require('./fix-component-name')
@@ -121,6 +122,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     livePlayer({ print }),
     livePusher({ print }),
     hyphenTagName({ print }),
+    label({ print }),
     component()
   ]
 }

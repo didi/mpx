@@ -34,13 +34,7 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  forwardRef,
-} from 'react'
+import { useEffect, useRef, useState, ReactNode, forwardRef } from 'react'
 import {
   View,
   Text,
@@ -328,17 +322,16 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     handleOpenTypeEvent(evt)
   }
 
-  const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
+  const catchTap= (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent(evt)
   }
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
     if (every(children, (child)=>isText(child))) {
       children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
     } else {
-      if(textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
+      if(textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
     }
   
     return children
