@@ -27,9 +27,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     setAreaHeight(height)
   }, [width, height])
 
-  const { nodeRef: movableViewRef } = useNodesRef(props, ref, {
-    node: {}
-  })
+  const { nodeRef: movableViewRef } = useNodesRef(props, ref)
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width = 10, height = 10 } = e.nativeEvent.layout
