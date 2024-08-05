@@ -18,6 +18,8 @@ export default function proxyEventMixin () {
       }
       const location = this.__mpxProxy.options.mpxFileResource
       const type = $event.type
+      // thanos 平台特殊事件标识
+      const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
         error('Event object must have [type] property!', location)
         return
@@ -44,6 +46,10 @@ export default function proxyEventMixin () {
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
+        if (emitMode) {
+          // thanos 平台特殊事件标识处理
+          $event = $event.detail.data
+        }
         if (callbackName) {
           const params = item.length > 1
             ? item.slice(1).map(item => {
