@@ -10,6 +10,7 @@
  * ✔ scale
  * ✔ scale-min
  * ✔ scale-max
+ * ✔ scale-value
  * ✘ animation
  * ✔ bindchange
  * ✔ bindscale
