@@ -10,14 +10,8 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import {
-  JSX,
-  useEffect,
-  useMemo,
-  useState,
-  forwardRef,
-  useRef,
-} from 'react'
+import  { useEffect, useMemo, useState, useRef, forwardRef } from 'react'
+
 import {
   Image as RNImage,
   View,
