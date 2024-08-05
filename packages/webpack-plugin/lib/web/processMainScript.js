@@ -12,11 +12,8 @@ const {
   buildI18n
 } = require('./script-helper')
 
-module.exports = function (script, {
+module.exports = function ({
   loaderContext,
-  srcMode,
-  moduleId,
-  isProduction,
   jsonConfig,
   localComponentsMap,
   tabBar,
@@ -40,8 +37,6 @@ module.exports = function (script, {
     jsonConfig
   })
 
-  const scriptSrcMode = script ? script.mode || srcMode : srcMode
-
   let output = 'import \'@mpxjs/webpack-plugin/lib/runtime/base.styl\'\n'
   // hasUnoCSS由@mpxjs/unocss-plugin注入
   if (hasUnoCSS) {
@@ -58,10 +53,7 @@ Vue.use(VueRouter)\n`
   }
 
   output += buildGlobalParams({
-    moduleId,
-    scriptSrcMode,
     loaderContext,
-    isProduction,
     jsonConfig,
     webConfig,
     isMain: true,

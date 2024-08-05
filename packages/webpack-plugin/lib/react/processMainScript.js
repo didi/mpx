@@ -5,7 +5,7 @@ const {
   stringifyRequest
 } = require('./script-helper')
 
-module.exports = function (script, {
+module.exports = function ({
   loaderContext
 }, callback) {
   const { projectName } = loaderContext.getMpx()
