@@ -10,6 +10,7 @@
  * ✔ scale
  * ✔ scale-min
  * ✔ scale-max
+ * ✔ scale-value
  * ✘ animation
  * ✔ bindchange
  * ✔ bindscale
@@ -86,7 +87,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   })
 
   const { nodeRef } = useNodesRef(props, ref, {
-    node: {}
+    defaultStyle: styles.container
   })
 
   let isFirstTouch = true

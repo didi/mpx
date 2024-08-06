@@ -1,15 +1,7 @@
 /**
  * ✘ for
  */
-import React, {
-  JSX,
-  useRef,
-  forwardRef,
-  ReactNode,
-  Children,
-  cloneElement,
-  ReactElement
-} from 'react'
+import { JSX, useRef, forwardRef, ReactNode, Children, cloneElement, ReactElement } from 'react'
 import {
   View,
   Text,
@@ -94,7 +86,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
           style: [...((child as ReactElement).props.style ?? []), textStyle],
           ...(isEmbedded(child)
             ? {
-                ref: (ref) => {
+                ref: (ref: any) => {
                   childRef.current = ref?.getNodeInstance()?.instance
                 }
               }

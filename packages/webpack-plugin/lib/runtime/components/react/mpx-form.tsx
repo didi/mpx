@@ -27,9 +27,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   const layoutRef = useRef({})
   const formValuesMap = useRef(new Map()).current
 
-  const { nodeRef: formRef } = useNodesRef(props, ref, {
-    node: {}
-  })
+  const { nodeRef: formRef } = useNodesRef(props, ref)
 
   const onLayout = (e: LayoutChangeEvent) => {
     formRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {

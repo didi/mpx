@@ -34,14 +34,8 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import {
-  JSX,
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  forwardRef,
-} from 'react'
+import { useEffect, useRef, useState, ReactNode, forwardRef } from 'react'
+
 import {
   View,
   Text,
