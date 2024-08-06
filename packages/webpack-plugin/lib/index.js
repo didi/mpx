@@ -67,8 +67,6 @@ const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/con
 const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
-const { log } = require('console')
-const diffObj = require('./utils/diff-obj')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -879,6 +877,8 @@ class MpxWebpackPlugin {
           runtimeInfo: {},
           // 记录运行时组件依赖的运行时组件当中使用的基础组件 slot，最终依据依赖关系注入到运行时组件的 json 配置当中
           dynamicSlotDependencies: {},
+          // 模板引擎参数，用来检测模板引擎支持渲染的模板
+          dynamicTemplateEngineOptions: this.options.dynamicTemplateEngineOptions,
           // 依据 package 注入到 mpx-custom-element-*.json 里面的组件路径
           getPackageInjectedComponentsMap: (packageName = 'main') => {
             const res = {}
@@ -1275,77 +1275,6 @@ class MpxWebpackPlugin {
                 const jsonContent = compilation.assets[jsonAsset].source()
                 compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
               }
-            }
-            try {
-              if (
-                !isProductionLikeMode(this.options) &&
-                this.options.dynamicTemplateEngineOptions
-              ) {
-                const srcModeConfig = config[mpx.srcMode]
-                const modeConfig = config[mpx.mode]
-                const packageInjectedTemplateConfig = mpx.getPackageInjectedTemplateConfig(packageName)
-                const { BaseTemplate } = require('@mpxjs/template-engine/dist/baseTemplate')
-                const base = new BaseTemplate()
-                base.normalizeInputOptions(this.options.dynamicTemplateEngineOptions)
-                const getAttrArr = attrs => {
-                  return Object.keys(attrs)
-                    .map(a => {
-                      const parseEvent = srcModeConfig.event.parseEvent(a)
-                      if (parseEvent) {
-                        // event需要转换为对应平台的，否则传入的是wx，但是收集的是ali的，会始终对应不上
-                        return `${modeConfig.event.getEvent(parseEvent.eventName)}`
-                      }
-                      return `${a}`
-                    })
-                    .filter(v => {
-                      return v !== 'data-mpxuid' || v !== 'data-eventconfigs' // 排除不需要diff的属性
-                    })
-                }
-                const normalizeDiffObj = o => {
-                  return o.reduce((res, b) => {
-                    const nodeType = b.nodeType.replace(/pure-|static-/, '') // 合并pure，static的属性
-                    res[nodeType] = res[nodeType] || []
-                    res[nodeType] = [
-                      ...new Set([...res[nodeType], ...getAttrArr(b.attrs).sort()]) // 去重
-                    ]
-                    return res
-                  }, {})
-                }
-                const normalizeTemplateConfig = config => {
-                  return normalizeDiffObj(
-                    Object.keys(config).map(v => {
-                      return {
-                        nodeType: v,
-                        attrs: config[v]
-                      }
-                    })
-                  )
-                }
-                const inputConfig = {
-                  baseComponents: normalizeDiffObj(base.buildOptions.baseComponents),
-                  normalComponents: normalizeDiffObj(base.buildOptions.normalComponents)
-                }
-                const collectedConfig = {
-                  baseComponents: normalizeTemplateConfig(
-                    packageInjectedTemplateConfig.baseComponents
-                  )
-                }
-                // diff收集的信息和配置是否存在不同，返回不同的键值
-                const noConfig = diffObj(collectedConfig.baseComponents, {
-                  ...inputConfig.baseComponents,
-                  ...inputConfig.normalComponents
-                })
-                if (Object.keys(noConfig).length) {
-                  const noConfigString = Object.entries(noConfig || {})
-                    .map(([k, v]) => `nodeType: ${k}, attrs: ${v}`)
-                    .join('\n')
-                  compilation.warnings.push(
-                    `template engine missing config, the following elements or attributes will not be rendered: \n${noConfigString}`
-                  )
-                }
-              }
-            } catch (error) {
-              console.error(error)
             }
           }
           if (!isEmptyObject(dynamicAssets)) {
