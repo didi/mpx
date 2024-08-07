@@ -7,6 +7,7 @@ const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
 const { stringify } = require('./dynamic')
+const { templateEngineRenderCheck } = require('../runtime-render/render-checker')
 
 module.exports = function (raw) {
   this.cacheable()
@@ -77,7 +78,7 @@ module.exports = function (raw) {
     globalComponents: Object.keys(mpx.usingComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
-    dynamicTemplateEngineOptions: mpx.dynamicTemplateEngineOptions
+    elementChecker: runtimeCompile ? (...args) => templateEngineRenderCheck(...args, mpx.dynamicTemplateEngineOptions) : undefined
   })
 
   if (meta.wxsContentMap) {

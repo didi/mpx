@@ -16,7 +16,6 @@ const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
 const { isReact } = require('../utils/env')
-const { templateEngineRenderCheck } = require('../runtime-render/render-checker')
 
 const no = function () {
   return false
@@ -2493,8 +2492,8 @@ function processElement (el, root, options, meta) {
     return
   }
 
-  if (runtimeCompile) {
-    templateEngineRenderCheck(el, options, config[mode])
+  if (options.elementChecker) {
+    options.elementChecker(el, options, config[mode])
   }
 
   if (rulesRunner && el._atModeStatus !== 'match') {

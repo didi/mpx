@@ -4,28 +4,50 @@ const diff = require('lodash/difference')
 const templateEngine = new BaseTemplate()
 let componentMap
 
-const normalizeTemplateEngineAttrs = o => {
+const normalizeEventAttr = (config, attr) => {
+  const eventParsed = config.event.parseEvent(attr)
+  if (eventParsed) {
+    return config.event.getEvent(eventParsed.eventName, eventParsed.prefix)
+  }
+  return attr
+}
+
+const normalizeTemplateEngineAttrs = (config, o) => {
   return o.reduce((res, b) => {
-    const nodeType = b.nodeType.replace(/pure-|static-/, '') // 合并pure，static的属性
-    res[nodeType] = res[nodeType] || []
-    res[nodeType] = [
-      ...new Set([...res[nodeType], ...Object.keys(b.attrs || {})]) // 去重
-    ]
+    const nodeType = b.nodeType
+    const attrSet = new Set(Object.keys(b.attrs || {}))
+    if (attrSet.has('class')) attrSet.add('style')
+    res[nodeType] = [...attrSet].map(v => normalizeEventAttr(config, v))
     return res
   }, {})
 }
 
-module.exports.templateEngineRenderCheck = function templateEngineRenderCheck (el, options, config) {
+const normalizeAttrsMap = (config, o) => {
+  const directives = new Set([...Object.values(config.directive), 'slot'])
+  return Object.keys(o)
+    .filter(key => !directives.has(key))
+    .map(v => normalizeEventAttr(config, v))
+}
+
+module.exports.templateEngineRenderCheck = function templateEngineRenderCheck (
+  el,
+  options,
+  config,
+  dynamicTemplateEngineOptions
+) {
   if (!componentMap) {
-    templateEngine.normalizeInputOptions(options.dynamicTemplateEngineOptions)
-    const { normalComponents = [], baseComponents = [] } = templateEngine.buildOptions
+    const baseComponents = templateEngine.normalizeInputComponentOptions(
+      dynamicTemplateEngineOptions.baseComponents
+    )
+    const normalComponents = templateEngine.normalizeInputComponentOptions(
+      dynamicTemplateEngineOptions.normalComponents
+    )
     componentMap = {
-      ...normalizeTemplateEngineAttrs(normalComponents),
-      ...normalizeTemplateEngineAttrs(baseComponents)
+      ...normalizeTemplateEngineAttrs(config, normalComponents),
+      ...normalizeTemplateEngineAttrs(config, baseComponents)
     }
   }
-  const directives = new Set([...Object.values(config.directive), 'slot'])
-  const attrKeys = Object.keys(el.attrsMap).filter(key => !directives.has(key))
+  const attrKeys = normalizeAttrsMap(config, el.attrsMap)
   const templateEngineNodeAttr = componentMap[el.tag]
   if (templateEngineNodeAttr) {
     const notRenderKeys = diff(attrKeys, templateEngineNodeAttr)
