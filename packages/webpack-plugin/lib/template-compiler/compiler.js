@@ -2492,8 +2492,8 @@ function processElement (el, root, options, meta) {
     return
   }
 
-  if (options.elementChecker) {
-    options.elementChecker(el, options, config[mode])
+  if (options.dynamicTemplateRuleRunner) {
+    options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
   if (rulesRunner && el._atModeStatus !== 'match') {
