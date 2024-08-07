@@ -2492,7 +2492,7 @@ function processElement (el, root, options, meta) {
     return
   }
 
-  if (options.dynamicTemplateRuleRunner) {
+  if (runtimeCompile && options.dynamicTemplateRuleRunner) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
