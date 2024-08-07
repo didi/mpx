@@ -1,6 +1,6 @@
 import { match } from 'path-to-regexp'
 
-import { type, isFunction, isArray, isString, forEach } from '@mpxjs/utils/src/base'
+import { type, isFunction, isArray, isString, forEach, isNumber } from '@mpxjs/utils/src/base'
 import { serialize, buildUrl, parseUrl } from '@mpxjs/utils/src/url'
 
 const toString = Object.prototype.toString
@@ -254,6 +254,7 @@ function compareParams (params, cacheParams, ignoreParamKeys = []) {
 export {
   isThenable,
   isFunction,
+  isNumber,
   parseUrl,
   deepMerge,
   doTest,
