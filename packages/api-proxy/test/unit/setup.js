@@ -6,3 +6,7 @@ global.getCurrentPages = function () {
     $el: document.body
   }]
 }
+jest.mock('@mpxjs/core', () => ({
+  isRef: jest.fn(),
+  isReactive: jest.fn()
+}))

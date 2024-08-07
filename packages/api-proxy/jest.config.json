@@ -9,6 +9,6 @@
   "globals": {
     "__mpx_mode__": "web"
   },
-  "setupFiles": ["../../test/unit/setup"],
+  "setupFiles": ["./test/unit/setup"],
   "transformIgnorePatterns": ["!node_modules/@mpxjs/utils"]
 }

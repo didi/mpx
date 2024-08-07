@@ -2,12 +2,7 @@ import '@testing-library/jest-dom/extend-expect'
 import {
   showActionSheet
 } from '../../src/platform/api/action-sheet/index.web'
-import { dispatchTap } from '../../../../test/utils/touch'
-
-jest.mock('@mpxjs/core', () => ({
-  isRef: jest.fn(),
-  isReactive: jest.fn()
-}))
+import { dispatchTap } from '../../test/utils/touch'
 
 describe('test toast', () => {
   afterAll(() => {

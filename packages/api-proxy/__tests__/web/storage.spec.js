@@ -10,11 +10,6 @@ import {
   clearStorageSync
 } from '../../src/platform/api/storage/index.web'
 
-jest.mock('@mpxjs/core', () => ({
-  isRef: jest.fn(),
-  isReactive: jest.fn()
-}))
-
 const storageKey = 'storage key'
 const storageValue = 'storage value'
 const storageSyncKey = 'storage sync key'

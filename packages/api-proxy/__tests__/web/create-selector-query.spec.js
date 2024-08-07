@@ -1,11 +1,6 @@
 import { createSelectorQuery } from '../../src/platform/api/create-selector-query/index.web'
 import Vue from 'vue/dist/vue.common.prod'
 
-jest.mock('@mpxjs/core', () => ({
-  isRef: jest.fn(),
-  isReactive: jest.fn()
-}))
-
 describe('test create-selector-query', () => {
   let component = null
 
