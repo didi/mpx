@@ -1,5 +1,5 @@
 import NodesRef from './NodesRef'
-import { parseDataset } from '../../../common/js'
+import { parseDataset } from '@mpxjs/utils'
 
 class SelectQuery {
   constructor () {

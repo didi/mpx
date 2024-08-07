@@ -101,20 +101,6 @@ function makeMap (arr) {
   }, {})
 }
 
-function parseDataset (dataset) {
-  const parsed = {}
-  for (const key in dataset) {
-    if (hasOwn(dataset, key)) {
-      try {
-        parsed[key] = JSON.parse(dataset[key])
-      } catch (e) {
-        parsed[key] = dataset[key]
-      }
-    }
-  }
-  return parsed
-}
-
 function defineUnsupportedProps (resObj, props) {
   const defineProps = {}
   props.forEach((item) => {
@@ -149,7 +135,6 @@ export {
   hasOwn,
   throwSSRWarning,
   ENV_OBJ,
-  parseDataset,
   type,
   defineUnsupportedProps
 }
