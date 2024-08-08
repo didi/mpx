@@ -35,13 +35,9 @@ module.exports = function ({
         }, callback)
       },
       (jsonRes, callback) => {
-        processMainScript(parts.script, {
+        processMainScript({
           loaderContext,
-          srcMode,
-          moduleId,
-          isProduction,
           jsonConfig: jsonRes.jsonObj,
-          outputPath: queryObj.outputPath || '',
           localComponentsMap: jsonRes.localComponentsMap,
           tabBar: jsonRes.jsonObj.tabBar,
           tabBarMap: jsonRes.tabBarMap,
