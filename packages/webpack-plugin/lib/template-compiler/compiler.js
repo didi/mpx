@@ -2492,6 +2492,10 @@ function processElement (el, root, options, meta) {
     return
   }
 
+  if (runtimeCompile && options.dynamicTemplateRuleRunner) {
+    options.dynamicTemplateRuleRunner(el, options, config[mode])
+  }
+
   if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
