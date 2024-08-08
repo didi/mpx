@@ -67,6 +67,7 @@ const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/con
 const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
+const VirtualModulesPlugin = require('webpack-virtual-modules')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -305,6 +306,20 @@ class MpxWebpackPlugin {
 
     // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
     new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
+
+    let __vfs = null
+    if (isWeb(this.options.mode)) {
+      for (const plugin of compiler.options.plugins) {
+        if (plugin instanceof VirtualModulesPlugin) {
+          __vfs = plugin
+          break
+        }
+      }
+      if (!__vfs) {
+        __vfs = new VirtualModulesPlugin()
+        compiler.options.plugins.push(__vfs)
+      }
+    }
 
     if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       // 强制设置publicPath为'/'
@@ -619,6 +634,8 @@ class MpxWebpackPlugin {
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
+          // 用于使用webpack-virtual-modules功能，目前仅输出web时下支持使用
+          __vfs,
           // app信息，便于获取appName
           appInfo: {},
           // pages全局记录，无需区分主包分包
