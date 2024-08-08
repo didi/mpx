@@ -10,4 +10,3 @@ yarn.lock
 .DS_Store
 docs-vuepress/.vuepress/dist
 elevate/
-package-lock.json
