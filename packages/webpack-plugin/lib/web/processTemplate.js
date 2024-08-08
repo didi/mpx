@@ -12,6 +12,7 @@ module.exports = function (template, {
   srcMode,
   moduleId,
   ctorType,
+  isWxml,
   usingComponents,
   componentGenerics
 }, callback) {
@@ -20,6 +21,7 @@ module.exports = function (template, {
     mode,
     defs,
     wxsContentMap,
+    templateCompContentMap,
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
@@ -29,7 +31,7 @@ module.exports = function (template, {
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
-  let wxsModuleMap, genericsInfo
+  let wxsModuleMap, genericsInfo, templateComponentMap, templateSrcList
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
@@ -77,6 +79,7 @@ module.exports = function (template, {
           isComponent: ctorType === 'component',
           isPage: ctorType === 'page',
           mode,
+          isWxml,
           srcMode: templateSrcMode,
           defs,
           decodeHTMLText,
@@ -101,6 +104,17 @@ module.exports = function (template, {
             wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
+        if (meta.templateComponentMap) {
+          templateComponentMap = meta.templateComponentMap
+        }
+        if (meta.templateComponentContent) {
+          for (const name in meta.templateComponentContent) {
+            templateCompContentMap[`${resourcePath}~${name}`] = meta.templateComponentContent[name]
+          }
+        }
+        if (meta.templateSrcList?.length) {
+          templateSrcList = meta.templateSrcList
+        }
         if (meta.builtInComponentsMap) {
           Object.keys(meta.builtInComponentsMap).forEach((name) => {
             builtInComponentsMap[name] = {
@@ -116,10 +130,12 @@ module.exports = function (template, {
     })
     output += '\n\n'
   }
-
   callback(null, {
     output,
     builtInComponentsMap,
+    templateComponentMap,
+    templateCompContentMap,
+    templateSrcList,
     genericsInfo,
     wxsModuleMap
   })

@@ -1,6 +1,8 @@
 const JSON5 = require('json5')
 const he = require('he')
+const path = require('path')
 const config = require('../config')
+const hash = require('hash-sum')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
@@ -12,6 +14,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
+const template2vue = normalize.lib('web/template2vue')
 
 const no = function () {
   return false
@@ -190,6 +193,7 @@ function parseHTML (html, options) {
   const canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no
   let index = 0
   let last, lastTag
+  stopParseHtml = false
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
@@ -664,6 +668,7 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
+    wxmlName: options.wxmlName,
     start: function start (tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
@@ -1932,8 +1937,33 @@ function processTemplate (el) {
   }
 }
 
-function postProcessTemplate (el) {
+function processImport (el, options, meta) {
+  if (el.tag === 'import' && el.attrsMap.src) {
+    if (!meta.templateSrcList) {
+      meta.templateSrcList = []
+    }
+    if (!meta.templateSrcList.includes(el.attrsMap.src)) {
+      meta.templateSrcList.push(el.attrsMap.src)
+    }
+  }
+}
+
+function postProcessTemplate (el, meta, options) {
   if (el.isTemplate) {
+    if (mode === 'web') {
+      if (!meta.templateComponentMap) {
+        meta.templateComponentMap = {}
+      }
+      if (!meta.templateComponentContent) {
+        meta.templateComponentContent = {}
+      }
+      const name = el.attrsMap.name
+      let dir = path.parse(options.filePath)
+      dir = dir.dir || dir
+      const hashValue = hash(options.filePath)
+      const fileName = options.isWxml ? name : `template/${name}-${hashValue}`
+      meta.templateComponentMap[name] = `${dir}/${fileName}.vue?isComponent!=!${template2vue}!${options.filePath}?is=${name}`
+    }
     processingTemplate = false
     return true
   }
@@ -2094,6 +2124,9 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfForWeb(el)
+    // 预处理template逻辑
+    processTemplate(el)
+    processImport(el, options, meta)
     processWebExternalClassesHack(el, options)
     processComponentGenericsForWeb(el, options, meta)
     return
@@ -2132,6 +2165,8 @@ function closeElement (el, meta, options) {
   postProcessAtMode(el)
   if (mode === 'web') {
     postProcessWxs(el, meta)
+    // 处理web下template逻辑
+    postProcessTemplate(el, meta, options)
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
     return
@@ -2244,8 +2279,26 @@ function serialize (root) {
           result += node.text
         }
       }
-      if (node.tag === 'wxs' && mode === 'web') {
+      if ((node.tag === 'wxs' || node.tag === 'import') && mode === 'web') {
         return result
+      }
+      if (mode === 'web') {
+        if (node.tag === 'template' && node.attrsMap && node.attrsMap.name) {
+          return result
+        }
+        if (node.tag === 'template' && node.attrsMap && node.attrsMap.is) {
+          node.tag = 'component'
+          node.attrsList.map((item) => {
+            if (item.name === 'is') {
+              item.name = ':is'
+              item.value = `'${item.value}'`
+            }
+            if (item.name === ':data') {
+              item.name = 'v-bind'
+              item.value = item.value.replace(/\(([^()]+)\)/, '{$1}')
+            }
+          })
+        }
       }
       if (node.type === 1) {
         if (node.tag !== 'temp-node') {

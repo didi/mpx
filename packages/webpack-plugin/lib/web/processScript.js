@@ -2,6 +2,7 @@ const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
+const wxmlTemplateLoader = normalize.lib('web/wxml-template-loader')
 const { buildComponentsMap, getRequireScript, buildGlobalParams, shallowStringify } = require('./script-helper')
 
 module.exports = function (script, {
@@ -16,6 +17,8 @@ module.exports = function (script, {
   builtInComponentsMap,
   genericsInfo,
   wxsModuleMap,
+  templateSrcList,
+  templateComponentMap,
   localComponentsMap
 }, callback) {
   const { projectRoot, appInfo } = loaderContext.getMpx()
@@ -30,6 +33,7 @@ module.exports = function (script, {
   } else {
     script = { tag: 'script' }
   }
+
   output += genComponentTag(script, {
     attrs (script) {
       const attrs = Object.assign({}, script.attrs)
@@ -54,10 +58,22 @@ module.exports = function (script, {
           content += `  wxsModules.${module} = ${expression}\n`
         })
       }
+      // const importTemplateMap = {}
+      content += `const templateModules = {}\n`
+      templateSrcList?.forEach((item) => {
+        content += `
+          const tempLoaderResult = require(${stringifyRequest(`!!${wxmlTemplateLoader}?context=${loaderContext.context}!${item}`)})\n
+          Object.assign(templateModules, tempLoaderResult)\n`
+        // content += `
+        //   const tempLoaderResult = require(${stringifyRequest(`!!${wxmlTemplateLoader}?context=${loaderContext.context}!${item}`)})\n
+        //   console.log(tempLoaderResult, 'test')\n
+        //   Object.keys(tempLoaderResult).forEach((item) => {\n
+        //     templateModules[item] = getComponent(require(tempLoaderResult[item]))\n
+        //   })\n`
+      })
 
       // 获取组件集合
       const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
-
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -73,6 +89,15 @@ module.exports = function (script, {
           })
       }
 
+      if (templateComponentMap) {
+        Object.keys(templateComponentMap).forEach((name) => {
+          const expression = `getComponent(require(${stringifyRequest(templateComponentMap[name])}))`
+          componentsMap[name] = expression
+        })
+      }
+
+      // content += `const templateComs = require('!!wxml-loader!xxx.wxml')`
+
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction })
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
@@ -82,7 +107,7 @@ module.exports = function (script, {
     outputPath: ${JSON.stringify(outputPath)},
     pageConfig: ${JSON.stringify(pageConfig)},
     // @ts-ignore
-    componentsMap: ${shallowStringify(componentsMap)},
+    componentsMap: Object.assign(${shallowStringify(componentsMap)}, templateModules),
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
@@ -91,7 +116,6 @@ module.exports = function (script, {
       return content
     }
   })
-
   callback(null, {
     output
   })

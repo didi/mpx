@@ -230,6 +230,8 @@ module.exports = function (content) {
               builtInComponentsMap: templateRes.builtInComponentsMap,
               genericsInfo: templateRes.genericsInfo,
               wxsModuleMap: templateRes.wxsModuleMap,
+              templateSrcList: templateRes.templateSrcList,
+              templateComponentMap: templateRes.templateComponentMap,
               localComponentsMap: jsonRes.localComponentsMap
             }, callback)
           }
