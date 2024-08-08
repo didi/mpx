@@ -38,10 +38,9 @@
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
     "@mpxjs/utils": "^2.9.50",
-    "axios": "^1.6.7"
+    "axios": "^1.7.3"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.9.43",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-clipboard/clipboard": "^1.14.0",
     "@react-native-community/netinfo": "^11.2.1",
