@@ -11,7 +11,7 @@ import {
   DataSetType,
   LayoutRef,
   NativeTouchEvent
-} from './getInnerListeners.type'
+} from './types/getInnerListeners'
 
 const getTouchEvent = (
   type: string,
