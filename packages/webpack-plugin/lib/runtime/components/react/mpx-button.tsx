@@ -34,13 +34,8 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  forwardRef,
-} from 'react'
+import { useEffect, useRef, useState, ReactNode, forwardRef } from 'react'
+
 import {
   View,
   Text,
@@ -152,7 +147,7 @@ const getOpenTypeEvent = (openType: OpenType) => {
   return event
 }
 
-const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
+const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
 
   const rotate = image.interpolate({
@@ -188,7 +183,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): React.JSX.Element => {
+const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -328,17 +323,16 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     handleOpenTypeEvent(evt)
   }
 
-  const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
+  const catchTap= (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent(evt)
   }
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
     if (every(children, (child)=>isText(child))) {
       children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
     } else {
-      if(textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
+      if(textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
     }
   
     return children

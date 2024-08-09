@@ -380,3 +380,130 @@
 | 属性名                   | 类型     | 默认值              | 说明                                 |
 | ----------------------- | ------- | ------------------  | ------------------------------------|
 | item-id                 | string  | `无`             | 该 swiper-item 的标识符                  |
+
+
+### checkbox
+多选项目
+
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| value	    | String   |              | checkbox 标识，选中时触发 checkbox-group 的 change 事件，并携带 checkbox 的 value |
+| disabled  | Boolean  |     false    | 是否禁用 |
+| checked	  | Boolean  |     false    | 当前是否选中，可用来设置默认选中 |
+| color		  | String   |     #09BB07  | checkbox的颜色，同css的color |
+
+
+### checkbox-group
+多项选择器，内部由多个checkbox组成。
+
+
+事件
+
+| 事件名           | 说明                |
+| ----------------| ------------------ |
+| bindchange      | checkbox-group 中选中项发生改变时触发 change 事件，detail = { value: [ 选中的 checkbox 的 value 的数组 ] } |
+
+
+### radio
+单选项目
+
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| value	    | String  |               | radio 标识，当该 radio 选中时，radio-group 的 change 事件会携带 radio 的 value |
+| disabled  | Boolean  |     false    | 是否禁用 |
+| checked	  | Boolean  |     false    | 当前是否选中，可用来设置默认选中 |
+| color		  | String   |     #09BB07  | checkbox 的颜色，同 css 的 color |
+
+
+### radio-group
+单项选择器，内部由多个 radio 组成
+
+
+事件
+
+| 事件名           | 说明                |
+| ----------------| ------------------ |
+| bindchange      | radio-group 中选中项发生改变时触发 change 事件，detail = { value: [ 选中的 radio 的 value 的数组 ] } |
+
+
+### label
+用来改进表单组件的可用性
+
+
+注意事项
+
+1. 当前不支持使用 for 属性找到对应 id，仅支持将控件放在该标签内，目前可以绑定的空间有：checkbox、radio、switch。
+
+
+### icon
+图标组件
+
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| type      | String  |               | icon 的类型，有效值：success、success_no_circle、info、warn、waiting、cancel、download、search、clear |
+| size      | String \| Number  |     23    | icon 的大小 |
+| color		  | String  |         | icon 的颜色，同 css 的 color |
+
+
+### movable-area
+movable-view的可移动区域。
+
+注意事项
+
+1. movable-area不支持设置 scale-area，缩放手势生效区域仅在 movable-view 内
+
+### movable-view
+可移动的视图容器，在页面中可以拖拽滑动。movable-view 必须在 movable-area 组件中，并且必须是直接子节点，否则不能移动。
+
+
+属性
+
+| 属性名 | 类型             | 默认值 | 说明                                                                                                  |
+| ------ | ---------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| direction   | String           |   none     | 目前支持 all、vertical、horizontal、none｜
+| x   | Number |      | 定义x轴方向的偏移  |
+| y  | Number  |        | 定义y轴方向的偏移 |
+|friction  | Number  |    7    | 摩擦系数 |
+|disabled  | boolean  |    false    | 是否禁用 |
+|scale  | boolean  |   false   | 是否支持双指缩放 |
+|scale-min  | Number  |    0.1    | 定义缩放倍数最小值 |
+|scale-max  | Number  |    10    | 定义缩放倍数最大值 |
+|scale-value | Number  |    1    | 定义缩放倍数，取值范围为 0.1 - 10 |
+
+事件
+
+| 事件名               | 说明                                       |
+| -------------------- | ------------------------------------------ |
+| bindchange        | 拖动过程中触发的事件，event.detail = {x, y, source} |
+| bindscale         | 缩放过程中触发的事件，event.detail = {x, y, scale}    |
+| htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
+| vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
+
+### form
+表单。将组件内的用户输入的switch input checkbox slider radio picker 提交。
+
+当点击 form 表单中 form-type 为 submit 的 button 组件时，会将表单组件中的 value 值进行提交，需要在表单组件中加上 name 来作为 key。
+
+事件
+
+| 事件名     | 说明                                                |
+| ---------- | --------------------------------------------------- |
+| bindsubmit | 携带 form 中的数据触发 submit 事件，event.detail = {value : {'name': 'value'} } |
+| bindreset  | 表单重置时会触发 reset 事件 |
+
+### cover-view
+视图容器。
+功能同 view 组件
+
+### cover-image
+视图容器。
+功能同 image 组件
