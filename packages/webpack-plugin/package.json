@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.43",
+  "version": "2.9.54",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -57,7 +57,8 @@
     "postcss-selector-parser": "^6.0.8",
     "postcss-value-parser": "^4.0.2",
     "semver": "^7.5.4",
-    "source-list-map": "^2.0.0"
+    "source-list-map": "^2.0.0",
+    "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
     "webpack": "^5.75.0"

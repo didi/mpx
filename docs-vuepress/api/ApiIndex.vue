@@ -733,8 +733,8 @@ const data = [
             anchor: '#autoVirtualHostRules'
           },
           {
-            text: 'partialCompile',
-            anchor: '#partialCompile'
+            text: 'partialCompileRules',
+            anchor: '#partialCompileRules'
           },
         ]
       },

@@ -1,5 +1,5 @@
 import * as platformApi from './platform'
-import { getEnvObj } from './common/js'
+import { ENV_OBJ } from './common/js'
 import promisify from './common/js/promisify'
 
 export default function install (target, options = {}) {
@@ -9,8 +9,7 @@ export default function install (target, options = {}) {
     blackList = [], // 强制不变成 promise 格式的 api
     custom = {} // 自定义转化规则
   } = options
-  const envObj = getEnvObj()
-  const transedApi = Object.assign({}, envObj, platformApi)
+  const transedApi = Object.assign({}, ENV_OBJ, platformApi)
   const promisedApi = usePromise ? promisify(transedApi, whiteList, blackList) : {}
   Object.assign(target, transedApi, promisedApi, custom[__mpx_mode__])
 }

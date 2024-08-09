@@ -27,8 +27,7 @@ import {
   callWithErrorHandling,
   warn,
   error,
-  getEnvObj,
-  isReact
+  getEnvObj
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -136,8 +135,10 @@ export default class MpxProxy {
   }
 
   created () {
-    // 缓存上下文，在 destoryed 阶段删除
-    contextMap.set(this.uid, this.target)
+    if (__mpx_dynamic_runtime__) {
+      // 缓存上下文，在 destoryed 阶段删除
+      contextMap.set(this.uid, this.target)
+    }
     if (__mpx_mode__ !== 'web') {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
@@ -153,7 +154,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web' && !isReact) {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
       this.initRender()
     }
 
@@ -197,13 +198,15 @@ export default class MpxProxy {
   }
 
   unmounted () {
-    // 页面/组件销毁清除上下文的缓存
-    contextMap.remove(this.uid)
+    if (__mpx_dynamic_runtime__) {
+      // 页面/组件销毁清除上下文的缓存
+      contextMap.remove(this.uid)
+    }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
-    this.state = UNMOUNTED
     this.callHook(UNMOUNTED)
+    this.state = UNMOUNTED
   }
 
   isUnmounted () {
@@ -239,7 +242,7 @@ export default class MpxProxy {
   }
 
   initProps () {
-    if (isReact) {
+    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
     } else {
@@ -650,7 +653,7 @@ export default class MpxProxy {
       this.forceUpdateAll = true
     }
 
-    if (isReact) {
+    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
       // rn中不需要setdata
       this.forceUpdateData = {}
       this.forceUpdateAll = false
