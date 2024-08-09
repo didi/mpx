@@ -17,7 +17,7 @@ class Animation {
     const { width } = Dimensions.get('screen')
     return value * width / 750
   }
-  
+
   _transformUnit (...args) {
     const ret = []
     args.forEach(each => {
@@ -25,7 +25,7 @@ class Animation {
         if (!/(\d+)(px|rpx)/.test(each)) {
           console.error('animation api 数据单位仅支持 px、rpx')
         } else {
-          const [,val,unit] = each.match(/(\d+)(px|rpx)/)
+          const [, val, unit] = each.match(/(\d+)(px|rpx)/)
           ret.push(unit === 'rpx' ? this.__rpx(+val) : +val)
         }
       } else {
