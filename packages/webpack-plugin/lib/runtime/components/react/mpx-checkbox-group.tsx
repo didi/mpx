@@ -96,20 +96,18 @@ const CheckboxGroup = forwardRef<
     return getSelectionValue()
   }
 
-  const setValue = ({ value, type }: { value?: boolean; type?: string }) => {
-    if (type === 'reset') {
-      Object.keys(groupValue).forEach((key) => {
+  const resetValue = () => {
+    Object.keys(groupValue).forEach((key) => {
         groupValue[key].checked = false
         groupValue[key].setValue(false)
       })
-    }
   }
 
   if (formValuesMap) {
     if (!props.name) {
       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
-      formValuesMap.set(props.name, { getValue, setValue })
+      formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
 

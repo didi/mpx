@@ -12,7 +12,7 @@ export interface CheckboxGroupContextValue {
 
 export interface FormFieldValue {
   getValue: () => any;
-  setValue: ({ newVal, type }: { newVal?: any; type?: string }) => void;
+  resetValue: ({ newVal, type }: { newVal?: any; type?: string }) => void;
 }
 
 

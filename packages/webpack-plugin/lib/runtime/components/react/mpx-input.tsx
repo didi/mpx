@@ -334,12 +334,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     })
   }
 
-  const setValue = ({ value = '', type }: { value?: string; type?: string }) => {
-    if (type === 'reset') {
-      setInputValue('')
-    } else {
-      setInputValue(value)
-    }
+  const resetValue = () => {
+    setInputValue('')
   }
 
   const getValue = () => {
@@ -350,7 +346,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     if (!props.name) {
       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
-      formValuesMap.set(props.name, { getValue, setValue })
+      formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
 

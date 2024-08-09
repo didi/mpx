@@ -96,7 +96,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   const reset = () => {
     const { bindreset } = props
     bindreset && bindreset()
-    formValuesMap.forEach(item => item.setValue({ type: 'reset' }))
+    formValuesMap.forEach(item => item.resetValue())
   }
 
   const innerProps = useInnerProps(props, {
