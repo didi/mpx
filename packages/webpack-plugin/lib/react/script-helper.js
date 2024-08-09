@@ -2,6 +2,7 @@ const loaderUtils = require('loader-utils')
 const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
+const normalize = require('../utils/normalize')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
@@ -125,10 +126,18 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   return content
 }
 
+function buildI18n ({ loaderContext }) {
+  const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
+  const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
+  const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
+  return `require(${stringifyRequest(loaderContext, i18nWxsRequest)})\n`
+}
+
 module.exports = {
   buildPagesMap,
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  stringifyRequest
+  stringifyRequest,
+  buildI18n
 }

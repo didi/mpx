@@ -1950,7 +1950,7 @@ function processText (el) {
 // RN中文字需被Text包裹
 function processWrapTextReact (el) {
   const parentTag = el.parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('Text')
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
@@ -1971,7 +1971,7 @@ function processWrapTextReact (el) {
 // }
 
 function injectWxs (meta, module, src) {
-  if (runtimeCompile || addWxsModule(meta, module, src)) {
+  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode)) {
     return
   }
 
@@ -2545,18 +2545,18 @@ function processElement (el, root, options, meta) {
 
   processIf(el)
   processFor(el)
-  processRef(el, options, meta)
-  if (runtimeCompile) {
-    processClassDynamic(el, meta)
-    processStyleDynamic(el, meta)
-  } else {
-    processClass(el, meta)
-    processStyle(el, meta)
-  }
-  processEvent(el, options)
 
   if (!pass) {
+    processRef(el, options, meta)
+    if (runtimeCompile) {
+      processClassDynamic(el, meta)
+      processStyleDynamic(el, meta)
+    } else {
+      processClass(el, meta)
+      processStyle(el, meta)
+    }
     processShow(el, options, root)
+    processEvent(el, options)
     processComponentIs(el, options)
   }
 
@@ -2574,6 +2574,7 @@ function closeElement (el, meta, options) {
     return
   }
   if (isReact(mode)) {
+    postProcessWxs(el, meta)
     postProcessForReact(el)
     postProcessIfReact(el)
     return
