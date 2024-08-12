@@ -7,7 +7,7 @@ export interface GroupValue {
 
 export interface CheckboxGroupContextValue {
   groupValue: GroupValue
-  notifyChange: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }
 
 export interface FormFieldValue {
