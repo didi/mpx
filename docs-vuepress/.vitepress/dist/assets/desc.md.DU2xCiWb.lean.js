@@ -1,0 +1,1 @@
+import{_ as s,c as a,o as e,a7 as i}from"./chunks/framework.CwvFaCp2.js";const _=JSON.parse('{"title":"文档指南","description":"","frontmatter":{},"headers":[],"relativePath":"desc.md","filePath":"desc.md"}'),l={name:"desc.md"},t=i("",10),n=[t];function r(h,p,o,d,c,k){return e(),a("div",null,n)}const g=s(l,[["render",r]]);export{_ as __pageData,g as default};

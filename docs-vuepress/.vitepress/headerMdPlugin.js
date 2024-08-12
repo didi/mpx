@@ -2,7 +2,7 @@
 const rControl = /[\u0000-\u001f]/g;
 const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'<>,.?/]+/g;
 const anchorReg = /\{#([a-z0-9\-_]+?)\}\s*$/
-const slugify$1 = (content) => {
+export const slugify$1 = (content) => {
     let str = content
     if (anchorReg.test(content)) {
         str = anchorReg.exec(content)[1]
@@ -37,9 +37,9 @@ const compose = (...processors) => {
     });
 };
 const parseHeader = compose(unescapeHtml, parseEmojis, remvoeCustomAnchor, removeMarkdownTokens, trim);
-const deeplyParseHeader = compose(removeNonCodeWrappedHTML, parseHeader);
+export const deeplyParseHeader = compose(removeNonCodeWrappedHTML, parseHeader);
 
-const headerPlugin = (md, include = ["h2", "h3"]) => {
+export const headerPlugin = (md, include = ["h2", "h3"]) => {
     md.renderer.rules.heading_open = (tokens, i, options, env, self) => {
         const token = tokens[i];
         if (include.includes(token.tag)) {
@@ -75,10 +75,3 @@ const headerPlugin = (md, include = ["h2", "h3"]) => {
         return self.renderToken(tokens, i, options);
     };
 };
-
-
-module.exports = {
-    headerPlugin,
-    deeplyParseHeader,
-    slugify$1
-}
