@@ -897,6 +897,8 @@ class MpxWebpackPlugin {
           runtimeInfo: {},
           // 记录运行时组件依赖的运行时组件当中使用的基础组件 slot，最终依据依赖关系注入到运行时组件的 json 配置当中
           dynamicSlotDependencies: {},
+          // 模板引擎参数，用来检测模板引擎支持渲染的模板
+          dynamicTemplateRuleRunner: this.options.dynamicTemplateRuleRunner,
           // 依据 package 注入到 mpx-custom-element-*.json 里面的组件路径
           getPackageInjectedComponentsMap: (packageName = 'main') => {
             const res = {}
