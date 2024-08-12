@@ -4,7 +4,7 @@
  * ✔ plain
  * ✔ disabled
  * ✔ loading
- * ✘ form-type
+ * ✔ form-type
  * - open-type: Partially. Only support `share`、`getUserInfo`
  * ✔ hover-class: Convert hoverClass to hoverStyle.
  * ✔ hover-style
@@ -34,7 +34,7 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import { useEffect, useRef, useState, ReactNode, forwardRef } from 'react'
+import { useEffect, useRef, useState, ReactNode, forwardRef, useContext } from 'react'
 
 import {
   View,
@@ -50,6 +50,7 @@ import {
 import { extractTextStyle, isText, every } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { FormContext } from './context'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -73,7 +74,8 @@ export interface ButtonProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
-  'enable-offset'?: boolean,
+  'enable-offset'?: boolean
+  'form-type'?: 'submit' | 'reset'
   style?: StyleProp<ViewStyle & TextStyle>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
@@ -196,6 +198,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
     'enable-offset': enableOffset,
+    'form-type': formType,
     style = [],
     children,
     bindgetuserinfo,
@@ -204,6 +207,17 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     bindtouchstart,
     bindtouchend,
   } = props
+
+
+  const formContext = useContext(FormContext)
+
+  let submitFn : () => void | undefined;
+  let resetFn : () => void | undefined;
+
+  if (formContext) {
+    submitFn = formContext.submit
+    resetFn = formContext.reset
+  }
 
   const refs = useRef<{
     hoverStartTimer: ReturnType<typeof setTimeout> | undefined
@@ -317,15 +331,24 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     setStayTimer()
   }
 
+  const handleFormTypeFn = () => {
+    if (formType === 'submit') {
+      submitFn && submitFn()
+    } else if (formType === 'reset') {
+      resetFn && resetFn()
+    }
+  }
   const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
     handleOpenTypeEvent(evt)
+    handleFormTypeFn()
   }
 
   const catchTap= (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
+    handleFormTypeFn()
   }
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {

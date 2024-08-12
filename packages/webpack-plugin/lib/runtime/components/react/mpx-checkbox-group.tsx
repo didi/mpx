@@ -48,12 +48,12 @@ const CheckboxGroup = forwardRef<
   } = props
 
   const layoutRef = useRef({})
-  const context = useContext(FormContext)
+  const formContext = useContext(FormContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined;
 
-  if (context) {
-    formValuesMap = context.formValuesMap
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
   }
 
   const groupValue: GroupValue = useRef({}).current

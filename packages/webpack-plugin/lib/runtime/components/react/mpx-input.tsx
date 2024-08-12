@@ -147,12 +147,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     bindlinechange,
   } = props
 
-  const context = useContext(FormContext)
+  const formContext = useContext(FormContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
-  if (context) {
-    formValuesMap = context.formValuesMap
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
   }
 
   const { nodeRef } = useNodesRef(props, ref)

@@ -17,7 +17,9 @@ export interface FormFieldValue {
 
 
 export interface FormContextValue {
-  formValuesMap: Map<string, FormFieldValue>
+  formValuesMap: Map<string, FormFieldValue>;
+  submit: () => void;
+  reset: () => void;
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
