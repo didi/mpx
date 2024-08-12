@@ -67,6 +67,7 @@ const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/con
 const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
+const VirtualModulesPlugin = require('webpack-virtual-modules')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -306,6 +307,20 @@ class MpxWebpackPlugin {
     // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
     new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
+    let __vfs = null
+    if (isWeb(this.options.mode)) {
+      for (const plugin of compiler.options.plugins) {
+        if (plugin instanceof VirtualModulesPlugin) {
+          __vfs = plugin
+          break
+        }
+      }
+      if (!__vfs) {
+        __vfs = new VirtualModulesPlugin()
+        compiler.options.plugins.push(__vfs)
+      }
+    }
+
     if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
@@ -520,6 +535,16 @@ class MpxWebpackPlugin {
       }
     }
 
+    const checkDynamicEntryInfo = (compilation) => {
+      for (const packageName in mpx.dynamicEntryInfo) {
+        const entryMap = mpx.dynamicEntryInfo[packageName]
+        if (packageName !== 'main' && !entryMap.hasPage) {
+          // 引用未注册分包的所有资源
+          const resources = entryMap.entries.map(info => info.resource).join(',')
+          compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
+        }
+      }
+    }
     // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
     compiler.hooks.finishMake.tapAsync({
       name: 'MpxWebpackPlugin',
@@ -534,17 +559,10 @@ class MpxWebpackPlugin {
         }
       ], (err) => {
         if (err) return callback(err)
-        const checkDynamicEntryInfo = () => {
-          for (const packageName in mpx.dynamicEntryInfo) {
-            const entryMap = mpx.dynamicEntryInfo[packageName]
-            if (packageName !== 'main' && !entryMap.hasPage) {
-              // 引用未注册分包的所有资源
-              const resources = entryMap.entries.map(info => info.resource).join(',')
-              compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
-            }
-          }
+        if (mpx.supportRequireAsync && mpx.mode !== 'tt') {
+          // 字节小程序异步分包中不能包含page，忽略该检查
+          checkDynamicEntryInfo(compilation)
         }
-        checkDynamicEntryInfo()
         callback()
       })
     })
@@ -619,6 +637,8 @@ class MpxWebpackPlugin {
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
+          // 用于使用webpack-virtual-modules功能，目前仅输出web时下支持使用
+          __vfs,
           // app信息，便于获取appName
           appInfo: {},
           // pages全局记录，无需区分主包分包
@@ -688,7 +708,7 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || isWeb(this.options.mode),
+          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {

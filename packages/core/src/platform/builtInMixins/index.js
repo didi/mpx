@@ -13,16 +13,16 @@ import pageRouteMixin from './pageRouteMixin'
 import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '../../dynamic/dynamicRenderMixin.empty'
 import styleHelperMixin from './styleHelperMixin'
 import directiveHelperMixin from './directiveHelperMixin'
-import { isReact } from '@mpxjs/utils'
 
 export default function getBuiltInMixins (options, type) {
   let bulitInMixins
-  if (isReact) {
+  if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
       styleHelperMixin(type),
-      refsMixin()
+      refsMixin(),
+      i18nMixin()
     ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [
