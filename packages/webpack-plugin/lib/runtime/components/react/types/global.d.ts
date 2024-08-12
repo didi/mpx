@@ -2,7 +2,7 @@ declare module 'react-native-svg/css' {
   import type { ImageSourcePropType, StyleProp, ImageStyle } from 'react-native'
   import type { SvgProps as SvgCssUriProps } from 'react-native-svg'
 
-  export const SvgCssUri: React.ComponentType<SvgCssUriProps>
+  export const SvgCssUri: React.ComponentType<SvgCssUriProps & { uri?: string }>
 
   export interface WithLocalSvgProps {
     asset: ImageSourcePropType
