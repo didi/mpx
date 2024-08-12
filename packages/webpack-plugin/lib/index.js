@@ -535,6 +535,16 @@ class MpxWebpackPlugin {
       }
     }
 
+    const checkDynamicEntryInfo = (compilation) => {
+      for (const packageName in mpx.dynamicEntryInfo) {
+        const entryMap = mpx.dynamicEntryInfo[packageName]
+        if (packageName !== 'main' && !entryMap.hasPage) {
+          // 引用未注册分包的所有资源
+          const resources = entryMap.entries.map(info => info.resource).join(',')
+          compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
+        }
+      }
+    }
     // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
     compiler.hooks.finishMake.tapAsync({
       name: 'MpxWebpackPlugin',
@@ -549,17 +559,10 @@ class MpxWebpackPlugin {
         }
       ], (err) => {
         if (err) return callback(err)
-        const checkDynamicEntryInfo = () => {
-          for (const packageName in mpx.dynamicEntryInfo) {
-            const entryMap = mpx.dynamicEntryInfo[packageName]
-            if (packageName !== 'main' && !entryMap.hasPage) {
-              // 引用未注册分包的所有资源
-              const resources = entryMap.entries.map(info => info.resource).join(',')
-              compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
-            }
-          }
+        if (mpx.supportRequireAsync && mpx.mode !== 'tt') {
+          // 字节小程序异步分包中不能包含page，忽略该检查
+          checkDynamicEntryInfo(compilation)
         }
-        checkDynamicEntryInfo()
         callback()
       })
     })
