@@ -266,7 +266,7 @@ const getWebviewApi = () => {
     tt: []
   }
   const multiApi = multiApiMap[env] || {}
-  const singleApi = singleApiMap[env] || {}
+  const singleApi = singleApiMap[env] || []
   const multiApiLists = multiApi.api || []
   multiApiLists.forEach((item) => {
     webviewBridge[item] = (...args) => {

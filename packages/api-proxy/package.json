@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.9.52",
+  "version": "2.9.53",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -38,7 +38,7 @@
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
     "@mpxjs/utils": "^2.9.50",
-    "axios": "^1.6.7"
+    "axios": "^1.7.3"
   },
   "peerDependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",

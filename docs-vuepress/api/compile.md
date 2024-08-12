@@ -1096,25 +1096,6 @@ module.exports = defineConfig({
 })
 ```
 
-### enableAliRequireAsync
-
-`boolean = false`
-
-支付宝在`2.8.2`基础库版本后开始支持分包异步化，开启此配置时Mpx的分包异步构建能力能在输出支付宝时生效，不开启时则还是采用兜底策略进行构建来兼容`2.8.2`之前的基础库版本
-
-```js
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      plugin: {
-        enableAliRequireAsync: true
-      }
-    }
-  }
-})
-```
-
 ### optimizeSize
 
 `boolean = false`

@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.41
+ * mpxjs webview bridge v2.9.44
  * (c) 2024 @mpxjs team
  * @license Apache
  */
@@ -243,7 +243,7 @@ var getWebviewApi = function getWebviewApi() {
     tt: []
   };
   var multiApi = multiApiMap[env] || {};
-  var singleApi = singleApiMap[env] || {};
+  var singleApi = singleApiMap[env] || [];
   var multiApiLists = multiApi.api || [];
   multiApiLists.forEach(function (item) {
     webviewBridge[item] = function () {
