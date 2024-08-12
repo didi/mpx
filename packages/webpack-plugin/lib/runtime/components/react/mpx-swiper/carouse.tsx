@@ -2,7 +2,7 @@
  * swiper 实现
  */
 import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
-import React, { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
+import { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
