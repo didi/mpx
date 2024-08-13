@@ -19,7 +19,7 @@ module.exports = function getSpec ({ warn, error }) {
           if (name.startsWith('data-')) {
             return {
               name: ':' + name,
-              value: `JSON.stringify(${parsed.result})`
+              value: `__ensureString(${parsed.result})`
             }
           } else if (parsed.hasBinding) {
             return {

@@ -1,4 +1,4 @@
-import React, {forwardRef, JSX, useRef} from 'react'
+import React, { forwardRef, JSX, useRef, useEffect } from 'react'
 import { View } from 'react-native'
 // @ts-ignore
 import { noop } from '@mpxjs/utils'
@@ -55,6 +55,23 @@ interface FormRef {
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
   const webViewRef = useRef<FormRef | null>(null)
+  const _messageList:any[] = []
+  const handleUnload = () => {
+    // 这里是 WebView 销毁前执行的逻辑
+    bindmessage(getCustomEvent('messsage', {}, {
+      detail: {
+        data: _messageList
+      },
+      layoutRef: webViewRef
+    }))
+  }
+
+  useEffect(() => {
+    // 组件卸载时执行
+    return () => {
+      handleUnload()
+    }
+  }, [])
   const _load = function(res:LoadRes) {
     const result = {
       type: 'load',
@@ -88,12 +105,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const postData:PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        bindmessage(getCustomEvent('messsage', {}, {
-          detail: {
-            data: postData.data
-          },
-          layoutRef: webViewRef
-        }))
+        _messageList.push(postData.data)
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })
@@ -114,6 +126,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         asyncCallback = navObj.reLaunch(postData)
         break
     }
+
     asyncCallback && asyncCallback.then((res: any) => {
       if (webViewRef.current?.postMessage) {
         const test = JSON.stringify({

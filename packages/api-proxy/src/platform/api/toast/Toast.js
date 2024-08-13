@@ -71,7 +71,6 @@ export default class Toast {
     this.title.textContent = opts.title || ''
 
     this.toast.classList.add('show')
-
     opts.duration >= 0 && this.hide({ duration: opts.duration }, type)
 
     const errMsg = type === 'loading' ? 'showLoading:ok' : 'showToast:ok'

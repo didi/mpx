@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.9.41-react.0",
+  "version": "2.9.43",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "Apache-2.0",

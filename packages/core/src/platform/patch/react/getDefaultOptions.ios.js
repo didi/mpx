@@ -1,15 +1,11 @@
-import { useEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, UPDATED, ONLOAD } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
-
-function getNativeComponent (tagName) {
-  return getByPath(ReactNative, tagName)
-}
 
 function getRootProps (props) {
   const rootProps = {}
@@ -39,12 +35,15 @@ function createEffect (proxy, components, props) {
     proxy.onStoreChange && proxy.onStoreChange()
   }
   update.id = proxy.uid
+  const getComponent = (tagName) => {
+    return components[tagName] || getByPath(ReactNative, tagName)
+  }
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent, getRootProps(props))
+    return proxy.target.__injectedRender(createElement, getComponent, getRootProps(props))
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ propsRef, ref, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
@@ -62,7 +61,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
       return propsData
     },
     __getSlot (name) {
-      const { children } = propsRef.current || {}
+      const { children } = propsRef.current
       if (children) {
         const result = []
         if (Array.isArray(children)) {
@@ -165,8 +164,20 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
     }
   })
 
+  const props = propsRef.current
+
+  if (type === 'page') {
+    instance.route = props.route.name
+    global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+  }
+
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
+
+  if (type === 'page') {
+    proxy.callHook(ONLOAD, [props.route.params])
+  }
+
   Object.assign(proxy, {
     onStoreChange: null,
     // eslint-disable-next-line symbol-description
@@ -198,7 +209,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const components = currentInject.getComponents() || {}
+  const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
@@ -206,7 +217,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
     // reset instance
@@ -239,6 +250,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.mounted()
       return () => {
         proxy.unmounted()
+        if (type === 'page') {
+          delete global.__mpxPagesMap[props.route.key]
+        }
       }
     }, [])
 
@@ -248,18 +262,29 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { RootSiblingParent } = global.__navigationHelper
-    const Page = () => {
-      return createElement(RootSiblingParent,
+    const { Provider } = global.__navigationHelper
+    const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
+    const Page = ({ navigation, route }) => {
+      useLayoutEffect(() => {
+        navigation.setOptions({
+          headerTitle: pageConfig.navigationBarTitleText || '',
+          headerStyle: {
+            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          },
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        })
+      }, [])
+
+      return createElement(Provider,
         null,
-        createElement(ReactNative.ScrollView,
+        createElement(ReactNative.View,
           {
             style: {
-              ...ReactNative.StyleSheet.absoluteFillObject
-            },
-            showsVerticalScrollIndicator: false
+              ...ReactNative.StyleSheet.absoluteFillObject,
+              backgroundColor: pageConfig.backgroundColor || '#ffffff'
+            }
           },
-          createElement(defaultOptions)
+          createElement(defaultOptions, { navigation, route, pageConfig })
         )
       )
     }

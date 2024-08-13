@@ -1654,9 +1654,10 @@ function processFor (el) {
   }
 }
 
-function processRefReact (el, options, meta) {
+function processRefReact (el, meta) {
   const val = getAndRemoveAttr(el, config[mode].directive.ref).val
-  const type = isComponentNode(el, options) ? 'component' : 'node'
+  // rn中只有内建组件能被作为node ref处理
+  const type = el.isBuiltIn ? 'node' : 'component'
   if (val) {
     if (!meta.refs) {
       meta.refs = []
@@ -1949,7 +1950,7 @@ function processText (el) {
 // RN中文字需被Text包裹
 function processWrapTextReact (el) {
   const parentTag = el.parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('Text')
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
@@ -1970,7 +1971,7 @@ function processWrapTextReact (el) {
 // }
 
 function injectWxs (meta, module, src) {
-  if (runtimeCompile || addWxsModule(meta, module, src)) {
+  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode)) {
     return
   }
 
@@ -2484,17 +2485,15 @@ function processMpxTagName (el) {
   }
 }
 
-function postProcessComponent (el, options) {
-  if (isComponentNode(el, options)) {
-    el.isComponent = true
-  }
-}
-
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
     return
+  }
+
+  if (runtimeCompile && options.dynamicTemplateRuleRunner) {
+    options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
   if (rulesRunner && el._atModeStatus !== 'match') {
@@ -2528,7 +2527,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processRefReact(el, options, meta)
+    processRefReact(el, meta)
     processStyleReact(el)
     processEventReact(el, options, meta)
     processComponentIs(el, options)
@@ -2550,18 +2549,18 @@ function processElement (el, root, options, meta) {
 
   processIf(el)
   processFor(el)
-  processRef(el, options, meta)
-  if (runtimeCompile) {
-    processClassDynamic(el, meta)
-    processStyleDynamic(el, meta)
-  } else {
-    processClass(el, meta)
-    processStyle(el, meta)
-  }
-  processEvent(el, options)
 
   if (!pass) {
+    processRef(el, options, meta)
+    if (runtimeCompile) {
+      processClassDynamic(el, meta)
+      processStyleDynamic(el, meta)
+    } else {
+      processClass(el, meta)
+      processStyle(el, meta)
+    }
     processShow(el, options, root)
+    processEvent(el, options)
     processComponentIs(el, options)
   }
 
@@ -2579,10 +2578,9 @@ function closeElement (el, meta, options) {
     return
   }
   if (isReact(mode)) {
+    postProcessWxs(el, meta)
     postProcessForReact(el)
     postProcessIfReact(el)
-    // flag component for react
-    postProcessComponent(el, options)
     return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
@@ -2961,7 +2959,7 @@ function postProcessForDynamic (vnode) {
 }
 
 function postProcessAttrsDynamic (vnode, config) {
-  const exps = vnode.exps?.filter(v => v.attrName) || []
+  const exps = (vnode.exps && vnode.exps.filter(v => v.attrName)) || []
   const expsMap = Object.fromEntries(exps.map(v => ([v.attrName, v])))
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {

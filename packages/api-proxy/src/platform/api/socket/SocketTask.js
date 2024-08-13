@@ -1,4 +1,5 @@
-import { successHandle, failHandle, type } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
+import { type } from '@mpxjs/utils'
 
 const socketTasks = new Set()
 

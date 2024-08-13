@@ -73,11 +73,11 @@ module.exports = function (content) {
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
       const placeholderMap = mode === 'ali'
-      ? {
-        view: { name: 'mpx-view', resource: mpxViewPath },
-        text: { name: 'mpx-text', resource: mpxTextPath }
-      }
-      : {}
+        ? {
+          view: { name: 'mpx-view', resource: mpxViewPath },
+          text: { name: 'mpx-text', resource: mpxTextPath }
+        }
+        : {}
       placeholder = placeholderMap[placeholder] || { name: placeholder }
     }
     if (!placeholder.name) {
@@ -275,7 +275,8 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, () => {
+      }, (err) => {
+        if (err) return callback(err)
         const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
         if (runtimeCompile) {
           components.element = mpxCustomElementPath
@@ -325,7 +326,8 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, () => {
+        }, (err) => {
+          if (err) return callback(err)
           if (tarRoot && subPackagesCfg) {
             if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
               subPackagesCfg[tarRoot].pages.push(pagesCache[0])
@@ -576,18 +578,38 @@ module.exports = function (content) {
         const srcCustomKey = config[srcMode].tabBar.customKey
         const srcPath = resolveTabBarPath(srcCustomKey)
         const outputPath = resolveTabBarPath(outputCustomKey)
-        const dynamicEntryExtraOptions = {
-          // replace with true for custom-tab-bar
-          replaceContent: 'true'
-        }
-
-        processComponent(`./${srcPath}`, context, { outputPath, extraOptions: dynamicEntryExtraOptions }, (err, entry) => {
+        processComponent(`./${srcPath}`, context, {
+          outputPath,
+          extraOptions: {
+            replaceContent: 'true'
+          }
+        }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete tabBar[srcCustomKey]
             return callback()
           }
           if (err) return callback(err)
           tabBar[outputCustomKey] = entry // hack for javascript parser call hook.
+          callback()
+        })
+      } else {
+        callback()
+      }
+    }
+
+    const processAppBar = (appBar, context, callback) => {
+      if (appBar) {
+        processComponent('./app-bar/index', context, {
+          outputPath: 'app-bar/index',
+          extraOptions: {
+            replaceContent: 'true'
+          }
+        }, (err, entry) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            return callback()
+          }
+          if (err) return callback(err)
+          appBar.custom = entry // hack for javascript parser call hook.
           callback()
         })
       } else {
@@ -671,6 +693,9 @@ module.exports = function (content) {
       },
       (callback) => {
         processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+      },
+      (callback) => {
+        processAppBar(json.appBar, this.context, callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -681,7 +706,8 @@ module.exports = function (content) {
       for (const root in subPackagesCfg) {
         const subPackageCfg = subPackagesCfg[root]
         // 分包不存在 pages，输出 subPackages 字段会报错
-        if (subPackageCfg.pages.length) {
+        // tt模式下分包异步允许一个分包不存在 pages
+        if (subPackageCfg.pages.length || mode === 'tt') {
           if (!json.subPackages) {
             json.subPackages = []
           }

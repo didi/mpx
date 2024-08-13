@@ -1,4 +1,5 @@
-import { successHandle, failHandle, hasOwn, isBrowser, throwSSRWarning } from '../../../common/js'
+import { successHandle, failHandle, isBrowser, throwSSRWarning } from '../../../common/js'
+import { hasOwn } from '@mpxjs/utils'
 
 function setStorage (options = {}) {
   if (!isBrowser) {

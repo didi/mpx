@@ -14,7 +14,7 @@ const SDK_URL_MAP = {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
-    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+    url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
   },
   ...window.sdkUrlMap
 }
@@ -274,10 +274,11 @@ const getWebviewApi = () => {
       'postMessage',
       'getLoadError',
       'getLocation'
-    ]
+    ],
+    tt: []
   }
   const multiApi = multiApiMap[env] || {}
-  const singleApi = singleApiMap[env] || {}
+  const singleApi = singleApiMap[env] || []
   const multiApiLists = multiApi.api || []
   multiApiLists.forEach((item) => {
     webviewBridge[item] = (...args) => {

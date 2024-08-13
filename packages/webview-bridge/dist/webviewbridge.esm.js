@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.41-react.0
+ * mpxjs webview bridge v2.9.53
  * (c) 2024 @mpxjs team
  * @license Apache
  */
@@ -102,7 +102,7 @@ var SDK_URL_MAP = _objectSpread2({
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
-    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+    url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
   }
 }, window.sdkUrlMap);
 function getMpxWebViewId() {
@@ -250,10 +250,11 @@ var getWebviewApi = function getWebviewApi() {
     wx: ['checkJSApi', 'chooseImage', 'previewImage', 'uploadImage', 'downloadImage', 'getLocalImgData', 'startRecord', 'stopRecord', 'onVoiceRecordEnd', 'playVoice', 'pauseVoice', 'stopVoice', 'onVoicePlayEnd', 'uploadVoice', 'downloadVoice', 'translateVoice', 'getNetworkType', 'openLocation', 'getLocation', 'startSearchBeacons', 'stopSearchBeacons', 'onSearchBeacons', 'scanQRCode', 'chooseCard', 'addCard', 'openCard'],
     my: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'chooseImage', 'previewImage', 'getLocation', 'openLocation', 'alert', 'showLoading', 'hideLoading', 'getNetworkType', 'startShare', 'tradePay', 'postMessage', 'onMessage', 'getEnv'],
     swan: ['makePhoneCall', 'setClipboardData', 'getNetworkType', 'openLocation', 'getLocation', 'chooseLocation', 'chooseImage', 'previewImage', 'openShare', 'navigateToSmartProgram'],
-    web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLoadError', 'getLocation']
+    web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLoadError', 'getLocation'],
+    tt: []
   };
   var multiApi = multiApiMap[env] || {};
-  var singleApi = singleApiMap[env] || {};
+  var singleApi = singleApiMap[env] || [];
   var multiApiLists = multiApi.api || [];
   multiApiLists.forEach(function (item) {
     webviewBridge[item] = function () {
