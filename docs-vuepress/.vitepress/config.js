@@ -1,4 +1,3 @@
-import { headerPlugin } from './headerMdPlugin'
 const sidebar = {
     onThisPage: 'contents',
     '/guide/': [
@@ -153,11 +152,6 @@ export default {
     ],
     title: 'Mpx框架',
     locales: {
-        root: {
-            // ...其他配置...
-            // 修改 Previous Page 文案
-            prev: '上一页',
-        },
         // 如果有其他语言，也可以在这里添加
         // '/zh/': {
         //   prev: '上一页',
@@ -198,12 +192,5 @@ export default {
     chainWebpack: (config, isServer) => {
         // 添加node_modules避免resolve错误
         config.resolve.modules.add('node_modules')
-    },
-    markdown: {
-        // markdown-it-toc 的选项
-        extendMarkdown: md => {
-            // 使用更多的 markdown-it 插件!
-            md.use(headerPlugin)
-        }
     }
 }
