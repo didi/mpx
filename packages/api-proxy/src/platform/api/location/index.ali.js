@@ -17,7 +17,7 @@ function getLocation (options = {}) {
 
 function openLocation (options = {}) {
   const opts = Object.assign({
-    scale: 15
+    scale: 15 // 地图缩放比例兜底值
   }, options)
   return ENV_OBJ.openLocation(opts)
 }
