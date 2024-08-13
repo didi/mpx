@@ -220,7 +220,6 @@ export default {
   computed: {
     list () {
       let result = []
-      console.log('this.$frontmatter ___', this.$frontmatter)
       let details = this.$frontmatter.sixSection.details
       let current = []
       let i = 0

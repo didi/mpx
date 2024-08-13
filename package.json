@@ -8,9 +8,9 @@
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
-    "docs:dev": "vitepress dev docs-vuepress",
-    "docs:build": "vitepress build docs-vuepress",
-    "docs:preview": "vitepress preview docs-vuepress"
+    "docs:dev": "vitepress dev docs-vitepress",
+    "docs:build": "vitepress build docs-vitepress",
+    "docs:preview": "vitepress preview docs-vitepress"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",
@@ -20,6 +20,7 @@
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
+    "@vite-pwa/vitepress": "^0.5.0",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-html": "^6.2.0",
@@ -36,7 +37,7 @@
   },
   "workspaces": [
     "packages/*",
-    "docs-vuepress"
+    "docs-vitepress"
   ],
   "dependencies": {
     "vue-demi": "^0.14.10"

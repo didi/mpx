@@ -1,3 +1,5 @@
+import { withPwa } from '@vite-pwa/vitepress'
+
 const sidebar = {
     onThisPage: 'contents',
     '/guide/': [
@@ -139,7 +141,7 @@ const nav = [
     { text: 'Github', link: 'https://github.com/didi/mpx', target:'_blank'}
 ]
 
-export default {
+export default withPwa( {
     base: '/',
     head: [
         ['link', { rel: 'icon', href: '/favicon.ico' }],
@@ -165,6 +167,7 @@ export default {
     },
     ignoreDeadLinks: true,
     shouldPrefetch: () => false,
+    pwa: {},
     plugins: {
         '@vuepress/pwa': {
             serviceWorker: true,
@@ -193,4 +196,4 @@ export default {
         // 添加node_modules避免resolve错误
         config.resolve.modules.add('node_modules')
     }
-}
+})
