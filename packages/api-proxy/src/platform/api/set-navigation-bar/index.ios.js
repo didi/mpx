@@ -1,5 +1,4 @@
 import { successHandle, failHandle } from '../../../common/js'
-import { noop } from '@mpxjs/utils'
 
 function getFocusedNavigation () {
   for (const key in global.__mpxPagesMap) {
@@ -10,7 +9,7 @@ function getFocusedNavigation () {
   }
 }
 function setNavigationBarTitle (options = {}) {
-  const { title = '', success = noop, fail = noop, complete = noop } = options
+  const { title = '', success, fail, complete } = options
   const navigation = getFocusedNavigation()
   if (!(navigation && navigation.setOptions)) {
     failHandle({ errMsg: 'setNavigationBarTitle:fail' }, fail, complete)
@@ -21,7 +20,7 @@ function setNavigationBarTitle (options = {}) {
 }
 
 function setNavigationBarColor (options = {}) {
-  const { frontColor = '', backgroundColor = '', success = noop, fail = noop, complete = noop } = options
+  const { frontColor = '', backgroundColor = '', success, fail, complete } = options
   const navigation = getFocusedNavigation()
   if (!(navigation && navigation.setOptions)) {
     failHandle({ errMsg: 'setNavigationBarColor:fail' }, fail, complete)
