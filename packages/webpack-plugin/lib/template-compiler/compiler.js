@@ -1094,7 +1094,7 @@ function processStyleReact (el) {
   }
 }
 
-function getModelConfig(el, match) {
+function getModelConfig (el, match) {
   const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
   const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
   const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
@@ -1138,7 +1138,7 @@ function processEventReact (el, options, meta) {
       }
     }
   })
-  
+
   const modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
   if (modelExp) {
     const match = tagRE.exec(modelExp)
@@ -1160,7 +1160,7 @@ function processEventReact (el, options, meta) {
       }
       eventConfigMap[modelEvent].configs.unshift({
         hasArgs: true,
-        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}`:''}]`
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
       })
       addAttrs(el, [
         {
