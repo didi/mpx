@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "type": "module",
   "dependencies": {
     "vue": "^3.4.37"
   }

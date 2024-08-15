@@ -133,14 +133,6 @@ const sidebar = {
     ]
 }
 
-const nav = [
-    { text: '指南', link: '/guide/basic/start' },
-    { text: 'API', link: '/api/index' },
-    { text: '文章', link: '/articles/index' },
-    { text: '更新记录', link: 'https://github.com/didi/mpx/releases', target:'_blank'},
-    { text: 'Github', link: 'https://github.com/didi/mpx', target:'_blank'}
-]
-
 export default withPwa( {
     base: '/',
     head: [
@@ -166,21 +158,7 @@ export default withPwa( {
         },
     },
     ignoreDeadLinks: true,
-    shouldPrefetch: () => false,
     pwa: {},
-    plugins: {
-        '@vuepress/pwa': {
-            serviceWorker: true,
-            updatePopup: {
-                message: '文档有更新啦！',
-                buttonText: '刷新'
-            }
-        },
-        '@vuepress/active-header-links': {
-            sidebarLinkSelector: '.header-anchor',
-            headerAnchorSelector: '.header-anchor'
-        }
-    },
     themeConfig: {
         // navbar: false,
         algolia: {
