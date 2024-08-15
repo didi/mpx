@@ -1,4 +1,4 @@
-import { error } from '@mpxjs/utils'
+import { error, setByPath } from '@mpxjs/utils'
 import Mpx from '../../index'
 
 export default function proxyEventMixin () {
@@ -33,15 +33,15 @@ export default function proxyEventMixin () {
         }
       })
       return returnedValue
+    },
+    __model (expr, $event, valuePath = ['value'], filterMethod) {
+      const innerFilter = {
+        trim: val => typeof val === 'string' && val.trim()
+      }
+      const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+      const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
+      setByPath(this, expr, value)
     }
-    // __model (expr, $event, valuePath = ['value'], filterMethod) {
-    //   const innerFilter = {
-    //     trim: val => typeof val === 'string' && val.trim()
-    //   }
-    //   const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
-    //   const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
-    //   setByPath(this, expr, value)
-    // }
   }
   return {
     methods
