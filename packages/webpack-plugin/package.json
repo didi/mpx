@@ -83,7 +83,8 @@
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.79",
-    "react-native": "^0.74.5"
+    "react-native": "^0.74.5",
+    "rimraf": "^6.0.1"
   },
   "engines": {
     "node": ">=14.14.0"
