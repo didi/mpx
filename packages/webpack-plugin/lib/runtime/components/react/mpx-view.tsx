@@ -280,7 +280,6 @@ function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp
   ]
 }
 
-const { createAnimation } = useAnimationHooks()
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
   const {
@@ -385,7 +384,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
-  const animationStyle = createAnimation(props)
+  const animationStyle = useAnimationHooks(props)
 
   return animation.actions?.length ? (
     <Animated.View

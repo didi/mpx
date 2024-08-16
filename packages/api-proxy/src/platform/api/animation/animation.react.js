@@ -11,6 +11,7 @@ class Animation {
   ) {
     // 默认值
     this._setDefault(duration, delay, timingFunction, transformOrigin)
+    this.id = 0
   }
 
   __rpx (value) {
@@ -269,7 +270,9 @@ class Animation {
 
   // 动画数据产出
   export () {
+    this.id++
     return {
+      id: this.id,
       actions: this.createAnimationData()
     }
   }
