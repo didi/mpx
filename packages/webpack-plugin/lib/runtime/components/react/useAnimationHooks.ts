@@ -119,6 +119,7 @@ export default function useAnimationHooks<T, P>(props) {
       toValue: isBg(key) ? 1 : value,
       duration,
       delay,
+      useNativeDriver: true,
       ...EasingKey[timingFunction] ? { easing: EasingKey[timingFunction] } : {}
     })
   }
