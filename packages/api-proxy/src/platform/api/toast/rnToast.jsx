@@ -5,7 +5,8 @@ import successPng from './success.png'
 import errorPng from './error.png'
 
 let toastKey
-let isLoading
+let isLoadingShow
+let tId // show duration 计时id
 const styles = StyleSheet.create({
   toastContent: {
     minWdth: 150,
@@ -49,14 +50,18 @@ const styles = StyleSheet.create({
   }
 })
 function showToast (options) {
-  const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isShowLoading } = options
+  const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   let ToastView
   const iconImg = {
     success: successPng,
     fail: errorPng
   }
   const pointerEvents = mask ? 'auto' : 'none'
-  isLoading = isShowLoading
+  isLoadingShow = isLoading
+  if (tId) {
+    clearTimeout(tId)
+  }
+  tId = null
   if (image || icon === 'success' || icon === 'error') {
     ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
       <View style={styles.toastContent}>
@@ -90,8 +95,8 @@ function showToast (options) {
       Portal.remove(toastKey)
     }
     toastKey = Portal.add(ToastView)
-    if (!isShowLoading) {
-      setTimeout(() => {
+    if (!isLoading) {
+      tId = setTimeout(() => {
         Portal.remove(toastKey)
         toastKey = null
       }, duration)
@@ -109,6 +114,9 @@ function showToast (options) {
 }
 
 function hideToast(options) {
+  if (isLoadingShow) {
+    return
+  }
   const { success, fail, complete } = options
   try {
     if (toastKey) {
@@ -128,7 +136,7 @@ function hideToast(options) {
 }
 
 function showLoading (options) {
-  if (isLoading) {
+  if (isLoadingShow) {
     return
   }
   const { title, mask, success, fail, complete } = options
@@ -136,7 +144,7 @@ function showLoading (options) {
     title,
     mask,
     icon: 'loading',
-    isShowLoading: true,
+    isLoading: true,
     success () {
       const result = {
         errMsg: 'showLoading:ok'
@@ -153,10 +161,10 @@ function showLoading (options) {
 }
 
 function hideLoading (options) {
-  if (!isLoading) {
+  if (!isLoadingShow) {
     return
   }
-  isLoading = false
+  isLoadingShow = false
   const { success, fail, complete } = options
   try {
     if (toastKey) {

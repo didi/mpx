@@ -1,10 +1,8 @@
 import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
-import RootSiblings from 'react-native-root-siblings'
 function showActionSheet (options) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
-  let rootSiblingsObj
   let actionSheetKey
   const slideAnim = new Animated.Value(500)
   const slideIn = () => {
@@ -120,7 +118,6 @@ function showActionSheet (options) {
       <View style={styles.buttonStyle}><Button color={'#000000'} title={'取消'} onPress={cancelAction}></Button></View>
     </Animated.View>
   </TouchableHighlight>
-  // rootSiblingsObj = new RootSiblings(ActionSheetView)
   actionSheetKey = Portal.add(ActionSheetView)
   slideIn()
 }
