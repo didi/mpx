@@ -158,7 +158,11 @@ export default withPwa( {
         },
     },
     ignoreDeadLinks: true,
-    pwa: {},
+    pwa: {
+        manifest: {
+            theme_color: '#ffffff'
+        }
+    },
     themeConfig: {
         // navbar: false,
         algolia: {

@@ -4,6 +4,7 @@
       <Navbar />
       <mobile-view v-if="smallMode"></mobile-view>
       <Content v-else />
+      <LayoutBottom/>
       <Footer />
     </div>
     <div v-else>
@@ -18,6 +19,7 @@ import Navbar from "../components/Navbar.vue";
 import MobileView from "../components/MobileView.vue";
 import Content from "../global-components/Content.vue";
 import Footer from "../global-components/Footer.vue";
+import LayoutBottom from '../components/RegisterSW.vue'
 import DefaultTheme from 'vitepress/theme'
 
 const { Layout } = DefaultTheme
@@ -29,7 +31,8 @@ export default {
     Footer,
     Layout,
     // ParentLayout,
-    MobileView
+    MobileView,
+    LayoutBottom
   },
   data () {
     return {

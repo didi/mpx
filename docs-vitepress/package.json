@@ -11,5 +11,8 @@
   "type": "module",
   "dependencies": {
     "vue": "^3.4.37"
+  },
+  "devDependencies": {
+    "workbox-window": "^7.1.0"
   }
 }

@@ -1,4 +1,4 @@
-// node_modules/@vue/devtools-shared/dist/index.js
+// node_modules/vitepress/node_modules/@vue/devtools-shared/dist/index.js
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -28,7 +28,7 @@ var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__
   mod
 ));
 var init_esm_shims = __esm({
-  "../../node_modules/.pnpm/tsup@8.1.0_@microsoft+api-extractor@7.43.0_@types+node@20.14.10__@swc+core@1.5.29_postcss@8.4.39_typescript@5.5.3/node_modules/tsup/assets/esm_shims.js"() {
+  "../../node_modules/.pnpm/tsup@8.2.4_@microsoft+api-extractor@7.43.0_@types+node@20.14.15__@swc+core@1.5.29_jiti@1.21.6_syuounfse6kvjheepufhb6fwcy/node_modules/tsup/assets/esm_shims.js"() {
     "use strict";
   }
 });
@@ -254,7 +254,7 @@ function isUrlString(str) {
 var deepClone = (0, import_rfdc.default)({ circles: true });
 init_esm_shims();
 
-// node_modules/hookable/dist/index.mjs
+// node_modules/vitepress/node_modules/hookable/dist/index.mjs
 function flatHooks(configHooks, hooks2 = {}, parentName) {
   for (const key in configHooks) {
     const subHook = configHooks[key];
@@ -459,7 +459,7 @@ function createHooks() {
   return new Hookable();
 }
 
-// node_modules/perfect-debounce/dist/index.mjs
+// node_modules/vitepress/node_modules/perfect-debounce/dist/index.mjs
 var DEBOUNCE_DEFAULTS = {
   trailing: true
 };
@@ -516,11 +516,11 @@ async function _applyPromised(fn, _this, args) {
   return await fn.apply(_this, args);
 }
 
-// node_modules/birpc/dist/index.mjs
+// node_modules/vitepress/node_modules/birpc/dist/index.mjs
 var { clearTimeout: clearTimeout2, setTimeout: setTimeout2 } = globalThis;
 var random = Math.random.bind(Math);
 
-// node_modules/@vue/devtools-kit/dist/index.js
+// node_modules/vitepress/node_modules/@vue/devtools-kit/dist/index.js
 var __create2 = Object.create;
 var __defProp2 = Object.defineProperty;
 var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
@@ -550,7 +550,7 @@ var __toESM2 = (mod, isNodeMode, target21) => (target21 = mod != null ? __create
   mod
 ));
 var init_esm_shims2 = __esm2({
-  "../../node_modules/.pnpm/tsup@8.1.0_@microsoft+api-extractor@7.43.0_@types+node@20.14.10__@swc+core@1.5.29_postcss@8.4.39_typescript@5.5.3/node_modules/tsup/assets/esm_shims.js"() {
+  "../../node_modules/.pnpm/tsup@8.2.4_@microsoft+api-extractor@7.43.0_@types+node@20.14.15__@swc+core@1.5.29_jiti@1.21.6_syuounfse6kvjheepufhb6fwcy/node_modules/tsup/assets/esm_shims.js"() {
     "use strict";
   }
 });
@@ -3019,13 +3019,21 @@ var RefStateEditor = class {
 var stateEditor = new StateEditor();
 init_esm_shims2();
 function openInEditor(options = {}) {
-  var _a24;
-  const { file, baseUrl = window.location.origin, line = 0, column = 0 } = options;
+  var _a24, _b24, _c;
+  const { file, host, baseUrl = window.location.origin, line = 0, column = 0 } = options;
   if (file) {
-    if (devtoolsState.vitePluginDetected) {
-      const _baseUrl = (_a24 = target.__VUE_DEVTOOLS_OPEN_IN_EDITOR_BASE_URL__) != null ? _a24 : baseUrl;
+    if (host === "chrome-extension") {
+      const fileName = file.replace(/\\/g, "\\\\");
+      const _baseUrl = (_b24 = (_a24 = window.VUE_DEVTOOLS_CONFIG) == null ? void 0 : _a24.openInEditorHost) != null ? _b24 : "/";
+      fetch(`${_baseUrl}__open-in-editor?file=${encodeURI(file)}`).then((response) => {
+        if (!response.ok) {
+          const msg = `Opening component ${fileName} failed`;
+          console.log(`%c${msg}`, "color:red");
+        }
+      });
+    } else if (devtoolsState.vitePluginDetected) {
+      const _baseUrl = (_c = target.__VUE_DEVTOOLS_OPEN_IN_EDITOR_BASE_URL__) != null ? _c : baseUrl;
       target.__VUE_INSPECTOR__.openInEditor(_baseUrl, file, line, column);
-    } else {
     }
   }
 }

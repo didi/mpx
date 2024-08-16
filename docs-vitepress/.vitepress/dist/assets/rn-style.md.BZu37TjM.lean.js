@@ -1,1 +1,0 @@
-import{_ as s,c as a,o as i,a7 as n}from"./chunks/framework.CwvFaCp2.js";const g=JSON.parse('{"title":"Mpx转RN样式使用指南","description":"","frontmatter":{},"headers":[],"relativePath":"rn-style.md","filePath":"rn-style.md"}'),t={name:"rn-style.md"},e=n("",302),l=[e];function h(p,r,d,k,o,c){return i(),a("div",null,l)}const b=s(t,[["render",h]]);export{g as __pageData,b as default};
