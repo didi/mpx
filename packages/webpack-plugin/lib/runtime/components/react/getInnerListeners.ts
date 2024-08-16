@@ -127,7 +127,7 @@ const useInnerProps = (
 
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
-  const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false }
+  const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
 
   propsRef.current = { ...props, ...additionalProps }
 
@@ -208,6 +208,9 @@ const useInnerProps = (
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchend', e)
     if (ref.current.needPress[type]) {
+      if (type === 'bubble' && config.disableTap) {
+        return
+      }
       handleEmitEvent(currentTapEvent, 'tap', e)
     }
   }
