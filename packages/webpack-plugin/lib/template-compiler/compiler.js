@@ -1655,23 +1655,36 @@ function processFor (el) {
 }
 
 function processRefReact (el, meta) {
-  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
+  const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
+
   // rn中只有内建组件能被作为node ref处理
   const type = el.isBuiltIn ? 'node' : 'component'
-  if (val) {
+  if (val || has) {
     if (!meta.refs) {
       meta.refs = []
     }
     const all = !!forScopes.length
+    const key = `ref_rn_${++refId}`
+    const classString = getAndRemoveAttr(el, 'class', false).val
+    const idString = getAndRemoveAttr(el, 'id', false).val
+    const ids = idString ? idString.split(' ').map(s => `#${s}`) : []
+    const classNames = classString ? classString.split(' ').map(s => `.${s}`) : []
+    const selector = [...ids, ...classNames]
+    if (val) {
+      selector.push(val)
+    }
+
     meta.refs.push({
-      key: val,
+      key,
       all,
-      type
+      type,
+      refKey: val,
+      selector
     })
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${val}') }}`
+      value: `{{ this.__getRefVal('${key}') }}`
     }])
   }
 }
