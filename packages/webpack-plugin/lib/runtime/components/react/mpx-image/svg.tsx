@@ -1,7 +1,6 @@
 import { JSX } from 'react'
 import type { ImageSourcePropType, ImageStyle, StyleProp } from 'react-native'
 import { SvgCssUri, WithLocalSvg } from 'react-native-svg/css'
-
 interface SvgProps {
   local?: boolean
   src: string | ImageSourcePropType

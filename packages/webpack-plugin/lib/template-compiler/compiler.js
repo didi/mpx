@@ -1094,6 +1094,33 @@ function processStyleReact (el) {
   }
 }
 
+function getModelConfig (el, match) {
+  const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
+  const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
+  const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
+  const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
+  const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
+  let modelValuePathArr
+  try {
+    modelValuePathArr = JSON5.parse(modelValuePath)
+  } catch (e) {
+    if (modelValuePath === '') {
+      modelValuePathArr = []
+    } else {
+      modelValuePathArr = modelValuePath.split('.')
+    }
+  }
+  const modelValue = match[1].trim()
+  const stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+  return {
+    modelProp,
+    modelEvent,
+    modelFilter,
+    modelValuePathArr,
+    stringifiedModelValue
+  }
+}
+
 function processEventReact (el, options, meta) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
@@ -1112,7 +1139,39 @@ function processEventReact (el, options, meta) {
     }
   })
 
-  let wrapper
+  const modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
+  if (modelExp) {
+    const match = tagRE.exec(modelExp)
+    if (match) {
+      const { modelProp, modelEvent, modelFilter, modelValuePathArr, stringifiedModelValue } = getModelConfig(el, match)
+      if (!isValidIdentifierStr(modelEvent)) {
+        warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
+        return
+      }
+      // if (forScopes.length) {
+      //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+      // } else {
+      //   stringifiedModelValue = stringify(modelValue)
+      // }
+      if (!eventConfigMap[modelEvent]) {
+        eventConfigMap[modelEvent] = {
+          configs: []
+        }
+      }
+      eventConfigMap[modelEvent].configs.unshift({
+        hasArgs: true,
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
+      })
+      addAttrs(el, [
+        {
+          name: modelProp,
+          value: modelExp
+        }
+      ])
+    }
+  }
+
+  // let wrapper
 
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
@@ -1166,12 +1225,12 @@ function processEventReact (el, options, meta) {
     // }
   }
 
-  if (wrapper) {
-    replaceNode(el, wrapper, true)
-    addChild(wrapper, el)
-    processAttrs(wrapper, options)
-    postMoveBaseDirective(wrapper, el)
-  }
+  // if (wrapper) {
+  //   replaceNode(el, wrapper, true)
+  //   addChild(wrapper, el)
+  //   processAttrs(wrapper, options)
+  //   postMoveBaseDirective(wrapper, el)
+  // }
 }
 
 function processEvent (el, options) {
@@ -1204,27 +1263,11 @@ function processEvent (el, options) {
   if (modelExp) {
     const match = tagRE.exec(modelExp)
     if (match) {
-      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
-      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
-      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
-      const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
-      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
-      let modelValuePathArr
-      try {
-        modelValuePathArr = JSON5.parse(modelValuePath)
-      } catch (e) {
-        if (modelValuePath === '') {
-          modelValuePathArr = []
-        } else {
-          modelValuePathArr = modelValuePath.split('.')
-        }
-      }
+      const { modelProp, modelEvent, modelFilter, modelValuePathArr, stringifiedModelValue } = getModelConfig(el, match)
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
       }
-      const modelValue = match[1].trim()
-      const stringifiedModelValue = stringifyWithResolveComputed(modelValue)
       // if (forScopes.length) {
       //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
       // } else {
@@ -2173,7 +2216,7 @@ function processBuiltInComponents (el, meta) {
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
       if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
       }
@@ -2492,6 +2535,10 @@ function processElement (el, root, options, meta) {
     return
   }
 
+  if (runtimeCompile && options.dynamicTemplateRuleRunner) {
+    options.dynamicTemplateRuleRunner(el, options, config[mode])
+  }
+
   if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
@@ -2545,18 +2592,18 @@ function processElement (el, root, options, meta) {
 
   processIf(el)
   processFor(el)
-  processRef(el, options, meta)
-  if (runtimeCompile) {
-    processClassDynamic(el, meta)
-    processStyleDynamic(el, meta)
-  } else {
-    processClass(el, meta)
-    processStyle(el, meta)
-  }
-  processEvent(el, options)
 
   if (!pass) {
+    processRef(el, options, meta)
+    if (runtimeCompile) {
+      processClassDynamic(el, meta)
+      processStyleDynamic(el, meta)
+    } else {
+      processClass(el, meta)
+      processStyle(el, meta)
+    }
     processShow(el, options, root)
+    processEvent(el, options)
     processComponentIs(el, options)
   }
 

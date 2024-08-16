@@ -966,11 +966,13 @@ module.exports = defineConfig({
 })
 ```
 
-### partialCompile
+### partialCompileRules
 
 `{ include: string | RegExp | Function | Array<string | RegExp | Function> }`
 
 在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持打包指定的小程序页面。
+
+**注意：** @mpxjs/webpack-plugin@2.9.41版本之前该配置为 partialCompile。
 
 ```js
 // vue.config.js
@@ -979,7 +981,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         // include 可以是正则、字符串、函数、数组
-        partialCompile: {
+        partialCompileRules: {
           include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
           include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
           include (pageResourcePath) {
@@ -1088,25 +1090,6 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         retryRequireAsync: true
-      }
-    }
-  }
-})
-```
-
-### enableAliRequireAsync
-
-`boolean = false`
-
-支付宝在`2.8.2`基础库版本后开始支持分包异步化，开启此配置时Mpx的分包异步构建能力能在输出支付宝时生效，不开启时则还是采用兜底策略进行构建来兼容`2.8.2`之前的基础库版本
-
-```js
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      plugin: {
-        enableAliRequireAsync: true
       }
     }
   }
