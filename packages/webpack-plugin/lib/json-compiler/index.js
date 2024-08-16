@@ -706,7 +706,8 @@ module.exports = function (content) {
       for (const root in subPackagesCfg) {
         const subPackageCfg = subPackagesCfg[root]
         // 分包不存在 pages，输出 subPackages 字段会报错
-        if (subPackageCfg.pages.length) {
+        // tt模式下分包异步允许一个分包不存在 pages
+        if (subPackageCfg.pages.length || mode === 'tt') {
           if (!json.subPackages) {
             json.subPackages = []
           }

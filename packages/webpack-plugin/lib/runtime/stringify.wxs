@@ -137,9 +137,9 @@ function stringifyArray (value) {
   return res
 }
 
-var mpxDashReg = genRegExp('(.+)MpxDash$')
-// 转义字符在wxs正则中存在平台兼容性问题，用[$]规避使用转义字符
-var mpxDashReplaceReg = genRegExp('[$]', 'g')
+var mpxEscapeReg = genRegExp('(.+)MpxEscape$')
+var dashEscapeReg = genRegExp('_da_', 'g')
+var spaceEscapeReg = genRegExp('_sp_', 'g')
 
 function stringifyObject (value) {
   var res = ''
@@ -148,8 +148,8 @@ function stringifyObject (value) {
     var key = objKeys[i]
     if (value[key]) {
       if (res) res += ' '
-      if (mpxDashReg.test(key)) {
-        key = mpxDashReg.exec(key)[1].replace(mpxDashReplaceReg, '-')
+      if (mpxEscapeReg.test(key)) {
+        key = mpxEscapeReg.exec(key)[1].replace(dashEscapeReg, '-').replace(spaceEscapeReg, ' ')
       }
       res += key
     }
