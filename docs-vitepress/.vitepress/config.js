@@ -1,3 +1,4 @@
+import { defineConfig } from 'vitepress'
 import { withPwa } from '@vite-pwa/vitepress'
 
 const sidebar = {
@@ -7,7 +8,7 @@ const sidebar = {
             text: '基础',
             collapsable: false,
             items: [
-                { text: '快速开始', link: '/guide/basic/start'},
+                { text: '快速开始', link: '/guide/basic/start' },
                 { text: '介绍', link: '/guide/basic/intro' },
                 { text: '单文件开发', link: '/guide/basic/single-file' },
                 { text: 'IDE 高亮配置', link: '/guide/basic/ide' },
@@ -50,8 +51,8 @@ const sidebar = {
             text: '组合式 API',
             collapsable: false,
             items: [
-                { text: '组合式 API', link: '/guide/composition-api/composition-api'},
-                { text: '响应式 API', link: '/guide/composition-api/reactive-api'}
+                { text: '组合式 API', link: '/guide/composition-api/composition-api' },
+                { text: '响应式 API', link: '/guide/composition-api/reactive-api' }
             ]
         },
         {
@@ -133,7 +134,10 @@ const sidebar = {
     ]
 }
 
-export default withPwa( {
+const title = 'Mpx框架'
+const description = '深度性能优化的增强型小程序开发框架'
+
+export default withPwa(defineConfig({
     base: '/',
     head: [
         ['link', { rel: 'icon', href: '/favicon.ico' }],
@@ -144,7 +148,7 @@ export default withPwa( {
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "jtvvy52wxy");`]
     ],
-    title: 'Mpx框架',
+    title,
     locales: {
         // 如果有其他语言，也可以在这里添加
         // '/zh/': {
@@ -152,16 +156,48 @@ export default withPwa( {
         // },
         '/': {
             lang: 'zh-CN', // 将会被设置为 <html> 的 lang 属性
-            title: 'Mpx框架',
-            description: '深度性能优化的增强型小程序开发框架',
+            title,
+            description,
             prev: '上一页',
         },
     },
     ignoreDeadLinks: true,
     pwa: {
+        base: '/',
+        scope: '/',
+        includeAssets: ['favicon.svg'],
         manifest: {
-            theme_color: '#ffffff'
-        }
+            name: title,
+            short_name: 'Mpx',
+            description,
+            theme_color: '#ffffff',
+            // icons: [
+            //     {
+            //         src: 'pwa-192x192.png',
+            //         sizes: '192x192',
+            //         type: 'image/png',
+            //     },
+            //     {
+            //         src: 'pwa-512x512.png',
+            //         sizes: '512x512',
+            //         type: 'image/png',
+            //     },
+            //     {
+            //         src: 'pwa-512x512.png',
+            //         sizes: '512x512',
+            //         type: 'image/png',
+            //         purpose: 'any maskable',
+            //     },
+            // ],
+        },
+        workbox: {
+            globPatterns: ['**/*.{css,js,html,svg,png,ico,txt,woff2}'],
+        },
+        devOptions: {
+            enabled: true,
+            suppressWarnings: true,
+            navigateFallback: '/',
+        },
     },
     themeConfig: {
         // navbar: false,
@@ -179,3 +215,4 @@ export default withPwa( {
         config.resolve.modules.add('node_modules')
     }
 })
+)

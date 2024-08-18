@@ -1,15 +1,12 @@
-// import formatHeaderSlugPlugin from './vuepress-format-header-slug-plugin'
-// .vitepress/theme/index.js
-// import DefaultTheme from 'vitepress/theme'
+import { h } from 'vue'
 import Theme from 'vitepress/theme'
 import Layout from './layouts/HomepageLayout.vue'
-import { h } from 'vue'
 import RegisterSW from "./components/RegisterSW.vue";
 
 export default {
     ...Theme,
     Layout() {
-        return h(Theme.Layout, null, {
+        return h(Layout, null, {
             'layout-bottom': () => h(RegisterSW)
         })
     }

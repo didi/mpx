@@ -8,5 +8,7 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 .DS_Store
-docs-vitepress/.vitepress/dist
 elevate/
+docs-vitepress/.vitepress/dist
+docs-vitepress/.vitepress/cache
+dev-dist
