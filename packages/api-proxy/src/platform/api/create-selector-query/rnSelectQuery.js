@@ -18,11 +18,21 @@ export default class SelectorQuery {
     return this
   }
 
+  /**
+   * 目前支持的 selector
+   * 
+   * 1. #id
+   * 2. .class
+   * 3. .class1.class2
+   */
   // todo 元素选择规则：只支持单 selector 选择器：#id，.class
-  select (selector, all) {
+  select (selector = '', all) {
+    // todo class/id
     if (!this._component) {
       warn('Please use SelectorQuery.in method to set context')
     }
+    const splitedSelector = selector.match(/(#|\.)\w+/g)
+    // todo match 工作
     const refs =
       this._component && this._component.__selectRef(selector, 'node', all)
     return new NodeRef(refs, this, !all)
