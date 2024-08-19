@@ -8,7 +8,6 @@ import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
-import { useIsFocused } from '@react-navigation/native'
 
 function getOrientation (window = ReactNative.Dimensions.get('window')) {
   return window.width > window.height ? 'landscape' : 'portrait'
@@ -25,25 +24,6 @@ function getSystemInfo () {
       windowWidth: window.width,
       windowHeight: window.height
     }
-  }
-}
-
-function hasPageHook (mpxProxy, hooks = [], componentHooks = [], pageHooks = []) {
-  if (hooks.some(h => mpxProxy.hasHook(h))) {
-    return true
-  }
-  const options = mpxProxy.options
-  const type = options.__type__
-  if (type === 'page') {
-    return pageHooks.some(h => {
-      if (h === 'onResize') {
-        return isFunction(options.methods[h])
-      } else {
-        return mpxProxy.hasHook(h)
-      }
-    })
-  } else if (type === 'component') {
-    return componentHooks.some(h => options.pageLifetimes && isFunction(options.pageLifetimes[h]))
   }
 }
 
@@ -258,56 +238,6 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-function usePageStatus (mpxProxy) {
-  const { routeName } = useContext(routeContext) || {}
-
-  useEffect(() => {
-    let chnageSubscription
-    let resizeSubScription
-    let pageStatus
-
-    const watcher = watch(() => pageStatusContext[routeName], (newVal) => {
-      pageStatus = newVal
-      triggerPageStatusHook(mpxProxy, pageStatus ? 'show' : 'hide')
-    }, { immediate: true })
-
-    if (hasPageHook(mpxProxy, [ONSHOW, ONHIDE], ['show', 'hide'])) {
-      chnageSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
-        if (currentState === 'active') {
-          pageStatus && triggerPageStatusHook(mpxProxy, 'show')
-        } else if (currentState === 'background') {
-          pageStatus && triggerPageStatusHook(mpxProxy, 'hide')
-        }
-      })
-    }
-
-    if (hasPageHook(mpxProxy, [ONRESIZE], ['resize'], ['onResize'])) {
-      let lastOrientation = getOrientation()
-      if (pageStatus) {
-        triggerResizeEvent(mpxProxy)
-      }
-
-      resizeSubScription = ReactNative.Dimensions.addEventListener(
-        'change',
-        ({ window }) => {
-          const orientation = getOrientation(window)
-          if (orientation === lastOrientation) return
-          lastOrientation = orientation
-          if (pageStatus) {
-            triggerResizeEvent(mpxProxy)
-          }
-        }
-      )
-    }
-
-    return () => {
-      chnageSubscription && chnageSubscription.remove()
-      resizeSubScription && resizeSubScription.remove()
-      watcher && watcher()
-    }
-  }, [])
-}
-
 const triggerResizeEvent = (mpxProxy) => {
   const type = mpxProxy.options.__type__
   const systemInfo = getSystemInfo()
@@ -321,9 +251,80 @@ const triggerResizeEvent = (mpxProxy) => {
   }
 }
 
+function usePageContext (mpxProxy) {
+  const { routeName } = useContext(routeContext) || {}
+
+  useEffect(() => {
+    let watcher
+    const hasShowHook = mpxProxy.hasHook([ONSHOW, 'show'])
+    const hasHideHook = mpxProxy.hasHook([ONHIDE, 'hide'])
+    const hasResizeHook = mpxProxy.hasHook([ONRESIZE, 'resize', 'onResize'])
+    if (hasShowHook || hasHideHook || hasResizeHook) {
+      // wx 真机上 resize 初次就会触发
+      if (hasResizeHook) {
+        triggerResizeEvent(mpxProxy)
+      }
+      watcher = watch(() => pageStatusContext[routeName], (newVal) => {
+        if (newVal === 'show' || newVal === 'hide') {
+          triggerPageStatusHook(mpxProxy, newVal)
+        } else if (/^resize/.test(newVal)) {
+          triggerResizeEvent(mpxProxy)
+        }
+      }, { immediate: true })
+    }
+
+    return () => {
+      watcher && watcher()
+    }
+  }, [])
+}
+
 const pageStatusContext = reactive({})
 function setPageStatus (routeName, val) {
   set(pageStatusContext, routeName, val)
+}
+
+function usePageStatus (navigation, route) {
+  let isFocused = true
+  setPageStatus(route.name, 'show')
+  useEffect(() => {
+    const focusSubscription = navigation.addListener('focus', () => {
+      setPageStatus(route.name, 'show')
+      isFocused = true
+    })
+    const blurSubscription = navigation.addListener('blur', () => {
+      setPageStatus(route.name, 'hide')
+      isFocused = false
+    })
+    const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
+      if (currentState === 'active') {
+        isFocused && setPageStatus(route.name, 'show')
+      } else if (currentState === 'background') {
+        isFocused && setPageStatus(route.name, 'hide')
+      }
+    })
+
+    let count = 0
+    let lastOrientation = getOrientation()
+    const resizeSubScription = ReactNative.Dimensions.addEventListener(
+      'change',
+      ({ window }) => {
+        const orientation = getOrientation(window)
+        if (orientation === lastOrientation) return
+        lastOrientation = orientation
+        if (isFocused) {
+          setPageStatus(route.name, `resize${count++}`)
+        }
+      }
+    )
+
+    return () => {
+      focusSubscription()
+      blurSubscription()
+      changeSubscription && changeSubscription.remove()
+      resizeSubScription && resizeSubScription.remove()
+    }
+  }, [navigation])
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -358,7 +359,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.propsUpdated()
     }
 
-    usePageStatus(proxy)
+    usePageContext(proxy)
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
@@ -386,7 +387,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      setPageStatus(route.name, useIsFocused())
+      usePageStatus(navigation, route)
+
       useLayoutEffect(() => {
         navigation.setOptions({
           headerTitle: pageConfig.navigationBarTitleText || '',
