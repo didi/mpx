@@ -114,10 +114,11 @@ function showToast (options) {
 }
 
 function hideToast(options) {
-  if (isLoadingShow) {
+  const { noConflict = false, success, fail, complete } = options
+
+  if (isLoadingShow && noConflict) {
     return
   }
-  const { success, fail, complete } = options
   try {
     if (toastKey) {
       Portal.remove(toastKey)
@@ -158,11 +159,11 @@ function showLoading (options) {
 }
 
 function hideLoading (options) {
-  if (!isLoadingShow) {
+  const { noConflict = false, success, fail, complete } = options
+  if (!isLoadingShow && noConflict) {
     return
   }
   isLoadingShow = false
-  const { success, fail, complete } = options
   try {
     if (toastKey) {
       Portal.remove(toastKey)
