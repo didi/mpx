@@ -9,15 +9,11 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../.
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 
-function getOrientation (window = ReactNative.Dimensions.get('window')) {
-  return window.width > window.height ? 'landscape' : 'portrait'
-}
-
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
   const screen = ReactNative.Dimensions.get('screen')
   return {
-    deviceOrientation: getOrientation(),
+    deviceOrientation: window.width > window.height ? 'landscape' : 'portrait',
     size: {
       screenWidth: screen.width,
       screenHeight: screen.height,
@@ -303,25 +299,10 @@ function usePageStatus (navigation, route) {
       }
     })
 
-    let count = 0
-    let lastOrientation = getOrientation()
-    const resizeSubScription = ReactNative.Dimensions.addEventListener(
-      'change',
-      ({ window }) => {
-        const orientation = getOrientation(window)
-        if (orientation === lastOrientation) return
-        lastOrientation = orientation
-        if (isFocused) {
-          setPageStatus(route.name, `resize${count++}`)
-        }
-      }
-    )
-
     return () => {
       focusSubscription()
       blurSubscription()
       appFocusedStateWatcher()
-      resizeSubScription && resizeSubScription.remove()
     }
   }, [navigation])
 }

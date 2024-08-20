@@ -10,6 +10,10 @@ import { ref } from '../observer/ref'
 
 const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
 
+function getOrientation (window = ReactNative.Dimensions.get('window')) {
+  return window.width > window.height ? 'landscape' : 'portrait'
+}
+
 function filterOptions (options, appData) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
@@ -115,8 +119,18 @@ export default function createApp (option, config = {}) {
           })
         }
       })
+
+      let count = 0
+      let lastOrientation = getOrientation()
+      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
+        const orientation = getOrientation(window)
+        if (orientation === lastOrientation) return
+        lastOrientation = orientation
+        global.__mpxAppFocusedState.value = `resize${count++}`
+      })
       return () => {
         changeSubscription()
+        resizeSubScription && resizeSubScription.remove()
       }
     }, [])
 
