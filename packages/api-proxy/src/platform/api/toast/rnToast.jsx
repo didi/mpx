@@ -136,9 +136,6 @@ function hideToast(options) {
 }
 
 function showLoading (options) {
-  if (isLoadingShow) {
-    return
-  }
   const { title, mask, success, fail, complete } = options
   showToast({
     title,
