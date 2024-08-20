@@ -296,11 +296,10 @@ function usePageStatus (navigation, route) {
       setPageStatus(route.name, 'hide')
       isFocused = false
     })
-    const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
-      if (currentState === 'active') {
-        isFocused && setPageStatus(route.name, 'show')
-      } else if (currentState === 'background') {
-        isFocused && setPageStatus(route.name, 'hide')
+
+    const appFocusedStateWatcher = watch(global.__mpxAppFocusedState, (value) => {
+      if (isFocused) {
+        setPageStatus(route.name, value)
       }
     })
 
@@ -321,7 +320,7 @@ function usePageStatus (navigation, route) {
     return () => {
       focusSubscription()
       blurSubscription()
-      changeSubscription && changeSubscription.remove()
+      appFocusedStateWatcher()
       resizeSubScription && resizeSubScription.remove()
     }
   }, [navigation])
