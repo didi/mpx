@@ -41,21 +41,26 @@ export default function getRefsMixin () {
         return (instance) => instance && this.__refs[key].push(instance)
       },
       __selectRef (selector, refType, all = false) {
-        const selectorMap = this.__selectorMap[selector] || []
-        if (all) {
-          const refs = []
+        const splitedSelector = selector.match(/(#|\.)\w+/g) || []
+        const refsArr = splitedSelector.map(selector => {
+          const selectorMap = this.__selectorMap[selector] || []
+          const res = []
           selectorMap.forEach(({ type, key }) => {
             if (type === refType) {
               const _refs = this.__refs[key] || []
-              refs.push(..._refs)
+              res.push(..._refs)
             }
           })
-          return refs
-        } else {
-          const { key } = selectorMap.find(({ type }) => type === refType) || {}
-          const _refs = this.__refs[key] || []
-          return _refs[0]
-        }
+          return res
+        })
+
+        const refs = refsArr.reduce((preRefs, curRefs, curIndex) => {
+          if (curIndex === 0) return curRefs
+          curRefs = new Set(curRefs)
+          return preRefs.filter(p => curRefs.has(p))
+        }, [])
+
+        return all ? refs : refs[0]
       }
     }
   }

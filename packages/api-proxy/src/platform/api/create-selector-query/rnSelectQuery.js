@@ -20,22 +20,24 @@ export default class SelectorQuery {
 
   /**
    * 目前支持的 selector
-   * 
-   * 1. #id
-   * 2. .class
-   * 3. .class1.class2
+   *
+   * 1. id 选择器：#the-id
+   * 2. class 选择器（可以连续指定多个）：.a-class.another-class
    */
-  // todo 元素选择规则：只支持单 selector 选择器：#id，.class
   select (selector = '', all) {
-    // todo class/id
     if (!this._component) {
       warn('Please use SelectorQuery.in method to set context')
     }
-    const splitedSelector = selector.match(/(#|\.)\w+/g)
-    // todo match 工作
-    const refs =
-      this._component && this._component.__selectRef(selector, 'node', all)
-    return new NodeRef(refs, this, !all)
+    const splitedSelector = selector.match(/(#|\.)\w+/g) || []
+    const refsArr = splitedSelector.map(selector => this._component && this._component.__selectRef(selector, 'node', true))
+    const refs = refsArr.reduce((preRefs, curRefs, curIndex) => {
+      if (curIndex === 0) return curRefs
+      return preRefs.filter(p => {
+        const preNodeRef = p.getNodeInstance && p.getNodeInstance().nodeRef
+        return curRefs.find(r => r.getNodeInstance && r.getNodeInstance().nodeRef === preNodeRef)
+      })
+    }, [])
+    return new NodeRef(all ? refs : refs[0], this, !all)
   }
 
   selectAll (selector) {
