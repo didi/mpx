@@ -2460,6 +2460,8 @@ function processAtMode (el) {
             if (!replacedAttrName) {
               if (defineMode === 'noMode' || isImplicitMode) {
                 // 若defineMode 为 noMode 或 implicitMode，则 element 都需要进行规则转换
+                // 避免前一次循环 _atModeStatus 被设置为 mismatch
+                el._atModeStatus = ''
               } else {
                 el._atModeStatus = 'match'
               }
