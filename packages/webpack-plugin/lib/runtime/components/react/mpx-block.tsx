@@ -1,5 +1,5 @@
 
- import { ViewProps } from 'react-native'
+ import React, { ViewProps, JSX } from 'react-native'
  
  const _Block: React.FC<ViewProps> = (props): JSX.Element => {
      return (
