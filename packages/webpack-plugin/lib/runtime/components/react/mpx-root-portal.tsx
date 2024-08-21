@@ -2,21 +2,20 @@
  * ✔ enable
  */
 import { ReactNode } from 'react'
-import { Portal, View } from '@ant-design/react-native'
+import { Portal } from '@ant-design/react-native'
 
 interface RootPortalProps {
   enable?: boolean
   children: ReactNode
-  style?: Record<string, any>
 }
 const _RootPortal = (props: RootPortalProps) => {
-  const { children, enable = true, style } = props
+  const { children, enable = true } = props
   return enable ? (
     <Portal>
-      <View style={style}>{children}</View>
+      {children}
     </Portal>
   ) : (
-    <View style={style}>{children}</View>
+    <>{children}</>
   );
 }
 
