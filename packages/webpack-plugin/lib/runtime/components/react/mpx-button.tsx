@@ -348,7 +348,6 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
   const catchTap= (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleFormTypeFn()
   }
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
