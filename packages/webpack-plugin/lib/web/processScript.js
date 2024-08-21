@@ -62,7 +62,7 @@ module.exports = function (script, {
           content += `  wxsModules.${module} = ${expression}\n`
         })
       }
-      content += `const templateModules = {}\n`
+      content += 'const templateModules = {}\n'
       if (templateSrcList?.length) { // import标签处理
         templateSrcList?.forEach((item) => {
           content += `
@@ -86,7 +86,7 @@ module.exports = function (script, {
             const { filePath, content } = inlineTemplateMap[name]
             loaderContext._module.addPresentationalDependency(new WriteVfsDependency(filePath, content)) // 处理缓存报错的情况
             vfs.writeModule(filePath, content) // 截取template写入文件
-            expression = `getComponent(require(${stringifyRequest(loaderContext, `${filePath}?is=${name}&isTemplate`)}))`
+            const expression = `getComponent(require(${stringifyRequest(loaderContext, `${filePath}?is=${name}&isTemplate`)}))`
             componentsMap[name] = expression
           })
         }

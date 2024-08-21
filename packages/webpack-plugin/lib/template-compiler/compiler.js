@@ -1,8 +1,6 @@
 const JSON5 = require('json5')
 const he = require('he')
-const path = require('path')
 const config = require('../config')
-const hash = require('hash-sum')
 const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
@@ -14,7 +12,6 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
-const template2vue = normalize.lib('web/template2vue')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
@@ -204,7 +201,6 @@ function parseHTML (html, options) {
   const canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no
   let index = 0
   let last, lastTag
-  stopParseHtml = false
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
@@ -2376,8 +2372,6 @@ function postProcessTemplate (el, meta, options) {
       }
       const name = el.attrsMap.name
       if (name) {
-        let dir = path.parse(options.filePath)
-        dir = dir.dir || dir
         const content = getTemplateContent(options.template, name)
         const filePath = options.filePath.replace(/.mpx$/, `-${name}.wxml`)
         meta.inlineTemplateMap[name] = {
@@ -2543,7 +2537,7 @@ function processElement (el, root, options, meta) {
   const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (mode === 'web') {
-    if(initialTag === 'block') {
+    if (initialTag === 'block') {
       el._fakeTemplate = true // 该值是在template2vue中处理block转换的template的情况
     }
     // 收集内建组件
@@ -2746,7 +2740,7 @@ function serialize (root) {
         }
         if (node.tag === 'template' && node.attrsMap && node.attrsMap.is) {
           node.tag = 'component'
-          node.attrsList.map((item) => {
+          node.attrsList.forEach((item) => {
             if (item.name === 'is') {
               item.name = ':is'
               item.value = `'${item.value}'`

@@ -6,15 +6,14 @@ const { stringifyRequest } = require('@mpxjs/webpack-plugin/lib/web/script-helpe
 const WriteVfsDependency = require('../dependencies/WriteVfsDependency')
 
 module.exports = function (content) {
-  const regex = /<template[^>]*\sname\s*=\s*"([^"]*)"[^>]*>/g;
+  const regex = /<template[^>]*\sname\s*=\s*"([^"]*)"[^>]*>/g
   const mpx = this.getMpx()
-  let match;
-  const templateNames = [];
+  let match
+  const templateNames = []
 
   while ((match = regex.exec(content)) !== null) {
     templateNames.push(match[1])
   }
-  const tempLen = templateNames.length
   const templateMaps = {}
   templateNames.forEach((name, index) => {
     const cutContent = getTemplateContent(content, name)

@@ -12,7 +12,7 @@ const wxmlTemplateLoader = normalize.lib('web/wxml-template-loader')
 const getRefVarNames = function (str) { // 获取元素属性上用到的动态数据keyname
   const regex = /\(([a-zA-Z_$]\w*)\)/g
 
-  const matches = str.match(regex) || [];
+  const matches = str.match(regex) || []
   const variableNames = matches.map(name => {
     const getName = /\((\w+)\)/.exec(name)
     return getName[1]
@@ -39,7 +39,7 @@ module.exports = function (content) {
   if (!query.is) {
     return content
   }
-  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const { resourcePath } = parseRequest(this.resource)
   const props = ['_data_v_id']
   const { root, meta } = templateCompiler.parse(content, {
     warn: (msg) => {
@@ -58,7 +58,7 @@ module.exports = function (content) {
     filePath: resourcePath,
     usingComponents: []
   })
-  let builtInComponentsMap = {}
+  const builtInComponentsMap = {}
   if (meta.builtInComponentsMap) {
     Object.keys(meta.builtInComponentsMap).forEach((name) => {
       builtInComponentsMap[name] = {
@@ -68,7 +68,7 @@ module.exports = function (content) {
   }
 
   const getForValue = function (str) { // 获取v-for中遍历的子对象
-    regex = /\(([^)]+)\)/
+    const regex = /\(([^)]+)\)/
     let forValue
     const matches = regex.exec(str)
     if (matches) {
@@ -85,7 +85,7 @@ module.exports = function (content) {
     }
     let forValue
     let parent = node.parent
-    while(parent) {
+    while (parent) {
       const value = parent.attrsMap['v-for']
       if (value) {
         forValue = getForValue(value)
@@ -142,7 +142,7 @@ module.exports = function (content) {
               } else if (node.attrsMap.is) { // template is处理逻辑
                 node.tag = 'component'
                 result += '<' + node.tag
-                node.attrsList.map((item) => {
+                node.attrsList.forEach((item) => {
                   if (item.name === 'is') {
                     item.name = ':is'
                     item.value = `'${item.value}'`
@@ -166,7 +166,7 @@ module.exports = function (content) {
                 return ''
               }
             } else {
-              result += '<' + node.tag + ` :[_data_v_id]='_data_v_id'`
+              result += '<' + node.tag + ' :[_data_v_id]="_data_v_id"'
               let forValue
               let tagProps = []
               node.attrsList.forEach(function (attr) {
@@ -224,13 +224,13 @@ module.exports = function (content) {
   const componentsMap = buildComponentsMap({ localComponentsMap: tempCompMaps, builtInComponentsMap, loaderContext: this, jsonConfig: {} })
   let script = `\n<script>\n
     const {getComponent} = require(${stringifyRequest(this, optionProcessorPath)})\n`
-  script += `const templateModules = {}\n`
+  script += 'const templateModules = {}\n'
   meta.templateSrcList?.forEach((item) => {
     script += `
           const tempLoaderResult = require(${stringifyRequest(this, `!!${wxmlTemplateLoader}!${item}`)})\n
           Object.assign(templateModules, tempLoaderResult)\n`
   })
-  script+= `export default {
+  script += `export default {
       name: '${query.is}',
       props: ${JSON.stringify([...(new Set(props))])},
       components: Object.assign(${shallowStringify(componentsMap)}, templateModules),
@@ -245,5 +245,3 @@ module.exports = function (content) {
     return text
   }
 }
-
-
