@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import { type } from '@mpxjs/utils'
 
 const socketTasks = new Set()
@@ -44,14 +44,14 @@ class SocketTask {
     const { data = '', success, fail, complete } = options
     if (typeof data !== 'string' || type(data) !== 'ArrayBuffer') {
       const res = { errMsg: 'sendSocketMessage:fail Unsupported data type' }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
     } else if (this._socket.readyState === 1) {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
-      webHandleSuccess(res, success, complete)
+      successHandle(res, success, complete)
     } else {
       const res = { errMsg: 'sendSocketMessage:fail' }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
     }
   }
 
@@ -64,10 +64,10 @@ class SocketTask {
     try {
       this._socket.close()
       const res = { errMsg: 'closeSocket:ok' }
-      webHandleSuccess(res, success, complete)
+      successHandle(res, success, complete)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
     }
   }
 

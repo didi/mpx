@@ -1,4 +1,4 @@
-import { createDom, getRootElement, webHandleSuccess, webHandleFail } from '../../../common/js'
+import { createDom, getRootElement, successHandle, failHandle } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -46,10 +46,10 @@ export default class Modal {
   show (options = {}) {
     const opts = Object.assign({}, this.defaultOpts, options)
     if (opts.confirmText && _getLength(opts.confirmText) > 8) {
-      return webHandleFail({ errMsg: 'showModal:fail confirmText length should not larger than 4 Chinese characters' }, opts.fail, opts.complete)
+      return failHandle({ errMsg: 'showModal:fail confirmText length should not larger than 4 Chinese characters' }, opts.fail, opts.complete)
     }
     if (opts.cancelText && _getLength(opts.cancelText) > 8) {
-      return webHandleFail({ errMsg: 'showModal:fail cancelText length should not larger than 4 Chinese characters' }, opts.fail, opts.complete)
+      return failHandle({ errMsg: 'showModal:fail cancelText length should not larger than 4 Chinese characters' }, opts.fail, opts.complete)
     }
     getRootElement().appendChild(this.modal)
     if (this.hideTimer) {
@@ -77,7 +77,7 @@ export default class Modal {
         cancel: true,
         confirm: false
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
     }
     this.confirmBtn.onclick = () => {
       this.hide()
@@ -86,7 +86,7 @@ export default class Modal {
         cancel: false,
         confirm: true
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
     }
 
     this.modal.classList.add('show')
