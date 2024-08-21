@@ -12,6 +12,7 @@ import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
 import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '../../dynamic/dynamicRenderMixin.empty'
 import styleHelperMixin from './styleHelperMixin'
+import classHelperMixin from './classHelperMixin'
 import directiveHelperMixin from './directiveHelperMixin'
 
 export default function getBuiltInMixins (options, type) {
@@ -22,7 +23,8 @@ export default function getBuiltInMixins (options, type) {
       directiveHelperMixin(),
       styleHelperMixin(type),
       refsMixin(),
-      i18nMixin()
+      i18nMixin(),
+      classHelperMixin()
     ]
   } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [

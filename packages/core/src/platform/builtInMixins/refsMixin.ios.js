@@ -1,9 +1,10 @@
-import { BEFORECREATE } from '../../core/innerLifecycle'
+import { CREATED } from '../../core/innerLifecycle'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
+import { watch } from '../../observer/watch'
 
 export default function getRefsMixin () {
   return {
-    [BEFORECREATE] () {
+    [CREATED] () {
       this.__refs = {}
       this.$refs = {}
       this.__selectorMap = {}
@@ -13,12 +14,24 @@ export default function getRefsMixin () {
       __getRefs () {
         const refs = this.__getRefsData() || []
         const target = this
-        refs.forEach(({ key, type, all, refKey, selector }) => {
-          selector.forEach(item => {
-            this.__selectorMap[item] = this.__selectorMap[item] || []
-            this.__selectorMap[item].push({ type, key })
-          })
+        refs.forEach(({ key, type, all, refKey, computedSelectorKeys }) => {
+          if (computedSelectorKeys.length) {
+            computedSelectorKeys.forEach((item) => {
+              const computedKey = item.key
+              const prefix = item.prefix
+              watch(() => this[computedKey], (selectors = '') => {
+                selectors.trim().split(/\s+/).forEach(item => {
+                  const selector = prefix + item
+                  this.__selectorMap[selector] = this.__selectorMap[selector] || []
+                  this.__selectorMap[selector].push({ type, key })
+                })
+              }, { immediate: true })
+            })
+          }
           if (refKey) {
+            this.__selectorMap[refKey] = this.__selectorMap[refKey] || []
+            this.__selectorMap[refKey].push({ type, key })
+
             Object.defineProperty(this.$refs, refKey, {
               enumerable: true,
               configurable: true,
@@ -41,7 +54,7 @@ export default function getRefsMixin () {
         return (instance) => instance && this.__refs[key].push(instance)
       },
       __selectRef (selector, refType, all = false) {
-        const splitedSelector = selector.match(/(#|\.)\w+/g) || []
+        const splitedSelector = selector.match(/(#|\.)?\w+/g) || []
         const refsArr = splitedSelector.map(selector => {
           const selectorMap = this.__selectorMap[selector] || []
           const res = []
