@@ -81,9 +81,6 @@ function request (options = { url: '' }) {
       data: response.data
     }
     failHandle(res, fail, complete)
-    if (!fail) {
-      return Promise.reject(res)
-    }
   })
 
   return requestTask

@@ -1,4 +1,4 @@
-import { hasOwn, noop } from '@mpxjs/utils'
+import { hasOwn, noop, isFunction } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
@@ -16,7 +16,7 @@ function transformProperties (properties) {
         type: null
       }
     }
-    if (typeof rawFiled === 'function') {
+    if (isFunction(rawFiled)) {
       newFiled = {
         type: rawFiled
       }

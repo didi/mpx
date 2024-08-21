@@ -51,13 +51,20 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __getProps () {
       const propsData = {}
       const props = propsRef.current
-      if (props) {
-        Object.keys(props).forEach((key) => {
-          if (hasOwn(validProps, key) && !isFunction(props[key])) {
-            propsData[key] = props[key]
+      Object.keys(validProps).forEach((key) => {
+        if (hasOwn(props, key)) {
+          propsData[key] = props[key]
+        } else {
+          let field = validProps[key]
+          if (isFunction(field) || field === null) {
+            field = {
+              type: field
+            }
           }
-        })
-      }
+          // 处理props默认值
+          propsData[key] = field.value
+        }
+      })
       return propsData
     },
     __getSlot (name) {
@@ -232,7 +239,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       // 处理props更新
       propsRef.current = props
       Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key) && !isFunction(props[key])) {
+        if (hasOwn(validProps, key)) {
           instance[key] = props[key]
         }
       })

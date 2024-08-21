@@ -45,19 +45,13 @@ class SocketTask {
     if (typeof data !== 'string' || type(data) !== 'ArrayBuffer') {
       const res = { errMsg: 'sendSocketMessage:fail Unsupported data type' }
       failHandle(res, fail, complete)
-      return
-    }
-    if (this._socket.readyState === 1) {
+    } else if (this._socket.readyState === 1) {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
       successHandle(res, success, complete)
-      return Promise.resolve(res)
     } else {
       const res = { errMsg: 'sendSocketMessage:fail' }
       failHandle(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
     }
   }
 
@@ -71,13 +65,9 @@ class SocketTask {
       this._socket.close()
       const res = { errMsg: 'closeSocket:ok' }
       successHandle(res, success, complete)
-      return Promise.resolve(res)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
       failHandle(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
     }
   }
 
