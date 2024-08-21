@@ -3,6 +3,8 @@ const TAG_NAME = 'view'
 module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
 
   return {
     // 匹配标签名，可传递正则
@@ -21,6 +23,14 @@ module.exports = function ({ print }) {
         return 'div'
       }
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-view'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-view'
+    },
     qa (tag) {
       return 'div'
     },
@@ -33,6 +43,10 @@ module.exports = function ({ print }) {
           el.isBuiltIn = true
         },
         qa: qaPropLog
+      }, {
+        test: /^(hover-stop-propagation)$/,
+        android: androidPropLog,
+        ios: iosPropLog
       }
     ],
     // 组件事件中的差异部分

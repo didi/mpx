@@ -7,6 +7,7 @@ const addQuery = require('../utils/add-query')
 const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 const { matchCondition } = require('../utils/match-condition')
+const { isWeb, isReact } = require('../utils/env')
 
 module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
   const mpx = loaderContext.getMpx()
@@ -28,10 +29,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
 
   let dynamicEntryCount = 0
 
-  const getDynamicEntry = (request, type, outputPath = '', packageRoot = '', relativePath = '', context = '') => {
+  const getDynamicEntry = (request, type, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) => {
     if (typeof customGetDynamicEntry === 'function') return customGetDynamicEntry(request, type, outputPath, packageRoot, relativePath, context)
     const key = `mpx_dynamic_entry_${dynamicEntryCount++}`
-    const value = `__mpx_dynamic_entry__( ${JSON.stringify(request)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)},${JSON.stringify(context)})`
+    const value = `__mpx_dynamic_entry__( ${JSON.stringify(request)},${JSON.stringify(type)},${JSON.stringify(outputPath)},${JSON.stringify(packageRoot)},${JSON.stringify(relativePath)},${JSON.stringify(context)},'${JSON.stringify(extraOptions)}')`
     dynamicEntryMap.set(key, value)
     return key
   }
@@ -43,7 +44,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     })
   }
 
-  const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '' }, callback) => {
+  const processComponent = (component, context, { tarRoot = '', outputPath = '', relativePath = '', extraOptions = {} }, callback) => {
     if (!isUrlRequest(component)) return callback(null, component)
     if (resolveMode === 'native') {
       component = urlToRequest(component)
@@ -58,11 +59,13 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         // 目前只有微信支持分包异步化
         if (supportRequireAsync) {
           tarRoot = queryObj.root
+          extraOptions.isAsync = true
         }
       } else if (!queryObj.root && asyncSubpackageRules && supportRequireAsync) {
         for (const item of asyncSubpackageRules) {
           if (matchCondition(resourcePath, item)) {
             tarRoot = item.root
+            extraOptions.isAsync = true
             placeholder = item.placeholder
             break
           }
@@ -74,7 +77,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const resourceName = path.join(parsed.dir, parsed.name)
 
       if (!outputPath) {
-        if (isScript(ext) && resourceName.includes('node_modules') && mode !== 'web') {
+        if (isScript(ext) && resourceName.includes('node_modules') && !isWeb(mode) && !isReact(mode)) {
           let root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
@@ -92,14 +95,16 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = getOutputPath(resourcePath, 'component')
         }
       }
-      if (isScript(ext) && mode !== 'web') {
+      if (isScript(ext) && !isWeb(mode) && !isReact(mode)) {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
 
-      const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath)
+      const entry = getDynamicEntry(resource, 'component', outputPath, tarRoot, relativePath, '', extraOptions)
       callback(null, entry, {
         tarRoot,
-        placeholder
+        placeholder,
+        resourcePath,
+        queryObj
       })
     })
   }
@@ -135,7 +140,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
         }
       }
-      if (isScript(ext) && mode !== 'web') {
+      if (isScript(ext) && !isWeb(mode) && !isReact(mode)) {
         resource = `!!${nativeLoaderPath}!${resource}`
       }
       const entry = getDynamicEntry(resource, 'page', outputPath, tarRoot, publicPath + tarRoot)

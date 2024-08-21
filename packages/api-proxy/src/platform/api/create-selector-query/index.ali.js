@@ -1,7 +1,8 @@
-import { noop } from '../../../common/js'
+import { ENV_OBJ } from '../../../common/js'
+import { noop } from '@mpxjs/utils'
 
 function createSelectorQuery (options = {}) {
-  const selectorQuery = my.createSelectorQuery(options)
+  const selectorQuery = ENV_OBJ.createSelectorQuery(options)
   const proxyMethods = ['boundingClientRect', 'scrollOffset']
   const cbs = []
   proxyMethods.forEach((name) => {
@@ -23,8 +24,12 @@ function createSelectorQuery (options = {}) {
     return originalExec.call(this, cb)
   }
 
-  selectorQuery.in = function () {
-    return this
+  selectorQuery.in = function (_this) {
+    if (typeof _this !== 'object' || typeof _this.createSelectorQuery !== 'function') {
+      throw new Error('in 方法中，传入的 this 参数不是组件实例')
+    }
+
+    return _this.createSelectorQuery(options)
   }
 
   return selectorQuery

@@ -1,4 +1,5 @@
 import NodesRef from './NodesRef'
+import { parseDataset } from '@mpxjs/utils'
 
 class SelectQuery {
   constructor () {
@@ -82,7 +83,7 @@ class SelectQuery {
     const res = {}
     const isViewport = selector === 'html'
     if (id) res.id = el.id
-    if (dataset) res.dataset = Object.assign({}, el.dataset)
+    if (dataset) res.dataset = parseDataset(el.dataset)
     if (rect) {
       if (isViewport) {
         res.left = 0

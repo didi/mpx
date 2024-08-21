@@ -51,17 +51,15 @@ packages|支持|支持|支持|支持|部分支持，无法分包
 如果你是自行搭建的mpx项目，你只需要进行简单的配置修改，打开项目的webpack配置，找到@mpxjs/webpack-plugin的声明位置，传入mode和srcMode参数即可，示例如下
 
 ```javascript
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
-    }
-  }
+new MpxwebpackPlugin({
+  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt|jd|web|ios|android)
+  mode: 'ali',
+  // srcMode为mpx编译的源码平台，目前仅支持wx   
+  srcMode: 'wx'
 })
 ```
 
-通过在 `npm script` 当中定义 `targets` 来设置mpx编译的目标平台
+使用 @mpxjs/cli 创建的项目，可以通过在 `npm script` 当中定义 `targets` 来设置编译的目标平台
 
 ```javascript
 // 项目 package.json
@@ -71,8 +69,6 @@ module.exports = defineConfig({
   }
 }
 ```
-
-> 在 @mpxjs/cli@3.x 之前，通过 --modes 来设置mpx编译的目标平台
 
 ### 跨平台差异抹平
 
@@ -106,22 +102,94 @@ module.exports = defineConfig({
 
 #### api调用差异抹平
 
-对于api调用，mpx提供了一个api调用代理插件来抹平跨平台api调用的差异，使用时需要在项目中安装使用`@mpxjs/api-proxy`，并且在调用小程序api时统一使用mpx对象进行调用，示例如下：
+对于api调用，mpx提供了一个api调用代理插件来抹平跨平台api调用的差异，使用时需要在项目中安装使用`@mpxjs/api-proxy`，可以通过两种方式使用
+#### 方式一：在调用小程序api时统一使用mpx对象进行调用，示例如下：
+安装插件支持options传入，options说明如下：
+
+| 参数名称         | 类型                | 含义                       | 是否必填  | 默认值                    | 备注                    |
+|--------------|-------------------|--------------------------|-------|------------------------|-----------------------|
+| ~~platform~~ | ~~Object~~        | ~~各平台之间的转换~~	            | ~~否~~ | ~~{ from:'', to:'' }~~ | 已删除                   |
+| usePromise   | Boolean           | 是否将 api 转化为 promise 格式使用 | -     | -                      | -                     |
+| ~~exclude~~  | ~~Array(String)~~ | ~~跨平台时不需要转换的 api~~       | -     | -                      | 已删除                     |
+| whiteList    | Array(String)     | 强行转化为 promise 格式的 api    | 否     | []                     | 需要 usePromise 设为 true |
+| blackList    | Array(String)     | 不转换 promise 格式的 api      | 否     | []                     | 需要 usePromise 设为 true |
+| custom       | Object            | 提供用户在各渠道下自定义api开放能力      | 否     | []                     | -                     |
+
+#### 普通形式
 
 ```js
-// 请在app.mpx中安装mpx插件
-import mpx, { createApp } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
+
+mpx.showModal({
+  title: '标题',
+  content: '这是一个弹窗',
+  success (res) {
+    if (res.cancel) {
+      console.log('用户点击取消')
+    }
+  }
+})
+```
+
+#### 使用promise形式
+
+```js
+import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, {
-  // 开启api promisify
   usePromise: true
 })
 
-createApp({
-  onLaunch() {
-    // 调用小程序api时使用mpx.xxx，而不要使用wx.xxx或者my.xxx
-    mpx.request({url: 'xxx'})
+mpx.showActionSheet({
+  itemList: ['A', 'B', 'C']
+})
+.then(res => {
+  console.log(res.tapIndex)
+})
+.catch(err => {
+  console.log(err)
+})
+```
+
+#### 用户自定义
+
+```js
+import mpx from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+import { scanCode } from '@test/scanCode'
+
+mpx.use(apiProxy, {
+  custom: {
+    web: {
+      scanCode
+    }
+  }
+})
+// 在web下调用的实际是用户自定义部分的scanCode
+mpx.scanCode({
+  onlyFromCamera: true,
+  success (res) {
+    console.log(res, 'scanCode, success')
+  },
+  fail (res) {
+    console.log(res, 'scanCode, fail')
+  }
+})
+```
+#### 方式二：直接在`@mpxjs/api-proxy`导出想使用的方法
+```js
+// 独立使用 支持treesharking能力
+import { showModal } from '@mpxjs/api-proxy'
+
+showModal({
+  title: '标题',
+  content: '这是一个弹窗',
+  success (res) {
+    console.log('弹框展示成功')
   }
 })
 ```

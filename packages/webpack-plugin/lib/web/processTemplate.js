@@ -12,16 +12,15 @@ module.exports = function (template, {
   srcMode,
   moduleId,
   ctorType,
-  isWxml,
   usingComponents,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
   const {
     mode,
+    env,
     defs,
     wxsContentMap,
-    templateCompContentMap,
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
@@ -31,12 +30,12 @@ module.exports = function (template, {
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
-  let wxsModuleMap, genericsInfo, templateComponentMap, templateSrcList
+  let wxsModuleMap, genericsInfo, inlineTemplateMap, templateSrcList
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
     const { el } = webConfig
-    const idName = el?.match(/#(.*)/)?.[1] || 'app'
+    const idName = (el && el.match(/#(.*)/) && el.match(/#(.*)/)[1]) || 'app'
     template = {
       tag: 'template',
       content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
@@ -61,25 +60,25 @@ module.exports = function (template, {
       }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
-
+        const warn = (msg) => {
+          loaderContext.emitWarning(
+            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+          )
+        }
+        const error = (msg) => {
+          loaderContext.emitError(
+            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+          )
+        }
         const { root, meta } = templateCompiler.parse(template.content, {
-          warn: (msg) => {
-            loaderContext.emitWarning(
-              new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-            )
-          },
-          error: (msg) => {
-            loaderContext.emitError(
-              new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-            )
-          },
+          warn,
+          error,
           usingComponents,
           hasComment,
           isNative,
-          isComponent: ctorType === 'component',
-          isPage: ctorType === 'page',
+          ctorType,
           mode,
-          isWxml,
+          env,
           srcMode: templateSrcMode,
           defs,
           decodeHTMLText,
@@ -104,13 +103,8 @@ module.exports = function (template, {
             wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
-        if (meta.templateComponentMap) {
-          templateComponentMap = meta.templateComponentMap
-        }
-        if (meta.templateComponentContent) {
-          for (const name in meta.templateComponentContent) {
-            templateCompContentMap[`${resourcePath}~${name}`] = meta.templateComponentContent[name]
-          }
+        if (meta.inlineTemplateMap) {
+          inlineTemplateMap = meta.inlineTemplateMap
         }
         if (meta.templateSrcList?.length) {
           templateSrcList = meta.templateSrcList
@@ -128,13 +122,12 @@ module.exports = function (template, {
         return templateCompiler.serialize(root)
       }
     })
-    output += '\n\n'
+    output += '\n'
   }
   callback(null, {
     output,
     builtInComponentsMap,
-    templateComponentMap,
-    templateCompContentMap,
+    inlineTemplateMap,
     templateSrcList,
     genericsInfo,
     wxsModuleMap

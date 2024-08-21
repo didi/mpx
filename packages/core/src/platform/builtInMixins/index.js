@@ -10,10 +10,21 @@ import pageScrollMixin from './pageScrollMixin'
 import componentGenericsMixin from './componentGenericsMixin'
 import getTabBarMixin from './getTabBarMixin'
 import pageRouteMixin from './pageRouteMixin'
+import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '../../dynamic/dynamicRenderMixin.empty'
+import styleHelperMixin from './styleHelperMixin'
+import directiveHelperMixin from './directiveHelperMixin'
 
 export default function getBuiltInMixins (options, type) {
-  let bulitInMixins = []
-  if (__mpx_mode__ === 'web') {
+  let bulitInMixins
+  if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+    bulitInMixins = [
+      proxyEventMixin(),
+      directiveHelperMixin(),
+      styleHelperMixin(type),
+      refsMixin(),
+      i18nMixin()
+    ]
+  } else if (__mpx_mode__ === 'web') {
     bulitInMixins = [
       proxyEventMixin(),
       refsMixin(),
@@ -39,7 +50,10 @@ export default function getBuiltInMixins (options, type) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
         showMixin(type),
-        i18nMixin()
+        i18nMixin(),
+        dynamicRenderHelperMixin(),
+        dynamicSlotMixin(),
+        dynamicRefsMixin()
       ])
     }
   }

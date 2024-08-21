@@ -1,57 +1,13 @@
 const templateCompiler = require('../template-compiler/compiler')
-const processTemplate = require('../web/processTemplate')
-const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
 const addQuery = require('../utils/add-query')
 const { buildComponentsMap } = require('./script-helper')
-const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { shallowStringify } = require('@mpxjs/webpack-plugin/lib/web/script-helper')
+const shallowStringify = require('../utils/shallow-stringify')
+const { stringifyRequest } = require('./script-helper')
 const parseQuery = require('loader-utils').parseQuery
-
-const getNameTemplate = function (source, name) { // 对template.wxml文件做截取
-  // 使用正则表达式匹配具有 name 的 template 标签及其所有子元素
-  // 正则表达式使用非贪婪匹配来递归匹配嵌套的 template
-  const regex = new RegExp(`(<template[^>]*\\bname=["|']${name}["|'][^>]*>).*?`, 'g')
-
-  let startIndex = 0
-  let endIndex = 0
-  const match = regex.exec(source)
-  // 逐个处理匹配到的 template 标签及其内容
-  if (match) {
-    const matchRes = match[0]
-    const reg = /<\/?template\s*[^>]*>/g
-    let n = 0
-    startIndex = match.index
-    endIndex = startIndex + matchRes.length
-    let html = source.substr(endIndex)
-    while (html) {
-      const matchRes = html.match(reg)
-      if (matchRes.length) {
-        const matchTemp = matchRes[0]
-        const matchIndex = html.indexOf(matchTemp)
-        const matchLength = matchTemp.length
-        const cutLength = matchIndex + matchLength
-        if (matchTemp.startsWith('</template>')) {
-          if (n === 0) {
-            endIndex += cutLength
-            break
-          } else {
-            n--
-          }
-        } else {
-          n++
-        }
-        endIndex += cutLength
-        html = html.substr(cutLength)
-      }
-    }
-  } else {
-    return ''
-  }
-  return source.substring(startIndex, endIndex)
-}
+const wxmlTemplateLoader = normalize.lib('web/wxml-template-loader')
 
 const getRefVarNames = function (str) { // 获取元素属性上用到的动态数据keyname
   const regex = /\(([a-zA-Z_$]\w*)\)/g
@@ -79,17 +35,13 @@ const getEventName = function (eventStr) { // 获取事件用到的动态数据k
 
 module.exports = function (content) {
   this._compiler = true
-  console.log(content, this.resourcePath, '***************')
   const query = parseQuery(this.resourceQuery)
   if (!query.is) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const cutContent = getNameTemplate(content, query.is)
-  if (!cutContent) return ''
-  const props = []
-  const stringifyRequest = r => loaderUtils.stringifyRequest(this, r)
-  const { root, meta } = templateCompiler.parse(cutContent, {
+  const props = ['_data_v_id']
+  const { root, meta } = templateCompiler.parse(content, {
     warn: (msg) => {
       this.emitWarning(
         new Error('[template compiler][' + this.resource + ']: ' + msg)
@@ -126,7 +78,7 @@ module.exports = function (content) {
     return forValue
   }
 
-  function parseText (text, node) {
+  function parseText (text, node) { // 拼接数据时过滤一下props
     const tagRE = /\{\{((?:.|\r?\n)+?)\}\}/g
     if (!tagRE.test(text)) {
       return text
@@ -162,6 +114,8 @@ module.exports = function (content) {
     return text
   }
   const eventReg = /^@[a-zA-Z]+/
+  let isFindRoot = false
+  const componentNames = [] // 记录引用多少个组件
   function serialize (root) {
     function walk (node) {
       let result = ''
@@ -174,9 +128,45 @@ module.exports = function (content) {
           }
         }
         if (node.type === 1) {
-          if (node.tag !== 'temp-node') {
-            result += '<' + node.tag
-            if (!(node.tag === 'template' && node.attrsMap.name)) {
+          if (node.tag === 'wxs' || node.tag === 'import') { // wxml文件里不支持import wxs后续支持
+            return ''
+          } else if (node.tag !== 'temp-node') {
+            if (node.tag === 'template' && !node._fakeTemplate) {
+              if (node.attrsMap.name) { // template name处理逻辑
+                if (isFindRoot) {
+                  componentNames.push(node.attrsMap.name)
+                  return ''
+                }
+                isFindRoot = true
+                result += '<' + node.tag
+              } else if (node.attrsMap.is) { // template is处理逻辑
+                node.tag = 'component'
+                result += '<' + node.tag
+                node.attrsList.map((item) => {
+                  if (item.name === 'is') {
+                    item.name = ':is'
+                    item.value = `'${item.value}'`
+                  }
+                  if (item.name === ':data') {
+                    // const bindValue = item.value.replace(/\(([^()]+)\)/, '$1')
+                    item.name = 'v-bind'
+                    // item.value = item.value.replace(/\(([^()]+)\)/, '{$1}')
+                    const bindValue = item.value.replace(/\(|\)/g, '')
+                    item.value = bindValue ? `{${bindValue}, _data_v_id}` : '{ _data_v_id }'
+                    // 获取props 清掉传入是写的空格
+                    props.push(...bindValue.split(',').map((item) => item?.trim()))
+                  }
+                  result += ' ' + item.name
+                  const value = item.value
+                  if (value != null) {
+                    result += '=' + templateCompiler.stringifyAttr(value)
+                  }
+                })
+              } else { // 其他template逻辑全部丢弃
+                return ''
+              }
+            } else {
+              result += '<' + node.tag + ` :[_data_v_id]='_data_v_id'`
               let forValue
               let tagProps = []
               node.attrsList.forEach(function (attr) {
@@ -223,15 +213,27 @@ module.exports = function (content) {
     }
     return walk(root)
   }
-  const componentsMap = buildComponentsMap({ builtInComponentsMap, loaderContext: this, jsonConfig: {} })
+  const tempCompMaps = []
+  const path = this.resourcePath || ''
   const template = serialize(root)
-  const script = `
-  <script>
-    import { getComponent } from ${stringifyRequest(optionProcessorPath)}
-    export default {
+  componentNames.forEach((item) => {
+    tempCompMaps[item] = {
+      resource: `${path.replace(query.is, item)}?is=${item}&isTemplate`
+    }
+  })
+  const componentsMap = buildComponentsMap({ localComponentsMap: tempCompMaps, builtInComponentsMap, loaderContext: this, jsonConfig: {} })
+  let script = `\n<script>\n
+    const {getComponent} = require(${stringifyRequest(this, optionProcessorPath)})\n`
+  script += `const templateModules = {}\n`
+  meta.templateSrcList?.forEach((item) => {
+    script += `
+          const tempLoaderResult = require(${stringifyRequest(this, `!!${wxmlTemplateLoader}!${item}`)})\n
+          Object.assign(templateModules, tempLoaderResult)\n`
+  })
+  script+= `export default {
       name: '${query.is}',
       props: ${JSON.stringify([...(new Set(props))])},
-      components: ${shallowStringify(componentsMap)}
+      components: Object.assign(${shallowStringify(componentsMap)}, templateModules),
     }
   </script>`
   const text = template + script

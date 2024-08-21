@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.15
+ * mpxjs webview bridge v2.9.44
  * (c) 2024 @mpxjs team
  * @license Apache
  */
@@ -58,15 +58,25 @@ const SDK_URL_MAP = {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
-    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+    url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
   },
   ...window.sdkUrlMap
 };
-
+function getMpxWebViewId () {
+  const href = location.href;
+  const reg = /mpx_webview_id=(\d+)/g;
+  const matchVal = reg.exec(href);
+  let result;
+  if (matchVal && matchVal[1]) {
+    result = +matchVal[1];
+  }
+  return result
+}
 let env = null;
 let callbackId = 0;
+const clientUid = getMpxWebViewId();
 const callbacks = {};
-// 环境判断
+// 环境判断逻辑
 const systemUA = navigator.userAgent;
 if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
   env = 'my';
@@ -149,11 +159,15 @@ function postMessage (type, data = {}) {
       }
       delete callbacks[currentCallbackId];
     };
-    window.parent.postMessage && window.parent.postMessage({
+    const postParams = {
       type,
       callbackId,
       payload: filterData(data)
-    }, '*');
+    };
+    if (clientUid !== undefined) {
+      postParams.clientUid = clientUid;
+    }
+    window.parent.postMessage && window.parent.postMessage(postParams, '*');
   } else {
     data({
       webapp: true
@@ -292,10 +306,11 @@ const getWebviewApi = () => {
       'postMessage',
       'getLoadError',
       'getLocation'
-    ]
+    ],
+    tt: []
   };
   const multiApi = multiApiMap[env] || {};
-  const singleApi = singleApiMap[env] || {};
+  const singleApi = singleApiMap[env] || [];
   const multiApiLists = multiApi.api || [];
   multiApiLists.forEach((item) => {
     webviewBridge[item] = (...args) => {

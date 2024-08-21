@@ -3,7 +3,14 @@ import mergeOptions from '../../../core/mergeOptions'
 import { diffAndCloneA, hasOwn } from '@mpxjs/utils'
 import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
-import { BEFORECREATE, BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED, SERVERPREFETCH } from '../../../core/innerLifecycle'
+import {
+  BEFORECREATE,
+  BEFOREUPDATE,
+  UPDATED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
+  SERVERPREFETCH
+} from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -37,7 +44,7 @@ function initProxy (context, rawOptions) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {} }) {
+export function getDefaultOptions ({ type, rawOptions = {} }) {
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
@@ -59,7 +66,12 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
     }
   }
   const rootMixins = [{
+    data: {
+      _data_v_id: '' // template 透传scoped样式用
+    },
     beforeCreate () {
+      const _scopeId = this.$vnode.componentOptions.Ctor?.options?._scopeId
+      this._data_v_id = _scopeId
       initProxy(this, rawOptions)
     },
     created () {
@@ -78,7 +90,10 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       if (this.__mpxProxy) this.__mpxProxy.callHook(BEFOREUNMOUNT)
     },
     destroyed () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(UNMOUNTED)
+      if (this.__mpxProxy) {
+        this.__mpxProxy.state = UNMOUNTED
+        this.__mpxProxy.callHook(UNMOUNTED)
+      }
     },
     serverPrefetch () {
       if (this.__mpxProxy) return this.__mpxProxy.callHook(SERVERPREFETCH)

@@ -1,4 +1,4 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
 
 function showModal (options = {}) {
   let opts
@@ -13,7 +13,7 @@ function showModal (options = {}) {
       return changeOpts(res, undefined, { cancel: !res.confirm })
     })
 
-    my.confirm(opts)
+    return ENV_OBJ.confirm(opts)
   } else {
     opts = changeOpts(options, {
       confirmText: 'buttonText'
@@ -23,7 +23,7 @@ function showModal (options = {}) {
       return changeOpts(res, undefined, { cancel: false, confirm: true })
     })
 
-    my.alert(opts)
+    return ENV_OBJ.alert(opts)
   }
 }
 

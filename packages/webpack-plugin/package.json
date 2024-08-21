@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.17",
+  "version": "2.9.50",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -27,6 +27,8 @@
     "@better-scroll/slide": "^2.5.1",
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
+    "@mpxjs/template-engine": "^2.8.7",
+    "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
     "css": "^2.2.1",
@@ -56,7 +58,7 @@
     "postcss-value-parser": "^4.0.2",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
-    "video.js": "^8.6.0"
+    "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
     "webpack": "^5.75.0"
@@ -78,7 +80,8 @@
   },
   "devDependencies": {
     "@types/babel-traverse": "^6.25.4",
-    "@types/babel-types": "^7.0.4"
+    "@types/babel-types": "^7.0.4",
+    "@types/react": "^18.2.79"
   },
   "engines": {
     "node": ">=14.14.0"

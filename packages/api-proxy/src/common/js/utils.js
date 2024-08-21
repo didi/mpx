@@ -1,3 +1,5 @@
+import { hasOwn, noop, getEnvObj } from '@mpxjs/utils'
+
 /**
  *
  * @param {Object} options 原参数
@@ -12,12 +14,6 @@
  *  d: 4 // 增加 d
  * })
  */
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
-}
-
 function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   let opts = {}
 
@@ -49,29 +45,6 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
-function getEnvObj () {
-  switch (__mpx_mode__) {
-    case 'wx':
-      return wx
-    case 'ali':
-      return my
-    case 'swan':
-      return swan
-    case 'qq':
-      return qq
-    case 'tt':
-      return tt
-    case 'jd':
-      return jd
-    case 'qa':
-      return qa
-    case 'dd':
-      return dd
-    case 'web':
-      return {}
-  }
-}
-
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
@@ -81,18 +54,21 @@ function error (msg) {
 }
 function envError (method) {
   return () => {
-    console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+    throw Error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
   }
 }
 
-function noop () {
-}
-
-function makeMap (arr) {
-  return arr.reduce((obj, item) => {
-    obj[item] = true
-    return obj
-  }, {})
+function defineUnsupportedProps (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get () {
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`)
+        return null
+      }
+    }
+  })
+  Object.defineProperties(resObj, defineProps)
 }
 
 const isBrowser = typeof window !== 'undefined'
@@ -100,16 +76,17 @@ const isBrowser = typeof window !== 'undefined'
 function throwSSRWarning (info) {
   console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
 }
+
+const ENV_OBJ = getEnvObj()
+
 export {
   changeOpts,
   handleSuccess,
-  getEnvObj,
   error,
   envError,
   warn,
-  noop,
-  makeMap,
   isBrowser,
-  hasOwn,
-  throwSSRWarning
+  throwSSRWarning,
+  ENV_OBJ,
+  defineUnsupportedProps
 }

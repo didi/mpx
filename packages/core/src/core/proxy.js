@@ -44,6 +44,8 @@ import {
   ONHIDE,
   ONRESIZE
 } from './innerLifecycle'
+import contextMap from '../dynamic/vnode/context'
+import { getAst } from '../dynamic/astCache'
 
 let uid = 0
 
@@ -97,6 +99,8 @@ function preProcessRenderData (renderData) {
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
+    // 兼容 getCurrentInstance.proxy
+    this.proxy = target
     this.reCreated = reCreated
     this.uid = uid++
     this.name = options.name || ''
@@ -124,11 +128,17 @@ export default class MpxProxy {
       this.forceUpdateAll = false
       this.currentRenderTask = null
       this.propsUpdatedFlag = false
+      // react专用，正确触发updated钩子
+      this.pendingUpdatedFlag = false
     }
     this.initApi()
   }
 
   created () {
+    if (__mpx_dynamic_runtime__) {
+      // 缓存上下文，在 destoryed 阶段删除
+      contextMap.set(this.uid, this.target)
+    }
     if (__mpx_mode__ !== 'web') {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
@@ -144,7 +154,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
       this.initRender()
     }
 
@@ -166,9 +176,9 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
-      this.state = MOUNTED
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
+      this.state = MOUNTED
       this.callHook(MOUNTED)
       this.currentRenderTask && this.currentRenderTask.resolve()
     }
@@ -188,6 +198,10 @@ export default class MpxProxy {
   }
 
   unmounted () {
+    if (__mpx_dynamic_runtime__) {
+      // 页面/组件销毁清除上下文的缓存
+      contextMap.remove(this.uid)
+    }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
@@ -228,7 +242,12 @@ export default class MpxProxy {
   }
 
   initProps () {
-    this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
+    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+      // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
+      this.props = this.target.__getProps()
+    } else {
+      this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
+    }
     reactive(this.props)
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
@@ -377,7 +396,10 @@ export default class MpxProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData (skipPre) {
+  renderWithData (skipPre, vnode) {
+    if (vnode) {
+      return this.doRenderWithVNode(vnode)
+    }
     const renderData = skipPre ? this.renderData : preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
@@ -476,6 +498,25 @@ export default class MpxProxy {
     return result
   }
 
+  doRenderWithVNode (vnode) {
+    if (!this._vnode) {
+      this.target.__render({ r: vnode })
+    } else {
+      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      if (!isEmptyObject(diffPath)) {
+        // 构造 diffPath 数据
+        diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
+          const key = 'r' + curVal
+          preVal[key] = diffPath[curVal]
+          return preVal
+        }, {})
+        this.target.__render(diffPath)
+      }
+    }
+    // 缓存本地的 vnode 用以下一次 diff
+    this._vnode = diffAndCloneA(vnode).clone
+  }
+
   doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
@@ -543,12 +584,30 @@ export default class MpxProxy {
     const _c = this.target._c.bind(this.target)
     const _r = this.target._r.bind(this.target)
     const _sc = this.target._sc.bind(this.target)
+    const _g = this.target._g?.bind(this.target)
+    const __getAst = this.target.__getAst?.bind(this.target)
+    const moduleId = this.target.__moduleId
+    const dynamicTarget = this.target.__dynamic
+
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
       }
-
+      if (dynamicTarget || __getAst) {
+        try {
+          const ast = getAst(__getAst, moduleId)
+          return _r(false, _g(ast, moduleId))
+        } catch (e) {
+          e.errType = 'mpx-dynamic-render'
+          e.errmsg = e.message
+          if (!__mpx_dynamic_runtime__) {
+            return error('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.', this.options.mpxFileResource, e)
+          } else {
+            return error('Dynamic rendering error', this.options.mpxFileResource, e)
+          }
+        }
+      }
       if (this.target.__injectedRender) {
         try {
           return this.target.__injectedRender(_i, _c, _r, _sc)
@@ -594,6 +653,20 @@ export default class MpxProxy {
       this.forceUpdateAll = true
     }
 
+    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+      // rn中不需要setdata
+      this.forceUpdateData = {}
+      this.forceUpdateAll = false
+      if (this.update) {
+        options.sync ? this.update() : queueJob(this.update)
+      }
+      if (callback) {
+        callback = callback.bind(this.target)
+        options.sync ? callback() : nextTick(callback)
+      }
+      return
+    }
+
     if (this.effect) {
       options.sync ? this.effect.run() : this.effect.update()
     } else {
@@ -622,7 +695,7 @@ export default class MpxProxy {
 export let currentInstance = null
 
 export const getCurrentInstance = () => {
-  return currentInstance && { proxy: currentInstance?.target }
+  return currentInstance
 }
 
 export const setCurrentInstance = (instance) => {

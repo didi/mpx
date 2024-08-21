@@ -16,11 +16,14 @@ module.exports = function getRulesRunner ({
     template: {
       wx: require('./template/wx')
     },
+    style: {
+      wx: require('./style/wx')
+    },
     json: {
       wx: require('./json/wx')
     }
   }
-  const spec = specMap[type]?.[srcMode]?.({ warn, error })
+  const spec = specMap[type] && specMap[type][srcMode] && specMap[type][srcMode]({ warn, error })
   if (spec && spec.supportedModes.indexOf(mode) > -1) {
     const normalizeTest = spec.normalizeTest
     const mainRules = mainKey ? spec[mainKey] : spec

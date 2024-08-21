@@ -1,11 +1,11 @@
-import { changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, envError, handleSuccess, defineUnsupportedProps } from '../../../common/js'
 
 function getSystemInfo (options = {}) {
   const opts = changeOpts(options)
 
   handleSuccess(opts, res => {
     res.system = `${res.platform} ${res.system}`
-    res.SDKVersion = my.SDKVersion
+    res.SDKVersion = ENV_OBJ.SDKVersion
 
     // 支付宝 windowHeight 可能为 0
     if (!res.windowHeight) {
@@ -15,14 +15,14 @@ function getSystemInfo (options = {}) {
     return res
   })
 
-  my.getSystemInfo(opts)
+  return ENV_OBJ.getSystemInfo(opts)
 }
 
 function getSystemInfoSync () {
-  const res = my.getSystemInfoSync() || {}
+  const res = ENV_OBJ.getSystemInfoSync() || {}
 
   res.system = `${res.platform} ${res.system}`
-  res.SDKVersion = my.SDKVersion
+  res.SDKVersion = ENV_OBJ.SDKVersion
 
   // 支付宝 windowHeight 可能为 0
   if (!res.windowHeight) {
@@ -32,7 +32,17 @@ function getSystemInfoSync () {
   return res
 }
 
+const getDeviceInfo = function () {
+  const res = ENV_OBJ.getDeviceBaseInfo
+  defineUnsupportedProps(res, ['deviceAbi', 'benchmarkLevel', 'cpuType'])
+  return res
+}
+
+const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
+
 export {
   getSystemInfo,
-  getSystemInfoSync
+  getSystemInfoSync,
+  getDeviceInfo,
+  getWindowInfo
 }
