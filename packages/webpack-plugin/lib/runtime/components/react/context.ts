@@ -7,17 +7,19 @@ export interface GroupValue {
 
 export interface CheckboxGroupContextValue {
   groupValue: GroupValue
-  notifyChange: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }
 
 export interface FormFieldValue {
   getValue: () => any;
-  setValue: ({ newVal, type }: { newVal?: any; type?: string }) => void;
+  resetValue: ({ newVal, type }: { newVal?: any; type?: string }) => void;
 }
 
 
 export interface FormContextValue {
-  formValuesMap: Map<string, FormFieldValue>
+  formValuesMap: Map<string, FormFieldValue>;
+  submit: () => void;
+  reset: () => void;
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })

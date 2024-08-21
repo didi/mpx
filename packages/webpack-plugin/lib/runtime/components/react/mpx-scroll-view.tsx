@@ -337,7 +337,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
     pinchGestureEnabled: false,
-    horizontal: scrollX || !scrollY,
+    horizontal: scrollEnabled ? (scrollX || !scrollY) : false,
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: enableBackToTop,
     showsHorizontalScrollIndicator: scrollX && showScrollbar,

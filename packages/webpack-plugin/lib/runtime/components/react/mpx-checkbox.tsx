@@ -97,7 +97,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const context = useContext(CheckboxGroupContext)
 
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
-    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void | undefined;
+    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
     if (context) {
       groupValue = context.groupValue

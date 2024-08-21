@@ -1,5 +1,5 @@
 import { nextTick } from '../next-tick'
-import { parseDataset } from '../../../common/js'
+import { parseDataset } from '@mpxjs/utils'
 
 let isInit = true
 

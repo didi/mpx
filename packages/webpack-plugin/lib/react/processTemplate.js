@@ -77,6 +77,7 @@ module.exports = function (template, {
         hasScoped: false,
         moduleId,
         filePath: resourcePath,
+        // react中模版i18n不需要特殊处理
         i18n: null,
         checkUsingComponents,
         // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空

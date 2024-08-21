@@ -6,10 +6,6 @@ import {
   useRef,
   forwardRef,
   ReactNode,
-  Children,
-  cloneElement,
-  FunctionComponent,
-  isValidElement,
   useContext
 } from 'react'
 import {
@@ -22,11 +18,6 @@ import {
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-
-interface Selection {
-  value: string
-  checked: boolean
-}
 
 export interface CheckboxGroupProps {
   name: string
@@ -48,12 +39,12 @@ const CheckboxGroup = forwardRef<
   } = props
 
   const layoutRef = useRef({})
-  const context = useContext(FormContext)
+  const formContext = useContext(FormContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined;
 
-  if (context) {
-    formValuesMap = context.formValuesMap
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
   }
 
   const groupValue: GroupValue = useRef({}).current
@@ -96,20 +87,18 @@ const CheckboxGroup = forwardRef<
     return getSelectionValue()
   }
 
-  const setValue = ({ value, type }: { value?: boolean; type?: string }) => {
-    if (type === 'reset') {
-      Object.keys(groupValue).forEach((key) => {
+  const resetValue = () => {
+    Object.keys(groupValue).forEach((key) => {
         groupValue[key].checked = false
         groupValue[key].setValue(false)
       })
-    }
   }
 
   if (formValuesMap) {
     if (!props.name) {
       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
-      formValuesMap.set(props.name, { getValue, setValue })
+      formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
 
@@ -132,21 +121,6 @@ const CheckboxGroup = forwardRef<
       )
   }
 
-  const wrapChildren = (children: ReactNode): ReactNode[] => {
-    return Children.toArray(children).map((child) => {
-      if (!isValidElement(child)) return child
-      const displayName = (child.type as FunctionComponent)?.displayName
-
-      if (displayName === 'mpx-checkbox') {
-        return cloneElement(child, {
-          ...child.props
-        })
-      } else {
-        return cloneElement(child, {}, wrapChildren(child.props.children))
-      }
-    })
-  }
-
   const innerProps = useInnerProps(
     props,
     {
@@ -163,7 +137,7 @@ const CheckboxGroup = forwardRef<
   return (
     <View {...innerProps}>
       <CheckboxGroupContext.Provider value={{ groupValue, notifyChange }}>
-        {wrapChildren(children)}
+        {children}
       </CheckboxGroupContext.Provider>
     </View>
   )

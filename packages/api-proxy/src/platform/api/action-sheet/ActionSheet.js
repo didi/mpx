@@ -45,7 +45,6 @@ export default class ActionSheet {
           tapIndex: index
         }
         webHandleSuccess(res, opts.success, opts.complete)
-        // this.toPromiseResolve(res)
       }))
       list.appendChild(sheet)
     })
@@ -58,7 +57,6 @@ export default class ActionSheet {
       this.hide()
       const err = { errMsg: 'showActionSheet:fail cancel' }
       webHandleFail(err, opts.fail, opts.complete)
-      // !opts.fail && this.toPromiseReject(err)
     }))
     // make transition next frame
     this.actionSheet.classList.add('show')
@@ -66,8 +64,6 @@ export default class ActionSheet {
     setTimeout(() => {
       this.box.classList.add('show')
     }, 17)
-
-    // return this.toPromiseInitPromise()
   }
 
   hide () {

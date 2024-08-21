@@ -1,4 +1,5 @@
-import { webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
+import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { hasOwn } from '@mpxjs/utils'
 import Vue from 'vue'
 
 function setTabBarStyle (options = {}) {

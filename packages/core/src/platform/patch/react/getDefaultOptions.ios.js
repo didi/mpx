@@ -51,13 +51,20 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __getProps () {
       const propsData = {}
       const props = propsRef.current
-      if (props) {
-        Object.keys(props).forEach((key) => {
-          if (hasOwn(validProps, key) && !isFunction(props[key])) {
-            propsData[key] = props[key]
+      Object.keys(validProps).forEach((key) => {
+        if (hasOwn(props, key)) {
+          propsData[key] = props[key]
+        } else {
+          let field = validProps[key]
+          if (isFunction(field) || field === null) {
+            field = {
+              type: field
+            }
           }
-        })
-      }
+          // 处理props默认值
+          propsData[key] = field.value
+        }
+      })
       return propsData
     },
     __getSlot (name) {
@@ -111,8 +118,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     },
     triggerEvent (eventName, eventDetail) {
       const props = propsRef.current
-      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-      const handler = props && (props['bind' + handlerName] || props['catch' + handlerName] || props['capture-bind' + handlerName] || props['capture-catch' + handlerName])
+      const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
       if (handler && typeof handler === 'function') {
         const timeStamp = +new Date()
         const dataset = collectDataset(props)
@@ -232,7 +238,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       // 处理props更新
       propsRef.current = props
       Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key) && !isFunction(props[key])) {
+        if (hasOwn(validProps, key)) {
           instance[key] = props[key]
         }
       })
