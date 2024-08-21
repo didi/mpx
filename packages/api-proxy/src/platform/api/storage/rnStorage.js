@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { envError, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import { hasOwn } from '@mpxjs/utils'
-import { envError, webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
 function setStorage (options) {
   const { key, data, success, fail, complete } = options
   let obj = {}
@@ -14,13 +14,13 @@ function setStorage (options) {
       const result = {
         errMsg: `setStorage:fail ${err}`
       }
-      webHandleFail(result, fail, complete)
+      failHandle(result, fail, complete)
       return
     }
     const result = {
       errMsg: 'setStorage:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   })
 }
 
@@ -32,7 +32,7 @@ function getStorage (options) {
     const result = {
       errMsg: 'getStorage:fail parameter error: parameter.key should be String instead of Undefined;'
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
     return
   }
   AsyncStorage.getItem(key, (err, res) => {
@@ -40,7 +40,7 @@ function getStorage (options) {
       const result = {
         errMsg: `getStorage:fail ${err || 'data not found'}`
       }
-      webHandleFail(result, fail, complete)
+      failHandle(result, fail, complete)
       return
     }
     let item
@@ -56,7 +56,7 @@ function getStorage (options) {
       errMsg: 'getStorage:ok',
       data
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   })
 }
 
@@ -69,7 +69,7 @@ function getStorageInfo (options) {
       const result = {
         errMsg: `getStorage:fail ${err}`
       }
-      webHandleFail(result, fail, complete)
+      failHandle(result, fail, complete)
       return
     }
     const result = {
@@ -77,7 +77,7 @@ function getStorageInfo (options) {
       errMsg: 'getStorageInfo:ok'
     }
     defineUnsupportedProps(result, ['currentSize', 'limitSize'])
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   })
 }
 
@@ -90,13 +90,13 @@ function removeStorage (options) {
       const result = {
         errMsg: `removeStorage:fail ${err}`
       }
-      webHandleFail(result, fail, complete)
+      failHandle(result, fail, complete)
       return
     }
     const result = {
       errMsg: 'removeStorage:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   })
 }
 
@@ -111,13 +111,13 @@ function clearStorage (options) {
       const result = {
         errMsg: `clearStorage:fail ${err}`
       }
-      webHandleFail(result, fail, complete)
+      failHandle(result, fail, complete)
       return
     }
     const result = {
       errMsg: 'clearStorage:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   })
 }
 
