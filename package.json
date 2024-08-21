@@ -7,10 +7,10 @@
     "lint": "eslint --ext .js packages/",
     "fix": "eslint --fix --ext .js packages/",
     "test": "jest",
+    "build": "lerna run build --ignore @mpxjs/webview-bridge",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
-    "docs:build": "vuepress build docs-vuepress",
-    "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
+    "docs:build": "vuepress build docs-vuepress"
   },
   "devDependencies": {
     "@babel/core": "^7.8.7",

@@ -1,0 +1,53 @@
+{
+  "name": "@mpxjs/compiler-core",
+  "version": "2.9.57",
+  "description": "@mpxjs/compiler-core",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "unbuild",
+    "dev": "nodemon --watch src --ext ts,js --exec 'unbuild'",
+    "test": "npm run test:types && vitest",
+    "test:types": "tsc --noEmit --skipLibCheck"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/didi/mpx.git"
+  },
+  "bugs": {
+    "url": "https://github.com/didi/mpx/issues"
+  },
+  "keywords": [
+    "mpx",
+    "compiler"
+  ],
+  "author": "wangshunnn <wangshunnn@gmail.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/didi/mpx/blob/master/packages/compiler-core/README.md",
+  "dependencies": {
+    "entities": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.25.2",
+    "nodemon": "^3.1.4",
+    "unbuild": "^2.0.0",
+    "vitest": "^2.0.5"
+  }
+}
