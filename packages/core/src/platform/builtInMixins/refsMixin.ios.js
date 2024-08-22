@@ -4,6 +4,7 @@ import { watch } from '../../observer/watch'
 
 export default function getRefsMixin () {
   return {
+    // 强依赖 CREATED 生命周期，确保响应式数据初始化完成
     [CREATED] () {
       this.__refs = {}
       this.$refs = {}
