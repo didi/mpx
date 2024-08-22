@@ -223,6 +223,22 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   return instance
 }
 
+function hasPageHook (mpxProxy, hookNames) {
+  const options = mpxProxy.options
+  const type = options.__type__
+  return hookNames.some(h => {
+    if (mpxProxy.hasHook(h)) {
+      return true
+    }
+    if (type === 'page') {
+      return isFunction(options.methods && options.methods[h])
+    } else if (type === 'component') {
+      return options.pageLifetimes && isFunction(options.pageLifetimes[h])
+    }
+    return false
+  })
+}
+
 const routeContext = createContext(null)
 
 const triggerPageStatusHook = (mpxProxy, event) => {
@@ -251,26 +267,28 @@ function usePageContext (mpxProxy) {
   const { routeName } = useContext(routeContext) || {}
 
   useEffect(() => {
-    let watcher
-    const hasShowHook = mpxProxy.hasHook([ONSHOW, 'show'])
-    const hasHideHook = mpxProxy.hasHook([ONHIDE, 'hide'])
-    const hasResizeHook = mpxProxy.hasHook([ONRESIZE, 'resize', 'onResize'])
+    let unWatch
+    const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
+    const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
+    const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize', 'onResize'])
     if (hasShowHook || hasHideHook || hasResizeHook) {
-      // wx 真机上 resize 初次就会触发
-      if (hasResizeHook) {
-        triggerResizeEvent(mpxProxy)
-      }
-      watcher = watch(() => pageStatusContext[routeName], (newVal) => {
-        if (newVal === 'show' || newVal === 'hide') {
-          triggerPageStatusHook(mpxProxy, newVal)
-        } else if (/^resize/.test(newVal)) {
+      if (hasOwn(pageStatusContext, routeName)) {
+        // wx 真机上 resize 初次就会触发
+        if (hasResizeHook) {
           triggerResizeEvent(mpxProxy)
         }
-      }, { immediate: true })
+        unWatch = watch(() => pageStatusContext[routeName], (newVal) => {
+          if (newVal === 'show' || newVal === 'hide') {
+            triggerPageStatusHook(mpxProxy, newVal)
+          } else if (/^resize/.test(newVal)) {
+            triggerResizeEvent(mpxProxy)
+          }
+        })
+      }
     }
 
     return () => {
-      watcher && watcher()
+      unWatch && unWatch()
     }
   }, [])
 }
@@ -282,8 +300,9 @@ function setPageStatus (routeName, val) {
 
 function usePageStatus (navigation, route) {
   let isFocused = true
-  setPageStatus(route.name, 'show')
+  setPageStatus(route.name, '')
   useEffect(() => {
+    setPageStatus(route.name, 'show')
     const focusSubscription = navigation.addListener('focus', () => {
       setPageStatus(route.name, 'show')
       isFocused = true
@@ -293,7 +312,7 @@ function usePageStatus (navigation, route) {
       isFocused = false
     })
 
-    const appFocusedStateWatcher = watch(global.__mpxAppFocusedState, (value) => {
+    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
       if (isFocused) {
         setPageStatus(route.name, value)
       }
@@ -302,7 +321,7 @@ function usePageStatus (navigation, route) {
     return () => {
       focusSubscription()
       blurSubscription()
-      appFocusedStateWatcher()
+      unWatchAppFocusedState()
     }
   }, [navigation])
 }

@@ -385,21 +385,7 @@ export default class MpxProxy {
   }
 
   hasHook (hookName) {
-    if (isString(hookName)) {
-      hookName = [hookName]
-    }
-    const type = this.options.__type__
-    return hookName.some(h => {
-      if (this.options[h] || this.hooks[h]) {
-        return true
-      }
-      if (type === 'page') {
-        return isFunction(this.options.methods[h])
-      } else if (type === 'component') {
-        return this.options.pageLifetimes && isFunction(this.options.pageLifetimes[h])
-      }
-      return false
-    })
+    return !!(this.options[hookName] || this.hooks[hookName])
   }
 
   render () {

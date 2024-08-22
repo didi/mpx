@@ -20,7 +20,7 @@ function getCurrentPageInstance () {
   return pageInstance
 }
 
-function onResize () {
+function getSystemInfo () {
   // 设备屏幕状态
   const deviceOrientation = window.screen.width > window.screen.height ? 'landscape' : 'portrait'
 
@@ -35,11 +35,15 @@ function onResize () {
     }
   }
 
+  return systemInfo
+}
+
+function onResize () {
   const _t = getCurrentPageInstance()
 
   if (_t) {
     _t.mpxPageStatus = `resize${count++}`
-    isFunction(_t.onResize) && _t.onResize(systemInfo)
+    isFunction(_t.onResize) && _t.onResize(getSystemInfo())
   }
 }
 
@@ -94,17 +98,26 @@ export default function pageStatusMixin (mixinType) {
   Object.assign(mixin, {
     [CREATED] () {
       if (isBrowser) {
-        const pageInstance = mixinType === 'page' ? this : this.$page
+        const isPage = mixinType === 'page'
+        const pageInstance = isPage ? this : this.$page
         if (pageInstance) {
+          const pageLifetimes = this.__mpxProxy.options.pageLifetimes
+          // wx 真机上页面/组件初次渲染就会触发 resize 事件
+          if (isPage) {
+            isFunction(this.onResize) && this.onResize(getSystemInfo())
+          } else {
+            if (pageLifetimes && isFunction(pageLifetimes.resize)) {
+              pageLifetimes.resize.call(this, getSystemInfo())
+            }
+          }
           this.$watch(() => pageInstance.mpxPageStatus, status => {
             if (!status) return
             if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
             if (status === 'hide') this.__mpxProxy.callHook(ONHIDE)
-            const pageLifetimes = this.__mpxProxy.options.pageLifetimes
             if (pageLifetimes) {
               if (/^resize/.test(status) && isFunction(pageLifetimes.resize)) {
                 // resize
-                pageLifetimes.resize.call(this, systemInfo)
+                pageLifetimes.resize.call(this, getSystemInfo())
               } else if (isFunction(pageLifetimes[status])) {
                 // show & hide
                 pageLifetimes[status].call(this)
