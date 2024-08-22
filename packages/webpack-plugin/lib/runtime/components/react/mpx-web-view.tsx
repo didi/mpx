@@ -112,11 +112,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
     try {
       const nativeEventData = res.nativeEvent?.data
-      if (typeof nativeEventData === 'string') {
-        data = JSON.parse(nativeEventData)
-      } else {
-        data = {}
-      }
+      data = JSON.parse(nativeEventData)
     } catch (e) {
       data = {}
     }
