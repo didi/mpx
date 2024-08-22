@@ -1,7 +1,6 @@
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import * as aliLifecycle from '../platform/patch/ali/lifecycle'
 import { mergeLifecycle } from './mergeLifecycle'
-import { mergeToArray } from '../core/mergeOptions'
 import { error, hasOwn, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 
