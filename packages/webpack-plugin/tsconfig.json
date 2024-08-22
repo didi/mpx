@@ -10,7 +10,6 @@
     "noImplicitAny": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "jsx": "preserve",
     "lib": [
