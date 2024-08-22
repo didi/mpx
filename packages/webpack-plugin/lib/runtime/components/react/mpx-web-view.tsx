@@ -1,5 +1,4 @@
-import React, { forwardRef, JSX, useRef, useEffect } from 'react'
-import { View } from 'react-native'
+import { forwardRef, JSX, useRef, useEffect } from 'react'
 // @ts-ignore
 import { noop } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
@@ -7,7 +6,8 @@ import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 // @ts-ignore
 import { WebView } from 'react-native-webview'
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef'
+import { StyleSheet } from 'react-native'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -54,7 +54,21 @@ interface FormRef {
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
-  const webViewRef = useRef<FormRef | null>(null)
+
+  const defaultWebViewStyle = [
+    {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    }
+  ]
+  const { nodeRef: webViewRef } = useNodesRef<WebView, WebViewProps>(props, ref, {
+    defaultStyle: StyleSheet.flatten([
+      ...defaultWebViewStyle
+    ])
+  })
   const _messageList:any[] = []
   const handleUnload = () => {
     // 这里是 WebView 销毁前执行的逻辑
@@ -138,15 +152,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
+  // @ts-ignore
   return(<Portal>
     <WebView
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0
-        }}
+        style={[ ...defaultWebViewStyle ]}
         source={{ uri: src }}
         ref={webViewRef}
         onLoad={_load}
