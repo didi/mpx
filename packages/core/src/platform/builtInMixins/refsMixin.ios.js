@@ -1,6 +1,6 @@
 import { CREATED } from '../../core/innerLifecycle'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
-import { watch } from '../../observer/watch'
+import { computed } from '../../observer/computed'
 
 export default function getRefsMixin () {
   return {
@@ -8,31 +8,35 @@ export default function getRefsMixin () {
     [CREATED] () {
       this.__refs = {}
       this.$refs = {}
-      this.__selectorMap = {}
+      this.__selectorMap = null
       this.__getRefs()
     },
     methods: {
       __getRefs () {
         const refs = this.__getRefsData() || []
         const target = this
-        refs.forEach(({ key, type, all, refKey, computedSelectorKeys }) => {
-          if (computedSelectorKeys.length) {
-            computedSelectorKeys.forEach((item) => {
+        this.__selectorMap = computed(() => {
+          const selectorMap = {}
+          refs.forEach(({ key, type, refKey, computedSelectorKeys = [] }) => {
+            if (refKey) {
+              selectorMap[refKey] = selectorMap[refKey] || []
+              selectorMap[refKey].push({ type, key })
+            }
+            computedSelectorKeys.forEach((item = {}) => {
               const computedKey = item.key
               const prefix = item.prefix
-              watch(() => this[computedKey], (selectors = '') => {
-                selectors.trim().split(/\s+/).forEach(item => {
-                  const selector = prefix + item
-                  this.__selectorMap[selector] = this.__selectorMap[selector] || []
-                  this.__selectorMap[selector].push({ type, key })
-                })
-              }, { immediate: true })
+              const selectors = this[computedKey] || ''
+              selectors.trim().split(/\s+/).forEach(item => {
+                const selector = prefix + item
+                selectorMap[selector] = selectorMap[selector] || []
+                selectorMap[selector].push({ type, key })
+              })
             })
-          }
+          })
+          return selectorMap
+        })
+        refs.forEach(({ key, type, all, refKey }) => {
           if (refKey) {
-            this.__selectorMap[refKey] = this.__selectorMap[refKey] || []
-            this.__selectorMap[refKey].push({ type, key })
-
             Object.defineProperty(this.$refs, refKey, {
               enumerable: true,
               configurable: true,
@@ -57,7 +61,7 @@ export default function getRefsMixin () {
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?\w+/g) || []
         const refsArr = splitedSelector.map(selector => {
-          const selectorMap = this.__selectorMap[selector] || []
+          const selectorMap = this.__selectorMap.value[selector] || []
           const res = []
           selectorMap.forEach(({ type, key }) => {
             if (type === refType) {

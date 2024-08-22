@@ -1678,20 +1678,15 @@ function processRefReact (el, meta) {
       const idString = getAndRemoveAttr(el, 'id', false).val
       const classString = getAndRemoveAttr(el, 'class', false).val
       const dynamicClassString = getAndRemoveAttr(el, config[mode].directive.dynamicClass, false).val
-  
       const staticId = parseMustacheWithContext(idString).result
       const staticClass = parseMustacheWithContext(classString).result
       const dynamicClass = parseMustacheWithContext(dynamicClassString).result
-  
-  
       meta.computed = meta.computed || []
-  
       if (idString) {
         const computedIdKey = `ref_computed_id_${++refId}`
         refConf.computedSelectorKeys.push({ key: computedIdKey, prefix: '#' })
         meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
       }
-  
       if (classString || dynamicClassString) {
         const computedClassKey = `ref_computed_class_${++refId}`
         refConf.computedSelectorKeys.push({ key: computedClassKey, prefix: '.' })
