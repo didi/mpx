@@ -60,14 +60,6 @@ export default {
       options.props = props
       delete options.properties
     }
-    if (options.onResize) {
-      mergeToArray(options, {
-        events: {
-          onResize: options.onResize
-        }
-      }, 'events')
-      delete options.onResize
-    }
     notSupportTip(options)
   }
 }
