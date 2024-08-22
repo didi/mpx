@@ -82,6 +82,10 @@ export default function pageStatusMixin (mixinType) {
         // onLoad应该在用户声明周期CREATED后再执行，故此处使用原生created声明周期来触发onLoad
         const query = this.$root.$options?.router?.currentRoute?.query || {}
         this.__mpxProxy.callHook(ONLOAD, [query])
+      },
+      mounted () {
+        this.mpxPageStatus = `resize${count++}`
+        isFunction(this.onResize) && this.onResize(getSystemInfo())
       }
     })
   }
@@ -98,22 +102,13 @@ export default function pageStatusMixin (mixinType) {
   Object.assign(mixin, {
     [CREATED] () {
       if (isBrowser) {
-        const isPage = mixinType === 'page'
-        const pageInstance = isPage ? this : this.$page
+        const pageInstance = mixinType === 'page' ? this : this.$page
         if (pageInstance) {
-          const pageLifetimes = this.__mpxProxy.options.pageLifetimes
-          // wx 真机上页面/组件初次渲染就会触发 resize 事件
-          if (isPage) {
-            isFunction(this.onResize) && this.onResize(getSystemInfo())
-          } else {
-            if (pageLifetimes && isFunction(pageLifetimes.resize)) {
-              pageLifetimes.resize.call(this, getSystemInfo())
-            }
-          }
           this.$watch(() => pageInstance.mpxPageStatus, status => {
             if (!status) return
             if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
             if (status === 'hide') this.__mpxProxy.callHook(ONHIDE)
+            const pageLifetimes = this.__mpxProxy.options.pageLifetimes
             if (pageLifetimes) {
               if (/^resize/.test(status) && isFunction(pageLifetimes.resize)) {
                 // resize
