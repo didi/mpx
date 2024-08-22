@@ -159,14 +159,13 @@ export declare const enum PatchFlags {
  * Make a map and return a function for checking if a key
  * is in that map.
  */
+/*! #__NO_SIDE_EFFECTS__ */
 export function makeMap (
   str: string,
-  expectsLowerCase?: boolean
-): (key: string) => true | undefined {
-  const map = Object.create(null)
-  const list: Array<string> = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase ? val => map[val.toLowerCase()] : val => map[val]
+  expectsLowerCase?: boolean,
+): (key: string) => boolean {
+  const set = new Set(str.split(','))
+  return expectsLowerCase
+    ? val => set.has(val.toLowerCase())
+    : val => set.has(val)
 }
