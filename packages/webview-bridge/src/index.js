@@ -46,7 +46,15 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'web'
   window.addEventListener('message', (event) => {
     // 接收web-view的回调
-    const { callbackId, error, result } = event.data
+    const data = event.data
+    let msgData = data
+    try {
+      if (typeof data === 'string') {
+        msgData = JSON.parse(data)
+      }
+    } catch (e) {
+    }
+    const { callbackId, error, result } = msgData
     if (callbackId !== undefined && callbacks[callbackId]) {
       if (error) {
         callbacks[callbackId](error)
@@ -123,7 +131,11 @@ function postMessage (type, data = {}) {
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid
     }
-    window.parent.postMessage && window.parent.postMessage(postParams, '*')
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams))
+    } else {
+      window.parent.postMessage && window.parent.postMessage(postParams, '*')
+    }
   } else {
     data({
       webapp: true
