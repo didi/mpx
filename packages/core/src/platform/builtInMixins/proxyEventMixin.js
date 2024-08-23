@@ -9,7 +9,25 @@ function logCallbackNotFound (context, callbackName) {
 
 export default function proxyEventMixin () {
   const methods = {
-    __invoke ($event) {
+    __invokeBind ($event) {
+      if (__mpx_mode__ === 'ali') {
+        return this.__invoke($event, 'on')
+      }
+      return this.__invoke($event, 'bind')
+    },
+     __invokeCatch ($event) {
+      return this.__invoke($event, 'catch')
+    },
+     __invokeCaptureBind ($event) {
+       if (__mpx_mode__ === 'ali') {
+        return this.__invoke($event, 'captureOn')
+      }
+      return this.__invoke($event, 'captureBind')
+    },
+     __invokeCaptureCatch ($event) {
+      return this.__invoke($event, 'captureCatch')
+    },
+    __invoke ($event, prefix = 'bind') {
       if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {
           Mpx.config.proxyEventHandler($event)
@@ -39,7 +57,7 @@ export default function proxyEventMixin () {
         return
       }
       const eventConfigs = target.dataset.eventconfigs || {}
-      const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
+      const curEventConfig = eventConfigs[prefix + type] || eventConfigs[prefix + fallbackType] || []
       // 如果有 mpxuid 说明是运行时组件，那么需要设置对应的上下文
       const rootRuntimeContext = contextMap.get(target.dataset.mpxuid)
       const context = rootRuntimeContext || this

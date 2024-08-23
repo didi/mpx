@@ -1232,7 +1232,7 @@ function processEvent (el, options) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
       const modifiers = (parsedEvent.modifier || '').split('.')
       const prefix = parsedEvent.prefix
       // catch 场景下，下发的 eventconfig 里面包含特殊字符，用以运行时的判断
@@ -1266,13 +1266,13 @@ function processEvent (el, options) {
       // } else {
       //   stringifiedModelValue = stringify(modelValue)
       // }
-
-      if (!eventConfigMap[modelEvent]) {
-        eventConfigMap[modelEvent] = {
+      const modelEventType = config[mode].event.getEvent(modelEvent)
+      if (!eventConfigMap[modelEventType]) {
+        eventConfigMap[modelEventType] = {
           configs: []
         }
       }
-      eventConfigMap[modelEvent].configs.unshift({
+      eventConfigMap[modelEventType].configs.unshift({
         hasArgs: true,
         expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)},${stringify(modelFilter)}]`
       })
@@ -1305,7 +1305,6 @@ function processEvent (el, options) {
     }
 
     if (needBind) {
-      let resultName
       configs.forEach(({ name }) => {
         if (name) {
           // 清空原始事件绑定
@@ -1313,18 +1312,23 @@ function processEvent (el, options) {
           do {
             has = getAndRemoveAttr(el, name).has
           } while (has)
-
-          if (!resultName) {
-            // 清除修饰符
-            resultName = name.replace(/\..*/, '')
-          }
         }
       })
+      let value = '__invoke'
+      if (type.startsWith('bind') || type.startsWith('on')) {
+        value = '__invokeBind'
+      } else if (type.startsWith('catch')) {
+        value = '__invokeCatch'
+      } else if (type.startsWith('captureBind') || type.startsWith('captureOn')) {
+        value = '__invokeCaptureBind'
+      } else if (type.startsWith('captureCatch')) {
+        value = '__invokeCaptureCatch'
+      }
 
       addAttrs(el, [
         {
-          name: resultName || config[mode].event.getEvent(type),
-          value: '__invoke'
+          name: type,
+          value
         }
       ])
       eventConfigMap[escapedType] = configs.map((item) => {

@@ -444,7 +444,9 @@ module.exports = function getSpec ({ warn, error }) {
           ali (prefix) {
             const prefixMap = {
               bind: 'on',
-              catch: 'catch'
+              catch: 'catch',
+              'capture-bind': 'capture-on',
+              'capture-catch': 'capture-catch'
             }
             if (!prefixMap[prefix]) {
               error(`Ali environment does not support [${prefix}] event handling!`)
