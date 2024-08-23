@@ -28,16 +28,8 @@ export default class SelectorQuery {
     if (!this._component) {
       warn('Please use SelectorQuery.in method to set context')
     }
-    const splitedSelector = selector.match(/(#|\.)\w+/g) || []
-    const refsArr = splitedSelector.map(selector => this._component && this._component.__selectRef(selector, 'node', true))
-    const refs = refsArr.reduce((preRefs, curRefs, curIndex) => {
-      if (curIndex === 0) return curRefs
-      return preRefs.filter(p => {
-        const preNodeRef = p.getNodeInstance && p.getNodeInstance().nodeRef
-        return curRefs.find(r => r.getNodeInstance && r.getNodeInstance().nodeRef === preNodeRef)
-      })
-    }, [])
-    return new NodeRef(all ? refs : refs[0], this, !all)
+    const refs = this._component && this._component.__selectRef(selector, 'node', all)
+    return new NodeRef(refs, this, !all)
   }
 
   selectAll (selector) {
