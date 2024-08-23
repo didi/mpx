@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -52,6 +52,7 @@ function createEffect (proxy, components, props) {
   }
   update.id = proxy.uid
   const getComponent = (tagName) => {
+    if (tagName === 'block') return Fragment
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   proxy.effect = new ReactiveEffect(() => {
@@ -67,13 +68,20 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __getProps () {
       const propsData = {}
       const props = propsRef.current
-      if (props) {
-        Object.keys(props).forEach((key) => {
-          if (hasOwn(validProps, key) && !isFunction(props[key])) {
-            propsData[key] = props[key]
+      Object.keys(validProps).forEach((key) => {
+        if (hasOwn(props, key)) {
+          propsData[key] = props[key]
+        } else {
+          let field = validProps[key]
+          if (isFunction(field) || field === null) {
+            field = {
+              type: field
+            }
           }
-        })
-      }
+          // 处理props默认值
+          propsData[key] = field.value
+        }
+      })
       return propsData
     },
     __getSlot (name) {
@@ -347,7 +355,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       // 处理props更新
       propsRef.current = props
       Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key) && !isFunction(props[key])) {
+        if (hasOwn(validProps, key)) {
           instance[key] = props[key]
         }
       })

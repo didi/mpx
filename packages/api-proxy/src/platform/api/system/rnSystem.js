@@ -1,7 +1,7 @@
 import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
@@ -84,12 +84,12 @@ const getSystemInfo = function (options) {
     Object.assign(systemInfo, {
       errMsg: 'setStorage:ok'
     })
-    webHandleSuccess(systemInfo, success, complete)
+    successHandle(systemInfo, success, complete)
   } catch (err) {
     const result = {
       errMsg: `getSystemInfo:fail ${err}`
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
   }
 }
 

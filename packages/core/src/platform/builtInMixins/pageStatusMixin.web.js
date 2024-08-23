@@ -3,7 +3,8 @@ import {
   CREATED,
   ONHIDE,
   ONSHOW,
-  ONLOAD
+  ONLOAD,
+  ONRESIZE
 } from '../../core/innerLifecycle'
 import { isFunction, isBrowser } from '@mpxjs/utils'
 
@@ -20,7 +21,7 @@ function getCurrentPageInstance () {
   return pageInstance
 }
 
-function getSystemInfo () {
+function onResize () {
   // 设备屏幕状态
   const deviceOrientation = window.screen.width > window.screen.height ? 'landscape' : 'portrait'
 
@@ -35,15 +36,11 @@ function getSystemInfo () {
     }
   }
 
-  return systemInfo
-}
+  const pageInstance = getCurrentPageInstance()
 
-function onResize () {
-  const _t = getCurrentPageInstance()
-
-  if (_t) {
-    _t.mpxPageStatus = `resize${count++}`
-    isFunction(_t.onResize) && _t.onResize(getSystemInfo())
+  if (pageInstance) {
+    pageInstance.mpxPageStatus = `resize${count++}`
+    pageInstance.__mpxProxy.callHook(ONRESIZE, [systemInfo])
   }
 }
 
@@ -111,7 +108,7 @@ export default function pageStatusMixin (mixinType) {
             if (pageLifetimes) {
               if (/^resize/.test(status) && isFunction(pageLifetimes.resize)) {
                 // resize
-                pageLifetimes.resize.call(this, getSystemInfo())
+                pageLifetimes.resize.call(this, systemInfo)
               } else if (isFunction(pageLifetimes[status])) {
                 // show & hide
                 pageLifetimes[status].call(this)

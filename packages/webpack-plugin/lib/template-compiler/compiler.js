@@ -1121,12 +1121,12 @@ function getModelConfig (el, match) {
   }
 }
 
-function processEventReact (el, options, meta) {
+function processEventReact (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1153,12 +1153,14 @@ function processEventReact (el, options, meta) {
       // } else {
       //   stringifiedModelValue = stringify(modelValue)
       // }
-      if (!eventConfigMap[modelEvent]) {
-        eventConfigMap[modelEvent] = {
+      // todo 未来可能需要支持类似modelEventPrefix这样的配置来声明model事件的绑定方式
+      const modelEventType = config[mode].event.getEvent(modelEvent)
+      if (!eventConfigMap[modelEventType]) {
+        eventConfigMap[modelEventType] = {
           configs: []
         }
       }
-      eventConfigMap[modelEvent].configs.unshift({
+      eventConfigMap[modelEventType].configs.unshift({
         hasArgs: true,
         expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
       })
@@ -1172,11 +1174,8 @@ function processEventReact (el, options, meta) {
   }
 
   // let wrapper
-
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
-
-    let resultName
     configs.forEach(({ name }) => {
       if (name) {
         // 清空原始事件绑定
@@ -1184,21 +1183,15 @@ function processEventReact (el, options, meta) {
         do {
           has = getAndRemoveAttr(el, name).has
         } while (has)
-
-        if (!resultName) {
-          // 清除修饰符
-          resultName = name.replace(/\..*/, '')
-        }
       }
     })
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = resultName || config[mode].event.getEvent(type)
     const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
     addAttrs(el, [
       {
-        name,
+        name: type,
         value
       }
     ])
@@ -2572,7 +2565,7 @@ function processElement (el, root, options, meta) {
     processFor(el)
     processRefReact(el, meta)
     processStyleReact(el)
-    processEventReact(el, options, meta)
+    processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)
     processAttrs(el, options)
