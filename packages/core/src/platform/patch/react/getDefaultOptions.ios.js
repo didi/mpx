@@ -270,13 +270,9 @@ function usePageContext (mpxProxy) {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
-    const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize', 'onResize'])
+    const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusContext, routeName)) {
-        // wx 真机上 resize 初次就会触发
-        if (hasResizeHook) {
-          triggerResizeEvent(mpxProxy)
-        }
         unWatch = watch(() => pageStatusContext[routeName], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)

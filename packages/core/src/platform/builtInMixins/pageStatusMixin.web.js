@@ -85,7 +85,6 @@ export default function pageStatusMixin (mixinType) {
       },
       mounted () {
         this.mpxPageStatus = `resize${count++}`
-        isFunction(this.onResize) && this.onResize(getSystemInfo())
       }
     })
   }
