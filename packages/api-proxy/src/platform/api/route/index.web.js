@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
+import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 let routeCount = 0
@@ -12,8 +12,7 @@ function redirectTo (options = {}) {
   if (router) {
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'redirectTo:fail can not redirectTo a tabBar page' }
-      webHandleFail(res, options.fail, options.complete)
-      return Promise.reject(res)
+      failHandle(res, options.fail, options.complete)
     }
     router.__mpxAction = { type: 'redirect' }
     if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
@@ -26,11 +25,11 @@ function redirectTo (options = {}) {
       },
       () => {
         const res = { errMsg: 'redirectTo:ok' }
-        webHandleSuccess(res, options.success, options.complete)
+        successHandle(res, options.success, options.complete)
       },
       err => {
         const res = { errMsg: `redirectTo:fail ${err}` }
-        webHandleFail(res, options.fail, options.complete)
+        failHandle(res, options.fail, options.complete)
       }
     )
   }
@@ -45,8 +44,7 @@ function navigateTo (options = {}) {
   if (router) {
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
-      webHandleFail(res, options.fail, options.complete)
-      return Promise.reject(res)
+      failHandle(res, options.fail, options.complete)
     }
     const eventChannel = new EventChannel()
     router.__mpxAction = {
@@ -66,11 +64,11 @@ function navigateTo (options = {}) {
       },
       () => {
         const res = { errMsg: 'navigateTo:ok', eventChannel }
-        webHandleSuccess(res, options.success, options.complete)
+        successHandle(res, options.success, options.complete)
       },
       err => {
         const res = { errMsg: `navigateTo:fail ${err}` }
-        webHandleFail(res, options.fail, options.complete)
+        failHandle(res, options.fail, options.complete)
       }
     )
   }
@@ -94,7 +92,7 @@ function navigateBack (options = {}) {
     }
     router.go(-delta)
     const res = { errMsg: 'navigateBack:ok' }
-    webHandleSuccess(res, options.success, options.complete)
+    successHandle(res, options.success, options.complete)
   }
 }
 
@@ -127,16 +125,16 @@ function reLaunch (options = {}) {
         },
         () => {
           const res = { errMsg: 'reLaunch:ok' }
-          webHandleSuccess(res, options.success, options.complete)
+          successHandle(res, options.success, options.complete)
         },
         err => {
           const res = { errMsg: `reLaunch:fail ${err}` }
-          webHandleFail(res, options.fail, options.complete)
+          failHandle(res, options.fail, options.complete)
         }
       )
     }
     const res = { errMsg: 'reLaunch:ok' }
-    webHandleSuccess(res, options.success, options.complete)
+    successHandle(res, options.success, options.complete)
   }
 }
 
@@ -152,8 +150,7 @@ function switchTab (options = {}) {
     if (toRoute.path !== currentRoute.path) {
       if (!isTabBarPage(options.url, router)) {
         const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page!' }
-        webHandleFail(res, options.fail, options.complete)
-        return Promise.reject(res)
+        failHandle(res, options.fail, options.complete)
       }
       router.__mpxAction = {
         type: 'switch',
@@ -171,17 +168,17 @@ function switchTab (options = {}) {
           },
           () => {
             const res = { errMsg: 'switchTab:ok' }
-            webHandleSuccess(res, options.success, options.complete)
+            successHandle(res, options.success, options.complete)
           },
           err => {
             const res = { errMsg: `switchTab:fail ${err}` }
-            webHandleFail(res, options.fail, options.complete)
+            failHandle(res, options.fail, options.complete)
           }
         )
       }
     }
     const res = { errMsg: 'switchTab:ok' }
-    webHandleSuccess(res, options.success, options.complete)
+    successHandle(res, options.success, options.complete)
   }
 }
 

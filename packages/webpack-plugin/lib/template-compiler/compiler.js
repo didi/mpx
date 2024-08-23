@@ -1094,12 +1094,39 @@ function processStyleReact (el) {
   }
 }
 
-function processEventReact (el, options, meta) {
+function getModelConfig (el, match) {
+  const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
+  const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
+  const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
+  const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
+  const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
+  let modelValuePathArr
+  try {
+    modelValuePathArr = JSON5.parse(modelValuePath)
+  } catch (e) {
+    if (modelValuePath === '') {
+      modelValuePathArr = []
+    } else {
+      modelValuePathArr = modelValuePath.split('.')
+    }
+  }
+  const modelValue = match[1].trim()
+  const stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+  return {
+    modelProp,
+    modelEvent,
+    modelFilter,
+    modelValuePathArr,
+    stringifiedModelValue
+  }
+}
+
+function processEventReact (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1112,12 +1139,43 @@ function processEventReact (el, options, meta) {
     }
   })
 
-  let wrapper
+  const modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
+  if (modelExp) {
+    const match = tagRE.exec(modelExp)
+    if (match) {
+      const { modelProp, modelEvent, modelFilter, modelValuePathArr, stringifiedModelValue } = getModelConfig(el, match)
+      if (!isValidIdentifierStr(modelEvent)) {
+        warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
+        return
+      }
+      // if (forScopes.length) {
+      //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+      // } else {
+      //   stringifiedModelValue = stringify(modelValue)
+      // }
+      // todo 未来可能需要支持类似modelEventPrefix这样的配置来声明model事件的绑定方式
+      const modelEventType = config[mode].event.getEvent(modelEvent)
+      if (!eventConfigMap[modelEventType]) {
+        eventConfigMap[modelEventType] = {
+          configs: []
+        }
+      }
+      eventConfigMap[modelEventType].configs.unshift({
+        hasArgs: true,
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
+      })
+      addAttrs(el, [
+        {
+          name: modelProp,
+          value: modelExp
+        }
+      ])
+    }
+  }
 
+  // let wrapper
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
-
-    let resultName
     configs.forEach(({ name }) => {
       if (name) {
         // 清空原始事件绑定
@@ -1125,21 +1183,15 @@ function processEventReact (el, options, meta) {
         do {
           has = getAndRemoveAttr(el, name).has
         } while (has)
-
-        if (!resultName) {
-          // 清除修饰符
-          resultName = name.replace(/\..*/, '')
-        }
       }
     })
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = resultName || config[mode].event.getEvent(type)
     const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
     addAttrs(el, [
       {
-        name,
+        name: type,
         value
       }
     ])
@@ -1166,12 +1218,12 @@ function processEventReact (el, options, meta) {
     // }
   }
 
-  if (wrapper) {
-    replaceNode(el, wrapper, true)
-    addChild(wrapper, el)
-    processAttrs(wrapper, options)
-    postMoveBaseDirective(wrapper, el)
-  }
+  // if (wrapper) {
+  //   replaceNode(el, wrapper, true)
+  //   addChild(wrapper, el)
+  //   processAttrs(wrapper, options)
+  //   postMoveBaseDirective(wrapper, el)
+  // }
 }
 
 function processEvent (el, options) {
@@ -1204,27 +1256,11 @@ function processEvent (el, options) {
   if (modelExp) {
     const match = tagRE.exec(modelExp)
     if (match) {
-      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
-      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
-      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
-      const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
-      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
-      let modelValuePathArr
-      try {
-        modelValuePathArr = JSON5.parse(modelValuePath)
-      } catch (e) {
-        if (modelValuePath === '') {
-          modelValuePathArr = []
-        } else {
-          modelValuePathArr = modelValuePath.split('.')
-        }
-      }
+      const { modelProp, modelEvent, modelFilter, modelValuePathArr, stringifiedModelValue } = getModelConfig(el, match)
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
       }
-      const modelValue = match[1].trim()
-      const stringifiedModelValue = stringifyWithResolveComputed(modelValue)
       // if (forScopes.length) {
       //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
       // } else {
@@ -2200,7 +2236,7 @@ function processBuiltInComponents (el, meta) {
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
       if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
       }
@@ -2556,7 +2592,7 @@ function processElement (el, root, options, meta) {
     processFor(el)
     processRefReact(el, meta)
     processStyleReact(el)
-    processEventReact(el, options, meta)
+    processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)
     processAttrs(el, options)

@@ -39,6 +39,10 @@ export default function createApp (option, config = {}) {
   const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   defaultOptions.onAppInit && defaultOptions.onAppInit()
+  // 在页面script执行前填充getApp()
+  global.getApp = function () {
+    return appData
+  }
   const pages = currentInject.getPages() || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
@@ -96,9 +100,7 @@ export default function createApp (option, config = {}) {
       )
     )
   })
-  global.getApp = function () {
-    return appData
-  }
+
   global.getCurrentPages = function () {
     const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
     if (navigation) {
