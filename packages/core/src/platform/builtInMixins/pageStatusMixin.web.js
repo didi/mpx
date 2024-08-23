@@ -79,9 +79,6 @@ export default function pageStatusMixin (mixinType) {
         // onLoad应该在用户声明周期CREATED后再执行，故此处使用原生created声明周期来触发onLoad
         const query = this.$root.$options?.router?.currentRoute?.query || {}
         this.__mpxProxy.callHook(ONLOAD, [query])
-      },
-      mounted () {
-        this.mpxPageStatus = `resize${count++}`
       }
     })
   }
