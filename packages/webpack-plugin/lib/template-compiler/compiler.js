@@ -1710,19 +1710,28 @@ function processRefReact (el, meta) {
 
     if (!val) {
       refConf.sKeys = []
-      const idString = getAndRemoveAttr(el, 'id', false).val
-      const classString = getAndRemoveAttr(el, 'class', false).val
-      const dynamicClassString = getAndRemoveAttr(el, config[mode].directive.dynamicClass, false).val
-      const staticId = parseMustacheWithContext(idString).result
-      const staticClass = parseMustacheWithContext(classString).result
-      const dynamicClass = parseMustacheWithContext(dynamicClassString).result
+      let rawId
+      let rawClass
+      let rawDynamicClass
+      el.attrsList.forEach(({ name, value }) => {
+        if (name === 'id') {
+          rawId = value
+        } else if (name === 'class') {
+          rawClass = value
+        } else if (name === config[mode].directive.dynamicClass) {
+          rawDynamicClass = value
+        }
+      })
       meta.computed = meta.computed || []
-      if (idString) {
+      if (rawId) {
+        const staticId = parseMustacheWithContext(rawId).result
         const computedIdKey = `_ri${++refId}`
         refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
         meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
       }
-      if (classString || dynamicClassString) {
+      if (rawClass || rawDynamicClass) {
+        const staticClass = parseMustacheWithContext(rawClass).result
+        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
         const computedClassKey = `_rc${++refId}`
         refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
         meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)

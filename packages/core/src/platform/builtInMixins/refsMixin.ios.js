@@ -17,7 +17,7 @@ export default function getRefsMixin () {
         const target = this
         this.__selectorMap = computed(() => {
           const selectorMap = {}
-          refs.forEach(({ key, type, all, sKeys }) => {
+          refs.forEach(({ key, type, sKeys }) => {
             // sKeys 是使用 wx:ref 没有值的标记场景，支持运行时的 createSelectorQuery 的使用
             if (sKeys) {
               sKeys.forEach((item = {}) => {
@@ -33,21 +33,26 @@ export default function getRefsMixin () {
             } else {
               selectorMap[key] = selectorMap[key] || []
               selectorMap[key].push({ type, key })
-              Object.defineProperty(this.$refs, key, {
-                enumerable: true,
-                configurable: true,
-                get () {
-                  const refs = target.__refs[key] || []
-                  if (type === 'component') {
-                    return all ? refs : refs[0]
-                  } else {
-                    return createSelectorQuery().in(target).select(key, all)
-                  }
-                }
-              })
             }
           })
           return selectorMap
+        })
+        refs.forEach(({ key, type, all, sKeys }) => {
+          // 如果没有 sKey 说明使用的是 wx:ref="xxx" 的场景
+          if (!sKeys) {
+            Object.defineProperty(this.$refs, key, {
+              enumerable: true,
+              configurable: true,
+              get () {
+                const refs = target.__refs[key] || []
+                if (type === 'component') {
+                  return all ? refs : refs[0]
+                } else {
+                  return createSelectorQuery().in(target).select(key, all)
+                }
+              }
+            })
+          }
         })
       },
       __getRefVal (key) {
