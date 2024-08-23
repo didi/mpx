@@ -36,7 +36,7 @@ export default function getRefsMixin () {
               Object.defineProperty(this.$refs, key, {
                 enumerable: true,
                 configurable: true,
-                get() {
+                get () {
                   const refs = target.__refs[key] || []
                   if (type === 'component') {
                     return all ? refs : refs[0]
