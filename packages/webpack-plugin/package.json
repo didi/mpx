@@ -80,6 +80,7 @@
     "build": "rimraf ./lib/runtime/components/react/dist && tsc"
   },
   "devDependencies": {
+    "@ant-design/react-native": "^5.2.2",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.79",

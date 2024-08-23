@@ -57,7 +57,6 @@ module.exports = function ({
         (callback) => {
           processStyles(parts.styles, {
             loaderContext,
-            srcMode,
             ctorType,
             autoScope,
             moduleId

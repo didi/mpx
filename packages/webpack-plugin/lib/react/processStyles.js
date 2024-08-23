@@ -5,7 +5,6 @@ const shallowStringify = require('../utils/shallow-stringify')
 
 module.exports = function (styles, {
   loaderContext,
-  srcMode,
   ctorType,
   autoScope,
   moduleId
@@ -14,7 +13,17 @@ module.exports = function (styles, {
   let content = ''
   let output = '/* styles */\n'
   if (styles.length) {
-    const { mode } = loaderContext.getMpx()
+    const warn = (msg) => {
+      loaderContext.emitWarning(
+        new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
+      )
+    }
+    const error = (msg) => {
+      loaderContext.emitError(
+        new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
+      )
+    }
+    const { mode, srcMode } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -41,7 +50,9 @@ module.exports = function (styles, {
           content,
           filename: loaderContext.resourcePath,
           mode,
-          srcMode
+          srcMode,
+          warn,
+          error
         })
         if (ctorType === 'app') {
           output += `global.__getAppClassMap = function() {
