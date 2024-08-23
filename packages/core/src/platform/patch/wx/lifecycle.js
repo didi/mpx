@@ -4,7 +4,8 @@ import {
   MOUNTED,
   ONSHOW,
   ONHIDE,
-  ONLOAD
+  ONLOAD,
+  ONRESIZE
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
@@ -52,7 +53,8 @@ export const lifecycleProxyMap = {
   [UNMOUNTED]: ['detached', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],
-  [ONLOAD]: ['onLoad']
+  [ONLOAD]: ['onLoad'],
+  [ONRESIZE]: ['onResize']
 }
 
 export const LIFECYCLE = {
