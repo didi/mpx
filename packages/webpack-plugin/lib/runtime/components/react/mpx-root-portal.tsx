@@ -11,6 +11,7 @@ interface RootPortalProps {
 const _RootPortal = (props: RootPortalProps) => {
   const { children, enable = true } = props
   return enable ? (
+    // @ts-ignore
     <Portal>
       {children}
     </Portal>
