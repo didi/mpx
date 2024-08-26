@@ -1,28 +1,12 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, Fragment } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
-import { watch } from '../../../observer/watch'
-import { reactive, set } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, UPDATED, ONLOAD } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
-
-function getSystemInfo () {
-  const window = ReactNative.Dimensions.get('window')
-  const screen = ReactNative.Dimensions.get('screen')
-  return {
-    deviceOrientation: window.width > window.height ? 'landscape' : 'portrait',
-    size: {
-      screenWidth: screen.width,
-      screenHeight: screen.height,
-      windowWidth: window.width,
-      windowHeight: window.height
-    }
-  }
-}
 
 function getRootProps (props) {
   const rootProps = {}
@@ -136,7 +120,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     },
     triggerEvent (eventName, eventDetail) {
       const props = propsRef.current
-      const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
+      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+      const handler = props && (props['bind' + handlerName] || props['catch' + handlerName] || props['capture-bind' + handlerName] || props['capture-catch' + handlerName])
       if (handler && typeof handler === 'function') {
         const timeStamp = +new Date()
         const dataset = collectDataset(props)
@@ -231,105 +216,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   return instance
 }
 
-function hasPageHook (mpxProxy, hookNames) {
-  const options = mpxProxy.options
-  const type = options.__type__
-  return hookNames.some(h => {
-    if (mpxProxy.hasHook(h)) {
-      return true
-    }
-    if (type === 'page') {
-      return isFunction(options.methods && options.methods[h])
-    } else if (type === 'component') {
-      return options.pageLifetimes && isFunction(options.pageLifetimes[h])
-    }
-    return false
-  })
-}
-
-const routeContext = createContext(null)
-
-const triggerPageStatusHook = (mpxProxy, event) => {
-  mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
-  const pageLifetimes = mpxProxy.options.pageLifetimes
-  if (pageLifetimes) {
-    const instance = mpxProxy.target
-    isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
-  }
-}
-
-const triggerResizeEvent = (mpxProxy) => {
-  const type = mpxProxy.options.__type__
-  const systemInfo = getSystemInfo()
-  const target = mpxProxy.target
-  mpxProxy.callHook(ONRESIZE, [systemInfo])
-  if (type === 'page') {
-    target.onResize && target.onResize(systemInfo)
-  } else {
-    const pageLifetimes = mpxProxy.options.pageLifetimes
-    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
-  }
-}
-
-function usePageContext (mpxProxy) {
-  const { routeName } = useContext(routeContext) || {}
-
-  useEffect(() => {
-    let unWatch
-    const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
-    const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
-    const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    if (hasShowHook || hasHideHook || hasResizeHook) {
-      if (hasOwn(pageStatusContext, routeName)) {
-        unWatch = watch(() => pageStatusContext[routeName], (newVal) => {
-          if (newVal === 'show' || newVal === 'hide') {
-            triggerPageStatusHook(mpxProxy, newVal)
-          } else if (/^resize/.test(newVal)) {
-            triggerResizeEvent(mpxProxy)
-          }
-        })
-      }
-    }
-
-    return () => {
-      unWatch && unWatch()
-    }
-  }, [])
-}
-
-const pageStatusContext = reactive({})
-function setPageStatus (routeName, val) {
-  set(pageStatusContext, routeName, val)
-}
-
-function usePageStatus (navigation, route) {
-  let isFocused = true
-  setPageStatus(route.name, '')
-  useEffect(() => {
-    setPageStatus(route.name, 'show')
-    const focusSubscription = navigation.addListener('focus', () => {
-      setPageStatus(route.name, 'show')
-      isFocused = true
-    })
-    const blurSubscription = navigation.addListener('blur', () => {
-      setPageStatus(route.name, 'hide')
-      isFocused = false
-    })
-
-    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      if (isFocused) {
-        setPageStatus(route.name, value)
-      }
-    })
-
-    return () => {
-      focusSubscription()
-      blurSubscription()
-      unWatchAppFocusedState()
-    }
-  }, [navigation])
-}
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -362,8 +248,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.propsUpdated()
     }
 
-    usePageContext(proxy)
-
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
@@ -390,8 +274,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      usePageStatus(navigation, route)
-
       useLayoutEffect(() => {
         navigation.setOptions({
           headerTitle: pageConfig.navigationBarTitleText || '',
@@ -411,18 +293,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
           },
-          createElement(routeContext.Provider,
-            {
-              value: { routeName: route.name }
-            },
-            createElement(defaultOptions,
-              {
-                navigation,
-                route,
-                pageConfig
-              }
-            )
-          )
+          createElement(defaultOptions, { navigation, route, pageConfig })
         )
       )
     }
