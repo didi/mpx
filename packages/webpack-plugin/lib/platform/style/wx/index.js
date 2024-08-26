@@ -155,7 +155,7 @@ module.exports = function getSpec ({ warn, error }) {
     let idx = 0
     let propsIdx = 0
     // 按值的个数循环赋值
-    while (idx < values.length || idx < props.length) {
+    while (idx < values.length || propsIdx < props.length) {
       const prop = props[propsIdx]
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
@@ -165,7 +165,7 @@ module.exports = function getSpec ({ warn, error }) {
         unsupportedValueError({ prop: dashProp, value })
         idx += 1
         propsIdx += 1
-      } else if (!verifyValues({ prop, value: values[idx], valueType })) {
+      } else if (!verifyValues({ prop, value, valueType })) {
         // 校验 value 类型，类型不符则匹配下一个value
         idx += 1
       } else if (prop.includes('.')) {
