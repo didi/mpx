@@ -60,7 +60,7 @@ module.exports = function getSpec ({ warn, error }) {
     default: 'default' // 不校验
   }
   // number 类型支持的单位(包含auto)
-  const numberRegExp = /^\s*((\d+(\.\d+)?)(rpx|px|%)?)|(auto)\s*$/
+  const numberRegExp = /^\s*((-?\d+(\.\d+)?)(rpx|px|%)?)|(auto)\s*$/
   // RN 不支持的颜色格式
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
 
@@ -220,7 +220,7 @@ module.exports = function getSpec ({ warn, error }) {
 
     return {
       prop,
-      value: /\d+(\.\d+)?$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: /^\s*-?\d+(\.\d+)?\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
     }
   }
 
