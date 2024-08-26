@@ -41,6 +41,7 @@ const label = require('./label')
 const wxs = require('./wxs')
 const component = require('./component')
 const fixComponentName = require('./fix-component-name')
+const rootPortal = require('./root-portal')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -123,6 +124,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     livePusher({ print }),
     hyphenTagName({ print }),
     label({ print }),
-    component()
+    component(),
+    rootPortal({ print })
   ]
 }
