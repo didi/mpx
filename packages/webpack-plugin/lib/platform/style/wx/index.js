@@ -152,18 +152,21 @@ module.exports = function getSpec ({ warn, error }) {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
     const props = Object.getOwnPropertyNames(keyMap)
-    let idx = 0
+    let idx = 0, propsIdx = 0
     // 按值的个数循环赋值
-    while (idx < values.length && idx < props.length) {
-      const prop = props[idx]
+    while (idx < values.length || idx < props.length) {
+      const prop = props[propsIdx]
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
-      // 校验 value 类型
-      verifyValues({ prop, value: values[idx], valueType })
       const value = values[idx]
       if (isIllegalValue({ prop: dashProp, value })) {
-        // 过滤不支持 value
+        // 过滤 rn prop 不支持 value
         unsupportedValueError({ prop: dashProp, value })
+        idx += 1
+        propsIdx += 1
+      } else if (!verifyValues({ prop, value: values[idx], valueType })) {
+        // 校验 value 类型，类型不符则匹配下一个value
+        idx += 1
       } else if (prop.includes('.')) {
         // 多个属性值的prop
         const [main, sub] = prop.split('.')
@@ -178,14 +181,17 @@ module.exports = function getSpec ({ warn, error }) {
             }
           })
         }
+        idx += 1
+        propsIdx += 1
       } else {
         // 单个值的属性
         cssMap.push({
           prop,
           value
         })
+        idx += 1
+        propsIdx += 1
       }
-      idx += 1
     }
     return cssMap
   }
