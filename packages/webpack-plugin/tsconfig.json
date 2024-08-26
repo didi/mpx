@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "strictNullChecks": true,
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
     "lib": [
       "esnext",
