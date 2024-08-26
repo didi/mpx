@@ -1,4 +1,4 @@
-import { createDom, getRootElement, webHandleSuccess } from '../../../common/js'
+import { createDom, getRootElement, successHandle, failHandle } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -23,9 +23,9 @@ export default class Modal {
       cancelColor: '#000000',
       confirmText: '确定',
       confirmColor: '#576B95',
-      success: (...args) => {},
-      fail: (...args) => {},
-      complete: (...args) => {}
+      success: (...args) => { },
+      fail: (...args) => { },
+      complete: (...args) => { }
     }
 
     this.hideTimer = null
@@ -44,21 +44,18 @@ export default class Modal {
   }
 
   show (options = {}) {
+    const opts = Object.assign({}, this.defaultOpts, options)
+    if (opts.confirmText && _getLength(opts.confirmText) > 8) {
+      return failHandle({ errMsg: 'showModal:fail confirmText length should not larger than 4 Chinese characters' }, opts.fail, opts.complete)
+    }
+    if (opts.cancelText && _getLength(opts.cancelText) > 8) {
+      return failHandle({ errMsg: 'showModal:fail cancelText length should not larger than 4 Chinese characters' }, opts.fail, opts.complete)
+    }
     getRootElement().appendChild(this.modal)
-    if (options.confirmText && _getLength(options.confirmText) > 8) {
-      // eslint-disable-next-line
-      return Promise.reject({errMsg: 'showModal:fail confirmText length should not larger than 4 Chinese characters'})
-    }
-    if (options.cancelText && _getLength(options.cancelText) > 8) {
-      // eslint-disable-next-line
-      return Promise.reject({errMsg: 'showModal:fail cancelText length should not larger than 4 Chinese characters'})
-    }
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)
       this.hideTimer = null
     }
-    const opts = Object.assign({}, this.defaultOpts, options)
-
     this.title.textContent = opts.title
     this.content.textContent = opts.content
 
@@ -80,7 +77,7 @@ export default class Modal {
         cancel: true,
         confirm: false
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
     }
     this.confirmBtn.onclick = () => {
       this.hide()
@@ -89,7 +86,7 @@ export default class Modal {
         cancel: false,
         confirm: true
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
     }
 
     this.modal.classList.add('show')

@@ -3,7 +3,8 @@ import {
   CREATED,
   ONHIDE,
   ONSHOW,
-  ONLOAD
+  ONLOAD,
+  ONRESIZE
 } from '../../core/innerLifecycle'
 import { isFunction, isBrowser } from '@mpxjs/utils'
 
@@ -35,11 +36,11 @@ function onResize () {
     }
   }
 
-  const _t = getCurrentPageInstance()
+  const pageInstance = getCurrentPageInstance()
 
-  if (_t) {
-    _t.mpxPageStatus = `resize${count++}`
-    isFunction(_t.onResize) && _t.onResize(systemInfo)
+  if (pageInstance) {
+    pageInstance.mpxPageStatus = `resize${count++}`
+    pageInstance.__mpxProxy.callHook(ONRESIZE, [systemInfo])
   }
 }
 

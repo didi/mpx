@@ -1121,12 +1121,12 @@ function getModelConfig (el, match) {
   }
 }
 
-function processEventReact (el, options, meta) {
+function processEventReact (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1153,12 +1153,14 @@ function processEventReact (el, options, meta) {
       // } else {
       //   stringifiedModelValue = stringify(modelValue)
       // }
-      if (!eventConfigMap[modelEvent]) {
-        eventConfigMap[modelEvent] = {
+      // todo 未来可能需要支持类似modelEventPrefix这样的配置来声明model事件的绑定方式
+      const modelEventType = config[mode].event.getEvent(modelEvent)
+      if (!eventConfigMap[modelEventType]) {
+        eventConfigMap[modelEventType] = {
           configs: []
         }
       }
-      eventConfigMap[modelEvent].configs.unshift({
+      eventConfigMap[modelEventType].configs.unshift({
         hasArgs: true,
         expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
       })
@@ -1172,11 +1174,8 @@ function processEventReact (el, options, meta) {
   }
 
   // let wrapper
-
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
-
-    let resultName
     configs.forEach(({ name }) => {
       if (name) {
         // 清空原始事件绑定
@@ -1184,21 +1183,15 @@ function processEventReact (el, options, meta) {
         do {
           has = getAndRemoveAttr(el, name).has
         } while (has)
-
-        if (!resultName) {
-          // 清除修饰符
-          resultName = name.replace(/\..*/, '')
-        }
       }
     })
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = resultName || config[mode].event.getEvent(type)
     const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
     addAttrs(el, [
       {
-        name,
+        name: type,
         value
       }
     ])
@@ -1698,23 +1691,58 @@ function processFor (el) {
 }
 
 function processRefReact (el, meta) {
-  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
+  const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
+
   // rn中只有内建组件能被作为node ref处理
   const type = el.isBuiltIn ? 'node' : 'component'
-  if (val) {
+  if (has) {
     if (!meta.refs) {
       meta.refs = []
     }
     const all = !!forScopes.length
-    meta.refs.push({
-      key: val,
+    const key = val || `ref_rn_${++refId}`
+
+    const refConf = {
+      key,
       all,
       type
-    })
+    }
+
+    if (!val) {
+      refConf.sKeys = []
+      let rawId
+      let rawClass
+      let rawDynamicClass
+      el.attrsList.forEach(({ name, value }) => {
+        if (name === 'id') {
+          rawId = value
+        } else if (name === 'class') {
+          rawClass = value
+        } else if (name === config[mode].directive.dynamicClass) {
+          rawDynamicClass = value
+        }
+      })
+      meta.computed = meta.computed || []
+      if (rawId) {
+        const staticId = parseMustacheWithContext(rawId).result
+        const computedIdKey = `_ri${++refId}`
+        refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
+        meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
+      }
+      if (rawClass || rawDynamicClass) {
+        const staticClass = parseMustacheWithContext(rawClass).result
+        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+        const computedClassKey = `_rc${++refId}`
+        refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
+        meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
+      }
+    }
+
+    meta.refs.push(refConf)
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${val}') }}`
+      value: `{{ this.__getRefVal('${key}') }}`
     }])
   }
 }
@@ -2572,7 +2600,7 @@ function processElement (el, root, options, meta) {
     processFor(el)
     processRefReact(el, meta)
     processStyleReact(el)
-    processEventReact(el, options, meta)
+    processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)
     processAttrs(el, options)

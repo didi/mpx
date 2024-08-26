@@ -29,7 +29,9 @@ const blackList = [
   'createOffscreenCanvas',
   'reportEvent',
   'connectSocket',
-  'base64ToArrayBuffer'
+  'base64ToArrayBuffer',
+  'getDeviceInfo',
+  'getWindowInfo'
 ]
 
 function getMapFromList (list) {

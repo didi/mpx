@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, Fragment } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
@@ -6,6 +6,7 @@ import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED, ONLOAD } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+import { createSelectorQuery } from '@mpxjs/api-proxy'
 
 function getRootProps (props) {
   const rootProps = {}
@@ -36,6 +37,7 @@ function createEffect (proxy, components, props) {
   }
   update.id = proxy.uid
   const getComponent = (tagName) => {
+    if (tagName === 'block') return Fragment
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   proxy.effect = new ReactiveEffect(() => {
@@ -51,13 +53,20 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __getProps () {
       const propsData = {}
       const props = propsRef.current
-      if (props) {
-        Object.keys(props).forEach((key) => {
-          if (hasOwn(validProps, key) && !isFunction(props[key])) {
-            propsData[key] = props[key]
+      Object.keys(validProps).forEach((key) => {
+        if (hasOwn(props, key)) {
+          propsData[key] = props[key]
+        } else {
+          let field = validProps[key]
+          if (isFunction(field) || field === null) {
+            field = {
+              type: field
+            }
           }
-        })
-      }
+          // 处理props默认值
+          propsData[key] = field.value
+        }
+      })
       return propsData
     },
     __getSlot (name) {
@@ -134,14 +143,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         handler.call(this, eventObj)
       }
     },
-    selectComponent () {
-      error('selectComponent is not supported in react native, please use ref instead')
+    selectComponent (selector) {
+      return this.__selectRef(selector, 'component')
     },
-    selectAllComponents () {
-      error('selectAllComponents is not supported in react native, please use ref instead')
+    selectAllComponents (selector) {
+      return this.__selectRef(selector, 'component', true)
     },
     createSelectorQuery () {
-      error('createSelectorQuery is not supported in react native, please use ref instead')
+      return createSelectorQuery().in(this)
     },
     createIntersectionObserver () {
       error('createIntersectionObserver is not supported in react native, please use ref instead')
@@ -232,7 +241,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       // 处理props更新
       propsRef.current = props
       Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key) && !isFunction(props[key])) {
+        if (hasOwn(validProps, key)) {
           instance[key] = props[key]
         }
       })
