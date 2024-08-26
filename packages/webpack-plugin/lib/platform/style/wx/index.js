@@ -152,7 +152,8 @@ module.exports = function getSpec ({ warn, error }) {
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
     const props = Object.getOwnPropertyNames(keyMap)
-    let idx = 0, propsIdx = 0
+    let idx = 0
+    let propsIdx = 0
     // 按值的个数循环赋值
     while (idx < values.length || idx < props.length) {
       const prop = props[propsIdx]
