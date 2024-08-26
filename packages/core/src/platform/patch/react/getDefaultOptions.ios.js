@@ -8,6 +8,7 @@ import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+import { createSelectorQuery } from '@mpxjs/api-proxy'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -135,8 +136,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     },
     triggerEvent (eventName, eventDetail) {
       const props = propsRef.current
-      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-      const handler = props && (props['bind' + handlerName] || props['catch' + handlerName] || props['capture-bind' + handlerName] || props['capture-catch' + handlerName])
+      const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
       if (handler && typeof handler === 'function') {
         const timeStamp = +new Date()
         const dataset = collectDataset(props)
@@ -158,14 +158,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         handler.call(this, eventObj)
       }
     },
-    selectComponent () {
-      error('selectComponent is not supported in react native, please use ref instead')
+    selectComponent (selector) {
+      return this.__selectRef(selector, 'component')
     },
-    selectAllComponents () {
-      error('selectAllComponents is not supported in react native, please use ref instead')
+    selectAllComponents (selector) {
+      return this.__selectRef(selector, 'component', true)
     },
     createSelectorQuery () {
-      error('createSelectorQuery is not supported in react native, please use ref instead')
+      return createSelectorQuery().in(this)
     },
     createIntersectionObserver () {
       error('createIntersectionObserver is not supported in react native, please use ref instead')

@@ -1691,23 +1691,58 @@ function processFor (el) {
 }
 
 function processRefReact (el, meta) {
-  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
+  const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
+
   // rn中只有内建组件能被作为node ref处理
   const type = el.isBuiltIn ? 'node' : 'component'
-  if (val) {
+  if (has) {
     if (!meta.refs) {
       meta.refs = []
     }
     const all = !!forScopes.length
-    meta.refs.push({
-      key: val,
+    const key = val || `ref_rn_${++refId}`
+
+    const refConf = {
+      key,
       all,
       type
-    })
+    }
+
+    if (!val) {
+      refConf.sKeys = []
+      let rawId
+      let rawClass
+      let rawDynamicClass
+      el.attrsList.forEach(({ name, value }) => {
+        if (name === 'id') {
+          rawId = value
+        } else if (name === 'class') {
+          rawClass = value
+        } else if (name === config[mode].directive.dynamicClass) {
+          rawDynamicClass = value
+        }
+      })
+      meta.computed = meta.computed || []
+      if (rawId) {
+        const staticId = parseMustacheWithContext(rawId).result
+        const computedIdKey = `_ri${++refId}`
+        refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
+        meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
+      }
+      if (rawClass || rawDynamicClass) {
+        const staticClass = parseMustacheWithContext(rawClass).result
+        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+        const computedClassKey = `_rc${++refId}`
+        refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
+        meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
+      }
+    }
+
+    meta.refs.push(refConf)
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${val}') }}`
+      value: `{{ this.__getRefVal('${key}') }}`
     }])
   }
 }
