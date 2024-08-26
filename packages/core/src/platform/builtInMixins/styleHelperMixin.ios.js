@@ -106,6 +106,9 @@ export default function styleHelperMixin (type) {
         // px = rpx * (750 / 屏幕宽度)
         return value * width / 750
       },
+      __getClass (staticClass, dynamicClass) {
+        return concat(staticClass, stringifyDynamicClass(dynamicClass))
+      },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
         const result = []
         const classMap = {}

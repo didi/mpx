@@ -6,6 +6,7 @@ import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, UPDATED, ONLOAD } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+import { createSelectorQuery } from '@mpxjs/api-proxy'
 
 function getRootProps (props) {
   const rootProps = {}
@@ -142,14 +143,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         handler.call(this, eventObj)
       }
     },
-    selectComponent () {
-      error('selectComponent is not supported in react native, please use ref instead')
+    selectComponent (selector) {
+      return this.__selectRef(selector, 'component')
     },
-    selectAllComponents () {
-      error('selectAllComponents is not supported in react native, please use ref instead')
+    selectAllComponents (selector) {
+      return this.__selectRef(selector, 'component', true)
     },
     createSelectorQuery () {
-      error('createSelectorQuery is not supported in react native, please use ref instead')
+      return createSelectorQuery().in(this)
     },
     createIntersectionObserver () {
       error('createIntersectionObserver is not supported in react native, please use ref instead')
