@@ -7,6 +7,7 @@
 import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Animated } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ForwardedRef, ReactNode, JSX } from 'react'
 import useAnimationHooks from './useAnimationHooks'
+import type { AnimationProp } from './useAnimationHooks'
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
@@ -22,6 +23,7 @@ type ExtendedViewStyle = ViewStyle & {
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ExtendedViewStyle>
+  animation?: AnimationProp
   children?: ReactNode | ReactNode []
   hoverStyle: Array<ExtendedViewStyle>
   ['hover-start-time']: number
@@ -289,7 +291,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset,
-    animation = {}
+    animation
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -386,7 +388,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
 
   const animationStyle = useAnimationHooks(props)
 
-  return animation.actions?.length ? (
+  return animation?.actions?.length ? (
     <Animated.View
       {...innerProps}
       style={{...innerStyle, ...animationStyle}}

@@ -1,14 +1,41 @@
 import { useRef } from 'react'
-import { Animated, Easing, StyleSheet } from 'react-native'
+import { Animated, Easing, StyleSheet, ViewStyle } from 'react-native'
+import type { _ViewProps } from './mpx-view'
+
+type TransformKey = 'translateX' | 'translateY' | 'rotate' | 'rotateX' | 'rotateY' | 'rotateZ' | 'scaleX' | 'scaleY' | 'skewX' | 'skewY'
+type NormalKey = 'opacity' | 'backgroundColor' | 'width' | 'height' | 'top' | 'right' | 'bottom' | 'left'
+type RuleKey = TransformKey | NormalKey
+type RulesMap = Map<RuleKey, {
+  animated: Animated.Value,
+  inputRange: number[]
+  outputRange: string[]
+}>
+type AnimatedOption = {
+  duration: number
+  delay: number
+  useNativeDriver: boolean
+  timingFunction: 'linear' | 'ease' | 'ease-in' | 'ease-in-out'| 'ease-out'
+  transformOrigin: string
+}
+export type AnimationStepItem = {
+  animatedOption: AnimatedOption
+  rules: Map<NormalKey, number | string>
+  transform: Map<TransformKey, number>
+}
+
+export type AnimationProp = {
+  id: number,
+  actions: AnimationStepItem[]
+}
 // 微信 timingFunction 和 RN Easing 对应关系
 const EasingKey = {
   linear: Easing.linear,
   ease: Easing.ease,
   'ease-in': Easing.in(Easing.ease),
   'ease-in-out': Easing.inOut(Easing.ease),
-  'ease-out': Easing.out(Easing.ease),
-  'step-start': '',
-  'step-end': ''
+  'ease-out': Easing.out(Easing.ease)
+  // 'step-start': '',
+  // 'step-end': ''
 }
 const TransformInitial = {
   // matrix: 0,
@@ -36,7 +63,7 @@ const TransformInitial = {
 const InitialValue = {
   ...TransformInitial,
   opacity: 1,
-  // backgroundColor: 0,
+  backgroundColor: 'transparent',
   width: 0,
   height: 0,
   top: 0,
@@ -45,41 +72,42 @@ const InitialValue = {
   left: 0
 }
 // deg 角度
-const isDeg = key => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY', 'rotate'].includes(key)
+const isDeg = (key: RuleKey) => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY', 'rotate'].includes(key)
 // 背景色
-const isBg = key => key === 'backgroundColor'
+const isBg = (key: RuleKey) => key === 'backgroundColor'
 // transform
-const isTransform = key => Object.keys(TransformInitial).includes(key)
+const isTransform = (key: RuleKey) => Object.keys(TransformInitial).includes(key)
 
-export default function useAnimationHooks<T, P>(props) {
+export default function useAnimationHooks<T, P>(props: _ViewProps) {
   // 动画规则 map
-  const rulesMap = useRef(new Map())
+  const rulesMap = useRef(new Map() as RulesMap)
   // id 标识
   let idRef = useRef(-1)
   const {
     style = [],
-    animation = {}
+    animation
   } = props
-  const actions = animation.actions || []
-  const originalStyle = StyleSheet.flatten(style)
-  if (!actions.length) return {}
+  if (!animation || !animation.actions || !animation.actions.length) return {} as ViewStyle
+  const actions = animation.actions
+  const originalStyle: ViewStyle = StyleSheet.flatten(style)
 
   /** 根据 ruleMap 获取对应的 animation style   */
   const getAnimationStyle = () => {
     return [...rulesMap.current.entries()].reduce((style, [key, value]) => {
+      const { animated, inputRange, outputRange } = value
       if (isTransform(key)) {
-        const transform = style.transform || []
-        transform.push({ [key]: value.getStyle() })
+        const transform = style.transform || originalStyle.transform || []
+        transform.push({ [key]: outputRange.length && inputRange.length ? animated.interpolate({ inputRange, outputRange }) : animated })
         style['transform'] = transform
       } else {
-        style[key] = value.getStyle()
+        style[key] = outputRange.length && inputRange.length ? animated.interpolate({ inputRange, outputRange }) : animated
       }
       return style
-    }, {})
+    }, {} as ViewStyle)
   }
   if (idRef.current === animation.id) {
     // animation id 未变化 直接映射出 style
-    const transformOrigin = actions[actions.length - 1].animatedOption.transformOrigin
+    const transformOrigin = actions[actions.length - 1].animatedOption?.transformOrigin || ''
     const style = getAnimationStyle()
     return transformOrigin ? {
       transformOrigin,
@@ -87,28 +115,30 @@ export default function useAnimationHooks<T, P>(props) {
     } : style
   }
   /** 获取动画实例 */
-  const getParallelsAnimation = ({ key, value, initialVal }, { delay, duration, timingFunction }) => {
-    if (initialVal === undefined) {
-      console.error(`style rule ${key} 初始值为空`)
-      return false
-    }
+  const getParallelsAnimation = (
+    {
+      key,
+      value,
+      fromVal
+    }: {
+      key: RuleKey,
+      value: string | number
+      fromVal: string | number
+    },
+    {
+      delay,
+      duration,
+      timingFunction
+    }: AnimatedOption
+  ) => {
     if (!rulesMap.current.has(key)) {
-      const animated = new Animated.Value(isBg(key) ? 0 : initialVal)
+      const animated = new Animated.Value(isBg(key) ? 0 : fromVal)
+      const inputRange = (isBg(key) ? [0, 1] : isDeg(key) ? [0, 360] : []) as number[]
+      const outputRange = (isBg(key) ? [fromVal, value] : isDeg(key) ? ['0deg', '360deg'] : []) as string[]
       rulesMap.current.set(key, {
         animated,
-        getStyle: isBg(key)
-          // 背景色映射
-          ? () => animated.interpolate({
-            inputRange: [0, 1],
-            outputRange: [initialVal, value]
-          })
-          : isDeg(key)
-            // deg 角度值映射
-            ? () => animated.interpolate({
-              inputRange: [0, 360],
-              outputRange: ['0deg', '360deg']
-            })
-            : () => animated
+        inputRange,
+        outputRange
       })
     }
     const animated = rulesMap.current.get(key).animated
@@ -116,25 +146,29 @@ export default function useAnimationHooks<T, P>(props) {
       console.error(`React Native 不支持 timingFunction = ${timingFunction}，请重新设置`)
     }
     return Animated.timing(animated, {
-      toValue: isBg(key) ? 1 : value,
+      toValue: isBg(key) ? 1 : +value,
       duration,
       delay,
-      useNativeDriver: true,
+      // Todo 有 width height 动画时不能设置为 true
+      useNativeDriver: !(rulesMap.current.has('width') || rulesMap.current.has('height')),
       ...EasingKey[timingFunction] ? { easing: EasingKey[timingFunction] } : {}
     })
   }
   /** 获取初始值 */
-  const getInitialVal = (key) => {
-    let initialVal
+  const getInitialVal = (key: RuleKey) => {
+    let initialVal: string | number
     if (isTransform(key) && originalStyle.transform?.length) {
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
-        if (item[key] !== undefined) {
-          initialVal = isDeg(key) ? +item[key].replace(/[^0-9]/ig,'') : item[key]
-        }
+        key = key as TransformKey
+        initialVal = item[key] !== undefined
+          ? isDeg(key)
+            ? +(`${item[key]}`.replace(/[^0-9]/ig,''))
+            : item[key]
+          : InitialValue[key]
       })
-      initialVal = initialVal !== undefined ? initialVal : InitialValue[key]
     } else {
+      key = key as NormalKey
       initialVal = originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
     }
     return initialVal
@@ -142,7 +176,7 @@ export default function useAnimationHooks<T, P>(props) {
 
   /** 创建&播放动画 */
   const createAnimation = () => {
-    const animationStyle = {}
+    const animationStyle: ViewStyle = {}
     const steps = actions.map(({ animatedOption, rules, transform }) => {
       // 设置 transformOrigin
       if (animatedOption.transformOrigin) {
@@ -155,8 +189,8 @@ export default function useAnimationHooks<T, P>(props) {
         ...rules.entries(),
         ...transform.entries()
       ].reduce((arr, [key, value]) => {
-        const initialVal = getInitialVal(key)
-        const animation = getParallelsAnimation({ key, value, initialVal }, animatedOption)
+        const fromVal = getInitialVal(key) // fromVal toVal
+        const animation = getParallelsAnimation({ key, value, fromVal }, animatedOption)
         animation && arr.push(animation)
         return arr
       }, [])
@@ -168,6 +202,7 @@ export default function useAnimationHooks<T, P>(props) {
     });
     // 更新id
     idRef.current = animation.id
+
     return animationStyle
   }
   return createAnimation()
