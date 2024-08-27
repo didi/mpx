@@ -49,7 +49,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         if (Array.isArray(value)) {
           value = value.map(val => {
             if (typeof val === 'object') {
-              for (const key in val ) {
+              for (const key in val) {
                 val[key] = formatValue(val[key])
               }
               return val

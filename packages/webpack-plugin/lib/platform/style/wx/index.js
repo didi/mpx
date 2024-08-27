@@ -398,7 +398,7 @@ module.exports = function getSpec ({ warn, error }) {
           {
             // 2 个以上的值处理
             key = key.replace('3d', '')
-            const vals = val.split(',').splice(0,key === 'rotate' ? 4 : 3)
+            const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
             const xyz = ['X', 'Y', 'Z']
             transform.push(...vals.map((v, index) => {
               if (key !== 'rotate' && index > 1) {
