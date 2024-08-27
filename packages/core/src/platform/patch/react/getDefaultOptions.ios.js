@@ -199,7 +199,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   proxy.created()
 
   if (type === 'page') {
-    proxy.callHook(ONLOAD, [props.route.params])
+    proxy.callHook(ONLOAD, [props.route.params || {}])
   }
 
   Object.assign(proxy, {
