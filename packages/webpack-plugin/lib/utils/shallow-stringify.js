@@ -6,7 +6,7 @@ module.exports = function shallowStringify (obj, isTemplateExp) {
     if (hasOwn(obj, key)) {
       let value = obj[key]
       if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
+        value = `[${value.map((item) => typeof item === 'object' ? shallowStringify(item, isTemplateExp) : item).join(',')}]`
       } else if (typeof value === 'object') {
         value = shallowStringify(value, isTemplateExp)
       }

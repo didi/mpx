@@ -362,6 +362,69 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  const formatTransform = ({ prop, value }, { mode }) => {
+    if (Array.isArray(value)) return { prop, value }
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    const transform = []
+    values.forEach(item => {
+      const match = item.match(/([/\w]+)\(([^)]+)\)/)
+      if (match.length >= 3) {
+        let key = match[1]
+        const val = match[2]
+        switch (key) {
+          case 'translateX':
+          case 'translateY':
+          case 'scaleX':
+          case 'scaleY':
+          case 'rotateX':
+          case 'rotateY':
+          case 'rotateZ':
+          case 'rotate':
+          case 'skewX':
+          case 'skewY':
+            // 单个值处理
+            transform.push({ [key]: val })
+            break
+          case 'matrix':
+          case 'matrix3d':
+            transform.push({ [key]: val.split(',').map(val => +val) })
+            break
+          case 'translate':
+          case 'scale':
+          case 'skew':
+          case 'rotate3d': // x y z angle
+          case 'translate3d': // x y 支持 z不支持
+          case 'scale3d': // x y 支持 z不支持
+          {
+            // 2 个以上的值处理
+            key = key.replace('3d', '')
+            const vals = val.split(',').splice(0,key === 'rotate' ? 4 : 3)
+            const xyz = ['X', 'Y', 'Z']
+            transform.push(...vals.map((v, index) => {
+              if (key !== 'rotate' && index > 1) {
+                unsupportedPropError({ prop: `${key}Z`, mode })
+              }
+              return { [`${key}${xyz[index] || ''}`]: v.trim() }
+            }))
+            break
+          }
+          case 'translateZ':
+          case 'scaleZ':
+          default:
+            // 不支持的属性处理
+            unsupportedPropError({ prop: key, mode })
+            break
+        }
+      } else {
+        error(`Property [${prop}] is invalid, please check the value!`)
+      }
+    })
+    return {
+      prop,
+      value: transform
+    }
+  }
+
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
@@ -423,6 +486,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'line-height',
         ios: formatLineHeight,
         android: formatLineHeight
+      },
+      {
+        test: 'transform',
+        ios: formatTransform,
+        android: formatTransform
       },
       // 值类型校验放到最后
       { // color 颜色值校验 color xx-color 等
