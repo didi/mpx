@@ -1052,7 +1052,7 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processStyleReact (el) {
+function processStyleReact (el, options) {
   // process class/wx:class/style/wx:style/wx:show for react native
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
@@ -1088,9 +1088,23 @@ function processStyleReact (el) {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
       name: 'hoverStyle',
-      // runtime helper
       value: `{{this.__getStyle(${staticClassExp})}}`
     }])
+  }
+
+  // 处理externalClasses，将其转换为style作为props传递
+  if (options.externalClasses) {
+    options.externalClasses.forEach((className) => {
+      let externalClass = getAndRemoveAttr(el, className).val || ''
+      externalClass = externalClass.replace(/\s+/g, ' ')
+      if (externalClass) {
+        const externalClassExp = parseMustacheWithContext(externalClass).result
+        addAttrs(el, [{
+          name: className,
+          value: `{{this.__getStyle(${externalClassExp})}}`
+        }])
+      }
+    })
   }
 }
 
@@ -2590,7 +2604,7 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el)
+    processStyleReact(el, options)
     processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)

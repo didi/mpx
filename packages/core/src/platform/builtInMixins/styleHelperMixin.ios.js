@@ -120,9 +120,12 @@ export default function styleHelperMixin (type) {
         }
         if ((staticClass || dynamicClass) && !isEmptyObject(classMap)) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
-          classString.split(' ').forEach((className) => {
+          classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               result.push(classMap[className])
+            } else if (this.props[classMap]) {
+              // externalClasses
+              result.push(this.props[classMap])
             }
           })
         }

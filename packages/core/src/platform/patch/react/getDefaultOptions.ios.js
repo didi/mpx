@@ -185,6 +185,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         return props.id
       },
       enumerable: true
+    },
+    props: {
+      get () {
+        return propsRef.current
+      },
+      enumerable: true
     }
   })
 
