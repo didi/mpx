@@ -96,10 +96,12 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
     return [...rulesMap.current.entries()].reduce((style, [key, value]) => {
       const { animated, inputRange, outputRange } = value
       if (isTransform(key)) {
+        key = key as TransformKey
         const transform = style.transform || originalStyle.transform || []
         transform.push({ [key]: outputRange.length && inputRange.length ? animated.interpolate({ inputRange, outputRange }) : animated })
         style['transform'] = transform
       } else {
+        key = key as NormalKey
         style[key] = outputRange.length && inputRange.length ? animated.interpolate({ inputRange, outputRange }) : animated
       }
       return style
@@ -132,7 +134,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
     }: AnimatedOption
   ) => {
     if (!rulesMap.current.has(key)) {
-      const animated = new Animated.Value(isBg(key) ? 0 : fromVal)
+      const animated = new Animated.Value(isBg(key) ? 0 : +fromVal)
       const inputRange = (isBg(key) ? [0, 1] : isDeg(key) ? [0, 360] : []) as number[]
       const outputRange = (isBg(key) ? [fromVal, value] : isDeg(key) ? ['0deg', '360deg'] : []) as string[]
       rulesMap.current.set(key, {
@@ -141,7 +143,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
         outputRange
       })
     }
-    const animated = rulesMap.current.get(key).animated
+    const animated = rulesMap.current.get(key)!.animated
     if (!EasingKey[timingFunction]) {
       console.error(`React Native 不支持 timingFunction = ${timingFunction}，请重新设置`)
     }
@@ -156,8 +158,8 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   }
   /** 获取初始值 */
   const getInitialVal = (key: RuleKey) => {
-    let initialVal: string | number
-    if (isTransform(key) && originalStyle.transform?.length) {
+    let initialVal
+    if (isTransform(key) && Array.isArray(originalStyle.transform) && originalStyle.transform?.length) {
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
         key = key as TransformKey
@@ -171,7 +173,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
       key = key as NormalKey
       initialVal = originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
     }
-    return initialVal
+    return initialVal as string | number
   }
 
   /** 创建&播放动画 */
@@ -193,8 +195,8 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
         const animation = getParallelsAnimation({ key, value, fromVal }, animatedOption)
         animation && arr.push(animation)
         return arr
-      }, [])
-      return Animated.parallel(parallels || [])
+      }, [] as Animated.CompositeAnimation[])
+      return Animated.parallel(parallels)
     })
     Object.assign(animationStyle, getAnimationStyle())
     Animated.sequence(steps).start(({ finished }) => {
