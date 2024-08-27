@@ -387,13 +387,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       usePageStatus(navigation, route)
 
       useLayoutEffect(() => {
         navigation.setOptions({
+          headerShown: pageConfig.navigationStyle !== 'custom',
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
@@ -402,11 +403,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      const insets = useSafeAreaInsets()
+
       return createElement(Provider,
         null,
         createElement(ReactNative.View,
           {
             style: {
+              paddingTop: insets.top,
+              paddingLeft: insets.left,
               ...ReactNative.StyleSheet.absoluteFillObject,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
