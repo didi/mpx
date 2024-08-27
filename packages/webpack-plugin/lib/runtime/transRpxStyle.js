@@ -5,7 +5,7 @@ module.exports = function (style) {
   }
   const transRpxFn = global.__mpxTransRpxFn || defaultTransRpxFn
   const parsedStyleObj = {}
-  const rpxRegExpG = /\b(\d+(\.\d+)?)rpx\b/g
+  const rpxRegExpG = /\b(-?\d+(\.\d+)?)rpx\b/g
   const parseStyleText = (cssText) => {
     const listDelimiter = /;(?![^(]*\))/g
     const propertyDelimiter = /:(.+)/
