@@ -5,8 +5,14 @@ import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
+import * as ReactNative from 'react-native'
+import { ref } from '../observer/ref'
 
 const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
+
+function getOrientation (window = ReactNative.Dimensions.get('window')) {
+  return window.width > window.height ? 'landscape' : 'portrait'
+}
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -34,7 +40,7 @@ function createAppInstance (appData) {
 export default function createApp (option, config = {}) {
   const appData = {}
 
-  const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator } = global.__navigationHelper
+  const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
@@ -68,6 +74,14 @@ export default function createApp (option, config = {}) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
+
+  global.__mpxAppCbs = global.__mpxAppCbs || {
+    show: [],
+    hide: [],
+    error: []
+  }
+
+  global.__mpxAppFocusedState = ref('show')
   global.__mpxOptionsMap[currentInject.moduleId] = memo(() => {
     const instanceRef = useRef(null)
     if (!instanceRef.current) {
@@ -85,18 +99,59 @@ export default function createApp (option, config = {}) {
       }
       global.__mpxEnterOptions = options
       defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, options)
+      if (defaultOptions.onShow) {
+        defaultOptions.onShow.call(instance, options)
+        global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(instance))
+      }
+      if (defaultOptions.onHide) {
+        global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(instance))
+      }
+      if (defaultOptions.onError) {
+        global.__mpxAppCbs.error.push(defaultOptions.onError.bind(instance))
+      }
+
+      const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
+        if (currentState === 'active') {
+          global.__mpxAppCbs.show.forEach((cb) => {
+            cb(options)
+            global.__mpxAppFocusedState.value = 'show'
+          })
+        } else if (currentState === 'background') {
+          global.__mpxAppCbs.hide.forEach((cb) => {
+            cb()
+            global.__mpxAppFocusedState.value = 'hide'
+          })
+        }
+      })
+
+      let count = 0
+      let lastOrientation = getOrientation()
+      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
+        const orientation = getOrientation(window)
+        if (orientation === lastOrientation) return
+        lastOrientation = orientation
+        global.__mpxAppFocusedState.value = `resize${count++}`
+      })
+      return () => {
+        changeSubscription()
+        resizeSubScription && resizeSubScription.remove()
+      }
     }, [])
-    return createElement(NavigationContainer,
-      {
-        ref: navigationRef,
-        onStateChange,
-        onUnhandledAction
-      },
-      createElement(Stack.Navigator,
+
+    return createElement(SafeAreaProvider,
+      null,
+      createElement(NavigationContainer,
         {
-          initialRouteName: firstPage
+          ref: navigationRef,
+          onStateChange,
+          onUnhandledAction
         },
-        ...pageScreens
+        createElement(Stack.Navigator,
+          {
+            initialRouteName: firstPage
+          },
+          ...pageScreens
+        )
       )
     )
   })
