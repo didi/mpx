@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
-import { reactive, set } from '../../../observer/reactive'
+import { reactive, set, del } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
@@ -278,7 +278,11 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageContext (mpxProxy, instance) {
-  const { routeName, pageId } = useContext(routeContext) || {}
+  const { pageId } = useContext(routeContext) || {}
+
+  instance.getPageId = () => {
+    return pageId
+  }
 
   useEffect(() => {
     let unWatch
@@ -286,8 +290,8 @@ function usePageContext (mpxProxy, instance) {
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
     if (hasShowHook || hasHideHook || hasResizeHook) {
-      if (hasOwn(pageStatusContext, routeName)) {
-        unWatch = watch(() => pageStatusContext[routeName], (newVal) => {
+      if (hasOwn(pageStatusContext, pageId)) {
+        unWatch = watch(() => pageStatusContext[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
           } else if (/^resize/.test(newVal)) {
@@ -301,34 +305,26 @@ function usePageContext (mpxProxy, instance) {
       unWatch && unWatch()
     }
   }, [])
-  instance.getPageId = () => {
-    return pageId
-  }
 }
 
 const pageStatusContext = reactive({})
 let pageId = 0
-function setPageStatus (routeName, val) {
-  set(pageStatusContext, routeName, val)
-}
 
-function usePageStatus (navigation, route) {
+function usePageStatus (navigation, pageId) {
   let isFocused = true
-  setPageStatus(route.name, '')
+  set(pageStatusContext, pageId, '')
   useEffect(() => {
-    setPageStatus(route.name, 'show')
     const focusSubscription = navigation.addListener('focus', () => {
-      setPageStatus(route.name, 'show')
+      pageStatusContext[pageId] = 'show'
       isFocused = true
     })
     const blurSubscription = navigation.addListener('blur', () => {
-      setPageStatus(route.name, 'hide')
+      pageStatusContext[pageId] = 'hide'
       isFocused = false
     })
-
     const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
       if (isFocused) {
-        setPageStatus(route.name, value)
+        pageStatusContext[pageId] = value
       }
     })
 
@@ -336,6 +332,7 @@ function usePageStatus (navigation, route) {
       focusSubscription()
       blurSubscription()
       unWatchAppFocusedState()
+      del(pageStatusContext, pageId)
     }
   }, [navigation])
 }
@@ -400,7 +397,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider, useSafeAreaInsets } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      usePageStatus(navigation, route)
+      const currentPageId = useMemo(() => ++pageId, [])
+      usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
         navigation.setOptions({
@@ -431,7 +429,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           },
           createElement(routeContext.Provider,
             {
-              value: { routeName: route.name, pageId: ++pageId }
+              value: { pageId: currentPageId }
             },
             createElement(defaultOptions,
               {

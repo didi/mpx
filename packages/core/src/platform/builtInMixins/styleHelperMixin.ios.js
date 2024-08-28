@@ -110,6 +110,7 @@ export default function styleHelperMixin (type) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
+        // todo 每次返回新对象会导致react memo优化失效，需要考虑优化手段
         const result = []
         const classMap = {}
         if (type === 'page' && isFunction(global.__getAppClassMap)) {
