@@ -277,8 +277,8 @@ const triggerResizeEvent = (mpxProxy) => {
   }
 }
 
-function usePageContext (mpxProxy) {
-  const { routeName } = useContext(routeContext) || {}
+function usePageContext (mpxProxy, instance) {
+  const { routeName, pageId } = useContext(routeContext) || {}
 
   useEffect(() => {
     let unWatch
@@ -301,9 +301,13 @@ function usePageContext (mpxProxy) {
       unWatch && unWatch()
     }
   }, [])
+  instance.getPageId = () => {
+    return pageId
+  }
 }
 
 const pageStatusContext = reactive({})
+let pageId = 0
 function setPageStatus (routeName, val) {
   set(pageStatusContext, routeName, val)
 }
@@ -368,7 +372,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.propsUpdated()
     }
 
-    usePageContext(proxy)
+    usePageContext(proxy, instance)
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
@@ -427,7 +431,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           },
           createElement(routeContext.Provider,
             {
-              value: { routeName: route.name }
+              value: { routeName: route.name, pageId: ++pageId }
             },
             createElement(defaultOptions,
               {
