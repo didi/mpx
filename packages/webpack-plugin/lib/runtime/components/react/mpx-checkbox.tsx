@@ -32,7 +32,7 @@ import { every, extractTextStyle, isText } from './utils'
 import { CheckboxGroupContext } from './context'
 
 interface Selection {
-  value: string
+  value?: string
   checked?: boolean
 }
 
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
 const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
   (props, ref): JSX.Element => {
     const {
-      value,
+      value = '',
       disabled = false,
       checked = false,
       color = '#09BB07',
