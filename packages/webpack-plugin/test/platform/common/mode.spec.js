@@ -139,10 +139,10 @@ describe('template should transform correct', function () {
 
   it('should work correct when multi mode or env', function () {
     const input1 = '<button @wx:didi|ali:didi>获取用户信息</button>'
-    const output1 = compileTemplate(input1, {env: 'didi', mode: 'ali'})
+    const output1 = compileTemplate(input1, { env: 'didi', mode: 'ali' })
     expect(output1).toBe('<button>获取用户信息</button>')
     const input2 = '<button @ali:didi|wx:didi></button>'
-    const output2 = compileTemplate(input2, {env: 'didi', mode: 'ali'})
+    const output2 = compileTemplate(input2, { env: 'didi', mode: 'ali' })
     expect(output2).toBe('<button>获取用户信息</button>')
   })
 
