@@ -153,17 +153,21 @@ module.exports = function getSpec ({ warn, error }) {
     const cssMap = []
     const props = Object.getOwnPropertyNames(keyMap)
     let idx = 0
+    let propsIdx = 0
     // 按值的个数循环赋值
-    while (idx < values.length && idx < props.length) {
-      const prop = props[idx]
+    while (idx < values.length || propsIdx < props.length) {
+      const prop = props[propsIdx]
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
-      // 校验 value 类型
-      verifyValues({ prop, value: values[idx], valueType })
       const value = values[idx]
       if (isIllegalValue({ prop: dashProp, value })) {
-        // 过滤不支持 value
+        // 过滤 rn prop 不支持 value
         unsupportedValueError({ prop: dashProp, value })
+        idx += 1
+        propsIdx += 1
+      } else if (!verifyValues({ prop, value, valueType })) {
+        // 校验 value 类型，类型不符则匹配下一个value
+        idx += 1
       } else if (prop.includes('.')) {
         // 多个属性值的prop
         const [main, sub] = prop.split('.')
@@ -178,14 +182,17 @@ module.exports = function getSpec ({ warn, error }) {
             }
           })
         }
+        idx += 1
+        propsIdx += 1
       } else {
         // 单个值的属性
         cssMap.push({
           prop,
           value
         })
+        idx += 1
+        propsIdx += 1
       }
-      idx += 1
     }
     return cssMap
   }
@@ -355,6 +362,69 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  const formatTransform = ({ prop, value }, { mode }) => {
+    if (Array.isArray(value)) return { prop, value }
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    const transform = []
+    values.forEach(item => {
+      const match = item.match(/([/\w]+)\(([^)]+)\)/)
+      if (match.length >= 3) {
+        let key = match[1]
+        const val = match[2]
+        switch (key) {
+          case 'translateX':
+          case 'translateY':
+          case 'scaleX':
+          case 'scaleY':
+          case 'rotateX':
+          case 'rotateY':
+          case 'rotateZ':
+          case 'rotate':
+          case 'skewX':
+          case 'skewY':
+            // 单个值处理
+            transform.push({ [key]: val })
+            break
+          case 'matrix':
+          case 'matrix3d':
+            transform.push({ [key]: val.split(',').map(val => +val) })
+            break
+          case 'translate':
+          case 'scale':
+          case 'skew':
+          case 'rotate3d': // x y z angle
+          case 'translate3d': // x y 支持 z不支持
+          case 'scale3d': // x y 支持 z不支持
+          {
+            // 2 个以上的值处理
+            key = key.replace('3d', '')
+            const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
+            const xyz = ['X', 'Y', 'Z']
+            transform.push(...vals.map((v, index) => {
+              if (key !== 'rotate' && index > 1) {
+                unsupportedPropError({ prop: `${key}Z`, mode })
+              }
+              return { [`${key}${xyz[index] || ''}`]: v.trim() }
+            }))
+            break
+          }
+          case 'translateZ':
+          case 'scaleZ':
+          default:
+            // 不支持的属性处理
+            unsupportedPropError({ prop: key, mode })
+            break
+        }
+      } else {
+        error(`Property [${prop}] is invalid, please check the value!`)
+      }
+    })
+    return {
+      prop,
+      value: transform
+    }
+  }
+
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
@@ -416,6 +486,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'line-height',
         ios: formatLineHeight,
         android: formatLineHeight
+      },
+      {
+        test: 'transform',
+        ios: formatTransform,
+        android: formatTransform
       },
       // 值类型校验放到最后
       { // color 颜色值校验 color xx-color 等
