@@ -2528,7 +2528,7 @@ function processAtMode (el) {
             const matchStatus = (isNoMode || isImplicitMode) ? 'implicitMatch' : 'match'
             setELModeStatus(el, matchStatus)
           } else {
-            let isAttrNeedTrans = (isNoMode || isImplicitMode) ? true : false
+            let isAttrNeedTrans = isNoMode || isImplicitMode
             // mpxTagName 特殊标签，需要做转换保留处理
             if (replacedAttrName === 'mpxTagName') isAttrNeedTrans = true
             processAttrTrans(el, isAttrNeedTrans)
