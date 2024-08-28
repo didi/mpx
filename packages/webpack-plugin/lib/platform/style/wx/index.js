@@ -60,7 +60,7 @@ module.exports = function getSpec ({ warn, error }) {
     default: 'default' // 不校验
   }
   // number 类型支持的单位(包含auto)
-  const numberRegExp = /^\s*((\d+(\.\d+)?)(rpx|px|%)?)|(auto)\s*$/
+  const numberRegExp = /^\s*((-?\d+(\.\d+)?)(rpx|px|%)?)|(auto)\s*$/
   // RN 不支持的颜色格式
   const colorRegExp = /^\s*(lab|lch|oklab|oklch|color-mix|color|hwb|lch|light-dark).*$/
 
@@ -101,6 +101,26 @@ module.exports = function getSpec ({ warn, error }) {
       borderStyle: ValueType.default,
       borderColor: ValueType.color
     },
+    'border-left': { // 仅支持 width | style | color 这种排序
+      borderLeftWidth: ValueType.number,
+      borderLeftStyle: ValueType.default,
+      borderLeftColor: ValueType.color
+    },
+    'border-right': { // 仅支持 width | style | color 这种排序
+      borderRightWidth: ValueType.number,
+      borderRightStyle: ValueType.default,
+      borderRightColor: ValueType.color
+    },
+    'border-top': { // 仅支持 width | style | color 这种排序
+      borderTopWidth: ValueType.number,
+      borderTopStyle: ValueType.default,
+      borderTopColor: ValueType.color
+    },
+    'border-bottom': { // 仅支持 width | style | color 这种排序
+      borderBottomWidth: ValueType.number,
+      borderBottomStyle: ValueType.default,
+      borderBottomColor: ValueType.color
+    },
     'box-shadow': { // 仅支持 offset-x | offset-y | blur-radius | color 排序
       'shadowOffset.width': ValueType.number,
       'shadowOffset.height': ValueType.number,
@@ -133,17 +153,21 @@ module.exports = function getSpec ({ warn, error }) {
     const cssMap = []
     const props = Object.getOwnPropertyNames(keyMap)
     let idx = 0
+    let propsIdx = 0
     // 按值的个数循环赋值
-    while (idx < values.length && idx < props.length) {
-      const prop = props[idx]
+    while (idx < values.length || propsIdx < props.length) {
+      const prop = props[propsIdx]
       const valueType = keyMap[prop]
       const dashProp = hump2dash(prop)
-      // 校验 value 类型
-      verifyValues({ prop, value: values[idx], valueType })
       const value = values[idx]
       if (isIllegalValue({ prop: dashProp, value })) {
-        // 过滤不支持 value
+        // 过滤 rn prop 不支持 value
         unsupportedValueError({ prop: dashProp, value })
+        idx += 1
+        propsIdx += 1
+      } else if (!verifyValues({ prop, value, valueType })) {
+        // 校验 value 类型，类型不符则匹配下一个value
+        idx += 1
       } else if (prop.includes('.')) {
         // 多个属性值的prop
         const [main, sub] = prop.split('.')
@@ -158,14 +182,17 @@ module.exports = function getSpec ({ warn, error }) {
             }
           })
         }
+        idx += 1
+        propsIdx += 1
       } else {
         // 单个值的属性
         cssMap.push({
           prop,
           value
         })
+        idx += 1
+        propsIdx += 1
       }
-      idx += 1
     }
     return cssMap
   }
@@ -220,7 +247,7 @@ module.exports = function getSpec ({ warn, error }) {
 
     return {
       prop,
-      value: /\d+(\.\d+)?$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: /^\s*-?\d+(\.\d+)?\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
     }
   }
 
@@ -335,11 +362,74 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  const formatTransform = ({ prop, value }, { mode }) => {
+    if (Array.isArray(value)) return { prop, value }
+    const values = value.trim().split(/\s(?![^()]*\))/)
+    const transform = []
+    values.forEach(item => {
+      const match = item.match(/([/\w]+)\(([^)]+)\)/)
+      if (match.length >= 3) {
+        let key = match[1]
+        const val = match[2]
+        switch (key) {
+          case 'translateX':
+          case 'translateY':
+          case 'scaleX':
+          case 'scaleY':
+          case 'rotateX':
+          case 'rotateY':
+          case 'rotateZ':
+          case 'rotate':
+          case 'skewX':
+          case 'skewY':
+            // 单个值处理
+            transform.push({ [key]: val })
+            break
+          case 'matrix':
+          case 'matrix3d':
+            transform.push({ [key]: val.split(',').map(val => +val) })
+            break
+          case 'translate':
+          case 'scale':
+          case 'skew':
+          case 'rotate3d': // x y z angle
+          case 'translate3d': // x y 支持 z不支持
+          case 'scale3d': // x y 支持 z不支持
+          {
+            // 2 个以上的值处理
+            key = key.replace('3d', '')
+            const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
+            const xyz = ['X', 'Y', 'Z']
+            transform.push(...vals.map((v, index) => {
+              if (key !== 'rotate' && index > 1) {
+                unsupportedPropError({ prop: `${key}Z`, mode })
+              }
+              return { [`${key}${xyz[index] || ''}`]: v.trim() }
+            }))
+            break
+          }
+          case 'translateZ':
+          case 'scaleZ':
+          default:
+            // 不支持的属性处理
+            unsupportedPropError({ prop: key, mode })
+            break
+        }
+      } else {
+        error(`Property [${prop}] is invalid, please check the value!`)
+      }
+    })
+    return {
+      prop,
+      value: transform
+    }
+  }
+
   const spec = {
     supportedModes: ['ios', 'android'],
     rules: [
       { // 背景相关属性的处理
-        test: /.*background*./,
+        test: /^(background|background-image|background-color|background-size|background-repeat|background-position)$/,
         ios: checkBackgroundImage,
         android: checkBackgroundImage
       },
@@ -372,7 +462,7 @@ module.exports = function getSpec ({ warn, error }) {
         android: getAbbreviationAndroid
       },
       {
-        test: /.*font-variant.*/,
+        test: /^(font-variant|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures)$/,
         ios: getFontVariant,
         android: getFontVariant
       },
@@ -382,7 +472,7 @@ module.exports = function getSpec ({ warn, error }) {
         android: getBorderRadius
       },
       { // margin padding 内外边距的处理
-        test: /.*(margin|padding).*/,
+        test: /^(margin|padding)$/,
         ios: formatMargins,
         android: formatMargins
       },
@@ -397,14 +487,19 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatLineHeight,
         android: formatLineHeight
       },
+      {
+        test: 'transform',
+        ios: formatTransform,
+        android: formatTransform
+      },
       // 值类型校验放到最后
-      { // color 颜色值校验
-        test: /.*color.*/i,
+      { // color 颜色值校验 color xx-color 等
+        test: /^(color|(.+-color))$/,
         ios: checkCommonValue(ValueType.color),
         android: checkCommonValue(ValueType.color)
       },
-      { // number 值校验
-        test: /.*width|height|left|right|top|bottom|radius|margin|padding|spacing|offset|size.*/i,
+      { // number 值校验 // width height xx-left xx-top 等
+        test: /^((width|height)|(.+-(left|right|top|bottom|radius|spacing|size)))$/,
         ios: checkCommonValue(ValueType.number),
         android: checkCommonValue(ValueType.number)
       }

@@ -185,6 +185,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         return props.id
       },
       enumerable: true
+    },
+    props: {
+      get () {
+        return propsRef.current
+      },
+      enumerable: true
     }
   })
 
@@ -199,7 +205,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   proxy.created()
 
   if (type === 'page') {
-    proxy.callHook(ONLOAD, [props.route.params])
+    proxy.callHook(ONLOAD, [props.route.params || {}])
   }
 
   Object.assign(proxy, {
@@ -271,8 +277,8 @@ const triggerResizeEvent = (mpxProxy) => {
   }
 }
 
-function usePageContext (mpxProxy) {
-  const { routeName } = useContext(routeContext) || {}
+function usePageContext (mpxProxy, instance) {
+  const { routeName, pageId } = useContext(routeContext) || {}
 
   useEffect(() => {
     let unWatch
@@ -295,9 +301,13 @@ function usePageContext (mpxProxy) {
       unWatch && unWatch()
     }
   }, [])
+  instance.getPageId = () => {
+    return pageId
+  }
 }
 
 const pageStatusContext = reactive({})
+let pageId = 0
 function setPageStatus (routeName, val) {
   set(pageStatusContext, routeName, val)
 }
@@ -362,7 +372,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.propsUpdated()
     }
 
-    usePageContext(proxy)
+    usePageContext(proxy, instance)
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
@@ -387,13 +397,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       usePageStatus(navigation, route)
 
       useLayoutEffect(() => {
         navigation.setOptions({
+          headerShown: pageConfig.navigationStyle !== 'custom',
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
@@ -402,18 +413,25 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      const insets = useSafeAreaInsets()
+      const safeAreaPadding = {
+        paddingTop: insets.top,
+        paddingLeft: insets.left
+      }
+
       return createElement(Provider,
         null,
         createElement(ReactNative.View,
           {
             style: {
+              ...pageConfig.navigationStyle === 'custom' && safeAreaPadding,
               ...ReactNative.StyleSheet.absoluteFillObject,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
           },
           createElement(routeContext.Provider,
             {
-              value: { routeName: route.name }
+              value: { routeName: route.name, pageId: ++pageId }
             },
             createElement(defaultOptions,
               {
