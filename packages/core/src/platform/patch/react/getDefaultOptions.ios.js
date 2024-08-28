@@ -404,14 +404,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const insets = useSafeAreaInsets()
+      const safeAreaPadding = {
+        paddingTop: insets.top,
+        paddingLeft: insets.left
+      }
 
       return createElement(Provider,
         null,
         createElement(ReactNative.View,
           {
             style: {
-              paddingTop: insets.top,
-              paddingLeft: insets.left,
+              ...pageConfig.navigationStyle === 'custom' && safeAreaPadding,
               ...ReactNative.StyleSheet.absoluteFillObject,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
