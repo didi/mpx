@@ -7,8 +7,7 @@ type NormalKey = 'opacity' | 'backgroundColor' | 'width' | 'height' | 'top' | 'r
 type RuleKey = TransformKey | NormalKey
 type RulesMap = Map<RuleKey, {
   animated: Animated.Value,
-  inputRange: number[]
-  outputRange: string[]
+  animatedStyle: Animated.AnimatedInterpolation<number>
 }>
 type AnimatedOption = {
   duration: number
@@ -94,15 +93,15 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   /** 根据 ruleMap 获取对应的 animation style   */
   const getAnimationStyle = () => {
     return [...rulesMap.current.entries()].reduce((style, [key, value]) => {
-      const { animated, inputRange, outputRange } = value
+      const { animatedStyle } = value
       if (isTransform(key)) {
         key = key as TransformKey
         const transform = style.transform || originalStyle.transform || []
-        transform.push({ [key]: outputRange.length && inputRange.length ? animated.interpolate({ inputRange, outputRange }) : animated })
+        transform.push({ [key]: animatedStyle })
         style['transform'] = transform
       } else {
         key = key as NormalKey
-        style[key] = outputRange.length && inputRange.length ? animated.interpolate({ inputRange, outputRange }) : animated
+        style[key] = animatedStyle
       }
       return style
     }, {} as ViewStyle)
@@ -135,12 +134,21 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   ) => {
     if (!rulesMap.current.has(key)) {
       const animated = new Animated.Value(isBg(key) ? 0 : +fromVal)
-      const inputRange = (isBg(key) ? [0, 1] : isDeg(key) ? [0, 360] : []) as number[]
-      const outputRange = (isBg(key) ? [fromVal, value] : isDeg(key) ? ['0deg', '360deg'] : []) as string[]
       rulesMap.current.set(key, {
         animated,
-        inputRange,
-        outputRange
+        animatedStyle: isBg(key)
+          // 背景色映射
+          ? animated.interpolate({
+            inputRange: [0, 1],
+            outputRange: ([fromVal, value]) as string[]
+          })
+          : isDeg(key)
+            // deg 角度值映射
+            ? animated.interpolate({
+              inputRange: [0, 360],
+              outputRange: ['0deg', '360deg']
+            })
+            : animated
       })
     }
     const animated = rulesMap.current.get(key)!.animated
