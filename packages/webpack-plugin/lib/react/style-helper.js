@@ -47,7 +47,16 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         prop = dash2hump(item.prop)
         value = item.value
         if (Array.isArray(value)) {
-          value = value.map(item => formatValue(item))
+          value = value.map(val => {
+            if (typeof val === 'object') {
+              for (const key in val) {
+                val[key] = formatValue(val[key])
+              }
+              return val
+            } else {
+              return formatValue(val)
+            }
+          })
         } else if (typeof value === 'object') {
           for (const key in value) {
             value[key] = formatValue(value[key])

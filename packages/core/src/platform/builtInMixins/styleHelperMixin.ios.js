@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, isFunction, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction } from '@mpxjs/utils'
 import { Dimensions } from 'react-native'
 
 function concat (a, b) {
@@ -118,11 +118,14 @@ export default function styleHelperMixin (type) {
         if (isFunction(this.__getClassMap)) {
           Object.assign(classMap, this.__getClassMap())
         }
-        if ((staticClass || dynamicClass) && !isEmptyObject(classMap)) {
+        if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
-          classString.split(' ').forEach((className) => {
+          classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               result.push(classMap[className])
+            } else if (this.props[className]) {
+              // externalClasses必定以数组形式传递下来
+              result.push(...this.props[className])
             }
           })
         }
