@@ -1,14 +1,15 @@
-import { CREATED } from '../../core/innerLifecycle'
+import { BEFORECREATE, CREATED } from '../../core/innerLifecycle'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
 import { computed } from '../../observer/computed'
 
 export default function getRefsMixin () {
   return {
-    // 强依赖 CREATED 生命周期，确保响应式数据初始化完成
-    [CREATED] () {
+    [BEFORECREATE] () {
       this.__refs = {}
       this.$refs = {}
-      this.__selectorMap = null
+    },
+    // __getRefs强依赖数据响应，需要在CREATED中执行
+    [CREATED] () {
       this.__getRefs()
     },
     methods: {
@@ -64,7 +65,7 @@ export default function getRefsMixin () {
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?\w+/g) || []
         const refsArr = splitedSelector.map(selector => {
-          const selectorMap = this.__selectorMap.value[selector] || []
+          const selectorMap = this.__selectorMap?.value[selector] || []
           const res = []
           selectorMap.forEach(({ type, key }) => {
             if (type === refType) {
