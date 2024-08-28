@@ -2446,6 +2446,22 @@ function processAtMode (el) {
   // if (el.parent && el.parent._atModeStatus) {
   //   el._atModeStatus = el.parent._atModeStatus
   // }
+  // mpxTagName 逻辑整体放在processAtMode 方法中
+  /**
+   * @param el
+   * @param status = 'match' | 'misMatch' | 'implicitMatch'
+   */
+  function setELModeStatus (el, status, replacedAttrName) {
+    // match: mode 与 env 都匹配，节点/属性保留，但不做跨平台转换
+    // implicitMatch: mode 与 env 匹配，节点/属性保留，属于隐式匹配，做跨平台转换
+    // misMatch: mode 或 env不匹配，节点/属性直接删除
+
+    // 如果是attr属性，则不设置modeStatus
+    if (replacedAttrName) return
+    // 如果已匹配，不再二次设置modeStatus
+    if (el._atModeStatus === 'match' || el._atModeStatus === 'implicitMatch') return
+    el._atModeStatus = status
+  }
 
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
@@ -2480,43 +2496,48 @@ function processAtMode (el) {
     const modeArr = [...conditionMap.keys()]
 
     if (modeArr.every(i => isValidModeP(i))) {
+      // 外层大循环重置 modeStatus
+      el._atModeStatus = ''
       const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
       const processedAttr = { name: replacedAttrName, value: attrValue }
-
+      const processAttrTrans = (el, needTrans) => {
+        if (needTrans) {
+          addAttrs(el, [processedAttr])
+        } else {
+          // 如果命中了指定的mode，且当前 mode 不为 noMode 或 implicitMode，则把不需要转换的 attrs 暂存在 noTransAttrs 上，等规则转换后再挂载回去
+          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+        }
+      }
+      // 循环 conditionMap
+      // 判断 env 是否匹配
+      // 判断 mode 是否匹配
+      // 额外处理attr value 场景
       for (let [defineMode, defineEnvArr] of conditionMap.entries()) {
         const isImplicitMode = defineMode[0] === '_'
         if (isImplicitMode) defineMode = defineMode.slice(1)
-        if (defineMode === 'noMode' || defineMode === mode) {
-          // 命中 env 规则(没有定义env 或者定义的envArr包含当前env)
-          if (!defineEnvArr.length || defineEnvArr.includes(env)) {
-            if (!replacedAttrName) {
-              if (defineMode === 'noMode' || isImplicitMode) {
-                // 若defineMode 为 noMode 或 implicitMode，则 element 都需要进行规则转换
-              } else {
-                el._atModeStatus = 'match'
-              }
-            } else {
-              if (defineMode === 'noMode' || isImplicitMode) {
-                // 若defineMode 为 noMode 或 implicitMode，则直接将 attr 挂载回 el，进行规则转换
-                addAttrs(el, [processedAttr])
-              } else {
-                // 如果命中了指定的mode，且当前 mode 不为 noMode 或 implicitMode，则把不需要转换的 attrs 暂存在 noTransAttrs 上，等规则转换后再挂载回去
-                el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
-              }
-            }
-            // 命中mode，命中env，完成匹配，直接退出
-            break
-          } else if (!replacedAttrName) {
-            // 命中mode规则，没有命中当前env规则，设置为 'mismatch'
-            el._atModeStatus = 'mismatch'
+
+        const isNoMode = defineMode === 'noMode'
+        const isMatchMode = isNoMode || defineMode === mode
+        const isMatchEnv = !defineEnvArr.length || defineEnvArr.includes(env)
+        // 是否为针对于节点的条件判断，否为节点属性
+        const isElAddition = !replacedAttrName
+
+        if (isMatchMode && isMatchEnv) {
+          if (isElAddition) {
+            const matchStatus = (isNoMode || isImplicitMode) ? 'implicitMatch' : 'match'
+            setELModeStatus(el, matchStatus)
+          } else {
+            let isAttrNeedTrans = (isNoMode || isImplicitMode) ? true : false
+            // mpxTagName 特殊标签，需要做转换保留处理
+            if (replacedAttrName === 'mpxTagName') isAttrNeedTrans = true
+            processAttrTrans(el, isAttrNeedTrans)
           }
-        } else if (!replacedAttrName) {
-          // 没有命中当前mode规则，设置为 'mismatch'
-          el._atModeStatus = 'mismatch'
-        } else {
-          // 如果没命中指定的mode，则该属性删除
+          // 命中mode，命中env，完成匹配，直接退出
+          break
         }
+        // mode 或 env 无匹配
+        setELModeStatus(el, 'mismatch', replacedAttrName)
       }
     }
   })
@@ -2568,6 +2589,8 @@ function processElement (el, root, options, meta) {
     return
   }
 
+  processMpxTagName(el)
+
   if (runtimeCompile && options.dynamicTemplateRuleRunner) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
@@ -2580,8 +2603,6 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
-
-  processMpxTagName(el)
 
   processInjectWxs(el, meta, options)
 
