@@ -2496,8 +2496,6 @@ function processAtMode (el) {
     const modeArr = [...conditionMap.keys()]
 
     if (modeArr.every(i => isValidModeP(i))) {
-      // 外层大循环重置 modeStatus
-      el._atModeStatus = ''
       const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
       const processedAttr = { name: replacedAttrName, value: attrValue }
