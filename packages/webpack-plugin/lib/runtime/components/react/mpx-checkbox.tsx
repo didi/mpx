@@ -42,7 +42,7 @@ export interface CheckboxProps extends Selection {
   style?: StyleProp<ViewStyle>
   groupValue?: Array<string>
   'enable-offset'?: boolean
-  children: ReactNode
+  children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }

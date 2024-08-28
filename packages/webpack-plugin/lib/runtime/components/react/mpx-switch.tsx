@@ -51,7 +51,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       setIsChecked(evt as boolean)
       changeHandler && changeHandler(getCustomEvent('change', {}, { layoutRef, detail: {value: evt} }, props))
     } else {
-      setIsChecked(checked)
+      setIsChecked(checked as boolean)
       changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: {value: checked} }, props))
     }
   }

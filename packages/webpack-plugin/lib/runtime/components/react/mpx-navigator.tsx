@@ -10,6 +10,7 @@
 import { View } from 'react-native'
 import { useCallback, forwardRef, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
+import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 
 import MpxView, { _ViewProps }  from './mpx-view'
 
@@ -30,19 +31,19 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
   const handleClick = useCallback(() => {
     switch (openType) {
       case 'navigateBack':
-        // navigateBack({ delta })
+        navigateBack({ delta })
         break
       case 'redirect':
-        // redirectTo({ url })
+        redirectTo({ url })
         break
       case 'switchTab':
-        // switchTab({ url })
+        switchTab({ url })
         break
       case 'reLaunch':
-        // reLaunch({ url })
+        reLaunch({ url })
         break
       default:
-        // navigateTo({ url })
+        navigateTo({ url })
         break
     }
   }, [openType, url, delta])
