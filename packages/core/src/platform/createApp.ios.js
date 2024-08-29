@@ -114,13 +114,13 @@ export default function createApp (option, config = {}) {
         if (currentState === 'active') {
           global.__mpxAppCbs.show.forEach((cb) => {
             cb(options)
-            global.__mpxAppFocusedState.value = 'show'
           })
-        } else if (currentState === 'background') {
+          global.__mpxAppFocusedState.value = 'show'
+        } else if (currentState === 'inactive') {
           global.__mpxAppCbs.hide.forEach((cb) => {
             cb()
-            global.__mpxAppFocusedState.value = 'hide'
           })
+          global.__mpxAppFocusedState.value = 'hide'
         }
       })
 
