@@ -6,11 +6,7 @@ import {
   useRef,
   forwardRef,
   ReactNode,
-  Children,
-  cloneElement,
-  FunctionComponent,
-  isValidElement,
-  useState
+  useContext
 } from 'react'
 import {
   View,
@@ -19,15 +15,16 @@ import {
   ViewStyle,
   StyleSheet
 } from 'react-native'
+import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
 export interface radioGroupProps {
+  name: string
   style?: StyleProp<ViewStyle>
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  _setGroupData?: (value: string) => void
 }
 
 const radioGroup = forwardRef<
@@ -39,12 +36,19 @@ const radioGroup = forwardRef<
     'enable-offset': enableOffset,
     children,
     bindchange,
-    _setGroupData
   } = props
 
   const layoutRef = useRef({})
 
-  const [checkedValue, setCheckedValue] = useState<string>()
+  const formContext = useContext(FormContext)
+
+  let formValuesMap: Map<string, FormFieldValue> | undefined;
+
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
+  }
+
+  const groupValue: GroupValue = useRef({}).current
 
   const defaultStyle = {
     flexDirection: 'row',
@@ -71,9 +75,36 @@ const radioGroup = forwardRef<
     )
   }
 
-  const onChange = (evt: NativeSyntheticEvent<TouchEvent>, value: string) => {
-    setCheckedValue(value)
+  const getSelectionValue = (): string | undefined => {
+    for (let key in groupValue) {
+      if (groupValue[key].checked) {
+        return key
+      }
+    }
+  }
 
+  const getValue = () => {
+    return getSelectionValue()
+  }
+
+  const resetValue = () => {
+    Object.keys(groupValue).forEach((key) => {
+      groupValue[key].checked = false
+      groupValue[key].setValue(false)
+    })
+  }
+
+  if (formValuesMap) {
+    if (!props.name) {
+      console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
+    }
+  }
+
+  const notifyChange = (
+    evt: NativeSyntheticEvent<TouchEvent>
+  ) => {
     bindchange &&
       bindchange(
         getCustomEvent(
@@ -82,36 +113,12 @@ const radioGroup = forwardRef<
           {
             layoutRef,
             detail: {
-              value
+              value: getSelectionValue()
             }
           },
           props
         )
       )
-  }
-
-  const wrapChildren = (children: ReactNode): ReactNode[] => {
-    return Children.toArray(children).map((child) => {
-      if (!isValidElement(child)) return child
-
-      const displayName = (child.type as FunctionComponent)?.displayName
-
-      if (displayName === 'mpx-radio') {
-        const { value, checked } = child.props
-
-        if (!checkedValue && checked && _setGroupData) {
-          _setGroupData(value)
-        }
-
-        return cloneElement(child, {
-          ...child.props,
-          checked: checkedValue ? checkedValue === value : !!checked,
-          _onChange: onChange
-        })
-      } else {
-        return cloneElement(child, {}, wrapChildren(child.props.children))
-      }
-    })
   }
 
   const innerProps = useInnerProps(
@@ -127,7 +134,13 @@ const radioGroup = forwardRef<
     }
   )
 
-  return <View {...innerProps}>{wrapChildren(children)}</View>
+  return (
+    <View {...innerProps}>
+      <RadioGroupContext.Provider value={{ groupValue, notifyChange }}>
+        {children}
+      </RadioGroupContext.Provider>
+    </View>
+  )
 })
 
 radioGroup.displayName = 'mpx-radio-group'

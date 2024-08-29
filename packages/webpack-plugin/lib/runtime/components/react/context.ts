@@ -5,7 +5,7 @@ export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
 }
 
-export interface CheckboxGroupContextValue {
+export interface GroupContextValue {
   groupValue: GroupValue
   notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }
@@ -26,4 +26,6 @@ export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
 
-export const CheckboxGroupContext = createContext<CheckboxGroupContextValue | null>(null)
+export const CheckboxGroupContext = createContext<GroupContextValue | null>(null)
+
+export const RadioGroupContext = createContext<GroupContextValue | null>(null)
