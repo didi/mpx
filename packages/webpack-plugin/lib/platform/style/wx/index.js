@@ -82,7 +82,7 @@ module.exports = function getSpec ({ warn, error }) {
     const type = getValueType(prop)
     const valueExp = {
       number: /^\s*(-?\d+(\.\d+)?)(rpx|px|%)?\s*$/,
-      color: /(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb\(|rgba\(|hsl\(|hsla\(|hwb\()/,
+      color: /(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb\(|rgba\(|hsl\(|hsla\(|hwb\()/
     }
     const tips = isError ? error : warn
     switch (type) {
@@ -122,7 +122,7 @@ module.exports = function getSpec ({ warn, error }) {
     // 仅支持 offset-x | offset-y | blur-radius | color 排序
     'text-shadow': ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
     // 仅支持 width | style | color 这种排序
-    border: ['borderWidth','borderStyle','borderColor'],
+    border: ['borderWidth', 'borderStyle', 'borderColor'],
     // 仅支持 width | style | color 这种排序
     'border-left': ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
     // 仅支持 width | style | color 这种排序
