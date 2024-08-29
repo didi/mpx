@@ -5,14 +5,16 @@
  * ✔ color
  */
 import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent  } from 'react-native'
-import { useRef, useEffect, forwardRef, JSX, useState } from 'react';
+import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react';
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
+import { FormContext, FormFieldValue } from './context'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
+  name?: string
   checked?: boolean 
   type: 'switch' | 'checkbox'
   disabled: boolean
@@ -40,6 +42,14 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const changeHandler = bindchange || catchchange
 
+  let formValuesMap: Map<string, FormFieldValue> | undefined
+
+  const formContext = useContext(FormContext)
+
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
+  }
+
   useEffect(() => {
     setIsChecked(checked)
   }, [checked])
@@ -53,6 +63,22 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     } else {
       setIsChecked(checked as boolean)
       changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: {value: checked} }, props))
+    }
+  }
+
+  const resetValue = () => {
+    setIsChecked(false)
+  }
+
+  const getValue = () => {
+    return isChecked
+  }
+
+  if (formValuesMap) {
+    if (!props.name) {
+      console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
 
