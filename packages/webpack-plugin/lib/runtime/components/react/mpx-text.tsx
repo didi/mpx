@@ -9,7 +9,7 @@ import { useRef, useEffect, forwardRef, ReactNode, ForwardedRef, JSX } from 'rea
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { PERCENT_REGX } from './utils'
+import { PERCENT_REGEX } from './utils'
 
 
 interface _TextProps extends TextProps {
@@ -28,7 +28,7 @@ const DEFAULT_STYLE = {
 
 const transformStyle = (styleObj: TextStyle) => {
   let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGX.test(lineHeight)) {
+  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
     lineHeight = (parseFloat(lineHeight)/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
     styleObj.lineHeight = lineHeight
   }
