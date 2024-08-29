@@ -152,7 +152,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  // @ts-ignore
   return(<Portal>
     <WebView
         style={[ ...defaultWebViewStyle ]}

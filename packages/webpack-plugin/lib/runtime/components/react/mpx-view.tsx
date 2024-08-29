@@ -6,10 +6,8 @@
  */
 import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, TextProps } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
-// @ts-ignore
 import useInnerProps from './getInnerListeners'
-// @ts-ignore
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy} from './utils'
 
