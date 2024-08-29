@@ -1,9 +1,16 @@
 import { useEffect, useRef, Children, ReactNode, FunctionComponent, isValidElement } from 'react'
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+type GroupData = Record<string, Record<string, any>>
+
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
+
+export const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
+
+export const TEXT_PROPS_REGEX =  /ellipsizeMode|numberOfLines/
+
 
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
@@ -89,4 +96,19 @@ export const isText = (ele: ReactNode) => {
 
 export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
   return Children.toArray(children).every((child) => callback(child as ReactNode))
+}
+
+export function groupBy(obj: Record<string, any>, callback: (key: string, val: string) => string, group:GroupData = {}):GroupData {
+  let groupKey = ''
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) { // 确保处理对象自身的属性
+      let val: string = obj[key] as string
+      groupKey = callback(key, val)
+      if (!group[groupKey]) {
+        group[groupKey] = {}
+      }
+      group[groupKey][key] = val
+    }
+  }
+  return group
 }

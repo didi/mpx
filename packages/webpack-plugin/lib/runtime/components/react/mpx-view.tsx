@@ -4,20 +4,14 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, TextProps } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 // @ts-ignore
 import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText} from './utils'
-
-
-type ExtendedViewStyle = ViewStyle & {
-  backgroundImage?: string
-  backgroundSize?: ImageResizeMode
-}
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy} from './utils'
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ExtendedViewStyle>
@@ -31,9 +25,10 @@ export interface _ViewProps extends ViewProps {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
-type Obj = Record<string, any>
-
-type GroupData = Record<string, Record<string, any>>;
+type ExtendedViewStyle = ViewStyle & {
+  backgroundImage?: string
+  backgroundSize?: ImageResizeMode
+}
 
 type Handler = (...args: any []) => void
 
@@ -52,23 +47,6 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string
-}
-
-const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
-
-function groupBy(style: Obj, callback: (key: string, val: string) => string, group:GroupData = {}):GroupData {
-  let groupKey = ''
-  for (let key in style) {
-    if (style.hasOwnProperty(key)) { // 确保处理对象自身的属性
-      let val: string = style[key] as string
-      groupKey = callback(key, val)
-      if (!group[groupKey]) {
-        group[groupKey] = {}
-      }
-      group[groupKey][key] = val  
-    }
-  }
-  return group
 }
 
 const applyHandlers = (handlers: Handler[] , args: any [] ) => {
@@ -252,31 +230,41 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   </View>
 }
 
-function splitStyle(styles: ExtendedViewStyle) {
-  return groupBy(styles, (key) => {
-    if (TEXT_STYLE_REGEX.test(key))
-      return 'textStyle'
-    else if (IMAGE_STYLE_REGEX.test(key)) return 'imageStyle'
-    return 'innerStyle'
-  }, {})
-}
-
-function every(children: ReactNode [], callback: (children: ReactNode) => boolean) {
-  return children.every((child) => callback(child))
-}
-
-function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
-  children = Array.isArray(children) ? children : [children]
+function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle, textProps?: TextProps) {
   if (every(children as ReactNode[], (child)=>isText(child))) {
-    children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
+    if (textStyle || textProps) {
+      children = [<Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>]
+    }
   } else {
     if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
   return [
     wrapImage(imageStyle),
-    ...children
+    children
   ]
+}
+
+function splitStyle(styles: ExtendedViewStyle) {
+  return groupBy(styles, (key) => {
+    if (TEXT_STYLE_REGEX.test(key)) {
+      return 'textStyle'
+    } else if (IMAGE_STYLE_REGEX.test(key)) {
+      return 'imageStyle'
+    } else {
+      return 'innerStyle'
+    }
+  }, {})
+}
+
+function splitProps(props: ExtendedViewStyle) {
+  return groupBy(props, (key) => {
+    if (TEXT_PROPS_REGEX.test(key)) {
+      return 'textProps'
+    } else {
+      return 'innerProps'
+    }
+  }, {})
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
@@ -361,6 +349,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     styleObj,
     ...(isHover ? hoverStyle : [])]
   ))
+  const { textProps } = splitProps(props)
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -386,7 +375,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       {...innerProps}
       style={innerStyle}
     >
-      {wrapChildren(children, textStyle, imageStyle)}
+      {wrapChildren(children, textStyle, imageStyle, textProps)}
     </View>
   )
 })
