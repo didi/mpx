@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, Children, cloneElement, ReactElement } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, Children } from 'react'
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
   StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle
+  TextStyle,
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, extractTextStyle, isEmbedded, isText } from './utils'
+import { every, extractTextStyle, isText } from './utils'
+import { LabelContext, LabelContextValue } from './context'
 
 export interface LabelProps {
   for?: string
@@ -39,9 +40,10 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       ...StyleSheet.flatten(style)
     }
 
-    const childRef = useRef<{
-      change: (evt?: NativeSyntheticEvent<TouchEvent>) => void
-    }>()
+    const contextRef: LabelContextValue = useRef({
+      textStyle,
+      triggerChange: () => {}
+    })
 
     const layoutRef = useRef({})
 
@@ -66,7 +68,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-      childRef.current?.change(evt)
+      contextRef.current.triggerChange?.(evt)
     }
 
     const wrapChildren = (
@@ -74,24 +76,17 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       textStyle?: StyleProp<TextStyle>
     ) => {
       if (every(children, (child) => isText(child))) {
-        children = [
+        return [
           <Text key='labelTextWrap' style={textStyle}>
             {children}
           </Text>
         ]
-        return children
       }
-      return Children.toArray(children).map((child) => {
-        return cloneElement(child as ReactElement, {
-          style: [...((child as ReactElement).props.style ?? []), textStyle],
-          ...(isEmbedded(child)
-            ? {
-                ref: (ref: any) => {
-                  childRef.current = ref?.getNodeInstance()?.instance
-                }
-              }
-            : {})
-        })
+      return Children.toArray(children).map((child, index) => {
+        if (isText(child)) {
+          return <Text key={index} style={textStyle}>{child}</Text>
+        }
+        return child
       })
     }
 
@@ -109,7 +104,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       }
     )
 
-    return <View {...innerProps}>{wrapChildren(children, textStyle)}</View>
+    return <View {...innerProps}>
+      <LabelContext.Provider value={contextRef}>
+        {wrapChildren(children, textStyle)}
+      </LabelContext.Provider>
+    </View>
   }
 )
 

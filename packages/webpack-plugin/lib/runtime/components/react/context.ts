@@ -1,5 +1,10 @@
-import { createContext, Dispatch, SetStateAction } from 'react';
-import { NativeSyntheticEvent } from 'react-native'
+import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { NativeSyntheticEvent, StyleProp, TextStyle } from 'react-native'
+
+export type LabelContextValue = MutableRefObject<{
+  textStyle: StyleProp<TextStyle>
+  triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
+}>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
@@ -15,7 +20,6 @@ export interface FormFieldValue {
   resetValue: ({ newVal, type }: { newVal?: any; type?: string }) => void;
 }
 
-
 export interface FormContextValue {
   formValuesMap: Map<string, FormFieldValue>;
   submit: () => void;
@@ -29,3 +33,5 @@ export const FormContext = createContext<FormContextValue | null>(null)
 export const CheckboxGroupContext = createContext<GroupContextValue | null>(null)
 
 export const RadioGroupContext = createContext<GroupContextValue | null>(null)
+
+export const LabelContext = createContext<LabelContextValue | null>(null)

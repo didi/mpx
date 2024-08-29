@@ -14,7 +14,7 @@ import {
   NativeSyntheticEvent,
   TextStyle
 } from 'react-native'
-import { RadioGroupContext } from './context'
+import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, extractTextStyle, isText } from './utils'
@@ -84,16 +84,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
-    const context = useContext(RadioGroupContext)
-
+    const groupContext = useContext(RadioGroupContext)
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
-    
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
-    if (context) {
-      groupValue = context.groupValue
-      notifyChange = context.notifyChange
-    }
+    const labelContext = useContext(LabelContext)
+    let labelTextStyle: StyleProp<TextStyle> = {}
 
     const textStyle = extractTextStyle(style)
 
@@ -150,7 +146,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>
+      textStyle?: StyleProp<TextStyle>[]
     ) => {
       if (every(children, (child) => isText(child))) {
         children = [
@@ -166,6 +162,16 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
 
       return children
+    }
+
+    if (groupContext) {
+      groupValue = groupContext.groupValue
+      notifyChange = groupContext.notifyChange
+    }
+
+    if (labelContext) {
+      labelTextStyle = labelContext.current.textStyle
+      labelContext.current.triggerChange = onChange
     }
 
     const innerProps = useInnerProps(
@@ -220,7 +226,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             ]}
           />
         </View>
-        {wrapChildren(children, textStyle)}
+        {wrapChildren(children, [textStyle, labelTextStyle])}
       </View>
     )
   }
