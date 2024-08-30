@@ -95,7 +95,8 @@ export const isText = (ele: ReactNode) => {
 }
 
 export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
-  return Children.toArray(children).every((child) => callback(child as ReactNode))
+  const childrenArray = Array.isArray(children) ? children : [children];
+  return childrenArray.every((child) => callback(child as ReactNode))
 }
 
 export function groupBy(obj: Record<string, any>, callback: (key: string, val: string) => string, group:GroupData = {}):GroupData {
