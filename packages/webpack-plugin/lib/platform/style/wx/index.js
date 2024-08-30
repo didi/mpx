@@ -150,6 +150,7 @@ module.exports = function getSpec ({ warn, error }) {
     const diff = values.length - props.length
     while (idx < values.length) {
       const prop = props[propsIdx]
+      if (!prop) break
       const value = values[idx]
       const newProp = hump2dash(prop.replace(/\..+/, ''))
       if (!verifyProps({ prop: newProp, value }, { mode })) {
