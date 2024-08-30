@@ -42,7 +42,8 @@ import {
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  REACTHOOKSEXEC
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
@@ -734,6 +735,7 @@ export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
 export const onServerPrefetch = createHook(SERVERPREFETCH)
+export const onReactHooksExec = createHook(REACTHOOKSEXEC)
 export const onPullDownRefresh = createHook('__onPullDownRefresh__')
 export const onReachBottom = createHook('__onReachBottom__')
 export const onShareAppMessage = createHook('__onShareAppMessage__')
