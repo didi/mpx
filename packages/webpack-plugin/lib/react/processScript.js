@@ -27,12 +27,16 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
 import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { Provider } from '@ant-design/react-native'
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
+
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createNavigationContainerRef: createNavigationContainerRef,
   createNativeStackNavigator: createNativeStackNavigator,
   StackActions: StackActions,
-  Provider: Provider
+  Provider: Provider,
+  SafeAreaProvider: SafeAreaProvider,
+  useSafeAreaInsets: useSafeAreaInsets
 }\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,

@@ -3,7 +3,7 @@ import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 
-export const PERCENT_REGX = /\d+(\.\d+)?%$/
+export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 

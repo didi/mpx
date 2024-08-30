@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
-import { reactive, set } from '../../../observer/reactive'
+import { reactive, set, del } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
@@ -185,6 +185,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         return props.id
       },
       enumerable: true
+    },
+    props: {
+      get () {
+        return propsRef.current
+      },
+      enumerable: true
     }
   })
 
@@ -199,7 +205,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   proxy.created()
 
   if (type === 'page') {
-    proxy.callHook(ONLOAD, [props.route.params])
+    proxy.callHook(ONLOAD, [props.route.params || {}])
   }
 
   Object.assign(proxy, {
@@ -271,8 +277,12 @@ const triggerResizeEvent = (mpxProxy) => {
   }
 }
 
-function usePageContext (mpxProxy) {
-  const { routeName } = useContext(routeContext) || {}
+function usePageContext (mpxProxy, instance) {
+  const { pageId } = useContext(routeContext) || {}
+
+  instance.getPageId = () => {
+    return pageId
+  }
 
   useEffect(() => {
     let unWatch
@@ -280,8 +290,8 @@ function usePageContext (mpxProxy) {
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
     if (hasShowHook || hasHideHook || hasResizeHook) {
-      if (hasOwn(pageStatusContext, routeName)) {
-        unWatch = watch(() => pageStatusContext[routeName], (newVal) => {
+      if (hasOwn(pageStatusContext, pageId)) {
+        unWatch = watch(() => pageStatusContext[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
           } else if (/^resize/.test(newVal)) {
@@ -298,27 +308,23 @@ function usePageContext (mpxProxy) {
 }
 
 const pageStatusContext = reactive({})
-function setPageStatus (routeName, val) {
-  set(pageStatusContext, routeName, val)
-}
+let pageId = 0
 
-function usePageStatus (navigation, route) {
+function usePageStatus (navigation, pageId) {
   let isFocused = true
-  setPageStatus(route.name, '')
+  set(pageStatusContext, pageId, '')
   useEffect(() => {
-    setPageStatus(route.name, 'show')
     const focusSubscription = navigation.addListener('focus', () => {
-      setPageStatus(route.name, 'show')
+      pageStatusContext[pageId] = 'show'
       isFocused = true
     })
     const blurSubscription = navigation.addListener('blur', () => {
-      setPageStatus(route.name, 'hide')
+      pageStatusContext[pageId] = 'hide'
       isFocused = false
     })
-
     const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
       if (isFocused) {
-        setPageStatus(route.name, value)
+        pageStatusContext[pageId] = value
       }
     })
 
@@ -326,6 +332,7 @@ function usePageStatus (navigation, route) {
       focusSubscription()
       blurSubscription()
       unWatchAppFocusedState()
+      del(pageStatusContext, pageId)
     }
   }, [navigation])
 }
@@ -362,7 +369,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.propsUpdated()
     }
 
-    usePageContext(proxy)
+    usePageContext(proxy, instance)
 
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
@@ -387,13 +394,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      usePageStatus(navigation, route)
+      const currentPageId = useMemo(() => ++pageId, [])
+      usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
         navigation.setOptions({
+          headerShown: pageConfig.navigationStyle !== 'custom',
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
@@ -402,18 +411,25 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      const insets = useSafeAreaInsets()
+      const safeAreaPadding = {
+        paddingTop: insets.top,
+        paddingLeft: insets.left
+      }
+
       return createElement(Provider,
         null,
         createElement(ReactNative.View,
           {
             style: {
+              ...pageConfig.navigationStyle === 'custom' && safeAreaPadding,
               ...ReactNative.StyleSheet.absoluteFillObject,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
           },
           createElement(routeContext.Provider,
             {
-              value: { routeName: route.name }
+              value: { pageId: currentPageId }
             },
             createElement(defaultOptions,
               {
