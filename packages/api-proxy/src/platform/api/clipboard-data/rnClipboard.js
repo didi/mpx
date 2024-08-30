@@ -1,6 +1,7 @@
-import Clipboard from '@react-native-clipboard/clipboard'
 import { successHandle, failHandle } from '../../../common/js'
 import { type } from '@mpxjs/utils'
+import { getStringAsync, setStringAsync } from 'expo-clipboard'
+
 const setClipboardData = function (options) {
   const { data, success, fail, complete } = options
   if (!data || type(data) !== 'String') {
@@ -12,24 +13,30 @@ const setClipboardData = function (options) {
     failHandle(result, fail, complete)
     return
   }
-  Clipboard.setString(data)
-  const result = {
-    errMsg: 'setClipboardData:ok'
-  }
-  successHandle(result, success, complete)
+  setStringAsync(data).then(() => {
+    const result = {
+      errMsg: 'setClipboardData:ok'
+    }
+    successHandle(result, success, complete)
+  }).catch((e) => {
+    const result = {
+      errMsg: `setClipboardData:fail ${e}`
+    }
+    failHandle(result, fail, complete)
+  })
 }
 
 const getClipboardData = function (options) {
   const { success, fail, complete } = options
-  Clipboard.getString().then((data) => {
+  getStringAsync().then((data) => {
     const result = {
       data,
       errMsg: 'getClipboardData:ok'
     }
     successHandle(result, success, complete)
-  }).catch(() => {
+  }).catch((e) => {
     const result = {
-      errMsg: 'setClipboardData:fail'
+      errMsg: `getClipboardData:fail ${e}`
     }
     failHandle(result, fail, complete)
   })
