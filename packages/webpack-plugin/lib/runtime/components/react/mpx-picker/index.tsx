@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { PickerValue } from '@ant-design/react-native'
-import React, { forwardRef, useRef } from 'react'
+import React, { forwardRef, useRef, useContext, useState } from 'react'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import Selector from './selector'
@@ -8,7 +8,8 @@ import TimeSelector from './time'
 import DateSelector from './date'
 import MultiSelector from './multiSelector'
 import RegionSelector from './region'
-import { PickerProps, EventType } from './type'
+import { PickerProps, EventType, ValueType } from './type'
+import { FormContext, FormFieldValue } from '../context'
 
 /**
  * ✔ mode
@@ -38,6 +39,41 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     ref: nodeRef
   }, [], { layoutRef: innerLayout })
 
+  const [pickerValue, setPickerValue] = useState(value as ValueType)
+  const defaultValues = {
+    selector: 0,
+    multiSelector: [0],
+    time: props.start,
+    date: props.start,
+    region: undefined
+  }
+
+  const formContext = useContext(FormContext)
+
+  let formValuesMap: Map<string, FormFieldValue> | undefined
+
+  // 判断 context 是否存在，存在的话读取 context 中存的 formValuesMap
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
+  }
+
+  const resetValue = () => {
+    type curMode = keyof typeof defaultValues
+    const defalutValue = (defaultValues[mode as curMode] !== undefined ? defaultValues[mode as curMode] : value) as ValueType
+    setPickerValue(defalutValue)
+  }
+
+  const getValue = () => {
+    return pickerValue
+  }
+  if (formValuesMap) {
+    if (!props.name) {
+       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+    } else {
+        formValuesMap.set(props.name, { getValue, resetValue })
+     }
+   }
+
   const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
@@ -45,6 +81,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   const onChange = (event: EventType) => {
     const eventData = getCustomEvent('change', {}, { detail: event.detail, layoutRef: innerLayout })
     bindchange && bindchange(eventData)
+    setPickerValue(event.detail.value as ValueType)
   }
   
   const columnChange = (value: PickerValue[], index: number) => {
@@ -52,11 +89,9 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     const eventData = getCustomEvent('columnchange', {}, { detail: { column: index, value }, layoutRef: innerLayout })
     bindcolumnchange && bindcolumnchange(eventData)
   }
-
   const commonProps = {
     ...{innerProps},
     mode,
-    value,
     children,
     bindchange: onChange,
     bindcolumnchange: columnChange,
@@ -66,18 +101,28 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
 
   const selectorProps = {
     ...commonProps,
+    value: pickerValue as PickerValue,
     range: props['range'],
     'range-key': props['range-key']
   }
 
+  const multiProps = {
+    ...commonProps,
+    value: pickerValue as Array<number>,
+    range: props['range'],
+    'range-key': props['range-key'] 
+  }
+
   const timeProps = {
     ...commonProps,
+    value: pickerValue as string,
     start: props['start'],
     end: props['end']
   }
 
   const dateProps = {
     ...commonProps,
+    value: pickerValue as string,
     start: props['start'],
     end: props['end'],
     fileds: props.fields || 'day'
@@ -85,13 +130,14 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
 
   const regionProps = {
     ...commonProps,
+    value: pickerValue as Array<string>,
     level: props.level || 'sub-district'
   }
 
   if (mode === 'selector') {
     return <Selector {...selectorProps}></Selector>
   } else if (mode === 'multiSelector') {
-    return <MultiSelector {...selectorProps}></MultiSelector>
+    return <MultiSelector {...multiProps}></MultiSelector>
   } else if (mode === 'time') {
     return <TimeSelector {...timeProps}></TimeSelector>
   } else if (mode === 'date') {

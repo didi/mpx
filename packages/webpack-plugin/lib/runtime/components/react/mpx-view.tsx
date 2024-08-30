@@ -11,7 +11,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGX, isText} from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText} from './utils'
 
 
 type ExtendedViewStyle = ViewStyle & {
@@ -80,7 +80,7 @@ const applyHandlers = (handlers: Handler[] , args: any [] ) => {
 
 const checkNeedLayout = (style: PreImageInfo) => {  
   const [width, height] = style.sizeList
-  return (PERCENT_REGX.test(`${height}`) && width === 'auto') || (PERCENT_REGX.test(`${width}`) && height === 'auto')
+  return (PERCENT_REGEX.test(`${height}`) && width === 'auto') || (PERCENT_REGEX.test(`${width}`) && height === 'auto')
 }
 
 /**
@@ -90,7 +90,7 @@ const checkNeedLayout = (style: PreImageInfo) => {
  * **/
 function calculateSize(h: number, lh: number, ratio: number) {
   let height, width
-  if (PERCENT_REGX.test(`${h}`)) { // auto  px/rpx 
+  if (PERCENT_REGEX.test(`${h}`)) { // auto  px/rpx 
     if (!lh) return null
     height = (parseFloat(`${h}`) / 100) * lh
     width = height * ratio
@@ -137,8 +137,8 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       (imageProps.style as ImageStyle).resizeMode = 'stretch'
-      newWidth = PERCENT_REGX.test(`${width}`) ? width : +width! as DimensionValue
-      newHeight = PERCENT_REGX.test(`${width}`) ? height : +height! as DimensionValue
+      newWidth = PERCENT_REGEX.test(`${width}`) ? width : +width! as DimensionValue
+      newHeight = PERCENT_REGEX.test(`${width}`) ? height : +height! as DimensionValue
     }
     // 样式合并
     imageProps.style = {

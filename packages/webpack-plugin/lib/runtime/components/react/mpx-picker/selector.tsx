@@ -39,7 +39,9 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
       const newFormatRange = formatRangeFun(range, props['range-key'])
       setData(newFormatRange)
     }
-    value && setSelected(value)
+    setSelected(() => {
+      return value
+    })
   }, [range, value])
   const defaultValue = [value]
   
