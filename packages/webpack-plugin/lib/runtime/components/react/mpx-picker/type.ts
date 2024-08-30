@@ -99,4 +99,9 @@ export type LayoutType = {
   }
 }
 
-export type PickerProps = SelectorProps & MultiSelectorProps & TimeProps & DateProps & RegionProps
+type FormType = {
+  name: string
+}
+
+export type PickerProps = SelectorProps & MultiSelectorProps & TimeProps & DateProps & RegionProps & FormType
+export type ValueType = string | number | Array<number> | Array<string>

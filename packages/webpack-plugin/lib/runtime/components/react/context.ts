@@ -27,3 +27,5 @@ export const MovableAreaContext = createContext({ width: 0, height: 0 })
 export const FormContext = createContext<FormContextValue | null>(null)
 
 export const CheckboxGroupContext = createContext<CheckboxGroupContextValue | null>(null)
+
+export const PickerContext = createContext(null)
