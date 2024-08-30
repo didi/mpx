@@ -151,11 +151,13 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       textStyle?: StyleProp<TextStyle>[]
     ) => {
       if (every(children, (child) => isText(child))) {
-        children = [
-          <Text key='checkboxTextWrap' style={textStyle}>
-            {children}
-          </Text>
-        ]
+        if (textStyle?.length) {
+          children = [
+            <Text key='checkboxTextWrap' style={textStyle}>
+              {children}
+            </Text>
+          ]
+        }
       } else {
         if (textStyle)
           console.warn(

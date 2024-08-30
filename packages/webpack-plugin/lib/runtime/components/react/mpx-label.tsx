@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, Children } from 'react'
+import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import {
   View,
   Text,
@@ -75,14 +75,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       children: ReactNode,
       textStyle?: StyleProp<TextStyle>
     ) => {
-      if (every(children, (child) => isText(child))) {
-        return [
-          <Text key='labelTextWrap' style={textStyle}>
-            {children}
-          </Text>
-        ]
+      if (textStyle && every(children, (child) => isText(child))) {
+        return [<Text key='labelTextWrap' style={textStyle}>{children}</Text>]
       }
-      return Children.toArray(children).map((child, index) => {
+      const childrenArray = Array.isArray(children) ? children : [children]
+      return childrenArray.map((child, index) => {
         if (isText(child)) {
           return <Text key={index} style={textStyle}>{child}</Text>
         }

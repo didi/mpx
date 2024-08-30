@@ -347,9 +347,11 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
     if (every(children, (child)=>isText(child))) {
-      children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
+      if (textStyle) {
+        children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
+      }
     } else {
-      if(textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
+      if (textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
     }
   
     return children
