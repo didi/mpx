@@ -26,6 +26,7 @@ export interface _ViewProps extends ViewProps {
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
   backgroundSize?: ImageResizeMode
+  [key: string]: any
 }
 
 type Handler = (...args: any []) => void
@@ -266,6 +267,8 @@ function splitProps(props: ExtendedViewStyle) {
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
+  const widthRelativeStyleProps = ['borderTopLeftRadius', 'borderBottomLeftRadius']
+  const heightRelativeStyleProps = ['borderBottomRightRadius', 'borderTopRightRadius']
   const {
     style = [],
     children,
@@ -276,6 +279,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   } = props
 
   const [isHover, setIsHover] = useState(false)
+  const [transformStyle, setTransformStyle] = useState({})
 
   const layoutRef = useRef({})
 
@@ -335,13 +339,34 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     setStayTimer()
   }
 
+  function percentTransform (style: string[], type: 'width'|'height', { width, height } : { width?:number, height?:number }) {
+    const styleMap:Record<string, any> = {}
+    style.forEach(key => {
+        const value = styleObj[key]
+        if (PERCENT_REGEX.test(value)) {
+           const percentage = parseFloat(value) / 100;
+          if (type === 'height' && height){
+            styleMap[key] = percentage * height;
+          } else if (type === 'width' && width){
+            styleMap[key] = percentage * width;
+          }
+        }
+    })
+    return styleMap
+  }
   const onLayout = () => {
   
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      const newWidthStyleMap = percentTransform(widthRelativeStyleProps, 'width', { width })
+      const newHeightStyleMap = percentTransform(heightRelativeStyleProps, 'height', { height })
+      setTransformStyle({
+        ...transformStyle,
+        ...newWidthStyleMap,
+        ...newHeightStyleMap
+      })
     })
   }
-
   const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
     defaultStyle,
     styleObj,
@@ -349,9 +374,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   ))
   const { textProps } = splitProps(props)
 
+  const needLayout = enableOffset || [...widthRelativeStyleProps, ...heightRelativeStyleProps].some(key => (PERCENT_REGEX.test(styleObj[key])))
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...enableOffset ? { onLayout } : {},
+    ...needLayout ? { onLayout } : {},
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -371,7 +398,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return (
     <View
       {...innerProps}
-      style={innerStyle}
+     style={[innerStyle, transformStyle]}
     >
       {wrapChildren(children, textStyle, imageStyle, textProps)}
     </View>
