@@ -15,6 +15,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // prop 校验
   const verifyProps = ({ prop, value }, { mode }, isError = true) => {
+    prop = prop.trim()
     const tips = isError ? error : warn
     if (unsupportedPropExp.test(prop) || unsupportedPropMode[mode].test(prop)) {
       tips(`Property [${prop}] is not supported in React Native ${mode} environment!`)
@@ -55,9 +56,9 @@ module.exports = function getSpec ({ warn, error }) {
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
     'background-size': ['contain', 'cover', 'auto', ValueType.number],
     'background-repeat': ['no-repeat'],
-    width: ['auto', ValueType.number],
-    height: ['auto', ValueType.number],
-    'flex-basis': ['auto', ValueType.number],
+    // width: ['auto', ValueType.number],
+    // height: ['auto', ValueType.number],
+    // 'flex-basis': ['initial', 'auto', 'none', ValueType.number],
     margin: ['auto', ValueType.number],
     'margin-top': ['auto', ValueType.number],
     'margin-left': ['auto', ValueType.number],
@@ -72,17 +73,166 @@ module.exports = function getSpec ({ warn, error }) {
     const propExp = {
       // 重要！！优先判断是不是枚举类型
       enum: new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$'),
-      number: /^((flex-grow|opacity|flex|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/,
+      number: /^((opacity|flex-grow|flex-shrink|flex-basis|gap|left|right|top|bottom|width|height)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/,
       color: /^(color|(.+-color))$/
     }
     return Object.keys(propExp).find(k => propExp[k].test(prop))
   }
   // 属性值校验
   const verifyValues = ({ prop, value }, isError = true) => {
+    prop = prop.trim()
+    value = value.trim()
     const type = getValueType(prop)
+    const namedColor = [
+      'aliceblue',
+      'antiquewhite',
+      'aqua',
+      'aquamarine',
+      'azure',
+      'beige',
+      'bisque',
+      'black',
+      'blanchedalmond',
+      'blue',
+      'blueviolet',
+      'brown',
+      'burlywood',
+      'cadetblue',
+      'chartreuse',
+      'chocolate',
+      'coral',
+      'cornflowerblue',
+      'cornsilk',
+      'crimson',
+      'cyan',
+      'darkblue',
+      'darkcyan',
+      'darkgoldenrod',
+      'darkgray',
+      'darkgreen',
+      'darkgrey',
+      'darkkhaki',
+      'darkmagenta',
+      'darkolivegreen',
+      'darkorange',
+      'darkorchid',
+      'darkred',
+      'darksalmon',
+      'darkseagreen',
+      'darkslateblue',
+      'darkslategrey',
+      'darkturquoise',
+      'darkviolet',
+      'deeppink',
+      'deepskyblue',
+      'dimgray',
+      'dimgrey',
+      'dodgerblue',
+      'firebrick',
+      'floralwhite',
+      'forestgreen',
+      'fuchsia',
+      'gainsboro',
+      'ghostwhite',
+      'gold',
+      'goldenrod',
+      'gray',
+      'green',
+      'greenyellow',
+      'grey',
+      'honeydew',
+      'hotpink',
+      'indianred',
+      'indigo',
+      'ivory',
+      'khaki',
+      'lavender',
+      'lavenderblush',
+      'lawngreen',
+      'lemonchiffon',
+      'lightblue',
+      'lightcoral',
+      'lightcyan',
+      'lightgoldenrodyellow',
+      'lightgray',
+      'lightgreen',
+      'lightgrey',
+      'lightpink',
+      'lightsalmon',
+      'lightseagreen',
+      'lightskyblue',
+      'lightslategrey',
+      'lightsteelblue',
+      'lightyellow',
+      'lime',
+      'limegreen',
+      'linen',
+      'magenta',
+      'maroon',
+      'mediumaquamarine',
+      'mediumblue',
+      'mediumorchid',
+      'mediumpurple',
+      'mediumseagreen',
+      'mediumslateblue',
+      'mediumspringgreen',
+      'mediumturquoise',
+      'mediumvioletred',
+      'midnightblue',
+      'mintcream',
+      'mistyrose',
+      'moccasin',
+      'navajowhite',
+      'navy',
+      'oldlace',
+      'olive',
+      'olivedrab',
+      'orange',
+      'orangered',
+      'orchid',
+      'palegoldenrod',
+      'palegreen',
+      'paleturquoise',
+      'palevioletred',
+      'papayawhip',
+      'peachpuff',
+      'peru',
+      'pink',
+      'plum',
+      'powderblue',
+      'purple',
+      'rebeccapurple',
+      'red',
+      'rosybrown',
+      'royalblue',
+      'saddlebrown',
+      'salmon',
+      'sandybrown',
+      'seagreen',
+      'seashell',
+      'sienna',
+      'silver',
+      'skyblue',
+      'slateblue',
+      'slategray',
+      'snow',
+      'springgreen',
+      'steelblue',
+      'tan',
+      'teal',
+      'thistle',
+      'tomato',
+      'turquoise',
+      'violet',
+      'wheat',
+      'white',
+      'whitesmoke',
+      'yellow',
+      'yellowgreen'
+    ]
     const valueExp = {
       number: /^\s*(-?\d+(\.\d+)?)(rpx|px|%)?\s*$/,
-      color: /(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb\(|rgba\(|hsl\(|hsla\(|hwb\()/
+      color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb\\(|rgba\\(|hsl\\(|hsla\\(|hwb\\()')
     }
     const tips = isError ? error : warn
     switch (type) {
@@ -142,6 +292,7 @@ module.exports = function getSpec ({ warn, error }) {
     'border-radius': ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
   }
   const formatAbbreviation = ({ prop, value }, { mode }) => {
+    const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
@@ -150,10 +301,13 @@ module.exports = function getSpec ({ warn, error }) {
     const diff = values.length - props.length
     while (idx < values.length) {
       const prop = props[propsIdx]
-      if (!prop) break
+      if (!prop) {
+        error(`the value of [${original}] has not enough props to assign in React Native environment, please check again`)
+        break
+      }
       const value = values[idx]
       const newProp = hump2dash(prop.replace(/\..+/, ''))
-      if (!verifyProps({ prop: newProp, value }, { mode })) {
+      if (!verifyProps({ prop: newProp, value }, { mode }, diff === 0)) {
         // 有 ios or android 不支持的 prop，跳过 prop
         if (diff === 0) {
           propsIdx++
@@ -396,8 +550,76 @@ module.exports = function getSpec ({ warn, error }) {
       value: transform
     }
   }
+  
+  const getIntegersFlex = ({ prop, value }) => {
+    if (!isNaN(value - 0) && value >= 0) {
+      return { prop, value }
+    } else {
+      error(`The value of ${prop} only supports positive integers.`)
+      return false
+    }
+  }
+  
+  const formatFlex = ({ prop, value }, { mode }) => {
+    let values = value.trim().split(/\s(?![^()]*\))/)
+    if (values.length > 3) {
+      error('The value of prop [flex] supports up to three values')
+      values = values.splice(0, 3)
+    }
+    let cssMap = []
+    const lastOne = values[values.length - 1]
+    const isPureNumber = !isNaN(lastOne - 0)
+    const flexEnum = ['auto', 'initial', 'none']
+    if (flexEnum.includes(lastOne)) {
+      // newVal 是枚举值，value 为 flexBasis 的有效值
+      // css flex: initial ===> css flex: 0 1 auto ===> rn flex -1
+      // css flex: auto ===> css flex: 1 1 auto ===> rn flex 1
+      // css flex: none ===> css flex: 0 0 auto ===> rn flex 0
+      if (lastOne === flexEnum[0] || values.length === 1) {
+        cssMap = [{
+          prop: 'flex',
+          value: lastOne === flexEnum[0] ? 1 : lastOne === flexEnum[1] ? -1 : 0
+        }]
+        // 枚举值为 auto 时，添加 basis 和 shrink
+        for (let i = 0; i < values.length - 1; i++) {
+          const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+          item && cssMap.push(item)
+        }
+      } else {
+        error(`The value of flex is only supports flex:initial,flex:none;flex:auto;flex:0 0 auto;flex:0 auto`)
+      }
+      return cssMap
+    }
+    if (!isPureNumber) {
+      // 有单位（百分比、px等），value 为 flexBasis 的有效值
+      cssMap = [{
+        prop: 'flexBasis',
+        value: lastOne
+      }]
+      // 添加 basis 和 shrink
+      for (let i = 0; i < values.length - 1; i++) {
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+        item && cssMap.push(item)
+      }
+      return cssMap
+    }
+    // 纯数值 只有一个value 或者 第一值非正整数
+    if (values.length === 1 || values[0] <= 0) {
+      cssMap.push({
+        prop: 'flex',
+        value: values[0]
+      })
+      return
+    }
+    // 纯数值 value 按flex-grow flex-shrink flex-basis 顺序赋值
+    for (let i = 0; i < values.length; i++) {
+      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+      item && cssMap.push(item)
+    }
+    return cssMap
+  }
 
-  const spec = {
+  return {
     supportedModes: ['ios', 'android'],
     rules: [
       { // 背景相关属性的处理
@@ -405,21 +627,6 @@ module.exports = function getSpec ({ warn, error }) {
         ios: checkBackgroundImage,
         android: checkBackgroundImage
       },
-      // {
-      //   test: 'box-shadow',
-      //   ios: getAbbreviation,
-      //   android: getAbbreviationAndroid
-      // },
-      // {
-      //   test: 'text-decoration',
-      //   ios: getAbbreviation,
-      //   android: getAbbreviationAndroid
-      // },
-      // {
-      //   test: /^(font-variant|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures)$/,
-      //   ios: getFontVariant,
-      //   android: getFontVariant
-      // },
       {
         test: 'border-radius',
         ios: getBorderRadius,
@@ -440,6 +647,11 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatTransform,
         android: formatTransform
       },
+      {
+        test: 'flex',
+        ios: formatFlex,
+        android: formatFlex
+      },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
@@ -454,5 +666,4 @@ module.exports = function getSpec ({ warn, error }) {
       }
     ]
   }
-  return spec
 }
