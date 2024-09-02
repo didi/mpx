@@ -143,6 +143,10 @@ Mpx.config = {
   forceFlushSync: false,
   webRouteConfig: {},
   /*
+    页面切换动画
+  */
+  disablePageTransition: false,
+  /*
     支持两个属性
     hostWhitelists Array 类型 支持h5域名白名单安全校验
     apiImplementations webview JSSDK接口 例如getlocation

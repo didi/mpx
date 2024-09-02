@@ -81,23 +81,25 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    option.watch = {
-      $route: {
-        handler () {
-          const actionType = global.__mpxRouter.currentActionType
+    if (!global.__mpx.config.disablePageTransition) {
+      option.watch = {
+        $route: {
+          handler () {
+            const actionType = global.__mpxRouter.currentActionType
 
-          switch (actionType) {
-            case 'to':
-              this.transitionName = 'mpx-slide-left'
-              break
-            case 'back':
-              this.transitionName = 'mpx-slide-right'
-              break
-            default:
-              this.transitionName = ''
-          }
-        },
-        immediate: true
+            switch (actionType) {
+              case 'to':
+                this.transitionName = 'mpx-slide-left'
+                break
+              case 'back':
+                this.transitionName = 'mpx-slide-right'
+                break
+              default:
+                this.transitionName = ''
+            }
+          },
+          immediate: true
+        }
       }
     }
   }
