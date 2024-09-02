@@ -148,23 +148,30 @@ module.exports = function getSpec ({ warn, error }) {
     const cssMap = []
     let idx = 0
     let propsIdx = 0
-    const jumpType = values.length - props.length
-    // props & values 循环更长的数组
-    let isStop = jumpType >= 0 ? (idx < values.length) : (propsIdx < props.length)
-    while (isStop) {
+    const diff = values.length - props.length
+    while (idx < values.length) {
       const prop = props[propsIdx]
+      if (!prop) break
       const value = values[idx]
       const newProp = hump2dash(prop.replace(/\..+/, ''))
       if (!verifyProps({ prop: newProp, value }, { mode })) {
         // 有 ios or android 不支持的 prop，跳过 prop
-        propsIdx += 1
-        // values 循环时 idx+1 继续循环
-        if (jumpType >= 0) idx += 1
-      } else if (!verifyValues({ prop: newProp, value }, false)) {
+        if (diff === 0) {
+          propsIdx++
+          idx++
+        } else {
+          propsIdx++
+        }
+      } else if (!verifyValues({ prop: newProp, value }, diff === 0)) {
         // 值不合法 跳过 value
-        idx += 1
-        // props 循环时 propsIdx+1 继续循环
-        if (jumpType < 0) propsIdx += 1
+        if (diff === 0) {
+          propsIdx++
+          idx++
+        } else if (diff < 0) {
+          propsIdx++
+        } else {
+          idx++
+        }
       } else if (prop.includes('.')) {
         // 多个属性值的prop
         const [main, sub] = prop.split('.')
@@ -190,7 +197,6 @@ module.exports = function getSpec ({ warn, error }) {
         idx += 1
         propsIdx += 1
       }
-      isStop = jumpType >= 0 ? (idx < values.length) : (propsIdx < props.length)
     }
     return cssMap
   }
