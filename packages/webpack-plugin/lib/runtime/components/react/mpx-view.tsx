@@ -4,12 +4,13 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, TextProps } from 'react-native'
+import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, TextProps } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
+import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy} from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle } from './utils'
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ExtendedViewStyle>
@@ -21,12 +22,6 @@ export interface _ViewProps extends ViewProps {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
-}
-
-type ExtendedViewStyle = ViewStyle & {
-  backgroundImage?: string
-  backgroundSize?: ImageResizeMode
-  [key: string]: any
 }
 
 type Handler = (...args: any []) => void
@@ -284,7 +279,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const layoutRef = useRef({})
 
   // 打平 style 数组
-  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
+  const styleObj:ExtendedViewStyle = normalizeStyle(StyleSheet.flatten(style))
   // 默认样式
   const defaultStyle:ExtendedViewStyle = {
     // flex 布局相关的默认样式
