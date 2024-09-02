@@ -116,7 +116,7 @@ export function groupBy(obj: Record<string, any>, callback: (key: string, val: s
 }
 
 export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
-  const { borderRadius, backgroundSize } = style
+  const { borderRadius } = style
   if (borderRadius && PERCENT_REGEX.test(borderRadius as string)) {
     style.borderTopLeftRadius = borderRadius
     style.borderBottomLeftRadius = borderRadius
@@ -124,10 +124,12 @@ export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
     style.borderTopRightRadius = borderRadius
     delete style.borderRadius
   }
-  if (backgroundSize && typeof backgroundSize === 'string') {
-    if (backgroundSize.trim()) {
-      style.backgroundSize = backgroundSize.split(' ')
+  ['backgroundSize', 'backgroundPosition'].forEach(name => {
+    if (style[name] && typeof style[name] === 'string') {
+      if (style[name].trim()) {
+        style[name] = style[name].split(' ')
+     }
     }
-  }
+  })
   return style
 }
