@@ -69,14 +69,15 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // 获取值类型
   const getValueType = (prop) => {
-    // 值类型
-    const propExp = {
+    const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
-      enum: new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$'),
-      number: /^((opacity|flex-grow|flex-shrink|flex-basis|gap|left|right|top|bottom|width|height)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/,
-      color: /^(color|(.+-color))$/
+      [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
+      [ValueType.number, /^((flex-grow|opacity|flex|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
+      [ValueType.color, /^(color|(.+-color))$/]
+    ]
+    for (const rule of propValueTypeRules) {
+      if (rule[1].test(prop)) return rule[0]
     }
-    return Object.keys(propExp).find(k => propExp[k].test(prop))
   }
   // 属性值校验
   const verifyValues = ({ prop, value }, isError = true) => {
@@ -521,19 +522,19 @@ module.exports = function getSpec ({ warn, error }) {
           case 'rotate3d': // x y z angle
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
-          {
-            // 2 个以上的值处理
-            key = key.replace('3d', '')
-            const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
-            const xyz = ['X', 'Y', 'Z']
-            transform.push(...vals.map((v, index) => {
-              if (key !== 'rotate' && index > 1) {
-                unsupportedPropError({ prop: `${key}Z`, mode })
-              }
-              return { [`${key}${xyz[index] || ''}`]: v.trim() }
-            }))
-            break
-          }
+            {
+              // 2 个以上的值处理
+              key = key.replace('3d', '')
+              const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
+              const xyz = ['X', 'Y', 'Z']
+              transform.push(...vals.map((v, index) => {
+                if (key !== 'rotate' && index > 1) {
+                  unsupportedPropError({ prop: `${key}Z`, mode })
+                }
+                return { [`${key}${xyz[index] || ''}`]: v.trim() }
+              }))
+              break
+            }
           case 'translateZ':
           case 'scaleZ':
           default:
