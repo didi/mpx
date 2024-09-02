@@ -154,3 +154,11 @@ Mpx 框架运行时报错捕获感知处理函数。
 * Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
 
 同时被捕获的错误会通过 console.error 输出。
+
+## disablePageTransition
+在 web 环境可以禁用页面切换时的动画效果，默认为 false
+
+- **用法**:
+```js
+mpx.config.disablePageTransition = true
+```
