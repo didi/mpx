@@ -415,9 +415,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const insets = useSafeAreaInsets()
-      const safeAreaPadding = {
-        paddingTop: insets.top,
-        paddingLeft: insets.left
+      const safeAreaMargin = {
+        marginTop: insets.top,
+        marginLeft: insets.left
       }
 
       return createElement(Provider,
@@ -425,21 +425,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         createElement(ReactNative.View,
           {
             style: {
-              ...pageConfig.navigationStyle === 'custom' && safeAreaPadding,
-              ...ReactNative.StyleSheet.absoluteFillObject,
+              flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
           },
-          createElement(routeContext.Provider,
+          createElement(ReactNative.View,
             {
-              value: { pageId: currentPageId }
-            },
-            createElement(defaultOptions,
-              {
-                navigation,
-                route,
-                pageConfig
+              style: {
+                flex: 1,
+                ...pageConfig.navigationStyle === 'custom' && safeAreaMargin
               }
+            },
+            createElement(routeContext.Provider,
+              {
+                value: { pageId: currentPageId }
+              },
+              createElement(defaultOptions,
+                {
+                  navigation,
+                  route,
+                  pageConfig
+                }
+              )
             )
           )
         )
