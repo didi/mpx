@@ -551,7 +551,7 @@ module.exports = function getSpec ({ warn, error }) {
       value: transform
     }
   }
-  
+
   const getIntegersFlex = ({ prop, value }) => {
     if (!isNaN(value - 0) && value >= 0) {
       return { prop, value }
@@ -560,7 +560,7 @@ module.exports = function getSpec ({ warn, error }) {
       return false
     }
   }
-  
+
   const formatFlex = ({ prop, value }, { mode }) => {
     let values = value.trim().split(/\s(?![^()]*\))/)
     if (values.length > 3) {
@@ -587,7 +587,7 @@ module.exports = function getSpec ({ warn, error }) {
           item && cssMap.push(item)
         }
       } else {
-        error(`The value of flex is only supports flex:initial,flex:none;flex:auto;flex:0 0 auto;flex:0 auto`)
+        error('The value of flex is only supports flex:initial,flex:none;flex:auto;flex:0 0 auto;flex:0 auto;')
       }
       return cssMap
     }
