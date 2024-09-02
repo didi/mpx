@@ -496,9 +496,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
         if (PERCENT_REGEX.test(value)) {
           const percentage = parseFloat(value) / 100
           if (type === 'height' && height){
-            styleMap[key] = percentage * height;
+            styleMap[key] = percentage * height
           } else if (type === 'width' && width){
-            styleMap[key] = percentage * width;
+            styleMap[key] = percentage * width
           }
         }
     })
