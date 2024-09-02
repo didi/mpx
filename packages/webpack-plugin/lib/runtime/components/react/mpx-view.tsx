@@ -38,9 +38,26 @@ type Size = {
 
 type DimensionValue = number | 'auto' | `${number}%`
 
+type Position = {
+  left?: number
+  right?: number
+  top?: number
+  bottom?: number
+}
+
+type PositionKey = keyof Position
+
+type PositionNumberVal = number | `${number}%`
+
+type PositionVal = PositionKey | PositionNumberVal
+
+type backgroundPositionList = [ 'left'| 'right', PositionNumberVal, 'top' | 'bottom',  PositionNumberVal ] | []
+
 type PreImageInfo = {
   src?: string,
   sizeList: DimensionValue []
+  containPercentSymbol?: boolean
+  backgroundPosition: backgroundPositionList
 }
 
 type ImageProps = {
@@ -56,7 +73,18 @@ const applyHandlers = (handlers: Handler[] , args: any [] ) => {
 
 const checkNeedLayout = (style: PreImageInfo) => {  
   const [width, height] = style.sizeList
-  return (PERCENT_REGEX.test(`${height}`) && width === 'auto') || (PERCENT_REGEX.test(`${width}`) && height === 'auto')
+  const bp = style.backgroundPosition
+  // 含有百分号，center 需计算布局
+  const containPercentSymbol = PERCENT_REGEX.test(`${bp[1]}`) || PERCENT_REGEX.test(`${bp[3]}`)
+
+  return {
+    // 是否开启layout的计算
+    needLayout: (PERCENT_REGEX.test(`${height}`) && width === 'auto') || (PERCENT_REGEX.test(`${width}`) && height === 'auto') || containPercentSymbol,
+    // 是否包含百分号
+    containPercentSymbol,
+    // 是否开启原始宽度的计算
+    needImageSize: style.sizeList.includes('auto')
+  }
 }
 
 /**
@@ -79,6 +107,51 @@ function calculateSize(h: number, lh: number, ratio: number) {
     width,
     height 
   }
+}
+
+/**
+* 用户设置百分比后，转换为偏移量
+* h - 用户设置图片的高度
+* ch - 容器的高度
+* val - 用户设置的百分比
+* **/
+function calculateSizePosition(h: number, ch: number, val: PositionNumberVal): number {
+  if (!h || !ch) return 0
+
+  // 百分比需要单独的计算
+  if (PERCENT_REGEX.test(`${h}`)) {
+    h = ch * parseFloat(`${h}`) / 100
+  }
+
+  // (container width - image width) * (position x%) = (x offset value)
+  return (ch - h) * parseFloat(`${val}`)/100
+}
+
+function backgroundPosition(imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
+  const bps = preImageInfo.backgroundPosition
+  if (bps.length === 0) return
+  let style: Position = {}
+  let imageStyle: ImageStyle = imageProps.style || {}
+
+  for (let i=0; i < bps.length; i+=2) {
+    let key = bps[i] as PositionKey, val = bps[i+1]
+    // 需要获取 图片宽度 和 容器的宽度 进行计算
+    if (PERCENT_REGEX.test(`${val}`)) {
+      if (i === 0) {
+        style[key] = calculateSizePosition(imageStyle.width as number, layoutInfo?.width , val as PositionNumberVal)
+      }else {
+        style[key] = calculateSizePosition(imageStyle.height as number, layoutInfo?.height , val as PositionNumberVal)
+      }
+    } else {
+      style[key] = val as number
+    }
+  }
+
+  imageProps.style = {
+    ...imageProps.style as ImageStyle,
+    ...style
+  }
+
 }
 
 // background-size 转换
@@ -135,19 +208,93 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
   const imageProps: ImageProps = {
     style: {
       resizeMode: 'cover' as ImageResizeMode,
-      ...StyleSheet.absoluteFillObject
+      ...(!preImageInfo.backgroundPosition ? StyleSheet.absoluteFillObject : { 'position': 'absolute' })
     }
   }
 
-  applyHandlers([ backgroundSize, backgroundImage ],[imageProps, preImageInfo, imageSize, layoutInfo])
+  applyHandlers([ backgroundSize, backgroundImage, backgroundPosition ],[imageProps, preImageInfo, imageSize, layoutInfo])
   if (!imageProps?.src) return null
   return imageProps
 }
 
 
+function isHorizontal(val: PositionVal): val is 'left' | 'right' {
+  return /^(left|right)$/.test(`${val}`)
+}
+
+function isVertical(val: PositionVal): val is 'top' | 'bottom' {
+  return /^(top|bottom)$/.test(`${val}`)
+}
+
+function normalizeBackgroundPosition(parts: PositionVal []): backgroundPositionList {
+
+  if (parts.length === 0) return []
+
+  // 定义默认值
+  let hStart: 'left' | 'right' = 'left'
+  let hOffset: PositionVal = 0
+  let vStart: 'top' | 'bottom' = 'top'
+  let vOffset: PositionVal = 0
+
+  if (parts.length === 4) return parts as backgroundPositionList
+
+  // 归一化
+  if (parts.length === 1) {
+    // 1. center
+    // 2. 2px - hOffset, vOffset(center) - center为50%
+    // 3. 10% - hOffset, vOffset(center) - center为50%
+    // 4. left - hStart, vOffset(center) - center为50%
+    // 5. top - hOffset(center), vStart - center为50%
+
+    if (isHorizontal(parts[0])) {
+      hStart = parts[0]
+      vOffset = '50%'
+    } else if (isVertical(parts[0])) {
+      vStart = parts[0]
+      hOffset = '50%'
+    } else {
+      hOffset = parts[0]
+      vOffset = '50%'
+    }
+  } else if (parts.length === 2) {
+    // 1. center center - hOffset, vOffset
+    // 2. 10px center - hOffset, vStart
+    // 3. left center - hStart, vOffset
+    // 4. right center - hStart, vOffset
+    // 5. 第一位是 left right 覆盖的是 hStart
+    //             center, 100% 正常的px 覆盖的是 hOffset
+    //     第二位是 top bottom 覆盖的是 vStart
+    //             center, 100% 覆盖的是 vOffset
+    //
+    // 水平方向
+    if (isHorizontal(parts[0])) {
+      hStart = parts[0]
+    } else { // center, 100% 正常的px 覆盖的是 hOffset
+      hOffset = parts[0]
+    }
+    // 垂直方向
+    if (isVertical(parts[1])) {
+      vStart = parts[1]
+    } else { // center, 100% 正常的px 覆盖的是 hOffset
+      vOffset = parts[1]
+    }
+  } else if (parts.length === 3) {
+    // 1. center top 10px / top 10px center 等价 - center为50%
+    // 2. right 10px center / center right 10px 等价 - center为50%
+    // 2. bottom 50px right
+    if (/^left|bottom|right|top$/.test(`${parts[0]}`) && /^left|bottom|right|top$/.test(`${parts[1]}`)) {
+      [hStart, vStart, vOffset] = parts as ['left' | 'right', 'top' | 'bottom', number ]
+    } else {
+      [hStart, hOffset, vStart] = parts as ['left' | 'right', number, 'top' | 'bottom' ]
+    }
+  }
+
+  return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
+}
+
 function preParseImage(imageStyle?: ExtendedViewStyle) {
 
-  const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle || {}
+  const { backgroundImage, backgroundSize = [ "auto" ], backgroundPosition = [ ] } = imageStyle || {}
   const src = parseUrl(backgroundImage)
 
   let sizeList = backgroundSize.slice() as DimensionValue []
@@ -156,7 +303,8 @@ function preParseImage(imageStyle?: ExtendedViewStyle) {
 
   return {
     src,
-    sizeList
+    sizeList,
+    backgroundPosition: normalizeBackgroundPosition(backgroundPosition)
   }
 }
 
@@ -172,10 +320,9 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   // 预解析
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
 
-
   // 判断是否可挂载onLayout
-  const needLayout = checkNeedLayout(preImageInfo)
-  const { src, sizeList } = preImageInfo
+  const { needLayout, needImageSize, containPercentSymbol } = checkNeedLayout(preImageInfo)
+  const { src } = preImageInfo
 
   useEffect(() => {
     if(!src) {
@@ -184,8 +331,8 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       layoutInfo.current = null
       return 
     }
-  
-    if (!sizeList.includes('auto')) {
+
+    if (!needImageSize) {
       setShow(true)
       return
     }
@@ -209,17 +356,20 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
 
   if (!preImageInfo?.src) return null
 
-  const onLayout = (res: LayoutChangeEvent) => {
+  const onLayout = (res: LayoutChangeEvent ) => {
     const { width, height } = res?.nativeEvent?.layout || {}
     layoutInfo.current = {
       width,
       height
     }
-    if (sizeInfo.current) {
-      setImageSizeWidth(sizeInfo.current.width)
-      setImageSizeHeight(sizeInfo.current.height)
+    if (containPercentSymbol && !needImageSize) {
       setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height) 
+      setLayoutInfoHeight(height)
+    } else if (sizeInfo.current) {
+      setLayoutInfoWidth(width)
+      setLayoutInfoHeight(height)
+      setImageSizeWidth(sizeInfo.current.width)
+      setImageSizeHeight(sizeInfo.current.height)  
       setShow(true)
     }
   }
@@ -344,7 +494,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     style.forEach(key => {
         const value = styleObj[key]
         if (PERCENT_REGEX.test(value)) {
-           const percentage = parseFloat(value) / 100;
+          const percentage = parseFloat(value) / 100
           if (type === 'height' && height){
             styleMap[key] = percentage * height;
           } else if (type === 'width' && width){
@@ -398,7 +548,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return (
     <View
       {...innerProps}
-     style={[innerStyle, transformStyle]}
+    style={[innerStyle, transformStyle]}
     >
       {wrapChildren(children, textStyle, imageStyle, textProps)}
     </View>
