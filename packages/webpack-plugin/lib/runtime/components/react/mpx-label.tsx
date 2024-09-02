@@ -80,7 +80,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       }
       const childrenArray = Array.isArray(children) ? children : [children]
       return childrenArray.map((child, index) => {
-        if (isText(child)) {
+        if (textStyle && isText(child)) {
           return <Text key={index} style={textStyle}>{child}</Text>
         }
         return child
