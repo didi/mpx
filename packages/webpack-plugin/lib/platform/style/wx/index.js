@@ -2,7 +2,7 @@ const { hump2dash } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(box-sizing|white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -31,6 +31,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
+    'box-sizing': ['border-box'],
     'backface-visibility': ['visible', 'hidden'],
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
