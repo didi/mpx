@@ -5,7 +5,7 @@ import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
@@ -356,7 +356,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useImperativeHandle(ref, () => {
       return instance
     })
+
     const proxy = instance.__mpxProxy
+
+    proxy.callHook(REACTHOOKSEXEC)
 
     if (!isFirst) {
       // 处理props更新
@@ -412,9 +415,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const insets = useSafeAreaInsets()
-      const safeAreaPadding = {
-        paddingTop: insets.top,
-        paddingLeft: insets.left
+      const safeAreaMargin = {
+        marginTop: insets.top,
+        marginLeft: insets.left
       }
 
       return createElement(Provider,
@@ -422,21 +425,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         createElement(ReactNative.View,
           {
             style: {
-              ...pageConfig.navigationStyle === 'custom' && safeAreaPadding,
-              ...ReactNative.StyleSheet.absoluteFillObject,
+              flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             }
           },
-          createElement(routeContext.Provider,
+          createElement(ReactNative.View,
             {
-              value: { pageId: currentPageId }
-            },
-            createElement(defaultOptions,
-              {
-                navigation,
-                route,
-                pageConfig
+              style: {
+                flex: 1,
+                ...pageConfig.navigationStyle === 'custom' && safeAreaMargin
               }
+            },
+            createElement(routeContext.Provider,
+              {
+                value: { pageId: currentPageId }
+              },
+              createElement(defaultOptions,
+                {
+                  navigation,
+                  route,
+                  pageConfig
+                }
+              )
             )
           )
         )
