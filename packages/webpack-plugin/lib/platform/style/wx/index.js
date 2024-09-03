@@ -570,49 +570,42 @@ module.exports = function getSpec ({ warn, error }) {
     let cssMap = []
     const lastOne = values[values.length - 1]
     const isPureNumber = !isNaN(lastOne - 0)
-    const flexEnum = ['auto', 'initial', 'none']
-    if (flexEnum.includes(lastOne)) {
-      // newVal 是枚举值，value 为 flexBasis 的有效值
-      // css flex: initial ===> css flex: 0 1 auto ===> rn flex -1
-      // css flex: auto ===> css flex: 1 1 auto ===> rn flex 1
-      // css flex: none ===> css flex: 0 0 auto ===> rn flex 0
-      if (lastOne === flexEnum[0] || values.length === 1) {
-        cssMap = [{
-          prop: 'flex',
-          value: lastOne === flexEnum[0] ? 1 : lastOne === flexEnum[1] ? -1 : 0
-        }]
-        // 枚举值为 auto 时，添加 basis 和 shrink
-        for (let i = 0; i < values.length - 1; i++) {
-          const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
-          item && cssMap.push(item)
-        }
+    const isAuto = lastOne === 'auto'
+    // 枚举值 none initial
+    if (values.includes('initial') || values.includes('none')) {
+      // css flex: initial ===> flex: 0 1 ===> rn flex 0 1
+      // css flex: none ===> css flex: 0 0 ===> rn flex 0 0
+      if (values.length === 1) {
+        // 添加 basis 和 shrink
+        // value=initial 则 flexShrink=1，其他场景都是0
+        cssMap.push(...[{ prop: 'flexGrow', value: 0 }, { prop: 'flexShrink', value: +(values[0] === 'initial') }])
       } else {
         error('The value of flex is only supports flex:initial,flex:none;flex:auto;flex:0 0 auto;flex:0 auto;')
       }
       return cssMap
     }
+    // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
+    // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
     if (!isPureNumber) {
-      // 有单位（百分比、px等），value 为 flexBasis 的有效值
-      cssMap = [{
-        prop: 'flexBasis',
-        value: lastOne
-      }]
-      // 添加 basis 和 shrink
-      for (let i = 0; i < values.length - 1; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+      if (!isAuto) {
+        // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
+        cssMap.push({
+          prop: 'flexBasis',
+          value: lastOne
+        })
+      }
+      // 添加 grow 和 shrink
+      // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
+      // 单值 flex: 1 1 <flex-basis>
+      // 双值 flex: <flex-grow> 1 <flex-basis>
+      // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+      for (let i = 0; i < 2; i++) {
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value:  !isNaN(values[i] - 0) ? values[i] : 1 })
         item && cssMap.push(item)
       }
       return cssMap
     }
-    // 纯数值 只有一个value 或者 第一值非正整数
-    if (values.length === 1 || values[0] <= 0) {
-      cssMap.push({
-        prop: 'flex',
-        value: values[0]
-      })
-      return
-    }
-    // 纯数值 value 按flex-grow flex-shrink flex-basis 顺序赋值
+    // 纯数值：value 按flex-grow flex-shrink flex-basis 顺序赋值
     for (let i = 0; i < values.length; i++) {
       const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
       item && cssMap.push(item)
