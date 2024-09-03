@@ -37,7 +37,7 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createEffect (proxy, components, props) {
+function createEffect (proxy, components, propsRef) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -57,7 +57,7 @@ function createEffect (proxy, components, props) {
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, getComponent, getRootProps(props))
+    return proxy.target.__injectedRender(createElement, getComponent, getRootProps(propsRef.current))
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -214,7 +214,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components, propsRef.current)
+        createEffect(proxy, components, propsRef)
         // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
@@ -231,7 +231,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components, propsRef.current)
+    createEffect(proxy, components, propsRef)
   }
 
   return instance
