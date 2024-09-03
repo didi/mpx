@@ -4,7 +4,7 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useRef, useState, forwardRef, useEffect, ReactNode } from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
 import {
   View,
   Text,
@@ -14,10 +14,11 @@ import {
   NativeSyntheticEvent,
   TextStyle
 } from 'react-native'
+import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import Icon from './mpx-icon'
 import { every, extractTextStyle, isText } from './utils'
+import Icon from './mpx-icon'
 
 export interface RadioProps {
   value?: string
@@ -29,10 +30,6 @@ export interface RadioProps {
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  _onChange?: (
-    evt: NativeSyntheticEvent<TouchEvent> | unknown,
-    value?: string
-  ) => void
 }
 
 const styles = StyleSheet.create({
@@ -72,7 +69,7 @@ const styles = StyleSheet.create({
 const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
   (props, ref): JSX.Element => {
     const {
-      value,
+      value = '',
       disabled = false,
       checked = false,
       color = '#09BB07',
@@ -81,12 +78,18 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       children,
       bindtap,
       catchtap,
-      _onChange
     } = props
 
     const layoutRef = useRef({})
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
+
+    const groupContext = useContext(RadioGroupContext)
+    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
+    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
+
+    const labelContext = useContext(LabelContext)
+    let labelTextStyle: StyleProp<TextStyle> = {}
 
     const textStyle = extractTextStyle(style)
 
@@ -100,7 +103,14 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
       setIsChecked(!isChecked)
-      _onChange && _onChange(evt, value)
+      if (groupValue) {
+        for (const [key, radio] of Object.entries(groupValue)) {
+          if (!radio) continue
+          radio.setValue(key === value)
+          radio.checked = key === value
+        }
+      }
+      notifyChange && notifyChange(evt)
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -136,14 +146,16 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>
+      textStyle?: StyleProp<TextStyle>[]
     ) => {
       if (every(children, (child) => isText(child))) {
-        children = [
-          <Text key='radioTextWrap' style={textStyle}>
-            {children}
-          </Text>
-        ]
+        if (textStyle?.length) {
+          children = [
+            <Text key='radioTextWrap' style={textStyle}>
+              {children}
+            </Text>
+          ]
+        }
       } else {
         if (textStyle)
           console.warn(
@@ -152,6 +164,16 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
 
       return children
+    }
+
+    if (groupContext) {
+      groupValue = groupContext.groupValue
+      notifyChange = groupContext.notifyChange
+    }
+
+    if (labelContext) {
+      labelTextStyle = labelContext.current.textStyle
+      labelContext.current.triggerChange = onChange
     }
 
     const innerProps = useInnerProps(
@@ -170,7 +192,26 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     )
 
     useEffect(() => {
-      checked !== isChecked && setIsChecked(checked)
+      if (groupValue) {
+        groupValue[value] = {
+          checked: checked,
+          setValue: setIsChecked
+        }
+      }
+      return () => {
+        if (groupValue) {
+          delete groupValue[value]
+        }
+      }
+    }, [])
+
+    useEffect(() => {
+      if (checked !== isChecked) {
+        setIsChecked(checked)
+        if (groupValue) {
+          groupValue[value].checked = checked
+        }
+      }
     }, [checked])
 
     return (
@@ -187,7 +228,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             ]}
           />
         </View>
-        {wrapChildren(children, textStyle)}
+        {wrapChildren(children, [textStyle, labelTextStyle])}
       </View>
     )
   }

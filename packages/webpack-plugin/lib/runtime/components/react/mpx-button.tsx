@@ -80,7 +80,6 @@ export interface ButtonProps {
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchstart?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -203,7 +202,6 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     children,
     bindgetuserinfo,
     bindtap,
-    catchtap,
     bindtouchstart,
     bindtouchend,
   } = props
@@ -295,11 +293,13 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
       })
     }
 
-    if (openType === 'getUserInfo') {
-      const userInfo = handleEvent && handleEvent()
-      if (typeof userInfo === 'object') {
-        bindgetuserinfo && bindgetuserinfo(userInfo)
-      }
+    if (openType === 'getUserInfo' && handleEvent && bindgetuserinfo) {
+      Promise.resolve(handleEvent)
+        .then((userInfo) => {
+          if (typeof userInfo === 'object') {
+            bindgetuserinfo(userInfo)
+          }
+        })
     }
   }
 
@@ -345,16 +345,13 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     handleFormTypeFn()
   }
 
-  const catchTap= (evt: NativeSyntheticEvent<TouchEvent>) => {
-    if (disabled) return
-    catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-  }
-
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
     if (every(children, (child)=>isText(child))) {
-      children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
+      if (textStyle) {
+        children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
+      }
     } else {
-      if(textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
+      if (textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
     }
   
     return children
@@ -380,14 +377,14 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
       bindtap: onTap,
-      catchtap: catchTap,
       ...(enableOffset ? { onLayout } : {}),
     },
     [
       'enable-offset'
     ],
     { 
-      layoutRef
+      layoutRef,
+      disableTap: disabled
     }
   );
 
