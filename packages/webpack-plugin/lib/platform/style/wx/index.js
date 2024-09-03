@@ -435,7 +435,7 @@ module.exports = function getSpec ({ warn, error }) {
         // value=initial 则 flexShrink=1，其他场景都是0
         cssMap.push(...[{ prop: 'flexGrow', value: 0 }, { prop: 'flexShrink', value: +(values[0] === 'initial') }])
       } else {
-        error('The value of flex is only supports flex:initial,flex:none;flex:auto;flex:0 0 auto;flex:0 auto;')
+        error('When setting the value of flex to none or initial, only one value is supported.')
       }
       return cssMap
     }
