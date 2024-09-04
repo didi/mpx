@@ -468,6 +468,19 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
 
+  const formatFontFamily = ({ prop, value }) => {
+    // 去掉引号 取逗号分隔后的第一个
+    const newVal = value.replace(/(\"|\')|(\"|\')/g, '').trim()
+    const values = newVal.split(',').filter(i => i)
+    if (!newVal || !values.length) {
+      error(`The value of prop [${prop}: ${value}] is invaild, please check again`)
+      return false
+    } else if (values.length > 1) {
+      warn(`The value of prop [${prop}] only supports one, and the first one is used by default`)
+    }
+    return { prop, value: values[0].trim() }
+  }
+
   return {
     supportedModes: ['ios', 'android'],
     rules: [
@@ -500,6 +513,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'flex',
         ios: formatFlex,
         android: formatFlex
+      },
+      {
+        test: 'font-family',
+        ios: formatFontFamily,
+        android: formatFontFamily
       },
       // 通用的简写格式匹配
       {
