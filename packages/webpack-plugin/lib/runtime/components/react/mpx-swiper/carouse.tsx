@@ -1,7 +1,7 @@
 /**
  * swiper 实现
  */
-import { View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
+import { Animated, View, ScrollView, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
 import { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
@@ -44,11 +44,14 @@ const styles: { [key: string]: Object } = {
 const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props , ref): JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
-  const defaultHeight = 150
+  const { styleObj, easingFunction } = props
+  const defaultHeight = styleObj?.height || 150
+  const defaultWidth = styleObj?.width || width || 375
   const dir = props.horizontal === false ? 'y' : 'x'
   // state的offset默认值
-  const defaultX = width * (props.circular ? props.current + 1 : props.current) || 0
-  const defaultY = defaultHeight * (props.circular ? props.current + 1 : props.current) || 0
+  const initIndex = props.circular ? props.current + 1: (props.current || 0)
+  const defaultX = defaultWidth * initIndex || 0
+  const defaultY = defaultHeight * initIndex || 0
   // 内部存储上一次的offset值
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   // 默认设置为初次渲染
@@ -57,6 +60,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   let loopJumpTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null) 
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
+  const fadeAnim = useRef(new Animated.Value(0)).current; // 1:初始化动画属性
   const autoplayEndRef = useRef(false)
   // 存储layout布局信息
   const layoutRef = useRef({})
@@ -68,11 +72,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     },
     isScrolling: false
   })
+  const isDragRef = useRef(false)
   const [state, setState] = useState({
     children: newChild,
-    width: width || 375,
+    width: defaultWidth || 375,
     height: defaultHeight,
-    index: 0,
+    index: initIndex,
     total: Array.isArray(newChild) ? newChild.length : ( newChild ? 1 : 0),
     offset: {
       x: dir === 'x' ? defaultX : 0,
@@ -94,13 +99,18 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 更新index，以视图的offset计算当前的索引
   */
-  function updateIndex (scrollViewOffset: NativeScrollPoint) {
+  function updateIndex (scrollViewOffset: NativeScrollPoint, useIndex = false) {
     const diff = scrollViewOffset[dir] - internalsRef.current.offset[state.dir]
+    console.log('--------------updateIndex-1--', internalsRef.current.offset)
     if (!diff) return
-
     const step = dir === 'x' ? state.width : state.height
-    let loopJump = false
     let newIndex = state.index + Math.round(diff / step)
+    if (useIndex) {
+      // 非循环时的计算, 循环的逻辑后面会覆盖
+      newIndex = diff < 0 ? state.index - 1 : state.index + 1
+    }
+    let loopJump = false
+    // let newIndex = useIndex ? state.index + 1 : state.index + Math.round(diff / step)
     // 若是循环circular
     // 1. 当前索引-1, 初始化为最后一个索引, 且scrollView的偏移量设置为 每个元素的步长 * 一共多少个元素， 这里为什么不减一呢
     // 2. 当前索引>total, 初始化为第一个元素，且scrollView的偏移量设置为一个元素的步长
@@ -111,12 +121,13 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
         loopJump = true
       } else if (newIndex >= state.total) {
         newIndex = 0
-        scrollViewOffset[state.dir] = step
+        scrollViewOffset[state.dir] = 0
         loopJump = true
       }
     }
-    // 存储当前的偏移量
+    // 存储当前的偏移量, 这里是不是只用存储初始值就好了????
     internalsRef.current.offset = scrollViewOffset
+    console.log('--------------updateIndex----', newIndex)
     // 这里需不需要区分是否loop，初始化？？？？
     setState((preState) => {
       const newState =  {
@@ -142,14 +153,24 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   */
   function startSwiperLoop () {
     loopJumpTimerRef.current = setTimeout(() => {
-      let offset = { x: 0, y: 0, animated: false}
+      let offset = { x: 0, y: 0, animated: true}
       if (state.index > 0){
-        offset = props.horizontal ? { x: state.width * state.index, y: 0, animated: false } : { x: 0, y: state.height * state.index, animated: false }
+        offset = props.horizontal ? { x: state.width * state.index, y: 0, animated: true } : { x: 0, y: state.height * state.index, animated: true }
       }
       if (props.circular) {
-        offset = props.horizontal ? { x: state.width * (state.index + 1), y: 0, animated: false } : { x: 0, y: state.height * (state.index + 1), animated: false }
+        offset = props.horizontal ? { x: state.width * (state.index + 1), y: 0, animated: true } : { x: 0, y: state.height * (state.index + 1), animated: true }
       }
-      scrollViewRef.current?.scrollTo(offset)
+      console.log('--------------startSwiperLoop---', state.index, offset.x)
+      // 这里可以设置transformX的值来变动么???
+      // scrollViewRef.current?.scrollTo(offset)
+      Animated.timing(
+        fadeAnim,
+        {
+          toValue: 0,
+          duration: 5000,  // 动画时长
+          useNativeDriver: true,  // 启用原生动画驱动
+        }
+      ).start();
       internalsRef.current.offset = offset
     }, props.duration || 500)
   }
@@ -180,12 +201,13 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       if (state.dir === 'x') x = toIndex * state.width
       if (state.dir === 'y') y = toIndex * state.height
       // animated会影响切换的offset，先改为false
-      scrollViewRef.current?.scrollTo({ x, y, animated: false })
+      console.log('----------------------------------startAutoPlay----')
+      scrollViewRef.current?.scrollTo({ x, y, animated: true })
 
       internalsRef.current.isScrolling = true
 
       autoplayEndRef.current = false
-      updateIndex({ x, y })
+      updateIndex({ x, y }, true)
     }, props.interval || 5000)
   }
 
@@ -195,11 +217,15 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   function onScrollBegin () {
     internalsRef.current.isScrolling = true
   }
+
+  /**
+   * 当用户开始拖动结束
+   */
   function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
     internalsRef.current.isScrolling = false
-    
+    console.log('----------------onScrollEnd---', event.nativeEvent.contentOffset)
     // 用户手动滑动更新索引后，如果开启了自动轮播等重新开始
-    updateIndex(event.nativeEvent.contentOffset)
+    updateIndex(event.nativeEvent.contentOffset, true)
   }
 
   /**
@@ -208,7 +234,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   function onScrollEndDrag (event: NativeSyntheticEvent<NativeScrollEvent>) {
     const { contentOffset } = event.nativeEvent
     const { index, total } = state
-
+    isDragRef.current = true
+    console.log('------------onScrollEndDrag------', contentOffset)
     const internalOffset = internalsRef.current.offset
     const previousOffset = props.horizontal ? internalOffset.x : internalOffset.y
     const newOffset = props.horizontal ? contentOffset.x : contentOffset.y
@@ -232,7 +259,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     }
 
     if (initRenderRef.current && state.total > 1) {
-      scrollViewRef.current?.scrollTo({ ...internalsRef.current.offset, animated: false })
+      console.log('--------------onItemLayout---')
+      scrollViewRef.current?.scrollTo({ ...internalsRef.current.offset, animated: true })
       initRenderRef.current = false
     }
     setState((preState) => {
@@ -246,6 +274,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
    * 水平方向时，获取单个元素的布局，更新
   */
   function onWrapperLayout () {
+    console.log('--------------onWrapperLayout---')
     if (props.enableOffset) {
       // @ts-ignore
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
@@ -258,7 +287,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       state.offset = internalsRef.current.offset
     }
     if (!initRenderRef.current && state.total > 1) {
-      scrollViewRef.current?.scrollTo({ ...state.offset, animated: false })
+      scrollViewRef.current?.scrollTo({ ...state.offset, animated: true })
       initRenderRef.current = false
     }
   }
@@ -273,10 +302,11 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       bounces: false,
       scrollsToTop: false,
       removeClippedSubviews: true,
-      automaticallyAdjustContentInsets: false
+      automaticallyAdjustContentInsets: false,
+      style: [styleObj.height || {}, { transform: [{ translateX: fadeAnim }] }],
     }
     return (
-      <ScrollView
+      <Animated.ScrollView
         {...scrollElementProps}
         overScrollMode="always"
         contentOffset={state.offset}
@@ -285,7 +315,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
         onScrollEndDrag={onScrollEndDrag}
       >
         {pages}
-      </ScrollView>
+      </Animated.ScrollView>
     )
   }
 
@@ -328,7 +358,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       </View>
     )
   }
-
+  
   function renderPages () {
     const { width, height, total, children } = state
     const { circular, previousMargin, nextMargin, innerProps } = props
@@ -338,12 +368,21 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       // pages = ["2", "0", "1", "2", "0"]
       let pages = Array.isArray(children) && Object.keys(children) || []
       /* 无限循环的时候 */
+      /*
       if (circular) {
         pages.unshift(total - 1 + '')
         pages.push('0')
       }
+      */
       arrElements = pages.map((page, i) => {
-        let pageStyle2 = { width: width, height: height }
+        let commonStyle = { width: width, height: height }
+        let animatedValue = i * width
+        const animationStyles = {
+          transform: [
+            { translateX: animatedValue }
+          ]
+        }
+        /*
         const extraStyle = {} as {
           left? : number;
           marginLeft?: number;
@@ -358,10 +397,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
           extraStyle.marginLeft = - half
           extraStyle.paddingLeft = half
         }
+        */
+        // 给View通过transform定义位置
         return (
-          <View style={[pageStyle2, extraStyle]} key={ 'page' + i} onLayout={onItemLayout}>
+          <Animated.View style={[commonStyle]} key={ 'page' + i} onLayout={onItemLayout}>
             {children[+page]}
-          </View>
+          </Animated.View>
         )
       })
       return arrElements
@@ -382,14 +423,15 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   const strStyle: string = 'container_' + state.dir
   const eventProps = props.innerProps || {}
 
-  return (
+  return (<View>
     <View
-      style={[styles[strStyle], vStyle]}
+      style={[styles[strStyle], vStyle, styleObj]}
       {...eventProps}
       onLayout={onWrapperLayout}>
       {renderScrollView(pages)}
-      {props.showsPagination && renderPagination()}
-    </View>)
+    </View>
+    <View>{props.showsPagination && renderPagination()}</View>
+  </View>)
   
 })
 

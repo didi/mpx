@@ -1,7 +1,7 @@
-import { ScrollView } from 'react-native'
+import { ScrollView, StyleSheet } from 'react-native'
 import { JSX, MutableRefObject, forwardRef, useRef } from 'react'
 import { default as Carouse } from './carouse'
-import { SwiperProps } from './type'
+import { SwiperProps, ExtendedStyle } from './type'
 import useInnerProps from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 /**
@@ -17,11 +17,14 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
  * ✘ display-multiple-items
  * ✔ previous-margin
  * ✔ next-margin
+ * ✔ easing-function  ="easeOutCubic"
  * ✘ snap-to-edge
  */
 const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const { children } = props
   let innerLayout = useRef({})
+  // 打平 style 数组
+  const styleObj: ExtendedStyle = StyleSheet.flatten(props.style)
   const swiperProp = {
     circular: props.circular || false,
     current: props.current || 0,
@@ -32,11 +35,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     dotColor: props['indicator-color'] || "rgba(0, 0, 0, .3)",
     activeDotColor: props['indicator-active-color'] || '#000000',
     horizontal: props.vertical !== undefined ? !props.vertical : true,
-    style: props.style,
+    styleObj: styleObj || {},
     previousMargin: props['previous-margin'] ? parseInt(props['previous-margin']) : 0,
     nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
     enableOffset: props['enable-offset'] || false,
-    bindchange: props.bindchange
+    bindchange: props.bindchange,
+    easingFunction: props['easing-function']
   }
   const { nodeRef } = useNodesRef<ScrollView, SwiperProps>(props, ref, {
   })

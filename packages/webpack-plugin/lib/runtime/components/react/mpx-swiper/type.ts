@@ -11,8 +11,8 @@ export interface SwiperProps {
   'indicator-color'?: string;
   'indicator-active-color'?: string;
   vertical?: boolean;
-  style?: string;
-  easingFunction?: string;
+  style?: Array<Object>;
+  'easing-function'?: string;
   'previous-margin'?: string;
   'next-margin'?: string;
   'enable-offset'?: boolean;
@@ -38,6 +38,10 @@ export interface CarouseProps {
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   getInnerLayout: Function,
   innerProps: Object;
+  styleObj: {
+    height?: number;
+    width?: number
+  };
 }
 
 export interface CarouseState {
@@ -66,4 +70,9 @@ export interface ScrollElementProps {
   removeClippedSubviews: boolean,
   automaticallyAdjustContentInsets: boolean,
   horizontal: boolean
+}
+
+export type ExtendedStyle = {
+  height?: number,
+  width?: number
 }
