@@ -49,15 +49,18 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   const defaultWidth = styleObj?.width || width || 375
   const dir = props.horizontal === false ? 'y' : 'x'
   // state的offset默认值
-  const initIndex = props.circular ? props.current + 1: (props.current || 0)
-  const defaultX = defaultWidth * initIndex || 0
-  const defaultY = defaultHeight * initIndex || 0
+  // const initIndex = props.circular ? props.current + 1: (props.current || 0)
+  // 记录真正的下标索引, 不包括循环前后加入的索引, 游标
+  const initIndex = props.current || 0
+  // 这里要排除超过元素个数的设置
+  const initOffsetIndex = initIndex + (props.circular ? 1 : 0)
+  const defaultX = defaultWidth * initOffsetIndex || 0
+  const defaultY = defaultHeight * initOffsetIndex || 0
   // 内部存储上一次的offset值
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   // 默认设置为初次渲染
   const initRenderRef = useRef(true)
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
-  let loopJumpTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null) 
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
   const fadeAnim = useRef(new Animated.Value(0)).current; // 1:初始化动画属性
@@ -77,6 +80,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     children: newChild,
     width: defaultWidth || 375,
     height: defaultHeight,
+    // 真正的游标索引
     index: initIndex,
     total: Array.isArray(newChild) ? newChild.length : ( newChild ? 1 : 0),
     offset: {
@@ -114,25 +118,29 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     // 若是循环circular
     // 1. 当前索引-1, 初始化为最后一个索引, 且scrollView的偏移量设置为 每个元素的步长 * 一共多少个元素， 这里为什么不减一呢
     // 2. 当前索引>total, 初始化为第一个元素，且scrollView的偏移量设置为一个元素的步长
-    if (props.circular) {
-      if (state.index <= -1) {
-        newIndex = state.total - 1
-        scrollViewOffset[state.dir] = step * state.total
-        loopJump = true
-      } else if (newIndex >= state.total) {
+    if (props.circular ) {
+      if (newIndex > state.total - 1) {
         newIndex = 0
-        scrollViewOffset[state.dir] = 0
+        scrollViewOffset[state.dir] = step
+        loopJump = true
+      } else if (newIndex < 0) {
+        newIndex = state.total - 1
+        scrollViewOffset[state.dir] = step * state.total - 1
         loopJump = true
       }
+    } else {
+      scrollViewOffset[state.dir] = step * newIndex
     }
     // 存储当前的偏移量, 这里是不是只用存储初始值就好了????
     internalsRef.current.offset = scrollViewOffset
-    console.log('--------------updateIndex----', newIndex)
+    console.log('--------------updateIndex----', newIndex, scrollViewOffset)
     // 这里需不需要区分是否loop，初始化？？？？
     setState((preState) => {
       const newState =  {
         ...preState,
+        // 索引用来指示游标
         index: newIndex,
+        // offset用来指示当前scrollView的偏移量,用来计算拖拽的计算
         offset: scrollViewOffset,
         loopJump
       }
@@ -152,27 +160,23 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
    * 若是circular, 到第一个再往前索引会更新为total-1, 但是视觉是展示的最后一个
   */
   function startSwiperLoop () {
-    loopJumpTimerRef.current = setTimeout(() => {
-      let offset = { x: 0, y: 0, animated: true}
-      if (state.index > 0){
-        offset = props.horizontal ? { x: state.width * state.index, y: 0, animated: true } : { x: 0, y: state.height * state.index, animated: true }
+    let offset = { x: 0, y: 0, animated: true}
+    if (state.index > 0){
+      offset = props.horizontal ? { x: state.width * state.index, y: 0, animated: true } : { x: 0, y: state.height * state.index, animated: true }
+    }
+    if (props.circular) {
+      offset = props.horizontal ? { x: state.width * (state.index + 1), y: 0, animated: true } : { x: 0, y: state.height * (state.index + 1), animated: true }
+    }
+    console.log('--------------startSwiperLoop---', state.index, offset.x)
+    Animated.timing(
+      fadeAnim,
+      {
+        toValue: 0,
+        duration:  props.duration || 500,  // 动画时长
+        useNativeDriver: true,  // 启用原生动画驱动
       }
-      if (props.circular) {
-        offset = props.horizontal ? { x: state.width * (state.index + 1), y: 0, animated: true } : { x: 0, y: state.height * (state.index + 1), animated: true }
-      }
-      console.log('--------------startSwiperLoop---', state.index, offset.x)
-      // 这里可以设置transformX的值来变动么???
-      // scrollViewRef.current?.scrollTo(offset)
-      Animated.timing(
-        fadeAnim,
-        {
-          toValue: 0,
-          duration: 5000,  // 动画时长
-          useNativeDriver: true,  // 启用原生动画驱动
-        }
-      ).start();
-      internalsRef.current.offset = offset
-    }, props.duration || 500)
+    ).start();
+    internalsRef.current.offset = offset
   }
 
   /**
@@ -293,6 +297,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   }
 
   function renderScrollView (pages: ReactNode) {
+    const transformObj = state.dir === 'x' ? [{ translateX: fadeAnim }] : [{ translateY: fadeAnim }]
     let scrollElementProps = {
       ref: scrollViewRef,
       horizontal: props.horizontal,
@@ -303,7 +308,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       scrollsToTop: false,
       removeClippedSubviews: true,
       automaticallyAdjustContentInsets: false,
-      style: [styleObj.height || {}, { transform: [{ translateX: fadeAnim }] }],
+      style: [styleObj.height || {}, { transform: transformObj }],
     }
     return (
       <Animated.ScrollView
@@ -368,12 +373,10 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       // pages = ["2", "0", "1", "2", "0"]
       let pages = Array.isArray(children) && Object.keys(children) || []
       /* 无限循环的时候 */
-      /*
       if (circular) {
         pages.unshift(total - 1 + '')
         pages.push('0')
       }
-      */
       arrElements = pages.map((page, i) => {
         let commonStyle = { width: width, height: height }
         let animatedValue = i * width
