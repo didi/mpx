@@ -459,7 +459,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   const formatFontFamily = ({ prop, value }) => {
     // 去掉引号 取逗号分隔后的第一个
-    const newVal = value.replace(/(\"|\')|(\"|\')/g, '').trim()
+    const newVal = value.replace(/"|'/g, '').trim()
     const values = newVal.split(',').filter(i => i)
     if (!newVal || !values.length) {
       error(`The value of prop [${prop}: ${value}] is invaild, please check again`)
