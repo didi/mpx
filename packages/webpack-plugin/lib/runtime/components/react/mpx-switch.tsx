@@ -12,6 +12,8 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
 
+import { recordPerformance } from './performance'
+
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
   name?: string
@@ -25,6 +27,8 @@ interface _SwitchProps extends SwitchProps {
 }
 
 const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((props, ref): JSX.Element => {
+   const startTime = new Date().getTime()
+
   const {
     style = [],
     checked = false,
@@ -110,7 +114,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     />
   }
 
-  return (<Switch
+  const content = (<Switch
     {...innerProps}
     style={style}
     value={isChecked}
@@ -118,6 +122,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     thumbColor={ isChecked ? "#FFF" : "#f4f3f4"}
     ios_backgroundColor="#FFF"
   />)
+
+  recordPerformance(startTime, 'mpx-switch')
+  
+  return content
 })
 
 _Switch.displayName = 'mpx-switch'

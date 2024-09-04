@@ -36,6 +36,7 @@ import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEve
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { recordPerformance } from './performance'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -88,6 +89,8 @@ type ScrollAdditionalProps = {
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 };
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const {
     children,
     enhanced = false,
@@ -390,7 +393,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'white': ['#fff']
   }
 
-  return (
+  const content = (
     <ScrollView
       {...innerProps}
       refreshControl={refresherEnabled ? (
@@ -405,6 +408,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       {children}
     </ScrollView>
   );
+
+  recordPerformance(startTime, 'mpx-scroll-view')
+  
+  return content
 })
 
 _ScrollView.displayName = 'mpx-scroll-view';

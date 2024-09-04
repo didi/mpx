@@ -10,6 +10,7 @@ import MultiSelector from './multiSelector'
 import RegionSelector from './region'
 import { PickerProps, EventType, ValueType } from './type'
 import { FormContext, FormFieldValue } from '../context'
+import { recordPerformance } from '../performance'
 
 /**
  * ✔ mode
@@ -31,6 +32,8 @@ import { FormContext, FormFieldValue } from '../context'
  */
 
 const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
+  const startTime = new Date().getTime()
+
   const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange } = props
   let innerLayout = useRef({})
   const { nodeRef } = useNodesRef<View, PickerProps>(props, ref, {
@@ -133,20 +136,25 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     value: pickerValue as Array<string>,
     level: props.level || 'sub-district'
   }
-
+  
+  let content = null
   if (mode === 'selector') {
-    return <Selector {...selectorProps}></Selector>
+    content = <Selector {...selectorProps}></Selector>
   } else if (mode === 'multiSelector') {
-    return <MultiSelector {...multiProps}></MultiSelector>
+    content = <MultiSelector {...multiProps}></MultiSelector>
   } else if (mode === 'time') {
-    return <TimeSelector {...timeProps}></TimeSelector>
+    content = <TimeSelector {...timeProps}></TimeSelector>
   } else if (mode === 'date') {
-    return <DateSelector {...dateProps}></DateSelector>
+    content = <DateSelector {...dateProps}></DateSelector>
   } else if (mode === 'region') {
-    return <RegionSelector {...regionProps}></RegionSelector>
+    content = <RegionSelector {...regionProps}></RegionSelector>
   } else {
-    return <View>只支持selector, multiSelector, time, date, region 这些类型</View>
+    content = <View>只支持selector, multiSelector, time, date, region 这些类型</View>
   }
+
+  recordPerformance(startTime, 'mpx-picker')
+  
+  return content
 })
 
 _Picker.displayName = 'mpx-picker';

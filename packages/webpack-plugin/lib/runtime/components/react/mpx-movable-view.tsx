@@ -22,6 +22,7 @@ import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from '
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
+import { recordPerformance } from './performance'
 
 interface MovableViewProps {
   children: ReactNode;
@@ -55,6 +56,8 @@ const styles = StyleSheet.create({
 })
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+  
   const {
     children,
     friction = 7,
@@ -406,7 +409,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'vtouchmove'
   ], { layoutRef })
 
-  return (
+  const content = (
     <Animated.View
       {...innerProps}
       style={[styles.container, props.style, childrenStyle]}
@@ -414,6 +417,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       {children}
     </Animated.View>
   );
+
+  recordPerformance(startTime, 'mpx-movable-view')
+  
+  return content
 })
 
 _MovableView.displayName = 'mpx-movable-view'

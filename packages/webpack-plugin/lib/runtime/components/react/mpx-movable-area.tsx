@@ -7,6 +7,7 @@ import { JSX, useState, useEffect, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
+import { recordPerformance } from './performance'
 
 interface MovableAreaProps {
   style?: Record<string, any>;
@@ -16,6 +17,8 @@ interface MovableAreaProps {
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const { children, style, width = 10, height = 10 } = props;
   const [areaWidth, setAreaWidth] = useState(0);
   const [areaHeight, setAreaHeight] = useState(0);
@@ -45,7 +48,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     'style',
   ], { layoutRef })
 
-  return (
+  const content = (
     <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>
       <View
         {...innerProps}
@@ -55,6 +58,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       </View>
     </MovableAreaContext.Provider>
   );
+
+  recordPerformance(startTime, 'mpx-movable-area')
+  
+  return content
 })
 
 _MovableArea.displayName = 'mpx-movable-area';

@@ -14,6 +14,7 @@ import { Keyboard, TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
 import { omit } from './utils'
 import { HandlerRef } from './useNodesRef'
+import { recordPerformance } from './performance'
 
 export type TextareProps = Omit<
   InputProps & PrivateInputProps,
@@ -22,6 +23,8 @@ export type TextareProps = Omit<
 
 const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
   (props, ref): JSX.Element => {
+    const startTime = new Date().getTime()
+
     const restProps = omit(props, [
       'ref',
       'type',
@@ -29,7 +32,7 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
       'multiline',
       'confirm-hold',
     ])
-    return (
+    const content = (
       <Input
         ref={ref}
         multiline
@@ -38,6 +41,10 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
         {...restProps}
       />
     )
+
+    recordPerformance(startTime, 'mpx-textarea')
+  
+    return content
   }
 )
 

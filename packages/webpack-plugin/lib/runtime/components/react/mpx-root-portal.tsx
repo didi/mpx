@@ -3,14 +3,16 @@
  */
 import { ReactNode } from 'react'
 import { Portal } from '@ant-design/react-native'
+import { recordPerformance } from './performance'
 
 interface RootPortalProps {
   enable?: boolean
   children: ReactNode
 }
 const _RootPortal = (props: RootPortalProps) => {
+  const startTime = new Date().getTime()
   const { children, enable = true } = props
-  return enable ? (
+  const content = enable ? (
     // @ts-ignore
     <Portal>
       {children}
@@ -18,6 +20,10 @@ const _RootPortal = (props: RootPortalProps) => {
   ) : (
     <>{children}</>
   );
+
+  recordPerformance(startTime, 'mpx-root-portal')
+  
+  return content
 }
 
 _RootPortal.displayName = 'mpx-root-portal'

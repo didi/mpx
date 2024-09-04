@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { ReactNode, forwardRef, useRef } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { recordPerformance } from './performance'
 
 interface SwiperItemProps {
   'item-id'?: string;
@@ -10,6 +11,8 @@ interface SwiperItemProps {
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
+  const startTime = new Date().getTime()
+
   const { children, 'enable-offset': enableOffset } = props
   const layoutRef = useRef({})
   const { nodeRef } = useNodesRef(props, ref, {})
@@ -27,7 +30,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     'enable-offset'
   ], { layoutRef })
 
-  return (
+  const content = (
     <View
       ref={nodeRef}
       data-itemId={props['item-id']}
@@ -35,6 +38,10 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
       {children}
     </View>
   )
+
+  recordPerformance(startTime, 'mpx-swiper-item')
+  
+  return content
 })
 
 _SwiperItem.displayName = 'mpx-swiper-item';

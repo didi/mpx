@@ -19,6 +19,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, extractTextStyle, isText } from './utils'
 import Icon from './mpx-icon'
+import { recordPerformance } from './performance'
 
 export interface RadioProps {
   value?: string
@@ -68,6 +69,8 @@ const styles = StyleSheet.create({
 
 const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
   (props, ref): JSX.Element => {
+    const startTime = new Date().getTime()
+
     const {
       value = '',
       disabled = false,
@@ -214,7 +217,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
     }, [checked])
 
-    return (
+    const content = (
       <View {...innerProps}>
         <View style={defaultStyle}>
           <Icon
@@ -231,6 +234,10 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         {wrapChildren(children, [textStyle, labelTextStyle])}
       </View>
     )
+
+    recordPerformance(startTime, 'mpx-radio')
+  
+    return content
   }
 )
 

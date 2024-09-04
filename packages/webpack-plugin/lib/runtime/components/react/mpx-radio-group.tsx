@@ -18,6 +18,7 @@ import {
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { recordPerformance } from './performance'
 
 export interface radioGroupProps {
   name: string
@@ -31,6 +32,8 @@ const radioGroup = forwardRef<
   HandlerRef<View, radioGroupProps>,
   radioGroupProps
 >((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const {
     style = [],
     'enable-offset': enableOffset,
@@ -134,13 +137,17 @@ const radioGroup = forwardRef<
     }
   )
 
-  return (
+  const content = (
     <View {...innerProps}>
       <RadioGroupContext.Provider value={{ groupValue, notifyChange }}>
         {children}
       </RadioGroupContext.Provider>
     </View>
   )
+
+  recordPerformance(startTime, 'mpx-radio-group')
+  
+  return content
 })
 
 radioGroup.displayName = 'mpx-radio-group'

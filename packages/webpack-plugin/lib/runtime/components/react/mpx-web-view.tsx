@@ -8,6 +8,7 @@ import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } 
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { StyleSheet } from 'react-native'
+import { recordPerformance } from './performance'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -53,6 +54,8 @@ interface FormRef {
 }
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
 
   const defaultWebViewStyle = [
@@ -153,7 +156,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     })
   }
   // @ts-ignore
-  return(<Portal>
+  const content = (<Portal>
     <WebView
         style={[ ...defaultWebViewStyle ]}
         source={{ uri: src }}
@@ -164,6 +167,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         javaScriptEnabled={true}
     ></WebView>
   </Portal>)
+
+  recordPerformance(startTime, 'mpx-web-view')
+  
+  return content
 })
 
 _WebView.displayName = 'mpx-web-view'

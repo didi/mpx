@@ -4,6 +4,7 @@ import { PickerView } from '@ant-design/react-native'
 import useInnerProps from './getInnerListeners'
 import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { recordPerformance } from './performance'
 /**
  * ✔ value
  * ✔ bindchange
@@ -24,6 +25,8 @@ interface PickerViewProps {
 }
 
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
+  const startTime = new Date().getTime()
+  
   const { children, ...restProps } = props
   const layoutRef = useRef({})
   const { nodeRef } = useNodesRef(props, ref, {})
@@ -84,7 +87,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     }
   })
 
-  return (
+  const content = (
     <PickerView
     {...restProps}
     cols={columns}
@@ -97,6 +100,10 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     onChange={onChange}
     cascade={false}/>
   )
+
+  recordPerformance(startTime, 'mpx-picker-view')
+  
+  return content
 })
 
 _PickerView.displayName = 'mpx-picker-view';

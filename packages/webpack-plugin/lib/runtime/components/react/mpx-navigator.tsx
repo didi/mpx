@@ -14,6 +14,8 @@ import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxj
 
 import MpxView, { _ViewProps }  from './mpx-view'
 
+import { recordPerformance } from './performance'
+
 interface _NavigatorProps extends _ViewProps {
   ['open-type']: 'navigate' | 'redirect' | 'switchTab' | 'reLaunch' | 'navigateBack'
   url: string
@@ -21,6 +23,8 @@ interface _NavigatorProps extends _ViewProps {
 }
 
 const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const {
     children,
     'open-type': openType,
@@ -53,13 +57,17 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
     bindtap: handleClick
   })
 
-  return (
+  const content = (
     <MpxView
       {...innerProps}
     >
       {children}
     </MpxView>
   )
+
+  recordPerformance(startTime, 'mpx-navigator')
+  
+  return content
 })
 
 _Navigator.displayName = 'mpx-navigator'
