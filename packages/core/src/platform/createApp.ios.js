@@ -38,6 +38,8 @@ function createAppInstance (appData) {
 }
 
 export default function createApp (option, config = {}) {
+  global.performanceData = {}
+
   const appData = {}
 
   const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator, SafeAreaProvider } = global.__navigationHelper

@@ -7,6 +7,7 @@ import { JSX, useRef, forwardRef } from 'react'
 import { Text, StyleProp, TextStyle, Image} from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { recordPerformance } from './performance'
 
 export type IconType =
   | 'success'
@@ -41,6 +42,7 @@ const IconTypeMap = new Map<IconType, string>([
 
 const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
   (props, ref): JSX.Element => {
+    const startTime = new Date().getTime()
     const {
       type,
       size = 23,
@@ -90,7 +92,11 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       }
     )
 
-    return <Image {...innerProps} />
+    const content = <Image {...innerProps} />
+
+    recordPerformance(startTime, 'mpx-icon')
+  
+    return content
   }
 )
 

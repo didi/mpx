@@ -4,6 +4,7 @@ import { default as Carouse } from './carouse'
 import { SwiperProps } from './type'
 import useInnerProps from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import { recordPerformance } from '../performance'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -20,6 +21,7 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
  * ✘ snap-to-edge
  */
 const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
+  const startTime = new Date().getTime()
   const { children } = props
   let innerLayout = useRef({})
   const swiperProp = {
@@ -54,13 +56,19 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     innerLayout.current = layout.current
   }
 
-  return <Carouse
-    getInnerLayout={getInnerLayout}
-    innerProps={innerProps}
-    {...swiperProp}
-    {...innerProps}>
-    {children}
-  </Carouse>
+  const content = (
+    <Carouse
+      getInnerLayout={getInnerLayout}
+      innerProps={innerProps}
+      {...swiperProp}
+      {...innerProps}>
+      {children}
+    </Carouse>
+  )
+
+  recordPerformance(startTime, 'mpx-swiper')
+  
+  return content
 
 })
 _SwiperWrapper.displayName = 'mpx-swiper';

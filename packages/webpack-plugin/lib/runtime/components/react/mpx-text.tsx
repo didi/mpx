@@ -10,6 +10,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { PERCENT_REGEX } from './utils'
+import { recordPerformance } from './performance'
 
 
 interface _TextProps extends TextProps {
@@ -35,6 +36,7 @@ const transformStyle = (styleObj: TextStyle) => {
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
   const {
     style = [],
     children,
@@ -89,8 +91,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       }
     }, [])
 
-
-    return (
+    const content = (
       <Text
         style={{...defaultStyle, ...styleObj}}
         selectable={!!selectable || !!userSelect}
@@ -99,6 +100,10 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
         {children}
       </Text>
     )
+
+    recordPerformance(startTime, 'mpx-text')
+
+    return content
 })
 
 _Text.displayName = 'mpx-text'

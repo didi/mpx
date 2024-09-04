@@ -51,6 +51,7 @@ import { extractTextStyle, isText, every } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
+import { recordPerformance } from './performance'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -186,6 +187,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
 }
 
 const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
   const {
     size = 'default',
     type = 'default',
@@ -391,7 +393,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     }
   );
 
-  return (
+  const content = (
     <View
       {...innerProps}
       style={[
@@ -411,6 +413,10 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
       }
     </View>
   )
+
+  recordPerformance(startTime, 'mpx-button')
+  
+  return content
 })
 
 Button.displayName = 'mpx-button'

@@ -12,6 +12,7 @@ import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText} from './utils'
+import { recordPerformance } from './performance'
 
 
 type ExtendedViewStyle = ViewStyle & {
@@ -281,6 +282,7 @@ function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
   const {
     style = [],
     children,
@@ -382,7 +384,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
-  return (
+  const content = (
     <View
       {...innerProps}
       style={innerStyle}
@@ -390,6 +392,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       {wrapChildren(children, textStyle, imageStyle)}
     </View>
   )
+
+  recordPerformance(startTime, 'mpx-view')
+  
+  return content
 })
 
 _View.displayName = 'mpx-view'

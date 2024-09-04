@@ -59,6 +59,7 @@ import { parseInlineStyle, useUpdateEffect } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue } from './context'
+import { recordPerformance } from './performance'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -119,6 +120,8 @@ const keyboardTypeMap: Record<Type, string> = {
 }
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const {
     style = [],
     type = 'text',
@@ -370,7 +373,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     layoutRef
   })
 
-  return (
+  const content = (
     <TextInput
       {...innerProps}
       keyboardType={keyboardType as KeyboardTypeOptions}
@@ -408,6 +411,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       ]}
     />
   )
+
+  recordPerformance(startTime, 'mpx-input')
+  
+  return content
 })
 
 Input.displayName = 'mpx-input'

@@ -14,6 +14,7 @@ import {
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, extractTextStyle, isEmbedded, isText } from './utils'
+import { recordPerformance } from './performance'
 
 export interface LabelProps {
   for?: string
@@ -25,6 +26,7 @@ export interface LabelProps {
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   (props, ref): JSX.Element => {
+    const startTime = new Date().getTime()
     const {
       style = [],
       'enable-offset': enableOffset,
@@ -109,7 +111,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       }
     )
 
-    return <View {...innerProps}>{wrapChildren(children, textStyle)}</View>
+    const content = <View {...innerProps}>{wrapChildren(children, textStyle)}</View>
+
+    recordPerformance(startTime, 'mpx-label')
+  
+    return content
   }
 )
 

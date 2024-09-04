@@ -18,6 +18,7 @@ import {
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { recordPerformance } from './performance'
 
 export interface CheckboxGroupProps {
   name: string
@@ -31,6 +32,8 @@ const CheckboxGroup = forwardRef<
   HandlerRef<View, CheckboxGroupProps>,
   CheckboxGroupProps
 >((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const {
     style = [],
     'enable-offset': enableOffset,
@@ -134,13 +137,17 @@ const CheckboxGroup = forwardRef<
     }
   )
 
-  return (
+  const content = (
     <View {...innerProps}>
       <CheckboxGroupContext.Provider value={{ groupValue, notifyChange }}>
         {children}
       </CheckboxGroupContext.Provider>
     </View>
   )
+
+  recordPerformance(startTime, 'mpx-checkbox-group')
+  
+  return content
 })
 
 CheckboxGroup.displayName = 'mpx-checkbox-group'

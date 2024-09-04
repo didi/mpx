@@ -28,6 +28,7 @@ import {
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
+import { recordPerformance } from './performance'
 
 export type Mode =
   | 'scaleToFill'
@@ -105,6 +106,7 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize 
 // )
 
 const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): JSX.Element => {
+  const startTime = new Date().getTime()
   const {
     src = '',
     mode = 'scaleToFill',
@@ -305,7 +307,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   //   )
   // }
 
-  return (
+  const content = (
     <View
       style={[
         { width, height },
@@ -338,6 +340,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       }
     </View>
   )
+
+  recordPerformance(startTime, 'mpx-image')
+
+  return content
 })
 
 Image.displayName = 'mpx-image'

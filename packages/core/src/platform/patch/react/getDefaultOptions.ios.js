@@ -341,7 +341,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  let start = 0
   const defaultOptions = memo(forwardRef((props, ref) => {
+    // rawOptions.mpxFileResource
+    start = new Date().getTime()
     const instanceRef = useRef(null)
     const propsRef = useRef(props)
     let isFirst = false
@@ -393,7 +396,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return proxy.effect.run()
+    const result = proxy.effect.run()
+    // end
+    const source = rawOptions.mpxFileResource
+    if (global.performanceData[source]) {
+      global.performanceData[source].duration += new Date().getTime() - start
+      global.performanceData[source].count += 1
+    } else {
+      global.performanceData[source] = {}
+      global.performanceData[source].duration = new Date().getTime() - start
+      global.performanceData[source].count = 1
+    }
+    return result
   }))
 
   if (type === 'page') {

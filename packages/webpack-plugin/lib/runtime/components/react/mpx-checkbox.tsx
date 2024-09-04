@@ -30,6 +30,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { every, extractTextStyle, isText } from './utils'
 import { CheckboxGroupContext } from './context'
+import { recordPerformance } from './performance'
 
 interface Selection {
   value?: string
@@ -76,6 +77,8 @@ const styles = StyleSheet.create({
 
 const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
   (props, ref): JSX.Element => {
+    const startTime = new Date().getTime()
+
     const {
       value = '',
       disabled = false,
@@ -210,7 +213,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       }
     }, [checked])
 
-    return (
+    const content = (
       <View {...innerProps}>
         <View style={defaultStyle}>
           <Icon
@@ -223,6 +226,10 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         {wrapChildren(children, textStyle)}
       </View>
     )
+
+    recordPerformance(startTime, 'mpx-checkbox')
+  
+    return content
   }
 )
 

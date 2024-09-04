@@ -10,6 +10,7 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react';
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
+import { recordPerformance } from './performance'
 
 interface FormProps {
   style?: Record<string, any>;
@@ -23,6 +24,8 @@ interface FormProps {
 }
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormProps, ref): JSX.Element => {
+  const startTime = new Date().getTime()
+
   const { children, style } = props;
   const layoutRef = useRef({})
   const formValuesMap = useRef(new Map()).current
@@ -73,7 +76,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
     'bindreset'
   ], { layoutRef });
 
-  return (
+  const content = (
     <View
       {...innerProps}
     >
@@ -82,6 +85,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
       </FormContext.Provider>
     </View>
   );
+
+  recordPerformance(startTime, 'mpx-form')
+  
+  return content
 })
 
 _Form.displayName = 'mpx-form';
