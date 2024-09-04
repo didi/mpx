@@ -343,7 +343,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   let start = 0
   const defaultOptions = memo(forwardRef((props, ref) => {
-    // rawOptions.mpxFileResource
     start = new Date().getTime()
     const instanceRef = useRef(null)
     const propsRef = useRef(props)
@@ -397,7 +396,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
     const result = proxy.effect.run()
-    // end
+
     const source = rawOptions.mpxFileResource
     if (global.performanceData[source]) {
       global.performanceData[source].duration += new Date().getTime() - start
