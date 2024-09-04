@@ -246,17 +246,6 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
-  // // font-variant 转换
-  // const getFontVariant = ({ prop, value }) => {
-  //   if (/^()$/.test(prop)) {
-  //     error(`Property [${prop}] is not supported in React Native environment, please replace [font-variant]!`)
-  //   }
-  //   prop = 'font-variant'
-  //   // 校验枚举值
-  //
-  //   return verifyValues({ prop, value }) && ({ prop, value })
-  // }
-
   // background 相关属性的转换 Todo
   // 仅支持以下属性，不支持其他背景相关的属性
   // /^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
@@ -481,6 +470,17 @@ module.exports = function getSpec ({ warn, error }) {
     return { prop, value: values[0].trim() }
   }
 
+  const formatBoxShadow = ({ prop, value }, { mode }) => {
+    const cssMap = formatAbbreviation({ prop, value }, { mode })
+    if (mode === 'android') return cssMap
+    // ios 阴影需要额外设置 shadowOpacity=1
+    cssMap.push({
+      prop: 'shadowOpacity',
+      value: 1
+    })
+    return cssMap
+  }
+
   return {
     supportedModes: ['ios', 'android'],
     rules: [
@@ -518,6 +518,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'font-family',
         ios: formatFontFamily,
         android: formatFontFamily
+      },
+      {
+        test: 'box-shadow',
+        ios: formatBoxShadow,
+        android: formatBoxShadow
       },
       // 通用的简写格式匹配
       {
