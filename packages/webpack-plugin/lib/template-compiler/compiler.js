@@ -1052,7 +1052,7 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processStyleReact (el) {
+function processStyleReact (el, options) {
   // process class/wx:class/style/wx:style/wx:show for react native
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
@@ -1088,9 +1088,23 @@ function processStyleReact (el) {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
       name: 'hoverStyle',
-      // runtime helper
       value: `{{this.__getStyle(${staticClassExp})}}`
     }])
+  }
+
+  // 处理externalClasses，将其转换为style作为props传递
+  if (options.externalClasses) {
+    options.externalClasses.forEach((className) => {
+      let externalClass = getAndRemoveAttr(el, className).val || ''
+      externalClass = externalClass.replace(/\s+/g, ' ')
+      if (externalClass) {
+        const externalClassExp = parseMustacheWithContext(externalClass).result
+        addAttrs(el, [{
+          name: className,
+          value: `{{this.__getStyle(${externalClassExp})}}`
+        }])
+      }
+    })
   }
 }
 
@@ -1700,39 +1714,30 @@ function processRefReact (el, meta) {
       meta.refs = []
     }
     const all = !!forScopes.length
-    const key = val || `ref_rn_${++refId}`
-
     const refConf = {
-      key,
+      key: val,
       all,
       type
     }
 
     if (!val) {
+      refConf.key = `ref_rn_${++refId}`
       refConf.sKeys = []
-      let rawId
-      let rawClass
-      let rawDynamicClass
-      el.attrsList.forEach(({ name, value }) => {
-        if (name === 'id') {
-          rawId = value
-        } else if (name === 'class') {
-          rawClass = value
-        } else if (name === config[mode].directive.dynamicClass) {
-          rawDynamicClass = value
-        }
-      })
+      const rawId = el.attrsMap.id
+      const rawClass = el.attrsMap.class
+      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
       meta.computed = meta.computed || []
       if (rawId) {
         const staticId = parseMustacheWithContext(rawId).result
-        const computedIdKey = `_ri${++refId}`
+        const computedIdKey = `_ri${refId}`
         refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
         meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
       }
       if (rawClass || rawDynamicClass) {
         const staticClass = parseMustacheWithContext(rawClass).result
         const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        const computedClassKey = `_rc${++refId}`
+        const computedClassKey = `_rc${refId}`
         refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
         meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
       }
@@ -1742,7 +1747,7 @@ function processRefReact (el, meta) {
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${key}') }}`
+      value: `{{ this.__getRefVal('${refConf.key}') }}`
     }])
   }
 }
@@ -2599,7 +2604,7 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el)
+    processStyleReact(el, options)
     processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)

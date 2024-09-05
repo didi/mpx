@@ -281,7 +281,7 @@ flex-wrap: wrap-reverse;
 /* flex-direction */
 flex-flow: row;
 /* flex-direction|  flex-wrap*/
-flex-flow: row no-wrap;
+flex-flow: row nowrap;
 ```
 
 ### View Style
@@ -324,10 +324,10 @@ number: rpx，px, %
 padding: 2px;
 
 /* top and bottom | left and right */
-padding: 5% auto;
+padding: 5% 10%;
 
 /* top | left and right | bottom */
-padding: 1rpx auto 2rpx;
+padding: 1rpx 0 2rpx;
 
 /* top | right | bottom | left */
 padding: 1rpx 2rpx 2rpx ;
