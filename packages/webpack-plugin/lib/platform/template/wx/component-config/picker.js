@@ -8,9 +8,20 @@ module.exports = function ({ print }) {
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker'
+    },
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-picker'
     },
@@ -30,7 +41,9 @@ module.exports = function ({ print }) {
         swan: baiduPropLog,
         ali: aliPropLog,
         jd: jdPropLog,
-        qa: qaPropLog
+        qa: qaPropLog,
+        ios: iosPropLog,
+        android: androidPropLog
       }
     ],
     event: [
