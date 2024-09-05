@@ -21,12 +21,15 @@ export default function request (config) {
 
     const rawSuccess = config.success
     const rawFail = config.fail
+    // eslint-disable-next-line prefer-const
     let requestTask
     let cancelMsg
+    let cancelFlag = false
     const cancelToken = config.cancelToken
     if (cancelToken) {
       cancelToken.then((msg) => {
         cancelMsg = msg
+        cancelFlag = true
         requestTask && requestTask.abort()
       })
     }
@@ -37,11 +40,15 @@ export default function request (config) {
     }
     config.fail = function (res) {
       res = Object.assign({ requestConfig: config }, transformRes(res))
-      const err = cancelMsg !== undefined ? cancelMsg : res
-      typeof rawFail === 'function' && rawFail.call(this, err)
-      reject(err)
+      if (cancelFlag) {
+        res.errMsg = cancelMsg || res.errMsg
+        res.__CANCEL__ = true
+      }
+      typeof rawFail === 'function' && rawFail.call(this, res)
+      reject(res)
     }
 
-    return requestApi(config)
+    requestTask = requestApi(config)
+    return requestTask
   })
 }
