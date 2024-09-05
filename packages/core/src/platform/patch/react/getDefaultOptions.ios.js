@@ -10,7 +10,7 @@ import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
 
-function getSystemInfo () {
+function getSystemInfo() {
   const window = ReactNative.Dimensions.get('window')
   const screen = ReactNative.Dimensions.get('screen')
   return {
@@ -24,7 +24,7 @@ function getSystemInfo () {
   }
 }
 
-function getRootProps (props) {
+function getRootProps(props) {
   const rootProps = {}
   for (const key in props) {
     if (hasOwn(props, key)) {
@@ -37,7 +37,7 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createEffect (proxy, components, props) {
+function createEffect(proxy, components, props) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -61,12 +61,12 @@ function createEffect (proxy, components, props) {
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
+function createInstance({ propsRef, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
-    setData (data, callback) {
+    setData(data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
-    __getProps () {
+    __getProps() {
       const propsData = {}
       const props = propsRef.current
       Object.keys(validProps).forEach((key) => {
@@ -85,7 +85,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       })
       return propsData
     },
-    __getSlot (name) {
+    __getSlot(name) {
       const { children } = propsRef.current
       if (children) {
         const result = []
@@ -114,7 +114,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
     // render helper
-    _i (val, fn) {
+    _i(val, fn) {
       let i, l, keys, key
       const result = []
       if (Array.isArray(val) || typeof val === 'string') {
@@ -134,7 +134,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       }
       return result
     },
-    triggerEvent (eventName, eventDetail) {
+    triggerEvent(eventName, eventDetail) {
       const props = propsRef.current
       const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
       if (handler && typeof handler === 'function') {
@@ -158,36 +158,36 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         handler.call(this, eventObj)
       }
     },
-    selectComponent (selector) {
+    selectComponent(selector) {
       return this.__selectRef(selector, 'component')
     },
-    selectAllComponents (selector) {
+    selectAllComponents(selector) {
       return this.__selectRef(selector, 'component', true)
     },
-    createSelectorQuery () {
+    createSelectorQuery() {
       return createSelectorQuery().in(this)
     },
-    createIntersectionObserver () {
+    createIntersectionObserver() {
       error('createIntersectionObserver is not supported in react native, please use ref instead')
     },
     ...rawOptions.methods
   }, {
     dataset: {
-      get () {
+      get() {
         const props = propsRef.current
         return collectDataset(props)
       },
       enumerable: true
     },
     id: {
-      get () {
+      get() {
         const props = propsRef.current
         return props.id
       },
       enumerable: true
     },
     props: {
-      get () {
+      get() {
         return propsRef.current
       },
       enumerable: true
@@ -237,7 +237,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   return instance
 }
 
-function hasPageHook (mpxProxy, hookNames) {
+function hasPageHook(mpxProxy, hookNames) {
   const options = mpxProxy.options
   const type = options.__type__
   return hookNames.some(h => {
@@ -277,7 +277,7 @@ const triggerResizeEvent = (mpxProxy) => {
   }
 }
 
-function usePageContext (mpxProxy, instance) {
+function usePageContext(mpxProxy, instance) {
   const { pageId } = useContext(routeContext) || {}
 
   instance.getPageId = () => {
@@ -310,7 +310,7 @@ function usePageContext (mpxProxy, instance) {
 const pageStatusContext = reactive({})
 let pageId = 0
 
-function usePageStatus (navigation, pageId) {
+function usePageStatus(navigation, pageId) {
   let isFocused = true
   set(pageStatusContext, pageId, '')
   useEffect(() => {
@@ -337,13 +337,26 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
-export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
+export function getDefaultOptions({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  let start = 0
+
   const defaultOptions = memo(forwardRef((props, ref) => {
-    start = new Date().getTime()
+    const start = +new Date()
+    const source = rawOptions.mpxFileResource
+    if (!global.performanceData[source]) {
+      global.performanceData[source] = {
+        duration: 0,
+        minDuration: Infinity,
+        maxDuration: 0,
+        stage1: 0,
+        stage2: 0,
+        stage3: 0,
+        stage4: 0,
+        count: 0
+      }
+    }
     const instanceRef = useRef(null)
     const propsRef = useRef(props)
     let isFirst = false
@@ -362,6 +375,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const proxy = instance.__mpxProxy
 
     proxy.callHook(REACTHOOKSEXEC)
+    const stage1 = +new Date()
+    global.performanceData[source].stage1 += stage1 - start
 
     if (!isFirst) {
       // 处理props更新
@@ -373,6 +388,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       })
       proxy.propsUpdated()
     }
+    const stage2 = +new Date()
+    global.performanceData[source].stage2 += stage2 - stage1
 
     usePageContext(proxy, instance)
 
@@ -394,18 +411,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }, [])
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
+    const stage3 = +new Date()
+    global.performanceData[source].stage3 += stage3 - stage2
 
     const result = proxy.effect.run()
-
-    const source = rawOptions.mpxFileResource
-    if (global.performanceData[source]) {
-      global.performanceData[source].duration += new Date().getTime() - start
-      global.performanceData[source].count += 1
-    } else {
-      global.performanceData[source] = {}
-      global.performanceData[source].duration = new Date().getTime() - start
-      global.performanceData[source].count = 1
-    }
+    const stage4 = +new Date()
+    const duration = stage4 - start
+    global.performanceData[source].stage4 += stage4 - stage3
+    global.performanceData[source].duration += duration
+    global.performanceData[source].minDuration = Math.min(duration, global.performanceData[source].minDuration)
+    global.performanceData[source].maxDuration = Math.max(duration, global.performanceData[source].maxDuration)
+    global.performanceData[source].count++
     return result
   }))
 

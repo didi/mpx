@@ -11,7 +11,7 @@ import useInnerProps from './getInnerListeners'
 // @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText} from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText } from './utils'
 import { recordPerformance } from './performance'
 
 
@@ -22,7 +22,7 @@ type ExtendedViewStyle = ViewStyle & {
 
 export interface _ViewProps extends ViewProps {
   style?: Array<ExtendedViewStyle>
-  children?: ReactNode | ReactNode []
+  children?: ReactNode | ReactNode[]
   hoverStyle?: Array<ExtendedViewStyle>
   ['hover-start-time']?: number
   ['hover-stay-time']?: number
@@ -37,7 +37,7 @@ type Obj = Record<string, any>
 
 type GroupData = Record<string, Record<string, any>>;
 
-type Handler = (...args: any []) => void
+type Handler = (...args: any[]) => void
 
 type Size = {
   width: number,
@@ -48,7 +48,7 @@ type DimensionValue = number | 'auto' | `${number}%`
 
 type PreImageInfo = {
   src?: string,
-  sizeList: DimensionValue []
+  sizeList: DimensionValue[]
 }
 
 type ImageProps = {
@@ -58,7 +58,7 @@ type ImageProps = {
 
 const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
-function groupBy(style: Obj, callback: (key: string, val: string) => string, group:GroupData = {}):GroupData {
+function groupBy(style: Obj, callback: (key: string, val: string) => string, group: GroupData = {}): GroupData {
   let groupKey = ''
   for (let key in style) {
     if (style.hasOwnProperty(key)) { // 确保处理对象自身的属性
@@ -67,19 +67,19 @@ function groupBy(style: Obj, callback: (key: string, val: string) => string, gro
       if (!group[groupKey]) {
         group[groupKey] = {}
       }
-      group[groupKey][key] = val  
+      group[groupKey][key] = val
     }
   }
   return group
 }
 
-const applyHandlers = (handlers: Handler[] , args: any [] ) => {
+const applyHandlers = (handlers: Handler[], args: any[]) => {
   for (let handler of handlers) {
     handler(...args)
   }
 }
 
-const checkNeedLayout = (style: PreImageInfo) => {  
+const checkNeedLayout = (style: PreImageInfo) => {
   const [width, height] = style.sizeList
   return (PERCENT_REGEX.test(`${height}`) && width === 'auto') || (PERCENT_REGEX.test(`${width}`) && height === 'auto')
 }
@@ -102,12 +102,12 @@ function calculateSize(h: number, lh: number, ratio: number) {
 
   return {
     width,
-    height 
+    height
   }
 }
 
 // background-size 转换
-function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
+function backgroundSize(imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   let sizeList = preImageInfo.sizeList
   if (!sizeList) return
   // 枚举值
@@ -129,9 +129,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       if (!dimensions) return
       newWidth = dimensions.width
       newHeight = dimensions.height
-    }else if (height === 'auto') { // auto px/rpx/%
+    } else if (height === 'auto') { // auto px/rpx/%
       if (!imageSize) return
-      const dimensions = calculateSize(width as number, layoutInfo?.width,  imageSizeHeight / imageSizeWidth)
+      const dimensions = calculateSize(width as number, layoutInfo?.width, imageSizeHeight / imageSizeWidth)
       if (!dimensions) return
       newHeight = dimensions.width
       newWidth = dimensions.height
@@ -164,7 +164,7 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
     }
   }
 
-  applyHandlers([ backgroundSize, backgroundImage ],[imageProps, preImageInfo, imageSize, layoutInfo])
+  applyHandlers([backgroundSize, backgroundImage], [imageProps, preImageInfo, imageSize, layoutInfo])
   if (!imageProps?.src) return null
   return imageProps
 }
@@ -172,12 +172,12 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
 
 function preParseImage(imageStyle?: ExtendedViewStyle) {
 
-  const { backgroundImage, backgroundSize = [ "auto" ] } = imageStyle || {}
+  const { backgroundImage, backgroundSize = ["auto"] } = imageStyle || {}
   const src = parseUrl(backgroundImage)
 
-  let sizeList = backgroundSize.slice() as DimensionValue []
+  let sizeList = backgroundSize.slice() as DimensionValue[]
 
-  sizeList.length === 1 &&  sizeList.push(sizeList[0])
+  sizeList.length === 1 && sizeList.push(sizeList[0])
 
   return {
     src,
@@ -203,13 +203,13 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   const { src, sizeList } = preImageInfo
 
   useEffect(() => {
-    if(!src) {
+    if (!src) {
       setShow(false)
       sizeInfo.current = null
       layoutInfo.current = null
-      return 
+      return
     }
-  
+
     if (!sizeList.includes('auto')) {
       setShow(true)
       return
@@ -223,7 +223,7 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       if (!needLayout || layoutInfo.current) {
         setImageSizeWidth(width)
         setImageSizeHeight(height)
-        if(layoutInfo.current) {
+        if (layoutInfo.current) {
           setLayoutInfoWidth(layoutInfo.current.width)
           setLayoutInfoHeight(layoutInfo.current.height)
         }
@@ -244,12 +244,12 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       setImageSizeWidth(sizeInfo.current.width)
       setImageSizeHeight(sizeInfo.current.height)
       setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height) 
+      setLayoutInfoHeight(height)
       setShow(true)
     }
   }
-  
-  return <View key='viewBgImg' {...needLayout ? {onLayout} : null }   style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden'}}>
+
+  return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
     {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
@@ -263,16 +263,16 @@ function splitStyle(styles: ExtendedViewStyle) {
   }, {})
 }
 
-function every(children: ReactNode [], callback: (children: ReactNode) => boolean) {
+function every(children: ReactNode[], callback: (children: ReactNode) => boolean) {
   return children.every((child) => callback(child))
 }
 
-function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
+function wrapChildren(children: ReactNode | ReactNode[], textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
   children = Array.isArray(children) ? children : [children]
-  if (every(children as ReactNode[], (child)=>isText(child))) {
+  if (every(children as ReactNode[], (child) => isText(child))) {
     children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
   } else {
-    if(textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
+    if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
   return [
@@ -282,7 +282,21 @@ function wrapChildren(children: ReactNode | ReactNode [] , textStyle?: StyleProp
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
-  const startTime = new Date().getTime()
+  const start = new Date().getTime()
+  const source = 'mpx-view'
+  if (!global.performanceData[source]) {
+    global.performanceData[source] = {
+      duration: 0,
+      minDuration: Infinity,
+      maxDuration: 0,
+      stage1: 0,
+      stage2: 0,
+      stage3: 0,
+      stage4: 0,
+      stage5: 0,
+      count: 0
+    }
+  }
   const {
     style = [],
     children,
@@ -297,9 +311,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const layoutRef = useRef({})
 
   // 打平 style 数组
-  const styleObj:ExtendedViewStyle = StyleSheet.flatten(style)
+  const styleObj: ExtendedViewStyle = StyleSheet.flatten(style)
   // 默认样式
-  const defaultStyle:ExtendedViewStyle = {
+  const defaultStyle: ExtendedViewStyle = {
     // flex 布局相关的默认样式
     ...styleObj.display === 'flex' && {
       flexDirection: 'row',
@@ -308,10 +322,20 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       flexWrap: 'nowrap'
     }
   }
+  const { textStyle, imageStyle, innerStyle } = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([
+    defaultStyle,
+    styleObj,
+    ...(isHover ? hoverStyle as Array<ExtendedViewStyle> : [])]
+  ))
+
+  const stage1 = +new Date()
+  global.performanceData[source].stage1 += stage1 - start
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
     defaultStyle
   })
+  const stage2 = +new Date()
+  global.performanceData[source].stage2 += stage2 - stage1
 
   const dataRef = useRef<{
     startTimer?: ReturnType<typeof setTimeout>
@@ -340,30 +364,26 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     }, +hoverStayTime)
   }
 
-  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>){
+  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
     const { bindtouchstart } = props;
     bindtouchstart && bindtouchstart(e)
     setStartTimer()
   }
 
-  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>){
+  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
     const { bindtouchend } = props;
     bindtouchend && bindtouchend(e)
     setStayTimer()
   }
 
   const onLayout = () => {
-  
+
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
 
-  const {textStyle, imageStyle, innerStyle} = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([ 
-    defaultStyle,
-    styleObj,
-    ...(isHover ? hoverStyle as Array<ExtendedViewStyle> : [])]
-  ))
+
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -384,17 +404,32 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
+  const stage3 = +new Date()
+  global.performanceData[source].stage3 += stage3 - stage2
+
+  const wrappedChildren = wrapChildren(children, textStyle, imageStyle)
+
+  const stage4 = +new Date()
+  global.performanceData[source].stage4 += stage4 - stage3
+
+
   const content = (
     <View
       {...innerProps}
       style={innerStyle}
     >
-      {wrapChildren(children, textStyle, imageStyle)}
+      {wrappedChildren}
     </View>
   )
 
-  recordPerformance(startTime, 'mpx-view')
-  
+  const stage5 = +new Date()
+  const duration = stage5 - start
+  global.performanceData[source].stage5 += stage5 - stage4
+  global.performanceData[source].duration += duration
+  global.performanceData[source].minDuration = Math.min(duration, global.performanceData[source].minDuration)
+  global.performanceData[source].maxDuration = Math.max(duration, global.performanceData[source].maxDuration)
+  global.performanceData[source].count++
+
   return content
 })
 

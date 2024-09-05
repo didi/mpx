@@ -1,0 +1,157 @@
+{
+  "/Users/didi/Work/Code/mp-apphome/node_modules/.pnpm/@didi+mpx-ui@2.2.182/node_modules/@didi/mpx-ui/src/components/icon/icon.mpx": {
+    "count": 3,
+    "duration": 1,
+    "maxDuration": 1,
+    "minDuration": 0,
+    "stage1": 1,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 0
+  },
+  "/Users/didi/Work/Code/mp-apphome/node_modules/.pnpm/@didi+mpx-ui@2.2.182/node_modules/@didi/mpx-ui/src/components/loading/index.mpx": {
+    "count": 1,
+    "duration": 1,
+    "maxDuration": 1,
+    "minDuration": 1,
+    "stage1": 0,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 1
+  },
+  "/Users/didi/Work/Code/mp-apphome/node_modules/.pnpm/@didi+mpx-ui@2.2.182/node_modules/@didi/mpx-ui/src/components/special-text/index.mpx": {
+    "count": 124,
+    "duration": 26,
+    "maxDuration": 3,
+    "minDuration": 0,
+    "stage1": 8,
+    "stage2": 0,
+    "stage3": 2,
+    "stage4": 16 // mark
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/components/universal-card.mpx": {
+    "count": 9,
+    "duration": 6,
+    "maxDuration": 3,
+    "minDuration": 0,
+    "stage1": 1,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 5
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/classify/classify-nav.mpx": {
+    "count": 3,
+    "duration": 3,
+    "maxDuration": 1,
+    "minDuration": 1,
+    "stage1": 0,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 3
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/classify/index.mpx": {
+    "count": 4,
+    "duration": 32,
+    "maxDuration": 23, // mark
+    "minDuration": 2,
+    "stage1": 22,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 10
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/common-order/components/new-order-btn.mpx": {
+    "count": 13,
+    "duration": 5,
+    "maxDuration": 2,
+    "minDuration": 0,
+    "stage1": 1,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 4
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/components/back.mpx": {
+    "count": 5,
+    "duration": 0,
+    "maxDuration": 0,
+    "minDuration": 0,
+    "stage1": 0,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 0
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/components/form-wrapper/index.mpx": {
+    "count": 11,
+    "duration": 82,
+    "maxDuration": 22, // mark
+    "minDuration": 0,
+    "stage1": 7,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 75 // mark
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/components/priceMultiLoad.mpx": {
+    "count": 1,
+    "duration": 8,
+    "maxDuration": 8,
+    "minDuration": 8,
+    "stage1": 1,
+    "stage2": 0,
+    "stage3": 0,
+    "stage4": 7 // mark
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/new-estimate/car-item/index.mpx": {
+    "count": 42,
+    "duration": 107,
+    "maxDuration": 11,
+    "minDuration": 1,
+    "stage1": 12,
+    "stage2": 0,
+    "stage3": 1,
+    "stage4": 94 // mark
+  },
+  "/Users/didi/Work/Code/mp-apphome/src/subpackage/estimate/pages/new-estimate.mpx": {
+    "count": 5,
+    "duration": 23,
+    "maxDuration": 22, // mark
+    "minDuration": 0,
+    "stage1": 19,
+    "stage2": 0,
+    "stage3": 1,
+    "stage4": 3
+  },
+  "mpx-button": {
+    "count": 19,
+    "duration": 2
+  },
+  "mpx-image": {
+    "count": 184,
+    "duration": 10
+  },
+  "mpx-movable-area": {
+    "count": 11,
+    "duration": 1
+  },
+  "mpx-movable-view": {
+    "count": 11,
+    "duration": 3
+  },
+  "mpx-scroll-view": { // mark
+    "count": 22,
+    "duration": 7
+  },
+  "mpx-text": {
+    "count": 42,
+    "duration": 0
+  },
+  "mpx-view": { // mark
+    "count": 1767,
+    "duration": 204,
+    "maxDuration": 7, // mark
+    "minDuration": 0,
+    "stage1": 54,
+    "stage2": 6,
+    "stage3": 61,
+    "stage4": 47,
+    "stage5": 36
+  }
+}
