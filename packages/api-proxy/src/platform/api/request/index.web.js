@@ -67,18 +67,22 @@ function request (options = { url: '' }) {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
-      header: res.headers
+      header: res.headers,
+      ...res
     }
     defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
     successHandle(result, success, complete)
     return result
   }).catch(err => {
+    const realError = err || {}
     const response = err?.response || {}
     const res = {
       errMsg: `request:fail ${err}`,
       statusCode: response.status,
       header: response.headers,
-      data: response.data
+      data: response.data,
+      stack: realError.stack,
+      ...realError
     }
     failHandle(res, fail, complete)
   })
