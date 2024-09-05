@@ -13,7 +13,7 @@ const getConnectionType = function (connectionInfo) {
   return type
 }
 
-const getNetworkType = function (options) {
+const getNetworkType = function (options = {}) {
   const { success, fail, complete } = options
   NetInfo.fetch().then((connectionInfo) => {
     const result = {
