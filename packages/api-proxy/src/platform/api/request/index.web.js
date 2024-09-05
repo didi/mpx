@@ -75,7 +75,7 @@ function request (options = { url: '' }) {
     return result
   }).catch(err => {
     const realError = err || {}
-    const response = err?.response || {}
+    const response = realError.response || {}
     const res = {
       errMsg: `request:fail ${err}`,
       statusCode: response.status,
