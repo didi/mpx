@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, isFunction, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction } from '@mpxjs/utils'
 import { Dimensions } from 'react-native'
 
 function concat (a, b) {
@@ -41,8 +41,8 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
+const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
+const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 
 function parseStyleText (cssText) {
   const res = {}
@@ -106,8 +106,12 @@ export default function styleHelperMixin (type) {
         // px = rpx * (750 / 屏幕宽度)
         return value * width / 750
       },
+      __getClass (staticClass, dynamicClass) {
+        return concat(staticClass, stringifyDynamicClass(dynamicClass))
+      },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
-        const result = []
+        // todo 每次返回新对象会导致react memo优化失效，需要考虑优化手段
+        const result = {}
         const classMap = {}
         if (type === 'page' && isFunction(global.__getAppClassMap)) {
           Object.assign(classMap, global.__getAppClassMap.call(this))
@@ -115,22 +119,25 @@ export default function styleHelperMixin (type) {
         if (isFunction(this.__getClassMap)) {
           Object.assign(classMap, this.__getClassMap())
         }
-        if ((staticClass || dynamicClass) && !isEmptyObject(classMap)) {
+        if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
-          classString.split(' ').forEach((className) => {
+          classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              result.push(classMap[className])
+              Object.assign(result, classMap[className])
+            } else if (this.props[className] && isObject(this.props[classMap])) {
+              // externalClasses必定以对象形式传递下来
+              Object.assign(result, this.props[className])
             }
           })
         }
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign(parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          result.push(transformStyleObj(this, styleObj))
+          Object.assign(result, transformStyleObj(this, styleObj))
         }
 
         if (show === false) {
-          result.push({
+          Object.assign(result, {
             display: 'none'
           })
         }

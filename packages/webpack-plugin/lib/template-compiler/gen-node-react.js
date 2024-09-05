@@ -61,7 +61,7 @@ function genNode (node) {
           } else {
             exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
             if (node.isRoot) {
-              exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
+              exp += `, Object.assign({}, rootProps, {style: Object.assign({}, ${attrExpMap.style}, rootProps.style)})`
             } else if (node.attrsList.length) {
               const attrs = []
               node.attrsList && node.attrsList.forEach(({ name, value }) => {

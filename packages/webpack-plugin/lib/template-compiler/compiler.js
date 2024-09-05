@@ -1052,7 +1052,7 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processStyleReact (el) {
+function processStyleReact (el, options) {
   // process class/wx:class/style/wx:style/wx:show for react native
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
@@ -1088,9 +1088,23 @@ function processStyleReact (el) {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
       name: 'hoverStyle',
-      // runtime helper
       value: `{{this.__getStyle(${staticClassExp})}}`
     }])
+  }
+
+  // 处理externalClasses，将其转换为style作为props传递
+  if (options.externalClasses) {
+    options.externalClasses.forEach((className) => {
+      let externalClass = getAndRemoveAttr(el, className).val || ''
+      externalClass = externalClass.replace(/\s+/g, ' ')
+      if (externalClass) {
+        const externalClassExp = parseMustacheWithContext(externalClass).result
+        addAttrs(el, [{
+          name: className,
+          value: `{{this.__getStyle(${externalClassExp})}}`
+        }])
+      }
+    })
   }
 }
 
@@ -1121,12 +1135,12 @@ function getModelConfig (el, match) {
   }
 }
 
-function processEventReact (el, options, meta) {
+function processEventReact (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1153,12 +1167,14 @@ function processEventReact (el, options, meta) {
       // } else {
       //   stringifiedModelValue = stringify(modelValue)
       // }
-      if (!eventConfigMap[modelEvent]) {
-        eventConfigMap[modelEvent] = {
+      // todo 未来可能需要支持类似modelEventPrefix这样的配置来声明model事件的绑定方式
+      const modelEventType = config[mode].event.getEvent(modelEvent)
+      if (!eventConfigMap[modelEventType]) {
+        eventConfigMap[modelEventType] = {
           configs: []
         }
       }
-      eventConfigMap[modelEvent].configs.unshift({
+      eventConfigMap[modelEventType].configs.unshift({
         hasArgs: true,
         expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
       })
@@ -1172,11 +1188,8 @@ function processEventReact (el, options, meta) {
   }
 
   // let wrapper
-
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
-
-    let resultName
     configs.forEach(({ name }) => {
       if (name) {
         // 清空原始事件绑定
@@ -1184,21 +1197,15 @@ function processEventReact (el, options, meta) {
         do {
           has = getAndRemoveAttr(el, name).has
         } while (has)
-
-        if (!resultName) {
-          // 清除修饰符
-          resultName = name.replace(/\..*/, '')
-        }
       }
     })
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = resultName || config[mode].event.getEvent(type)
     const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
     addAttrs(el, [
       {
-        name,
+        name: type,
         value
       }
     ])
@@ -1698,23 +1705,49 @@ function processFor (el) {
 }
 
 function processRefReact (el, meta) {
-  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
+  const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
+
   // rn中只有内建组件能被作为node ref处理
   const type = el.isBuiltIn ? 'node' : 'component'
-  if (val) {
+  if (has) {
     if (!meta.refs) {
       meta.refs = []
     }
     const all = !!forScopes.length
-    meta.refs.push({
+    const refConf = {
       key: val,
       all,
       type
-    })
+    }
+
+    if (!val) {
+      refConf.key = `ref_rn_${++refId}`
+      refConf.sKeys = []
+      const rawId = el.attrsMap.id
+      const rawClass = el.attrsMap.class
+      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+      meta.computed = meta.computed || []
+      if (rawId) {
+        const staticId = parseMustacheWithContext(rawId).result
+        const computedIdKey = `_ri${refId}`
+        refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
+        meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
+      }
+      if (rawClass || rawDynamicClass) {
+        const staticClass = parseMustacheWithContext(rawClass).result
+        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+        const computedClassKey = `_rc${refId}`
+        refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
+        meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
+      }
+    }
+
+    meta.refs.push(refConf)
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${val}') }}`
+      value: `{{ this.__getRefVal('${refConf.key}') }}`
     }])
   }
 }
@@ -2571,8 +2604,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el)
-    processEventReact(el, options, meta)
+    processStyleReact(el, options)
+    processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)
     processAttrs(el, options)

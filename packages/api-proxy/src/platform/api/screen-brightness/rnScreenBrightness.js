@@ -1,7 +1,7 @@
 import * as Brightness from 'expo-brightness'
 import { successHandle, failHandle } from '../../../common/js'
 
-function getScreenBrightness (options) {
+function getScreenBrightness (options = {}) {
   const { success, fail, complete } = options
   Brightness.getBrightnessAsync().then(value => {
     const result = {
@@ -17,7 +17,7 @@ function getScreenBrightness (options) {
   })
 }
 
-function setScreenBrightness (options) {
+function setScreenBrightness (options = {}) {
   const { value, success, fail, complete } = options
   Brightness.setBrightnessAsync(value).then(() => {
     const result = {

@@ -29,11 +29,12 @@ export {
   UPDATED,
   BEFOREUNMOUNT,
   UNMOUNTED,
-  SERVERPREFETCH,
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  SERVERPREFETCH,
+  REACTHOOKSEXEC
 } from './core/innerLifecycle'
 
 export {
@@ -43,7 +44,6 @@ export {
   onUpdated,
   onBeforeUnmount,
   onUnmounted,
-  onServerPrefetch,
   onLoad,
   onShow,
   onHide,
@@ -55,7 +55,9 @@ export {
   onAddToFavorites,
   onPageScroll,
   onTabItemTap,
-  onSaveExitState
+  onSaveExitState,
+  onServerPrefetch,
+  onReactHooksExec
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
@@ -146,9 +148,9 @@ Mpx.config = {
     apiImplementations webview JSSDK接口 例如getlocation
    */
   webviewConfig: {},
-   /**
-   * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
-   */
+  /**
+  * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
+  */
   rnConfig: {}
 }
 

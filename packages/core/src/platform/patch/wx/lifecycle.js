@@ -4,7 +4,10 @@ import {
   MOUNTED,
   ONSHOW,
   ONHIDE,
-  ONLOAD
+  ONLOAD,
+  ONRESIZE,
+  SERVERPREFETCH,
+  REACTHOOKSEXEC
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
@@ -15,6 +18,7 @@ const APP_HOOKS = [
   'onPageNotFound',
   'onUnhandledRejection',
   'onThemeChange',
+  'onSSRAppCreated',
   'onAppInit'
 ]
 
@@ -42,7 +46,9 @@ const COMPONENT_HOOKS = [
   'moved',
   'detached',
   'pageShow',
-  'pageHide'
+  'pageHide',
+  'serverPrefetch',
+  'reactHooksExec'
 ]
 
 export const lifecycleProxyMap = {
@@ -52,7 +58,10 @@ export const lifecycleProxyMap = {
   [UNMOUNTED]: ['detached', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],
-  [ONLOAD]: ['onLoad']
+  [ONLOAD]: ['onLoad'],
+  [ONRESIZE]: ['onResize'],
+  [SERVERPREFETCH]: ['serverPrefetch'],
+  [REACTHOOKSEXEC]: ['reactHooksExec']
 }
 
 export const LIFECYCLE = {
