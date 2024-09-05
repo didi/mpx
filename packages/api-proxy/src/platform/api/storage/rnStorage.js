@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { envError, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import { hasOwn } from '@mpxjs/utils'
-function setStorage (options) {
+function setStorage (options = {}) {
   const { key, data, success, fail, complete } = options
   let obj = {}
   if (typeof data === 'symbol') {
@@ -26,7 +26,7 @@ function setStorage (options) {
 
 const setStorageSync = envError('setStorageSync')
 
-function getStorage (options) {
+function getStorage (options = {}) {
   const { key, success, fail, complete } = options
   if (!key) {
     const result = {
@@ -62,7 +62,7 @@ function getStorage (options) {
 
 const getStorageSync = envError('getStorageSync')
 
-function getStorageInfo (options) {
+function getStorageInfo (options = {}) {
   const { success, fail, complete } = options
   AsyncStorage.getAllKeys((err, keys) => {
     if (err) {
@@ -83,7 +83,7 @@ function getStorageInfo (options) {
 
 const getStorageInfoSync = envError('getStorageInfoSync')
 
-function removeStorage (options) {
+function removeStorage (options = {}) {
   const { key, success, fail, complete } = options
   AsyncStorage.removeItem(key, (err) => {
     if (err) {
@@ -104,7 +104,7 @@ function removeStorageSync (key) {
   AsyncStorage.removeItem(key)
 }
 
-function clearStorage (options) {
+function clearStorage (options = {}) {
   const { success, fail, complete } = options
   AsyncStorage.clear((err) => {
     if (err) {
