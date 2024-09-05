@@ -87,8 +87,8 @@ module.exports = function getSpec ({ warn, error }) {
     const type = getValueType(prop)
     const namedColor = ['aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^\s*(-?\d+(\.\d+)?)(rpx|px|%)?\s*$/,
-      color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb\\(|rgba\\(|hsl\\(|hsla\\(|hwb\\()')
+      number: /^(-?\d+(\.\d+)?)(rpx|px|%)?$/,
+      color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const tips = isError ? error : warn
     switch (type) {
@@ -396,8 +396,12 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  const isNumber = (value) => {
+    return !isNaN(+value)
+  }
+
   const getIntegersFlex = ({ prop, value }) => {
-    if (!isNaN(value - 0) && value >= 0) {
+    if (isNumber(value) && value >= 0) {
       return { prop, value }
     } else {
       error(`The value of ${prop} accepts any floating point value >= 0.`)
@@ -413,7 +417,6 @@ module.exports = function getSpec ({ warn, error }) {
     }
     const cssMap = []
     const lastOne = values[values.length - 1]
-    const isPureNumber = !isNaN(lastOne - 0)
     const isAuto = lastOne === 'auto'
     // 枚举值 none initial
     if (values.includes('initial') || values.includes('none')) {
@@ -430,7 +433,16 @@ module.exports = function getSpec ({ warn, error }) {
     }
     // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
     // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
-    if (!isPureNumber) {
+    if (!isNumber(lastOne)) {
+      // 添加 grow 和 shrink
+      // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
+      // 单值 flex: 1 1 <flex-basis>
+      // 双值 flex: <flex-grow> 1 <flex-basis>
+      // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+      for (let i = 0; i < 2; i++) {
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) ? values[i] : 1 })
+        item && cssMap.push(item)
+      }
       if (!isAuto) {
         // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
         cssMap.push({
@@ -438,18 +450,16 @@ module.exports = function getSpec ({ warn, error }) {
           value: lastOne
         })
       }
-      // 添加 grow 和 shrink
-      // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
-      // 单值 flex: 1 1 <flex-basis>
-      // 双值 flex: <flex-grow> 1 <flex-basis>
-      // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
-      for (let i = 0; i < 2; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: !isNaN(values[i] - 0) ? values[i] : 1 })
-        item && cssMap.push(item)
-      }
       return cssMap
     }
     // 纯数值：value 按flex-grow flex-shrink flex-basis 顺序赋值
+    // 兜底 shrink & basis
+    if (values.length === 1) {
+      values.push(...[1, 0])
+    } else if (values.length === 2) {
+      values.push(0)
+    }
+    // 循环赋值
     for (let i = 0; i < values.length; i++) {
       const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
       item && cssMap.push(item)
