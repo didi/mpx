@@ -13,7 +13,6 @@ import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText} from './utils'
 
-
 type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
   backgroundSize?: ImageResizeMode
