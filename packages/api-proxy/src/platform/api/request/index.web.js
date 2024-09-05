@@ -32,7 +32,31 @@ function request (options = { url: '' }) {
     }, '').slice(1)
   }
 
-  const rOptions = {
+  /**
+   * axios 的其他参数
+   * baseURL
+   * transformRequest
+   * transformResponse,
+   * headers,
+   * params,
+   * paramsSerializer,
+   * withCredentials,
+   * adapter,
+   * auth,
+   * xsrfCookieName,
+   * xsrfHeaderName,
+   * onUploadProgress,
+   * onDownloadProgress,
+   * maxContentLength,
+   * maxBodyLength,
+   * validateStatus,
+   * maxRedirects,
+   * socketPath,
+   * httpAgent,
+   * httpsAgent,
+   * decompress
+   */
+  const rOptions = Object.assign(options, {
     method,
     url: options.url,
     data,
@@ -50,7 +74,7 @@ function request (options = { url: '' }) {
       // throw ETIMEDOUT error instead of generic ECONNABORTED on request timeouts
       clarifyTimeoutError: false
     }
-  }
+  })
   if (method === 'GET') {
     rOptions.params = rOptions.data || {}
     delete rOptions.data
