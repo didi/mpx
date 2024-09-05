@@ -340,7 +340,7 @@ module.exports = function getSpec ({ warn, error }) {
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\(([^)]+)\)/)
-      if (match.length >= 3) {
+      if (match && match.length >= 3) {
         let key = match[1]
         const val = match[2]
         switch (key) {
