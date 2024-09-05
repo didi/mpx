@@ -185,6 +185,10 @@ export default class XFetch {
     return false
   }
 
+  isCancel (value) {
+    return !!(value && value.__CANCEL__)
+  }
+
   fetch (config, priority) {
     // 检查缓存
     const responsePromise = this.checkPreCache(config)
