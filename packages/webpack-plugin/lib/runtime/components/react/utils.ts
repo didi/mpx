@@ -1,5 +1,6 @@
-import { useEffect, useRef, Children, ReactNode, FunctionComponent, isValidElement } from 'react'
-import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
+import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement } from 'react'
+import { StyleProp, StyleSheet, TextStyle, ViewStyle, AnimatableNumericValue } from 'react-native'
+import { ExtendedViewStyle } from './types/common'
 
 type GroupData = Record<string, Record<string, any>>
 
@@ -112,4 +113,23 @@ export function groupBy(obj: Record<string, any>, callback: (key: string, val: s
     }
   }
   return group
+}
+
+export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
+  const { borderRadius } = style
+  if (borderRadius && PERCENT_REGEX.test(borderRadius as string)) {
+    style.borderTopLeftRadius = borderRadius
+    style.borderBottomLeftRadius = borderRadius
+    style.borderBottomRightRadius = borderRadius
+    style.borderTopRightRadius = borderRadius
+    delete style.borderRadius
+  }
+  ['backgroundSize', 'backgroundPosition'].forEach(name => {
+    if (style[name] && typeof style[name] === 'string') {
+      if (style[name].trim()) {
+        style[name] = style[name].split(' ')
+     }
+    }
+  })
+  return style
 }

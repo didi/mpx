@@ -318,19 +318,6 @@ module.exports = function getSpec ({ warn, error }) {
         // value 无有效值时返回false
         return values.length === 0 ? false : { prop, value: values }
       }
-      case bgPropMap.position: {
-        const values = []
-        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
-          if (numberRegExp.test(item) || !isIllegalValue({ prop, value: item })) {
-            // 支持 number 值 / 枚举, center与50%等价
-            values.push(item === 'center' ? '50%' : item)
-          } else {
-            error(`background position value[${value}] does not support in React Native ${mode} environment!`)
-          }
-        })
-
-        return { prop, value: values }
-      }
       case bgPropMap.repeat: {
         // background-repeat 仅支持 no-repeat
         if (isIllegalValue({ prop, value })) {
