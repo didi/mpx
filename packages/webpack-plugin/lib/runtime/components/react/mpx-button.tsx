@@ -339,7 +339,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     if (every(children, (child) => isText(child))) {
       children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
     } else {
-      console.warn('Text style will be ignored unless every child of the Button is Text node!')
+      console.warn('Button\'s children only support text node or string.')
     }
 
     return children
