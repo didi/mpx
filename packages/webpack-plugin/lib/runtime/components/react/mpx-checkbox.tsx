@@ -39,7 +39,7 @@ interface Selection {
 export interface CheckboxProps extends Selection {
   disabled?: boolean
   color?: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   groupValue?: Array<string>
   'enable-offset'?: boolean
   children?: ReactNode
@@ -81,7 +81,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       disabled = false,
       checked = false,
       color = '#09BB07',
-      style = [],
+      style = {},
       'enable-offset': enableOffset,
       children,
       bindtap,
@@ -98,11 +98,11 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
-    const defaultStyle = StyleSheet.flatten([
-      styles.wrapper,
-      disabled && styles.wrapperDisabled,
-      style
-    ])
+    const defaultStyle = {
+      ...styles.wrapper,
+      ...(disabled && styles.wrapperDisabled || {}),
+      ...style
+    }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
@@ -152,11 +152,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     ) => {
       if (every(children, (child) => isText(child))) {
         if (textStyle?.length) {
-          children = [
-            <Text key='checkboxTextWrap' style={textStyle}>
-              {children}
-            </Text>
-          ]
+          children = <Text key='checkboxTextWrap' style={textStyle}>{children}</Text>
         }
       } else {
         if (textStyle)
@@ -185,7 +181,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       props,
       {
         ref: nodeRef,
-        style: [styles.container],
+        style: styles.container,
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
