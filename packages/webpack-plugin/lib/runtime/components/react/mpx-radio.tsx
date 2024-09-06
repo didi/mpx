@@ -9,7 +9,6 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle
