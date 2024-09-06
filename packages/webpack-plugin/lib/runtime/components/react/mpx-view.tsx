@@ -96,7 +96,6 @@ const applyHandlers = (handlers: Handler[] , args: any [] ) => {
 
 
 const checkNeedLayout = (style: PreImageInfo) => {
-  console.log(">>> style", style)
   const [width, height] = style.sizeList
   const bp = style.backgroundPosition
   // 含有百分号，center 需计算布局
