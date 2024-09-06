@@ -231,7 +231,7 @@ function wrapChildren(children: ReactNode | ReactNode[], props: _ViewProps, text
 
   if (every(children as ReactNode[], (child) => isText(child))) {
     if (textStyle || textProps) {
-      children = [<Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>]
+      children = <Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
     }
   } else {
     if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
@@ -269,7 +269,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const widthRelativeStyleProps = ['borderTopLeftRadius', 'borderBottomLeftRadius']
   const heightRelativeStyleProps = ['borderBottomRightRadius', 'borderTopRightRadius']
   const {
-    style = [],
+    style = {},
     children,
     hoverStyle,
     'hover-start-time': hoverStartTime = 50,
@@ -283,7 +283,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const layoutRef = useRef({})
 
   // 打平 style 数组
-  const styleObj: ExtendedViewStyle = normalizeStyle(StyleSheet.flatten(style))
+  const styleObj: ExtendedViewStyle = normalizeStyle(style)
   // 默认样式
   const defaultStyle: ExtendedViewStyle = {
     // flex 布局相关的默认样式
@@ -316,7 +316,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const setStartTimer = () => {
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(() => true)
+      setIsHover(true)
     }, +hoverStartTime)
   }
 
@@ -324,7 +324,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(() => false)
+      setIsHover(false)
     }, +hoverStayTime)
   }
 
@@ -372,11 +372,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       })
     }
   }
-  const { textStyle, imageStyle, innerStyle } = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([
-    defaultStyle,
-    styleObj,
-    ...(isHover ? hoverStyle : [])]
-  ))
+  const { textStyle, imageStyle, innerStyle } = splitStyle({
+    ...defaultStyle,
+    ...styleObj,
+    ...(isHover ? hoverStyle : null)
+  })
 
   const needLayout = enableOffset || hasPercentStyle
 

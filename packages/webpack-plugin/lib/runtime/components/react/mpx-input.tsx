@@ -118,7 +118,7 @@ const keyboardTypeMap: Record<Type, string> = {
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): React.JSX.Element => {
   const {
-    style = [],
+    style = {},
     type = 'text',
     value,
     password,
@@ -336,12 +336,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     ref: nodeRef,
     ...(enableOffset ? { onLayout } : {}),
   },
-  [
-    'enable-offset'
-  ],
-  {
-    layoutRef
-  })
+    [
+      'enable-offset'
+    ],
+    {
+      layoutRef
+    })
 
 
   return (
@@ -376,9 +376,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         },
         style,
         multiline &&
-          autoHeight && {
-            height: Math.max((style as any)?.minHeight || 35, contentHeight),
-          },
+        autoHeight && {
+          height: Math.max((style as any)?.minHeight || 35, contentHeight),
+        },
       ]}
     />
   )

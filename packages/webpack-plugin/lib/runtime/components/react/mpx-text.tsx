@@ -28,76 +28,74 @@ const DEFAULT_STYLE = {
 const transformStyle = (styleObj: TextStyle) => {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight)/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
     styleObj.lineHeight = lineHeight
   }
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const {
-    style = [],
+    style = {},
     children,
     selectable,
     'enable-offset': enableOffset,
     'user-select': userSelect,
     'disable-default-style': disableDefaultStyle = false,
-    } = props
+  } = props
 
-    const layoutRef = useRef({})
+  const layoutRef = useRef({})
 
-    const styleObj: TextStyle = StyleSheet.flatten<TextStyle>(style)
+  let defaultStyle = {}
 
-    let defaultStyle = {}
+  if (!disableDefaultStyle) {
+    defaultStyle = DEFAULT_STYLE
+    transformStyle(style)
+  }
 
-    if (!disableDefaultStyle) {
-      defaultStyle = DEFAULT_STYLE
-      transformStyle(styleObj)
-    }
+  const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
+    defaultStyle
+  })
 
-    const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
-      defaultStyle
-    })
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef
+  }, [
+    'style',
+    'children',
+    'selectable',
+    'user-select',
+    'useInherit',
+    'enable-offset'
+  ], {
+    layoutRef
+  })
 
-    const innerProps = useInnerProps(props, {
-      ref: nodeRef
-    }, [
-      'style',
-      'children',
-      'selectable',
-      'user-select',
-      'useInherit',
-      'enable-offset'
-    ], {
-      layoutRef
-    })
-
-    useEffect(() => {
-      let measureTimeout: ReturnType<typeof setTimeout> | null = null
-      if (enableOffset) {
-        measureTimeout = setTimeout(() => {
-          nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          })
+  useEffect(() => {
+    let measureTimeout: ReturnType<typeof setTimeout> | null = null
+    if (enableOffset) {
+      measureTimeout = setTimeout(() => {
+        nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         })
-        return () => {
-          if (measureTimeout) {
-            clearTimeout(measureTimeout)
-            measureTimeout = null
-          }
+      })
+      return () => {
+        if (measureTimeout) {
+          clearTimeout(measureTimeout)
+          measureTimeout = null
         }
       }
-    }, [])
+    }
+  }, [])
 
 
-    return (
-      <Text
-        style={{...defaultStyle, ...styleObj}}
-        selectable={!!selectable || !!userSelect}
-        {...innerProps}
-      >
-        {children}
-      </Text>
-    )
+  return (
+    <Text
+      style={{ ...defaultStyle, ...style }}
+      selectable={!!selectable || !!userSelect}
+      {...innerProps}
+    >
+      {children}
+    </Text>
+  )
 })
 
 _Text.displayName = 'mpx-text'

@@ -30,10 +30,10 @@ export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
  * @returns
  */
 export const extractTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
-  return Object.entries(StyleSheet.flatten(style)).reduce((textStyle, [key, value]) => {
+  return style && Object.entries(style).reduce((textStyle, [key, value]) => {
     TEXT_STYLE_REGEX.test(key) && Object.assign(textStyle, { [key]: value })
     return textStyle
-  }, {})
+  }, {}) || {}
 }
 
 /**

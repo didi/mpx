@@ -115,7 +115,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     src = '',
     mode = 'scaleToFill',
     // svg = false,
-    style = [],
+    style = {},
     'enable-offset': enableOffset,
     bindload,
     binderror

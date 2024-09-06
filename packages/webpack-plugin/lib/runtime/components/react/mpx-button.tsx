@@ -188,7 +188,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): React.JSX.Element => {
+const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): React.JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -196,12 +196,12 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     disabled = false,
     loading = false,
     'hover-class': hoverClass,
-    'hover-style': hoverStyle = [],
+    'hover-style': hoverStyle = {},
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
     'enable-offset': enableOffset,
-    style = [],
+    style = {},
     children,
     bindgetuserinfo,
     bindtap,
@@ -237,16 +237,16 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
   const plainBorderColor = disabled
     ? 'rgba(0, 0, 0, .2)'
     : applyHoverEffect
-    ? `rgba(${plainColor},.6)`
-    : `rgb(${plainColor})`
+      ? `rgba(${plainColor},.6)`
+      : `rgb(${plainColor})`
 
   const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
 
   const plainTextColor = disabled
     ? 'rgba(0, 0, 0, .2)'
     : applyHoverEffect
-    ? `rgba(${plainColor}, .6)`
-    : `rgb(${plainColor})`
+      ? `rgba(${plainColor}, .6)`
+      : `rgb(${plainColor})`
 
   const normalTextColor =
     type === 'default'
@@ -334,20 +334,20 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
   }
 
   function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
-    if (every(children, (child)=>isText(child))) {
-      children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
+    if (every(children, (child) => isText(child))) {
+      children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
     } else {
-      if(textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
+      if (textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
     }
-  
+
     return children
   }
 
   const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: StyleSheet.flatten([
+    defaultStyle: {
       ...defaultViewStyle,
       ...defaultTextStyle,
-    ])
+    }
   })
 
   const onLayout = () => {
@@ -369,7 +369,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     [
       'enable-offset'
     ],
-    { 
+    {
       layoutRef
     }
   );
@@ -385,7 +385,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
-          children, 
+          children,
           [
             ...defaultTextStyle,
             applyHoverEffect && textHoverStyle,
