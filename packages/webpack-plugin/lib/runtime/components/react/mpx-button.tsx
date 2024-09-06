@@ -335,11 +335,11 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
   }
 
-  function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
+  function wrapChildren(children: ReactNode, textStyle: StyleProp<TextStyle>) {
     if (every(children, (child) => isText(child))) {
       children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
     } else {
-      if (textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
+      console.warn('Text style will be ignored unless every child of the Button is Text node!')
     }
 
     return children
