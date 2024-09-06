@@ -87,13 +87,13 @@ function request (options = { url: '' }) {
       } catch (e) {
       }
     }
-    const result = {
+
+    const result = Object.assign(res || {}, {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
-      header: res.headers,
-      ...res
-    }
+      header: res.headers
+    })
     defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
     successHandle(result, success, complete)
     return result
