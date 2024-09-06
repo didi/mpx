@@ -57,9 +57,9 @@ module.exports = function getSpec ({ warn, error }) {
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
     'background-size': ['contain', 'cover', 'auto', ValueType.number],
     'background-repeat': ['no-repeat'],
-    // width: ['auto', ValueType.number],
-    // height: ['auto', ValueType.number],
-    // 'flex-basis': ['initial', 'auto', 'none', ValueType.number],
+    width: ['auto', ValueType.number],
+    height: ['auto', ValueType.number],
+    'flex-basis': ['auto', ValueType.number],
     margin: ['auto', ValueType.number],
     'margin-top': ['auto', ValueType.number],
     'margin-left': ['auto', ValueType.number],
@@ -73,7 +73,7 @@ module.exports = function getSpec ({ warn, error }) {
     const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
       [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
-      [ValueType.number, /^((width|height|opacity|flex-grow|flex-basis|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
+      [ValueType.number, /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
       [ValueType.color, /^(color|(.+-color))$/]
     ]
     for (const rule of propValueTypeRules) {
