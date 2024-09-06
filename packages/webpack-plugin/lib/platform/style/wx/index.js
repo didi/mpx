@@ -56,6 +56,7 @@ module.exports = function getSpec ({ warn, error }) {
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
     'background-size': ['contain', 'cover', 'auto', ValueType.number],
+    'background-position': ['left', 'right', 'top', 'bottom', 'center', ValueType.number],
     'background-repeat': ['no-repeat'],
     width: ['auto', ValueType.number],
     height: ['auto', ValueType.number],
@@ -255,7 +256,7 @@ module.exports = function getSpec ({ warn, error }) {
       color: 'background-color',
       size: 'background-size',
       repeat: 'background-repeat',
-      // position: 'background-position',
+      position: 'background-position',
       all: 'background'
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
@@ -291,6 +292,19 @@ module.exports = function getSpec ({ warn, error }) {
         })
         // value 无有效值时返回false
         return values.length === 0 ? false : { prop, value: values }
+      }
+      case bgPropMap.position: {
+        const values = []
+        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+          if (verifyValues({ prop, value: item })) {
+            // 支持 number 值 /  枚举, center与50%等价
+            values.push(item === 'center' ? '50%' : item)
+          } else {
+            error(`background position value[${value}] does not support in React Native ${mode} environment!`)
+          }
+        })
+
+        return { prop, value: values }
       }
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
@@ -495,7 +509,7 @@ module.exports = function getSpec ({ warn, error }) {
     supportedModes: ['ios', 'android'],
     rules: [
       { // 背景相关属性的处理
-        test: /^(background|background-image|background-size)$/,
+        test: /^(background|background-image|background-size|background-position)$/,
         ios: checkBackgroundImage,
         android: checkBackgroundImage
       },
