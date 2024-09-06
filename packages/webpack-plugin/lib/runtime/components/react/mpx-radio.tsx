@@ -19,6 +19,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, extractTextStyle, isText } from './utils'
 import Icon from './mpx-icon'
+import { isEmptyObject } from '@mpxjs/utils'
 
 export interface RadioProps {
   value?: string
@@ -89,7 +90,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: StyleProp<TextStyle> = {}
+    let labelTextStyle: TextStyle = {}
 
     const textStyle = extractTextStyle(style)
 
@@ -146,16 +147,17 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>[]
+      textStyle?: TextStyle
     ) => {
+      const hasTextStyle = isEmptyObject(textStyle)
       if (every(children, (child) => isText(child))) {
-        if (textStyle?.length) {
+        if (hasTextStyle) {
           children = <Text key='radioTextWrap' style={textStyle}>
             {children}
           </Text>
         }
       } else {
-        if (textStyle)
+        if (hasTextStyle)
           console.warn(
             'Text style will be ignored unless every child of the Radio is Text node!'
           )
@@ -170,7 +172,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle
+      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -226,7 +228,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             }}
           />
         </View>
-        {wrapChildren(children, [textStyle, labelTextStyle])}
+        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
       </View>
     )
   }

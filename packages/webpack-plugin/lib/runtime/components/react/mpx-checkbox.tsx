@@ -30,6 +30,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { every, extractTextStyle, isText } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
+import { isEmptyObject } from '@mpxjs/utils'
 
 interface Selection {
   value?: string
@@ -148,14 +149,15 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>[]
+      textStyle?: TextStyle
     ) => {
+      const hasTextStyle = isEmptyObject(textStyle)
       if (every(children, (child) => isText(child))) {
-        if (textStyle?.length) {
+        if (hasTextStyle) {
           children = <Text key='checkboxTextWrap' style={textStyle}>{children}</Text>
         }
       } else {
-        if (textStyle)
+        if (hasTextStyle)
           console.warn(
             'Text style will be ignored unless every child of the Checkbox is Text node!'
           )
@@ -165,7 +167,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: StyleProp<TextStyle> = {}
+    let labelTextStyle: TextStyle = {}
 
     if (groupContext) {
       groupValue = groupContext.groupValue
@@ -173,7 +175,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle
+      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -225,7 +227,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             style={isChecked ? styles.iconChecked : styles.icon}
           />
         </View>
-        {wrapChildren(children, [textStyle, labelTextStyle])}
+        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
       </View>
     )
   }
