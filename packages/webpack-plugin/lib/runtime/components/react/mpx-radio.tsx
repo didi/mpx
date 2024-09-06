@@ -25,7 +25,7 @@ export interface RadioProps {
   checked?: boolean
   disabled?: boolean
   color?: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -93,12 +93,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const textStyle = extractTextStyle(style)
 
-    const defaultStyle = StyleSheet.flatten([
-      styles.wrapper,
-      isChecked && styles.wrapperChecked,
-      disabled && styles.wrapperDisabled,
-      style
-    ])
+    const defaultStyle = {
+      ...styles.wrapper,
+      ...(isChecked && styles.wrapperChecked),
+      ...(disabled && styles.wrapperDisabled),
+      ...style
+    }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
@@ -150,11 +150,9 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     ) => {
       if (every(children, (child) => isText(child))) {
         if (textStyle?.length) {
-          children = [
-            <Text key='radioTextWrap' style={textStyle}>
-              {children}
-            </Text>
-          ]
+          children = <Text key='radioTextWrap' style={textStyle}>
+            {children}
+          </Text>
         }
       } else {
         if (textStyle)
@@ -180,7 +178,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       props,
       {
         ref: nodeRef,
-        style: [styles.container],
+        style: styles.container,
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
@@ -221,11 +219,11 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             type='success'
             size={24}
             color={disabled ? '#E1E1E1' : color}
-            style={[
-              styles.icon,
-              isChecked && styles.iconChecked,
-              disabled && styles.iconDisabled
-            ]}
+            style={{
+              ...styles.icon,
+              ...(isChecked && styles.iconChecked),
+              ...(disabled && styles.iconDisabled)
+            }}
           />
         </View>
         {wrapChildren(children, [textStyle, labelTextStyle])}

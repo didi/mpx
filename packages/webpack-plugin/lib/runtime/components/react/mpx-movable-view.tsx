@@ -62,6 +62,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     direction = 'none',
     x = 0,
     y = 0,
+    style = {},
     'scale-min': scaleMin = 0.1,
     'scale-max': scaleMax = 10,
     'scale-value': originScaleValue = 1,
@@ -277,7 +278,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   createPanResponder()
-  
+
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
@@ -377,7 +378,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const [translateX, translateY] = [pan.x, pan.y];
 
-  const childrenStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue }], transformOrigin: transformOrigin }
+  const transformStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue }], transformOrigin: transformOrigin }
 
   const hasTouchmove = () => !!props.bindhtouchmove || !!props.bindvtouchmove || !!props.bindtouchmove
 
@@ -409,7 +410,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   return (
     <Animated.View
       {...innerProps}
-      style={[styles.container, props.style, childrenStyle]}
+      style={{
+        ...styles.container,
+        ...style,
+        ...transformStyle
+      }}
     >
       {children}
     </Animated.View>
