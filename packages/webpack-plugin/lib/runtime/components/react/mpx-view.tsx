@@ -12,11 +12,11 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 
 import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle } from './utils'
 export interface _ViewProps extends ViewProps {
-  style?: Array<ExtendedViewStyle>
+  style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
-  hoverStyle: Array<ExtendedViewStyle>
-  ['hover-start-time']: number
-  ['hover-stay-time']: number
+  hoverStyle?: ExtendedViewStyle
+  ['hover-start-time']?: number
+  ['hover-stay-time']?: number
   'enable-offset'?: boolean
   'enable-background-image'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
