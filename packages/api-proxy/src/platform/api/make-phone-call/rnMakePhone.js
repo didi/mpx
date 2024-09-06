@@ -1,7 +1,7 @@
 import { successHandle, failHandle } from '../../../common/js'
 import { Linking } from 'react-native'
 
-const makePhoneCall = function (options) {
+const makePhoneCall = function (options = {}) {
   const {
     phoneNumber = '',
     success = null,
