@@ -147,6 +147,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
       snapScrollTop.current = props['scroll-top'] || 0
       snapScrollLeft.current = props['scroll-left'] || 0
+
+      initialTimeout.current = setTimeout(() => {
+        scrollToOffset(snapScrollLeft.current, snapScrollTop.current);
+      }, 0);
+
+      return () => {
+        initialTimeout.current && clearTimeout(initialTimeout.current);
+      };
     }
   }, [props['scroll-top'], props['scroll-left']]);
 
@@ -163,16 +171,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       setScrollEnabled(true);
     }
   }, [props['scroll-x'], props['scroll-y']]);
-
-  useEffect(() => {
-    initialTimeout.current = setTimeout(() => {
-      scrollToOffset(snapScrollLeft.current, snapScrollTop.current);
-    }, 0);
-
-    return () => {
-      initialTimeout.current && clearTimeout(initialTimeout.current);
-    };
-  }, [snapScrollTop, snapScrollLeft]);
 
   function selectLength(size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width;
