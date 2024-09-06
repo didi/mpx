@@ -34,7 +34,7 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import { useEffect, useRef, useState, ReactNode, forwardRef, useContext } from 'react'
+import { useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX } from 'react'
 
 import {
   View,
@@ -70,13 +70,13 @@ export interface ButtonProps {
   disabled?: boolean
   loading?: boolean
   'hover-class'?: string
-  'hover-style'?: StyleProp<ViewStyle & TextStyle>
+  'hover-style'?: ViewStyle & TextStyle & Record<string, any>
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
-  'enable-offset'?: boolean
   'form-type'?: 'submit' | 'reset'
-  style?: StyleProp<ViewStyle & TextStyle>
+  'enable-offset'?: boolean,
+  style?: ViewStyle & TextStyle & Record<string, any>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -184,7 +184,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): JSX.Element => {
+const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -192,13 +192,13 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     disabled = false,
     loading = false,
     'hover-class': hoverClass,
-    'hover-style': hoverStyle = [],
+    'hover-style': hoverStyle = {},
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
     'enable-offset': enableOffset,
     'form-type': formType,
-    style = [],
+    style = {},
     children,
     bindgetuserinfo,
     bindtap,
@@ -209,8 +209,8 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
 
   const formContext = useContext(FormContext)
 
-  let submitFn : () => void | undefined;
-  let resetFn : () => void | undefined;
+  let submitFn: () => void | undefined;
+  let resetFn: () => void | undefined;
 
   if (formContext) {
     submitFn = formContext.submit
@@ -244,16 +244,16 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
   const plainBorderColor = disabled
     ? 'rgba(0, 0, 0, .2)'
     : applyHoverEffect
-    ? `rgba(${plainColor},.6)`
-    : `rgb(${plainColor})`
+      ? `rgba(${plainColor},.6)`
+      : `rgb(${plainColor})`
 
   const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
 
   const plainTextColor = disabled
     ? 'rgba(0, 0, 0, .2)'
     : applyHoverEffect
-    ? `rgba(${plainColor}, .6)`
-    : `rgb(${plainColor})`
+      ? `rgba(${plainColor}, .6)`
+      : `rgb(${plainColor})`
 
   const normalTextColor =
     type === 'default'
@@ -272,15 +272,17 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     ...inheritTextStyle
   }
 
-  const defaultViewStyle = [
-    styles.button,
-    isMiniSize && styles.buttonMini || {},
-    viewStyle,
-  ]
+  const defaultViewStyle = {
+    ...styles.button,
+    ...(isMiniSize && styles.buttonMini),
+    ...viewStyle,
+  }
 
-  const defaultTextStyle = [
-    styles.text, isMiniSize && styles.textMini, textStyle
-  ]
+  const defaultTextStyle = {
+    ...styles.text,
+    ...(isMiniSize && styles.textMini),
+    ...textStyle
+  }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (!openType) return
@@ -345,23 +347,21 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     handleFormTypeFn()
   }
 
-  function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
-    if (every(children, (child)=>isText(child))) {
-      if (textStyle) {
-        children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
-      }
+  function wrapChildren(children: ReactNode, textStyle: StyleProp<TextStyle>) {
+    if (every(children, (child) => isText(child))) {
+      children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
     } else {
-      if (textStyle) console.warn('Text style will be ignored unless every child of the Button is Text node!')
+      console.warn('Button\'s children only support text node or string.')
     }
-  
+
     return children
   }
 
   const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: StyleSheet.flatten([
+    defaultStyle: {
       ...defaultViewStyle,
       ...defaultTextStyle,
-    ])
+    }
   })
 
   const onLayout = () => {
@@ -382,7 +382,7 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     [
       'enable-offset'
     ],
-    { 
+    {
       layoutRef,
       disableTap: disabled
     }
@@ -391,19 +391,19 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
   return (
     <View
       {...innerProps}
-      style={[
+      style={{
         ...defaultViewStyle,
-        style,
-        applyHoverEffect && hoverStyle,
-      ]}>
+        ...style,
+        ...(applyHoverEffect && hoverStyle),
+      } as ViewStyle}>
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
-          children, 
-          [
+          children,
+          {
             ...defaultTextStyle,
-            applyHoverEffect && textHoverStyle,
-          ]
+            ...(applyHoverEffect && textHoverStyle || {}),
+          }
         )
       }
     </View>
