@@ -11,6 +11,7 @@ export const ONSHOW = '__onShow__'
 export const ONHIDE = '__onHide__'
 export const ONRESIZE = '__onResize__'
 export const SERVERPREFETCH = '__serverPrefetch__'
+export const REACTHOOKSEXEC = '__reactHooksExec__'
 
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
@@ -21,6 +22,7 @@ export const INNER_LIFECYCLES = [
   UPDATED,
   BEFOREUNMOUNT,
   SERVERPREFETCH,
+  REACTHOOKSEXEC,
   UNMOUNTED,
   ONLOAD,
   ONSHOW,

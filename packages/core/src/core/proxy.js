@@ -42,7 +42,8 @@ import {
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  REACTHOOKSEXEC
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
@@ -498,11 +499,28 @@ export default class MpxProxy {
     return result
   }
 
-  doRenderWithVNode (vnode) {
+  doRenderWithVNode (vnode, cb) {
+    const renderTask = this.createRenderTask()
+    let callback = cb
+    // mounted之后才会触发BEFOREUPDATE/UPDATED
+    if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
+      callback = () => {
+        cb && cb()
+        this.callHook(UPDATED)
+        renderTask && renderTask.resolve()
+      }
+    }
     if (!this._vnode) {
-      this.target.__render({ r: vnode })
+      this._vnode = diffAndCloneA(vnode).clone
+      pauseTracking()
+      // 触发渲染时暂停数据响应追踪，避免误收集到子组件的数据依赖
+      this.target.__render({ r: vnode }, callback)
+      resetTracking()
     } else {
-      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      const result = diffAndCloneA(vnode, this._vnode)
+      this._vnode = result.clone
+      let diffPath = result.diffData
       if (!isEmptyObject(diffPath)) {
         // 构造 diffPath 数据
         diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
@@ -510,11 +528,11 @@ export default class MpxProxy {
           preVal[key] = diffPath[curVal]
           return preVal
         }, {})
-        this.target.__render(diffPath)
+        pauseTracking()
+        this.target.__render(diffPath, callback)
+        resetTracking()
       }
     }
-    // 缓存本地的 vnode 用以下一次 diff
-    this._vnode = diffAndCloneA(vnode).clone
   }
 
   doRender (data, cb) {
@@ -734,6 +752,7 @@ export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
 export const onServerPrefetch = createHook(SERVERPREFETCH)
+export const onReactHooksExec = createHook(REACTHOOKSEXEC)
 export const onPullDownRefresh = createHook('__onPullDownRefresh__')
 export const onReachBottom = createHook('__onReachBottom__')
 export const onShareAppMessage = createHook('__onShareAppMessage__')

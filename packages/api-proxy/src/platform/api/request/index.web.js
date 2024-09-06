@@ -32,7 +32,31 @@ function request (options = { url: '' }) {
     }, '').slice(1)
   }
 
-  const rOptions = {
+  /**
+   * axios 的其他参数
+   * baseURL
+   * transformRequest
+   * transformResponse,
+   * headers,
+   * params,
+   * paramsSerializer,
+   * withCredentials,
+   * adapter,
+   * auth,
+   * xsrfCookieName,
+   * xsrfHeaderName,
+   * onUploadProgress,
+   * onDownloadProgress,
+   * maxContentLength,
+   * maxBodyLength,
+   * validateStatus,
+   * maxRedirects,
+   * socketPath,
+   * httpAgent,
+   * httpsAgent,
+   * decompress
+   */
+  const rOptions = Object.assign(options, {
     method,
     url: options.url,
     data,
@@ -50,7 +74,7 @@ function request (options = { url: '' }) {
       // throw ETIMEDOUT error instead of generic ECONNABORTED on request timeouts
       clarifyTimeoutError: false
     }
-  }
+  })
   if (method === 'GET') {
     rOptions.params = rOptions.data || {}
     delete rOptions.data
@@ -67,18 +91,22 @@ function request (options = { url: '' }) {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
-      header: res.headers
+      header: res.headers,
+      ...res
     }
     defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
     successHandle(result, success, complete)
     return result
   }).catch(err => {
-    const response = err?.response || {}
+    const realError = err || {}
+    const response = realError.response || {}
     const res = {
       errMsg: `request:fail ${err}`,
       statusCode: response.status,
       header: response.headers,
-      data: response.data
+      data: response.data,
+      stack: realError.stack,
+      ...realError
     }
     failHandle(res, fail, complete)
   })
