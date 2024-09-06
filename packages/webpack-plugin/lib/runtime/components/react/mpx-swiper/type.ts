@@ -1,5 +1,8 @@
 import { ReactNode } from 'react'
 import { NativeSyntheticEvent } from 'react-native'
+
+export type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
+
 export interface SwiperProps {
   children?: ReactNode;
   circular?: boolean;
@@ -12,7 +15,7 @@ export interface SwiperProps {
   'indicator-active-color'?: string;
   vertical?: boolean;
   style?: Array<Object>;
-  'easing-function'?: string;
+  'easing-function'?: EaseType;
   'previous-margin'?: string;
   'next-margin'?: string;
   'enable-offset'?: boolean;
@@ -31,7 +34,7 @@ export interface CarouseProps {
   activeDotColor?: string;
   horizontal?: boolean;
   style?: string;
-  easingFunction?: string;
+  easingFunction?: EaseType;
   previousMargin?: number;
   nextMargin?: number;
   enableOffset?: boolean;
@@ -59,6 +62,7 @@ export interface CarouseState {
   autoplayEnd: boolean;
   loopJump: boolean;
   dir: 'x' | 'y';
+  isScrollEnd: boolean
 }
 
 export interface ScrollElementProps {

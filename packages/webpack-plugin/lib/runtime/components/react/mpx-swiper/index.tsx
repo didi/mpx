@@ -40,7 +40,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
     enableOffset: props['enable-offset'] || false,
     bindchange: props.bindchange,
-    easingFunction: props['easing-function']
+    easingFunction: props['easing-function'] || 'default'
   }
   const { nodeRef } = useNodesRef<ScrollView, SwiperProps>(props, ref, {
   })
