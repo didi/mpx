@@ -100,7 +100,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const defaultStyle = {
       ...styles.wrapper,
-      ...(disabled && styles.wrapperDisabled || {}),
+      ...(disabled && styles.wrapperDisabled),
       ...style
     }
 
