@@ -77,7 +77,7 @@ const getSystemInfoSync = function () {
   return result
 }
 
-const getSystemInfo = function (options) {
+const getSystemInfo = function (options = {}) {
   const { success, fail, complete } = options
   try {
     const systemInfo = getSystemInfoSync()
