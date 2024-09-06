@@ -60,7 +60,7 @@ export default function getRefsMixin () {
         if (!this.__refs[key]) {
           this.__refs[key] = []
         }
-        return (instance) => instance && this.__refs[key]?.push(instance)
+        return (instance) => instance && this.__refs[key].push(instance)
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?\w+/g) || []
