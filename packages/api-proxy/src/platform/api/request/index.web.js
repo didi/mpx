@@ -88,7 +88,7 @@ function request (options = { url: '' }) {
       }
     }
 
-    const result = Object.assign({}, res || {}, {
+    const result = Object.assign({}, res, {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
