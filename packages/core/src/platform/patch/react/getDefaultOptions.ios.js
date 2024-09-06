@@ -24,7 +24,6 @@ function getSystemInfo() {
   }
 }
 
-<<<<<<< HEAD
 function getRootProps(props) {
   const rootProps = {}
   for (const key in props) {
