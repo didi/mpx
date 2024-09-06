@@ -69,7 +69,6 @@
  
  
 const checkNeedLayout = (style: PreImageInfo) => {
-  console.log(">>> style", style)
   const [width, height] = style.sizeList
   const bp = style.backgroundPosition
   // 含有百分号，center 需计算布局
@@ -156,7 +155,6 @@ function backgroundPosition(imageProps: ImageProps, preImageInfo: PreImageInfo, 
 
 // background-size 转换
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
-  console.log(">>> backgroundSize", preImageInfo.sizeList)
   let sizeList = preImageInfo.sizeList
   if (!sizeList) return
   const { width:layoutWidth, height: layoutHeight } = layoutInfo || {}
@@ -166,11 +164,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     width: number | `${number}%`,
     height: number | `${number}%`
   } | null = { width: 0, height: 0 }
-  console.log(">>> layoutInfo?.height", layoutInfo, imageSize, sizeList)
 
   // 枚举值
   if (typeof width === 'string' && ['cover', 'contain'].includes(width)) {
-    console.log(">>> layoutInfo?.height", layoutInfo, imageSize, sizeList)
     if (layoutInfo && imageSize) {
       let layoutRatio = layoutWidth / imageSizeWidth
       let eleRatio = imageSizeWidth / imageSizeHeight
