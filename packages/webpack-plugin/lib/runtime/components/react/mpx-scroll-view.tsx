@@ -108,10 +108,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'enable-offset': enableOffset,
     'show-scrollbar': showScrollbar = true
   } = props;
-  const [snapScrollTop, setSnapScrollTop] = useState(0);
-  const [snapScrollLeft, setSnapScrollLeft] = useState(0);
+
   const [refreshing, setRefreshing] = useState(true);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const snapScrollTop = useRef(0);
+  const snapScrollLeft = useRef(0);
+
   const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
@@ -141,11 +144,20 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   useEffect(() => {
     if (
-      snapScrollTop !== props['scroll-top'] ||
-      snapScrollLeft !== props['scroll-left']
+      snapScrollTop.current !== props['scroll-top'] ||
+      snapScrollLeft.current !== props['scroll-left']
     ) {
-      setSnapScrollTop(props['scroll-top'] || 0);
-      setSnapScrollLeft(props['scroll-left'] || 0);
+
+      snapScrollTop.current = props['scroll-top'] || 0
+      snapScrollLeft.current = props['scroll-left'] || 0
+
+      initialTimeout.current = setTimeout(() => {
+        scrollToOffset(snapScrollLeft.current, snapScrollTop.current);
+      }, 0);
+
+      return () => {
+        initialTimeout.current && clearTimeout(initialTimeout.current);
+      };
     }
   }, [props['scroll-top'], props['scroll-left']]);
 
@@ -162,18 +174,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       setScrollEnabled(true);
     }
   }, [props['scroll-x'], props['scroll-y']]);
-
-  useEffect(() => {
-    if (snapScrollTop || snapScrollLeft) {
-      initialTimeout.current = setTimeout(() => {
-        scrollToOffset(snapScrollLeft, snapScrollTop);
-      }, 0);
-    }
-
-    return () => {
-      initialTimeout.current && clearTimeout(initialTimeout.current);
-    };
-  }, [snapScrollTop, snapScrollLeft]);
 
   function selectLength(size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width;

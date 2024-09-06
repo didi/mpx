@@ -4,38 +4,27 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, ViewStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
-// @ts-ignore
 import useInnerProps from './getInnerListeners'
-// @ts-ignore
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { ExtendedViewStyle } from './types/common'
+import useNodesRef, { HandlerRef } from './useNodesRef'
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, isText } from './utils'
-import { recordPerformance } from './performance'
-
-type ExtendedViewStyle = ViewStyle & {
-  backgroundImage?: string
-  backgroundSize?: ImageResizeMode
-  backgroundPosition?: backgroundPositionList
-}
-
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle } from './utils'
 export interface _ViewProps extends ViewProps {
-  style?: Array<ExtendedViewStyle>
+
+  style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
-  hoverStyle?: Array<ExtendedViewStyle>
+  hoverStyle?: ExtendedViewStyle
   ['hover-start-time']?: number
   ['hover-stay-time']?: number
-  ['disable-default-style']?: boolean
   'enable-offset'?: boolean
+  'enable-background-image'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
-type Obj = Record<string, any>
-
-type GroupData = Record<string, Record<string, any>>;
 
 type Handler = (...args: any[]) => void
 
@@ -71,23 +60,6 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string
-}
-
-const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
-
-function groupBy(style: Obj, callback: (key: string, val: string) => string, group: GroupData = {}): GroupData {
-  let groupKey = ''
-  for (let key in style) {
-    if (style.hasOwnProperty(key)) { // 确保处理对象自身的属性
-      let val: string = style[key] as string
-      groupKey = callback(key, val)
-      if (!group[groupKey]) {
-        group[groupKey] = {}
-      }
-      group[groupKey][key] = val
-    }
-  }
-  return group
 }
 
 const applyHandlers = (handlers: Handler[], args: any[]) => {
@@ -329,7 +301,6 @@ function normalizeBackgroundPosition(parts: PositionVal[]): backgroundPositionLi
   return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
 }
 
-
 function preParseImage(imageStyle?: ExtendedViewStyle) {
 
   const { backgroundImage, backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
@@ -354,7 +325,6 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   const [, setLayoutInfoHeight] = useState<number | null>(null)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
-
   // 预解析
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
 
@@ -415,31 +385,44 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   </View>
 }
 
-function splitStyle(styles: ExtendedViewStyle) {
-  return groupBy(styles, (key) => {
-    if (TEXT_STYLE_REGEX.test(key))
-      return 'textStyle'
-    else if (IMAGE_STYLE_REGEX.test(key)) return 'imageStyle'
-    return 'innerStyle'
-  }, {})
-}
+function wrapChildren(children: ReactNode | ReactNode[], props: _ViewProps, textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
+  const { textProps } = splitProps(props)
+  const { 'enable-background-image': enableBackgroundImage } = props
 
-function every(children: ReactNode[], callback: (children: ReactNode) => boolean) {
-  return children.every((child) => callback(child))
-}
-
-function wrapChildren(children: ReactNode | ReactNode[], textStyle?: StyleProp<TextStyle>, imageStyle?: ExtendedViewStyle) {
-  children = Array.isArray(children) ? children : [children]
   if (every(children as ReactNode[], (child) => isText(child))) {
-    children = [<Text key='viewTextWrap' style={textStyle}>{children}</Text>]
+    if (textStyle || textProps) {
+      children = <Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
+    }
   } else {
     if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
   }
 
   return [
-    wrapImage(imageStyle),
-    ...children
+    enableBackgroundImage ? wrapImage(imageStyle) : null,
+    children
   ]
+}
+
+function splitStyle(styles: ExtendedViewStyle) {
+  return groupBy(styles, (key) => {
+    if (TEXT_STYLE_REGEX.test(key)) {
+      return 'textStyle'
+    } else if (IMAGE_STYLE_REGEX.test(key)) {
+      return 'imageStyle'
+    } else {
+      return 'innerStyle'
+    }
+  }, {})
+}
+
+function splitProps(props: _ViewProps) {
+  return groupBy(props, (key) => {
+    if (TEXT_PROPS_REGEX.test(key)) {
+      return 'textProps'
+    } else {
+      return 'innerProps'
+    }
+  }, {})
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
@@ -458,21 +441,24 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       count: 0
     }
   }
+  const widthRelativeStyleProps = ['borderTopLeftRadius', 'borderBottomLeftRadius']
+  const heightRelativeStyleProps = ['borderBottomRightRadius', 'borderTopRightRadius']
   const {
-    style = [],
+    style = {},
     children,
     hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
-    'enable-offset': enableOffset
+    'enable-offset': enableOffset,
   } = props
 
   const [isHover, setIsHover] = useState(false)
+  const [transformStyle, setTransformStyle] = useState({})
 
   const layoutRef = useRef({})
 
   // 打平 style 数组
-  const styleObj: ExtendedViewStyle = StyleSheet.flatten(style)
+  const styleObj: ExtendedViewStyle = normalizeStyle(style)
   // 默认样式
   const defaultStyle: ExtendedViewStyle = {
     // flex 布局相关的默认样式
@@ -483,14 +469,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       flexWrap: 'nowrap'
     }
   }
-  const { textStyle, imageStyle, innerStyle } = splitStyle(StyleSheet.flatten<ExtendedViewStyle>([
-    defaultStyle,
-    styleObj,
-    ...(isHover ? hoverStyle as Array<ExtendedViewStyle> : [])]
-  ))
 
   const stage1 = +new Date()
   global.performanceData[source].stage1 += stage1 - start
+
+  const hasPercentStyle = [...widthRelativeStyleProps, ...heightRelativeStyleProps].some(key => (PERCENT_REGEX.test(styleObj[key])))
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
     defaultStyle
@@ -513,7 +496,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const setStartTimer = () => {
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(() => true)
+      setIsHover(true)
     }, +hoverStartTime)
   }
 
@@ -521,7 +504,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(() => false)
+      setIsHover(false)
     }, +hoverStayTime)
   }
 
@@ -537,18 +520,49 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     setStayTimer()
   }
 
-  const onLayout = () => {
-
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+  function percentTransform(style: string[], type: 'width' | 'height', { width, height }: { width?: number, height?: number }) {
+    const styleMap: Record<string, any> = {}
+    style.forEach(key => {
+      const value = styleObj[key]
+      if (PERCENT_REGEX.test(value)) {
+        const percentage = parseFloat(value) / 100
+        if (type === 'height' && height) {
+          styleMap[key] = percentage * height
+        } else if (type === 'width' && width) {
+          styleMap[key] = percentage * width
+        }
+      }
     })
+    return styleMap
   }
+  const onLayout = (res: LayoutChangeEvent) => {
+    if (hasPercentStyle) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      const newWidthStyleMap = percentTransform(widthRelativeStyleProps, 'width', { width })
+      const newHeightStyleMap = percentTransform(heightRelativeStyleProps, 'height', { height })
+      setTransformStyle({
+        ...transformStyle,
+        ...newWidthStyleMap,
+        ...newHeightStyleMap
+      })
+    }
+    if (enableOffset) {
+      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    }
+  }
+  const { textStyle, imageStyle, innerStyle } = splitStyle({
+    ...defaultStyle,
+    ...styleObj,
+    ...(isHover ? hoverStyle : null)
+  })
 
-
+  const needLayout = enableOffset || hasPercentStyle
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...enableOffset ? { onLayout } : {},
+    ...needLayout ? { onLayout } : {},
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -560,7 +574,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hover-stay-time',
     'hoverStyle',
     'hover-class',
-    'enable-offset'
+    'enable-offset',
+    'enable-background-image'
   ], {
     layoutRef
   })
@@ -568,7 +583,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const stage3 = +new Date()
   global.performanceData[source].stage3 += stage3 - stage2
 
-  const wrappedChildren = wrapChildren(children, textStyle, imageStyle)
+  const wrappedChildren = wrapChildren(children, props, textStyle, imageStyle)
 
   const stage4 = +new Date()
   global.performanceData[source].stage4 += stage4 - stage3
@@ -577,10 +592,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const content = (
     <View
       {...innerProps}
-      style={innerStyle}
+      style={{ ...innerStyle, ...transformStyle }}
     >
       {wrappedChildren}
-    </View>
+    </View >
   )
 
   const stage5 = +new Date()

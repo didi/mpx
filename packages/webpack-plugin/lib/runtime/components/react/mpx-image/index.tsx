@@ -52,7 +52,7 @@ export interface ImageProps {
   src?: string
   mode?: Mode
   svg?: boolean
-  style?: StyleProp<ImageStyle>
+  style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean;
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
@@ -111,13 +111,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     src = '',
     mode = 'scaleToFill',
     // svg = false,
-    style = [],
+    style = {},
     'enable-offset': enableOffset,
     bindload,
     binderror
   } = props
 
-  const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = StyleSheet.flatten(style)
+  const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = style as ImageStyle
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: {
@@ -309,15 +309,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const content = (
     <View
-      style={[
-        { width, height },
-        style,
-        {
-          ...(isHeightFixMode && { width: fixedWidth }),
-          ...(isWidthFixMode && { height: fixedHeight }),
-        },
-        { overflow: 'hidden' },
-      ]}
+      style={{
+        width, height,
+        ...style,
+        ...(isHeightFixMode && { width: fixedWidth }),
+        ...(isWidthFixMode && { height: fixedHeight }),
+        overflow: 'hidden',
+      }}
       onLayout={onViewLayout}>
       {
         loaded && <RNImage
@@ -326,16 +324,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           resizeMode={resizeMode}
           onLoad={onImageLoad}
           onError={onImageError}
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              width: !isCropMode ? '100%' : imageWidth,
-              height: !isCropMode ? '100%' : imageHeight,
-            },
-            {
-              ...(isCropMode && cropModeStyle),
-            },
-          ]}
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            width: !isCropMode ? '100%' : imageWidth,
+            height: !isCropMode ? '100%' : imageHeight,
+            ...(isCropMode && cropModeStyle)
+          }}
         />
       }
     </View>

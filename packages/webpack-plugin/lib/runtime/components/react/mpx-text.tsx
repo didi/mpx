@@ -7,7 +7,6 @@
 import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
-// @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { PERCENT_REGEX } from './utils'
 import { recordPerformance } from './performance'
@@ -30,7 +29,7 @@ const DEFAULT_STYLE = {
 const transformStyle = (styleObj: TextStyle) => {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight)/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
     styleObj.lineHeight = lineHeight
   }
 }
@@ -38,72 +37,70 @@ const transformStyle = (styleObj: TextStyle) => {
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const startTime = new Date().getTime()
   const {
-    style = [],
+    style = {},
     children,
     selectable,
     'enable-offset': enableOffset,
     'user-select': userSelect,
     'disable-default-style': disableDefaultStyle = false,
-    } = props
+  } = props
 
-    const layoutRef = useRef({})
+  const layoutRef = useRef({})
 
-    const styleObj: TextStyle = StyleSheet.flatten<TextStyle>(style)
+  let defaultStyle = {}
 
-    let defaultStyle = {}
+  if (!disableDefaultStyle) {
+    defaultStyle = DEFAULT_STYLE
+    transformStyle(style)
+  }
 
-    if (!disableDefaultStyle) {
-      defaultStyle = DEFAULT_STYLE
-      transformStyle(styleObj)
-    }
+  const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
+    defaultStyle
+  })
 
-    const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
-      defaultStyle
-    })
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef
+  }, [
+    'style',
+    'children',
+    'selectable',
+    'user-select',
+    'useInherit',
+    'enable-offset'
+  ], {
+    layoutRef
+  })
 
-    const innerProps = useInnerProps(props, {
-      ref: nodeRef
-    }, [
-      'style',
-      'children',
-      'selectable',
-      'user-select',
-      'useInherit',
-      'enable-offset'
-    ], {
-      layoutRef
-    })
-
-    useEffect(() => {
-      let measureTimeout: ReturnType<typeof setTimeout> | null = null
-      if (enableOffset) {
-        measureTimeout = setTimeout(() => {
-          nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          })
+  useEffect(() => {
+    let measureTimeout: ReturnType<typeof setTimeout> | null = null
+    if (enableOffset) {
+      measureTimeout = setTimeout(() => {
+        nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         })
-        return () => {
-          if (measureTimeout) {
-            clearTimeout(measureTimeout)
-            measureTimeout = null
-          }
+      })
+      return () => {
+        if (measureTimeout) {
+          clearTimeout(measureTimeout)
+          measureTimeout = null
         }
       }
-    }, [])
+    }
+  }, [])
 
-    const content = (
-      <Text
-        style={{...defaultStyle, ...styleObj}}
-        selectable={!!selectable || !!userSelect}
-        {...innerProps}
-      >
-        {children}
-      </Text>
-    )
+  const content = (
+    <Text
+      style={{ ...defaultStyle, ...style }}
+      selectable={!!selectable || !!userSelect}
+      {...innerProps}
+    >
+      {children}
+    </Text>
+  )
 
-    recordPerformance(startTime, 'mpx-text')
+  recordPerformance(startTime, 'mpx-text')
 
-    return content
+  return content
 })
 
 _Text.displayName = 'mpx-text'
