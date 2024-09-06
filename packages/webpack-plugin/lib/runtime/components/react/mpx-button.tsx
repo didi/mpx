@@ -267,7 +267,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
 
   const defaultViewStyle = {
     ...styles.button,
-    ...isMiniSize && styles.buttonMini || {},
+    ...(isMiniSize && styles.buttonMini),
     ...viewStyle,
   }
 
