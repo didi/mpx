@@ -24,6 +24,7 @@ function getSystemInfo() {
   }
 }
 
+<<<<<<< HEAD
 function getRootProps(props) {
   const rootProps = {}
   for (const key in props) {
@@ -37,7 +38,7 @@ function getRootProps(props) {
   return rootProps
 }
 
-function createEffect(proxy, components, props) {
+function createEffect(proxy, components) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -57,7 +58,7 @@ function createEffect(proxy, components, props) {
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, getComponent, getRootProps(props))
+    return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -67,8 +68,8 @@ function createInstance({ propsRef, type, rawOptions, currentInject, validProps,
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
     __getProps() {
-      const propsData = {}
       const props = propsRef.current
+      const propsData = {}
       Object.keys(validProps).forEach((key) => {
         if (hasOwn(props, key)) {
           propsData[key] = props[key]
@@ -84,6 +85,19 @@ function createInstance({ propsRef, type, rawOptions, currentInject, validProps,
         }
       })
       return propsData
+    },
+    __getRootProps() {
+      const props = propsRef.current
+      const rootProps = {}
+      for (const key in props) {
+        if (hasOwn(props, key)) {
+          const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
+          if (match) {
+            rootProps[key] = props[key]
+          }
+        }
+      }
+      return rootProps
     },
     __getSlot(name) {
       const { children } = propsRef.current
@@ -204,17 +218,13 @@ function createInstance({ propsRef, type, rawOptions, currentInject, validProps,
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
 
-  if (type === 'page') {
-    proxy.callHook(ONLOAD, [props.route.params || {}])
-  }
-
   Object.assign(proxy, {
     onStoreChange: null,
     // eslint-disable-next-line symbol-description
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components, propsRef.current)
+        createEffect(proxy, components)
         // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
@@ -231,7 +241,7 @@ function createInstance({ propsRef, type, rawOptions, currentInject, validProps,
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components, propsRef.current)
+    createEffect(proxy, components)
   }
 
   return instance
@@ -358,7 +368,8 @@ export function getDefaultOptions({ type, rawOptions = {}, currentInject }) {
       }
     }
     const instanceRef = useRef(null)
-    const propsRef = useRef(props)
+    const propsRef = useRef(null)
+    propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
@@ -378,29 +389,28 @@ export function getDefaultOptions({ type, rawOptions = {}, currentInject }) {
     const stage1 = +new Date()
     global.performanceData[source].stage1 += stage1 - start
 
-    if (!isFirst) {
-      // 处理props更新
-      propsRef.current = props
-      Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key)) {
-          instance[key] = props[key]
-        }
-      })
-      proxy.propsUpdated()
-    }
-    const stage2 = +new Date()
-    global.performanceData[source].stage2 += stage2 - stage1
-
-    usePageContext(proxy, instance)
-
     useEffect(() => {
+      if (!isFirst) {
+        // 处理props更新
+        Object.keys(props).forEach(key => {
+          if (hasOwn(validProps, key)) {
+            instance[key] = props[key]
+          }
+        })
+      }
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }
     })
+    const stage2 = +new Date()
+    global.performanceData[source].stage2 += stage2 - stage1
+    usePageContext(proxy, instance)
 
     useEffect(() => {
+      if (type === 'page') {
+        proxy.callHook(ONLOAD, [props.route.params || {}])
+      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
@@ -414,7 +424,7 @@ export function getDefaultOptions({ type, rawOptions = {}, currentInject }) {
     const stage3 = +new Date()
     global.performanceData[source].stage3 += stage3 - stage2
 
-    const result = proxy.effect.run()
+    const result = rawOptions.__disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
     const stage4 = +new Date()
     const duration = stage4 - start
     global.performanceData[source].stage4 += stage4 - stage3

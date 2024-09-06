@@ -1,7 +1,7 @@
 import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
-function showActionSheet (options) {
+function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   let actionSheetKey
   const slideAnim = new Animated.Value(500)

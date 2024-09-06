@@ -135,7 +135,7 @@ export default function createApp (option, config = {}) {
         global.__mpxAppFocusedState.value = `resize${count++}`
       })
       return () => {
-        changeSubscription()
+        changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
     }, [])

@@ -1,7 +1,7 @@
 import GetLocation from 'react-native-get-location'
 import { envError, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 
-const getLocation = function (options) {
+const getLocation = function (options = {}) {
   const { isHighAccuracy = false, success, fail, complete } = options
   GetLocation.getCurrentPosition({
     enableHighAccuracy: isHighAccuracy
