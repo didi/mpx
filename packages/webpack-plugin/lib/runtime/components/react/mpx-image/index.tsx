@@ -57,7 +57,7 @@ export interface ImageProps {
   src?: string
   mode?: Mode
   svg?: boolean
-  style?: StyleProp<ImageStyle>
+  style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean;
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
@@ -315,7 +315,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     <View
       style={{
         width, height,
-        ...(style && typeof style === 'object' ? style : {}),
+        ...style,
         ...(isHeightFixMode && { width: fixedWidth }),
         ...(isWidthFixMode && { height: fixedHeight }),
         overflow: 'hidden',

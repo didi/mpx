@@ -74,12 +74,12 @@ export interface ButtonProps {
   disabled?: boolean
   loading?: boolean
   'hover-class'?: string
-  'hover-style'?: StyleProp<ViewStyle & TextStyle>
+  'hover-style'?: ViewStyle & TextStyle & Record<string, any>
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
   'enable-offset'?: boolean,
-  style?: StyleProp<ViewStyle & TextStyle>
+  style?: ViewStyle & TextStyle & Record<string, any>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -381,8 +381,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       {...innerProps}
       style={{
         ...defaultViewStyle,
-        ...(style && typeof style === 'object' ? style : {}),
-        ...(hoverStyle && typeof hoverStyle === 'object' && applyHoverEffect ? hoverStyle : {}),
+        ...style,
+        ...(applyHoverEffect && hoverStyle),
       } as ViewStyle}>
       {loading && <Loading alone={!children} />}
       {

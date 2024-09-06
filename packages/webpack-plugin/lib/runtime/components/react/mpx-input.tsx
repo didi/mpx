@@ -73,7 +73,7 @@ type InputStyle = Omit<
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
-  style?: StyleProp<InputStyle>
+  style?: InputStyle & Record<string, any>
   value?: string
   type?: Type
   password?: boolean
@@ -372,7 +372,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       onSelectionChange={onSelectionChange}
       style={{
         padding: 0,
-        ...(style && typeof style === 'object' ? style : {}),
+        ...style,
         ...multiline && autoHeight && {
           height: Math.max((style as any)?.minHeight || 35, contentHeight)
         }
