@@ -1,5 +1,6 @@
 import { ViewStyle, ImageResizeMode} from 'react-native'
 
+type NumberVal = number | `${number}%`
 type backgroundPositionList = [ 'left'| 'right', NumberVal, 'top' | 'bottom',  NumberVal ] | []
 
 export type ExtendedViewStyle = ViewStyle & {

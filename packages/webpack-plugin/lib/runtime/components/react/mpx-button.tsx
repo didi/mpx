@@ -265,15 +265,17 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     ...inheritTextStyle
   }
 
-  const defaultViewStyle = [
-    styles.button,
-    isMiniSize && styles.buttonMini || {},
-    viewStyle,
-  ]
+  const defaultViewStyle = {
+    ...styles.button,
+    ...isMiniSize && styles.buttonMini || {},
+    ...viewStyle,
+  }
 
-  const defaultTextStyle = [
-    styles.text, isMiniSize && styles.textMini, textStyle
-  ]
+  const defaultTextStyle = {
+    ...styles.text,
+    ...(isMiniSize && styles.textMini),
+    ...textStyle
+  }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (!openType) return
@@ -377,19 +379,19 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
   return (
     <View
       {...innerProps}
-      style={[
+      style={{
         ...defaultViewStyle,
-        style,
-        applyHoverEffect && hoverStyle,
-      ]}>
+        ...(style && typeof style === 'object' ? style : {}),
+        ...(hoverStyle && typeof hoverStyle === 'object' && applyHoverEffect ? hoverStyle : {}),
+      } as ViewStyle}>
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
           children,
-          [
+          {
             ...defaultTextStyle,
-            applyHoverEffect && textHoverStyle,
-          ]
+            ...(applyHoverEffect && textHoverStyle || {}),
+          }
         )
       }
     </View>

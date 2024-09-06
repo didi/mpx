@@ -299,7 +299,6 @@ function normalizeBackgroundPosition(parts: PositionVal[]): backgroundPositionLi
   return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
 }
 
-
 function preParseImage(imageStyle?: ExtendedViewStyle) {
 
   const { backgroundImage, backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
@@ -563,7 +562,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return (
     <View
       {...innerProps}
-      style={[innerStyle, transformStyle]}
+      style={{ ...innerStyle, ...transformStyle }}
     >
       {wrapChildren(children, props, textStyle, imageStyle)}
     </View>

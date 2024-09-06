@@ -370,16 +370,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       onSubmitEditing={onSubmitEditing}
       onContentSizeChange={onContentSizeChange}
       onSelectionChange={onSelectionChange}
-      style={[
-        {
-          padding: 0,
-        },
-        style,
-        multiline &&
-        autoHeight && {
-          height: Math.max((style as any)?.minHeight || 35, contentHeight),
-        },
-      ]}
+      style={{
+        padding: 0,
+        ...(style && typeof style === 'object' ? style : {}),
+        ...multiline && autoHeight && {
+          height: Math.max((style as any)?.minHeight || 35, contentHeight)
+        }
+      }
+      }
     />
   )
 })
