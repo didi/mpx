@@ -84,25 +84,25 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     children: newChild,
     width: defaultWidth || 375,
     height: defaultHeight,
-    // 真正的游标索引
+    // 真正的游标索引, 从0开始
     index: initIndex,
     total: Array.isArray(newChild) ? newChild.length : ( newChild ? 1 : 0),
     offset: {
       x: dir === 'x' ? defaultX : 0,
       y: dir === 'y' ? defaultY: 0
     },
-    loopJump: false,
     dir
   } as CarouseState);
 
+  /**
+   * @desc: 开启下一次自动轮播
+  */
   function createAutoPlay () {
     autoplayTimerRef.current && clearTimeout(autoplayTimerRef.current)
     autoplayTimerRef.current = setTimeout(() => {
       startAutoPlay()
     }, props.interval || 500)
   }
-
-  
 
   useEffect(() => {
     // 确认这个是变化的props变化的时候才执行，还是初始化的时候就执行
@@ -112,7 +112,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   }, [props.autoplay, props.current, state.index, state.width, state.height]);
 
   /**
-   * 更新index，以视图的offset计算当前的索引
+   * @desc: 更新状态: index和offset, 并响应索引变化的事件
    * scrollViewOffset: 移动到的目标位置
   */
   function updateIndex (scrollViewOffset: NativeScrollPoint, useIndex = false) {
@@ -122,7 +122,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       const newState =  {
         ...preState,
         index: nextIndex,
-        // offset用来指示当前scrollView的偏移量,用来计算拖拽的计算
+        // offset用来指示当前scrollView的偏移量
         offset: nextOffset,
       }
       return newState
@@ -134,30 +134,51 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     // 更新完状态之后, 开启新的loop
   }
 
+  /**
+   * @desc: 获取下一个位置的索引、scrollView的contentOffset、scrollTo到的offset
+   * @desc: 包括正循环、反向循环、不循环
+   * 其中循环模式为了实现无缝链接, 会将结合contentOffset, 和 scrollTo的offset, 先scrollTo一个位置的坐标, 然后通过updateIndex设置真正的index和内容的offset,视觉上是无缝
+  */
   function getNextConfig (scrollViewOffset: NativeScrollPoint) {
     const step = state.dir === 'x' ? state.width : state.height
     let currentOffset = state.offset
     let nextIndex = state.index + 1
     let nextOffset = currentOffset
+    // autoMoveOffset scrollView 滚动到前后增加的位置
     let autoMoveOffset = currentOffset
     let isBack = false
     let isAutoEnd = false
     // 如果是循环反向的
     if (scrollViewOffset?.[state.dir] < currentOffset[state.dir]) {
       isBack = true
+      nextIndex = isBack ? nextIndex - 2 : nextIndex
     }
     if (!props.circular) {
-      nextIndex = isBack ? nextIndex - 2 : nextIndex
+      // nextIndex = isBack ? nextIndex - 2 : nextIndex
       nextOffset = Object.assign({}, currentOffset, { [state.dir]: step * nextIndex })
     } else {
-      if (nextIndex > state.total - 1) {
-        autoMoveOffset = Object.assign({}, currentOffset, { [state.dir]: step * ( nextIndex + 1 )})
-        nextIndex = 0
-        nextOffset = Object.assign({}, currentOffset, { [state.dir]: step }),
-        isAutoEnd = true
+      if (isBack) {
+        if (nextIndex < 0) {
+          // 反向: scollView 滚动到虚拟的位置
+          autoMoveOffset = Object.assign({}, currentOffset, { [state.dir]: 0 })
+          nextIndex = state.total - 1
+          // 反向: 数组最后一个index
+          nextOffset = Object.assign({}, currentOffset, { [state.dir]: step * state.total }),
+          isAutoEnd = true
+        } else {
+          // 反向非最后一个
+          nextOffset = Object.assign({}, currentOffset, { [state.dir]: ( nextIndex + 1 ) * step })
+        }
       } else {
-        // nextIndex =  nextIndex,
-        nextOffset = Object.assign({}, currentOffset, { [state.dir]: (nextIndex + 1) * step })
+        if (nextIndex > state.total - 1) {
+          autoMoveOffset = Object.assign({}, currentOffset, { [state.dir]: step * ( nextIndex + 1 )})
+          nextIndex = 0
+          nextOffset = Object.assign({}, currentOffset, { [state.dir]: step }),
+          isAutoEnd = true
+        } else {
+          // nextIndex =  nextIndex,
+          nextOffset = Object.assign({}, currentOffset, { [state.dir]: (nextIndex + 1) * step })
+        }
       }
     }
     return {
@@ -169,8 +190,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   }
 
   /**
-   * 开启自动轮播
-   * 每间隔interval scrollView的offset更改到下一个位置，通过onScrollEnd来获取contentOffset再计算要更新的索引index
+   * @desc: 开启自动轮播
   */
   function startAutoPlay () {
     if (state.width && isNaN(+state.width)) {
@@ -181,7 +201,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       return
     }
     const { nextIndex, nextOffset, autoMoveOffset, isAutoEnd } = getNextConfig(state.offset)
-    // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
     // 这里可以scroll到下一个元素, 但是把scrollView的偏移量在设置为content,视觉效果就没了吧
     // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
     if (!isAutoEnd) {
@@ -227,22 +246,23 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     const internalOffset = internalsRef.current.offset
     const previousOffset = props.horizontal ? internalOffset.x : internalOffset.y
     const moveOffset = props.horizontal ? contentOffset.x : contentOffset.y
-    const diff = moveOffset - previousOffset
+    // const diff = moveOffset - previousOffset
+    /*
     if (diff > 0 && state.index + 1 >= total) {
-      // const { nextOffset } = getNextConfig(contentOffset)
+      const { nextOffset } = getNextConfig(contentOffset)
       // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: false })
     } else if ( diff < 0 && state.index -1 < 0) {
-      // const { nextOffset } = getNextConfig(contentOffset)
-      // console.log('------------------diff<0 onScrollEnd-')
+      const { nextOffset } = getNextConfig(contentOffset)
       // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: false })
     }
+    */
     if (previousOffset === moveOffset && (index === 0 || index === total - 1)) {
       internalsRef.current.isScrolling = false
     }
   }
 
   /**
-   * 水平方向时，获取元素的布局，更新
+   * @desc: 水平方向时，获取元素的布局，更新, 其中如果传递100%时需要依赖measure计算元算的宽高
   */
   function onWrapperLayout () {
     if (props.enableOffset) {
@@ -370,16 +390,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     }
   }
 
-  const vStyle = {} as { height: number }
-  if (dir === 'y') {
-    vStyle.height = defaultHeight
-  }
   const pages: Array<ReactNode> | ReactNode = renderPages()
   const strStyle: string = 'container_' + state.dir
   const eventProps = props.innerProps || {}
   const layoutStyle = dir === 'x' ? { width: defaultWidth, height: defaultHeight } : { width: defaultWidth }
 
-  return (<View style={[layoutStyle, {backgroundColor: 'red'}]}>
+  return (<View style={[layoutStyle]}>
     <View
       style={[styles[strStyle], layoutStyle]}
       {...eventProps}
