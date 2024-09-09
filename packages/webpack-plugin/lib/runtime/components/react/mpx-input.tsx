@@ -41,7 +41,6 @@ import { JSX, forwardRef, useMemo, useRef, useState, useContext } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
-  StyleProp,
   TextInput,
   TextStyle,
   ViewStyle,

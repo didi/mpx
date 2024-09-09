@@ -16,7 +16,7 @@ interface MovableAreaProps {
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { children, style, width = 10, height = 10 } = props;
+  const { children, style = {}, width = 10, height = 10 } = props;
   const [areaWidth, setAreaWidth] = useState(0);
   const [areaHeight, setAreaHeight] = useState(0);
 
@@ -49,7 +49,12 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>
       <View
         {...innerProps}
-        style={[{ height: areaHeight, width: areaWidth, overflow: 'hidden' }, style]}
+        style={{
+          height: areaHeight,
+          width: areaWidth,
+          overflow: 'hidden',
+          ...style
+        }}
       >
         {children}
       </View>

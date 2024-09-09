@@ -4,7 +4,7 @@
  * ✔ disabled
  * ✔ color
  */
-import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent  } from 'react-native'
+import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react';
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -15,18 +15,18 @@ import { FormContext, FormFieldValue } from './context'
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
   name?: string
-  checked?: boolean 
+  checked?: boolean
   type: 'switch' | 'checkbox'
   disabled: boolean
   color: string
   'enable-offset'?: boolean
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchchange?:(event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((props, ref): JSX.Element => {
   const {
-    style = [],
+    style = {},
     checked = false,
     type = 'switch',
     disabled = false,
@@ -34,7 +34,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     'enable-offset': enableOffset,
     bindchange,
     catchchange,
-    } = props
+  } = props
 
   const [isChecked, setIsChecked] = useState<boolean>(checked)
 
@@ -59,10 +59,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked?: boolean } = {}) => {
     if (type === 'switch') {
       setIsChecked(evt as boolean)
-      changeHandler && changeHandler(getCustomEvent('change', {}, { layoutRef, detail: {value: evt} }, props))
+      changeHandler && changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: evt } }, props))
     } else {
       setIsChecked(checked as boolean)
-      changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: {value: checked} }, props))
+      changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: { value: checked } }, props))
     }
   }
 
@@ -90,7 +90,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     ...enableOffset ? { onLayout } : {},
-    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange'] : onChange } : {}
+    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
   }, [
     'style',
     'checked',
@@ -100,9 +100,9 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   ], {
     layoutRef
   })
-  
+
   if (type === 'checkbox') {
-    return <CheckBox 
+    return <CheckBox
       {...innerProps}
       color={color}
       style={style}
@@ -115,7 +115,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     style={style}
     value={isChecked}
     trackColor={{ false: "#FFF", true: color }}
-    thumbColor={ isChecked ? "#FFF" : "#f4f3f4"}
+    thumbColor={isChecked ? "#FFF" : "#f4f3f4"}
     ios_backgroundColor="#FFF"
   />)
 })

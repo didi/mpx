@@ -9,7 +9,6 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle
@@ -19,13 +18,14 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, extractTextStyle, isText } from './utils'
 import Icon from './mpx-icon'
+import { isEmptyObject } from '@mpxjs/utils'
 
 export interface RadioProps {
   value?: string
   checked?: boolean
   disabled?: boolean
   color?: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -89,16 +89,16 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: StyleProp<TextStyle> = {}
+    let labelTextStyle: TextStyle = {}
 
     const textStyle = extractTextStyle(style)
 
-    const defaultStyle = StyleSheet.flatten([
-      styles.wrapper,
-      isChecked && styles.wrapperChecked,
-      disabled && styles.wrapperDisabled,
-      style
-    ])
+    const defaultStyle = {
+      ...styles.wrapper,
+      ...(isChecked && styles.wrapperChecked),
+      ...(disabled && styles.wrapperDisabled),
+      ...style
+    }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
@@ -146,18 +146,17 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>[]
+      textStyle?: TextStyle
     ) => {
+      const hasTextStyle = isEmptyObject(textStyle || {})
       if (every(children, (child) => isText(child))) {
-        if (textStyle?.length) {
-          children = [
-            <Text key='radioTextWrap' style={textStyle}>
-              {children}
-            </Text>
-          ]
+        if (hasTextStyle) {
+          children = <Text key='radioTextWrap' style={textStyle}>
+            {children}
+          </Text>
         }
       } else {
-        if (textStyle)
+        if (hasTextStyle)
           console.warn(
             'Text style will be ignored unless every child of the Radio is Text node!'
           )
@@ -172,7 +171,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle
+      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -180,7 +179,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       props,
       {
         ref: nodeRef,
-        style: [styles.container],
+        style: styles.container,
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
@@ -221,14 +220,14 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             type='success'
             size={24}
             color={disabled ? '#E1E1E1' : color}
-            style={[
-              styles.icon,
-              isChecked && styles.iconChecked,
-              disabled && styles.iconDisabled
-            ]}
+            style={{
+              ...styles.icon,
+              ...(isChecked && styles.iconChecked),
+              ...(disabled && styles.iconDisabled)
+            }}
           />
         </View>
-        {wrapChildren(children, [textStyle, labelTextStyle])}
+        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
       </View>
     )
   }

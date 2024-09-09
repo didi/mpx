@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useRef, useEffect } from 'react'
+import { forwardRef, JSX, useEffect } from 'react'
 // @ts-ignore
 import { noop } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
