@@ -151,7 +151,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       children: ReactNode,
       textStyle?: TextStyle
     ) => {
-      const hasTextStyle = isEmptyObject(textStyle)
+      const hasTextStyle = isEmptyObject(textStyle || {})
       if (every(children, (child) => isText(child))) {
         if (hasTextStyle) {
           children = <Text key='checkboxTextWrap' style={textStyle}>{children}</Text>

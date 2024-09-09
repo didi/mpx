@@ -148,7 +148,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       children: ReactNode,
       textStyle?: TextStyle
     ) => {
-      const hasTextStyle = isEmptyObject(textStyle)
+      const hasTextStyle = isEmptyObject(textStyle || {})
       if (every(children, (child) => isText(child))) {
         if (hasTextStyle) {
           children = <Text key='radioTextWrap' style={textStyle}>
