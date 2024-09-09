@@ -11,9 +11,7 @@ import {
 import {
   View,
   NativeSyntheticEvent,
-  StyleProp,
-  ViewStyle,
-  StyleSheet
+  ViewStyle
 } from 'react-native'
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -21,7 +19,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 
 export interface CheckboxGroupProps {
   name: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -32,7 +30,7 @@ const CheckboxGroup = forwardRef<
   CheckboxGroupProps
 >((props, ref): JSX.Element => {
   const {
-    style = [],
+    style = {},
     'enable-offset': enableOffset,
     children,
     bindchange
@@ -52,7 +50,7 @@ const CheckboxGroup = forwardRef<
   const defaultStyle = {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    ...StyleSheet.flatten(style)
+    ...style
   }
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
@@ -89,9 +87,9 @@ const CheckboxGroup = forwardRef<
 
   const resetValue = () => {
     Object.keys(groupValue).forEach((key) => {
-        groupValue[key].checked = false
-        groupValue[key].setValue(false)
-      })
+      groupValue[key].checked = false
+      groupValue[key].setValue(false)
+    })
   }
 
   if (formValuesMap) {

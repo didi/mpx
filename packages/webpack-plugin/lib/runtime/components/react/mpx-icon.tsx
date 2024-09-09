@@ -4,7 +4,7 @@
  * ✔ color
  */
 import { JSX, useRef, forwardRef } from 'react'
-import { Text, StyleProp, TextStyle, Image} from 'react-native'
+import { Text, TextStyle, Image } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
@@ -23,7 +23,7 @@ export interface IconProps {
   type: IconType
   size?: number
   color?: string
-  style?: StyleProp<TextStyle>
+  style?: TextStyle & Record<string, any>
   'enable-offset'?: boolean
 }
 
@@ -45,7 +45,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       type,
       size = 23,
       color,
-      style = [],
+      style = {},
       'enable-offset': enableOffset
     } = props
 
@@ -78,7 +78,11 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       props,
       {
         ref: nodeRef,
-        style: [defaultStyle, { tintColor: color }, style],
+        style: {
+          ...defaultStyle,
+          tintColor: color,
+          ...style
+        },
         source: { uri },
         ...(enableOffset ? { onLayout } : {})
       },

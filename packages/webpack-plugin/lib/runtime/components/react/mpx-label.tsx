@@ -5,7 +5,6 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import {
   View,
   Text,
-  StyleSheet,
   StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
@@ -18,7 +17,7 @@ import { LabelContext, LabelContextValue } from './context'
 
 export interface LabelProps {
   for?: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -27,7 +26,7 @@ export interface LabelProps {
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   (props, ref): JSX.Element => {
     const {
-      style = [],
+      style = {},
       'enable-offset': enableOffset,
       children,
       bindtap
@@ -37,12 +36,12 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const defaultStyle = {
       flexDirection: 'row',
-      ...StyleSheet.flatten(style)
+      ...style
     }
 
     const contextRef: LabelContextValue = useRef({
       textStyle,
-      triggerChange: () => {}
+      triggerChange: () => { }
     })
 
     const layoutRef = useRef({})
@@ -76,7 +75,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       textStyle?: StyleProp<TextStyle>
     ) => {
       if (textStyle && every(children, (child) => isText(child))) {
-        return [<Text key='labelTextWrap' style={textStyle}>{children}</Text>]
+        return <Text key='labelTextWrap' style={textStyle}>{children}</Text>
       }
       const childrenArray = Array.isArray(children) ? children : [children]
       return childrenArray.map((child, index) => {
