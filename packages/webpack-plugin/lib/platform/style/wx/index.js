@@ -2,7 +2,7 @@ const { hump2dash } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -495,6 +495,10 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatBoxShadow = ({ prop, value }, { mode }) => {
+    value = value.trim()
+    if (value === 'none') {
+      return  false
+    }
     const cssMap = formatAbbreviation({ prop, value }, { mode })
     if (mode === 'android') return cssMap
     // ios 阴影需要额外设置 shadowOpacity=1
