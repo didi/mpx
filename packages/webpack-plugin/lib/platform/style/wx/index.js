@@ -497,7 +497,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatBoxShadow = ({ prop, value }, { mode }) => {
     value = value.trim()
     if (value === 'none') {
-      return  false
+      return false
     }
     const cssMap = formatAbbreviation({ prop, value }, { mode })
     if (mode === 'android') return cssMap
