@@ -10,7 +10,7 @@ import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle } from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle, throwReactWarning } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -393,7 +393,7 @@ function wrapChildren(children: ReactNode | ReactNode[], props: _ViewProps, text
       children = <Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
     }
   } else {
-    if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
+    if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the view is Text node!')
   }
 
   return [

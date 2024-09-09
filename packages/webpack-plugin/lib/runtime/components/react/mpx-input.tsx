@@ -41,7 +41,6 @@ import { JSX, forwardRef, useMemo, useRef, useState, useContext } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
-  StyleProp,
   TextInput,
   TextStyle,
   ViewStyle,
@@ -55,7 +54,7 @@ import {
   TextInputChangeEventData,
   TextInputSubmitEditingEventData
 } from 'react-native'
-import { parseInlineStyle, useUpdateEffect } from './utils'
+import { parseInlineStyle, useUpdateEffect, throwReactWarning } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue } from './context'
@@ -344,7 +343,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   if (formValuesMap) {
     if (!props.name) {
-      console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }

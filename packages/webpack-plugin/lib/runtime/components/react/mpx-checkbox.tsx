@@ -28,7 +28,7 @@ import {
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { every, extractTextStyle, isText } from './utils'
+import { every, extractTextStyle, isText, throwReactWarning } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 
 interface Selection {
@@ -160,8 +160,8 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         }
       } else {
         if (textStyle)
-          console.warn(
-            'Text style will be ignored unless every child of the Checkbox is Text node!'
+          throwReactWarning(
+            '[Mpx runtime warn]: Text style will be ignored unless every child of the Checkbox is Text node!'
           )
       }
 

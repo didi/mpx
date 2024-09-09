@@ -17,7 +17,7 @@ import {
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, extractTextStyle, isText } from './utils'
+import { every, extractTextStyle, isText, throwReactWarning } from './utils'
 import Icon from './mpx-icon'
 
 export interface RadioProps {
@@ -158,8 +158,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         }
       } else {
         if (textStyle)
-          console.warn(
-            'Text style will be ignored unless every child of the Radio is Text node!'
+          throwReactWarning(
+            '[Mpx runtime warn]: Text style will be ignored unless every child of the Radio is Text node!'
           )
       }
 

@@ -141,3 +141,9 @@ export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
   })
   return style
 }
+
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
+}
