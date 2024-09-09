@@ -466,7 +466,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const hasCombinationPercentStyle = combinationStyleProps.some(props => {
     return combinationStyleProps.some(({ key, rules }) => {
       return Object.entries(rules).some(([dimension, transformKey]) => {
-        const transformValue = styleObj[key].find((item: Record<string, any>) => item.hasOwnProperty(transformKey));
+        const transformValue = styleObj[key] && styleObj[key].find((item: Record<string, any>) => item.hasOwnProperty(transformKey));
         return transformValue && PERCENT_REGEX.test(transformValue[transformKey])
       });
     })
