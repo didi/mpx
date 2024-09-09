@@ -2,7 +2,7 @@ import { View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
 import { PickerView } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { TimeProps, } from './type'
+import { TimeProps } from './type'
 
 // 可见应用窗口的大小。
 // const { height: dHeight, width: dWidth } = Dimensions.get('window');
