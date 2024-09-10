@@ -47,7 +47,7 @@ import {
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { extractTextStyle, isText, every, throwReactWarning } from './utils'
+import { extractTextStyle, isText, every, throwReactWarning, transformTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -349,6 +349,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
 
   function wrapChildren(children: ReactNode, textStyle: StyleProp<TextStyle>) {
     if (every(children, (child) => isText(child))) {
+      transformTextStyle(textStyle as TextStyle)
       children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
     } else {
       throwReactWarning('[Mpx runtime warn]: Button\'s children only support text node or string.')
