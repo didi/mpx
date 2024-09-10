@@ -74,10 +74,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const baseScale = useRef<any>(new Animated.Value(1)).current
   const scaleValue = useRef<any>(new Animated.Value(1))
   const [transformOrigin, setTransformOrigin] = useState('0% 0%')
-  let panResponder: any = {}
 
   const propsRef = useRef<any>(props || {})
   const layoutRef = useRef<any>({})
+
   const MovableAreaLayout = useContext(MovableAreaContext)
 
   const movablePosition = useRef({
@@ -88,6 +88,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
   })
+
+  let panResponder = useRef<any>({})
 
   let isFirstTouch = useRef<boolean>(true)
   let touchEvent = useRef<string>('')
@@ -149,7 +151,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   }, [x, y])
 
-  panResponder = useMemo(() => {
+  panResponder.current = useMemo(() => {
     return PanResponder.create({
       onMoveShouldSetPanResponder: () => !propsRef.current.disabled,
       onMoveShouldSetPanResponderCapture: () => !propsRef.current.disabled,
@@ -380,7 +382,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...panResponder.panHandlers,
+    ...panResponder.current.panHandlers,
     onLayout,
     ...(hasTouchmove() ? { 'bindtouchmove': onTouchMove } : {}),
     ...(hasCatchTouchmove() ? { 'catchtouchmove': onCatchTouchMove } : {}),
