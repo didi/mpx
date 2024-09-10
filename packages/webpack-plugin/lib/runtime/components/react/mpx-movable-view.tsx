@@ -89,7 +89,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     defaultStyle: styles.container
   })
 
-  let panResponder = useRef<any>({})
+  const panResponder: any = useRef({})
 
   let isFirstTouch = useRef<boolean>(true)
   let touchEvent = useRef<string>('')
@@ -151,7 +151,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   }, [x, y])
 
-  panResponder.current = useMemo(() => {
+  panResponder = useMemo(() => {
     return PanResponder.create({
       onMoveShouldSetPanResponder: () => !propsRef.current.disabled,
       onMoveShouldSetPanResponderCapture: () => !propsRef.current.disabled,
@@ -382,7 +382,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...panResponder.current.panHandlers,
+    ...panResponder.panHandlers,
     onLayout,
     ...(hasTouchmove() ? { 'bindtouchmove': onTouchMove } : {}),
     ...(hasCatchTouchmove() ? { 'catchtouchmove': onCatchTouchMove } : {}),
