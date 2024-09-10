@@ -44,6 +44,8 @@ function createEffect (proxy, components) {
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   proxy.effect = new ReactiveEffect(() => {
+    // reset instance
+    proxy.target.__resetInstance()
     return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
   }, () => queueJob(update), proxy.scope)
 }
@@ -84,6 +86,10 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         }
       }
       return rootProps
+    },
+    __resetInstance () {
+      this.__refs = {}
+      this.__dispatchedSlotSet = new WeakSet()
     },
     __getSlot (name) {
       const { children } = propsRef.current
@@ -347,9 +353,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
-    // reset instance
-    instance.__refs = {}
-    instance.__dispatchedSlotSet = new WeakSet()
     useImperativeHandle(ref, () => {
       return instance
     })
