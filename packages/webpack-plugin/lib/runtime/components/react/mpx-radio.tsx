@@ -89,14 +89,21 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: TextStyle = {}
 
-    const { textStyle, innerStyle } = splitStyle(style)
+    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
+
+    if (!isEmptyObject(imageStyle)) {
+      throwReactWarning('[Mpx runtime warn]: Radio does not support background image-related styles!')
+    }
 
     const defaultStyle = {
       ...styles.wrapper,
       ...(isChecked && styles.wrapperChecked),
       ...(disabled && styles.wrapperDisabled),
+    }
+
+    const viewStyle = {
+      ...defaultStyle,
       ...innerStyle
     }
 
@@ -175,7 +182,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -219,7 +225,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     return (
       <View {...innerProps}>
-        <View style={defaultStyle}>
+        <View style={viewStyle}>
           <Icon
             type='success'
             size={24}
@@ -231,7 +237,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             }}
           />
         </View>
-        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
+        {wrapChildren(children, textStyle)}
       </View>
     )
   }

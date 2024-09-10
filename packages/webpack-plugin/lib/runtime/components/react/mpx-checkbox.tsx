@@ -92,7 +92,11 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
-    const { textStyle, innerStyle } = splitStyle(style)
+    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
+
+    if (!isEmptyObject(imageStyle)) {
+      throwReactWarning('[Mpx runtime warn]: Checkbox does not support background image-related styles!')
+    }
 
     const groupContext = useContext(CheckboxGroupContext)
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
@@ -101,6 +105,10 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const defaultStyle = {
       ...styles.wrapper,
       ...(disabled && styles.wrapperDisabled),
+    }
+
+    const viewStyle = {
+      ...defaultStyle,
       ...innerStyle
     }
 
@@ -170,7 +178,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: TextStyle = {}
 
     if (groupContext) {
       groupValue = groupContext.groupValue
@@ -178,7 +185,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -222,7 +228,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     return (
       <View {...innerProps}>
-        <View style={defaultStyle}>
+        <View style={viewStyle}>
           <Icon
             type='success_no_circle'
             size={18}
@@ -230,7 +236,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             style={isChecked ? styles.iconChecked : styles.icon}
           />
         </View>
-        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
+        {wrapChildren(children, textStyle)}
       </View>
     )
   }

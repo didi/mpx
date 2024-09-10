@@ -233,9 +233,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
-  const { textStyle, innerStyle } = splitStyle(style)
+  const { textStyle, imageStyle, innerStyle } = splitStyle(style)
 
-  const { textStyle: hoverTextStyle, innerStyle: hoverInnerStyle } = splitStyle(hoverStyle)
+  const { textStyle: hoverTextStyle, imageStyle: hoverImageStyle, innerStyle: hoverInnerStyle } = splitStyle(hoverStyle)
+
+  if (!isEmptyObject({ ...imageStyle, ...hoverImageStyle })) {
+    throwReactWarning('[Mpx runtime warn]: Button does not support background image-related styles!')
+  }
 
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 

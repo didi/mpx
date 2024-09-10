@@ -5,12 +5,10 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, useEffect, forwardRef, ReactNode, JSX, useContext } from 'react'
+import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { PERCENT_REGEX } from './utils'
-import { LabelContext } from './context'
-
 
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -46,17 +44,10 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
 
   const layoutRef = useRef({})
 
-  const labelContext = useContext(LabelContext)
-  let labelTextStyle: TextStyle = {}
-
-  if (labelContext) {
-    labelTextStyle = labelContext.current.textStyle as TextStyle || {}
-  }
-
   let defaultStyle = {}
 
   if (!disableDefaultStyle) {
-    defaultStyle = { ...DEFAULT_STYLE, ...labelTextStyle }
+    defaultStyle = DEFAULT_STYLE
     transformStyle(style)
   }
 

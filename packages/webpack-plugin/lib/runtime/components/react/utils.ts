@@ -82,14 +82,6 @@ export const isText = (ele: ReactNode) => {
   return false
 }
 
-export const isNativeText = (ele: ReactNode) => {
-  if (isValidElement(ele)) {
-    const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName === 'Text'  
-  }
-  return false
-}
-
 export const isEmbedded = (ele: ReactNode) => {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName

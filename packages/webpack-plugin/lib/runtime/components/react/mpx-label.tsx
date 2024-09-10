@@ -13,7 +13,7 @@ import {
 import { isEmptyObject } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, splitStyle, splitProps, isText, isNativeText } from './utils'
+import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 
 export interface LabelProps {
@@ -33,15 +33,17 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       bindtap
     } = props
 
-    const { textStyle, innerStyle } = splitStyle(style)
+    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
+
+    if (!isEmptyObject(imageStyle)) {
+      throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
+    }
 
     const defaultStyle = {
       flexDirection: 'row',
-      ...innerStyle
     }
 
     const contextRef: LabelContextValue = useRef({
-      textStyle,
       triggerChange: () => { }
     })
 
@@ -80,24 +82,20 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
       if (every(children, (child) => isText(child))) {
         if (hasTextStyle || textProps) {
-          return <Text key='labelTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
+          children = <Text key='labelTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
         }
+      } else {
+        if (hasTextStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Label is Text node!')
       }
 
-      const childrenArray = Array.isArray(children) ? children : [children]
-      return childrenArray.map((child, index) => {
-        if (hasTextStyle && isNativeText(child)) {
-          return <Text key={index} style={textStyle}>{child}</Text>
-        }
-        return child
-      })
+      return children
     }
 
     const innerProps = useInnerProps(
       props,
       {
         ref: nodeRef,
-        style: defaultStyle,
+        style: { ...defaultStyle, ...innerStyle },
         bindtap: onTap,
         ...(enableOffset ? { onLayout } : {})
       },
