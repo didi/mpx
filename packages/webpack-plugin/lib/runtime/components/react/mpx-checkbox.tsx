@@ -20,7 +20,6 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle
@@ -28,7 +27,7 @@ import {
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { every, extractTextStyle, isText } from './utils'
+import { every, extractTextStyle, isText, throwReactWarning } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 import { isEmptyObject } from '@mpxjs/utils'
 
@@ -157,10 +156,11 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
           children = <Text key='checkboxTextWrap' style={textStyle}>{children}</Text>
         }
       } else {
-        if (hasTextStyle)
-          console.warn(
-            'Text style will be ignored unless every child of the Checkbox is Text node!'
+        if (hasTextStyle) {
+          throwReactWarning(
+            '[Mpx runtime warn]: Text style will be ignored unless every child of the Checkbox is Text node!'
           )
+        }
       }
 
       return children

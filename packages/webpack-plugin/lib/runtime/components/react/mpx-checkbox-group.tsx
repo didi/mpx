@@ -16,6 +16,7 @@ import {
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { throwReactWarning } from './utils'
 
 export interface CheckboxGroupProps {
   name: string
@@ -94,7 +95,7 @@ const CheckboxGroup = forwardRef<
 
   if (formValuesMap) {
     if (!props.name) {
-      console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }

@@ -12,6 +12,8 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
 
+import { throwReactWarning } from './utils'
+
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
   name?: string
@@ -76,7 +78,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   if (formValuesMap) {
     if (!props.name) {
-      console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }
