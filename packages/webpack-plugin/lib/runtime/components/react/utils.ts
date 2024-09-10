@@ -151,7 +151,7 @@ export const throwReactWarning = (message: string) => {
   }, 0)
 }
 
-export const transformStyle = (styleObj: TextStyle) => {
+export const transformTextStyle = (styleObj: TextStyle) => {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
     lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
