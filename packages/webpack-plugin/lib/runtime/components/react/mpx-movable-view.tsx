@@ -271,7 +271,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         })
       }
     })
-  }, [])
+  }, [MovableAreaLayout])
 
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
