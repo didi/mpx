@@ -6,12 +6,31 @@ import { successHandle, failHandle, defineUnsupportedProps } from '../../../comm
 const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
   const dimensionsScreen = Dimensions.get('screen')
+  let safeArea = {}
+  let { top = 0, bottom = 0, left = 0, right = 0 } = initialWindowMetrics?.insets || {}
+  if (Platform.OS === 'android') {
+    top = StatusBar.currentHeight || 0
+  }
+  const screenHeight = dimensionsScreen.height
+  const screenWidth = dimensionsScreen.width
+  try {
+    safeArea = {
+      left,
+      right,
+      top,
+      bottom,
+      height: screenHeight - bottom - top,
+      width: screenWidth - left - right
+    }
+  } catch (error) {
+  }
   const result = {
     pixelRatio: PixelRatio.get(),
     windowWidth: dimensionsWindow.width,
     windowHeight: dimensionsWindow.height,
-    screenWidth: dimensionsScreen.width,
-    screenHeight: dimensionsScreen.height
+    screenWidth: screenWidth,
+    screenHeight: screenHeight,
+    safeArea
   }
   defineUnsupportedProps(result, ['screenTop'])
   return result
@@ -19,38 +38,17 @@ const getWindowInfo = function () {
 
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
-  const { screenWidth, screenHeight } = windowInfo
-  let safeArea = {}
-  let { top = 0, bottom = 0 } = initialWindowMetrics?.insets || {}
-  if (Platform.OS === 'android') {
-    top = StatusBar.currentHeight || 0
-  }
-  const iosRes = {}
+  const { screenWidth, screenHeight, safeArea } = windowInfo
 
-  try {
-    const width = Math.min(screenWidth, screenHeight)
-    const height = Math.max(screenWidth, screenHeight)
-    safeArea = {
-      left: 0,
-      right: width,
-      top,
-      bottom: height - bottom,
-      height: height - bottom - top,
-      width
-    }
-  } catch (error) {
-  }
   const result = {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
-    statusBarHeight: top,
+    statusBarHeight: safeArea.top,
     fontSizeSetting: PixelRatio.getFontScale(),
-    safeArea,
-    ...windowInfo,
-    ...iosRes
+    ...windowInfo
   }
   defineUnsupportedProps(result, [
     'language',
