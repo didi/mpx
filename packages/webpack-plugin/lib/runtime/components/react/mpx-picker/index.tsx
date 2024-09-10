@@ -10,6 +10,7 @@ import MultiSelector from './multiSelector'
 import RegionSelector from './region'
 import { PickerProps, EventType, ValueType } from './type'
 import { FormContext, FormFieldValue } from '../context'
+import { throwReactWarning } from '../utils'
 
 /**
  * ✔ mode
@@ -68,11 +69,11 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   }
   if (formValuesMap) {
     if (!props.name) {
-       console.warn('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
     } else {
-        formValuesMap.set(props.name, { getValue, resetValue })
-     }
-   }
+      formValuesMap.set(props.name, { getValue, resetValue })
+    }
+  }
 
   const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
     innerLayout.current = layout.current
@@ -83,14 +84,14 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     bindchange && bindchange(eventData)
     setPickerValue(event.detail.value as ValueType)
   }
-  
+
   const columnChange = (value: PickerValue[], index: number) => {
     // type: "columnchange", detail: {column: 1, value: 2}
     const eventData = getCustomEvent('columnchange', {}, { detail: { column: index, value }, layoutRef: innerLayout })
     bindcolumnchange && bindcolumnchange(eventData)
   }
   const commonProps = {
-    ...{innerProps},
+    ...{ innerProps },
     mode,
     children,
     bindchange: onChange,
@@ -110,7 +111,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     ...commonProps,
     value: pickerValue as Array<number>,
     range: props['range'],
-    'range-key': props['range-key'] 
+    'range-key': props['range-key']
   }
 
   const timeProps = {

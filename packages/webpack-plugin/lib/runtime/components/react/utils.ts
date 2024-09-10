@@ -158,3 +158,9 @@ export function splitProps<T extends Record<string, any>>(props: T) {
     }
   }, {})
 }
+
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
+}

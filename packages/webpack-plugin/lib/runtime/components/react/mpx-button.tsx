@@ -46,7 +46,7 @@ import {
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { splitStyle, isText, every, splitProps } from './utils'
+import { splitStyle, isText, every, splitProps, throwReactWarning } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -127,20 +127,20 @@ const styles = StyleSheet.create({
 const getOpenTypeEvent = (openType: OpenType) => {
   // @ts-ignore
   if (!global?.__mpx?.config?.rnConfig) {
-    console.warn('Environment not supported')
+    throwReactWarning('[Mpx runtime warn]: Environment not supported')
     return
   }
 
   const eventName = OpenTypeEventsMap.get(openType)
   if (!eventName) {
-    console.warn(`open-type not support ${openType}`)
+    throwReactWarning(`[Mpx runtime warn]: open-type not support ${openType}`)
     return
   }
 
   // @ts-ignore
   const event = global.__mpx.config.rnConfig?.openTypeHandler?.[eventName]
   if (!event) {
-    console.warn(`Unregistered ${eventName} event`)
+    throwReactWarning(`[Mpx runtime warn]: Unregistered ${eventName} event`)
     return
   }
 
@@ -348,7 +348,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     if (every(children, (child) => isText(child))) {
       children = <Text key='buttonTextWrap' style={{ ...defaultTextStyle, ...textStyle }} {...(textProps || {})}>{children}</Text>
     } else {
-      if (textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
+      if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the button is Text node!')
     }
 
     return children
