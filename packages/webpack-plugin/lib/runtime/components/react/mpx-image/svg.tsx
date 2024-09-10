@@ -1,4 +1,4 @@
-import React from 'react'
+import { JSX } from 'react'
 import type { ImageSourcePropType, ImageStyle, StyleProp } from 'react-native'
 import { SvgCssUri, WithLocalSvg } from 'react-native-svg/css'
 interface SvgProps {
@@ -9,7 +9,7 @@ interface SvgProps {
   height?: string | number
 }
 
-const Svg = ({ local = false, src, style, width, height }: SvgProps): React.JSX.Element => {
+const Svg = ({ local = false, src, style, width, height }: SvgProps): JSX.Element => {
   return local ? (
     <WithLocalSvg style={style} asset={src as ImageSourcePropType} width={width} height={height} />
   ) : (

@@ -4,7 +4,7 @@
  * ✘ space
  * ✘ decode
  */
-import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
+import { Text, TextStyle, TextProps } from 'react-native'
 import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
