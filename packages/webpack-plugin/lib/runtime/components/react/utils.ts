@@ -1,5 +1,4 @@
 import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement } from 'react'
-import { StyleProp, StyleSheet, TextStyle, ViewStyle, AnimatableNumericValue } from 'react-native'
 import { ExtendedViewStyle } from './types/common'
 
 type GroupData = Record<string, Record<string, any>>
@@ -22,18 +21,6 @@ export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
     delete shallowCopy[key]
   }
   return shallowCopy
-}
-
-/**
- * 从 style 中提取 TextStyle
- * @param style
- * @returns
- */
-export const extractTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
-  return style && Object.entries(style).reduce((textStyle, [key, value]) => {
-    TEXT_STYLE_REGEX.test(key) && Object.assign(textStyle, { [key]: value })
-    return textStyle
-  }, {}) || {}
 }
 
 /**
@@ -95,6 +82,14 @@ export const isText = (ele: ReactNode) => {
   return false
 }
 
+export const isNativeText = (ele: ReactNode) => {
+  if (isValidElement(ele)) {
+    const displayName = (ele.type as FunctionComponent)?.displayName
+    return displayName === 'Text'  
+  }
+  return false
+}
+
 export const isEmbedded = (ele: ReactNode) => {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName
@@ -140,4 +135,26 @@ export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
     }
   })
   return style
+}
+
+export function splitStyle<T extends Record<string, any>>(styles: T) {
+  return groupBy(styles, (key) => {
+    if (TEXT_STYLE_REGEX.test(key)) {
+      return 'textStyle'
+    } else if (IMAGE_STYLE_REGEX.test(key)) {
+      return 'imageStyle'
+    } else {
+      return 'innerStyle'
+    }
+  }, {})
+}
+
+export function splitProps<T extends Record<string, any>>(props: T) {
+  return groupBy(props, (key) => {
+    if (TEXT_PROPS_REGEX.test(key)) {
+      return 'textProps'
+    } else {
+      return 'innerProps'
+    }
+  }, {})
 }

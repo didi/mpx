@@ -20,7 +20,6 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle
@@ -28,7 +27,7 @@ import {
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { every, extractTextStyle, isText } from './utils'
+import { every, splitStyle, isText, splitProps } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 import { isEmptyObject } from '@mpxjs/utils'
 
@@ -93,7 +92,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
-    const textStyle = extractTextStyle(style)
+    const { textStyle, innerStyle } = splitStyle(style)
 
     const groupContext = useContext(CheckboxGroupContext)
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
@@ -102,7 +101,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const defaultStyle = {
       ...styles.wrapper,
       ...(disabled && styles.wrapperDisabled),
-      ...style
+      ...innerStyle
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -151,10 +150,13 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       children: ReactNode,
       textStyle?: TextStyle
     ) => {
-      const hasTextStyle = isEmptyObject(textStyle || {})
+      if (!children) return children
+      const hasTextStyle = !isEmptyObject(textStyle || {})
+      const { textProps } = splitProps(props)
+
       if (every(children, (child) => isText(child))) {
-        if (hasTextStyle) {
-          children = <Text key='checkboxTextWrap' style={textStyle}>{children}</Text>
+        if (hasTextStyle || textProps) {
+          children = <Text key='checkboxTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
         }
       } else {
         if (hasTextStyle)

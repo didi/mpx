@@ -16,7 +16,7 @@ import {
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, extractTextStyle, isText } from './utils'
+import { every, splitStyle, splitProps, isText } from './utils'
 import Icon from './mpx-icon'
 import { isEmptyObject } from '@mpxjs/utils'
 
@@ -91,13 +91,13 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const labelContext = useContext(LabelContext)
     let labelTextStyle: TextStyle = {}
 
-    const textStyle = extractTextStyle(style)
+    const { textStyle, innerStyle } = splitStyle(style)
 
     const defaultStyle = {
       ...styles.wrapper,
       ...(isChecked && styles.wrapperChecked),
       ...(disabled && styles.wrapperDisabled),
-      ...style
+      ...innerStyle
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -148,10 +148,13 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       children: ReactNode,
       textStyle?: TextStyle
     ) => {
-      const hasTextStyle = isEmptyObject(textStyle || {})
+      if (!children) return children
+      const hasTextStyle = !isEmptyObject(textStyle || {})
+      const { textProps } = splitProps(props)
+
       if (every(children, (child) => isText(child))) {
-        if (hasTextStyle) {
-          children = <Text key='radioTextWrap' style={textStyle}>
+        if (hasTextStyle || textProps) {
+          children = <Text key='radioTextWrap' style={textStyle} {...(textProps || {})}>
             {children}
           </Text>
         }

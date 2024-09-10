@@ -10,9 +10,10 @@ import {
   NativeSyntheticEvent,
   TextStyle,
 } from 'react-native'
+import { isEmptyObject } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, extractTextStyle, isText } from './utils'
+import { every, splitStyle, splitProps, isText, isNativeText } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 
 export interface LabelProps {
@@ -32,11 +33,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       bindtap
     } = props
 
-    const textStyle = extractTextStyle(style)
+    const { textStyle, innerStyle } = splitStyle(style)
 
     const defaultStyle = {
       flexDirection: 'row',
-      ...style
+      ...innerStyle
     }
 
     const contextRef: LabelContextValue = useRef({
@@ -74,12 +75,18 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       children: ReactNode,
       textStyle?: StyleProp<TextStyle>
     ) => {
-      if (textStyle && every(children, (child) => isText(child))) {
-        return <Text key='labelTextWrap' style={textStyle}>{children}</Text>
+      const hasTextStyle = !isEmptyObject(textStyle || {})
+      const { textProps } = splitProps(props)
+
+      if (every(children, (child) => isText(child))) {
+        if (hasTextStyle || textProps) {
+          return <Text key='labelTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
+        }
       }
+
       const childrenArray = Array.isArray(children) ? children : [children]
       return childrenArray.map((child, index) => {
-        if (textStyle && isText(child)) {
+        if (hasTextStyle && isNativeText(child)) {
           return <Text key={index} style={textStyle}>{child}</Text>
         }
         return child

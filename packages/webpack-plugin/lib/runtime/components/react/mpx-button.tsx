@@ -40,14 +40,13 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   TextStyle,
   Animated,
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { extractTextStyle, isText, every } from './utils'
+import { splitStyle, isText, every, splitProps } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -233,9 +232,9 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
-  const inheritTextStyle = extractTextStyle(style)
+  const { textStyle, innerStyle } = splitStyle(style)
 
-  const textHoverStyle = extractTextStyle(hoverStyle)
+  const { textStyle: hoverTextStyle, innerStyle: hoverInnerStyle } = splitStyle(hoverStyle)
 
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 
@@ -267,11 +266,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     backgroundColor: plain ? 'transparent' : normalBackgroundColor,
   }
 
-  const textStyle = {
-    color: plain ? plainTextColor : normalTextColor,
-    ...inheritTextStyle
-  }
-
   const defaultViewStyle = {
     ...styles.button,
     ...(isMiniSize && styles.buttonMini),
@@ -281,7 +275,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
   const defaultTextStyle = {
     ...styles.text,
     ...(isMiniSize && styles.textMini),
-    ...textStyle
+    color: plain ? plainTextColor : normalTextColor,
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -347,11 +341,14 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     handleFormTypeFn()
   }
 
-  function wrapChildren(children: ReactNode, textStyle: StyleProp<TextStyle>) {
+  function wrapChildren(children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
+    if (!children) return children
+    const { textProps } = splitProps(props)
+
     if (every(children, (child) => isText(child))) {
-      children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
+      children = <Text key='buttonTextWrap' style={{ ...defaultTextStyle, ...textStyle }} {...(textProps || {})}>{children}</Text>
     } else {
-      console.warn('Button\'s children only support text node or string.')
+      if (textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
     }
 
     return children
@@ -361,6 +358,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     defaultStyle: {
       ...defaultViewStyle,
       ...defaultTextStyle,
+      ...textStyle
     }
   })
 
@@ -393,16 +391,17 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       {...innerProps}
       style={{
         ...defaultViewStyle,
-        ...style,
-        ...(applyHoverEffect && hoverStyle),
+        ...innerStyle,
+        ...(applyHoverEffect && hoverInnerStyle),
       } as ViewStyle}>
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
           children,
+          defaultTextStyle,
           {
-            ...defaultTextStyle,
-            ...(applyHoverEffect && textHoverStyle || {}),
+            ...textStyle,
+            ...(applyHoverEffect && hoverTextStyle),
           }
         )
       }
