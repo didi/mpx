@@ -40,7 +40,7 @@ class SocketTask {
     return this._socket.readyState
   }
 
-  send (options) {
+  send (options = {}) {
     const { data = '', success, fail, complete } = options
     if (typeof data !== 'string' || type(data) !== 'ArrayBuffer') {
       const res = { errMsg: 'sendSocketMessage:fail Unsupported data type' }

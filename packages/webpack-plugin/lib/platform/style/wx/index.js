@@ -2,7 +2,7 @@ const { hump2dash } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(box-sizing|white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -15,6 +15,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // prop 校验
   const verifyProps = ({ prop, value }, { mode }, isError = true) => {
+    prop = prop.trim()
     const tips = isError ? error : warn
     if (unsupportedPropExp.test(prop) || unsupportedPropMode[mode].test(prop)) {
       tips(`Property [${prop}] is not supported in React Native ${mode} environment!`)
@@ -30,6 +31,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
+    'box-sizing': ['border-box'],
     'backface-visibility': ['visible', 'hidden'],
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
@@ -54,6 +56,7 @@ module.exports = function getSpec ({ warn, error }) {
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
     'background-size': ['contain', 'cover', 'auto', ValueType.number],
+    'background-position': ['left', 'right', 'top', 'bottom', 'center', ValueType.number],
     'background-repeat': ['no-repeat'],
     width: ['auto', ValueType.number],
     height: ['auto', ValueType.number],
@@ -71,7 +74,7 @@ module.exports = function getSpec ({ warn, error }) {
     const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
       [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
-      [ValueType.number, /^((flex-grow|opacity|flex|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
+      [ValueType.number, /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
       [ValueType.color, /^(color|(.+-color))$/]
     ]
     for (const rule of propValueTypeRules) {
@@ -80,10 +83,13 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // 属性值校验
   const verifyValues = ({ prop, value }, isError = true) => {
+    prop = prop.trim()
+    value = value.trim()
     const type = getValueType(prop)
+    const namedColor = ['aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^\s*(-?\d+(\.\d+)?)(rpx|px|%)?\s*$/,
-      color: /^\s*(#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})|(rgb|rgba|hsl|hsla|hwb)\(.+\))\s*$/
+      number: /^(-?\d+(\.\d+)?)(rpx|px|%)?$/,
+      color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const tips = isError ? error : warn
     switch (type) {
@@ -143,6 +149,7 @@ module.exports = function getSpec ({ warn, error }) {
     'border-radius': ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
   }
   const formatAbbreviation = ({ prop, value }, { mode }) => {
+    const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
     const values = value.trim().split(/\s(?![^()]*\))/)
     const cssMap = []
@@ -151,10 +158,13 @@ module.exports = function getSpec ({ warn, error }) {
     const diff = values.length - props.length
     while (idx < values.length) {
       const prop = props[propsIdx]
-      if (!prop) break
+      if (!prop) {
+        error(`the value of [${original}] has not enough props to assign in React Native environment, please check again`)
+        break
+      }
       const value = values[idx]
       const newProp = hump2dash(prop.replace(/\..+/, ''))
-      if (!verifyProps({ prop: newProp, value }, { mode })) {
+      if (!verifyProps({ prop: newProp, value }, { mode }, diff === 0)) {
         // 有 ios or android 不支持的 prop，跳过 prop
         if (diff === 0) {
           propsIdx++
@@ -237,17 +247,6 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
-  // // font-variant 转换
-  // const getFontVariant = ({ prop, value }) => {
-  //   if (/^()$/.test(prop)) {
-  //     error(`Property [${prop}] is not supported in React Native environment, please replace [font-variant]!`)
-  //   }
-  //   prop = 'font-variant'
-  //   // 校验枚举值
-  //
-  //   return verifyValues({ prop, value }) && ({ prop, value })
-  // }
-
   // background 相关属性的转换 Todo
   // 仅支持以下属性，不支持其他背景相关的属性
   // /^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
@@ -293,6 +292,19 @@ module.exports = function getSpec ({ warn, error }) {
         })
         // value 无有效值时返回false
         return values.length === 0 ? false : { prop, value: values }
+      }
+      case bgPropMap.position: {
+        const values = []
+        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+          if (verifyValues({ prop, value: item })) {
+            // 支持 number 值 /  枚举, center与50%等价
+            values.push(item === 'center' ? '50%' : item)
+          } else {
+            error(`background position value[${value}] does not support in React Native ${mode} environment!`)
+          }
+        })
+
+        return { prop, value: values }
       }
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
@@ -340,7 +352,7 @@ module.exports = function getSpec ({ warn, error }) {
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\(([^)]+)\)/)
-      if (match.length >= 3) {
+      if (match && match.length >= 3) {
         let key = match[1]
         const val = match[2]
         switch (key) {
@@ -398,29 +410,109 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
-  const spec = {
+  const isNumber = (value) => {
+    return !isNaN(+value)
+  }
+
+  const getIntegersFlex = ({ prop, value }) => {
+    if (isNumber(value) && value >= 0) {
+      return { prop, value }
+    } else {
+      error(`The value of ${prop} accepts any floating point value >= 0.`)
+      return false
+    }
+  }
+
+  const formatFlex = ({ prop, value }, { mode }) => {
+    let values = value.trim().split(/\s(?![^()]*\))/)
+    if (values.length > 3) {
+      error('The value of prop [flex] supports up to three values')
+      values = values.splice(0, 3)
+    }
+    const cssMap = []
+    const lastOne = values[values.length - 1]
+    const isAuto = lastOne === 'auto'
+    // 枚举值 none initial
+    if (values.includes('initial') || values.includes('none')) {
+      // css flex: initial ===> flex: 0 1 ===> rn flex 0 1
+      // css flex: none ===> css flex: 0 0 ===> rn flex 0 0
+      if (values.length === 1) {
+        // 添加 basis 和 shrink
+        // value=initial 则 flexShrink=1，其他场景都是0
+        cssMap.push(...[{ prop: 'flexGrow', value: 0 }, { prop: 'flexShrink', value: +(values[0] === 'initial') }])
+      } else {
+        error('When setting the value of flex to none or initial, only one value is supported.')
+      }
+      return cssMap
+    }
+    // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
+    // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
+    if (!isNumber(lastOne)) {
+      // 添加 grow 和 shrink
+      // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
+      // 单值 flex: 1 1 <flex-basis>
+      // 双值 flex: <flex-grow> 1 <flex-basis>
+      // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+      for (let i = 0; i < 2; i++) {
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) ? values[i] : 1 })
+        item && cssMap.push(item)
+      }
+      if (!isAuto) {
+        // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
+        cssMap.push({
+          prop: 'flexBasis',
+          value: lastOne
+        })
+      }
+      return cssMap
+    }
+    // 纯数值：value 按flex-grow flex-shrink flex-basis 顺序赋值
+    // 兜底 shrink & basis
+    if (values.length === 1) {
+      values.push(...[1, 0])
+    } else if (values.length === 2) {
+      values.push(0)
+    }
+    // 循环赋值
+    for (let i = 0; i < values.length; i++) {
+      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+      item && cssMap.push(item)
+    }
+    return cssMap
+  }
+
+  const formatFontFamily = ({ prop, value }) => {
+    // 去掉引号 取逗号分隔后的第一个
+    const newVal = value.replace(/"|'/g, '').trim()
+    const values = newVal.split(',').filter(i => i)
+    if (!newVal || !values.length) {
+      error(`The value of prop [${prop}: ${value}] is invaild, please check again`)
+      return false
+    } else if (values.length > 1) {
+      warn(`The value of prop [${prop}] only supports one, and the first one is used by default`)
+    }
+    return { prop, value: values[0].trim() }
+  }
+
+  const formatBoxShadow = ({ prop, value }, { mode }) => {
+    const cssMap = formatAbbreviation({ prop, value }, { mode })
+    if (mode === 'android') return cssMap
+    // ios 阴影需要额外设置 shadowOpacity=1
+    cssMap.push({
+      prop: 'shadowOpacity',
+      value: 1
+    })
+    return cssMap
+  }
+
+  return {
     supportedModes: ['ios', 'android'],
     rules: [
       { // 背景相关属性的处理
-        test: /^(background|background-image|background-size)$/,
+        test: /^(background|background-image|background-size|background-position)$/,
         ios: checkBackgroundImage,
         android: checkBackgroundImage
       },
-      // {
-      //   test: 'box-shadow',
-      //   ios: getAbbreviation,
-      //   android: getAbbreviationAndroid
-      // },
-      // {
-      //   test: 'text-decoration',
-      //   ios: getAbbreviation,
-      //   android: getAbbreviationAndroid
-      // },
-      // {
-      //   test: /^(font-variant|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures)$/,
-      //   ios: getFontVariant,
-      //   android: getFontVariant
-      // },
       {
         test: 'border-radius',
         ios: getBorderRadius,
@@ -441,6 +533,21 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatTransform,
         android: formatTransform
       },
+      {
+        test: 'flex',
+        ios: formatFlex,
+        android: formatFlex
+      },
+      {
+        test: 'font-family',
+        ios: formatFontFamily,
+        android: formatFontFamily
+      },
+      {
+        test: 'box-shadow',
+        ios: formatBoxShadow,
+        android: formatBoxShadow
+      },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
@@ -455,5 +562,4 @@ module.exports = function getSpec ({ warn, error }) {
       }
     ]
   }
-  return spec
 }
