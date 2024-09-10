@@ -8,7 +8,7 @@ import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
 import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { PERCENT_REGEX } from './utils'
+import { transformStyle, DEFAULT_STYLE } from './utils'
 
 
 interface _TextProps extends TextProps {
@@ -19,18 +19,6 @@ interface _TextProps extends TextProps {
   'user-select'?: boolean
   userSelect?: boolean
   ['disable-default-style']?: boolean
-}
-
-const DEFAULT_STYLE = {
-  fontSize: 16
-}
-
-const transformStyle = (styleObj: TextStyle) => {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
-    styleObj.lineHeight = lineHeight
-  }
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {

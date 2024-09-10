@@ -12,6 +12,9 @@ export const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
 export const TEXT_PROPS_REGEX =  /ellipsizeMode|numberOfLines/
 
+export const DEFAULT_STYLE = {
+  fontSize: 16
+}
 
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
@@ -132,4 +135,12 @@ export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
     }
   })
   return style
+}
+
+export const transformStyle = (styleObj: TextStyle) => {
+  let { lineHeight } = styleObj
+  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
+    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    styleObj.lineHeight = lineHeight
+  }
 }
