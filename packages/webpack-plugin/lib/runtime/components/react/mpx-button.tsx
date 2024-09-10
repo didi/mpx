@@ -50,6 +50,7 @@ import { splitStyle, isText, every, splitProps, throwReactWarning } from './util
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
+import { isEmptyObject } from '@mpxjs/utils'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -343,12 +344,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
 
   function wrapChildren(children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
     if (!children) return children
+    const hasTextStyle = !isEmptyObject(textStyle || {})
     const { textProps } = splitProps(props)
 
     if (every(children, (child) => isText(child))) {
       children = <Text key='buttonTextWrap' style={{ ...defaultTextStyle, ...textStyle }} {...(textProps || {})}>{children}</Text>
     } else {
-      if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the button is Text node!')
+      if (hasTextStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Button is Text node!')
     }
 
     return children
