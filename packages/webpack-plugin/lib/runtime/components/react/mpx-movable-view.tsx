@@ -89,7 +89,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     defaultStyle: styles.container
   })
 
-  let panResponder: any = useRef({})
+  let panResponder: any = {}
 
   let isFirstTouch = useRef<boolean>(true)
   let touchEvent = useRef<string>('')
