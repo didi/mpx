@@ -17,7 +17,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useRef, useEffect, forwardRef, ReactNode, useContext, useMemo } from 'react';
+import { useRef, useEffect, forwardRef, ReactNode, useContext, useState, useMemo } from 'react';
 import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from 'react-native';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -72,7 +72,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const pan = useRef<any>(new Animated.ValueXY())
   const scaleValue = useRef<any>(new Animated.Value(1))
-  const transformOrigin = useRef('0% 0%')
+  const [transformOrigin, setTransformOrigin] = useState('0% 0%')
 
   const propsRef = useRef<any>({})
   const layoutRef = useRef<any>({})
@@ -186,10 +186,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   panResponder = useMemo(() => {
     return PanResponder.create({
+      onMoveShouldSetPanResponder: () => !propsRef.current.disabled,
+      onMoveShouldSetPanResponderCapture: () => !propsRef.current.disabled,
       onPanResponderGrant: (e, gestureState) => {
-        if (propsRef.current.disabled) return
         if (gestureState.numberActiveTouches === 1) {
-          transformOrigin.current = '0% 0%'
+          setTransformOrigin('0% 0%')
           pan.current.setOffset({
             x: direction === 'all' || direction === 'horizontal' ? pan.current.x._value : 0,
             y: direction === 'all' || direction === 'vertical' ? pan.current.y._value : 0
@@ -197,13 +198,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           pan.current.setValue({ x: 0, y: 0 });
         } else {
           initialDistance.current = 0;
-          transformOrigin.current = '50% 50%'
+          setTransformOrigin('50% 50%')
         }
       },
       onPanResponderMove: (e, gestureState) => {
-        if (propsRef.current.disabled) return
         if (gestureState.numberActiveTouches === 2 && scale) {
-          transformOrigin.current = '50% 50%'
+          setTransformOrigin('50% 50%')
           const touch1 = e.nativeEvent.touches[0];
           const touch2 = e.nativeEvent.touches[1];
           const currentTouchDistance = Math.sqrt(
@@ -235,7 +235,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           if (initialDistance.current) {
             return; // Skip processing if it's switching from a double touch
           }
-          transformOrigin.current = '50% 50%'
+          setTransformOrigin('0% 0%')
           if (isFirstTouch.current) {
             touchEvent.current = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove'
             isFirstTouch.current = false;
@@ -270,11 +270,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       },
       onPanResponderRelease: () => {
-        if (propsRef.current.disabled) return
         handlePanReleaseOrTerminate()
       },
       onPanResponderTerminate: () => {
-        if (propsRef.current.disabled) return
         handlePanReleaseOrTerminate()
       }
     })
@@ -379,7 +377,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const [translateX, translateY] = [pan.current.x, pan.current.y];
 
-  const transformStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue.current }], transformOrigin: transformOrigin.current }
+  const transformStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue.current }], transformOrigin: transformOrigin }
 
   const hasTouchmove = () => !!props.bindhtouchmove || !!props.bindvtouchmove || !!props.bindtouchmove
 
