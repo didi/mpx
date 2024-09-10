@@ -15,19 +15,19 @@ const getWindowInfo = function () {
   const screenWidth = dimensionsScreen.width
   try {
     safeArea = {
-      left,
-      right,
+      left: 0,
+      right: screenWidth,
       top,
-      bottom,
-      height: screenHeight - bottom - top,
-      width: screenWidth - left - right
+      bottom: screenHeight - bottom,
+      height: screenHeight - top - bottom,
+      screenWidth
     }
   } catch (error) {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
     windowWidth: dimensionsWindow.width,
-    windowHeight: dimensionsWindow.height,
+    windowHeight: screenHeight - top,
     screenWidth: screenWidth,
     screenHeight: screenHeight,
     safeArea
