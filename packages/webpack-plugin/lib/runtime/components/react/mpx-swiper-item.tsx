@@ -7,10 +7,11 @@ interface SwiperItemProps {
   'item-id'?: string;
   'enable-offset'?: boolean;
   children?: ReactNode;
+  style?: Object;
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
-  const { children, 'enable-offset': enableOffset } = props
+  const { children, 'enable-offset': enableOffset, style } = props
   const layoutRef = useRef({})
   const { nodeRef } = useNodesRef(props, ref, {})
 
@@ -31,6 +32,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     <View
       ref={nodeRef}
       data-itemId={props['item-id']}
+      style={[style]}
       {...innerProps}>
       {children}
     </View>

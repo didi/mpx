@@ -30,6 +30,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { every, extractTextStyle, isText, throwReactWarning } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
+import { isEmptyObject } from '@mpxjs/utils'
 
 interface Selection {
   value?: string
@@ -39,7 +40,7 @@ interface Selection {
 export interface CheckboxProps extends Selection {
   disabled?: boolean
   color?: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   groupValue?: Array<string>
   'enable-offset'?: boolean
   children?: ReactNode
@@ -81,7 +82,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       disabled = false,
       checked = false,
       color = '#09BB07',
-      style = [],
+      style = {},
       'enable-offset': enableOffset,
       children,
       bindtap,
@@ -98,11 +99,11 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
-    const defaultStyle = StyleSheet.flatten([
-      styles.wrapper,
-      disabled && styles.wrapperDisabled,
-      style
-    ])
+    const defaultStyle = {
+      ...styles.wrapper,
+      ...(disabled && styles.wrapperDisabled),
+      ...style
+    }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
@@ -148,28 +149,26 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>[]
+      textStyle?: TextStyle
     ) => {
+      const hasTextStyle = isEmptyObject(textStyle || {})
       if (every(children, (child) => isText(child))) {
-        if (textStyle?.length) {
-          children = [
-            <Text key='checkboxTextWrap' style={textStyle}>
-              {children}
-            </Text>
-          ]
+        if (hasTextStyle) {
+          children = <Text key='checkboxTextWrap' style={textStyle}>{children}</Text>
         }
       } else {
-        if (textStyle)
+        if (hasTextStyle) {
           throwReactWarning(
             '[Mpx runtime warn]: Text style will be ignored unless every child of the Checkbox is Text node!'
           )
+        }
       }
 
       return children
     }
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: StyleProp<TextStyle> = {}
+    let labelTextStyle: TextStyle = {}
 
     if (groupContext) {
       groupValue = groupContext.groupValue
@@ -177,7 +176,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle
+      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -185,7 +184,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       props,
       {
         ref: nodeRef,
-        style: [styles.container],
+        style: styles.container,
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
@@ -229,7 +228,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             style={isChecked ? styles.iconChecked : styles.icon}
           />
         </View>
-        {wrapChildren(children, [textStyle, labelTextStyle])}
+        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
       </View>
     )
   }

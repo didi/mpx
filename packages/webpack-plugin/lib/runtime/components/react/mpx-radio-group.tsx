@@ -11,9 +11,7 @@ import {
 import {
   View,
   NativeSyntheticEvent,
-  StyleProp,
-  ViewStyle,
-  StyleSheet
+  ViewStyle
 } from 'react-native'
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -22,7 +20,7 @@ import { throwReactWarning } from './utils'
 
 export interface radioGroupProps {
   name: string
-  style?: StyleProp<ViewStyle>
+  style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -33,7 +31,7 @@ const radioGroup = forwardRef<
   radioGroupProps
 >((props, ref): JSX.Element => {
   const {
-    style = [],
+    style = {},
     'enable-offset': enableOffset,
     children,
     bindchange,
@@ -54,7 +52,7 @@ const radioGroup = forwardRef<
   const defaultStyle = {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    ...StyleSheet.flatten(style)
+    ...style
   }
 
   const { nodeRef } = useNodesRef(props, ref, {

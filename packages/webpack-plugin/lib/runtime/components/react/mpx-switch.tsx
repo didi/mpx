@@ -28,7 +28,7 @@ interface _SwitchProps extends SwitchProps {
 
 const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((props, ref): JSX.Element => {
   const {
-    style = [],
+    style = {},
     checked = false,
     type = 'switch',
     disabled = false,

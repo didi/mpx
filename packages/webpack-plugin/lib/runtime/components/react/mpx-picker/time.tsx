@@ -2,7 +2,7 @@ import { View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
 import { PickerView } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { TimeProps,  } from './type'
+import { TimeProps } from './type'
 
 // 可见应用窗口的大小。
 // const { height: dHeight, width: dWidth } = Dimensions.get('window');
@@ -107,14 +107,14 @@ function toSingleStr(str: number) {
 function toStr(time: string): string {
   const [hour, minute]: any = formatStrToInt(time)
   const newHour = toSingleStr(hour)
-  const newMinute = toSingleStr(minute) 
+  const newMinute = toSingleStr(minute)
   return '' + newHour + newMinute
 }
 
 function checkSelectedIsValid(strStart: string, strEnd: string, selected: number[]): Boolean {
   const strSel = '' + toSingleStr(selected[0]) + toSingleStr(selected[1])
   if (strSel < strStart || strSel > strEnd) return false
-  return true 
+  return true
 }
 /**
  * [{label:'', value: '', key: '', children: []}]
@@ -224,12 +224,12 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
       <View style={styles.centeredView} ref={modalRef} onLayout={onModalLayout}>
         <View style={styles.btnLine}>
           <View style={styles.cancel}>
-            <TouchableWithoutFeedback onPress={handleCancel}> 
+            <TouchableWithoutFeedback onPress={handleCancel}>
               <Text style={styles.btntext}>取消</Text>
             </TouchableWithoutFeedback>
           </View>
           <View style={styles.ok}>
-            <TouchableWithoutFeedback onPress={handleConfirm}> 
+            <TouchableWithoutFeedback onPress={handleConfirm}>
               <Text style={styles.btntext}>确定</Text>
             </TouchableWithoutFeedback>
           </View>
@@ -243,7 +243,7 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
     const touchProps = {
       onLayout: onElementLayout,
       ref: viewRef
-    }  
+    }
     return <View>
       <TouchableWithoutFeedback onPress={handleChildClick}>
         <View {...touchProps}>{children}</View>
@@ -255,17 +255,17 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
 
   // Animated.View
   return (<>
-      <View style={[strStyle, { height: visible ? mheight : 0, bottom: 0 }]}>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={visible}
-          >
-          {renderModalChildren()}
-        </Modal>
-      </View>
+    <View style={{ ...strStyle, height: visible ? mheight : 0, bottom: 0 }}>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={visible}
+      >
+        {renderModalChildren()}
+      </Modal>
+    </View>
     {renderChildren()}
-    </>)
+  </>)
 })
 
 _TimePicker.displayName = 'mpx-picker-time'
