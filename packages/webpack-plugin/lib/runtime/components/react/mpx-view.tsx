@@ -425,13 +425,31 @@ function splitProps(props: _ViewProps) {
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
-  const widthRelativeStyleProps = ['borderTopLeftRadius', 'borderBottomLeftRadius']
-  const heightRelativeStyleProps = ['borderBottomRightRadius', 'borderTopRightRadius']
   const combinationStyleProps = [{
     key: 'transform',
     rules: {
       width: 'translateX',
       height: 'translateY'
+    }
+  }, {
+    key: 'borderTopLeftRadius',
+    rules: {
+      width: 'borderTopLeftRadius'
+    }
+  }, {
+    key: 'borderBottomLeftRadius',
+    rules: {
+      width: 'borderBottomLeftRadius'
+    }
+  }, {
+    key: 'borderBottomRightRadius',
+    rules: {
+      height: 'borderBottomRightRadius'
+    }
+  }, {
+    key: 'borderTopRightRadius',
+    rules: {
+      height: 'borderTopRightRadius'
     }
   }]
   const {
@@ -461,14 +479,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     }
   }
 
-  const hasWidthPercentStyle = widthRelativeStyleProps.some(key => (PERCENT_REGEX.test(styleObj[key])))
-  const hasHeightPercentStyle = heightRelativeStyleProps.some(key => (PERCENT_REGEX.test(styleObj[key])))
-  const hasCombinationPercentStyle = combinationStyleProps.some(props => {
-    return combinationStyleProps.some(({ key, rules }) => {
-      return Object.entries(rules).some(([dimension, transformKey]) => {
-        const transformValue = styleObj[key] && styleObj[key].find((item: Record<string, any>) => item.hasOwnProperty(transformKey));
-        return transformValue && PERCENT_REGEX.test(transformValue[transformKey])
-      });
+  const hasPercentStyle = combinationStyleProps.some(({ key, rules }) => {
+    return Object.entries(rules).some(([dimension, transformKey]) => {
+      const transformItemValue = styleObj[key]
+      if (transformItemValue) {
+        if (Array.isArray(transformItemValue)) {
+          const transformValue = transformItemValue.find((item: Record<string, any>) => item.hasOwnProperty(transformKey))
+          return transformValue && PERCENT_REGEX.test(transformValue[transformKey])
+        } else if (typeof transformItemValue === 'string') {
+          return PERCENT_REGEX.test(transformItemValue)
+        }
+      }
     })
   })
 
@@ -517,10 +538,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   }
 
 
-  function percentTransform(style: string[] | Record<string, any>, type: 'width' | 'height' | 'combination', { width, height }: { width?: number, height?: number }) {
+  function percentTransform(style: string[] | Record<string, any>, { width, height }: { width?: number, height?: number }) {
     const styleMap: Record<string, any> = {}
-    if (type === 'combination') {
-      style.forEach((styleItem: Record<string, any>) => {
+    style.forEach((styleItem: Record<string, any>) => {
+      const transformItemValue = styleObj[styleItem.key]
+      if (Array.isArray(transformItemValue)) {
         const transformStyle: Record<string, any>[] = []
         styleObj[styleItem.key].forEach((transformItem: Record<string, any>) => {
           const rules = styleItem.rules
@@ -534,7 +556,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
                 } else if (type === 'width' && width) {
                   transformStyle.push({ [rules[type]]: percentage * width });
                 } else {
-                  console.log(`mpx warning: ${[rules[type]]}  does not support % units.`)
+                  throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
                 }
               } else {
                 transformStyle.push(transformItem);
@@ -543,41 +565,34 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
           }
         })
         styleMap[styleItem.key] = transformStyle
-      })
-    } else {
-      style.forEach((key: string) => {
-        const value = styleObj[key]
-        if (PERCENT_REGEX.test(value)) {
-          const percentage = parseFloat(value) / 100
-          if (type === 'height' && height) {
-            styleMap[key] = percentage * height
-          } else if (type === 'width' && width) {
-            styleMap[key] = percentage * width
+      } else if (typeof transformItemValue === 'string') {
+        const rules = styleItem.rules
+        for (const type in rules) {
+          if (transformItemValue) {
+            if (PERCENT_REGEX.test(transformItemValue)) {
+              const percentage = parseFloat(transformItemValue) / 100;
+              if (type === 'height' && height) {
+                styleMap[styleItem.key] = percentage * height
+              } else if (type === 'width' && width) {
+                styleMap[styleItem.key] = percentage * width
+              } else {
+                throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+              }
+            } else {
+              styleMap[styleItem.key] = transformItemValue
+            }
           }
         }
-      })
-    }
+      }
+    })
     return styleMap
   }
   const onLayout = (res: LayoutChangeEvent) => {
     if (hasPercentStyle) {
       const { width, height } = res?.nativeEvent?.layout || {}
-      let newWidthStyleMap = {}
-      let newHeightStyleMap = {}
-      let newCombinationStyleMap = {}
-      if (hasWidthPercentStyle) {
-        newWidthStyleMap = percentTransform(widthRelativeStyleProps, 'width', { width })
-      }
-      if (hasHeightPercentStyle) {
-        newHeightStyleMap = percentTransform(heightRelativeStyleProps, 'height', { height })
-      }
-      if (hasCombinationPercentStyle) {
-        newCombinationStyleMap = percentTransform(combinationStyleProps, 'combination', { width, height })
-      }
+      const newCombinationStyleMap = percentTransform(combinationStyleProps, { width, height })
       setTransformStyle({
         ...transformStyle,
-        ...newWidthStyleMap,
-        ...newHeightStyleMap,
         ...newCombinationStyleMap
       })
     }
@@ -592,8 +607,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     ...styleObj,
     ...(isHover ? hoverStyle : null)
   })
-
-  const hasPercentStyle = hasWidthPercentStyle || hasHeightPercentStyle || hasCombinationPercentStyle
 
   const needLayout = enableOffset || hasPercentStyle
 
