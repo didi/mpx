@@ -17,7 +17,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useRef, useState, useEffect, forwardRef, ReactNode, useContext, useMemo } from 'react';
+import { useRef, useEffect, forwardRef, ReactNode, useContext, useState, useMemo } from 'react';
 import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from 'react-native';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -71,11 +71,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   } = props
 
   const pan = useRef<any>(new Animated.ValueXY())
-  const baseScale = useRef<any>(new Animated.Value(1)).current
   const scaleValue = useRef<any>(new Animated.Value(1))
   const [transformOrigin, setTransformOrigin] = useState('0% 0%')
 
-  const propsRef = useRef<any>(props || {})
+  const propsRef = useRef<any>({})
   const layoutRef = useRef<any>({})
 
   const MovableAreaLayout = useContext(MovableAreaContext)
@@ -95,6 +94,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   let touchEvent = useRef<string>('')
   let initialDistance = useRef<number>(0)
 
+  propsRef.current = props
 
   useEffect(() => {
     if (scale && (scaleValue.current._value !== originScaleValue)) {
@@ -116,10 +116,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
     }
   }, [originScaleValue]);
-
-  useEffect(() => {
-    propsRef.current = props
-  }, [props]);
 
   useEffect(() => {
     if (movablePosition.current.x !== Number(x) || movablePosition.current.y !== Number(y)) {
@@ -151,6 +147,43 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   }, [x, y])
 
+  const handlePanReleaseOrTerminate = () => {
+    pan.current.flattenOffset()
+    isFirstTouch.current = true
+    initialDistance.current = 0
+    const { x, y } = checkBoundaryPosition({
+      clampedScale: scaleValue.current._value,
+      width: layoutRef.current.width,
+      height: layoutRef.current.height,
+      positionX: pan.current.x._value,
+      positionY: pan.current.y._value
+    })
+    movablePosition.current = {
+      x,
+      y
+    }
+    const needChange = x !== pan.current.x._value || y !== pan.current.y._value
+
+    Animated.spring(pan.current, {
+      toValue: { x, y },
+      friction: 7,
+      useNativeDriver: false
+    }).start(() => {
+      if (needChange) {
+        bindchange && bindchange(
+          getCustomEvent('change', {}, {
+            detail: {
+              x,
+              y,
+              source: 'out-of-bounds'
+            },
+            layoutRef
+          }, propsRef.current)
+        )
+      }
+    })
+  }
+
   panResponder = useMemo(() => {
     return PanResponder.create({
       onMoveShouldSetPanResponder: () => !propsRef.current.disabled,
@@ -180,7 +213,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           if (!initialDistance.current) {
             initialDistance.current = currentTouchDistance;
           } else {
-            const newScale = (baseScale._value * currentTouchDistance) / initialDistance.current
+            const newScale = currentTouchDistance / initialDistance.current
             const clampedScale = Math.min(scaleMax, Math.max(scaleMin, newScale))
 
 
@@ -237,43 +270,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       },
       onPanResponderRelease: () => {
-        pan.current.flattenOffset()
-        isFirstTouch.current = true
-        initialDistance.current = 0
-        const { x, y } = checkBoundaryPosition({
-          clampedScale: scaleValue.current._value,
-          width: layoutRef.current.width,
-          height: layoutRef.current.height,
-          positionX: pan.current.x._value,
-          positionY: pan.current.y._value
-        })
-        movablePosition.current = {
-          x,
-          y
-        }
-        const needChange = x !== pan.current.x._value || y !== pan.current.y._value
-
-        Animated.spring(pan.current, {
-          toValue: { x, y },
-          friction: 7,
-          useNativeDriver: false
-        }).start(() => {
-          if (needChange) {
-            bindchange && bindchange(
-              getCustomEvent('change', {}, {
-                detail: {
-                  x,
-                  y,
-                  source: 'out-of-bounds'
-                },
-                layoutRef
-              }, propsRef.current)
-            )
-          }
-        })
+        handlePanReleaseOrTerminate()
+      },
+      onPanResponderTerminate: () => {
+        handlePanReleaseOrTerminate()
       }
     })
-  }, [MovableAreaLayout])
+  }, [MovableAreaLayout.width, MovableAreaLayout.height])
 
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
