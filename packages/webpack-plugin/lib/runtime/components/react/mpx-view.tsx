@@ -589,7 +589,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
               } else if (type === 'width' && width) {
                 styleMap[styleItem.key] = percentage * width
               } else {
-                throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+                styleMap[styleItem.key] = Number(transformItemValue.replace(/(-?\d+)%/g, '$1')) || 0
               }
             } else {
               styleMap[styleItem.key] = transformItemValue
