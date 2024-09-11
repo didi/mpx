@@ -21,7 +21,7 @@ const getWindowInfo = function () {
   try {
     safeArea = {
       left,
-      right: screenWidth - left,
+      right: screenWidth - right,
       top,
       bottom: screenHeight - bottom,
       height: screenHeight - top - bottom,
