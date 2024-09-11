@@ -498,7 +498,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   })
 
   if (hasPercentStyle) {
-    transformStyle = percentTransform(combinationStyleProps, { width: containerWidth || 0, height: containerHeight || 0 })
+    transformStyle = percentTransform(combinationStyleProps, { width: containerWidth, height: containerHeight })
   }
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
