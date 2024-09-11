@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState, useContext } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -169,6 +169,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
 
+  useEffect(() => {
+    setInputValue(value)
+  }, [value])
 
   const selection = useMemo(() => {
     if (selectionStart >= 0 && selectionEnd >= 0) {
