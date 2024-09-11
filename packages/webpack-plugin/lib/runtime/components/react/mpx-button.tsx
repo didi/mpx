@@ -4,7 +4,7 @@
  * ✔ plain
  * ✔ disabled
  * ✔ loading
- * ✘ form-type
+ * ✔ form-type
  * - open-type: Partially. Only support `share`、`getUserInfo`
  * ✔ hover-class: Convert hoverClass to hoverStyle.
  * ✔ hover-style
@@ -34,13 +34,8 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  forwardRef,
-} from 'react'
+import { useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX } from 'react'
+
 import {
   View,
   Text,
@@ -52,9 +47,10 @@ import {
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { extractTextStyle, isText, every, transformStyle } from './utils'
+import { extractTextStyle, isText, every, throwReactWarning, transformTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { FormContext } from './context'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -78,12 +74,12 @@ export interface ButtonProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
+  'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
   style?: ViewStyle & TextStyle & Record<string, any>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchstart?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -132,27 +128,27 @@ const styles = StyleSheet.create({
 const getOpenTypeEvent = (openType: OpenType) => {
   // @ts-ignore
   if (!global?.__mpx?.config?.rnConfig) {
-    console.warn('Environment not supported')
+    throwReactWarning('[Mpx runtime warn]: Environment not supported')
     return
   }
 
   const eventName = OpenTypeEventsMap.get(openType)
   if (!eventName) {
-    console.warn(`open-type not support ${openType}`)
+    throwReactWarning(`[Mpx runtime warn]: open-type not support ${openType}`)
     return
   }
 
   // @ts-ignore
   const event = global.__mpx.config.rnConfig?.openTypeHandler?.[eventName]
   if (!event) {
-    console.warn(`Unregistered ${eventName} event`)
+    throwReactWarning(`[Mpx runtime warn]: Unregistered ${eventName} event`)
     return
   }
 
   return event
 }
 
-const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
+const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
 
   const rotate = image.interpolate({
@@ -188,7 +184,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): React.JSX.Element => {
+const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -201,14 +197,25 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
     'enable-offset': enableOffset,
+    'form-type': formType,
     style = {},
     children,
     bindgetuserinfo,
     bindtap,
-    catchtap,
     bindtouchstart,
     bindtouchend,
   } = props
+
+
+  const formContext = useContext(FormContext)
+
+  let submitFn: () => void | undefined;
+  let resetFn: () => void | undefined;
+
+  if (formContext) {
+    submitFn = formContext.submit
+    resetFn = formContext.reset
+  }
 
   const refs = useRef<{
     hoverStartTimer: ReturnType<typeof setTimeout> | undefined
@@ -288,11 +295,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       })
     }
 
-    if (openType === 'getUserInfo') {
-      const userInfo = handleEvent && handleEvent()
-      if (typeof userInfo === 'object') {
-        bindgetuserinfo && bindgetuserinfo(userInfo)
-      }
+    if (openType === 'getUserInfo' && handleEvent && bindgetuserinfo) {
+      Promise.resolve(handleEvent)
+        .then((userInfo) => {
+          if (typeof userInfo === 'object') {
+            bindgetuserinfo(userInfo)
+          }
+        })
     }
   }
 
@@ -324,23 +333,26 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     setStayTimer()
   }
 
+  const handleFormTypeFn = () => {
+    if (formType === 'submit') {
+      submitFn && submitFn()
+    } else if (formType === 'reset') {
+      resetFn && resetFn()
+    }
+  }
   const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
     handleOpenTypeEvent(evt)
-  }
-
-  const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    if (disabled) return
-    catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
+    handleFormTypeFn()
   }
 
   function wrapChildren(children: ReactNode, textStyle: StyleProp<TextStyle>) {
     if (every(children, (child) => isText(child))) {
-      transformStyle(textStyle as TextStyle)
+      transformTextStyle(textStyle as TextStyle)
       children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
     } else {
-      console.warn('Button\'s children only support text node or string.')
+      throwReactWarning('[Mpx runtime warn]: Button\'s children only support text node or string.')
     }
 
     return children
@@ -366,14 +378,14 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
       bindtap: onTap,
-      catchtap: catchTap,
       ...(enableOffset ? { onLayout } : {}),
     },
     [
       'enable-offset'
     ],
     {
-      layoutRef
+      layoutRef,
+      disableTap: disabled
     }
   );
 

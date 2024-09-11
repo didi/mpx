@@ -98,6 +98,14 @@ export const isText = (ele: ReactNode) => {
   return false
 }
 
+export const isEmbedded = (ele: ReactNode) => {
+  if (isValidElement(ele)) {
+    const displayName = (ele.type as FunctionComponent)?.displayName
+    return displayName && ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName) 
+  }
+  return false
+}
+
 export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
   const childrenArray = Array.isArray(children) ? children : [children];
   return childrenArray.every((child) => callback(child as ReactNode))
@@ -137,11 +145,16 @@ export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
   return style
 }
 
-export const transformStyle = (styleObj: TextStyle) => {
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
+}
+
+export const transformTextStyle = (styleObj: TextStyle) => {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
     lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
     styleObj.lineHeight = lineHeight
   }
-  return styleObj
 }

@@ -4,11 +4,11 @@
  * ✘ space
  * ✘ decode
  */
-import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
+import { Text, TextStyle, TextProps } from 'react-native'
 import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { DEFAULT_STYLE, transformStyle } from './utils'
+import { transformTextStyle, DEFAULT_STYLE } from './utils'
 
 
 interface _TextProps extends TextProps {
@@ -37,7 +37,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
 
   if (!disableDefaultStyle) {
     defaultStyle = DEFAULT_STYLE
-    transformStyle(style)
+    transformTextStyle(style)
   }
 
   const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {

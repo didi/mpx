@@ -10,13 +10,13 @@ import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle, transformStyle } from './utils'
+import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle, throwReactWarning, transformTextStyle } from './utils'
 export interface _ViewProps extends ViewProps {
-  style?: Array<ExtendedViewStyle>
+  style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
-  hoverStyle: Array<ExtendedViewStyle>
-  ['hover-start-time']: number
-  ['hover-stay-time']: number
+  hoverStyle?: ExtendedViewStyle
+  ['hover-start-time']?: number
+  ['hover-stay-time']?: number
   'enable-offset'?: boolean
   'enable-background-image'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -327,20 +327,19 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   // 预解析
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
 
-
   // 判断是否可挂载onLayout
-  const needLayout = checkNeedLayout(preImageInfo)
-  const { src, sizeList } = preImageInfo
+  const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
+  const { src } = preImageInfo
 
   useEffect(() => {
-    if (!src) {
+    if(!src) {
       setShow(false)
       sizeInfo.current = null
       layoutInfo.current = null
-      return
+      return 
     }
 
-    if (!sizeList.includes('auto')) {
+    if (!needImageSize) {
       setShow(true)
       return
     }
@@ -353,7 +352,7 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       if (!needLayout || layoutInfo.current) {
         setImageSizeWidth(width)
         setImageSizeHeight(height)
-        if (layoutInfo.current) {
+        if(layoutInfo.current) {
           setLayoutInfoWidth(layoutInfo.current.width)
           setLayoutInfoHeight(layoutInfo.current.height)
         }
@@ -364,23 +363,26 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
 
   if (!preImageInfo?.src) return null
 
-  const onLayout = (res: LayoutChangeEvent) => {
+  const onLayout = (res: LayoutChangeEvent ) => {
     const { width, height } = res?.nativeEvent?.layout || {}
     layoutInfo.current = {
       width,
       height
     }
-    if (sizeInfo.current) {
-      setImageSizeWidth(sizeInfo.current.width)
-      setImageSizeHeight(sizeInfo.current.height)
+    if (!needImageSize) {
       setLayoutInfoWidth(width)
       setLayoutInfoHeight(height)
+    } else if (sizeInfo.current) {
+      setLayoutInfoWidth(width)
+      setLayoutInfoHeight(height)
+      setImageSizeWidth(sizeInfo.current.width)
+      setImageSizeHeight(sizeInfo.current.height)  
       setShow(true)
     }
   }
 
   return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
-    {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
+    {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
 
@@ -390,11 +392,11 @@ function wrapChildren(children: ReactNode | ReactNode[], props: _ViewProps, text
 
   if (every(children as ReactNode[], (child) => isText(child))) {
     if (textStyle || textProps) {
-      transformStyle(textStyle as TextStyle)
+      transformTextStyle(textStyle as TextStyle)
       children = <Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
     }
   } else {
-    if (textStyle) console.warn('Text style will be ignored unless every child of the view is Text node!')
+    if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the view is Text node!')
   }
 
   return [
@@ -426,8 +428,33 @@ function splitProps(props: _ViewProps) {
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
-  const widthRelativeStyleProps = ['borderTopLeftRadius', 'borderBottomLeftRadius']
-  const heightRelativeStyleProps = ['borderBottomRightRadius', 'borderTopRightRadius']
+  const combinationStyleProps = [{
+    key: 'transform',
+    rules: {
+      width: 'translateX',
+      height: 'translateY'
+    }
+  }, {
+    key: 'borderTopLeftRadius',
+    rules: {
+      width: 'borderTopLeftRadius'
+    }
+  }, {
+    key: 'borderBottomLeftRadius',
+    rules: {
+      width: 'borderBottomLeftRadius'
+    }
+  }, {
+    key: 'borderBottomRightRadius',
+    rules: {
+      height: 'borderBottomRightRadius'
+    }
+  }, {
+    key: 'borderTopRightRadius',
+    rules: {
+      height: 'borderTopRightRadius'
+    }
+  }]
   const {
     style = {},
     children,
@@ -455,7 +482,20 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     }
   }
 
-  const hasPercentStyle = [...widthRelativeStyleProps, ...heightRelativeStyleProps].some(key => (PERCENT_REGEX.test(styleObj[key])))
+  const hasPercentStyle = combinationStyleProps.some(({ key, rules }) => {
+    return Object.entries(rules).some(([dimension, transformKey]) => {
+      const transformItemValue = styleObj[key]
+      if (transformItemValue) {
+        if (Array.isArray(transformItemValue)) {
+          const transformValue = transformItemValue.find((item: Record<string, any>) => item.hasOwnProperty(transformKey))
+          return transformValue && PERCENT_REGEX.test(transformValue[transformKey])
+        } else if (typeof transformItemValue === 'string') {
+          return PERCENT_REGEX.test(transformItemValue)
+        }
+      }
+    })
+  })
+
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
     defaultStyle
@@ -500,16 +540,51 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     setStayTimer()
   }
 
-  function percentTransform(style: string[], type: 'width' | 'height', { width, height }: { width?: number, height?: number }) {
+
+  function percentTransform(style: string[] | Record<string, any>, { width, height }: { width?: number, height?: number }) {
     const styleMap: Record<string, any> = {}
-    style.forEach(key => {
-      const value = styleObj[key]
-      if (PERCENT_REGEX.test(value)) {
-        const percentage = parseFloat(value) / 100
-        if (type === 'height' && height) {
-          styleMap[key] = percentage * height
-        } else if (type === 'width' && width) {
-          styleMap[key] = percentage * width
+    style.forEach((styleItem: Record<string, any>) => {
+      const transformItemValue = styleObj[styleItem.key]
+      if (Array.isArray(transformItemValue)) {
+        const transformStyle: Record<string, any>[] = []
+        styleObj[styleItem.key].forEach((transformItem: Record<string, any>) => {
+          const rules = styleItem.rules
+          for (const type in rules) {
+            const value = transformItem[rules[type]]
+            if (value) {
+              if (PERCENT_REGEX.test(value)) {
+                const percentage = parseFloat(value) / 100;
+                if (type === 'height' && height) {
+                  transformStyle.push({ [rules[type]]: percentage * height });
+                } else if (type === 'width' && width) {
+                  transformStyle.push({ [rules[type]]: percentage * width });
+                } else {
+                  throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+                }
+              } else {
+                transformStyle.push(transformItem);
+              }
+            }
+          }
+        })
+        styleMap[styleItem.key] = transformStyle
+      } else if (typeof transformItemValue === 'string') {
+        const rules = styleItem.rules
+        for (const type in rules) {
+          if (transformItemValue) {
+            if (PERCENT_REGEX.test(transformItemValue)) {
+              const percentage = parseFloat(transformItemValue) / 100;
+              if (type === 'height' && height) {
+                styleMap[styleItem.key] = percentage * height
+              } else if (type === 'width' && width) {
+                styleMap[styleItem.key] = percentage * width
+              } else {
+                throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+              }
+            } else {
+              styleMap[styleItem.key] = transformItemValue
+            }
+          }
         }
       }
     })
@@ -518,12 +593,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const onLayout = (res: LayoutChangeEvent) => {
     if (hasPercentStyle) {
       const { width, height } = res?.nativeEvent?.layout || {}
-      const newWidthStyleMap = percentTransform(widthRelativeStyleProps, 'width', { width })
-      const newHeightStyleMap = percentTransform(heightRelativeStyleProps, 'height', { height })
+      const newCombinationStyleMap = percentTransform(combinationStyleProps, { width, height })
       setTransformStyle({
         ...transformStyle,
-        ...newWidthStyleMap,
-        ...newHeightStyleMap
+        ...newCombinationStyleMap
       })
     }
     if (enableOffset) {
