@@ -598,7 +598,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     if (hasPercentStyle) {
       const { width, height } = res?.nativeEvent?.layout || {}
       setContainerWidth(width || 0)
-      setContainerHeight(width || 0)
+      setContainerHeight(height || 0)
     }
     if (enableOffset) {
       nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
