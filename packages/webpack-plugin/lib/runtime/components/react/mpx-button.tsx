@@ -40,17 +40,17 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   TextStyle,
   Animated,
   Easing,
   NativeSyntheticEvent,
 } from 'react-native'
-import { extractTextStyle, isText, every, throwReactWarning, transformTextStyle } from './utils'
+import { splitStyle, isText, every, splitProps, throwReactWarning, transformTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
+import { isEmptyObject } from '@mpxjs/utils'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -233,9 +233,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
 
-  const inheritTextStyle = extractTextStyle(style)
+  const { textStyle, imageStyle, innerStyle } = splitStyle(style)
 
-  const textHoverStyle = extractTextStyle(hoverStyle)
+  const { textStyle: hoverTextStyle, imageStyle: hoverImageStyle, innerStyle: hoverInnerStyle } = splitStyle(hoverStyle)
+
+  if (imageStyle || hoverImageStyle) {
+    throwReactWarning('[Mpx runtime warn]: Button does not support background image-related styles!')
+  }
 
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 
@@ -267,11 +271,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     backgroundColor: plain ? 'transparent' : normalBackgroundColor,
   }
 
-  const textStyle = {
-    color: plain ? plainTextColor : normalTextColor,
-    ...inheritTextStyle
-  }
-
   const defaultViewStyle = {
     ...styles.button,
     ...(isMiniSize && styles.buttonMini),
@@ -281,7 +280,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
   const defaultTextStyle = {
     ...styles.text,
     ...(isMiniSize && styles.textMini),
-    ...textStyle
+    color: plain ? plainTextColor : normalTextColor,
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -347,12 +346,16 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     handleFormTypeFn()
   }
 
-  function wrapChildren(children: ReactNode, textStyle: StyleProp<TextStyle>) {
+  function wrapChildren(children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any> = {}) {
+    if (!children) return children
+    const hasTextStyle = !isEmptyObject(textStyle)
+    const { textProps } = splitProps(props)
+
     if (every(children, (child) => isText(child))) {
       transformTextStyle(textStyle as TextStyle)
-      children = <Text key='buttonTextWrap' style={textStyle}>{children}</Text>
+      children = <Text key='buttonTextWrap' style={{ ...defaultTextStyle, ...textStyle }} {...(textProps || {})}>{children}</Text>
     } else {
-      throwReactWarning('[Mpx runtime warn]: Button\'s children only support text node or string.')
+      if (hasTextStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Button is Text node!')
     }
 
     return children
@@ -362,6 +365,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     defaultStyle: {
       ...defaultViewStyle,
       ...defaultTextStyle,
+      ...textStyle
     }
   })
 
@@ -394,16 +398,17 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       {...innerProps}
       style={{
         ...defaultViewStyle,
-        ...style,
-        ...(applyHoverEffect && hoverStyle),
+        ...innerStyle,
+        ...(applyHoverEffect && hoverInnerStyle),
       } as ViewStyle}>
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
           children,
+          defaultTextStyle,
           {
-            ...defaultTextStyle,
-            ...(applyHoverEffect && textHoverStyle || {}),
+            ...textStyle,
+            ...(applyHoverEffect && hoverTextStyle),
           }
         )
       }

@@ -10,7 +10,7 @@ import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle, throwReactWarning, transformTextStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, isText, every, normalizeStyle, splitStyle, splitProps, throwReactWarning, transformTextStyle } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -401,28 +401,6 @@ function wrapChildren(children: ReactNode | ReactNode[], props: _ViewProps, text
     enableBackgroundImage ? wrapImage(imageStyle) : null,
     children
   ]
-}
-
-function splitStyle(styles: ExtendedViewStyle) {
-  return groupBy(styles, (key) => {
-    if (TEXT_STYLE_REGEX.test(key)) {
-      return 'textStyle'
-    } else if (IMAGE_STYLE_REGEX.test(key)) {
-      return 'imageStyle'
-    } else {
-      return 'innerStyle'
-    }
-  }, {})
-}
-
-function splitProps(props: _ViewProps) {
-  return groupBy(props, (key) => {
-    if (TEXT_PROPS_REGEX.test(key)) {
-      return 'textProps'
-    } else {
-      return 'innerProps'
-    }
-  }, {})
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
