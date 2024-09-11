@@ -421,6 +421,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             style: {
               flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
+            },
+            onLayout (e) {
+              navigation.layout = e.layout
             }
           },
           createElement(routeContext.Provider,
