@@ -89,7 +89,7 @@ const showModal = function (options = {}) {
     type: 'confirm',
     color: 'rgb(87, 107, 149)'
   }]
-  let contentText = ''
+  let contentText = content
   const onChangeText = function (text) {
     contentText = text
   }
@@ -146,7 +146,7 @@ const showModal = function (options = {}) {
         width: '100%',
         paddingLeft: 10,
         paddingRight: 10
-      }} onChangeText={text => onChangeText(text)}></TextInput></View>)}
+      }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
       <View style={styles.modalBtnBox}>
         {modalButton.map((item, index) => <TouchableOpacity key={index} style={[ styles.modalBtn, item.style ]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
       </View>
