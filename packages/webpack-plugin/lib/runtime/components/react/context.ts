@@ -1,8 +1,7 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react';
-import { NativeSyntheticEvent, StyleProp, TextStyle } from 'react-native'
+import { NativeSyntheticEvent } from 'react-native'
 
 export type LabelContextValue = MutableRefObject<{
-  textStyle: StyleProp<TextStyle>
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
