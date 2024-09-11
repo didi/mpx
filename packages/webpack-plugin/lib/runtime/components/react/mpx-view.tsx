@@ -502,7 +502,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   if (hasPercentStyle) {
     const newCombinationStyleMap = percentTransform(combinationStyleProps, { width: containerLayout.width || 0, height: containerLayout.height || 0 })
     transformStyle.current = {
-      ...transformStyle,
+      ...transformStyle.current,
       ...newCombinationStyleMap
     }
   }
@@ -569,7 +569,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
                 } else if (type === 'width' && width) {
                   transformStyle.push({ [rules[type]]: percentage * width });
                 } else {
-                  transformStyle.push({ [rules[type]]: value.replace(/(-?\d+)%/g, '$1') });
+                  transformStyle.push({ [rules[type]]: Number(value.replace(/(-?\d+)%/g, '$1')) || 0 });
                 }
               } else {
                 transformStyle.push(transformItem);
