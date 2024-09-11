@@ -92,7 +92,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const { textStyle, imageStyle, innerStyle } = splitStyle(style)
 
-    if (!isEmptyObject(imageStyle)) {
+    if (imageStyle) {
       throwReactWarning('[Mpx runtime warn]: Radio does not support background image-related styles!')
     }
 
@@ -153,10 +153,10 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: TextStyle
+      textStyle: TextStyle = {}
     ) => {
       if (!children) return children
-      const hasTextStyle = !isEmptyObject(textStyle || {})
+      const hasTextStyle = !isEmptyObject(textStyle)
       const { textProps } = splitProps(props)
 
       if (every(children, (child) => isText(child))) {

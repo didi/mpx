@@ -5,7 +5,6 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import {
   View,
   Text,
-  StyleProp,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle,
@@ -35,7 +34,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const { textStyle, imageStyle, innerStyle } = splitStyle(style)
 
-    if (!isEmptyObject(imageStyle)) {
+    if (imageStyle) {
       throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
     }
 
@@ -75,9 +74,9 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle?: StyleProp<TextStyle>
+      textStyle: TextStyle = {}
     ) => {
-      const hasTextStyle = !isEmptyObject(textStyle || {})
+      const hasTextStyle = !isEmptyObject(textStyle)
       const { textProps } = splitProps(props)
 
       if (every(children, (child) => isText(child))) {

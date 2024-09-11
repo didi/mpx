@@ -1,5 +1,6 @@
 import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement } from 'react'
 import { ExtendedViewStyle } from './types/common'
+import { TextStyle } from 'react-native'
 
 type GroupData = Record<string, Record<string, any>>
 
