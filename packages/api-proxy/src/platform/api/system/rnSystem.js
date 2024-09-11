@@ -1,7 +1,7 @@
 import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
@@ -13,6 +13,11 @@ const getWindowInfo = function () {
   }
   const screenHeight = dimensionsScreen.height
   const screenWidth = dimensionsScreen.width
+
+  const navigation = getFocusedNavigation()
+  const layoutHeight = navigation?.layout?.height || 0
+  let navigationHeight = layoutHeight === 0 ? 0 : screenHeight - layoutHeight - top // 在onload和ready阶段取值不准确会导致screenTop计算不准确所以兜底处理一下
+  navigationHeight = navigationHeight < 0 ? 0 : navigationHeight // 在没有navigation的情况下会出现负值
   try {
     safeArea = {
       left: 0,
@@ -27,12 +32,12 @@ const getWindowInfo = function () {
   const result = {
     pixelRatio: PixelRatio.get(),
     windowWidth: dimensionsWindow.width,
-    windowHeight: screenHeight - top,
+    windowHeight: layoutHeight || screenHeight - top, // 取不到layout的时候有个兜底
     screenWidth: screenWidth,
     screenHeight: screenHeight,
+    screenTop: top + navigationHeight,
     safeArea
   }
-  defineUnsupportedProps(result, ['screenTop'])
   return result
 }
 
