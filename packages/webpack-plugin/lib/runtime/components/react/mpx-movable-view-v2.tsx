@@ -151,6 +151,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const touches = e.nativeEvent.touches;
     if (touches.length === 1) {
       setTransformOrigin('0% 0%')
+      const initialTouchPosition = {
+        x: touches[0].pageX,
+        y: touches[0].pageY,
+      };
+      lastTouchPosition.current = initialTouchPosition
       pan.current.setOffset({
         x: direction === 'all' || direction === 'horizontal' ? pan.current.x._value : 0,
         y: direction === 'all' || direction === 'vertical' ? pan.current.y._value : 0
@@ -215,8 +220,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       // 更新动画值
       pan.current.setValue({ x: dx, y: dy });
       movablePosition.current = {
-        x: dx,
-        y: dy
+        x: pan.current.x.__getValue(),
+        y: pan.current.y.__getValue()
       }
       // 更新最后触摸位置
       lastTouchPosition.current = currentTouchPosition;
