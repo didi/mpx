@@ -170,7 +170,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const [contentHeight, setContentHeight] = useState(0)
 
   useEffect(() => {
-    setInputValue(value)
+    if (inputValue !== value) {
+      setInputValue(value)
+    }
   }, [value])
 
   const selection = useMemo(() => {
