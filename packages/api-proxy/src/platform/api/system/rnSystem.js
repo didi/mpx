@@ -7,7 +7,7 @@ const getWindowInfo = function () {
   const dimensionsWindow = Dimensions.get('window')
   const dimensionsScreen = Dimensions.get('screen')
   let safeArea = {}
-  let { top = 0, bottom = 0 } = initialWindowMetrics?.insets || {}
+  let { top = 0, bottom = 0, left = 0, right = 0 } = initialWindowMetrics?.insets || {}
   if (Platform.OS === 'android') {
     top = StatusBar.currentHeight || 0
   }
@@ -20,12 +20,12 @@ const getWindowInfo = function () {
   navigationHeight = navigationHeight < 0 ? 0 : navigationHeight // 在没有navigation的情况下会出现负值
   try {
     safeArea = {
-      left: 0,
-      right: screenWidth,
+      left,
+      right: screenWidth - left,
       top,
       bottom: screenHeight - bottom,
       height: screenHeight - top - bottom,
-      screenWidth
+      width: screenWidth - left - right
     }
   } catch (error) {
   }
