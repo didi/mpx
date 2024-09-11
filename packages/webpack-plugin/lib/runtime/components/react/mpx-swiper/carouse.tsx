@@ -199,6 +199,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     if (!Array.isArray(state.children) || !props.autoplay || internalsRef.current.isScrolling) {
       return
     }
+    const step = state.dir === 'x' ? state.width : state.height
     const { nextOffset, autoMoveOffset, isAutoEnd } = getNextConfig(state.offset)
     // 这里可以scroll到下一个元素, 但是把scrollView的偏移量在设置为content,视觉效果就没了吧
     // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
@@ -206,7 +207,15 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       if (!isAutoEnd) {
         scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
       } else {
-        scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['y'], animated: true })
+        if (state.dir === 'x') {
+          scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['x'], animated: true })
+        } else {
+          scrollViewRef.current?.scrollTo({ x: autoMoveOffset['y'], y: autoMoveOffset['y'], animated: true })
+        }
+      }
+    } else {
+      if (!isAutoEnd) {
+        scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
         onScrollEnd({
           nativeEvent: {
             // @ts-ignore
@@ -214,16 +223,23 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
             y: +nextOffset['y']
           }
         })
-      }
-    } else {
-      scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: isAutoEnd ? true : true })
-      onScrollEnd({
-        nativeEvent: {
-          // @ts-ignore
-          x: +nextOffset['x'],
-          y: +nextOffset['y']
+      } else {
+        setTimeout(() => {
+          onScrollEnd({
+            nativeEvent: {
+              // @ts-ignore
+              x: 0,
+              y: 0
+            }
+          })
+        }, 10)
+        // scrollViewRef.current?.scrollTo({ x: step, y: step, animated: true })
+        if (state.dir === 'x') {
+          scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['x'], animated: true })
+        } else {
+          scrollViewRef.current?.scrollTo({ x: autoMoveOffset['y'], y: autoMoveOffset['y'], animated: true })
         }
-      })
+      }
     }
   }
 
@@ -290,7 +306,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
           state.offset = correctOffset
           state.width = width
           state.height = height
-          setState((preState: Object) => {
+          setState((preState) => {
             return {
               ...preState,
               offset: correctOffset,
