@@ -463,12 +463,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   } = props
 
   const [isHover, setIsHover] = useState(false)
-  const transformStyle = useRef({})
+  let transformStyle = {}
 
-  const [containerLayout, setContainerLayout] = useState({
-    width: 0,
-    height: 0
-  })
+  const [containerWidth, setContainerWidth] = useState(0)
+  const [containerHeight, setContainerHeight] = useState(0)
 
   const layoutRef = useRef({})
 
@@ -500,11 +498,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   })
 
   if (hasPercentStyle) {
-    const newCombinationStyleMap = percentTransform(combinationStyleProps, { width: containerLayout.width || 0, height: containerLayout.height || 0 })
-    transformStyle.current = {
-      ...transformStyle.current,
-      ...newCombinationStyleMap
-    }
+    transformStyle = percentTransform(combinationStyleProps, { width: containerWidth || 0, height: containerHeight || 0 })
   }
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
@@ -569,7 +563,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
                 } else if (type === 'width' && width) {
                   transformStyle.push({ [rules[type]]: percentage * width });
                 } else {
-                  transformStyle.push({ [rules[type]]: Number(value.replace(/(-?\d+)%/g, '$1')) || 0 });
+                  transformStyle.push({ [rules[type]]: 0 });
                 }
               } else {
                 transformStyle.push(transformItem);
@@ -589,7 +583,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
               } else if (type === 'width' && width) {
                 styleMap[styleItem.key] = percentage * width
               } else {
-                styleMap[styleItem.key] = Number(transformItemValue.replace(/(-?\d+)%/g, '$1')) || 0
+                styleMap[styleItem.key] = 0
               }
             } else {
               styleMap[styleItem.key] = transformItemValue
@@ -603,10 +597,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const onLayout = (res: LayoutChangeEvent) => {
     if (hasPercentStyle) {
       const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerLayout({
-        width,
-        height
-      })
+      setContainerWidth(width || 0)
+      setContainerHeight(width || 0)
     }
     if (enableOffset) {
       nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
@@ -645,7 +637,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return (
     <View
       {...innerProps}
-      style={{ ...innerStyle, ...transformStyle.current }}
+      style={{ ...innerStyle, ...transformStyle }}
     >
       {wrapChildren(children, props, textStyle, imageStyle)}
     </View>
