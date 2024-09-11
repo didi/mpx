@@ -30,6 +30,9 @@ function isNotEmptyArray (ary) {
 function transformReq (config) {
   // 抹平wx & ali 请求参数
   let header = config.header || config.headers
+  if (config.header && config.headers) {
+    header = Object.assign({}, config.headers, config.header)
+  }
   const descriptor = {
     get () {
       return header
