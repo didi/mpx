@@ -463,7 +463,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   } = props
 
   const [isHover, setIsHover] = useState(false)
-  const [transformStyle, setTransformStyle] = useState({})
+  let transformStyle = {}
+
+  const [containerWidth, setContainerWidth] = useState(0)
+  const [containerHeight, setContainerHeight] = useState(0)
 
   const layoutRef = useRef({})
 
@@ -494,6 +497,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     })
   })
 
+  if (hasPercentStyle) {
+    transformStyle = percentTransform(combinationStyleProps, { width: containerWidth, height: containerHeight })
+  }
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
     defaultStyle
@@ -549,7 +555,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
           const rules = styleItem.rules
           for (const type in rules) {
             const value = transformItem[rules[type]]
-            if (value) {
+            if (value !== undefined) {
               if (PERCENT_REGEX.test(value)) {
                 const percentage = parseFloat(value) / 100;
                 if (type === 'height' && height) {
@@ -557,7 +563,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
                 } else if (type === 'width' && width) {
                   transformStyle.push({ [rules[type]]: percentage * width });
                 } else {
-                  throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+                  transformStyle.push({ [rules[type]]: 0 });
                 }
               } else {
                 transformStyle.push(transformItem);
@@ -577,7 +583,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
               } else if (type === 'width' && width) {
                 styleMap[styleItem.key] = percentage * width
               } else {
-                throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+                styleMap[styleItem.key] = 0
               }
             } else {
               styleMap[styleItem.key] = transformItemValue
@@ -591,11 +597,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const onLayout = (res: LayoutChangeEvent) => {
     if (hasPercentStyle) {
       const { width, height } = res?.nativeEvent?.layout || {}
-      const newCombinationStyleMap = percentTransform(combinationStyleProps, { width, height })
-      setTransformStyle({
-        ...transformStyle,
-        ...newCombinationStyleMap
-      })
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
     }
     if (enableOffset) {
       nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
