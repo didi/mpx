@@ -1,7 +1,7 @@
 /**
  * swiper 实现
  */
-import { Animated, View, ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint } from 'react-native'
+import { Animated, View, ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint, Platform } from 'react-native'
 import { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
@@ -68,7 +68,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
-  const autoplayEndRef = useRef(false)
   // 存储layout布局信息
   const layoutRef = useRef({})
   // 内部存储上一次的偏移量
@@ -197,27 +196,35 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       createAutoPlay()
       return
     }
-    if (!Array.isArray(state.children) || !props.autoplay || internalsRef.current.isScrolling || autoplayEndRef.current) {
+    if (!Array.isArray(state.children) || !props.autoplay || internalsRef.current.isScrolling) {
       return
     }
-    const { nextIndex, nextOffset, autoMoveOffset, isAutoEnd } = getNextConfig(state.offset)
+    const { nextOffset, autoMoveOffset, isAutoEnd } = getNextConfig(state.offset)
     // 这里可以scroll到下一个元素, 但是把scrollView的偏移量在设置为content,视觉效果就没了吧
     // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
-    if (!isAutoEnd) {
-      scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
-    } else {
-      scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['y'], animated: true })
-      if (isAutoEnd) {
-          onScrollEnd({
-            nativeEvent: {
-              // @ts-ignore
-              x: +nextOffset['x'],
-              y: +nextOffset['y']
-            }
-          })
+    if (Platform.OS === 'ios') {
+      if (!isAutoEnd) {
+        scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
+      } else {
+        scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['y'], animated: true })
+        onScrollEnd({
+          nativeEvent: {
+            // @ts-ignore
+            x: +nextOffset['x'],
+            y: +nextOffset['y']
+          }
+        })
       }
+    } else {
+      scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: isAutoEnd ? true : true })
+      onScrollEnd({
+        nativeEvent: {
+          // @ts-ignore
+          x: +nextOffset['x'],
+          y: +nextOffset['y']
+        }
+      })
     }
-
   }
 
   /**
@@ -231,6 +238,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
    * 当用户开始拖动结束
    */
   function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
+    // 这里安卓好像没有触发onScrollEnd, 调用scrollTo的时候
     internalsRef.current.isScrolling = false
     // 用户手动滑动更新索引后，如果开启了自动轮播等重新开始
     updateIndex(event.nativeEvent.contentOffset, true)
@@ -269,23 +277,28 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       // @ts-ignore
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        if (state.width !== width) {
-          // state.offset[state.dir] = initOffsetIndex * width
-          let correctOffset = Object.assign({}, state.offset, { [state.dir]: initOffsetIndex * (state.dir === 'x' ? width : defaultHeight)})
+        const isWDiff = state.width !== width
+        const isHDiff = state.height !== height
+        if (isWDiff || isHDiff) {
+          const changeState = {
+            width: isWDiff ? width : state.width,
+            height: isHDiff ? height : state.height
+          }
+          let correctOffset = Object.assign({}, state.offset, {
+            [state.dir]: initOffsetIndex * (state.dir === 'x' ? changeState.width : changeState.height)
+          })
           state.offset = correctOffset
           state.width = width
-          setState((preState) => {
+          state.height = height
+          setState((preState: Object) => {
             return {
               ...preState,
               offset: correctOffset,
-              width
+              width: changeState.width,
+              height: changeState.height
             }
           })
           scrollViewRef.current?.scrollTo({ x: correctOffset['x'], y: correctOffset['y'], animated: false })
-        }
-        if (state.height !== height) {
-          state.offset = Object.assign({}, state.offset, { [state.dir]: initOffsetIndex * (state.dir === 'x' ? defaultWidth : height)})
-          state.height = height
         }
         props.getInnerLayout && props.getInnerLayout(layoutRef)
       })
