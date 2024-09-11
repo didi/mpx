@@ -463,7 +463,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   } = props
 
   const [isHover, setIsHover] = useState(false)
-  const [transformStyle, setTransformStyle] = useState({})
+  const transformStyle = useRef({})
+
+  const [containerLayout, setContainerLayout] = useState({
+    width: 0,
+    height: 0
+  })
 
   const layoutRef = useRef({})
 
@@ -494,6 +499,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     })
   })
 
+  if (hasPercentStyle) {
+    const newCombinationStyleMap = percentTransform(combinationStyleProps, { width: containerLayout.width || 0, height: containerLayout.height || 0 })
+    transformStyle.current = {
+      ...transformStyle,
+      ...newCombinationStyleMap
+    }
+  }
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
     defaultStyle
@@ -549,7 +561,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
           const rules = styleItem.rules
           for (const type in rules) {
             const value = transformItem[rules[type]]
-            if (value) {
+            if (value !== undefined) {
               if (PERCENT_REGEX.test(value)) {
                 const percentage = parseFloat(value) / 100;
                 if (type === 'height' && height) {
@@ -557,7 +569,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
                 } else if (type === 'width' && width) {
                   transformStyle.push({ [rules[type]]: percentage * width });
                 } else {
-                  throwReactWarning(`[Mpx runtime warn]: ${[rules[type]]}  does not support % units.`)
+                  transformStyle.push({ [rules[type]]: value.replace(/(-?\d+)%/g, '$1') });
                 }
               } else {
                 transformStyle.push(transformItem);
@@ -591,10 +603,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const onLayout = (res: LayoutChangeEvent) => {
     if (hasPercentStyle) {
       const { width, height } = res?.nativeEvent?.layout || {}
-      const newCombinationStyleMap = percentTransform(combinationStyleProps, { width, height })
-      setTransformStyle({
-        ...transformStyle,
-        ...newCombinationStyleMap
+      setContainerLayout({
+        width,
+        height
       })
     }
     if (enableOffset) {
@@ -634,7 +645,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return (
     <View
       {...innerProps}
-      style={{ ...innerStyle, ...transformStyle }}
+      style={{ ...innerStyle, ...transformStyle.current }}
     >
       {wrapChildren(children, props, textStyle, imageStyle)}
     </View>
