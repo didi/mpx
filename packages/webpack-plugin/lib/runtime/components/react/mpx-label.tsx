@@ -9,7 +9,6 @@ import {
   NativeSyntheticEvent,
   TextStyle,
 } from 'react-native'
-import { isEmptyObject } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
@@ -74,17 +73,16 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle: TextStyle = {}
+      textStyle?: TextStyle
     ) => {
-      const hasTextStyle = !isEmptyObject(textStyle)
       const { textProps } = splitProps(props)
 
       if (every(children, (child) => isText(child))) {
-        if (hasTextStyle || textProps) {
-          children = <Text key='labelTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
+        if (textStyle || textProps) {
+          children = <Text key='labelTextWrap' style={textStyle || {}} {...(textProps || {})}>{children}</Text>
         }
       } else {
-        if (hasTextStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Label is Text node!')
+        if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Label is Text node!')
       }
 
       return children

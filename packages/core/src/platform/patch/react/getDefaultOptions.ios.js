@@ -423,7 +423,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             },
             onLayout (e) {
-              navigation.layout = e.layout
+              navigation.layout = e.nativeEvent.layout
             }
           },
           createElement(routeContext.Provider,

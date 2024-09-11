@@ -29,7 +29,6 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { every, splitStyle, isText, splitProps, throwReactWarning } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
-import { isEmptyObject } from '@mpxjs/utils'
 
 interface Selection {
   value?: string
@@ -156,18 +155,17 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle: TextStyle = {}
+      textStyle?: TextStyle
     ) => {
       if (!children) return children
-      const hasTextStyle = !isEmptyObject(textStyle)
       const { textProps } = splitProps(props)
 
       if (every(children, (child) => isText(child))) {
-        if (hasTextStyle || textProps) {
-          children = <Text key='checkboxTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
+        if (textStyle || textProps) {
+          children = <Text key='checkboxTextWrap' style={textStyle || {}} {...(textProps || {})}>{children}</Text>
         }
       } else {
-        if (hasTextStyle) {
+        if (textStyle) {
           throwReactWarning(
             '[Mpx runtime warn]: Text style will be ignored unless every child of the Checkbox is Text node!'
           )

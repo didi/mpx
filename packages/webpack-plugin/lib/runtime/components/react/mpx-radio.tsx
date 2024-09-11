@@ -18,7 +18,6 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
 import Icon from './mpx-icon'
-import { isEmptyObject } from '@mpxjs/utils'
 
 export interface RadioProps {
   value?: string
@@ -153,20 +152,19 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const wrapChildren = (
       children: ReactNode,
-      textStyle: TextStyle = {}
+      textStyle?: TextStyle
     ) => {
       if (!children) return children
-      const hasTextStyle = !isEmptyObject(textStyle)
       const { textProps } = splitProps(props)
 
       if (every(children, (child) => isText(child))) {
-        if (hasTextStyle || textProps) {
-          children = <Text key='radioTextWrap' style={textStyle} {...(textProps || {})}>
+        if (textStyle || textProps) {
+          children = <Text key='radioTextWrap' style={textStyle || {}} {...(textProps || {})}>
             {children}
           </Text>
         }
       } else {
-        if (hasTextStyle) {
+        if (textStyle) {
           throwReactWarning(
             '[Mpx runtime warn]: Text style will be ignored unless every child of the Radio is Text node!'
           )
