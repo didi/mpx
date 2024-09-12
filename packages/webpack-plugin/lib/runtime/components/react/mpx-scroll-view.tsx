@@ -31,8 +31,8 @@
  * ✔ bindscrolltolower
  * ✔ bindscroll
  */
-
-import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler'
+import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native';
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
