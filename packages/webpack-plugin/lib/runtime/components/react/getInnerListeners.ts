@@ -97,8 +97,10 @@ export const getCustomEvent = (
       dataset: getDataSet(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
-    }
-
+    },
+    persist: oe.persist,
+    stopPropagation: oe.stopPropagation,
+    preventDefault: oe.preventDefault
   }
 }
 
