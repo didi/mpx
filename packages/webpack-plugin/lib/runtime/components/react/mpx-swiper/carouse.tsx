@@ -48,6 +48,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
   const { styleObj } = props
+  const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
+  const totalElements = Array.isArray(newChild) ? newChild.length : (newChild ? 1 : 0)
   // const defaultHeight = (styleObj?.height || 150) - previousMargin - nextMargin
   // const defaultWidth = (styleObj?.width || width || 375) - previousMargin - nextMargin
   const defaultHeight = (styleObj?.height || 150)
@@ -58,13 +60,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   // 记录真正的下标索引, 不包括循环前后加入的索引, 游标
   const initIndex = props.current || 0
   // 这里要排除超过元素个数的设置
-  const initOffsetIndex = initIndex + (props.circular ? 1 : 0)
+  const initOffsetIndex = initIndex + (props.circular && totalElements > 1 ? 1 : 0)
   // const defaultX = (defaultWidth * initOffsetIndex + previousMargin) || 0
   // const defaultY = (defaultHeight * initOffsetIndex + previousMargin) || 0
   const defaultX = (defaultWidth * initOffsetIndex) || 0
   const defaultY = (defaultHeight * initOffsetIndex) || 0
   // 内部存储上一次的offset值
-  const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
