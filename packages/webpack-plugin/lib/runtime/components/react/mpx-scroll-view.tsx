@@ -68,7 +68,6 @@ interface ScrollViewProps {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  onScrollEndDrag?: (event: NativeSyntheticEvent<TouchEvent>) => void;
 }
 type ScrollAdditionalProps = {
   pinchGestureEnabled: boolean;
@@ -89,6 +88,7 @@ type ScrollAdditionalProps = {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   onScrollEndDrag?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
   const {
@@ -296,7 +296,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         )
     }
   }
-
   function onScrollTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
     const { binddragging, bindtouchmove, enhanced } = props;
     bindtouchmove && bindtouchmove(e)
@@ -344,7 +343,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     bindtouchstart: onScrollTouchStart,
     bindtouchmove: onScrollTouchMove,
     onLayout,
-    onScrollEndDrag
+    onScrollEndDrag,
+    onMomentumScrollEnd: onScroll
   };
   if (enhanced) {
     scrollAdditionalProps = {
