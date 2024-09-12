@@ -179,6 +179,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     if (!bindload) return
     if (typeof src === 'string') {
+      evt.persist()
       RNImage.getSize(src, (width: number, height: number) => {
         bindload(
           getCustomEvent(

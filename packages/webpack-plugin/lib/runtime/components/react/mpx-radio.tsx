@@ -16,9 +16,8 @@ import {
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, extractTextStyle, isText, throwReactWarning } from './utils'
+import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
 import Icon from './mpx-icon'
-import { isEmptyObject } from '@mpxjs/utils'
 
 export interface RadioProps {
   value?: string
@@ -89,15 +88,22 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
 
     const labelContext = useContext(LabelContext)
-    let labelTextStyle: TextStyle = {}
 
-    const textStyle = extractTextStyle(style)
+    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
+
+    if (imageStyle) {
+      throwReactWarning('[Mpx runtime warn]: Radio does not support background image-related styles!')
+    }
 
     const defaultStyle = {
       ...styles.wrapper,
       ...(isChecked && styles.wrapperChecked),
       ...(disabled && styles.wrapperDisabled),
-      ...style
+    }
+
+    const viewStyle = {
+      ...defaultStyle,
+      ...innerStyle
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -148,15 +154,17 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       children: ReactNode,
       textStyle?: TextStyle
     ) => {
-      const hasTextStyle = isEmptyObject(textStyle || {})
+      if (!children) return children
+      const { textProps } = splitProps(props)
+
       if (every(children, (child) => isText(child))) {
-        if (hasTextStyle) {
-          children = <Text key='radioTextWrap' style={textStyle}>
+        if (textStyle || textProps) {
+          children = <Text key='radioTextWrap' style={textStyle || {}} {...(textProps || {})}>
             {children}
           </Text>
         }
       } else {
-        if (hasTextStyle) {
+        if (textStyle) {
           throwReactWarning(
             '[Mpx runtime warn]: Text style will be ignored unless every child of the Radio is Text node!'
           )
@@ -172,7 +180,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     if (labelContext) {
-      labelTextStyle = labelContext.current.textStyle as TextStyle || {}
       labelContext.current.triggerChange = onChange
     }
 
@@ -216,7 +223,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     return (
       <View {...innerProps}>
-        <View style={defaultStyle}>
+        <View style={viewStyle}>
           <Icon
             type='success'
             size={24}
@@ -228,7 +235,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             }}
           />
         </View>
-        {wrapChildren(children, { ...textStyle, ...labelTextStyle })}
+        {wrapChildren(children, textStyle)}
       </View>
     )
   }

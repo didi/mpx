@@ -5,11 +5,10 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react';
+import { useRef, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { transformTextStyle, DEFAULT_STYLE } from './utils'
-
 
 interface _TextProps extends TextProps {
   style?: TextStyle

@@ -10,7 +10,7 @@ import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 
-import { parseUrl, TEXT_STYLE_REGEX, PERCENT_REGEX, TEXT_PROPS_REGEX, IMAGE_STYLE_REGEX, isText, every, groupBy, normalizeStyle, throwReactWarning, transformTextStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, isText, every, normalizeStyle, splitStyle, splitProps, throwReactWarning, transformTextStyle } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -327,20 +327,19 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
   // 预解析
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
 
-
   // 判断是否可挂载onLayout
-  const needLayout = checkNeedLayout(preImageInfo)
-  const { src, sizeList } = preImageInfo
+  const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
+  const { src } = preImageInfo
 
   useEffect(() => {
-    if (!src) {
+    if(!src) {
       setShow(false)
       sizeInfo.current = null
       layoutInfo.current = null
-      return
+      return 
     }
 
-    if (!sizeList.includes('auto')) {
+    if (!needImageSize) {
       setShow(true)
       return
     }
@@ -353,7 +352,7 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       if (!needLayout || layoutInfo.current) {
         setImageSizeWidth(width)
         setImageSizeHeight(height)
-        if (layoutInfo.current) {
+        if(layoutInfo.current) {
           setLayoutInfoWidth(layoutInfo.current.width)
           setLayoutInfoHeight(layoutInfo.current.height)
         }
@@ -364,23 +363,26 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
 
   if (!preImageInfo?.src) return null
 
-  const onLayout = (res: LayoutChangeEvent) => {
+  const onLayout = (res: LayoutChangeEvent ) => {
     const { width, height } = res?.nativeEvent?.layout || {}
     layoutInfo.current = {
       width,
       height
     }
-    if (sizeInfo.current) {
-      setImageSizeWidth(sizeInfo.current.width)
-      setImageSizeHeight(sizeInfo.current.height)
+    if (!needImageSize) {
       setLayoutInfoWidth(width)
       setLayoutInfoHeight(height)
+    } else if (sizeInfo.current) {
+      setLayoutInfoWidth(width)
+      setLayoutInfoHeight(height)
+      setImageSizeWidth(sizeInfo.current.width)
+      setImageSizeHeight(sizeInfo.current.height)  
       setShow(true)
     }
   }
 
-  return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
-    {show && <Image  {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
+  return <View key='viewBgImg' {...needLayout ? { onLayout } : null } style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
+    {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
 
@@ -401,28 +403,6 @@ function wrapChildren(children: ReactNode | ReactNode[], props: _ViewProps, text
     enableBackgroundImage ? wrapImage(imageStyle) : null,
     children
   ]
-}
-
-function splitStyle(styles: ExtendedViewStyle) {
-  return groupBy(styles, (key) => {
-    if (TEXT_STYLE_REGEX.test(key)) {
-      return 'textStyle'
-    } else if (IMAGE_STYLE_REGEX.test(key)) {
-      return 'imageStyle'
-    } else {
-      return 'innerStyle'
-    }
-  }, {})
-}
-
-function splitProps(props: _ViewProps) {
-  return groupBy(props, (key) => {
-    if (TEXT_PROPS_REGEX.test(key)) {
-      return 'textProps'
-    } else {
-      return 'innerProps'
-    }
-  }, {})
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
