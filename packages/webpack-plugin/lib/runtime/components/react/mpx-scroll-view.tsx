@@ -36,6 +36,7 @@ import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEve
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react';
 import useInnerProps, { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { throwReactWarning } from './utils'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -107,7 +108,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   } = props;
 
   const [refreshing, setRefreshing] = useState(true);
-  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   const snapScrollTop = useRef(0);
   const snapScrollLeft = useRef(0);
@@ -129,7 +129,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
     node: {
-      scrollEnabled,
+      scrollEnabled: scrollX || scrollY,
       bounces,
       showScrollbar,
       pagingEnabled,
@@ -138,7 +138,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       scrollTo: scrollToOffset
     }
   })
-
+  if (scrollX && scrollY) {
+    throwReactWarning('[Mpx runtime warn]: scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
+  }
   useEffect(() => {
     if (
       snapScrollTop.current !== props['scroll-top'] ||
@@ -163,14 +165,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       setRefreshing(!!props['refresher-triggered']);
     }
   }, [props['refresher-triggered']]);
-
-  useEffect(() => {
-    if (!props['scroll-x'] && !props['scroll-y']) {
-      setScrollEnabled(false);
-    } else {
-      setScrollEnabled(true);
-    }
-  }, [props['scroll-x'], props['scroll-y']]);
 
   function selectLength(size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width;
@@ -337,12 +331,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
     pinchGestureEnabled: false,
-    horizontal: scrollEnabled ? (scrollX || !scrollY) : false,
+    horizontal: scrollX && !scrollY,
     scrollEventThrottle: scrollEventThrottle,
     scrollsToTop: enableBackToTop,
     showsHorizontalScrollIndicator: scrollX && showScrollbar,
     showsVerticalScrollIndicator: scrollY && showScrollbar,
-    scrollEnabled: scrollEnabled,
+    scrollEnabled: scrollX || scrollY,
     ref: scrollViewRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
