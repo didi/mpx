@@ -1,4 +1,4 @@
-import {changeOpts, ENV_OBJ, envError} from '../../../common/js'
+import { changeOpts, ENV_OBJ, envError } from '../../../common/js'
 
 const getExtConfig = function (options = {}) {
   const cacheSuc = options.success
