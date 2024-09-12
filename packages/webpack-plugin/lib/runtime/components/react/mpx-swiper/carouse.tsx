@@ -86,7 +86,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     height: defaultHeight,
     // 真正的游标索引, 从0开始
     index: initIndex,
-    total: Array.isArray(newChild) ? newChild.length : ( newChild ? 1 : 0),
+    total: totalElements,
     offset: {
       x: dir === 'x' ? defaultX : 0,
       y: dir === 'y' ? defaultY: 0
@@ -256,6 +256,9 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
    */
   function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
     // 这里安卓好像没有触发onScrollEnd, 调用scrollTo的时候
+    if (totalElements === 1) {
+      return
+    }
     internalsRef.current.isScrolling = false
     // 用户手动滑动更新索引后，如果开启了自动轮播等重新开始
     updateIndex(event.nativeEvent.contentOffset, true)
