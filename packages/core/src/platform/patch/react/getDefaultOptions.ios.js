@@ -397,7 +397,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
@@ -414,6 +414,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      navigation.insets = useSafeAreaInsets()
+
       return createElement(Provider,
         null,
         createElement(ReactNative.View,
@@ -421,6 +423,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             style: {
               flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
+            },
+            onLayout (e) {
+              navigation.layout = e.nativeEvent.layout
             }
           },
           createElement(routeContext.Provider,
