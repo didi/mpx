@@ -5,16 +5,19 @@ import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation
 
 const getWindowInfo = function () {
   const dimensionsScreen = Dimensions.get('screen')
+  const navigation = getFocusedNavigation() || {}
+  const insets = {
+    ...(initialWindowMetrics?.insets || {}),
+    ...(navigation.insets || {})
+  }
   let safeArea = {}
-  let { top = 0, bottom = 0, left = 0, right = 0 } = initialWindowMetrics?.insets || {}
+  let { top = 0, bottom = 0, left = 0, right = 0 } = insets
   if (Platform.OS === 'android') {
     top = StatusBar.currentHeight || 0
   }
   const screenHeight = dimensionsScreen.height
   const screenWidth = dimensionsScreen.width
-
-  const navigation = getFocusedNavigation()
-  const layout = navigation?.layout || {}
+  const layout = navigation.layout || {}
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   let navigationHeight = layoutHeight === 0 ? 0 : screenHeight - layoutHeight - top // 在onload和ready阶段取值不准确会导致screenTop计算不准确所以兜底处理一下
