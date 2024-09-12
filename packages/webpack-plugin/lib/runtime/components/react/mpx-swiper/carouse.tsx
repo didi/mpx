@@ -233,9 +233,9 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
             }
           })
         }, 10)
-        // scrollViewRef.current?.scrollTo({ x: step, y: step, animated: true })
         if (state.dir === 'x') {
-          scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['x'], animated: true })
+          scrollViewRef.current?.scrollTo({ x: step, y: step, animated: true })
+          // scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['x'], animated: true })
         } else {
           scrollViewRef.current?.scrollTo({ x: autoMoveOffset['y'], y: autoMoveOffset['y'], animated: true })
         }
