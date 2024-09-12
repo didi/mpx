@@ -5,9 +5,7 @@ const reactConfig = {
       if (match) {
         return {
           prefix: match[1],
-          eventName: match[2].replace(/^./, function (match) {
-            return match.toLowerCase()
-          }),
+          eventName: match[2],
           modifier: match[3]
         }
       }

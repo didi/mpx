@@ -2,7 +2,7 @@ import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView } from
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
 const { width, height } = Dimensions.get('window')
-const showModal = function (options) {
+const showModal = function (options = {}) {
   const {
     title,
     content,

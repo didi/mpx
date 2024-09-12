@@ -41,7 +41,7 @@ const styles: { [key: string]: Object } = {
 }
 
 
-const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props , ref): React.JSX.Element => {
+const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props, ref): React.JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
   const defaultHeight = 150
@@ -53,8 +53,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   // 默认设置为初次渲染
   const initRenderRef = useRef(true)
-  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
-  let loopJumpTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null) 
+  const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  let loopJumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
   })
   const autoplayEndRef = useRef(false)
@@ -73,10 +73,10 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     width: width || 375,
     height: defaultHeight,
     index: 0,
-    total: Array.isArray(newChild) ? newChild.length : ( newChild ? 1 : 0),
+    total: Array.isArray(newChild) ? newChild.length : (newChild ? 1 : 0),
     offset: {
       x: dir === 'x' ? defaultX : 0,
-      y: dir === 'y' ? defaultY: 0
+      y: dir === 'y' ? defaultY : 0
     },
     loopJump: false,
     dir
@@ -94,7 +94,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 更新index，以视图的offset计算当前的索引
   */
-  function updateIndex (scrollViewOffset: NativeScrollPoint) {
+  function updateIndex(scrollViewOffset: NativeScrollPoint) {
     const diff = scrollViewOffset[dir] - internalsRef.current.offset[state.dir]
     if (!diff) return
 
@@ -119,7 +119,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     internalsRef.current.offset = scrollViewOffset
     // 这里需不需要区分是否loop，初始化？？？？
     setState((preState) => {
-      const newState =  {
+      const newState = {
         ...preState,
         index: newIndex,
         offset: scrollViewOffset,
@@ -129,7 +129,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     })
     internalsRef.current.isScrolling = false
     // getCustomEvent
-    const eventData = getCustomEvent('change', {}, { detail: {current: newIndex, source: 'touch' }, layoutRef: layoutRef })
+    const eventData = getCustomEvent('change', {}, { detail: { current: newIndex, source: 'touch' }, layoutRef: layoutRef })
     props.bindchange && props.bindchange(eventData)
     // 更新完状态之后, 开启新的loop
   }
@@ -140,10 +140,10 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
    * 若是circular, 到最后一个索引会更新为0，但是视觉要scrollView到下一个
    * 若是circular, 到第一个再往前索引会更新为total-1, 但是视觉是展示的最后一个
   */
-  function startSwiperLoop () {
+  function startSwiperLoop() {
     loopJumpTimerRef.current = setTimeout(() => {
-      let offset = { x: 0, y: 0, animated: false}
-      if (state.index > 0){
+      let offset = { x: 0, y: 0, animated: false }
+      if (state.index > 0) {
         offset = props.horizontal ? { x: state.width * state.index, y: 0, animated: false } : { x: 0, y: state.height * state.index, animated: false }
       }
       if (props.circular) {
@@ -158,18 +158,18 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
    * 开启自动轮播
    * 每间隔interval scrollView的offset更改到下一个位置，通过onScrollEnd来获取contentOffset再计算要更新的索引index
   */
-  function startAutoPlay () {
+  function startAutoPlay() {
     // 已经开启过autopaly则不重新创建
     if (!Array.isArray(state.children) || !props.autoplay || internalsRef.current.isScrolling || autoplayEndRef.current) {
       return
     }
     autoplayTimerRef.current && clearTimeout(autoplayTimerRef.current)
     // 非循环自动播放的形式下 到最后一帧 结束自动播放
-    if (!props.circular && state.index === state.total -1) {
+    if (!props.circular && state.index === state.total - 1) {
       autoplayEndRef.current = true
       return
     }
-    
+
     // 开启自动播放
     autoplayTimerRef.current = setTimeout(() => {
       if (state.total < 2) return
@@ -192,12 +192,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 当用户开始拖动此视图时调用此函数, 更新当前在滚动态
    */
-  function onScrollBegin () {
+  function onScrollBegin() {
     internalsRef.current.isScrolling = true
   }
-  function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onScrollEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
     internalsRef.current.isScrolling = false
-    
+
     // 用户手动滑动更新索引后，如果开启了自动轮播等重新开始
     updateIndex(event.nativeEvent.contentOffset)
   }
@@ -205,7 +205,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 当拖拽结束时，检测是否可滚动
   */
-  function onScrollEndDrag (event: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onScrollEndDrag(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const { contentOffset } = event.nativeEvent
     const { index, total } = state
 
@@ -220,7 +220,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 垂直方向时，获取单个元素的布局，更新
   */
-  function onItemLayout (event: LayoutChangeEvent) {
+  function onItemLayout(event: LayoutChangeEvent) {
     if (!initRenderRef.current || state.dir === 'x') return
     const { width, height } = event.nativeEvent.layout
     if (state.total > 1) {
@@ -245,7 +245,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   /**
    * 水平方向时，获取单个元素的布局，更新
   */
-  function onWrapperLayout () {
+  function onWrapperLayout() {
     if (props.enableOffset) {
       // @ts-ignore
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
@@ -263,7 +263,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     }
   }
 
-  function renderScrollView (pages: ReactNode) {
+  function renderScrollView(pages: ReactNode) {
     let scrollElementProps = {
       ref: scrollViewRef,
       horizontal: props.horizontal,
@@ -289,10 +289,10 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     )
   }
 
-  function renderPagination () {
+  function renderPagination() {
     if (state.total <= 1) return null
     let dots: Array<ReactNode> = []
-    const activeDotStyle = [          {
+    const activeDotStyle = [{
       backgroundColor: props.activeDotColor || '#007aff',
       width: 8,
       height: 8,
@@ -322,14 +322,14 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     return (
       <View
         pointerEvents="none"
-        style={[styles['pagination_' + state.dir]]}
+        style={styles['pagination_' + state.dir]}
       >
         {dots}
       </View>
     )
   }
 
-  function renderPages () {
+  function renderPages() {
     const { width, height, total, children } = state
     const { circular, previousMargin, nextMargin, innerProps } = props
     const pageStyle = { width: width, height: height }
@@ -345,13 +345,13 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       arrElements = pages.map((page, i) => {
         let pageStyle2 = { width: width, height: height }
         const extraStyle = {} as {
-          left? : number;
+          left?: number;
           marginLeft?: number;
           paddingLeft?: number
         }
 
         if (previousMargin) {
-            extraStyle.left = +previousMargin
+          extraStyle.left = +previousMargin
         }
         if (nextMargin && state.index === i - 1) {
           const half = Math.floor(+nextMargin / 2)
@@ -359,7 +359,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
           extraStyle.paddingLeft = half
         }
         return (
-          <View style={[pageStyle2, extraStyle]} key={ 'page' + i} onLayout={onItemLayout}>
+          <View style={{ ...pageStyle2, ...extraStyle }} key={'page' + i} onLayout={onItemLayout}>
             {children[+page]}
           </View>
         )
@@ -384,13 +384,13 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
 
   return (
     <View
-      style={[styles[strStyle], vStyle]}
+      style={{ ...styles[strStyle], ...vStyle }}
       {...eventProps}
       onLayout={onWrapperLayout}>
       {renderScrollView(pages)}
       {props.showsPagination && renderPagination()}
     </View>)
-  
+
 })
 
 _Carouse.displayName = '_Carouse';

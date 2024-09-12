@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden'
   }
 })
-function showToast (options) {
+function showToast (options = {}) {
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   let ToastView
   const iconImg = {
@@ -113,7 +113,7 @@ function showToast (options) {
   }
 }
 
-function hideToast(options) {
+function hideToast(options = {}) {
   const { noConflict = false, success, fail, complete } = options
 
   if (isLoadingShow && noConflict) {
@@ -136,7 +136,7 @@ function hideToast(options) {
   }
 }
 
-function showLoading (options) {
+function showLoading (options = {}) {
   const { title, mask, success, fail, complete } = options
   showToast({
     title,
@@ -158,7 +158,7 @@ function showLoading (options) {
   })
 }
 
-function hideLoading (options) {
+function hideLoading (options = {}) {
   const { noConflict = false, success, fail, complete } = options
   if (!isLoadingShow && noConflict) {
     return

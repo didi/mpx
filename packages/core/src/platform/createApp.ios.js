@@ -114,13 +114,13 @@ export default function createApp (option, config = {}) {
         if (currentState === 'active') {
           global.__mpxAppCbs.show.forEach((cb) => {
             cb(options)
-            global.__mpxAppFocusedState.value = 'show'
           })
-        } else if (currentState === 'background') {
+          global.__mpxAppFocusedState.value = 'show'
+        } else if (currentState === 'inactive') {
           global.__mpxAppCbs.hide.forEach((cb) => {
             cb()
-            global.__mpxAppFocusedState.value = 'hide'
           })
+          global.__mpxAppFocusedState.value = 'hide'
         }
       })
 
@@ -133,7 +133,7 @@ export default function createApp (option, config = {}) {
         global.__mpxAppFocusedState.value = `resize${count++}`
       })
       return () => {
-        changeSubscription()
+        changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
     }, [])
