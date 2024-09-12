@@ -4,7 +4,6 @@ import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
-  const dimensionsWindow = Dimensions.get('window')
   const dimensionsScreen = Dimensions.get('screen')
   let safeArea = {}
   let { top = 0, bottom = 0, left = 0, right = 0 } = initialWindowMetrics?.insets || {}
@@ -15,7 +14,9 @@ const getWindowInfo = function () {
   const screenWidth = dimensionsScreen.width
 
   const navigation = getFocusedNavigation()
-  const layoutHeight = navigation?.layout?.height || 0
+  const layout = navigation?.layout || {}
+  const layoutHeight = layout.height || 0
+  const layoutWidth = layout.width || 0
   let navigationHeight = layoutHeight === 0 ? 0 : screenHeight - layoutHeight - top // 在onload和ready阶段取值不准确会导致screenTop计算不准确所以兜底处理一下
   navigationHeight = navigationHeight < 0 ? 0 : navigationHeight // 在没有navigation的情况下会出现负值
   try {
@@ -31,8 +32,8 @@ const getWindowInfo = function () {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
-    windowWidth: dimensionsWindow.width,
-    windowHeight: layoutHeight || screenHeight - top, // 取不到layout的时候有个兜底
+    windowWidth: layoutWidth || screenWidth,
+    windowHeight: layoutHeight || screenHeight, // 取不到layout的时候有个兜底
     screenWidth: screenWidth,
     screenHeight: screenHeight,
     screenTop: top + navigationHeight,
