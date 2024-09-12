@@ -397,7 +397,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
@@ -413,6 +413,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
       }, [])
+
+      navigation.insets = useSafeAreaInsets()
 
       return createElement(Provider,
         null,
