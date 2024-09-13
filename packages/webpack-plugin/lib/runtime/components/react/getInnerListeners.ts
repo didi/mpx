@@ -161,7 +161,7 @@ const useInnerProps = (
     })
   }
 
-  function checkNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture') {
     const tapDetailInfo = ref.current.mpxPressInfo.detail || { x: 0, y: 0 }
     const nativeEvent = e.nativeEvent
     const currentPageX = nativeEvent.changedTouches[0].pageX
@@ -205,7 +205,7 @@ const useInnerProps = (
     hasEmittedTouchmove = true
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
-    checkNeedPress(e, type)
+    checkIsNeedPress(e, type)
   }
 
   function handleTouchend(e: NativeTouchEvent, type: 'bubble' | 'capture') {
@@ -220,7 +220,7 @@ const useInnerProps = (
     handleEmitEvent(currentTouchEvent, 'touchend', e)
     // move event may not be triggered
     if (!hasEmittedTouchmove) {
-      checkNeedPress(e, type)
+      checkIsNeedPress(e, type)
     }
     if (ref.current.needPress[type]) {
       if (type === 'bubble' && config.disableTap) {
