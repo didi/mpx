@@ -20,8 +20,7 @@ const getWindowInfo = function () {
   const layout = navigation.layout || {}
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
-  let navigationHeight = layoutHeight === 0 ? 0 : screenHeight - layoutHeight - top // 在onload和ready阶段取值不准确会导致screenTop计算不准确所以兜底处理一下
-  navigationHeight = navigationHeight < 0 ? 0 : navigationHeight // 在没有navigation的情况下会出现负值
+  const windowHeight = layoutHeight || screenHeight
   try {
     safeArea = {
       left,
@@ -36,10 +35,10 @@ const getWindowInfo = function () {
   const result = {
     pixelRatio: PixelRatio.get(),
     windowWidth: layoutWidth || screenWidth,
-    windowHeight: layoutHeight || screenHeight, // 取不到layout的时候有个兜底
+    windowHeight, // 取不到layout的时候有个兜底
     screenWidth: screenWidth,
     screenHeight: screenHeight,
-    screenTop: top + navigationHeight,
+    screenTop: screenHeight - windowHeight,
     safeArea
   }
   return result
