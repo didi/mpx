@@ -62,7 +62,7 @@ function navigateTo (options = {}) {
         url,
         animated: true,
         params: Object.assign({}, query, options.query || {})
-      }, () => {})
+      })
       const res = { errMsg: 'redirectTo:ok', eventChannel }
       webHandleSuccess(res, options.success, options.complete)
       resolve(res)
