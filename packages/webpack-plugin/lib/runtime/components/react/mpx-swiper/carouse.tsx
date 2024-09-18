@@ -197,7 +197,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       createAutoPlay()
       return
     }
-    if (!Array.isArray(state.children) || !props.autoplay || internalsRef.current.isScrolling) {
+    if (!Array.isArray(state.children)) {
       return
     }
     const step = state.dir === 'x' ? state.width : state.height
