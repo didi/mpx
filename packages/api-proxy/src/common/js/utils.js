@@ -87,6 +87,14 @@ function failHandle (result, fail, complete) {
   typeof complete === 'function' && complete(result)
 }
 
+function getFocusedNavigation () {
+  for (const key in global.__mpxPagesMap) {
+    const navigation = global.__mpxPagesMap[key]?.[1]
+    if (navigation && navigation.isFocused()) {
+      return navigation
+    }
+  }
+}
 const ENV_OBJ = getEnvObj()
 
 export {
@@ -100,5 +108,6 @@ export {
   ENV_OBJ,
   defineUnsupportedProps,
   successHandle,
-  failHandle
+  failHandle,
+  getFocusedNavigation
 }

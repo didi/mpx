@@ -1,13 +1,5 @@
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, getFocusedNavigation } from '../../../common/js'
 
-function getFocusedNavigation () {
-  for (const key in global.__mpxPagesMap) {
-    const navigation = global.__mpxPagesMap[key]?.[1]
-    if (navigation && navigation.isFocused()) {
-      return navigation
-    }
-  }
-}
 function setNavigationBarTitle (options = {}) {
   const { title = '', success, fail, complete } = options
   const navigation = getFocusedNavigation()
