@@ -77,6 +77,7 @@ module.exports = function (template, {
         hasScoped: false,
         moduleId,
         filePath: resourcePath,
+        // react中模版i18n不需要特殊处理
         i18n: null,
         checkUsingComponents,
         // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
@@ -112,14 +113,13 @@ module.exports = function (template, {
         try {
           const ignoreMap = Object.assign({
             createElement: true,
-            components: true,
-            getNativeComponent: true,
+            getComponent: true,
             rootProps: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
           })
-          output += `global.currentInject.render = function (createElement, components, getNativeComponent, rootProps) {
+          output += `global.currentInject.render = function (createElement, getComponent, rootProps) {
   return ${bindResult.code}
 };\n`
         } catch (e) {

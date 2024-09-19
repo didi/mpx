@@ -27,8 +27,7 @@ import {
   callWithErrorHandling,
   warn,
   error,
-  getEnvObj,
-  isReact
+  getEnvObj
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -43,7 +42,8 @@ import {
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  REACTHOOKSEXEC
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
@@ -136,8 +136,10 @@ export default class MpxProxy {
   }
 
   created () {
-    // 缓存上下文，在 destoryed 阶段删除
-    contextMap.set(this.uid, this.target)
+    if (__mpx_dynamic_runtime__) {
+      // 缓存上下文，在 destoryed 阶段删除
+      contextMap.set(this.uid, this.target)
+    }
     if (__mpx_mode__ !== 'web') {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
@@ -153,7 +155,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web' && !isReact) {
+    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
       this.initRender()
     }
 
@@ -197,13 +199,15 @@ export default class MpxProxy {
   }
 
   unmounted () {
-    // 页面/组件销毁清除上下文的缓存
-    contextMap.remove(this.uid)
+    if (__mpx_dynamic_runtime__) {
+      // 页面/组件销毁清除上下文的缓存
+      contextMap.remove(this.uid)
+    }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
-    this.state = UNMOUNTED
     this.callHook(UNMOUNTED)
+    this.state = UNMOUNTED
   }
 
   isUnmounted () {
@@ -239,7 +243,7 @@ export default class MpxProxy {
   }
 
   initProps () {
-    if (isReact) {
+    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
     } else {
@@ -495,11 +499,28 @@ export default class MpxProxy {
     return result
   }
 
-  doRenderWithVNode (vnode) {
+  doRenderWithVNode (vnode, cb) {
+    const renderTask = this.createRenderTask()
+    let callback = cb
+    // mounted之后才会触发BEFOREUPDATE/UPDATED
+    if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
+      callback = () => {
+        cb && cb()
+        this.callHook(UPDATED)
+        renderTask && renderTask.resolve()
+      }
+    }
     if (!this._vnode) {
-      this.target.__render({ r: vnode })
+      this._vnode = diffAndCloneA(vnode).clone
+      pauseTracking()
+      // 触发渲染时暂停数据响应追踪，避免误收集到子组件的数据依赖
+      this.target.__render({ r: vnode }, callback)
+      resetTracking()
     } else {
-      let diffPath = diffAndCloneA(vnode, this._vnode).diffData
+      const result = diffAndCloneA(vnode, this._vnode)
+      this._vnode = result.clone
+      let diffPath = result.diffData
       if (!isEmptyObject(diffPath)) {
         // 构造 diffPath 数据
         diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
@@ -507,11 +528,11 @@ export default class MpxProxy {
           preVal[key] = diffPath[curVal]
           return preVal
         }, {})
-        this.target.__render(diffPath)
+        pauseTracking()
+        this.target.__render(diffPath, callback)
+        resetTracking()
       }
     }
-    // 缓存本地的 vnode 用以下一次 diff
-    this._vnode = diffAndCloneA(vnode).clone
   }
 
   doRender (data, cb) {
@@ -650,7 +671,7 @@ export default class MpxProxy {
       this.forceUpdateAll = true
     }
 
-    if (isReact) {
+    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
       // rn中不需要setdata
       this.forceUpdateData = {}
       this.forceUpdateAll = false
@@ -731,6 +752,7 @@ export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
 export const onServerPrefetch = createHook(SERVERPREFETCH)
+export const onReactHooksExec = createHook(REACTHOOKSEXEC)
 export const onPullDownRefresh = createHook('__onPullDownRefresh__')
 export const onReachBottom = createHook('__onReachBottom__')
 export const onShareAppMessage = createHook('__onShareAppMessage__')

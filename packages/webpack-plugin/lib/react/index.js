@@ -25,7 +25,7 @@ module.exports = function ({
   callback
 }) {
   if (ctorType === 'app' && !queryObj.isApp) {
-    return processMainScript(parts.script, {
+    return processMainScript({
       loaderContext
     }, (err, scriptRes) => {
       if (err) return callback(err)
@@ -57,7 +57,6 @@ module.exports = function ({
         (callback) => {
           processStyles(parts.styles, {
             loaderContext,
-            srcMode,
             ctorType,
             autoScope,
             moduleId

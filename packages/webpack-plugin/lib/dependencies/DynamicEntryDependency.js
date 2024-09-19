@@ -35,7 +35,7 @@ class DynamicEntryDependency extends NullDependency {
 
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
-    let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
+    let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver, extraOptions } = this
 
     async.waterfall([
       (callback) => {
@@ -89,6 +89,14 @@ class DynamicEntryDependency extends NullDependency {
               originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
             })
           }
+          if (mpx.dynamicEntryInfo[packageName] && extraOptions.isAsync) {
+            mpx.dynamicEntryInfo[packageName].entries.forEach(entry => {
+              if (entry.resource === resource && entry.filename === filename && entry.entryType === entryType) {
+                entry.hasAsync = true
+              }
+              return entry
+            })
+          }
           // alreadyOutputted时直接返回，避免存在模块循环引用时死循环
           return callback(null, { resultPath })
         } else {
@@ -113,7 +121,8 @@ class DynamicEntryDependency extends NullDependency {
             resource,
             packageName,
             filename,
-            entryType
+            entryType,
+            hasAsync: extraOptions.isAsync || false
           })
         }
       }
@@ -145,9 +154,9 @@ class DynamicEntryDependency extends NullDependency {
       mpx.subpackagesEntriesMap[packageRoot].push(this)
       callback()
     } else {
-      this.addEntry(compilation, (err, { resultPath }) => {
+      this.addEntry(compilation, (err, result) => {
         if (err) return callback(err)
-        this.resultPath = resultPath
+        this.resultPath = result.resultPath
         callback()
       })
     }

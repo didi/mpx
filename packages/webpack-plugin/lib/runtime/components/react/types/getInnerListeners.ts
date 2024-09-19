@@ -1,7 +1,7 @@
-import React from 'react'
+import { MutableRefObject } from 'react'
 import { NativeSyntheticEvent } from 'react-native'
 
-type LayoutRef = React.MutableRefObject<any>
+type LayoutRef = MutableRefObject<any>
 
 type SetTimeoutReturnType = ReturnType<typeof setTimeout>
 

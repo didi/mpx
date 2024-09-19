@@ -170,17 +170,18 @@ function buildGlobalParams ({
     if (globalTabBar) {
       content += globalTabBar
     }
-  } else if (!hasApp) {
-    content += `
-  global.__mpxGenericsMap = global.__mpxGenericsMap || {}
-  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-  global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
-  }
-  content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-  content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
-  if (!isProduction) {
-    content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+  } else {
+    if (!hasApp) {
+      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+      content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
+      content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+    }
+    content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+    content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+    content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
+    if (!isProduction) {
+      content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+    }
   }
   return content
 }

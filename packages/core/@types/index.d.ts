@@ -34,17 +34,17 @@ type Data = object | (() => object)
 export type PropType<T> = {
   __type: T
 } & (
-  T extends String
+    T extends String
     ? StringConstructor
     : T extends number
-      ? NumberConstructor
-      : T extends boolean
-        ? BooleanConstructor
-        : T extends any[]
-          ? ArrayConstructor
-          : T extends object
-            ? ObjectConstructor
-            : never
+    ? NumberConstructor
+    : T extends boolean
+    ? BooleanConstructor
+    : T extends any[]
+    ? ArrayConstructor
+    : T extends object
+    ? ObjectConstructor
+    : never
   )
 
 type FullPropType<T> = {
@@ -85,10 +85,10 @@ type GetDataType<T> = T extends () => any ? ReturnType<T> : T
 
 type GetPropsType<T extends Properties> = {
   readonly [K in keyof T]: T[K] extends FullPropType<infer V>
-    ? V
-    : T[K] extends PropType<infer V>
-      ? V
-      : WechatMiniprogram.Component.PropertyToData<T[K]>
+  ? V
+  : T[K] extends PropType<infer V>
+  ? V
+  : WechatMiniprogram.Component.PropertyToData<T[K]>
 }
 
 type RequiredPropertyNames<T> = {
@@ -246,7 +246,7 @@ export function injectMixins (mixins: object | Array<object>, options?: MixinTyp
 // export function watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
 interface AnyConstructor {
-  new (...args: any[]): any
+  new(...args: any[]): any
 
   prototype: any
 }
@@ -285,9 +285,9 @@ export type Plugin = PluginInstallFunction | {
   install: PluginInstallFunction
 }
 
-export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never;
+export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never
 
-export type PluginFunctionParams<T extends PluginInstallFunction> = T extends (app: any, ...args: infer P) => any ? P : [];
+export type PluginFunctionParams<T extends PluginInstallFunction> = T extends (app: any, ...args: infer P) => any ? P : []
 
 export interface Mpx {
   getMixin: typeof getMixin
@@ -297,7 +297,7 @@ export interface Mpx {
   observable: typeof observable
   watch: typeof watch
 
-  use <T extends Plugin = Plugin>(plugin: T, ...rest: PluginFunctionParams<PluginFunction<T>>): Mpx
+  use<T extends Plugin = Plugin> (plugin: T, ...rest: PluginFunctionParams<PluginFunction<T>>): Mpx
 
   implement (name: string, options?: ImplementOptions): void
 
@@ -376,8 +376,8 @@ export interface RefUnwrapBailTypes {
 export type UnwrapRef<T> = T extends ShallowRef<infer V>
   ? V
   : T extends Ref<infer V>
-    ? UnwrapRefSimple<V>
-    : UnwrapRefSimple<T>
+  ? UnwrapRefSimple<V>
+  : UnwrapRefSimple<T>
 
 export type UnwrapRefSimple<T> = T extends | Function
   | CollectionTypes
@@ -386,10 +386,10 @@ export type UnwrapRefSimple<T> = T extends | Function
   | RefUnwrapBailTypes[keyof RefUnwrapBailTypes]
   ? T
   : T extends Array<any>
-    ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
-    : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
-      ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
-      : T
+  ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
+  : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
+  ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
+  : T
 
 // If the the type T accepts type "any", output type Y, otherwise output type N.
 // https://stackoverflow.com/questions/49927523/disallow-call-with-any/49928360#49928360
@@ -572,13 +572,9 @@ export function watch<T extends Reactive<object>> ( // for reactive value
 ): () => void
 
 export function effectScope (detached?: boolean): EffectScope
-
 export function getCurrentScope (): EffectScope | undefined
-
 export function onScopeDispose (fn: () => void): void
-
 export function set<T extends object> (target: T, key: string | number, value: any): void
-
 export function del<T extends object> (target: T, key: keyof T): void
 
 // nextTick
@@ -586,43 +582,25 @@ export function nextTick (fn: () => any): void
 
 // lifecycle
 export function onBeforeMount (callback: () => void): void
-
 export function onMounted (callback: () => void): void
-
 export function onBeforeUpdate (callback: () => void): void
-
 export function onUpdated (callback: () => void): void
-
 export function onBeforeUnmount (callback: () => void): void
-
 export function onUnmounted (callback: () => void): void
-
 export function onLoad<T extends Record<string, string | undefined>> (callback: (query: T) => void): void
-
-// wechat dose not have generics
-// export function onLoad (callback: WechatMiniprogram.Page.ILifetime['onLoad']): void
-
 export function onShow (callback: WechatMiniprogram.Page.ILifetime['onShow']): void
-
 export function onHide (callback: WechatMiniprogram.Page.ILifetime['onHide']): void
-
 export function onResize (callback: WechatMiniprogram.Page.ILifetime['onResize']): void
-
 export function onPullDownRefresh (callback: WechatMiniprogram.Page.ILifetime['onPullDownRefresh']): void
-
 export function onReachBottom (callback: WechatMiniprogram.Page.ILifetime['onReachBottom']): void
-
 export function onShareAppMessage (callback: WechatMiniprogram.Page.ILifetime['onShareAppMessage']): void
-
 export function onShareTimeline (callback: WechatMiniprogram.Page.ILifetime['onShareTimeline']): void
-
 export function onAddToFavorites (callback: WechatMiniprogram.Page.ILifetime['onAddToFavorites']): void
-
 export function onPageScroll (callback: WechatMiniprogram.Page.ILifetime['onPageScroll']): void
-
 export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabItemTap']): void
-
 export function onSaveExitState (callback: () => void): void
+export function onServerPrefetch (callback: () => any): void
+export function onReactHooksExec (callback: () => void): void
 
 // get instance
 export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): { proxy: T, [x: string]: any }
@@ -672,6 +650,8 @@ export const ONLOAD: string
 export const ONSHOW: string
 export const ONHIDE: string
 export const ONRESIZE: string
+export const SERVERPREFETCH: string
+export const REACTHOOKSEXEC: string
 
 declare global {
   const defineProps: (<T extends Properties = {}>(props: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)

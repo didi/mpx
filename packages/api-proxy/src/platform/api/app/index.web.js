@@ -1,4 +1,5 @@
-import { isBrowser } from '../../../common/js'
+import { isBrowser, isReact } from '@mpxjs/utils'
+
 global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
@@ -7,7 +8,7 @@ global.__mpxAppCbs = global.__mpxAppCbs || {
 }
 
 function onError (callback) {
-  if (isBrowser) {
+  if (isBrowser || isReact) {
     global.__mpxAppCbs.error.push(callback)
   }
 }
@@ -19,7 +20,7 @@ function offError (callback) {
 }
 
 function onAppShow (callback) {
-  if (isBrowser) {
+  if (isBrowser || isReact) {
     global.__mpxAppCbs.show.push(callback)
   }
 }
@@ -31,7 +32,7 @@ function offAppShow (callback) {
 }
 
 function onAppHide (callback) {
-  if (isBrowser) {
+  if (isBrowser || isReact) {
     global.__mpxAppCbs.hide.push(callback)
   }
 }

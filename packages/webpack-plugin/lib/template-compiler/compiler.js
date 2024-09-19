@@ -1052,7 +1052,7 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processStyleReact (el) {
+function processStyleReact (el, options) {
   // process class/wx:class/style/wx:style/wx:show for react native
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
@@ -1088,18 +1088,59 @@ function processStyleReact (el) {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
       name: 'hoverStyle',
-      // runtime helper
       value: `{{this.__getStyle(${staticClassExp})}}`
     }])
   }
+
+  // 处理externalClasses，将其转换为style作为props传递
+  if (options.externalClasses) {
+    options.externalClasses.forEach((className) => {
+      let externalClass = getAndRemoveAttr(el, className).val || ''
+      externalClass = externalClass.replace(/\s+/g, ' ')
+      if (externalClass) {
+        const externalClassExp = parseMustacheWithContext(externalClass).result
+        addAttrs(el, [{
+          name: className,
+          value: `{{this.__getStyle(${externalClassExp})}}`
+        }])
+      }
+    })
+  }
 }
 
-function processEventReact (el, options, meta) {
+function getModelConfig (el, match) {
+  const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
+  const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
+  const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
+  const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
+  const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
+  let modelValuePathArr
+  try {
+    modelValuePathArr = JSON5.parse(modelValuePath)
+  } catch (e) {
+    if (modelValuePath === '') {
+      modelValuePathArr = []
+    } else {
+      modelValuePathArr = modelValuePath.split('.')
+    }
+  }
+  const modelValue = match[1].trim()
+  const stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+  return {
+    modelProp,
+    modelEvent,
+    modelFilter,
+    modelValuePathArr,
+    stringifiedModelValue
+  }
+}
+
+function processEventReact (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
-      const type = parsedEvent.eventName
+      const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1112,12 +1153,43 @@ function processEventReact (el, options, meta) {
     }
   })
 
-  let wrapper
+  const modelExp = getAndRemoveAttr(el, config[mode].directive.model).val
+  if (modelExp) {
+    const match = tagRE.exec(modelExp)
+    if (match) {
+      const { modelProp, modelEvent, modelFilter, modelValuePathArr, stringifiedModelValue } = getModelConfig(el, match)
+      if (!isValidIdentifierStr(modelEvent)) {
+        warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
+        return
+      }
+      // if (forScopes.length) {
+      //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
+      // } else {
+      //   stringifiedModelValue = stringify(modelValue)
+      // }
+      // todo 未来可能需要支持类似modelEventPrefix这样的配置来声明model事件的绑定方式
+      const modelEventType = config[mode].event.getEvent(modelEvent)
+      if (!eventConfigMap[modelEventType]) {
+        eventConfigMap[modelEventType] = {
+          configs: []
+        }
+      }
+      eventConfigMap[modelEventType].configs.unshift({
+        hasArgs: true,
+        expStr: `[${stringify('__model')},${stringifiedModelValue},${stringify(eventIdentifier)},${stringify(modelValuePathArr)}${modelFilter ? `,${stringify(modelFilter)}` : ''}]`
+      })
+      addAttrs(el, [
+        {
+          name: modelProp,
+          value: modelExp
+        }
+      ])
+    }
+  }
 
+  // let wrapper
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
-
-    let resultName
     configs.forEach(({ name }) => {
       if (name) {
         // 清空原始事件绑定
@@ -1125,21 +1197,15 @@ function processEventReact (el, options, meta) {
         do {
           has = getAndRemoveAttr(el, name).has
         } while (has)
-
-        if (!resultName) {
-          // 清除修饰符
-          resultName = name.replace(/\..*/, '')
-        }
       }
     })
     configs = configs.map((item) => {
       return item.expStr
     })
-    const name = resultName || config[mode].event.getEvent(type)
     const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
     addAttrs(el, [
       {
-        name,
+        name: type,
         value
       }
     ])
@@ -1166,12 +1232,12 @@ function processEventReact (el, options, meta) {
     // }
   }
 
-  if (wrapper) {
-    replaceNode(el, wrapper, true)
-    addChild(wrapper, el)
-    processAttrs(wrapper, options)
-    postMoveBaseDirective(wrapper, el)
-  }
+  // if (wrapper) {
+  //   replaceNode(el, wrapper, true)
+  //   addChild(wrapper, el)
+  //   processAttrs(wrapper, options)
+  //   postMoveBaseDirective(wrapper, el)
+  // }
 }
 
 function processEvent (el, options) {
@@ -1204,27 +1270,11 @@ function processEvent (el, options) {
   if (modelExp) {
     const match = tagRE.exec(modelExp)
     if (match) {
-      const modelProp = getAndRemoveAttr(el, config[mode].directive.modelProp).val || config[mode].event.defaultModelProp
-      const modelEvent = getAndRemoveAttr(el, config[mode].directive.modelEvent).val || config[mode].event.defaultModelEvent
-      const modelValuePathRaw = getAndRemoveAttr(el, config[mode].directive.modelValuePath).val
-      const modelValuePath = modelValuePathRaw === undefined ? config[mode].event.defaultModelValuePath : modelValuePathRaw
-      const modelFilter = getAndRemoveAttr(el, config[mode].directive.modelFilter).val
-      let modelValuePathArr
-      try {
-        modelValuePathArr = JSON5.parse(modelValuePath)
-      } catch (e) {
-        if (modelValuePath === '') {
-          modelValuePathArr = []
-        } else {
-          modelValuePathArr = modelValuePath.split('.')
-        }
-      }
+      const { modelProp, modelEvent, modelFilter, modelValuePathArr, stringifiedModelValue } = getModelConfig(el, match)
       if (!isValidIdentifierStr(modelEvent)) {
         warn$1(`EventName ${modelEvent} which is used in ${config[mode].directive.model} must be a valid identifier!`)
         return
       }
-      const modelValue = match[1].trim()
-      const stringifiedModelValue = stringifyWithResolveComputed(modelValue)
       // if (forScopes.length) {
       //   stringifiedModelValue = stringifyWithResolveComputed(modelValue)
       // } else {
@@ -1654,23 +1704,50 @@ function processFor (el) {
   }
 }
 
-function processRefReact (el, options, meta) {
-  const val = getAndRemoveAttr(el, config[mode].directive.ref).val
-  const type = isComponentNode(el, options) ? 'component' : 'node'
-  if (val) {
+function processRefReact (el, meta) {
+  const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
+
+  // rn中只有内建组件能被作为node ref处理
+  const type = el.isBuiltIn ? 'node' : 'component'
+  if (has) {
     if (!meta.refs) {
       meta.refs = []
     }
     const all = !!forScopes.length
-    meta.refs.push({
+    const refConf = {
       key: val,
       all,
       type
-    })
+    }
+
+    if (!val) {
+      refConf.key = `ref_rn_${++refId}`
+      refConf.sKeys = []
+      const rawId = el.attrsMap.id
+      const rawClass = el.attrsMap.class
+      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+      meta.computed = meta.computed || []
+      if (rawId) {
+        const staticId = parseMustacheWithContext(rawId).result
+        const computedIdKey = `_ri${refId}`
+        refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
+        meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
+      }
+      if (rawClass || rawDynamicClass) {
+        const staticClass = parseMustacheWithContext(rawClass).result
+        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+        const computedClassKey = `_rc${refId}`
+        refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
+        meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
+      }
+    }
+
+    meta.refs.push(refConf)
 
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${val}') }}`
+      value: `{{ this.__getRefVal('${refConf.key}') }}`
     }])
   }
 }
@@ -1949,7 +2026,7 @@ function processText (el) {
 // RN中文字需被Text包裹
 function processWrapTextReact (el) {
   const parentTag = el.parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text') {
+  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('Text')
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
@@ -1970,7 +2047,7 @@ function processWrapTextReact (el) {
 // }
 
 function injectWxs (meta, module, src) {
-  if (runtimeCompile || addWxsModule(meta, module, src)) {
+  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode)) {
     return
   }
 
@@ -2172,7 +2249,7 @@ function processBuiltInComponents (el, meta) {
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
       if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
       }
@@ -2484,17 +2561,15 @@ function processMpxTagName (el) {
   }
 }
 
-function postProcessComponent (el, options) {
-  if (isComponentNode(el, options)) {
-    el.isComponent = true
-  }
-}
-
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._atModeStatus === 'mismatch') {
     return
+  }
+
+  if (runtimeCompile && options.dynamicTemplateRuleRunner) {
+    options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
   if (rulesRunner && el._atModeStatus !== 'match') {
@@ -2528,9 +2603,9 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processRefReact(el, options, meta)
-    processStyleReact(el)
-    processEventReact(el, options, meta)
+    processRefReact(el, meta)
+    processStyleReact(el, options)
+    processEventReact(el)
     processComponentIs(el, options)
     processSlotReact(el)
     processAttrs(el, options)
@@ -2550,18 +2625,18 @@ function processElement (el, root, options, meta) {
 
   processIf(el)
   processFor(el)
-  processRef(el, options, meta)
-  if (runtimeCompile) {
-    processClassDynamic(el, meta)
-    processStyleDynamic(el, meta)
-  } else {
-    processClass(el, meta)
-    processStyle(el, meta)
-  }
-  processEvent(el, options)
 
   if (!pass) {
+    processRef(el, options, meta)
+    if (runtimeCompile) {
+      processClassDynamic(el, meta)
+      processStyleDynamic(el, meta)
+    } else {
+      processClass(el, meta)
+      processStyle(el, meta)
+    }
     processShow(el, options, root)
+    processEvent(el, options)
     processComponentIs(el, options)
   }
 
@@ -2579,10 +2654,9 @@ function closeElement (el, meta, options) {
     return
   }
   if (isReact(mode)) {
+    postProcessWxs(el, meta)
     postProcessForReact(el)
     postProcessIfReact(el)
-    // flag component for react
-    postProcessComponent(el, options)
     return
   }
   const pass = isNative || postProcessTemplate(el) || processingTemplate
@@ -2961,7 +3035,7 @@ function postProcessForDynamic (vnode) {
 }
 
 function postProcessAttrsDynamic (vnode, config) {
-  const exps = vnode.exps?.filter(v => v.attrName) || []
+  const exps = (vnode.exps && vnode.exps.filter(v => v.attrName)) || []
   const expsMap = Object.fromEntries(exps.map(v => ([v.attrName, v])))
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {

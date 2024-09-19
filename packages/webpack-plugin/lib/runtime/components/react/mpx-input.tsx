@@ -73,7 +73,7 @@ type InputStyle = Omit<
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
-  style?: StyleProp<InputStyle>
+  style?: InputStyle & Record<string, any>
   value?: string
   type?: Type
   password?: boolean
@@ -118,7 +118,7 @@ const keyboardTypeMap: Record<Type, string> = {
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): React.JSX.Element => {
   const {
-    style = [],
+    style = {},
     type = 'text',
     value,
     password,
@@ -336,12 +336,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     ref: nodeRef,
     ...(enableOffset ? { onLayout } : {}),
   },
-  [
-    'enable-offset'
-  ],
-  {
-    layoutRef
-  })
+    [
+      'enable-offset'
+    ],
+    {
+      layoutRef
+    })
 
 
   return (
@@ -370,16 +370,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       onSubmitEditing={onSubmitEditing}
       onContentSizeChange={onContentSizeChange}
       onSelectionChange={onSelectionChange}
-      style={[
-        {
-          padding: 0,
-        },
-        style,
-        multiline &&
-          autoHeight && {
-            height: Math.max((style as any)?.minHeight || 35, contentHeight),
-          },
-      ]}
+      style={{
+        padding: 0,
+        ...style,
+        ...multiline && autoHeight && {
+          height: Math.max((style as any)?.minHeight || 35, contentHeight)
+        }
+      }
+      }
     />
   )
 })

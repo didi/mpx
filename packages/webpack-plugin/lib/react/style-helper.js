@@ -2,10 +2,10 @@ const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
-const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
+const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
+const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode }) {
+function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   const classMap = {}
 
   const root = postcss.parse(content, {
@@ -30,12 +30,8 @@ function getClassMap ({ content, filename, mode, srcMode }) {
     srcMode,
     type: 'style',
     testKey: 'prop',
-    warn: (msg) => {
-      console.warn('[style compiler warn]: ' + msg)
-    },
-    error: (msg) => {
-      console.error('[style compiler error]: ' + msg)
-    }
+    warn,
+    error
   })
 
   root.walkRules(rule => {
@@ -51,7 +47,16 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         prop = dash2hump(item.prop)
         value = item.value
         if (Array.isArray(value)) {
-          value = value.map(item => formatValue(item))
+          value = value.map(val => {
+            if (typeof val === 'object') {
+              for (const key in val) {
+                val[key] = formatValue(val[key])
+              }
+              return val
+            } else {
+              return formatValue(val)
+            }
+          })
         } else if (typeof value === 'object') {
           for (const key in value) {
             value[key] = formatValue(value[key])
@@ -70,7 +75,7 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
           classMapKeys.push(selector.nodes[0].value)
         } else {
-          rule.error('Only single class selector is supported in react native mode temporarily.')
+          error('Only single class selector is supported in react native mode temporarily.')
         }
       })
     }).processSync(rule.selector)

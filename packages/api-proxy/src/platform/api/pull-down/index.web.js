@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, throwSSRWarning, isBrowser } from '../../../common/js'
+import { successHandle, failHandle, throwSSRWarning, isBrowser } from '../../../common/js'
 
 function stopPullDownRefresh (options = {}) {
   if (!isBrowser) {
@@ -22,10 +22,10 @@ function stopPullDownRefresh (options = {}) {
     }
     if (err) {
       const res = { errMsg: `stopPullDownRefresh:fail ${err}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     } else {
       const res = { errMsg: 'stopPullDownRefresh:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
   }
 }
@@ -52,10 +52,10 @@ function startPullDownRefresh (options = {}) {
     }
     if (err) {
       const res = { errMsg: `startPullDownRefresh:fail ${err}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     } else {
       const res = { errMsg: 'startPullDownRefresh:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
   }
 }

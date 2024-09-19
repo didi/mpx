@@ -1,30 +1,30 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, createElement, memo, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
+import { watch } from '../../../observer/watch'
+import { reactive, set, del } from '../../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, UPDATED } from '../../../core/innerLifecycle'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
+import { createSelectorQuery } from '@mpxjs/api-proxy'
 
-function getNativeComponent (tagName) {
-  return getByPath(ReactNative, tagName)
-}
-
-function getRootProps (props) {
-  const rootProps = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
-      if (match) {
-        rootProps[key] = props[key]
-      }
+function getSystemInfo () {
+  const window = ReactNative.Dimensions.get('window')
+  const screen = ReactNative.Dimensions.get('screen')
+  return {
+    deviceOrientation: window.width > window.height ? 'landscape' : 'portrait',
+    size: {
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      windowWidth: window.width,
+      windowHeight: window.height
     }
   }
-  return rootProps
 }
 
-function createEffect (proxy, components, props) {
+function createEffect (proxy, components) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -39,30 +39,60 @@ function createEffect (proxy, components, props) {
     proxy.onStoreChange && proxy.onStoreChange()
   }
   update.id = proxy.uid
+  const getComponent = (tagName) => {
+    if (tagName === 'block') return Fragment
+    return components[tagName] || getByPath(ReactNative, tagName)
+  }
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, components, getNativeComponent, getRootProps(props))
+    // reset instance
+    proxy.target.__resetInstance()
+    return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ propsRef, ref, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
     __getProps () {
-      const propsData = {}
       const props = propsRef.current
-      if (props) {
-        Object.keys(props).forEach((key) => {
-          if (hasOwn(validProps, key) && !isFunction(props[key])) {
-            propsData[key] = props[key]
+      const propsData = {}
+      Object.keys(validProps).forEach((key) => {
+        if (hasOwn(props, key)) {
+          propsData[key] = props[key]
+        } else {
+          let field = validProps[key]
+          if (isFunction(field) || field === null) {
+            field = {
+              type: field
+            }
           }
-        })
-      }
+          // 处理props默认值
+          propsData[key] = field.value
+        }
+      })
       return propsData
     },
+    __getRootProps () {
+      const props = propsRef.current
+      const rootProps = {}
+      for (const key in props) {
+        if (hasOwn(props, key)) {
+          const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
+          if (match) {
+            rootProps[key] = props[key]
+          }
+        }
+      }
+      return rootProps
+    },
+    __resetInstance () {
+      this.__refs = {}
+      this.__dispatchedSlotSet = new WeakSet()
+    },
     __getSlot (name) {
-      const { children } = propsRef.current || {}
+      const { children } = propsRef.current
       if (children) {
         const result = []
         if (Array.isArray(children)) {
@@ -112,8 +142,7 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
     },
     triggerEvent (eventName, eventDetail) {
       const props = propsRef.current
-      const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-      const handler = props && (props['bind' + handlerName] || props['catch' + handlerName] || props['capture-bind' + handlerName] || props['capture-catch' + handlerName])
+      const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
       if (handler && typeof handler === 'function') {
         const timeStamp = +new Date()
         const dataset = collectDataset(props)
@@ -135,14 +164,14 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
         handler.call(this, eventObj)
       }
     },
-    selectComponent () {
-      error('selectComponent is not supported in react native, please use ref instead')
+    selectComponent (selector) {
+      return this.__selectRef(selector, 'component')
     },
-    selectAllComponents () {
-      error('selectAllComponents is not supported in react native, please use ref instead')
+    selectAllComponents (selector) {
+      return this.__selectRef(selector, 'component', true)
     },
     createSelectorQuery () {
-      error('createSelectorQuery is not supported in react native, please use ref instead')
+      return createSelectorQuery().in(this)
     },
     createIntersectionObserver () {
       error('createIntersectionObserver is not supported in react native, please use ref instead')
@@ -162,18 +191,32 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
         return props.id
       },
       enumerable: true
+    },
+    props: {
+      get () {
+        return propsRef.current
+      },
+      enumerable: true
     }
   })
 
+  const props = propsRef.current
+
+  if (type === 'page') {
+    instance.route = props.route.name
+    global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+  }
+
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
+
   Object.assign(proxy, {
     onStoreChange: null,
     // eslint-disable-next-line symbol-description
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components, propsRef.current)
+        createEffect(proxy, components)
         // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
@@ -190,69 +233,179 @@ function createInstance ({ propsRef, ref, type, rawOptions, currentInject, valid
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components, propsRef.current)
+    createEffect(proxy, components)
   }
 
   return instance
 }
 
+function hasPageHook (mpxProxy, hookNames) {
+  const options = mpxProxy.options
+  const type = options.__type__
+  return hookNames.some(h => {
+    if (mpxProxy.hasHook(h)) {
+      return true
+    }
+    if (type === 'page') {
+      return isFunction(options.methods && options.methods[h])
+    } else if (type === 'component') {
+      return options.pageLifetimes && isFunction(options.pageLifetimes[h])
+    }
+    return false
+  })
+}
+
+const routeContext = createContext(null)
+
+const triggerPageStatusHook = (mpxProxy, event) => {
+  mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
+  const pageLifetimes = mpxProxy.options.pageLifetimes
+  if (pageLifetimes) {
+    const instance = mpxProxy.target
+    isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
+  }
+}
+
+const triggerResizeEvent = (mpxProxy) => {
+  const type = mpxProxy.options.__type__
+  const systemInfo = getSystemInfo()
+  const target = mpxProxy.target
+  mpxProxy.callHook(ONRESIZE, [systemInfo])
+  if (type === 'page') {
+    target.onResize && target.onResize(systemInfo)
+  } else {
+    const pageLifetimes = mpxProxy.options.pageLifetimes
+    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
+  }
+}
+
+function usePageContext (mpxProxy, instance) {
+  const { pageId } = useContext(routeContext) || {}
+
+  instance.getPageId = () => {
+    return pageId
+  }
+
+  useEffect(() => {
+    let unWatch
+    const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
+    const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
+    const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
+    if (hasShowHook || hasHideHook || hasResizeHook) {
+      if (hasOwn(pageStatusContext, pageId)) {
+        unWatch = watch(() => pageStatusContext[pageId], (newVal) => {
+          if (newVal === 'show' || newVal === 'hide') {
+            triggerPageStatusHook(mpxProxy, newVal)
+          } else if (/^resize/.test(newVal)) {
+            triggerResizeEvent(mpxProxy)
+          }
+        })
+      }
+    }
+
+    return () => {
+      unWatch && unWatch()
+    }
+  }, [])
+}
+
+const pageStatusContext = reactive({})
+let pageId = 0
+
+function usePageStatus (navigation, pageId) {
+  let isFocused = true
+  set(pageStatusContext, pageId, '')
+  useEffect(() => {
+    const focusSubscription = navigation.addListener('focus', () => {
+      pageStatusContext[pageId] = 'show'
+      isFocused = true
+    })
+    const blurSubscription = navigation.addListener('blur', () => {
+      pageStatusContext[pageId] = 'hide'
+      isFocused = false
+    })
+    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
+      if (isFocused) {
+        pageStatusContext[pageId] = value
+      }
+    })
+
+    return () => {
+      focusSubscription()
+      blurSubscription()
+      unWatchAppFocusedState()
+      del(pageStatusContext, pageId)
+    }
+  }, [navigation])
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const components = currentInject.getComponents() || {}
+  const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const propsRef = useRef(props)
+    const propsRef = useRef(null)
+    propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, ref, type, rawOptions, currentInject, validProps, components })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
-    // reset instance
-    instance.__refs = {}
-    instance.__dispatchedSlotSet = new WeakSet()
     useImperativeHandle(ref, () => {
       return instance
     })
+
     const proxy = instance.__mpxProxy
 
-    if (!isFirst) {
-      // 处理props更新
-      propsRef.current = props
-      Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key) && !isFunction(props[key])) {
-          instance[key] = props[key]
-        }
-      })
-      proxy.propsUpdated()
-    }
+    proxy.callHook(REACTHOOKSEXEC)
 
     useEffect(() => {
+      if (!isFirst) {
+        // 处理props更新
+        Object.keys(props).forEach(key => {
+          if (hasOwn(validProps, key)) {
+            instance[key] = props[key]
+          }
+        })
+      }
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }
     })
 
+    usePageContext(proxy, instance)
+
     useEffect(() => {
+      if (type === 'page') {
+        proxy.callHook(ONLOAD, [props.route.params || {}])
+      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
+        if (type === 'page') {
+          delete global.__mpxPagesMap[props.route.key]
+        }
       }
     }, [])
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return proxy.effect.run()
+    return rawOptions.__disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
-    const Page = ({ navigation }) => {
+    const Page = ({ navigation, route }) => {
+      const currentPageId = useMemo(() => ++pageId, [])
+      usePageStatus(navigation, currentPageId)
+
       useLayoutEffect(() => {
         navigation.setOptions({
+          headerShown: pageConfig.navigationStyle !== 'custom',
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
@@ -260,17 +413,33 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
       }, [])
+
+      navigation.insets = useSafeAreaInsets()
+
       return createElement(Provider,
         null,
-        createElement(ReactNative.ScrollView,
+        createElement(GestureHandlerRootView,
           {
             style: {
-              ...ReactNative.StyleSheet.absoluteFillObject,
+              flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
             },
-            showsVerticalScrollIndicator: false
+            onLayout (e) {
+              navigation.layout = e.nativeEvent.layout
+            }
           },
-          createElement(defaultOptions)
+          createElement(routeContext.Provider,
+            {
+              value: { pageId: currentPageId }
+            },
+            createElement(defaultOptions,
+              {
+                navigation,
+                route,
+                pageConfig
+              }
+            )
+          )
         )
       )
     }

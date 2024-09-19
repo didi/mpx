@@ -11,7 +11,7 @@ import {
   DataSetType,
   LayoutRef,
   NativeTouchEvent
-} from './getInnerListeners.type'
+} from './types/getInnerListeners'
 
 const getTouchEvent = (
   type: string,
@@ -33,8 +33,8 @@ const getTouchEvent = (
     ...event,
     type,
     timeStamp: timestamp,
-    target: {
-      ...(event.target || {}),
+    currentTarget: {
+      ...(event.currentTarget || {}),
       id: id || '',
       dataset: getDataSet(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
