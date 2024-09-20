@@ -81,7 +81,7 @@ export const getRestProps = (transferProps: any = {}, originProps: any = {}, del
 export const isText = (ele: ReactNode) => {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName === 'mpx-text' || displayName === 'Text'  
+    return displayName === 'mpx-text' || displayName === 'Text'
   }
   return false
 }
@@ -89,7 +89,7 @@ export const isText = (ele: ReactNode) => {
 export const isEmbedded = (ele: ReactNode) => {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName && ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName) 
+    return displayName && ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName)
   }
   return false
 }

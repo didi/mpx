@@ -62,7 +62,8 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
-    "webpack": "^5.75.0"
+    "webpack": "^5.75.0",
+    "expo-linear-gradient": "~13.0.2"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

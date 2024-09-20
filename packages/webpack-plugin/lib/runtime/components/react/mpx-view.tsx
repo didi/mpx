@@ -92,7 +92,7 @@ function calculateSize(h: number, ratio: number, lh?: number | boolean, reverse:
     reverse = lh
   }
 
-  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx 
+  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx
     if (!lh) return null
     height = (parseFloat(h) / 100) * (lh as number)
     width = height * ratio
@@ -336,7 +336,7 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       setShow(false)
       sizeInfo.current = null
       layoutInfo.current = null
-      return 
+      return
     }
 
     if (!needImageSize) {
@@ -376,7 +376,7 @@ function wrapImage(imageStyle?: ExtendedViewStyle) {
       setLayoutInfoWidth(width)
       setLayoutInfoHeight(height)
       setImageSizeWidth(sizeInfo.current.width)
-      setImageSizeHeight(sizeInfo.current.height)  
+      setImageSizeHeight(sizeInfo.current.height)
       setShow(true)
     }
   }
