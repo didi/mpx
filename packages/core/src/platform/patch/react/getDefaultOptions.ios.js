@@ -397,7 +397,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
@@ -414,9 +414,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      navigation.insets = useSafeAreaInsets()
+
       return createElement(Provider,
         null,
-        createElement(ReactNative.View,
+        createElement(GestureHandlerRootView,
           {
             style: {
               flex: 1,
