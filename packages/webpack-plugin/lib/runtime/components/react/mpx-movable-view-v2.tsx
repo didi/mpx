@@ -79,7 +79,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindchange
   } = props
 
-  const propsRef = useRef<any>({})
+  const propsRef = useSharedValue<any>({})
   const layoutRef = useSharedValue<any>({})
   const direction = useSharedValue<string>(props.direction)
 
@@ -87,7 +87,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const offsetY = useSharedValue(props.y);
   const scaleValue = useSharedValue(1)
   const hasChangeEvent = useSharedValue(props.bindchange)
-  const startPostion = useSharedValue({
+  const startPosition = useSharedValue({
     x: 0,
     y: 0
   })
@@ -107,7 +107,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   let touchEvent = useSharedValue<string>('')
 
-  propsRef.current = props
+  propsRef.value = props
 
   const handleTriggerChange = ({ x, y, source }: { x: number; y: number; source: 'string' }) => {
     bindchange &&
@@ -185,11 +185,53 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
     }
   )
+  const checkBoundaryPosition = ({ clampedScale, width, height, positionX, positionY }: { clampedScale: number; width: number; height: number; positionX: number; positionY: number }) => {
+    // Calculate scaled element size
+    const scaledWidth = width * clampedScale
+    const scaledHeight = height * clampedScale
 
+    // Calculate the boundary limits
+    let x = positionX
+    let y = positionY
+
+    // Correct y coordinate
+    if (scaledHeight > MovableAreaLayout.height) {
+      if (y >= 0) {
+        y = 0
+      } else if (y < MovableAreaLayout.height - scaledHeight) {
+        y = MovableAreaLayout.height - scaledHeight
+      }
+    } else {
+      if (y < 0) {
+        y = 0
+      } else if (y > MovableAreaLayout.height - scaledHeight) {
+        y = MovableAreaLayout.height - scaledHeight
+      }
+    }
+    // Correct x coordinate
+    if (scaledWidth > MovableAreaLayout.width) {
+      if (x >= 0) {
+        x = 0
+      } else if (x < MovableAreaLayout.width - scaledWidth) {
+        x = MovableAreaLayout.width - scaledWidth
+      }
+    } else {
+      if (x < 0) {
+        x = 0
+      } else if (x > MovableAreaLayout.width - scaledWidth) {
+        x = MovableAreaLayout.width - scaledWidth
+      }
+    }
+
+    return {
+      x,
+      y
+    }
+  }
   const gesture = Gesture.Pan()
     .onTouchesDown((e) => {
       const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-      startPostion.value = {
+      startPosition.value = {
         x: changedTouches.x,
         y: changedTouches.y
       }
@@ -197,16 +239,26 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     .onTouchesMove((e) => {
       const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
       if (isFirstTouch.value) {
-        touchEvent.value = Math.abs(changedTouches.x - startPostion.value.x) > Math.abs(changedTouches.y - startPostion.value.y) ? 'htouchmove' : 'vtouchmove'
+        touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
         isFirstTouch.value = false
       }
-      const changeX = changedTouches.x - startPostion.value.x;
-      const changeY = changedTouches.y - startPostion.value.y;
+      const changeX = changedTouches.x - startPosition.value.x;
+      const changeY = changedTouches.y - startPosition.value.y;
       if (direction.value === 'horizontal' || direction.value === 'all') {
-        offsetX.value = offsetX.value + changeX
+        let newX = offsetX.value + changeX
+        if (!propsRef.value['out-of-bounds']) {
+          const { x } = checkBoundaryPosition({ clampedScale: 1, width: layoutRef.value.width, height: layoutRef.value.height, positionX: newX, positionY: offsetY.value })
+          newX = x
+        }
+        offsetX.value = newX
       }
       if (direction.value === 'vertical' || direction.value === 'all') {
-        offsetY.value = offsetY.value + changeY
+        let newY = offsetY.value + changeY
+        if (!propsRef.value['out-of-bounds']) {
+          const { y } = checkBoundaryPosition({ clampedScale: 1, width: layoutRef.value.width, height: layoutRef.value.height, positionX: offsetX.value, positionY: newY })
+          newY = y
+        }
+        offsetY.value = newY
       }
       if (hasTouchmove()) {
         onTouchMove(e)
@@ -219,12 +271,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       isFirstTouch.value = true
     })
     .onChange((event) => {
-      // if (direction.value === 'horizontal' || direction.value === 'all') {
-      //   offsetX.value = offsetX.value + event.changeX
-      // }
-      // if (direction.value === 'vertical' || direction.value === 'all') {
-      //   offsetY.value = offsetY.value + event.changeY
-      // }
       let source = 'touch'
       if (offsetX.value < 0 || offsetY.value < 0 || offsetX.value > (MovableAreaLayout.value.width - layoutRef.value.width) || offsetY.value > MovableAreaLayout.value.height - layoutRef.value.height) {
         source = 'touch-out-of-bounds'
