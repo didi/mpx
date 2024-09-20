@@ -161,7 +161,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     () => offsetX.value,
     (currentValue: number, previousValue: number) => {
       if (hasChangeEvent) {
-        if (currentValue > (MovableAreaLayout.value.width - layoutRef.value.width)) {
+        if (currentValue < 0 || currentValue > (MovableAreaLayout.value.width - layoutRef.value.width)) {
           runOnJS(handleTriggerChange)({
             x: currentValue,
             y: offsetY.value,
@@ -175,7 +175,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     () => offsetY.value,
     (currentValue: number, previousValue: number) => {
       if (hasChangeEvent) {
-        if (currentValue > (MovableAreaLayout.value.height - layoutRef.value.height)) {
+        if (currentValue < 0 || currentValue > (MovableAreaLayout.value.height - layoutRef.value.height)) {
           runOnJS(handleTriggerChange)({
             x: offsetX.value,
             y: currentValue,
@@ -200,6 +200,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         touchEvent.value = Math.abs(changedTouches.x - startPostion.value.x) > Math.abs(changedTouches.y - startPostion.value.y) ? 'htouchmove' : 'vtouchmove'
         isFirstTouch.value = false
       }
+      const changeX = changedTouches.x - startPostion.value.x;
+      const changeY = changedTouches.y - startPostion.value.y;
+      if (direction.value === 'horizontal' || direction.value === 'all') {
+        offsetX.value = offsetX.value + changeX
+      }
+      if (direction.value === 'vertical' || direction.value === 'all') {
+        offsetY.value = offsetY.value + changeY
+      }
       if (hasTouchmove()) {
         onTouchMove(e)
       }
@@ -211,14 +219,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       isFirstTouch.value = true
     })
     .onChange((event) => {
-      if (direction.value === 'horizontal' || direction.value === 'all') {
-        offsetX.value = offsetX.value + event.changeX
-      }
-      if (direction.value === 'vertical' || direction.value === 'all') {
-        offsetY.value = offsetY.value + event.changeY
-      }
+      // if (direction.value === 'horizontal' || direction.value === 'all') {
+      //   offsetX.value = offsetX.value + event.changeX
+      // }
+      // if (direction.value === 'vertical' || direction.value === 'all') {
+      //   offsetY.value = offsetY.value + event.changeY
+      // }
       let source = 'touch'
-      if (offsetX.value > (MovableAreaLayout.value.width - layoutRef.value.width) || offsetY.value > MovableAreaLayout.value.height - layoutRef.value.height) {
+      if (offsetX.value < 0 || offsetY.value < 0 || offsetX.value > (MovableAreaLayout.value.width - layoutRef.value.width) || offsetY.value > MovableAreaLayout.value.height - layoutRef.value.height) {
         source = 'touch-out-of-bounds'
       }
       if (hasChangeEvent) {
