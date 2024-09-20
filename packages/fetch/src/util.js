@@ -1,8 +1,13 @@
 import { match } from 'path-to-regexp'
 
-import { type, isFunction, isArray, isString, serialize, buildUrl, parseUrl, getEnvObj, hasOwn, forEach } from '@mpxjs/utils'
+import { type, isFunction, isArray, isString, forEach, isNumber } from '@mpxjs/utils/src/base'
+import { serialize, buildUrl, parseUrl } from '@mpxjs/utils/src/url'
 
 const toString = Object.prototype.toString
+const hasOwnProperty = Object.prototype.hasOwnProperty
+function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
 
 function isObject (val) {
   return type(val) === 'Object'
@@ -25,6 +30,9 @@ function isNotEmptyArray (ary) {
 function transformReq (config) {
   // 抹平wx & ali 请求参数
   let header = config.header || config.headers
+  if (config.header && config.headers) {
+    header = Object.assign({}, config.headers, config.header)
+  }
   const descriptor = {
     get () {
       return header
@@ -249,11 +257,11 @@ function compareParams (params, cacheParams, ignoreParamKeys = []) {
 export {
   isThenable,
   isFunction,
+  isNumber,
   parseUrl,
   deepMerge,
   doTest,
   buildUrl,
-  getEnvObj,
   serialize,
   transformRes,
   isString,

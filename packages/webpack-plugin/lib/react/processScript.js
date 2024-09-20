@@ -28,12 +28,14 @@ import { NavigationContainer, createNavigationContainerRef, StackActions } from 
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { Provider } from '@ant-design/react-native'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createNavigationContainerRef: createNavigationContainerRef,
   createNativeStackNavigator: createNativeStackNavigator,
   StackActions: StackActions,
+  GestureHandlerRootView: GestureHandlerRootView,
   Provider: Provider,
   SafeAreaProvider: SafeAreaProvider,
   useSafeAreaInsets: useSafeAreaInsets

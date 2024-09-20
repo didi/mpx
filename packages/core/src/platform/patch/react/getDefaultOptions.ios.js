@@ -397,7 +397,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
@@ -414,39 +414,30 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
-      const insets = useSafeAreaInsets()
-      const safeAreaMargin = {
-        marginTop: insets.top,
-        marginLeft: insets.left
-      }
+      navigation.insets = useSafeAreaInsets()
 
       return createElement(Provider,
         null,
-        createElement(ReactNative.View,
+        createElement(GestureHandlerRootView,
           {
             style: {
               flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
+            },
+            onLayout (e) {
+              navigation.layout = e.nativeEvent.layout
             }
           },
-          createElement(ReactNative.View,
+          createElement(routeContext.Provider,
             {
-              style: {
-                flex: 1,
-                ...pageConfig.navigationStyle === 'custom' && safeAreaMargin
-              }
+              value: { pageId: currentPageId }
             },
-            createElement(routeContext.Provider,
+            createElement(defaultOptions,
               {
-                value: { pageId: currentPageId }
-              },
-              createElement(defaultOptions,
-                {
-                  navigation,
-                  route,
-                  pageConfig
-                }
-              )
+                navigation,
+                route,
+                pageConfig
+              }
             )
           )
         )
