@@ -195,31 +195,31 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     let y = positionY
 
     // Correct y coordinate
-    if (scaledHeight > MovableAreaLayout.height) {
+    if (scaledHeight > MovableAreaLayout.value.height) {
       if (y >= 0) {
         y = 0
-      } else if (y < MovableAreaLayout.height - scaledHeight) {
-        y = MovableAreaLayout.height - scaledHeight
+      } else if (y < MovableAreaLayout.value.height - scaledHeight) {
+        y = MovableAreaLayout.value.height - scaledHeight
       }
     } else {
       if (y < 0) {
         y = 0
-      } else if (y > MovableAreaLayout.height - scaledHeight) {
-        y = MovableAreaLayout.height - scaledHeight
+      } else if (y > MovableAreaLayout.value.height - scaledHeight) {
+        y = MovableAreaLayout.value.height - scaledHeight
       }
     }
     // Correct x coordinate
-    if (scaledWidth > MovableAreaLayout.width) {
+    if (scaledWidth > MovableAreaLayout.value.width) {
       if (x >= 0) {
         x = 0
-      } else if (x < MovableAreaLayout.width - scaledWidth) {
-        x = MovableAreaLayout.width - scaledWidth
+      } else if (x < MovableAreaLayout.value.width - scaledWidth) {
+        x = MovableAreaLayout.value.width - scaledWidth
       }
     } else {
       if (x < 0) {
         x = 0
-      } else if (x > MovableAreaLayout.width - scaledWidth) {
-        x = MovableAreaLayout.width - scaledWidth
+      } else if (x > MovableAreaLayout.value.width - scaledWidth) {
+        x = MovableAreaLayout.value.width - scaledWidth
       }
     }
 
@@ -260,17 +260,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
         offsetY.value = newY
       }
-      if (hasTouchmove()) {
-        onTouchMove(e)
-      }
-      if (hasCatchTouchmove()) {
-        onCatchTouchMove(e)
-      }
-    })
-    .onTouchesUp(() => {
-      isFirstTouch.value = true
-    })
-    .onChange((event) => {
       let source = 'touch'
       if (offsetX.value < 0 || offsetY.value < 0 || offsetX.value > (MovableAreaLayout.value.width - layoutRef.value.width) || offsetY.value > MovableAreaLayout.value.height - layoutRef.value.height) {
         source = 'touch-out-of-bounds'
@@ -282,27 +271,38 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           source
         })
       }
+      if (hasTouchmove()) {
+        onTouchMove(e)
+      }
+      if (hasCatchTouchmove()) {
+        onCatchTouchMove(e)
+      }
+    })
+    .onTouchesUp(() => {
+      isFirstTouch.value = true
     })
     .onFinalize((event) => {
-      if (direction.value === 'horizontal' || direction.value === 'all') {
-        offsetX.value = withDecay({
-          velocity: event.velocityX,
-          rubberBandEffect: true,
-          clamp: [
-            0,
-            MovableAreaLayout.value.width - layoutRef.value.width
-          ],
-        });
-      }
-      if (direction.value === 'vertical' || direction.value === 'all') {
-        offsetY.value = withDecay({
-          velocity: event.velocityY,
-          rubberBandEffect: true,
-          clamp: [
-            0,
-            MovableAreaLayout.value.height - layoutRef.value.height
-          ],
-        });
+      if (propsRef.value['out-of-bounds']) {
+        if (direction.value === 'horizontal' || direction.value === 'all') {
+          offsetX.value = withDecay({
+            velocity: event.velocityX,
+            rubberBandEffect: true,
+            clamp: [
+              0,
+              MovableAreaLayout.value.width - layoutRef.value.width
+            ],
+          });
+        }
+        if (direction.value === 'vertical' || direction.value === 'all') {
+          offsetY.value = withDecay({
+            velocity: event.velocityY,
+            rubberBandEffect: true,
+            clamp: [
+              0,
+              MovableAreaLayout.value.height - layoutRef.value.height
+            ],
+          });
+        }
       }
     });
 
