@@ -124,7 +124,7 @@ export default function styleHelperMixin (type) {
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               Object.assign(result, classMap[className])
-            } else if (this.props[className] && isObject(this.props[classMap])) {
+            } else if (this.props[className] && isObject(this.props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.props[className])
             }
