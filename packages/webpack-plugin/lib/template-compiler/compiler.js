@@ -990,7 +990,7 @@ function processComponentIs (el, options) {
 const eventIdentifier = '__mpx_event__'
 
 function parseFuncStr (str, extraStr = '') {
-  const funcRE = /^([^()]+)(\((.*)\))?/
+  const funcRE = /^(.*{{.+}}[^()]*|[^()]+)(\((.*)\))?/
   const match = funcRE.exec(str)
   if (match) {
     const funcName = parseMustacheWithContext(match[1]).result
