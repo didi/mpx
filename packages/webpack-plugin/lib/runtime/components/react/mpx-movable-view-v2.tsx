@@ -144,8 +144,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.value = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
       const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, width, height, positionX: offsetX.value, positionY: offsetY.value })
-      offsetX.value = withSpring(newX)
-      offsetY.value = withSpring(newY)
+      offsetX.value = newX
+      offsetY.value = newY
     })
   }
 
@@ -215,6 +215,38 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       onCatchTouchMove(e)
     }
   }
+
+  const getBoundary = ({ clampedScale }) => {
+    const top = (style.position === 'absolute' && style.top) || 0;
+    const left = (style.position === 'absolute' && style.left) || 0;
+    // Calculate scaled element size
+    const scaledWidth = layoutRef.value.width * clampedScale
+    const scaledHeight = layoutRef.value.height * clampedScale
+
+    let maxY = MovableAreaLayout.value.height - scaledHeight - top
+    let maxX = MovableAreaLayout.value.width - scaledWidth - left
+
+    let draggableXRange
+    let draggableYRange
+
+    if (MovableAreaLayout.value.width < scaledWidth) {
+      draggableXRange = [maxX, 0];
+    } else {
+      draggableXRange = [-left, maxX < 0 ? 0 : maxX]
+    }
+
+    if (MovableAreaLayout.value.height < scaledHeight) {
+      draggableYRange = [maxY, 0];
+    } else {
+      draggableYRange = [-top, maxY < 0 ? 0 : maxY]
+    }
+
+    return {
+      draggableXRange,
+      draggableYRange
+    }
+  }
+
   const checkBoundaryPosition = ({ clampedScale, width, height, positionX, positionY }: { clampedScale: number; width: number; height: number; positionX: number; positionY: number }) => {
     // Calculate scaled element size
     const scaledWidth = width * clampedScale
@@ -224,39 +256,24 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     let x = positionX
     let y = positionY
 
-    // Correct y coordinate
-    if (scaledHeight > MovableAreaLayout.value.height) {
-      if (y >= 0) {
-        y = 0
-      } else if (y < MovableAreaLayout.value.height - scaledHeight) {
-        y = MovableAreaLayout.value.height - scaledHeight
-      }
+    // 获取样式中的top和left值
+    const top = (style.position === 'absolute' && style.top) || 0;
+    const left = (style.position === 'absolute' && style.left) || 0;
+
+    // 计算边界限制
+    if (scaledHeight + top > MovableAreaLayout.value.height) {
+      y = Math.max(Math.min(y, MovableAreaLayout.value.height - scaledHeight - top), top);
     } else {
-      if (y < 0) {
-        y = 0
-      } else if (y > MovableAreaLayout.value.height - scaledHeight) {
-        y = MovableAreaLayout.value.height - scaledHeight
-      }
-    }
-    // Correct x coordinate
-    if (scaledWidth > MovableAreaLayout.value.width) {
-      if (x >= 0) {
-        x = 0
-      } else if (x < MovableAreaLayout.value.width - scaledWidth) {
-        x = MovableAreaLayout.value.width - scaledWidth
-      }
-    } else {
-      if (x < 0) {
-        x = 0
-      } else if (x > MovableAreaLayout.value.width - scaledWidth) {
-        x = MovableAreaLayout.value.width - scaledWidth
-      }
+      y = Math.max(Math.min(y, MovableAreaLayout.value.height - scaledHeight - top), 0);
     }
 
-    return {
-      x,
-      y
+    if (scaledWidth + left > MovableAreaLayout.value.width) {
+      x = Math.max(Math.min(x, MovableAreaLayout.value.width - scaledWidth - left), left);
+    } else {
+      x = Math.max(Math.min(x, MovableAreaLayout.value.width - scaledWidth - left), 0);
     }
+
+    return { x, y };
   }
   const gesture = Gesture.Pan()
     .onTouchesDown((e) => {
@@ -269,7 +286,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       runOnJS(handleTriggerStart)(e)
     })
     .onTouchesMove((e) => {
-      'worklet'
+      // 'worklet'
       const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
       if (isFirstTouch.value) {
         touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
@@ -305,6 +322,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         })
       }
       runOnJS(handleTriggerMove)(e)
+
     })
     .onTouchesUp(() => {
       'worklet'
@@ -313,22 +331,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     .onFinalize((event) => {
       'worklet'
       if (propsShare.value['out-of-bounds']) {
+        const { draggableXRange, draggableYRange } = getBoundary({ clampedScale: 1 })
         if (direction.value === 'horizontal' || direction.value === 'all') {
-          const diffWidth = MovableAreaLayout.value.width - layoutRef.value.width
-          const clamp = diffWidth > 0 ? [0, diffWidth] : [diffWidth, 0]
           offsetX.value = withDecay({
             velocity: propsShare.value['inertia'] ? event.velocityX : 0,
             rubberBandEffect: true,
-            clamp
+            clamp: draggableXRange
           });
         }
         if (direction.value === 'vertical' || direction.value === 'all') {
-          const diffHeight = MovableAreaLayout.value.height - layoutRef.value.height
-          const clamp = diffHeight > 0 ? [0, diffHeight] : [diffHeight, 0]
           offsetY.value = withDecay({
             velocity: propsShare.value['inertia'] ? event.velocityY : 0,
             rubberBandEffect: true,
-            clamp
+            clamp: draggableYRange
           });
         }
       }
