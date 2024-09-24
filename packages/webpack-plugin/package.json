@@ -63,7 +63,7 @@
   },
   "peerDependencies": {
     "webpack": "^5.75.0",
-    "expo-linear-gradient": "~13.0.2"
+    "react-native-linear-gradient": "^2.8.3"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
