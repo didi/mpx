@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.59",
+  "version": "2.9.62",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@ant-design/react-native": "^5.2.2",
-    "@mpxjs/api-proxy": "^2.9.53",
+    "@mpxjs/api-proxy": "^2.9.62",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.79",
