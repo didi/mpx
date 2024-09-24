@@ -2450,17 +2450,17 @@ const statusEnum = {
   MATCH: 3
 }
 
-function processAtMode (el) {
-  // 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
-  function setModeStatus (target, status) {
-    // 高优status才可以覆盖低优status，status枚举值代表优先级
-    if (!target._matchStatus) {
-      target._matchStatus = status
-    } else if (status > target._matchStatus) {
-      target._matchStatus = status
-    }
+// 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
+function setModeStatus (target, status) {
+  // 高优status才可以覆盖低优status，status枚举值代表优先级
+  if (!target._matchStatus) {
+    target._matchStatus = status
+  } else if (status > target._matchStatus) {
+    target._matchStatus = status
   }
+}
 
+function processAtMode (el) {
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
     const attrName = item.name || ''
