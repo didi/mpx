@@ -266,8 +266,8 @@ interface MpxConfig {
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,
-  webviewConfig?: WebviewConfig,
-  disablePageTransition?: boolean
+  webConfig: object,
+  webviewConfig?: WebviewConfig
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

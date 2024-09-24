@@ -41,8 +41,8 @@ const data = [
             anchor: '#webRouteConfig'
           },
           {
-            text: 'disablePageTransition',
-            anchor: '#disablePageTransition'
+            text: 'webConfig',
+            anchor: '#webConfig'
           },
         ]
       }
