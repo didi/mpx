@@ -85,10 +85,11 @@
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.79",
     "react-native": "^0.74.5",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "react-native-webview": "^13.10.5"
   },
   "engines": {
     "node": ">=14.14.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
-}
+},

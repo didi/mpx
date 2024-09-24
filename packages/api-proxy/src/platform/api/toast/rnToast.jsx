@@ -65,7 +65,7 @@ function showToast (options = {}) {
   if (image || icon === 'success' || icon === 'error') {
     ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
       <View style={styles.toastContent}>
-        <Image style={ styles.toastImg } source={{uri: iconImg[icon]}}></Image>
+        <Image style={ styles.toastImg } source={{uri: image || iconImg[icon]}}></Image>
         <Text style={styles.toastText}>{title}</Text>
       </View>
     </View>
