@@ -27,9 +27,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withDecay,
-  withSpring,
+  withTiming,
   runOnJS,
-  withClamp,
   useAnimatedReaction
 } from 'react-native-reanimated'
 
@@ -114,8 +113,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (offsetX.value !== x || offsetY.value !== y) {
       if (layoutRef.value.width && layoutRef.value.height) {
         const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, width: layoutRef.value.width, height: layoutRef.value.height, positionX: Number(x), positionY: Number(y) })
-        offsetX.value = withSpring(newX)
-        offsetY.value = withSpring(newY)
+        offsetX.value = withTiming(newX)
+        offsetY.value = withTiming(newY)
         if (hasChangeEvent.value) {
           handleTriggerChange({
             x: newX,
