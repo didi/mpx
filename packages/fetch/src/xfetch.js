@@ -3,8 +3,8 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { validate } from './validator'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig } from './util'
+import { Validator } from './validator'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig, isArray, isString } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -21,6 +21,9 @@ export default class XFetch {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
     if (options && options.proxy) this.setProxy(options.proxy)
+    this.onValidatorError = options?.onValidatorError || (error => {
+      console.error(error)
+    })
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -95,12 +98,25 @@ export default class XFetch {
 
   setValidator (options) {
     // 添加校验配置
-    if (isNotEmptyArray(options)) {
-      this.validatorOptions = options
-    } else if (isNotEmptyObject(options)) {
-      this.validatorOptions = [options]
-    } else {
-      console.error('仅支持不为空的对象或数组')
+    if (isNotEmptyObject(options)) {
+      const preValidatorOptions = this.validatorOptions || {}
+      this.validatorOptions = options || {}
+      Object.keys(this.validatorOptions).forEach(key => {
+        const preOption = preValidatorOptions[key]
+        const option = this.validatorOptions[key]
+        const objectRule = key === 'rules' && isNotEmptyObject(option)
+        const stringRule = (key === 'exclude' || key === 'include') && isString(option)
+        const isEnv = key === 'env'
+        if (isNotEmptyArray(option)) {
+          this.validatorOptions[key] = isArray(preOption) ? preOption.concat(option) : option
+        } else if (objectRule || stringRule) {
+          this.validatorOptions[key] = isArray(preOption) ? preOption.concat([option]) : [option]
+        } else if (isEnv) {
+          this.validatorOptions[key] = isObject(preOption) ? Object.assign({}, preOption, option) : option
+        } else {
+          console.error('rules仅支持不为空的数组或对象, include和exclude仅支持不为空的字符串或对象')
+        }
+      })
     }
   }
 
@@ -111,7 +127,9 @@ export default class XFetch {
 
   // 校验参数规则
   checkValidator (config) {
-    return validate(this.validatorOptions, config)
+    const env = Object.assign({}, this.validatorOptions?.env, config?.validate?.env)
+    const options = Object.assign({}, this.validatorOptions, config.validate, { env: env })
+    return Validator(options, config)
   }
 
   // 向前追加代理规则
@@ -167,14 +185,16 @@ export default class XFetch {
     return false
   }
 
+  isCancel (value) {
+    return !!(value && value.__CANCEL__)
+  }
+
   fetch (config, priority) {
     // 检查缓存
     const responsePromise = this.checkPreCache(config)
     if (responsePromise) {
       return responsePromise
     }
-
-    config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
     let promise = Promise.resolve(config)
@@ -189,10 +209,14 @@ export default class XFetch {
       // 5. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
-      const checkRes = this.checkValidator(config)
-      const validatorRes = isObject(checkRes) ? checkRes.valid : checkRes
-      if (typeof validatorRes !== 'undefined' && !validatorRes) {
-        return Promise.reject(new Error(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:' + checkRes.message.join(',') : ''}`))
+      try {
+        const checkRes = this.checkValidator(config)
+        const isWrong = (typeof checkRes === 'boolean' && !checkRes) || (isObject(checkRes) && !checkRes.valid)
+        if (isWrong) {
+          this.onValidatorError(`xfetch参数校验错误 ${checkRes.url} ${checkRes?.errorResult ? 'error:' + checkRes.errorResult : ''} ${checkRes?.warningResult ? 'warning:' + checkRes?.warningResult : ''}`)
+        }
+      } catch (e) {
+        console.log('xfetch参数校验错误', e)
       }
       config = this.checkProxy(config) // proxy
       return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)

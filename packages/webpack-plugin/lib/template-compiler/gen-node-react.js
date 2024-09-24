@@ -61,7 +61,7 @@ function genNode (node) {
           } else {
             exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
             if (node.isRoot) {
-              exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
+              exp += `, Object.assign({}, rootProps, {style: Object.assign({}, ${attrExpMap.style}, rootProps.style)})`
             } else if (node.attrsList.length) {
               const attrs = []
               node.attrsList && node.attrsList.forEach(({ name, value }) => {
@@ -75,17 +75,17 @@ function genNode (node) {
 
             if (!node.unary && node.children.length) {
               exp += ','
-              node.children.forEach(function (child, index) {
-                exp += `${index === 0 ? '' : ','}${genNode(child)}`
-              })
+              exp += node.children.map((child) => {
+                return genNode(child)
+              }).filter(fragment => fragment).join(',')
             }
             exp += ')'
           }
         }
       } else {
-        node.children.forEach(function (child, index) {
-          exp += `${index === 0 ? '' : ','}${genNode(child)}`
-        })
+        exp += node.children.map((child) => {
+          return genNode(child)
+        }).filter(fragment => fragment).join(',')
       }
     }
   }
