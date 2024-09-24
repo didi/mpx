@@ -81,23 +81,25 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    option.watch = {
-      $route: {
-        handler () {
-          const actionType = global.__mpxRouter.currentActionType
+    if (!global.__mpx.config.webConfig.disablePageTransition) {
+      option.watch = {
+        $route: {
+          handler () {
+            const actionType = global.__mpxRouter.currentActionType
 
-          switch (actionType) {
-            case 'to':
-              this.transitionName = 'mpx-slide-left'
-              break
-            case 'back':
-              this.transitionName = 'mpx-slide-right'
-              break
-            default:
-              this.transitionName = ''
-          }
-        },
-        immediate: true
+            switch (actionType) {
+              case 'to':
+                this.transitionName = 'mpx-slide-left'
+                break
+              case 'back':
+                this.transitionName = 'mpx-slide-right'
+                break
+              default:
+                this.transitionName = ''
+            }
+          },
+          immediate: true
+        }
       }
     }
   }
@@ -161,7 +163,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         redirect: '/' + firstPage
       })
     }
-    const webRouteConfig = global.__mpx.config.webRouteConfig
+    const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
     global.__mpxRouter = option.router = new VueRouter({
       ...webRouteConfig,
       routes: routes
