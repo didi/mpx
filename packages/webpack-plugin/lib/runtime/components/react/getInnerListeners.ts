@@ -97,8 +97,10 @@ export const getCustomEvent = (
       dataset: getDataSet(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
-    }
-
+    },
+    persist: oe.persist,
+    stopPropagation: oe.stopPropagation,
+    preventDefault: oe.preventDefault
   }
 }
 
@@ -106,7 +108,7 @@ const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
   removeProps: RemoveProps = [],
-  rawConfig: UseInnerPropsConfig
+  rawConfig?: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
     startTimer: {
@@ -127,7 +129,7 @@ const useInnerProps = (
 
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
-  const config = rawConfig || {}
+  const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
 
   propsRef.current = { ...props, ...additionalProps }
 
@@ -156,6 +158,19 @@ const useInnerProps = (
       }
     })
   }
+
+  function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture') {
+    const tapDetailInfo = ref.current.mpxPressInfo.detail || { x: 0, y: 0 }
+    const nativeEvent = e.nativeEvent
+    const currentPageX = nativeEvent.changedTouches[0].pageX
+    const currentPageY = nativeEvent.changedTouches[0].pageY
+    if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+      ref.current.needPress[type] = false
+      ref.current.startTimer[type] && clearTimeout(ref.current.startTimer[type] as SetTimeoutReturnType)
+      ref.current.startTimer[type] = null
+    }
+  }
+
   function handleTouchstart(e: NativeTouchEvent, type: 'bubble' | 'capture') {
     e.persist()
     const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
@@ -184,20 +199,14 @@ const useInnerProps = (
   function handleTouchmove(e: NativeTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
     const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
-    const tapDetailInfo = ref.current.mpxPressInfo.detail || { x: 0, y: 0 }
-    const nativeEvent = e.nativeEvent
-    const currentPageX = nativeEvent.changedTouches[0].pageX
-    const currentPageY = nativeEvent.changedTouches[0].pageY
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
-    if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
-      ref.current.needPress[type] = false
-      ref.current.startTimer[type] && clearTimeout(ref.current.startTimer[type] as SetTimeoutReturnType)
-      ref.current.startTimer[type] = null
-    }
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
+    checkIsNeedPress(e, type)
   }
 
   function handleTouchend(e: NativeTouchEvent, type: 'bubble' | 'capture') {
+    // move event may not be triggered
+    checkIsNeedPress(e, type)
     const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
     const bubbleTapEvent = ['catchtap', 'bindtap']
     const captureTouchEvent = ['capture-catchtouchend', 'capture-bindtouchend']
@@ -208,6 +217,9 @@ const useInnerProps = (
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchend', e)
     if (ref.current.needPress[type]) {
+      if (type === 'bubble' && config.disableTap) {
+        return
+      }
       handleEmitEvent(currentTapEvent, 'tap', e)
     }
   }

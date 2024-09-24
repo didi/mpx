@@ -13,3 +13,7 @@ declare module 'react-native-svg/css' {
 
   export const WithLocalSvg: React.ComponentType<WithLocalSvgProps>
 }
+
+declare module '@mpxjs/utils' {
+  export function isEmptyObject(obj: Record<string, any>): boolean;
+}

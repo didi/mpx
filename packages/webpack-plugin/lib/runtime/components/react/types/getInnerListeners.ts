@@ -49,7 +49,8 @@ interface InnerRef {
 }
 interface UseInnerPropsConfig {
   layoutRef: LayoutRef;
-  disableTouch?: boolean
+  disableTouch?: boolean;
+  disableTap?: boolean
 }
 interface DataSetType {
   [key: string]: string;
