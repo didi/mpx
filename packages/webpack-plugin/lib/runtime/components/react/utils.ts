@@ -1,9 +1,17 @@
-import { useEffect, useRef, Children, ReactNode, FunctionComponent, isValidElement } from 'react'
-import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native'
+import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement } from 'react'
+import { StyleProp, StyleSheet, TextStyle, ViewStyle, AnimatableNumericValue } from 'react-native'
+import { ExtendedViewStyle } from './types/common'
+
+type GroupData = Record<string, Record<string, any>>
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
+
+export const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
+
+export const TEXT_PROPS_REGEX =  /ellipsizeMode|numberOfLines/
+
 
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
@@ -22,10 +30,10 @@ export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
  * @returns
  */
 export const extractTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
-  return Object.entries(StyleSheet.flatten(style)).reduce((textStyle, [key, value]) => {
+  return style && Object.entries(style).reduce((textStyle, [key, value]) => {
     TEXT_STYLE_REGEX.test(key) && Object.assign(textStyle, { [key]: value })
     return textStyle
-  }, {})
+  }, {}) || {}
 }
 
 /**
@@ -88,5 +96,40 @@ export const isText = (ele: ReactNode) => {
 }
 
 export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
-  return Children.toArray(children).every((child) => callback(child as ReactNode))
+  const childrenArray = Array.isArray(children) ? children : [children];
+  return childrenArray.every((child) => callback(child as ReactNode))
+}
+
+export function groupBy(obj: Record<string, any>, callback: (key: string, val: string) => string, group:GroupData = {}):GroupData {
+  let groupKey = ''
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) { // 确保处理对象自身的属性
+      let val: string = obj[key] as string
+      groupKey = callback(key, val)
+      if (!group[groupKey]) {
+        group[groupKey] = {}
+      }
+      group[groupKey][key] = val
+    }
+  }
+  return group
+}
+
+export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
+  const { borderRadius } = style
+  if (borderRadius && PERCENT_REGEX.test(borderRadius as string)) {
+    style.borderTopLeftRadius = borderRadius
+    style.borderBottomLeftRadius = borderRadius
+    style.borderBottomRightRadius = borderRadius
+    style.borderTopRightRadius = borderRadius
+    delete style.borderRadius
+  }
+  ['backgroundSize', 'backgroundPosition'].forEach(name => {
+    if (style[name] && typeof style[name] === 'string') {
+      if (style[name].trim()) {
+        style[name] = style[name].split(' ')
+     }
+    }
+  })
+  return style
 }

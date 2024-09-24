@@ -24,20 +24,7 @@ function getSystemInfo () {
   }
 }
 
-function getRootProps (props) {
-  const rootProps = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
-      if (match) {
-        rootProps[key] = props[key]
-      }
-    }
-  }
-  return rootProps
-}
-
-function createEffect (proxy, components, props) {
+function createEffect (proxy, components) {
   const update = proxy.update = () => {
     // pre render for props update
     if (proxy.propsUpdatedFlag) {
@@ -57,7 +44,9 @@ function createEffect (proxy, components, props) {
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   proxy.effect = new ReactiveEffect(() => {
-    return proxy.target.__injectedRender(createElement, getComponent, getRootProps(props))
+    // reset instance
+    proxy.target.__resetInstance()
+    return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -67,8 +56,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
     __getProps () {
-      const propsData = {}
       const props = propsRef.current
+      const propsData = {}
       Object.keys(validProps).forEach((key) => {
         if (hasOwn(props, key)) {
           propsData[key] = props[key]
@@ -84,6 +73,23 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         }
       })
       return propsData
+    },
+    __getRootProps () {
+      const props = propsRef.current
+      const rootProps = {}
+      for (const key in props) {
+        if (hasOwn(props, key)) {
+          const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
+          if (match) {
+            rootProps[key] = props[key]
+          }
+        }
+      }
+      return rootProps
+    },
+    __resetInstance () {
+      this.__refs = {}
+      this.__dispatchedSlotSet = new WeakSet()
     },
     __getSlot (name) {
       const { children } = propsRef.current
@@ -204,17 +210,13 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
 
-  if (type === 'page') {
-    proxy.callHook(ONLOAD, [props.route.params || {}])
-  }
-
   Object.assign(proxy, {
     onStoreChange: null,
     // eslint-disable-next-line symbol-description
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components, propsRef.current)
+        createEffect(proxy, components)
         // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
@@ -231,7 +233,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components, propsRef.current)
+    createEffect(proxy, components)
   }
 
   return instance
@@ -343,16 +345,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const propsRef = useRef(props)
+    const propsRef = useRef(null)
+    propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
       instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components })
     }
     const instance = instanceRef.current
-    // reset instance
-    instance.__refs = {}
-    instance.__dispatchedSlotSet = new WeakSet()
     useImperativeHandle(ref, () => {
       return instance
     })
@@ -361,27 +361,27 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     proxy.callHook(REACTHOOKSEXEC)
 
-    if (!isFirst) {
-      // 处理props更新
-      propsRef.current = props
-      Object.keys(props).forEach(key => {
-        if (hasOwn(validProps, key)) {
-          instance[key] = props[key]
-        }
-      })
-      proxy.propsUpdated()
-    }
-
-    usePageContext(proxy, instance)
-
     useEffect(() => {
+      if (!isFirst) {
+        // 处理props更新
+        Object.keys(props).forEach(key => {
+          if (hasOwn(validProps, key)) {
+            instance[key] = props[key]
+          }
+        })
+      }
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }
     })
 
+    usePageContext(proxy, instance)
+
     useEffect(() => {
+      if (type === 'page') {
+        proxy.callHook(ONLOAD, [props.route.params || {}])
+      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
@@ -393,11 +393,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return proxy.effect.run()
+    return rawOptions.__disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
   }))
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
@@ -414,39 +414,30 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
-      const insets = useSafeAreaInsets()
-      const safeAreaMargin = {
-        marginTop: insets.top,
-        marginLeft: insets.left
-      }
+      navigation.insets = useSafeAreaInsets()
 
       return createElement(Provider,
         null,
-        createElement(ReactNative.View,
+        createElement(GestureHandlerRootView,
           {
             style: {
               flex: 1,
               backgroundColor: pageConfig.backgroundColor || '#ffffff'
+            },
+            onLayout (e) {
+              navigation.layout = e.nativeEvent.layout
             }
           },
-          createElement(ReactNative.View,
+          createElement(routeContext.Provider,
             {
-              style: {
-                flex: 1,
-                ...pageConfig.navigationStyle === 'custom' && safeAreaMargin
-              }
+              value: { pageId: currentPageId }
             },
-            createElement(routeContext.Provider,
+            createElement(defaultOptions,
               {
-                value: { pageId: currentPageId }
-              },
-              createElement(defaultOptions,
-                {
-                  navigation,
-                  route,
-                  pageConfig
-                }
-              )
+                navigation,
+                route,
+                pageConfig
+              }
             )
           )
         )
