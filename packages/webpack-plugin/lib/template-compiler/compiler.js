@@ -2531,6 +2531,7 @@ function processAtMode (el) {
           default:
           // MISMATCH丢弃属性
         }
+        delete processedAttr._matchStatus
       }
     }
   })
