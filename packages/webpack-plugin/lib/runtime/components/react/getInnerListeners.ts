@@ -133,8 +133,6 @@ const useInnerProps = (
 
   propsRef.current = { ...props, ...additionalProps }
 
-  let hasEmittedTouchmove = false
-
   for (const key in eventConfigMap) {
     if (propsRef.current[key]) {
       eventConfig[key] = eventConfigMap[key]
@@ -181,7 +179,6 @@ const useInnerProps = (
     const capturePressEvent = ['capture-catchlongpress', 'capture-bindlongpress']
     ref.current.startTimer[type] = null
     ref.current.needPress[type] = true
-    hasEmittedTouchmove = false
     const nativeEvent = e.nativeEvent
     ref.current.mpxPressInfo.detail = {
       x: nativeEvent.changedTouches[0].pageX,
@@ -202,13 +199,14 @@ const useInnerProps = (
   function handleTouchmove(e: NativeTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
     const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
-    hasEmittedTouchmove = true
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
     checkIsNeedPress(e, type)
   }
 
   function handleTouchend(e: NativeTouchEvent, type: 'bubble' | 'capture') {
+    // move event may not be triggered
+    checkIsNeedPress(e, type)
     const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
     const bubbleTapEvent = ['catchtap', 'bindtap']
     const captureTouchEvent = ['capture-catchtouchend', 'capture-bindtouchend']
@@ -218,10 +216,6 @@ const useInnerProps = (
     ref.current.startTimer[type] && clearTimeout(ref.current.startTimer[type] as SetTimeoutReturnType)
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchend', e)
-    // move event may not be triggered
-    if (!hasEmittedTouchmove) {
-      checkIsNeedPress(e, type)
-    }
     if (ref.current.needPress[type]) {
       if (type === 'bubble' && config.disableTap) {
         return
