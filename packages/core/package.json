@@ -35,7 +35,8 @@
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
-    "vue-i18n-bridge": "^9.2.2"
+    "vue-i18n-bridge": "^9.2.2",
+    "react-native-webview": "^13.10.5"
   },
   "peerDependenciesMeta": {
     "vue": {
@@ -66,6 +67,9 @@
       "optional": true
     },
     "react-native-safe-area-context": {
+      "optional": true
+    },
+    "react-native-webview": {
       "optional": true
     }
   },
