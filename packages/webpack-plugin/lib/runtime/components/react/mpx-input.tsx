@@ -37,11 +37,10 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import React, { forwardRef, useMemo, useRef, useState } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
-  StyleProp,
   TextInput,
   TextStyle,
   ViewStyle,
@@ -55,9 +54,10 @@ import {
   TextInputChangeEventData,
   TextInputSubmitEditingEventData
 } from 'react-native'
-import { parseInlineStyle, useUpdateEffect } from './utils'
+import { parseInlineStyle, useUpdateEffect, throwReactWarning } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { FormContext, FormFieldValue } from './context'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -73,6 +73,7 @@ type InputStyle = Omit<
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
+  name?: string
   style?: InputStyle & Record<string, any>
   value?: string
   type?: Type
@@ -116,7 +117,7 @@ const keyboardTypeMap: Record<Type, string> = {
     }) || '',
 }
 
-const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): React.JSX.Element => {
+const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
     style = {},
     type = 'text',
@@ -145,6 +146,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     bindlinechange,
   } = props
 
+  const formContext = useContext(FormContext)
+
+  let formValuesMap: Map<string, FormFieldValue> | undefined
+
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
+  }
+
   const { nodeRef } = useNodesRef(props, ref)
 
   const keyboardType = keyboardTypeMap[type]
@@ -157,8 +166,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
 
-  const [inputValue, setInputValue] = useState()
+  const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
+
+  useEffect(() => {
+    if (inputValue !== value) {
+      setInputValue(value)
+    }
+  }, [value])
 
   const selection = useMemo(() => {
     if (selectionStart >= 0 && selectionEnd >= 0) {
@@ -197,8 +212,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     if (typeof result === 'string') {
       tmpValue.current = result
       setInputValue(result)
-    } else if (inputValue) {
-      setInputValue(undefined)
+    } else {
+      setInputValue(tmpValue.current)
     }
   }
 
@@ -323,6 +338,22 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     })
   }
 
+  const resetValue = () => {
+    setInputValue('')
+  }
+
+  const getValue = () => {
+    return inputValue
+  }
+
+  if (formValuesMap) {
+    if (!props.name) {
+      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
+    }
+  }
+
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
@@ -342,7 +373,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     {
       layoutRef
     })
-
 
   return (
     <TextInput
