@@ -330,21 +330,21 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
     .onFinalize((event) => {
       isMoving.value = false
-      if (propsShare.value['out-of-bounds']) {
-        if (direction.value === 'horizontal' || direction.value === 'all') {
-          offsetX.value = withDecay({
-            velocity: propsShare.value['inertia'] ? event.velocityX : 0,
-            rubberBandEffect: true,
-            clamp: draggableXRange.value
-          });
-        }
-        if (direction.value === 'vertical' || direction.value === 'all') {
-          offsetY.value = withDecay({
-            velocity: propsShare.value['inertia'] ? event.velocityY : 0,
-            rubberBandEffect: true,
-            clamp: draggableYRange.value
-          });
-        }
+      const inertia = propsShare.value['inertia']
+      const outOfBounds = propsShare.value['out-of-bounds']
+      if (direction.value === 'horizontal' || direction.value === 'all') {
+        offsetX.value = withDecay({
+          velocity: inertia ? event.velocityX : 0,
+          rubberBandEffect: outOfBounds,
+          clamp: draggableXRange.value
+        });
+      }
+      if (direction.value === 'vertical' || direction.value === 'all') {
+        offsetY.value = withDecay({
+          velocity: inertia ? event.velocityY : 0,
+          rubberBandEffect: outOfBounds,
+          clamp: draggableYRange.value
+        })
       }
     });
 
