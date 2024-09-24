@@ -2441,28 +2441,26 @@ function isValidModeP (i) {
 
 const wrapRE = /^\((.*)\)$/
 
-function processAtMode (el) {
-  // 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
-  // if (el.parent && el.parent._atModeStatus) {
-  //   el._atModeStatus = el.parent._atModeStatus
-  // }
-  // mpxTagName 逻辑整体放在processAtMode 方法中
-  /**
-   * @param el
-   * @param status = 'match' | 'misMatch' | 'implicitMatch'
-   */
-  function setELModeStatus (el, status, replacedAttrName) {
-    // match: mode 与 env 都匹配，节点/属性保留，但不做跨平台转换
-    // implicitMatch: mode 与 env 匹配，节点/属性保留，属于隐式匹配，做跨平台转换
-    // misMatch: mode 或 env不匹配，节点/属性直接删除
+// MATCH: mode 与 env 都匹配，节点/属性保留，但不做跨平台转换
+// IMPLICITMATCH: mode 与 env 匹配，节点/属性保留，属于隐式匹配，做跨平台转换
+// MISMATCH: mode 或 env不匹配，节点/属性直接删除
+const statusEnum = {
+  MISMATCH: 1,
+  IMPLICITMATCH: 2,
+  MATCH: 3
+}
 
-    // 如果是attr属性，则不设置modeStatus
-    if (replacedAttrName) return
-    // 如果已匹配，不再二次设置modeStatus
-    if (el._atModeStatus === 'match' || el._atModeStatus === 'implicitMatch') return
-    el._atModeStatus = status
+// 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
+function setModeStatus (target, status) {
+  // 高优status才可以覆盖低优status，status枚举值代表优先级
+  if (!target._matchStatus) {
+    target._matchStatus = status
+  } else if (status > target._matchStatus) {
+    target._matchStatus = status
   }
+}
 
+function processAtMode (el) {
   const attrsListClone = cloneAttrsList(el.attrsList)
   attrsListClone.forEach(item => {
     const attrName = item.name || ''
@@ -2499,14 +2497,7 @@ function processAtMode (el) {
       const attrValue = getAndRemoveAttr(el, attrName).val
       const replacedAttrName = attrArr.join('@')
       const processedAttr = { name: replacedAttrName, value: attrValue }
-      const processAttrTrans = (el, needTrans) => {
-        if (needTrans) {
-          addAttrs(el, [processedAttr])
-        } else {
-          // 如果命中了指定的mode，且当前 mode 不为 noMode 或 implicitMode，则把不需要转换的 attrs 暂存在 noTransAttrs 上，等规则转换后再挂载回去
-          el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
-        }
-      }
+      const target = replacedAttrName ? processedAttr : el
       // 循环 conditionMap
       // 判断 env 是否匹配
       // 判断 mode 是否匹配
@@ -2518,24 +2509,29 @@ function processAtMode (el) {
         const isNoMode = defineMode === 'noMode'
         const isMatchMode = isNoMode || defineMode === mode
         const isMatchEnv = !defineEnvArr.length || defineEnvArr.includes(env)
+        let matchStatus = statusEnum.MISMATCH
         // 是否为针对于节点的条件判断，否为节点属性
-        const isElAddition = !replacedAttrName
-
         if (isMatchMode && isMatchEnv) {
-          if (isElAddition) {
-            const matchStatus = (isNoMode || isImplicitMode) ? 'implicitMatch' : 'match'
-            setELModeStatus(el, matchStatus)
-          } else {
-            let isAttrNeedTrans = isNoMode || isImplicitMode
-            // mpxTagName 特殊标签，需要做转换保留处理
-            if (replacedAttrName === 'mpxTagName') isAttrNeedTrans = true
-            processAttrTrans(el, isAttrNeedTrans)
-          }
-          // 命中mode，命中env，完成匹配，直接退出
-          break
+          // mpxTagName 特殊标签，需要做转换保留处理
+          matchStatus = (isNoMode || isImplicitMode || replacedAttrName === 'mpxTagName') ? statusEnum.IMPLICITMATCH : statusEnum.MATCH
         }
-        // mode 或 env 无匹配
-        setELModeStatus(el, 'mismatch', replacedAttrName)
+        setModeStatus(target, matchStatus)
+      }
+      // 解析处理attr._modeStatus
+      if (replacedAttrName) {
+        switch (processedAttr._matchStatus) {
+          // IMPLICITMATCH保留属性并进行平台转换
+          case statusEnum.IMPLICITMATCH:
+            addAttrs(el, [processedAttr])
+            break
+          // MATCH保留属性并跳过平台转换
+          case statusEnum.MATCH:
+            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+            break
+          default:
+          // MISMATCH丢弃属性
+        }
+        delete processedAttr._matchStatus
       }
     }
   })
@@ -2583,7 +2579,7 @@ function processMpxTagName (el) {
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
-  if (el._atModeStatus === 'mismatch') {
+  if (el._matchStatus === statusEnum.MISMATCH) {
     return
   }
 
@@ -2593,7 +2589,7 @@ function processElement (el, root, options, meta) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
-  if (rulesRunner && el._atModeStatus !== 'match') {
+  if (rulesRunner && el._matchStatus !== statusEnum.MATCH) {
     currentEl = el
     rulesRunner(el)
   }
@@ -2703,8 +2699,8 @@ function collectDynamicInfo (el, options, meta) {
 }
 
 function postProcessAtMode (el) {
-  if (el._atModeStatus === 'mismatch') {
-    removeNode(el, true)
+  if (el._matchStatus === statusEnum.MISMATCH) {
+    removeNode(el)
   }
 }
 
