@@ -2517,7 +2517,7 @@ function processAtMode (el) {
         }
         setModeStatus(target, matchStatus)
       }
-      // 解析处理attr._modeStatus
+      // 解析处理attr._matchStatus
       if (replacedAttrName) {
         switch (processedAttr._matchStatus) {
           // IMPLICITMATCH保留属性并进行平台转换
