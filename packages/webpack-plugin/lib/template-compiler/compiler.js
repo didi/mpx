@@ -2700,7 +2700,7 @@ function collectDynamicInfo (el, options, meta) {
 
 function postProcessAtMode (el) {
   if (el._matchStatus === statusEnum.MISMATCH) {
-    removeNode(el, true)
+    removeNode(el)
   }
 }
 
