@@ -78,13 +78,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindchange
   } = props
 
-
   const layoutRef = useSharedValue<any>({})
   const propsShare = useSharedValue<any>({})
   const direction = useSharedValue<string>(props.direction)
 
-  const offsetX = useSharedValue(props.x);
-  const offsetY = useSharedValue(props.y);
+  const offsetX = useSharedValue(x);
+  const offsetY = useSharedValue(y);
+
   const scaleValue = useSharedValue(1)
   const hasChangeEvent = useSharedValue(props.bindchange)
   const startPosition = useSharedValue({
@@ -112,7 +112,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   useEffect(() => {
     // 监听上下文变化并更新 SharedValue
     MovableAreaLayout.value = contextValue;
-  }, [contextValue])
+  }, [contextValue.width, contextValue.height])
 
   useEffect(() => {
     if (offsetX.value !== x || offsetY.value !== y) {
@@ -202,22 +202,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     // Calculate the boundary limits
     let x = positionX
     let y = positionY
-
-    // 获取样式中的top和left值
-    const top = (style.position === 'absolute' && style.top) || 0
-    const left = (style.position === 'absolute' && style.left) || 0
+    const { draggableXRange, draggableYRange } = getBoundary({ clampedScale: 1, width: scaledWidth, height: scaledHeight })
 
     // 计算边界限制
-    if (scaledHeight + top > MovableAreaLayout.value.height) {
-      y = Math.max(Math.min(y, MovableAreaLayout.value.height - scaledHeight - top), top)
-    } else {
-      y = Math.max(Math.min(y, MovableAreaLayout.value.height - scaledHeight - top), 0)
+    if (x > draggableXRange[1]) {
+      x = draggableXRange[1]
+    } else if (y < draggableXRange[0]) {
+      x = draggableXRange[0]
     }
 
-    if (scaledWidth + left > MovableAreaLayout.value.width) {
-      x = Math.max(Math.min(x, MovableAreaLayout.value.width - scaledWidth - left), left)
-    } else {
-      x = Math.max(Math.min(x, MovableAreaLayout.value.width - scaledWidth - left), 0)
+    if (y > draggableYRange[1]) {
+      y = draggableYRange[1]
+    } else if (y < draggableYRange[0]) {
+      y = draggableYRange[0]
     }
 
     return { x, y };
