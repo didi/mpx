@@ -124,16 +124,6 @@ import mpx from '@mpxjs/core'
 mpx.config.forceFlushSync = true
 ```
 
-## webRouteConfig
-Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
-
-- **用法**:
-```js
-mpx.config.webRouteConfig = {
-  mode: 'history'
-}
-```
-
 ## errorHandler
 
 `Function`
@@ -154,3 +144,27 @@ Mpx 框架运行时报错捕获感知处理函数。
 * Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
 
 同时被捕获的错误会通过 console.error 输出。
+
+## webRouteConfig
+Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置。
+此配置后续将被废弃，请使用 webConfig 进行配置
+
+- **用法**:
+```js
+mpx.config.webRouteConfig = {
+  mode: 'history'
+}
+```
+
+## webConfig
+web 环境下的一些配置，如路由模式，页面切换动画效果等
+
+- **用法**:
+```js
+// 修改路由模式
+mpx.config.webConfig.routeConfig = {
+  mode: 'history'
+}
+// 禁用页面切换动画
+mpx.config.webConfig.disablePageTransition = true
+```
