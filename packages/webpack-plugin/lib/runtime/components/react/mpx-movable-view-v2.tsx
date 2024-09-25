@@ -294,18 +294,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const gesture = Gesture.Pan()
     .onTouchesDown((e) => {
       'worklet';
-      console.log('---------------onTouchesDown!!')
-      const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-      isMoving.value = false
-      startPosition.value = {
-        x: changedTouches.x,
-        y: changedTouches.y
+
+      if (!propsShare.value.disabled) {
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
+        isMoving.value = false
+        startPosition.value = {
+          x: changedTouches.x,
+          y: changedTouches.y
+        }
       }
       runOnJS(handleTriggerStart)(e)
     })
     .onTouchesMove((e) => {
       'worklet';
-      console.log('---------------onTouchesMove!!')
+      if (propsShare.value.disabled) return
       isMoving.value = true
       const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
       if (isFirstTouch.value) {
@@ -336,13 +338,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
     .onTouchesUp((e) => {
       'worklet';
-      console.log('---------------onTouchesUp!!')
       isFirstTouch.value = true
       isMoving.value = false
+
       runOnJS(handleTriggerEnd)(e)
     })
     .onFinalize((event) => {
       'worklet';
+      if (propsShare.value.disabled) return
       isMoving.value = false
       const inertia = propsShare.value['inertia']
       const outOfBounds = propsShare.value['out-of-bounds']
