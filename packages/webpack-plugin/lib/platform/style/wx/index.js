@@ -27,7 +27,8 @@ module.exports = function getSpec ({ warn, error }) {
   const ValueType = {
     number: 'number',
     color: 'color',
-    enum: 'enum'
+    enum: 'enum',
+    variable: 'variable'
   }
   // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
@@ -69,8 +70,11 @@ module.exports = function getSpec ({ warn, error }) {
     'margin-horizontal': ['auto', ValueType.number],
     'margin-vertical': ['auto', ValueType.number]
   }
+  const CssVariableExp = /var\((.*?)\)/
   // 获取值类型
-  const getValueType = (prop) => {
+  const getValueType = (prop, value) => {
+    // css variable 类型校验
+    if (CssVariableExp.test(value)) return ValueType.variable
     const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
       [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
@@ -85,7 +89,7 @@ module.exports = function getSpec ({ warn, error }) {
   const verifyValues = ({ prop, value }, isError = true) => {
     prop = prop.trim()
     value = value.trim()
-    const type = getValueType(prop)
+    const type = getValueType(prop, value)
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
       number: /^(-?\d+(\.\d+)?)(rpx|px|%)?$/,
@@ -93,6 +97,15 @@ module.exports = function getSpec ({ warn, error }) {
     }
     const tips = isError ? error : warn
     switch (type) {
+      case ValueType.variable: {
+        const newVal = (value.match(CssVariableExp)?.[1] || '').split(',')
+        const variable = newVal?.[0]
+        if (!variable || !/^--.+$/.test(variable)) {
+          tips(`The css variable is invalid, please check again`)
+          return false
+        }
+        return true
+      }
       case ValueType.number: {
         if (!valueExp.number.test(value)) {
           tips(`The value type of [${prop}] only supports [Number] in React Native environment, eg 10rpx, 10px, 10%, 10, please check again`)
