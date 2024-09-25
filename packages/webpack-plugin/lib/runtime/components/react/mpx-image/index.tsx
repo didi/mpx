@@ -10,19 +10,12 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  forwardRef,
-  useRef,
-} from 'react'
+import { useEffect, useMemo, useState, useRef, forwardRef } from 'react'
+
 import {
   Image as RNImage,
   View,
   ImageStyle,
-  StyleProp,
   ImageSourcePropType,
   ImageResizeMode,
   StyleSheet,
@@ -110,7 +103,7 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize 
 //   </View>
 // )
 
-const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): React.JSX.Element => {
+const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): JSX.Element => {
   const {
     src = '',
     mode = 'scaleToFill',
@@ -186,6 +179,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     if (!bindload) return
     if (typeof src === 'string') {
+      evt.persist()
       RNImage.getSize(src, (width: number, height: number) => {
         bindload(
           getCustomEvent(

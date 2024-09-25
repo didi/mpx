@@ -9,7 +9,7 @@
  *     ✘ show-confirm-bar
  *     ✔ bindlinechange: No `heightRpx` info.
  */
-import React, { forwardRef } from 'react'
+import { JSX, forwardRef } from 'react'
 import { Keyboard, TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
 import { omit } from './utils'
@@ -21,7 +21,7 @@ export type TextareProps = Omit<
 >
 
 const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
-  (props, ref): React.JSX.Element => {
+  (props, ref): JSX.Element => {
     const restProps = omit(props, [
       'ref',
       'type',

@@ -75,17 +75,17 @@ function genNode (node) {
 
             if (!node.unary && node.children.length) {
               exp += ','
-              node.children.forEach(function (child, index) {
-                exp += `${index === 0 ? '' : ','}${genNode(child)}`
-              })
+              exp += node.children.map((child) => {
+                return genNode(child)
+              }).filter(fragment => fragment).join(',')
             }
             exp += ')'
           }
         }
       } else {
-        node.children.forEach(function (child, index) {
-          exp += `${index === 0 ? '' : ','}${genNode(child)}`
-        })
+        exp += node.children.map((child) => {
+          return genNode(child)
+        }).filter(fragment => fragment).join(',')
       }
     }
   }

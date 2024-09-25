@@ -266,6 +266,7 @@ interface MpxConfig {
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,
+  webConfig: object,
   webviewConfig?: WebviewConfig
 }
 

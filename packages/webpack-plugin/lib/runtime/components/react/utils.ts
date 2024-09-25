@@ -1,6 +1,6 @@
 import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement } from 'react'
-import { StyleProp, StyleSheet, TextStyle, ViewStyle, AnimatableNumericValue } from 'react-native'
 import { ExtendedViewStyle } from './types/common'
+import { TextStyle } from 'react-native'
 
 type GroupData = Record<string, Record<string, any>>
 
@@ -12,6 +12,9 @@ export const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
 export const TEXT_PROPS_REGEX =  /ellipsizeMode|numberOfLines/
 
+export const DEFAULT_STYLE = {
+  fontSize: 16
+}
 
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
@@ -22,18 +25,6 @@ export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
     delete shallowCopy[key]
   }
   return shallowCopy
-}
-
-/**
- * 从 style 中提取 TextStyle
- * @param style
- * @returns
- */
-export const extractTextStyle = (style: StyleProp<ViewStyle & TextStyle>): TextStyle => {
-  return style && Object.entries(style).reduce((textStyle, [key, value]) => {
-    TEXT_STYLE_REGEX.test(key) && Object.assign(textStyle, { [key]: value })
-    return textStyle
-  }, {}) || {}
 }
 
 /**
@@ -95,6 +86,14 @@ export const isText = (ele: ReactNode) => {
   return false
 }
 
+export const isEmbedded = (ele: ReactNode) => {
+  if (isValidElement(ele)) {
+    const displayName = (ele.type as FunctionComponent)?.displayName
+    return displayName && ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName) 
+  }
+  return false
+}
+
 export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
   const childrenArray = Array.isArray(children) ? children : [children];
   return childrenArray.every((child) => callback(child as ReactNode))
@@ -132,4 +131,40 @@ export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
     }
   })
   return style
+}
+
+export function splitStyle<T extends Record<string, any>>(styles: T) {
+  return groupBy(styles, (key) => {
+    if (TEXT_STYLE_REGEX.test(key)) {
+      return 'textStyle'
+    } else if (IMAGE_STYLE_REGEX.test(key)) {
+      return 'imageStyle'
+    } else {
+      return 'innerStyle'
+    }
+  }, {})
+}
+
+export function splitProps<T extends Record<string, any>>(props: T) {
+  return groupBy(props, (key) => {
+    if (TEXT_PROPS_REGEX.test(key)) {
+      return 'textProps'
+    } else {
+      return 'innerProps'
+    }
+  }, {})
+}
+
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
+}
+
+export const transformTextStyle = (styleObj: TextStyle) => {
+  let { lineHeight } = styleObj
+  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
+    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
+    styleObj.lineHeight = lineHeight
+  }
 }
