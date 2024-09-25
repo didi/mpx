@@ -4,6 +4,7 @@ const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const varRegExp = /^--.*/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   const classMap = {}
@@ -44,7 +45,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         newData = [newData]
       }
       newData.forEach(item => {
-        prop = dash2hump(item.prop)
+        prop = varRegExp.test(item.prop) ? item.prop : dash2hump(item.prop)
         value = item.value
         if (Array.isArray(value)) {
           value = value.map(val => {

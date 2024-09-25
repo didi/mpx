@@ -1,4 +1,4 @@
-import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
 import { NativeSyntheticEvent } from 'react-native'
 
 export type LabelContextValue = MutableRefObject<{
@@ -15,14 +15,14 @@ export interface GroupContextValue {
 }
 
 export interface FormFieldValue {
-  getValue: () => any;
-  resetValue: ({ newVal, type }: { newVal?: any; type?: string }) => void;
+  getValue: () => any
+  resetValue: ({ newVal, type }: { newVal?: any; type?: string }) => void
 }
 
 export interface FormContextValue {
-  formValuesMap: Map<string, FormFieldValue>;
-  submit: () => void;
-  reset: () => void;
+  formValuesMap: Map<string, FormFieldValue>
+  submit: () => void
+  reset: () => void
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -36,3 +36,5 @@ export const RadioGroupContext = createContext<GroupContextValue | null>(null)
 export const LabelContext = createContext<LabelContextValue | null>(null)
 
 export const PickerContext = createContext(null)
+
+export const VarContext = createContext<Object>({})

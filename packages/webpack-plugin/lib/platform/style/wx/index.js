@@ -9,6 +9,7 @@ module.exports = function getSpec ({ warn, error }) {
     // React Native android 不支持的 CSS property
     android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
+  const cssVariableExp = /var\((.*?)\)/
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, mode, selector }) => {
     error(`Property [${prop}] in ${selector} selector is not supported in React Native ${mode} environment!`)
@@ -86,7 +87,6 @@ module.exports = function getSpec ({ warn, error }) {
     prop = prop.trim()
     value = value.trim()
     const tips = isError ? error : warn
-    const cssVariableExp = /var\((.*?)\)/
     if (cssVariableExp.test(value)) {
       // css variable 类型校验
       const newVal = (value.match(cssVariableExp)?.[1] || '').split(',')
@@ -102,7 +102,7 @@ module.exports = function getSpec ({ warn, error }) {
       number: /^(-?\d+(\.\d+)?)(rpx|px|%)?$/,
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
-    const type = getValueType(prop, value)
+    const type = getValueType(prop)
     switch (type) {
       case ValueType.number: {
         if (!valueExp.number.test(value)) {
