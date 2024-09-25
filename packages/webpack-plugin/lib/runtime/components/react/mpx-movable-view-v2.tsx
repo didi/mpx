@@ -7,13 +7,13 @@
  * ✘ damping
  * ✔ friction
  * ✔ disabled
- * ✔ scale
- * ✔ scale-min
- * ✔ scale-max
- * ✔ scale-value
+ * ✘ scale
+ * ✘ scale-min
+ * ✘ scale-max
+ * ✘ scale-value
  * ✘ animation
  * ✔ bindchange
- * ✔ bindscale
+ * ✘ bindscale
  * ✔ htouchmove
  * ✔ vtouchmove
  */
@@ -67,14 +67,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const {
     children,
     friction = 7,
-    scale = false,
     x = 0,
     y = 0,
     style = {},
-    'scale-min': scaleMin = 0.1,
-    'scale-max': scaleMax = 10,
-    'scale-value': originScaleValue = 1,
-    bindscale,
     bindchange
   } = props
 
@@ -85,7 +80,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const offsetX = useSharedValue(x);
   const offsetY = useSharedValue(y);
 
-  const scaleValue = useSharedValue(1)
   const hasChangeEvent = useSharedValue(props.bindchange)
   const startPosition = useSharedValue({
     x: 0,
@@ -104,6 +98,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
 
   propsShare.value = props
+
+  const externalGesture = propsShare.value.externalGesture?.getNodeInstance()
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
@@ -138,30 +134,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     (currentValue, previousValue) => {
       if (hasChangeEvent.value) {
         const { offsetX, offsetY } = currentValue
-        const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] || offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
-        let source = ''
-        if (hasOverBoundary) {
-          if (isMoving.value) {
-            source = 'touch-out-of-bounds'
-          } else {
-            source = 'out-of-bounds'
-          }
-        } else {
-          if (isMoving.value) {
-            source = 'touch'
-          } else {
-            source = ''
-          }
-        }
         runOnJS(handleTriggerChange)({
           x: offsetX,
-          y: offsetY,
-          source
+          y: offsetY
         })
       }
     })
 
+  function getTouchSource(offsetX, offsetY) {
+    const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] || offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
+    return hasOverBoundary ? (isMoving.value ? 'touch-out-of-bounds' : 'out-of-bounds') : (isMoving.value ? 'touch' : '');
+  }
+
   function getBoundary({ clampedScale, width, height }: { clampedScale: number; width?: number; height?: number; }) {
+    'worklet';
     const top = (style.position === 'absolute' && style.top) || 0;
     const left = (style.position === 'absolute' && style.left) || 0;
     // Calculate scaled element size
@@ -193,6 +179,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   function checkBoundaryPosition({ clampedScale, width, height, positionX, positionY }: { clampedScale: number; width?: number; height?: number; positionX: number; positionY: number }) {
+    'worklet';
     // Calculate scaled element size
     const defaultWidth = layoutRef.value.width || 0
     const defaultHeight = layoutRef.value.height || 0
@@ -253,11 +240,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   function handleTriggerStart(e) {
+    extendEvent(e)
     const touchStartEvent = propsShare.value.bindtouchstart
     if (touchStartEvent) touchStartEvent(e)
   }
 
   function handleTriggerMove(e) {
+    extendEvent(e)
     const hasTouchmove = !!propsShare.value.bindhtouchmove || !!propsShare.value.bindvtouchmove || !!propsShare.value.bindtouchmove
     const hasCatchTouchmove = !!propsShare.value.catchhtouchmove || !!propsShare.value.catchvtouchmove || !!propsShare.value.catchtouchmove
     if (hasTouchmove) {
@@ -267,8 +256,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       onCatchTouchMove(e)
     }
   }
+  function handleTriggerEnd(e) {
+    extendEvent(e)
+    const touchEndEvent = propsShare.value.bindtouchend
+    if (touchEndEvent) touchEndEvent(e)
+  }
 
-  function handleTriggerChange({ x, y, source }: { x: number; y: number; source?: 'string' }) {
+  function handleTriggerChange({ x, y }: { x: number; y: number; }) {
+    const source = getTouchSource(x, y);
     bindchange &&
       bindchange(
         getCustomEvent('change', {}, {
@@ -284,8 +279,22 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       )
   }
 
+  function extendEvent(e) {
+    e.changedTouches.forEach(item => {
+      item.pageX = item.absoluteX
+      item.pageY = item.absoluteY
+    })
+    e.allTouches.forEach(item => {
+      item.pageX = item.absoluteX
+      item.pageY = item.absoluteY
+    })
+    e.touches = e.allTouches
+  }
+
   const gesture = Gesture.Pan()
     .onTouchesDown((e) => {
+      'worklet';
+      console.log('---------------onTouchesDown!!')
       const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
       isMoving.value = false
       startPosition.value = {
@@ -295,6 +304,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       runOnJS(handleTriggerStart)(e)
     })
     .onTouchesMove((e) => {
+      'worklet';
+      console.log('---------------onTouchesMove!!')
       isMoving.value = true
       const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
       if (isFirstTouch.value) {
@@ -307,25 +318,31 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         let newX = offsetX.value + changeX
         if (!propsShare.value['out-of-bounds']) {
           const { x } = checkBoundaryPosition({ clampedScale: 1, positionX: newX, positionY: offsetY.value })
-          newX = x
+          offsetX.value = x
+        } else {
+          offsetX.value = newX
         }
-        offsetX.value = newX
       }
       if (direction.value === 'vertical' || direction.value === 'all') {
         let newY = offsetY.value + changeY
         if (!propsShare.value['out-of-bounds']) {
-          const { y } = checkBoundaryPosition({ clampedScale: 1, positionX: offsetX.value, positionY: newY })
-          newY = y
+          const { y } = checkBoundaryPosition({ clampedScale: 1, positionX: offsetX.value, positionY: newY });
+          offsetY.value = y; // 确保 x 有值
+        } else {
+          offsetY.value = newY
         }
-        offsetY.value = newY
       }
       runOnJS(handleTriggerMove)(e)
     })
-    .onTouchesUp(() => {
+    .onTouchesUp((e) => {
+      'worklet';
+      console.log('---------------onTouchesUp!!')
       isFirstTouch.value = true
       isMoving.value = false
+      runOnJS(handleTriggerEnd)(e)
     })
     .onFinalize((event) => {
+      'worklet';
       isMoving.value = false
       const inertia = propsShare.value['inertia']
       const outOfBounds = propsShare.value['out-of-bounds']
@@ -343,14 +360,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           clamp: draggableYRange.value
         })
       }
-    });
-
+    })
+  if (externalGesture?.nodeRef) {
+    gesture.simultaneousWithExternalGesture(externalGesture.nodeRef)
+  }
   const animatedStyles = useAnimatedStyle(() => {
     return {
       transform: [
         { translateX: offsetX.value },
-        { translateY: offsetY.value },
-        { scale: scaleValue.value }
+        { translateY: offsetY.value }
       ]
     }
   })
