@@ -10,15 +10,15 @@ module.exports = function getSpec ({ warn, error }) {
     android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
   // 不支持的属性提示
-  const unsupportedPropError = ({ prop, mode }) => {
-    error(`Property [${prop}] is not supported in React Native ${mode} environment!`)
+  const unsupportedPropError = ({ prop, mode, selector }) => {
+    error(`Property [${prop}] in ${selector} selector is not supported in React Native ${mode} environment!`)
   }
   // prop 校验
-  const verifyProps = ({ prop, value }, { mode }, isError = true) => {
+  const verifyProps = ({ prop, value, selector }, { mode }, isError = true) => {
     prop = prop.trim()
     const tips = isError ? error : warn
     if (unsupportedPropExp.test(prop) || unsupportedPropMode[mode].test(prop)) {
-      tips(`Property [${prop}] is not supported in React Native ${mode} environment!`)
+      tips(`Property [${prop}] in ${selector} selector is not supported in React Native ${mode} environment!`)
       return false
     }
     return true
@@ -82,7 +82,7 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
   // 属性值校验
-  const verifyValues = ({ prop, value }, isError = true) => {
+  const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     value = value.trim()
     const tips = isError ? error : warn
@@ -92,7 +92,7 @@ module.exports = function getSpec ({ warn, error }) {
       const newVal = (value.match(cssVariableExp)?.[1] || '').split(',')
       const variable = newVal?.[0]
       if (!variable || !/^--.+$/.test(variable)) {
-        tips(`The css variable [${prop}:${value}] is invalid, please check again`)
+        tips(`Css variable [${prop}:${value}] is invalid in ${selector} selector, please check again`)
         return false
       }
       return true
@@ -106,14 +106,14 @@ module.exports = function getSpec ({ warn, error }) {
     switch (type) {
       case ValueType.number: {
         if (!valueExp.number.test(value)) {
-          tips(`The value type of [${prop}] only supports [Number] in React Native environment, eg 10rpx, 10px, 10%, 10, please check again`)
+          tips(`Value of [${prop}] in ${selector} selector should be Number type in React Native environment, eg 10rpx, 10px, 10%, 10, received ${value}, please check again!`)
           return false
         }
         return true
       }
       case ValueType.color: {
         if (!valueExp.color.test(value)) {
-          tips(`The value type of [${prop}] only supports [Color] in React Native environment, eg #000, rgba(0,0,0,0), please check again`)
+          tips(`Value of [${prop}] in ${selector} selector should be Color type in React Native environment, eg #000, rgba(0,0,0,0), received ${value}, please check again!`)
           return false
         }
         return true
@@ -122,7 +122,7 @@ module.exports = function getSpec ({ warn, error }) {
         const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(value)
         const isType = Object.keys(valueExp).some(item => valueExp[item].test(value) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
         if (!isIn && !isType) {
-          tips(`Property [${prop}] only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, the value [${value}] does not support!`)
+          tips(`Property [${prop}] in ${selector} selector only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, received ${value}, please check again!`)
           return false
         }
         return true
@@ -131,8 +131,8 @@ module.exports = function getSpec ({ warn, error }) {
     return true
   }
   // prop & value 校验：过滤的不合法的属性和属性值
-  const verification = ({ prop, value }, { mode }) => {
-    return verifyProps({ prop, value }, { mode }) && verifyValues({ prop, value }) && ({ prop, value })
+  const verification = ({ prop, value, selector }, { mode }) => {
+    return verifyProps({ prop, value, selector }, { mode }) && verifyValues({ prop, value, selector }) && ({ prop, value })
   }
 
   // 简写转换规则
@@ -159,7 +159,7 @@ module.exports = function getSpec ({ warn, error }) {
     'flex-flow': ['flexDirection', 'flexWrap'],
     'border-radius': ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
   }
-  const formatAbbreviation = ({ prop, value }, { mode }) => {
+  const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
     const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
     const values = value.trim().split(/\s(?![^()]*\))/)
@@ -170,12 +170,12 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length) {
       const prop = props[propsIdx]
       if (!prop) {
-        error(`the value of [${original}] has not enough props to assign in React Native environment, please check again`)
+        error(`Value of [${original}] in ${selector} selector has not enough props to assign in React Native environment, please check again!`)
         break
       }
       const value = values[idx]
       const newProp = hump2dash(prop.replace(/\..+/, ''))
-      if (!verifyProps({ prop: newProp, value }, { mode }, diff === 0)) {
+      if (!verifyProps({ prop: newProp, value, selector }, { mode }, diff === 0)) {
         // 有 ios or android 不支持的 prop，跳过 prop
         if (diff === 0) {
           propsIdx++
@@ -183,7 +183,7 @@ module.exports = function getSpec ({ warn, error }) {
         } else {
           propsIdx++
         }
-      } else if (!verifyValues({ prop: newProp, value }, diff === 0)) {
+      } else if (!verifyValues({ prop: newProp, value, selector }, diff === 0)) {
         // 值不合法 跳过 value
         if (diff === 0) {
           propsIdx++
@@ -223,7 +223,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // margin padding
-  const formatMargins = ({ prop, value }) => {
+  const formatMargins = ({ prop, value, selector }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     // format
     let suffix = []
@@ -242,7 +242,7 @@ module.exports = function getSpec ({ warn, error }) {
     return values.map((value, index) => {
       const newProp = `${prop}${suffix[index] || ''}`
       // validate
-      verifyValues({ prop: hump2dash(newProp), value }, false)
+      verifyValues({ prop: hump2dash(newProp), value, selector }, false)
       return {
         prop: newProp,
         value: value
@@ -251,8 +251,8 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // line-height
-  const formatLineHeight = ({ prop, value }) => {
-    return verifyValues({ prop, value }) && ({
+  const formatLineHeight = ({ prop, value, selector }) => {
+    return verifyValues({ prop, value, selector }) && ({
       prop,
       value: /^\s*-?\d+(\.\d+)?\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
     })
@@ -261,7 +261,7 @@ module.exports = function getSpec ({ warn, error }) {
   // background 相关属性的转换 Todo
   // 仅支持以下属性，不支持其他背景相关的属性
   // /^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
-  const checkBackgroundImage = ({ prop, value }, { mode }) => {
+  const checkBackgroundImage = ({ prop, value, selector }, { mode }) => {
     const bgPropMap = {
       image: 'background-image',
       color: 'background-color',
@@ -281,7 +281,7 @@ module.exports = function getSpec ({ warn, error }) {
         if (imgUrl) {
           return { prop, value: imgUrl }
         } else {
-          error(`[${prop}] only support value <url()>`)
+          error(`Value of ${prop} in ${selector} selector only support value <url()>, received ${value}, please check again!`)
           return false
         }
       }
@@ -291,12 +291,12 @@ module.exports = function getSpec ({ warn, error }) {
         // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
         // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
         if (value.includes(',')) { // commas are not allowed in values
-          error(`background size value[${value}] does not support commas in React Native ${mode} environment!`)
+          error(`Value of [${bgPropMap.size}] in ${selector} selector does not support commas in React Native ${mode} environment, received ${value}, please check again!`)
           return false
         }
         const values = []
         value.trim().split(/\s(?![^()]*\))/).forEach(item => {
-          if (verifyValues({ prop, value: item })) {
+          if (verifyValues({ prop, value: item, selector })) {
             // 支持 number 值 / container cover auto 枚举
             values.push(item)
           }
@@ -307,11 +307,11 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.position: {
         const values = []
         value.trim().split(/\s(?![^()]*\))/).forEach(item => {
-          if (verifyValues({ prop, value: item })) {
+          if (verifyValues({ prop, value: item, selector })) {
             // 支持 number 值 /  枚举, center与50%等价
             values.push(item === 'center' ? '50%' : item)
           } else {
-            error(`background position value[${value}] does not support in React Native ${mode} environment!`)
+            error(` Value of [${bgPropMap.size}] in ${selector} selector does not support commas in React Native ${mode} environment, received ${value}, please check again!`)
           }
         })
 
@@ -327,28 +327,28 @@ module.exports = function getSpec ({ warn, error }) {
             error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
           } else if (url) {
             bgMap.push({ prop: bgPropMap.image, value: url })
-          } else if (verifyValues({ prop: bgPropMap.color, value: item }, false)) {
+          } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, false)) {
             bgMap.push({ prop: bgPropMap.color, value: item })
-          } else if (verifyValues({ prop: bgPropMap.repeat, value: item }, false)) {
+          } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, false)) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
           }
         })
         return bgMap.length ? bgMap : false
       }
     }
-    unsupportedPropError({ prop, mode })
+    unsupportedPropError({ prop, mode, selector })
     return false
   }
 
   // border-radius 缩写转换
-  const getBorderRadius = ({ prop, value }, { mode }) => {
+  const getBorderRadius = ({ prop, value, selector }, { mode }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
     if (values.length === 1 && !/^(-?\d+(\.\d+)?)%$/.test(value)) {
       // 单值且非number%情况下 直接以单值输出（%情况需要展示到组件内计算具体值）
-      verifyValues({ prop, value }, false)
+      verifyValues({ prop, value, selector }, false)
       return { prop, value }
     } else {
-      if (values.length ===1) {
+      if (values.length === 1) {
         const val = values[0]
         values.push(...[val, val, val])
       } else if (values.length === 2) {
@@ -361,7 +361,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // transform 转换
-  const formatTransform = ({ prop, value }, { mode }) => {
+  const formatTransform = ({ prop, value, selector }, { mode }) => {
     if (Array.isArray(value)) return { prop, value }
     const values = value.trim().split(/\s(?![^()]*\))/)
     const transform = []
@@ -416,7 +416,7 @@ module.exports = function getSpec ({ warn, error }) {
             break
         }
       } else {
-        error(`Property [${prop}] is invalid, please check the value!`)
+        error(`Property [${prop}] is invalid in ${selector} selector, please check the value!`)
       }
     })
     return {
@@ -429,19 +429,19 @@ module.exports = function getSpec ({ warn, error }) {
     return !isNaN(+value)
   }
 
-  const getIntegersFlex = ({ prop, value }) => {
+  const getIntegersFlex = ({ prop, value, selector }) => {
     if (isNumber(value) && value >= 0) {
       return { prop, value }
     } else {
-      error(`The value of ${prop} accepts any floating point value >= 0.`)
+      error(`Value of [${prop}] in ${selector} selector accepts any floating point value >= 0, please check the value!`)
       return false
     }
   }
 
-  const formatFlex = ({ prop, value }, { mode }) => {
+  const formatFlex = ({ prop, value, selector }) => {
     let values = value.trim().split(/\s(?![^()]*\))/)
     if (values.length > 3) {
-      error('The value of prop [flex] supports up to three values')
+      error(`Value of [flex] in ${selector} selector supports up to three values, please check the value!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
@@ -456,7 +456,7 @@ module.exports = function getSpec ({ warn, error }) {
         // value=initial 则 flexShrink=1，其他场景都是0
         cssMap.push(...[{ prop: 'flexGrow', value: 0 }, { prop: 'flexShrink', value: +(values[0] === 'initial') }])
       } else {
-        error('When setting the value of flex to none or initial, only one value is supported.')
+        error(`Value of [${prop}] in ${selector} selector is invalid, When setting the value of flex to none or initial, only one value is supported.`)
       }
       return cssMap
     }
@@ -496,25 +496,25 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
 
-  const formatFontFamily = ({ prop, value }) => {
+  const formatFontFamily = ({ prop, value, selector }) => {
     // 去掉引号 取逗号分隔后的第一个
     const newVal = value.replace(/"|'/g, '').trim()
     const values = newVal.split(',').filter(i => i)
     if (!newVal || !values.length) {
-      error(`The value of prop [${prop}: ${value}] is invaild, please check again`)
+      error(`[${prop}:${value}] is invalid in ${selector} selector, please check again`)
       return false
     } else if (values.length > 1) {
-      warn(`The value of prop [${prop}] only supports one, and the first one is used by default`)
+      warn(`Value of [${prop}] in ${selector} selector only supports one, received ${value}, and the first one is used by default.`)
     }
     return { prop, value: values[0].trim() }
   }
 
-  const formatBoxShadow = ({ prop, value }, { mode }) => {
+  const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
     if (value === 'none') {
       return false
     }
-    const cssMap = formatAbbreviation({ prop, value }, { mode })
+    const cssMap = formatAbbreviation({ prop, value, selector }, { mode })
     if (mode === 'android') return cssMap
     // ios 阴影需要额外设置 shadowOpacity=1
     cssMap.push({
