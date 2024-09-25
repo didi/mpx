@@ -101,7 +101,7 @@ module.exports = function getSpec ({ warn, error }) {
         const newVal = (value.match(CssVariableExp)?.[1] || '').split(',')
         const variable = newVal?.[0]
         if (!variable || !/^--.+$/.test(variable)) {
-          tips(`The css variable is invalid, please check again`)
+          tips(`The css variable [${prop}:${value}] is invalid, please check again`)
           return false
         }
         return true
