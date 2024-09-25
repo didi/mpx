@@ -345,11 +345,15 @@ module.exports = function getSpec ({ warn, error }) {
   // border-radius 缩写转换
   const getBorderRadius = ({ prop, value }, { mode }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
-    if (values.length === 1) {
+    if (values.length === 1 && !/^(-?\d+(\.\d+)?)%$/.test(value)) {
+      // 单值且非number%情况下 直接以单值输出（%情况需要展示到组件内计算具体值）
       verifyValues({ prop, value }, false)
       return { prop, value }
     } else {
-      if (values.length === 2) {
+      if (values.length ===1) {
+        const val = values[0]
+        values.push(...[val, val, val])
+      } else if (values.length === 2) {
         values.push(...values)
       } else if (values.length === 3) {
         values.push(values[1])
