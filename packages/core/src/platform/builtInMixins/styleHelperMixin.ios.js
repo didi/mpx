@@ -43,6 +43,7 @@ const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const varRegExp = /^--.*/
 
 function parseStyleText (cssText = '') {
   const res = {}
@@ -52,7 +53,8 @@ function parseStyleText (cssText = '') {
     if (item) {
       const tmp = item.split(propertyDelimiter)
       if (tmp.length > 1) {
-        const k = dash2hump(tmp[0].trim())
+        let k = tmp[0].trim()
+        k = varRegExp.test(k) ? k : dash2hump(k)
         res[k] = tmp[1].trim()
       }
     }

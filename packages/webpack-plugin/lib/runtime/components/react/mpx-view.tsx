@@ -395,14 +395,14 @@ function wrapChildren (children: ReactNode | ReactNode[], props: _ViewProps, tex
   if (every(children as ReactNode[], (child) => isText(child))) {
     if (textStyle || textProps) {
       transformTextStyle(textStyle as TextStyle)
-      children = <Text key='viewTextWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
+      children = <Text key='childrenWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
     }
   } else {
     if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the view is Text node!')
   }
 
   if (varStyle && varContext) {
-    children = <VarContext.Provider value={varContext}>{children}</VarContext.Provider>
+    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
   }
 
   return [
@@ -561,7 +561,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     ...(isHover ? hoverStyle : null)
   }
 
-  const { normalStyle: styleObj, varStyle } = splitVarStyle(rawStyleObj)
+  const { normalStyle: styleObj = {}, varStyle } = splitVarStyle(rawStyleObj)
 
   const newVarContext = Object.assign({}, varContext, varStyle)
 
