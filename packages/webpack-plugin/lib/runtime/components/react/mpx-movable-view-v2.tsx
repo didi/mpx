@@ -36,8 +36,8 @@ interface MovableViewProps {
   children: ReactNode;
   style?: Record<string, any>;
   direction: 'all' | 'vertical' | 'horizontal' | 'none';
-  x?: string | number;
-  y?: string | number;
+  x?: number;
+  y?: number;
   scale?: boolean;
   disabled?: boolean;
   friction?: number;
@@ -100,8 +100,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     x: 0,
     y: 0
   })
-  const draggableXRange = useSharedValue([])
-  const draggableYRange = useSharedValue([])
+  const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
+  const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   let touchEvent = useSharedValue<string>('')
@@ -230,8 +230,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       offsetX.value = newX
       offsetY.value = newY
       const range = getBoundary({ clampedScale: 1, width, height })
-      draggableXRange.value = range.draggableXRange
-      draggableYRange.value = range.draggableYRange
+      draggableXRange.value = range.draggableXRange as [min: number, max: number]
+      draggableYRange.value = range.draggableYRange as [min: number, max: number]
     })
   }, [])
 
@@ -264,12 +264,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     e.touches = e.allTouches
   }
 
-  const handleTriggerStart = (e: NativeSyntheticEvent<TouchEvent>) => {
+  const handleTriggerStart = (e: any) => {
     extendEvent(e)
     bindtouchstart && bindtouchstart(e)
   }
 
-  const handleTriggerMove = (e: NativeSyntheticEvent<TouchEvent>) => {
+  const handleTriggerMove = (e: any) => {
     extendEvent(e)
     const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
     const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
@@ -280,7 +280,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       onCatchTouchMove(e)
     }
   }
-  const handleTriggerEnd = (e: NativeSyntheticEvent<TouchEvent>) => {
+  const handleTriggerEnd = (e: any) => {
     extendEvent(e)
     bindtouchend && bindtouchend(e)
   }
