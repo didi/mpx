@@ -55,7 +55,7 @@ interface MovableViewProps {
   catchhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   'out-of-bounds'?: boolean;
-  externalGesture?: { getNodeInstance: () => any };
+  externalGesture?: Array<{ getNodeInstance: () => any }>;
   inertia?: boolean;
 }
 
@@ -78,7 +78,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     disabled,
     'out-of-bounds': outOfBounds,
     direction,
-    externalGesture,
+    externalGesture = [],
     bindtouchstart,
     bindhtouchmove,
     catchhtouchmove,
@@ -109,7 +109,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const contextValue = useContext(MovableAreaContext)
   const MovableAreaLayout = useSharedValue(contextValue)
 
-  const externalComponentGesture = externalGesture?.getNodeInstance()
+  const externalComponentGesture = externalGesture.map(gesture => {
+    const instance = gesture?.getNodeInstance?.() || {}
+    return instance.nodeRef
+  }).filter(Boolean)
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
@@ -153,13 +156,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
     })
 
-    const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
-      const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] || 
-                              offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
-      return hasOverBoundary ? (isMoving.value ? 'touch-out-of-bounds' : 'out-of-bounds') : (isMoving.value ? 'touch' : '');
-    }, [])
+  const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
+    const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
+      offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
+    return hasOverBoundary ? (isMoving.value ? 'touch-out-of-bounds' : 'out-of-bounds') : (isMoving.value ? 'touch' : '');
+  }, [])
 
-  const  getBoundary = ({ clampedScale, width, height }: { clampedScale: number; width?: number; height?: number; }) => {
+  const getBoundary = ({ clampedScale, width, height }: { clampedScale: number; width?: number; height?: number; }) => {
     'worklet';
     const top = (style.position === 'absolute' && style.top) || 0;
     const left = (style.position === 'absolute' && style.left) || 0;
@@ -242,7 +245,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindtouchmove && bindtouchmove(e)
   }, [bindhtouchmove, bindvtouchmove, bindtouchmove])
 
-  const onCatchTouchMove= useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
+  const onCatchTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
     if (touchEvent.value === 'htouchmove') {
       catchhtouchmove && catchhtouchmove(e)
     } else if (touchEvent.value === 'vtouchmove') {
@@ -313,7 +316,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
       runOnJS(handleTriggerStart)(e)
     })
-    .onTouchesMove((e:GestureTouchEvent) => {
+    .onTouchesMove((e: GestureTouchEvent) => {
       'worklet';
       if (disabled) return
       isMoving.value = true
@@ -344,7 +347,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
       runOnJS(handleTriggerMove)(e)
     })
-    .onTouchesUp((e:GestureTouchEvent) => {
+    .onTouchesUp((e: GestureTouchEvent) => {
       'worklet';
       isFirstTouch.value = true
       isMoving.value = false
@@ -370,8 +373,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         })
       }
     })
-  if (externalComponentGesture?.nodeRef) {
-    gesture.simultaneousWithExternalGesture(externalComponentGesture.nodeRef)
+  if (externalComponentGesture && externalComponentGesture.length) {
+    gesture.simultaneousWithExternalGesture(...externalComponentGesture)
   }
   const animatedStyles = useAnimatedStyle(() => {
     return {
