@@ -98,21 +98,18 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         if (Array.isArray(children)) {
           children.forEach(child => {
             if (child?.props?.slot === name) {
-              isObject(child) && result.push(child)
+              result.push(child)
             }
           })
         } else {
           if (children?.props?.slot === name) {
-            isObject(children) && result.push(children)
+            result.push(children)
           }
         }
         return result.filter(item => {
-          if (this.__dispatchedSlotSet.has(item)) {
-            return false
-          } else {
-            this.__dispatchedSlotSet.add(item)
-            return true
-          }
+          if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
+          this.__dispatchedSlotSet.add(item)
+          return true
         })
       }
       return null
