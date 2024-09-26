@@ -97,12 +97,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         const result = []
         if (Array.isArray(children)) {
           children.forEach(child => {
-            if (child && child.props && child.props.slot === name) {
+            if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (children && children.props && children.props.slot === name) {
+          if (children?.props?.slot === name) {
             result.push(children)
           }
         }

@@ -67,7 +67,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       return () => {
         if (measureTimeout) {
           clearTimeout(measureTimeout)
-          measureTimeout = null
         }
       }
     }

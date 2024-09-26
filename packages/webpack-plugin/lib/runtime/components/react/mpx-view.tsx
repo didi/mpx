@@ -543,6 +543,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const layoutRef = useRef({})
 
   const varContext = useContext(VarContext)
+  // const varContextRef = useRef(null) 
 
   // 默认样式
   const defaultStyle: ExtendedViewStyle = {
