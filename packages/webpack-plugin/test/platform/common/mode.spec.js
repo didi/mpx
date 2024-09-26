@@ -136,4 +136,37 @@ describe('template should transform correct', function () {
     const output10 = compileTemplate(input10, { env: 'didi', mode: 'ali' })
     expect(output10).toBe('<button hello@@@didi:didi="123">获取用户信息</button>')
   })
+
+  it('should work correct when multi mode or env', function () {
+    const input1 = '<button @wx:didi|ali:didi>获取用户信息</button>'
+    const output1 = compileTemplate(input1, { env: 'didi', mode: 'ali' })
+    expect(output1).toBe('<button>获取用户信息</button>')
+    const input2 = '<button @ali:didi|wx:didi>获取用户信息</button>'
+    const output2 = compileTemplate(input2, { env: 'didi', mode: 'ali' })
+    expect(output2).toBe('<button>获取用户信息</button>')
+  })
+
+  it('should attr trans correct when implicit mode', function () {
+    const input1 = '<button @wx:didi|ali:didi bindtap="test">获取用户信息</button>'
+    const output1 = compileTemplate(input1, { env: 'didi', mode: 'ali' })
+    expect(output1).toBe('<button bindtap="test">获取用户信息</button>')
+
+    const input2 = '<button @_wx:didi|_ali:didi bindtap="test">获取用户信息</button>'
+    const output2 = compileTemplate(input2, { env: 'didi', mode: 'ali' })
+    expect(output2).toBe('<button onTap="test">获取用户信息</button>')
+
+    const input3 = '<button @:didi bindtap="test">获取用户信息</button>'
+    const output3 = compileTemplate(input3, { env: 'didi', mode: 'ali' })
+    expect(output3).toBe('<button onTap="test">获取用户信息</button>')
+  })
+
+  it('should mpxTagName trans correct', function () {
+    const input1 = '<button mpxTagName@ali:didi="view">获取用户信息</button>'
+    const output1 = compileTemplate(input1, { env: 'didi', mode: 'ali' })
+    expect(output1).toBe('<view>获取用户信息</view>')
+
+    const input2 = '<button mpxTagName@ali:didi="view" bindtap="test">获取用户信息</button>'
+    const output2 = compileTemplate(input2, { env: 'didi', mode: 'ali' })
+    expect(output2).toBe('<view onTap="test">获取用户信息</view>')
+  })
 })

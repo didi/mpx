@@ -1,5 +1,4 @@
 import { forwardRef, JSX, useEffect } from 'react'
-// @ts-ignore
 import { noop } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
