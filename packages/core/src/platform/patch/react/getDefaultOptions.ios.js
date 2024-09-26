@@ -98,12 +98,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         if (Array.isArray(children)) {
           children.forEach(child => {
             if (child?.props?.slot === name) {
-              result.push(child)
+              isObject(child) && result.push(child)
             }
           })
         } else {
           if (children?.props?.slot === name) {
-            result.push(children)
+            isObject(children) && result.push(children)
           }
         }
         return result.filter(item => {
@@ -385,6 +385,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.mounted()
       return () => {
         proxy.unmounted()
+        proxy.target.__resetInstance()
         if (type === 'page') {
           delete global.__mpxPagesMap[props.route.key]
         }
