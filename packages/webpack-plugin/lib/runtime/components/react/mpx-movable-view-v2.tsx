@@ -116,12 +116,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
+  }, {
+    isAnimatedRef: true
   })
 
   propsRef.current = props
 
   useEffect(() => {
-    // 监听上下文变化并更新 SharedValue
     MovableAreaLayout.value = contextValue;
   }, [contextValue.width, contextValue.height])
 
@@ -129,8 +130,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (offsetX.value !== x || offsetY.value !== y) {
       if (layoutRef.value.width && layoutRef.value.height) {
         const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, positionX: Number(x), positionY: Number(y) })
-        offsetX.value = withTiming(newX)
-        offsetY.value = withTiming(newY)
+        if (direction === 'horizontal' || direction === 'all') {
+          offsetX.value = withTiming(newX)
+        }
+        if (direction === 'vertical' || direction === 'all') {
+          offsetY.value = withTiming(newY)
+        }
+
         if (bindchange) {
           handleTriggerChange({
             x: newX,
@@ -226,12 +232,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const onLayout = useCallback(() => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.value = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
-      const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, width, height, positionX: offsetX.value, positionY: offsetY.value })
-      offsetX.value = newX
-      offsetY.value = newY
       const range = getBoundary({ clampedScale: 1, width, height })
       draggableXRange.value = range.draggableXRange as [min: number, max: number]
       draggableYRange.value = range.draggableYRange as [min: number, max: number]
+      if (width !== layoutRef.value.width || (height !== layoutRef.value.height)) {
+        const positionX = offsetX.value
+        const positionY = offsetY.value
+        const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, width, height, positionX, positionY })
+        if (positionX !== newX) {
+          offsetX.value = newX
+        }
+        if (positionY !== newY) {
+          offsetY.value = newY
+        }
+      }
     })
   }, [])
 
