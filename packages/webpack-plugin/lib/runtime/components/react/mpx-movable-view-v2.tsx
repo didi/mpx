@@ -86,6 +86,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const propsRef = useRef<any>({})
   const layoutRef = useRef<any>({})
+  const changeSource = useRef<any>('')
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
@@ -97,6 +98,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
+  const xInertialMotion = useSharedValue(false)
+  const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   let touchEvent = useSharedValue<string>('')
 
@@ -128,7 +131,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (bindchange) {
           runOnJS(handleTriggerChange)({
             x: newX,
-            y: newY
+            y: newY,
+            type: 'setData'
           })
         }
       }
@@ -153,10 +157,25 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
     const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
       offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
-    return hasOverBoundary ? (isMoving.value ? 'touch-out-of-bounds' : 'out-of-bounds') : (isMoving.value ? 'touch' : '');
+    let source = changeSource.current
+    if (hasOverBoundary) {
+      if (isMoving.value) {
+        source = 'touch-out-of-bounds'
+      } else {
+        source = 'out-of-bounds'
+      }
+    } else {
+      if (isMoving.value) {
+        source = 'touch'
+      } else if ((xInertialMotion.value || yInertialMotion.value) && (changeSource.current === 'touch' || changeSource.current === 'friction')) {
+        source = 'friction'
+      }
+    }
+    changeSource.current = source
+    return source
   }, [])
 
-  const setBoundary = ({ width, height }) => {
+  const setBoundary = ({ width, height }: { width: number; height: number }) => {
     const top = (style.position === 'absolute' && style.top) || 0;
     const left = (style.position === 'absolute' && style.left) || 0;
 
@@ -272,15 +291,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindtouchend && bindtouchend(e)
   }
 
-  function handleTriggerChange({ x, y }: { x: number; y: number; }) {
-    const source = getTouchSource(x, y);
+  function handleTriggerChange({ x, y, type }: { x: number; y: number; type?: string }) {
+    let source = ''
+    if (type !== 'setData') {
+      source = getTouchSource(x, y);
+    } else {
+      changeSource.current = ''
+    }
     bindchange &&
       bindchange(
         getCustomEvent('change', {}, {
           detail: {
             x,
             y,
-            source: source || ''
+            source
           },
           layoutRef
         }, propsRef.current)
@@ -344,17 +368,27 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       if (disabled) return
       isMoving.value = false
       if (direction === 'horizontal' || direction === 'all') {
+        if (inertia) {
+          xInertialMotion.value = true
+        }
         offsetX.value = withDecay({
           velocity: inertia ? e.velocityX : 0,
           rubberBandEffect: outOfBounds,
           clamp: draggableXRange.value
+        }, () => {
+          xInertialMotion.value = false
         });
       }
       if (direction === 'vertical' || direction === 'all') {
+        if (inertia) {
+          yInertialMotion.value = true
+        }
         offsetY.value = withDecay({
           velocity: inertia ? e.velocityY : 0,
           rubberBandEffect: outOfBounds,
           clamp: draggableYRange.value
+        }, () => {
+          yInertialMotion.value = false
         })
       }
     })
