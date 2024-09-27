@@ -1,11 +1,11 @@
 /**
  * ✔ direction
- * ✘ inertia
- * ✘ out-of-bounds
+ * ✔ inertia
+ * ✔ out-of-bounds
  * ✔ x
  * ✔ y
  * ✘ damping
- * ✔ friction
+ * ✘ friction
  * ✔ disabled
  * ✘ scale
  * ✘ scale-min
@@ -38,14 +38,8 @@ interface MovableViewProps {
   direction: 'all' | 'vertical' | 'horizontal' | 'none';
   x?: number;
   y?: number;
-  scale?: boolean;
   disabled?: boolean;
-  friction?: number;
-  'scale-value'?: number;
-  'scale-min'?: number;
-  'scale-max'?: number;
   bindchange?: (event: unknown) => void;
-  bindscale?: (event: unknown) => void;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
@@ -70,7 +64,6 @@ const styles = StyleSheet.create({
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
   const {
     children,
-    friction = 7,
     x = 0,
     y = 0,
     style = {},
@@ -129,7 +122,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   useEffect(() => {
     if (offsetX.value !== x || offsetY.value !== y) {
       if (layoutRef.value.width && layoutRef.value.height) {
-        const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, positionX: Number(x), positionY: Number(y) })
+        const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
         if (direction === 'horizontal' || direction === 'all') {
           offsetX.value = withTiming(newX)
         }
@@ -168,10 +161,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return hasOverBoundary ? (isMoving.value ? 'touch-out-of-bounds' : 'out-of-bounds') : (isMoving.value ? 'touch' : '');
   }, [])
 
-  const getBoundary = ({ clampedScale, width, height }: { clampedScale: number; width?: number; height?: number; }) => {
+  const getBoundary = ({ clampedScale = 1, width, height }: { clampedScale?: number; width?: number; height?: number; }) => {
     'worklet';
     const top = (style.position === 'absolute' && style.top) || 0;
     const left = (style.position === 'absolute' && style.left) || 0;
+
     // Calculate scaled element size
     const scaledWidth = (width || layoutRef.value.width) * clampedScale
     const scaledHeight = (height || layoutRef.value.height) * clampedScale
@@ -200,9 +194,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   }
 
-  const checkBoundaryPosition = ({ clampedScale, width, height, positionX, positionY }: { clampedScale: number; width?: number; height?: number; positionX: number; positionY: number }) => {
+  const checkBoundaryPosition = ({ clampedScale = 1, width, height, positionX, positionY }: { clampedScale?: number; width?: number; height?: number; positionX: number; positionY: number }) => {
     'worklet';
-    // Calculate scaled element size
     const defaultWidth = layoutRef.value.width || 0
     const defaultHeight = layoutRef.value.height || 0
     const scaledWidth = (width || defaultWidth) * clampedScale
@@ -211,12 +204,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     // Calculate the boundary limits
     let x = positionX
     let y = positionY
-    const { draggableXRange, draggableYRange } = getBoundary({ clampedScale: 1, width: scaledWidth, height: scaledHeight })
+    const { draggableXRange, draggableYRange } = getBoundary({ width: scaledWidth, height: scaledHeight })
 
     // 计算边界限制
     if (x > draggableXRange[1]) {
       x = draggableXRange[1]
-    } else if (y < draggableXRange[0]) {
+    } else if (x < draggableXRange[0]) {
       x = draggableXRange[0]
     }
 
@@ -232,13 +225,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const onLayout = useCallback(() => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.value = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
-      const range = getBoundary({ clampedScale: 1, width, height })
+      const range = getBoundary({ width, height })
       draggableXRange.value = range.draggableXRange as [min: number, max: number]
       draggableYRange.value = range.draggableYRange as [min: number, max: number]
       if (width !== layoutRef.value.width || (height !== layoutRef.value.height)) {
         const positionX = offsetX.value
         const positionY = offsetY.value
-        const { x: newX, y: newY } = checkBoundaryPosition({ clampedScale: 1, width, height, positionX, positionY })
+        const { x: newX, y: newY } = checkBoundaryPosition({ width, height, positionX, positionY })
         if (positionX !== newX) {
           offsetX.value = newX
         }
@@ -344,7 +337,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       if (direction === 'horizontal' || direction === 'all') {
         let newX = offsetX.value + changeX
         if (!outOfBounds) {
-          const { x } = checkBoundaryPosition({ clampedScale: 1, positionX: newX, positionY: offsetY.value })
+          const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
           offsetX.value = x
         } else {
           offsetX.value = newX
@@ -353,7 +346,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       if (direction === 'vertical' || direction === 'all') {
         let newY = offsetY.value + changeY
         if (!outOfBounds) {
-          const { y } = checkBoundaryPosition({ clampedScale: 1, positionX: offsetX.value, positionY: newY });
+          const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY });
           offsetY.value = y
         } else {
           offsetY.value = newY

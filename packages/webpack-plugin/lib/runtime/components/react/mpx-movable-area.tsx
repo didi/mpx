@@ -3,7 +3,7 @@
  */
 
 import { View, LayoutChangeEvent } from 'react-native'
-import { JSX, useState, useEffect, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useState, useEffect, useRef, forwardRef, ReactNode, useMemo } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
@@ -37,6 +37,11 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
+  const contextValue = useMemo(() => ({
+    height: areaHeight,
+    width: areaWidth
+  }), [areaHeight, areaWidth]);
+
   const innerProps = useInnerProps(props, {
     ref: movableViewRef,
     onLayout
@@ -46,7 +51,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   ], { layoutRef })
 
   return (
-    <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>
+    <MovableAreaContext.Provider value={contextValue}>
       <View
         {...innerProps}
         style={{
