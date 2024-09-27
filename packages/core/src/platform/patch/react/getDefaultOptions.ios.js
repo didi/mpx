@@ -97,22 +97,19 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         const result = []
         if (Array.isArray(children)) {
           children.forEach(child => {
-            if (child && child.props && child.props.slot === name) {
+            if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (children && children.props && children.props.slot === name) {
+          if (children?.props?.slot === name) {
             result.push(children)
           }
         }
         return result.filter(item => {
-          if (this.__dispatchedSlotSet.has(item)) {
-            return false
-          } else {
-            this.__dispatchedSlotSet.add(item)
-            return true
-          }
+          if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
+          this.__dispatchedSlotSet.add(item)
+          return true
         })
       }
       return null
@@ -385,6 +382,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.mounted()
       return () => {
         proxy.unmounted()
+        proxy.target.__resetInstance()
         if (type === 'page') {
           delete global.__mpxPagesMap[props.route.key]
         }
