@@ -1,16 +1,16 @@
 import { Keyboard } from 'react-native'
 
-import { ENV_OBJ, envError } from '../../../common/js'
 let hasListener = false
-let callbacks = []
+const callbacks = []
 
-function keyboardShowListener(e) {
+function keyboardShowListener (e) {
   const endCoordinates = e.endCoordinates || {}
+  // eslint-disable-next-line node/no-callback-literal
   callbacks.forEach(cb => cb({
     height: endCoordinates.height
   }))
 }
-function keyboardHideListener(e) {
+function keyboardHideListener (e) {
   const endCoordinates = e.endCoordinates || {}
   let height
   if (__mpx_mode__ === 'ios') {
@@ -18,14 +18,15 @@ function keyboardHideListener(e) {
   } else {
     height = endCoordinates.height
   }
+  // eslint-disable-next-line node/no-callback-literal
   callbacks.forEach(cb => cb({
     height
   }))
 }
 const onKeyboardHeightChange = function (callback) {
   if (!hasListener) {
-    Keyboard.addListener("keyboardDidShow", keyboardShowListener)
-    Keyboard.addListener("keyboardDidHide", keyboardHideListener)
+    Keyboard.addListener('keyboardDidShow', keyboardShowListener)
+    Keyboard.addListener('keyboardDidHide', keyboardHideListener)
     hasListener = true
   }
   callbacks.push(callback)
