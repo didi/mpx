@@ -4,7 +4,8 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Animated } from 'react-native'
+import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, useContext } from 'react'
 import useInnerProps from './getInnerListeners'
 import useAnimationHooks from './useAnimationHooks'
@@ -660,12 +661,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
-  const animationStyle = useAnimationHooks(props)
+  const animationStyle = props.animation ? useAnimationHooks({
+    ...props,
+    style: {
+      ...innerStyle,
+      ...percentStyle
+    }
+  }) : {}
 
   return animation?.actions?.length ? (
     <Animated.View
       {...innerProps}
-      style={{...innerStyle, ...percentStyle, ...animationStyle}}
+      style={animationStyle}
     >
       {wrapChildren(children, props, textStyle, imageStyle, varStyle, newVarContextRef.current)}
     </Animated.View>
