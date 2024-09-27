@@ -5,10 +5,10 @@ import Animated, {
   useSharedValue,
   withTiming,
   useAnimatedStyle,
-  // withRepeat,
   withSequence,
   withDelay,
-  makeMutable, runOnUI
+  makeMutable,
+  // withRepeat,
   // Extrapolation,
   // interpolate,
   // interpolateColor,
@@ -110,11 +110,11 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
       return valMap
     }, {})
   }, [])
-  runOnUI(() => {
-    Object.keys(shareValMap).forEach((key) => {
-      console.info('shareValMap: valMap=', key, shareValMap[key].value)
-    })
-  })()
+  // runOnUI(() => {
+  //   Object.keys(shareValMap).forEach((key) => {
+  //     console.info('shareValMap: valMap=', key, shareValMap[key].value)
+  //   })
+  // })()
   // console.info(`idRef.current=${idRef.current}`)
   // 更新 animation id
   idRef.current = animation?.id || -1
