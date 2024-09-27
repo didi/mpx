@@ -30,8 +30,7 @@ import Animated, {
   withTiming,
   runOnJS,
   runOnUI,
-  useAnimatedReaction,
-  measure
+  useAnimatedReaction
 } from 'react-native-reanimated'
 
 interface MovableViewProps {
@@ -101,8 +100,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const isFirstTouch = useSharedValue(true)
   let touchEvent = useSharedValue<string>('')
 
-  const contextValue = useContext(MovableAreaContext)
-  const MovableAreaLayout = useSharedValue(contextValue)
+  const MovableAreaLayout = useContext(MovableAreaContext)
 
   const externalComponentGesture = externalGesture.map(gesture => {
     const instance = gesture?.getNodeInstance?.() || {}
@@ -116,10 +114,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   })
 
   propsRef.current = props
-
-  useEffect(() => {
-    MovableAreaLayout.value = contextValue;
-  }, [contextValue.width, contextValue.height])
 
   useEffect(() => {
     runOnUI(() => {
@@ -162,63 +156,49 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return hasOverBoundary ? (isMoving.value ? 'touch-out-of-bounds' : 'out-of-bounds') : (isMoving.value ? 'touch' : '');
   }, [])
 
-  const getBoundary = () => {
-    'worklet';
+  const setBoundary = ({ width, height }) => {
     const top = (style.position === 'absolute' && style.top) || 0;
     const left = (style.position === 'absolute' && style.left) || 0;
 
-    // Calculate scaled element size
-    const measureInfo = measure(nodeRef)
-    if (!measureInfo) return {
-      draggableXRange: [0, 0],
-      draggableYRange: [0, 0]
-    }
+    const scaledWidth = width || 0
+    const scaledHeight = height || 0
 
-    const scaledWidth = measureInfo?.width
-    const scaledHeight = measureInfo?.height
+    let maxY = MovableAreaLayout.height - scaledHeight - top
+    let maxX = MovableAreaLayout.width - scaledWidth - left
 
-    let maxY = MovableAreaLayout.value.height - scaledHeight - top
-    let maxX = MovableAreaLayout.value.width - scaledWidth - left
+    let xRange
+    let yRange
 
-    let draggableXRange
-    let draggableYRange
-
-    if (MovableAreaLayout.value.width < scaledWidth) {
-      draggableXRange = [maxX, 0];
+    if (MovableAreaLayout.width < scaledWidth) {
+      xRange = [maxX, 0];
     } else {
-      draggableXRange = [-left, maxX < 0 ? 0 : maxX]
+      xRange = [-left, maxX < 0 ? 0 : maxX]
     }
 
-    if (MovableAreaLayout.value.height < scaledHeight) {
-      draggableYRange = [maxY, 0];
+    if (MovableAreaLayout.height < scaledHeight) {
+      yRange = [maxY, 0];
     } else {
-      draggableYRange = [-top, maxY < 0 ? 0 : maxY]
+      yRange = [-top, maxY < 0 ? 0 : maxY]
     }
-
-    return {
-      draggableXRange,
-      draggableYRange
-    }
+    draggableXRange.value = xRange
+    draggableYRange.value = yRange
   }
 
   const checkBoundaryPosition = ({ positionX, positionY }: { positionX: number; positionY: number }) => {
     'worklet';
-    // Calculate the boundary limits
     let x = positionX
     let y = positionY
-    const { draggableXRange, draggableYRange } = getBoundary()
-
     // 计算边界限制
-    if (x > draggableXRange[1]) {
-      x = draggableXRange[1]
-    } else if (x < draggableXRange[0]) {
-      x = draggableXRange[0]
+    if (x > draggableXRange.value[1]) {
+      x = draggableXRange.value[1]
+    } else if (x < draggableXRange.value[0]) {
+      x = draggableXRange.value[0]
     }
 
-    if (y > draggableYRange[1]) {
-      y = draggableYRange[1]
-    } else if (y < draggableYRange[0]) {
-      y = draggableYRange[0]
+    if (y > draggableYRange.value[1]) {
+      y = draggableYRange.value[1]
+    } else if (y < draggableYRange.value[0]) {
+      y = draggableYRange.value[0]
     }
 
     return { x, y };
@@ -227,10 +207,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
+      setBoundary({ width, height })
       runOnUI(() => {
-        const range = getBoundary()
-        draggableXRange.value = range.draggableXRange as [min: number, max: number]
-        draggableYRange.value = range.draggableYRange as [min: number, max: number]
         const positionX = offsetX.value
         const positionY = offsetY.value
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
