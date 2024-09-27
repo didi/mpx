@@ -113,3 +113,6 @@ export * from './api/location'
 
 // getExtConfig, getExtConfigSync
 export * from './api/ext'
+
+// onKeyboardHeightChange, offKeyboardHeightChange
+export * from './api/keyboard'
