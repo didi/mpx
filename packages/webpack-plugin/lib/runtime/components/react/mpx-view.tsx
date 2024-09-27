@@ -623,7 +623,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return animation?.actions?.length ? (
     <Animated.View
       {...innerProps}
-      style={{...innerStyle, ...animationStyle}}
+      style={{...innerStyle, ...transformStyle, ...animationStyle}}
     >
       {wrapChildren(children, props, textStyle, imageStyle)}
     </Animated.View>
