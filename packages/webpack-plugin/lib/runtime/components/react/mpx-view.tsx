@@ -11,6 +11,7 @@ import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { VarContext } from './context'
 import { parseUrl, PERCENT_REGEX, VAR_USE_REGEX, isText, every, splitVarStyle, splitStyle, splitProps, throwReactWarning, transformTextStyle, formatValue } from './utils'
+import LinearGradient from 'react-native-linear-gradient'
 import { hasOwn, diffAndCloneA } from '@mpxjs/utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -50,9 +51,16 @@ type PositionVal = PositionKey | NumberVal
 
 type backgroundPositionList = ['left' | 'right', NumberVal, 'top' | 'bottom', NumberVal] | []
 
+type linearProps = {
+  colors: Array<string>,
+  locations: Array<number>,
+  angle: number
+}
+
 type PreImageInfo = {
   src?: string,
   sizeList: DimensionValue[]
+  lGProps?: linearProps
   containPercentSymbol?: boolean
   backgroundPosition: backgroundPositionList
 }
@@ -61,6 +69,22 @@ type ImageProps = {
   style: ImageStyle,
   src?: string
 }
+
+
+const linearMap = new Map([
+  ['top', 0], 
+  ['bottom', 180], 
+  ['left', 270], 
+  ['right', 90],
+  ['top right', 45],
+  ['right top', 45],
+  ['top left', 315],
+  ['left top', 315],
+  ['bottom right', 135],
+  ['right bottom', 135],
+  ['bottom left', 225],
+  ['left bottom', 225]
+])
 
 const applyHandlers = (handlers: Handler[], args: any[]) => {
   for (let handler of handlers) {
@@ -94,7 +118,7 @@ function calculateSize (h: number, ratio: number, lh?: number | boolean, reverse
     reverse = lh
   }
 
-  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx 
+  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx
     if (!lh) return null
     height = (parseFloat(h) / 100) * (lh as number)
     width = height * ratio
@@ -275,7 +299,7 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
     //     第二位是 top bottom 覆盖的是 vStart
     //             center, 100% 覆盖的是 vOffset
     //
-    // 水平方向
+    // 水平方向 
     if (isHorizontal(parts[0])) {
       hStart = parts[0]
     } else { // center, 100% 正常的px 覆盖的是 hOffset
@@ -301,17 +325,71 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
   return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
 }
 
+function normalLinearGradient(text: string) {
+  
+  let linearText = text.trim().match(/linear-gradient\((.*)\)/)?.[1]
+  
+  if (!linearText) return
+
+  // 添加默认的角度
+  if (!/^to|^-?\d+deg/.test(linearText)) {
+    linearText = '180deg ,' + linearText
+  } else {
+    linearText = linearText.replace('to', '')
+  }
+  // 把 30deg,red 10%, blue 20% 解析为 ['0deg', 'red, 10%', 'blue, 20%']
+  let [direction, ...colorList] = linearText.split(/,(?![^(#]*\))/);
+
+  // 获取角度
+  let angle = +(linearMap.get(direction.trim()) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
+  // 把 ['red, 10%', 'blue, 20%']解析为 [[red, 10%], [blue, 20%]]
+  return colorList.map(item => item.trim().split(/(?<!,)\s+/)).reduce<linearProps>((prev, cur, idx, self) => {
+
+    const { colors, locations } = prev
+    const [ color, val ] = cur
+    let numberVal: number = parseFloat(val)/100
+    
+    // 添加color的数组
+    colors.push(color.trim())
+
+    // 处理渐变位置
+    if (idx === 0) {
+      numberVal = numberVal || 0
+    } else if (self.length - 1 === idx){
+      numberVal = numberVal || 1
+    }
+    locations.push(numberVal)
+    return prev
+  }, {'colors': [], 'locations': [], angle })
+}
+
+function normalBackgroundImage (text?: string) {
+  
+  if (!text) return {}
+
+  const src = parseUrl(text)
+
+  if (src) return { src }
+
+  const lGProps = normalLinearGradient(text)
+
+  return {
+    lGProps
+  }
+}
+
 function preParseImage (imageStyle?: ExtendedViewStyle) {
 
   const { backgroundImage, backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
-  const src = parseUrl(backgroundImage)
+  const { src, lGProps } = normalBackgroundImage(backgroundImage)
 
   let sizeList = backgroundSize.slice() as DimensionValue[]
 
   sizeList.length === 1 && sizeList.push('auto')
-
+  
   return {
     src,
+    lGProps,
     sizeList,
     backgroundPosition: normalizeBackgroundPosition(backgroundPosition)
   }
@@ -328,10 +406,10 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
 
   // 预解析
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
-
+  
   // 判断是否可挂载onLayout
   const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
-  const { src } = preImageInfo
+  const { src, lGProps } = preImageInfo
 
   useEffect(() => {
     if (!src) {
@@ -363,7 +441,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     })
   }, [preImageInfo?.src])
 
-  if (!preImageInfo?.src) return null
+  if (!preImageInfo?.src && !lGProps) return null
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
@@ -384,6 +462,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   }
 
   return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
+    {lGProps && <LinearGradient useAngle={true} style={{ width: '100%', height: '100%'}} {...lGProps} /> }
     {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
@@ -670,3 +749,4 @@ _View.displayName = 'mpx-view'
 
 export default _View
 
+ 
