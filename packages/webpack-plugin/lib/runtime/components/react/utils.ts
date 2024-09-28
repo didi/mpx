@@ -1,6 +1,5 @@
 import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement } from 'react'
-import { ExtendedViewStyle } from './types/common'
-import { TextStyle } from 'react-native'
+import { TextStyle, Dimensions } from 'react-native'
 
 type GroupData = Record<string, Record<string, any>>
 
@@ -10,7 +9,11 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 
 export const IMAGE_STYLE_REGEX = /^background(Image|Size|Repeat|Position)$/
 
-export const TEXT_PROPS_REGEX =  /ellipsizeMode|numberOfLines/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
+
+export const VAR_DEC_REGEX = /^--.*/
+
+export const VAR_USE_REGEX = /var\(([^,]+)(?:,([^)]+))?\)/
 
 export const DEFAULT_STYLE = {
   fontSize: 16
@@ -18,7 +21,27 @@ export const DEFAULT_STYLE = {
 
 const URL_REGEX = /url\(["']?(.*?)["']?\)/
 
-export function omit<T, K extends string>(obj: T, fields: K[]): Omit<T, K> {
+export function rpx (value: number) {
+  const { width } = Dimensions.get('screen')
+  // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
+  // px = rpx * (750 / 屏幕宽度)
+  return value * width / 750
+}
+
+const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
+const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+
+export function formatValue (value: string) {
+  let matched
+  if ((matched = pxRegExp.exec(value))) {
+    return +matched[1]
+  } else if ((matched = rpxRegExp.exec(value))) {
+    return rpx(+matched[1])
+  }
+  return value
+}
+
+export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = Object.assign({}, obj)
   for (let i = 0; i < fields.length; i += 1) {
     const key = fields[i]
@@ -94,12 +117,12 @@ export const isEmbedded = (ele: ReactNode) => {
   return false
 }
 
-export function every(children: ReactNode, callback: (children: ReactNode) => boolean ) {
-  const childrenArray = Array.isArray(children) ? children : [children];
+export function every (children: ReactNode, callback: (children: ReactNode) => boolean) {
+  const childrenArray = Array.isArray(children) ? children : [children]
   return childrenArray.every((child) => callback(child as ReactNode))
 }
 
-export function groupBy(obj: Record<string, any>, callback: (key: string, val: string) => string, group:GroupData = {}):GroupData {
+export function groupBy (obj: Record<string, any>, callback: (key: string, val: string) => string, group: GroupData = {}): GroupData {
   let groupKey = ''
   for (let key in obj) {
     if (obj.hasOwnProperty(key)) { // 确保处理对象自身的属性
@@ -114,27 +137,18 @@ export function groupBy(obj: Record<string, any>, callback: (key: string, val: s
   return group
 }
 
-export const normalizeStyle = (style: ExtendedViewStyle = {}) => {
-  const { borderRadius } = style
-  if (borderRadius && PERCENT_REGEX.test(borderRadius as string)) {
-    style.borderTopLeftRadius = borderRadius
-    style.borderBottomLeftRadius = borderRadius
-    style.borderBottomRightRadius = borderRadius
-    style.borderTopRightRadius = borderRadius
-    delete style.borderRadius
-  }
-  ['backgroundSize', 'backgroundPosition'].forEach(name => {
-    if (style[name] && typeof style[name] === 'string') {
-      if (style[name].trim()) {
-        style[name] = style[name].split(' ')
-     }
+export function splitVarStyle (styleObj: Object) {
+  return groupBy(styleObj, (key) => {
+    if (VAR_DEC_REGEX.test(key)) {
+      return 'varStyle'
+    } else {
+      return 'normalStyle'
     }
-  })
-  return style
+  }, {})
 }
 
-export function splitStyle<T extends Record<string, any>>(styles: T) {
-  return groupBy(styles, (key) => {
+export function splitStyle (styleObj: Object) {
+  return groupBy(styleObj, (key) => {
     if (TEXT_STYLE_REGEX.test(key)) {
       return 'textStyle'
     } else if (IMAGE_STYLE_REGEX.test(key)) {
@@ -145,7 +159,7 @@ export function splitStyle<T extends Record<string, any>>(styles: T) {
   }, {})
 }
 
-export function splitProps<T extends Record<string, any>>(props: T) {
+export function splitProps<T extends Record<string, any>> (props: T) {
   return groupBy(props, (key) => {
     if (TEXT_PROPS_REGEX.test(key)) {
       return 'textProps'

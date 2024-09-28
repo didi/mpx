@@ -28,6 +28,12 @@ export default class SelectorQuery {
     if (!this._component) {
       warn('Please use SelectorQuery.in method to set context')
     }
+    selector = selector.trim()
+    // 后续如果要支持这种复杂的选择器，需要按场景拆分这些判断逻辑
+    if (/>|,|>>>|\+|~|\s+/.test(selector)) {
+      warn('SelectQuery.select don\'t support combinator selector, it only supports selector like #a or .a or .a.b now.')
+      return new NodeRef([], this, !all)
+    }
     const refs = this._component && this._component.__selectRef(selector, 'node', all)
     return new NodeRef(refs, this, !all)
   }
