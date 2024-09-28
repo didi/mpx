@@ -327,18 +327,18 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
 
 function normalLinearGradient(text: string) {
   
-  let gradientText = text.trim().match(/linear-gradient\((.*)\)/)?.[1]
+  let linearText = text.trim().match(/linear-gradient\((.*)\)/)?.[1]
   
-  if (!gradientText) return
+  if (!linearText) return
 
   // 添加默认的角度
-  if (!/^to|^-?\d+deg/.test(gradientText)) {
-    gradientText = '180deg ,' + gradientText
+  if (!/^to|^-?\d+deg/.test(linearText)) {
+    linearText = '180deg ,' + linearText
   } else {
-    gradientText = gradientText.replace('to', '')
+    linearText = linearText.replace('to', '')
   }
   // 把 30deg,red 10%, blue 20% 解析为 ['0deg', 'red, 10%', 'blue, 20%']
-  let [direction, ...colorList] = gradientText.split(/,(?![^(#]*\))/);
+  let [direction, ...colorList] = linearText.split(/,(?![^(#]*\))/);
 
   // 获取角度
   let angle = +(linearMap.get(direction.trim()) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
