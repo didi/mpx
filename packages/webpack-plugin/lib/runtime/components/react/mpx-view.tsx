@@ -51,7 +51,7 @@ type PositionVal = PositionKey | NumberVal
 
 type backgroundPositionList = ['left' | 'right', NumberVal, 'top' | 'bottom', NumberVal] | []
 
-type gradientProps = {
+type linearProps = {
   colors: Array<string>,
   locations: Array<number>,
   angle: number
@@ -60,7 +60,7 @@ type gradientProps = {
 type PreImageInfo = {
   src?: string,
   sizeList: DimensionValue[]
-  lGProps?: gradientProps
+  lGProps?: linearProps
   containPercentSymbol?: boolean
   backgroundPosition: backgroundPositionList
 }
@@ -343,7 +343,7 @@ function normalLinearGradient(text: string) {
   // 获取角度
   let angle = +(linearMap.get(direction.trim()) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
   // 把 ['red, 10%', 'blue, 20%']解析为 [[red, 10%], [blue, 20%]]
-  return colorList.map(item => item.trim().split(/(?<!,)\s+/)).reduce<gradientProps>((prev, cur, idx, self) => {
+  return colorList.map(item => item.trim().split(/(?<!,)\s+/)).reduce<linearProps>((prev, cur, idx, self) => {
 
     const { colors, locations } = prev
     const [ color, val ] = cur
