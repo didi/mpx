@@ -6,6 +6,7 @@
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js,.tsx packages/",
     "fix": "eslint --fix --ext .js,.tsx packages/",
+    "lint:js": "eslint --ext .js packages/",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
