@@ -1,6 +1,6 @@
-import { useEffect, useRef, ReactNode, FunctionComponent, isValidElement, useContext, useState } from 'react'
+import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
 import { TextStyle, Dimensions } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
+import { isObject, hasOwn, diffAndCloneA } from '@mpxjs/utils'
 import { VarContext } from './context'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -94,7 +94,7 @@ export const getRestProps = (transferProps: any = {}, originProps: any = {}, del
   }
 }
 
-export const isText = (ele: ReactNode) => {
+export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName
     return displayName === 'mpx-text' || displayName === 'Text'
@@ -102,10 +102,10 @@ export const isText = (ele: ReactNode) => {
   return false
 }
 
-export const isEmbedded = (ele: ReactNode) => {
+export function isEmbedded (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
-    const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName && ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName)
+    const displayName = (ele.type as FunctionComponent)?.displayName || ''
+    return ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName)
   }
   return false
 }
@@ -115,7 +115,7 @@ export function every (children: ReactNode, callback: (children: ReactNode) => b
   return childrenArray.every((child) => callback(child as ReactNode))
 }
 
-type GroupData = Record<string, Record<string, any>>
+type GroupData = Record<string, Record<string, any> | undefined>
 export function groupBy (obj: Record<string, any>, callback: (key: string, val: any) => string, group: GroupData = {}): GroupData {
   Object.entries(obj).forEach(([key, val]) => {
     const groupKey = callback(key, val)

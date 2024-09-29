@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -384,17 +384,18 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   </View>
 }
 
-function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { hasVarDec: boolean, enableBackground: boolean }, textStyle?: StyleProp<TextStyle>, backgroundStyle?: ExtendedViewStyle, varContext?: Object) {
+function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { hasVarDec: boolean, enableBackground: boolean }, textStyle?: TextStyle, backgroundStyle?: ExtendedViewStyle, varContext?: Record<string, any>) {
   const { textProps } = splitProps(props)
   let { children } = props
 
-  if (every(children as ReactNode[], (child) => isText(child))) {
-    if (textStyle || textProps) {
-      transformTextStyle(textStyle as TextStyle)
-      children = <Text key='childrenWrap' style={textStyle} {...(textProps || {})}>{children}</Text>
-    }
-  } else {
-    if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the view is Text node!')
+  if (textStyle || textProps) {
+    children = Children.map(children, (child) => {
+      if (isText(child)) {
+        const style = { ...textStyle, ...child.props.style }
+        return cloneElement(child, { ...textProps, style })
+      }
+      return child
+    })
   }
 
   if (hasVarDec && varContext) {
