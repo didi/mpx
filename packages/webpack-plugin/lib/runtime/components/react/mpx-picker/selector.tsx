@@ -9,7 +9,7 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 type RangeItemType = Obj | number | string
 
-const  formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
+const formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
   let newRange: Object[] = []
   newRange = (range || []).map((item: RangeItemType, index) => {
     if (typeof item === 'object') {
@@ -24,7 +24,7 @@ const  formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
 const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProps>((props: SelectorProps, ref): React.JSX.Element => {
   const { range, children, value, disabled, bindchange, bindcancel } = props
   // 格式化数据为Array<*>
-  let formatRange: PickerColumn = formatRangeFun(range, props['range-key'])
+  const formatRange: PickerColumn = formatRangeFun(range, props['range-key'])
   // 选中的索引值
   const [selected, setSelected] = useState<PickerValue>(value || 0)
   // range数据源
@@ -44,7 +44,7 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     })
   }, [range, value])
   const defaultValue = [value]
-  
+
   const onChange = (value: PickerValue[]) => {
     bindchange && bindchange({
       detail: {
@@ -60,7 +60,6 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     })
   }
 
-
   const antPickerProps = {
     data,
     value: [selected],
@@ -69,7 +68,7 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     itemHeight: 40,
     onChange,
     onDismiss: bindcancel && bindcancel
-  }  as any
+  } as any
 
   const touchProps = {
     onLayout: onElementLayout,
@@ -87,6 +86,6 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   )
 })
 
-_SelectorPicker.displayName = 'mpx-picker-selector';
+_SelectorPicker.displayName = 'mpx-picker-selector'
 
 export default _SelectorPicker

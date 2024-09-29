@@ -3,8 +3,6 @@ import { TextStyle, Dimensions } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
 
-
-
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
@@ -81,7 +79,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
   }, {})
 }
 
-export const parseUrl = (cssUrl: string = '') => {
+export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
 
   const match = cssUrl.match(URL_REGEX)
@@ -120,7 +118,7 @@ export function every (children: ReactNode, callback: (children: ReactNode) => b
 type GroupData = Record<string, Record<string, any>>
 export function groupBy (obj: Record<string, any>, callback: (key: string, val: any) => string, group: GroupData = {}): GroupData {
   Object.entries(obj).forEach(([key, val]) => {
-    let groupKey = callback(key, val)
+    const groupKey = callback(key, val)
     group[groupKey] = group[groupKey] || {}
     group[groupKey][key] = val
   })
@@ -147,7 +145,6 @@ const percentRule: Record<string, string> = {
   borderBottomRightRadius: 'height',
   borderTopRightRadius: 'height'
 }
-
 
 function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array<Array<string>>, { width, height }: { width?: number, height?: number }) {
   percentKeyPaths.forEach((percentKeyPath) => {
@@ -184,12 +181,11 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-
 export function useTransformStyle (styleObj: Record<string, any>, { enableVar }: { enableVar?: boolean }) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
-  let hasVarUse = false
+  const hasVarUse = false
   let hasPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -223,7 +219,7 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar }:
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
   if (enableVarRef.current !== enableVar) {
-    throw new Error(`[Mpx runtime error]: css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.`)
+    throw new Error('[Mpx runtime error]: css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
   }
   // apply var
   const varContextRef = useRef({})
@@ -264,11 +260,11 @@ export interface VisitorArg {
 }
 
 export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(arg: VisitorArg) => void>) {
-  let keyPath: Array<string> = []
+  const keyPath: Array<string> = []
   function traverse<T extends Record<string, any>> (target: T) {
     if (Array.isArray(target)) {
       target.forEach((value, index) => {
-        let key = String(index)
+        const key = String(index)
         keyPath.push(key)
         visitors.forEach(visitor => visitor({
           target,
@@ -291,7 +287,7 @@ export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(a
   traverse(styleObj)
 }
 
-export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>, setter: (arg: VisitorArg) => void, needClone: boolean = false) {
+export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>, setter: (arg: VisitorArg) => void, needClone = false) {
   let target = styleObj
   const firstKey = keyPath[0]
   const lastKey = keyPath[keyPath.length - 1]

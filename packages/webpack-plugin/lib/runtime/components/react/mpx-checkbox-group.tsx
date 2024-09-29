@@ -40,7 +40,7 @@ const CheckboxGroup = forwardRef<
   const layoutRef = useRef({})
   const formContext = useContext(FormContext)
 
-  let formValuesMap: Map<string, FormFieldValue> | undefined;
+  let formValuesMap: Map<string, FormFieldValue> | undefined
 
   if (formContext) {
     formValuesMap = formContext.formValuesMap
@@ -74,7 +74,7 @@ const CheckboxGroup = forwardRef<
 
   const getSelectionValue = (): string[] => {
     const arr: string[] = []
-    for (let key in groupValue) {
+    for (const key in groupValue) {
       if (groupValue[key].checked) {
         arr.push(key)
       }

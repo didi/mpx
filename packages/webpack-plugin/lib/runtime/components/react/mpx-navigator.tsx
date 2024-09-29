@@ -8,11 +8,11 @@
  * ✔ delta
  */
 import { View } from 'react-native'
-import { useCallback, forwardRef, JSX } from 'react';
+import { useCallback, forwardRef, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 
-import MpxView, { _ViewProps }  from './mpx-view'
+import MpxView, { _ViewProps } from './mpx-view'
 
 interface _NavigatorProps extends _ViewProps {
   ['open-type']: 'navigate' | 'redirect' | 'switchTab' | 'reLaunch' | 'navigateBack'

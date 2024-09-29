@@ -5,13 +5,12 @@
  * ✔ hover-stay-time
  */
 import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, useContext } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { VarContext } from './context'
-import { parseUrl, PERCENT_REGEX, VAR_USE_REGEX, isText, every, splitStyle, splitProps, throwReactWarning, transformTextStyle, useTransformStyle, formatValue, traverseStyle, setStyle, VisitorArg, VAR_DEC_REGEX } from './utils'
-import { hasOwn, diffAndCloneA, isObject } from '@mpxjs/utils'
+import { parseUrl, PERCENT_REGEX, isText, every, splitStyle, splitProps, throwReactWarning, transformTextStyle, useTransformStyle } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -63,7 +62,7 @@ type ImageProps = {
 }
 
 const applyHandlers = (handlers: Handler[], args: any[]) => {
-  for (let handler of handlers) {
+  for (const handler of handlers) {
     handler(...args)
   }
 }
@@ -87,14 +86,14 @@ const checkNeedLayout = (style: PreImageInfo) => {
 * lh - 容器的高度
 * ratio - 原始图片的宽高比
 * **/
-function calculateSize (h: number, ratio: number, lh?: number | boolean, reverse: boolean = false): Size | null {
-  let height = 0, width = 0
+function calculateSize (h: number, ratio: number, lh?: number | boolean, reverse = false): Size | null {
+  let height = 0; let width = 0
 
   if (typeof lh === 'boolean') {
     reverse = lh
   }
 
-  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx 
+  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx
     if (!lh) return null
     height = (parseFloat(h) / 100) * (lh as number)
     width = height * ratio
@@ -129,11 +128,11 @@ function calculateSizePosition (h: number, ch: number, val: string): number {
 function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   const bps = preImageInfo.backgroundPosition
   if (bps.length === 0) return
-  let style: Position = {}
-  let imageStyle: ImageStyle = imageProps.style || {}
+  const style: Position = {}
+  const imageStyle: ImageStyle = imageProps.style || {}
 
   for (let i = 0; i < bps.length; i += 2) {
-    let key = bps[i] as PositionKey, val = bps[i + 1]
+    const key = bps[i] as PositionKey; const val = bps[i + 1]
     // 需要获取 图片宽度 和 容器的宽度 进行计算
     if (typeof val === 'string' && PERCENT_REGEX.test(val)) {
       if (i === 0) {
@@ -150,12 +149,11 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
     ...imageProps.style as ImageStyle,
     ...style
   }
-
 }
 
 // background-size 转换
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
-  let sizeList = preImageInfo.sizeList
+  const sizeList = preImageInfo.sizeList
   if (!sizeList) return
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
@@ -168,8 +166,8 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   // 枚举值
   if (typeof width === 'string' && ['cover', 'contain'].includes(width)) {
     if (layoutInfo && imageSize) {
-      let layoutRatio = layoutWidth / imageSizeWidth
-      let eleRatio = imageSizeWidth / imageSizeHeight
+      const layoutRatio = layoutWidth / imageSizeWidth
+      const eleRatio = imageSizeWidth / imageSizeHeight
       // 容器宽高比 大于 图片的宽高比，依据宽度作为基准，否则以高度为基准
       if (layoutRatio <= eleRatio && (width as string) === 'contain' || layoutRatio >= eleRatio && (width as string) === 'cover') {
         dimensions = calculateSize(layoutWidth as number, imageSizeHeight / imageSizeWidth, true) as Size
@@ -236,7 +234,6 @@ function isVertical (val: PositionVal): val is 'top' | 'bottom' {
 }
 
 function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionList {
-
   if (parts.length === 0) return []
 
   // 定义默认值
@@ -302,11 +299,10 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
-
   const { backgroundImage, backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
   const src = parseUrl(backgroundImage)
 
-  let sizeList = backgroundSize.slice() as DimensionValue[]
+  const sizeList = backgroundSize.slice() as DimensionValue[]
 
   sizeList.length === 1 && sizeList.push('auto')
 
@@ -350,7 +346,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
         width,
         height
       }
-      //1. 当需要绑定onLayout 2. 获取到布局信息
+      // 1. 当需要绑定onLayout 2. 获取到布局信息
       if (!needLayout || layoutInfo.current) {
         setImageSizeWidth(width)
         setImageSizeHeight(height)
@@ -387,8 +383,6 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
-
-
 
 function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { hasVarDec: boolean, enableBackground: boolean }, textStyle?: StyleProp<TextStyle>, backgroundStyle?: ExtendedViewStyle, varContext?: Object) {
   const { textProps } = splitProps(props)
@@ -458,7 +452,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    throw new Error(`[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.`)
+    throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
@@ -563,4 +557,3 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
 _View.displayName = 'mpx-view'
 
 export default _View
-

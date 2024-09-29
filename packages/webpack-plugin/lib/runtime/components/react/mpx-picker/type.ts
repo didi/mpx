@@ -34,7 +34,7 @@ export type MultiSelectorProps = {
   getInnerLayout: Function
 }
 
-export type TimeProps =  {
+export type TimeProps = {
   mode: string,
   // 表示选择了 range 中的第几个（下标从 0 开始）
   value: string,
