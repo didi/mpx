@@ -11,7 +11,7 @@ import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { VarContext } from './context'
 import { parseUrl, PERCENT_REGEX, VAR_USE_REGEX, isText, every, splitVarStyle, splitStyle, splitProps, throwReactWarning, transformTextStyle, formatValue } from './utils'
-import { hasOwn } from '@mpxjs/utils'
+import { hasOwn, diffAndCloneA } from '@mpxjs/utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -532,7 +532,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset,
-    // 'enable-css-var': enableCssVar
+    'enable-css-var': enableCssVar
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -543,7 +543,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   const layoutRef = useRef({})
 
   const varContext = useContext(VarContext)
-  // const varContextRef = useRef(null) 
+  // 缓存比较newVarContext是否发生变化
+  const newVarContextRef = useRef({})
 
   // 默认样式
   const defaultStyle: ExtendedViewStyle = {
@@ -566,7 +567,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
 
   const newVarContext = Object.assign({}, varContext, varStyle)
 
-  transformVar(styleObj, newVarContext)
+  if (diffAndCloneA(newVarContextRef.current, newVarContext).diff) {
+    newVarContextRef.current = newVarContext
+  }
+
+  transformVar(styleObj, newVarContextRef.current)
 
   const { textStyle, imageStyle, innerStyle } = splitStyle(styleObj)
 
@@ -656,7 +661,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       {...innerProps}
       style={{ ...innerStyle, ...percentStyle }}
     >
-      {wrapChildren(children, props, textStyle, imageStyle, varStyle, newVarContext)}
+      {wrapChildren(children, props, textStyle, imageStyle, varStyle, newVarContextRef.current)}
     </View>
   )
 })

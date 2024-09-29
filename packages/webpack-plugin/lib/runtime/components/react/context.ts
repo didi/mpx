@@ -37,4 +37,4 @@ export const LabelContext = createContext<LabelContextValue | null>(null)
 
 export const PickerContext = createContext(null)
 
-export const VarContext = createContext<Object>({})
+export const VarContext = createContext({})
