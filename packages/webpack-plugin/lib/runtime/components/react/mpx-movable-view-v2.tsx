@@ -241,7 +241,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
   }
 
-  const onTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
+  const onTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
     const { bindhtouchmove, bindvtouchmove, bindtouchmove } = props
     if (touchEvent.value === 'htouchmove') {
       bindhtouchmove && bindhtouchmove(e)
@@ -249,16 +249,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       bindvtouchmove && bindvtouchmove(e)
     }
     bindtouchmove && bindtouchmove(e)
-  }, [bindhtouchmove, bindvtouchmove, bindtouchmove])
+  }
 
-  const onCatchTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
+  const onCatchTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
     if (touchEvent.value === 'htouchmove') {
       catchhtouchmove && catchhtouchmove(e)
     } else if (touchEvent.value === 'vtouchmove') {
       catchvtouchmove && catchvtouchmove(e)
     }
     catchtouchmove && catchtouchmove(e)
-  }, [catchhtouchmove, catchvtouchmove, catchtouchmove])
+  }
 
   const extendEvent = (e: any) => {
     [e.changedTouches, e.allTouches].map(touches => {
