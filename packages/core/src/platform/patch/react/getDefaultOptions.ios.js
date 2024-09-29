@@ -424,18 +424,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
 
-      return createElement(Provider,
-        null,
-        createElement(GestureHandlerRootView,
-          {
-            style: {
-              flex: 1,
-              backgroundColor: pageConfig.backgroundColor || '#ffffff'
-            },
-            onLayout (e) {
-              navigation.layout = e.nativeEvent.layout
-            }
+      return createElement(GestureHandlerRootView,
+        {
+          style: {
+            flex: 1,
+            backgroundColor: pageConfig.backgroundColor || '#ffffff'
           },
+          onLayout (e) {
+            navigation.layout = e.nativeEvent.layout
+          }
+        },
+        // todo custom portal host for active route
+        createElement(Provider,
+          null,
           createElement(routeContext.Provider,
             {
               value: { pageId: currentPageId }
