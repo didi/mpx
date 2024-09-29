@@ -115,7 +115,7 @@ export function every (children: ReactNode, callback: (children: ReactNode) => b
   return childrenArray.every((child) => callback(child as ReactNode))
 }
 
-type GroupData = Record<string, Record<string, any> | undefined>
+type GroupData = Record<string, Record<string, any>>
 export function groupBy (obj: Record<string, any>, callback: (key: string, val: any) => string, group: GroupData = {}): GroupData {
   Object.entries(obj).forEach(([key, val]) => {
     const groupKey = callback(key, val)
