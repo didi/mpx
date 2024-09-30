@@ -10,7 +10,7 @@ import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { VarContext } from './context'
-import { parseUrl, PERCENT_REGEX, isText, every, splitStyle, splitProps, throwReactWarning, transformTextStyle, useTransformStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, isText, splitStyle, splitProps, useTransformStyle } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -20,6 +20,7 @@ export interface _ViewProps extends ViewProps {
   'enable-offset'?: boolean
   'enable-background'?: boolean
   'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -416,6 +417,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset,
     'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     'enable-background': enableBackground
   } = props
 
@@ -446,7 +448,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     varContextRef,
     setContainerWidth,
     setContainerHeight
-  } = useTransformStyle(styleObj, { enableVar })
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
