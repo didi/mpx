@@ -110,28 +110,27 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) {
     const { bindchange } = propsRef.current
+    if (!bindchange) return
     let source = ''
     if (type !== 'setData') {
       source = getTouchSource(x, y);
     } else {
       changeSource.current = ''
     }
-    bindchange &&
-      bindchange(
-        getCustomEvent('change', {}, {
-          detail: {
-            x,
-            y,
-            source
-          },
-          layoutRef
-        }, propsRef.current)
-      )
+    bindchange(
+      getCustomEvent('change', {}, {
+        detail: {
+          x,
+          y,
+          source
+        },
+        layoutRef
+      }, propsRef.current)
+    )
   }, [])
 
   useEffect(() => {
     runOnUI(() => {
-      const { bindchange } = propsRef.current
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
         if (direction === 'horizontal' || direction === 'all') {
@@ -140,13 +139,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (direction === 'vertical' || direction === 'all') {
           offsetY.value = withTiming(newY)
         }
-        if (bindchange) {
-          runOnJS(handleTriggerChange)({
-            x: newX,
-            y: newY,
-            type: 'setData'
-          })
-        }
+        runOnJS(handleTriggerChange)({
+          x: newX,
+          y: newY,
+          type: 'setData'
+        })
       }
     })()
   }, [x, y])
@@ -157,13 +154,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       offsetY: offsetY.value
     }),
     (currentValue: { offsetX: any; offsetY: any; }) => {
-      if (bindchange) {
-        const { offsetX, offsetY } = currentValue
-        runOnJS(handleTriggerChange)({
-          x: offsetX,
-          y: offsetY
-        })
-      }
+      const { offsetX, offsetY } = currentValue
+      runOnJS(handleTriggerChange)({
+        x: offsetX,
+        y: offsetY
+      })
     })
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
