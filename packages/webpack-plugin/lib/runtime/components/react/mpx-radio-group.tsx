@@ -6,7 +6,9 @@ import {
   useRef,
   forwardRef,
   ReactNode,
-  useContext
+  useContext,
+  useMemo,
+  useCallback
 } from 'react'
 import {
   View,
@@ -33,9 +35,12 @@ const radioGroup = forwardRef<
   const {
     style = {},
     'enable-offset': enableOffset,
-    children,
-    bindchange,
+    children
   } = props
+
+  const propsRef = useRef({} as radioGroupProps)
+
+  propsRef.current = props
 
   const layoutRef = useRef({})
 
@@ -59,7 +64,7 @@ const radioGroup = forwardRef<
     defaultStyle
   })
 
-  const onLayout = () => {
+  const onLayout = useCallback(() => {
     nodeRef.current?.measure(
       (
         x: number,
@@ -72,19 +77,19 @@ const radioGroup = forwardRef<
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
       }
     )
-  }
+  }, [])
 
-  const getSelectionValue = (): string | undefined => {
+  const getSelectionValue = useCallback((): string | undefined => {
     for (let key in groupValue) {
       if (groupValue[key].checked) {
         return key
       }
     }
-  }
+  }, [])
 
-  const getValue = () => {
+  const getValue = useCallback(() => {
     return getSelectionValue()
-  }
+  }, [getSelectionValue])
 
   const resetValue = () => {
     Object.keys(groupValue).forEach((key) => {
@@ -101,9 +106,10 @@ const radioGroup = forwardRef<
     }
   }
 
-  const notifyChange = (
+  const notifyChange = useCallback((
     evt: NativeSyntheticEvent<TouchEvent>
   ) => {
+    const { bindchange } = propsRef.current
     bindchange &&
       bindchange(
         getCustomEvent(
@@ -115,10 +121,19 @@ const radioGroup = forwardRef<
               value: getSelectionValue()
             }
           },
-          props
+          propsRef.current
         )
       )
-  }
+  }, [])
+
+
+  const contextValue = useMemo(() => {
+    return {
+      groupValue,
+      notifyChange
+    }
+  }, [notifyChange])
+
 
   const innerProps = useInnerProps(
     props,
@@ -135,7 +150,7 @@ const radioGroup = forwardRef<
 
   return (
     <View {...innerProps}>
-      <RadioGroupContext.Provider value={{ groupValue, notifyChange }}>
+      <RadioGroupContext.Provider value={contextValue}>
         {children}
       </RadioGroupContext.Provider>
     </View>

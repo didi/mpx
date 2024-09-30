@@ -17,7 +17,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef } from 'react';
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react';
 import { StyleSheet, NativeSyntheticEvent, View } from 'react-native';
 import { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -63,30 +63,22 @@ const styles = StyleSheet.create({
 })
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
+  const layoutRef = useRef<any>({})
+  const changeSource = useRef<any>('')
+
+  const propsRef = useRef({} as MovableViewProps)
+  propsRef.current = props
   const {
     children,
     x = 0,
     y = 0,
-    style = {},
     inertia,
     disabled,
     'out-of-bounds': outOfBounds,
     direction,
     externalGesture = [],
-    bindtouchstart,
-    bindhtouchmove,
-    catchhtouchmove,
-    bindvtouchmove,
-    catchvtouchmove,
-    bindtouchmove,
-    catchtouchmove,
-    bindtouchend,
-    bindchange,
+    style = {},
   } = props
-
-  const propsRef = useRef<any>({})
-  const layoutRef = useRef<any>({})
-  const changeSource = useRef<any>('')
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
@@ -116,10 +108,30 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     isAnimatedRef: true
   })
 
-  propsRef.current = props
+  const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) {
+    const { bindchange } = propsRef.current
+    let source = ''
+    if (type !== 'setData') {
+      source = getTouchSource(x, y);
+    } else {
+      changeSource.current = ''
+    }
+    bindchange &&
+      bindchange(
+        getCustomEvent('change', {}, {
+          detail: {
+            x,
+            y,
+            source
+          },
+          layoutRef
+        }, propsRef.current)
+      )
+  }, [])
 
   useEffect(() => {
     runOnUI(() => {
+      const { bindchange } = propsRef.current
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
         if (direction === 'horizontal' || direction === 'all') {
@@ -175,7 +187,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return source
   }, [])
 
-  const setBoundary = ({ width, height }: { width: number; height: number }) => {
+  const setBoundary = useCallback(({ width, height }: { width: number; height: number }) => {
     const top = (style.position === 'absolute' && style.top) || 0;
     const left = (style.position === 'absolute' && style.left) || 0;
 
@@ -201,9 +213,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
     draggableXRange.value = xRange
     draggableYRange.value = yRange
-  }
+  }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
-  const checkBoundaryPosition = ({ positionX, positionY }: { positionX: number; positionY: number }) => {
+  const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
     'worklet';
     let x = positionX
     let y = positionY
@@ -221,7 +233,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     return { x, y };
-  }
+  }, [])
 
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
@@ -241,26 +253,27 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
   }
 
-  const onTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
-    const { bindhtouchmove, bindvtouchmove, bindtouchmove } = props
+  const onTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove } = propsRef.current
     if (touchEvent.value === 'htouchmove') {
       bindhtouchmove && bindhtouchmove(e)
     } else if (touchEvent.value === 'vtouchmove') {
       bindvtouchmove && bindvtouchmove(e)
     }
     bindtouchmove && bindtouchmove(e)
-  }
+  }, [])
 
-  const onCatchTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
+  const onCatchTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
+    const { catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
     if (touchEvent.value === 'htouchmove') {
       catchhtouchmove && catchhtouchmove(e)
     } else if (touchEvent.value === 'vtouchmove') {
       catchvtouchmove && catchvtouchmove(e)
     }
     catchtouchmove && catchtouchmove(e)
-  }
+  }, [])
 
-  const extendEvent = (e: any) => {
+  const extendEvent = useCallback((e: any) => {
     [e.changedTouches, e.allTouches].map(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
         item.pageX = item.absoluteX
@@ -268,14 +281,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
     })
     e.touches = e.allTouches
-  }
+  }, [])
 
-  const handleTriggerStart = (e: any) => {
+  const handleTriggerStart = useCallback((e: any) => {
+    const { bindtouchstart } = propsRef.current
     extendEvent(e)
     bindtouchstart && bindtouchstart(e)
-  }
+  }, [])
 
-  const handleTriggerMove = (e: any) => {
+  const handleTriggerMove = useCallback((e: any) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
     extendEvent(e)
     const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
     const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
@@ -285,113 +300,98 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (hasCatchTouchmove) {
       onCatchTouchMove(e)
     }
-  }
-  const handleTriggerEnd = (e: any) => {
+  }, [])
+
+  const handleTriggerEnd = useCallback((e: any) => {
+    const { bindtouchend } = propsRef.current
     extendEvent(e)
     bindtouchend && bindtouchend(e)
-  }
+  }, [])
 
-  function handleTriggerChange({ x, y, type }: { x: number; y: number; type?: string }) {
-    let source = ''
-    if (type !== 'setData') {
-      source = getTouchSource(x, y);
-    } else {
-      changeSource.current = ''
-    }
-    bindchange &&
-      bindchange(
-        getCustomEvent('change', {}, {
-          detail: {
-            x,
-            y,
-            source
-          },
-          layoutRef
-        }, propsRef.current)
-      )
-  }
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .onTouchesDown((e: GestureTouchEvent) => {
+        'worklet';
 
-  const gesture = Gesture.Pan()
-    .onTouchesDown((e: GestureTouchEvent) => {
-      'worklet';
-
-      if (!disabled) {
+        if (!disabled) {
+          const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
+          isMoving.value = false
+          startPosition.value = {
+            x: changedTouches.x,
+            y: changedTouches.y
+          }
+        }
+        runOnJS(handleTriggerStart)(e)
+      })
+      .onTouchesMove((e: GestureTouchEvent) => {
+        'worklet';
+        if (disabled) return
+        isMoving.value = true
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
+        if (isFirstTouch.value) {
+          touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
+          isFirstTouch.value = false
+        }
+        const changeX = changedTouches.x - startPosition.value.x;
+        const changeY = changedTouches.y - startPosition.value.y;
+        if (direction === 'horizontal' || direction === 'all') {
+          let newX = offsetX.value + changeX
+          if (!outOfBounds) {
+            const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
+            offsetX.value = x
+          } else {
+            offsetX.value = newX
+          }
+        }
+        if (direction === 'vertical' || direction === 'all') {
+          let newY = offsetY.value + changeY
+          if (!outOfBounds) {
+            const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY });
+            offsetY.value = y
+          } else {
+            offsetY.value = newY
+          }
+        }
+        runOnJS(handleTriggerMove)(e)
+      })
+      .onTouchesUp((e: GestureTouchEvent) => {
+        'worklet';
+        isFirstTouch.value = true
         isMoving.value = false
-        startPosition.value = {
-          x: changedTouches.x,
-          y: changedTouches.y
-        }
-      }
-      runOnJS(handleTriggerStart)(e)
-    })
-    .onTouchesMove((e: GestureTouchEvent) => {
-      'worklet';
-      if (disabled) return
-      isMoving.value = true
-      const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-      if (isFirstTouch.value) {
-        touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
-        isFirstTouch.value = false
-      }
-      const changeX = changedTouches.x - startPosition.value.x;
-      const changeY = changedTouches.y - startPosition.value.y;
-      if (direction === 'horizontal' || direction === 'all') {
-        let newX = offsetX.value + changeX
-        if (!outOfBounds) {
-          const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
-          offsetX.value = x
-        } else {
-          offsetX.value = newX
-        }
-      }
-      if (direction === 'vertical' || direction === 'all') {
-        let newY = offsetY.value + changeY
-        if (!outOfBounds) {
-          const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY });
-          offsetY.value = y
-        } else {
-          offsetY.value = newY
-        }
-      }
-      runOnJS(handleTriggerMove)(e)
-    })
-    .onTouchesUp((e: GestureTouchEvent) => {
-      'worklet';
-      isFirstTouch.value = true
-      isMoving.value = false
 
-      runOnJS(handleTriggerEnd)(e)
-    })
-    .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
-      'worklet';
-      if (disabled) return
-      isMoving.value = false
-      if (direction === 'horizontal' || direction === 'all') {
-        if (inertia) {
-          xInertialMotion.value = true
+        runOnJS(handleTriggerEnd)(e)
+      })
+      .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet';
+        if (disabled) return
+        isMoving.value = false
+        if (direction === 'horizontal' || direction === 'all') {
+          if (inertia) {
+            xInertialMotion.value = true
+          }
+          offsetX.value = withDecay({
+            velocity: inertia ? e.velocityX : 0,
+            rubberBandEffect: outOfBounds,
+            clamp: draggableXRange.value
+          }, () => {
+            xInertialMotion.value = false
+          });
         }
-        offsetX.value = withDecay({
-          velocity: inertia ? e.velocityX : 0,
-          rubberBandEffect: outOfBounds,
-          clamp: draggableXRange.value
-        }, () => {
-          xInertialMotion.value = false
-        });
-      }
-      if (direction === 'vertical' || direction === 'all') {
-        if (inertia) {
-          yInertialMotion.value = true
+        if (direction === 'vertical' || direction === 'all') {
+          if (inertia) {
+            yInertialMotion.value = true
+          }
+          offsetY.value = withDecay({
+            velocity: inertia ? e.velocityY : 0,
+            rubberBandEffect: outOfBounds,
+            clamp: draggableYRange.value
+          }, () => {
+            yInertialMotion.value = false
+          })
         }
-        offsetY.value = withDecay({
-          velocity: inertia ? e.velocityY : 0,
-          rubberBandEffect: outOfBounds,
-          clamp: draggableYRange.value
-        }, () => {
-          yInertialMotion.value = false
-        })
-      }
-    })
+      })
+  }, [disabled, direction, inertia, outOfBounds, handleTriggerMove, handleTriggerStart, handleTriggerEnd])
+
   if (externalComponentGesture && externalComponentGesture.length) {
     gesture.simultaneousWithExternalGesture(...externalComponentGesture)
   }
