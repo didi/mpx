@@ -1,6 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import { PickerView } from '@ant-design/react-native'
+import React, { forwardRef, MutableRefObject, useState, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 /**
@@ -22,81 +21,80 @@ interface PickerViewProps {
   bindchange?: Function
 }
 
+interface PickerLayout {
+  height: number
+}
+
+const styles: { [key: string]: Object } = {
+  wrapper: {
+    display: 'flex',
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-around"
+  }
+}
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
-  const { children, ...restProps } = props
-  const layoutRef = useRef({})
-  const { nodeRef } = useNodesRef(props, ref, {})
-  const [value, setValue] = useState(props.value)
-  useEffect(() => {
-    // 确认这个是变化的props变化的时候才执行，还是初始化的时候就执行
-    setValue(props.value)
-  }, [props.value])
+  const { children, value = [], bindchange } = props
+  const innerLayout = useRef({})
+  const cloneRef = useRef(null)
+  let [pickH, setPickH] = useState(0)
 
-  const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
-  }
-  const innerProps = useInnerProps(props, {}, [], { layoutRef })
+  const { nodeRef } = useNodesRef<View, PickerViewProps>(props, ref, {})
 
-  const onChange = (val: Array<number>): void => {
-    const eventData = getCustomEvent('change', {}, { detail: { value: val, source: 'touch' }, layoutRef: layoutRef })
-    setValue(val)
-    props.bindchange && props.bindchange(eventData)
+  // value 如何关联picker-view-column这几个slot的内容呢
+
+  const onColumnLayoutChange = (layoutConfig: PickerLayout) => {
+    pickH = layoutConfig.height
+    setPickH(layoutConfig.height)
   }
 
-  const joinString = (data: string | any[] | React.ReactElement): string => {
-    return (Array.isArray(data) ? data : [data]).join('')
+  const onSelectChange = (columnIndex: number, selIndex: number) => {
+    const changeValue = value.slice()
+    changeValue[columnIndex] = selIndex
+    const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: {} })
+    console.log('-------------------onSelectChange:eventData', eventData)
+    bindchange && bindchange(eventData)
+  }
+  
+  const getInnerLayout = (layout: MutableRefObject<{}>) => {
+    innerLayout.current = layout.current
   }
 
-  const getLabelFromChildren = (child: React.ReactElement): string => {
-    return child.props && child.props.children ? getLabelFromChildren(child.props.children) : joinString(child)
-  }
+  const innerProps = useInnerProps(props, {ref: nodeRef}, [], { layoutRef: innerLayout })
 
-  const handleChildren = (children: React.ReactNode[]): any[] => {
-    return children.map((child: any, index: number) => {
-      return {
-        label: getLabelFromChildren(child),
-        value: index
-      }
-    })
-  }
-
-  const getDataFromChildren = (children: React.ReactNode): any[] => {
-    return (Array.isArray(children) ? children : [children]).map((child: any) => {
-      return handleChildren(child.props && child.props.children ? child.props.children : [child])
-    })
-  }
-
-  const columns = Array.isArray(children) ? children.length : 1
-  const originData = getDataFromChildren(children)
-  // 子节点默认的序号，这里是更新默认值的
-  const subChildLength = originData.map((item) => {
-    return item.length
-  })
-  const defaultValue = (props.value || []).map((item, index) => {
-    if (item > subChildLength[index]) {
-      return subChildLength[index] - 1
-    } else {
-      return item
+  const cloneChild = (child: React.ReactNode, index: number) => {
+    const extraProps = index === 0 ? {
+      getInnerLayout: getInnerLayout,
+      innerProps
+    } : {}
+    const childProps = {
+      ...child.props,
+      ref: cloneRef,
+      onColumnLayoutChange,
+      onSelectChange: onSelectChange.bind(null, index),
+      selectedIndex: value?.[index] || 0,
+      ...extraProps
     }
-  })
+    return React.cloneElement(child, childProps)
+  }
 
-  return (
-    <PickerView
-    {...restProps}
-    cols={columns}
-    // 默认选中项
-    defaultValue={defaultValue}
-    // 内部维护选中项
-    value={value}
-    // data数据源column
-    data={originData}
-    onChange={onChange}
-    cascade={false}/>
-  )
+  const renderSubChild = () => {
+    if (Array.isArray(children)) {
+      return children.map((item, index) => {
+        return cloneChild(item, index)
+      })
+    } else {
+      return cloneChild(children, 0)
+    }
+  }
+  
+  return (<View style={[{height: pickH}]}>
+    <View style={[styles.wrapper, { height: pickH }]}>
+      {renderSubChild()}
+    </View>
+  </View>)
 })
 
-_PickerView.displayName = 'mpx-picker-view'
+_PickerView.displayName = 'mpx-picker-view';
 
 export default _PickerView
