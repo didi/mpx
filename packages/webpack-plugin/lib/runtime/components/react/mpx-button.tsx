@@ -44,7 +44,7 @@ import {
   TextStyle,
   Animated,
   Easing,
-  NativeSyntheticEvent,
+  NativeSyntheticEvent
 } from 'react-native'
 import { splitStyle, isText, every, splitProps, throwReactWarning, transformTextStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -90,12 +90,12 @@ const LOADING_IMAGE_URI =
 const TypeColorMap: Record<Type, TypeColor> = {
   default: ['#F8F8F8', '#DEDEDE', '35,35,35', '#F7F7F7'],
   primary: ['#1AAD19', '#179B16', '26,173,25', '#9ED99D'],
-  warn: ['#E64340', '#CE3C39', '230,67,64', '#EC8B89'],
+  warn: ['#E64340', '#CE3C39', '230,67,64', '#EC8B89']
 }
 
 const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
   ['share', 'onShareAppMessage'],
-  ['getUserInfo', 'onUserInfo'],
+  ['getUserInfo', 'onUserInfo']
 ])
 
 const styles = StyleSheet.create({
@@ -110,19 +110,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 'auto' // 按钮默认居中
   },
   buttonMini: {
-    height: 30,
+    height: 30
   },
   text: {
     fontSize: 18,
-    color: '#000000',
+    color: '#000000'
   },
   textMini: {
-    fontSize: 13,
+    fontSize: 13
   },
   loading: {
     width: 20,
-    height: 20,
-  },
+    height: 20
+  }
 })
 
 const getOpenTypeEvent = (openType: OpenType) => {
@@ -153,7 +153,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
 
   const rotate = image.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+    outputRange: ['0deg', '360deg']
   })
 
   useEffect(() => {
@@ -163,7 +163,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
         duration: 1000,
         easing: Easing.linear,
         useNativeDriver: true,
-        isInteraction: false,
+        isInteraction: false
       })
     )
 
@@ -178,7 +178,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   const loadingStyle = {
     ...styles.loading,
     transform: [{ rotate }],
-    marginRight: alone ? 0 : 5,
+    marginRight: alone ? 0 : 5
   }
 
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
@@ -203,14 +203,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     bindgetuserinfo,
     bindtap,
     bindtouchstart,
-    bindtouchend,
+    bindtouchend
   } = props
-
 
   const formContext = useContext(FormContext)
 
-  let submitFn: () => void | undefined;
-  let resetFn: () => void | undefined;
+  let submitFn: () => void | undefined
+  let resetFn: () => void | undefined
 
   if (formContext) {
     submitFn = formContext.submit
@@ -222,7 +221,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     hoverStayTimer: ReturnType<typeof setTimeout> | undefined
   }>({
     hoverStartTimer: undefined,
-    hoverStayTimer: undefined,
+    hoverStayTimer: undefined
   })
 
   const layoutRef = useRef({})
@@ -268,19 +267,19 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: plain ? plainBorderColor : normalBorderColor,
-    backgroundColor: plain ? 'transparent' : normalBackgroundColor,
+    backgroundColor: plain ? 'transparent' : normalBackgroundColor
   }
 
   const defaultViewStyle = {
     ...styles.button,
     ...(isMiniSize && styles.buttonMini),
-    ...viewStyle,
+    ...viewStyle
   }
 
   const defaultTextStyle = {
     ...styles.text,
     ...(isMiniSize && styles.textMini),
-    color: plain ? plainTextColor : normalTextColor,
+    color: plain ? plainTextColor : normalTextColor
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -290,7 +289,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     if (openType === 'share') {
       handleEvent && handleEvent({
         from: 'button',
-        target: getCustomEvent('tap', evt, { layoutRef }, props).target,
+        target: getCustomEvent('tap', evt, { layoutRef }, props).target
       })
     }
 
@@ -346,7 +345,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     handleFormTypeFn()
   }
 
-  function wrapChildren(children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
+  function wrapChildren (children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
     if (!children) return children
     const hasTextStyle = !isEmptyObject(textStyle)
     const { textProps } = splitProps(props)
@@ -382,7 +381,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
       bindtap: onTap,
-      ...(enableOffset ? { onLayout } : {}),
+      ...(enableOffset ? { onLayout } : {})
     },
     [
       'enable-offset'
@@ -391,7 +390,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       layoutRef,
       disableTap: disabled
     }
-  );
+  )
 
   return (
     <View
@@ -399,7 +398,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       style={{
         ...defaultViewStyle,
         ...innerStyle,
-        ...(applyHoverEffect && hoverInnerStyle),
+        ...(applyHoverEffect && hoverInnerStyle)
       } as ViewStyle}>
       {loading && <Loading alone={!children} />}
       {
@@ -408,7 +407,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
           defaultTextStyle,
           {
             ...textStyle,
-            ...(applyHoverEffect && hoverTextStyle),
+            ...(applyHoverEffect && hoverTextStyle)
           }
         )
       }

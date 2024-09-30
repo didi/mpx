@@ -17,9 +17,9 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useRef, useEffect, forwardRef, ReactNode, useContext, useState, useMemo } from 'react';
-import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from 'react-native';
-import useInnerProps, { getCustomEvent } from './getInnerListeners';
+import { useRef, useEffect, forwardRef, ReactNode, useContext, useState, useMemo } from 'react'
+import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from 'react-native'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0
-  },
+  }
 })
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
@@ -90,9 +90,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   let panResponder: any = {}
 
-  let isFirstTouch = useRef<boolean>(true)
-  let touchEvent = useRef<string>('')
-  let initialDistance = useRef<number>(0)
+  const isFirstTouch = useRef<boolean>(true)
+  const touchEvent = useRef<string>('')
+  const initialDistance = useRef<number>(0)
 
   propsRef.current = props
 
@@ -102,7 +102,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       Animated.spring(scaleValue.current, {
         toValue: clampedScale,
         friction,
-        useNativeDriver: false,
+        useNativeDriver: false
       }).start(() => {
         bindscale && bindscale(getCustomEvent('scale', {}, {
           detail: {
@@ -115,7 +115,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         )
       })
     }
-  }, [originScaleValue]);
+  }, [originScaleValue])
 
   useEffect(() => {
     if (movablePosition.current.x !== Number(x) || movablePosition.current.y !== Number(y)) {
@@ -142,7 +142,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               },
               layoutRef
             }, props)
-          );
+          )
       })
     }
   }, [x, y])
@@ -194,34 +194,33 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           pan.current.setOffset({
             x: direction === 'all' || direction === 'horizontal' ? pan.current.x._value : 0,
             y: direction === 'all' || direction === 'vertical' ? pan.current.y._value : 0
-          });
-          pan.current.setValue({ x: 0, y: 0 });
+          })
+          pan.current.setValue({ x: 0, y: 0 })
         } else {
-          initialDistance.current = 0;
+          initialDistance.current = 0
           setTransformOrigin('50% 50%')
         }
       },
       onPanResponderMove: (e, gestureState) => {
         if (gestureState.numberActiveTouches === 2 && scale) {
           setTransformOrigin('50% 50%')
-          const touch1 = e.nativeEvent.touches[0];
-          const touch2 = e.nativeEvent.touches[1];
+          const touch1 = e.nativeEvent.touches[0]
+          const touch2 = e.nativeEvent.touches[1]
           const currentTouchDistance = Math.sqrt(
             Math.pow(touch1.pageX - touch2.pageX, 2) + Math.pow(touch1.pageY - touch2.pageY, 2)
           )
 
           if (!initialDistance.current) {
-            initialDistance.current = currentTouchDistance;
+            initialDistance.current = currentTouchDistance
           } else {
             const newScale = currentTouchDistance / initialDistance.current
             const clampedScale = Math.min(scaleMax, Math.max(scaleMin, newScale))
-
 
             Animated.spring(scaleValue.current, {
               toValue: clampedScale,
               friction: 7,
               useNativeDriver: false
-            }).start();
+            }).start()
             bindscale && bindscale(getCustomEvent('scale', e, {
               detail: {
                 x: pan.current.x._value,
@@ -229,29 +228,29 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 scale: clampedScale
               },
               layoutRef
-            }, propsRef.current));
+            }, propsRef.current))
           }
         } else if (gestureState.numberActiveTouches === 1) {
           if (initialDistance.current) {
-            return; // Skip processing if it's switching from a double touch
+            return // Skip processing if it's switching from a double touch
           }
           setTransformOrigin('0% 0%')
           if (isFirstTouch.current) {
             touchEvent.current = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove'
-            isFirstTouch.current = false;
+            isFirstTouch.current = false
           }
           Animated.event(
             [
               null,
               {
                 dx: direction === 'all' || direction === 'horizontal' ? pan.current.x : new Animated.Value(0),
-                dy: direction === 'all' || direction === 'vertical' ? pan.current.y : new Animated.Value(0),
+                dy: direction === 'all' || direction === 'vertical' ? pan.current.y : new Animated.Value(0)
               }
             ],
             {
               useNativeDriver: false
             }
-          )(e, gestureState);
+          )(e, gestureState)
 
           movablePosition.current = {
             x: pan.current.x.__getValue(),
@@ -375,7 +374,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   }
 
-  const [translateX, translateY] = [pan.current.x, pan.current.y];
+  const [translateX, translateY] = [pan.current.x, pan.current.y]
 
   const transformStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue.current }], transformOrigin: transformOrigin }
 
@@ -387,8 +386,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     ref: nodeRef,
     ...panResponder.panHandlers,
     onLayout,
-    ...(hasTouchmove() ? { 'bindtouchmove': onTouchMove } : {}),
-    ...(hasCatchTouchmove() ? { 'catchtouchmove': onCatchTouchMove } : {}),
+    ...(hasTouchmove() ? { bindtouchmove: onTouchMove } : {}),
+    ...(hasCatchTouchmove() ? { catchtouchmove: onCatchTouchMove } : {})
   }, [
     'children',
     'style',
@@ -417,7 +416,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     >
       {children}
     </Animated.View>
-  );
+  )
 })
 
 _MovableView.displayName = '_mpxMovableView'

@@ -8,7 +8,7 @@
  * ✔ delta
  */
 import { View } from 'react-native'
-import { useCallback, forwardRef, JSX } from 'react';
+import { useCallback, forwardRef, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 

@@ -22,7 +22,7 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
  */
 const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const { children } = props
-  let innerLayout = useRef({})
+  const innerLayout = useRef({})
   const swiperProp = {
     circular: props.circular || false,
     current: props.current || 0,
@@ -30,7 +30,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     duration: props.duration || 500,
     interval: props.interval || 5000,
     showsPagination: props['indicator-dots'],
-    dotColor: props['indicator-color'] || "rgba(0, 0, 0, .3)",
+    dotColor: props['indicator-color'] || 'rgba(0, 0, 0, .3)',
     activeDotColor: props['indicator-active-color'] || '#000000',
     horizontal: props.vertical !== undefined ? !props.vertical : true,
     styleObj: props.style || {},
@@ -60,8 +60,8 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     {...swiperProp}>
     {children}
   </Carouse>
-
 })
+
 _SwiperWrapper.displayName = '_mpxSwiper';
 
 export default _SwiperWrapper

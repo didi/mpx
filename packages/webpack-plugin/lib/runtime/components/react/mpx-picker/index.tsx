@@ -33,7 +33,7 @@ import { throwReactWarning } from '../utils'
 
 const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
   const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange } = props
-  let innerLayout = useRef({})
+  const innerLayout = useRef({})
   const { nodeRef } = useNodesRef<View, PickerProps>(props, ref, {
   })
   const innerProps = useInnerProps(props, {
@@ -103,29 +103,29 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   const selectorProps = {
     ...commonProps,
     value: pickerValue as PickerValue,
-    range: props['range'],
+    range: props.range,
     'range-key': props['range-key']
   }
 
   const multiProps = {
     ...commonProps,
     value: pickerValue as Array<number>,
-    range: props['range'],
+    range: props.range,
     'range-key': props['range-key']
   }
 
   const timeProps = {
     ...commonProps,
     value: pickerValue as string,
-    start: props['start'],
-    end: props['end']
+    start: props.start,
+    end: props.end
   }
 
   const dateProps = {
     ...commonProps,
     value: pickerValue as string,
-    start: props['start'],
-    end: props['end'],
+    start: props.start,
+    end: props.end,
     fileds: props.fields || 'day'
   }
 
@@ -150,6 +150,6 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   }
 })
 
-_Picker.displayName = 'mpx-picker';
+_Picker.displayName = 'mpx-picker'
 
 export default _Picker

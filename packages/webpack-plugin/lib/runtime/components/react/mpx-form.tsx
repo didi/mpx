@@ -4,7 +4,6 @@
  * ✔ bindsubmit
  * ✔ bindreset
  */
-
 import { View, LayoutChangeEvent } from 'react-native';
 import { JSX, useRef, forwardRef, ReactNode, useMemo, useCallback } from 'react';
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -41,7 +40,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   const submit = useCallback(() => {
     const { bindsubmit } = propsRef.current
     const formValue: Record<string, any> = {}
-    for (let name of formValuesMap.keys()) {
+    for (const name of formValuesMap.keys()) {
       if (formValuesMap.get(name).getValue) {
         formValue[name] = formValuesMap.get(name).getValue()
       }
@@ -74,7 +73,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
     'style',
     'bindsubmit',
     'bindreset'
-  ], { layoutRef });
+  ], { layoutRef })
 
   const contextValue = useMemo(() => {
     return {
@@ -91,7 +90,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
         {children}
       </FormContext.Provider>
     </View>
-  );
+  )
 })
 
 _Form.displayName = '_mpxForm';

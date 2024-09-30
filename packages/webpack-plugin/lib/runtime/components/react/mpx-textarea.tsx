@@ -27,7 +27,7 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
       'type',
       'password',
       'multiline',
-      'confirm-hold',
+      'confirm-hold'
     ])
     return (
       <Input

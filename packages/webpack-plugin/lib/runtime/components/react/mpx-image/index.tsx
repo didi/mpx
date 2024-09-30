@@ -23,7 +23,7 @@ import {
   ImageErrorEventData,
   LayoutChangeEvent,
   DimensionValue,
-  ImageLoadEventData,
+  ImageLoadEventData
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
@@ -79,7 +79,7 @@ const cropMode: Mode[] = [
   'top left',
   'top right',
   'bottom left',
-  'bottom right',
+  'bottom right'
 ]
 
 const ModeMap = new Map<Mode, ImageResizeMode | undefined>([
@@ -88,7 +88,7 @@ const ModeMap = new Map<Mode, ImageResizeMode | undefined>([
   ['aspectFill', 'cover'],
   ['widthFix', 'stretch'],
   ['heightFix', 'stretch'],
-  ...cropMode.map<[Mode, ImageResizeMode]>(mode => [mode, 'stretch']),
+  ...cropMode.map<[Mode, ImageResizeMode]>(mode => [mode, 'stretch'])
 ])
 
 const isNumber = (value: DimensionValue) => typeof value === 'number'
@@ -226,8 +226,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onViewLayout = ({
     nativeEvent: {
-      layout: { width, height },
-    },
+      layout: { width, height }
+    }
   }: LayoutChangeEvent) => {
     setViewWidth(width)
     setViewHeight(height)
@@ -277,12 +277,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ref: nodeRef,
     ...(enableOffset ? { onLayout: onImageLayout } : {})
   },
-    [
-      'enable-offset'
-    ],
-    {
-      layoutRef
-    }
+  [
+    'enable-offset'
+  ],
+  {
+    layoutRef
+  }
   )
 
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
@@ -308,11 +308,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   return (
     <View
       style={{
-        width, height,
+        width,
+        height,
         ...style,
         ...(isHeightFixMode && { width: fixedWidth }),
         ...(isWidthFixMode && { height: fixedHeight }),
-        overflow: 'hidden',
+        overflow: 'hidden'
       }}
       onLayout={onViewLayout}>
       {

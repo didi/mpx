@@ -1,8 +1,7 @@
 import { View } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import { PickerView } from '@ant-design/react-native'
-import useInnerProps from './getInnerListeners'
-import { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 /**
  * ✔ value
@@ -31,7 +30,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   useEffect(() => {
     // 确认这个是变化的props变化的时候才执行，还是初始化的时候就执行
     setValue(props.value)
-  }, [props.value]);
+  }, [props.value])
 
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
@@ -40,9 +39,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
   const innerProps = useInnerProps(props, {}, [], { layoutRef })
 
-
   const onChange = (val: Array<number>): void => {
-    const eventData = getCustomEvent('change', {}, { detail: {value: val, source: 'touch' }, layoutRef: layoutRef })
+    const eventData = getCustomEvent('change', {}, { detail: { value: val, source: 'touch' }, layoutRef: layoutRef })
     setValue(val)
     props.bindchange && props.bindchange(eventData)
   }
@@ -99,6 +97,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 })
 
-_PickerView.displayName = 'mpx-picker-view';
+_PickerView.displayName = 'mpx-picker-view'
 
 export default _PickerView

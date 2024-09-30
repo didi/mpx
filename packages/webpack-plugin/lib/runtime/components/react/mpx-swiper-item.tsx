@@ -22,7 +22,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   }
 
   const innerProps = useInnerProps(props, {
-    ...(enableOffset ? { onLayout } : {}),
+    ...(enableOffset ? { onLayout } : {})
   }, [
     'children',
     'enable-offset'

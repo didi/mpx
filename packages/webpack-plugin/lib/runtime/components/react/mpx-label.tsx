@@ -7,7 +7,7 @@ import {
   Text,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle,
+  TextStyle
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -41,7 +41,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     }
 
     const defaultStyle = {
-      flexDirection: 'row',
+      flexDirection: 'row'
     }
 
     const contextRef: LabelContextValue = useRef({

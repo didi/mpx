@@ -82,7 +82,7 @@ export const getDataSet = (props: Record<string, any>) => {
 }
 
 export const getCustomEvent = (
-  type: string = '',
+  type = '',
   oe: any = {},
   { detail = {}, layoutRef }: { detail?: Record<string, unknown>; layoutRef: LayoutRef },
   props: Props = {}
@@ -143,7 +143,7 @@ const useInnerProps = (
     return omit(propsRef.current, removeProps)
   }
 
-  function handleEmitEvent(
+  function handleEmitEvent (
     events: string[],
     type: string,
     oe: NativeTouchEvent
@@ -171,7 +171,7 @@ const useInnerProps = (
     }
   }
 
-  function handleTouchstart(e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture') {
     e.persist()
     const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
     const bubblePressEvent = ['catchlongpress', 'bindlongpress']
@@ -196,7 +196,7 @@ const useInnerProps = (
     }
   }
 
-  function handleTouchmove(e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchmove (e: NativeTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
     const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
@@ -204,7 +204,7 @@ const useInnerProps = (
     checkIsNeedPress(e, type)
   }
 
-  function handleTouchend(e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture') {
     // move event may not be triggered
     checkIsNeedPress(e, type)
     const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
@@ -224,7 +224,7 @@ const useInnerProps = (
     }
   }
 
-  function handleTouchcancel(e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  function handleTouchcancel (e: NativeTouchEvent, type: 'bubble' | 'capture') {
     const bubbleTouchEvent = ['catchtouchcancel', 'bindtouchcancel']
     const captureTouchEvent = ['capture-catchtouchcancel', 'capture-bindtouchcancel']
     const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
@@ -283,7 +283,6 @@ const useInnerProps = (
   }
 
   const finalEventKeys = [...new Set(transformedEventKeys)]
-
 
   touchEventList.forEach(item => {
     if (finalEventKeys.includes(item.eventName)) {

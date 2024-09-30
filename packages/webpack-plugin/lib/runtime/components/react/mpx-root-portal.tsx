@@ -17,7 +17,7 @@ const _RootPortal = (props: RootPortalProps) => {
     </Portal>
   ) : (
     <>{children}</>
-  );
+  )
 }
 
 _RootPortal.displayName = '_mpxRootPortal'

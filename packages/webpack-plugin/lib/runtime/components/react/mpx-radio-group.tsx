@@ -46,7 +46,7 @@ const radioGroup = forwardRef<
 
   const formContext = useContext(FormContext)
 
-  let formValuesMap: Map<string, FormFieldValue> | undefined;
+  let formValuesMap: Map<string, FormFieldValue> | undefined
 
   if (formContext) {
     formValuesMap = formContext.formValuesMap
@@ -80,7 +80,7 @@ const radioGroup = forwardRef<
   }, [])
 
   const getSelectionValue = useCallback((): string | undefined => {
-    for (let key in groupValue) {
+    for (const key in groupValue) {
       if (groupValue[key].checked) {
         return key
       }

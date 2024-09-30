@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, isFunction } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction, cached } from '@mpxjs/utils'
 import { Dimensions } from 'react-native'
 
 function concat (a = '', b = '') {
@@ -45,7 +45,7 @@ const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const varRegExp = /^--.*/
 
-function parseStyleText (cssText = '') {
+const parseStyleText = cached((cssText = '') => {
   const res = {}
   const arr = cssText.split(listDelimiter)
   for (let i = 0; i < arr.length; i++) {
@@ -60,7 +60,7 @@ function parseStyleText (cssText = '') {
     }
   }
   return res
-}
+})
 
 function normalizeDynamicStyle (value) {
   if (!value) return {}
