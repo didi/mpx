@@ -152,6 +152,6 @@ const CheckboxGroup = forwardRef<
   )
 })
 
-CheckboxGroup.displayName = 'mpx-checkbox-group'
+CheckboxGroup.displayName = '_mpxCheckboxGroup'
 
 export default CheckboxGroup

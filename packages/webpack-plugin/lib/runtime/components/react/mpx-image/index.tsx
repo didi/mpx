@@ -334,6 +334,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   )
 })
 
-Image.displayName = 'mpx-image'
+Image.displayName = '_mpxImage'
 
 export default Image

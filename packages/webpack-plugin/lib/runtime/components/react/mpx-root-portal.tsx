@@ -20,6 +20,6 @@ const _RootPortal = (props: RootPortalProps) => {
   );
 }
 
-_RootPortal.displayName = 'mpx-root-portal'
+_RootPortal.displayName = '_mpxRootPortal'
 
 export default _RootPortal

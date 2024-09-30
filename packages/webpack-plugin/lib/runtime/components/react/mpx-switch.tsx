@@ -122,6 +122,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   />)
 })
 
-_Switch.displayName = 'mpx-switch'
+_Switch.displayName = '_mpxSwitch'
 
 export default _Switch

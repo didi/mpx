@@ -12,7 +12,7 @@ import { useCallback, forwardRef, JSX } from 'react';
 import useInnerProps from './getInnerListeners'
 import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 
-import MpxView, { _ViewProps }  from './mpx-view'
+import MpxView, { _ViewProps } from './mpx-view'
 
 interface _NavigatorProps extends _ViewProps {
   ['open-type']: 'navigate' | 'redirect' | 'switchTab' | 'reLaunch' | 'navigateBack'
@@ -62,6 +62,6 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
   )
 })
 
-_Navigator.displayName = 'mpx-navigator'
+_Navigator.displayName = '_mpxNavigator'
 
 export default _Navigator

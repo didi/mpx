@@ -412,6 +412,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   )
 })
 
-Input.displayName = 'mpx-input'
+Input.displayName = '_mpxInput'
 
 export default Input

@@ -411,6 +411,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   );
 })
 
-_MovableView.displayName = 'mpx-movable-view'
+_MovableView.displayName = '_mpxMovableView'
 
 export default _MovableView

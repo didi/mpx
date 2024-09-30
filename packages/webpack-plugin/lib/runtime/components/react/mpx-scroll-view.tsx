@@ -431,6 +431,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   );
 })
 
-_ScrollView.displayName = 'mpx-scroll-view';
+_ScrollView.displayName = '_mpxScrollView';
 
 export default _ScrollView

@@ -84,6 +84,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   )
 })
 
-_Text.displayName = 'mpx-text'
+_Text.displayName = '_mpxText'
 
 export default _Text

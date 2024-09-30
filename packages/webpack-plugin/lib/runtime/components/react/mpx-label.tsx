@@ -114,6 +114,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   }
 )
 
-Label.displayName = 'mpx-label'
+Label.displayName = '_mpxLabel'
 
 export default Label
