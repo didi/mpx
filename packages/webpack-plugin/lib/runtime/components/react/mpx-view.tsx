@@ -94,7 +94,7 @@ function calculateSize (h: number, ratio: number, lh?: number | boolean, reverse
     reverse = lh
   }
 
-  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx 
+  if (typeof h === 'string' && PERCENT_REGEX.test(h)) { // auto  px/rpx
     if (!lh) return null
     height = (parseFloat(h) / 100) * (lh as number)
     width = height * ratio
@@ -666,7 +666,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   )
 })
 
-_View.displayName = 'mpx-view'
+_View.displayName = '_mpxView'
 
 export default _View
 

@@ -392,7 +392,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
       </View>
     )
   }
-  
+
   function renderPages () {
     const { width, height, total, children } = state
     const { circular } = props
@@ -437,9 +437,9 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     </View>
     <View>{props.showsPagination && renderPagination()}</View>
   </View>)
-  
+
 })
 
-_Carouse.displayName = '_Carouse';
+_Carouse.displayName = '_mpxCarouse';
 
 export default _Carouse
