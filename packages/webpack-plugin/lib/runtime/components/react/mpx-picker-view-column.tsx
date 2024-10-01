@@ -1,7 +1,8 @@
 
-import { View, Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import { View, Animated, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import React, { forwardRef, useRef, useState, useEffect } from 'react'
-import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
+// import { Reanimated } from 'react-native-reanimated';
+import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 interface ColumnProps {
   children: React.ReactNode,
   selectedIndex: number,
@@ -11,7 +12,7 @@ interface ColumnProps {
 }
 // 每个Column 都有个外层的高度, 内部的元素高度
 // 默认的高度
-
+// const AnimatedScrollView = Reanimated.createAnimatedComponent(ScrollView);
 const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout } = props
   // scrollView的ref
@@ -68,7 +69,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       return <View ref={itemDomRef} {...InnerProps}>{item}</View>
     })
-    const emptyEle = (<View style={[{height: itemH}]}></View>)
+    // 渐变待支持
+    const emptyEle = (<View style={[{ height: itemH }]}></View>)
     arrChild.unshift(emptyEle)
     arrChild.unshift(emptyEle)
     arrChild.push(emptyEle)
@@ -78,9 +80,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
 
   const renderScollView = () => {
     const wheelStyle = {
-      // display: "flex",
-      // flex: 1,
       height: itemH
+    }
+    const contentContainerStyle = {
+      textAlign: "center"
     }
 
     return (<Animated.ScrollView
@@ -94,6 +97,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
       showsVerticalScrollIndicator={false}
       pagingEnabled={false}
       snapToInterval={itemH}
+      contentContainerStyle={contentContainerStyle}
       automaticallyAdjustContentInsets={false}
       // contentOffset={offset}
       // directionalLockEnabled={true}
@@ -105,7 +109,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
     </Animated.ScrollView>)
   }
 
-  return (<View style={[{display: 'flex', flex: 1}]}>
+  return (<View style={[{display: 'flex'}]}>
     {renderScollView()}
   </View>)
 })
