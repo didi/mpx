@@ -20,10 +20,13 @@ const showModal = function (options = {}) {
   const modalWidth = width - 60
   const styles = StyleSheet.create({
     modalTask: {
-      width,
-      height,
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
       justifyContent: 'center',
       alignItems: 'center',
+      display: 'flex',
       backgroundColor: 'rgba(0,0,0,0.6)',
       position: 'absolute'
     },
@@ -144,6 +147,7 @@ const showModal = function (options = {}) {
         height: 40,
         backgroundColor: '#eeeeee',
         width: '100%',
+        keyboardType: 'default',
         paddingLeft: 10,
         paddingRight: 10
       }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
