@@ -269,6 +269,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const extendEvent = useCallback((e: any) => {
+    'worklet';
     [e.changedTouches, e.allTouches].map(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
         item.pageX = item.absoluteX
@@ -279,28 +280,43 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const handleTriggerStart = useCallback((e: any) => {
+    'worklet';
     const { bindtouchstart } = propsRef.current
     extendEvent(e)
-    bindtouchstart && bindtouchstart(e)
+    bindtouchstart && runOnJS(bindtouchstart)(e)
   }, [])
 
   const handleTriggerMove = useCallback((e: any) => {
-    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
+    'worklet';
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current;
     extendEvent(e)
-    const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
-    const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
+    const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove;
+    const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove;
+
     if (hasTouchmove) {
-      onTouchMove(e)
+      if (touchEvent.value === 'htouchmove') {
+        bindhtouchmove && runOnJS(bindhtouchmove)(e);
+      } else if (touchEvent.value === 'vtouchmove') {
+        bindvtouchmove && runOnJS(bindvtouchmove)(e);
+      }
+      bindtouchmove && runOnJS(bindtouchmove)(e);
     }
+
     if (hasCatchTouchmove) {
-      onCatchTouchMove(e)
+      if (touchEvent.value === 'htouchmove') {
+        catchhtouchmove && runOnJS(catchhtouchmove)(e);
+      } else if (touchEvent.value === 'vtouchmove') {
+        catchvtouchmove && runOnJS(catchvtouchmove)(e);
+      }
+      catchtouchmove && runOnJS(catchtouchmove)(e);
     }
-  }, [])
+  }, []);
 
   const handleTriggerEnd = useCallback((e: any) => {
+    'worklet';
     const { bindtouchend } = propsRef.current
     extendEvent(e)
-    bindtouchend && bindtouchend(e)
+    bindtouchend && runOnJS(bindtouchend)(e)
   }, [])
 
   const gesture = useMemo(() => {
@@ -316,7 +332,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             y: changedTouches.y
           }
         }
-        runOnJS(handleTriggerStart)(e)
+        handleTriggerStart(e)
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet';
@@ -347,14 +363,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
-        runOnJS(handleTriggerMove)(e)
+        handleTriggerMove(e)
+        // runOnJS(handleTriggerMove)(e)
       })
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet';
         isFirstTouch.value = true
         isMoving.value = false
 
-        runOnJS(handleTriggerEnd)(e)
+        handleTriggerEnd(e)
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet';
