@@ -248,26 +248,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
   }
 
-  const onTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
-    const { bindhtouchmove, bindvtouchmove, bindtouchmove } = propsRef.current
-    if (touchEvent.value === 'htouchmove') {
-      bindhtouchmove && bindhtouchmove(e)
-    } else if (touchEvent.value === 'vtouchmove') {
-      bindvtouchmove && bindvtouchmove(e)
-    }
-    bindtouchmove && bindtouchmove(e)
-  }, [])
-
-  const onCatchTouchMove = useCallback((e: NativeSyntheticEvent<TouchEvent>) => {
-    const { catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
-    if (touchEvent.value === 'htouchmove') {
-      catchhtouchmove && catchhtouchmove(e)
-    } else if (touchEvent.value === 'vtouchmove') {
-      catchvtouchmove && catchvtouchmove(e)
-    }
-    catchtouchmove && catchtouchmove(e)
-  }, [])
-
   const extendEvent = useCallback((e: any) => {
     'worklet';
     [e.changedTouches, e.allTouches].map(touches => {
@@ -364,7 +344,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         handleTriggerMove(e)
-        // runOnJS(handleTriggerMove)(e)
       })
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet';
