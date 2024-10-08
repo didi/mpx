@@ -46,7 +46,7 @@ import {
   Easing,
   NativeSyntheticEvent
 } from 'react-native'
-import { splitStyle, isText, every, splitProps, throwReactWarning, transformTextStyle } from './utils'
+import { splitStyle, isText, every, splitProps, throwReactWarning } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -351,7 +351,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     const { textProps } = splitProps(props)
 
     if (every(children, (child) => isText(child))) {
-      transformTextStyle(textStyle as TextStyle)
       children = <Text key='buttonTextWrap' style={{ ...defaultTextStyle, ...textStyle }} {...(textProps || {})}>{children}</Text>
     } else {
       if (hasTextStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Button is Text node!')

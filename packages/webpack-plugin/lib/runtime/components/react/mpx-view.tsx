@@ -14,9 +14,9 @@ import { parseUrl, PERCENT_REGEX, isText, splitStyle, splitProps, useTransformSt
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
-  hoverStyle?: ExtendedViewStyle
-  ['hover-start-time']?: number
-  ['hover-stay-time']?: number
+  'hover-style'?: ExtendedViewStyle
+  'hover-start-time'?: number
+  'hover-stay-time'?: number
   'enable-offset'?: boolean
   'enable-background'?: boolean
   'enable-var'?: boolean
@@ -385,7 +385,15 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   </View>
 }
 
-function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { hasVarDec: boolean, enableBackground: boolean }, textStyle?: TextStyle, backgroundStyle?: ExtendedViewStyle, varContext?: Record<string, any>) {
+interface WrapChildrenConfig {
+  hasVarDec: boolean
+  enableBackground: boolean
+  textStyle?: TextStyle
+  backgroundStyle?: ExtendedViewStyle
+  varContext?: Record<string, any>
+}
+
+function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
   const { textProps } = splitProps(props)
   let { children } = props
 
@@ -412,7 +420,7 @@ function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { has
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
   let {
     style = {},
-    hoverStyle,
+    'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset,
@@ -528,7 +536,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'children',
     'hover-start-time',
     'hover-stay-time',
-    'hoverStyle',
+    'hover-style',
     'hover-class',
     'enable-offset',
     'enable-background-image'
@@ -546,11 +554,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
           props,
           {
             hasVarDec,
-            enableBackground: enableBackgroundRef.current
-          },
-          textStyle,
-          backgroundStyle,
-          varContextRef.current
+            enableBackground: enableBackgroundRef.current,
+            textStyle,
+            backgroundStyle,
+            varContext: varContextRef.current
+          }
         )
       }
     </View>
