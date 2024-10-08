@@ -181,7 +181,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-export function useTransformStyle (styleObj: Record<string, any>, { enableVar }: { enableVar?: boolean }) {
+export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext }: { enableVar?: boolean, externalVarContext?: Record<string, any> }) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
@@ -216,6 +216,7 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar }:
   // traverse
   traverseStyle(styleObj, [varVisitor, percentVisitor])
 
+  hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
   if (enableVarRef.current !== enableVar) {
@@ -225,7 +226,7 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar }:
   const varContextRef = useRef({})
   if (enableVarRef.current) {
     const varContext = useContext(VarContext)
-    const newVarContext = Object.assign({}, varContext, varStyle)
+    const newVarContext = Object.assign({}, varContext, externalVarContext, varStyle)
     // 缓存比较newVarContext是否发生变化
     if (diffAndCloneA(varContextRef.current, newVarContext).diff) {
       varContextRef.current = newVarContext

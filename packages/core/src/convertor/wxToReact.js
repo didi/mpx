@@ -5,7 +5,7 @@ import {
 import { implemented } from '../core/implement'
 
 // 暂不支持的wx选项，后期需要各种花式支持
-const unsupported = ['relations', 'moved', 'definitionFilter', 'onShareAppMessage', 'options']
+const unsupported = ['relations', 'moved', 'definitionFilter', 'onShareAppMessage']
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to react native.`, global.currentResource)

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -46,8 +46,21 @@ function createEffect (proxy, components) {
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
+    return proxy.target.__injectedRender(createElement, getComponent)
   }, () => queueJob(update), proxy.scope)
+}
+
+function getRootProps (props) {
+  const rootProps = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
+      if (match) {
+        rootProps[key] = props[key]
+      }
+    }
+  }
+  return rootProps
 }
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
@@ -79,19 +92,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       })
       return propsData
     },
-    __getRootProps () {
-      const props = propsRef.current
-      const rootProps = {}
-      for (const key in props) {
-        if (hasOwn(props, key)) {
-          const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
-          if (match) {
-            rootProps[key] = props[key]
-          }
-        }
-      }
-      return rootProps
-    },
+
     __resetInstance () {
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
@@ -401,7 +402,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return rawOptions.__disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    const rootProps = getRootProps(props)
+    rootProps.style = { ...root.props.style, ...rootProps.style }
+    // update root props
+    return cloneElement(root, rootProps)
   }))
 
   if (type === 'page') {
