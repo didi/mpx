@@ -4,7 +4,7 @@
  * ✔ out-of-bounds
  * ✔ x
  * ✔ y
- * ✘ damping
+ * ✔ damping
  * ✘ friction
  * ✔ disabled
  * ✘ scale
@@ -27,7 +27,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withDecay,
-  withTiming,
+  withSpring,
   runOnJS,
   runOnUI,
   useAnimatedReaction
@@ -75,6 +75,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     y = 0,
     inertia,
     disabled,
+    damping,
     'out-of-bounds': outOfBounds,
     direction,
     externalGesture = [],
@@ -142,11 +143,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
+        const springDamping = damping * 5 || 100,
         if (direction === 'horizontal' || direction === 'all') {
-          offsetX.value = withTiming(newX)
+          offsetX.value = withSpring(newX, {
+            mass: 0.5,
+            damping: springDamping
+          })
         }
         if (direction === 'vertical' || direction === 'all') {
-          offsetY.value = withTiming(newY)
+          offsetY.value = withSpring(newY, {
+            mass: 0.5,
+            damping: springDamping
+          })
         }
         runOnJS(handleTriggerChange)({
           x: newX,
