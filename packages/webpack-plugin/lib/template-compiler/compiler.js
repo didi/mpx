@@ -1068,14 +1068,18 @@ function processStyleReact (el, options) {
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
 
-  const show = getAndRemoveAttr(el, config[mode].directive.show).val
+
+  let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
+  if (has && show === undefined) {
+    error$1(`Attrs ${config[mode].directive.show} should have a value `)
+  }
 
   if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
     const dynamicClassExp = parseMustacheWithContext(dynamicClass).result
     const staticStyleExp = parseMustacheWithContext(staticStyle).result
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
-    const showExp = parseMustacheWithContext(show).result
+    const showExp = show === undefined ? 'true' : parseMustacheWithContext(show).result
 
     addAttrs(el, [{
       name: 'style',

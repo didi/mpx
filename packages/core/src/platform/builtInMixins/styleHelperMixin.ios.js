@@ -138,7 +138,7 @@ export default function styleHelperMixin (type) {
           Object.assign(result, transformStyleObj(this, styleObj))
         }
 
-        if (show === false) {
+        if (!show) {
           Object.assign(result, {
             display: 'none'
           })
