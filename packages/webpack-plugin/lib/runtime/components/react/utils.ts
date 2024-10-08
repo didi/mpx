@@ -112,7 +112,7 @@ export function isEmbedded (ele: ReactNode): ele is ReactElement {
 
 export function every (children: ReactNode, callback: (children: ReactNode) => boolean) {
   const childrenArray = Array.isArray(children) ? children : [children]
-  return childrenArray.every((child) => callback(child as ReactNode))
+  return childrenArray.every((child) => callback(child))
 }
 
 type GroupData = Record<string, Record<string, any>>
