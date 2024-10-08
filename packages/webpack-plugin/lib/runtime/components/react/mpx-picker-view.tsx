@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import LinearGradient from 'react-native-linear-gradient';
 import React, { forwardRef, MutableRefObject, useState, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
@@ -42,21 +43,14 @@ const styles: { [key: string]: Object } = {
     justifyContent: "space-around",
     overflow: 'hidden'
   },
-
   maskTop: {
     position: 'absolute',
-    backgroundColor: "#fcfcfc",
-    opacity: 0.6,
-    top: 0,
-    width: "100%",
+    width: "200%",
     zIndex: 100
   },
   maskBottom: {
     position: 'absolute',
-    backgroundColor: "#fcfcfc",
-    opacity: 0.6,
-    bottom: 0,
-    width: "100%",
+    width: "200%",
     zIndex: 100
   }
 }
@@ -121,11 +115,35 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const renderTopMask = () => {
-    return <View style={[styles.maskTop, { height: maskPos.height, top: 0, pointerEvents: "none"}]}></View>
+    return <LinearGradient colors={['rgba(249,249,249,0)', 'rgba(249,249,249,0)', 'rgba(249,249,249,0.8)', 'rgba(249,249,249,0.5)', 'rgba(249,249,249,0.2)']}
+      style={[
+        styles.maskTop, 
+        {
+          height: maskPos.height,
+          top: 0,
+          pointerEvents: "none",
+          transformOrigin: "bottom",
+          transform: [{ scaleX: 2 }, { scaleY: 2 }]
+        }
+      ]}>
+      </LinearGradient>
+    // return <View style={[styles.maskTop, { height: maskPos.height, top: 0, pointerEvents: "none"}]}></View>
   }
 
   const renderBottomMask = () => {
-    return <View style={[styles.maskBottom, { height: maskPos.height, bottom: 0, pointerEvents: "none"}]}></View>
+    return <LinearGradient colors={['rgba(249,249,249,0.2)', 'rgba(249,249,249,0.8)', 'rgba(249,249,249,0)']}
+      style={[
+        styles.maskBottom,
+        {
+          height: maskPos.height,
+          bottom: 0,
+          pointerEvents: "none",
+          transformOrigin: "top",
+          transform: [{ scaleX: 2 }, { scaleY: 2 }]
+        }
+      ]}>
+    </LinearGradient>
+    // return <View style={[styles.maskBottom, { height: maskPos.height, bottom: 0, pointerEvents: "none"}]}></View>
   }
 
   const renderSubChild = () => {
@@ -137,7 +155,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       return cloneChild(children, 0)
     }
   }
-  
+
   return (<View style={[style, { position: 'relative', overflow: 'hidden' }]}  onLayout={onWrapperLayout} ref={wrapRef}>
     {renderTopMask()}
     <View style={[styles.wrapper, fixPosition]}>
