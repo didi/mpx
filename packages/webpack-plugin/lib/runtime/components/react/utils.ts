@@ -1,6 +1,6 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
 import { TextStyle, Dimensions } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA } from '@mpxjs/utils'
+import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -10,9 +10,7 @@ export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const VAR_DEC_REGEX = /^--.*/
 export const VAR_USE_REGEX = /var\(([^,]+)(?:,([^)]+))?\)/
 export const URL_REGEX = /url\(["']?(.*?)["']?\)/
-export const DEFAULT_STYLE = {
-  fontSize: 16
-}
+export const DEFAULT_FONT_SIZE = 16
 
 export function rpx (value: number) {
   const { width } = Dimensions.get('screen')
@@ -181,7 +179,22 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext }: { enableVar?: boolean, externalVarContext?: Record<string, any> }) {
+function transformLineHeight (styleObj: Record<string, any>) {
+  let { lineHeight } = styleObj
+  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
+    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_FONT_SIZE)
+    styleObj.lineHeight = lineHeight
+  }
+}
+
+interface TransformStyleConfig {
+  enableVar?: boolean
+  externalVarContext?: Record<string, any>
+  enablePercent?: boolean
+  enableLineHeight?: boolean
+}
+
+export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
@@ -189,6 +202,8 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar, e
   let hasPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
+  let setContainerWidth = noop
+  let setContainerHeight = noop
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
@@ -213,8 +228,12 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar, e
     }
   }
 
+  const visitors = [varVisitor]
+
+  if (enablePercent) visitors.push(percentVisitor)
+
   // traverse
-  traverseStyle(styleObj, [varVisitor, percentVisitor])
+  traverseStyle(styleObj, visitors)
 
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
@@ -234,11 +253,20 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar, e
     transformVar(normalStyle, varKeyPaths, varContextRef.current)
   }
 
-  const [width, setContainerWidth] = useState(0)
-  const [height, setContainerHeight] = useState(0)
-  // apply percent
-  if (hasPercent) {
-    transformPercent(normalStyle, percentKeyPaths, { width, height })
+  if (enablePercent) {
+    const [width, setWidth] = useState(0)
+    const [height, setHeight] = useState(0)
+    setContainerWidth = setWidth
+    setContainerHeight = setHeight
+    // apply percent
+    if (hasPercent) {
+      transformPercent(normalStyle, percentKeyPaths, { width, height })
+    }
+  }
+
+  if (enableLineHeight) {
+    // transform lineHeight
+    transformLineHeight(normalStyle)
   }
 
   return {
@@ -319,12 +347,4 @@ export const throwReactWarning = (message: string) => {
   setTimeout(() => {
     console.warn(message)
   }, 0)
-}
-
-export const transformTextStyle = (styleObj: TextStyle) => {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
-    styleObj.lineHeight = lineHeight
-  }
 }
