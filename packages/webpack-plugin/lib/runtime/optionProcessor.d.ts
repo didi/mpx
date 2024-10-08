@@ -1,6 +1,7 @@
 declare global {
   namespace NodeJS {
     interface Global {
+      // @ts-ignore
       [key: string]: any
     }
   }
