@@ -68,6 +68,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const propsRef = useRef({} as MovableViewProps)
   propsRef.current = props
+
   const {
     children,
     x = 0,
@@ -78,6 +79,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     direction,
     externalGesture = [],
     style = {},
+    bindtouchstart,
+    bindhtouchmove,
+    bindvtouchmove,
+    bindtouchmove,
+    catchhtouchmove,
+    catchvtouchmove,
+    catchtouchmove,
+    bindtouchend
   } = props
 
   const offsetX = useSharedValue(x)
@@ -259,16 +268,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     e.touches = e.allTouches
   }, [])
 
-  const handleTriggerStart = useCallback((e: any) => {
+  const handleTriggerStart = (e: any) => {
     'worklet';
-    const { bindtouchstart } = propsRef.current
     extendEvent(e)
     bindtouchstart && runOnJS(bindtouchstart)(e)
-  }, [])
+  }
 
-  const handleTriggerMove = useCallback((e: any) => {
+  const handleTriggerMove = (e: any) => {
     'worklet';
-    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current;
     extendEvent(e)
     const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove;
     const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove;
@@ -290,20 +297,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
       catchtouchmove && runOnJS(catchtouchmove)(e);
     }
-  }, []);
+  };
 
-  const handleTriggerEnd = useCallback((e: any) => {
+  const handleTriggerEnd = (e: any) => {
     'worklet';
-    const { bindtouchend } = propsRef.current
     extendEvent(e)
     bindtouchend && runOnJS(bindtouchend)(e)
-  }, [])
+  }
 
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet';
-
         if (!disabled) {
           const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
           isMoving.value = false
