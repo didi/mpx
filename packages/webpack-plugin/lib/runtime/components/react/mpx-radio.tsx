@@ -76,7 +76,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       'enable-offset': enableOffset,
       children,
       bindtap,
-      catchtap,
+      catchtap
     } = props
 
     const layoutRef = useRef({})
@@ -84,8 +84,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
     const groupContext = useContext(RadioGroupContext)
-    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
-    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
+    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
+    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
     const labelContext = useContext(LabelContext)
 
@@ -98,7 +98,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const defaultStyle = {
       ...styles.wrapper,
       ...(isChecked && styles.wrapperChecked),
-      ...(disabled && styles.wrapperDisabled),
+      ...(disabled && styles.wrapperDisabled)
     }
 
     const viewStyle = {

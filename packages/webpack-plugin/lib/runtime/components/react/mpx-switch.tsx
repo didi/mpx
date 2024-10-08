@@ -5,7 +5,7 @@
  * ✔ color
  */
 import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
-import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react';
+import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
@@ -35,7 +35,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     color = '#04BE02',
     'enable-offset': enableOffset,
     bindchange,
-    catchchange,
+    catchchange
   } = props
 
   const [isChecked, setIsChecked] = useState<boolean>(checked)
@@ -116,8 +116,8 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     {...innerProps}
     style={style}
     value={isChecked}
-    trackColor={{ false: "#FFF", true: color }}
-    thumbColor={isChecked ? "#FFF" : "#f4f3f4"}
+    trackColor={{ false: '#FFF', true: color }}
+    thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
     ios_backgroundColor="#FFF"
   />)
 })

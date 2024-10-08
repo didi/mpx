@@ -113,8 +113,8 @@ const keyboardTypeMap: Record<Type, string> = {
   digit:
     Platform.select({
       ios: 'decimal-pad',
-      android: 'numeric',
-    }) || '',
+      android: 'numeric'
+    }) || ''
 }
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
@@ -143,7 +143,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     // private
     multiline,
     'auto-height': autoHeight,
-    bindlinechange,
+    bindlinechange
   } = props
 
   const formContext = useContext(FormContext)
@@ -187,7 +187,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     if (!bindinput && !bindblur) return
     const {
       range: { start, end },
-      text,
+      text
     } = nativeEvent
     cursorIndex.current = start < end ? start : start + text.length
   }
@@ -202,7 +202,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         {
           detail: {
             value: evt.nativeEvent.text,
-            cursor: cursorIndex.current,
+            cursor: cursorIndex.current
           },
           layoutRef
         },
@@ -225,7 +225,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
           evt,
           {
             detail: {
-              value: tmpValue.current || '',
+              value: tmpValue.current || ''
             },
             layoutRef
           },
@@ -243,7 +243,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
           {
             detail: {
               value: tmpValue.current || '',
-              cursor: cursorIndex.current,
+              cursor: cursorIndex.current
             },
             layoutRef
           },
@@ -261,7 +261,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
           evt,
           {
             detail: {
-              value: tmpValue.current || '',
+              value: tmpValue.current || ''
             },
             layoutRef
           },
@@ -279,7 +279,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
           evt,
           {
             detail: {
-              value: tmpValue.current || '',
+              value: tmpValue.current || ''
             },
             layoutRef
           },
@@ -303,7 +303,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
               detail: {
                 height,
                 lineHeight,
-                lineCount: lineCount.current,
+                lineCount: lineCount.current
               },
               layoutRef
             },
@@ -323,7 +323,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
           {
             detail: {
               selectionStart: evt.nativeEvent.selection.start,
-              selectionEnd: evt.nativeEvent.selection.end,
+              selectionEnd: evt.nativeEvent.selection.end
             },
             layoutRef
           },
@@ -365,14 +365,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...(enableOffset ? { onLayout } : {}),
+    ...(enableOffset ? { onLayout } : {})
   },
-    [
-      'enable-offset'
-    ],
-    {
-      layoutRef
-    })
+  [
+    'enable-offset'
+  ],
+  {
+    layoutRef
+  })
 
   return (
     <TextInput

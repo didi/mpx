@@ -4,7 +4,7 @@ import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { DateProps, LayoutType } from './type'
 
-function formatTimeStr(time = ''): Date {
+function formatTimeStr (time = ''): Date {
   let [year, month, day]: any = time.split('-')
   year = ~~year || 2000
   month = ~~month || 1
@@ -26,8 +26,7 @@ function dateToString (date: Date, fields: 'day' | 'month' | 'year' = 'day'): st
   return ret
 }
 
-
-const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: DateProps, ref):  React.JSX.Element => {
+const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: DateProps, ref): React.JSX.Element => {
   const { children, start = '1970-01-01', end = '2999-01-01', value, bindchange, bindcancel, disabled, fields } = props
   const [datevalue, setDateValue] = useState(value)
   // 存储layout布局信息

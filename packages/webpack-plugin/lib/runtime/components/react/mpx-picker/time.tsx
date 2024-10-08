@@ -12,44 +12,44 @@ import { TimeProps } from './type'
 
 const styles: { [key: string]: Object } = {
   showModal: {
-    backgroundColor: "black",
+    backgroundColor: 'black',
     opacity: 0.5,
-    position: "absolute",
-    width: "100%"
+    position: 'absolute',
+    width: '100%'
   },
   hideModal: {
     opacity: 1,
     height: 0
   },
   modal: {
-    backgroundColor: "black",
+    backgroundColor: 'black',
     opacity: 0.5
   },
   centeredView: {
     position: 'absolute',
     bottom: 0,
-    width: "100%",
+    width: '100%',
     overflow: 'scroll'
   },
   btnLine: {
-    width: "100%",
+    width: '100%',
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     borderColor: 20,
     borderBottomWidth: 1,
-    backgroundColor: "white",
+    backgroundColor: 'white',
     paddingLeft: 40,
     paddingRight: 40
   },
   cancel: {
     height: 50,
-    display: "flex",
+    display: 'flex',
     justifyContent: 'center'
   },
   ok: {
     height: 50,
-    display: "flex",
+    display: 'flex',
     justifyContent: 'center'
   },
   btntext: {
@@ -58,12 +58,12 @@ const styles: { [key: string]: Object } = {
   }
 }
 
-function formatStrToInt(timestr: string) {
-  let [start, end] = timestr.split(':')
+function formatStrToInt (timestr: string) {
+  const [start, end] = timestr.split(':')
   return [parseInt(start), parseInt(end)]
 }
 // [9, 59] to 09:59
-function formatStr(arr: any[]) {
+function formatStr (arr: any[]) {
   let [hour, minute] = arr
   if (hour < 10) {
     hour = '0' + hour
@@ -74,10 +74,10 @@ function formatStr(arr: any[]) {
   return hour + ':' + minute
 }
 
-function generateMinute() {
-  let arrMinute: any[] = []
+function generateMinute () {
+  const arrMinute: any[] = []
   for (let i = 0; i <= 59; i++) {
-    let obj = {
+    const obj = {
       label: toSingleStr(i),
       value: i,
       children: []
@@ -86,10 +86,10 @@ function generateMinute() {
   }
   return arrMinute
 }
-function generateColumns(): any[] {
-  let pickData: any[] = []
+function generateColumns (): any[] {
+  const pickData: any[] = []
   for (let i = 0; i <= 23; i++) {
-    let obj = {
+    const obj = {
       label: toSingleStr(i),
       value: i,
       children: generateMinute()
@@ -100,18 +100,18 @@ function generateColumns(): any[] {
   return pickData
 }
 
-function toSingleStr(str: number) {
+function toSingleStr (str: number) {
   return str < 10 ? '0' + str : str
 }
 
-function toStr(time: string): string {
+function toStr (time: string): string {
   const [hour, minute]: any = formatStrToInt(time)
   const newHour = toSingleStr(hour)
   const newMinute = toSingleStr(minute)
   return '' + newHour + newMinute
 }
 
-function checkSelectedIsValid(strStart: string, strEnd: string, selected: number[]): Boolean {
+function checkSelectedIsValid (strStart: string, strEnd: string, selected: number[]): boolean {
   const strSel = '' + toSingleStr(selected[0]) + toSingleStr(selected[1])
   if (strSel < strStart || strSel > strEnd) return false
   return true
@@ -196,7 +196,6 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
     }
   }
 
-
   const onElementLayout = () => {
     viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -210,7 +209,6 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
       setOffsetTop(offsetTop)
     })
   }
-
 
   const renderModalChildren = () => {
     const pickerProps = {
@@ -250,7 +248,7 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
       </TouchableWithoutFeedback>
     </View>
   }
-  const strStyle = visible ? styles['showModal'] : styles['hideModal']
+  const strStyle = visible ? styles.showModal : styles.hideModal
   const mheight = Math.floor(offsetTop)
 
   // Animated.View
@@ -271,4 +269,3 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
 _TimePicker.displayName = 'mpx-picker-time'
 
 export default _TimePicker
-

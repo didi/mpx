@@ -5,7 +5,7 @@ import React, { forwardRef, useState, useRef } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { RegionProps, RegionObj, PickerData, LayoutType } from './type'
 
-function formateRegionData(clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerData[] {
+function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerData[] {
   const l = depth
   const obj: PickerData[] = []
   if (customItem) {
@@ -25,7 +25,7 @@ function formateRegionData(clObj: RegionObj[] = [], customItem?: string, depth =
   for (let i = 0; i < clObj.length; i++) {
     const region: PickerData = {
       value: clObj[i].value,
-      label: clObj[i].value,
+      label: clObj[i].value
     }
     if (clObj[i].children) {
       region.children = formateRegionData(clObj[i].children, customItem, l - 1)
@@ -35,11 +35,9 @@ function formateRegionData(clObj: RegionObj[] = [], customItem?: string, depth =
   return obj
 }
 
-
-
 const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((props: RegionProps, ref): React.JSX.Element => {
   const { children, value, bindchange, bindcancel, disabled } = props
-  let formatRegionData = formateRegionData(regionData, props['custom-item'])
+  const formatRegionData = formateRegionData(regionData, props['custom-item'])
 
   const [regionvalue, setRegionValue] = useState(value)
   // 存储layout布局信息
@@ -75,7 +73,7 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
       props.getInnerLayout && props.getInnerLayout(layoutRef)
     })
   }
-  
+
   const regionProps = {
     data: formatRegionData,
     value: regionvalue,
@@ -97,7 +95,6 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
       </TouchableWithoutFeedback>
     </Picker>
   )
-
 })
 
 _RegionPicker.displayName === 'mpx-picker-region'

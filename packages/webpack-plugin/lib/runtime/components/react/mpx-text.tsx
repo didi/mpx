@@ -27,7 +27,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     selectable,
     'enable-offset': enableOffset,
     'user-select': userSelect,
-    'disable-default-style': disableDefaultStyle = false,
+    'disable-default-style': disableDefaultStyle = false
   } = props
 
   const layoutRef = useRef({})
@@ -71,7 +71,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       }
     }
   }, [])
-
 
   return (
     <Text

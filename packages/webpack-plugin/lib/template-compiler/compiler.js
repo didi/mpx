@@ -1355,11 +1355,13 @@ function processEvent (el, options) {
   }
 }
 
-function processSlotReact (el) {
+function processSlotReact (el, meta) {
   if (el.tag === 'slot') {
     el.slot = {
       name: getAndRemoveAttr(el, 'name').val
     }
+    meta.options = meta.options || {}
+    meta.options.disableMemo = true
   }
 }
 
@@ -2329,7 +2331,7 @@ function getVirtualHostRoot (options, meta) {
     if (ctorType === 'component') {
       if (mode === 'wx' && hasVirtualHost) {
         // wx组件注入virtualHost配置
-        !meta.options && (meta.options = {})
+        meta.options = meta.options || {}
         meta.options.virtualHost = true
       }
       if (mode === 'web' && !hasVirtualHost) {
@@ -2353,8 +2355,12 @@ function getVirtualHostRoot (options, meta) {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
           }
+          // todo 运行时通过root标识确定是否合并rootProps
+          // {
+          //   name: 'is-root',
+          //   value: '{{true}}'
+          // }
         ])
-        rootView.isRoot = true
         processElement(rootView, rootView, options, meta)
         return rootView
       }
@@ -2622,7 +2628,7 @@ function processElement (el, root, options, meta) {
     processStyleReact(el, options)
     processEventReact(el)
     processComponentIs(el, options)
-    processSlotReact(el)
+    processSlotReact(el, meta)
     processAttrs(el, options)
     return
   }

@@ -10,11 +10,13 @@ interface SvgProps {
 }
 
 const Svg = ({ local = false, src, style, width, height }: SvgProps): JSX.Element => {
-  return local ? (
+  return local
+    ? (
     <WithLocalSvg style={style} asset={src as ImageSourcePropType} width={width} height={height} />
-  ) : (
+      )
+    : (
     <SvgCssUri style={style} uri={src as string} width={width} height={height} />
-  )
+      )
 }
 
 export default Svg

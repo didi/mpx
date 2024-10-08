@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset, hump2dash } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -46,8 +46,21 @@ function createEffect (proxy, components) {
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
+    return proxy.target.__injectedRender(createElement, getComponent)
   }, () => queueJob(update), proxy.scope)
+}
+
+function getRootProps (props) {
+  const rootProps = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
+      if (match) {
+        rootProps[key] = props[key]
+      }
+    }
+  }
+  return rootProps
 }
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
@@ -62,31 +75,24 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         if (hasOwn(props, key)) {
           propsData[key] = props[key]
         } else {
-          let field = validProps[key]
-          if (isFunction(field) || field === null) {
-            field = {
-              type: field
+          const altKey = hump2dash(key)
+          if (hasOwn(props, altKey)) {
+            propsData[key] = props[altKey]
+          } else {
+            let field = validProps[key]
+            if (isFunction(field) || field === null) {
+              field = {
+                type: field
+              }
             }
+            // 处理props默认值
+            propsData[key] = field.value
           }
-          // 处理props默认值
-          propsData[key] = field.value
         }
       })
       return propsData
     },
-    __getRootProps () {
-      const props = propsRef.current
-      const rootProps = {}
-      for (const key in props) {
-        if (hasOwn(props, key)) {
-          const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
-          if (match) {
-            rootProps[key] = props[key]
-          }
-        }
-      }
-      return rootProps
-    },
+
     __resetInstance () {
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
@@ -361,9 +367,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useEffect(() => {
       if (!isFirst) {
         // 处理props更新
-        Object.keys(props).forEach(key => {
-          if (hasOwn(validProps, key)) {
+        Object.keys(validProps).forEach((key) => {
+          if (hasOwn(props, key)) {
             instance[key] = props[key]
+          } else {
+            const altKey = hump2dash(key)
+            if (hasOwn(props, altKey)) {
+              instance[key] = props[altKey]
+            }
           }
         })
       }
@@ -391,7 +402,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return rawOptions.__disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    const rootProps = getRootProps(props)
+    rootProps.style = { ...root.props.style, ...rootProps.style }
+    // update root props
+    return cloneElement(root, rootProps)
   }))
 
   if (type === 'page') {
@@ -414,18 +429,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
 
-      return createElement(Provider,
-        null,
-        createElement(GestureHandlerRootView,
-          {
-            style: {
-              flex: 1,
-              backgroundColor: pageConfig.backgroundColor || '#ffffff'
-            },
-            onLayout (e) {
-              navigation.layout = e.nativeEvent.layout
-            }
+      return createElement(GestureHandlerRootView,
+        {
+          style: {
+            flex: 1,
+            backgroundColor: pageConfig.backgroundColor || '#ffffff'
           },
+          onLayout (e) {
+            navigation.layout = e.nativeEvent.layout
+          }
+        },
+        // todo custom portal host for active route
+        createElement(Provider,
+          null,
           createElement(routeContext.Provider,
             {
               value: { pageId: currentPageId }

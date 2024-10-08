@@ -34,7 +34,7 @@ type Data = object | (() => object)
 export type PropType<T> = {
   __type: T
 } & (
-    T extends String
+    T extends string
     ? StringConstructor
     : T extends number
     ? NumberConstructor
@@ -427,9 +427,7 @@ export interface ComputedRef<T = any> extends WritableComputedRef<T> {
   [ComputedRefSymbol]: true
 }
 
-export interface WritableComputedRef<T> extends Ref<T> {
-  // readonly effect: ReactiveEffect<T>
-}
+export type WritableComputedRef<T> = Ref<T>
 
 type WatchCallback<T> = (
   value: T,
@@ -463,7 +461,6 @@ interface EffectScope {
   resume (ignoreDirty?: boolean): void
 }
 
-
 type StringObj = {
   [k: string]: string | StringObj
 }
@@ -489,7 +486,6 @@ interface UseI18n {
 
   mergeLocaleMessage (locale: string, messages: StringObj): void
 }
-
 
 export function ref<T extends object> (
   value: T
@@ -530,7 +526,6 @@ export function computed<T> (
   options: WritableComputedOptions<T>
 ): WritableComputedRef<T>
 
-
 export function watchEffect (
   effect: (onCleanup: (cleanupFn: () => void) => void) => void,
   options?: WatchEffectOptions
@@ -545,7 +540,6 @@ export function watchPostEffect (
   effect: (onCleanup: (cleanupFn: () => void) => void) => void,
   options?: WatchEffectOptions
 ): void
-
 
 export function watch<T extends MultiWatchSources> (
   sources: [...T],
