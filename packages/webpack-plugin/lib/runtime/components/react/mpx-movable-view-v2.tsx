@@ -40,6 +40,7 @@ interface MovableViewProps {
   x?: number;
   y?: number;
   disabled?: boolean;
+  damping?: number;
   bindchange?: (event: unknown) => void;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
@@ -118,7 +119,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     isAnimatedRef: true
   })
 
-  const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) {
+  const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
     if (!bindchange) return
     let source = ''
@@ -143,7 +144,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
-        const springDamping = damping * 5 || 100,
+        const springDamping = damping as number * 5 || 100
         if (direction === 'horizontal' || direction === 'all') {
           offsetX.value = withSpring(newX, {
             mass: 0.5,
