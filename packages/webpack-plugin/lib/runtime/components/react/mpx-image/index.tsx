@@ -134,7 +134,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     defaultStyle
   })
 
-  const { normalStyle } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+  const { 
+    hasPercent,
+    normalStyle,
+    setContainerWidth,
+    setContainerHeight,
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   const { width, height } = normalStyle
 
@@ -248,7 +253,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     setViewHeight(height)
   }
 
-  const onImageLayout = () => {
+  const onImageLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
