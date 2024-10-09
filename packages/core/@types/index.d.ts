@@ -7,10 +7,8 @@
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
 
-// @ts-ignore
 import { GetComputedType } from '@mpxjs/store'
 
-// @ts-ignore
 export * from '@mpxjs/store'
 
 // utils

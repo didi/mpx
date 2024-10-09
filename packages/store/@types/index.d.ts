@@ -1,4 +1,3 @@
-// @ts-ignore
 import type { ComputedRef } from '@mpxjs/core'
 
 type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
