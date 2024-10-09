@@ -381,6 +381,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
+    'id',
     'enable-offset',
     'scroll-x',
     'scroll-y',
