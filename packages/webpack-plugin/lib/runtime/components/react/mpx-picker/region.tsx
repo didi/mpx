@@ -58,6 +58,7 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
           return code
         }
       }
+      return item
     }).filter(code => !!code)
     const detail: Record<string, any> = { value, code }
     if (postcode[2]) detail.postcode = postcode[2]
@@ -88,7 +89,6 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   }
 
   return (
-    // @ts-ignore
     <Picker {...regionProps}>
       <TouchableWithoutFeedback>
         <View {...touchProps}>{children}</View>
@@ -97,5 +97,5 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   )
 })
 
-_RegionPicker.displayName === 'mpx-picker-region'
+_RegionPicker.displayName = 'mpx-picker-region'
 export default _RegionPicker

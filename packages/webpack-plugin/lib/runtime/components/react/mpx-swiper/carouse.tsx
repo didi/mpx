@@ -162,7 +162,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
           autoMoveOffset = Object.assign({}, currentOffset, { [state.dir]: 0 })
           nextIndex = state.total - 1
           // 反向: 数组最后一个index
-          nextOffset = Object.assign({}, currentOffset, { [state.dir]: step * state.total }),
+          nextOffset = Object.assign({}, currentOffset, { [state.dir]: step * state.total })
           isAutoEnd = true
         } else {
           // 反向非最后一个
@@ -172,7 +172,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
         if (nextIndex > state.total - 1) {
           autoMoveOffset = Object.assign({}, currentOffset, { [state.dir]: step * (nextIndex + 1) })
           nextIndex = 0
-          nextOffset = Object.assign({}, currentOffset, { [state.dir]: step }),
+          nextOffset = Object.assign({}, currentOffset, { [state.dir]: step })
           isAutoEnd = true
         } else {
           // nextIndex =  nextIndex,
@@ -216,22 +216,26 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     } else {
       if (!isAutoEnd) {
         scrollViewRef.current?.scrollTo({ x: nextOffset.x, y: nextOffset.y, animated: true })
+        // 这里包裹了一层contentOffset需要测试下
         onScrollEnd({
           nativeEvent: {
-            // @ts-ignore
-            x: +nextOffset.x,
-            y: +nextOffset.y
+            contentOffset: {
+              x: +nextOffset.x,
+              y: +nextOffset.y
+            }
           }
-        })
+        } as NativeSyntheticEvent<NativeScrollEvent>)
       } else {
+        // 同上
         setTimeout(() => {
           onScrollEnd({
             nativeEvent: {
-              // @ts-ignore
-              x: 0,
-              y: 0
+              contentOffset: {
+                x: 0,
+                y: 0
+              }
             }
-          })
+          } as NativeSyntheticEvent<NativeScrollEvent>)
         }, 10)
         if (state.dir === 'x') {
           scrollViewRef.current?.scrollTo({ x: step, y: step, animated: true })
@@ -293,7 +297,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   */
   function onWrapperLayout () {
     if (props.enableOffset) {
-      // @ts-ignore
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         const isWDiff = state.width !== width
@@ -399,7 +402,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
     if (total > 1 && Array.isArray(children)) {
       let arrElements: (Array<ReactNode>) = []
       // pages = ["2", "0", "1", "2", "0"]
-      const pages = Array.isArray(children) && Object.keys(children) || []
+      const pages = Array.isArray(children) ? Object.keys(children) : []
       /* 无限循环的时候 */
       if (circular) {
         pages.unshift(total - 1 + '')
