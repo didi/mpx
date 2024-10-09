@@ -13,17 +13,31 @@ import {
   NativeSyntheticEvent,
   ViewStyle
 } from 'react-native'
-import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
+import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue, VarContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { throwReactWarning, useTransformStyle } from './utils'
 
 export interface CheckboxGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+}
+
+function wrapChildren (props: CheckboxGroupProps, { hasVarDec }: { hasVarDec: boolean }, varContext?: Record<string, any>) {
+  let { children } = props
+
+  if (hasVarDec && varContext) {
+    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
+  }
+
+  return [
+    children
+  ]
 }
 
 const CheckboxGroup = forwardRef<
@@ -33,7 +47,8 @@ const CheckboxGroup = forwardRef<
   const {
     style = {},
     'enable-offset': enableOffset,
-    children,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     bindchange
   } = props
 
@@ -51,8 +66,15 @@ const CheckboxGroup = forwardRef<
   const defaultStyle = {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  }
+
+  const styleObj = {
+    ...defaultStyle,
     ...style
   }
+
+  const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
   })
@@ -124,7 +146,7 @@ const CheckboxGroup = forwardRef<
     props,
     {
       ref: nodeRef,
-      style: defaultStyle,
+      style: normalStyle,
       ...(enableOffset ? { onLayout } : {})
     },
     ['enable-offset'],
@@ -136,7 +158,15 @@ const CheckboxGroup = forwardRef<
   return (
     <View {...innerProps}>
       <CheckboxGroupContext.Provider value={{ groupValue, notifyChange }}>
-        {children}
+        {
+          wrapChildren(
+            props,
+            {
+               hasVarDec
+            },
+            varContextRef.current
+          )
+        }
       </CheckboxGroupContext.Provider>
     </View>
   )

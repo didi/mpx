@@ -197,6 +197,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       props,
       {
         ref: nodeRef,
+        style: innerStyle,
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
@@ -231,7 +232,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }, [checked])
 
     return (
-      <View {...innerProps} style={innerStyle}>
+      <View {...innerProps}>
         <View style={defaultStyle}>
           <Icon
             type='success_no_circle'
