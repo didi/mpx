@@ -182,6 +182,9 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
 function transformLineHeight (styleObj: Record<string, any>) {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
+    if (!styleObj.fontSize) {
+      console.warn('[Mpx runtime warn]: The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
+    }
     lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_FONT_SIZE)
     styleObj.lineHeight = lineHeight
   }
