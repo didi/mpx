@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import LinearGradient from 'react-native-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient'
 import React, { forwardRef, MutableRefObject, useState, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
@@ -39,33 +39,31 @@ const styles: { [key: string]: Object } = {
   wrapper: {
     display: 'flex',
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    overflow: 'hidden'
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    alignItems: 'center'
   },
   maskTop: {
     position: 'absolute',
-    width: "200%",
+    width: 1000,
     zIndex: 100
   },
   maskBottom: {
     position: 'absolute',
-    width: "200%",
+    width: 1000,
     zIndex: 100
   }
 }
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
-  const { children, value = [], bindchange, style} = props
+  const { children, value = [], bindchange, style } = props
   const innerLayout = useRef({})
   const cloneRef = useRef(null)
   const wrapRef = useRef(null)
-  const fixPosition: PosType = {}
   const maskPos: PosType = {}
   let [pickH, setPickH] = useState(0)
   if (style?.height && pickH) {
-    const fixH = Math.floor((pickH - style.height) / 2)
-    fixPosition.top = -fixH
-    maskPos.height = pickH / 5 * 2 - fixH
+    maskPos.height = pickH / 5 * 2 + (style.height - pickH)
   } else {
     maskPos.height = pickH / 5 * 2
   }
@@ -85,8 +83,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: {} })
     bindchange && bindchange(eventData)
   }
-  
-  const onWrapperLayout = (e) => {
+
+  const onWrapperLayout = () => {
     wrapRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       const a = { x, y, width, height, offsetLeft, offsetTop }
     })
@@ -96,16 +94,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     innerLayout.current = layout.current
   }
 
-  const innerProps = useInnerProps(props, {ref: nodeRef}, [], { layoutRef: innerLayout })
+  const innerProps = useInnerProps(props, { ref: nodeRef }, [], { layoutRef: innerLayout })
 
   const cloneChild = (child: React.ReactNode, index: number) => {
-    const extraProps = index === 0 ? {
-      getInnerLayout: getInnerLayout,
-      innerProps
-    } : {}
+    const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}
     const childProps = {
-      ...child.props,
+      ...child?.props,
       ref: cloneRef,
+      prefix: index,
+      key: 'pick-view' + index,
+      wrapperStyle: {
+        height: style?.height || 0
+      },
       onColumnLayoutChange,
       onSelectChange: onSelectChange.bind(null, index),
       selectedIndex: value?.[index] || 0,
@@ -115,35 +115,29 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const renderTopMask = () => {
-    return <LinearGradient colors={['rgba(249,249,249,0)', 'rgba(249,249,249,0)', 'rgba(249,249,249,0.8)', 'rgba(249,249,249,0.5)', 'rgba(249,249,249,0.2)']}
+    return <LinearGradient colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.2)']}
       style={[
-        styles.maskTop, 
+        styles.maskTop,
         {
           height: maskPos.height,
           top: 0,
-          pointerEvents: "none",
-          transformOrigin: "bottom",
-          transform: [{ scaleX: 2 }, { scaleY: 2 }]
+          pointerEvents: 'none'
         }
       ]}>
       </LinearGradient>
-    // return <View style={[styles.maskTop, { height: maskPos.height, top: 0, pointerEvents: "none"}]}></View>
   }
 
   const renderBottomMask = () => {
-    return <LinearGradient colors={['rgba(249,249,249,0.2)', 'rgba(249,249,249,0.8)', 'rgba(249,249,249,0)']}
+    return <LinearGradient colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.8)']}
       style={[
         styles.maskBottom,
         {
           height: maskPos.height,
           bottom: 0,
-          pointerEvents: "none",
-          transformOrigin: "top",
-          transform: [{ scaleX: 2 }, { scaleY: 2 }]
+          pointerEvents: 'none'
         }
       ]}>
     </LinearGradient>
-    // return <View style={[styles.maskBottom, { height: maskPos.height, bottom: 0, pointerEvents: "none"}]}></View>
   }
 
   const renderSubChild = () => {
@@ -155,16 +149,15 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       return cloneChild(children, 0)
     }
   }
-
-  return (<View style={[style, { position: 'relative', overflow: 'hidden' }]}  onLayout={onWrapperLayout} ref={wrapRef}>
+  return (<View style={[style, { position: 'relative', overflow: 'hidden' }]} onLayout={onWrapperLayout} ref={wrapRef}>
     {renderTopMask()}
-    <View style={[styles.wrapper, fixPosition]}>
+    <View style={[styles.wrapper]}>
       {renderSubChild()}
     </View>
     {renderBottomMask()}
   </View>)
 })
 
-_PickerView.displayName = 'mpx-picker-view';
+_PickerView.displayName = 'mpx-picker-view'
 
 export default _PickerView

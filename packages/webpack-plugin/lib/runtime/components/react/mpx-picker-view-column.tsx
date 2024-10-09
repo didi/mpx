@@ -1,5 +1,5 @@
 
-import { View, Animated, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, Platform } from 'react-native'
 import React, { forwardRef, useRef, useState, useEffect } from 'react'
 // import { Reanimated } from 'react-native-reanimated';
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
@@ -7,22 +7,23 @@ interface ColumnProps {
   children: React.ReactNode,
   selectedIndex: number,
   onColumnLayoutChange: Function,
-  getInnerLayout: Function
-  onSelectChange: Function
+  getInnerLayout: Function,
+  onSelectChange: Function,
+  style: Object,
+  wrapperStyle: {
+    height?: number
+  },
+  prefix: number
 }
 // 每个Column 都有个外层的高度, 内部的元素高度
 // 默认的高度
 // const AnimatedScrollView = Reanimated.createAnimatedComponent(ScrollView);
 const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
-  const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout } = props
+  const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout, wrapperStyle } = props
   // scrollView的ref
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {})
   // scrollView的布局存储
   const layoutRef = useRef({})
-  // item的ref
-  const itemDomRef = useRef(null)
-    // item的布局存储
-  const itemPosRef = useRef({})
   // 每个元素的高度
   let [itemH, setItemH] = useState(0)
   // scrollView内容的初始offset
@@ -42,15 +43,13 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
     })
   }
 
-  const onItemLayout = () => {
-    itemDomRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      if (height > 0 && itemH !== height) {
-        itemPosRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        itemH = height
-        setItemH(height)
-        onColumnLayoutChange && onColumnLayoutChange({ height: height * 5 })
-      }
-    })
+  const onItemLayout = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const layout = e.nativeEvent.layout
+    if (layout.height && itemH !== layout.height) {
+      itemH = layout.height
+      setItemH(layout.height)
+      onColumnLayoutChange && onColumnLayoutChange({ height: layout.height * 5 })
+    }
   }
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -64,30 +63,33 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
   const renderInnerchild = () => {
     // Fragment 节点
     const realChilds = Array.isArray(children) ? children : (children.props?.children && Array.isArray(children.props?.children) ? children.props.children : [children])
-    
-    const arrChild =  realChilds.map((item: React.ReactNode, index: number) => {
+    const arrChild = realChilds.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
-      return <View ref={itemDomRef} {...InnerProps}>{item}</View>
+      const strKey = 'picker' + props.prefix + '-column' + index
+      return <View key={strKey} {...InnerProps}>{item}</View>
     })
-    // 渐变待支持
-    const emptyEle = (<View style={[{ height: itemH }]}></View>)
-    arrChild.unshift(emptyEle)
-    arrChild.unshift(emptyEle)
-    arrChild.push(emptyEle)
-    arrChild.push(emptyEle)
+    const totalHeight = itemH * 5
+    if (wrapperStyle.height && totalHeight > wrapperStyle.height) {
+      const fix = Math.ceil((totalHeight - wrapperStyle.height) / 2)
+      arrChild.unshift(<View key="picker-column-0" style={[{ height: itemH - fix }]}></View>)
+      arrChild.unshift(<View key="picker-column-1" style={[{ height: itemH }]}></View>)
+      arrChild.push(<View key="picker-column-2" style={[{ height: itemH }]}></View>)
+      arrChild.push(<View key="picker-column-3" style={[{ height: itemH - fix }]}></View>)
+    } else {
+      arrChild.unshift(<View key="picker-column-0" style={[{ height: itemH }]}></View>)
+      arrChild.unshift(<View key="picker-column-1" style={[{ height: itemH }]}></View>)
+      arrChild.push(<View key="picker-column-2" style={[{ height: itemH }]}></View>)
+      arrChild.push(<View key="picker-column-3" style={[{ height: itemH }]}></View>)
+    }
     return arrChild
   }
 
   const renderScollView = () => {
-    const wheelStyle = {
-      height: itemH
-    }
     const contentContainerStyle = {
-      textAlign: "center"
+      textAlign: 'center'
     }
 
     return (<Animated.ScrollView
-      style={wheelStyle}
       horizontal={false}
       ref={scrollViewRef}
       bounces={false}
@@ -99,22 +101,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
       snapToInterval={itemH}
       contentContainerStyle={contentContainerStyle}
       automaticallyAdjustContentInsets={false}
-      // contentOffset={offset}
-      // directionalLockEnabled={true}
       onLayout={onScrollViewLayout}
-      // onMomentumScrollBegin={onMomentumScrollBegin}
-      // onScrollEndDrag={onScrollEndDrag}
       onMomentumScrollEnd={onMomentumScrollEnd}>
-      {renderInnerchild()}
+        {renderInnerchild()}
     </Animated.ScrollView>)
   }
 
-  return (<View style={[{display: 'flex'}]}>
-    {renderScollView()}
-  </View>)
+  return (<SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
+    { renderScollView() }
+  </SafeAreaView>)
 })
 
-_PickerViewColumn.displayName = 'mpx-picker-view-column';
-
+_PickerViewColumn.displayName = 'mpx-picker-view-column'
 export default _PickerViewColumn
-
