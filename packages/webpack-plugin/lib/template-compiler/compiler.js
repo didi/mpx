@@ -1078,12 +1078,12 @@ function processStyleReact (el, options) {
     const dynamicClassExp = parseMustacheWithContext(dynamicClass).result
     const staticStyleExp = parseMustacheWithContext(staticStyle).result
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
-    const showExp = show === undefined ? 'true' : parseMustacheWithContext(show).result
+    const showExp = parseMustacheWithContext(show).result
 
     addAttrs(el, [{
       name: 'style',
       // runtime helper
-      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}${show === undefined ? '' : `, !(${showExp})`})}}`
     }])
   }
 
