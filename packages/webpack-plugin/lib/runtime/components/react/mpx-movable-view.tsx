@@ -1,42 +1,47 @@
 /**
  * ✔ direction
- * ✘ inertia
- * ✘ out-of-bounds
+ * ✔ inertia
+ * ✔ out-of-bounds
  * ✔ x
  * ✔ y
- * ✘ damping
- * ✔ friction
+ * ✔ damping
+ * ✘ friction
  * ✔ disabled
- * ✔ scale
- * ✔ scale-min
- * ✔ scale-max
- * ✔ scale-value
+ * ✘ scale
+ * ✘ scale-min
+ * ✘ scale-max
+ * ✘ scale-value
  * ✘ animation
  * ✔ bindchange
- * ✔ bindscale
+ * ✘ bindscale
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useRef, useEffect, forwardRef, ReactNode, useContext, useState, useMemo } from 'react'
-import { StyleSheet, Animated, NativeSyntheticEvent, PanResponder, View } from 'react-native'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react';
+import { StyleSheet, NativeSyntheticEvent, View } from 'react-native';
+import { getCustomEvent } from './getInnerListeners';
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
+import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDecay,
+  withSpring,
+  runOnJS,
+  runOnUI,
+  useAnimatedReaction
+} from 'react-native-reanimated'
 
 interface MovableViewProps {
   children: ReactNode;
   style?: Record<string, any>;
   direction: 'all' | 'vertical' | 'horizontal' | 'none';
-  x?: string | number;
-  y?: string | number;
-  scale?: boolean;
+  x?: number;
+  y?: number;
   disabled?: boolean;
-  friction?: number;
-  'scale-value'?: number;
-  'scale-min'?: number;
-  'scale-max'?: number;
+  damping?: number;
   bindchange?: (event: unknown) => void;
-  bindscale?: (event: unknown) => void;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
@@ -45,378 +50,375 @@ interface MovableViewProps {
   bindvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  'out-of-bounds'?: boolean;
+  externalGesture?: Array<{ getNodeInstance: () => any }>;
+  inertia?: boolean;
 }
+
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     left: 0,
     top: 0
-  }
+  },
 })
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
+  const layoutRef = useRef<any>({})
+  const changeSource = useRef<any>('')
+
+  const propsRef = useRef({} as MovableViewProps)
+  propsRef.current = props
+
   const {
     children,
-    friction = 7,
-    scale = false,
-    direction = 'none',
     x = 0,
     y = 0,
+    inertia,
+    disabled,
+    damping,
+    'out-of-bounds': outOfBounds,
+    direction,
+    externalGesture = [],
     style = {},
-    'scale-min': scaleMin = 0.1,
-    'scale-max': scaleMax = 10,
-    'scale-value': originScaleValue = 1,
-    bindscale,
-    bindchange
+    bindtouchstart,
+    bindhtouchmove,
+    bindvtouchmove,
+    bindtouchmove,
+    catchhtouchmove,
+    catchvtouchmove,
+    catchtouchmove,
+    bindtouchend
   } = props
 
-  const pan = useRef<any>(new Animated.ValueXY())
-  const scaleValue = useRef<any>(new Animated.Value(1))
-  const [transformOrigin, setTransformOrigin] = useState('0% 0%')
+  const offsetX = useSharedValue(x)
+  const offsetY = useSharedValue(y)
 
-  const propsRef = useRef<any>({})
-  const layoutRef = useRef<any>({})
+  const startPosition = useSharedValue({
+    x: 0,
+    y: 0
+  })
+  const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
+  const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
+  const isMoving = useSharedValue(false)
+  const xInertialMotion = useSharedValue(false)
+  const yInertialMotion = useSharedValue(false)
+  const isFirstTouch = useSharedValue(true)
+  let touchEvent = useSharedValue<string>('')
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
-  const movablePosition = useRef({
-    x: Number(x),
-    y: Number(y)
-  })
+  const externalComponentGesture = externalGesture.map(gesture => {
+    const instance = gesture?.getNodeInstance?.() || {}
+    return instance.nodeRef
+  }).filter(Boolean)
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
+  }, {
+    isAnimatedRef: true
   })
 
-  let panResponder: any = {}
-
-  const isFirstTouch = useRef<boolean>(true)
-  const touchEvent = useRef<string>('')
-  const initialDistance = useRef<number>(0)
-
-  propsRef.current = props
+  const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    const { bindchange } = propsRef.current
+    if (!bindchange) return
+    let source = ''
+    if (type !== 'setData') {
+      source = getTouchSource(x, y);
+    } else {
+      changeSource.current = ''
+    }
+    bindchange(
+      getCustomEvent('change', {}, {
+        detail: {
+          x,
+          y,
+          source
+        },
+        layoutRef
+      }, propsRef.current)
+    )
+  }, [])
 
   useEffect(() => {
-    if (scale && (scaleValue.current._value !== originScaleValue)) {
-      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue))
-      Animated.spring(scaleValue.current, {
-        toValue: clampedScale,
-        friction,
-        useNativeDriver: false
-      }).start(() => {
-        bindscale && bindscale(getCustomEvent('scale', {}, {
-          detail: {
-            x: pan.current.x._value,
-            y: pan.current.y._value,
-            scale: clampedScale
-          },
-          layoutRef
-        }, props)
-        )
-      })
-    }
-  }, [originScaleValue])
-
-  useEffect(() => {
-    if (movablePosition.current.x !== Number(x) || movablePosition.current.y !== Number(y)) {
-      const { x: newX, y: newY } = checkBoundaryPosition({
-        clampedScale: scaleValue.current._value,
-        width: layoutRef.current.width,
-        height: layoutRef.current.height,
-        positionX: Number(x),
-        positionY: Number(y)
-      })
-      movablePosition.current = { x: newX, y: newY }
-      Animated.spring(pan.current, {
-        toValue: { x: newX, y: newY },
-        useNativeDriver: false,
-        friction
-      }).start(() => {
-        bindchange &&
-          bindchange(
-            getCustomEvent('change', {}, {
-              detail: {
-                x: newX,
-                y: newY,
-                source: ''
-              },
-              layoutRef
-            }, props)
-          )
-      })
-    }
+    runOnUI(() => {
+      if (offsetX.value !== x || offsetY.value !== y) {
+        const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
+        const springDamping = damping as number * 5 || 100
+        if (direction === 'horizontal' || direction === 'all') {
+          offsetX.value = withSpring(newX, {
+            mass: 0.5,
+            damping: springDamping
+          })
+        }
+        if (direction === 'vertical' || direction === 'all') {
+          offsetY.value = withSpring(newY, {
+            mass: 0.5,
+            damping: springDamping
+          })
+        }
+        runOnJS(handleTriggerChange)({
+          x: newX,
+          y: newY,
+          type: 'setData'
+        })
+      }
+    })()
   }, [x, y])
 
-  const handlePanReleaseOrTerminate = () => {
-    pan.current.flattenOffset()
-    isFirstTouch.current = true
-    initialDistance.current = 0
-    const { x, y } = checkBoundaryPosition({
-      clampedScale: scaleValue.current._value,
-      width: layoutRef.current.width,
-      height: layoutRef.current.height,
-      positionX: pan.current.x._value,
-      positionY: pan.current.y._value
+  useAnimatedReaction(
+    () => ({
+      offsetX: offsetX.value,
+      offsetY: offsetY.value
+    }),
+    (currentValue: { offsetX: any; offsetY: any; }) => {
+      const { offsetX, offsetY } = currentValue
+      runOnJS(handleTriggerChange)({
+        x: offsetX,
+        y: offsetY
+      })
     })
-    movablePosition.current = {
-      x,
-      y
+
+  const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
+    const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
+      offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
+    let source = changeSource.current
+    if (hasOverBoundary) {
+      if (isMoving.value) {
+        source = 'touch-out-of-bounds'
+      } else {
+        source = 'out-of-bounds'
+      }
+    } else {
+      if (isMoving.value) {
+        source = 'touch'
+      } else if ((xInertialMotion.value || yInertialMotion.value) && (changeSource.current === 'touch' || changeSource.current === 'friction')) {
+        source = 'friction'
+      }
     }
-    const needChange = x !== pan.current.x._value || y !== pan.current.y._value
+    changeSource.current = source
+    return source
+  }, [])
 
-    Animated.spring(pan.current, {
-      toValue: { x, y },
-      friction: 7,
-      useNativeDriver: false
-    }).start(() => {
-      if (needChange) {
-        bindchange && bindchange(
-          getCustomEvent('change', {}, {
-            detail: {
-              x,
-              y,
-              source: 'out-of-bounds'
-            },
-            layoutRef
-          }, propsRef.current)
-        )
-      }
-    })
-  }
+  const setBoundary = useCallback(({ width, height }: { width: number; height: number }) => {
+    const top = (style.position === 'absolute' && style.top) || 0;
+    const left = (style.position === 'absolute' && style.left) || 0;
 
-  panResponder = useMemo(() => {
-    return PanResponder.create({
-      onMoveShouldSetPanResponder: () => !propsRef.current.disabled,
-      onMoveShouldSetPanResponderCapture: () => !propsRef.current.disabled,
-      onPanResponderGrant: (e, gestureState) => {
-        if (gestureState.numberActiveTouches === 1) {
-          setTransformOrigin('0% 0%')
-          pan.current.setOffset({
-            x: direction === 'all' || direction === 'horizontal' ? pan.current.x._value : 0,
-            y: direction === 'all' || direction === 'vertical' ? pan.current.y._value : 0
-          })
-          pan.current.setValue({ x: 0, y: 0 })
-        } else {
-          initialDistance.current = 0
-          setTransformOrigin('50% 50%')
-        }
-      },
-      onPanResponderMove: (e, gestureState) => {
-        if (gestureState.numberActiveTouches === 2 && scale) {
-          setTransformOrigin('50% 50%')
-          const touch1 = e.nativeEvent.touches[0]
-          const touch2 = e.nativeEvent.touches[1]
-          const currentTouchDistance = Math.sqrt(
-            Math.pow(touch1.pageX - touch2.pageX, 2) + Math.pow(touch1.pageY - touch2.pageY, 2)
-          )
+    const scaledWidth = width || 0
+    const scaledHeight = height || 0
 
-          if (!initialDistance.current) {
-            initialDistance.current = currentTouchDistance
-          } else {
-            const newScale = currentTouchDistance / initialDistance.current
-            const clampedScale = Math.min(scaleMax, Math.max(scaleMin, newScale))
+    let maxY = MovableAreaLayout.height - scaledHeight - top
+    let maxX = MovableAreaLayout.width - scaledWidth - left
 
-            Animated.spring(scaleValue.current, {
-              toValue: clampedScale,
-              friction: 7,
-              useNativeDriver: false
-            }).start()
-            bindscale && bindscale(getCustomEvent('scale', e, {
-              detail: {
-                x: pan.current.x._value,
-                y: pan.current.y._value,
-                scale: clampedScale
-              },
-              layoutRef
-            }, propsRef.current))
-          }
-        } else if (gestureState.numberActiveTouches === 1) {
-          if (initialDistance.current) {
-            return // Skip processing if it's switching from a double touch
-          }
-          setTransformOrigin('0% 0%')
-          if (isFirstTouch.current) {
-            touchEvent.current = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) ? 'htouchmove' : 'vtouchmove'
-            isFirstTouch.current = false
-          }
-          Animated.event(
-            [
-              null,
-              {
-                dx: direction === 'all' || direction === 'horizontal' ? pan.current.x : new Animated.Value(0),
-                dy: direction === 'all' || direction === 'vertical' ? pan.current.y : new Animated.Value(0)
-              }
-            ],
-            {
-              useNativeDriver: false
-            }
-          )(e, gestureState)
+    let xRange
+    let yRange
 
-          movablePosition.current = {
-            x: pan.current.x.__getValue(),
-            y: pan.current.y.__getValue()
-          }
-          bindchange && bindchange(
-            getCustomEvent('change', e, {
-              detail: {
-                x: movablePosition.current.x,
-                y: movablePosition.current.y,
-                source: 'touch'
-              },
-              layoutRef
-            }, propsRef.current)
-          )
-        }
-      },
-      onPanResponderRelease: () => {
-        handlePanReleaseOrTerminate()
-      },
-      onPanResponderTerminate: () => {
-        handlePanReleaseOrTerminate()
-      }
-    })
-  }, [MovableAreaLayout.width, MovableAreaLayout.height])
+    if (MovableAreaLayout.width < scaledWidth) {
+      xRange = [maxX, 0];
+    } else {
+      xRange = [-left, maxX < 0 ? 0 : maxX]
+    }
+
+    if (MovableAreaLayout.height < scaledHeight) {
+      yRange = [maxY, 0];
+    } else {
+      yRange = [-top, maxY < 0 ? 0 : maxY]
+    }
+    draggableXRange.value = xRange
+    draggableYRange.value = yRange
+  }, [MovableAreaLayout.height, MovableAreaLayout.width])
+
+  const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
+    'worklet';
+    let x = positionX
+    let y = positionY
+    // 计算边界限制
+    if (x > draggableXRange.value[1]) {
+      x = draggableXRange.value[1]
+    } else if (x < draggableXRange.value[0]) {
+      x = draggableXRange.value[0]
+    }
+
+    if (y > draggableYRange.value[1]) {
+      y = draggableYRange.value[1]
+    } else if (y < draggableYRange.value[0]) {
+      y = draggableYRange.value[0]
+    }
+
+    return { x, y };
+  }, [])
 
   const onLayout = () => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
-      const clampedScale = Math.min(scaleMax, Math.max(scaleMin, originScaleValue))
-      const { x: newX, y: nexY } = checkBoundaryPosition({
-        clampedScale,
-        width,
-        height,
-        positionX: movablePosition.current.x,
-        positionY: movablePosition.current.y
-      })
-
-      Animated.spring(pan.current, {
-        toValue: { x: newX, y: nexY },
-        useNativeDriver: false,
-        friction
-      }).start(() => {
-        movablePosition.current = { x: newX, y: nexY }
-        bindchange &&
-          bindchange(
-            getCustomEvent('change', {}, {
-              detail: {
-                x: newX,
-                y: nexY,
-                source: ''
-              },
-              layoutRef
-            }, props)
-          )
-      })
+      setBoundary({ width, height })
+      runOnUI(() => {
+        const positionX = offsetX.value
+        const positionY = offsetY.value
+        const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
+        if (positionX !== newX) {
+          offsetX.value = newX
+        }
+        if (positionY !== newY) {
+          offsetY.value = newY
+        }
+      })()
     })
   }
 
-  const onTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
-    const { bindhtouchmove, bindvtouchmove, bindtouchmove } = props
-    if (touchEvent.current === 'htouchmove') {
-      bindhtouchmove && bindhtouchmove(e)
-    } else if (touchEvent.current === 'vtouchmove') {
-      bindvtouchmove && bindvtouchmove(e)
-    }
-    bindtouchmove && bindtouchmove(e)
+  const extendEvent = useCallback((e: any) => {
+    'worklet';
+    [e.changedTouches, e.allTouches].map(touches => {
+      touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
+        item.pageX = item.absoluteX
+        item.pageY = item.absoluteY
+      })
+    })
+    e.touches = e.allTouches
+  }, [])
+
+  const handleTriggerStart = (e: any) => {
+    'worklet';
+    extendEvent(e)
+    bindtouchstart && runOnJS(bindtouchstart)(e)
   }
 
-  const onCatchTouchMove = (e: NativeSyntheticEvent<TouchEvent>) => {
-    const { catchhtouchmove, catchvtouchmove, catchtouchmove } = props
-    if (touchEvent.current === 'htouchmove') {
-      catchhtouchmove && catchhtouchmove(e)
-    } else if (touchEvent.current === 'vtouchmove') {
-      catchvtouchmove && catchvtouchmove(e)
+  const handleTriggerMove = (e: any) => {
+    'worklet';
+    extendEvent(e)
+    const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove;
+    const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove;
+
+    if (hasTouchmove) {
+      if (touchEvent.value === 'htouchmove') {
+        bindhtouchmove && runOnJS(bindhtouchmove)(e);
+      } else if (touchEvent.value === 'vtouchmove') {
+        bindvtouchmove && runOnJS(bindvtouchmove)(e);
+      }
+      bindtouchmove && runOnJS(bindtouchmove)(e);
     }
-    catchtouchmove && catchtouchmove(e)
+
+    if (hasCatchTouchmove) {
+      if (touchEvent.value === 'htouchmove') {
+        catchhtouchmove && runOnJS(catchhtouchmove)(e);
+      } else if (touchEvent.value === 'vtouchmove') {
+        catchvtouchmove && runOnJS(catchvtouchmove)(e);
+      }
+      catchtouchmove && runOnJS(catchtouchmove)(e);
+    }
+  };
+
+  const handleTriggerEnd = (e: any) => {
+    'worklet';
+    extendEvent(e)
+    bindtouchend && runOnJS(bindtouchend)(e)
   }
 
-  const checkBoundaryPosition = ({ clampedScale, width, height, positionX, positionY }: { clampedScale: number; width: number; height: number; positionX: number; positionY: number }) => {
-    // Calculate scaled element size
-    const scaledWidth = width * clampedScale
-    const scaledHeight = height * clampedScale
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .onTouchesDown((e: GestureTouchEvent) => {
+        'worklet';
+        if (!disabled) {
+          const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
+          isMoving.value = false
+          startPosition.value = {
+            x: changedTouches.x,
+            y: changedTouches.y
+          }
+        }
+        handleTriggerStart(e)
+      })
+      .onTouchesMove((e: GestureTouchEvent) => {
+        'worklet';
+        if (disabled) return
+        isMoving.value = true
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
+        if (isFirstTouch.value) {
+          touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
+          isFirstTouch.value = false
+        }
+        const changeX = changedTouches.x - startPosition.value.x;
+        const changeY = changedTouches.y - startPosition.value.y;
+        if (direction === 'horizontal' || direction === 'all') {
+          let newX = offsetX.value + changeX
+          if (!outOfBounds) {
+            const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
+            offsetX.value = x
+          } else {
+            offsetX.value = newX
+          }
+        }
+        if (direction === 'vertical' || direction === 'all') {
+          let newY = offsetY.value + changeY
+          if (!outOfBounds) {
+            const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY });
+            offsetY.value = y
+          } else {
+            offsetY.value = newY
+          }
+        }
+        handleTriggerMove(e)
+      })
+      .onTouchesUp((e: GestureTouchEvent) => {
+        'worklet';
+        isFirstTouch.value = true
+        isMoving.value = false
 
-    // Calculate the boundary limits
-    let x = positionX
-    let y = positionY
+        handleTriggerEnd(e)
+      })
+      .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet';
+        if (disabled) return
+        isMoving.value = false
+        if (direction === 'horizontal' || direction === 'all') {
+          if (inertia) {
+            xInertialMotion.value = true
+          }
+          offsetX.value = withDecay({
+            velocity: inertia ? e.velocityX : 0,
+            rubberBandEffect: outOfBounds,
+            clamp: draggableXRange.value
+          }, () => {
+            xInertialMotion.value = false
+          });
+        }
+        if (direction === 'vertical' || direction === 'all') {
+          if (inertia) {
+            yInertialMotion.value = true
+          }
+          offsetY.value = withDecay({
+            velocity: inertia ? e.velocityY : 0,
+            rubberBandEffect: outOfBounds,
+            clamp: draggableYRange.value
+          }, () => {
+            yInertialMotion.value = false
+          })
+        }
+      })
+  }, [disabled, direction, inertia, outOfBounds, handleTriggerMove, handleTriggerStart, handleTriggerEnd])
 
-    // Correct y coordinate
-    if (scaledHeight > MovableAreaLayout.height) {
-      if (y >= 0) {
-        y = 0
-      } else if (y < MovableAreaLayout.height - scaledHeight) {
-        y = MovableAreaLayout.height - scaledHeight
-      }
-    } else {
-      if (y < 0) {
-        y = 0
-      } else if (y > MovableAreaLayout.height - scaledHeight) {
-        y = MovableAreaLayout.height - scaledHeight
-      }
-    }
-    // Correct x coordinate
-    if (scaledWidth > MovableAreaLayout.width) {
-      if (x >= 0) {
-        x = 0
-      } else if (x < MovableAreaLayout.width - scaledWidth) {
-        x = MovableAreaLayout.width - scaledWidth
-      }
-    } else {
-      if (x < 0) {
-        x = 0
-      } else if (x > MovableAreaLayout.width - scaledWidth) {
-        x = MovableAreaLayout.width - scaledWidth
-      }
-    }
-
+  if (externalComponentGesture && externalComponentGesture.length) {
+    gesture.simultaneousWithExternalGesture(...externalComponentGesture)
+  }
+  const animatedStyles = useAnimatedStyle(() => {
     return {
-      x,
-      y
+      transform: [
+        { translateX: offsetX.value },
+        { translateY: offsetY.value }
+      ]
     }
-  }
-
-  const [translateX, translateY] = [pan.current.x, pan.current.y]
-
-  const transformStyle = { transform: [{ translateX }, { translateY }, { scale: scaleValue.current }], transformOrigin: transformOrigin }
-
-  const hasTouchmove = () => !!props.bindhtouchmove || !!props.bindvtouchmove || !!props.bindtouchmove
-
-  const hasCatchTouchmove = () => !!props.catchhtouchmove || !!props.catchvtouchmove || !!props.catchtouchmove
-
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    ...panResponder.panHandlers,
-    onLayout,
-    ...(hasTouchmove() ? { bindtouchmove: onTouchMove } : {}),
-    ...(hasCatchTouchmove() ? { catchtouchmove: onCatchTouchMove } : {})
-  }, [
-    'children',
-    'style',
-    'direction',
-    'x',
-    'y',
-    'scale',
-    'disabled',
-    'scale-value',
-    'scale-min',
-    'scale-max',
-    'bindchange',
-    'bindscale',
-    'htouchmove',
-    'vtouchmove'
-  ], { layoutRef })
-
+  })
   return (
-    <Animated.View
-      {...innerProps}
-      style={{
-        ...styles.container,
-        ...style,
-        ...transformStyle
-      }}
-    >
-      {children}
-    </Animated.View>
-  )
+    <GestureDetector gesture={gesture}>
+      <Animated.View
+        ref={nodeRef}
+        onLayout={onLayout}
+        style={[styles.container, style, animatedStyles]}
+      >
+        {children}
+      </Animated.View>
+    </GestureDetector>
+  );
 })
 
 _MovableView.displayName = '_mpxMovableView'
