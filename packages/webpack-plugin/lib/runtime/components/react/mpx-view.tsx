@@ -87,7 +87,7 @@ const checkNeedLayout = (style: PreImageInfo) => {
 * lh - 容器的高度
 * ratio - 原始图片的宽高比
 * **/
-function calculateSize(h: number, ratio: number, lh?: number | boolean, reverse = false): Size | null {
+function calculateSize (h: number, ratio: number, lh?: number | boolean, reverse = false): Size | null {
   let height = 0; let width = 0
 
   if (typeof lh === 'boolean') {
@@ -114,7 +114,7 @@ function calculateSize(h: number, ratio: number, lh?: number | boolean, reverse 
  * ch - 容器的高度
  * val - 用户设置的百分比
  * **/
-function calculateSizePosition(h: number, ch: number, val: string): number {
+function calculateSizePosition (h: number, ch: number, val: string): number {
   if (!h || !ch) return 0
 
   // 百分比需要单独的计算
@@ -126,7 +126,7 @@ function calculateSizePosition(h: number, ch: number, val: string): number {
   return (ch - h) * parseFloat(val) / 100
 }
 
-function backgroundPosition(imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
+function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   const bps = preImageInfo.backgroundPosition
   if (bps.length === 0) return
   const style: Position = {}
@@ -153,7 +153,7 @@ function backgroundPosition(imageProps: ImageProps, preImageInfo: PreImageInfo, 
 }
 
 // background-size 转换
-function backgroundSize(imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
+function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   const sizeList = preImageInfo.sizeList
   if (!sizeList) return
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
@@ -208,7 +208,7 @@ function backgroundSize(imageProps: ImageProps, preImageInfo: PreImageInfo, imag
 }
 
 // background-image转换为source
-function backgroundImage(imageProps: ImageProps, preImageInfo: PreImageInfo) {
+function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo) {
   imageProps.src = preImageInfo.src
 }
 
@@ -226,15 +226,15 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
   return imageProps
 }
 
-function isHorizontal(val: PositionVal): val is 'left' | 'right' {
+function isHorizontal (val: PositionVal): val is 'left' | 'right' {
   return typeof val === 'string' && /^(left|right)$/.test(val)
 }
 
-function isVertical(val: PositionVal): val is 'top' | 'bottom' {
+function isVertical (val: PositionVal): val is 'top' | 'bottom' {
   return typeof val === 'string' && /^(top|bottom)$/.test(val)
 }
 
-function normalizeBackgroundPosition(parts: PositionVal[]): backgroundPositionList {
+function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionList {
   if (parts.length === 0) return []
 
   // 定义默认值
@@ -299,7 +299,7 @@ function normalizeBackgroundPosition(parts: PositionVal[]): backgroundPositionLi
   return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
 }
 
-function preParseImage(imageStyle?: ExtendedViewStyle) {
+function preParseImage (imageStyle?: ExtendedViewStyle) {
   const { backgroundImage, backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
   const src = parseUrl(backgroundImage)
 
@@ -314,7 +314,7 @@ function preParseImage(imageStyle?: ExtendedViewStyle) {
   }
 }
 
-function wrapImage(imageStyle?: ExtendedViewStyle) {
+function wrapImage (imageStyle?: ExtendedViewStyle) {
   const [show, setShow] = useState<boolean>(false)
   const [, setImageSizeWidth] = useState<number | null>(null)
   const [, setImageSizeHeight] = useState<number | null>(null)
@@ -393,7 +393,7 @@ interface WrapChildrenConfig {
   varContext?: Record<string, any>
 }
 
-function wrapChildren(props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
+function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
   const { textProps } = splitProps(props)
   let { children } = props
 
@@ -497,13 +497,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     }, +hoverStayTime)
   }
 
-  function onTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
+  function onTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
     const { bindtouchstart } = props
     bindtouchstart && bindtouchstart(e)
     setStartTimer()
   }
 
-  function onTouchEnd(e: NativeSyntheticEvent<TouchEvent>) {
+  function onTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
     const { bindtouchend } = props
     bindtouchend && bindtouchend(e)
     setStayTimer()

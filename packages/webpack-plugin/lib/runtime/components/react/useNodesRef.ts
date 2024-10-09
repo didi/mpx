@@ -11,11 +11,11 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}, config:Obj = {}) {
-  let nodeRef
+export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}, config:Obj = {}) {
+  let nodeRef: RefObject<T>
 
   if (config.isAnimatedRef) {
-    nodeRef = useAnimatedRef<T>(null)
+    nodeRef = useAnimatedRef<T>()
   } else {
     nodeRef = useRef<T>(null)
   }

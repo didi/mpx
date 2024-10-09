@@ -27,7 +27,7 @@ interface WrapChildrenConfig {
   varContext?: Record<string, any>
 }
 
-function wrapChildren(props: TextProps, { hasVarDec, varContext }: WrapChildrenConfig) {
+function wrapChildren (props: TextProps, { hasVarDec, varContext }: WrapChildrenConfig) {
   let { children } = props
   if (hasVarDec && varContext) {
     children = <VarContext.Provider value={varContext}>{children}</VarContext.Provider>

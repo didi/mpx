@@ -367,12 +367,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     ref: nodeRef,
     ...(enableOffset ? { onLayout } : {})
   },
-    [
-      'enable-offset'
-    ],
-    {
-      layoutRef
-    })
+  [
+    'enable-offset'
+  ],
+  {
+    layoutRef
+  })
 
   return (
     <TextInput

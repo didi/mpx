@@ -210,8 +210,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const maxY = MovableAreaLayout.height - scaledHeight - top
     const maxX = MovableAreaLayout.width - scaledWidth - left
 
-    let xRange
-    let yRange
+    let xRange:[min: number, max: number]
+    let yRange:[min: number, max: number]
 
     if (MovableAreaLayout.width < scaledWidth) {
       xRange = [maxX, 0]
@@ -268,7 +268,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const extendEvent = useCallback((e: any) => {
     'worklet'
-    [e.changedTouches, e.allTouches].map(touches => {
+    const touchArr = [e.changedTouches, e.allTouches]
+    touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
         item.pageX = item.absoluteX
         item.pageY = item.absoluteY
