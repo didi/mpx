@@ -19,7 +19,7 @@
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View } from 'react-native'
-import { getCustomEvent } from './getInnerListeners'
+import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
@@ -43,8 +43,10 @@ interface MovableViewProps {
   damping?: number;
   bindchange?: (event: unknown) => void;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  catchtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  catchtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
@@ -82,13 +84,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     externalGesture = [],
     style = {},
     bindtouchstart,
+    catchtouchstart,
     bindhtouchmove,
     bindvtouchmove,
     bindtouchmove,
     catchhtouchmove,
     catchvtouchmove,
     catchtouchmove,
-    bindtouchend
+    bindtouchend,
+    catchtouchend
   } = props
 
   const offsetX = useSharedValue(x)
@@ -282,6 +286,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'worklet'
     extendEvent(e)
     bindtouchstart && runOnJS(bindtouchstart)(e)
+    catchtouchstart && runOnJS(catchtouchstart)(e)
   }
 
   const handleTriggerMove = (e: any) => {
@@ -313,6 +318,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'worklet'
     extendEvent(e)
     bindtouchend && runOnJS(bindtouchend)(e)
+    catchtouchend && runOnJS(catchtouchend)(e)
   }
 
   const gesture = useMemo(() => {
@@ -409,12 +415,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       ]
     }
   })
+
+  const catchEventHandlers = injectCatchEvent(props)
+
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
         ref={nodeRef}
         onLayout={onLayout}
         style={[styles.container, style, animatedStyles]}
+        {...catchEventHandlers}
       >
         {children}
       </Animated.View>
