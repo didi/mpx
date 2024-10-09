@@ -98,6 +98,6 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
   }
 )
 
-Icon.displayName = '_mpxIcon'
+Icon.displayName = 'MpxIcon'
 
 export default Icon

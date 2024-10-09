@@ -367,12 +367,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     ref: nodeRef,
     ...(enableOffset ? { onLayout } : {})
   },
-  [
-    'enable-offset'
-  ],
-  {
-    layoutRef
-  })
+    [
+      'enable-offset'
+    ],
+    {
+      layoutRef
+    })
 
   return (
     <TextInput
@@ -412,6 +412,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   )
 })
 
-Input.displayName = '_mpxInput'
+Input.displayName = 'MpxInput'
 
 export default Input

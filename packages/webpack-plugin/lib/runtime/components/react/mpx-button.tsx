@@ -345,7 +345,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     handleFormTypeFn()
   }
 
-  function wrapChildren (children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
+  function wrapChildren(children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
     if (!children) return children
     const hasTextStyle = !isEmptyObject(textStyle)
     const { textProps } = splitProps(props)
@@ -414,6 +414,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
   )
 })
 
-Button.displayName = '_mpxButton'
+Button.displayName = 'MpxButton'
 
 export default Button

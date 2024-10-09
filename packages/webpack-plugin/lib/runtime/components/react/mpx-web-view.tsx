@@ -161,6 +161,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   </Portal>)
 })
 
-_WebView.displayName = '_mpxWebview'
+_WebView.displayName = 'MpxWebview'
 
 export default _WebView

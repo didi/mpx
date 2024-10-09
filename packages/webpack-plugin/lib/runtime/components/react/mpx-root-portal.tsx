@@ -20,6 +20,6 @@ const _RootPortal = (props: RootPortalProps) => {
   )
 }
 
-_RootPortal.displayName = '_mpxRootPortal'
+_RootPortal.displayName = 'MpxRootPortal'
 
 export default _RootPortal

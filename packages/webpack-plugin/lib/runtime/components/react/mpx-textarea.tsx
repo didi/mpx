@@ -41,6 +41,6 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
   }
 )
 
-Textarea.displayName = '_mpxTextarea'
+Textarea.displayName = 'MpxTextarea'
 
 export default Textarea

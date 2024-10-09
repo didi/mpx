@@ -67,6 +67,6 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   )
 })
 
-_MovableArea.displayName = '_mpxMovableArea';
+_MovableArea.displayName = 'MpxMovableArea';
 
 export default _MovableArea

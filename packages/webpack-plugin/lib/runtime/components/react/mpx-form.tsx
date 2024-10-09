@@ -93,6 +93,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   )
 })
 
-_Form.displayName = '_mpxForm';
+_Form.displayName = 'MpxForm';
 
 export default _Form

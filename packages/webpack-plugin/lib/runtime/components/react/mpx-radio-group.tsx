@@ -157,6 +157,6 @@ const radioGroup = forwardRef<
   )
 })
 
-radioGroup.displayName = '_mpxRadioGroup'
+radioGroup.displayName = 'MpxRadioGroup'
 
 export default radioGroup

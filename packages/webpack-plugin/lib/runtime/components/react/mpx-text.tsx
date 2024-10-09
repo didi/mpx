@@ -27,7 +27,7 @@ interface WrapChildrenConfig {
   varContext?: Record<string, any>
 }
 
-function wrapChildren (props: TextProps, { hasVarDec, varContext }: WrapChildrenConfig) {
+function wrapChildren(props: TextProps, { hasVarDec, varContext }: WrapChildrenConfig) {
   let { children } = props
   if (hasVarDec && varContext) {
     children = <VarContext.Provider value={varContext}>{children}</VarContext.Provider>
@@ -100,6 +100,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   )
 })
 
-_Text.displayName = '_mpxText'
+_Text.displayName = 'MpxText'
 
 export default _Text

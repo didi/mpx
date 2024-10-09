@@ -168,15 +168,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }, [props['refresher-triggered']])
 
-  function selectLength (size: { height: number; width: number }) {
+  function selectLength(size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width
   }
 
-  function selectOffset (position: { x: number; y: number }) {
+  function selectOffset(position: { x: number; y: number }) {
     return !scrollX ? position.y : position.x
   }
 
-  function onStartReached (e: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onStartReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrolltoupper } = props
     const { offset } = scrollOptions.current
     if (bindscrolltoupper && (offset <= upperThreshold)) {
@@ -196,7 +196,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onEndReached (e: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onEndReached(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrolltolower } = props
     const { contentLength, visibleLength, offset } = scrollOptions.current
     const distanceFromEnd = contentLength - visibleLength - offset
@@ -217,11 +217,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onContentSizeChange (width: number, height: number) {
+  function onContentSizeChange(width: number, height: number) {
     scrollOptions.current.contentLength = selectLength({ height, width })
   }
 
-  function onLayout (e: LayoutChangeEvent) {
+  function onLayout(e: LayoutChangeEvent) {
     scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout)
     if (enableOffset) {
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
@@ -230,7 +230,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
+  function updateScrollOptions(e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
     const visibleLength = selectLength(e.nativeEvent.layoutMeasurement)
     const contentLength = selectLength(e.nativeEvent.contentSize)
     const offset = selectOffset(e.nativeEvent.contentOffset)
@@ -244,7 +244,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onScroll (e: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscroll } = props
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
@@ -265,7 +265,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
   }
 
-  function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onScrollEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrollend } = props
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
@@ -286,7 +286,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     onEndReached(e)
   }
 
-  function scrollToOffset (x = 0, y = 0) {
+  function scrollToOffset(x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
       scrollOptions.current.scrollLeft = x
@@ -294,7 +294,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onRefresh () {
+  function onRefresh() {
     const { bindrefresherrefresh } = props
     bindrefresherrefresh &&
       bindrefresherrefresh(
@@ -302,7 +302,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       )
   }
 
-  function onScrollTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
+  function onScrollTouchStart(e: NativeSyntheticEvent<TouchEvent>) {
     const { binddragstart, bindtouchstart, enhanced } = props
     bindtouchstart && bindtouchstart(e)
     if (enhanced) {
@@ -318,7 +318,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         )
     }
   }
-  function onScrollTouchMove (e: NativeSyntheticEvent<TouchEvent>) {
+  function onScrollTouchMove(e: NativeSyntheticEvent<TouchEvent>) {
     const { binddragging, bindtouchmove, enhanced } = props
     bindtouchmove && bindtouchmove(e)
     if (enhanced) {
@@ -335,7 +335,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onScrollEndDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
+  function onScrollEndDrag(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { binddragend, enhanced } = props
     if (enhanced) {
       const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
@@ -417,13 +417,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       {...innerProps}
       refreshControl={refresherEnabled
         ? (
-        <RefreshControl
-          progressBackgroundColor={refresherBackground}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          {...(refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : {})}
-        />
-          )
+          <RefreshControl
+            progressBackgroundColor={refresherBackground}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            {...(refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : {})}
+          />
+        )
         : undefined}
     >
       {children}
@@ -431,6 +431,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   )
 })
 
-_ScrollView.displayName = '_mpxScrollView';
+_ScrollView.displayName = 'MpxScrollView';
 
 export default _ScrollView

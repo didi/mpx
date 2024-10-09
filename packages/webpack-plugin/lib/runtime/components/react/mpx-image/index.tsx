@@ -277,12 +277,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ref: nodeRef,
     ...(enableOffset ? { onLayout: onImageLayout } : {})
   },
-  [
-    'enable-offset'
-  ],
-  {
-    layoutRef
-  }
+    [
+      'enable-offset'
+    ],
+    {
+      layoutRef
+    }
   )
 
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
@@ -335,6 +335,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   )
 })
 
-Image.displayName = '_mpxImage'
+Image.displayName = 'MpxImage'
 
 export default Image
