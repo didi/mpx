@@ -62,6 +62,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
   </Carouse>
 })
 
-_SwiperWrapper.displayName = 'MpxSwiper';
+_SwiperWrapper.displayName = 'MpxSwiper'
 
 export default _SwiperWrapper

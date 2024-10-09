@@ -37,7 +37,7 @@ const CheckboxGroup = forwardRef<
   const {
     style = {},
     'enable-offset': enableOffset,
-    children,
+    children
   } = props
 
   const layoutRef = useRef({})

@@ -282,8 +282,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ],
     {
       layoutRef
-    }
-  )
+    })
 
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
   //   return (

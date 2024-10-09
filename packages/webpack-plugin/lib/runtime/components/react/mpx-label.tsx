@@ -29,7 +29,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const {
       style = {},
       'enable-offset': enableOffset,
-      children,
+      children
     } = props
 
     const { textStyle, imageStyle, innerStyle } = splitStyle(style)

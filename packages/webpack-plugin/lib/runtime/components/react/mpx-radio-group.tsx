@@ -126,14 +126,12 @@ const radioGroup = forwardRef<
       )
   }, [])
 
-
   const contextValue = useMemo(() => {
     return {
       groupValue,
       notifyChange
     }
   }, [notifyChange])
-
 
   const innerProps = useInnerProps(
     props,

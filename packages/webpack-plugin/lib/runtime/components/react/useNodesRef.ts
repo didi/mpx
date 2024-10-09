@@ -1,5 +1,5 @@
 import { useRef, useImperativeHandle, RefObject, ForwardedRef } from 'react'
-import { useAnimatedRef } from 'react-native-reanimated';
+import { useAnimatedRef } from 'react-native-reanimated'
 
 type Obj = Record<string, any>
 
@@ -11,7 +11,7 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}, config:Obj = {}  ) {
+export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}, config:Obj = {}) {
   let nodeRef
 
   if (config.isAnimatedRef) {

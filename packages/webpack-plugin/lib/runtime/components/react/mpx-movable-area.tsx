@@ -40,7 +40,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   const contextValue = useMemo(() => ({
     height: areaHeight,
     width: areaWidth
-  }), [areaHeight, areaWidth]);
+  }), [areaHeight, areaWidth])
 
   const innerProps = useInnerProps(props, {
     ref: movableViewRef,
@@ -67,6 +67,6 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   )
 })
 
-_MovableArea.displayName = 'MpxMovableArea';
+_MovableArea.displayName = 'MpxMovableArea'
 
 export default _MovableArea

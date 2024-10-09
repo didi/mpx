@@ -17,12 +17,12 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react';
-import { StyleSheet, NativeSyntheticEvent, View } from 'react-native';
-import { getCustomEvent } from './getInnerListeners';
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
+import { StyleSheet, NativeSyntheticEvent, View } from 'react-native'
+import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
+import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0
-  },
+  }
 })
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
@@ -104,7 +104,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const xInertialMotion = useSharedValue(false)
   const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
-  let touchEvent = useSharedValue<string>('')
+  const touchEvent = useSharedValue<string>('')
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -124,7 +124,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (!bindchange) return
     let source = ''
     if (type !== 'setData') {
-      source = getTouchSource(x, y);
+      source = getTouchSource(x, y)
     } else {
       changeSource.current = ''
     }
@@ -201,26 +201,26 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const setBoundary = useCallback(({ width, height }: { width: number; height: number }) => {
-    const top = (style.position === 'absolute' && style.top) || 0;
-    const left = (style.position === 'absolute' && style.left) || 0;
+    const top = (style.position === 'absolute' && style.top) || 0
+    const left = (style.position === 'absolute' && style.left) || 0
 
     const scaledWidth = width || 0
     const scaledHeight = height || 0
 
-    let maxY = MovableAreaLayout.height - scaledHeight - top
-    let maxX = MovableAreaLayout.width - scaledWidth - left
+    const maxY = MovableAreaLayout.height - scaledHeight - top
+    const maxX = MovableAreaLayout.width - scaledWidth - left
 
     let xRange
     let yRange
 
     if (MovableAreaLayout.width < scaledWidth) {
-      xRange = [maxX, 0];
+      xRange = [maxX, 0]
     } else {
       xRange = [-left, maxX < 0 ? 0 : maxX]
     }
 
     if (MovableAreaLayout.height < scaledHeight) {
-      yRange = [maxY, 0];
+      yRange = [maxY, 0]
     } else {
       yRange = [-top, maxY < 0 ? 0 : maxY]
     }
@@ -229,7 +229,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
   const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
-    'worklet';
+    'worklet'
     let x = positionX
     let y = positionY
     // 计算边界限制
@@ -245,7 +245,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       y = draggableYRange.value[0]
     }
 
-    return { x, y };
+    return { x, y }
   }, [])
 
   const onLayout = () => {
@@ -267,7 +267,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const extendEvent = useCallback((e: any) => {
-    'worklet';
+    'worklet'
     [e.changedTouches, e.allTouches].map(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
         item.pageX = item.absoluteX
@@ -278,38 +278,38 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const handleTriggerStart = (e: any) => {
-    'worklet';
+    'worklet'
     extendEvent(e)
     bindtouchstart && runOnJS(bindtouchstart)(e)
   }
 
   const handleTriggerMove = (e: any) => {
-    'worklet';
+    'worklet'
     extendEvent(e)
-    const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove;
-    const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove;
+    const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
+    const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
 
     if (hasTouchmove) {
       if (touchEvent.value === 'htouchmove') {
-        bindhtouchmove && runOnJS(bindhtouchmove)(e);
+        bindhtouchmove && runOnJS(bindhtouchmove)(e)
       } else if (touchEvent.value === 'vtouchmove') {
-        bindvtouchmove && runOnJS(bindvtouchmove)(e);
+        bindvtouchmove && runOnJS(bindvtouchmove)(e)
       }
-      bindtouchmove && runOnJS(bindtouchmove)(e);
+      bindtouchmove && runOnJS(bindtouchmove)(e)
     }
 
     if (hasCatchTouchmove) {
       if (touchEvent.value === 'htouchmove') {
-        catchhtouchmove && runOnJS(catchhtouchmove)(e);
+        catchhtouchmove && runOnJS(catchhtouchmove)(e)
       } else if (touchEvent.value === 'vtouchmove') {
-        catchvtouchmove && runOnJS(catchvtouchmove)(e);
+        catchvtouchmove && runOnJS(catchvtouchmove)(e)
       }
-      catchtouchmove && runOnJS(catchtouchmove)(e);
+      catchtouchmove && runOnJS(catchtouchmove)(e)
     }
-  };
+  }
 
   const handleTriggerEnd = (e: any) => {
-    'worklet';
+    'worklet'
     extendEvent(e)
     bindtouchend && runOnJS(bindtouchend)(e)
   }
@@ -317,7 +317,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
-        'worklet';
+        'worklet'
         if (!disabled) {
           const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
           isMoving.value = false
@@ -329,7 +329,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         handleTriggerStart(e)
       })
       .onTouchesMove((e: GestureTouchEvent) => {
-        'worklet';
+        'worklet'
         if (disabled) return
         isMoving.value = true
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
@@ -337,10 +337,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
-        const changeX = changedTouches.x - startPosition.value.x;
-        const changeY = changedTouches.y - startPosition.value.y;
+        const changeX = changedTouches.x - startPosition.value.x
+        const changeY = changedTouches.y - startPosition.value.y
         if (direction === 'horizontal' || direction === 'all') {
-          let newX = offsetX.value + changeX
+          const newX = offsetX.value + changeX
           if (!outOfBounds) {
             const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
             offsetX.value = x
@@ -349,9 +349,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (direction === 'vertical' || direction === 'all') {
-          let newY = offsetY.value + changeY
+          const newY = offsetY.value + changeY
           if (!outOfBounds) {
-            const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY });
+            const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY })
             offsetY.value = y
           } else {
             offsetY.value = newY
@@ -360,14 +360,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         handleTriggerMove(e)
       })
       .onTouchesUp((e: GestureTouchEvent) => {
-        'worklet';
+        'worklet'
         isFirstTouch.value = true
         isMoving.value = false
 
         handleTriggerEnd(e)
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
-        'worklet';
+        'worklet'
         if (disabled) return
         isMoving.value = false
         if (direction === 'horizontal' || direction === 'all') {
@@ -380,7 +380,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableXRange.value
           }, () => {
             xInertialMotion.value = false
-          });
+          })
         }
         if (direction === 'vertical' || direction === 'all') {
           if (inertia) {
@@ -418,7 +418,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         {children}
       </Animated.View>
     </GestureDetector>
-  );
+  )
 })
 
 _MovableView.displayName = 'MpxMovableView'

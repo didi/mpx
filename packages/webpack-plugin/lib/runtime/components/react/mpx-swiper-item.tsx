@@ -39,6 +39,6 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   )
 })
 
-_SwiperItem.displayName = 'MpxSwiperItem';
+_SwiperItem.displayName = 'MpxSwiperItem'
 
 export default _SwiperItem
