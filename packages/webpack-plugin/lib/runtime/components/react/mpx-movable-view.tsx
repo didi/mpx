@@ -24,10 +24,11 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
 import Animated, {
+  Easing,
   useSharedValue,
   useAnimatedStyle,
   withDecay,
-  withSpring,
+  withTiming,
   runOnJS,
   runOnUI,
   useAnimatedReaction
@@ -78,7 +79,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     y = 0,
     inertia,
     disabled,
-    damping,
+    damping = 20,
     'out-of-bounds': outOfBounds,
     direction,
     externalGesture = [],
@@ -148,17 +149,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
-        const springDamping = damping as number * 5 || 100
+        const duration = Math.floor(10000 / (damping || 20))
         if (direction === 'horizontal' || direction === 'all') {
-          offsetX.value = withSpring(newX, {
-            mass: 0.5,
-            damping: springDamping
+          offsetX.value = withTiming(newX, {
+            easing: Easing.linear,
+            duration
           })
         }
         if (direction === 'vertical' || direction === 'all') {
-          offsetY.value = withSpring(newY, {
-            mass: 0.5,
-            damping: springDamping
+          offsetY.value = withTiming(newY, {
+            easing: Easing.linear,
+            duration
           })
         }
         runOnJS(handleTriggerChange)({
