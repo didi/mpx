@@ -46,7 +46,7 @@ import {
   NativeSyntheticEvent,
   LayoutChangeEvent
 } from 'react-native'
-import { splitStyle, isText, splitProps, throwReactWarning, transformTextStyle, useTransformStyle } from './utils'
+import { splitStyle, isText, splitProps, throwReactWarning, useTransformStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, VarContext } from './context'
@@ -192,7 +192,6 @@ function wrapChildren (props: ButtonProps, { hasVarDec }: { hasVarDec: boolean }
   if (textStyle || textProps) {
     children = Children.map(children, (child) => {
       if (isText(child)) {
-        transformTextStyle(textStyle as TextStyle)
         const style = { ...textStyle, ...child.props.style }
         return cloneElement(child, { ...textProps, style })
       }
