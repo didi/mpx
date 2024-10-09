@@ -14,13 +14,13 @@ import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '..
 import styleHelperMixin from './styleHelperMixin'
 import directiveHelperMixin from './directiveHelperMixin'
 
-export default function getBuiltInMixins (options, type) {
+export default function getBuiltInMixins ({ type, rawOptions = {}, currentInject }) {
   let bulitInMixins
   if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
-      styleHelperMixin(type),
+      styleHelperMixin(currentInject),
       refsMixin(),
       i18nMixin()
     ]
@@ -46,7 +46,7 @@ export default function getBuiltInMixins (options, type) {
       relationsMixin(type)
     ]
     // 此为纯增强类mixins，原生模式下不需要注入
-    if (!options.__nativeRender__) {
+    if (!rawOptions.__nativeRender__) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
         showMixin(type),
