@@ -10,14 +10,11 @@ interface RootPortalProps {
 }
 const _RootPortal = (props: RootPortalProps) => {
   const { children, enable = true } = props
-  return enable ? (
-    // @ts-ignore
-    <Portal>
+  return enable
+    ? <Portal>
       {children}
     </Portal>
-  ) : (
-    <>{children}</>
-  )
+    : <>{children}</>
 }
 
 _RootPortal.displayName = 'MpxRootPortal'
