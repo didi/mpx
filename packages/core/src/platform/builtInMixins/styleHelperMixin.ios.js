@@ -1,5 +1,14 @@
-import { isObject, isArray, dash2hump, cached } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction, cached } from '@mpxjs/utils'
 import { Dimensions } from 'react-native'
+
+function rpx (value) {
+  const { width } = Dimensions.get('screen')
+  // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
+  // px = rpx * (750 / 屏幕宽度)
+  return value * width / 750
+}
+
+global.__rpx = rpx
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
@@ -110,7 +119,7 @@ function mergeObjectArray (arr) {
   return res
 }
 
-function transformStyleObj (context, styleObj) {
+function transformStyleObj (styleObj) {
   const keys = Object.keys(styleObj)
   const transformed = {}
   keys.forEach((prop) => {
@@ -120,7 +129,7 @@ function transformStyleObj (context, styleObj) {
     if ((matched = pxRegExp.exec(value))) {
       value = +matched[1]
     } else if ((matched = rpxRegExp.exec(value))) {
-      value = context.__rpx(+matched[1])
+      value = rpx(+matched[1])
     }
     // todo 检测不支持的value
     transformed[prop] = value
@@ -128,22 +137,22 @@ function transformStyleObj (context, styleObj) {
   return transformed
 }
 
-export default function styleHelperMixin (currentInject) {
+export default function styleHelperMixin () {
   return {
     methods: {
-      __rpx (value) {
-        const { width } = Dimensions.get('screen')
-        // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-        // px = rpx * (750 / 屏幕宽度)
-        return value * width / 750
-      },
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const result = {}
+        const classMap = {}
         // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-        const classMap = Object.assign({}, global.__appClassMap, currentInject.classMap)
+        if (isFunction(global.__getAppClassMap)) {
+          Object.assign(classMap, global.__getAppClassMap())
+        }
+        if (isFunction(this.__getClassMap)) {
+          Object.assign(classMap, this.__getClassMap())
+        }
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -160,7 +169,7 @@ export default function styleHelperMixin (currentInject) {
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(this, styleObj))
+          Object.assign(result, transformStyleObj(styleObj))
         }
 
         if (hide) {
