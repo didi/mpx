@@ -150,16 +150,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
         const duration = Math.floor(10000 / (damping || 20))
+        const finalDuration = duration < 50 ? 50 : duration
         if (direction === 'horizontal' || direction === 'all') {
           offsetX.value = withTiming(newX, {
             easing: Easing.linear,
-            duration
+            duration: finalDuration
           })
         }
         if (direction === 'vertical' || direction === 'all') {
           offsetY.value = withTiming(newY, {
             easing: Easing.linear,
-            duration
+            duration: finalDuration
           })
         }
         runOnJS(handleTriggerChange)({
