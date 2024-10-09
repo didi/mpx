@@ -31,6 +31,7 @@ module.exports = function (styles, {
         scoped,
         extract: false
       }
+      // todo 建立新的request在内部导出classMap，便于样式模块复用
       loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
           result = result.map((item) => {
@@ -55,15 +56,9 @@ module.exports = function (styles, {
           error
         })
         if (ctorType === 'app') {
-          output += `global.__getAppClassMap = function() {
-            return ${shallowStringify(classMap)};
-          };\n`
+          output += `global.__appClassMap = ${shallowStringify(classMap)};\n`
         } else {
-          output += `global.currentInject.injectMethods = {
-            __getClassMap: function() {
-              return ${shallowStringify(classMap)};
-            }
-          };\n`
+          output += `global.currentInject.classMap = ${shallowStringify(classMap)};\n`
         }
       } catch (e) {
         return callback(e)
