@@ -3,9 +3,9 @@ import { noop } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-// @ts-ignore
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -41,11 +41,6 @@ interface NativeEvent {
   data: string
 }
 
-interface LoadRes {
-  timeStamp: string,
-  nativeEvent: NativeEvent
-}
-
 interface FormRef {
   postMessage: (value: any) => void;
 }
@@ -54,11 +49,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
 
   const defaultWebViewStyle = {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0
+    position: 'absolute' as 'absolute' | 'relative' | 'static',
+    left: 0 as number,
+    right: 0 as number,
+    top: 0 as number,
+    bottom: 0 as number
   }
 
   const { nodeRef: webViewRef } = useNodesRef<WebView, WebViewProps>(props, ref, {
@@ -82,7 +77,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       handleUnload()
     }
   }, [])
-  const _load = function (res: LoadRes) {
+  const _load = function (res: WebViewNavigationEvent) {
     const result = {
       type: 'load',
       timeStamp: res.timeStamp,
@@ -92,7 +87,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     bindload(result)
   }
-  const _error = function (res: LoadRes) {
+  const _error = function (res: WebViewErrorEvent) {
     const result = {
       type: 'error',
       timeStamp: res.timeStamp,
@@ -102,13 +97,15 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
-  const _message = function (res: LoadRes) {
-    let data: MessageData
+  const _message = function (res: WebViewMessageEvent) {
+    let data: MessageData = {}
     let asyncCallback
     const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
     try {
       const nativeEventData = res.nativeEvent?.data
-      data = JSON.parse(nativeEventData)
+      if (typeof nativeEventData === 'string') {
+        data = JSON.parse(nativeEventData)
+      }
     } catch (e) {
       data = {}
     }
