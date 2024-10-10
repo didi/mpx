@@ -1,25 +1,49 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, Children, cloneElement } from 'react'
 import {
   View,
-  Text,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
-import { LabelContext, LabelContextValue } from './context'
+import { splitStyle, splitProps, isText, throwReactWarning, useTransformStyle } from './utils'
+import { LabelContext, LabelContextValue, VarContext } from './context'
 
 export interface LabelProps {
   for?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+}
+
+function wrapChildren (props: LabelProps, { hasVarDec }: { hasVarDec: boolean }, textStyle?: TextStyle, varContext?: Record<string, any>) {
+  const { textProps } = splitProps(props)
+  let { children } = props
+
+  if (textStyle || textProps) {
+    children = Children.map(children, (child) => {
+      if (isText(child)) {
+        const style = { ...textStyle, ...child.props.style }
+        return cloneElement(child, { ...textProps, style })
+      }
+      return child
+    })
+  }
+
+  if (hasVarDec && varContext) {
+    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
+  }
+
+  return [
+    children
+  ]
 }
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
@@ -27,18 +51,26 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const {
       style = {},
       'enable-offset': enableOffset,
-      children,
+      'enable-var': enableVar,
+      'external-var-context': externalVarContext,
       bindtap
     } = props
 
-    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
-
-    if (imageStyle) {
-      throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
-    }
-
     const defaultStyle = {
       flexDirection: 'row'
+    }
+
+    const styleObj = {
+      ...defaultStyle,
+      ...style
+    }
+
+    const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+    if (backgroundStyle) {
+      throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
     }
 
     const contextRef: LabelContextValue = useRef({
@@ -71,28 +103,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       contextRef.current.triggerChange?.(evt)
     }
 
-    const wrapChildren = (
-      children: ReactNode,
-      textStyle?: TextStyle
-    ) => {
-      const { textProps } = splitProps(props)
-
-      if (every(children, (child) => isText(child))) {
-        if (textStyle || textProps) {
-          children = <Text key='labelTextWrap' style={textStyle || {}} {...(textProps || {})}>{children}</Text>
-        }
-      } else {
-        if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Label is Text node!')
-      }
-
-      return children
-    }
-
     const innerProps = useInnerProps(
       props,
       {
         ref: nodeRef,
-        style: { ...defaultStyle, ...innerStyle },
+        style: innerStyle,
         bindtap: onTap,
         ...(enableOffset ? { onLayout } : {})
       },
@@ -104,7 +119,16 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     return <View {...innerProps}>
       <LabelContext.Provider value={contextRef}>
-        {wrapChildren(children, textStyle)}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec 
+            },
+            textStyle,
+            varContextRef.current
+          )
+        }
       </LabelContext.Provider>
     </View>
   }
