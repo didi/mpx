@@ -6,7 +6,6 @@ import {
   hump2dash,
   isArray
 } from '@mpxjs/utils'
-import { StyleSheet } from 'react-native'
 
 const flushRefFns = (nodeInstances, fns, single) => {
   // wx的数据格式：对于具体方法接受到的回调传参，如果获取的 nodeRef 只有一个，那么只需要返回一条数据而不是数组，但是 exec 里面统一都是数组
@@ -61,8 +60,8 @@ const getMeasureProps = (measureProps = []) => {
 }
 
 const getDataset = (props) => {
-  return wrapFn((nodeRef, resolve) => {
-    props = nodeRef.props.current
+  return wrapFn((nodeInstance, resolve) => {
+    props = nodeInstance.props.current
     resolve({
       dataset: collectDataset(props)
     })
@@ -70,9 +69,9 @@ const getDataset = (props) => {
 }
 
 const getPlainProps = (config) => {
-  return wrapFn((nodeRef, resolve) => {
+  return wrapFn((nodeInstance, resolve) => {
     const res = {}
-    const props = nodeRef.props.current
+    const props = nodeInstance.props.current
     config.forEach((key) => {
       // props 属性默认不转驼峰，用户写什么格式不会变化，取值做兼容
       res[key] = props[key] || props[hump2dash(key)] || ''
@@ -82,12 +81,15 @@ const getPlainProps = (config) => {
 }
 
 const getComputedStyle = (config = []) => {
-  return wrapFn((nodeRef, resolve) => {
+  return wrapFn((nodeInstance, resolve) => {
     config = new Set(config)
     const res = {}
-    const styles = nodeRef.props.current.style || []
-    const defaultStyle = nodeRef.instance.defaultStyle || {}
-    const computedStyle = StyleSheet.flatten([defaultStyle, ...styles])
+    const styles = nodeInstance.props.current.style || {}
+    const defaultStyle = nodeInstance.instance.defaultStyle || {}
+    const computedStyle = {
+      ...defaultStyle,
+      ...styles
+    }
     config.forEach((key) => {
       const humpKey = dash2hump(key)
       // 取 style 的 key 是根据传入的 key 来设置，传什么设置什么 key，只不过取值需要做兼容
@@ -99,8 +101,8 @@ const getComputedStyle = (config = []) => {
 }
 
 const getInstanceConfig = (config) => {
-  return wrapFn((nodeRef, resolve) => {
-    const instance = nodeRef.instance
+  return wrapFn((nodeInstance, resolve) => {
+    const instance = nodeInstance.instance
     resolve({ [config]: instance[config] || {} })
   })
 }
@@ -113,8 +115,8 @@ const defaultScrollOffset = {
 }
 
 const getScrollOffset = () => {
-  return wrapFn((nodeRef, resolve) => {
-    const instance = nodeRef.instance
+  return wrapFn((nodeInstance, resolve) => {
+    const instance = nodeInstance.instance
     resolve(
       (instance.scrollOffset && instance.scrollOffset.current) ||
         defaultScrollOffset
