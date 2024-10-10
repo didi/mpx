@@ -205,7 +205,7 @@ interface TransformStyleConfig {
   enableLineHeight?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
