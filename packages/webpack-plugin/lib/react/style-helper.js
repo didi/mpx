@@ -20,7 +20,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
       value = matched[1]
       needStringify = false
     } else if ((matched = rpxRegExp.exec(value))) {
-      value = `this.__rpx(${matched[1]})`
+      value = `global.__rpx(${matched[1]})`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
