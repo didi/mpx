@@ -120,8 +120,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
-  }, {
-    isAnimatedRef: true
   })
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {

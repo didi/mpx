@@ -11,14 +11,9 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}, config:Obj = {}) {
-  let nodeRef: RefObject<T>
+export default function useNodesRef<T extends React.Component<any, any>, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}) {
+  const nodeRef = useAnimatedRef<T>()
 
-  if (config.isAnimatedRef) {
-    nodeRef = useAnimatedRef<T>()
-  } else {
-    nodeRef = useRef<T>(null)
-  }
   const _props = useRef<P | null>(null)
   _props.current = props
 

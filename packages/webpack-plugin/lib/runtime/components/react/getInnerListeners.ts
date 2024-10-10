@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { NativeSyntheticEvent } from 'react-native'
 import { omit } from './utils'
 import eventConfigMap from './event.config'
 import {
