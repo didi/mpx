@@ -4,19 +4,18 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import {
   View,
-  Text,
   StyleSheet,
   ViewStyle,
   NativeSyntheticEvent,
   TextStyle
 } from 'react-native'
-import { LabelContext, RadioGroupContext } from './context'
+import { LabelContext, RadioGroupContext, VarContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
+import { splitStyle, splitProps, isText, throwReactWarning, useTransformStyle } from './utils'
 import Icon from './mpx-icon'
 
 export interface RadioProps {
@@ -26,6 +25,8 @@ export interface RadioProps {
   color?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -65,6 +66,29 @@ const styles = StyleSheet.create({
   }
 })
 
+function wrapChildren (props: RadioProps, { hasVarDec }: { hasVarDec: boolean }, textStyle?: TextStyle, varContext?: Record<string, any>) {
+  const { textProps } = splitProps(props)
+  let { children } = props
+
+  if (textStyle || textProps) {
+    children = Children.map(children, (child) => {
+      if (isText(child)) {
+        const style = { ...textStyle, ...child.props.style }
+        return cloneElement(child, { ...textProps, style })
+      }
+      return child
+    })
+  }
+
+  if (hasVarDec && varContext) {
+    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
+  }
+
+  return [
+    children
+  ]
+}
+
 const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
   (props, ref): JSX.Element => {
     const {
@@ -74,7 +98,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       color = '#09BB07',
       style = [],
       'enable-offset': enableOffset,
-      children,
+      'enable-var': enableVar,
+      'external-var-context': externalVarContext,
       bindtap,
       catchtap
     } = props
@@ -89,21 +114,23 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const labelContext = useContext(LabelContext)
 
-    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
-
-    if (imageStyle) {
-      throwReactWarning('[Mpx runtime warn]: Radio does not support background image-related styles!')
-    }
-
     const defaultStyle = {
       ...styles.wrapper,
       ...(isChecked && styles.wrapperChecked),
       ...(disabled && styles.wrapperDisabled)
     }
 
-    const viewStyle = {
-      ...defaultStyle,
-      ...innerStyle
+    const styleObj = {
+      ...styles.container,
+      ...style
+    }
+
+    const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+    if (backgroundStyle) {
+      throwReactWarning('[Mpx runtime warn]: Radio does not support background image-related styles!')
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -150,30 +177,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       )
     }
 
-    const wrapChildren = (
-      children: ReactNode,
-      textStyle?: TextStyle
-    ) => {
-      if (!children) return children
-      const { textProps } = splitProps(props)
-
-      if (every(children, (child) => isText(child))) {
-        if (textStyle || textProps) {
-          children = <Text key='radioTextWrap' style={textStyle || {}} {...(textProps || {})}>
-            {children}
-          </Text>
-        }
-      } else {
-        if (textStyle) {
-          throwReactWarning(
-            '[Mpx runtime warn]: Text style will be ignored unless every child of the Radio is Text node!'
-          )
-        }
-      }
-
-      return children
-    }
-
     if (groupContext) {
       groupValue = groupContext.groupValue
       notifyChange = groupContext.notifyChange
@@ -187,7 +190,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       props,
       {
         ref: nodeRef,
-        style: styles.container,
+        style: innerStyle,
         bindtap: onTap,
         catchtap: catchTap,
         ...(enableOffset ? { onLayout } : {})
@@ -223,7 +226,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     return (
       <View {...innerProps}>
-        <View style={viewStyle}>
+        <View style={defaultStyle}>
           <Icon
             type='success'
             size={24}
@@ -235,7 +238,16 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             }}
           />
         </View>
-        {wrapChildren(children, textStyle)}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec 
+            },
+            textStyle,
+            varContextRef.current
+          )
+        }
       </View>
     )
   }
