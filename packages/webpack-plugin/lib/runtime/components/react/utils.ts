@@ -1,5 +1,5 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { TextStyle, Dimensions } from 'react-native'
+import { Dimensions } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
 
@@ -11,6 +11,12 @@ export const VAR_DEC_REGEX = /^--.*/
 export const VAR_USE_REGEX = /var\(([^,]+)(?:,([^)]+))?\)/
 export const URL_REGEX = /url\(["']?(.*?)["']?\)/
 export const DEFAULT_FONT_SIZE = 16
+
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
+}
 
 export function rpx (value: number) {
   const { width } = Dimensions.get('screen')
@@ -182,7 +188,12 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
 function transformLineHeight (styleObj: Record<string, any>) {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_FONT_SIZE)
+    const hasFontSize = hasOwn(styleObj, 'fontSize')
+    if (!hasFontSize) {
+      throwReactWarning('[Mpx runtime warn]: The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
+    }
+    const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
+    lineHeight = (parseFloat(lineHeight) / 100) * fontSize
     styleObj.lineHeight = lineHeight
   }
 }
@@ -194,7 +205,7 @@ interface TransformStyleConfig {
   enableLineHeight?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
@@ -341,10 +352,4 @@ export function splitProps<T extends Record<string, any>> (props: T) {
       return 'innerProps'
     }
   })
-}
-
-export const throwReactWarning = (message: string) => {
-  setTimeout(() => {
-    console.warn(message)
-  }, 0)
 }

@@ -43,7 +43,7 @@ const styles: { [key: string]: Object } = {
   }
 }
 
-const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>((props, ref): JSX.Element => {
+const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, CarouseProps>((props, ref): JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
   const { styleObj } = props
@@ -65,8 +65,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView, CarouseProps>, CarouseProps>(
   const defaultX = (defaultWidth * initOffsetIndex) || 0
   const defaultY = (defaultHeight * initOffsetIndex) || 0
   // 内部存储上一次的offset值
-  const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { nodeRef: scrollViewRef } = useNodesRef<ScrollView, CarouseProps>(props, ref, {
+  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
+  const { nodeRef: scrollViewRef } = useNodesRef<ScrollView & View, CarouseProps>(props, ref, {
   })
   // 存储layout布局信息
   const layoutRef = useRef({})
