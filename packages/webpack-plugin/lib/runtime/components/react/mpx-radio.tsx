@@ -10,7 +10,8 @@ import {
   StyleSheet,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle
+  TextStyle,
+  LayoutChangeEvent
 } from 'react-native'
 import { LabelContext, RadioGroupContext, VarContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -125,7 +126,14 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       ...style
     }
 
-    const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+    const { 
+      normalStyle,
+      hasPercent,
+      hasVarDec,
+      varContextRef,
+      setContainerWidth,
+      setContainerHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -162,7 +170,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       change: onChange
     })
 
-    const onLayout = () => {
+    const onLayout = (res: LayoutChangeEvent) => {
+      if (hasPercent) {
+        const { width, height } = res?.nativeEvent?.layout || {}
+        setContainerWidth(width || 0)
+        setContainerHeight(height || 0)
+      }
       nodeRef.current?.measure(
         (
           x: number,

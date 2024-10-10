@@ -23,7 +23,8 @@ import {
   StyleSheet,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle
+  TextStyle,
+  LayoutChangeEvent
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -132,7 +133,14 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       ...style
     }
 
-    const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+    const { 
+      normalStyle,
+      hasPercent,
+      hasVarDec,
+      varContextRef,
+      setContainerWidth,
+      setContainerHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -167,7 +175,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       change: onChange
     })
 
-    const onLayout = () => {
+    const onLayout = (res: LayoutChangeEvent) => {
+      if (hasPercent) {
+        const { width, height } = res?.nativeEvent?.layout || {}
+        setContainerWidth(width || 0)
+        setContainerHeight(height || 0)
+      }
       nodeRef.current?.measure(
         (
           x: number,
