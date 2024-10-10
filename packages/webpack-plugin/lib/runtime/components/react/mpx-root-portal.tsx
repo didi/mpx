@@ -10,16 +10,13 @@ interface RootPortalProps {
 }
 const _RootPortal = (props: RootPortalProps) => {
   const { children, enable = true } = props
-  return enable ? (
-    // @ts-ignore
-    <Portal>
+  return enable
+    ? <Portal>
       {children}
     </Portal>
-  ) : (
-    <>{children}</>
-  )
+    : <>{children}</>
 }
 
-_RootPortal.displayName = 'mpx-root-portal'
+_RootPortal.displayName = 'MpxRootPortal'
 
 export default _RootPortal

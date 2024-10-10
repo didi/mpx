@@ -1,6 +1,6 @@
 import { ScrollView } from 'react-native'
 import { JSX, MutableRefObject, forwardRef, useRef } from 'react'
-import { default as Carouse } from './carouse'
+import Carouse from './carouse'
 import { SwiperProps } from './type'
 import useInnerProps from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
@@ -61,6 +61,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     {children}
   </Carouse>
 })
-_SwiperWrapper.displayName = 'mpx-swiper'
+
+_SwiperWrapper.displayName = 'MpxSwiper'
 
 export default _SwiperWrapper
