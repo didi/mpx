@@ -59,6 +59,7 @@ interface ScrollViewProps {
   'scroll-left'?: number;
   'enable-offset'?: boolean;
   'scroll-into-view'?: string;
+  'scroll-options'?: Record<string, any>;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -112,7 +113,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-into-view': scrollIntoView = '',
     'scroll-top': scrollTop = 0,
     'scroll-left': scrollLeft = 0,
-    'refresher-triggered': refresherTriggered
+    'refresher-triggered': refresherTriggered,
+    'scroll-options': naScrollOptions
   } = props
 
   const [refreshing, setRefreshing] = useState(true)
@@ -390,7 +392,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     bindtouchmove: onScrollTouchMove,
     onLayout,
     onScrollEndDrag,
-    onMomentumScrollEnd: onScrollEnd
+    onMomentumScrollEnd: onScrollEnd,
+    ...naScrollOptions
   }
   if (enhanced) {
     scrollAdditionalProps = {
@@ -400,6 +403,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
+    'scroll-options',
     'id',
     'enable-offset',
     'scroll-x',
