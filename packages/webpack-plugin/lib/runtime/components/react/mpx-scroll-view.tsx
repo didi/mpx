@@ -158,7 +158,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       snapScrollTop.current !== scrollTop || snapScrollLeft.current !== scrollLeft
     ) {
       initialTimeout.current = setTimeout(() => {
-        scrollToOffset(scrollTop, scrollLeft)
+        scrollToOffset(scrollLeft, scrollTop)
       }, 0)
 
       return () => {
