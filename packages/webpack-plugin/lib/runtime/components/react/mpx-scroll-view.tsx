@@ -98,7 +98,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const {
     enhanced = false,
     bounces = true,
-    style,
+    style = {},
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
