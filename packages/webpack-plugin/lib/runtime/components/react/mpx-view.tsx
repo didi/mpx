@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
@@ -97,13 +97,13 @@ const checkNeedLayout = (style: PreImageInfo) => {
   const [width, height] = style.sizeList
   const bp = style.backgroundPosition
   // 含有百分号，center 需计算布局
-  const containPercentSymbol = typeof bp[1] === 'string' && PERCENT_REGEX.test(bp[1]) || typeof bp[3] === 'string' && PERCENT_REGEX.test(bp[3])
+  const containPercentSymbol = (typeof bp[1] === 'string' && PERCENT_REGEX.test(bp[1])) || (typeof bp[3] === 'string' && PERCENT_REGEX.test(bp[3]))
 
   return {
     // 是否开启layout的计算
-    needLayout: typeof width === 'string' && /^cover|contain$/.test(width) || (typeof height === 'string' && PERCENT_REGEX.test(height) && width === 'auto') || (typeof width === 'string' && PERCENT_REGEX.test(width) && height === 'auto') || containPercentSymbol,
+    needLayout: (typeof width === 'string' && /^cover|contain$/.test(width)) || (typeof height === 'string' && PERCENT_REGEX.test(height) && width === 'auto') || (typeof width === 'string' && PERCENT_REGEX.test(width) && height === 'auto') || containPercentSymbol,
     // 是否开启原始宽度的计算
-    needImageSize: typeof width === 'string' && /^cover|contain$/.test(width) || style.sizeList.includes('auto')
+    needImageSize: (typeof width === 'string' && /^cover|contain$/.test(width)) || style.sizeList.includes('auto')
   }
 }
 
@@ -195,9 +195,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       const layoutRatio = layoutWidth / imageSizeWidth
       const eleRatio = imageSizeWidth / imageSizeHeight
       // 容器宽高比 大于 图片的宽高比，依据宽度作为基准，否则以高度为基准
-      if (layoutRatio <= eleRatio && (width as string) === 'contain' || layoutRatio >= eleRatio && (width as string) === 'cover') {
+      if ((layoutRatio <= eleRatio && (width as string) === 'contain') || (layoutRatio >= eleRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutWidth as number, imageSizeHeight / imageSizeWidth, true) as Size
-      } else if (layoutRatio > eleRatio && (width as string) === 'contain' || layoutRatio < eleRatio && (width as string) === 'cover') {
+      } else if ((layoutRatio > eleRatio && (width as string) === 'contain') || (layoutRatio < eleRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutHeight as number, imageSizeWidth / imageSizeHeight) as Size
       }
     }
@@ -220,8 +220,8 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       // 数值类型设置为 stretch
       (imageProps.style as ImageStyle).resizeMode = 'stretch'
       dimensions = {
-        width: typeof width === 'string' && PERCENT_REGEX.test(width) ? width : +width! as number,
-        height: typeof height === 'string' && PERCENT_REGEX.test(height) ? height : +height! as number
+        width: typeof width === 'string' && PERCENT_REGEX.test(width) ? width : +width as number,
+        height: typeof height === 'string' && PERCENT_REGEX.test(height) ? height : +height as number
       }
     }
   }
