@@ -1,5 +1,5 @@
 import { isObject, isArray, dash2hump, isFunction, cached } from '@mpxjs/utils'
-import { Dimensions } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 
 function rpx (value) {
   const { width } = Dimensions.get('screen')
@@ -9,6 +9,7 @@ function rpx (value) {
 }
 
 global.__rpx = rpx
+global.__hairlineWidth = StyleSheet.hairlineWidth
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
@@ -81,7 +82,8 @@ const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
-const varRegExp = /^--.*/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
+const varRegExp = /^--/
 
 const parseStyleText = cached((cssText = '') => {
   const res = {}
@@ -123,15 +125,15 @@ function transformStyleObj (styleObj) {
   const keys = Object.keys(styleObj)
   const transformed = {}
   keys.forEach((prop) => {
-    // todo 检测不支持的prop
     let value = styleObj[prop]
     let matched
     if ((matched = pxRegExp.exec(value))) {
       value = +matched[1]
     } else if ((matched = rpxRegExp.exec(value))) {
       value = rpx(+matched[1])
+    } else if (hairlineRegExp.test(value)) {
+      value = StyleSheet.hairlineWidth
     }
-    // todo 检测不支持的value
     transformed[prop] = value
   })
   return transformed
