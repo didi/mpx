@@ -71,6 +71,7 @@ interface ScrollViewProps {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindscrollend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  __selectRef?: (selector: string, nodeType: 'node' | 'component', all?: boolean) => HandlerRef<any, any>
 }
 type ScrollAdditionalProps = {
   pinchGestureEnabled: boolean;

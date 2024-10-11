@@ -1755,6 +1755,15 @@ function processRefReact (el, meta) {
       value: `{{ this.__getRefVal('${refConf.key}') }}`
     }])
   }
+
+  if (el.tag === 'mpx-scroll-view' && el.attrsMap['scroll-into-view']) {
+    addAttrs(el, [
+      {
+        name: '__selectRef',
+        value: `{{ this.__selectRef.bind(this) }}`
+      }
+    ])
+  }
 }
 
 function processRef (el, options, meta) {
