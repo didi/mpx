@@ -1,6 +1,6 @@
 
-import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, Platform } from 'react-native'
-import React, { forwardRef, useRef, useState, useEffect } from 'react'
+import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
+import React, { forwardRef, useRef, useState, useEffect, ReactElement } from 'react'
 // import { Reanimated } from 'react-native-reanimated';
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 interface ColumnProps {
@@ -18,7 +18,7 @@ interface ColumnProps {
 // 每个Column 都有个外层的高度, 内部的元素高度
 // 默认的高度
 // const AnimatedScrollView = Reanimated.createAnimatedComponent(ScrollView);
-const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
+const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout, wrapperStyle } = props
   // scrollView的ref
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {})
@@ -43,7 +43,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
     })
   }
 
-  const onItemLayout = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const onItemLayout = (e: LayoutChangeEvent) => {
     const layout = e.nativeEvent.layout
     if (layout.height && itemH !== layout.height) {
       itemH = layout.height
@@ -62,7 +62,20 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
 
   const renderInnerchild = () => {
     // Fragment 节点
-    const realChilds = Array.isArray(children) ? children : (children.props?.children && Array.isArray(children.props?.children) ? children.props.children : [children])
+    const getRealChilds = () => {
+      if (Array.isArray(children)) {
+        return children
+      } else {
+        const tempChild = children as ReactElement
+        if (tempChild.props.children && tempChild.props.children) {
+          return tempChild.props.children
+        } else {
+          return [children]
+        }
+      }
+    }
+    // const realChilds = Array.isArray(children) ? children : (children?.props?.children && Array.isArray(children.props?.children) ? children.props.children : [children])
+    const realChilds = getRealChilds()
     const arrChild = realChilds.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = 'picker' + props.prefix + '-column' + index
@@ -99,7 +112,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
       showsVerticalScrollIndicator={false}
       pagingEnabled={false}
       snapToInterval={itemH}
-      contentContainerStyle={contentContainerStyle}
       automaticallyAdjustContentInsets={false}
       onLayout={onScrollViewLayout}
       onMomentumScrollEnd={onMomentumScrollEnd}>

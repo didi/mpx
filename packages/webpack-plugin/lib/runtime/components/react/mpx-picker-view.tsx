@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import LinearGradient from 'react-native-linear-gradient'
-import React, { forwardRef, MutableRefObject, useState, useRef } from 'react'
+import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradient'
+import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 /**
@@ -80,16 +80,16 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const onSelectChange = (columnIndex: number, selIndex: number) => {
     const changeValue = value.slice()
     changeValue[columnIndex] = selIndex
-    const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: {} })
+    const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: innerLayout })
     bindchange && bindchange(eventData)
   }
-
+  /*
   const onWrapperLayout = () => {
     wrapRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       const a = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
-
+  */
   const getInnerLayout = (layout: MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
@@ -99,7 +99,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const cloneChild = (child: React.ReactNode, index: number) => {
     const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}
     const childProps = {
-      ...child?.props,
+      ...(child as ReactElement)?.props,
       ref: cloneRef,
       prefix: index,
       key: 'pick-view' + index,
@@ -111,33 +111,37 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       selectedIndex: value?.[index] || 0,
       ...extraProps
     }
-    return React.cloneElement(child, childProps)
+    return React.cloneElement(child as ReactElement, childProps)
   }
 
   const renderTopMask = () => {
-    return <LinearGradient colors={['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.2)']}
-      style={[
+    const linearProps: LinearGradientProps = {
+      colors: ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.2)'],
+      style: [
         styles.maskTop,
         {
           height: maskPos.height,
           top: 0,
           pointerEvents: 'none'
         }
-      ]}>
-      </LinearGradient>
+      ]
+    }
+    return (<LinearGradient {...linearProps}/>)
   }
 
   const renderBottomMask = () => {
-    return <LinearGradient colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.8)']}
-      style={[
+    const linearProps: LinearGradientProps = {
+      colors: ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.8)'],
+      style: [
         styles.maskBottom,
         {
           height: maskPos.height,
           bottom: 0,
           pointerEvents: 'none'
         }
-      ]}>
-    </LinearGradient>
+      ]
+    }
+    return <LinearGradient {...linearProps}></LinearGradient>
   }
 
   const renderSubChild = () => {
@@ -149,7 +153,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       return cloneChild(children, 0)
     }
   }
-  return (<View style={[style, { position: 'relative', overflow: 'hidden' }]} onLayout={onWrapperLayout} ref={wrapRef}>
+  return (<View style={[style, { position: 'relative', overflow: 'hidden' }]} ref={wrapRef}>
     {renderTopMask()}
     <View style={[styles.wrapper]}>
       {renderSubChild()}
