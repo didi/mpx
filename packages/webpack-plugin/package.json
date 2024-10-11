@@ -62,8 +62,7 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
-    "webpack": "^5.75.0",
-    "react-native-linear-gradient": "^2.8.3"
+    "webpack": "^5.75.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
@@ -90,6 +89,7 @@
     "react-native": "^0.74.5",
     "react-native-gesture-handler": "^2.18.1",
     "react-native-webview": "^13.12.2",
+    "react-native-linear-gradient": "^2.8.3",
     "rimraf": "^6.0.1"
   },
   "engines": {
