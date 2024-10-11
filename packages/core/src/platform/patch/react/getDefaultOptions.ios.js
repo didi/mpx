@@ -452,8 +452,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             createElement(defaultOptions,
               {
                 navigation,
-                route,
-                pageConfig
+                route
               }
             )
           )
