@@ -14,13 +14,13 @@ import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '..
 import styleHelperMixin from './styleHelperMixin'
 import directiveHelperMixin from './directiveHelperMixin'
 
-export default function getBuiltInMixins ({ type, rawOptions = {}, currentInject }) {
+export default function getBuiltInMixins ({ type, rawOptions = {} }) {
   let bulitInMixins
   if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
-      styleHelperMixin(currentInject),
+      styleHelperMixin(),
       refsMixin(),
       i18nMixin()
     ]

@@ -56,9 +56,15 @@ module.exports = function (styles, {
           error
         })
         if (ctorType === 'app') {
-          output += `global.__appClassMap = ${shallowStringify(classMap)};\n`
+          output += `global.__getAppClassMap = function() {
+            return ${shallowStringify(classMap)};
+          };\n`
         } else {
-          output += `global.currentInject.classMap = ${shallowStringify(classMap)};\n`
+          output += `global.currentInject.injectMethods = {
+            __getClassMap: function() {
+              return ${shallowStringify(classMap)};
+            }
+          };\n`
         }
       } catch (e) {
         return callback(e)
