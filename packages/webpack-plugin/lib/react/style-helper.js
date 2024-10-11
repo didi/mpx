@@ -4,7 +4,8 @@ const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
-const varRegExp = /^--.*/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
+const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   const classMap = {}
@@ -20,7 +21,10 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
       value = matched[1]
       needStringify = false
     } else if ((matched = rpxRegExp.exec(value))) {
-      value = `this.__rpx(${matched[1]})`
+      value = `global.__rpx(${matched[1]})`
+      needStringify = false
+    } else if (hairlineRegExp.test(value)) {
+      value = `global.__hairlineWidth`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value

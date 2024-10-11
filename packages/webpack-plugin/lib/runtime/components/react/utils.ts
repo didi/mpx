@@ -1,5 +1,5 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { Dimensions } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
 
@@ -8,8 +8,8 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const VAR_DEC_REGEX = /^--.*/
-export const VAR_USE_REGEX = /var\(([^,]+)(?:,([^)]+))?\)/
-export const URL_REGEX = /url\(["']?(.*?)["']?\)/
+export const VAR_USE_REGEX = /^\s*var\(([^,]+)(?:,(.+))?\)\s*$/
+export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const DEFAULT_FONT_SIZE = 16
 
 export const throwReactWarning = (message: string) => {
@@ -27,6 +27,7 @@ export function rpx (value: number) {
 
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
 
 export function formatValue (value: string) {
   let matched
@@ -34,6 +35,8 @@ export function formatValue (value: string) {
     return +matched[1]
   } else if ((matched = rpxRegExp.exec(value))) {
     return rpx(+matched[1])
+  } else if (hairlineRegExp.test(value)) {
+    return StyleSheet.hairlineWidth
   }
   return value
 }
@@ -85,9 +88,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
 
 export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
-
   const match = cssUrl.match(URL_REGEX)
-
   return match?.[1]
 }
 
