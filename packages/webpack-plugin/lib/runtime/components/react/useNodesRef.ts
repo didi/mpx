@@ -1,6 +1,5 @@
 import { useRef, useImperativeHandle, RefObject, ForwardedRef } from 'react'
 
-
 type Obj = Record<string, any>
 
 export type HandlerRef<T, P> = {
@@ -11,7 +10,7 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {} ) {
+export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}) {
   const nodeRef = useRef<T>(null)
   const _props = useRef<P | null>(null)
   _props.current = props

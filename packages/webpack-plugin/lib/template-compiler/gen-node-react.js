@@ -60,9 +60,7 @@ function genNode (node) {
             exp += `__getSlot(${name ? s(name) : ''})`
           } else {
             exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
-            if (node.isRoot) {
-              exp += `, Object.assign({}, rootProps, {style: Object.assign({}, ${attrExpMap.style}, rootProps.style)})`
-            } else if (node.attrsList.length) {
+            if (node.attrsList.length) {
               const attrs = []
               node.attrsList && node.attrsList.forEach(({ name, value }) => {
                 const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)

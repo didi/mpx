@@ -84,7 +84,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       'enable-offset': enableOffset,
       children,
       bindtap,
-      catchtap,
+      catchtap
     } = props
 
     const layoutRef = useRef({})
@@ -98,12 +98,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const groupContext = useContext(CheckboxGroupContext)
-    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined;
-    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined;
+    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
+    let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
     const defaultStyle = {
       ...styles.wrapper,
-      ...(disabled && styles.wrapperDisabled),
+      ...(disabled && styles.wrapperDisabled)
     }
 
     const viewStyle = {

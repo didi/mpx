@@ -5,8 +5,8 @@
  * ✔ bindreset
  */
 
-import { View, LayoutChangeEvent } from 'react-native';
-import { JSX, useRef, forwardRef, ReactNode } from 'react';
+import { View, LayoutChangeEvent } from 'react-native'
+import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
@@ -23,7 +23,7 @@ interface FormProps {
 }
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormProps, ref): JSX.Element => {
-  const { children, style } = props;
+  const { children, style } = props
   const layoutRef = useRef({})
   const formValuesMap = useRef(new Map()).current
 
@@ -38,7 +38,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
   const submit = () => {
     const { bindsubmit } = props
     const formValue: Record<string, any> = {}
-    for (let name of formValuesMap.keys()) {
+    for (const name of formValuesMap.keys()) {
       if (formValuesMap.get(name).getValue) {
         formValue[name] = formValuesMap.get(name).getValue()
       }
@@ -71,7 +71,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
     'style',
     'bindsubmit',
     'bindreset'
-  ], { layoutRef });
+  ], { layoutRef })
 
   return (
     <View
@@ -81,9 +81,9 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((props: FormPro
         {children}
       </FormContext.Provider>
     </View>
-  );
+  )
 })
 
-_Form.displayName = 'mpx-form';
+_Form.displayName = 'mpx-form'
 
 export default _Form

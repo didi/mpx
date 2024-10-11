@@ -4,7 +4,7 @@ import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import { MultiSelectorProps, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
-function convertToObj(item?: any, rangeKey = ''): any {
+function convertToObj (item?: any, rangeKey = ''): any {
   if (typeof item === 'object') {
     return { value: item[rangeKey], label: item[rangeKey] }
   } else {
@@ -13,13 +13,13 @@ function convertToObj(item?: any, rangeKey = ''): any {
 }
 
 // eslint-disable-next-line default-param-last
-function formatRangeFun(range: any[][] = [], rangeKey?: string): any[] {
+function formatRangeFun (range: any[][] = [], rangeKey?: string): any[] {
   const result = (range[0] || []).map(item => {
     return convertToObj(item, rangeKey)
   })
   let tmp = result
   for (let i = 1; i < range.length; i++) {
-    let child = Array.isArray(range[i]) ? range[i] : []
+    const child = Array.isArray(range[i]) ? range[i] : []
     const nextColData = child.map(item => {
       return convertToObj(item, rangeKey)
     })
@@ -31,7 +31,7 @@ function formatRangeFun(range: any[][] = [], rangeKey?: string): any[] {
   return result
 }
 
-function getIndexByValues(range: any[] = [], value: any[] = []): number[] {
+function getIndexByValues (range: any[] = [], value: any[] = []): number[] {
   let tmp = range
   return value.map(v => {
     for (let i = 0; i < tmp.length; i++) {
@@ -44,16 +44,16 @@ function getIndexByValues(range: any[] = [], value: any[] = []): number[] {
   })
 }
 // [1,1,2] 寻找出[]
-function getInnerValueByIndex(range: any[] = [], value: any[] = []): string[] {
+function getInnerValueByIndex (range: any[] = [], value: any[] = []): string[] {
   let tmp = range
   return value.map(v => {
-    let current = tmp[v].value
+    const current = tmp[v].value
     tmp = tmp[v].children
     return current
   })
 }
 // column = 1 value = ['无脊柱动物', '扁性动物', '吸血虫'] 根据column 和value 获取到当前列变动选择的值所在当前列的索引
-function getColumnIndexByValue(range: any[] = [], column: number, value: any[] = []): number {
+function getColumnIndexByValue (range: any[] = [], column: number, value: any[] = []): number {
   let curRange = range
   let changeIndex = 0
   let tmpRange: any[] = []
@@ -63,23 +63,26 @@ function getColumnIndexByValue(range: any[] = [], column: number, value: any[] =
         if (ritem.value === item) {
           changeIndex = rindex
         }
+        return ritem
       })
     } else {
-    curRange.map((citem, cindex) => {
+      curRange.map((citem, cindex) => {
         if (citem.value === item) {
           tmpRange = citem.children
         }
-    })
-    curRange = tmpRange
+        return citem
+      })
+      curRange = tmpRange
     }
+    return item
   })
   return changeIndex
 }
 
 const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, MultiSelectorProps>((props: MultiSelectorProps, ref): React.JSX.Element => {
   const { range, value, disabled, bindchange, bindcancel, children, bindcolumnchange } = props
-  let formatRange = formatRangeFun(range, props['range-key'])
-  let initValue = getInnerValueByIndex(formatRange, value)
+  const formatRange = formatRangeFun(range, props['range-key'])
+  const initValue = getInnerValueByIndex(formatRange, value)
   // 选中的索引值
   const [selected, setSelected] = useState(initValue)
   // range数据源
