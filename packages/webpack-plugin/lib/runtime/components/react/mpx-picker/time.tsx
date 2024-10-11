@@ -8,8 +8,7 @@ import { TimeProps } from './type'
 // const { height: dHeight, width: dWidth } = Dimensions.get('window');
 //  modal属性: {"height": 298.33331298828125, "offsetLeft": 0, "offsetTop": 513.6666870117188, "width": 375, "x": 0, "y": 513.6666870117188}
 // const { height: sHeight, width: sWidth } = Dimensions.get('screen');
-// 	设备屏幕的大小。 screen
-
+// 设备屏幕的大小。 screen
 const styles: { [key: string]: Object } = {
   showModal: {
     backgroundColor: 'black',
