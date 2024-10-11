@@ -9,6 +9,7 @@
 
 // @ts-ignore
 import { GetComputedType } from '@mpxjs/store'
+import React from 'react';
 
 // @ts-ignore
 export * from '@mpxjs/store'
@@ -221,6 +222,9 @@ type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M exte
 interface CreateConfig {
   customCtor: any
 }
+
+declare const IntersectionObserverContext: React.Context<Function[] | null>;
+export { IntersectionObserverContext }
 
 export function createComponent<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>, config?: CreateConfig): void
 

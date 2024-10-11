@@ -8,7 +8,8 @@ import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
-import { createSelectorQuery } from '@mpxjs/api-proxy'
+import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
+import { IntersectionObserverContext } from '../../export/index'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -50,7 +51,7 @@ function createEffect (proxy, components) {
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, intersectionCtx }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
@@ -175,8 +176,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     createSelectorQuery () {
       return createSelectorQuery().in(this)
     },
-    createIntersectionObserver () {
-      error('createIntersectionObserver is not supported in react native, please use ref instead')
+    createIntersectionObserver (opt) {
+      return createIntersectionObserver(this, opt, intersectionCtx)
     },
     ...rawOptions.methods
   }, {
@@ -348,11 +349,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
+    const intersectionCtx = useContext(IntersectionObserverContext)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, intersectionCtx })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -424,6 +426,26 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
 
+      const innerElement = pageConfig.openIntersectionObserver ? 
+        createElement(IntersectionObserverContext.Provider, 
+          {
+            value: []
+          },
+          createElement(defaultOptions,
+            {
+              navigation,
+              route,
+              pageConfig
+            }
+          )
+        ): createElement(defaultOptions,
+          {
+            navigation,
+            route,
+            pageConfig
+          }
+        )
+
       return createElement(GestureHandlerRootView,
         {
           style: {
@@ -437,23 +459,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         // todo custom portal host for active route
         createElement(Provider,
           null,
-          createElement(routeContext.Provider,
-            {
-              value: { pageId: currentPageId }
-            },
-            createElement(defaultOptions,
-              {
-                navigation,
-                route,
-                pageConfig
-              }
-            )
-          )
+          innerElement
         )
       )
     }
     return Page
   }
-
   return defaultOptions
 }

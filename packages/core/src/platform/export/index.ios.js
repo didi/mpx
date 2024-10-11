@@ -1,3 +1,5 @@
+import { createContext } from 'react'
+
 export {
   watchEffect,
   watchSyncEffect,
@@ -42,3 +44,5 @@ export {
 export {
   useI18n
 } from '../../platform/builtInMixins/i18nMixin'
+
+export const IntersectionObserverContext = createContext(null)

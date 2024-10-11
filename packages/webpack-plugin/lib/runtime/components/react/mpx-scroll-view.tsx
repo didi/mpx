@@ -33,10 +33,11 @@
  */
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { throwReactWarning } from './utils'
+import { IntersectionObserverContext } from '@mpxjs/core'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -128,6 +129,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intersectionFns: Function[] = useContext(IntersectionObserverContext)
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
@@ -263,6 +265,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    if (intersectionFns && intersectionFns.length) {
+      intersectionFns.forEach(fn => {
+        fn()
+      })
+    }
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
