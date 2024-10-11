@@ -180,13 +180,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       snapScrollIntoView.current = scrollIntoView || ''
       setTimeout(() => {
         const refs = __selectRef(`#${scrollIntoView}`, 'node')
-        const { nodeRef } = refs.getNodeInstance()
-        nodeRef.current?.measureLayout(
-          scrollViewRef.current,
-          (left: number, top:number) => {
-            scrollToOffset(left, top)
-          }
-        )
+        if (refs) {
+          const { nodeRef } = refs.getNodeInstance()
+          nodeRef.current?.measureLayout(
+            scrollViewRef.current,
+            (left: number, top:number) => {
+              scrollToOffset(left, top)
+            }
+          )
+        }
       })
     }
   }, [scrollIntoView])
