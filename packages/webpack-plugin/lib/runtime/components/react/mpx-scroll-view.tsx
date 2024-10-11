@@ -398,8 +398,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     bindtouchmove: onScrollTouchMove,
     onLayout,
     onScrollEndDrag,
-    onMomentumScrollEnd: onScrollEnd,
-    ...naScrollOptions
+    onMomentumScrollEnd: onScrollEnd
   }
   if (enhanced) {
     scrollAdditionalProps = {
@@ -408,6 +407,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       pagingEnabled
     }
   }
+
+  if (naScrollOptions) {
+    scrollAdditionalProps = {
+      ...scrollAdditionalProps,
+      ...naScrollOptions
+    }
+  }
+
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
     'scroll-options',
     'id',
