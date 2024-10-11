@@ -116,3 +116,6 @@ export * from './api/ext'
 
 // vibrateShort, vibrateLong
 export * from './api/vibrate'
+
+// onKeyboardHeightChange, offKeyboardHeightChange, hideKeyboard
+export * from './api/keyboard'

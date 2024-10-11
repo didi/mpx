@@ -20,7 +20,7 @@ const vibrateShort = function (options = {}) {
     const result = {
       errMsg: 'vibrateShort:fail'
     }
-    successHandle(result, fail, complete)
+    failHandle(result, fail, complete)
   }
 }
 
