@@ -24,7 +24,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
       value = `global.__rpx(${matched[1]})`
       needStringify = false
     } else if (hairlineRegExp.test(value)) {
-      value = `global.__hairlineWidth`
+      value = 'global.__hairlineWidth'
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
