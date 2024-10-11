@@ -71,11 +71,10 @@ type ImageProps = {
   src?: string
 }
 
-
 const linearMap = new Map([
-  ['top', 0], 
-  ['bottom', 180], 
-  ['left', 270], 
+  ['top', 0],
+  ['bottom', 180],
+  ['left', 270],
   ['right', 90],
   ['top right', 45],
   ['right top', 45],
@@ -298,7 +297,7 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
     //     第二位是 top bottom 覆盖的是 vStart
     //             center, 100% 覆盖的是 vOffset
     //
-    // 水平方向 
+    // 水平方向
     if (isHorizontal(parts[0])) {
       hStart = parts[0]
     } else { // center, 100% 正常的px 覆盖的是 hOffset
@@ -324,10 +323,8 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
   return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
 }
 
-function normalLinearGradient(text: string) {
-  
+function normalLinearGradient (text: string) {
   let linearText = text.trim().match(/linear-gradient\((.*)\)/)?.[1]
-  
   if (!linearText) return
 
   // 添加默认的角度
@@ -337,33 +334,32 @@ function normalLinearGradient(text: string) {
     linearText = linearText.replace('to', '')
   }
   // 把 30deg,red 10%, blue 20% 解析为 ['0deg', 'red, 10%', 'blue, 20%']
-  let [direction, ...colorList] = linearText.split(/,(?![^(#]*\))/);
+  const [direction, ...colorList] = linearText.split(/,(?![^(#]*\))/)
 
   // 获取角度
-  let angle = +(linearMap.get(direction.trim()) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
+  const angle = +(linearMap.get(direction.trim()) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
   // 把 ['red, 10%', 'blue, 20%']解析为 [[red, 10%], [blue, 20%]]
-  return colorList.map(item => item.trim().split(/(?<!,)\s+/)).reduce<linearProps>((prev, cur, idx, self) => {
+  return colorList.map(item => item.trim().split(/(?<!,)\s+/))
+    .reduce<linearProps>((prev, cur, idx, self) => {
+      const { colors, locations } = prev
+      const [color, val] = cur
+      let numberVal: number = parseFloat(val) / 100
 
-    const { colors, locations } = prev
-    const [ color, val ] = cur
-    let numberVal: number = parseFloat(val)/100
-    
-    // 添加color的数组
-    colors.push(color.trim())
+      // 添加color的数组
+      colors.push(color.trim())
 
-    // 处理渐变位置
-    if (idx === 0) {
-      numberVal = numberVal || 0
-    } else if (self.length - 1 === idx){
-      numberVal = numberVal || 1
-    }
-    locations.push(numberVal)
-    return prev
-  }, {'colors': [], 'locations': [], angle })
+      // 处理渐变位置
+      if (idx === 0) {
+        numberVal = numberVal || 0
+      } else if (self.length - 1 === idx) {
+        numberVal = numberVal || 1
+      }
+      locations.push(numberVal)
+      return prev
+    }, { colors: [], locations: [], angle })
 }
 
 function normalBackgroundImage (text?: string) {
-  
   if (!text) return {}
 
   const src = parseUrl(text)
@@ -384,7 +380,7 @@ function preParseImage (imageStyle?: ExtendedViewStyle) {
   const sizeList = backgroundSize.slice() as DimensionValue[]
 
   sizeList.length === 1 && sizeList.push('auto')
-  
+
   return {
     src,
     lGProps,
@@ -404,7 +400,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
 
   // 预解析
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
-  
+
   // 判断是否可挂载onLayout
   const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
   const { src, lGProps } = preImageInfo
@@ -460,7 +456,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   }
 
   return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
-    {lGProps && <LinearGradient useAngle={true} style={{ width: '100%', height: '100%'}} {...lGProps} /> }
+    {lGProps && <LinearGradient useAngle={true} style={{ width: '100%', height: '100%' }} {...lGProps} /> }
     {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
