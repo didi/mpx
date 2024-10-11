@@ -1068,7 +1068,10 @@ function processStyleReact (el, options) {
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
 
-  const show = getAndRemoveAttr(el, config[mode].directive.show).val
+  const { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
+  if (has && show === undefined) {
+    error$1(`Attrs ${config[mode].directive.show} should have a value `)
+  }
 
   if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
@@ -1080,14 +1083,14 @@ function processStyleReact (el, options) {
     addAttrs(el, [{
       name: 'style',
       // runtime helper
-      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}${show === undefined ? '' : `, !(${showExp})`})}}`
     }])
   }
 
   if (staticHoverClass && staticHoverClass !== 'none') {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
-      name: 'hoverStyle',
+      name: 'hover-style',
       value: `{{this.__getStyle(${staticClassExp})}}`
     }])
   }
@@ -1355,11 +1358,13 @@ function processEvent (el, options) {
   }
 }
 
-function processSlotReact (el) {
+function processSlotReact (el, meta) {
   if (el.tag === 'slot') {
     el.slot = {
       name: getAndRemoveAttr(el, 'name').val
     }
+    meta.options = meta.options || {}
+    meta.options.disableMemo = true
   }
 }
 
@@ -2329,7 +2334,7 @@ function getVirtualHostRoot (options, meta) {
     if (ctorType === 'component') {
       if (mode === 'wx' && hasVirtualHost) {
         // wx组件注入virtualHost配置
-        !meta.options && (meta.options = {})
+        meta.options = meta.options || {}
         meta.options.virtualHost = true
       }
       if (mode === 'web' && !hasVirtualHost) {
@@ -2353,8 +2358,12 @@ function getVirtualHostRoot (options, meta) {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
           }
+          // todo 运行时通过root标识确定是否合并rootProps
+          // {
+          //   name: 'is-root',
+          //   value: '{{true}}'
+          // }
         ])
-        rootView.isRoot = true
         processElement(rootView, rootView, options, meta)
         return rootView
       }
@@ -2622,7 +2631,7 @@ function processElement (el, root, options, meta) {
     processStyleReact(el, options)
     processEventReact(el)
     processComponentIs(el, options)
-    processSlotReact(el)
+    processSlotReact(el, meta)
     processAttrs(el, options)
     return
   }

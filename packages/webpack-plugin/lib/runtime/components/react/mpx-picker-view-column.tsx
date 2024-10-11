@@ -22,7 +22,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<View, ColumnProps>, ColumnProps>
   )
 })
 
-_PickerViewColumn.displayName = 'mpx-picker-view-column';
+_PickerViewColumn.displayName = 'mpx-picker-view-column'
 
 export default _PickerViewColumn
-
