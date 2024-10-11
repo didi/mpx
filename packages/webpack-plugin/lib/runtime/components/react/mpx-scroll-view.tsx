@@ -115,7 +115,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-top': scrollTop = 0,
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
-    'scroll-options': naScrollOptions,
     __selectRef
   } = props
 
@@ -408,15 +407,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  if (naScrollOptions) {
-    scrollAdditionalProps = {
-      ...scrollAdditionalProps,
-      ...naScrollOptions
-    }
-  }
-
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'scroll-options',
     'id',
     'enable-offset',
     'scroll-x',
