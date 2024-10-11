@@ -1,15 +1,17 @@
 import { View, TouchableWithoutFeedback } from 'react-native'
-import { Picker } from '@ant-design/react-native'
+import { Picker, PickerColumnItem } from '@ant-design/react-native'
 import { regionData } from './regionData'
 import React, { forwardRef, useState, useRef } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { RegionProps, RegionObj, PickerData, LayoutType } from './type'
+import { RegionProps, RegionObj, LayoutType } from './type'
 
-function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerData[] {
+function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerColumnItem[] {
   const l = depth
-  const obj: PickerData[] = []
+  // 'PickerData[]' is not assignable to type 'PickerColumn | PickerColumn[]'.
+  // const obj: PickerColumnItem[] = []
+  const obj: PickerColumnItem[] = []
   if (customItem) {
-    const objClone: PickerData = {
+    const objClone: PickerColumnItem = {
       value: customItem,
       label: customItem,
       children: []
@@ -18,12 +20,12 @@ function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth 
     let loop = panding
     while (depth-- > 0) {
       loop.children = [{ ...objClone }]
-      loop = loop.children[0] as PickerData
+      loop = loop.children[0] as PickerColumnItem
     }
-    obj.push(panding)
+    obj.push(panding as PickerColumnItem)
   }
   for (let i = 0; i < clObj.length; i++) {
-    const region: PickerData = {
+    const region: PickerColumnItem = {
       value: clObj[i].value,
       label: clObj[i].value
     }
@@ -58,6 +60,7 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
           return code
         }
       }
+      return item
     }).filter(code => !!code)
     const detail: Record<string, any> = { value, code }
     if (postcode[2]) detail.postcode = postcode[2]
@@ -74,12 +77,16 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
     })
   }
 
+  const onDismiss = (): void => {
+    bindcancel && bindcancel()
+  }
+
   const regionProps = {
     data: formatRegionData,
     value: regionvalue,
     onChange,
     disabled,
-    onDismiss: bindcancel && bindcancel
+    onDismiss
   }
 
   const touchProps = {
@@ -88,7 +95,6 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   }
 
   return (
-    // @ts-ignore
     <Picker {...regionProps}>
       <TouchableWithoutFeedback>
         <View {...touchProps}>{children}</View>
@@ -97,5 +103,5 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   )
 })
 
-_RegionPicker.displayName === 'mpx-picker-region'
+_RegionPicker.displayName = 'mpx-picker-region'
 export default _RegionPicker
