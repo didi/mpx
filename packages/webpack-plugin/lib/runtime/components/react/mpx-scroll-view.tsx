@@ -59,6 +59,7 @@ interface ScrollViewProps {
   'scroll-top'?: number;
   'scroll-left'?: number;
   'enable-offset'?: boolean;
+  'enable-trigger-intersection-observer'?: boolean;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -100,6 +101,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
+    'enable-trigger-intersection-observer': enableTriggerIntersectionObserver = false,
     'paging-enabled': pagingEnabled = false,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
@@ -265,7 +267,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (intersectionFns && intersectionFns.length) {
+    if (enableTriggerIntersectionObserver && intersectionFns && intersectionFns.length) {
       intersectionFns.forEach(fn => {
         fn()
       })
@@ -392,6 +394,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-x',
     'scroll-y',
     'enable-back-to-top',
+    'enable-trigger-intersection-observer',
     'paging-enabled',
     'show-scrollbar',
     'upper-threshold',

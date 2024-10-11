@@ -411,6 +411,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
+      const intersectionObservers = useMemo(() => [], [])
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
@@ -426,26 +427,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
 
-      const innerElement = pageConfig.openIntersectionObserver ? 
-        createElement(IntersectionObserverContext.Provider, 
-          {
-            value: []
-          },
-          createElement(defaultOptions,
-            {
-              navigation,
-              route,
-              pageConfig
-            }
-          )
-        ): createElement(defaultOptions,
-          {
-            navigation,
-            route,
-            pageConfig
-          }
-        )
-
       return createElement(GestureHandlerRootView,
         {
           style: {
@@ -459,7 +440,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         // todo custom portal host for active route
         createElement(Provider,
           null,
-          innerElement
+          createElement(IntersectionObserverContext.Provider, 
+            {
+              value: intersectionObservers
+            },
+            createElement(defaultOptions,
+              {
+                navigation,
+                route,
+                pageConfig
+              }
+            )
+          )
         )
       )
     }

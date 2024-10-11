@@ -60,7 +60,7 @@ class RNIntersectionObserver {
     this._measureTarget(true)
 
     // 添加实例添加到上下文中，滚动组件可以获取到上下文内的实例从而触发滚动
-    if (this.intersectionCtx && Array.isArray(this.intersectionCtx)) {
+    if (this.intersectionCtx && Array.isArray(this.intersectionCtx) && !this.intersectionCtx.includes(this.throttleMeasure)) {
       this.intersectionCtx.push(this.throttleMeasure)
     }
 
@@ -185,8 +185,8 @@ class RNIntersectionObserver {
     return this
   }
   disconnect () {
-    if (this.intersectionCtx && this.intersectionCtx.indexOf(this) > -1) {
-      this.intersectionCtx.splice(this.intersectionCtx.indexOf(this), 1)
+    if (this.intersectionCtx && this.intersectionCtx.indexOf(this.throttleMeasure) > -1) {
+      this.intersectionCtx.splice(this.intersectionCtx.indexOf(this.throttleMeasure), 1)
     }
   }
 }
