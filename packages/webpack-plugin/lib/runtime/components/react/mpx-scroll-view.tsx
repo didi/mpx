@@ -115,7 +115,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-top': scrollTop = 0,
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
-    'scroll-options': naScrollOptions
+    'scroll-options': naScrollOptions,
+    __selectRef
   } = props
 
   const [refreshing, setRefreshing] = useState(true)
@@ -175,16 +176,18 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }, [refresherTriggered])
 
   useEffect(() => {
-    if (snapScrollIntoView.current !== scrollIntoView) {
+    if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
       snapScrollIntoView.current = scrollIntoView || ''
-      if (scrollIntoView) {
-        scrollViewRef.current?.measureLayout(
+      setTimeout(() => {
+        const refs = __selectRef(`#${scrollIntoView}`, 'node')
+        const { nodeRef } = refs.getNodeInstance()
+        nodeRef.current?.measureLayout(
           scrollViewRef.current,
-          (left, top) => {
+          (left: number, top:number) => {
             scrollToOffset(left, top)
           }
         )
-      }
+      })
     }
   }, [scrollIntoView])
 
