@@ -1760,7 +1760,7 @@ function processRefReact (el, meta) {
     addAttrs(el, [
       {
         name: '__selectRef',
-        value: `{{ this.__selectRef.bind(this) }}`
+        value: '{{ this.__selectRef.bind(this) }}'
       }
     ])
   }
