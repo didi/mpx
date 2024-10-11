@@ -11,15 +11,15 @@ module.exports = function getSpec ({ warn, error }) {
   }
   const cssVariableExp = /^var\((.+)\)$/
   // 不支持的属性提示
-  const unsupportedPropError = ({ prop, mode, selector }) => {
-    error(`Property [${prop}] in ${selector} selector is not supported in React Native ${mode} environment!`)
+  const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
+    const tips = isError ? error : warn
+    tips(`Property [${prop}] on ${selector} is not supported in ${mode} environment!`)
   }
   // prop 校验
   const verifyProps = ({ prop, value, selector }, { mode }, isError = true) => {
     prop = prop.trim()
-    const tips = isError ? error : warn
     if (unsupportedPropExp.test(prop) || unsupportedPropMode[mode].test(prop)) {
-      tips(`Property [${prop}] in ${selector} selector is not supported in React Native ${mode} environment!`)
+      unsupportedPropError({ prop, value, selector }, { mode }, isError)
       return false
     }
     return true
@@ -92,7 +92,7 @@ module.exports = function getSpec ({ warn, error }) {
       const newVal = (value.match(cssVariableExp)?.[1] || '').split(',')
       const variable = newVal?.[0]
       if (!variable || !/^--/.test(variable)) {
-        tips(`The css variable [${prop}:${value}] is invalid, please check again`)
+        tips(`The css variable [${prop}:${value}] is invalid in ${selector}`)
         return false
       }
       return true
@@ -103,17 +103,25 @@ module.exports = function getSpec ({ warn, error }) {
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const type = getValueType(prop)
+    const tipsType = (type) => {
+      const info = {
+        [ValueType.number]: '2rpx,10%,30rpx',
+        [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
+        [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
+      }
+      tips(`Value of ${prop} in ${selector} selector should be ${type}, eg ${info[type]}, received [${value}], please check!`)
+    }
     switch (type) {
       case ValueType.number: {
         if (!valueExp.number.test(value)) {
-          tips(`Value of [${prop}] in ${selector} selector should be Number type in React Native environment, eg 10rpx, 10px, 10%, 10, received ${value}, please check again!`)
+          tipsType(type)
           return false
         }
         return true
       }
       case ValueType.color: {
         if (!valueExp.color.test(value)) {
-          tips(`Value of [${prop}] in ${selector} selector should be Color type in React Native environment, eg #000, rgba(0,0,0,0), received ${value}, please check again!`)
+          tipsType(type)
           return false
         }
         return true
@@ -122,7 +130,7 @@ module.exports = function getSpec ({ warn, error }) {
         const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(value)
         const isType = Object.keys(valueExp).some(item => valueExp[item].test(value) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
         if (!isIn && !isType) {
-          tips(`Property [${prop}] in ${selector} selector only support value [${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}] in React Native environment, received ${value}, please check again!`)
+          tipsType(type)
           return false
         }
         return true
@@ -170,7 +178,7 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length) {
       const prop = props[propsIdx]
       if (!prop) {
-        error(`Value of [${original}] in ${selector} selector has not enough props to assign in React Native environment, please check again!`)
+        error(`Value of [${original}] in ${selector} has not enough props to assign, please check!`)
         break
       }
       const value = values[idx]
@@ -291,7 +299,7 @@ module.exports = function getSpec ({ warn, error }) {
         // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
         // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
         if (value.includes(',')) { // commas are not allowed in values
-          error(`Value of [${bgPropMap.size}] in ${selector} selector does not support commas in React Native ${mode} environment, received ${value}, please check again!`)
+          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check!`)
           return false
         }
         const values = []
@@ -311,7 +319,7 @@ module.exports = function getSpec ({ warn, error }) {
             // 支持 number 值 /  枚举, center与50%等价
             values.push(item === 'center' ? '50%' : item)
           } else {
-            error(` Value of [${bgPropMap.size}] in ${selector} selector does not support commas in React Native ${mode} environment, received ${value}, please check again!`)
+            error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check!`)
           }
         })
 
@@ -324,7 +332,7 @@ module.exports = function getSpec ({ warn, error }) {
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
           if (/.*linear-gradient*./.test(item)) {
-            error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
+            error(`Value of [${bgPropMap.size}] in ${selector} selector is not supported <linear-gradient()> in React Native ${mode} environment!`)
           } else if (url) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, false)) {
@@ -336,7 +344,7 @@ module.exports = function getSpec ({ warn, error }) {
         return bgMap.length ? bgMap : false
       }
     }
-    unsupportedPropError({ prop, mode, selector })
+    unsupportedPropError({ prop, value, selector }, { mode })
     return false
   }
 
@@ -402,7 +410,7 @@ module.exports = function getSpec ({ warn, error }) {
               const xyz = ['X', 'Y', 'Z']
               transform.push(...vals.map((v, index) => {
                 if (key !== 'rotate' && index > 1) {
-                  unsupportedPropError({ prop: `${key}Z`, mode })
+                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
                 }
                 return { [`${key}${xyz[index] || ''}`]: v.trim() }
               }))
@@ -412,11 +420,11 @@ module.exports = function getSpec ({ warn, error }) {
           case 'scaleZ':
           default:
             // 不支持的属性处理
-            unsupportedPropError({ prop: key, mode })
+            unsupportedPropError({ prop, value, selector }, { mode })
             break
         }
       } else {
-        error(`Property [${prop}] is invalid in ${selector} selector, please check the value!`)
+        error(`Property [${prop}] is invalid in ${selector}, received [${value}], please check!`)
       }
     })
     return {
@@ -433,7 +441,7 @@ module.exports = function getSpec ({ warn, error }) {
     if (isNumber(value) && value >= 0) {
       return { prop, value }
     } else {
-      error(`Value of [${prop}] in ${selector} selector accepts any floating point value >= 0, please check the value!`)
+      error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check!`)
       return false
     }
   }
@@ -441,7 +449,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatFlex = ({ prop, value, selector }) => {
     let values = value.trim().split(/\s(?![^()]*\))/)
     if (values.length > 3) {
-      error(`Value of [flex] in ${selector} selector supports up to three values, please check the value!`)
+      error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
@@ -456,7 +464,7 @@ module.exports = function getSpec ({ warn, error }) {
         // value=initial 则 flexShrink=1，其他场景都是0
         cssMap.push(...[{ prop: 'flexGrow', value: 0 }, { prop: 'flexShrink', value: +(values[0] === 'initial') }])
       } else {
-        error(`Value of [${prop}] in ${selector} selector is invalid, When setting the value of flex to none or initial, only one value is supported.`)
+        error(`Value of [${prop}] in ${selector} is invalid, When setting the value of flex to none or initial, only one value is supported.`)
       }
       return cssMap
     }
@@ -501,10 +509,10 @@ module.exports = function getSpec ({ warn, error }) {
     const newVal = value.replace(/"|'/g, '').trim()
     const values = newVal.split(',').filter(i => i)
     if (!newVal || !values.length) {
-      error(`[${prop}:${value}] is invalid in ${selector} selector, please check again`)
+      error(`Value of [${prop}] is invalid in ${selector}, received [${value}].`)
       return false
     } else if (values.length > 1) {
-      warn(`Value of [${prop}] in ${selector} selector only supports one, received ${value}, and the first one is used by default.`)
+      warn(`Value of [${prop}] only supports one in ${selector}, received [${value}], and the first one is used by default.`)
     }
     return { prop, value: values[0].trim() }
   }
