@@ -13,7 +13,7 @@ interface TextConfig {
   textProps?: Record<string, any>
 }
 
-export function wrapChildren (props: TextProps = {}, { hasVarDec, varContext }: WrapChildrenConfig, { textStyle, textProps } : TextConfig = {}) {
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext }: WrapChildrenConfig, { textStyle, textProps } : TextConfig = {}) {
   let { children } = props
   if (textStyle || textProps) {
     children = Children.map(children, (child) => {
