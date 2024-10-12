@@ -27,15 +27,15 @@ export interface LabelProps {
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   (labelProps, ref): JSX.Element => {
+    const { textProps, innerProps: props = {} } = splitProps(labelProps)
+
     const {
       style = {},
       'enable-offset': enableOffset,
       'enable-var': enableVar,
       'external-var-context': externalVarContext,
       bindtap
-    } = labelProps
-
-    const { textProps, innerProps: props } = splitProps(labelProps)
+    } = props
 
     const defaultStyle = {
       flexDirection: 'row'

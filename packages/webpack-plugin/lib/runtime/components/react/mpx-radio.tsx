@@ -69,6 +69,8 @@ const styles = StyleSheet.create({
 
 const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
   (radioProps, ref): JSX.Element => {
+    const { textProps, innerProps: props = {} } = splitProps(radioProps)
+
     const {
       value = '',
       disabled = false,
@@ -80,9 +82,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       'external-var-context': externalVarContext,
       bindtap,
       catchtap
-    } = radioProps
-
-    const { textProps, innerProps: props } = splitProps(radioProps)
+    } = props
 
     const layoutRef = useRef({})
 

@@ -77,6 +77,8 @@ const styles = StyleSheet.create({
 
 const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
   (checkboxProps, ref): JSX.Element => {
+    const { textProps, innerProps: props = {} } = splitProps(checkboxProps)
+
     const {
       value = '',
       disabled = false,
@@ -88,9 +90,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       'external-var-context': externalVarContext,
       bindtap,
       catchtap
-    } = checkboxProps
-
-    const { textProps, innerProps: props } = splitProps(checkboxProps)
+    } = props
 
     const layoutRef = useRef({})
 

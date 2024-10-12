@@ -182,6 +182,8 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
 }
 
 const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(buttonProps)
+
   const {
     size = 'default',
     type = 'default',
@@ -203,9 +205,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     bindtap,
     bindtouchstart,
     bindtouchend
-  } = buttonProps
-
-  const { textProps, innerProps: props } = splitProps(buttonProps)
+  } = props
 
   const formContext = useContext(FormContext)
 
