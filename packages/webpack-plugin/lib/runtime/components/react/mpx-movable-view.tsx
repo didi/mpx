@@ -18,7 +18,7 @@
  * ✔ vtouchmove
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
-import { StyleSheet, NativeSyntheticEvent, View } from 'react-native'
+import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
@@ -71,16 +71,15 @@ const styles = StyleSheet.create({
 })
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((movableViewProps: MovableViewProps, ref): JSX.Element => {
-  const { textProps, innerProps: props } = splitProps(movableViewProps)
+  const { textProps, innerProps: props = {} } = splitProps(movableViewProps)
 
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
 
-  const propsRef = useRef({} as MovableViewProps)
-  propsRef.current = props
+  const propsRef = useRef<any>({})
+  propsRef.current = (props || {}) as MovableViewProps
 
   const {
-    children,
     x = 0,
     y = 0,
     inertia,
@@ -90,7 +89,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     direction,
     externalGesture = [],
     style = {},
-    'enable-var': enableVar, 
+    'enable-var': enableVar,
     'external-var-context': externalVarContext,
     bindtouchstart,
     catchtouchstart,
@@ -103,7 +102,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindtouchend,
     catchtouchend
   } = props
- 
+
   const {
     normalStyle,
     hasVarDec,
