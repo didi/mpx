@@ -36,7 +36,8 @@ import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutCh
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -59,6 +60,8 @@ interface ScrollViewProps {
   'scroll-left'?: number;
   'enable-offset'?: boolean;
   'scroll-into-view'?: string;
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -93,11 +96,12 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
-const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
+const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
+  const { textProps, innerProps: props } = splitProps(scrollViewProps)
   const {
-    children,
     enhanced = false,
     bounces = true,
+    style = {},
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
@@ -114,6 +118,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-top': scrollTop = 0,
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     __selectRef
   } = props
 
@@ -137,6 +143,17 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const snapScrollIntoView = useRef<string>('')
+
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasPercent,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext })
+
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
@@ -245,7 +262,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onLayout (e: LayoutChangeEvent) {
-    scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout)
+    const layout = e.nativeEvent.layout || {}
+    scrollOptions.current.visibleLength = selectLength(layout)
+    if (hasPercent) {
+      const { width, height } = layout
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     if (enableOffset) {
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -408,6 +431,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
     'id',
+    'style',
     'enable-offset',
     'scroll-x',
     'scroll-y',
@@ -442,6 +466,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   return (
     <ScrollView
       {...innerProps}
+      style={innerStyle}
       refreshControl={refresherEnabled
         ? (
           <RefreshControl
@@ -453,7 +478,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           )
         : undefined}
     >
-      {children}
+       {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            varContext: varContextRef.current
+          },
+          {
+            textStyle,
+            textProps
+          }
+        )
+      }
     </ScrollView>
   )
 })
