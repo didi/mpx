@@ -59,7 +59,6 @@ interface ScrollViewProps {
   'scroll-left'?: number;
   'enable-offset'?: boolean;
   'scroll-into-view'?: string;
-  'scroll-options'?: Record<string, any>;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
