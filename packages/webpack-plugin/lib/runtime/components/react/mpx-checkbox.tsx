@@ -13,9 +13,7 @@ import {
   ReactNode,
   useContext,
   Dispatch,
-  SetStateAction,
-  Children,
-  cloneElement
+  SetStateAction
 } from 'react'
 
 import {
@@ -23,14 +21,14 @@ import {
   StyleSheet,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle,
   LayoutChangeEvent
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitStyle, isText, splitProps, throwReactWarning, useTransformStyle } from './utils'
-import { CheckboxGroupContext, LabelContext, VarContext } from './context'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { CheckboxGroupContext, LabelContext } from './context'
+import { wrapChildren } from './common'
 
 interface Selection {
   value?: string
@@ -77,29 +75,6 @@ const styles = StyleSheet.create({
   }
 })
 
-function wrapChildren (props: CheckboxProps, { hasVarDec }: { hasVarDec: boolean }, textStyle?: TextStyle, varContext?: Record<string, any>) {
-  const { textProps } = splitProps(props)
-  let { children } = props
-
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
-      }
-      return child
-    })
-  }
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
-
-  return [
-    children
-  ]
-}
-
 const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
   (props, ref): JSX.Element => {
     const {
@@ -133,7 +108,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       ...style
     }
 
-    const { 
+    const {
       normalStyle,
       hasPercent,
       hasVarDec,
@@ -141,6 +116,8 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       setContainerWidth,
       setContainerHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textProps } = splitProps(props)
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -258,10 +235,13 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
           wrapChildren(
             props,
             {
-              hasVarDec 
+              hasVarDec,
+              varContext: varContextRef.current
             },
-            textStyle,
-            varContextRef.current
+            {
+              textStyle,
+              textProps
+            }
           )
         }
       </View>

@@ -13,10 +13,11 @@ import {
   NativeSyntheticEvent,
   ViewStyle
 } from 'react-native'
-import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue, VarContext } from './context'
+import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { throwReactWarning, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
 export interface CheckboxGroupProps {
   name: string
@@ -26,18 +27,6 @@ export interface CheckboxGroupProps {
   'external-var-context'?: Record<string, any>
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-}
-
-function wrapChildren (props: CheckboxGroupProps, { hasVarDec }: { hasVarDec: boolean }, varContext?: Record<string, any>) {
-  let { children } = props
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
-
-  return [
-    children
-  ]
 }
 
 const CheckboxGroup = forwardRef<
@@ -65,7 +54,7 @@ const CheckboxGroup = forwardRef<
 
   const defaultStyle = {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
   }
 
   const styleObj = {
@@ -162,9 +151,9 @@ const CheckboxGroup = forwardRef<
           wrapChildren(
             props,
             {
-               hasVarDec
-            },
-            varContextRef.current
+              hasVarDec,
+              varContext: varContextRef.current
+            }
           )
         }
       </CheckboxGroupContext.Provider>

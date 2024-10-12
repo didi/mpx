@@ -34,8 +34,7 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import { useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX, Children, cloneElement } from 'react'
-
+import { useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX } from 'react'
 import {
   View,
   StyleSheet,
@@ -46,10 +45,11 @@ import {
   NativeSyntheticEvent,
   LayoutChangeEvent
 } from 'react-native'
-import { splitStyle, isText, splitProps, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { FormContext, VarContext } from './context'
+import { FormContext } from './context'
+import { wrapChildren } from './common'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -181,29 +181,6 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-function wrapChildren (props: ButtonProps, { hasVarDec }: { hasVarDec: boolean }, textStyle?: TextStyle, varContext?: Record<string, any>) {
-  const { textProps } = splitProps(props)
-  let { children } = props
-
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
-      }
-      return child
-    })
-  }
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
-
-  return [
-    children
-  ]
-}
-
 const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): JSX.Element => {
   const {
     size = 'default',
@@ -315,6 +292,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+  const { textProps } = splitProps(props)
 
   const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -429,10 +408,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
         wrapChildren(
           props,
           {
-            hasVarDec
+            hasVarDec,
+            varContext: varContextRef.current
           },
-          textStyle,
-          varContextRef.current
+          {
+            textStyle,
+            textProps
+          }
         )
       }
     </View>

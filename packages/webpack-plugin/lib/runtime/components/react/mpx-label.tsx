@@ -1,19 +1,19 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, Children, cloneElement } from 'react'
+import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import {
   View,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle,
   LayoutChangeEvent
 } from 'react-native'
 import { noop } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitStyle, splitProps, isText, throwReactWarning, useTransformStyle } from './utils'
-import { LabelContext, LabelContextValue, VarContext } from './context'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { LabelContext, LabelContextValue } from './context'
+import { wrapChildren } from './common'
 
 export interface LabelProps {
   for?: string
@@ -23,29 +23,6 @@ export interface LabelProps {
   'external-var-context'?: Record<string, any>
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-}
-
-function wrapChildren (props: LabelProps, { hasVarDec }: { hasVarDec: boolean }, textStyle?: TextStyle, varContext?: Record<string, any>) {
-  const { textProps } = splitProps(props)
-  let { children } = props
-
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
-      }
-      return child
-    })
-  }
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
-
-  return [
-    children
-  ]
 }
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
@@ -67,7 +44,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       ...style
     }
 
-    const { 
+    const {
       normalStyle,
       hasPercent,
       hasVarDec,
@@ -75,6 +52,8 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       setContainerWidth,
       setContainerHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textProps } = splitProps(props)
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -137,10 +116,13 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
           wrapChildren(
             props,
             {
-              hasVarDec 
+              hasVarDec,
+              varContext: varContextRef.current
             },
-            textStyle,
-            varContextRef.current
+            {
+              textStyle,
+              textProps
+            }
           )
         }
       </LabelContext.Provider>

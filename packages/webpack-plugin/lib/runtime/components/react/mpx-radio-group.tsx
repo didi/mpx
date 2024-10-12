@@ -13,10 +13,11 @@ import {
   NativeSyntheticEvent,
   ViewStyle
 } from 'react-native'
-import { FormContext, FormFieldValue, RadioGroupContext, GroupValue, VarContext } from './context'
+import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { throwReactWarning, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
 export interface RadioGroupProps {
   name: string
@@ -26,18 +27,6 @@ export interface RadioGroupProps {
   'external-var-context'?: Record<string, any>
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-}
-
-function wrapChildren (props: RadioGroupProps, { hasVarDec }: { hasVarDec: boolean }, varContext?: Record<string, any>) {
-  let { children } = props
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
-
-  return [
-    children
-  ]
 }
 
 const radioGroup = forwardRef<
@@ -66,7 +55,7 @@ const radioGroup = forwardRef<
 
   const defaultStyle = {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
   }
 
   const styleObj = {
@@ -161,9 +150,9 @@ const radioGroup = forwardRef<
           wrapChildren(
             props,
             {
-               hasVarDec
-            },
-            varContextRef.current
+              hasVarDec,
+              varContext: varContextRef.current
+            }
           )
         }
       </RadioGroupContext.Provider>
@@ -174,4 +163,3 @@ const radioGroup = forwardRef<
 radioGroup.displayName = 'mpx-radio-group'
 
 export default radioGroup
-

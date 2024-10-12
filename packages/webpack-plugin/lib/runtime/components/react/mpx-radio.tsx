@@ -4,20 +4,20 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
 import {
   View,
   StyleSheet,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle,
   LayoutChangeEvent
 } from 'react-native'
-import { LabelContext, RadioGroupContext, VarContext } from './context'
+import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitStyle, splitProps, isText, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
 import Icon from './mpx-icon'
+import { wrapChildren } from './common'
 
 export interface RadioProps {
   value?: string
@@ -67,29 +67,6 @@ const styles = StyleSheet.create({
   }
 })
 
-function wrapChildren (props: RadioProps, { hasVarDec }: { hasVarDec: boolean }, textStyle?: TextStyle, varContext?: Record<string, any>) {
-  const { textProps } = splitProps(props)
-  let { children } = props
-
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
-      }
-      return child
-    })
-  }
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
-
-  return [
-    children
-  ]
-}
-
 const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
   (props, ref): JSX.Element => {
     const {
@@ -126,7 +103,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       ...style
     }
 
-    const { 
+    const {
       normalStyle,
       hasPercent,
       hasVarDec,
@@ -134,6 +111,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       setContainerWidth,
       setContainerHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textProps } = splitProps(props)
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -255,10 +234,13 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
           wrapChildren(
             props,
             {
-              hasVarDec 
+              hasVarDec,
+              varContext: varContextRef.current
             },
-            textStyle,
-            varContextRef.current
+            {
+              textStyle,
+              textProps
+            }
           )
         }
       </View>

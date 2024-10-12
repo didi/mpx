@@ -51,7 +51,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       style = {},
       'enable-offset': enableOffset,
       'enable-var': enableVar,
-      'external-var-context': externalVarContext,
+      'external-var-context': externalVarContext
     } = props
 
     const uri = IconTypeMap.get(type)
@@ -63,7 +63,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       ...style
     }
 
-    const { 
+    const {
       normalStyle,
       hasPercent,
       setContainerWidth,

@@ -183,7 +183,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
-  const { 
+  const {
     normalStyle,
     hasPercent,
     setContainerWidth,

@@ -134,11 +134,11 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     defaultStyle
   })
 
-  const { 
+  const {
     hasPercent,
     normalStyle,
     setContainerWidth,
-    setContainerHeight,
+    setContainerHeight
   } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   const { width, height } = normalStyle
@@ -337,7 +337,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         height,
         ...normalStyle,
         ...(isHeightFixMode && { width: fixedWidth }),
-        ...(isWidthFixMode && { height: fixedHeight }),
+        ...(isWidthFixMode && { height: fixedHeight })
       }}
       onLayout={onViewLayout}>
       {
