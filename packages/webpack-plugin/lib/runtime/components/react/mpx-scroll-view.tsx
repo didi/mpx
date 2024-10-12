@@ -36,7 +36,8 @@ import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutCh
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { throwReactWarning, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -58,6 +59,8 @@ interface ScrollViewProps {
   'scroll-top'?: number;
   'scroll-left'?: number;
   'enable-offset'?: boolean;
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -93,9 +96,9 @@ type ScrollAdditionalProps = {
 };
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
   const {
-    children,
     enhanced = false,
     bounces = true,
+    style = {},
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
@@ -107,7 +110,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'refresher-default-style': refresherDefaultStyle,
     'refresher-background': refresherBackground,
     'enable-offset': enableOffset,
-    'show-scrollbar': showScrollbar = true
+    'show-scrollbar': showScrollbar = true,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext
   } = props
 
   const [refreshing, setRefreshing] = useState(true)
@@ -128,6 +133,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasPercent,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
@@ -222,7 +236,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onLayout (e: LayoutChangeEvent) {
-    scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout)
+    const layout = e.nativeEvent.layout || {}
+    scrollOptions.current.visibleLength = selectLength(layout)
+    if (hasPercent) {
+      const { width, height } = layout
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     if (enableOffset) {
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -381,6 +401,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
+    'style',
     'enable-offset',
     'scroll-x',
     'scroll-y',
@@ -414,6 +435,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   return (
     <ScrollView
+      style={normalStyle}
       {...innerProps}
       refreshControl={refresherEnabled
         ? (
@@ -426,7 +448,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           )
         : undefined}
     >
-      {children}
+       {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            varContext: varContextRef.current
+          }
+        )
+      }
     </ScrollView>
   )
 })

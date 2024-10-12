@@ -127,20 +127,17 @@ const styles = StyleSheet.create({
 })
 
 const getOpenTypeEvent = (openType: OpenType) => {
-  // @ts-ignore
-  if (!global?.__mpx?.config?.rnConfig) {
+  if (!(globalThis as any)?.__mpx?.config?.rnConfig) {
     throwReactWarning('[Mpx runtime warn]: Environment not supported')
     return
   }
-
   const eventName = OpenTypeEventsMap.get(openType)
   if (!eventName) {
     throwReactWarning(`[Mpx runtime warn]: open-type not support ${openType}`)
     return
   }
 
-  // @ts-ignore
-  const event = global.__mpx.config.rnConfig?.openTypeHandler?.[eventName]
+  const event = (globalThis as any).__mpx.config.rnConfig?.openTypeHandler?.[eventName]
   if (!event) {
     throwReactWarning(`[Mpx runtime warn]: Unregistered ${eventName} event`)
     return
@@ -173,7 +170,6 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
     return () => {
       animation.stop()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadingStyle = {
@@ -433,7 +429,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
         wrapChildren(
           props,
           {
-            hasVarDec,
+            hasVarDec
           },
           textStyle,
           varContextRef.current

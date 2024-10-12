@@ -31,6 +31,7 @@ module.exports = function (styles, {
         scoped,
         extract: false
       }
+      // todo 建立新的request在内部导出classMap，便于样式模块复用
       loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
           result = result.map((item) => {

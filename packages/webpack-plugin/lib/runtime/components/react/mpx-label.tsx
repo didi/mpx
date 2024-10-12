@@ -9,6 +9,7 @@ import {
   TextStyle,
   LayoutChangeEvent
 } from 'react-native'
+import { noop } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitStyle, splitProps, isText, throwReactWarning, useTransformStyle } from './utils'
@@ -82,7 +83,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     }
 
     const contextRef: LabelContextValue = useRef({
-      triggerChange: () => { }
+      triggerChange: noop
     })
 
     const layoutRef = useRef({})

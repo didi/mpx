@@ -63,15 +63,18 @@ function getColumnIndexByValue (range: any[] = [], column: number, value: any[] 
         if (ritem.value === item) {
           changeIndex = rindex
         }
+        return ritem
       })
     } else {
       curRange.map((citem, cindex) => {
         if (citem.value === item) {
           tmpRange = citem.children
         }
+        return citem
       })
       curRange = tmpRange
     }
+    return item
   })
   return changeIndex
 }

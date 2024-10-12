@@ -283,7 +283,7 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageContext (mpxProxy, instance) {
-  const { pageId } = useContext(routeContext) || {}
+  const pageId = useContext(routeContext)
 
   instance.getPageId = () => {
     return pageId
@@ -403,10 +403,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
     const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
-    const rootProps = getRootProps(props)
-    rootProps.style = { ...root.props.style, ...rootProps.style }
-    // update root props
-    return cloneElement(root, rootProps)
+    if (root) {
+      const rootProps = getRootProps(props)
+      rootProps.style = { ...root.props.style, ...rootProps.style }
+      // update root props
+      return cloneElement(root, rootProps)
+    }
+    return root
   }))
 
   if (type === 'page') {
@@ -444,13 +447,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           null,
           createElement(routeContext.Provider,
             {
-              value: { pageId: currentPageId }
+              value: currentPageId
             },
             createElement(defaultOptions,
               {
                 navigation,
-                route,
-                pageConfig
+                route
               }
             )
           )
