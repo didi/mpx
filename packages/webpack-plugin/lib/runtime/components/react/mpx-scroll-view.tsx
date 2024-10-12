@@ -36,7 +36,7 @@ import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutCh
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
 import { wrapChildren } from './common'
 
 interface ScrollViewProps {
@@ -94,7 +94,8 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
-const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
+const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
+  const { textProps, innerProps: props } = splitProps(scrollViewProps)
   const {
     enhanced = false,
     bounces = true,
@@ -141,7 +142,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasPercent,
     setContainerWidth,
     setContainerHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
+  } = useTransformStyle(style, { enableVar, externalVarContext })
+
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
@@ -435,8 +438,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   return (
     <ScrollView
-      style={normalStyle}
       {...innerProps}
+      style={innerStyle}
       refreshControl={refresherEnabled
         ? (
         <RefreshControl
@@ -454,6 +457,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           {
             hasVarDec,
             varContext: varContextRef.current
+          },
+          {
+            textStyle,
+            textProps
           }
         )
       }
