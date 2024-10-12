@@ -21,7 +21,7 @@ interface MovableAreaProps {
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((movableAreaProps: MovableAreaProps, ref): JSX.Element => {
-  const { textProps, innerProps: props } = splitProps(movableAreaProps)
+  const { textProps, innerProps: props = {} } = splitProps(movableAreaProps)
 
   const { style = {}, width = 10, height = 10, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'enable-offset': enableOffset } = props
   const [areaWidth, setAreaWidth] = useState(0)

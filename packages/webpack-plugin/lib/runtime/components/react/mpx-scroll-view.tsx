@@ -97,7 +97,7 @@ type ScrollAdditionalProps = {
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
-  const { textProps, innerProps: props } = splitProps(scrollViewProps)
+  const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
     enhanced = false,
     bounces = true,
