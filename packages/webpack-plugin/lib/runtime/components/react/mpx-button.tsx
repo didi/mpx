@@ -181,7 +181,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): JSX.Element => {
+const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonProps, ref): JSX.Element => {
   const {
     size = 'default',
     type = 'default',
@@ -203,7 +203,9 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     bindtap,
     bindtouchstart,
     bindtouchend
-  } = props
+  } = buttonProps
+
+  const { textProps, innerProps: props } = splitProps(buttonProps)
 
   const formContext = useContext(FormContext)
 
@@ -292,8 +294,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(styleObj, { enableVar, externalVarContext })
-
-  const { textProps } = splitProps(props)
 
   const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 

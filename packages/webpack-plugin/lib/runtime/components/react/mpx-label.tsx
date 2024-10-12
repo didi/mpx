@@ -26,14 +26,16 @@ export interface LabelProps {
 }
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
-  (props, ref): JSX.Element => {
+  (labelProps, ref): JSX.Element => {
     const {
       style = {},
       'enable-offset': enableOffset,
       'enable-var': enableVar,
       'external-var-context': externalVarContext,
       bindtap
-    } = props
+    } = labelProps
+
+    const { textProps, innerProps: props } = splitProps(labelProps)
 
     const defaultStyle = {
       flexDirection: 'row'
@@ -52,8 +54,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       setContainerWidth,
       setContainerHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext })
-
-    const { textProps } = splitProps(props)
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 

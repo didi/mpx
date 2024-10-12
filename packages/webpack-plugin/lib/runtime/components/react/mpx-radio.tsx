@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
 })
 
 const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
-  (props, ref): JSX.Element => {
+  (radioProps, ref): JSX.Element => {
     const {
       value = '',
       disabled = false,
@@ -80,7 +80,9 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       'external-var-context': externalVarContext,
       bindtap,
       catchtap
-    } = props
+    } = radioProps
+
+    const { textProps, innerProps: props } = splitProps(radioProps)
 
     const layoutRef = useRef({})
 
@@ -111,8 +113,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       setContainerWidth,
       setContainerHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext })
-
-    const { textProps } = splitProps(props)
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
