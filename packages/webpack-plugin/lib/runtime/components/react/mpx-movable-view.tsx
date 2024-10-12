@@ -18,7 +18,7 @@
  * ✔ vtouchmove
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
-import { StyleSheet, NativeSyntheticEvent, View } from 'react-native'
+import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
@@ -70,8 +70,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
 
-  const propsRef = useRef({} as MovableViewProps)
-  propsRef.current = props
+  const propsRef = useRef<any>({})
+  propsRef.current = (props || {}) as MovableViewProps
 
   const {
     children,
@@ -252,7 +252,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return { x, y }
   }, [])
 
-  const onLayout = () => {
+  const onLayout = (e: LayoutChangeEvent) => {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
       setBoundary({ width, height })
