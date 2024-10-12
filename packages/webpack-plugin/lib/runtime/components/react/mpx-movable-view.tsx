@@ -33,6 +33,8 @@ import Animated, {
   runOnUI,
   useAnimatedReaction
 } from 'react-native-reanimated'
+import { splitProps, splitStyle, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
 interface MovableViewProps {
   children: ReactNode;
@@ -56,6 +58,8 @@ interface MovableViewProps {
   'out-of-bounds'?: boolean;
   externalGesture?: Array<{ getNodeInstance: () => any }>;
   inertia?: boolean;
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
 }
 
 const styles = StyleSheet.create({
@@ -66,7 +70,9 @@ const styles = StyleSheet.create({
   }
 })
 
-const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
+const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((movableViewProps: MovableViewProps, ref): JSX.Element => {
+  const { textProps, innerProps: props } = splitProps(movableViewProps)
+
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
 
@@ -84,6 +90,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     direction,
     externalGesture = [],
     style = {},
+    'enable-var': enableVar, 
+    'external-var-context': externalVarContext,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -95,6 +103,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindtouchend,
     catchtouchend
   } = props
+ 
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasPercent,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
+
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
@@ -252,7 +271,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return { x, y }
   }, [])
 
-  const onLayout = () => {
+  const onLayout = (e: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = e.nativeEvent.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
       setBoundary({ width, height })
@@ -423,10 +447,22 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       <Animated.View
         ref={nodeRef}
         onLayout={onLayout}
-        style={[styles.container, style, animatedStyles]}
+        style={[styles.container, innerStyle, animatedStyles]}
         {...catchEventHandlers}
       >
-        {children}
+      {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            varContext: varContextRef.current
+          },
+          {
+            textStyle,
+            textProps
+          }
+        )
+      }
       </Animated.View>
     </GestureDetector>
   )
