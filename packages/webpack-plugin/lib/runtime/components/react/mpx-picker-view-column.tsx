@@ -27,12 +27,17 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   // 每个元素的高度
   let [itemH, setItemH] = useState(0)
   // scrollView内容的初始offset
-  let [offset, setOffset] = useState(0)
+  /*
+  let [offset, setOffset] = useState({
+    x: 0,
+    y: 0
+  })
+  */
 
   useEffect(() => {
     if (selectedIndex && itemH) {
-      offset = (selectedIndex + 2) * itemH
-      setOffset(offset)
+      let offsetY = selectedIndex * itemH
+      scrollViewRef.current?.scrollTo({ x: 0, y: offsetY, animated: true })
     }
   }, [selectedIndex, itemH])
 
@@ -55,7 +60,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (scrollViewRef && itemH) {
       const { y: scrollY } = e.nativeEvent.contentOffset
-      const selIndex = scrollY / itemH
+      const selIndex = Math.floor(scrollY / itemH)
       onSelectChange(selIndex)
     }
   }
@@ -79,10 +84,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     const arrChild = realChilds.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = 'picker' + props.prefix + '-column' + index
-      return <View key={strKey} {...InnerProps}>{item}</View>
+      return <View key={strKey} {...InnerProps} style={[{ height: 36 }]}>{item}</View>
     })
     const totalHeight = itemH * 5
-    if (wrapperStyle.height && totalHeight > wrapperStyle.height) {
+    if (wrapperStyle.height && totalHeight !== wrapperStyle.height) {
       const fix = Math.ceil((totalHeight - wrapperStyle.height) / 2)
       arrChild.unshift(<View key="picker-column-0" style={[{ height: itemH - fix }]}></View>)
       arrChild.unshift(<View key="picker-column-1" style={[{ height: itemH }]}></View>)

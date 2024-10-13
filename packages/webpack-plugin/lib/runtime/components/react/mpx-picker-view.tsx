@@ -3,13 +3,14 @@ import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradien
 import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { parseInlineStyle } from './utils'
 /**
  * ✔ value
  * ✔ bindchange
  * ✘ bindpickstart
  * ✘ bindpickend
  * ✘ mask-class
- * ✘ indicator-style
+ * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
  * ✘ indicator-class
  * ✘ mask-style
  * ✘ immediate-change
@@ -22,7 +23,8 @@ interface PickerViewProps {
   bindchange?: Function
   style?: {
     height?: number
-  }
+  },
+  'indicator-style'?: string
 }
 
 interface PickerLayout {
@@ -57,15 +59,20 @@ const styles: { [key: string]: Object } = {
 }
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
   const { children, value = [], bindchange, style } = props
+  const indicatorStyle = props['indicator-style']
+  // indicatorStyle 需要转换为rn的style
+  const { height: indicatorH, width: indicatorW } = parseInlineStyle(indicatorStyle)
+  const isSetW = indicatorW !== undefined ? 1 : 0
   const innerLayout = useRef({})
   const cloneRef = useRef(null)
   const wrapRef = useRef(null)
   const maskPos: PosType = {}
   let [pickH, setPickH] = useState(0)
-  if (style?.height && pickH) {
-    maskPos.height = pickH / 5 * 2 + (style.height - pickH)
+  const itemH = pickH / 5
+  if (style?.height && pickH && pickH !== style?.height) {
+    maskPos.height = itemH * 2 + Math.ceil((style.height - pickH) / 2)
   } else {
-    maskPos.height = pickH / 5 * 2
+    maskPos.height = itemH * 2
   }
 
   const { nodeRef } = useNodesRef<View, PickerViewProps>(props, ref, {})
@@ -144,6 +151,20 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     return <LinearGradient {...linearProps}></LinearGradient>
   }
 
+  const renderLine = () => {
+    return <View style={[{
+      position: "absolute",
+      top: "50%",
+      transform: [{ "translateY": -(itemH)/2 }],
+      height: itemH,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: "#f0f0f0",
+      width: "100%",
+      zIndex: 101
+    }]}></View>
+  }
+
   const renderSubChild = () => {
     if (Array.isArray(children)) {
       return children.map((item, index) => {
@@ -159,6 +180,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {renderSubChild()}
     </View>
     {renderBottomMask()}
+    {!isSetW && renderLine()}
   </View>)
 })
 
