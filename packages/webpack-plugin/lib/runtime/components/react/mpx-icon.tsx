@@ -82,18 +82,20 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
         setContainerWidth(width || 0)
         setContainerHeight(height || 0)
       }
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
+      if (enableOffset) {
+        nodeRef.current?.measure(
+          (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            offsetLeft: number,
+            offsetTop: number
+          ) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          }
+        )
+      }
     }
 
     const innerProps = useInnerProps(
@@ -105,7 +107,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
           tintColor: color
         },
         source: { uri },
-        ...(enableOffset ? { onLayout } : {})
+        ...(enableOffset || hasPercent ? { onLayout } : {})
       },
       [
         'enable-offset'

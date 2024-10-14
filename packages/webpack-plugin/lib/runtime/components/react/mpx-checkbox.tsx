@@ -158,18 +158,20 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         setContainerWidth(width || 0)
         setContainerHeight(height || 0)
       }
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
+      if (enableOffset) {
+        nodeRef.current?.measure(
+          (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            offsetLeft: number,
+            offsetTop: number
+          ) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          }
+        )
+      }
     }
 
     const labelContext = useContext(LabelContext)
@@ -190,7 +192,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         style: innerStyle,
         bindtap: onTap,
         catchtap: catchTap,
-        ...(enableOffset ? { onLayout } : {})
+        ...(enableOffset || hasPercent ? { onLayout } : {})
       },
       ['enable-offset'],
       {

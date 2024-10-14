@@ -77,18 +77,20 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
         setContainerWidth(width || 0)
         setContainerHeight(height || 0)
       }
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
+      if (enableOffset) {
+        nodeRef.current?.measure(
+          (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            offsetLeft: number,
+            offsetTop: number
+          ) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          }
+        )
+      }
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -102,7 +104,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
         ref: nodeRef,
         style: innerStyle,
         bindtap: onTap,
-        ...(enableOffset ? { onLayout } : {})
+        ...(enableOffset || hasPercent ? { onLayout } : {})
       },
       ['enable-offset'],
       {
