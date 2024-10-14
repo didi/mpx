@@ -24,14 +24,13 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
 import Animated, {
-  Easing,
   useSharedValue,
   useAnimatedStyle,
   withDecay,
-  withTiming,
   runOnJS,
   runOnUI,
-  useAnimatedReaction
+  useAnimatedReaction,
+  withSpring
 } from 'react-native-reanimated'
 
 interface MovableViewProps {
@@ -42,6 +41,7 @@ interface MovableViewProps {
   y?: number;
   disabled?: boolean;
   damping?: number;
+  animation?: boolean;
   bindchange?: (event: unknown) => void;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
@@ -77,11 +77,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     children,
     x = 0,
     y = 0,
-    inertia,
-    disabled,
+    inertia = false,
+    disabled = false,
     damping = 20,
+    animation = true,
     'out-of-bounds': outOfBounds,
-    direction,
+    direction = 'none',
     externalGesture = [],
     style = {},
     bindtouchstart,
@@ -147,19 +148,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
-        const duration = Math.floor(10000 / (damping || 20))
-        const finalDuration = duration < 50 ? 50 : duration
         if (direction === 'horizontal' || direction === 'all') {
-          offsetX.value = withTiming(newX, {
-            easing: Easing.linear,
-            duration: finalDuration
-          })
+          offsetX.value = animation
+            ? withSpring(newX, {
+              damping
+            })
+            : newX
         }
         if (direction === 'vertical' || direction === 'all') {
-          offsetY.value = withTiming(newY, {
-            easing: Easing.linear,
-            duration: finalDuration
-          })
+          offsetY.value = animation
+            ? withSpring(newY, {
+              damping
+            })
+            : newY
         }
         runOnJS(handleTriggerChange)({
           x: newX,
@@ -370,19 +371,33 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         isFirstTouch.value = true
         isMoving.value = false
-
         handleTriggerEnd(e)
+        if (!inertia) {
+          const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
+          if (x !== offsetX.value) {
+            offsetX.value = animation
+              ? withSpring(x, {
+                damping
+              })
+              : x
+          }
+          if (y !== offsetY.value) {
+            offsetY.value = animation
+              ? withSpring(y, {
+                damping
+              })
+              : y
+          }
+        }
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
-        if (disabled) return
+        if (!inertia || disabled || !animation) return
         isMoving.value = false
         if (direction === 'horizontal' || direction === 'all') {
-          if (inertia) {
-            xInertialMotion.value = true
-          }
+          xInertialMotion.value = true
           offsetX.value = withDecay({
-            velocity: inertia ? e.velocityX : 0,
+            velocity: e.velocityX,
             rubberBandEffect: outOfBounds,
             clamp: draggableXRange.value
           }, () => {
@@ -390,11 +405,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           })
         }
         if (direction === 'vertical' || direction === 'all') {
-          if (inertia) {
-            yInertialMotion.value = true
-          }
+          yInertialMotion.value = true
           offsetY.value = withDecay({
-            velocity: inertia ? e.velocityY : 0,
+            velocity: e.velocityY,
             rubberBandEffect: outOfBounds,
             clamp: draggableYRange.value
           }, () => {
