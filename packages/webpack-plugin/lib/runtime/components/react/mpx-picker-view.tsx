@@ -24,7 +24,7 @@ interface PickerViewProps {
   bindchange?: Function
   style: {
     [key: string]: any
-  } 
+  }
   'indicator-style'?: string
   'enable-var': boolean
   'external-var-context'?: Record<string, any>
@@ -168,14 +168,14 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
 
   const renderLine = () => {
     return <View style={[{
-      position: "absolute",
-      top: "50%",
-      transform: [{ "translateY": -(itemH/2) }],
+      position: 'absolute',
+      top: '50%',
+      transform: [{ translateY: -(itemH / 2) }],
       height: itemH,
       borderTopWidth: 1,
       borderBottomWidth: 1,
-      borderColor: "#f0f0f0",
-      width: "100%",
+      borderColor: '#f0f0f0',
+      width: '100%',
       zIndex: 101
     }]}></View>
   }

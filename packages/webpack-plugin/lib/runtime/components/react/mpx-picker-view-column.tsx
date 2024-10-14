@@ -46,7 +46,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   useEffect(() => {
     if (selectedIndex && itemH) {
-      let offsetY = selectedIndex * itemH
+      const offsetY = selectedIndex * itemH
       scrollViewRef.current?.scrollTo({ x: 0, y: offsetY, animated: true })
     }
   }, [selectedIndex, itemH])
