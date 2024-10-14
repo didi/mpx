@@ -1,5 +1,5 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { TextStyle, Dimensions } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
 
@@ -8,9 +8,15 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const VAR_DEC_REGEX = /^--.*/
-export const VAR_USE_REGEX = /var\(([^,]+)(?:,([^)]+))?\)/
-export const URL_REGEX = /url\(["']?(.*?)["']?\)/
+export const VAR_USE_REGEX = /^\s*var\(([^,]+)(?:,(.+))?\)\s*$/
+export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const DEFAULT_FONT_SIZE = 16
+
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
+}
 
 export function rpx (value: number) {
   const { width } = Dimensions.get('screen')
@@ -21,6 +27,7 @@ export function rpx (value: number) {
 
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
 
 export function formatValue (value: string) {
   let matched
@@ -28,6 +35,8 @@ export function formatValue (value: string) {
     return +matched[1]
   } else if ((matched = rpxRegExp.exec(value))) {
     return rpx(+matched[1])
+  } else if (hairlineRegExp.test(value)) {
+    return StyleSheet.hairlineWidth
   }
   return value
 }
@@ -79,9 +88,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
 
 export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
-
   const match = cssUrl.match(URL_REGEX)
-
   return match?.[1]
 }
 
@@ -113,17 +120,25 @@ export function every (children: ReactNode, callback: (children: ReactNode) => b
   return childrenArray.every((child) => callback(child))
 }
 
-type GroupData = Record<string, Record<string, any>>
-export function groupBy (obj: Record<string, any>, callback: (key: string, val: any) => string, group: GroupData = {}): GroupData {
+type GroupData<T> = Record<string, Partial<T>>
+export function groupBy<T extends Record<string, any>> (
+  obj: T,
+  callback: (key: string, val: T[keyof T]) => string,
+  group: GroupData<T> = {}
+): GroupData<T> {
   Object.entries(obj).forEach(([key, val]) => {
     const groupKey = callback(key, val)
     group[groupKey] = group[groupKey] || {}
-    group[groupKey][key] = val
+    group[groupKey][key as keyof T] = val
   })
   return group
 }
 
-export function splitStyle (styleObj: Object) {
+export function splitStyle<T extends Record<string, any>> (styleObj: T): {
+  textStyle?: Partial<T>;
+  backgroundStyle?: Partial<T>;
+  innerStyle?: Partial<T>;
+} {
   return groupBy(styleObj, (key) => {
     if (TEXT_STYLE_REGEX.test(key)) {
       return 'textStyle'
@@ -132,7 +147,11 @@ export function splitStyle (styleObj: Object) {
     } else {
       return 'innerStyle'
     }
-  })
+  }) as {
+    textStyle: Partial<T>;
+    backgroundStyle: Partial<T>;
+    innerStyle: Partial<T>;
+  }
 }
 
 const percentRule: Record<string, string> = {
@@ -182,7 +201,12 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
 function transformLineHeight (styleObj: Record<string, any>) {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_FONT_SIZE)
+    const hasFontSize = hasOwn(styleObj, 'fontSize')
+    if (!hasFontSize) {
+      throwReactWarning('[Mpx runtime warn]: The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
+    }
+    const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
+    lineHeight = (parseFloat(lineHeight) / 100) * fontSize
     styleObj.lineHeight = lineHeight
   }
 }
@@ -194,7 +218,7 @@ interface TransformStyleConfig {
   enableLineHeight?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
@@ -333,18 +357,18 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
   })
 }
 
-export function splitProps<T extends Record<string, any>> (props: T) {
+export function splitProps<T extends Record<string, any>> (props: T): {
+  textProps?: Partial<T>;
+  innerProps?: Partial<T>;
+} {
   return groupBy(props, (key) => {
     if (TEXT_PROPS_REGEX.test(key)) {
       return 'textProps'
     } else {
       return 'innerProps'
     }
-  })
-}
-
-export const throwReactWarning = (message: string) => {
-  setTimeout(() => {
-    console.warn(message)
-  }, 0)
+  }) as {
+    textProps: Partial<T>;
+    innerProps: Partial<T>;
+  }
 }

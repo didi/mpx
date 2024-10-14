@@ -1,15 +1,17 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import { PickerView } from '@ant-design/react-native'
+import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradient'
+import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import { VarContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { parseInlineStyle, useTransformStyle } from './utils'
 /**
  * ✔ value
  * ✔ bindchange
  * ✘ bindpickstart
  * ✘ bindpickend
  * ✘ mask-class
- * ✘ indicator-style
+ * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
  * ✘ indicator-class
  * ✘ mask-style
  * ✘ immediate-change
@@ -20,81 +22,182 @@ interface PickerViewProps {
   // 初始的defaultValue数组中的数字依次表示 picker-view 内的 picker-view-column 选择的第几项（下标从 0 开始），数字大于 picker-view-column 可选项长度时，选择最后一项。
   value?: Array<number>
   bindchange?: Function
+  style: {
+    [key: string]: any
+  }
+  'indicator-style'?: string
+  'enable-var': boolean
+  'external-var-context'?: Record<string, any>
 }
 
+interface PickerLayout {
+  height: number,
+  itemHeight: number
+}
+
+interface PosType {
+  height?: number,
+  top?: number
+}
+
+const styles: { [key: string]: Object } = {
+  wrapper: {
+    display: 'flex',
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    alignItems: 'center'
+  },
+  maskTop: {
+    position: 'absolute',
+    width: 1000,
+    zIndex: 100
+  },
+  maskBottom: {
+    position: 'absolute',
+    width: 1000,
+    zIndex: 100
+  }
+}
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
-  const { children, ...restProps } = props
-  const layoutRef = useRef({})
-  const { nodeRef } = useNodesRef(props, ref, {})
-  const [value, setValue] = useState(props.value)
-  useEffect(() => {
-    // 确认这个是变化的props变化的时候才执行，还是初始化的时候就执行
-    setValue(props.value)
-  }, [props.value])
+  const { children, value = [], bindchange, style, 'enable-var': enableVar, 'external-var-context': externalVarContext } = props
+  // indicatorStyle 需要转换为rn的style
+  // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
+  const indicatorStyle = parseInlineStyle(props['indicator-style'])
+  const { height: indicatorH, width: indicatorW } = indicatorStyle
+  // const { normalStyle: lineStyle} = useTransformStyle(indicatorStyle, { enableVar, externalVarContext})
+  //  picker-view 设置的color等textStyle,在小程序上的表现是可以继承到最内层的text样式, 但是RN内部column是slot无法设置, 需要业务自己在column内的元素上设置
+  const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(style, { enableVar, externalVarContext })
+  const isSetW = indicatorW !== undefined ? 1 : 0
+  const innerLayout = useRef({})
+  const cloneRef = useRef(null)
+  const wrapRef = useRef(null)
+  const maskPos: PosType = {}
+  let [pickH, setPickH] = useState(0)
+  const itemH = pickH / 5
+  if (style?.height && pickH && pickH !== style?.height) {
+    maskPos.height = itemH * 2 + Math.ceil((style.height - pickH) / 2)
+  } else {
+    maskPos.height = itemH * 2
+  }
 
-  const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+  const { nodeRef } = useNodesRef<View, PickerViewProps>(props, ref, {})
+
+  // value 如何关联picker-view-column这几个slot的内容呢
+
+  const onColumnLayoutChange = (layoutConfig: PickerLayout) => {
+    pickH = layoutConfig.height
+    setPickH(layoutConfig.height)
+  }
+
+  const onSelectChange = (columnIndex: number, selIndex: number) => {
+    const changeValue = value.slice()
+    changeValue[columnIndex] = selIndex
+    const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: innerLayout })
+    bindchange && bindchange(eventData)
+  }
+  /*
+  const onWrapperLayout = () => {
+    wrapRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      const a = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
-  const innerProps = useInnerProps(props, {}, [], { layoutRef })
-
-  const onChange = (val: Array<number>): void => {
-    const eventData = getCustomEvent('change', {}, { detail: { value: val, source: 'touch' }, layoutRef: layoutRef })
-    setValue(val)
-    props.bindchange && props.bindchange(eventData)
+  */
+  const getInnerLayout = (layout: MutableRefObject<{}>) => {
+    innerLayout.current = layout.current
   }
 
-  const joinString = (data: string | any[] | React.ReactElement): string => {
-    return (Array.isArray(data) ? data : [data]).join('')
-  }
+  const innerProps = useInnerProps(props, { ref: nodeRef }, [], { layoutRef: innerLayout })
 
-  const getLabelFromChildren = (child: React.ReactElement): string => {
-    return child.props && child.props.children ? getLabelFromChildren(child.props.children) : joinString(child)
-  }
-
-  const handleChildren = (children: React.ReactNode[]): any[] => {
-    return children.map((child: any, index: number) => {
-      return {
-        label: getLabelFromChildren(child),
-        value: index
-      }
-    })
-  }
-
-  const getDataFromChildren = (children: React.ReactNode): any[] => {
-    return (Array.isArray(children) ? children : [children]).map((child: any) => {
-      return handleChildren(child.props && child.props.children ? child.props.children : [child])
-    })
-  }
-
-  const columns = Array.isArray(children) ? children.length : 1
-  const originData = getDataFromChildren(children)
-  // 子节点默认的序号，这里是更新默认值的
-  const subChildLength = originData.map((item) => {
-    return item.length
-  })
-  const defaultValue = (props.value || []).map((item, index) => {
-    if (item > subChildLength[index]) {
-      return subChildLength[index] - 1
-    } else {
-      return item
+  const cloneChild = (child: React.ReactNode, index: number) => {
+    const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}
+    const childProps = {
+      ...(child as ReactElement)?.props,
+      ref: cloneRef,
+      prefix: index,
+      key: 'pick-view' + index,
+      wrapperStyle: {
+        height: style?.height || 0,
+        itemHeight: indicatorH || 0
+      },
+      onColumnLayoutChange,
+      onSelectChange: onSelectChange.bind(null, index),
+      selectedIndex: value?.[index] || 0,
+      ...extraProps
     }
-  })
+    const realElement = React.cloneElement(child as ReactElement, childProps)
+    if (hasVarDec && varContextRef.current) {
+      const wrapChild = <VarContext.Provider value={varContextRef.current}>{realElement}</VarContext.Provider>
+      return wrapChild
+    } else {
+      return realElement
+    }
+    // return React.cloneElement(child as ReactElement, childProps)
+  }
 
-  return (
-    <PickerView
-    {...restProps}
-    cols={columns}
-    // 默认选中项
-    defaultValue={defaultValue}
-    // 内部维护选中项
-    value={value}
-    // data数据源column
-    data={originData}
-    onChange={onChange}
-    cascade={false}/>
-  )
+  const renderTopMask = () => {
+    const linearProps: LinearGradientProps = {
+      colors: ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.2)'],
+      style: [
+        styles.maskTop,
+        {
+          height: maskPos.height,
+          top: 0,
+          pointerEvents: 'none'
+        }
+      ]
+    }
+    return (<LinearGradient {...linearProps}/>)
+  }
+
+  const renderBottomMask = () => {
+    const linearProps: LinearGradientProps = {
+      colors: ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.8)'],
+      style: [
+        styles.maskBottom,
+        {
+          height: maskPos.height,
+          bottom: 0,
+          pointerEvents: 'none'
+        }
+      ]
+    }
+    return <LinearGradient {...linearProps}></LinearGradient>
+  }
+
+  const renderLine = () => {
+    return <View style={[{
+      position: 'absolute',
+      top: '50%',
+      transform: [{ translateY: -(itemH / 2) }],
+      height: itemH,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: '#f0f0f0',
+      width: '100%',
+      zIndex: 101
+    }]}></View>
+  }
+
+  const renderSubChild = () => {
+    if (Array.isArray(children)) {
+      return children.map((item, index) => {
+        return cloneChild(item, index)
+      })
+    } else {
+      return cloneChild(children, 0)
+    }
+  }
+
+  return (<View style={[normalStyle, { position: 'relative', overflow: 'hidden' }]} ref={wrapRef}>
+    {renderTopMask()}
+    <View style={[styles.wrapper]}>
+      {renderSubChild()}
+    </View>
+    {renderBottomMask()}
+    {!isSetW && renderLine()}
+  </View>)
 })
 
 _PickerView.displayName = 'mpx-picker-view'

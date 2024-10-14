@@ -8,7 +8,7 @@ import { Text, TextStyle, TextProps } from 'react-native'
 import { useRef, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { DEFAULT_FONT_SIZE, useTransformStyle } from './utils'
+import { useTransformStyle } from './utils'
 import { wrapChildren } from './common'
 
 interface _TextProps extends TextProps {
@@ -28,31 +28,18 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
-    'user-select': userSelect,
-    'disable-default-style': disableDefaultStyle = false
+    'user-select': userSelect
   } = props
 
   const layoutRef = useRef({})
 
-  const defaultStyle: TextStyle = {}
-
-  if (!disableDefaultStyle) {
-    defaultStyle.fontSize = DEFAULT_FONT_SIZE
-  }
-
-  const styleObj: TextStyle = {
-    ...defaultStyle,
-    ...style
-  }
   const {
     normalStyle,
     hasVarDec,
     varContextRef
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, enablePercent: false })
+  } = useTransformStyle(style, { enableVar, externalVarContext, enablePercent: false })
 
-  const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
-    defaultStyle
-  })
+  const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef
