@@ -92,7 +92,7 @@ module.exports = function getSpec ({ warn, error }) {
       const newVal = (value.match(cssVariableExp)?.[1] || '').split(',')
       const variable = newVal?.[0]
       if (!variable || !/^--/.test(variable)) {
-        tips(`The css variable [${prop}:${value}] is invalid in ${selector}`)
+        tips(`The css variable [${prop}:${value}] is invalid, please check again!`)
         return false
       }
       return true
@@ -109,7 +109,7 @@ module.exports = function getSpec ({ warn, error }) {
         [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
         [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
       }
-      tips(`Value of ${prop} in ${selector} selector should be ${type}, eg ${info[type]}, received [${value}], please check!`)
+      tips(`Value of ${prop} in ${selector} should be ${type}, eg ${info[type]}, received [${value}], please check again!`)
     }
     switch (type) {
       case ValueType.number: {
@@ -178,7 +178,7 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length) {
       const prop = props[propsIdx]
       if (!prop) {
-        error(`Value of [${original}] in ${selector} has not enough props to assign, please check!`)
+        error(`Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
         break
       }
       const value = values[idx]
@@ -299,7 +299,7 @@ module.exports = function getSpec ({ warn, error }) {
         // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
         // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
         if (value.includes(',')) { // commas are not allowed in values
-          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check!`)
+          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
           return false
         }
         const values = []
@@ -319,7 +319,7 @@ module.exports = function getSpec ({ warn, error }) {
             // 支持 number 值 /  枚举, center与50%等价
             values.push(item === 'center' ? '50%' : item)
           } else {
-            error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check!`)
+            error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
           }
         })
 
@@ -332,7 +332,7 @@ module.exports = function getSpec ({ warn, error }) {
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
           if (/.*linear-gradient*./.test(item)) {
-            error(`Value of [${bgPropMap.size}] in ${selector} selector is not supported <linear-gradient()> in React Native ${mode} environment!`)
+            error(`Value of [${bgPropMap.size}] in ${selector} selector is not supported <linear-gradient()> in React Native, please check again!`)
           } else if (url) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, false)) {
@@ -424,7 +424,7 @@ module.exports = function getSpec ({ warn, error }) {
             break
         }
       } else {
-        error(`Property [${prop}] is invalid in ${selector}, received [${value}], please check!`)
+        error(`Property [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       }
     })
     return {
@@ -441,7 +441,7 @@ module.exports = function getSpec ({ warn, error }) {
     if (isNumber(value) && value >= 0) {
       return { prop, value }
     } else {
-      error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check!`)
+      error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
       return false
     }
   }
@@ -449,7 +449,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatFlex = ({ prop, value, selector }) => {
     let values = value.trim().split(/\s(?![^()]*\))/)
     if (values.length > 3) {
-      error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check!`)
+      error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
@@ -509,7 +509,7 @@ module.exports = function getSpec ({ warn, error }) {
     const newVal = value.replace(/"|'/g, '').trim()
     const values = newVal.split(',').filter(i => i)
     if (!newVal || !values.length) {
-      error(`Value of [${prop}] is invalid in ${selector}, received [${value}].`)
+      error(`Value of [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       return false
     } else if (values.length > 1) {
       warn(`Value of [${prop}] only supports one in ${selector}, received [${value}], and the first one is used by default.`)
