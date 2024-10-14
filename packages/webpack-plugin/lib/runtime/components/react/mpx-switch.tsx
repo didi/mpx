@@ -4,7 +4,7 @@
  * ✔ disabled
  * ✔ color
  */
-import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
+import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -12,7 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
 
-import { throwReactWarning } from './utils'
+import { throwReactWarning, useTransformStyle } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -52,6 +52,17 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     formValuesMap = formContext.formValuesMap
   }
 
+  const {
+    normalStyle,
+    hasPercent,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, {
+    enableVar: false,
+    enablePercent: true,
+    enableLineHeight: false
+  })
+
   useEffect(() => {
     setIsChecked(checked)
   }, [checked])
@@ -84,7 +95,12 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }
 
-  const onLayout = () => {
+  const onLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
@@ -107,14 +123,14 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     return <CheckBox
       {...innerProps}
       color={color}
-      style={style}
+      style={normalStyle}
       checked={isChecked}
     />
   }
 
   return (<Switch
     {...innerProps}
-    style={style}
+    style={normalStyle}
     value={isChecked}
     trackColor={{ false: '#FFF', true: color }}
     thumbColor={isChecked ? '#FFF' : '#f4f3f4'}

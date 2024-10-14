@@ -9,7 +9,7 @@ import { useRef, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle } from './utils'
-import { VarContext } from './context'
+import { wrapChildren } from './common'
 
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -20,19 +20,6 @@ interface _TextProps extends TextProps {
   'user-select'?: boolean
   userSelect?: boolean
   'disable-default-style'?: boolean
-}
-
-interface WrapChildrenConfig {
-  hasVarDec: boolean
-  varContext?: Record<string, any>
-}
-
-function wrapChildren (props: TextProps, { hasVarDec, varContext }: WrapChildrenConfig) {
-  let { children } = props
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider value={varContext}>{children}</VarContext.Provider>
-  }
-  return children
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
