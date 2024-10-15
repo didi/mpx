@@ -128,30 +128,23 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     layoutRef
   })
   
-  let component = null
   if (type === 'checkbox') {
-    component = <CheckBox
+    return <CheckBox
       {...innerProps}
       color={color}
       style={normalStyle}
       checked={isChecked}
     />
-  } else {
-    component = <Switch
-      {...innerProps}
-      style={normalStyle}
-      value={isChecked}
-      trackColor={{ false: '#FFF', true: color }}
-      thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
-      ios_backgroundColor="#FFF"
-    />
   }
 
-  if (hasVarDec && varContextRef.current) {
-    return <VarContext.Provider value={varContextRef.current}>{ component }</VarContext.Provider>
-  }
-
-  return component
+  return <Switch
+    {...innerProps}
+    style={normalStyle}
+    value={isChecked}
+    trackColor={{ false: '#FFF', true: color }}
+    thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
+    ios_backgroundColor="#FFF"
+  />
 })
 
 _Switch.displayName = 'mpx-switch'
