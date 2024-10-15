@@ -40,9 +40,12 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   } = props
 
   const {
+    hasPercent,
     normalStyle,
     hasVarDec,
-    varContextRef
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
@@ -50,6 +53,11 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const { nodeRef: formRef } = useNodesRef(props, ref)
 
   const onLayout = (e: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = e?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     if (enableOffset) {
       formRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -78,6 +86,8 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     ))
   }
 
+  const needLayout = enableOffset || hasPercent
+
   const reset = () => {
     const { bindreset } = props
     bindreset && bindreset()
@@ -87,7 +97,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const innerProps = useInnerProps(props, {
     style: innerStyle,
     ref: formRef,
-    onLayout
+    ...needLayout ? { onLayout } : null
   }, [
     'children',
     'style',

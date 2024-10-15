@@ -33,9 +33,12 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   }, [width, height])
 
   const {
+    hasPercent,
     normalStyle,
     hasVarDec,
-    varContextRef
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
 
   const { nodeRef: movableViewRef } = useNodesRef(props, ref)
@@ -44,6 +47,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     const { width = 10, height = 10 } = e.nativeEvent.layout
     setAreaWidth(width)
     setAreaHeight(height)
+    if (hasPercent) {
+      setContainerWidth(width)
+      setContainerHeight(height)
+    }
     if (enableOffset) {
       movableViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
