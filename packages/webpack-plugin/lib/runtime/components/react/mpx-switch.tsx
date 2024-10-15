@@ -11,6 +11,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
+import { VarContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/context'
 
 import { throwReactWarning, useTransformStyle } from './utils'
 
@@ -22,6 +23,8 @@ interface _SwitchProps extends SwitchProps {
   disabled: boolean
   color: string
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -34,6 +37,8 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     disabled = false,
     color = '#04BE02',
     'enable-offset': enableOffset,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     bindchange,
     catchchange
   } = props
@@ -55,11 +60,13 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   const {
     normalStyle,
     hasPercent,
+    hasVarDec,
+    varContextRef,
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(style, {
-    enableVar: false,
-    enablePercent: true,
+    enableVar,
+    externalVarContext,
     enableLineHeight: false
   })
 
@@ -105,9 +112,11 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
     })
   }
+  const needLayout = enableOffset || hasPercent
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...enableOffset ? { onLayout } : {},
+    ...needLayout ? { onLayout } : {},
     ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
   }, [
     'style',
@@ -118,24 +127,31 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   ], {
     layoutRef
   })
-
+  
+  let component = null
   if (type === 'checkbox') {
-    return <CheckBox
+    component = <CheckBox
       {...innerProps}
       color={color}
       style={normalStyle}
       checked={isChecked}
     />
+  } else {
+    component = <Switch
+      {...innerProps}
+      style={normalStyle}
+      value={isChecked}
+      trackColor={{ false: '#FFF', true: color }}
+      thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
+      ios_backgroundColor="#FFF"
+    />
   }
 
-  return (<Switch
-    {...innerProps}
-    style={normalStyle}
-    value={isChecked}
-    trackColor={{ false: '#FFF', true: color }}
-    thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
-    ios_backgroundColor="#FFF"
-  />)
+  if (hasVarDec && varContextRef.current) {
+    return <VarContext.Provider value={varContextRef.current}>{ component }</VarContext.Provider>
+  }
+
+  return component
 })
 
 _Switch.displayName = 'mpx-switch'

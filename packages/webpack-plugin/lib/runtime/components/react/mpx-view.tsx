@@ -393,11 +393,10 @@ interface WrapChildrenConfig {
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
+  textProps?: Record<string, any>
 }
 
-function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
-  const { textProps } = splitProps(props)
-
+function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {  
   let children = wrapChildren(props, {
     hasVarDec,
     varContext
@@ -412,7 +411,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   ]
 }
 
-const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
+const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
     'hover-style': hoverStyle,
@@ -552,7 +552,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
             enableBackground: enableBackgroundRef.current,
             textStyle,
             backgroundStyle,
-            varContext: varContextRef.current
+            varContext: varContextRef.current,
+            textProps
           }
         )
       }
