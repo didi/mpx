@@ -4,9 +4,10 @@
  * ✔ color
  */
 import { JSX, useRef, forwardRef } from 'react'
-import { Text, TextStyle, Image } from 'react-native'
+import { Text, TextStyle, Image, LayoutChangeEvent } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { useTransformStyle } from './utils'
 
 export type IconType =
   | 'success'
@@ -25,6 +26,8 @@ export interface IconProps {
   color?: string
   style?: TextStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
 }
 
 const IconTypeMap = new Map<IconType, string>([
@@ -46,12 +49,26 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       size = 23,
       color,
       style = {},
-      'enable-offset': enableOffset
+      'enable-offset': enableOffset,
+      'enable-var': enableVar,
+      'external-var-context': externalVarContext
     } = props
 
     const uri = IconTypeMap.get(type)
 
     const defaultStyle = { width: ~~size, height: ~~size }
+
+    const styleObj = {
+      ...defaultStyle,
+      ...style
+    }
+
+    const {
+      normalStyle,
+      hasPercent,
+      setContainerWidth,
+      setContainerHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
     const layoutRef = useRef({})
 
@@ -59,19 +76,26 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       defaultStyle
     })
 
-    const onLayout = () => {
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
+    const onLayout = (res: LayoutChangeEvent) => {
+      if (hasPercent) {
+        const { width, height } = res?.nativeEvent?.layout || {}
+        setContainerWidth(width || 0)
+        setContainerHeight(height || 0)
+      }
+      if (enableOffset) {
+        nodeRef.current?.measure(
+          (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            offsetLeft: number,
+            offsetTop: number
+          ) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          }
+        )
+      }
     }
 
     const innerProps = useInnerProps(
@@ -79,12 +103,11 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       {
         ref: nodeRef,
         style: {
-          ...defaultStyle,
-          tintColor: color,
-          ...style
+          ...normalStyle,
+          tintColor: color
         },
         source: { uri },
-        ...(enableOffset ? { onLayout } : {})
+        ...(enableOffset || hasPercent ? { onLayout } : {})
       },
       [
         'enable-offset'

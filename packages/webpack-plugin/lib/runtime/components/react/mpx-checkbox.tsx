@@ -18,17 +18,17 @@ import {
 
 import {
   View,
-  Text,
   StyleSheet,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle
+  LayoutChangeEvent
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { every, splitStyle, isText, splitProps, throwReactWarning } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
+import { wrapChildren } from './common'
 
 interface Selection {
   value?: string
@@ -41,6 +41,8 @@ export interface CheckboxProps extends Selection {
   style?: ViewStyle & Record<string, any>
   groupValue?: Array<string>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -74,7 +76,9 @@ const styles = StyleSheet.create({
 })
 
 const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
-  (props, ref): JSX.Element => {
+  (checkboxProps, ref): JSX.Element => {
+    const { textProps, innerProps: props = {} } = splitProps(checkboxProps)
+
     const {
       value = '',
       disabled = false,
@@ -82,7 +86,8 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       color = '#09BB07',
       style = {},
       'enable-offset': enableOffset,
-      children,
+      'enable-var': enableVar,
+      'external-var-context': externalVarContext,
       bindtap,
       catchtap
     } = props
@@ -90,12 +95,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const layoutRef = useRef({})
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
-
-    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
-
-    if (imageStyle) {
-      throwReactWarning('[Mpx runtime warn]: Checkbox does not support background image-related styles!')
-    }
 
     const groupContext = useContext(CheckboxGroupContext)
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
@@ -106,9 +105,24 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       ...(disabled && styles.wrapperDisabled)
     }
 
-    const viewStyle = {
-      ...defaultStyle,
-      ...innerStyle
+    const styleObj = {
+      ...styles.container,
+      ...style
+    }
+
+    const {
+      normalStyle,
+      hasPercent,
+      hasVarDec,
+      varContextRef,
+      setContainerWidth,
+      setContainerHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+    if (backgroundStyle) {
+      throwReactWarning('[Mpx runtime warn]: Checkbox does not support background image-related styles!')
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -138,41 +152,26 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       change: onChange
     })
 
-    const onLayout = () => {
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
-    }
-
-    const wrapChildren = (
-      children: ReactNode,
-      textStyle?: TextStyle
-    ) => {
-      if (!children) return children
-      const { textProps } = splitProps(props)
-
-      if (every(children, (child) => isText(child))) {
-        if (textStyle || textProps) {
-          children = <Text key='checkboxTextWrap' style={textStyle || {}} {...(textProps || {})}>{children}</Text>
-        }
-      } else {
-        if (textStyle) {
-          throwReactWarning(
-            '[Mpx runtime warn]: Text style will be ignored unless every child of the Checkbox is Text node!'
-          )
-        }
+    const onLayout = (res: LayoutChangeEvent) => {
+      if (hasPercent) {
+        const { width, height } = res?.nativeEvent?.layout || {}
+        setContainerWidth(width || 0)
+        setContainerHeight(height || 0)
       }
-
-      return children
+      if (enableOffset) {
+        nodeRef.current?.measure(
+          (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            offsetLeft: number,
+            offsetTop: number
+          ) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          }
+        )
+      }
     }
 
     const labelContext = useContext(LabelContext)
@@ -190,10 +189,10 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       props,
       {
         ref: nodeRef,
-        style: styles.container,
+        style: innerStyle,
         bindtap: onTap,
         catchtap: catchTap,
-        ...(enableOffset ? { onLayout } : {})
+        ...(enableOffset || hasPercent ? { onLayout } : {})
       },
       ['enable-offset'],
       {
@@ -226,7 +225,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     return (
       <View {...innerProps}>
-        <View style={viewStyle}>
+        <View style={defaultStyle}>
           <Icon
             type='success_no_circle'
             size={18}
@@ -234,7 +233,19 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             style={isChecked ? styles.iconChecked : styles.icon}
           />
         </View>
-        {wrapChildren(children, textStyle)}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec,
+              varContext: varContextRef.current
+            },
+            {
+              textStyle,
+              textProps
+            }
+          )
+        }
       </View>
     )
   }

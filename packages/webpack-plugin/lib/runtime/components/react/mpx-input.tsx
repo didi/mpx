@@ -52,9 +52,10 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData
+  TextInputSubmitEditingEventData,
+  LayoutChangeEvent
 } from 'react-native'
-import { parseInlineStyle, useUpdateEffect, throwReactWarning } from './utils'
+import { parseInlineStyle, useUpdateEffect, throwReactWarning, useTransformStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue } from './context'
@@ -72,6 +73,7 @@ type InputStyle = Omit<
 >
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
+
 export interface InputProps {
   name?: string
   style?: InputStyle & Record<string, any>
@@ -91,6 +93,8 @@ export interface InputProps {
   'selection-end'?: number
   'placeholder-style'?: string
   'enable-offset'?: boolean,
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -135,6 +139,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
     'enable-offset': enableOffset,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     bindinput,
     bindfocus,
     bindblur,
@@ -168,6 +174,21 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
+
+  const styleObj = {
+    padding: 0,
+    ...style,
+    ...multiline && autoHeight && {
+      height: Math.max((style as any)?.minHeight || 35, contentHeight)
+    }
+  }
+
+  const {
+    normalStyle,
+    hasPercent,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   useEffect(() => {
     if (inputValue !== value) {
@@ -332,10 +353,17 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       )
   }
 
-  const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
+  const onLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
+    if (enableOffset) {
+      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    }
   }
 
   const resetValue = () => {
@@ -365,7 +393,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...(enableOffset ? { onLayout } : {})
+    style: normalStyle,
+    ...(enableOffset || hasPercent ? { onLayout } : {})
   },
   [
     'enable-offset'
