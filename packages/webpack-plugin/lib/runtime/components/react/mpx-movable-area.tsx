@@ -7,7 +7,7 @@ import { JSX, useState, useEffect, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
-import { splitProps, splitStyle, useTransformStyle } from './utils'
+import { useTransformStyle } from './utils'
 import { wrapChildren } from './common'
 
 interface MovableAreaProps {
@@ -20,9 +20,7 @@ interface MovableAreaProps {
   'external-var-context'?: Record<string, any>
 }
 
-const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((movableAreaProps: MovableAreaProps, ref): JSX.Element => {
-  const { textProps, innerProps: props = {} } = splitProps(movableAreaProps)
-
+const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
   const { style = {}, width = 10, height = 10, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'enable-offset': enableOffset } = props
   const [areaWidth, setAreaWidth] = useState(0)
   const [areaHeight, setAreaHeight] = useState(0)
@@ -35,12 +33,13 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   }, [width, height])
 
   const {
+    hasPercent,
     normalStyle,
     hasVarDec,
-    varContextRef
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
-
-  const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const { nodeRef: movableViewRef } = useNodesRef(props, ref)
 
@@ -48,6 +47,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     const { width = 10, height = 10 } = e.nativeEvent.layout
     setAreaWidth(width)
     setAreaHeight(height)
+    if (hasPercent) {
+      setContainerWidth(width)
+      setContainerHeight(height)
+    }
     if (enableOffset) {
       movableViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -70,19 +73,15 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
           height: areaHeight,
           width: areaWidth,
           overflow: 'hidden',
-          ...innerStyle
+          ...normalStyle
         }}
       >
-         {
+      {
         wrapChildren(
           props,
           {
             hasVarDec,
             varContext: varContextRef.current
-          },
-          {
-            textStyle,
-            textProps
           }
         )
       }

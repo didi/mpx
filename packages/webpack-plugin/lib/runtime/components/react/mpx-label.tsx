@@ -4,42 +4,61 @@
 import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import {
   View,
-  Text,
   ViewStyle,
   NativeSyntheticEvent,
-  TextStyle
+  LayoutChangeEvent
 } from 'react-native'
 import { noop } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { every, splitStyle, splitProps, isText, throwReactWarning } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
 import { LabelContext, LabelContextValue } from './context'
+import { wrapChildren } from './common'
 
 export interface LabelProps {
   for?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
-  (props, ref): JSX.Element => {
+  (labelProps, ref): JSX.Element => {
+    const { textProps, innerProps: props = {} } = splitProps(labelProps)
+
     const {
       style = {},
       'enable-offset': enableOffset,
-      children,
+      'enable-var': enableVar,
+      'external-var-context': externalVarContext,
       bindtap
     } = props
 
-    const { textStyle, imageStyle, innerStyle } = splitStyle(style)
-
-    if (imageStyle) {
-      throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
-    }
-
     const defaultStyle = {
       flexDirection: 'row'
+    }
+
+    const styleObj = {
+      ...defaultStyle,
+      ...style
+    }
+
+    const {
+      normalStyle,
+      hasPercent,
+      hasVarDec,
+      varContextRef,
+      setContainerWidth,
+      setContainerHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+
+    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+    if (backgroundStyle) {
+      throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
     }
 
     const contextRef: LabelContextValue = useRef({
@@ -52,19 +71,26 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       defaultStyle
     })
 
-    const onLayout = () => {
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
+    const onLayout = (res: LayoutChangeEvent) => {
+      if (hasPercent) {
+        const { width, height } = res?.nativeEvent?.layout || {}
+        setContainerWidth(width || 0)
+        setContainerHeight(height || 0)
+      }
+      if (enableOffset) {
+        nodeRef.current?.measure(
+          (
+            x: number,
+            y: number,
+            width: number,
+            height: number,
+            offsetLeft: number,
+            offsetTop: number
+          ) => {
+            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          }
+        )
+      }
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -72,30 +98,13 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       contextRef.current.triggerChange?.(evt)
     }
 
-    const wrapChildren = (
-      children: ReactNode,
-      textStyle?: TextStyle
-    ) => {
-      const { textProps } = splitProps(props)
-
-      if (every(children, (child) => isText(child))) {
-        if (textStyle || textProps) {
-          children = <Text key='labelTextWrap' style={textStyle || {}} {...(textProps || {})}>{children}</Text>
-        }
-      } else {
-        if (textStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Label is Text node!')
-      }
-
-      return children
-    }
-
     const innerProps = useInnerProps(
       props,
       {
         ref: nodeRef,
-        style: { ...defaultStyle, ...innerStyle },
+        style: innerStyle,
         bindtap: onTap,
-        ...(enableOffset ? { onLayout } : {})
+        ...(enableOffset || hasPercent ? { onLayout } : {})
       },
       ['enable-offset'],
       {
@@ -105,7 +114,19 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     return <View {...innerProps}>
       <LabelContext.Provider value={contextRef}>
-        {wrapChildren(children, textStyle)}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec,
+              varContext: varContextRef.current
+            },
+            {
+              textStyle,
+              textProps
+            }
+          )
+        }
       </LabelContext.Provider>
     </View>
   }

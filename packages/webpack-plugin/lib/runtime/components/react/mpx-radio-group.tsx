@@ -16,24 +16,28 @@ import {
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { throwReactWarning, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
-export interface radioGroupProps {
+export interface RadioGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const radioGroup = forwardRef<
-  HandlerRef<View, radioGroupProps>,
-  radioGroupProps
+  HandlerRef<View, RadioGroupProps>,
+  RadioGroupProps
 >((props, ref): JSX.Element => {
   const {
     style = {},
     'enable-offset': enableOffset,
-    children,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     bindchange
   } = props
 
@@ -51,9 +55,15 @@ const radioGroup = forwardRef<
 
   const defaultStyle = {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
+  }
+
+  const styleObj = {
+    ...defaultStyle,
     ...style
   }
+
+  const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
@@ -124,7 +134,7 @@ const radioGroup = forwardRef<
     props,
     {
       ref: nodeRef,
-      style: defaultStyle,
+      style: normalStyle,
       ...(enableOffset ? { onLayout } : {})
     },
     ['enable-offset'],
@@ -136,7 +146,15 @@ const radioGroup = forwardRef<
   return (
     <View {...innerProps}>
       <RadioGroupContext.Provider value={{ groupValue, notifyChange }}>
-        {children}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec,
+              varContext: varContextRef.current
+            }
+          )
+        }
       </RadioGroupContext.Provider>
     </View>
   )

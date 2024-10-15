@@ -397,7 +397,7 @@ interface WrapChildrenConfig {
 }
 
 function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {  
-  let children = wrapChildren(props, {
+  const children = wrapChildren(props, {
     hasVarDec,
     varContext
   }, {
