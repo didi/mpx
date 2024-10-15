@@ -1,59 +1,33 @@
-import { BEFORECREATE, CREATED } from '../../core/innerLifecycle'
+import { BEFORECREATE } from '../../core/innerLifecycle'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
-import { computed } from '../../observer/computed'
 
 export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
       this.__refs = {}
       this.$refs = {}
-    },
-    // __getRefs强依赖数据响应，需要在CREATED中执行
-    [CREATED] () {
+      this.__selectorMap = {}
       this.__getRefs()
     },
     methods: {
       __getRefs () {
         const refs = this.__getRefsData() || []
         const target = this
-        this.__selectorMap = computed(() => {
-          const selectorMap = {}
-          refs.forEach(({ key, type, sKeys }) => {
-            // sKeys 是使用 wx:ref 没有值的标记场景，支持运行时的 createSelectorQuery 的使用
-            if (sKeys) {
-              sKeys.forEach((item = {}) => {
-                const computedKey = item.key
-                const prefix = item.prefix
-                const selectors = this[computedKey] || ''
-                selectors.trim().split(/\s+/).forEach(item => {
-                  const selector = prefix + item
-                  selectorMap[selector] = selectorMap[selector] || []
-                  selectorMap[selector].push({ type, key })
-                })
-              })
-            } else {
-              selectorMap[key] = selectorMap[key] || []
-              selectorMap[key].push({ type, key })
+        refs.forEach(({ key, type, all }) => {
+          this.__selectorMap[key] = this.__selectorMap[key] || []
+          this.__selectorMap[key].push({ key, type })
+          Object.defineProperty(this.$refs, key, {
+            enumerable: true,
+            configurable: true,
+            get () {
+              const refs = target.__refs[key] || []
+              if (type === 'component') {
+                return all ? refs : refs[0]
+              } else {
+                return createSelectorQuery().in(target).select(key, all)
+              }
             }
           })
-          return selectorMap
-        })
-        refs.forEach(({ key, type, all, sKeys }) => {
-          // 如果没有 sKey 说明使用的是 wx:ref="xxx" 的场景
-          if (!sKeys) {
-            Object.defineProperty(this.$refs, key, {
-              enumerable: true,
-              configurable: true,
-              get () {
-                const refs = target.__refs[key] || []
-                if (type === 'component') {
-                  return all ? refs : refs[0]
-                } else {
-                  return createSelectorQuery().in(target).select(key, all)
-                }
-              }
-            })
-          }
         })
       },
       __getRefVal (key) {
@@ -67,7 +41,7 @@ export default function getRefsMixin () {
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
         const refsArr = splitedSelector.map(selector => {
-          const selectorMap = this.__selectorMap?.value[selector] || []
+          const selectorMap = this.__selectorMap[selector] || []
           const res = []
           selectorMap.forEach(({ type, key }) => {
             if (type === refType) {

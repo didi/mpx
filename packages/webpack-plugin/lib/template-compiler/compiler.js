@@ -1719,6 +1719,7 @@ function processRefReact (el, meta) {
       meta.refs = []
     }
     const all = !!forScopes.length
+    const forIndexs = all ? forScopes.map(scope => scope.index).join('+') : null
     const refConf = {
       key: val,
       all,
@@ -1726,34 +1727,45 @@ function processRefReact (el, meta) {
     }
 
     if (!val) {
-      refConf.key = `ref_rn_${++refId}`
-      refConf.sKeys = []
+      refConf.key = `"ref_rn_${++refId}"${forIndexs ? '+' + forIndexs : ''}`
       const rawId = el.attrsMap.id
       const rawClass = el.attrsMap.class
       const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
 
-      meta.computed = meta.computed || []
       if (rawId) {
+        el.refs = el.refs || []
         const staticId = parseMustacheWithContext(rawId).result
-        const computedIdKey = `_ri${refId}`
-        refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
-        meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
+        el.refs.push({
+          key: refConf.key,
+          type,
+          prefix: '#',
+          selectors: `${staticId}`
+        })
       }
       if (rawClass || rawDynamicClass) {
+        el.refs = el.refs || []
         const staticClass = parseMustacheWithContext(rawClass).result
         const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        const computedClassKey = `_rc${refId}`
-        refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
-        meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
+        el.refs.push({
+          key: refConf.key,
+          type,
+          prefix: '.',
+          selectors: `this.__getClass(${staticClass}, ${dynamicClass})`
+        })
       }
+
+      addAttrs(el, [{
+        name: 'ref',
+        value: `{{ this.__getRefVal(${refConf.key}) }}`
+      }])
+    } else {
+      meta.refs.push(refConf)
+
+      addAttrs(el, [{
+        name: 'ref',
+        value: `{{ this.__getRefVal('${refConf.key}') }}`
+      }])
     }
-
-    meta.refs.push(refConf)
-
-    addAttrs(el, [{
-      name: 'ref',
-      value: `{{ this.__getRefVal('${refConf.key}') }}`
-    }])
   }
 }
 
