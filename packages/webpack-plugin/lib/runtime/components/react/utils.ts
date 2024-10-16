@@ -2,14 +2,13 @@ import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidE
 import { Dimensions, StyleSheet } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
+import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
+export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
-export const VAR_DEC_REGEX = /^--.*/
-export const VAR_USE_REGEX = /^\s*var\(([^,]+)(?:,(.+))?\)\s*$/
-export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const DEFAULT_FONT_SIZE = 16
 
 export const throwReactWarning = (message: string) => {
@@ -167,21 +166,31 @@ function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array
   })
 }
 
-function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, string | number>) {
+const VAR_DEC_REGEX = /^--.*/
+const VAR_USE_REGEX = /var\(/
+
+function resolveVar (input: string, varContext: Record<string, any>) {
+  const parsed = parseFunc(input, 'var')
+  const replaced = new ReplaceSource(input)
+
+  parsed.forEach(({ start, end, args }) => {
+    const varName = args[0]
+    const fallback = args[1] || ''
+    let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
+    if (VAR_USE_REGEX.test(varValue)) {
+      varValue = '' + resolveVar(varValue, varContext)
+    } else {
+      varValue = '' + formatValue(varValue)
+    }
+    replaced.replace(start, end - 1, varValue)
+  })
+  return formatValue(replaced.source())
+}
+
+function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
-      const matched = VAR_USE_REGEX.exec(value)
-      if (matched) {
-        const varName = matched[1].trim()
-        const fallback = (matched[2] || '').trim()
-        if (hasOwn(varContext, varName)) {
-          target[key] = varContext[varName]
-        } else if (fallback) {
-          target[key] = formatValue(fallback)
-        } else {
-          delete target[key]
-        }
-      }
+      target[key] = resolveVar(value, varContext)
     })
   })
 }
@@ -210,7 +219,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
-  const hasVarUse = false
+  let hasVarUse = false
   let hasPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -227,8 +236,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
         normalStyle[key] = isObject(value) ? diffAndCloneA(value).clone : value
       }
     }
-    if (VAR_USE_REGEX.test(value)) {
-      hasVarDec = true
+    // 对于var定义中使用的var无需替换值，可以通过resolveVar递归解析出值
+    if (!VAR_DEC_REGEX.test(key) && VAR_USE_REGEX.test(value)) {
+      hasVarUse = true
       varKeyPaths.push(keyPath.slice())
     }
   }
