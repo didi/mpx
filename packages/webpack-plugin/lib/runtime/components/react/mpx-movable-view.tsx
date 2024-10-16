@@ -4,7 +4,7 @@
  * ✔ out-of-bounds
  * ✔ x
  * ✔ y
- * ✔ damping
+ * ✘ damping
  * ✘ friction
  * ✔ disabled
  * ✘ scale
@@ -40,7 +40,6 @@ interface MovableViewProps {
   x?: number;
   y?: number;
   disabled?: boolean;
-  damping?: number;
   animation?: boolean;
   bindchange?: (event: unknown) => void;
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
@@ -79,9 +78,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     y = 0,
     inertia = false,
     disabled = false,
-    damping = 20,
     animation = true,
-    'out-of-bounds': outOfBounds,
+    'out-of-bounds': outOfBounds = false,
     direction = 'none',
     externalGesture = [],
     style = {},
@@ -151,14 +149,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (direction === 'horizontal' || direction === 'all') {
           offsetX.value = animation
             ? withSpring(newX, {
-              damping
+              duration: 1500,
+              dampingRatio: 0.8
             })
             : newX
         }
         if (direction === 'vertical' || direction === 'all') {
           offsetY.value = animation
             ? withSpring(newY, {
-              damping
+              duration: 1500,
+              dampingRatio: 0.8
             })
             : newY
         }
@@ -377,14 +377,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           if (x !== offsetX.value) {
             offsetX.value = animation
               ? withSpring(x, {
-                damping
+                duration: 1500,
+                dampingRatio: 0.8
               })
               : x
           }
           if (y !== offsetY.value) {
             offsetY.value = animation
               ? withSpring(y, {
-                damping
+                duration: 1500,
+                dampingRatio: 0.8
               })
               : y
           }
@@ -397,7 +399,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (direction === 'horizontal' || direction === 'all') {
           xInertialMotion.value = true
           offsetX.value = withDecay({
-            velocity: e.velocityX,
+            velocity: e.velocityX / 10,
             rubberBandEffect: outOfBounds,
             clamp: draggableXRange.value
           }, () => {
@@ -407,7 +409,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (direction === 'vertical' || direction === 'all') {
           yInertialMotion.value = true
           offsetY.value = withDecay({
-            velocity: e.velocityY,
+            velocity: e.velocityY / 10,
             rubberBandEffect: outOfBounds,
             clamp: draggableYRange.value
           }, () => {
