@@ -108,9 +108,11 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       setContainerWidth(width || 0)
       setContainerHeight(height || 0)
     }
-    nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
+    if (enableOffset) {
+      nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    }
   }
   const needLayout = enableOffset || hasPercent
 
