@@ -127,7 +127,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   ], {
     layoutRef
   })
-  
+
   if (type === 'checkbox') {
     return <CheckBox
       {...innerProps}
