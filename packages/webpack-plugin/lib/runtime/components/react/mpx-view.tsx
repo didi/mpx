@@ -61,7 +61,8 @@ type linearProps = {
 type PreImageInfo = {
   src?: string,
   sizeList: DimensionValue[]
-  lGProps?: linearProps
+  linearProps?: linearProps
+  direction?: string
   containPercentSymbol?: boolean
   backgroundPosition: backgroundPositionList
 }
@@ -75,16 +76,33 @@ const linearMap = new Map([
   ['top', 0],
   ['bottom', 180],
   ['left', 270],
-  ['right', 90],
-  ['top right', 45],
-  ['right top', 45],
-  ['top left', 315],
-  ['left top', 315],
-  ['bottom right', 135],
-  ['right bottom', 135],
-  ['bottom left', 225],
-  ['left bottom', 225]
+  ['right', 90]
 ])
+
+// 对角线角度
+const diagonalAngleMap: Record<string, (width: number, height: number) => any> = {
+  'top right': (width: number, height: number) => {
+    return Math.acos(
+      (width / 2) /
+      (Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2)) / 2)
+    )
+  },
+  'right top': (...bounds) => { return diagonalAngleMap['top right'](...bounds) },
+
+  'bottom right': (...bounds) => Math.PI - diagonalAngleMap['top right'](...bounds),
+  'right bottom': (...bounds) => { return diagonalAngleMap['bottom right'](...bounds) },
+
+  'bottom left': (...bounds) => Math.PI + diagonalAngleMap['top right'](...bounds),
+  'left bottom': (...bounds) => { return diagonalAngleMap['bottom left'](...bounds) },
+
+  'top left': (...bounds) => (2 * Math.PI) - diagonalAngleMap['top right'](...bounds),
+  'left top': (...bounds) => { return diagonalAngleMap['top left'](...bounds) }
+}
+
+// 弧度转化为角度的公式
+function radToAngle (r: number) {
+  return r * 180 / Math.PI
+}
 
 const applyHandlers = (handlers: Handler[], args: any[]) => {
   for (const handler of handlers) {
@@ -97,10 +115,10 @@ const checkNeedLayout = (style: PreImageInfo) => {
   const bp = style.backgroundPosition
   // 含有百分号，center 需计算布局
   const containPercentSymbol = (typeof bp[1] === 'string' && PERCENT_REGEX.test(bp[1])) || (typeof bp[3] === 'string' && PERCENT_REGEX.test(bp[3]))
-
+  // 在渐变的时候，background-size的cover，contain, auto属性值，转化为100%, needLayout计算逻辑和原来保持一致，needImageSize始终为false
   return {
     // 是否开启layout的计算
-    needLayout: (typeof width === 'string' && /^cover|contain$/.test(width)) || (typeof height === 'string' && PERCENT_REGEX.test(height) && width === 'auto') || (typeof width === 'string' && PERCENT_REGEX.test(width) && height === 'auto') || containPercentSymbol,
+    needLayout: (typeof width === 'string' && /^cover|contain$/.test(width)) || (typeof height === 'string' && PERCENT_REGEX.test(height) && width === 'auto') || (typeof width === 'string' && PERCENT_REGEX.test(width) && height === 'auto') || containPercentSymbol || (style.direction && diagonalAngleMap[style.direction]),
     // 是否开启原始宽度的计算
     needImageSize: (typeof width === 'string' && /^cover|contain$/.test(width)) || style.sizeList.includes('auto')
   }
@@ -232,8 +250,22 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
 }
 
 // background-image转换为source
-function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo) {
-  imageProps.src = preImageInfo.src
+function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
+  if (preImageInfo.src) {
+    imageProps.src = preImageInfo.src
+  }
+  const { linearProps } = preImageInfo
+  const direction = preImageInfo?.direction || ''
+  // 当出现 方向top right时， 需要计算宽高
+  if (layoutInfo && diagonalAngleMap[direction] && imageSize && linearProps) {
+    const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
+    const { width, height } = imageSize
+    const realWidth = typeof width === 'string' && PERCENT_REGEX.test(width) ? parseFloat(width) / 100 * layoutWidth : +width as number
+    const realheight = typeof height === 'string' && PERCENT_REGEX.test(height) ? parseFloat(height) / 100 * layoutHeight : +height as number
+    linearProps.angle = radToAngle(diagonalAngleMap[direction](realWidth, realheight)) || 180
+  }
+
+  Object.assign(imageProps, linearProps)
 }
 
 const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) => {
@@ -246,7 +278,9 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
     }
   }
   applyHandlers([backgroundSize, backgroundImage, backgroundPosition], [imageProps, preImageInfo, imageSize, layoutInfo])
-  if (!imageProps?.src) return null
+
+  if (!imageProps?.src && !preImageInfo?.linearProps) return null
+
   return imageProps
 }
 
@@ -323,9 +357,34 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
   return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
 }
 
-function normalLinearGradient (text: string) {
+/**
+ *
+ * calcSteps - 计算起始位置和终点位置之间的差值
+ *    startVal - 起始位置距离
+ *    endVal - 终点位置距离
+ *    len - 数量
+ * **/
+function calcSteps (startVal: number, endVal: number, len: number) {
+  const diffVal = endVal - startVal
+  const step = diffVal / len
+  const newArr = []
+  for (let i = 1; i < len; i++) {
+    const val = startVal + step * i
+    newArr.push(+val.toFixed(2))
+  }
+
+  return newArr
+}
+
+function normalLinearGradient (text: string, sizeList: DimensionValue[]): { linearProps?: linearProps; direction?: string; } {
   let linearText = text.trim().match(/linear-gradient\((.*)\)/)?.[1]
-  if (!linearText) return
+  if (!linearText) return {}
+
+  // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
+  for (const i in sizeList) {
+    const val = sizeList[i]
+    sizeList[i] = /^cover|contain|auto$/.test(val as string) ? '100%' : val
+  }
 
   // 添加默认的角度
   if (!/^to|^-?\d+deg/.test(linearText)) {
@@ -333,57 +392,76 @@ function normalLinearGradient (text: string) {
   } else {
     linearText = linearText.replace('to', '')
   }
-  // 把 30deg,red 10%, blue 20% 解析为 ['0deg', 'red, 10%', 'blue, 20%']
+  // 把 0deg, red 10%, blue 20% 解析为 ['0deg', 'red, 10%', 'blue, 20%']
   const [direction, ...colorList] = linearText.split(/,(?![^(#]*\))/)
-
   // 获取角度
   const angle = +(linearMap.get(direction.trim()) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
+  // 记录需要填充起点的起始位置
+  let startIdx = 0; let startVal = 0
   // 把 ['red, 10%', 'blue, 20%']解析为 [[red, 10%], [blue, 20%]]
-  return colorList.map(item => item.trim().split(/(?<!,)\s+/))
+  const linearProps = colorList.map(item => item.trim().split(/(?<!,)\s+/))
     .reduce<linearProps>((prev, cur, idx, self) => {
       const { colors, locations } = prev
       const [color, val] = cur
       let numberVal: number = parseFloat(val) / 100
 
-      // 添加color的数组
-      colors.push(color.trim())
-
-      // 处理渐变位置
+      // 处理渐变默认值
       if (idx === 0) {
         numberVal = numberVal || 0
       } else if (self.length - 1 === idx) {
         numberVal = numberVal || 1
       }
-      locations.push(numberVal)
+
+      // 出现缺省值时进行填充
+      if (idx - startIdx > 1 && !isNaN(numberVal)) {
+        locations.push(...calcSteps(startVal, numberVal, idx - startIdx))
+      }
+
+      if (!isNaN(numberVal)) {
+        startIdx = idx
+        startVal = numberVal
+      }
+
+      // 添加color的数组
+      colors.push(color.trim())
+
+      !isNaN(numberVal) && locations.push(numberVal)
       return prev
     }, { colors: [], locations: [], angle })
+
+  return {
+    linearProps,
+    direction: direction.trim()
+  }
 }
 
-function normalBackgroundImage (text?: string) {
+function parseBgImage (text: string, sizeList: DimensionValue[]): {
+  linearProps?: linearProps;
+  direction?: string;
+  src?: string
+} {
   if (!text) return {}
 
   const src = parseUrl(text)
 
   if (src) return { src }
 
-  const lGProps = normalLinearGradient(text)
-
-  return {
-    lGProps
-  }
+  return normalLinearGradient(text, sizeList)
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
-  const { backgroundImage, backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
-  const { src, lGProps } = normalBackgroundImage(backgroundImage)
+  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
 
   const sizeList = backgroundSize.slice() as DimensionValue[]
 
   sizeList.length === 1 && sizeList.push('auto')
 
+  const { src, linearProps, direction } = parseBgImage(backgroundImage, sizeList)
+
   return {
     src,
-    lGProps,
+    linearProps,
+    direction,
     sizeList,
     backgroundPosition: normalizeBackgroundPosition(backgroundPosition)
   }
@@ -403,9 +481,11 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
 
   // 判断是否可挂载onLayout
   const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
-  const { src, lGProps } = preImageInfo
+  const { src, linearProps, sizeList } = preImageInfo
 
   useEffect(() => {
+    if (linearProps) return
+
     if (!src) {
       setShow(false)
       sizeInfo.current = null
@@ -435,7 +515,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     })
   }, [preImageInfo?.src])
 
-  if (!preImageInfo?.src && !lGProps) return null
+  if (!preImageInfo?.src && !linearProps) return null
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
@@ -456,7 +536,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   }
 
   return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
-    {lGProps && <LinearGradient useAngle={true} style={{ width: '100%', height: '100%' }} {...lGProps} /> }
+    {linearProps && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, { width: sizeList[0], height: sizeList[1] } as Size, layoutInfo.current as Size)} /> }
     {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
