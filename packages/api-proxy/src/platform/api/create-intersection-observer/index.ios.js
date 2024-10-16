@@ -1,7 +1,7 @@
 import IntersectionObserver from './rnIntersectionObserver'
 
-function createIntersectionObserver (comp, opt, intersectionCtx) {
-  return new IntersectionObserver(comp, opt, intersectionCtx)
+function createIntersectionObserver (comp, opt, config) {
+  return new IntersectionObserver(comp, opt, config)
 }
 
 export {
