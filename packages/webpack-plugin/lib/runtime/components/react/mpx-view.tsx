@@ -7,12 +7,16 @@
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
+import Animated from 'react-native-reanimated'
+import useAnimationHooks from './useAnimationHooks'
+import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { VarContext } from './context'
 import { parseUrl, PERCENT_REGEX, isText, splitStyle, splitProps, useTransformStyle } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
+  animation?: AnimationProp
   children?: ReactNode | ReactNode[]
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
@@ -426,7 +430,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
-    'enable-background': enableBackground
+    'enable-background': enableBackground,
+    animation
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -544,7 +549,30 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     layoutRef
   })
 
-  return (
+  const animationStyle = props.animation ? useAnimationHooks({
+    ...props,
+    style: innerStyle
+  }) : {}
+
+  return animation?.actions?.length ? (
+    <Animated.View
+      {...innerProps}
+      style={animationStyle}
+    >
+      {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            enableBackground: enableBackgroundRef.current
+          },
+          textStyle,
+          backgroundStyle,
+          varContextRef.current
+        )
+      }
+    </Animated.View>
+  ) : (
     <View
       {...innerProps}
       style={innerStyle}
