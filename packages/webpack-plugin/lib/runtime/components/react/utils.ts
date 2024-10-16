@@ -1,6 +1,6 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
 import { Dimensions, StyleSheet } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
+import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 
@@ -27,18 +27,9 @@ export function rpx (value: number) {
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
-
-export function formatValue (value: string) {
-  let matched
-  if ((matched = pxRegExp.exec(value))) {
-    return +matched[1]
-  } else if ((matched = rpxRegExp.exec(value))) {
-    return rpx(+matched[1])
-  } else if (hairlineRegExp.test(value)) {
-    return StyleSheet.hairlineWidth
-  }
-  return value
-}
+const varDecRegExp = /^--.*/
+const varUseRegExp = /var\(/
+const calcUseRegExp = /calc\(/
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = Object.assign({}, obj)
@@ -146,8 +137,34 @@ const percentRule: Record<string, string> = {
   translateY: 'height',
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
-  borderBottomRightRadius: 'height',
-  borderTopRightRadius: 'height'
+  borderBottomRightRadius: 'width',
+  borderTopRightRadius: 'width',
+  borderRadius: 'width'
+}
+
+const heightPercentRule: Record<string, boolean> = {
+  translateY: true,
+  top: true,
+  bottom: true,
+  marginTop: true,
+  marginBottom: true,
+  marginVertical: true,
+  paddingTop: true,
+  paddingBottom: true,
+  paddingVertical: true
+}
+
+// todo calc时处理角度和时间等单位
+function formatValue (value: string) {
+  let matched
+  if ((matched = pxRegExp.exec(value))) {
+    return +matched[1]
+  } else if ((matched = rpxRegExp.exec(value))) {
+    return rpx(+matched[1])
+  } else if (hairlineRegExp.test(value)) {
+    return StyleSheet.hairlineWidth
+  }
+  return value
 }
 
 function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array<Array<string>>, { width, height }: { width?: number, height?: number }) {
@@ -166,9 +183,6 @@ function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array
   })
 }
 
-const VAR_DEC_REGEX = /^--.*/
-const VAR_USE_REGEX = /var\(/
-
 function resolveVar (input: string, varContext: Record<string, any>) {
   const parsed = parseFunc(input, 'var')
   const replaced = new ReplaceSource(input)
@@ -177,7 +191,7 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     const varName = args[0]
     const fallback = args[1] || ''
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
-    if (VAR_USE_REGEX.test(varValue)) {
+    if (varUseRegExp.test(varValue)) {
       varValue = '' + resolveVar(varValue, varContext)
     } else {
       varValue = '' + formatValue(varValue)
@@ -195,12 +209,33 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
+function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array<string>>, formatter: (value: string, key: string) => number) {
+  calcKeyPaths.forEach((calcKeyPath) => {
+    setStyle(styleObj, calcKeyPath, ({ target, key, value }) => {
+      const parsed = parseFunc(value, 'calc')
+      const replaced = new ReplaceSource(value)
+      parsed.forEach(({ start, end, args }) => {
+        const exp = args[0]
+        try {
+          const result = new ExpressionParser(exp, (value) => {
+            return formatter(value, key)
+          }).parse()
+          replaced.replace(start, end - 1, '' + result.value)
+        } catch (e) {
+          error(`calc(${exp}) parse error.`, undefined, e)
+        }
+      })
+      target[key] = formatValue(replaced.source())
+    })
+  })
+}
+
 function transformLineHeight (styleObj: Record<string, any>) {
   let { lineHeight } = styleObj
   if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
     const hasFontSize = hasOwn(styleObj, 'fontSize')
     if (!hasFontSize) {
-      throwReactWarning('[Mpx runtime warn]: The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
+      warn('The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
     }
     const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
     lineHeight = (parseFloat(lineHeight) / 100) * fontSize
@@ -211,24 +246,26 @@ function transformLineHeight (styleObj: Record<string, any>) {
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
-  enablePercent?: boolean
-  enableLineHeight?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
   let hasVarUse = false
   let hasPercent = false
+  let hasCalcUse = false
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
-  let setContainerWidth = noop
-  let setContainerHeight = noop
+  const calcKeyPaths: Array<Array<string>> = []
+  const [width, setWidth] = useState(0)
+  const [height, setHeight] = useState(0)
+  const setContainerWidth = setWidth
+  const setContainerHeight = setHeight
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
-      if (VAR_DEC_REGEX.test(key)) {
+      if (varDecRegExp.test(key)) {
         hasVarDec = true
         varStyle[key] = value
       } else {
@@ -237,31 +274,18 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       }
     }
     // 对于var定义中使用的var无需替换值，可以通过resolveVar递归解析出值
-    if (!VAR_DEC_REGEX.test(key) && VAR_USE_REGEX.test(value)) {
+    if (!varDecRegExp.test(key) && varUseRegExp.test(value)) {
       hasVarUse = true
       varKeyPaths.push(keyPath.slice())
     }
   }
-
-  function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(percentRule, key) && PERCENT_REGEX.test(value)) {
-      hasPercent = true
-      percentKeyPaths.push(keyPath.slice())
-    }
-  }
-
-  const visitors = [varVisitor]
-
-  if (enablePercent) visitors.push(percentVisitor)
-
-  // traverse
-  traverseStyle(styleObj, visitors)
-
+  // traverse var
+  traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
   if (enableVarRef.current !== enableVar) {
-    throw new Error('[Mpx runtime error]: css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
+    error('css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
   }
   // apply var
   const varContextRef = useRef({})
@@ -275,21 +299,54 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     transformVar(normalStyle, varKeyPaths, varContextRef.current)
   }
 
-  if (enablePercent) {
-    const [width, setWidth] = useState(0)
-    const [height, setHeight] = useState(0)
-    setContainerWidth = setWidth
-    setContainerHeight = setHeight
-    // apply percent
-    if (hasPercent) {
-      transformPercent(normalStyle, percentKeyPaths, { width, height })
+  function calcVisitor ({ value, keyPath }: VisitorArg) {
+    if (calcUseRegExp.test(value)) {
+      hasCalcUse = true
+      calcKeyPaths.push(keyPath.slice())
     }
   }
 
-  if (enableLineHeight) {
-    // transform lineHeight
-    transformLineHeight(normalStyle)
+  function percentVisitor ({ key, value, keyPath }: VisitorArg) {
+    if (hasOwn(percentRule, key) && PERCENT_REGEX.test(value)) {
+      hasPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    }
   }
+
+  // traverse calc & percent
+  traverseStyle(normalStyle, [percentVisitor, calcVisitor])
+
+  // apply percent
+  if (hasPercent) {
+    transformPercent(normalStyle, percentKeyPaths, { width, height })
+  }
+
+  function calcFormatter (value: string, key: string) {
+    if (PERCENT_REGEX.test(value)) {
+      if (key === 'width' || key === 'height') {
+        error(`calc() can not use % in ${key}.`)
+        return 0
+      }
+      hasPercent = true
+      const percentage = parseFloat(value) / 100
+      const isHeight = heightPercentRule[key]
+      return percentage * (isHeight ? height : width)
+    } else {
+      const formatted = formatValue(value)
+      if (typeof formatted === 'number') {
+        return formatted
+      } else {
+        warn('calc() only support number, px, rpx, % temporarily.')
+        return 0
+      }
+    }
+  }
+  // apply calc
+  if (hasCalcUse) {
+    transformCalc(normalStyle, calcKeyPaths, calcFormatter)
+  }
+  // transform lineHeight
+  transformLineHeight(normalStyle)
 
   return {
     normalStyle,
