@@ -36,7 +36,7 @@ import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutCh
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, throwReactWarning, useTransformStyle, DEFAULT_UNLAY_STYLE } from './utils'
 import { wrapChildren } from './common'
 
 interface ScrollViewProps {
@@ -238,7 +238,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     scrollOptions.current.contentLength = selectLength({ height, width })
   }
 
+  const hasLayout = useRef(false)
   function onLayout (e: LayoutChangeEvent) {
+    hasLayout.current = true
     const layout = e.nativeEvent.layout || {}
     scrollOptions.current.visibleLength = selectLength(layout)
     if (hasPercent) {
@@ -403,6 +405,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       pagingEnabled
     }
   }
+  const layoutStyle = !hasLayout.current && hasPercent ? DEFAULT_UNLAY_STYLE : {}
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
     'style',
     'enable-offset',
@@ -439,7 +442,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   return (
     <ScrollView
       {...innerProps}
-      style={innerStyle}
+      style={{ ...innerStyle, ...layoutStyle }}
       refreshControl={refresherEnabled
         ? (
         <RefreshControl

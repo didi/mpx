@@ -11,7 +11,9 @@ export const VAR_DEC_REGEX = /^--.*/
 export const VAR_USE_REGEX = /^\s*var\(([^,]+)(?:,(.+))?\)\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const DEFAULT_FONT_SIZE = 16
-
+export const DEFAULT_UNLAY_STYLE = {
+  opacity: 0
+}
 export const throwReactWarning = (message: string) => {
   setTimeout(() => {
     console.warn(message)

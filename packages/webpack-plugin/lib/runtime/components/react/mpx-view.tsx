@@ -5,11 +5,11 @@
  * ✔ hover-stay-time
  */
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, DEFAULT_UNLAY_STYLE } from './utils'
 
 import { wrapChildren } from './common'
 
@@ -503,8 +503,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     bindtouchend && bindtouchend(e)
     setStayTimer()
   }
-
+  const hasLayout = useRef(false)
   const onLayout = (res: LayoutChangeEvent) => {
+    hasLayout.current = true
     if (hasPercent) {
       const { width, height } = res?.nativeEvent?.layout || {}
       setContainerWidth(width || 0)
@@ -518,8 +519,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   }
 
   const needLayout = enableOffset || hasPercent
+  const layoutStyle = !hasLayout.current && hasPercent ? DEFAULT_UNLAY_STYLE : {}
 
   const innerProps = useInnerProps(props, {
+    style: { ...innerStyle, ...layoutStyle },
     ref: nodeRef,
     ...needLayout ? { onLayout } : null,
     ...(hoverStyle && {
@@ -542,7 +545,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   return (
     <View
       {...innerProps}
-      style={innerStyle}
     >
       {
         wrapWithChildren(

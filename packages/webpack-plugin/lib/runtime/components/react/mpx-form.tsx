@@ -10,7 +10,7 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle } from './utils'
+import { useTransformStyle, splitProps, splitStyle, DEFAULT_UNLAY_STYLE } from './utils'
 
 import { wrapChildren } from './common'
 
@@ -52,7 +52,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
   const { nodeRef: formRef } = useNodesRef(props, ref)
 
+  const hasLayout = useRef(false)
+
   const onLayout = (e: LayoutChangeEvent) => {
+    hasLayout.current = true
     if (hasPercent) {
       const { width, height } = e?.nativeEvent?.layout || {}
       setContainerWidth(width || 0)
@@ -94,8 +97,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     formValuesMap.forEach(item => item.resetValue())
   }
 
+  const layoutStyle = !hasLayout.current && hasPercent ? DEFAULT_UNLAY_STYLE : {}
+
   const innerProps = useInnerProps(props, {
-    style: innerStyle,
+    style: { ...innerStyle, ...layoutStyle },
     ref: formRef,
     ...needLayout ? { onLayout } : null
   }, [
