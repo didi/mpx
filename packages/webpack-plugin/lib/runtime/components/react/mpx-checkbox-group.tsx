@@ -11,7 +11,8 @@ import {
 import {
   View,
   NativeSyntheticEvent,
-  ViewStyle
+  ViewStyle,
+  LayoutChangeEvent
 } from 'react-native'
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -62,25 +63,39 @@ const CheckboxGroup = forwardRef<
     ...style
   }
 
-  const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+  const {
+    normalStyle,
+    hasPercent,
+    hasVarDec,
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
   })
 
-  const onLayout = () => {
-    nodeRef.current?.measure(
-      (
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        offsetLeft: number,
-        offsetTop: number
-      ) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      }
-    )
+  const onLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
+    if (enableOffset) {
+      nodeRef.current?.measure(
+        (
+          x: number,
+          y: number,
+          width: number,
+          height: number,
+          offsetLeft: number,
+          offsetTop: number
+        ) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        }
+      )
+    }
   }
 
   const getSelectionValue = (): string[] => {
@@ -136,7 +151,7 @@ const CheckboxGroup = forwardRef<
     {
       ref: nodeRef,
       style: normalStyle,
-      ...(enableOffset ? { onLayout } : {})
+      ...(enableOffset || hasPercent ? { onLayout } : {})
     },
     ['enable-offset'],
     {
