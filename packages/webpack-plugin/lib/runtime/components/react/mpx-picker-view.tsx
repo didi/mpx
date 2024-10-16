@@ -1,9 +1,9 @@
-import { View } from 'react-native'
+import { View, LayoutChangeEvent } from 'react-native'
 import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradient'
 import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { VarContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { VarContext } from './context'
 import { parseInlineStyle, useTransformStyle } from './utils'
 /**
  * ✔ value
@@ -27,7 +27,8 @@ interface PickerViewProps {
   }
   'indicator-style'?: string
   'enable-var': boolean
-  'external-var-context'?: Record<string, any>
+  'external-var-context'?: Record<string, any>,
+  'enable-offset': boolean
 }
 
 interface PickerLayout {
@@ -66,9 +67,16 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, width: indicatorW } = indicatorStyle
-  // const { normalStyle: lineStyle} = useTransformStyle(indicatorStyle, { enableVar, externalVarContext})
   //  picker-view 设置的color等textStyle,在小程序上的表现是可以继承到最内层的text样式, 但是RN内部column是slot无法设置, 需要业务自己在column内的元素上设置
-  const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(style, { enableVar, externalVarContext })
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasPercent,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext })
+
   const isSetW = indicatorW !== undefined ? 1 : 0
   const innerLayout = useRef({})
   const cloneRef = useRef(null)
@@ -81,10 +89,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } else {
     maskPos.height = itemH * 2
   }
-
   const { nodeRef } = useNodesRef<View, PickerViewProps>(props, ref, {})
-
-  // value 如何关联picker-view-column这几个slot的内容呢
 
   const onColumnLayoutChange = (layoutConfig: PickerLayout) => {
     pickH = layoutConfig.height
@@ -97,18 +102,23 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: innerLayout })
     bindchange && bindchange(eventData)
   }
-  /*
-  const onWrapperLayout = () => {
-    wrapRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      const a = { x, y, width, height, offsetLeft, offsetTop }
-    })
-  }
-  */
+
   const getInnerLayout = (layout: MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
 
-  const innerProps = useInnerProps(props, { ref: nodeRef }, [], { layoutRef: innerLayout })
+  const onWrapperLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
+  }
+
+  const innerProps = useInnerProps(props, { ref: nodeRef }, [
+    'style',
+    'enable-offset'
+  ], { layoutRef: innerLayout })
 
   const cloneChild = (child: React.ReactNode, index: number) => {
     const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}
@@ -133,7 +143,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     } else {
       return realElement
     }
-    // return React.cloneElement(child as ReactElement, childProps)
   }
 
   const renderTopMask = () => {
@@ -190,7 +199,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     }
   }
 
-  return (<View style={[normalStyle, { position: 'relative', overflow: 'hidden' }]} ref={wrapRef}>
+  return (<View style={[normalStyle, { position: 'relative', overflow: 'hidden' }]} ref={wrapRef} onLayout={onWrapperLayout}>
     {renderTopMask()}
     <View style={[styles.wrapper]}>
       {renderSubChild()}

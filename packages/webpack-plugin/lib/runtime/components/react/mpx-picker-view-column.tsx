@@ -2,8 +2,7 @@
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
 import React, { forwardRef, useRef, useState, useEffect, ReactElement, ReactNode } from 'react'
 import { VarContext } from './context'
-import { useTransformStyle } from './utils'
-// import { Reanimated } from 'react-native-reanimated';
+import { useTransformStyle, splitStyle } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 interface ColumnProps {
   children: React.ReactNode,
@@ -29,20 +28,21 @@ const defaultItemHeight = 36
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout, style, wrapperStyle, 'enable-var': enableVar, 'external-var-context': externalVarContext } = props
   // PickerViewColumn
-  const { normalStyle, hasVarDec, varContextRef } = useTransformStyle(style, { enableVar, externalVarContext })
+  const {
+    normalStyle,
+    hasVarDec,
+    hasPercent,
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext })
+  const { innerStyle } = splitStyle(normalStyle)
   // scrollView的ref
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {})
   // scrollView的布局存储
   const layoutRef = useRef({})
   // 每个元素的高度
   let [itemH, setItemH] = useState(0)
-  // scrollView内容的初始offset
-  /*
-  let [offset, setOffset] = useState({
-    x: 0,
-    y: 0
-  })
-  */
 
   useEffect(() => {
     if (selectedIndex && itemH) {
@@ -51,7 +51,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [selectedIndex, itemH])
 
-  const onScrollViewLayout = () => {
+  const onScrollViewLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
       getInnerLayout && getInnerLayout(layoutRef)
@@ -97,17 +102,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = 'picker' + props.prefix + '-column' + index
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
-      const iHeight = arrHeight[0] || defaultItemHeight
-
+      const iHeight = (arrHeight[0] || defaultItemHeight) as number
       if (hasVarDec && varContextRef.current) {
         const wrapChild = (<VarContext.Provider value={varContextRef.current}>
-          <View key={strKey} {...InnerProps} style={[{ height: iHeight }, normalStyle]}>{item}</View>
+          <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>{item}</View>
         </VarContext.Provider>)
         return wrapChild
       } else {
-        return <View key={strKey} {...InnerProps} style={[{ height: iHeight }, normalStyle]}>{item}</View>
+        return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>{item}</View>
       }
-      // return <View key={strKey} {...InnerProps} {...normalStyle} style={[{ height: iHeight }]}>{item}</View>
     })
     const totalHeight = itemH * 5
     if (wrapperStyle.height && totalHeight !== wrapperStyle.height) {
@@ -126,10 +129,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const renderScollView = () => {
-    const contentContainerStyle = {
-      textAlign: 'center'
-    }
-
     return (<Animated.ScrollView
       horizontal={false}
       ref={scrollViewRef}
