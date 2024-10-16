@@ -9,7 +9,10 @@ module.exports = function getSpec ({ warn, error }) {
     // React Native android 不支持的 CSS property
     android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
+  // var(xx)
   const cssVariableExp = /^var\((.+)\)$/
+  // calc(xx)
+  const calcExp = /^calc\((.+)\)$/
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, mode }) => {
     error(`Property [${prop}] is not supported in React Native ${mode} environment!`)
@@ -239,6 +242,11 @@ module.exports = function getSpec ({ warn, error }) {
         suffix = ['Top', 'Right', 'Bottom', 'Left']
         break
     }
+    if (values.length === 1 && (calcExp.test(value) || cssVariableExp.test(value))) {
+      // calc() or var() 则分开输出
+      suffix = ['Vertical', 'Horizontal']
+      values.push(values[0])
+    }
     return values.map((value, index) => {
       const newProp = `${prop}${suffix[index] || ''}`
       // validate
@@ -343,15 +351,11 @@ module.exports = function getSpec ({ warn, error }) {
   // border-radius 缩写转换
   const getBorderRadius = ({ prop, value }, { mode }) => {
     const values = value.trim().split(/\s(?![^()]*\))/)
-    if (values.length === 1 && !/^(-?\d+(\.\d+)?)%$/.test(value)) {
-      // 单值且非number%情况下 直接以单值输出（%情况需要展示到组件内计算具体值）
+    if (values.length === 1) {
       verifyValues({ prop, value }, false)
       return { prop, value }
     } else {
-      if (values.length === 1) {
-        const val = values[0]
-        values.push(...[val, val, val])
-      } else if (values.length === 2) {
+      if (values.length === 2) {
         values.push(...values)
       } else if (values.length === 3) {
         values.push(values[1])
