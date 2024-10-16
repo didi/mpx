@@ -11,8 +11,6 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-import { VarContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/context'
-
 import { throwReactWarning, useTransformStyle } from './utils'
 
 interface _SwitchProps extends SwitchProps {
