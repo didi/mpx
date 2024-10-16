@@ -410,6 +410,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
   )
 })
 
-Button.displayName = 'mpx-button'
+Button.displayName = 'MpxButton'
 
 export default Button

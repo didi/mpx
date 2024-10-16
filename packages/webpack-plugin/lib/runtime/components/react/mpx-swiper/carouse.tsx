@@ -411,7 +411,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
       }
       arrElements = pages.map((page, i) => {
         return (
-          <View style={[pageStyle, styles.slide]} key={ 'page' + i}>
+          <View style={[pageStyle, styles.slide]} key={'page' + i}>
             {children[+page]}
           </View>
         )
@@ -442,6 +442,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   </View>)
 })
 
-_Carouse.displayName = '_Carouse'
+_Carouse.displayName = 'MpxCarouse'
 
 export default _Carouse

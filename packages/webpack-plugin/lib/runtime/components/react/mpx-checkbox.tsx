@@ -240,6 +240,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
   }
 )
 
-Checkbox.displayName = 'mpx-checkbox'
+Checkbox.displayName = 'MpxCheckbox'
 
 export default Checkbox
