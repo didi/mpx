@@ -37,6 +37,8 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     previousMargin: props['previous-margin'] ? parseInt(props['previous-margin']) : 0,
     nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
     enableOffset: props['enable-offset'] || true,
+    enableVar: props['enable-var'] || false,
+    externalVarContext: props['external-var-context'],
     bindchange: props.bindchange,
     easingFunction: props['easing-function'] || 'default'
   }
