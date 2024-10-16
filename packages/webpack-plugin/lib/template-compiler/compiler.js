@@ -1719,53 +1719,40 @@ function processRefReact (el, meta) {
       meta.refs = []
     }
     const all = !!forScopes.length
-    const forIndexs = all ? forScopes.map(scope => scope.index).join('+') : null
     const refConf = {
       key: val,
       all,
       type
     }
 
+    const selectors = []
+
+    /**
+     * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
+     */
     if (!val) {
-      refConf.key = `"ref_rn_${++refId}"${forIndexs ? '+' + forIndexs : ''}`
       const rawId = el.attrsMap.id
       const rawClass = el.attrsMap.class
       const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
 
       if (rawId) {
-        el.refs = el.refs || []
         const staticId = parseMustacheWithContext(rawId).result
-        el.refs.push({
-          key: refConf.key,
-          type,
-          prefix: '#',
-          selectors: `${staticId}`
-        })
+        selectors.push({ prefix: '#', selector: `${staticId}` })
       }
       if (rawClass || rawDynamicClass) {
-        el.refs = el.refs || []
         const staticClass = parseMustacheWithContext(rawClass).result
         const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        el.refs.push({
-          key: refConf.key,
-          type,
-          prefix: '.',
-          selectors: `this.__getClass(${staticClass}, ${dynamicClass})`
-        })
+        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
       }
-
-      addAttrs(el, [{
-        name: 'ref',
-        value: `{{ this.__getRefVal(${refConf.key}) }}`
-      }])
     } else {
       meta.refs.push(refConf)
-
-      addAttrs(el, [{
-        name: 'ref',
-        value: `{{ this.__getRefVal('${refConf.key}') }}`
-      }])
+      selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
+    const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
+    addAttrs(el, [{
+      name: 'ref',
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
+    }])
   }
 }
 

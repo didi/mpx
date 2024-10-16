@@ -143,16 +143,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       }
       return result
     },
-    _r (refsConf = []) {
-      refsConf.forEach((item = []) => {
-        const [key, type, prefix, selectors = ''] = item
-        selectors.trim().split(/\s+/).forEach(item => {
-          const selector = prefix + item
-          this.__selectorMap[selector] = this.__selectorMap[selector] || []
-          this.__selectorMap[selector].push({ type, key })
-        })
-      })
-    },
     triggerEvent (eventName, eventDetail) {
       const props = propsRef.current
       const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])

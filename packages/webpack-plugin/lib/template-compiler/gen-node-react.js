@@ -22,12 +22,6 @@ function genFor (node) {
   return `_i(${node.for.exp}, function(${item},${index}){return ${genNode(node)}})`
 }
 
-function genRef (node) {
-  node.refProcessed = true
-  const refs = node.refs.map(item => `[${item.key}, "${item.type}", "${item.prefix}", ${item.selectors}]`)
-  return `_r([${refs}]), ` + genNode(node)
-}
-
 const s = JSON.stringify
 
 function mapAttrName (name) {
@@ -54,8 +48,6 @@ function genNode (node) {
           exp += genFor(node)
         } else if (node.if && !node.ifProcessed) {
           exp += genIf(node)
-        } else if (node.refs && !node.refProcessed) {
-          exp += genRef(node)
         } else {
           const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
             if (attrName) {

@@ -6,7 +6,6 @@ export default function getRefsMixin () {
     [BEFORECREATE] () {
       this.__refs = {}
       this.$refs = {}
-      this.__selectorMap = {}
       this.__getRefs()
     },
     methods: {
@@ -14,15 +13,12 @@ export default function getRefsMixin () {
         const refs = this.__getRefsData() || []
         const target = this
         refs.forEach(({ key, type, all }) => {
-          this.__selectorMap[key] = this.__selectorMap[key] || []
-          this.__selectorMap[key].push({ key, type })
           Object.defineProperty(this.$refs, key, {
             enumerable: true,
             configurable: true,
             get () {
-              const refs = target.__refs[key] || []
               if (type === 'component') {
-                return all ? refs : refs[0]
+                return all ? target.selectAllComponents(key) : target.selectComponent(key)
               } else {
                 return createSelectorQuery().in(target).select(key, all)
               }
@@ -30,23 +26,30 @@ export default function getRefsMixin () {
           })
         })
       },
-      __getRefVal (key) {
+      __getRefVal (type, selectorsConf) {
         return (instance) => {
           if (instance) {
-            this.__refs[key] = this.__refs[key] || []
-            this.__refs[key].push(instance)
+            selectorsConf.forEach((item = []) => {
+              const [prefix, selectors = ''] = item
+              if (selectors) {
+                selectors.trim().split(/\s+/).forEach(selector => {
+                  const refKey = prefix + selector
+                  this.__refs[refKey] = this.__refs[refKey] || []
+                  this.__refs[refKey].push({ type, instance })
+                })
+              }
+            })
           }
         }
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
         const refsArr = splitedSelector.map(selector => {
-          const selectorMap = this.__selectorMap[selector] || []
+          const refs = this.__refs[selector] || []
           const res = []
-          selectorMap.forEach(({ type, key }) => {
+          refs.forEach(({ type, instance }) => {
             if (type === refType) {
-              const _refs = this.__refs[key] || []
-              res.push(..._refs)
+              res.push(instance)
             }
           })
           return res
