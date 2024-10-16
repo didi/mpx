@@ -513,9 +513,9 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
         setShow(true)
       }
     })
-  }, [preImageInfo?.src])
+  }, [src])
 
-  if (!preImageInfo?.src && !linearProps) return null
+  if (!src && !linearProps) return null
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
