@@ -7,7 +7,7 @@
     "lint": "eslint --ext .js,.ts,.tsx packages/",
     "fix": "eslint --fix --ext .js,.ts,.tsx packages/",
     "lint:js": "eslint --ext .js packages/",
-    "test": "jest",
+    "test": "node ./test",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
     "docs:build": "vuepress build docs-vuepress",
@@ -21,6 +21,8 @@
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
     "@vuepress/plugin-back-to-top": "^1.8.2",
     "@vuepress/plugin-pwa": "^1.8.0",
     "eslint": "^7.32.0",
@@ -30,8 +32,6 @@
     "eslint-plugin-jest": "^27.0.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.1",
-    "@typescript-eslint/eslint-plugin": "^5.2.0",
-    "@typescript-eslint/parser": "^5.2.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.2.0",
     "lerna": "^8.1.8",
@@ -40,5 +40,9 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@types/react": "^18.3.11",
+    "react-native-linear-gradient": "^2.8.3"
+  }
 }

@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, Text, StyleProp, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -18,9 +18,9 @@ export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   animation?: AnimationProp
   children?: ReactNode | ReactNode[]
-  hoverStyle?: ExtendedViewStyle
-  ['hover-start-time']?: number
-  ['hover-stay-time']?: number
+  'hover-style'?: ExtendedViewStyle
+  'hover-start-time'?: number
+  'hover-stay-time'?: number
   'enable-offset'?: boolean
   'enable-background'?: boolean
   'enable-var'?: boolean
@@ -76,13 +76,13 @@ const checkNeedLayout = (style: PreImageInfo) => {
   const [width, height] = style.sizeList
   const bp = style.backgroundPosition
   // 含有百分号，center 需计算布局
-  const containPercentSymbol = typeof bp[1] === 'string' && PERCENT_REGEX.test(bp[1]) || typeof bp[3] === 'string' && PERCENT_REGEX.test(bp[3])
+  const containPercentSymbol = (typeof bp[1] === 'string' && PERCENT_REGEX.test(bp[1])) || (typeof bp[3] === 'string' && PERCENT_REGEX.test(bp[3]))
 
   return {
     // 是否开启layout的计算
-    needLayout: typeof width === 'string' && /^cover|contain$/.test(width) || (typeof height === 'string' && PERCENT_REGEX.test(height) && width === 'auto') || (typeof width === 'string' && PERCENT_REGEX.test(width) && height === 'auto') || containPercentSymbol,
+    needLayout: (typeof width === 'string' && /^cover|contain$/.test(width)) || (typeof height === 'string' && PERCENT_REGEX.test(height) && width === 'auto') || (typeof width === 'string' && PERCENT_REGEX.test(width) && height === 'auto') || containPercentSymbol,
     // 是否开启原始宽度的计算
-    needImageSize: typeof width === 'string' && /^cover|contain$/.test(width) || style.sizeList.includes('auto')
+    needImageSize: (typeof width === 'string' && /^cover|contain$/.test(width)) || style.sizeList.includes('auto')
   }
 }
 
@@ -174,9 +174,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       const layoutRatio = layoutWidth / imageSizeWidth
       const eleRatio = imageSizeWidth / imageSizeHeight
       // 容器宽高比 大于 图片的宽高比，依据宽度作为基准，否则以高度为基准
-      if (layoutRatio <= eleRatio && (width as string) === 'contain' || layoutRatio >= eleRatio && (width as string) === 'cover') {
+      if ((layoutRatio <= eleRatio && (width as string) === 'contain') || (layoutRatio >= eleRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutWidth as number, imageSizeHeight / imageSizeWidth, true) as Size
-      } else if (layoutRatio > eleRatio && (width as string) === 'contain' || layoutRatio < eleRatio && (width as string) === 'cover') {
+      } else if ((layoutRatio > eleRatio && (width as string) === 'contain') || (layoutRatio < eleRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutHeight as number, imageSizeWidth / imageSizeHeight) as Size
       }
     }
@@ -199,8 +199,8 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       // 数值类型设置为 stretch
       (imageProps.style as ImageStyle).resizeMode = 'stretch'
       dimensions = {
-        width: typeof width === 'string' && PERCENT_REGEX.test(width) ? width : +width! as number,
-        height: typeof height === 'string' && PERCENT_REGEX.test(height) ? height : +height! as number
+        width: typeof width === 'string' && PERCENT_REGEX.test(width) ? width : +width as number,
+        height: typeof height === 'string' && PERCENT_REGEX.test(height) ? height : +height as number
       }
     }
   }
@@ -389,7 +389,15 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   </View>
 }
 
-function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { hasVarDec: boolean, enableBackground: boolean }, textStyle?: TextStyle, backgroundStyle?: ExtendedViewStyle, varContext?: Record<string, any>) {
+interface WrapChildrenConfig {
+  hasVarDec: boolean
+  enableBackground: boolean
+  textStyle?: TextStyle
+  backgroundStyle?: ExtendedViewStyle
+  varContext?: Record<string, any>
+}
+
+function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
   const { textProps } = splitProps(props)
   let { children } = props
 
@@ -416,7 +424,7 @@ function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground }: { has
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
   let {
     style = {},
-    hoverStyle,
+    'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-offset': enableOffset,
@@ -533,7 +541,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'children',
     'hover-start-time',
     'hover-stay-time',
-    'hoverStyle',
+    'hover-style',
     'hover-class',
     'enable-offset',
     'enable-background-image'
@@ -574,11 +582,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
           props,
           {
             hasVarDec,
-            enableBackground: enableBackgroundRef.current
-          },
-          textStyle,
-          backgroundStyle,
-          varContextRef.current
+            enableBackground: enableBackgroundRef.current,
+            textStyle,
+            backgroundStyle,
+            varContext: varContextRef.current
+          }
         )
       }
     </View>

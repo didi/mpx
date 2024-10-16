@@ -1068,7 +1068,10 @@ function processStyleReact (el, options) {
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
 
-  const show = getAndRemoveAttr(el, config[mode].directive.show).val
+  const { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
+  if (has && show === undefined) {
+    error$1(`Attrs ${config[mode].directive.show} should have a value `)
+  }
 
   if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
@@ -1080,14 +1083,14 @@ function processStyleReact (el, options) {
     addAttrs(el, [{
       name: 'style',
       // runtime helper
-      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}, ${showExp})}}`
+      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}${show === undefined ? '' : `, !(${showExp})`})}}`
     }])
   }
 
   if (staticHoverClass && staticHoverClass !== 'none') {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
-      name: 'hoverStyle',
+      name: 'hover-style',
       value: `{{this.__getStyle(${staticClassExp})}}`
     }])
   }

@@ -1,17 +1,20 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { TextStyle, Dimensions } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA } from '@mpxjs/utils'
+import { Dimensions, StyleSheet } from 'react-native'
+import { isObject, hasOwn, diffAndCloneA, noop } from '@mpxjs/utils'
 import { VarContext } from './context'
+import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
+export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
-export const VAR_DEC_REGEX = /^--.*/
-export const VAR_USE_REGEX = /var\(([^,]+)(?:,([^)]+))?\)/
-export const URL_REGEX = /url\(["']?(.*?)["']?\)/
-export const DEFAULT_STYLE = {
-  fontSize: 16
+export const DEFAULT_FONT_SIZE = 16
+
+export const throwReactWarning = (message: string) => {
+  setTimeout(() => {
+    console.warn(message)
+  }, 0)
 }
 
 export function rpx (value: number) {
@@ -23,6 +26,7 @@ export function rpx (value: number) {
 
 const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
 const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
 
 export function formatValue (value: string) {
   let matched
@@ -30,6 +34,8 @@ export function formatValue (value: string) {
     return +matched[1]
   } else if ((matched = rpxRegExp.exec(value))) {
     return rpx(+matched[1])
+  } else if (hairlineRegExp.test(value)) {
+    return StyleSheet.hairlineWidth
   }
   return value
 }
@@ -81,9 +87,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
 
 export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
-
   const match = cssUrl.match(URL_REGEX)
-
   return match?.[1]
 }
 
@@ -162,33 +166,65 @@ function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array
   })
 }
 
-function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, string | number>) {
+const VAR_DEC_REGEX = /^--.*/
+const VAR_USE_REGEX = /var\(/
+
+function resolveVar (input: string, varContext: Record<string, any>) {
+  const parsed = parseFunc(input, 'var')
+  const replaced = new ReplaceSource(input)
+
+  parsed.forEach(({ start, end, args }) => {
+    const varName = args[0]
+    const fallback = args[1] || ''
+    let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
+    if (VAR_USE_REGEX.test(varValue)) {
+      varValue = '' + resolveVar(varValue, varContext)
+    } else {
+      varValue = '' + formatValue(varValue)
+    }
+    replaced.replace(start, end - 1, varValue)
+  })
+  return formatValue(replaced.source())
+}
+
+function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
-      const matched = VAR_USE_REGEX.exec(value)
-      if (matched) {
-        const varName = matched[1].trim()
-        const fallback = (matched[2] || '').trim()
-        if (hasOwn(varContext, varName)) {
-          target[key] = varContext[varName]
-        } else if (fallback) {
-          target[key] = formatValue(fallback)
-        } else {
-          delete target[key]
-        }
-      }
+      target[key] = resolveVar(value, varContext)
     })
   })
 }
 
-export function useTransformStyle (styleObj: Record<string, any>, { enableVar, externalVarContext }: { enableVar?: boolean, externalVarContext?: Record<string, any> }) {
+function transformLineHeight (styleObj: Record<string, any>) {
+  let { lineHeight } = styleObj
+  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
+    const hasFontSize = hasOwn(styleObj, 'fontSize')
+    if (!hasFontSize) {
+      throwReactWarning('[Mpx runtime warn]: The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
+    }
+    const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
+    lineHeight = (parseFloat(lineHeight) / 100) * fontSize
+    styleObj.lineHeight = lineHeight
+  }
+}
+
+interface TransformStyleConfig {
+  enableVar?: boolean
+  externalVarContext?: Record<string, any>
+  enablePercent?: boolean
+  enableLineHeight?: boolean
+}
+
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, enablePercent = true, enableLineHeight = true }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
-  const hasVarUse = false
+  let hasVarUse = false
   let hasPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
+  let setContainerWidth = noop
+  let setContainerHeight = noop
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
@@ -200,8 +236,9 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar, e
         normalStyle[key] = isObject(value) ? diffAndCloneA(value).clone : value
       }
     }
-    if (VAR_USE_REGEX.test(value)) {
-      hasVarDec = true
+    // 对于var定义中使用的var无需替换值，可以通过resolveVar递归解析出值
+    if (!VAR_DEC_REGEX.test(key) && VAR_USE_REGEX.test(value)) {
+      hasVarUse = true
       varKeyPaths.push(keyPath.slice())
     }
   }
@@ -213,8 +250,12 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar, e
     }
   }
 
+  const visitors = [varVisitor]
+
+  if (enablePercent) visitors.push(percentVisitor)
+
   // traverse
-  traverseStyle(styleObj, [varVisitor, percentVisitor])
+  traverseStyle(styleObj, visitors)
 
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
@@ -234,11 +275,20 @@ export function useTransformStyle (styleObj: Record<string, any>, { enableVar, e
     transformVar(normalStyle, varKeyPaths, varContextRef.current)
   }
 
-  const [width, setContainerWidth] = useState(0)
-  const [height, setContainerHeight] = useState(0)
-  // apply percent
-  if (hasPercent) {
-    transformPercent(normalStyle, percentKeyPaths, { width, height })
+  if (enablePercent) {
+    const [width, setWidth] = useState(0)
+    const [height, setHeight] = useState(0)
+    setContainerWidth = setWidth
+    setContainerHeight = setHeight
+    // apply percent
+    if (hasPercent) {
+      transformPercent(normalStyle, percentKeyPaths, { width, height })
+    }
+  }
+
+  if (enableLineHeight) {
+    // transform lineHeight
+    transformLineHeight(normalStyle)
   }
 
   return {
@@ -313,18 +363,4 @@ export function splitProps<T extends Record<string, any>> (props: T) {
       return 'innerProps'
     }
   })
-}
-
-export const throwReactWarning = (message: string) => {
-  setTimeout(() => {
-    console.warn(message)
-  }, 0)
-}
-
-export const transformTextStyle = (styleObj: TextStyle) => {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight) / 100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
-    styleObj.lineHeight = lineHeight
-  }
 }
