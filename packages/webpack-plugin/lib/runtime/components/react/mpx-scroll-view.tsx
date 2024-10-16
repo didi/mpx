@@ -37,7 +37,7 @@ import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, use
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { throwReactWarning } from './utils'
-import { IntersectionObserverContext } from '@mpxjs/core'
+import { IntersectionObserverContext } from './context'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -131,7 +131,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const intersectionFns: Function[] = useContext(IntersectionObserverContext)
+  const intersectionObservers = useContext(IntersectionObserverContext)
 
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
@@ -267,9 +267,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (enableTriggerIntersectionObserver && intersectionFns && intersectionFns.length) {
-      intersectionFns.forEach(fn => {
-        fn()
+    if (enableTriggerIntersectionObserver && intersectionObservers && intersectionObservers.length) {
+      intersectionObservers.forEach(observer => {
+        observer.throttleMeasure()
       })
     }
   }

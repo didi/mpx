@@ -7,11 +7,9 @@
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
 
-// @ts-ignore
 import { GetComputedType } from '@mpxjs/store'
 import React from 'react';
 
-// @ts-ignore
 export * from '@mpxjs/store'
 
 // utils

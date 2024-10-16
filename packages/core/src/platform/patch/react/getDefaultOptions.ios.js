@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -9,7 +9,7 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext } from '../../export/index'
+import { IntersectionObserverContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -47,11 +47,24 @@ function createEffect (proxy, components) {
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(createElement, getComponent, proxy.target.__getRootProps())
+    return proxy.target.__injectedRender(createElement, getComponent)
   }, () => queueJob(update), proxy.scope)
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, intersectionCtx }) {
+function getRootProps (props) {
+  const rootProps = {}
+  for (const key in props) {
+    if (hasOwn(props, key)) {
+      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
+      if (match) {
+        rootProps[key] = props[key]
+      }
+    }
+  }
+  return rootProps
+}
+
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, intersectionCtx}) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
@@ -80,19 +93,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       })
       return propsData
     },
-    __getRootProps () {
-      const props = propsRef.current
-      const rootProps = {}
-      for (const key in props) {
-        if (hasOwn(props, key)) {
-          const match = /^(bind|catch|capture-bind|capture-catch|style):?(.*?)(?:\.(.*))?$/.exec(key)
-          if (match) {
-            rootProps[key] = props[key]
-          }
-        }
-      }
-      return rootProps
-    },
+
     __resetInstance () {
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
@@ -177,7 +178,10 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       return createSelectorQuery().in(this)
     },
     createIntersectionObserver (opt) {
-      return createIntersectionObserver(this, opt, intersectionCtx)
+      return createIntersectionObserver(this, opt, {
+        intersectionCtx,
+        isCustomNavigator: props.pageConfig.navigationStyle === 'custom'
+      })
     },
     ...rawOptions.methods
   }, {
@@ -283,7 +287,7 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageContext (mpxProxy, instance) {
-  const { pageId } = useContext(routeContext) || {}
+  const pageId = useContext(routeContext)
 
   instance.getPageId = () => {
     return pageId
@@ -403,15 +407,22 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    return rawOptions.__disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    if (root) {
+      const rootProps = getRootProps(props)
+      rootProps.style = { ...root.props.style, ...rootProps.style }
+      // update root props
+      return cloneElement(root, rootProps)
+    }
+    return root
   }))
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
-      const intersectionObservers = useMemo(() => [], [])
+      const intersectionObservers = useRef([])
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
@@ -426,6 +437,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       navigation.insets = useSafeAreaInsets()
+      navigation.headerHeight = useHeaderHeight()
 
       return createElement(GestureHandlerRootView,
         {
@@ -440,16 +452,20 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         // todo custom portal host for active route
         createElement(Provider,
           null,
-          createElement(IntersectionObserverContext.Provider, 
-            {
-              value: intersectionObservers
+          createElement(routeContext.Provider, {
+              value: currentPageId
             },
-            createElement(defaultOptions,
+            createElement(IntersectionObserverContext.Provider, 
               {
-                navigation,
-                route,
-                pageConfig
-              }
+                value: intersectionObservers.current
+              },
+              createElement(defaultOptions,
+                {
+                  navigation,
+                  route,
+                  pageConfig
+                }
+              )
             )
           )
         )

@@ -1,31 +1,39 @@
 import { isArray, noop } from "@mpxjs/utils"
 import throttle from 'lodash/throttle'
-import {
-  Dimensions
-} from 'react-native';
+import { Dimensions } from 'react-native'
+import { getFocusedNavigation } from '../../../common/js'
+
 
 class RNIntersectionObserver {
-  constructor (component, options, intersectionCtx) {
+  constructor (component, options, { intersectionCtx, isCustomNavigator }) {
     this.component = component
     this.options = options
     this.thresholds = options.thresholds.sort((a,b ) => a-b) || [0]
     this.initialRatio = options.initialRatio || 0
-    // TODO这个没用, observe的时候看是否可以传入一个数组
     this.observeAll = options.observeAll || false
-    // this.nativeMode = options.nativeMode || false
+
+    // 用来relativeToViewport的时候计算top
+    this.isCustomNavigator = isCustomNavigator
+
+    // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
+    this.component._intersectionObservers = this.component.__intersectionObservers || []
+    this.component._intersectionObservers.push(this)
 
     this.observerRef = null
     this.relativeRef = null
     this.margins = {top: 0, bottom: 0, left: 0, right: 0}
     this.callback = noop
 
-    this.throttleMeasure = this.getThrottleMeasure()
+    this.throttleMeasure = this.getThrottleMeasure(options.throttleTime || 100)
 
     // 记录上一次相交的比例
     this.previousIntersectionRatio = []
 
-    // 用来存储与scroll-view相关的上下文相关内容
-    this.intersectionCtx = intersectionCtx
+     // 添加实例添加到上下文中，滚动组件可以获取到上下文内的实例从而触发滚动
+     if (intersectionCtx && Array.isArray(intersectionCtx) && !intersectionCtx.includes(this)) {
+      intersectionCtx.push(this)
+      this.intersectionCtx = intersectionCtx
+    }
     
     return this
   }
@@ -48,32 +56,36 @@ class RNIntersectionObserver {
     return this
   }
   observe (selector, callback) {
+    if (this.observerRef) {
+      console.error('"observe" call can be only called once in IntersectionObserver')
+      return
+    }
     let targetRef = null
     if (this.observeAll){
       targetRef = this.component.__selectRef(selector, 'node', true)
     } else {
       targetRef = this.component.__selectRef(selector, 'node')
     }
-    if (!targetRef || targetRef.length === 0) console.error('intersection observer target not found')
+    if (!targetRef || targetRef.length === 0) {
+      console.error('intersection observer target not found')
+      return
+    }
     this.observerRef = isArray(targetRef) ? targetRef : [targetRef]
     this.callback = callback
     this._measureTarget(true)
-
-    // 添加实例添加到上下文中，滚动组件可以获取到上下文内的实例从而触发滚动
-    if (this.intersectionCtx && Array.isArray(this.intersectionCtx) && !this.intersectionCtx.includes(this.throttleMeasure)) {
-      this.intersectionCtx.push(this.throttleMeasure)
-    }
-
-    return this
   }
   _getWindowRect() {
-    const window = Dimensions.get('window');
-    return {
-      top: this.margins.top,
-      bottom: window.height - this.margins.bottom,
+    if (this.windowRect) return this.windowRect
+    const navigation = getFocusedNavigation()
+    const screen =  Dimensions.get('screen')
+    const windowRect = {
+      top: this.isCustomNavigator ? this.margins.top : navigation.headerHeight,
       left: this.margins.left,
-      right:  window.width - this.margins.right
+      right: screen.width - this.margins.right,
+      bottom: navigation.layout.height + navigation.headerHeight - this.margins.bottom
     }
+    this.windowRect = windowRect
+    return this.windowRect
   }
   _getReferenceRect(targetRef) {
     if (!targetRef) {
@@ -95,7 +107,7 @@ class RNIntersectionObserver {
                 width: width,
                 height: height
               };
-              resolve(boundingClientRect);
+              resolve(boundingClientRect)
             },
           );
         })) 
@@ -129,7 +141,7 @@ class RNIntersectionObserver {
       }
     }
   }
-  getThrottleMeasure(throttleTime = 100) {
+  getThrottleMeasure(throttleTime) {
     return throttle(() => {
       this._measureTarget()
     }, throttleTime)
@@ -142,7 +154,6 @@ class RNIntersectionObserver {
     ]).then(([observeRects, relativeRects]) => {
       observeRects.forEach((observeRect, index) => {
         const { intersectionRatio, intersectionRect } = this._measureIntersection(observeRect, relativeRects[0])
-        // console.log('_measureIntersection success', {intersectionRatio, intersectionRect} )
         const isCallback = isInit ? intersectionRatio >= this.initialRatio : this._isInsected(intersectionRatio, this.previousIntersectionRatio[index])
         // 初次调用的
         if (isCallback) {
@@ -185,8 +196,8 @@ class RNIntersectionObserver {
     return this
   }
   disconnect () {
-    if (this.intersectionCtx && this.intersectionCtx.indexOf(this.throttleMeasure) > -1) {
-      this.intersectionCtx.splice(this.intersectionCtx.indexOf(this.throttleMeasure), 1)
+    if (this.intersectionCtx && this.intersectionCtx.includes(this)) {
+      this.intersectionCtx.splice(this.intersectionCtx.indexOf(this, 1))
     }
   }
 }
