@@ -483,8 +483,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const pages: Array<ReactNode> | ReactNode = renderPages()
   // const strStyle: string = 'container_' + state.dir
   // const eventProps = props.innerProps || {}
-  const layoutStyle = dir === 'x' ? { width: defaultWidth, height: defaultHeight } : { width: defaultWidth }
-  return (<View style={[layoutStyle,innerStyle]} onLayout={onWrapperLayout}>
+  // const layoutStyle = dir === 'x' ? { width: defaultWidth, height: defaultHeight } : { width: defaultWidth }
+  return (<View style={[innerStyle]} onLayout={onWrapperLayout}>
       {renderScrollView(pages)}
       {props.showsPagination && renderPagination()}
   </View>)
