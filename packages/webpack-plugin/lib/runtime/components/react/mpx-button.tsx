@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
 })
 
 const getOpenTypeEvent = (openType: OpenType) => {
-  if (!(globalThis as any)?.__mpx?.config?.rnConfig) {
+  if (!global.__mpx?.config?.rnConfig) {
     throwReactWarning('[Mpx runtime warn]: Environment not supported')
     return
   }
@@ -137,7 +137,7 @@ const getOpenTypeEvent = (openType: OpenType) => {
     return
   }
 
-  const event = (globalThis as any).__mpx.config.rnConfig?.openTypeHandler?.[eventName]
+  const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
   if (!event) {
     throwReactWarning(`[Mpx runtime warn]: Unregistered ${eventName} event`)
     return
