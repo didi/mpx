@@ -54,6 +54,14 @@ module.exports = function (css, map) {
     }
 
     if (mode === 'web' || isReact(mode)) {
+      if (queryObj.scoped) {
+        plugins.push(scopeId({ id }))
+        delete queryObj.scoped
+        const newResourceQuery = Object.keys(queryObj)
+          .map(key => `${key}=${encodeURIComponent(queryObj[key])}`)
+          .join('&')
+        this.resourceQuery = `?${newResourceQuery}`
+      }
       plugins.push(transSpecial({ id }))
     }
 

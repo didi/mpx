@@ -2207,29 +2207,56 @@ function processWebExternalClassesHack (el, options) {
   // 处理externalClasses多层透传
   const isComponent = isComponentNode(el, options)
   if (isComponent) {
-    options.externalClasses.forEach((classLikeAttrName) => {
-      const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+    // options.externalClasses.forEach((classLikeAttrName) => {
+    //   const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+    //   if (classLikeAttrValue) {
+    //     const classNames = classLikeAttrValue.split(/\s+/)
+    //     const replacements = []
+    //     options.externalClasses.forEach((className) => {
+    //       const index = classNames.indexOf(className)
+    //       if (index > -1) {
+    //         replacements.push(`$attrs[${stringify(className)}]`)
+    //         classNames.splice(index, 1)
+    //       }
+    //     })
+    //
+    //     if (classNames.length) {
+    //       replacements.unshift(stringify(classNames.join(' ')))
+    //     }
+    //
+    //     addAttrs(el, [{
+    //       name: ':' + classLikeAttrName,
+    //       value: `[${replacements}].join(' ')`
+    //     }])
+    //   }
+    // })
+    const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+    classLikeAttrNames.forEach((classLikeAttrName) => {
+      let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
       if (classLikeAttrValue) {
-        const classNames = classLikeAttrValue.split(/\s+/)
-        const replacements = []
         options.externalClasses.forEach((className) => {
-          const index = classNames.indexOf(className)
-          if (index > -1) {
-            replacements.push(`$attrs[${stringify(className)}]`)
-            classNames.splice(index, 1)
-          }
+          const reg = new RegExp('\\b' + className + '\\b', 'g')
+          const replacement = dash2hump(className)
+          classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
         })
-
-        if (classNames.length) {
-          replacements.unshift(stringify(classNames.join(' ')))
-        }
-
         addAttrs(el, [{
-          name: ':' + classLikeAttrName,
-          value: `[${replacements}].join(' ')`
+          name: classLikeAttrName,
+          value: classLikeAttrValue
         }])
       }
     })
+
+    if (hasScoped && isComponent) {
+      options.externalClasses.forEach((className) => {
+        const externalClass = getAndRemoveAttr(el, className).val
+        if (externalClass) {
+          addAttrs(el, [{
+            name: className,
+            value: `${externalClass} ${moduleId}`
+          }])
+        }
+      })
+    }
   }
 }
 
