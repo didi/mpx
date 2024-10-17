@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
+import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction } from 'react'
 import { Dimensions, StyleSheet, LayoutChangeEvent } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
@@ -444,12 +444,12 @@ export function splitProps<T extends Record<string, any>> (props: T) {
 }
 
 interface layoutConfig {
-  props: Record<string, any>;
-  hasSelfPercent: boolean;
-  setWidth:any
-  setHeight: any
-  onLayout?: any
-  nodeRef: any
+  props: Record<string, any>
+  hasSelfPercent: boolean
+  setWidth: Dispatch<SetStateAction<number>>
+  setHeight: Dispatch<SetStateAction<number>>
+  onLayout?: (event?: LayoutChangeEvent) => void
+  nodeRef: React.RefObject<any>
 }
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:layoutConfig) => {
   const layoutRef = useRef({})
