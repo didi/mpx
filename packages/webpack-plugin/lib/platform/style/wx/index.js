@@ -265,17 +265,18 @@ module.exports = function getSpec ({ warn, error }) {
       all: 'background'
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
+    const linerExp = /linear-gradient\(["']?(.*?)["']?\)/
     switch (prop) {
       case bgPropMap.image: {
         // background-image 仅支持背景图
         const imgUrl = value.match(urlExp)?.[0]
-        if (/.*linear-gradient*./.test(value)) {
-          error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
-        }
+        const linerVal = value.match(linerExp)?.[0]
         if (imgUrl) {
           return { prop, value: imgUrl }
+        } else if (linerVal) {
+          return { prop, value: linerVal }
         } else {
-          error(`[${prop}] only support value <url()>`)
+          error(`[${prop}] only support value <url()> or <linear-gradient()>`)
           return false
         }
       }
@@ -308,7 +309,6 @@ module.exports = function getSpec ({ warn, error }) {
             error(`background position value[${value}] does not support in React Native ${mode} environment!`)
           }
         })
-
         return { prop, value: values }
       }
       case bgPropMap.all: {
@@ -317,10 +317,11 @@ module.exports = function getSpec ({ warn, error }) {
         const values = value.trim().split(/\s(?![^()]*\))/)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
-          if (/.*linear-gradient*./.test(item)) {
-            error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
-          } else if (url) {
+          const linerVal = item.match(linerExp)?.[0]
+          if (url) {
             bgMap.push({ prop: bgPropMap.image, value: url })
+          } else if (linerVal) {
+            bgMap.push({ prop: bgPropMap.image, value: linerVal })
           } else if (verifyValues({ prop: bgPropMap.color, value: item }, false)) {
             bgMap.push({ prop: bgPropMap.color, value: item })
           } else if (verifyValues({ prop: bgPropMap.repeat, value: item }, false)) {
