@@ -7,7 +7,7 @@
     "lint": "eslint --ext .js,.ts,.tsx packages/",
     "fix": "eslint --fix --ext .js,.ts,.tsx packages/",
     "lint:js": "eslint --ext .js packages/",
-    "test": "node ./test",
+    "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
     "docs:build": "vuepress build docs-vuepress",
