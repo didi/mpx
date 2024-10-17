@@ -16,6 +16,7 @@ export default class InterceptorManager {
   constructor () {
     // 双队列数组, 0 为 fulfilled 队列，1 为 rejected 队列
     this.interceptors = [[], []]
+    this.executionTimes = []; // 用于存储每个拦截器的执行时间
   }
   /**
    * {
@@ -43,7 +44,11 @@ export default class InterceptorManager {
       rejected = rejected.reject
     }
     const fulfilledFn = (result) => {
+      const startTime = Date.now();
       const returned = isFunction(fulfilled) ? fulfilled(result) : result
+      const endTime = Date.now();
+      const executionTime = endTime - startTime;
+      this.executionTimes.push({ type: 'fulfilled', time: executionTime });
       return returned === undefined ? result : returned
     }
     const RejectedFn = (reason) => {
