@@ -443,7 +443,7 @@ export function splitProps<T extends Record<string, any>> (props: T) {
   })
 }
 
-interface layoutConfig {
+interface LayoutConfig {
   props: Record<string, any>
   hasSelfPercent: boolean
   setWidth: Dispatch<SetStateAction<number>>
@@ -451,7 +451,7 @@ interface layoutConfig {
   onLayout?: (event?: LayoutChangeEvent) => void
   nodeRef: React.RefObject<any>
 }
-export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:layoutConfig) => {
+export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
   const layoutStyle: Record<string, any> = hasLayoutRef.current ? {} : DEFAULT_UNLAY_STYLE
