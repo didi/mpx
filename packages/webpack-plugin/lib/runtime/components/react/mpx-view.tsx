@@ -552,7 +552,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     'hover-style',
     'hover-class',
     'enable-offset',
-    'enable-background-image'
+    'enable-background-image',
+    'enable-var',
+    'external-var-context',
+    'parent-font-size',
+    'parent-width',
+    'parent-height'
   ], {
     layoutRef
   })
