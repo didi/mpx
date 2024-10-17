@@ -83,7 +83,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     ...layoutProps
   }, [
     'children',
-    'style',
     'bindsubmit',
     'bindreset'
   ], { layoutRef })
