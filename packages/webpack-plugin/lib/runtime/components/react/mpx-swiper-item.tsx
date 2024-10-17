@@ -34,7 +34,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  const { textStyle } = splitStyle(normalStyle)
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const onLayout = (e: LayoutChangeEvent) => {
     if (hasPercent) {
@@ -60,7 +60,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     <View
       ref={nodeRef}
       data-itemId={props['item-id']}
-      style={[style]}
+      style={[innerStyle]}
       {...innerProps}>
        {
         wrapChildren(
