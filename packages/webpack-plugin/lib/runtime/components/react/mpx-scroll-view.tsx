@@ -34,9 +34,10 @@
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
+import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useTransformStyle } from './utils'
 import { wrapChildren } from './common'
 
 interface ScrollViewProps {
@@ -159,7 +160,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   })
   if (scrollX && scrollY) {
-    throwReactWarning('[Mpx runtime warn]: scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
+    warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
   }
   useEffect(() => {
     if (

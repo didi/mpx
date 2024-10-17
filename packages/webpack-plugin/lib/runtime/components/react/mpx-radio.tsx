@@ -12,10 +12,11 @@ import {
   NativeSyntheticEvent,
   LayoutChangeEvent
 } from 'react-native'
+import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useTransformStyle } from './utils'
 import Icon from './mpx-icon'
 import { wrapChildren } from './common'
 
@@ -117,7 +118,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
-      throwReactWarning('[Mpx runtime warn]: Radio does not support background image-related styles!')
+      warn('Radio does not support background image-related styles!')
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {

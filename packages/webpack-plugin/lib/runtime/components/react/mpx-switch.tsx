@@ -6,12 +6,13 @@
  */
 import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
+import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-import { throwReactWarning, useTransformStyle } from './utils'
+import { useTransformStyle } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -94,7 +95,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }

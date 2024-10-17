@@ -23,10 +23,11 @@ import {
   NativeSyntheticEvent,
   LayoutChangeEvent
 } from 'react-native'
+import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useTransformStyle } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 import { wrapChildren } from './common'
 
@@ -122,7 +123,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
-      throwReactWarning('[Mpx runtime warn]: Checkbox does not support background image-related styles!')
+      warn('Checkbox does not support background image-related styles!')
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {

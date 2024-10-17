@@ -8,10 +8,10 @@ import {
   NativeSyntheticEvent,
   LayoutChangeEvent
 } from 'react-native'
-import { noop } from '@mpxjs/utils'
+import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useTransformStyle } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 import { wrapChildren } from './common'
 
@@ -58,7 +58,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
-      throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
+      warn('Label does not support background image-related styles!')
     }
 
     const contextRef: LabelContextValue = useRef({

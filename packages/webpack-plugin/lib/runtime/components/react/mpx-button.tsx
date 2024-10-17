@@ -45,7 +45,8 @@ import {
   NativeSyntheticEvent,
   LayoutChangeEvent
 } from 'react-native'
-import { splitProps, splitStyle, throwReactWarning, useTransformStyle } from './utils'
+import { warn } from '@mpxjs/utils'
+import { splitProps, splitStyle, useTransformStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -128,18 +129,18 @@ const styles = StyleSheet.create({
 
 const getOpenTypeEvent = (openType: OpenType) => {
   if (!global.__mpx?.config?.rnConfig) {
-    throwReactWarning('[Mpx runtime warn]: Environment not supported')
+    warn('Environment not supported')
     return
   }
   const eventName = OpenTypeEventsMap.get(openType)
   if (!eventName) {
-    throwReactWarning(`[Mpx runtime warn]: open-type not support ${openType}`)
+    warn(`open-type not support ${openType}`)
     return
   }
 
   const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
   if (!event) {
-    throwReactWarning(`[Mpx runtime warn]: Unregistered ${eventName} event`)
+    warn(`Unregistered ${eventName} event`)
     return
   }
 
@@ -298,7 +299,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
   if (backgroundStyle) {
-    throwReactWarning('[Mpx runtime warn]: Button does not support background image-related styles!')
+    warn('Button does not support background image-related styles!')
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {

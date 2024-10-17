@@ -55,7 +55,8 @@ import {
   TextInputSubmitEditingEventData,
   LayoutChangeEvent
 } from 'react-native'
-import { parseInlineStyle, useUpdateEffect, throwReactWarning, useTransformStyle } from './utils'
+import { warn } from '@mpxjs/utils'
+import { parseInlineStyle, useUpdateEffect, useTransformStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue } from './context'
@@ -376,7 +377,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }

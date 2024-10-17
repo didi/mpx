@@ -14,10 +14,11 @@ import {
   ViewStyle,
   LayoutChangeEvent
 } from 'react-native'
+import { warn } from '@mpxjs/utils'
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning, useTransformStyle } from './utils'
+import { useTransformStyle } from './utils'
 import { wrapChildren } from './common'
 
 export interface CheckboxGroupProps {
@@ -121,7 +122,7 @@ const CheckboxGroup = forwardRef<
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }

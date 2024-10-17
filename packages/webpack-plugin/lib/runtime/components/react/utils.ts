@@ -11,12 +11,6 @@ export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
 
-export const throwReactWarning = (message: string) => {
-  setTimeout(() => {
-    console.warn(message)
-  }, 0)
-}
-
 export function rpx (value: number) {
   const { width } = Dimensions.get('screen')
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
