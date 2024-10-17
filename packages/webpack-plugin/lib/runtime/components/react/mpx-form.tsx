@@ -10,8 +10,7 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, useLayout } from './utils'
-import { wrapChildren } from './common'
+import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren } from './utils'
 interface FormProps {
   style?: Record<string, any>;
   children: ReactNode;
@@ -84,11 +83,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   }
 
   const innerProps = useInnerProps(props, {
+    style: { ...innerStyle, ...layoutStyle },
     ref: formRef,
     ...layoutProps
   }, [
-    'style',
-    'children',
     'bindsubmit',
     'bindreset'
   ], { layoutRef })
@@ -96,7 +94,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   return (
     <View
       {...innerProps}
-      style= {{ ...innerStyle, ...layoutStyle }}
     >
       <FormContext.Provider value={{ formValuesMap, submit, reset }}>
         {
@@ -104,9 +101,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
             props,
             {
               hasVarDec,
-              varContext: varContextRef.current
-            },
-            {
+              varContext: varContextRef.current,
               textStyle,
               textProps
             }
