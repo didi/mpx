@@ -430,7 +430,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
 
         if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle('dark-content')
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
           ReactNative.StatusBar.setTranslucent(true)
           ReactNative.StatusBar.setBackgroundColor('transparent')
         }
