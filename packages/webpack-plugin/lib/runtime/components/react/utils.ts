@@ -253,19 +253,6 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
-function transformLineHeight (styleObj: Record<string, any>) {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    const hasFontSize = hasOwn(styleObj, 'fontSize')
-    if (!hasFontSize) {
-      warn('The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
-    }
-    const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
-    lineHeight = (parseFloat(lineHeight) / 100) * fontSize
-    styleObj.lineHeight = lineHeight
-  }
-}
-
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
