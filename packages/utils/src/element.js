@@ -31,7 +31,9 @@ function matchSelector (vnode, selectorGroups) {
     for (let i = 0; i < selectorGroups.length; i++) {
       const { id, classes } = selectorGroups[i]
       if (id === vnodeId) return true
-      if (classes.every((item) => vnodeClasses.includes(item))) return true
+      if (classes.length && classes.every((item) => vnodeClasses.includes(item))) {
+        return true
+      }
     }
   }
   return false
