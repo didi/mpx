@@ -15,11 +15,12 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
   selectable?: boolean
+  'user-select'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
-  'user-select'?: boolean
-  userSelect?: boolean
-  'disable-default-style'?: boolean
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
@@ -28,7 +29,10 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
-    'user-select': userSelect
+    'user-select': userSelect,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
   } = props
 
   const layoutRef = useRef({})
@@ -37,7 +41,13 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     normalStyle,
     hasVarDec,
     varContextRef
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
 
   const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
 
@@ -48,8 +58,11 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'children',
     'selectable',
     'user-select',
-    'useInherit',
-    'enable-offset'
+    'enable-var',
+    'external-var-context',
+    'parent-font-size',
+    'parent-width',
+    'parent-height'
   ], {
     layoutRef
   })

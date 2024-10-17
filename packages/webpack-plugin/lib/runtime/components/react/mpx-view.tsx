@@ -23,6 +23,9 @@ export interface _ViewProps extends ViewProps {
   'enable-background'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -421,7 +424,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
-    'enable-background': enableBackground
+    'enable-background': enableBackground,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -446,12 +452,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const {
     normalStyle,
-    hasPercent,
+    hasSelfPercent,
     hasVarDec,
     varContextRef,
-    setContainerWidth,
-    setContainerHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
 
   const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -505,10 +517,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   }
 
   const onLayout = (res: LayoutChangeEvent) => {
-    if (hasPercent) {
+    props.onLayout && props.onLayout(res)
+    if (hasSelfPercent) {
       const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
+      setWidth(width || 0)
+      setHeight(height || 0)
     }
     if (enableOffset) {
       nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
@@ -517,7 +530,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     }
   }
 
-  const needLayout = enableOffset || hasPercent
+  const needLayout = enableOffset || hasSelfPercent
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -534,7 +547,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-style',
     'hover-class',
     'enable-offset',
-    'enable-background-image'
+    'enable-background-image',
+    'enable-var',
+    'external-var-context',
+    'parent-font-size',
+    'parent-width',
+    'parent-height'
   ], {
     layoutRef
   })
