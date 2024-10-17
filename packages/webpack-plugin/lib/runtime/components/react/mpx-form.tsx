@@ -17,7 +17,10 @@ interface FormProps {
   children: ReactNode;
   'enable-offset'?: boolean;
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   bindsubmit?: (evt: {
     detail: {
       value: any;
@@ -32,7 +35,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const {
     style,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
   } = props
 
   const {
@@ -42,7 +48,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
