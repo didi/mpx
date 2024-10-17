@@ -18,7 +18,7 @@ export interface _ViewProps extends ViewProps {
   children?: ReactNode | ReactNode[]
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
-  'hover-stay-time'?: number
+  'hover-stay-time'?: number 
   'enable-offset'?: boolean
   'enable-background'?: boolean
   'enable-var'?: boolean
