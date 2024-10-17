@@ -451,19 +451,3 @@ export function splitProps<T extends Record<string, any>> (props: T): {
     innerProps: Partial<T>;
   }
 }
-
-export const useLayoutHook = ({ hasSelfPercent, enableOffset, setWidth, setHeight, layoutRef, nodeRef }, callback) => {
-  return (e: LayoutChangeEvent) => {
-    if (hasSelfPercent) {
-      const { width, height } = e?.nativeEvent?.layout || {}
-      setWidth(width || 0)
-      setHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-    callback && callback(e)
-  }
-}
