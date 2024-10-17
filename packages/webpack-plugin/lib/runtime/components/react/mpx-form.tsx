@@ -84,10 +84,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   }
 
   const innerProps = useInnerProps(props, {
-    style: { ...innerStyle, ...layoutStyle },
     ref: formRef,
     ...layoutProps
   }, [
+    'style',
     'children',
     'bindsubmit',
     'bindreset'
@@ -96,6 +96,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   return (
     <View
       {...innerProps}
+      style= {{ ...innerStyle, ...layoutStyle }}
     >
       <FormContext.Provider value={{ formValuesMap, submit, reset }}>
         {
