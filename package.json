@@ -40,5 +40,9 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@types/react": "^18.3.11",
+    "react-native-linear-gradient": "^2.8.3"
+  }
 }

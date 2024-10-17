@@ -50,7 +50,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     normalStyle,
     hasVarDec,
     varContextRef
-  } = useTransformStyle(style, { enableVar, externalVarContext, enablePercent: false })
+  } = useTransformStyle(style, { enableVar, externalVarContext })
 
   const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
 

@@ -63,10 +63,13 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+    },
+    getPageId () {
+      return pageId
     },
     __getProps () {
       const props = propsRef.current
@@ -92,7 +95,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       })
       return propsData
     },
-
     __resetInstance () {
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
@@ -258,7 +260,7 @@ function hasPageHook (mpxProxy, hookNames) {
   })
 }
 
-const routeContext = createContext(null)
+const RouteContext = createContext(null)
 
 const triggerPageStatusHook = (mpxProxy, event) => {
   mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
@@ -282,13 +284,7 @@ const triggerResizeEvent = (mpxProxy) => {
   }
 }
 
-function usePageContext (mpxProxy, instance) {
-  const pageId = useContext(routeContext)
-
-  instance.getPageId = () => {
-    return pageId
-  }
-
+function usePageEffect (mpxProxy, pageId) {
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
@@ -305,7 +301,6 @@ function usePageContext (mpxProxy, instance) {
         })
       }
     }
-
     return () => {
       unWatch && unWatch()
     }
@@ -349,11 +344,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
+    const pageId = useContext(RouteContext)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -384,7 +380,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     })
 
-    usePageContext(proxy, instance)
+    usePageEffect(proxy, pageId)
 
     useEffect(() => {
       if (type === 'page') {
@@ -445,14 +441,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         // todo custom portal host for active route
         createElement(Provider,
           null,
-          createElement(routeContext.Provider,
+          createElement(RouteContext.Provider,
             {
               value: currentPageId
             },
             createElement(defaultOptions,
               {
                 navigation,
-                route
+                route,
+                id: currentPageId
               }
             )
           )
