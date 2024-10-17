@@ -1,5 +1,5 @@
 import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { Dimensions, StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet, LayoutChangeEvent } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -10,6 +10,9 @@ export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
+export const DEFAULT_UNLAY_STYLE = {
+  opacity: 0
+}
 
 export const throwReactWarning = (message: string) => {
   setTimeout(() => {
@@ -438,4 +441,41 @@ export function splitProps<T extends Record<string, any>> (props: T) {
       return 'innerProps'
     }
   })
+}
+
+interface layoutConfig {
+  props: Record<string, any>;
+  hasSelfPercent: boolean;
+  setWidth:any
+  setHeight: any
+  onLayout?: any
+  nodeRef: any
+}
+export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:layoutConfig) => {
+  const layoutRef = useRef({})
+  const hasLayoutRef = useRef(false)
+  const layoutStyle: Record<string, any> = hasLayoutRef.current ? {} : DEFAULT_UNLAY_STYLE
+  const layoutProps: Record<string, any> = {}
+  if (hasSelfPercent || onLayout) {
+    layoutProps.onLayout = (e: LayoutChangeEvent) => {
+      hasLayoutRef.current = true
+      if (hasSelfPercent) {
+        const { width, height } = e?.nativeEvent?.layout || {}
+        setWidth(width || 0)
+        setHeight(height || 0)
+      }
+      if (props['enable-offset']) {
+        nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        })
+      }
+      onLayout && onLayout(e)
+      props.onLayout && props.onLayout(e)
+    }
+  }
+  return {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  }
 }

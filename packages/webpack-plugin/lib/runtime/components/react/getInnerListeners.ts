@@ -107,7 +107,7 @@ export const getCustomEvent = (
 const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
-  removeProps: RemoveProps = [],
+  useRemoveProps: RemoveProps = [],
   rawConfig?: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
@@ -130,6 +130,14 @@ const useInnerProps = (
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
   const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
+  const removeProps = [
+    'enable-var',
+    'external-var-context',
+    'parent-font-size',
+    'parent-width',
+    'parent-height',
+    ...useRemoveProps
+  ]
 
   propsRef.current = { ...props, ...additionalProps }
 
