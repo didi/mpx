@@ -33,17 +33,16 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     dotColor: props['indicator-color'] || 'rgba(0, 0, 0, .3)',
     activeDotColor: props['indicator-active-color'] || '#000000',
     horizontal: props.vertical !== undefined ? !props.vertical : true,
-    styleObj: props.style || {},
     previousMargin: props['previous-margin'] ? parseInt(props['previous-margin']) : 0,
     nextMargin: props['next-margin'] ? parseInt(props['next-margin']) : 0,
     enableOffset: props['enable-offset'] || true,
     enableVar: props['enable-var'] || false,
+    style: props.style || {},
     externalVarContext: props['external-var-context'],
     bindchange: props.bindchange,
     easingFunction: props['easing-function'] || 'default'
   }
-  const { nodeRef } = useNodesRef<ScrollView, SwiperProps>(props, ref, {
-  })
+  const { nodeRef } = useNodesRef<ScrollView, SwiperProps>(props, ref, {})
   const innerProps = useInnerProps(props, {
     ref: nodeRef
   }, [
@@ -51,14 +50,22 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     'indicator-color',
     'indicator-active-color',
     'previous-margin',
-    'next-margin'
+    'vertical',
+    'previous-margin',
+    'next-margin',
+    'enable-var',
+    'external-var-context',
+    'easing-function'
   ], { layoutRef: innerLayout })
+
   const getInnerLayout = (layout: MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
+
   return <Carouse
     getInnerLayout={getInnerLayout}
     innerProps={innerProps}
+    {...innerProps}
     {...swiperProp}>
     {children}
   </Carouse>

@@ -1,13 +1,13 @@
 /**
  * swiper 实现
  */
-import { Animated, View, ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint, Platform } from 'react-native'
+import { Animated, View, ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent, NativeScrollPoint, Platform, LayoutChangeEvent } from 'react-native'
 import { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { VarContext } from '../context'
-import { useTransformStyle } from '../utils'
+import { useTransformStyle, splitStyle, splitProps } from '../utils'
+import { wrapChildren } from '../common'
 
 /**
  * 默认的Style类型
@@ -48,7 +48,8 @@ const styles: { [key: string]: Object } = {
 const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, CarouseProps>((props, ref): JSX.Element => {
   // 默认取水平方向的width
   const { width } = Dimensions.get('window')
-  const { styleObj, previousMargin = 0, nextMargin = 0, enableVar, externalVarContext } = props
+  const { style, previousMargin = 0, nextMargin = 0, enableVar, externalVarContext } = props
+  const styleObj = JSON.parse(JSON.stringify(style || ''))
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   const totalElements = Array.isArray(newChild) ? newChild.length : (newChild ? 1 : 0)
   const defaultHeight = (styleObj?.height || 150)
@@ -71,6 +72,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const { textProps } = splitProps(props)
   // 内部存储上一次的offset值
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView & View, CarouseProps>(props, ref, {
@@ -313,17 +316,18 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   /**
    * @desc: 水平方向时，获取元素的布局，更新, 其中如果传递100%时需要依赖measure计算元算的宽高
   */
-  function onWrapperLayout () {
+  function onWrapperLayout (e: LayoutChangeEvent) {
+    if (hasPercent) {
+      const { width, height } = e?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
     if (props.enableOffset) {
       scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
         layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         const isWDiff = state.width !== width
         const isHDiff = state.height !== height
         if (isWDiff || isHDiff) {
-          if (hasPercent) {
-            setContainerWidth(width || 0)
-            setContainerHeight(height || 0)
-          }
           const changeState = {
             width: isWDiff ? width : state.width,
             height: isHDiff ? height : state.height
@@ -352,12 +356,13 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   }
 
   function renderScrollView (pages: ReactNode) {
+    // const offsetsArray = []
     const scrollElementProps = {
       ref: scrollViewRef,
       horizontal: props.horizontal,
       pagingEnabled: false,
       // snapToOffsets: true,
-      decelerationRate: 0.99, // 'fast'
+      decelerationRate: 0.80, // 'fast'
       showsHorizontalScrollIndicator: false,
       showsVerticalScrollIndicator: false,
       bounces: false,
@@ -447,17 +452,22 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
         } else if (i === pages.length && typeof width === 'number') {
           nextMargin && (extraStyle.marginRight = nextMargin)
         }
-        const realElement = (
-          <View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>
-            {children[+page]}
-          </View>
-        )
-        if (hasVarDec && varContextRef.current) {
-          const wrapChild = <VarContext.Provider value={varContextRef.current}>{realElement}</VarContext.Provider>
-          return wrapChild
-        } else {
-          return realElement
-        }
+        // return (<View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>{children[+page]}</View>)
+        return (<View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>
+          {wrapChildren(
+            {
+              children: children[+page]
+            },
+            {
+              hasVarDec,
+              varContext: varContextRef.current
+            },
+            {
+              textStyle,
+              textProps
+            }
+          )}
+        </View>)
       })
       return arrElements
     } else {
@@ -466,12 +476,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
           {children}
         </View>
       )
-      if (hasVarDec && varContextRef.current) {
-        const wrapChild = <VarContext.Provider value={varContextRef.current}>{realElement}</VarContext.Provider>
-        return wrapChild
-      } else {
-        return realElement
-      }
+      return realElement
     }
   }
 
@@ -479,11 +484,10 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const strStyle: string = 'container_' + state.dir
   const eventProps = props.innerProps || {}
   const layoutStyle = dir === 'x' ? { width: defaultWidth, height: defaultHeight } : { width: defaultWidth }
-  return (<View style={[layoutStyle]}>
+  return (<View style={[{ display: 'flex' }]} onLayout={onWrapperLayout}>
     <View
       style={[styles[strStyle], layoutStyle]}
-      {...eventProps}
-      onLayout={onWrapperLayout}>
+      {...eventProps}>
       {renderScrollView(pages)}
     </View>
     <View>{props.showsPagination && renderPagination()}</View>
