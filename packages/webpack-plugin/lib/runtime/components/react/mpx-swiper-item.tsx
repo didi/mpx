@@ -19,8 +19,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
-    style,
-    children
+    style
   } = props
 
   const { textProps } = splitProps(props)

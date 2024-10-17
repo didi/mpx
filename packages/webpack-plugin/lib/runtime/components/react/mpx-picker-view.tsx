@@ -3,8 +3,8 @@ import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradien
 import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { VarContext } from './context'
-import { parseInlineStyle, useTransformStyle } from './utils'
+import { wrapChildren } from './common'
+import { parseInlineStyle, useTransformStyle, splitStyle, splitProps } from './utils'
 /**
  * ✔ value
  * ✔ bindchange
@@ -76,6 +76,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
+  const { textStyle } = splitStyle(normalStyle)
+  const { textProps } = splitProps(props)
 
   const isSetW = indicatorW !== undefined ? 1 : 0
   const innerLayout = useRef({})
@@ -137,12 +139,19 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       ...extraProps
     }
     const realElement = React.cloneElement(child as ReactElement, childProps)
-    if (hasVarDec && varContextRef.current) {
-      const wrapChild = <VarContext.Provider value={varContextRef.current}>{realElement}</VarContext.Provider>
-      return wrapChild
-    } else {
-      return realElement
-    }
+    return wrapChildren(
+      {
+        children: realElement
+      },
+      {
+        hasVarDec,
+        varContext: varContextRef.current
+      },
+      {
+        textStyle,
+        textProps
+      }
+    )
   }
 
   const renderTopMask = () => {

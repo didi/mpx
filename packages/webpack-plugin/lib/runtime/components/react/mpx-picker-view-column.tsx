@@ -1,9 +1,9 @@
 
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
 import React, { forwardRef, useRef, useState, useEffect, ReactElement, ReactNode } from 'react'
-import { VarContext } from './context'
-import { useTransformStyle, splitStyle } from './utils'
+import { useTransformStyle, splitStyle, splitProps } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import { wrapChildren } from './common'
 interface ColumnProps {
   children: React.ReactNode,
   selectedIndex: number,
@@ -36,7 +36,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setContainerWidth,
     setContainerHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  const { innerStyle } = splitStyle(normalStyle)
+  const { textStyle } = splitStyle(normalStyle)
+  const { textProps } = splitProps(props)
+  // const { innerStyle } = splitStyle(normalStyle)
   // scrollView的ref
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {})
   // scrollView的布局存储
@@ -103,6 +105,22 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       const strKey = 'picker' + props.prefix + '-column' + index
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
       const iHeight = (arrHeight[0] || defaultItemHeight) as number
+      return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>
+        {wrapChildren(
+          {
+            children: item
+          },
+          {
+            hasVarDec,
+            varContext: varContextRef.current
+          },
+          {
+            textStyle,
+            textProps
+          }
+        )}
+      </View>
+      /*
       if (hasVarDec && varContextRef.current) {
         const wrapChild = (<VarContext.Provider value={varContextRef.current}>
           <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>{item}</View>
@@ -111,6 +129,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       } else {
         return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>{item}</View>
       }
+      */
     })
     const totalHeight = itemH * 5
     if (wrapperStyle.height && totalHeight !== wrapperStyle.height) {
