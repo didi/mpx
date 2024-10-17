@@ -5,7 +5,7 @@
  * ✔ bindreset
  */
 
-import { View, LayoutChangeEvent } from 'react-native'
+import { View } from 'react-native'
 import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
