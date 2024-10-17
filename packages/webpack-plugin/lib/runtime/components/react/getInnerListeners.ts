@@ -131,6 +131,7 @@ const useInnerProps = (
   const eventConfig: { [key: string]: string[] } = {}
   const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
   const removeProps = [
+    'enable-background',
     'enable-offset',
     'enable-var',
     'external-var-context',
