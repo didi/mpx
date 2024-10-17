@@ -107,7 +107,7 @@ export const getCustomEvent = (
 const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
-  useRemoveProps: RemoveProps = [],
+  userRemoveProps: RemoveProps = [],
   rawConfig?: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
@@ -136,7 +136,7 @@ const useInnerProps = (
     'parent-font-size',
     'parent-width',
     'parent-height',
-    ...useRemoveProps
+    ...userRemoveProps
   ]
 
   propsRef.current = { ...props, ...additionalProps }
