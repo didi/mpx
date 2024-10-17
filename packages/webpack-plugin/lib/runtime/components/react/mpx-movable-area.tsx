@@ -7,16 +7,21 @@ import { JSX, useState, useEffect, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
+import { useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
 interface MovableAreaProps {
   style?: Record<string, any>;
   children: ReactNode;
   width?: number;
   height?: number;
+  'enable-offset'?: boolean;
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { children, style = {}, width = 10, height = 10 } = props
+  const { style = {}, width = 10, height = 10, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'enable-offset': enableOffset } = props
   const [areaWidth, setAreaWidth] = useState(0)
   const [areaHeight, setAreaHeight] = useState(0)
 
@@ -27,15 +32,30 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     setAreaHeight(height)
   }, [width, height])
 
+  const {
+    hasPercent,
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
+
   const { nodeRef: movableViewRef } = useNodesRef(props, ref)
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width = 10, height = 10 } = e.nativeEvent.layout
     setAreaWidth(width)
     setAreaHeight(height)
-    movableViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
+    if (hasPercent) {
+      setContainerWidth(width)
+      setContainerHeight(height)
+    }
+    if (enableOffset) {
+      movableViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    }
   }
   const innerProps = useInnerProps(props, {
     ref: movableViewRef,
@@ -53,10 +73,18 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
           height: areaHeight,
           width: areaWidth,
           overflow: 'hidden',
-          ...style
+          ...normalStyle
         }}
       >
-        {children}
+      {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            varContext: varContextRef.current
+          }
+        )
+      }
       </View>
     </MovableAreaContext.Provider>
   )

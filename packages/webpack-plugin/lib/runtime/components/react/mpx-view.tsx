@@ -9,8 +9,10 @@ import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, clon
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { VarContext } from './context'
-import { parseUrl, PERCENT_REGEX, isText, splitStyle, splitProps, useTransformStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle } from './utils'
+
+import { wrapChildren } from './common'
+
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -394,25 +396,17 @@ interface WrapChildrenConfig {
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
+  textProps?: Record<string, any>
 }
 
-function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
-  const { textProps } = splitProps(props)
-  let { children } = props
-
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
-      }
-      return child
-    })
-  }
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
+function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {
+  const children = wrapChildren(props, {
+    hasVarDec,
+    varContext
+  }, {
+    textStyle,
+    textProps
+  })
 
   return [
     enableBackground ? wrapImage(backgroundStyle) : null,
@@ -420,7 +414,8 @@ function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textSty
   ]
 }
 
-const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
+const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
     'hover-style': hoverStyle,
@@ -568,14 +563,15 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       style={innerStyle}
     >
       {
-        wrapChildren(
+        wrapWithChildren(
           props,
           {
             hasVarDec,
             enableBackground: enableBackgroundRef.current,
             textStyle,
             backgroundStyle,
-            varContext: varContextRef.current
+            varContext: varContextRef.current,
+            textProps
           }
         )
       }

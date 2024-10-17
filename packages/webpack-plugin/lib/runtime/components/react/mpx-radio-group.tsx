@@ -11,29 +11,35 @@ import {
 import {
   View,
   NativeSyntheticEvent,
-  ViewStyle
+  ViewStyle,
+  LayoutChangeEvent
 } from 'react-native'
+import { warn } from '@mpxjs/utils'
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { useTransformStyle } from './utils'
+import { wrapChildren } from './common'
 
-export interface radioGroupProps {
+export interface RadioGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const radioGroup = forwardRef<
-  HandlerRef<View, radioGroupProps>,
-  radioGroupProps
+  HandlerRef<View, RadioGroupProps>,
+  RadioGroupProps
 >((props, ref): JSX.Element => {
   const {
     style = {},
     'enable-offset': enableOffset,
-    children,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     bindchange
   } = props
 
@@ -51,27 +57,47 @@ const radioGroup = forwardRef<
 
   const defaultStyle = {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
+  }
+
+  const styleObj = {
+    ...defaultStyle,
     ...style
   }
+
+  const {
+    normalStyle,
+    hasPercent,
+    hasVarDec,
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle
   })
 
-  const onLayout = () => {
-    nodeRef.current?.measure(
-      (
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        offsetLeft: number,
-        offsetTop: number
-      ) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      }
-    )
+  const onLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
+    if (enableOffset) {
+      nodeRef.current?.measure(
+        (
+          x: number,
+          y: number,
+          width: number,
+          height: number,
+          offsetLeft: number,
+          offsetTop: number
+        ) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        }
+      )
+    }
   }
 
   const getSelectionValue = (): string | undefined => {
@@ -95,7 +121,7 @@ const radioGroup = forwardRef<
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }
@@ -124,8 +150,8 @@ const radioGroup = forwardRef<
     props,
     {
       ref: nodeRef,
-      style: defaultStyle,
-      ...(enableOffset ? { onLayout } : {})
+      style: normalStyle,
+      ...(enableOffset || hasPercent ? { onLayout } : {})
     },
     ['enable-offset'],
     {
@@ -136,7 +162,15 @@ const radioGroup = forwardRef<
   return (
     <View {...innerProps}>
       <RadioGroupContext.Provider value={{ groupValue, notifyChange }}>
-        {children}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec,
+              varContext: varContextRef.current
+            }
+          )
+        }
       </RadioGroupContext.Provider>
     </View>
   )

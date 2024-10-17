@@ -14,11 +14,15 @@ export interface SwiperProps {
   'indicator-color'?: string;
   'indicator-active-color'?: string;
   vertical?: boolean;
-  style?: Object;
+  style: {
+    [key: string]: any
+  };
   'easing-function'?: EaseType;
   'previous-margin'?: string;
   'next-margin'?: string;
   'enable-offset'?: boolean;
+  'enable-var': boolean;
+  'external-var-context'?: Record<string, any>;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
@@ -38,12 +42,13 @@ export interface CarouseProps {
   nextMargin?: number;
   enableOffset?: boolean;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
-  getInnerLayout: Function,
+  getInnerLayout: Function;
   innerProps: Object;
-  styleObj: {
-    height?: number;
-    width?: number
+  style: {
+    [key: string]: any
   };
+  enableVar: boolean;
+  externalVarContext?: Record<string, any>;
 }
 
 export interface CarouseState {
