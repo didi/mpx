@@ -10,7 +10,7 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle } from './utils'
+import { useTransformStyle, splitProps, splitStyle, useLayoutHook } from './utils'
 
 import { wrapChildren } from './common'
 
@@ -40,30 +40,24 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   } = props
 
   const {
-    hasPercent,
+    hasSelfPercent,
     normalStyle,
     hasVarDec,
     varContextRef,
-    setContainerWidth,
-    setContainerHeight
+    setWidth,
+    setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const { nodeRef: formRef } = useNodesRef(props, ref)
 
-  const onLayout = (e: LayoutChangeEvent) => {
-    if (hasPercent) {
-      const { width, height } = e?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-    if (enableOffset) {
-      formRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-  }
+  const hasLayout = useRef(false)
+
+  const onLayout = useLayoutHook({ hasSelfPercent, enableOffset, setWidth, setHeight, layoutRef, nodeRef: formRef }, () => {
+    hasLayout.current = true
+    props.onLayout && props.onLayout()
+  })
 
   const submit = () => {
     const { bindsubmit } = props
