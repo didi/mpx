@@ -52,25 +52,17 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef
+    ref: nodeRef,
+    style: normalStyle,
+    selectable: !!selectable || !!userSelect
   }, [
-    'style',
-    'children',
-    'selectable',
-    'user-select',
-    'enable-var',
-    'external-var-context',
-    'parent-font-size',
-    'parent-width',
-    'parent-height'
+    'user-select'
   ], {
     layoutRef
   })
 
   return (
     <Text
-      style={normalStyle}
-      selectable={!!selectable || !!userSelect}
       {...innerProps}
     >
       {
