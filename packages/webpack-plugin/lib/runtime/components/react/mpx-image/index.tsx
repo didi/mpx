@@ -282,8 +282,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   ],
   {
     layoutRef
-  }
-  )
+  })
 
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
   //   return (
@@ -335,6 +334,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   )
 })
 
-Image.displayName = 'mpx-image'
+Image.displayName = 'MpxImage'
 
 export default Image

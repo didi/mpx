@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { NativeSyntheticEvent } from 'react-native'
 import { omit } from './utils'
 import eventConfigMap from './event.config'
 import {
@@ -102,6 +103,25 @@ export const getCustomEvent = (
     stopPropagation: oe.stopPropagation,
     preventDefault: oe.preventDefault
   }
+}
+
+export const injectCatchEvent = (props: Record<string, any>) => {
+  const eventHandlers: Record<string, any> = {}
+  const catchEventList = [
+    { name: 'onTouchStart', value: ['catchtouchstart'] },
+    { name: 'onTouchMove', value: ['catchtouchmove', 'catchvtouchmove', 'catchvhouchmove'] },
+    { name: 'onTouchEnd', value: ['catchtouchend'] }
+  ]
+  catchEventList.forEach(event => {
+    event.value.forEach(name => {
+      if (props[name] && !eventHandlers[event.name]) {
+        eventHandlers[event.name] = (e: NativeSyntheticEvent<TouchEvent>) => {
+          e.stopPropagation()
+        }
+      }
+    })
+  })
+  return eventHandlers
 }
 
 const useInnerProps = (

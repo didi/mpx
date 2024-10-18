@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback, useMemo } from 'react'
 import {
   View,
   Text,
@@ -25,14 +25,17 @@ export interface LabelProps {
 
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   (props, ref): JSX.Element => {
+    const propsRef = useRef({} as LabelProps)
+
     const {
       style = {},
       'enable-offset': enableOffset,
-      children,
-      bindtap
+      children
     } = props
 
     const { textStyle, imageStyle, innerStyle } = splitStyle(style)
+
+    propsRef.current = props
 
     if (imageStyle) {
       throwReactWarning('[Mpx runtime warn]: Label does not support background image-related styles!')
@@ -52,7 +55,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       defaultStyle
     })
 
-    const onLayout = () => {
+    const onLayout = useCallback(() => {
       nodeRef.current?.measure(
         (
           x: number,
@@ -65,12 +68,13 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
           layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
         }
       )
-    }
+    }, [])
 
-    const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
+    const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
+      const { bindtap } = propsRef.current
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
       contextRef.current.triggerChange?.(evt)
-    }
+    }, [])
 
     const wrapChildren = (
       children: ReactNode,
@@ -111,6 +115,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   }
 )
 
-Label.displayName = 'mpx-label'
+Label.displayName = 'MpxLabel'
 
 export default Label

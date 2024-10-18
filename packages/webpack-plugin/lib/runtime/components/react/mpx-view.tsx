@@ -574,6 +574,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   )
 })
 
-_View.displayName = 'mpx-view'
+_View.displayName = 'MpxView'
 
 export default _View

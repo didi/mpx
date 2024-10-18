@@ -95,7 +95,7 @@ export const getRestProps = (transferProps: any = {}, originProps: any = {}, del
 export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName === 'mpx-text' || displayName === 'Text'
+    return displayName === 'MpxText' || displayName === 'Text'
   }
   return false
 }
