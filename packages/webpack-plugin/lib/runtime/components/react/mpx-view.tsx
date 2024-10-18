@@ -179,7 +179,7 @@ function calculateSizePosition (h: number, ch: number, val: string): number {
   if (!h || !ch) return 0
 
   // 百分比需要单独的计算
-  if (isPercent(h))) {
+  if (isPercent(h)) {
     h = ch * parseFloat(h) / 100
   }
 
