@@ -4,21 +4,14 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
-import {
-  View,
-  StyleSheet,
-  ViewStyle,
-  NativeSyntheticEvent,
-  LayoutChangeEvent
-} from 'react-native'
+import { JSX, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
+import { View, StyleSheet, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import Icon from './mpx-icon'
-import { wrapChildren } from './common'
 
 export interface RadioProps {
   value?: string
@@ -29,6 +22,9 @@ export interface RadioProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -78,14 +74,14 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       checked = false,
       color = '#09BB07',
       style = [],
-      'enable-offset': enableOffset,
       'enable-var': enableVar,
       'external-var-context': externalVarContext,
+      'parent-font-size': parentFontSize,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight,
       bindtap,
       catchtap
     } = props
-
-    const layoutRef = useRef({})
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
@@ -104,21 +100,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const styleObj = {
       ...styles.container,
       ...style
-    }
-
-    const {
-      normalStyle,
-      hasPercent,
-      hasVarDec,
-      varContextRef,
-      setContainerWidth,
-      setContainerHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
-
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
-
-    if (backgroundStyle) {
-      warn('Radio does not support background image-related styles!')
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -145,32 +126,27 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
     }
 
+    const {
+      hasSelfPercent,
+      normalStyle,
+      hasVarDec,
+      varContextRef,
+      setWidth,
+      setHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+    if (backgroundStyle) {
+      warn('Radio does not support background image-related styles!')
+    }
+
     const { nodeRef } = useNodesRef(props, ref, {
       defaultStyle,
       change: onChange
     })
 
-    const onLayout = (res: LayoutChangeEvent) => {
-      if (hasPercent) {
-        const { width, height } = res?.nativeEvent?.layout || {}
-        setContainerWidth(width || 0)
-        setContainerHeight(height || 0)
-      }
-      if (enableOffset) {
-        nodeRef.current?.measure(
-          (
-            x: number,
-            y: number,
-            width: number,
-            height: number,
-            offsetLeft: number,
-            offsetTop: number
-          ) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          }
-        )
-      }
-    }
+    const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     if (groupContext) {
       groupValue = groupContext.groupValue
@@ -185,12 +161,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       props,
       {
         ref: nodeRef,
-        style: innerStyle,
+        style: { ...innerStyle, ...layoutStyle },
+        ...layoutProps,
         bindtap: onTap,
-        catchtap: catchTap,
-        ...(enableOffset || hasPercent ? { onLayout } : {})
+        catchtap: catchTap
       },
-      ['enable-offset'],
+      [],
       {
         layoutRef
       }
@@ -238,9 +214,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
             props,
             {
               hasVarDec,
-              varContext: varContextRef.current
-            },
-            {
+              varContext: varContextRef.current,
               textStyle,
               textProps
             }

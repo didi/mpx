@@ -6,7 +6,6 @@
  */
 import {
   JSX,
-  useRef,
   useState,
   forwardRef,
   useEffect,
@@ -15,21 +14,18 @@ import {
   Dispatch,
   SetStateAction
 } from 'react'
-
 import {
   View,
   StyleSheet,
   ViewStyle,
-  NativeSyntheticEvent,
-  LayoutChangeEvent
+  NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitProps, splitStyle, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
-import { wrapChildren } from './common'
 
 interface Selection {
   value?: string
@@ -44,6 +40,9 @@ export interface CheckboxProps extends Selection {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -86,14 +85,14 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       checked = false,
       color = '#09BB07',
       style = {},
-      'enable-offset': enableOffset,
       'enable-var': enableVar,
       'external-var-context': externalVarContext,
+      'parent-font-size': parentFontSize,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight,
       bindtap,
       catchtap
     } = props
-
-    const layoutRef = useRef({})
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
@@ -109,21 +108,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const styleObj = {
       ...styles.container,
       ...style
-    }
-
-    const {
-      normalStyle,
-      hasPercent,
-      hasVarDec,
-      varContextRef,
-      setContainerWidth,
-      setContainerHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
-
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
-
-    if (backgroundStyle) {
-      warn('Checkbox does not support background image-related styles!')
     }
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -148,31 +132,26 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       onChange(evt)
     }
 
+    const {
+      hasSelfPercent,
+      normalStyle,
+      hasVarDec,
+      varContextRef,
+      setWidth,
+      setHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
     const { nodeRef } = useNodesRef(props, ref, {
       defaultStyle,
       change: onChange
     })
 
-    const onLayout = (res: LayoutChangeEvent) => {
-      if (hasPercent) {
-        const { width, height } = res?.nativeEvent?.layout || {}
-        setContainerWidth(width || 0)
-        setContainerHeight(height || 0)
-      }
-      if (enableOffset) {
-        nodeRef.current?.measure(
-          (
-            x: number,
-            y: number,
-            width: number,
-            height: number,
-            offsetLeft: number,
-            offsetTop: number
-          ) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          }
-        )
-      }
+    const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
+
+    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+    if (backgroundStyle) {
+      warn('Checkbox does not support background image-related styles!')
     }
 
     const labelContext = useContext(LabelContext)
@@ -190,12 +169,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       props,
       {
         ref: nodeRef,
-        style: innerStyle,
+        style: { ...innerStyle, ...layoutStyle },
+        ...layoutProps,
         bindtap: onTap,
-        catchtap: catchTap,
-        ...(enableOffset || hasPercent ? { onLayout } : {})
+        catchtap: catchTap
       },
-      ['enable-offset'],
+      [],
       {
         layoutRef
       }
@@ -239,9 +218,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
             props,
             {
               hasVarDec,
-              varContext: varContextRef.current
-            },
-            {
+              varContext: varContextRef.current,
               textStyle,
               textProps
             }

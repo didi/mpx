@@ -2,18 +2,12 @@
  * ✘ for
  */
 import { JSX, useRef, forwardRef, ReactNode } from 'react'
-import {
-  View,
-  ViewStyle,
-  NativeSyntheticEvent,
-  LayoutChangeEvent
-} from 'react-native'
+import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import { LabelContext, LabelContextValue } from './context'
-import { wrapChildren } from './common'
 
 export interface LabelProps {
   for?: string
@@ -21,6 +15,9 @@ export interface LabelProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -31,9 +28,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const {
       style = {},
-      'enable-offset': enableOffset,
       'enable-var': enableVar,
       'external-var-context': externalVarContext,
+      'parent-font-size': parentFontSize,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight,
       bindtap
     } = props
 
@@ -47,13 +46,17 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     }
 
     const {
+      hasSelfPercent,
       normalStyle,
-      hasPercent,
       hasVarDec,
       varContextRef,
-      setContainerWidth,
-      setContainerHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+      setWidth,
+      setHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+    const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
+
+    const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -65,34 +68,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       triggerChange: noop
     })
 
-    const layoutRef = useRef({})
-
-    const { nodeRef } = useNodesRef(props, ref, {
-      defaultStyle
-    })
-
-    const onLayout = (res: LayoutChangeEvent) => {
-      if (hasPercent) {
-        const { width, height } = res?.nativeEvent?.layout || {}
-        setContainerWidth(width || 0)
-        setContainerHeight(height || 0)
-      }
-      if (enableOffset) {
-        nodeRef.current?.measure(
-          (
-            x: number,
-            y: number,
-            width: number,
-            height: number,
-            offsetLeft: number,
-            offsetTop: number
-          ) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          }
-        )
-      }
-    }
-
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       contextRef.current.triggerChange?.(evt)
@@ -102,11 +77,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       props,
       {
         ref: nodeRef,
-        style: innerStyle,
-        bindtap: onTap,
-        ...(enableOffset || hasPercent ? { onLayout } : {})
+        style: { ...innerStyle, ...layoutStyle },
+        ...layoutProps,
+        bindtap: onTap
       },
-      ['enable-offset'],
+      [],
       {
         layoutRef
       }
@@ -119,9 +94,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
             props,
             {
               hasVarDec,
-              varContext: varContextRef.current
-            },
-            {
+              varContext: varContextRef.current,
               textStyle,
               textProps
             }

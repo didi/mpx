@@ -3,11 +3,11 @@
  * ✔ size
  * ✔ color
  */
-import { JSX, useRef, forwardRef } from 'react'
-import { Text, TextStyle, Image, LayoutChangeEvent } from 'react-native'
+import { JSX, forwardRef } from 'react'
+import { Text, TextStyle, Image } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useTransformStyle } from './utils'
+import { useLayout, useTransformStyle } from './utils'
 
 export type IconType =
   | 'success'
@@ -28,6 +28,9 @@ export interface IconProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 const IconTypeMap = new Map<IconType, string>([
@@ -49,9 +52,11 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       size = 23,
       color,
       style = {},
-      'enable-offset': enableOffset,
       'enable-var': enableVar,
-      'external-var-context': externalVarContext
+      'external-var-context': externalVarContext,
+      'parent-font-size': parentFontSize,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight
     } = props
 
     const uri = IconTypeMap.get(type)
@@ -64,39 +69,15 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
     }
 
     const {
+      hasSelfPercent,
       normalStyle,
-      hasPercent,
-      setContainerWidth,
-      setContainerHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+      setWidth,
+      setHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-    const layoutRef = useRef({})
+    const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
 
-    const { nodeRef } = useNodesRef(props, ref, {
-      defaultStyle
-    })
-
-    const onLayout = (res: LayoutChangeEvent) => {
-      if (hasPercent) {
-        const { width, height } = res?.nativeEvent?.layout || {}
-        setContainerWidth(width || 0)
-        setContainerHeight(height || 0)
-      }
-      if (enableOffset) {
-        nodeRef.current?.measure(
-          (
-            x: number,
-            y: number,
-            width: number,
-            height: number,
-            offsetLeft: number,
-            offsetTop: number
-          ) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          }
-        )
-      }
-    }
+    const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const innerProps = useInnerProps(
       props,
@@ -104,14 +85,13 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
         ref: nodeRef,
         style: {
           ...normalStyle,
+          ...layoutStyle,
           tintColor: color
         },
         source: { uri },
-        ...(enableOffset || hasPercent ? { onLayout } : {})
+        ...layoutProps
       },
-      [
-        'enable-offset'
-      ],
+      [],
       {
         layoutRef
       }
