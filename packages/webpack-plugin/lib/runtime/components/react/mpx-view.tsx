@@ -502,7 +502,7 @@ function normalizeBackgroundSize (backgroundSize: Exclude<ExtendedViewStyle['bac
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
   const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
-  const { src, linearInfo, type } = parseBgImage(backgroundImage)
+  const { type, src, linearInfo } = parseBgImage(backgroundImage)
 
   return {
     src,
