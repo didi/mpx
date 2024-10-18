@@ -132,7 +132,7 @@ export function splitStyle (styleObj: Object) {
   })
 }
 
-const percentRule: Record<string, string> = {
+const selfPercentRule: Record<string, 'height' | 'width'> = {
   translateX: 'width',
   translateY: 'height',
   borderTopLeftRadius: 'width',
@@ -142,16 +142,10 @@ const percentRule: Record<string, string> = {
   borderRadius: 'width'
 }
 
-const heightPercentRule: Record<string, boolean> = {
-  translateY: true,
+const parentHeightPercentRule: Record<string, boolean> = {
+  height: true,
   top: true,
-  bottom: true,
-  marginTop: true,
-  marginBottom: true,
-  marginVertical: true,
-  paddingTop: true,
-  paddingBottom: true,
-  paddingVertical: true
+  bottom: true
 }
 
 // todo calc时处理角度和时间等单位
@@ -167,18 +161,47 @@ function formatValue (value: string) {
   return value
 }
 
-function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array<Array<string>>, { width, height }: { width?: number, height?: number }) {
+interface PercentConfig {
+  fontSize?: number | string
+  width?: number
+  height?: number
+  parentFontSize?: number
+  parentWidth?: number
+  parentHeight?: number
+}
+
+function resolvePercent (value: string | number | undefined, key: string, percentConfig: PercentConfig): string | number | undefined {
+  if (!(typeof value === 'string' && PERCENT_REGEX.test(value))) return value
+  let base
+  let reason
+  if (key === 'fontSize') {
+    base = percentConfig.parentFontSize
+    reason = 'parent-font-size'
+  } else if (key === 'lineHeight') {
+    base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
+    reason = 'font-size'
+  } else if (selfPercentRule[key]) {
+    base = percentConfig[selfPercentRule[key]]
+    reason = selfPercentRule[key]
+  } else if (parentHeightPercentRule[key]) {
+    base = percentConfig.parentHeight
+    reason = 'parent-height'
+  } else {
+    base = percentConfig.parentWidth
+    reason = 'parent-width'
+  }
+  if (typeof base !== 'number') {
+    error(`[${key}] can not contain % unit unless you set [${reason}] with a number for the percent calculation.`)
+    return value
+  } else {
+    return parseFloat(value) / 100 * base
+  }
+}
+
+function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array<Array<string>>, percentConfig: PercentConfig) {
   percentKeyPaths.forEach((percentKeyPath) => {
     setStyle(styleObj, percentKeyPath, ({ target, key, value }) => {
-      const percentage = parseFloat(value) / 100
-      const type = percentRule[key]
-      if (type === 'height' && height) {
-        target[key] = percentage * height
-      } else if (type === 'width' && width) {
-        target[key] = percentage * width
-      } else {
-        target[key] = 0
-      }
+      target[key] = resolvePercent(value, key, percentConfig)
     })
   })
 }
@@ -230,38 +253,25 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
-function transformLineHeight (styleObj: Record<string, any>) {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    const hasFontSize = hasOwn(styleObj, 'fontSize')
-    if (!hasFontSize) {
-      warn('The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
-    }
-    const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
-    lineHeight = (parseFloat(lineHeight) / 100) * fontSize
-    styleObj.lineHeight = lineHeight
-  }
-}
-
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
+  parentFontSize?: number
+  parentWidth?: number
+  parentHeight?: number
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
   let hasVarUse = false
-  let hasPercent = false
-  let hasCalcUse = false
+  let hasSelfPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
   const calcKeyPaths: Array<Array<string>> = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
-  const setContainerWidth = setWidth
-  const setContainerHeight = setHeight
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
@@ -301,14 +311,15 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   function calcVisitor ({ value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
-      hasCalcUse = true
       calcKeyPaths.push(keyPath.slice())
     }
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(percentRule, key) && PERCENT_REGEX.test(value)) {
-      hasPercent = true
+    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+      hasSelfPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    } else if (key === 'fontSize' || key === 'lineHeight') {
       percentKeyPaths.push(keyPath.slice())
     }
   }
@@ -316,21 +327,22 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // traverse calc & percent
   traverseStyle(normalStyle, [percentVisitor, calcVisitor])
 
-  // apply percent
-  if (hasPercent) {
-    transformPercent(normalStyle, percentKeyPaths, { width, height })
+  const percentConfig = {
+    width,
+    height,
+    fontSize: normalStyle.fontSize,
+    parentWidth,
+    parentHeight,
+    parentFontSize
   }
 
-  function calcFormatter (value: string, key: string) {
+  // apply percent
+  transformPercent(normalStyle, percentKeyPaths, percentConfig)
+  // apply calc
+  transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
     if (PERCENT_REGEX.test(value)) {
-      if (key === 'width' || key === 'height') {
-        error(`calc() can not use % in ${key}.`)
-        return 0
-      }
-      hasPercent = true
-      const percentage = parseFloat(value) / 100
-      const isHeight = heightPercentRule[key]
-      return percentage * (isHeight ? height : width)
+      const resolved = resolvePercent(value, key, percentConfig)
+      return typeof resolved === 'number' ? resolved : 0
     } else {
       const formatted = formatValue(value)
       if (typeof formatted === 'number') {
@@ -340,23 +352,16 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
         return 0
       }
     }
-  }
-  // apply calc
-  if (hasCalcUse) {
-    transformCalc(normalStyle, calcKeyPaths, calcFormatter)
-  }
-  // transform lineHeight
-  transformLineHeight(normalStyle)
+  })
 
   return {
     normalStyle,
-    hasPercent,
+    hasSelfPercent,
     hasVarDec,
-    hasVarUse,
     enableVarRef,
     varContextRef,
-    setContainerWidth,
-    setContainerHeight
+    setWidth,
+    setHeight
   }
 }
 

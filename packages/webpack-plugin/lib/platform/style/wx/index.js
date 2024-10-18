@@ -233,11 +233,6 @@ module.exports = function getSpec ({ warn, error }) {
         suffix = ['Top', 'Right', 'Bottom', 'Left']
         break
     }
-    if (values.length === 1 && (calcExp.test(value) || cssVariableExp.test(value))) {
-      // calc() or var() 则分开输出
-      suffix = ['Vertical', 'Horizontal']
-      values.push(values[0])
-    }
     return values.map((value, index) => {
       const newProp = `${prop}${suffix[index] || ''}`
       // validate
