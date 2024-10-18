@@ -338,13 +338,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
-        if (disabled) return
         isMoving.value = true
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         if (isFirstTouch.value) {
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
+        handleTriggerMove(e)
+        if (disabled) return
         const changeX = changedTouches.x - startPosition.value.x
         const changeY = changedTouches.y - startPosition.value.y
         if (direction === 'horizontal' || direction === 'all') {
@@ -365,7 +366,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
-        handleTriggerMove(e)
       })
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet'
