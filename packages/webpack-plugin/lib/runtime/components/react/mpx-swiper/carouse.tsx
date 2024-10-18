@@ -116,27 +116,35 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   */
   function updateIndex (scrollViewOffset: NativeScrollPoint, useIndex = false) {
     const { nextIndex, nextOffset } = getNextConfig(scrollViewOffset)
-    internalsRef.current.offset = nextOffset
+    updateState(nextIndex, nextOffset)
+    // 更新完状态之后, 开启新的loop
+  }
+
+  /**
+   * 更新索引状态
+  */
+  function updateState (index: number, offset: { x: number, y: number}) {
+    internalsRef.current.offset = offset
     setState((preState) => {
       const newState = {
         ...preState,
-        index: nextIndex,
+        index: index,
         // offset用来指示当前scrollView的偏移量
-        offset: nextOffset
+        offset: offset
       }
       return newState
     })
     internalsRef.current.isScrolling = false
     // getCustomEvent
-    const eventData = getCustomEvent('change', {}, { detail: { current: nextIndex, source: 'touch' }, layoutRef: layoutRef })
+    const eventData = getCustomEvent('change', {}, { detail: { current: index, source: 'touch' }, layoutRef: layoutRef })
     props.bindchange && props.bindchange(eventData)
-    // 更新完状态之后, 开启新的loop
   }
 
   /**
    * @desc: 获取下一个位置的索引、scrollView的contentOffset、scrollTo到的offset
    * @desc: 包括正循环、反向循环、不循环
-   * 其中循环模式为了实现无缝链接, 会将结合contentOffset, 和 scrollTo的offset, 先scrollTo一个位置的坐标, 然后通过updateIndex设置真正的index和内容的offset,视觉上是无缝
+   * 其中循环模式为了实现无缝链接, 会将结合contentOffset, 和 scrollTo的offset,
+   * 先scrollTo一个位置的坐标, 然后通过updateIndex设置真正的index和内容的offset,视觉上是无缝
   */
   function getNextConfig (scrollViewOffset: NativeScrollPoint) {
     const step = state.dir === 'x' ? state.width : state.height
@@ -181,8 +189,11 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
       }
     }
     return {
+      // 下一个要滚动到的实际元素的索引
       nextIndex,
+      // 下一个要滚动到实际元素的offset
       nextOffset,
+      // scrollTo一个位置的坐标, 虚拟元素的位置
       autoMoveOffset,
       isAutoEnd
     }
@@ -216,7 +227,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     } else {
       if (!isAutoEnd) {
         scrollViewRef.current?.scrollTo({ x: nextOffset.x, y: nextOffset.y, animated: true })
-        // 这里包裹了一层contentOffset需要测试下
         onScrollEnd({
           nativeEvent: {
             contentOffset: {
@@ -226,23 +236,14 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
           }
         } as NativeSyntheticEvent<NativeScrollEvent>)
       } else {
-        // 同上
-        setTimeout(() => {
-          onScrollEnd({
-            nativeEvent: {
-              contentOffset: {
-                x: 0,
-                y: 0
-              }
-            }
-          } as NativeSyntheticEvent<NativeScrollEvent>)
-        }, 10)
+        // 安卓无法实现视觉的无缝连接, 只能回到真正的位置, 且安卓调用scrollTo不能触发onMomentumScrollEnd,还未找到为啥
         if (state.dir === 'x') {
           scrollViewRef.current?.scrollTo({ x: step, y: step, animated: true })
-          // scrollViewRef.current?.scrollTo({ x: autoMoveOffset['x'], y: autoMoveOffset['x'], animated: true })
+          // scrollViewRef.current?.scrollTo({ x: autoMoveOffset.x, y: autoMoveOffset.y, animated: true })
         } else {
-          scrollViewRef.current?.scrollTo({ x: autoMoveOffset.y, y: autoMoveOffset.y, animated: true })
+          scrollViewRef.current?.scrollTo({ x: autoMoveOffset.x, y: step, animated: true })
         }
+        updateState(0, nextOffset)
       }
     }
   }

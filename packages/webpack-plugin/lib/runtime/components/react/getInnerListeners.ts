@@ -127,7 +127,7 @@ export const injectCatchEvent = (props: Record<string, any>) => {
 const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
-  removeProps: RemoveProps = [],
+  userRemoveProps: RemoveProps = [],
   rawConfig?: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
@@ -150,6 +150,17 @@ const useInnerProps = (
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
   const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
+  const removeProps = [
+    'children',
+    'enable-background',
+    'enable-offset',
+    'enable-var',
+    'external-var-context',
+    'parent-font-size',
+    'parent-width',
+    'parent-height',
+    ...userRemoveProps
+  ]
 
   propsRef.current = { ...props, ...additionalProps }
 
