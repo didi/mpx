@@ -539,25 +539,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
+    style: innerStyle,
     ...needLayout ? { onLayout } : null,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
     })
   }, [
-    'style',
-    'children',
     'hover-start-time',
     'hover-stay-time',
     'hover-style',
-    'hover-class',
-    'enable-offset',
-    'enable-background-image',
-    'enable-var',
-    'external-var-context',
-    'parent-font-size',
-    'parent-width',
-    'parent-height'
+    'hover-class'
   ], {
     layoutRef
   })
@@ -565,7 +557,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   return (
     <View
       {...innerProps}
-      style={innerStyle}
     >
       {
         wrapChildren(
