@@ -6,7 +6,7 @@ const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function (template, {
   loaderContext,
-  // hasScoped,
+  hasScoped,
   hasComment,
   isNative,
   srcMode,
@@ -83,8 +83,7 @@ module.exports = function (template, {
           defs,
           decodeHTMLText,
           externalClasses,
-          // todo 后续输出web也采用mpx的scoped处理
-          hasScoped: false,
+          hasScoped,
           moduleId,
           filePath: resourcePath,
           i18n: null,
