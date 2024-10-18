@@ -14,7 +14,13 @@ export function warn (msg, location, e) {
   } else if (condition instanceof RegExp) {
     ignore = condition.test(msg)
   }
-  if (!ignore) return log('warn', msg, location, e)
+  if (!ignore) {
+    const warnHandler = global.__mpx?.config.warnHandler
+    if (isFunction(warnHandler)) {
+      warnHandler(msg, location, e)
+    }
+    return log('warn', msg, location, e)
+  }
 }
 
 export function error (msg, location, e) {
