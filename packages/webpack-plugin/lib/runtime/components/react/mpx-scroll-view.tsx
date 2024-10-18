@@ -34,9 +34,10 @@
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
+import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren } from './utils'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -58,6 +59,11 @@ interface ScrollViewProps {
   'scroll-top'?: number;
   'scroll-left'?: number;
   'enable-offset'?: boolean;
+  'enable-var'?: boolean;
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -91,11 +97,12 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
-const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((props: ScrollViewProps = {}, ref): JSX.Element => {
+const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
-    children,
     enhanced = false,
     bounces = true,
+    style = {},
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
@@ -106,8 +113,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'refresher-enabled': refresherEnabled,
     'refresher-default-style': refresherDefaultStyle,
     'refresher-background': refresherBackground,
-    'enable-offset': enableOffset,
-    'show-scrollbar': showScrollbar = true
+    'show-scrollbar': showScrollbar = true,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
   } = props
 
   const [refreshing, setRefreshing] = useState(true)
@@ -115,7 +126,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const snapScrollTop = useRef(0)
   const snapScrollLeft = useRef(0)
 
-  const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
@@ -129,6 +139,17 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
+
   const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {
     scrollOffset: scrollOptions,
     node: {
@@ -141,8 +162,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       scrollTo: scrollToOffset
     }
   })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
   if (scrollX && scrollY) {
-    throwReactWarning('[Mpx runtime warn]: scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
+    warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
   }
   useEffect(() => {
     if (
@@ -222,12 +246,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onLayout (e: LayoutChangeEvent) {
-    scrollOptions.current.visibleLength = selectLength(e.nativeEvent.layout)
-    if (enableOffset) {
-      scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
+    const layout = e.nativeEvent.layout || {}
+    scrollOptions.current.visibleLength = selectLength(layout)
   }
 
   function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
@@ -357,6 +377,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
+    style: { ...innerStyle, ...layoutStyle },
     pinchGestureEnabled: false,
     horizontal: scrollX && !scrollY,
     scrollEventThrottle: scrollEventThrottle,
@@ -369,9 +390,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     onContentSizeChange: onContentSizeChange,
     bindtouchstart: onScrollTouchStart,
     bindtouchmove: onScrollTouchMove,
-    onLayout,
     onScrollEndDrag,
-    onMomentumScrollEnd: onScrollEnd
+    onMomentumScrollEnd: onScrollEnd,
+    ...layoutProps
   }
   if (enhanced) {
     scrollAdditionalProps = {
@@ -381,7 +402,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'enable-offset',
     'scroll-x',
     'scroll-y',
     'enable-back-to-top',
@@ -426,7 +446,17 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           )
         : undefined}
     >
-      {children}
+       {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            varContext: varContextRef.current,
+            textStyle,
+            textProps
+          }
+        )
+      }
     </ScrollView>
   )
 })

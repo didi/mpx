@@ -4,15 +4,15 @@
  * ✔ disabled
  * ✔ color
  */
-import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
+import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
+import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-
-import { throwReactWarning } from './utils'
+import { useTransformStyle } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -22,6 +22,8 @@ interface _SwitchProps extends SwitchProps {
   disabled: boolean
   color: string
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -34,6 +36,8 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     disabled = false,
     color = '#04BE02',
     'enable-offset': enableOffset,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     bindchange,
     catchchange
   } = props
@@ -51,6 +55,19 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   if (formContext) {
     formValuesMap = formContext.formValuesMap
   }
+
+  const {
+    normalStyle,
+    hasPercent,
+    hasVarDec,
+    varContextRef,
+    setContainerWidth,
+    setContainerHeight
+  } = useTransformStyle(style, {
+    enableVar,
+    externalVarContext,
+    enableLineHeight: false
+  })
 
   useEffect(() => {
     setIsChecked(checked)
@@ -78,20 +95,29 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
 
-  const onLayout = () => {
-    nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
+  const onLayout = (res: LayoutChangeEvent) => {
+    if (hasPercent) {
+      const { width, height } = res?.nativeEvent?.layout || {}
+      setContainerWidth(width || 0)
+      setContainerHeight(height || 0)
+    }
+    if (enableOffset) {
+      nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      })
+    }
   }
+  const needLayout = enableOffset || hasPercent
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...enableOffset ? { onLayout } : {},
+    ...needLayout ? { onLayout } : {},
     ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
   }, [
     'style',
@@ -107,19 +133,19 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     return <CheckBox
       {...innerProps}
       color={color}
-      style={style}
+      style={normalStyle}
       checked={isChecked}
     />
   }
 
-  return (<Switch
+  return <Switch
     {...innerProps}
-    style={style}
+    style={normalStyle}
     value={isChecked}
     trackColor={{ false: '#FFF', true: color }}
     thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
     ios_backgroundColor="#FFF"
-  />)
+  />
 })
 
 _Switch.displayName = 'mpx-switch'
