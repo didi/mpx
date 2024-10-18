@@ -1,25 +1,13 @@
 /**
  * ✔ bindchange
  */
-import {
-  JSX,
-  useRef,
-  forwardRef,
-  ReactNode,
-  useContext
-} from 'react'
-import {
-  View,
-  NativeSyntheticEvent,
-  ViewStyle,
-  LayoutChangeEvent
-} from 'react-native'
+import { JSX, useRef, forwardRef, ReactNode, useContext } from 'react'
+import { View, NativeSyntheticEvent, ViewStyle } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useTransformStyle } from './utils'
-import { wrapChildren } from './common'
+import { useLayout, useTransformStyle, wrapChildren } from './utils'
 
 export interface RadioGroupProps {
   name: string
@@ -27,6 +15,9 @@ export interface RadioGroupProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -37,13 +28,13 @@ const radioGroup = forwardRef<
 >((props, ref): JSX.Element => {
   const {
     style = {},
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     bindchange
   } = props
-
-  const layoutRef = useRef({})
 
   const formContext = useContext(FormContext)
 
@@ -66,39 +57,17 @@ const radioGroup = forwardRef<
   }
 
   const {
+    hasSelfPercent,
     normalStyle,
-    hasPercent,
     hasVarDec,
     varContextRef,
-    setContainerWidth,
-    setContainerHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle
-  })
+  const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
 
-  const onLayout = (res: LayoutChangeEvent) => {
-    if (hasPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
-    }
-  }
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const getSelectionValue = (): string | undefined => {
     for (const key in groupValue) {
@@ -150,10 +119,10 @@ const radioGroup = forwardRef<
     props,
     {
       ref: nodeRef,
-      style: normalStyle,
-      ...(enableOffset || hasPercent ? { onLayout } : {})
+      style: { ...normalStyle, ...layoutStyle },
+      ...layoutProps
     },
-    ['enable-offset'],
+    [],
     {
       layoutRef
     }
