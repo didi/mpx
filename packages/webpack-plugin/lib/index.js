@@ -1812,7 +1812,6 @@ try {
         }
 
         if (isWeb(mpx.mode)) {
-          const mpxStyleOptions = queryObj.mpxStyleOptions
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
@@ -1837,8 +1836,7 @@ try {
             }
             if (loaderIndex > -1) {
               loaders.splice(loaderIndex + 1, 0, {
-                loader: styleCompilerPath,
-                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+                loader: styleCompilerPath
               })
             }
           }
