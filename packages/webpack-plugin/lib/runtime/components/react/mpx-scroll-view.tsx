@@ -37,8 +37,7 @@ import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } fr
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle } from './utils'
-import { wrapChildren } from './common'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren } from './utils'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -60,8 +59,11 @@ interface ScrollViewProps {
   'scroll-top'?: number;
   'scroll-left'?: number;
   'enable-offset'?: boolean;
-  'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-var'?: boolean;
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -111,10 +113,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'refresher-enabled': refresherEnabled,
     'refresher-default-style': refresherDefaultStyle,
     'refresher-background': refresherBackground,
-    'enable-offset': enableOffset,
     'show-scrollbar': showScrollbar = true,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
   } = props
 
   const [refreshing, setRefreshing] = useState(true)
@@ -122,7 +126,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const snapScrollTop = useRef(0)
   const snapScrollLeft = useRef(0)
 
-  const layoutRef = useRef({})
   const scrollOptions = useRef({
     contentLength: 0,
     offset: 0,
@@ -140,10 +143,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     normalStyle,
     hasVarDec,
     varContextRef,
-    hasPercent,
-    setContainerWidth,
-    setContainerHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -159,6 +162,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       scrollTo: scrollToOffset
     }
   })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
   if (scrollX && scrollY) {
     warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
   }
@@ -242,16 +248,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onLayout (e: LayoutChangeEvent) {
     const layout = e.nativeEvent.layout || {}
     scrollOptions.current.visibleLength = selectLength(layout)
-    if (hasPercent) {
-      const { width, height } = layout
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-    if (enableOffset) {
-      scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
   }
 
   function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
@@ -381,6 +377,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
+    style: { ...innerStyle, ...layoutStyle },
     pinchGestureEnabled: false,
     horizontal: scrollX && !scrollY,
     scrollEventThrottle: scrollEventThrottle,
@@ -393,9 +390,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     onContentSizeChange: onContentSizeChange,
     bindtouchstart: onScrollTouchStart,
     bindtouchmove: onScrollTouchMove,
-    onLayout,
     onScrollEndDrag,
-    onMomentumScrollEnd: onScrollEnd
+    onMomentumScrollEnd: onScrollEnd,
+    ...layoutProps
   }
   if (enhanced) {
     scrollAdditionalProps = {
@@ -405,8 +402,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'style',
-    'enable-offset',
     'scroll-x',
     'scroll-y',
     'enable-back-to-top',
@@ -440,7 +435,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   return (
     <ScrollView
       {...innerProps}
-      style={innerStyle}
       refreshControl={refresherEnabled
         ? (
         <RefreshControl
@@ -457,9 +451,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           props,
           {
             hasVarDec,
-            varContext: varContextRef.current
-          },
-          {
+            varContext: varContextRef.current,
             textStyle,
             textProps
           }
