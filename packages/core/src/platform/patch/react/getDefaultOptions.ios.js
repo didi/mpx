@@ -424,6 +424,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           },
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
+
+        if (__mpx_mode__ === 'android') {
+          ReactNative.StatusBar.setBarStyle('dark-content')
+          ReactNative.StatusBar.setTranslucent(true)
+          ReactNative.StatusBar.setBackgroundColor('transparent')
+        }
       }, [])
 
       navigation.insets = useSafeAreaInsets()
