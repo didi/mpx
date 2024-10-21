@@ -118,9 +118,9 @@ const applyHandlers = (handlers: Handler[], args: any[]) => {
 
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
 
-const isBackgroundSizeKeyword = (val: string | number) => typeof val === 'string' && /^cover|contain$/.test(val)
+const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
-const isNeedLayout = (preImageInfo: PreImageInfo) => {
+const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
   const { sizeList, backgroundPosition, linearInfo } = preImageInfo
   const [width, height] = sizeList
   const bp = backgroundPosition
@@ -195,7 +195,7 @@ function calculateSizePosition (h: number, ch: number, val: string): number {
 * h - 用户设置的高度
 * lh - 容器的高度
 * **/
-const calcImageSize = (h: NumberVal, lh: number) => {
+const calcPercent = (h: NumberVal, lh: number) => {
   return isPercent(h) ? parseFloat(h) / 100 * lh : +h
 }
 
@@ -288,10 +288,10 @@ function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo) {
 }
 
 // 渐变的转换
-function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size, linearInfo: LinearInfo) {
+function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
+  const { type, linearInfo } = preImageInfo
   const { colors, locations, direction = '' } = linearInfo || {}
   const { width, height } = imageSize || {}
-  const { type } = preImageInfo
 
   if (type !== 'linear') return
 
@@ -309,7 +309,7 @@ function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   imageProps.angle = angle
 }
 
-const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size, linearInfo?: LinearInfo) => {
+const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) => {
   // 初始化
   const imageProps: ImageProps = {
     style: {
@@ -318,7 +318,7 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
       // ...StyleSheet.absoluteFillObject
     }
   }
-  applyHandlers([backgroundSize, backgroundImage, backgroundPosition, linearGradient], [imageProps, preImageInfo, imageSize, layoutInfo, linearInfo])
+  applyHandlers([backgroundSize, backgroundImage, backgroundPosition, linearGradient], [imageProps, preImageInfo, imageSize, layoutInfo])
 
   if (!imageProps?.src && !preImageInfo?.linearInfo) return null
 
@@ -516,12 +516,18 @@ function preParseImage (imageStyle?: ExtendedViewStyle) {
   }
 }
 
-function isDiagonalAngle (linearInfo?: LinearInfo) {
-  return !!linearInfo?.direction && diagonalAngleMap[linearInfo.direction]
+function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
+  return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
 
 function wrapImage (imageStyle?: ExtendedViewStyle) {
-  const [show, setShow] = useState<boolean>(false)
+
+  // 预处理数据
+  const preImageInfo: PreImageInfo = preParseImage(imageStyle)
+  // 判断是否可挂载onLayout
+  const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
+
+  const [show, setShow] = useState<boolean>(!(needLayout || needImageSize))
   const [, setImageSizeWidth] = useState<number | null>(null)
   const [, setImageSizeHeight] = useState<number | null>(null)
   const [, setLayoutInfoWidth] = useState<number | null>(null)
@@ -529,19 +535,10 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
   // 预解析
-  const preImageInfo: PreImageInfo = preParseImage(imageStyle)
-
-  // 判断是否可挂载onLayout
-  const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
-  const { src, sizeList, linearInfo, type } = preImageInfo
+  const { src, sizeList, type } = preImageInfo
 
   useEffect(() => {
-    if (type === 'linear') {
-      if (!isDiagonalAngle(linearInfo)) {
-        setShow(true)
-      }
-      return
-    }
+    if (type === 'linear') return
 
     if (!src) {
       setShow(false)
@@ -584,10 +581,10 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
       setLayoutInfoWidth(width)
       setLayoutInfoHeight(height)
       // 有渐变角度的时候，才触发渲染组件
-      if (isDiagonalAngle(linearInfo)) {
+      if (type === 'linear') {
         sizeInfo.current = {
-          width: calcImageSize(sizeList[0] as NumberVal, width),
-          height: calcImageSize(sizeList[1] as NumberVal, height)
+          width: calcPercent(sizeList[0] as NumberVal, width),
+          height: calcPercent(sizeList[1] as NumberVal, height)
         }
         setImageSizeWidth(sizeInfo.current.width)
         setImageSizeHeight(sizeInfo.current.height)
@@ -603,7 +600,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   }
 
   return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size, linearInfo)} /> }
+    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
     {show && type === 'image' && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
