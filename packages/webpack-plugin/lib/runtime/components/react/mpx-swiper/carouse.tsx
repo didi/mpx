@@ -6,8 +6,7 @@ import { JSX, forwardRef, useState, useRef, useEffect, ReactNode } from 'react'
 import { CarouseProps, CarouseState } from './type'
 import { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, useLayoutHook } from '../utils'
-import { wrapChildren } from '../common'
+import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from '../utils'
 
 /**
  * 默认的Style类型
@@ -94,10 +93,10 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView & View, CarouseProps>(props, ref, {})
   const {
     // 存储layout布局信息
-    layoutRef, 
+    layoutRef,
+    layoutProps,
     layoutStyle, 
-    layoutProps 
-  } = useLayoutHook({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef }, onWrapperLayout)
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: onWrapperLayout })
   // 内部存储上一次的偏移量
   const internalsRef = useRef({
     offset: {
@@ -494,9 +493,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
             },
             {
               hasVarDec,
-              varContext: varContextRef.current
-            },
-            {
+              varContext: varContextRef.current,
               textStyle,
               textProps
             }
@@ -515,7 +512,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   }
 
   const pages: Array<ReactNode> | ReactNode = renderPages()
-  return (<View style={[innerStyle]} onLayout={onWrapperLayout}>
+  return (<View style={[innerStyle, layoutStyle]} {...layoutProps}>
       {renderScrollView(pages)}
       {props.showsPagination && renderPagination()}
   </View>)
