@@ -4,15 +4,12 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle } from './utils'
-
-import { wrapChildren } from './common'
-
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
@@ -402,11 +399,13 @@ interface WrapChildrenConfig {
 function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {
   const children = wrapChildren(props, {
     hasVarDec,
-    varContext
-  }, {
+    varContext,
     textStyle,
     textProps
   })
+
+
+  console.log(">>> children", children)
 
   return [
     enableBackground ? wrapImage(backgroundStyle) : null,
@@ -430,8 +429,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'parent-height': parentHeight
   } = props
 
+
+  // return <View>
+  //   <Text>1232323</Text>
+  // </View>
+
   const [isHover, setIsHover] = useState(false)
-  const layoutRef = useRef({})
 
   // 默认样式
   const defaultStyle: ExtendedViewStyle = {

@@ -42,15 +42,13 @@ import {
   TextStyle,
   Animated,
   Easing,
-  NativeSyntheticEvent,
-  LayoutChangeEvent
+  NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { splitProps, splitStyle, useTransformStyle } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
-import { wrapChildren } from './common'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -78,6 +76,9 @@ export interface ButtonProps {
   'enable-offset'?: boolean,
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   style?: ViewStyle & TextStyle & Record<string, any>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
@@ -196,10 +197,12 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
-    'enable-offset': enableOffset,
     'form-type': formType,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     style = {},
     children,
     bindgetuserinfo,
@@ -225,8 +228,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     hoverStartTimer: undefined,
     hoverStayTimer: undefined
   })
-
-  const layoutRef = useRef({})
 
   const [isHover, setIsHover] = useState(false)
 
@@ -288,13 +289,17 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const {
+    hasSelfPercent,
     normalStyle,
-    hasPercent,
     hasVarDec,
     varContextRef,
-    setContainerWidth,
-    setContainerHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
 
@@ -366,35 +371,17 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     handleFormTypeFn()
   }
 
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle
-  })
-
-  const onLayout = (res: LayoutChangeEvent) => {
-    if (hasPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-  }
-
   const innerProps = useInnerProps(
     props,
     {
       ref: nodeRef,
+      style: { ...innerStyle, ...layoutStyle },
+      ...layoutProps,
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
-      bindtap: onTap,
-      ...(enableOffset || hasPercent ? { onLayout } : {})
+      bindtap: onTap
     },
-    [
-      'enable-offset'
-    ],
+    [],
     {
       layoutRef,
       disableTap: disabled
@@ -402,19 +389,14 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   )
 
   return (
-    <View
-      {...innerProps}
-      style={innerStyle}
-    >
+    <View {...innerProps}>
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
           props,
           {
             hasVarDec,
-            varContext: varContextRef.current
-          },
-          {
+            varContext: varContextRef.current,
             textStyle,
             textProps
           }

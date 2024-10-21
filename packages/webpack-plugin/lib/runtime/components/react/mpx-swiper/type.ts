@@ -22,6 +22,9 @@ export interface SwiperProps {
   'next-margin'?: string;
   'enable-offset'?: boolean;
   'enable-var': boolean;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   'external-var-context'?: Record<string, any>;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
@@ -41,6 +44,9 @@ export interface CarouseProps {
   previousMargin?: number;
   nextMargin?: number;
   enableOffset?: boolean;
+  parentFontSize?: number;
+  parentWidth?: number;
+  parentHeight?: number;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
   getInnerLayout: Function;
   innerProps: Object;

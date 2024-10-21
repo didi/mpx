@@ -52,11 +52,10 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData,
-  LayoutChangeEvent
+  TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { parseInlineStyle, useUpdateEffect, useTransformStyle } from './utils'
+import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue } from './context'
@@ -96,6 +95,9 @@ export interface InputProps {
   'enable-offset'?: boolean,
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -139,9 +141,11 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'cursor-color': cursorColor,
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     bindinput,
     bindfocus,
     bindblur,
@@ -161,14 +165,11 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     formValuesMap = formContext.formValuesMap
   }
 
-  const { nodeRef } = useNodesRef(props, ref)
-
   const keyboardType = keyboardTypeMap[type]
   const defaultValue = type === 'number' && value ? value + '' : value
   const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const layoutRef = useRef({})
   const tmpValue = useRef<string>()
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
@@ -185,11 +186,15 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const {
+    hasSelfPercent,
     normalStyle,
-    hasPercent,
-    setContainerWidth,
-    setContainerHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext })
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { nodeRef } = useNodesRef(props, ref)
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   useEffect(() => {
     if (inputValue !== value) {
@@ -354,19 +359,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       )
   }
 
-  const onLayout = (res: LayoutChangeEvent) => {
-    if (hasPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-  }
-
   const resetValue = () => {
     setInputValue('')
   }
@@ -392,14 +384,20 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       : (nodeRef.current as TextInput)?.blur()
   }, [focus])
 
+  const composeStyle = { ...normalStyle, ...layoutStyle }
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: normalStyle,
-    ...(enableOffset || hasPercent ? { onLayout } : {})
+    style: {
+      padding: 0,
+      ...composeStyle,
+      ...multiline && autoHeight && {
+        height: Math.max((composeStyle as any)?.minHeight || 35, contentHeight)
+      }
+    },
+    ...layoutProps
   },
-  [
-    'enable-offset'
-  ],
+  [],
   {
     layoutRef
   })
@@ -430,14 +428,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       onSubmitEditing={onSubmitEditing}
       onContentSizeChange={onContentSizeChange}
       onSelectionChange={onSelectionChange}
-      style={{
-        padding: 0,
-        ...style,
-        ...multiline && autoHeight && {
-          height: Math.max((style as any)?.minHeight || 35, contentHeight)
-        }
-      }
-      }
     />
   )
 })

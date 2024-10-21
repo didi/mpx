@@ -8,8 +8,7 @@ import { Text, TextStyle, TextProps } from 'react-native'
 import { useRef, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle } from './utils'
-import { wrapChildren } from './common'
+import { useTransformStyle, wrapChildren } from './utils'
 
 interface _TextProps extends TextProps {
   style?: TextStyle
