@@ -3,12 +3,11 @@
  */
 
 import { View, LayoutChangeEvent } from 'react-native'
-import { JSX, useState, useEffect, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useState, useEffect, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
-import { useTransformStyle } from './utils'
-import { wrapChildren } from './common'
+import { useTransformStyle, wrapChildren, useLayout } from './utils'
 
 interface MovableAreaProps {
   style?: Record<string, any>;
@@ -17,15 +16,16 @@ interface MovableAreaProps {
   height?: number;
   'enable-offset'?: boolean;
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { style = {}, width = 10, height = 10, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'enable-offset': enableOffset } = props
+  const { style = {}, width = 10, height = 10, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
   const [areaWidth, setAreaWidth] = useState(0)
   const [areaHeight, setAreaHeight] = useState(0)
-
-  const layoutRef = useRef<any>({})
 
   useEffect(() => {
     setAreaWidth(width)
@@ -33,13 +33,13 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   }, [width, height])
 
   const {
-    hasPercent,
+    hasSelfPercent,
     normalStyle,
     hasVarDec,
     varContextRef,
-    setContainerWidth,
-    setContainerHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, enableLineHeight: false })
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { nodeRef: movableViewRef } = useNodesRef(props, ref)
 
@@ -47,34 +47,20 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     const { width = 10, height = 10 } = e.nativeEvent.layout
     setAreaWidth(width)
     setAreaHeight(height)
-    if (hasPercent) {
-      setContainerWidth(width)
-      setContainerHeight(height)
-    }
-    if (enableOffset) {
-      movableViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
   }
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef, onLayout })
+
   const innerProps = useInnerProps(props, {
+    style: { height: areaHeight, width: areaWidth, overflow: 'hidden', ...normalStyle, ...layoutStyle },
     ref: movableViewRef,
-    onLayout
-  }, [
-    'children',
-    'style'
-  ], { layoutRef })
+    ...layoutProps
+  }, [], { layoutRef })
 
   return (
     <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>
       <View
         {...innerProps}
-        style={{
-          height: areaHeight,
-          width: areaWidth,
-          overflow: 'hidden',
-          ...normalStyle
-        }}
       >
       {
         wrapChildren(

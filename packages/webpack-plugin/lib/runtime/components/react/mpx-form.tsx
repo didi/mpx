@@ -5,21 +5,21 @@
  * ✔ bindreset
  */
 
-import { View, LayoutChangeEvent } from 'react-native'
+import { View } from 'react-native'
 import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, useLayoutHook } from './utils'
-
-import { wrapChildren } from './common'
-
+import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren } from './utils'
 interface FormProps {
   style?: Record<string, any>;
   children: ReactNode;
   'enable-offset'?: boolean;
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
   bindsubmit?: (evt: {
     detail: {
       value: any;
@@ -30,13 +30,14 @@ interface FormProps {
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: FormProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(fromProps)
-  const layoutRef = useRef({})
   const formValuesMap = useRef(new Map()).current
   const {
     style,
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
   } = props
 
   const {
@@ -46,18 +47,13 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const { nodeRef: formRef } = useNodesRef(props, ref)
 
-  const hasLayout = useRef(false)
-
-  const onLayout = useLayoutHook({ hasSelfPercent, enableOffset, setWidth, setHeight, layoutRef, nodeRef: formRef }, () => {
-    hasLayout.current = true
-    props.onLayout && props.onLayout()
-  })
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 
   const submit = () => {
     const { bindsubmit } = props
@@ -80,8 +76,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     ))
   }
 
-  const needLayout = enableOffset || hasPercent
-
   const reset = () => {
     const { bindreset } = props
     bindreset && bindreset()
@@ -89,12 +83,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   }
 
   const innerProps = useInnerProps(props, {
-    style: innerStyle,
+    style: { ...innerStyle, ...layoutStyle },
     ref: formRef,
-    ...needLayout ? { onLayout } : null
+    ...layoutProps
   }, [
-    'children',
-    'style',
     'bindsubmit',
     'bindreset'
   ], { layoutRef })
@@ -109,9 +101,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
             props,
             {
               hasVarDec,
-              varContext: varContextRef.current
-            },
-            {
+              varContext: varContextRef.current,
               textStyle,
               textProps
             }

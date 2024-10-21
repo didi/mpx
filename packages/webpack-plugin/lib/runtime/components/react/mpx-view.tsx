@@ -385,7 +385,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     }
   }
 
-  return <View key='viewBgImg' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
+  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', overflow: 'hidden' }}>
     {show && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
   </View>
 }
@@ -534,25 +534,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
+    style: innerStyle,
     ...needLayout ? { onLayout } : null,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
     })
   }, [
-    'style',
-    'children',
     'hover-start-time',
     'hover-stay-time',
     'hover-style',
-    'hover-class',
-    'enable-offset',
-    'enable-background-image',
-    'enable-var',
-    'external-var-context',
-    'parent-font-size',
-    'parent-width',
-    'parent-height'
+    'hover-class'
   ], {
     layoutRef
   })
@@ -560,7 +552,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   return (
     <View
       {...innerProps}
-      style={innerStyle}
     >
       {
         wrapWithChildren(

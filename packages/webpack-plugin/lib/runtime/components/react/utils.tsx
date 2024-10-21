@@ -1,5 +1,5 @@
-import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { Dimensions, StyleSheet } from 'react-native'
+import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { Dimensions, StyleSheet, LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -10,6 +10,9 @@ export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
+export const DEFAULT_UNLAY_STYLE = {
+  opacity: 0
+}
 
 export function rpx (value: number) {
   const { width } = Dimensions.get('screen')
@@ -259,19 +262,6 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
-function transformLineHeight (styleObj: Record<string, any>) {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGEX.test(lineHeight)) {
-    const hasFontSize = hasOwn(styleObj, 'fontSize')
-    if (!hasFontSize) {
-      warn('The fontSize property could not be read correctly, so the default fontSize of 16 will be used as the basis for calculating the lineHeight!')
-    }
-    const fontSize = hasFontSize ? styleObj.fontSize : DEFAULT_FONT_SIZE
-    lineHeight = (parseFloat(lineHeight) / 100) * fontSize
-    styleObj.lineHeight = lineHeight
-  }
-}
-
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -452,6 +442,64 @@ export function splitProps<T extends Record<string, any>> (props: T): {
   }
 }
 
-export function styleToRn(styleObj: Record<string, any>) {
+interface LayoutConfig {
+  props: Record<string, any>
+  hasSelfPercent: boolean
+  setWidth: Dispatch<SetStateAction<number>>
+  setHeight: Dispatch<SetStateAction<number>>
+  onLayout?: (event?: LayoutChangeEvent) => void
+  nodeRef: React.RefObject<any>
+}
+export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:LayoutConfig) => {
+  const layoutRef = useRef({})
+  const hasLayoutRef = useRef(false)
+  const layoutStyle: Record<string, any> = hasLayoutRef.current ? {} : DEFAULT_UNLAY_STYLE
+  const layoutProps: Record<string, any> = {}
+  const enableOffset = props['enable-offset']
+  if (hasSelfPercent || onLayout || enableOffset) {
+    layoutProps.onLayout = (e: LayoutChangeEvent) => {
+      hasLayoutRef.current = true
+      if (hasSelfPercent) {
+        const { width, height } = e?.nativeEvent?.layout || {}
+        setWidth(width || 0)
+        setHeight(height || 0)
+      }
+      if (enableOffset) {
+        nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        })
+      }
+      onLayout && onLayout(e)
+      props.onLayout && props.onLayout(e)
+    }
+  }
+  return {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  }
+}
 
+export interface WrapChildrenConfig {
+  hasVarDec: boolean
+  varContext?: Record<string, any>
+  textStyle?: TextStyle
+  textProps?: Record<string, any>
+}
+
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textStyle, textProps }: WrapChildrenConfig) {
+  let { children } = props
+  if (textStyle || textProps) {
+    children = Children.map(children, (child) => {
+      if (isText(child)) {
+        const style = { ...textStyle, ...child.props.style }
+        return cloneElement(child, { ...textProps, style })
+      }
+      return child
+    })
+  }
+  if (hasVarDec && varContext) {
+    children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
+  }
+  return children
 }
