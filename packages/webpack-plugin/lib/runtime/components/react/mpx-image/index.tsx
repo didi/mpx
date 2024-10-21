@@ -139,14 +139,11 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     defaultStyle
   })
 
-  const onLayout = ({
-    nativeEvent: {
-      layout: { width, height }
-    }
-  }: LayoutChangeEvent) => {
+  const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
     setViewWidth(width)
     setViewHeight(height)
   }
+
   const { normalStyle, hasSelfPercent, setWidth, setHeight } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout })
@@ -162,8 +159,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const source: ImageSourcePropType = typeof src === 'string' ? { uri: src } : src
 
-  const [viewWidth, setViewWidth] = useState(isNumber(width) ? (width as number) : 0)
-  const [viewHeight, setViewHeight] = useState(isNumber(height) ? (height as number) : 0)
+  const [viewWidth, setViewWidth] = useState(isNumber(width) ? width : 0)
+  const [viewHeight, setViewHeight] = useState(isNumber(height) ? height : 0)
   const [imageWidth, setImageWidth] = useState(0)
   const [imageHeight, setImageHeight] = useState(0)
   const [ratio, setRatio] = useState(0)
@@ -327,15 +324,14 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     <View {...innerProps}>
       {
         loaded && <RNImage
-          {...innerProps}
           source={source}
           resizeMode={resizeMode}
           onLoad={onImageLoad}
           onError={onImageError}
           style={{
             ...StyleSheet.absoluteFillObject,
-            width: !isCropMode ? '100%' : imageWidth,
-            height: !isCropMode ? '100%' : imageHeight,
+            width: isCropMode ? imageWidth : '100%',
+            height: isCropMode ? imageHeight : '100%',
             ...(isCropMode && cropModeStyle)
           }}
         />
