@@ -3,8 +3,7 @@ import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradien
 import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { wrapChildren } from './common'
-import { parseInlineStyle, useTransformStyle, splitStyle, splitProps } from './utils'
+import { parseInlineStyle, useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
 /**
  * ✔ value
  * ✔ bindchange
@@ -67,17 +66,24 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, width: indicatorW } = indicatorStyle
+  const { nodeRef } = useNodesRef<View, PickerViewProps>(props, ref, {})
   //  picker-view 设置的color等textStyle,在小程序上的表现是可以继承到最内层的text样式, 但是RN内部column是slot无法设置, 需要业务自己在column内的元素上设置
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
-    hasPercent,
-    setContainerWidth,
-    setContainerHeight
+    hasSelfPercent,
+    setWidth,
+    setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
+  const {
+    // 存储layout布局信息
+    layoutRef,
+    layoutProps,
+    layoutStyle
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
   const isSetW = indicatorW !== undefined ? 1 : 0
   const innerLayout = useRef({})
@@ -91,7 +97,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } else {
     maskPos.height = itemH * 2
   }
-  const { nodeRef } = useNodesRef<View, PickerViewProps>(props, ref, {})
 
   const onColumnLayoutChange = (layoutConfig: PickerLayout) => {
     pickH = layoutConfig.height
@@ -101,29 +106,27 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const onSelectChange = (columnIndex: number, selIndex: number) => {
     const changeValue = value.slice()
     changeValue[columnIndex] = selIndex
-    const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef: innerLayout })
+    const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef })
     bindchange && bindchange(eventData)
   }
-
+  /*
   const getInnerLayout = (layout: MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
+  */
 
-  const onWrapperLayout = (res: LayoutChangeEvent) => {
-    if (hasPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-  }
-
-  const innerProps = useInnerProps(props, { ref: nodeRef }, [
+  const innerProps = useInnerProps(props, {
+    ref: nodeRef,
+    style: [normalStyle, layoutStyle, { position: 'relative', overflow: 'hidden' }],
+    ...layoutProps
+  }, [
     'style',
     'enable-offset'
-  ], { layoutRef: innerLayout })
+  ], { layoutRef })
 
   const cloneChild = (child: React.ReactNode, index: number) => {
-    const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}
+    // const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}
+    const extraProps = {}
     const childProps = {
       ...(child as ReactElement)?.props,
       ref: cloneRef,
@@ -145,9 +148,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       },
       {
         hasVarDec,
-        varContext: varContextRef.current
-      },
-      {
+        varContext: varContextRef.current,
         textStyle,
         textProps
       }
@@ -208,7 +209,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     }
   }
 
-  return (<View style={[normalStyle, { position: 'relative', overflow: 'hidden' }]} ref={wrapRef} onLayout={onWrapperLayout}>
+  return (<View {...innerProps}>
     {renderTopMask()}
     <View style={[styles.wrapper]}>
       {renderSubChild()}
