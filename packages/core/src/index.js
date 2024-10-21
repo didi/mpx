@@ -138,6 +138,7 @@ Mpx.config = {
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
   errorHandler: null,
+  warnHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
   forceFlushSync: false,
