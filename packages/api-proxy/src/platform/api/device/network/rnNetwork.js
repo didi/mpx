@@ -1,33 +1,33 @@
-import { successHandle, failHandle, defineUnsupportedProps } from '../../../../common/js'
-import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
+// import { successHandle, failHandle, defineUnsupportedProps } from '../../../../common/js'
+// import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
 
 let _unsubscribe = null
 const _callbacks = new Set()
 const getConnectionType = function (connectionInfo) {
   let type = 'unknown'
-  if (connectionInfo.type === NetInfoStateType.cellular && connectionInfo.details.cellularGeneration) {
-    type = connectionInfo.details.cellularGeneration
-  } else if (connectionInfo.type === NetInfoStateType.wifi || connectionInfo.type === NetInfoStateType.none) {
-    type = connectionInfo.type
-  }
+  // if (connectionInfo.type === NetInfoStateType.cellular && connectionInfo.details.cellularGeneration) {
+  //   type = connectionInfo.details.cellularGeneration
+  // } else if (connectionInfo.type === NetInfoStateType.wifi || connectionInfo.type === NetInfoStateType.none) {
+  //   type = connectionInfo.type
+  // }
   return type
 }
 
 const getNetworkType = function (options = {}) {
-  const { success, fail, complete } = options
-  NetInfo.fetch().then((connectionInfo) => {
-    const result = {
-      networkType: getConnectionType(connectionInfo),
-      errMsg: 'getNetworkType:ok'
-    }
-    defineUnsupportedProps(result, ['signalStrength', 'hasSystemProxy'])
-    successHandle(result, success, complete)
-  }).catch((err) => {
-    const result = {
-      errMsg: err.message
-    }
-    failHandle(result, fail, complete)
-  })
+  // const { success, fail, complete } = options
+  // NetInfo.fetch().then((connectionInfo) => {
+  //   const result = {
+  //     networkType: getConnectionType(connectionInfo),
+  //     errMsg: 'getNetworkType:ok'
+  //   }
+  //   defineUnsupportedProps(result, ['signalStrength', 'hasSystemProxy'])
+  //   successHandle(result, success, complete)
+  // }).catch((err) => {
+  //   const result = {
+  //     errMsg: err.message
+  //   }
+  //   failHandle(result, fail, complete)
+  // })
 }
 
 const onNetworkStatusChange = function (callback) {

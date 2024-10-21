@@ -1,5 +1,5 @@
 import { View, TouchableWithoutFeedback } from 'react-native'
-import { Picker, PickerValue } from '@ant-design/react-native'
+// import { Picker, any } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import { MultiSelectorProps, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
@@ -101,7 +101,7 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     value && setSelected(newValue)
   }, [range, value])
 
-  const onChange = (value: PickerValue[]) => {
+  const onChange = (value: any[]) => {
     // e.detail.value 都是索引multi
     const strIndex = getIndexByValues(data, value)
     bindchange && bindchange({
@@ -111,7 +111,7 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     })
   }
 
-  const onPickerChange = (value: PickerValue[], column: number) => {
+  const onPickerChange = (value: any[], column: number) => {
     // onPickerChange--- ["无脊柱动物", "节肢动物", "吸血虫"] 1  拿着column
     const changeIndex = getColumnIndexByValue(data, column, value)
     bindcolumnchange && bindcolumnchange(changeIndex, column)
@@ -141,13 +141,13 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
     ref: viewRef
   }
 
-  return (<Picker {...antPickerProps}>
+  return (<>
       <TouchableWithoutFeedback>
         <View {...touchProps}>
           {children}
         </View>
       </TouchableWithoutFeedback>
-    </Picker>
+    </>
   )
 })
 

@@ -26,9 +26,23 @@ module.exports = function (script, {
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { Provider } from '@ant-design/react-native'
+import { createContext, useMemo, createElement } from 'react'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+
+const LocaleContext = createContext();
+
+const Provider = (props) => {
+  const locale = useMemo(() => {
+    return { antLocale: { ...props.locale, exist: true } };
+  }, [props.locale]);
+
+  return createElement(
+    LocaleContext.Provider,
+    { value: locale },
+    props.children
+  );
+};
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,

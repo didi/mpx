@@ -1,27 +1,27 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
+// import AsyncStorage from '@react-native-async-storage/async-storage'
 import { envError, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import { hasOwn } from '@mpxjs/utils'
 function setStorage (options = {}) {
-  const { key, data, success, fail, complete } = options
-  let obj = {}
-  if (typeof data === 'symbol') {
-    obj = { data: '' }
-  } else {
-    obj = { data }
-  }
-  AsyncStorage.setItem(key, JSON.stringify(obj), (err) => {
-    if (err) {
-      const result = {
-        errMsg: `setStorage:fail ${err}`
-      }
-      failHandle(result, fail, complete)
-      return
-    }
-    const result = {
-      errMsg: 'setStorage:ok'
-    }
-    successHandle(result, success, complete)
-  })
+  // const { key, data, success, fail, complete } = options
+  // let obj = {}
+  // if (typeof data === 'symbol') {
+  //   obj = { data: '' }
+  // } else {
+  //   obj = { data }
+  // }
+  // AsyncStorage.setItem(key, JSON.stringify(obj), (err) => {
+  //   if (err) {
+  //     const result = {
+  //       errMsg: `setStorage:fail ${err}`
+  //     }
+  //     failHandle(result, fail, complete)
+  //     return
+  //   }
+  //   const result = {
+  //     errMsg: 'setStorage:ok'
+  //   }
+  //   successHandle(result, success, complete)
+  // })
 }
 
 const setStorageSync = envError('setStorageSync')

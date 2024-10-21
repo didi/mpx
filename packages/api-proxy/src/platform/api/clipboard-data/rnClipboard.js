@@ -1,6 +1,6 @@
 import { successHandle, failHandle } from '../../../common/js'
 import { type } from '@mpxjs/utils'
-import { getStringAsync, setStringAsync } from 'expo-clipboard'
+// import { getStringAsync, setStringAsync } from 'expo-clipboard'
 
 const setClipboardData = function (options = {}) {
   const { data, success, fail, complete } = options
@@ -13,33 +13,33 @@ const setClipboardData = function (options = {}) {
     failHandle(result, fail, complete)
     return
   }
-  setStringAsync(data).then(() => {
-    const result = {
-      errMsg: 'setClipboardData:ok'
-    }
-    successHandle(result, success, complete)
-  }).catch((e) => {
-    const result = {
-      errMsg: `setClipboardData:fail ${e}`
-    }
-    failHandle(result, fail, complete)
-  })
+  // setStringAsync(data).then(() => {
+  //   const result = {
+  //     errMsg: 'setClipboardData:ok'
+  //   }
+  //   successHandle(result, success, complete)
+  // }).catch((e) => {
+  //   const result = {
+  //     errMsg: `setClipboardData:fail ${e}`
+  //   }
+  //   failHandle(result, fail, complete)
+  // })
 }
 
 const getClipboardData = function (options = {}) {
-  const { success, fail, complete } = options
-  getStringAsync().then((data) => {
-    const result = {
-      data,
-      errMsg: 'getClipboardData:ok'
-    }
-    successHandle(result, success, complete)
-  }).catch((e) => {
-    const result = {
-      errMsg: `getClipboardData:fail ${e}`
-    }
-    failHandle(result, fail, complete)
-  })
+  // const { success, fail, complete } = options
+  // getStringAsync().then((data) => {
+  //   const result = {
+  //     data,
+  //     errMsg: 'getClipboardData:ok'
+  //   }
+  //   successHandle(result, success, complete)
+  // }).catch((e) => {
+  //   const result = {
+  //     errMsg: `getClipboardData:fail ${e}`
+  //   }
+  //   failHandle(result, fail, complete)
+  // })
 }
 
 export {

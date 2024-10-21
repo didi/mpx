@@ -1,4 +1,4 @@
-import DeviceInfo from 'react-native-device-info'
+// import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation } from '../../../common/js'
@@ -49,10 +49,14 @@ const getSystemInfoSync = function () {
   const { screenWidth, screenHeight, safeArea } = windowInfo
 
   const result = {
-    brand: DeviceInfo.getBrand(),
-    model: DeviceInfo.getModel(),
-    system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    // brand: DeviceInfo.getBrand(),
+    // model: DeviceInfo.getModel(),
+    // system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
+    // platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    brand: 'Apple',
+    model: '?',
+    system: 'iOS 11.0',
+    platform: 'emulator',
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
     statusBarHeight: safeArea.top,
     fontSizeSetting: PixelRatio.getFontScale(),
@@ -102,16 +106,21 @@ const getSystemInfo = function (options = {}) {
 const getDeviceInfo = function () {
   const deviceInfo = {}
   if (Platform.OS === 'android') {
-    const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
+    const deviceAbi = []
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
   defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
   Object.assign(deviceInfo, {
-    brand: DeviceInfo.getBrand(),
-    model: DeviceInfo.getModel(),
-    system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
+    // brand: DeviceInfo.getBrand(),
+    // model: DeviceInfo.getModel(),
+    // system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
+    // platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    // memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
+    brand: 'Apple',
+    model: '?',
+    system: 'iOS 11.0',
+    platform: 'emulator',
+    memorySize: 8192
   })
   return deviceInfo
 }

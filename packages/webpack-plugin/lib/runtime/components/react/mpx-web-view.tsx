@@ -1,11 +1,12 @@
 import { forwardRef, JSX, useEffect } from 'react'
 import { noop } from '@mpxjs/utils'
-import { Portal } from '@ant-design/react-native'
+// import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-import { WebView } from 'react-native-webview'
+// import { WebView } from 'react-native-webview'
+import { View } from 'react-native'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
+// import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -45,7 +46,7 @@ interface FormRef {
   postMessage: (value: any) => void;
 }
 
-const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
+const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
 
   const defaultWebViewStyle = {
@@ -56,7 +57,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     bottom: 0 as number
   }
 
-  const { nodeRef: webViewRef } = useNodesRef<WebView, WebViewProps>(props, ref, {
+  const { nodeRef: webViewRef } = useNodesRef<any, WebViewProps>(props, ref, {
     defaultStyle: defaultWebViewStyle
   })
 
@@ -77,7 +78,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       handleUnload()
     }
   }, [])
-  const _load = function (res: WebViewNavigationEvent) {
+  const _load = function (res: any) {
     const result = {
       type: 'load',
       timeStamp: res.timeStamp,
@@ -87,7 +88,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     bindload(result)
   }
-  const _error = function (res: WebViewErrorEvent) {
+  const _error = function (res: any) {
     const result = {
       type: 'error',
       timeStamp: res.timeStamp,
@@ -97,7 +98,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
-  const _message = function (res: WebViewMessageEvent) {
+  const _message = function (res: any) {
     let data: MessageData = {}
     let asyncCallback
     const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
@@ -145,8 +146,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  return (<Portal>
-    <WebView
+  return (<>
+    <View
       style={defaultWebViewStyle}
       source={{ uri: src }}
       ref={webViewRef}
@@ -154,8 +155,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onError={_error}
       onMessage={_message}
       javaScriptEnabled={true}
-    ></WebView>
-  </Portal>)
+    ></View>
+  </>)
 })
 
 _WebView.displayName = 'mpx-web-view'

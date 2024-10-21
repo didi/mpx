@@ -3,7 +3,7 @@
  */
 import { View, TouchableWithoutFeedback } from 'react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import { Picker, PickerColumn, PickerValue } from '@ant-design/react-native'
+// import { Picker, any, any } from '@ant-design/react-native'
 import { SelectorProps, Obj, LayoutType } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
@@ -18,15 +18,15 @@ const formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
       return { value: index, label: item }
     }
   })
-  return newRange as PickerColumn
+  return newRange as any
 }
 
 const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProps>((props: SelectorProps, ref): React.JSX.Element => {
   const { range, children, value, disabled, bindchange, bindcancel } = props
   // 格式化数据为Array<*>
-  const formatRange: PickerColumn = formatRangeFun(range, props['range-key'])
+  const formatRange: any = formatRangeFun(range, props['range-key'])
   // 选中的索引值
-  const [selected, setSelected] = useState<PickerValue>(value || 0)
+  const [selected, setSelected] = useState<any>(value || 0)
   // range数据源
   const [data, setData] = useState(formatRange || [])
   // 存储layout布局信息
@@ -45,7 +45,7 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   }, [range, value])
   const defaultValue = [value]
 
-  const onChange = (value: PickerValue[]) => {
+  const onChange = (value: any[]) => {
     bindchange && bindchange({
       detail: {
         value: value && value[0]
@@ -75,14 +75,13 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
     ref: viewRef
   }
   return (
-    <Picker
-      {...antPickerProps}>
+    <>
         <TouchableWithoutFeedback>
           <View {...touchProps}>
             {children}
           </View>
         </TouchableWithoutFeedback>
-    </Picker>
+    </>
   )
 })
 

@@ -1,6 +1,6 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import { Portal } from '@ant-design/react-native'
+// import { Portal } from '@ant-design/react-native'
 
 let toastKey
 let isLoadingShow
@@ -91,16 +91,16 @@ function showToast (options = {}) {
     </View>
   }
   try {
-    if (toastKey) {
-      Portal.remove(toastKey)
-    }
-    toastKey = Portal.add(ToastView)
-    if (!isLoading) {
-      tId = setTimeout(() => {
-        Portal.remove(toastKey)
-        toastKey = null
-      }, duration)
-    }
+    // if (toastKey) {
+    //   Portal.remove(toastKey)
+    // }
+    // toastKey = Portal.add(ToastView)
+    // if (!isLoading) {
+    //   tId = setTimeout(() => {
+    //     Portal.remove(toastKey)
+    //     toastKey = null
+    //   }, duration)
+    // }
     const result = {
       errMsg: 'showToast:ok'
     }
@@ -120,10 +120,10 @@ function hideToast(options = {}) {
     return
   }
   try {
-    if (toastKey) {
-      Portal.remove(toastKey)
-      toastKey = null
-    }
+    // if (toastKey) {
+    //   Portal.remove(toastKey)
+    //   toastKey = null
+    // }
     const result = {
       errMsg: 'hideToast:ok'
     }
@@ -165,10 +165,10 @@ function hideLoading (options = {}) {
   }
   isLoadingShow = false
   try {
-    if (toastKey) {
-      Portal.remove(toastKey)
-      toastKey = null
-    }
+    // if (toastKey) {
+    //   Portal.remove(toastKey)
+    //   toastKey = null
+    // }
     const result = {
       errMsg: 'hideLoading:ok'
     }

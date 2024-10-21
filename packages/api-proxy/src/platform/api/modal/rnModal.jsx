@@ -1,6 +1,6 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import { Portal } from '@ant-design/react-native'
+// import { Portal } from '@ant-design/react-native'
 const { width, height } = Dimensions.get('window')
 const showModal = function (options = {}) {
   const {
@@ -97,7 +97,7 @@ const showModal = function (options = {}) {
     contentText = text
   }
   const closeModal = function (buttonInfo) {
-    Portal.remove(modalKey)
+    // Portal.remove(modalKey)
     modalKey = null
     const result = {
       errMsg: 'showModal:ok'
@@ -156,14 +156,14 @@ const showModal = function (options = {}) {
       </View>
     </View>
   </View>
-  try {
-    modalKey = Portal.add(ModalView)
-  } catch (e) {
-    const result = {
-      errMsg: `showModal:fail invalid ${e}`
-    }
-    failHandle(result, fail, complete)
-  }
+  // try {
+  //   modalKey = Portal.add(ModalView)
+  // } catch (e) {
+  //   const result = {
+  //     errMsg: `showModal:fail invalid ${e}`
+  //   }
+  //   failHandle(result, fail, complete)
+  // }
 }
 
 export {

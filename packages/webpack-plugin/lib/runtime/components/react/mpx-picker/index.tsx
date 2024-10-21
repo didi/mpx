@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import { PickerValue } from '@ant-design/react-native'
+// import { PickerValue } from '@ant-design/react-native'
 import React, { forwardRef, useRef, useContext, useState } from 'react'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
@@ -85,7 +85,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     setPickerValue(event.detail.value as ValueType)
   }
 
-  const columnChange = (value: PickerValue[], index: number) => {
+  const columnChange = (value: any[], index: number) => {
     // type: "columnchange", detail: {column: 1, value: 2}
     const eventData = getCustomEvent('columnchange', {}, { detail: { column: index, value }, layoutRef: innerLayout })
     bindcolumnchange && bindcolumnchange(eventData)
@@ -102,7 +102,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
 
   const selectorProps = {
     ...commonProps,
-    value: pickerValue as PickerValue,
+    value: pickerValue as any,
     range: props.range,
     'range-key': props['range-key']
   }
