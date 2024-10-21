@@ -2199,64 +2199,33 @@ function processWebExternalClassesHack (el, options) {
 
       addAttrs(el, [{
         name: ':class',
-        value: `[${replacements}]`
+        value: `[${replacements}, $attrs[${stringify('p-module-id')}]]`
       }])
     }
   }
 
   // 处理externalClasses多层透传
   const isComponent = isComponentNode(el, options)
-  if (isComponent) {
-    // options.externalClasses.forEach((classLikeAttrName) => {
-    //   const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
-    //   if (classLikeAttrValue) {
-    //     const classNames = classLikeAttrValue.split(/\s+/)
-    //     const replacements = []
-    //     options.externalClasses.forEach((className) => {
-    //       const index = classNames.indexOf(className)
-    //       if (index > -1) {
-    //         replacements.push(`$attrs[${stringify(className)}]`)
-    //         classNames.splice(index, 1)
-    //       }
-    //     })
-    //
-    //     if (classNames.length) {
-    //       replacements.unshift(stringify(classNames.join(' ')))
-    //     }
-    //
-    //     addAttrs(el, [{
-    //       name: ':' + classLikeAttrName,
-    //       value: `[${replacements}].join(' ')`
-    //     }])
-    //   }
-    // })
-    const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
-    classLikeAttrNames.forEach((classLikeAttrName) => {
-      let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
-      if (classLikeAttrValue) {
-        options.externalClasses.forEach((className) => {
-          const reg = new RegExp('\\b' + className + '\\b', 'g')
-          const replacement = dash2hump(className)
-          classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
-        })
+
+  if (hasScoped && isComponent) {
+    // 外层 custom-class = "{{someClass}}" 透传处理
+    options.externalClasses.forEach((className) => {
+      const externalClass = getAndRemoveAttr(el, className).val
+      const dynamicClass = getAndRemoveAttr(el, ':' + className).val
+      const classValue = externalClass || dynamicClass
+      if (classValue) {
         addAttrs(el, [{
-          name: classLikeAttrName,
-          value: classLikeAttrValue
+          name: dynamicClass ? ':' + className : className,
+          value: `${classValue}`
+        }])
+      }
+      if (classValue && className !== 'custom-class') {
+        addAttrs(el, [{
+          name: 'p-module-id',
+          value: `${moduleId}`
         }])
       }
     })
-
-    if (hasScoped && isComponent) {
-      options.externalClasses.forEach((className) => {
-        const externalClass = getAndRemoveAttr(el, className).val
-        if (externalClass) {
-          addAttrs(el, [{
-            name: className,
-            value: `${externalClass} ${moduleId}`
-          }])
-        }
-      })
-    }
   }
 }
 
@@ -2643,6 +2612,7 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfWeb(el)
+    processScoped(el)
     processWebExternalClassesHack(el, options)
     processComponentGenericsWeb(el, options, meta)
     return
