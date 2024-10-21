@@ -319,7 +319,7 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
     }
   }
   applyHandlers([backgroundSize, backgroundImage, backgroundPosition, linearGradient], [imageProps, preImageInfo, imageSize, layoutInfo])
-  
+
   if (!imageProps?.src && !preImageInfo?.linearInfo) return null
 
   return imageProps
@@ -565,7 +565,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
         }
       })
     // 一开始未出现，数据改变时出现
-    } else if (!(needLayout || needImageSize)){
+    } else if (!(needLayout || needImageSize)) {
       setShow(true)
     }
   }, [src])
