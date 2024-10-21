@@ -41,7 +41,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     // 存储layout布局信息
     layoutRef,
     layoutProps,
-    layoutStyle, 
+    layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
   const innerProps = useInnerProps(props, {

@@ -95,7 +95,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     // 存储layout布局信息
     layoutRef,
     layoutProps,
-    layoutStyle, 
+    layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: onWrapperLayout })
   // 内部存储上一次的偏移量
   const internalsRef = useRef({
@@ -372,7 +372,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     }
   }
 
-  function getOffset () {
+  function getOffset (): Array<number> {
     const step = state.dir === 'x' ? state.width : state.height
     const offsetArray = []
     if (previousMargin) {
@@ -385,6 +385,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
         offsetArray.push(i * step)
       }
     }
+    return offsetArray
   }
 
   function renderScrollView (pages: ReactNode) {

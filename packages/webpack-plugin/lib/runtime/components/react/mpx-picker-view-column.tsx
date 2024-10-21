@@ -58,9 +58,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     // 存储layout布局信息
     layoutRef,
     layoutProps
-    // layoutStyle, 
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: onScrollViewLayout })
-  
+
   /*
   const onScrollViewLayout = (res: LayoutChangeEvent) => {
     scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {

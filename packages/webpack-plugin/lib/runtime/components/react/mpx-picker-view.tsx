@@ -82,7 +82,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     // 存储layout布局信息
     layoutRef,
     layoutProps,
-    layoutStyle, 
+    layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
   const isSetW = indicatorW !== undefined ? 1 : 0
