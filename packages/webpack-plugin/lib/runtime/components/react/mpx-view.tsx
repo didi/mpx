@@ -319,7 +319,7 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
     }
   }
   applyHandlers([backgroundSize, backgroundImage, backgroundPosition, linearGradient], [imageProps, preImageInfo, imageSize, layoutInfo])
-
+  
   if (!imageProps?.src && !preImageInfo?.linearInfo) return null
 
   return imageProps
@@ -523,18 +523,19 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
 function wrapImage (imageStyle?: ExtendedViewStyle) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
+  // 预解析
+  const { src, sizeList, type } = preImageInfo
+
   // 判断是否可挂载onLayout
   const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
 
-  const [show, setShow] = useState<boolean>(!(needLayout || needImageSize))
+  const [show, setShow] = useState<boolean>(!!(src && !(needLayout || needImageSize)))
   const [, setImageSizeWidth] = useState<number | null>(null)
   const [, setImageSizeHeight] = useState<number | null>(null)
   const [, setLayoutInfoWidth] = useState<number | null>(null)
   const [, setLayoutInfoHeight] = useState<number | null>(null)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
-  // 预解析
-  const { src, sizeList, type } = preImageInfo
 
   useEffect(() => {
     if (type === 'linear') return
@@ -546,26 +547,27 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
       return
     }
 
-    if (!needImageSize) {
-      setShow(true)
-      return
-    }
-    Image.getSize(src, (width, height) => {
-      sizeInfo.current = {
-        width,
-        height
-      }
-      // 1. 当需要绑定onLayout 2. 获取到布局信息
-      if (!needLayout || layoutInfo.current) {
-        setImageSizeWidth(width)
-        setImageSizeHeight(height)
-        if (layoutInfo.current) {
-          setLayoutInfoWidth(layoutInfo.current.width)
-          setLayoutInfoHeight(layoutInfo.current.height)
+    if (needImageSize) {
+      Image.getSize(src, (width, height) => {
+        sizeInfo.current = {
+          width,
+          height
         }
-        setShow(true)
-      }
-    })
+        // 1. 当需要绑定onLayout 2. 获取到布局信息
+        if (!needLayout || layoutInfo.current) {
+          setImageSizeWidth(width)
+          setImageSizeHeight(height)
+          if (layoutInfo.current) {
+            setLayoutInfoWidth(layoutInfo.current.width)
+            setLayoutInfoHeight(layoutInfo.current.height)
+          }
+          setShow(true)
+        }
+      })
+    // 一开始未出现，数据改变时出现
+    } else if (!(needLayout || needImageSize)){
+      setShow(true)
+    }
   }, [src])
 
   if (!type) return null
