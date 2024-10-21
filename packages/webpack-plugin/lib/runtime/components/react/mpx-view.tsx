@@ -529,22 +529,26 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   // 判断是否可挂载onLayout
   const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
 
-  const [show, setShow] = useState<boolean>(!!(src && !(needLayout || needImageSize)))
+  const [show, setShow] = useState<boolean>(((type === 'image' && !!src) || type === 'linear') && !needLayout && !needImageSize)
   const [, setImageSizeWidth] = useState<number | null>(null)
   const [, setImageSizeHeight] = useState<number | null>(null)
   const [, setLayoutInfoWidth] = useState<number | null>(null)
   const [, setLayoutInfoHeight] = useState<number | null>(null)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
-
   useEffect(() => {
-    if (type === 'linear') return
+    sizeInfo.current = null
+    if (type === 'linear') {
+      if(!needLayout) setShow(true)
+      return        
+    }
 
     if (!src) {
       setShow(false)
-      sizeInfo.current = null
-      layoutInfo.current = null
       return
+    // 一开始未出现，数据改变时出现
+    } else if (!(needLayout || needImageSize)) {
+      setShow(true)
     }
 
     if (needImageSize) {
@@ -564,11 +568,9 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
           setShow(true)
         }
       })
-    // 一开始未出现，数据改变时出现
-    } else if (!(needLayout || needImageSize)) {
-      setShow(true)
     }
-  }, [src])
+  // type 添加type 处理无渐变 有渐变的场景
+  }, [src, type])
 
   if (!type) return null
 
