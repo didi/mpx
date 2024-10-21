@@ -539,8 +539,8 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
   useEffect(() => {
     sizeInfo.current = null
     if (type === 'linear') {
-      if(!needLayout) setShow(true)
-      return        
+      if (!needLayout) setShow(true)
+      return
     }
 
     if (!src) {
