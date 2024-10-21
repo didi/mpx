@@ -5,7 +5,7 @@ function getSystemInfoSync () {
     throwSSRWarning('getSystemInfoSync API is running in non browser environments')
     return
   }
-  const ua = navigator.userAgent.split('(')[1].split(')')[0]
+  const ua = navigator.userAgent.split('(')[1]?.split(')')[0] || ''
   const phones = new Map([
     ['iPhone', /iPhone|iPad|iPod|iOS/i],
     ['Huawei', /huawei/i],
