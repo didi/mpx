@@ -451,3 +451,7 @@ export function splitProps<T extends Record<string, any>> (props: T): {
     innerProps: Partial<T>;
   }
 }
+
+export function styleToRn(styleObj: Record<string, any>) {
+
+}
