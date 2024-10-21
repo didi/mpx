@@ -521,7 +521,6 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
 }
 
 function wrapImage (imageStyle?: ExtendedViewStyle) {
-
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 判断是否可挂载onLayout
