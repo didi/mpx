@@ -18,7 +18,6 @@ export interface _ViewProps extends ViewProps {
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
-  'enable-offset'?: boolean
   'enable-background'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
@@ -638,7 +637,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
