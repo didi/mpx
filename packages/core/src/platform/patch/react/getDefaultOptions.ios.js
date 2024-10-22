@@ -8,7 +8,8 @@ import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
-import { createSelectorQuery } from '@mpxjs/api-proxy'
+import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
+import { IntersectionObserverContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -63,7 +64,7 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
@@ -178,8 +179,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     createSelectorQuery () {
       return createSelectorQuery().in(this)
     },
-    createIntersectionObserver () {
-      error('createIntersectionObserver is not supported in react native, please use ref instead')
+    createIntersectionObserver (opt) {
+      return createIntersectionObserver(this, opt, intersectionCtx)
     },
     ...rawOptions.methods
   }, {
@@ -344,12 +345,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
+    const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -409,10 +411,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
+      const intersectionObservers = useRef([])
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
@@ -427,6 +430,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       navigation.insets = useSafeAreaInsets()
+      navigation.headerHeight = useHeaderHeight()
+      navigation.isCustomHeader = pageConfig.navigationStyle === 'custom'
 
       return createElement(GestureHandlerRootView,
         {
@@ -445,12 +450,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             {
               value: currentPageId
             },
-            createElement(defaultOptions,
+            createElement(IntersectionObserverContext.Provider, 
               {
-                navigation,
-                route,
-                id: currentPageId
-              }
+                value: intersectionObservers.current
+              },
+              createElement(defaultOptions,
+                {
+                  navigation,
+                  route,
+                  id: currentPageId
+                }
+              )
             )
           )
         )
@@ -458,6 +468,5 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
     return Page
   }
-
   return defaultOptions
 }
