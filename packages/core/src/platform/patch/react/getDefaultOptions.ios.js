@@ -180,10 +180,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       return createSelectorQuery().in(this)
     },
     createIntersectionObserver (opt) {
-      return createIntersectionObserver(this, opt, {
-        intersectionCtx,
-        isCustomNavigator: props.pageConfig.navigationStyle === 'custom'
-      })
+      return createIntersectionObserver(this, opt, intersectionCtx)
     },
     ...rawOptions.methods
   }, {
@@ -434,6 +431,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
       navigation.headerHeight = useHeaderHeight()
+      navigation.isCustomHeader = pageConfig.navigationStyle === 'custom'
 
       return createElement(GestureHandlerRootView,
         {

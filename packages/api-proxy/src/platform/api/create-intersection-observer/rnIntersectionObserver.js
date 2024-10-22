@@ -5,15 +5,12 @@ import { getFocusedNavigation } from '../../../common/js'
 
 
 class RNIntersectionObserver {
-  constructor (component, options, { intersectionCtx, isCustomNavigator }) {
+  constructor (component, options, intersectionCtx) {
     this.component = component
     this.options = options
     this.thresholds = options.thresholds.sort((a,b ) => a-b) || [0]
     this.initialRatio = options.initialRatio || 0
     this.observeAll = options.observeAll || false
-
-    // 用来relativeToViewport的时候计算top
-    this.isCustomNavigator = isCustomNavigator
 
     // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
     this.component._intersectionObservers = this.component.__intersectionObservers || []
@@ -79,7 +76,7 @@ class RNIntersectionObserver {
     const navigation = getFocusedNavigation()
     const screen =  Dimensions.get('screen')
     const windowRect = {
-      top: this.isCustomNavigator ? this.margins.top : navigation.headerHeight,
+      top: navigation.isCustomHeader ? this.margins.top : navigation.headerHeight,
       left: this.margins.left,
       right: screen.width - this.margins.right,
       bottom: navigation.layout.height + navigation.headerHeight - this.margins.bottom
