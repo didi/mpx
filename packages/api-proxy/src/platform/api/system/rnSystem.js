@@ -56,7 +56,7 @@ const getSystemInfoSync = function () {
     brand: 'Apple',
     model: '?',
     system: 'iOS 11.0',
-    platform: 'emulator',
+    platform: 'iOS',
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
     statusBarHeight: safeArea.top,
     fontSizeSetting: PixelRatio.getFontScale(),
