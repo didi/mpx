@@ -357,13 +357,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
-        if (!disabled) {
-          const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-          isMoving.value = false
-          startPosition.value = {
-            x: changedTouches.x,
-            y: changedTouches.y
-          }
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
+        isMoving.value = false
+        startPosition.value = {
+          x: changedTouches.x,
+          y: changedTouches.y
         }
         handleTriggerStart(e)
       })
@@ -403,6 +401,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         isFirstTouch.value = true
         isMoving.value = false
         handleTriggerEnd(e)
+        if (disabled) return
         if (!inertia) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
           if (x !== offsetX.value) {
