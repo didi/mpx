@@ -81,7 +81,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   propsRef.current = (props || {}) as MovableViewProps
 
   const {
-    children,
     x = 0,
     y = 0,
     inertia = false,
@@ -468,7 +467,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       <Animated.View
         ref={nodeRef}
         onLayout={onLayout}
-        style={[styles.container, innerStyle, animatedStyles, hasLayoutRef.current ? {} : DEFAULT_UNLAY_STYLE]}
+        style={[styles.container, innerStyle, animatedStyles, !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}]}
         {...catchEventHandlers}
       >
         {
