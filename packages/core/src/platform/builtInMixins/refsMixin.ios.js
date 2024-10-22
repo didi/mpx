@@ -1,78 +1,55 @@
-import { BEFORECREATE, CREATED } from '../../core/innerLifecycle'
+import { BEFORECREATE } from '../../core/innerLifecycle'
 import { createSelectorQuery } from '@mpxjs/api-proxy'
-import { computed } from '../../observer/computed'
 
 export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
       this.__refs = {}
       this.$refs = {}
-    },
-    // __getRefs强依赖数据响应，需要在CREATED中执行
-    [CREATED] () {
       this.__getRefs()
     },
     methods: {
       __getRefs () {
         const refs = this.__getRefsData() || []
         const target = this
-        this.__selectorMap = computed(() => {
-          const selectorMap = {}
-          refs.forEach(({ key, type, sKeys }) => {
-            // sKeys 是使用 wx:ref 没有值的标记场景，支持运行时的 createSelectorQuery 的使用
-            if (sKeys) {
-              sKeys.forEach((item = {}) => {
-                const computedKey = item.key
-                const prefix = item.prefix
-                const selectors = this[computedKey] || ''
-                selectors.trim().split(/\s+/).forEach(item => {
-                  const selector = prefix + item
-                  selectorMap[selector] = selectorMap[selector] || []
-                  selectorMap[selector].push({ type, key })
-                })
-              })
-            } else {
-              selectorMap[key] = selectorMap[key] || []
-              selectorMap[key].push({ type, key })
+        refs.forEach(({ key, type, all }) => {
+          Object.defineProperty(this.$refs, key, {
+            enumerable: true,
+            configurable: true,
+            get () {
+              if (type === 'component') {
+                return all ? target.selectAllComponents(key) : target.selectComponent(key)
+              } else {
+                return createSelectorQuery().in(target).select(key, all)
+              }
             }
           })
-          return selectorMap
-        })
-        refs.forEach(({ key, type, all, sKeys }) => {
-          // 如果没有 sKey 说明使用的是 wx:ref="xxx" 的场景
-          if (!sKeys) {
-            Object.defineProperty(this.$refs, key, {
-              enumerable: true,
-              configurable: true,
-              get () {
-                const refs = target.__refs[key] || []
-                if (type === 'component') {
-                  return all ? refs : refs[0]
-                } else {
-                  return createSelectorQuery().in(target).select(key, all)
-                }
-              }
-            })
-          }
         })
       },
-      __getRefVal (key) {
+      __getRefVal (type, selectorsConf) {
         return (instance) => {
           if (instance) {
-            this.__refs[key] = this.__refs[key] || []
-            this.__refs[key].push(instance)
+            selectorsConf.forEach((item = []) => {
+              const [prefix, selectors = ''] = item
+              if (selectors) {
+                selectors.trim().split(/\s+/).forEach(selector => {
+                  const refKey = prefix + selector
+                  this.__refs[refKey] = this.__refs[refKey] || []
+                  this.__refs[refKey].push({ type, instance })
+                })
+              }
+            })
           }
         }
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
         const refsArr = splitedSelector.map(selector => {
-          const selectorMap = this.__selectorMap?.value[selector] || []
+          const refs = this.__refs[selector] || []
           const res = []
-          selectorMap.forEach(({ type, key }) => {
+          refs.forEach(({ type, instance }) => {
             if (type === refType) {
-              const _refs = this.__refs[key] || []
-              res.push(..._refs)
+              res.push(instance)
             }
           })
           return res
