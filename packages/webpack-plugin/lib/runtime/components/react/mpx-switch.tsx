@@ -12,7 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-import { useTransformStyle } from './utils'
+import { useTransformStyle, useLayout } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -23,6 +23,9 @@ interface _SwitchProps extends SwitchProps {
   color: string
   'enable-offset'?: boolean
   'enable-var'?: boolean
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   'external-var-context'?: Record<string, any>
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -38,13 +41,15 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
+
     bindchange,
     catchchange
   } = props
 
   const [isChecked, setIsChecked] = useState<boolean>(checked)
-
-  const layoutRef = useRef({})
 
   const changeHandler = bindchange || catchchange
 
@@ -58,15 +63,15 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const {
     normalStyle,
-    hasPercent,
-    hasVarDec,
-    varContextRef,
-    setContainerWidth,
-    setContainerHeight
+    hasSelfPercent,
+    setWidth,
+    setHeight
   } = useTransformStyle(style, {
     enableVar,
     externalVarContext,
-    enableLineHeight: false
+    parentFontSize,
+    parentWidth,
+    parentHeight
   })
 
   useEffect(() => {
@@ -74,6 +79,12 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   }, [checked])
 
   const { nodeRef } = useNodesRef<Switch, _SwitchProps>(props, ref)
+
+  const {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked?: boolean } = {}) => {
     if (type === 'switch') {
@@ -101,26 +112,12 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }
 
-  const onLayout = (res: LayoutChangeEvent) => {
-    if (hasPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setContainerWidth(width || 0)
-      setContainerHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-  }
-  const needLayout = enableOffset || hasPercent
-
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...needLayout ? { onLayout } : {},
+    style: { ...normalStyle, ...layoutStyle },
+    ...layoutProps,
     ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
   }, [
-    'style',
     'checked',
     'disabled',
     'type',

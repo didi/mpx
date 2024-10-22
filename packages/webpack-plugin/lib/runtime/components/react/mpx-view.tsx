@@ -404,9 +404,6 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
     textProps
   })
 
-
-  console.log(">>> children", children)
-
   return [
     enableBackground ? wrapImage(backgroundStyle) : null,
     children
@@ -428,7 +425,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
-
 
   // return <View>
   //   <Text>1232323</Text>
@@ -519,26 +515,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     setStayTimer()
   }
 
-  const onLayout = (res: LayoutChangeEvent) => {
-    props.onLayout && props.onLayout(res)
-    if (hasSelfPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setWidth(width || 0)
-      setHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-  }
-
-  const needLayout = enableOffset || hasSelfPercent
+  const {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: innerStyle,
-    ...needLayout ? { onLayout } : null,
+    style: { ...innerStyle, ...layoutStyle },
+    ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
