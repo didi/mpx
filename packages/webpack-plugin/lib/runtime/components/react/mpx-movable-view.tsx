@@ -22,6 +22,7 @@ import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react
 import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
+import { useTransformStyle, splitProps, splitStyle, DEFAULT_UNLAY_STYLE, wrapChildren } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -55,6 +56,11 @@ interface MovableViewProps {
   'out-of-bounds'?: boolean;
   externalGesture?: Array<{ getNodeInstance: () => any }>;
   inertia?: boolean;
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
 }
 
 const styles = StyleSheet.create({
@@ -65,21 +71,27 @@ const styles = StyleSheet.create({
   }
 })
 
-const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((props: MovableViewProps, ref): JSX.Element => {
+const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((movableViewProps: MovableViewProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(movableViewProps)
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
+  const hasLayoutRef = useRef(false)
 
   const propsRef = useRef<any>({})
   propsRef.current = (props || {}) as MovableViewProps
 
   const {
-    children,
     x = 0,
     y = 0,
     inertia = false,
     disabled = false,
     animation = true,
     'out-of-bounds': outOfBounds = false,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     direction = 'none',
     externalGesture = [],
     style = {},
@@ -94,6 +106,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindtouchend,
     catchtouchend
   } = props
+
+  const {
+    hasSelfPercent,
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
@@ -254,6 +277,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const onLayout = (e: LayoutChangeEvent) => {
+    hasLayoutRef.current = true
+    if (hasSelfPercent) {
+      const { width, height } = e?.nativeEvent?.layout || {}
+      setWidth(width || 0)
+      setHeight(height || 0)
+    }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
       setBoundary({ width, height })
@@ -269,6 +298,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       })()
     })
+    props.onLayout && props.onLayout(e)
   }
 
   const extendEvent = useCallback((e: any) => {
@@ -431,16 +461,26 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   })
 
   const catchEventHandlers = injectCatchEvent(props)
-
+  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
         ref={nodeRef}
         onLayout={onLayout}
-        style={[styles.container, style, animatedStyles]}
+        style={[styles.container, innerStyle, animatedStyles, layoutStyle]}
         {...catchEventHandlers}
       >
-        {children}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec,
+              varContext: varContextRef.current,
+              textStyle,
+              textProps
+            }
+          )
+      }
       </Animated.View>
     </GestureDetector>
   )
