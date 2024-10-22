@@ -93,14 +93,14 @@ module.exports = function getSpec ({ warn, error }) {
     if (cssVariableExp.test(value) || calcExp.test(value)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^((-?\d+(\.\d+)?)(rpx|px|%)?|hairlineWidth)$/,
+      number: /^((-?\d+(\.\d+)?)(rpx|px|%|vw|vh)?|hairlineWidth)$/,
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const type = getValueType(prop)
     switch (type) {
       case ValueType.number: {
         if (!valueExp.number.test(value)) {
-          tips(`The value type of [${prop}] only supports [Number] in React Native environment, eg 10rpx, 10px, 10%, 10, please check again`)
+          tips(`The value type of [${prop}] only supports [Number] in React Native environment, eg 10rpx, 10px, 10%, please check again`)
           return false
         }
         return true
@@ -265,17 +265,18 @@ module.exports = function getSpec ({ warn, error }) {
       all: 'background'
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
+    const linerExp = /linear-gradient\(["']?(.*?)["']?\)/
     switch (prop) {
       case bgPropMap.image: {
         // background-image 仅支持背景图
         const imgUrl = value.match(urlExp)?.[0]
-        if (/.*linear-gradient*./.test(value)) {
-          error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
-        }
+        const linerVal = value.match(linerExp)?.[0]
         if (imgUrl) {
           return { prop, value: imgUrl }
+        } else if (linerVal) {
+          return { prop, value: linerVal }
         } else {
-          error(`[${prop}] only support value <url()>`)
+          error(`[${prop}] only support value <url()> or <linear-gradient()>`)
           return false
         }
       }
@@ -308,7 +309,6 @@ module.exports = function getSpec ({ warn, error }) {
             error(`background position value[${value}] does not support in React Native ${mode} environment!`)
           }
         })
-
         return { prop, value: values }
       }
       case bgPropMap.all: {
@@ -317,10 +317,11 @@ module.exports = function getSpec ({ warn, error }) {
         const values = value.trim().split(/\s(?![^()]*\))/)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
-          if (/.*linear-gradient*./.test(item)) {
-            error(`<linear-gradient()> is not supported in React Native ${mode} environment!`)
-          } else if (url) {
+          const linerVal = item.match(linerExp)?.[0]
+          if (url) {
             bgMap.push({ prop: bgPropMap.image, value: url })
+          } else if (linerVal) {
+            bgMap.push({ prop: bgPropMap.image, value: linerVal })
           } else if (verifyValues({ prop: bgPropMap.color, value: item }, false)) {
             bgMap.push({ prop: bgPropMap.color, value: item })
           } else if (verifyValues({ prop: bgPropMap.repeat, value: item }, false)) {
