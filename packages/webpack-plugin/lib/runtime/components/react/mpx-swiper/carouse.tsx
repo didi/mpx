@@ -57,11 +57,27 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     parentWidth,
     parentHeight
   } = props
-  const styleObj = JSON.parse(JSON.stringify(style || ''))
+  // 计算transfrom之类的
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
+  const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const { textProps } = splitProps(props)
   const newChild = Array.isArray(props.children) ? props.children.filter(child => child) : props.children
   const totalElements = Array.isArray(newChild) ? newChild.length : (newChild ? 1 : 0)
-  const defaultHeight = (styleObj?.height || 150)
-  const defaultWidth = (styleObj?.width || width || 375)
+  const defaultHeight = (normalStyle?.height || 150)
+  const defaultWidth = (normalStyle?.width || width || 375)
   const dir = props.horizontal === false ? 'y' : 'x'
   // state的offset默认值
   // const initIndex = props.circular ? props.current + 1: (props.current || 0)
@@ -71,23 +87,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const initOffsetIndex = initIndex + (props.circular && totalElements > 1 ? 1 : 0)
   const defaultX = (defaultWidth * initOffsetIndex) || 0
   const defaultY = (defaultHeight * initOffsetIndex) || 0
-  // 计算transfrom之类的
-  const {
-    normalStyle,
-    hasVarDec,
-    varContextRef,
-    hasSelfPercent,
-    setWidth,
-    setHeight
-  } = useTransformStyle(styleObj, {
-    enableVar,
-    externalVarContext,
-    parentFontSize,
-    parentWidth,
-    parentHeight
-  })
-  const { textStyle, innerStyle } = splitStyle(normalStyle)
-  const { textProps } = splitProps(props)
   // 内部存储上一次的offset值
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
   const { nodeRef: scrollViewRef } = useNodesRef<ScrollView & View, CarouseProps>(props, ref, {})
@@ -374,7 +373,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
 
   function getOffset (): Array<number> {
     const step = state.dir === 'x' ? state.width : state.height
-    if (!step) return []
+    if (!step || Number.isNaN(+step)) return []
     const offsetArray = []
     if (previousMargin) {
       offsetArray.push(0)

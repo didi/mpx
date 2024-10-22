@@ -56,8 +56,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
     'vertical',
     'previous-margin',
     'next-margin',
-    'enable-var',
-    'external-var-context',
     'easing-function'
   ], { layoutRef: innerLayout })
 

@@ -2254,7 +2254,7 @@ function processBuiltInComponents (el, meta) {
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
       if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
       }
