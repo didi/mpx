@@ -396,7 +396,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
       horizontal: props.horizontal,
       pagingEnabled: false,
       snapToOffsets: offsetsArray,
-      decelerationRate: 0.80, // 'fast'
+      decelerationRate: 0.99, // 'fast'
       showsHorizontalScrollIndicator: false,
       showsVerticalScrollIndicator: false,
       bounces: false,
@@ -513,7 +513,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   }
 
   const pages: Array<ReactNode> | ReactNode = renderPages()
-  return (<View style={[innerStyle, layoutStyle]} {...layoutProps}>
+  return (<View style={[normalStyle, innerStyle, layoutStyle]} {...layoutProps}>
       {renderScrollView(pages)}
       {props.showsPagination && renderPagination()}
   </View>)

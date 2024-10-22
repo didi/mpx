@@ -1,6 +1,6 @@
-import { View, LayoutChangeEvent } from 'react-native'
+import { View } from 'react-native'
 import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradient'
-import React, { forwardRef, MutableRefObject, useState, useRef, ReactElement, JSX } from 'react'
+import React, { forwardRef, useState, useRef, ReactElement, JSX } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { parseInlineStyle, useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
@@ -86,14 +86,12 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
   const isSetW = indicatorW !== undefined ? 1 : 0
-  const innerLayout = useRef({})
   const cloneRef = useRef(null)
-  const wrapRef = useRef(null)
   const maskPos: PosType = {}
   let [pickH, setPickH] = useState(0)
   const itemH = pickH / 5
-  if (style?.height && pickH && pickH !== style?.height) {
-    maskPos.height = itemH * 2 + Math.ceil((style.height - pickH) / 2)
+  if (normalStyle?.height && pickH && pickH !== normalStyle?.height) {
+    maskPos.height = itemH * 2 + Math.ceil((normalStyle.height - pickH) / 2)
   } else {
     maskPos.height = itemH * 2
   }
@@ -109,18 +107,17 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const eventData = getCustomEvent('change', {}, { detail: { value: changeValue, source: 'change' }, layoutRef })
     bindchange && bindchange(eventData)
   }
-  /*
-  const getInnerLayout = (layout: MutableRefObject<{}>) => {
-    innerLayout.current = layout.current
-  }
-  */
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: [normalStyle, layoutStyle, { position: 'relative', overflow: 'hidden' }],
+    style: {
+      ...normalStyle,
+      ...layoutStyle,
+      position: 'relative',
+      overflow: 'hidden'
+    },
     ...layoutProps
   }, [
-    'style',
     'enable-offset'
   ], { layoutRef })
 
@@ -133,7 +130,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       prefix: index,
       key: 'pick-view' + index,
       wrapperStyle: {
-        height: style?.height || 0,
+        height: normalStyle?.height || 0,
         itemHeight: indicatorH || 0
       },
       onColumnLayoutChange,
@@ -208,7 +205,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       return cloneChild(children, 0)
     }
   }
-
   return (<View {...innerProps}>
     {renderTopMask()}
     <View style={[styles.wrapper]}>
