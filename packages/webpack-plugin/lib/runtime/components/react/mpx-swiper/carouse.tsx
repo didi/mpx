@@ -374,6 +374,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
 
   function getOffset (): Array<number> {
     const step = state.dir === 'x' ? state.width : state.height
+    if (!step) return []
     const offsetArray = []
     if (previousMargin) {
       offsetArray.push(0)
@@ -390,13 +391,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
 
   function renderScrollView (pages: ReactNode) {
     const offsetsArray = getOffset()
-
     const scrollElementProps = {
       ref: scrollViewRef,
       horizontal: props.horizontal,
       pagingEnabled: false,
       snapToOffsets: offsetsArray,
-      decelerationRate: 0.80, // 'fast'
+      decelerationRate: 0.99, // 'fast'
       showsHorizontalScrollIndicator: false,
       showsVerticalScrollIndicator: false,
       bounces: false,
@@ -513,7 +513,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   }
 
   const pages: Array<ReactNode> | ReactNode = renderPages()
-  return (<View style={[innerStyle, layoutStyle]} {...layoutProps}>
+  return (<View style={[normalStyle, innerStyle, layoutStyle]} {...layoutProps}>
       {renderScrollView(pages)}
       {props.showsPagination && renderPagination()}
   </View>)
