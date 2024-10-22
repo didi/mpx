@@ -426,10 +426,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'parent-height': parentHeight
   } = props
 
-  // return <View>
-  //   <Text>1232323</Text>
-  // </View>
-
   const [isHover, setIsHover] = useState(false)
 
   // 默认样式
