@@ -2188,24 +2188,21 @@ function processExternalClasses (el, options) {
     options.externalClasses.forEach((className) => {
       const index = classNames.indexOf(className)
       if (index > -1) {
-        replacements.push(`$attrs[${stringify(className)}]`)
+        replacements.push(`($attrs[${stringify(className)}] || '')`)
         classNames.splice(index, 1)
       }
     })
 
-    if (classNames.length) {
+    if (replacements.length) {
+      addAttrs(el, [{
+        name: ':' + classLikeAttrName,
+        value: `['${classNames.join(' ')}', ${replacements.join(' ')}, $attrs[${stringify(P_MODULE_ID)}]].join(' ')`
+      }])
+    } else if (classNames.length) {
+      // 静态class拼接
       addAttrs(el, [{
         name: classLikeAttrName,
         value: classNames.join(' ')
-      }])
-    }
-
-    if (replacements.length) {
-      const dynamicClass = getAndRemoveAttr(el, ':class').val
-      if (dynamicClass) replacements.push(dynamicClass)
-      addAttrs(el, [{
-        name: ':class',
-        value: `[${replacements}, $attrs[${stringify(P_MODULE_ID)}]]`
       }])
     }
   }
