@@ -136,10 +136,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
-  const externalComponentGesture = externalGesture.flatMap((gesture: { nodeRefs?: Array<{ getNodeInstance: () => any }>, current?: any }) => {
+  const externalComponentGesture = externalGesture.flatMap((gesture: any) => {
     if (gesture?.nodeRefs) {
       return gesture.nodeRefs
-        .map(item => item.getNodeInstance().nodeRef)
+        .map((item: { getNodeInstance: () => any }) => item.getNodeInstance().nodeRef)
         .filter(Boolean)
     }
     return gesture?.current ? [gesture] : []
