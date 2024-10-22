@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, P_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -2140,43 +2140,52 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function processAliExternalClassesHack (el, options) {
+function processExternalClasses (el, options) {
   const isComponent = isComponentNode(el, options)
-  // 处理组件externalClass多层传递
-  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+  // const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+  // 默认仅处理 'class' 即可？ 应该无需支持 custom-class='i-class' 这种嵌套形写法？
+  const classLikeAttrNames = ['class']
+
   classLikeAttrNames.forEach((classLikeAttrName) => {
-    let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+    const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
     if (classLikeAttrValue) {
-      options.externalClasses.forEach((className) => {
-        const reg = new RegExp('\\b' + className + '\\b', 'g')
-        const replacement = dash2hump(className)
-        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
-      })
-      addAttrs(el, [{
-        name: classLikeAttrName,
-        value: classLikeAttrValue
-      }])
+      if (mode === 'web') {
+        processWebClass(classLikeAttrName, classLikeAttrValue, el, options)
+      } else {
+        processAliClass(classLikeAttrName, classLikeAttrValue, el, options)
+      }
     }
   })
 
   if (hasScoped && isComponent) {
+    let needAddPModuleId = false
     options.externalClasses.forEach((className) => {
-      const externalClass = getAndRemoveAttr(el, className).val
-      if (externalClass) {
+      let attrValue = getAndRemoveAttr(el, className).val
+      let attrName = className
+      if (mode === 'web') {
+        const dynamicClass = getAndRemoveAttr(el, ':' + className).val
+        if (dynamicClass) {
+          attrValue = dynamicClass
+          attrName = ':' + className
+        }
+      }
+      if (attrValue) {
         addAttrs(el, [{
-          name: className,
-          value: `${externalClass} ${moduleId}`
+          name: attrName,
+          value: attrValue
         }])
+        needAddPModuleId = true
       }
     })
+    if (needAddPModuleId) {
+      addAttrs(el, [{
+        name: P_MODULE_ID,
+        value: `${moduleId}`
+      }])
+    }
   }
-}
-
-// externalClasses只能模拟静态传递
-function processWebExternalClassesHack (el, options) {
-  const staticClass = getAndRemoveAttr(el, 'class').val
-  if (staticClass) {
-    const classNames = staticClass.split(/\s+/)
+  function processWebClass (classLikeAttrName, classLikeAttrValue, el, options) {
+    const classNames = classLikeAttrValue.split(/\s+/)
     const replacements = []
     options.externalClasses.forEach((className) => {
       const index = classNames.indexOf(className)
@@ -2188,7 +2197,7 @@ function processWebExternalClassesHack (el, options) {
 
     if (classNames.length) {
       addAttrs(el, [{
-        name: 'class',
+        name: classLikeAttrName,
         value: classNames.join(' ')
       }])
     }
@@ -2196,36 +2205,24 @@ function processWebExternalClassesHack (el, options) {
     if (replacements.length) {
       const dynamicClass = getAndRemoveAttr(el, ':class').val
       if (dynamicClass) replacements.push(dynamicClass)
-
       addAttrs(el, [{
         name: ':class',
-        value: `[${replacements}, $attrs[${stringify('p-module-id')}]]`
+        value: `[${replacements}, $attrs[${stringify(P_MODULE_ID)}]]`
       }])
     }
   }
 
-  // 处理externalClasses多层透传
-  const isComponent = isComponentNode(el, options)
-
-  if (hasScoped && isComponent) {
-    // 外层 custom-class = "{{someClass}}" 透传处理
+  function processAliClass (classLikeAttrName, classLikeAttrValue, el, options) {
     options.externalClasses.forEach((className) => {
-      const externalClass = getAndRemoveAttr(el, className).val
-      const dynamicClass = getAndRemoveAttr(el, ':' + className).val
-      const classValue = externalClass || dynamicClass
-      if (classValue) {
-        addAttrs(el, [{
-          name: dynamicClass ? ':' + className : className,
-          value: `${classValue}`
-        }])
-      }
-      if (classValue && className !== 'custom-class') {
-        addAttrs(el, [{
-          name: 'p-module-id',
-          value: `${moduleId}`
-        }])
-      }
+      const reg = new RegExp('\\b' + className + '\\b', 'g')
+      const replacementClassName = dash2hump(className)
+      const replacementModuleId = dash2hump(P_MODULE_ID)
+      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName}||''}} {{${replacementModuleId}}}`)
     })
+    addAttrs(el, [{
+      name: classLikeAttrName,
+      value: classLikeAttrValue
+    }])
   }
 }
 
@@ -2613,7 +2610,8 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfWeb(el)
     processScoped(el)
-    processWebExternalClassesHack(el, options)
+    // processWebExternalClassesHack(el, options)
+    processExternalClasses(el, options)
     processComponentGenericsWeb(el, options, meta)
     return
   }
@@ -2641,7 +2639,8 @@ function processElement (el, root, options, meta) {
   }
 
   if (transAli) {
-    processAliExternalClassesHack(el, options)
+    // processAliExternalClassesHack(el, options)
+    processExternalClasses(el, options)
   }
 
   processIf(el)
