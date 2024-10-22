@@ -14,12 +14,6 @@ export const DEFAULT_UNLAY_STYLE = {
   opacity: 0
 }
 
-export const throwReactWarning = (message: string) => {
-  setTimeout(() => {
-    console.warn(message)
-  }, 0)
-}
-
 export function rpx (value: number) {
   const { width } = Dimensions.get('screen')
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
@@ -113,17 +107,25 @@ export function every (children: ReactNode, callback: (children: ReactNode) => b
   return childrenArray.every((child) => callback(child))
 }
 
-type GroupData = Record<string, Record<string, any>>
-export function groupBy (obj: Record<string, any>, callback: (key: string, val: any) => string, group: GroupData = {}): GroupData {
+type GroupData<T> = Record<string, Partial<T>>
+export function groupBy<T extends Record<string, any>> (
+  obj: T,
+  callback: (key: string, val: T[keyof T]) => string,
+  group: GroupData<T> = {}
+): GroupData<T> {
   Object.entries(obj).forEach(([key, val]) => {
     const groupKey = callback(key, val)
     group[groupKey] = group[groupKey] || {}
-    group[groupKey][key] = val
+    group[groupKey][key as keyof T] = val
   })
   return group
 }
 
-export function splitStyle (styleObj: Object) {
+export function splitStyle<T extends Record<string, any>> (styleObj: T): {
+  textStyle?: Partial<T>;
+  backgroundStyle?: Partial<T>;
+  innerStyle?: Partial<T>;
+} {
   return groupBy(styleObj, (key) => {
     if (TEXT_STYLE_REGEX.test(key)) {
       return 'textStyle'
@@ -132,7 +134,11 @@ export function splitStyle (styleObj: Object) {
     } else {
       return 'innerStyle'
     }
-  })
+  }) as {
+    textStyle: Partial<T>;
+    backgroundStyle: Partial<T>;
+    innerStyle: Partial<T>;
+  }
 }
 
 const selfPercentRule: Record<string, 'height' | 'width'> = {
@@ -420,14 +426,20 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
   })
 }
 
-export function splitProps<T extends Record<string, any>> (props: T) {
+export function splitProps<T extends Record<string, any>> (props: T): {
+  textProps?: Partial<T>;
+  innerProps?: Partial<T>;
+} {
   return groupBy(props, (key) => {
     if (TEXT_PROPS_REGEX.test(key)) {
       return 'textProps'
     } else {
       return 'innerProps'
     }
-  })
+  }) as {
+    textProps: Partial<T>;
+    innerProps: Partial<T>;
+  }
 }
 
 interface LayoutConfig {
@@ -441,7 +453,7 @@ interface LayoutConfig {
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const layoutStyle: Record<string, any> = hasLayoutRef.current ? {} : DEFAULT_UNLAY_STYLE
+  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
   const layoutProps: Record<string, any> = {}
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {

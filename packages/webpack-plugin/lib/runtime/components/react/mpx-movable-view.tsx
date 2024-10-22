@@ -53,6 +53,7 @@ interface MovableViewProps {
   bindvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  onLayout?: (event: LayoutChangeEvent) => void;
   'out-of-bounds'?: boolean;
   externalGesture?: Array<{ getNodeInstance: () => any }>;
   inertia?: boolean;
