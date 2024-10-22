@@ -4,13 +4,12 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { VarContext } from './context'
-import { parseUrl, PERCENT_REGEX, isText, splitStyle, splitProps, useTransformStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
 import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
@@ -19,7 +18,6 @@ export interface _ViewProps extends ViewProps {
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
-  'enable-offset'?: boolean
   'enable-background'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
@@ -615,25 +613,16 @@ interface WrapChildrenConfig {
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
+  textProps?: Record<string, any>
 }
 
-function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext }: WrapChildrenConfig) {
-  const { textProps } = splitProps(props)
-  let { children } = props
-
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
-      }
-      return child
-    })
-  }
-
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider key='childrenWrap' value={varContext}>{children}</VarContext.Provider>
-  }
+function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {
+  const children = wrapChildren(props, {
+    hasVarDec,
+    varContext,
+    textStyle,
+    textProps
+  })
 
   return [
     enableBackground ? wrapImage(backgroundStyle) : null,
@@ -641,13 +630,13 @@ function wrapChildren (props: _ViewProps, { hasVarDec, enableBackground, textSty
   ]
 }
 
-const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref): JSX.Element => {
+const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
@@ -657,7 +646,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
   } = props
 
   const [isHover, setIsHover] = useState(false)
-  const layoutRef = useRef({})
 
   // 默认样式
   const defaultStyle: ExtendedViewStyle = {
@@ -742,26 +730,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
     setStayTimer()
   }
 
-  const onLayout = (res: LayoutChangeEvent) => {
-    props.onLayout && props.onLayout(res)
-    if (hasSelfPercent) {
-      const { width, height } = res?.nativeEvent?.layout || {}
-      setWidth(width || 0)
-      setHeight(height || 0)
-    }
-    if (enableOffset) {
-      nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      })
-    }
-  }
-
-  const needLayout = enableOffset || hasSelfPercent
+  const {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: innerStyle,
-    ...needLayout ? { onLayout } : null,
+    style: { ...innerStyle, ...layoutStyle },
+    ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd
@@ -780,14 +758,15 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((props, ref):
       {...innerProps}
     >
       {
-        wrapChildren(
+        wrapWithChildren(
           props,
           {
             hasVarDec,
             enableBackground: enableBackgroundRef.current,
             textStyle,
             backgroundStyle,
-            varContext: varContextRef.current
+            varContext: varContextRef.current,
+            textProps
           }
         )
       }
