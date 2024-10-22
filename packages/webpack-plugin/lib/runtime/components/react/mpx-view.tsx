@@ -549,6 +549,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     // 一开始未出现，数据改变时出现
     } else if (!(needLayout || needImageSize)) {
       setShow(true)
+      return
     }
 
     if (needImageSize) {
