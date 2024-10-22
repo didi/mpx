@@ -74,7 +74,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const scaleValue = useRef<any>(new Animated.Value(1))
   const [transformOrigin, setTransformOrigin] = useState('0% 0%')
 
-  const propsRef = useRef({})
+  const propsRef = useRef<any>({})
   const layoutRef = useRef<any>({})
 
   const MovableAreaLayout = useContext(MovableAreaContext)
