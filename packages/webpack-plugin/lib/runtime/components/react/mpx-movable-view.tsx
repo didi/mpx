@@ -461,13 +461,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   })
 
   const catchEventHandlers = injectCatchEvent(props)
-
+  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
         ref={nodeRef}
         onLayout={onLayout}
-        style={[styles.container, innerStyle, animatedStyles, !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}]}
+        style={[styles.container, innerStyle, animatedStyles, layoutStyle]}
         {...catchEventHandlers}
       >
         {
