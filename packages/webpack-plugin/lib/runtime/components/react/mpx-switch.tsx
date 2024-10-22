@@ -21,7 +21,6 @@ interface _SwitchProps extends SwitchProps {
   type: 'switch' | 'checkbox'
   disabled: boolean
   color: string
-  'enable-offset'?: boolean
   'enable-var'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
@@ -38,7 +37,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     type = 'switch',
     disabled = false,
     color = '#04BE02',
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
