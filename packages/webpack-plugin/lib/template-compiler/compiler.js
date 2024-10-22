@@ -2142,9 +2142,7 @@ function isComponentNode (el, options) {
 
 function processExternalClasses (el, options) {
   const isComponent = isComponentNode(el, options)
-  // const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
-  // 默认仅处理 'class' 即可？ 应该无需支持 custom-class='i-class' 这种嵌套形写法？
-  const classLikeAttrNames = ['class']
+  const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
     const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
