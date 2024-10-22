@@ -244,11 +244,21 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
+  const formatOpacity = ({ prop, value }) => {
+    if (/^(\.\d+)$/.test(value)) {
+      return ({ prop, value: +`0${value}` })
+    }
+    return ({ prop, value })
+  }
+
   // line-height
   const formatLineHeight = ({ prop, value }) => {
+    if (/^(\.\d+)$/.test(value)) {
+      value = `0${value}`
+    }
     return verifyValues({ prop, value }) && ({
       prop,
-      value: /^\s*-?\d+(\.\d+)?\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: /^\d*(\.\d+)?$/.test(value) ? `${Math.round(value * 100)}%` : value
     })
   }
 
@@ -532,6 +542,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^(margin|padding)$/,
         ios: formatMargins,
         android: formatMargins
+      },
+      {
+        test: 'opacity',
+        ios: formatOpacity,
+        android: formatOpacity
       },
       { // line-height 换算
         test: 'line-height',
