@@ -1,5 +1,5 @@
-import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState } from 'react'
-import { Dimensions, StyleSheet } from 'react-native'
+import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { Dimensions, StyleSheet, LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -10,11 +10,8 @@ export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
-
-export const throwReactWarning = (message: string) => {
-  setTimeout(() => {
-    console.warn(message)
-  }, 0)
+export const DEFAULT_UNLAY_STYLE = {
+  opacity: 0
 }
 
 export function rpx (value: number) {
@@ -110,17 +107,25 @@ export function every (children: ReactNode, callback: (children: ReactNode) => b
   return childrenArray.every((child) => callback(child))
 }
 
-type GroupData = Record<string, Record<string, any>>
-export function groupBy (obj: Record<string, any>, callback: (key: string, val: any) => string, group: GroupData = {}): GroupData {
+type GroupData<T> = Record<string, Partial<T>>
+export function groupBy<T extends Record<string, any>> (
+  obj: T,
+  callback: (key: string, val: T[keyof T]) => string,
+  group: GroupData<T> = {}
+): GroupData<T> {
   Object.entries(obj).forEach(([key, val]) => {
     const groupKey = callback(key, val)
     group[groupKey] = group[groupKey] || {}
-    group[groupKey][key] = val
+    group[groupKey][key as keyof T] = val
   })
   return group
 }
 
-export function splitStyle (styleObj: Object) {
+export function splitStyle<T extends Record<string, any>> (styleObj: T): {
+  textStyle?: Partial<T>;
+  backgroundStyle?: Partial<T>;
+  innerStyle?: Partial<T>;
+} {
   return groupBy(styleObj, (key) => {
     if (TEXT_STYLE_REGEX.test(key)) {
       return 'textStyle'
@@ -129,7 +134,11 @@ export function splitStyle (styleObj: Object) {
     } else {
       return 'innerStyle'
     }
-  })
+  }) as {
+    textStyle: Partial<T>;
+    backgroundStyle: Partial<T>;
+    innerStyle: Partial<T>;
+  }
 }
 
 const selfPercentRule: Record<string, 'height' | 'width'> = {
@@ -417,12 +426,80 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
   })
 }
 
-export function splitProps<T extends Record<string, any>> (props: T) {
+export function splitProps<T extends Record<string, any>> (props: T): {
+  textProps?: Partial<T>;
+  innerProps?: Partial<T>;
+} {
   return groupBy(props, (key) => {
     if (TEXT_PROPS_REGEX.test(key)) {
       return 'textProps'
     } else {
       return 'innerProps'
     }
-  })
+  }) as {
+    textProps: Partial<T>;
+    innerProps: Partial<T>;
+  }
+}
+
+interface LayoutConfig {
+  props: Record<string, any>
+  hasSelfPercent: boolean
+  setWidth: Dispatch<SetStateAction<number>>
+  setHeight: Dispatch<SetStateAction<number>>
+  onLayout?: (event?: LayoutChangeEvent) => void
+  nodeRef: React.RefObject<any>
+}
+export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:LayoutConfig) => {
+  const layoutRef = useRef({})
+  const hasLayoutRef = useRef(false)
+  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
+  const layoutProps: Record<string, any> = {}
+  const enableOffset = props['enable-offset']
+  if (hasSelfPercent || onLayout || enableOffset) {
+    layoutProps.onLayout = (e: LayoutChangeEvent) => {
+      hasLayoutRef.current = true
+      if (hasSelfPercent) {
+        const { width, height } = e?.nativeEvent?.layout || {}
+        setWidth(width || 0)
+        setHeight(height || 0)
+      }
+      if (enableOffset) {
+        nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+        })
+      }
+      onLayout && onLayout(e)
+      props.onLayout && props.onLayout(e)
+    }
+  }
+  return {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  }
+}
+
+export interface WrapChildrenConfig {
+  hasVarDec: boolean
+  varContext?: Record<string, any>
+  textStyle?: TextStyle
+  textProps?: Record<string, any>
+}
+
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textStyle, textProps }: WrapChildrenConfig) {
+  let { children } = props
+  if (textStyle || textProps) {
+    children = Children.map(children, (child) => {
+      if (isText(child)) {
+        const style = { ...textStyle, ...child.props.style }
+        return cloneElement(child, { ...textProps, style })
+      }
+      return child
+    })
+  }
+  if (hasVarDec && varContext) {
+    children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
+  }
+  return children
 }
