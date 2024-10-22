@@ -73,7 +73,7 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string,
-  colors?: Array<string>,
+  colors: Array<string>,
   locations?: Array<number>
   angle?: number
 }
@@ -290,7 +290,7 @@ function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo) {
 // 渐变的转换
 function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   const { type, linearInfo } = preImageInfo
-  const { colors, locations, direction = '' } = linearInfo || {}
+  const { colors = [], locations, direction = '' } = linearInfo || {}
   const { width, height } = imageSize || {}
 
   if (type !== 'linear') return
@@ -316,11 +316,10 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
       resizeMode: 'cover' as ImageResizeMode,
       position: 'absolute'
       // ...StyleSheet.absoluteFillObject
-    }
+    },
+    colors: []
   }
   applyHandlers([backgroundSize, backgroundImage, backgroundPosition, linearGradient], [imageProps, preImageInfo, imageSize, layoutInfo])
-
-  if (!imageProps?.src && !preImageInfo?.linearInfo) return null
 
   return imageProps
 }
