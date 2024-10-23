@@ -7,8 +7,20 @@ function rpx (value) {
   // px = rpx * (750 / 屏幕宽度)
   return value * width / 750
 }
+function vw (value) {
+  const { width } = Dimensions.get('screen')
+  return value * width / 100
+}
+function vh (value) {
+  const { height } = Dimensions.get('screen')
+  return value * height / 100
+}
 
-global.__rpx = rpx
+global.__unit = {
+  rpx,
+  vw,
+  vh
+}
 global.__hairlineWidth = StyleSheet.hairlineWidth
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
@@ -80,8 +92,8 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
+const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
@@ -127,10 +139,10 @@ function transformStyleObj (styleObj) {
   keys.forEach((prop) => {
     let value = styleObj[prop]
     let matched
-    if ((matched = pxRegExp.exec(value))) {
+    if ((matched = numberRegExp.exec(value))) {
       value = +matched[1]
-    } else if ((matched = rpxRegExp.exec(value))) {
-      value = rpx(+matched[1])
+    } else if ((matched = unitRegExp.exec(value))) {
+      value = global.__unit[matched[2]](+matched[1])
     } else if (hairlineRegExp.test(value)) {
       value = StyleSheet.hairlineWidth
     }

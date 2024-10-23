@@ -4,15 +4,15 @@
  * ✔ disabled
  * ✔ color
  */
-import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
+import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
+import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-
-import { throwReactWarning } from './utils'
+import { useTransformStyle, useLayout } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -21,7 +21,11 @@ interface _SwitchProps extends SwitchProps {
   type: 'switch' | 'checkbox'
   disabled: boolean
   color: string
-  'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  'external-var-context'?: Record<string, any>
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -33,14 +37,17 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     type = 'switch',
     disabled = false,
     color = '#04BE02',
-    'enable-offset': enableOffset,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
+
     bindchange,
     catchchange
   } = props
 
   const [isChecked, setIsChecked] = useState<boolean>(checked)
-
-  const layoutRef = useRef({})
 
   const changeHandler = bindchange || catchchange
 
@@ -52,11 +59,30 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     formValuesMap = formContext.formValuesMap
   }
 
+  const {
+    normalStyle,
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
+
   useEffect(() => {
     setIsChecked(checked)
   }, [checked])
 
   const { nodeRef } = useNodesRef<Switch, _SwitchProps>(props, ref)
+
+  const {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked?: boolean } = {}) => {
     if (type === 'switch') {
@@ -78,23 +104,18 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
 
-  const onLayout = () => {
-    nodeRef.current?.measure?.((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
-  }
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...enableOffset ? { onLayout } : {},
+    style: { ...normalStyle, ...layoutStyle },
+    ...layoutProps,
     ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
   }, [
-    'style',
     'checked',
     'disabled',
     'type',
@@ -107,19 +128,19 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     return <CheckBox
       {...innerProps}
       color={color}
-      style={style}
+      style={normalStyle}
       checked={isChecked}
     />
   }
 
-  return (<Switch
+  return <Switch
     {...innerProps}
-    style={style}
+    style={normalStyle}
     value={isChecked}
     trackColor={{ false: '#FFF', true: color }}
     thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
     ios_backgroundColor="#FFF"
-  />)
+  />
 })
 
 _Switch.displayName = 'mpx-switch'

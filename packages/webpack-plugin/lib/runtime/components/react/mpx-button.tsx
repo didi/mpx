@@ -35,10 +35,8 @@
  * ✔ bindtap
  */
 import { useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX } from 'react'
-
 import {
   View,
-  Text,
   StyleSheet,
   ViewStyle,
   TextStyle,
@@ -46,11 +44,11 @@ import {
   Easing,
   NativeSyntheticEvent
 } from 'react-native'
-import { splitStyle, isText, every, splitProps, throwReactWarning } from './utils'
+import { warn } from '@mpxjs/utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
-import { isEmptyObject } from '@mpxjs/utils'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -76,6 +74,11 @@ export interface ButtonProps {
   'open-type'?: OpenType
   'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   style?: ViewStyle & TextStyle & Record<string, any>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
@@ -127,18 +130,18 @@ const styles = StyleSheet.create({
 
 const getOpenTypeEvent = (openType: OpenType) => {
   if (!global.__mpx?.config?.rnConfig) {
-    throwReactWarning('[Mpx runtime warn]: Environment not supported')
+    warn('Environment not supported')
     return
   }
   const eventName = OpenTypeEventsMap.get(openType)
   if (!eventName) {
-    throwReactWarning(`[Mpx runtime warn]: open-type not support ${openType}`)
+    warn(`open-type not support ${openType}`)
     return
   }
 
   const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
   if (!event) {
-    throwReactWarning(`[Mpx runtime warn]: Unregistered ${eventName} event`)
+    warn(`Unregistered ${eventName} event`)
     return
   }
 
@@ -180,7 +183,9 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, ref): JSX.Element => {
+const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(buttonProps)
+
   const {
     size = 'default',
     type = 'default',
@@ -192,8 +197,12 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
-    'enable-offset': enableOffset,
     'form-type': formType,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     style = {},
     children,
     bindgetuserinfo,
@@ -220,21 +229,11 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     hoverStayTimer: undefined
   })
 
-  const layoutRef = useRef({})
-
   const [isHover, setIsHover] = useState(false)
 
   const isMiniSize = size === 'mini'
 
   const applyHoverEffect = isHover && hoverClass !== 'none'
-
-  const { textStyle, imageStyle, innerStyle } = splitStyle(style)
-
-  const { textStyle: hoverTextStyle, imageStyle: hoverImageStyle, innerStyle: hoverInnerStyle } = splitStyle(hoverStyle)
-
-  if (imageStyle || hoverImageStyle) {
-    throwReactWarning('[Mpx runtime warn]: Button does not support background image-related styles!')
-  }
 
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 
@@ -276,6 +275,36 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     ...styles.text,
     ...(isMiniSize && styles.textMini),
     color: plain ? plainTextColor : normalTextColor
+  }
+
+  const defaultStyle = {
+    ...defaultViewStyle,
+    ...defaultTextStyle
+  }
+
+  const styleObj = {
+    ...defaultStyle,
+    ...style,
+    ...(applyHoverEffect && hoverStyle)
+  }
+
+  const {
+    hasSelfPercent,
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
+
+  const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+
+  if (backgroundStyle) {
+    warn('Button does not support background image-related styles!')
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
@@ -334,6 +363,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
       resetFn && resetFn()
     }
   }
+
   const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
@@ -341,46 +371,17 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
     handleFormTypeFn()
   }
 
-  function wrapChildren (children: ReactNode, defaultTextStyle: Record<string, any>, textStyle: Record<string, any>) {
-    if (!children) return children
-    const hasTextStyle = !isEmptyObject(textStyle)
-    const { textProps } = splitProps(props)
-
-    if (every(children, (child) => isText(child))) {
-      children = <Text key='buttonTextWrap' style={{ ...defaultTextStyle, ...textStyle }} {...(textProps || {})}>{children}</Text>
-    } else {
-      if (hasTextStyle) throwReactWarning('[Mpx runtime warn]: Text style will be ignored unless every child of the Button is Text node!')
-    }
-
-    return children
-  }
-
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: {
-      ...defaultViewStyle,
-      ...defaultTextStyle,
-      ...textStyle
-    }
-  })
-
-  const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
-  }
-
   const innerProps = useInnerProps(
     props,
     {
       ref: nodeRef,
+      style: { ...innerStyle, ...layoutStyle },
+      ...layoutProps,
       bindtouchstart: onTouchStart,
       bindtouchend: onTouchEnd,
-      bindtap: onTap,
-      ...(enableOffset ? { onLayout } : {})
+      bindtap: onTap
     },
-    [
-      'enable-offset'
-    ],
+    [],
     {
       layoutRef,
       disableTap: disabled
@@ -388,21 +389,16 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((props, re
   )
 
   return (
-    <View
-      {...innerProps}
-      style={{
-        ...defaultViewStyle,
-        ...innerStyle,
-        ...(applyHoverEffect && hoverInnerStyle)
-      } as ViewStyle}>
+    <View {...innerProps}>
       {loading && <Loading alone={!children} />}
       {
         wrapChildren(
-          children,
-          defaultTextStyle,
+          props,
           {
-            ...textStyle,
-            ...(applyHoverEffect && hoverTextStyle)
+            hasVarDec,
+            varContext: varContextRef.current,
+            textStyle,
+            textProps
           }
         )
       }
