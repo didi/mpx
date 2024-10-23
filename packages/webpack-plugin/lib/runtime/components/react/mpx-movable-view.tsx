@@ -23,7 +23,7 @@ import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { useTransformStyle, splitProps, splitStyle, DEFAULT_UNLAY_STYLE, wrapChildren } from './utils'
-import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
+import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((movableViewProps: MovableViewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(movableViewProps)
+  const movableGestureRef = useRef<PanGesture>()
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
   const hasLayoutRef = useRef(false)
@@ -157,7 +158,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const waitForHandlers = flatGesture(waitFor)
 
   const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: styles.container
+    defaultStyle: styles.container,
+    nodes: {
+      gestureRef: movableGestureRef
+    }
   })
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
@@ -209,6 +213,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
     })()
   }, [x, y])
+
+  useEffect(() => {
+    const { width, height } = layoutRef.current
+    if (width && height) {
+      resetBoundaryAndCheck({ width, height })
+    }
+  }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
   useAnimatedReaction(
     () => ({
@@ -270,7 +281,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
     draggableXRange.value = xRange
     draggableYRange.value = yRange
-  }, [MovableAreaLayout.height, MovableAreaLayout.width])
+  }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
 
   const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
     'worklet'
@@ -292,6 +303,21 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return { x, y }
   }, [])
 
+  const resetBoundaryAndCheck = ({ width, height }: { width: number; height: number }) => {
+    setBoundary({ width, height })
+    runOnUI(() => {
+      const positionX = offsetX.value
+      const positionY = offsetY.value
+      const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
+      if (positionX !== newX) {
+        offsetX.value = newX
+      }
+      if (positionY !== newY) {
+        offsetY.value = newY
+      }
+    })()
+  }
+
   const onLayout = (e: LayoutChangeEvent) => {
     hasLayoutRef.current = true
     if (hasSelfPercent) {
@@ -301,18 +327,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
-      setBoundary({ width, height })
-      runOnUI(() => {
-        const positionX = offsetX.value
-        const positionY = offsetY.value
-        const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
-        if (positionX !== newX) {
-          offsetX.value = newX
-        }
-        if (positionY !== newY) {
-          offsetY.value = newY
-        }
-      })()
+      resetBoundaryAndCheck({ width, height })
     })
     props.onLayout && props.onLayout(e)
   }
@@ -462,13 +477,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           })
         }
       })
+      .withRef(movableGestureRef)
   }, [disabled, direction, inertia, outOfBounds, handleTriggerMove, handleTriggerStart, handleTriggerEnd])
 
   if (simultaneousHandlers && simultaneousHandlers.length) {
     gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
   }
 
-  if (waitForHandlers && simultaneousHandlers.length) {
+  if (waitForHandlers && waitForHandlers.length) {
     gesture.requireExternalGestureToFail(...waitForHandlers)
   }
 

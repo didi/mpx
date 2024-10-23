@@ -33,7 +33,7 @@
  */
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, Ref } from 'react'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -65,6 +65,8 @@ interface ScrollViewProps {
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
+  'wait-for'?: Ref<unknown> | Ref<unknown>[];
+  'simultaneous-handlers'?: Ref<unknown> | Ref<unknown>[];
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -125,6 +127,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    'simultaneous-handlers': simultaneousHandlers,
+    'wait-for': waitFor,
     __selectRef
   } = props
 
@@ -417,7 +421,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     bindtouchmove: onScrollTouchMove,
     onScrollEndDrag,
     onMomentumScrollEnd: onScrollEnd,
-    ...layoutProps
+    ...layoutProps,
+    ...(simultaneousHandlers ? { simultaneousHandlers } : {}),
+    ...(waitFor ? { waitFor } : {})
   }
   if (enhanced) {
     scrollAdditionalProps = {

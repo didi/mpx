@@ -23,14 +23,7 @@ interface MovableAreaProps {
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { style = {}, width = 10, height = 10, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
-  const [areaWidth, setAreaWidth] = useState(0)
-  const [areaHeight, setAreaHeight] = useState(0)
-
-  useEffect(() => {
-    setAreaWidth(width)
-    setAreaHeight(height)
-  }, [width, height])
+  const { style = {}, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
 
   const {
     hasSelfPercent,
@@ -43,21 +36,15 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
 
   const { nodeRef: movableViewRef } = useNodesRef(props, ref)
 
-  const onLayout = (e: LayoutChangeEvent) => {
-    const { width = 10, height = 10 } = e.nativeEvent.layout
-    setAreaWidth(width)
-    setAreaHeight(height)
-  }
-
   const contextValue = useMemo(() => ({
-    height: areaHeight,
-    width: areaWidth
-  }), [areaHeight, areaWidth])
+    height: style.height || 10,
+    width: style.width || 10
+  }), [style.width, style.height])
 
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef, onLayout })
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef })
 
   const innerProps = useInnerProps(props, {
-    style: { height: areaHeight, width: areaWidth, overflow: 'hidden', ...normalStyle, ...layoutStyle },
+    style: { height: contextValue.height, width: contextValue.width, overflow: 'hidden', ...normalStyle, ...layoutStyle },
     ref: movableViewRef,
     ...layoutProps
   }, [], { layoutRef })
