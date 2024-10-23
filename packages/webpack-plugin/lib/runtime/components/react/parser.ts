@@ -23,10 +23,10 @@ export class ExpressionParser {
 
   tokenize (input: string): Token[] {
     const tokens: Token[] = []
-    const regex = /(\d+\.?\d*(?:px|rpx|%)?|[+\-*/(),]|\b[a-zA-Z_][a-zA-Z0-9_]*\b)/g
+    const regex = /(\d+\.?\d*(?:px|rpx|%|vw|vh)?|[+\-*/(),]|\b[a-zA-Z_][a-zA-Z0-9_]*\b)/g
     let match: RegExpExecArray | null
     while ((match = regex.exec(input))) {
-      if (/^\d+\.?\d*(?:px|rpx|%)?$/.test(match[0])) {
+      if (/^\d+\.?\d*(?:px|rpx|%|vw|vh)?$/.test(match[0])) {
         const lastToken = tokens[tokens.length - 1]
         const last2Token = tokens[tokens.length - 2]
         if (lastToken?.type === '-' && (!last2Token || /^[+\-*/(,]$/.test(last2Token?.type))) {
