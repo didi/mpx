@@ -93,7 +93,7 @@ module.exports = function getSpec ({ warn, error }) {
     if (cssVariableExp.test(value) || calcExp.test(value)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^((-?\d+(\.\d+)?)(rpx|px|%|vw|vh)?|hairlineWidth)$/,
+      number: /^((-?(\d+(\.\d+)?|(\.\d+)))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const type = getValueType(prop)
@@ -244,21 +244,11 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
-  const formatOpacity = ({ prop, value }) => {
-    if (/^(\.\d+)$/.test(value)) {
-      return ({ prop, value: +`0${value}` })
-    }
-    return ({ prop, value })
-  }
-
   // line-height
   const formatLineHeight = ({ prop, value }) => {
-    if (/^(\.\d+)$/.test(value)) {
-      value = `0${value}`
-    }
     return verifyValues({ prop, value }) && ({
       prop,
-      value: /^\d*(\.\d+)?$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: /^\s*(-?(\d+(\.\d+)?)|(\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
     })
   }
 
@@ -542,11 +532,6 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^(margin|padding)$/,
         ios: formatMargins,
         android: formatMargins
-      },
-      {
-        test: 'opacity',
-        ios: formatOpacity,
-        android: formatOpacity
       },
       { // line-height 换算
         test: 'line-height',
