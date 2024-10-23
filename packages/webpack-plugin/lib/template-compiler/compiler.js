@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, P_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -2156,64 +2156,55 @@ function processExternalClasses (el, options) {
   })
 
   if (hasScoped && isComponent) {
-    let needAddPModuleId = false
-    options.externalClasses.forEach((className) => {
-      let attrValue = getAndRemoveAttr(el, className).val
-      let attrName = className
-      if (mode === 'web') {
-        const dynamicClass = getAndRemoveAttr(el, ':' + className).val
-        if (dynamicClass) {
-          attrValue = dynamicClass
-          attrName = ':' + className
-        }
-      }
-      if (attrValue) {
-        addAttrs(el, [{
-          name: attrName,
-          value: attrValue
-        }])
-        needAddPModuleId = true
-      }
+    const needAddModuleId = options.externalClasses.some((className) => {
+      return el.attrsMap[className] || (mode === 'web' && el.attrsMap[':' + className])
     })
-    if (needAddPModuleId) {
+
+    if (needAddModuleId) {
       addAttrs(el, [{
-        name: P_MODULE_ID,
+        name: PARENT_MODULE_ID,
         value: `${moduleId}`
       }])
     }
   }
   function processWebClass (classLikeAttrName, classLikeAttrValue, el, options) {
-    const classNames = classLikeAttrValue.split(/\s+/)
-    const replacements = []
-    options.externalClasses.forEach((className) => {
-      const index = classNames.indexOf(className)
-      if (index > -1) {
-        replacements.push(`($attrs[${stringify(className)}] || '')`)
-        classNames.splice(index, 1)
+    let classNames = classLikeAttrValue.split(/\s+/)
+    let hasExternalClass = false
+    classNames = classNames.map((className) => {
+      if (options.externalClasses.includes(className)) {
+        hasExternalClass = true
+        return `($attrs[${stringify(className)}] || '')`
       }
+      return stringify(className)
     })
 
-    if (replacements.length) {
-      addAttrs(el, [{
-        name: ':' + classLikeAttrName,
-        value: `['${classNames.join(' ')}', ${replacements.join(' ')}, $attrs[${stringify(P_MODULE_ID)}]].join(' ')`
-      }])
-    } else if (classNames.length) {
-      // 静态class拼接
-      addAttrs(el, [{
-        name: classLikeAttrName,
-        value: classNames.join(' ')
-      }])
+    if (classLikeAttrName === 'class') {
+      // 处理动态 class 进行合并
+      const dynamicClass = getAndRemoveAttr(el, ':class').val
+      if (dynamicClass) classNames.push(dynamicClass)
     }
+
+    if (hasExternalClass) {
+      classNames.push(`($attrs[${stringify(PARENT_MODULE_ID)}] || '')`)
+    }
+
+    addAttrs(el, [{
+      name: ':' + classLikeAttrName,
+      value: `[${classNames}].join(' ')`
+    }])
   }
 
   function processAliClass (classLikeAttrName, classLikeAttrValue, el, options) {
+    let hasExternalClass = false
     options.externalClasses.forEach((className) => {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
       const replacementClassName = dash2hump(className)
-      const replacementModuleId = dash2hump(P_MODULE_ID)
-      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName}||''}} {{${replacementModuleId}}}`)
+      if (classLikeAttrValue.includes(className)) hasExternalClass = true
+      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName}||''}}`)
     })
+    if (hasExternalClass) {
+      classLikeAttrValue += ` {{${dash2hump(PARENT_MODULE_ID)}}}`
+    }
     addAttrs(el, [{
       name: classLikeAttrName,
       value: classLikeAttrValue
