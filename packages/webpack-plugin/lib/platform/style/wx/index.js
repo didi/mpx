@@ -273,7 +273,7 @@ module.exports = function getSpec ({ warn, error }) {
       all: 'background'
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
-    const linerExp = /linear-gradient\(["']?(.*?)["']?\)/
+    const linerExp = /linear-gradient\(.*\)\s*$/
     switch (prop) {
       case bgPropMap.image: {
         // background-image 仅支持背景图
