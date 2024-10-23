@@ -43,7 +43,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
       if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
-      let newData = rulesRunner({ prop, value })
+      let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
         newData = [newData]
