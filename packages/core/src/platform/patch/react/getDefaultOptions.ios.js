@@ -416,20 +416,23 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
+        const isCustom = pageConfig.navigationStyle === 'custom'
+        const opt = __mpx_mode__ === 'android' ? {
+          statusBarTranslucent: isCustom,
+          statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色为黑色
+          statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
+        } : {}
+
         navigation.setOptions({
-          headerShown: pageConfig.navigationStyle !== 'custom',
+          headerShown: !isCustom,
+          headerShadowVisible: pageConfig.headerShadowVisible, // 控制header是否有阴影或border
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          ...opt
         })
-
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(true)
-          ReactNative.StatusBar.setBackgroundColor('transparent')
-        }
       }, [])
 
       navigation.insets = useSafeAreaInsets()
