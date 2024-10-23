@@ -417,11 +417,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        const opt = __mpx_mode__ === 'android' ? {
-          statusBarTranslucent: isCustom,
-          statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色为黑色
-          statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
-        } : {}
+        const opt = __mpx_mode__ === 'android'
+          ? {
+            statusBarTranslucent: isCustom,
+            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色为黑色
+            statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
+          }
+          : {}
 
         navigation.setOptions({
           headerShown: !isCustom,
