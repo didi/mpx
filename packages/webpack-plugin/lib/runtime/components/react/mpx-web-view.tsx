@@ -1,5 +1,5 @@
 import { forwardRef, JSX, useEffect } from 'react'
-import { noop } from '@mpxjs/utils'
+import { noop, warn } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
@@ -20,10 +20,11 @@ type CommonCallbackEvent = {
 }
 
 interface WebViewProps {
-  src: string
+  src?: string
   bindmessage?: (event: OnMessageCallbackEvent) => void
   bindload?: (event: CommonCallbackEvent) => void
   binderror?: (event: CommonCallbackEvent) => void
+  [x: string]: any
 }
 
 interface PayloadData {
@@ -47,7 +48,9 @@ interface FormRef {
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
-
+  if (props.style) {
+    warn('The web-view component does not support the style prop.')
+  }
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,

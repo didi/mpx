@@ -2,8 +2,8 @@ const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
-const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
+const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
@@ -17,11 +17,11 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   function formatValue (value) {
     let matched
     let needStringify = true
-    if ((matched = pxRegExp.exec(value))) {
+    if ((matched = numberRegExp.exec(value))) {
       value = matched[1]
       needStringify = false
-    } else if ((matched = rpxRegExp.exec(value))) {
-      value = `global.__rpx(${matched[1]})`
+    } else if ((matched = unitRegExp.exec(value))) {
+      value = `global.__unit.${matched[2]}(${matched[1]})`
       needStringify = false
     } else if (hairlineRegExp.test(value)) {
       value = 'global.__hairlineWidth'
@@ -43,7 +43,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
       if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
-      let newData = rulesRunner({ prop, value })
+      let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
         newData = [newData]
