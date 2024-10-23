@@ -420,10 +420,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         const opt = __mpx_mode__ === 'android'
           ? {
             statusBarTranslucent: isCustom,
-            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色为黑色
+            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
             statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
           }
-          : {}
+          : {
+            headerBackTitleVisible: false
+          }
 
         navigation.setOptions({
           headerShown: !isCustom,
@@ -432,6 +434,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
+          headerTitleAlign: 'center',
           headerTintColor: pageConfig.navigationBarTextStyle || 'white',
           ...opt
         })
