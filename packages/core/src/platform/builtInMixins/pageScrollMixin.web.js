@@ -16,19 +16,19 @@ function refreshMs () {
 
 function showLoading (vm) {
   const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
-  vm.loading = document.createElement('div')
-  vm.loading.className = 'pull-down-loading'
-  vm.loading.style.cssText = `background-color: ${backgroundColor};`
+  vm.__mpxloading = document.createElement('div')
+  vm.__mpxloading.className = 'pull-down-loading'
+  vm.__mpxloading.style.cssText = `background-color: ${backgroundColor};`
   const dot = document.createElement('div')
   dot.className = `dot-flashing ${backgroundTextStyle}`
-  vm.loading.append(dot)
-  vm.$el.prepend(vm.loading)
+  vm.__mpxloading.append(dot)
+  vm.$el.prepend(vm.__mpxloading)
 }
 
 function hideLoading (vm) {
-  if (vm.loading) {
-    vm.$el.removeChild(vm.loading)
-    vm.loading = null
+  if (vm.__mpxloading) {
+    vm.$el.removeChild(vm.__mpxloading)
+    vm.__mpxloading = null
   }
 }
 
