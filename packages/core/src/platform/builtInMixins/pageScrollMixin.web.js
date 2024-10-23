@@ -14,8 +14,6 @@ function refreshMs () {
   }
 }
 
-let loading = null
-
 function showLoading (vm) {
   const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
   vm.loading = document.createElement('div')
