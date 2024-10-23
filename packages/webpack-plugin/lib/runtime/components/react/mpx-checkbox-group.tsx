@@ -1,27 +1,23 @@
 /**
  * ✔ bindchange
  */
-import {
-  JSX,
-  useRef,
-  forwardRef,
-  ReactNode,
-  useContext
-} from 'react'
-import {
-  View,
-  NativeSyntheticEvent,
-  ViewStyle
-} from 'react-native'
+import { JSX, useRef, forwardRef, ReactNode, useContext } from 'react'
+import { View, NativeSyntheticEvent, ViewStyle } from 'react-native'
+import { warn } from '@mpxjs/utils'
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { throwReactWarning } from './utils'
+import { useLayout, useTransformStyle, wrapChildren } from './utils'
 
 export interface CheckboxGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   children: ReactNode
   bindchange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -32,12 +28,14 @@ const CheckboxGroup = forwardRef<
 >((props, ref): JSX.Element => {
   const {
     style = {},
-    'enable-offset': enableOffset,
-    children,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     bindchange
   } = props
 
-  const layoutRef = useRef({})
   const formContext = useContext(FormContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
@@ -50,27 +48,26 @@ const CheckboxGroup = forwardRef<
 
   const defaultStyle = {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
+  }
+
+  const styleObj = {
+    ...defaultStyle,
     ...style
   }
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle
-  })
 
-  const onLayout = () => {
-    nodeRef.current?.measure(
-      (
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        offsetLeft: number,
-        offsetTop: number
-      ) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      }
-    )
-  }
+  const {
+    hasSelfPercent,
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const getSelectionValue = (): string[] => {
     const arr: string[] = []
@@ -95,7 +92,7 @@ const CheckboxGroup = forwardRef<
 
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }
@@ -124,10 +121,10 @@ const CheckboxGroup = forwardRef<
     props,
     {
       ref: nodeRef,
-      style: defaultStyle,
-      ...(enableOffset ? { onLayout } : {})
+      style: { ...normalStyle, ...layoutStyle },
+      ...layoutProps
     },
-    ['enable-offset'],
+    [],
     {
       layoutRef
     }
@@ -136,7 +133,15 @@ const CheckboxGroup = forwardRef<
   return (
     <View {...innerProps}>
       <CheckboxGroupContext.Provider value={{ groupValue, notifyChange }}>
-        {children}
+        {
+          wrapChildren(
+            props,
+            {
+              hasVarDec,
+              varContext: varContextRef.current
+            }
+          )
+        }
       </CheckboxGroupContext.Provider>
     </View>
   )

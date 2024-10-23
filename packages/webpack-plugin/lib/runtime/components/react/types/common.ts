@@ -5,7 +5,7 @@ type backgroundPositionList = [ 'left'| 'right', NumberVal, 'top' | 'bottom', Nu
 
 export type ExtendedViewStyle = ViewStyle & {
   backgroundImage?: string
-  backgroundSize?: Array<ImageResizeMode | string> | ImageResizeMode | string
+  backgroundSize?: Array<NumberVal | 'auto' | 'contain' | 'cover'>
   borderRadius?: string | number
   backgroundPosition?: backgroundPositionList
   [key: string]: any
