@@ -34,6 +34,11 @@ import Animated, {
   withSpring
 } from 'react-native-reanimated'
 
+interface GestureHandler {
+  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>;
+  current?: unknown;
+}
+
 interface MovableViewProps {
   children: ReactNode;
   style?: Record<string, any>;
@@ -55,7 +60,8 @@ interface MovableViewProps {
   catchvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
   'out-of-bounds'?: boolean;
-  externalGesture?: Array<{ getNodeInstance: () => any }>;
+  'wait-for'?: Array<GestureHandler>;
+  'simultaneous-handlers'?: Array<GestureHandler>;
   inertia?: boolean;
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>;
@@ -94,7 +100,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     direction = 'none',
-    externalGesture = [],
+    'simultaneous-handlers': originSimultaneousHandlers = [],
+    'wait-for': waitFor = [],
     style = {},
     bindtouchstart,
     catchtouchstart,
@@ -136,14 +143,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
-  const externalComponentGesture = externalGesture.flatMap((gesture: any) => {
-    if (gesture?.nodeRefs) {
-      return gesture.nodeRefs
-        .map((item: { getNodeInstance: () => any }) => item.getNodeInstance().nodeRef)
-        .filter(Boolean)
-    }
-    return gesture?.current ? [gesture] : []
-  }).filter(Boolean)
+  const flatGesture = (gestures: Array<GestureHandler>) => {
+    return gestures.flatMap((gesture: GestureHandler) => {
+      if (gesture?.nodeRefs) {
+        return gesture.nodeRefs
+          .map((item: { getNodeInstance: () => any }) => item.getNodeInstance().nodeRef)
+          .filter(Boolean)
+      }
+      return gesture?.current ? [gesture] : []
+    }).filter(Boolean)
+  }
+  const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
+  const waitForHandlers = flatGesture(waitFor)
 
   const { nodeRef } = useNodesRef(props, ref, {
     defaultStyle: styles.container
@@ -453,9 +464,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
   }, [disabled, direction, inertia, outOfBounds, handleTriggerMove, handleTriggerStart, handleTriggerEnd])
 
-  if (externalComponentGesture && externalComponentGesture.length) {
-    gesture.simultaneousWithExternalGesture(...externalComponentGesture)
+  if (simultaneousHandlers && simultaneousHandlers.length) {
+    gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
   }
+
+  if (waitForHandlers && simultaneousHandlers.length) {
+    gesture.requireExternalGestureToFail(...waitForHandlers)
+  }
+
   const animatedStyles = useAnimatedStyle(() => {
     return {
       transform: [
