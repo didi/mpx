@@ -18,19 +18,19 @@ let loading = null
 
 function showLoading (vm) {
   const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
-  loading = document.createElement('div')
-  loading.className = 'pull-down-loading'
-  loading.style.cssText = `background-color: ${backgroundColor};`
+  vm.loading = document.createElement('div')
+  vm.loading.className = 'pull-down-loading'
+  vm.loading.style.cssText = `background-color: ${backgroundColor};`
   const dot = document.createElement('div')
   dot.className = `dot-flashing ${backgroundTextStyle}`
-  loading.append(dot)
-  vm.$el.prepend(loading)
+  vm.loading.append(dot)
+  vm.$el.prepend(vm.loading)
 }
 
 function hideLoading (vm) {
-  if (loading) {
-    vm.$el.removeChild(loading)
-    loading = null
+  if (vm.loading) {
+    vm.$el.removeChild(vm.loading)
+    vm.loading = null
   }
 }
 
