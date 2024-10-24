@@ -110,7 +110,8 @@ function reLaunch (options = {}) {
       routeCount: ++routeCount,
       replaced: false
     }
-    const delta = router.stack.length - 1
+    // 宿主环境中没有办法统计到webview中的页面跳转，所有给用户开放个userDelta，由用户根据webview中的页面跳转的个数自行传递控制relaunch跳转正确
+    const delta = router.stack.length - 1 + (options.delta || 0)
     // 在需要操作后退时，先操作后退，在beforeEach中基于当前action通过next()进行replace操作，避免部分浏览器的表现不一致
     if (delta > 0) {
       router.go(-delta)
