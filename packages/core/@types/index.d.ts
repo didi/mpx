@@ -114,7 +114,7 @@ interface Context {
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
   asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
 
-  forceUpdate (params?: object, callback?: () => void): void
+  forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
 
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
@@ -183,7 +183,7 @@ export interface MpxComponentIns {
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
-  $forceUpdate (params?: object, callback?: () => void): void
+  $forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
 
   $nextTick (fn: () => void): void
 

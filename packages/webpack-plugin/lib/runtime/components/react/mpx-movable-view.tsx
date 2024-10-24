@@ -157,11 +157,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
 
-  const { nodeRef } = useNodesRef(props, ref, {
+  const nodeRef = useRef<View>(null)
+  useNodesRef(nodeRef, props, ref, {
     defaultStyle: styles.container,
-    nodes: {
-      gestureRef: movableGestureRef
-    }
+    gestureRef: movableGestureRef
   })
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {

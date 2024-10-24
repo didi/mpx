@@ -2,8 +2,8 @@
  * ✘ scale-area
  */
 
-import { View, LayoutChangeEvent } from 'react-native'
-import { JSX, useState, useEffect, forwardRef, ReactNode, useMemo } from 'react'
+import { View } from 'react-native'
+import { JSX, forwardRef, ReactNode, useRef, useMemo } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
@@ -34,7 +34,8 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { nodeRef: movableViewRef } = useNodesRef(props, ref)
+  const movableViewRef = useRef(null)
+  useNodesRef(movableViewRef, props, ref)
 
   const contextValue = useMemo(() => ({
     height: style.height || 10,

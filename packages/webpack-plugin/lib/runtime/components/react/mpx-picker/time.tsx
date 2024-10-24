@@ -134,10 +134,12 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   const [timevalue, setTimeValue] = useState(defaultValue)
   // 存储layout布局信息
   const layoutRef = useRef({})
-  const { nodeRef: viewRef } = useNodesRef<View, TimeProps>(props, ref, {})
+  const viewRef = useRef<View>(null)
+  useNodesRef<View, TimeProps>(viewRef, props, ref, {})
   // 存储modal的布局信息
   const modalLayoutRef = useRef({})
-  const { nodeRef: modalRef } = useNodesRef<View, TimeProps>(props, ref, {})
+  const modalRef = useRef<View>(null)
+  useNodesRef<View, TimeProps>(modalRef, props, ref, {})
   const [visible, setVisible] = useState(false)
   const columnData = generateColumns()
   const [data, setData] = useState(columnData)

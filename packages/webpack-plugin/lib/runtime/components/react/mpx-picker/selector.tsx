@@ -31,7 +31,8 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   const [data, setData] = useState(formatRange || [])
   // 存储layout布局信息
   const layoutRef = useRef({})
-  const { nodeRef: viewRef } = useNodesRef<View, SelectorProps>(props, ref, {
+  const viewRef = useRef<View>(null)
+  useNodesRef<View, SelectorProps>(viewRef, props, ref, {
   })
 
   useEffect(() => {

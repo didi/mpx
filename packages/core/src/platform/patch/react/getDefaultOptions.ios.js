@@ -416,13 +416,30 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
+        const isCustom = pageConfig.navigationStyle === 'custom'
+        let opt = {}
+        if (__mpx_mode__ === 'android') {
+          opt = {
+            statusBarTranslucent: isCustom,
+            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
+            statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
+          }
+        } else if (__mpx_mode__ === 'ios') {
+          opt = {
+            headerBackTitleVisible: false
+          }
+        }
+
         navigation.setOptions({
-          headerShown: pageConfig.navigationStyle !== 'custom',
+          headerShown: !isCustom,
+          headerShadowVisible: false,
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+          headerTitleAlign: 'center',
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          ...opt
         })
       }, [])
 

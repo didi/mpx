@@ -686,7 +686,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
-  const { nodeRef } = useNodesRef<View, _ViewProps>(props, ref, {
+  const nodeRef = useRef(null)
+  useNodesRef<View, _ViewProps>(nodeRef, props, ref, {
     defaultStyle
   })
 
