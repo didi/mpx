@@ -417,19 +417,22 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        const opt = __mpx_mode__ === 'android'
-          ? {
+        let opt = {}
+        if (__mpx_mode__ === 'android') {
+          opt = {
             statusBarTranslucent: isCustom,
             statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
             statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
           }
-          : {
+        } else if (__mpx_mode__ === 'ios') {
+          opt = {
             headerBackTitleVisible: false
           }
+        }
 
         navigation.setOptions({
           headerShown: !isCustom,
-          headerShadowVisible: pageConfig.headerShadowVisible, // 控制header是否有阴影或border
+          headerShadowVisible: false,
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
