@@ -89,7 +89,8 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
   const [data, setData] = useState(formatRange || [])
   // 存储layout布局信息
   const layoutRef = useRef({})
-  const { nodeRef: viewRef } = useNodesRef<View, MultiSelectorProps>(props, ref, {
+  const viewRef = useRef<View>(null)
+  useNodesRef<View, MultiSelectorProps>(props, ref, viewRef, {
   })
 
   useEffect(() => {

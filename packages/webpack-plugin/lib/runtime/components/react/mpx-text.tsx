@@ -48,7 +48,8 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     parentHeight
   })
 
-  const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
+  const nodeRef = useRef(null)
+  useNodesRef<Text, _TextProps>(props, ref, nodeRef)
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -77,6 +78,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   )
 })
 
-_Text.displayName = 'mpx-text'
+_Text.displayName = 'MpxText'
 
 export default _Text

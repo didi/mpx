@@ -4,16 +4,15 @@
  * ✔ bindsubmit
  * ✔ bindreset
  */
-
 import { View } from 'react-native'
-import { JSX, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useMemo, useCallback } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
 import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren } from './utils'
 interface FormProps {
   style?: Record<string, any>;
-  children: ReactNode;
+  children?: ReactNode;
   'enable-offset'?: boolean;
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>;
@@ -51,12 +50,16 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
-  const { nodeRef: formRef } = useNodesRef(props, ref)
+  const formRef = useRef(null)
+  useNodesRef(props, ref, formRef)
+
+  const propsRef = useRef<FormProps>({})
+  propsRef.current = props
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 
-  const submit = () => {
-    const { bindsubmit } = props
+  const submit = useCallback(() => {
+    const { bindsubmit } = propsRef.current
     const formValue: Record<string, any> = {}
     for (const name of formValuesMap.keys()) {
       if (formValuesMap.get(name).getValue) {
@@ -72,15 +75,15 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
         },
         layoutRef
       },
-      props
+      propsRef.current
     ))
-  }
+  }, [])
 
-  const reset = () => {
-    const { bindreset } = props
+  const reset = useCallback(() => {
+    const { bindreset } = propsRef.current
     bindreset && bindreset()
     formValuesMap.forEach(item => item.resetValue())
-  }
+  }, [])
 
   const innerProps = useInnerProps(props, {
     style: { ...innerStyle, ...layoutStyle },
@@ -91,11 +94,18 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     'bindreset'
   ], { layoutRef })
 
+  const contextValue = useMemo(() => {
+    return {
+      formValuesMap,
+      submit,
+      reset
+    }
+  }, [submit, reset])
   return (
     <View
       {...innerProps}
     >
-      <FormContext.Provider value={{ formValuesMap, submit, reset }}>
+      <FormContext.Provider value={contextValue}>
         {
           wrapChildren(
             props,
@@ -112,6 +122,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   )
 })
 
-_Form.displayName = 'mpx-form'
+_Form.displayName = 'MpxForm'
 
 export default _Form

@@ -192,7 +192,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     setHeight
   } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { nodeRef } = useNodesRef(props, ref)
+  const nodeRef = useRef(null)
+  useNodesRef(props, ref, nodeRef)
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
@@ -432,6 +433,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   )
 })
 
-Input.displayName = 'mpx-input'
+Input.displayName = 'MpxInput'
 
 export default Input

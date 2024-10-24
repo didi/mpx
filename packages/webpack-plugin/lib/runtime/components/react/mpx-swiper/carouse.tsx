@@ -89,7 +89,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const defaultY = (defaultHeight * initOffsetIndex) || 0
   // 内部存储上一次的offset值
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
-  const { nodeRef: scrollViewRef } = useNodesRef<ScrollView & View, CarouseProps>(props, ref, {})
+  const scrollViewRef = useRef<ScrollView & View>(null)
+  useNodesRef<ScrollView & View, CarouseProps>(props, ref, scrollViewRef, {})
   const {
     // 存储layout布局信息
     layoutRef,
@@ -486,7 +487,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
           nextMargin && (extraStyle.marginRight = nextMargin)
         }
         // return (<View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>{children[+page]}</View>)
-        return (<View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>
+        return (<View style={[pageStyle, styles.slide, extraStyle]} key={'page' + i}>
           {wrapChildren(
             {
               children: children[+page]
@@ -518,6 +519,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   </View>)
 })
 
-_Carouse.displayName = '_Carouse'
+_Carouse.displayName = 'MpxCarouse'
 
 export default _Carouse

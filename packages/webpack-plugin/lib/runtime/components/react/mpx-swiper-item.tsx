@@ -25,7 +25,8 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   } = props
 
   const { textProps } = splitProps(props)
-  const { nodeRef } = useNodesRef(props, ref, {})
+  const nodeRef = useRef(null)
+  useNodesRef(props, ref, nodeRef, {})
 
   const {
     normalStyle,
@@ -72,6 +73,6 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   )
 })
 
-_SwiperItem.displayName = 'mpx-swiper-item'
+_SwiperItem.displayName = 'MpxSwiperItem'
 
 export default _SwiperItem

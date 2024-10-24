@@ -7,6 +7,7 @@
 import {
   JSX,
   useState,
+  useRef,
   forwardRef,
   useEffect,
   ReactNode,
@@ -141,7 +142,9 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       setHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-    const { nodeRef } = useNodesRef(props, ref, {
+    const nodeRef = useRef(null)
+
+    useNodesRef(props, ref, nodeRef, {
       defaultStyle,
       change: onChange
     })
@@ -229,6 +232,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
   }
 )
 
-Checkbox.displayName = 'mpx-checkbox'
+Checkbox.displayName = 'MpxCheckbox'
 
 export default Checkbox

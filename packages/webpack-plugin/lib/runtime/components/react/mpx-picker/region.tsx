@@ -44,7 +44,8 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   const [regionvalue, setRegionValue] = useState(value)
   // 存储layout布局信息
   const layoutRef = useRef({})
-  const { nodeRef: viewRef } = useNodesRef<View, RegionProps>(props, ref, {
+  const viewRef = useRef<View>(null)
+  useNodesRef<View, RegionProps>(props, ref, viewRef, {
   })
 
   const onChange = (value: string[]): void => {

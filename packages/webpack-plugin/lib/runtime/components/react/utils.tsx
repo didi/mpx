@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, Ref } from 'react'
 import { Dimensions, StyleSheet, LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
@@ -89,7 +89,7 @@ export const getRestProps = (transferProps: any = {}, originProps: any = {}, del
 export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName === 'mpx-text' || displayName === 'Text'
+    return displayName === 'MpxText' || displayName === 'Text'
   }
   return false
 }
@@ -503,3 +503,19 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   }
   return children
 }
+
+export interface GestureHandler {
+  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>;
+  current?: unknown;
+}
+
+export function flatGesture (gestures?: Array<GestureHandler>) {
+    return gestures && gestures.flatMap((gesture: GestureHandler) => {
+      if (gesture?.nodeRefs) {
+        return gesture.nodeRefs
+          .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
+          .filter(Boolean)
+      }
+      return gesture?.current ? [gesture] : []
+    }).filter(Boolean)
+  }
