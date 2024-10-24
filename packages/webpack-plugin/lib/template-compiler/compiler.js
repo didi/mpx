@@ -2167,30 +2167,53 @@ function processExternalClasses (el, options) {
     }
   }
   function processWebClass (classLikeAttrName, classLikeAttrValue, el, options) {
-    let classNames = classLikeAttrValue.split(/\s+/)
-    let hasExternalClass = false
-    classNames = classNames.map((className) => {
-      if (options.externalClasses.includes(className)) {
-        hasExternalClass = true
-        return `($attrs[${stringify(className)}] || '')`
-      }
-      return stringify(className)
-    })
 
     if (classLikeAttrName === 'class') {
-      // 处理动态 class 进行合并
-      const dynamicClass = getAndRemoveAttr(el, ':class').val
-      if (dynamicClass) classNames.push(dynamicClass)
-    }
+      const classNames = classLikeAttrValue.split(/\s+/)
+      const replacements = []
+      options.externalClasses.forEach((className) => {
+        const index = classNames.indexOf(className)
+        if (index > -1) {
+          replacements.push(`$attrs[${stringify(className)}]`)
+          classNames.splice(index, 1)
+        }
+      })
 
-    if (hasExternalClass) {
-      classNames.push(`($attrs[${stringify(PARENT_MODULE_ID)}] || '')`)
-    }
+      if (classNames.length) {
+        addAttrs(el, [{
+          name: 'class',
+          value: classNames.join(' ')
+        }])
+      }
 
-    addAttrs(el, [{
-      name: ':' + classLikeAttrName,
-      value: `[${classNames}].join(' ')`
-    }])
+      if (replacements.length) {
+        const dynamicClass = getAndRemoveAttr(el, ':class').val
+        if (dynamicClass) replacements.push(dynamicClass)
+        replacements.push(`($attrs[${stringify(PARENT_MODULE_ID)}] || '')`)
+
+        addAttrs(el, [{
+          name: ':class',
+          value: `[${replacements}]`
+        }])
+      }
+    } else {
+      let classNames = classLikeAttrValue.split(/\s+/)
+      let hasExternalClass = false
+      classNames = classNames.map((className) => {
+        if (options.externalClasses.includes(className)) {
+          hasExternalClass = true
+          return `($attrs[${stringify(className)}] || '')`
+        }
+        return stringify(className)
+      })
+      if (hasExternalClass) {
+        classNames.push(`($attrs[${stringify(PARENT_MODULE_ID)}] || '')`)
+      }
+      addAttrs(el, [{
+        name: ':' + classLikeAttrName,
+        value: `[${classNames}].join(' ')`
+      }])
+    }
   }
 
   function processAliClass (classLikeAttrName, classLikeAttrValue, el, options) {
