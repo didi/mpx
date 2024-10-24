@@ -22,7 +22,7 @@ module.exports = function (content) {
   const { queryObj } = parseRequest(this.resource)
   const hasScoped = false
   const hasComment = false
-  const isNative = true
+  const isNative = false
 
   const mode = mpx.mode
   const localSrcMode = queryObj.mode
