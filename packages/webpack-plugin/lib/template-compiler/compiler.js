@@ -1725,34 +1725,33 @@ function processRefReact (el, meta) {
       type
     }
 
+    const selectors = []
+
+    /**
+     * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
+     */
     if (!val) {
-      refConf.key = `ref_rn_${++refId}`
-      refConf.sKeys = []
       const rawId = el.attrsMap.id
       const rawClass = el.attrsMap.class
       const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
 
-      meta.computed = meta.computed || []
       if (rawId) {
         const staticId = parseMustacheWithContext(rawId).result
-        const computedIdKey = `_ri${refId}`
-        refConf.sKeys.push({ key: computedIdKey, prefix: '#' })
-        meta.computed.push(`${computedIdKey}() {\n return ${staticId}}`)
+        selectors.push({ prefix: '#', selector: `${staticId}` })
       }
       if (rawClass || rawDynamicClass) {
         const staticClass = parseMustacheWithContext(rawClass).result
         const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        const computedClassKey = `_rc${refId}`
-        refConf.sKeys.push({ key: computedClassKey, prefix: '.' })
-        meta.computed.push(`${computedClassKey}() {\n return this.__getClass(${staticClass}, ${dynamicClass})}`)
+        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
       }
+    } else {
+      meta.refs.push(refConf)
+      selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
-
-    meta.refs.push(refConf)
-
+    const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${refConf.key}') }}`
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
     }])
   }
 }
