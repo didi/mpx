@@ -513,7 +513,7 @@ export function flatGesture (gestures?: Array<GestureHandler>) {
     return gestures && gestures.flatMap((gesture: GestureHandler) => {
       if (gesture?.nodeRefs) {
         return gesture.nodeRefs
-          .map((item: { getNodeInstance: () => any }) => item.getNodeInstance().gestureRef || {})
+          .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
           .filter(Boolean)
       }
       return gesture?.current ? [gesture] : []
