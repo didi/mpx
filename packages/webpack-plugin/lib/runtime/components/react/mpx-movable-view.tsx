@@ -17,12 +17,12 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, Ref } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, DEFAULT_UNLAY_STYLE, wrapChildren } from './utils'
+import { useTransformStyle, splitProps, splitStyle, DEFAULT_UNLAY_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -33,11 +33,6 @@ import Animated, {
   useAnimatedReaction,
   withSpring
 } from 'react-native-reanimated'
-
-interface GestureHandler {
-  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>;
-  current?: unknown;
-}
 
 interface MovableViewProps {
   children: ReactNode;
@@ -144,16 +139,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
-  const flatGesture = (gestures: Array<GestureHandler>) => {
-    return gestures.flatMap((gesture: GestureHandler) => {
-      if (gesture?.nodeRefs) {
-        return gesture.nodeRefs
-          .map((item: { getNodeInstance: () => any }) => item.getNodeInstance().nodeRef)
-          .filter(Boolean)
-      }
-      return gesture?.current ? [gesture] : []
-    }).filter(Boolean)
-  }
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
 

@@ -38,7 +38,7 @@ import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, flatGesture, GestureHandler } from './utils'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -66,8 +66,8 @@ interface ScrollViewProps {
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
-  'wait-for'?: Ref<unknown> | Ref<unknown>[];
-  'simultaneous-handlers'?: Ref<unknown> | Ref<unknown>[];
+  'wait-for'?:  Array<GestureHandler>;
+  'simultaneous-handlers'?:   Array<GestureHandler>;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -128,10 +128,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'simultaneous-handlers': simultaneousHandlers,
+    'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
     __selectRef
   } = props
+
+  const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
+  const waitForHandlers = flatGesture(waitFor)
 
   const [refreshing, setRefreshing] = useState(true)
 
@@ -175,7 +178,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       fastDeceleration: false,
       decelerationDisabled: false,
       scrollTo: scrollToOffset
-    }
+    },
+    gestureRef: scrollViewRef
   })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
@@ -425,7 +429,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     onMomentumScrollEnd: onScrollEnd,
     ...layoutProps,
     ...(simultaneousHandlers ? { simultaneousHandlers } : {}),
-    ...(waitFor ? { waitFor } : {})
+    ...(waitForHandlers ? { waitFor: waitForHandlers } : {})
   }
   if (enhanced) {
     scrollAdditionalProps = {
