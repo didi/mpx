@@ -49,7 +49,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   })
 
   const nodeRef = useRef(null)
-  useNodesRef<Text, _TextProps>(nodeRef, props, ref)
+  useNodesRef<Text, _TextProps>(props, ref, nodeRef)
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,

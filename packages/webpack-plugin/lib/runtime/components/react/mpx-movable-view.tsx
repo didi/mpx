@@ -143,7 +143,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const waitForHandlers = flatGesture(waitFor)
 
   const nodeRef = useRef<View>(null)
-  useNodesRef(nodeRef, props, ref, {
+
+  useNodesRef(props, ref, nodeRef, {
     defaultStyle: styles.container,
     gestureRef: movableGestureRef
   })

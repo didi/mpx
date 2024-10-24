@@ -51,7 +51,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const formRef = useRef(null)
-  useNodesRef(formRef, props, ref)
+  useNodesRef(props, ref, formRef)
 
   const propsRef = useRef<FormProps>({})
   propsRef.current = props

@@ -57,7 +57,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
     const nodeRef = useRef(null)
-    useNodesRef(nodeRef, props, ref, { defaultStyle })
+    useNodesRef(props, ref, nodeRef, { defaultStyle })
 
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 

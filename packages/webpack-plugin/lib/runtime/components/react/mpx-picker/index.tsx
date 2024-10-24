@@ -35,7 +35,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange } = props
   const innerLayout = useRef({})
   const nodeRef = useRef(null)
-  useNodesRef<View, PickerProps>(nodeRef, props, ref, {
+  useNodesRef<View, PickerProps>(props, ref, nodeRef, {
   })
   const innerProps = useInnerProps(props, {
     ref: nodeRef

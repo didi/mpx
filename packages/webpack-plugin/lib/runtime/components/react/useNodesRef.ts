@@ -11,7 +11,7 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T extends React.Component<any, any>, P> (nodeRef: RefObject<T>, props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}) {
+export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, nodeRef: RefObject<T>, instance:Obj = {}) {
   const _props = useRef<P | null>(null)
   _props.current = props
 

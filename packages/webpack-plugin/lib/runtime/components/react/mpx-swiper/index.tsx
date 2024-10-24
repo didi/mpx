@@ -47,7 +47,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
   }
 
   const nodeRef = useRef(null)
-  useNodesRef<ScrollView, SwiperProps>(nodeRef, props, ref, {})
+  useNodesRef<ScrollView, SwiperProps>(props, ref, nodeRef, {})
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef
