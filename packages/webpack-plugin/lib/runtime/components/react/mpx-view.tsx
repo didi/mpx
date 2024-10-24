@@ -7,6 +7,9 @@
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
+import Animated from 'react-native-reanimated'
+import useAnimationHooks from './useAnimationHooks'
+import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
@@ -14,6 +17,7 @@ import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
+  animation?: AnimationProp
   children?: ReactNode | ReactNode[]
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
@@ -641,7 +645,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-background': enableBackground,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
+    'parent-height': parentHeight,
+    animation
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -735,9 +740,15 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
+  const viewStyle = { ...innerStyle, ...layoutStyle }
+  const finalStyle = animation ? useAnimationHooks({
+    ...props,
+    style: viewStyle
+  }) : viewStyle
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
+    style: finalStyle,
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -752,7 +763,24 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
-  return (
+  return animation?.actions?.length ? (
+    <Animated.View
+      {...innerProps}
+    >
+      {
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            enableBackground: enableBackgroundRef.current,
+            textStyle,
+            backgroundStyle,
+            varContext: varContextRef.current
+          }
+        )
+      }
+    </Animated.View>
+  ) : (
     <View
       {...innerProps}
     >

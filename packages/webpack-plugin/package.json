@@ -62,7 +62,8 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
-    "webpack": "^5.75.0"
+    "webpack": "^5.75.0",
+    "react-native-reanimated": "^3.15.2"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
