@@ -152,7 +152,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const scrollViewRef = useAnimatedRef<ScrollView>()
-  useNodesRef(scrollViewRef, props, ref, {
+  useNodesRef(props, ref, scrollViewRef, {
     scrollOffset: scrollOptions,
     node: {
       scrollEnabled: scrollX || scrollY,

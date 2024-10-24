@@ -142,7 +142,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const nodeRef = useRef(null)
-    useNodesRef(nodeRef, props, ref, {
+    useNodesRef(props, ref, nodeRef, {
       defaultStyle,
       change: onChange
     })

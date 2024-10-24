@@ -39,7 +39,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   // const { innerStyle } = splitStyle(normalStyle)
   // scrollView的ref
   const scrollViewRef = useRef<ScrollView>(null)
-  useNodesRef(scrollViewRef, props, ref, {})
+  useNodesRef(props, ref, scrollViewRef, {})
   // 每个元素的高度
   let [itemH, setItemH] = useState(0)
 

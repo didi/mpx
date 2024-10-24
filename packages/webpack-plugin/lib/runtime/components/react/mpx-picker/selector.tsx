@@ -32,7 +32,7 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, SelectorProps>(viewRef, props, ref, {
+  useNodesRef<View, SelectorProps>(props, ref, viewRef, {
   })
 
   useEffect(() => {

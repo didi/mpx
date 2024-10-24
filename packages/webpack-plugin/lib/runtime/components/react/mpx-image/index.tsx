@@ -136,7 +136,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const nodeRef = useRef(null)
-  useNodesRef(nodeRef, props, ref, {
+  useNodesRef(props, ref, nodeRef, {
     defaultStyle
   })
 

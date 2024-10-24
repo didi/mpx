@@ -193,7 +193,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
-  useNodesRef(nodeRef, props, ref)
+  useNodesRef(props, ref, nodeRef)
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 

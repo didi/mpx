@@ -144,7 +144,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const nodeRef = useRef(null)
 
-    useNodesRef(nodeRef, props, ref, {
+    useNodesRef(props, ref, nodeRef, {
       defaultStyle,
       change: onChange
     })

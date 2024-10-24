@@ -60,7 +60,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   const webViewRef = useRef<WebView>(null)
-  useNodesRef<WebView, WebViewProps>(webViewRef, props, ref, {
+  useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     defaultStyle: defaultWebViewStyle
   })
 
