@@ -3,7 +3,7 @@
  */
 
 import { View, LayoutChangeEvent } from 'react-native'
-import { JSX, useState, useEffect, forwardRef, ReactNode } from 'react'
+import { JSX, useState, useEffect, forwardRef, ReactNode, useRef } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
@@ -41,7 +41,8 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { nodeRef: movableViewRef } = useNodesRef(props, ref)
+  const movableViewRef = useRef(null)
+  useNodesRef(movableViewRef, props, ref)
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width = 10, height = 10 } = e.nativeEvent.layout

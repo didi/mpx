@@ -48,7 +48,8 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     parentHeight
   })
 
-  const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
+  const nodeRef = useRef(null)
+  useNodesRef<Text, _TextProps>(nodeRef, props, ref)
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,

@@ -10,8 +10,7 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}) {
-  const nodeRef = useRef<T>(null)
+export default function useNodesRef<T, P> (nodeRef: RefObject<T>, props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {}) {
   const _props = useRef<P | null>(null)
   _props.current = props
 
@@ -26,8 +25,4 @@ export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRe
       }
     }
   })
-
-  return {
-    nodeRef
-  }
 }

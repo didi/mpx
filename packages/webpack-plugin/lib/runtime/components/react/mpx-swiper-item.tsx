@@ -25,7 +25,8 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   } = props
 
   const { textProps } = splitProps(props)
-  const { nodeRef } = useNodesRef(props, ref, {})
+  const nodeRef = useRef(null)
+  useNodesRef(nodeRef, props, ref, {})
 
   const {
     normalStyle,
