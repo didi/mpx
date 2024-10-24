@@ -2199,10 +2199,10 @@ function processExternalClasses (el, options) {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
       const replacementClassName = dash2hump(className)
       if (classLikeAttrValue.includes(className)) hasExternalClass = true
-      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName}||''}}`)
+      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName} || ''}}`)
     })
     if (hasExternalClass) {
-      classLikeAttrValue += ` {{${dash2hump(PARENT_MODULE_ID)}}}`
+      classLikeAttrValue += ` {{${PARENT_MODULE_ID} || ''}}`
     }
     addAttrs(el, [{
       name: classLikeAttrName,
