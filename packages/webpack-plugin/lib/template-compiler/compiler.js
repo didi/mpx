@@ -2167,7 +2167,6 @@ function processExternalClasses (el, options) {
     }
   }
   function processWebClass (classLikeAttrName, classLikeAttrValue, el, options) {
-
     if (classLikeAttrName === 'class') {
       const classNames = classLikeAttrValue.split(/\s+/)
       const replacements = []
