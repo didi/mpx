@@ -4,7 +4,7 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
 import { View, StyleSheet, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
@@ -141,7 +141,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       warn('Radio does not support background image-related styles!')
     }
 
-    const { nodeRef } = useNodesRef(props, ref, {
+    const nodeRef = useRef(null)
+    useNodesRef(props, ref, nodeRef, {
       defaultStyle,
       change: onChange
     })
