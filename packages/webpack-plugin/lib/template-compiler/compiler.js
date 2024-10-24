@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -2139,96 +2139,76 @@ function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function processAliExternalClassesHack (el, options) {
+function processExternalClasses (el, options) {
   const isComponent = isComponentNode(el, options)
-  // 处理组件externalClass多层传递
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+
   classLikeAttrNames.forEach((classLikeAttrName) => {
-    let classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
+    const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
     if (classLikeAttrValue) {
-      options.externalClasses.forEach((className) => {
-        const reg = new RegExp('\\b' + className + '\\b', 'g')
-        const replacement = dash2hump(className)
-        classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacement}||''}}`)
-      })
-      addAttrs(el, [{
-        name: classLikeAttrName,
-        value: classLikeAttrValue
-      }])
+      if (mode === 'web') {
+        processWebClass(classLikeAttrName, classLikeAttrValue, el, options)
+      } else {
+        processAliClass(classLikeAttrName, classLikeAttrValue, el, options)
+      }
     }
   })
 
   if (hasScoped && isComponent) {
-    options.externalClasses.forEach((className) => {
-      const externalClass = getAndRemoveAttr(el, className).val
-      if (externalClass) {
-        addAttrs(el, [{
-          name: className,
-          value: `${externalClass} ${moduleId}`
-        }])
-      }
-    })
-  }
-}
-
-// externalClasses只能模拟静态传递
-function processWebExternalClassesHack (el, options) {
-  const staticClass = getAndRemoveAttr(el, 'class').val
-  if (staticClass) {
-    const classNames = staticClass.split(/\s+/)
-    const replacements = []
-    options.externalClasses.forEach((className) => {
-      const index = classNames.indexOf(className)
-      if (index > -1) {
-        replacements.push(`$attrs[${stringify(className)}]`)
-        classNames.splice(index, 1)
-      }
+    const needAddModuleId = options.externalClasses.some((className) => {
+      return el.attrsMap[className] || (mode === 'web' && el.attrsMap[':' + className])
     })
 
-    if (classNames.length) {
+    if (needAddModuleId) {
       addAttrs(el, [{
-        name: 'class',
-        value: classNames.join(' ')
+        name: PARENT_MODULE_ID,
+        value: `${moduleId}`
       }])
     }
-
-    if (replacements.length) {
+  }
+  function processWebClass (classLikeAttrName, classLikeAttrValue, el, options) {
+    let classNames = classLikeAttrValue.split(/\s+/)
+    let hasExternalClass = false
+    classNames = classNames.map((className) => {
+      if (options.externalClasses.includes(className)) {
+        hasExternalClass = true
+        return `($attrs[${stringify(className)}] || '')`
+      }
+      return stringify(className)
+    })
+    if (hasExternalClass) {
+      classNames.push(`($attrs[${stringify(PARENT_MODULE_ID)}] || '')`)
+    }
+    if (classLikeAttrName === 'class') {
       const dynamicClass = getAndRemoveAttr(el, ':class').val
-      if (dynamicClass) replacements.push(dynamicClass)
-
+      if (dynamicClass) classNames.push(dynamicClass)
       addAttrs(el, [{
         name: ':class',
-        value: `[${replacements}]`
+        value: `[${classNames}]`
+      }])
+    } else {
+      addAttrs(el, [{
+        name: ':' + classLikeAttrName,
+        value: `[${classNames}].join(' ')`
       }])
     }
   }
 
-  // 处理externalClasses多层透传
-  const isComponent = isComponentNode(el, options)
-  if (isComponent) {
-    options.externalClasses.forEach((classLikeAttrName) => {
-      const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
-      if (classLikeAttrValue) {
-        const classNames = classLikeAttrValue.split(/\s+/)
-        const replacements = []
-        options.externalClasses.forEach((className) => {
-          const index = classNames.indexOf(className)
-          if (index > -1) {
-            replacements.push(`$attrs[${stringify(className)}]`)
-            classNames.splice(index, 1)
-          }
-        })
-
-        if (classNames.length) {
-          replacements.unshift(stringify(classNames.join(' ')))
-        }
-
-        addAttrs(el, [{
-          name: ':' + classLikeAttrName,
-          value: `[${replacements}].join(' ')`
-        }])
-      }
+  function processAliClass (classLikeAttrName, classLikeAttrValue, el, options) {
+    let hasExternalClass = false
+    options.externalClasses.forEach((className) => {
+      const reg = new RegExp('\\b' + className + '\\b', 'g')
+      const replacementClassName = dash2hump(className)
+      if (classLikeAttrValue.includes(className)) hasExternalClass = true
+      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName} || ''}}`)
     })
+    if (hasExternalClass) {
+      classLikeAttrValue += ` {{${PARENT_MODULE_ID} || ''}}`
+    }
+    addAttrs(el, [{
+      name: classLikeAttrName,
+      value: classLikeAttrValue
+    }])
   }
 }
 
@@ -2601,7 +2581,9 @@ function processElement (el, root, options, meta) {
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfWeb(el)
-    processWebExternalClassesHack(el, options)
+    processScoped(el)
+    // processWebExternalClassesHack(el, options)
+    processExternalClasses(el, options)
     processComponentGenericsWeb(el, options, meta)
     return
   }
@@ -2629,7 +2611,8 @@ function processElement (el, root, options, meta) {
   }
 
   if (transAli) {
-    processAliExternalClassesHack(el, options)
+    // processAliExternalClassesHack(el, options)
+    processExternalClasses(el, options)
   }
 
   processIf(el)
