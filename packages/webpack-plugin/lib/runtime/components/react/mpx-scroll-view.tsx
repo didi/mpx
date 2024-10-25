@@ -66,8 +66,8 @@ interface ScrollViewProps {
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
-  'wait-for'?:  Array<GestureHandler>;
-  'simultaneous-handlers'?:   Array<GestureHandler>;
+  'wait-for'?: Array<GestureHandler>;
+  'simultaneous-handlers'?: Array<GestureHandler>;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
