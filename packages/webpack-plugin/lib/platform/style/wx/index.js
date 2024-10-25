@@ -85,6 +85,24 @@ module.exports = function getSpec ({ warn, error }) {
       if (rule[1].test(prop)) return rule[0]
     }
   }
+  // 多value解析
+  const parseValues = (str, char = ' ') => {
+    const stack = []
+    const result = []
+    let lastIdx = 0
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === '(') {
+        stack.push(i)
+      } else if (str[i] === ')') {
+        stack.pop()
+        i + 1 === str.length && (result.push(str.slice(lastIdx, str.length)))
+      } else if (str[i] === char && stack.length === 0) {
+        result.push(str.slice(lastIdx, i))
+        lastIdx = i + 1
+      }
+    }
+    return result
+  }
   // 属性值校验
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
@@ -164,7 +182,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
     const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     const cssMap = []
     let idx = 0
     let propsIdx = 0
@@ -226,7 +244,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // margin padding
   const formatMargins = ({ prop, value, selector }) => {
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     // format
     let suffix = []
     switch (values.length) {
@@ -293,12 +311,12 @@ module.exports = function getSpec ({ warn, error }) {
         // 不支持逗号分隔的多个值：设置多重背景!!!
         // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
         // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
-        if (value.includes(',')) { // commas are not allowed in values
+        if (parseValues(value, ',').length > 1) { // commas are not allowed in values
           error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
           return false
         }
         const values = []
-        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+        parseValues(value).forEach(item => {
           if (verifyValues({ prop, value: item, selector })) {
             // 支持 number 值 / container cover auto 枚举
             values.push(item)
@@ -309,7 +327,7 @@ module.exports = function getSpec ({ warn, error }) {
       }
       case bgPropMap.position: {
         const values = []
-        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+        parseValues(value).forEach(item => {
           if (verifyValues({ prop, value: item, selector })) {
             // 支持 number 值 /  枚举, center与50%等价
             values.push(item === 'center' ? '50%' : item)
@@ -322,7 +340,7 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
         const bgMap = []
-        const values = value.trim().split(/\s(?![^()]*\))/)
+        const values = parseValues(value)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
           const linerVal = item.match(linerExp)?.[0]
@@ -345,7 +363,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // border-radius 缩写转换
   const getBorderRadius = ({ prop, value, selector }, { mode }) => {
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     if (values.length === 1) {
       verifyValues({ prop, value, selector }, false)
       return { prop, value }
@@ -362,7 +380,7 @@ module.exports = function getSpec ({ warn, error }) {
   // transform 转换
   const formatTransform = ({ prop, value, selector }, { mode }) => {
     if (Array.isArray(value)) return { prop, value }
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\(([^)]+)\)/)
@@ -438,7 +456,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatFlex = ({ prop, value, selector }) => {
-    let values = value.trim().split(/\s(?![^()]*\))/)
+    let values = parseValues(value)
     if (values.length > 3) {
       error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
