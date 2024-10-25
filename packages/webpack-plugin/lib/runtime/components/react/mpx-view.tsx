@@ -589,8 +589,8 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
         }
         setImageSizeWidth(sizeInfo.current.width)
         setImageSizeHeight(sizeInfo.current.height)
-        setShow(true)
       }
+      setShow(true)
     } else if (sizeInfo.current) {
       setLayoutInfoWidth(width)
       setLayoutInfoHeight(height)
