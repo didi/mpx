@@ -4,10 +4,12 @@ import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
+import { isRef } from '../observer/ref'
 import Mpx from '../index'
 import {
   noop,
   type,
+  isArray,
   isFunction,
   isObject,
   isEmptyObject,
@@ -47,6 +49,7 @@ import {
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
+import { hasSymbol, inject, normalizeInject, provide } from './apiInject'
 
 let uid = 0
 
@@ -114,6 +117,9 @@ export default class MpxProxy {
     this.hooks = {}
     if (__mpx_mode__ !== 'web') {
       this.scope = effectScope(true)
+      // provide & inject
+      this.provides = {}
+      this.inject = {}
       // props响应式数据代理
       this.props = {}
       // data响应式数据代理
@@ -160,11 +166,15 @@ export default class MpxProxy {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
+      // 在 data/props 初始化之前初始化 inject
+      this.initInject()
       this.initProps()
       this.initSetup()
       this.initData()
       this.initComputed()
       this.initWatch()
+      // 在 data/props 初始化之后初始化 provide
+      this.initProvide()
       unsetCurrentInstance()
     }
 
@@ -347,6 +357,60 @@ export default class MpxProxy {
           this.watch(key, handler)
         }
       })
+    }
+  }
+
+  initProvide () {
+    const provideOpt = this.options.provide
+    if (provideOpt) {
+      const provided = isFunction(provideOpt)
+        ? provideOpt.call(this.target)
+        : provideOpt
+      if (!isObject(provided)) {
+        return
+      }
+      // TODO 是否有必要判断 Symbol 支持环境
+      const keys = hasSymbol ? Reflect.ownKeys(provided) : Object.keys(provided)
+      keys.forEach(key => {
+        provide(key, provided[key])
+      })
+    }
+  }
+
+  initInject () {
+    const injectOpt = this.options.inject
+    if (injectOpt) {
+      this.resolveInject(injectOpt)
+    }
+  }
+
+  resolveInject (injectOpt) {
+    if (isArray(injectOpt)) {
+      injectOpt = normalizeInject(injectOpt)
+    }
+    for (const key in injectOpt) {
+      const opt = injectOpt[key]
+      let injected
+      if (isObject(opt)) {
+        if ('default' in opt) {
+          injected = inject(opt.from || key, opt.default, true)
+        } else {
+          injected = inject(opt.from || key)
+        }
+      } else {
+        injected = inject(opt)
+      }
+      if (isRef(injected)) {
+        // 解包注入的 ref
+        Object.defineProperty(this.target, key, {
+          enumerable: true,
+          configurable: true,
+          get: () => injected.value,
+          set: (v) => (injected.value = v)
+        })
+      } else {
+        this.target[key] = injected
+      }
     }
   }
 
