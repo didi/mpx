@@ -122,6 +122,8 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
+type InjectKey = string | Symbol
+
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
   data?: D
   properties?: P
@@ -136,6 +138,11 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
   pageHide?: () => void
 
   initData?: Record<string, any>
+
+  provide?: Record<string | symbol, any> | (() => Record<string | symbol, any>)
+  inject?:
+    | { [key: string]: InjectKey | { from?: InjectKey; default?: any } }
+    | Array<string>
 
   [index: string]: any
 }
@@ -569,6 +576,14 @@ export function getCurrentScope (): EffectScope | undefined
 export function onScopeDispose (fn: () => void): void
 export function set<T extends object> (target: T, key: string | number, value: any): void
 export function del<T extends object> (target: T, key: keyof T): void
+
+// provide & inject
+export declare function provide<T>(key: InjectionKey<T> | string | number, value: T): void;
+export declare function inject<T>(key: InjectionKey<T> | string): T | undefined;
+export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T, treatDefaultAsFactory?: false): T;
+export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T | (() => T), treatDefaultAsFactory: true): T;
+export declare interface InjectionKey<T> extends Symbol {
+}
 
 // nextTick
 export function nextTick (fn: () => any): void
