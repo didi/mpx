@@ -21,34 +21,32 @@ export function provide (key, value) {
   const instance = currentInstance
   if (!instance) {
     warn('provide() can only be used inside setup().')
-  } else {
-    let provides = instance.provides
-    // 默认情况下，一个实例继承其父实例的 `provides` 对象
-    // 但是当它需要提供自己的值时，它会使用父实例的 `provides` 作为原型创建自己的 `provides` 对象
-    // 这样，在 `inject` 中，我们可以简单地从直接的父实例的 `provides` 中查找注入，并让原型链完成工作
-    const parentProvides = instance.$parent && currentInstance.$parent.provides
-    if (provides === parentProvides) {
-      provides = instance.provides = Object.create(parentProvides)
-    }
-    provides[key] = value
   }
+  let provides = instance.provides
+  // 默认情况下，一个实例继承其父实例的 `provides` 对象
+  // 但是当它需要提供自己的值时，它会使用父实例的 `provides` 作为原型创建自己的 `provides` 对象
+  // 这样，在 `inject` 中，我们可以简单地从直接的父实例的 `provides` 中查找注入，并让原型链完成工作
+  const parentProvides = instance.parent && instance.parent.provides
+  if (provides === parentProvides) {
+    provides = instance.provides = Object.create(parentProvides)
+  }
+  provides[key] = value
 }
 
 export function inject (key, defaultValue, treatDefaultAsFactory = false) {
   const instance = currentInstance
-  if (instance) {
-    const provides = instance.$parent && instance.$parent.provides
-    if (provides && key in provides) {
-      return provides[key]
-    } else if (arguments.length > 1) {
-      return treatDefaultAsFactory && isFunction(defaultValue)
-        ? defaultValue.call(instance)
-        : defaultValue
-    } else {
-      warn(`injection "${String(key)}" not found.`)
-    }
-  } else {
+  if (!instance) {
     warn('inject() can only be used inside setup()')
+  }
+  const provides = instance.parent && instance.parent.provides
+  if (provides && key in provides) {
+    return provides[key]
+  } else if (arguments.length > 1) {
+    return treatDefaultAsFactory && isFunction(defaultValue)
+      ? defaultValue.call(instance)
+      : defaultValue
+  } else {
+    warn(`injection "${String(key)}" not found.`)
   }
 }
 
