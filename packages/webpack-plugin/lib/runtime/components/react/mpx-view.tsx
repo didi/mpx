@@ -114,6 +114,17 @@ const applyHandlers = (handlers: Handler[], args: any[]) => {
   }
 }
 
+const normalizeStyle = (style: ExtendedViewStyle = {}) => {
+  ['backgroundSize', 'backgroundPosition'].forEach(name => {
+    if (style[name] && typeof style[name] === 'string') {
+      if (style[name].trim()) {
+        style[name] = style[name].split(' ')
+      }
+    }
+  })
+  return style
+}
+
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
 
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
@@ -670,7 +681,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, {
+  } = useTransformStyle(normalizeStyle(styleObj), {
     enableVar,
     externalVarContext,
     parentFontSize,
