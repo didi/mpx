@@ -4,7 +4,6 @@ import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
-import { isRef } from '../observer/ref'
 import Mpx from '../index'
 import {
   noop,
@@ -366,7 +365,6 @@ export default class MpxProxy {
       if (!isObject(provided)) {
         return
       }
-      // TODO 是否有必要判断 Symbol 支持环境
       const keys = hasSymbol ? Reflect.ownKeys(provided) : Object.keys(provided)
       keys.forEach(key => {
         provide(key, provided[key])
@@ -385,6 +383,7 @@ export default class MpxProxy {
     if (isArray(injectOpt)) {
       injectOpt = normalizeInject(injectOpt)
     }
+    const injectObj = {}
     for (const key in injectOpt) {
       const opt = injectOpt[key]
       let injected
@@ -397,18 +396,9 @@ export default class MpxProxy {
       } else {
         injected = inject(opt)
       }
-      if (isRef(injected)) {
-        // 解包注入的 ref
-        Object.defineProperty(this.target, key, {
-          enumerable: true,
-          configurable: true,
-          get: () => injected.value,
-          set: (v) => (injected.value = v)
-        })
-      } else {
-        this.target[key] = injected
-      }
+      injectObj[key] = injected
     }
+    proxy(this.target, injectObj, undefined, false, this.createProxyConflictHandler('inject'))
   }
 
   watch (source, cb, options) {
