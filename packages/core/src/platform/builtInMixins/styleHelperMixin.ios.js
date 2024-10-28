@@ -97,7 +97,8 @@ const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
-const parseStyleText = cached((cssText = '') => {
+const parseStyleText = cached((cssText) => {
+  if (typeof cssText !== 'string') return cssText
   const res = {}
   const arr = cssText.split(listDelimiter)
   for (let i = 0; i < arr.length; i++) {
