@@ -190,7 +190,7 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length) {
       const prop = props[propsIdx]
       if (!prop) {
-        error(`Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
+        warn(`Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
         break
       }
       const value = values[idx]
