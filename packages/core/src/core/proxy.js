@@ -117,8 +117,6 @@ export default class MpxProxy {
     this.hooks = {}
     if (__mpx_mode__ !== 'web') {
       this.scope = effectScope(true)
-      // provide 数据
-      this.provides = {}
       // props响应式数据代理
       this.props = {}
       // data响应式数据代理
