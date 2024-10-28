@@ -3,6 +3,12 @@ name: test
 on: [push, pull_request]
 
 jobs:
+  tsc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm i && npm run tsc:build
+
   lint:
     runs-on: ubuntu-latest
     steps:

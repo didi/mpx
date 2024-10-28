@@ -20,7 +20,7 @@ type CommonCallbackEvent = {
 }
 
 interface WebViewProps {
-  src: string
+  src?: string
   bindmessage?: (event: OnMessageCallbackEvent) => void
   bindload?: (event: CommonCallbackEvent) => void
   binderror?: (event: CommonCallbackEvent) => void
