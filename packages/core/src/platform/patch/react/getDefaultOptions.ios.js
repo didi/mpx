@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset, hump2dash } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -450,7 +450,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           ...opt
         })
       }, [])
-
       navigation.insets = useSafeAreaInsets()
       navigation.headerHeight = useHeaderHeight()
       navigation.isCustomHeader = pageConfig.navigationStyle === 'custom'
@@ -472,7 +471,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             {
               value: currentPageId
             },
-            createElement(IntersectionObserverContext.Provider, 
+            createElement(IntersectionObserverContext.Provider,
               {
                 value: intersectionObservers.current
               },
