@@ -512,7 +512,7 @@ function normalizeBackgroundSize (backgroundSize: Exclude<ExtendedViewStyle['bac
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
-  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
+  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = normalizeStyle(imageStyle) || {}
   const { type, src, linearInfo } = parseBgImage(backgroundImage)
 
   return {
@@ -681,7 +681,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(normalizeStyle(styleObj), {
+  } = useTransformStyle(styleObj, {
     enableVar,
     externalVarContext,
     parentFontSize,
