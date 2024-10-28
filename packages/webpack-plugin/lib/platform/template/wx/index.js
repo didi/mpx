@@ -5,6 +5,7 @@ const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
+const { dash2hump } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
@@ -299,7 +300,7 @@ module.exports = function getSpec ({ warn, error }) {
           const eventName = match[2]
           const modifierStr = match[3] || ''
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
-          const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
+          const rEventName = dash2hump(runRules(eventRules, eventName, { mode: 'ali' }))
           return {
             name: rPrefix + rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
@@ -312,7 +313,8 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          if (eventName.includes('-')) rPrefix += ':'
           const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
           return {
             name: rPrefix + rEventName + modifierStr,
@@ -324,7 +326,8 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          if (eventName.includes('-')) rPrefix += ':'
           const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
           return {
             name: rPrefix + rEventName + modifierStr,
@@ -336,7 +339,8 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          if (eventName.includes('-')) rPrefix += ':'
           const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
           return {
             name: rPrefix + rEventName + modifierStr,
@@ -360,7 +364,8 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          if (eventName.includes('-')) rPrefix += ':'
           const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
           return {
             name: rPrefix + rEventName + modifierStr,
@@ -372,7 +377,8 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          if (eventName.includes('-')) rPrefix += ':'
           const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
           return {
             name: rPrefix + rEventName + modifierStr,

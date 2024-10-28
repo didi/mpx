@@ -70,7 +70,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -192,7 +196,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -249,7 +257,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -306,7 +318,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -377,7 +393,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -434,7 +454,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -491,7 +515,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
