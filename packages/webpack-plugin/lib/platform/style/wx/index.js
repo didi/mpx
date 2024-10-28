@@ -87,18 +87,21 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // 多value解析
   const parseValues = (str, char = ' ') => {
-    const stack = []
+    let stack = 0
+    let temp = ''
     const result = []
-    let lastIdx = 0
     for (let i = 0; i < str.length; i++) {
       if (str[i] === '(') {
-        stack.push(i)
+        stack++
       } else if (str[i] === ')') {
-        stack.pop()
-        i + 1 === str.length && (result.push(str.slice(lastIdx, str.length)))
-      } else if (str[i] === char && stack.length === 0) {
-        result.push(str.slice(lastIdx, i))
-        lastIdx = i + 1
+        stack--
+      }
+      if (str[i] !== ' ' && str[i] !== char) {
+        temp += str[i]
+      }
+      if ((stack === 0 && str[i] === char) || i === str.length - 1) {
+        result.push(temp)
+        temp = ''
       }
     }
     return result
@@ -348,8 +351,12 @@ module.exports = function getSpec ({ warn, error }) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (linerVal) {
             bgMap.push({ prop: bgPropMap.image, value: linerVal })
-          } else if (verifyValues({ prop: bgPropMap.color, value: item }, false)) {
-            bgMap.push({ prop: bgPropMap.color, value: item })
+          } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, false)) {
+            const cssVariableExp = /^var\((.+)\)$/
+            const newVal = (item.match(cssVariableExp)?.[1] || '').split(',')
+            if (!newVal[1] || newVal[1] && verifyValues({ prop: bgPropMap.color, value: newVal[1], selector }, false)) {
+              bgMap.push({ prop: bgPropMap.color, value: item })
+            }
           } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, false)) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
           }
@@ -447,7 +454,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const getIntegersFlex = ({ prop, value, selector }) => {
-    if (isNumber(value) && value >= 0) {
+    if (isNumber(value) && value >= 0 || cssVariableExp.test(value)) {
       return { prop, value }
     } else {
       error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
@@ -479,14 +486,14 @@ module.exports = function getSpec ({ warn, error }) {
     }
     // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
     // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
-    if (!isNumber(lastOne)) {
+    if (!isNumber(lastOne) || !cssVariableExp.test(value)) {
       // 添加 grow 和 shrink
       // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
       // 单值 flex: 1 1 <flex-basis>
       // 双值 flex: <flex-grow> 1 <flex-basis>
       // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
       for (let i = 0; i < 2; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) ? values[i] : 1 })
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) || cssVariableExp.test(value) ? values[i] : 1 })
         item && cssMap.push(item)
       }
       if (!isAuto) {
