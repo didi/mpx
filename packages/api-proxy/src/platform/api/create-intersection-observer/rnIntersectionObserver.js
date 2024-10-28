@@ -3,6 +3,7 @@ import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
 
+const WindowRefStr = 'window'
 
 class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
@@ -36,11 +37,6 @@ class RNIntersectionObserver {
   }
   relativeTo (selector, margins) {
     const relativeRef = this.component.__selectRef(selector, 'node')
-    if (isArray(relativeRef)) {
-      this.relativeRef = relativeRef[0]
-    } else {
-      this.relativeRef = relativeRef
-    }
     if (relativeRef) {
       this.relativeRef = relativeRef
       this.margins = margins || this.margins
@@ -48,7 +44,7 @@ class RNIntersectionObserver {
     return this
   }
   relativeToViewport(margins) {
-    this.relativeRef = null
+    this.relativeRef = WindowRefStr
     this.margins = margins || this.margins
     return this
   }
@@ -85,7 +81,7 @@ class RNIntersectionObserver {
     return this.windowRect
   }
   _getReferenceRect(targetRef) {
-    if (!targetRef) {
+    if (targetRef === WindowRefStr) {
       return Promise.resolve([this._getWindowRect()])
     } else {
       if (!isArray(targetRef)) targetRef = [targetRef]
@@ -186,11 +182,6 @@ class RNIntersectionObserver {
       }
     })
     return !(nowIndex === previousIndex)
-  };
-
-  relativeToViewport (margins) {
-    this._relativeInfo = { relativeRef: null, margins }
-    return this
   }
   disconnect () {
     if (this.intersectionCtx && this.intersectionCtx.includes(this)) {
