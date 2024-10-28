@@ -106,15 +106,14 @@ module.exports = function getSpec ({ warn, error }) {
     }
     return result
   }
-  
-  const getDefaultValueFromVar = (str) => {
-    const totalVarExp = /^var\((.+)\)$/
-    if (!totalVarExp.test(str)) return str
-    const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
-    if (newVal.length <= 1) return ''
-    if (!totalVarExp.test(newVal[1])) return newVal[1]
-    return getDefaultValueFromVar(newVal[1])
-  }
+  // const getDefaultValueFromVar = (str) => {
+  //   const totalVarExp = /^var\((.+)\)$/
+  //   if (!totalVarExp.test(str)) return str
+  //   const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
+  //   if (newVal.length <= 1) return ''
+  //   if (!totalVarExp.test(newVal[1])) return newVal[1]
+  //   return getDefaultValueFromVar(newVal[1])
+  // }
   // 属性值校验
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
@@ -360,11 +359,8 @@ module.exports = function getSpec ({ warn, error }) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (linerVal) {
             bgMap.push({ prop: bgPropMap.image, value: linerVal })
-          } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, false)) {
-            const defaultVal = getDefaultValueFromVar(item)
-            if (!defaultVal || defaultVal && verifyValues({ prop: bgPropMap.color, value: defaultVal, selector }, false)) {
-              bgMap.push({ prop: bgPropMap.color, value: item })
-            }
+          } else if (verifyValues({ prop: bgPropMap.color, value: item }, false)) {
+            bgMap.push({ prop: bgPropMap.color, value: item })
           } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, false)) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
           }
