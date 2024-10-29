@@ -41,7 +41,7 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
     return globalProvides[key]
   } else if (arguments.length > 1) {
     return treatDefaultAsFactory && isFunction(defaultValue)
-      ? defaultValue.call(instance)
+      ? defaultValue.call(instance && instance.target)
       : defaultValue
   } else {
     warn(`injection "${String(key)}" not found.`)

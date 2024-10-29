@@ -399,6 +399,7 @@ export default class MpxProxy {
       injectObj[key] = injected
     }
     proxy(this.target, injectObj, undefined, false, this.createProxyConflictHandler('inject'))
+    this.collectLocalKeys(injectObj)
   }
 
   watch (source, cb, options) {
