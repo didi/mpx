@@ -246,44 +246,41 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindfocus &&
-      bindfocus(
-        getCustomEvent(
-          'focus',
-          evt,
-          {
-            detail: {
-              value: tmpValue.current || ''
-            },
-            layoutRef
+    bindfocus!(
+      getCustomEvent(
+        'focus',
+        evt,
+        {
+          detail: {
+            value: tmpValue.current || ''
           },
-          props
-        )
+          layoutRef
+        },
+        props
       )
+    )
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindblur &&
-      bindblur(
-        getCustomEvent(
-          'blur',
-          evt,
-          {
-            detail: {
-              value: tmpValue.current || '',
-              cursor: cursorIndex.current
-            },
-            layoutRef
+    bindblur!(
+      getCustomEvent(
+        'blur',
+        evt,
+        {
+          detail: {
+            value: tmpValue.current || '',
+            cursor: cursorIndex.current
           },
-          props
-        )
+          layoutRef
+        },
+        props
       )
+    )
   }
 
   const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-    bindconfirm &&
-      evt.nativeEvent.key === 'Enter' &&
-      bindconfirm(
+    evt.nativeEvent.key === 'Enter' &&
+      bindconfirm!(
         getCustomEvent(
           'confirm',
           evt,
@@ -299,21 +296,36 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onSubmitEditing = (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
-    bindconfirm &&
-      multiline &&
-      bindconfirm(
-        getCustomEvent(
-          'confirm',
-          evt,
-          {
-            detail: {
-              value: tmpValue.current || ''
-            },
-            layoutRef
+    bindconfirm!(
+      getCustomEvent(
+        'confirm',
+        evt,
+        {
+          detail: {
+            value: tmpValue.current || ''
           },
-          props
-        )
+          layoutRef
+        },
+        props
       )
+    )
+  }
+
+  const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    bindselectionchange!(
+      getCustomEvent(
+        'selectionchange',
+        evt,
+        {
+          detail: {
+            selectionStart: evt.nativeEvent.selection.start,
+            selectionEnd: evt.nativeEvent.selection.end
+          },
+          layoutRef
+        },
+        props
+      )
+    )
   }
 
   const onContentSizeChange = (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
@@ -340,24 +352,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         )
       setContentHeight(height)
     }
-  }
-
-  const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    bindselectionchange &&
-      bindselectionchange(
-        getCustomEvent(
-          'selectionchange',
-          evt,
-          {
-            detail: {
-              selectionStart: evt.nativeEvent.selection.start,
-              selectionEnd: evt.nativeEvent.selection.end
-            },
-            layoutRef
-          },
-          props
-        )
-      )
   }
 
   const resetValue = () => {
@@ -396,7 +390,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         height: Math.max((composeStyle as any)?.minHeight || 35, contentHeight)
       }
     },
-    ...layoutProps
+    ...layoutProps,
+    onFocus: bindfocus && onInputFocus,
+    onBlur: bindblur && onInputBlur,
+    onKeyPress: bindconfirm && onKeyPress,
+    onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
+    onSelectionChange: bindselectionchange && onSelectionChange
   },
   [],
   {
@@ -423,12 +422,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       multiline={!!multiline}
       onTextInput={onTextInput}
       onChange={onChange}
-      onFocus={onInputFocus}
-      onBlur={onInputBlur}
-      onKeyPress={onKeyPress}
-      onSubmitEditing={onSubmitEditing}
       onContentSizeChange={onContentSizeChange}
-      onSelectionChange={onSelectionChange}
     />
   )
 })
