@@ -613,6 +613,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
 interface WrapChildrenConfig {
   hasVarDec: boolean
   enableBackground: boolean
+  enableAnimation: boolean
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
@@ -643,6 +644,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -741,15 +743,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const viewStyle = { ...innerStyle, ...layoutStyle }
-  const finalStyle = animation ? useAnimationHooks({
-    ...props,
-    style: viewStyle
-  }) : viewStyle
+  enableAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableAnimation)
+  console.info(enableAnimationRef.current, enableAnimation, 999000)
+  if (enableAnimationRef.current !== enableAnimation) {
+    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
 
+  // const viewStyle = { ...innerStyle, ...layoutStyle }
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: finalStyle,
+    style: { ...innerStyle, ...layoutStyle },
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -764,19 +768,26 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
-  return animation?.actions?.length ? (
+  const finalStyle = enableAnimation ? useAnimationHooks({
+    animation,
+    style: innerProps.style
+  }) : innerProps.style
+
+  return enableAnimation ? (
     <Animated.View
       {...innerProps}
+      style={finalStyle}
     >
       {
-        wrapChildren(
+        wrapWithChildren(
           props,
           {
             hasVarDec,
             enableBackground: enableBackgroundRef.current,
             textStyle,
             backgroundStyle,
-            varContext: varContextRef.current
+            varContext: varContextRef.current,
+            textProps
           }
         )
       }
