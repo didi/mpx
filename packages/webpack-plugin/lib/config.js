@@ -1,3 +1,5 @@
+const { dash2hump } = require('./utils/hump-dash')
+
 const reactConfig = {
   event: {
     parseEvent (attr) {
@@ -136,9 +138,9 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'on') {
-        return prefix + eventName.replace(/^./, (matched) => {
+        return prefix + dash2hump(eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
-        })
+        }))
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
