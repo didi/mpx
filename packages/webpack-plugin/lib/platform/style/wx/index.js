@@ -85,6 +85,36 @@ module.exports = function getSpec ({ warn, error }) {
       if (rule[1].test(prop)) return rule[0]
     }
   }
+  // 多value解析
+  const parseValues = (str, char = ' ') => {
+    let stack = 0
+    let temp = ''
+    const result = []
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === '(') {
+        stack++
+      } else if (str[i] === ')') {
+        stack--
+      }
+      // 非括号内 或者 非分隔字符且非空
+      if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+        temp += str[i]
+      }
+      if ((stack === 0 && str[i] === char) || i === str.length - 1) {
+        result.push(temp)
+        temp = ''
+      }
+    }
+    return result
+  }
+  // const getDefaultValueFromVar = (str) => {
+  //   const totalVarExp = /^var\((.+)\)$/
+  //   if (!totalVarExp.test(str)) return str
+  //   const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
+  //   if (newVal.length <= 1) return ''
+  //   if (!totalVarExp.test(newVal[1])) return newVal[1]
+  //   return getDefaultValueFromVar(newVal[1])
+  // }
   // 属性值校验
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
@@ -93,7 +123,7 @@ module.exports = function getSpec ({ warn, error }) {
     if (cssVariableExp.test(value) || calcExp.test(value)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^((-?\d+(\.\d+)?)(rpx|px|%|vw|vh)?|hairlineWidth)$/,
+      number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const type = getValueType(prop)
@@ -164,7 +194,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
     const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     const cssMap = []
     let idx = 0
     let propsIdx = 0
@@ -172,7 +202,7 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length) {
       const prop = props[propsIdx]
       if (!prop) {
-        error(`Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
+        warn(`Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
         break
       }
       const value = values[idx]
@@ -226,7 +256,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // margin padding
   const formatMargins = ({ prop, value, selector }) => {
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     // format
     let suffix = []
     switch (values.length) {
@@ -256,7 +286,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatLineHeight = ({ prop, value, selector }) => {
     return verifyValues({ prop, value, selector }) && ({
       prop,
-      value: /^\s*-?\d+(\.\d+)?\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: /^\s*(-?(\d+(\.\d+)?|\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
     })
   }
 
@@ -293,12 +323,12 @@ module.exports = function getSpec ({ warn, error }) {
         // 不支持逗号分隔的多个值：设置多重背景!!!
         // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
         // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
-        if (value.includes(',')) { // commas are not allowed in values
+        if (parseValues(value, ',').length > 1) { // commas are not allowed in values
           error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
           return false
         }
         const values = []
-        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+        parseValues(value).forEach(item => {
           if (verifyValues({ prop, value: item, selector })) {
             // 支持 number 值 / container cover auto 枚举
             values.push(item)
@@ -309,7 +339,7 @@ module.exports = function getSpec ({ warn, error }) {
       }
       case bgPropMap.position: {
         const values = []
-        value.trim().split(/\s(?![^()]*\))/).forEach(item => {
+        parseValues(value).forEach(item => {
           if (verifyValues({ prop, value: item, selector })) {
             // 支持 number 值 /  枚举, center与50%等价
             values.push(item === 'center' ? '50%' : item)
@@ -322,7 +352,7 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
         const bgMap = []
-        const values = value.trim().split(/\s(?![^()]*\))/)
+        const values = parseValues(value)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
           const linerVal = item.match(linerExp)?.[0]
@@ -345,7 +375,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // border-radius 缩写转换
   const getBorderRadius = ({ prop, value, selector }, { mode }) => {
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     if (values.length === 1) {
       verifyValues({ prop, value, selector }, false)
       return { prop, value }
@@ -362,7 +392,7 @@ module.exports = function getSpec ({ warn, error }) {
   // transform 转换
   const formatTransform = ({ prop, value, selector }, { mode }) => {
     if (Array.isArray(value)) return { prop, value }
-    const values = value.trim().split(/\s(?![^()]*\))/)
+    const values = parseValues(value)
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\(([^)]+)\)/)
@@ -398,6 +428,10 @@ module.exports = function getSpec ({ warn, error }) {
               // 2 个以上的值处理
               key = key.replace('3d', '')
               const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
+              // scale(.5) === scaleX(.5) scaleY(.5)
+              if (vals.length === 1 && key === 'scale') {
+                vals.push(vals[0])
+              }
               const xyz = ['X', 'Y', 'Z']
               transform.push(...vals.map((v, index) => {
                 if (key !== 'rotate' && index > 1) {
@@ -429,7 +463,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const getIntegersFlex = ({ prop, value, selector }) => {
-    if (isNumber(value) && value >= 0) {
+    if ((isNumber(value) && value >= 0) || cssVariableExp.test(value)) {
       return { prop, value }
     } else {
       error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
@@ -438,7 +472,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const formatFlex = ({ prop, value, selector }) => {
-    let values = value.trim().split(/\s(?![^()]*\))/)
+    let values = parseValues(value)
     if (values.length > 3) {
       error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
@@ -461,14 +495,14 @@ module.exports = function getSpec ({ warn, error }) {
     }
     // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
     // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
-    if (!isNumber(lastOne)) {
+    if (!isNumber(lastOne) || !cssVariableExp.test(value)) {
       // 添加 grow 和 shrink
       // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
       // 单值 flex: 1 1 <flex-basis>
       // 双值 flex: <flex-grow> 1 <flex-basis>
       // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
       for (let i = 0; i < 2; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) ? values[i] : 1 })
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) || cssVariableExp.test(value) ? values[i] : 1 })
         item && cssMap.push(item)
       }
       if (!isAuto) {
