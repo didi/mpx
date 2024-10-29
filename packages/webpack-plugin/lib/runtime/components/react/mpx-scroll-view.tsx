@@ -95,6 +95,7 @@ type ScrollAdditionalProps = {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
@@ -104,6 +105,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     enhanced = false,
     bounces = true,
     style = {},
+    binddragstart,
+    binddragging,
+    binddragend,
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
@@ -244,12 +248,18 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onContentSizeChange (width: number, height: number) {
-    scrollOptions.current.contentLength = selectLength({ height, width })
+    scrollOptions.current = {
+      ...scrollOptions.current,
+      contentLength: selectLength({ height, width })
+    }
   }
 
   function onLayout (e: LayoutChangeEvent) {
     const layout = e.nativeEvent.layout || {}
-    scrollOptions.current.visibleLength = selectLength(layout)
+    scrollOptions.current = {
+      ...scrollOptions.current,
+      visibleLength: selectLength(layout)
+    }
   }
 
   function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
@@ -325,7 +335,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onScrollTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
-    const { binddragstart, bindtouchstart, enhanced } = props
+    const { bindtouchstart } = props
     bindtouchstart && bindtouchstart(e)
     if (enhanced) {
       binddragstart &&
@@ -341,7 +351,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   function onScrollTouchMove (e: NativeSyntheticEvent<TouchEvent>) {
-    const { binddragging, bindtouchmove, enhanced } = props
+    const { bindtouchmove } = props
     bindtouchmove && bindtouchmove(e)
     if (enhanced) {
       binddragging &&
@@ -357,25 +367,26 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onScrollEndDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const { binddragend, enhanced } = props
+  function onScrollTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
+    const { bindtouchend } = props
+    bindtouchend && bindtouchend(e)
     if (enhanced) {
-      const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
-      const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
       binddragend &&
         binddragend(
           getCustomEvent('dragend', e, {
             detail: {
-              scrollLeft: scrollLeft,
-              scrollTop: scrollTop,
-              scrollHeight,
-              scrollWidth
+              scrollLeft: scrollOptions.current.scrollLeft || 0,
+              scrollTop: scrollOptions.current.scrollTop || 0
             },
             layoutRef
           }, props)
         )
-      updateScrollOptions(e, { scrollLeft, scrollTop })
     }
+  }
+
+  function onScrollDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
+    const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
+    updateScrollOptions(e, { scrollLeft, scrollTop })
   }
 
   let scrollAdditionalProps: ScrollAdditionalProps = {
@@ -390,9 +401,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     ref: scrollViewRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
-    bindtouchstart: onScrollTouchStart,
-    bindtouchmove: onScrollTouchMove,
-    onScrollEndDrag,
+    ...(enhanced && {
+      ...(binddragstart && { bindtouchstart: onScrollTouchStart }),
+      ...(binddragging && { bindtouchmove: onScrollTouchMove }),
+      ...(binddragend && { bindtouchend: onScrollTouchEnd })
+    }),
+    onScrollBeginDrag: onScrollDrag,
+    onScrollEndDrag: onScrollDrag,
     onMomentumScrollEnd: onScrollEnd,
     ...layoutProps
   }
