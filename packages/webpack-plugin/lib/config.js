@@ -138,9 +138,7 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'on') {
-        return prefix + dash2hump(eventName.replace(/^./, (matched) => {
-          return matched.toUpperCase()
-        }))
+        return dash2hump(prefix + '-' + eventName)
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
