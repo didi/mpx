@@ -106,9 +106,9 @@ export const getCustomEvent = (
 
 const useInnerProps = (
   props: Props = {},
-  additionalProps: AdditionalProps = {},
-  userRemoveProps: RemoveProps = [],
-  rawConfig?: UseInnerPropsConfig
+  additionalProps:AdditionalProps = {},
+  userRemoveProps:RemoveProps = [],
+  rawConfig: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
     startTimer: {
@@ -142,7 +142,24 @@ const useInnerProps = (
     ...userRemoveProps
   ]
 
-  propsRef.current = { ...props, ...additionalProps }
+  const propsMap = additionalProps.propsMap || {}
+  const propsMapKeys = Object.keys(propsMap || {})
+  const transformPropsMap:Record<string, string|Function> = {}
+  const partAdditionalProps = omit(additionalProps, ['propsMap'])
+
+  for (const key in propsMap) {
+    const originPropsValue = props[key]
+    const transformPropsValue = propsMap[key]
+    if (originPropsValue) {
+      if (typeof propsMap[key] === 'string') {
+        transformPropsMap[transformPropsValue] = originPropsValue
+      } else {
+        transformPropsMap[transformPropsValue.name] = transformPropsValue?.getter?.(originPropsValue)
+      }
+    }
+  }
+
+  propsRef.current = { ...props, ...partAdditionalProps, ...transformPropsMap }
 
   for (const key in eventConfigMap) {
     if (propsRef.current[key]) {
@@ -151,7 +168,7 @@ const useInnerProps = (
   }
 
   if (!(Object.keys(eventConfig).length) || config.disableTouch) {
-    return omit(propsRef.current, removeProps)
+    return omit(propsRef.current, [...removeProps, ...propsMapKeys])
   }
 
   function handleEmitEvent (
@@ -305,7 +322,7 @@ const useInnerProps = (
 
   return {
     ...events,
-    ...omit(propsRef.current, [...rawEventKeys, ...removeProps])
+    ...omit(propsRef.current, [...rawEventKeys, ...removeProps, ...propsMapKeys])
   }
 }
 export default useInnerProps
