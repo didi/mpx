@@ -743,14 +743,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  enableAnimation = enableAnimation || !!animation
-  const enableAnimationRef = useRef(enableAnimation)
-  console.info(enableAnimationRef.current, enableAnimation, 999000)
-  if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-
-  // const viewStyle = { ...innerStyle, ...layoutStyle }
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     style: { ...innerStyle, ...layoutStyle },
@@ -768,12 +760,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
+  enableAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableAnimation)
+  if (enableAnimationRef.current !== enableAnimation) {
+    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
   const finalStyle = enableAnimation ? useAnimationHooks({
     animation,
     style: innerProps.style
   }) : innerProps.style
 
-  return enableAnimation ? (
+  return animation?.actions?.length ? (
     <Animated.View
       {...innerProps}
       style={finalStyle}
