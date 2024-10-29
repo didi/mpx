@@ -82,21 +82,21 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
     const innerProps = useInnerProps(
       props,
       {
-        ref: nodeRef,
-        style: {
-          ...normalStyle,
-          ...layoutStyle,
-          tintColor: color
+        additionalProps: {
+          ref: nodeRef,
+          style: {
+            ...normalStyle,
+            ...layoutStyle,
+            tintColor: color
+          },
+          source: { uri },
+          ...layoutProps
         },
-        source: { uri },
-        ...layoutProps
-      },
-      [],
-      {
-        layoutRef
+        config: {
+          layoutRef
+        }
       }
     )
-
     return <Image {...innerProps} />
   }
 )

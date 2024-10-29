@@ -52,10 +52,14 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef, onLayout })
 
   const innerProps = useInnerProps(props, {
-    style: { height: areaHeight, width: areaWidth, overflow: 'hidden', ...normalStyle, ...layoutStyle },
-    ref: movableViewRef,
-    ...layoutProps
-  }, [], { layoutRef })
+    additionalProps: {
+      style: { height: areaHeight, width: areaWidth, overflow: 'hidden', ...normalStyle, ...layoutStyle },
+      ref: movableViewRef,
+      ...layoutProps
+    },
+    config: { layoutRef }
+
+  })
 
   return (
     <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>

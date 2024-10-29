@@ -120,13 +120,14 @@ const CheckboxGroup = forwardRef<
   const innerProps = useInnerProps(
     props,
     {
-      ref: nodeRef,
-      style: { ...normalStyle, ...layoutStyle },
-      ...layoutProps
-    },
-    [],
-    {
-      layoutRef
+      additionalProps: {
+        ref: nodeRef,
+        style: { ...normalStyle, ...layoutStyle },
+        ...layoutProps
+      },
+      config: {
+        layoutRef
+      }
     }
   )
 

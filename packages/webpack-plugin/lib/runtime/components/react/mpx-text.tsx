@@ -51,13 +51,17 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref)
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: normalStyle,
-    selectable: !!selectable || !!userSelect
-  }, [
-    'user-select'
-  ], {
-    layoutRef
+    additionalProps: {
+      ref: nodeRef,
+      style: normalStyle,
+      selectable: !!selectable || !!userSelect
+    },
+    removeProps: [
+      'user-select'
+    ],
+    config: {
+      layoutRef
+    }
   })
 
   return (

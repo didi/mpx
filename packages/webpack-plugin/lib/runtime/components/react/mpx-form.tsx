@@ -83,13 +83,17 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   }
 
   const innerProps = useInnerProps(props, {
-    style: { ...innerStyle, ...layoutStyle },
-    ref: formRef,
-    ...layoutProps
-  }, [
-    'bindsubmit',
-    'bindreset'
-  ], { layoutRef })
+    additionalProps: {
+      style: { ...innerStyle, ...layoutStyle },
+      ref: formRef,
+      ...layoutProps
+    },
+    removeProps: [
+      'bindsubmit',
+      'bindreset'
+    ],
+    config: { layoutRef }
+  })
 
   return (
     <View

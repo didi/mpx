@@ -736,20 +736,24 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
-    ...layoutProps,
-    ...(hoverStyle && {
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd
-    })
-  }, [
-    'hover-start-time',
-    'hover-stay-time',
-    'hover-style',
-    'hover-class'
-  ], {
-    layoutRef
+    additionalProps: {
+      ref: nodeRef,
+      style: { ...innerStyle, ...layoutStyle },
+      ...layoutProps,
+      ...(hoverStyle && {
+        bindtouchstart: onTouchStart,
+        bindtouchend: onTouchEnd
+      })
+    },
+    removeProps: [
+      'hover-start-time',
+      'hover-stay-time',
+      'hover-style',
+      'hover-class'
+    ],
+    config: {
+      layoutRef
+    }
   })
 
   return (

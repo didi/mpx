@@ -47,17 +47,21 @@ const _SwiperWrapper = forwardRef<HandlerRef<ScrollView, SwiperProps>, SwiperPro
   }
   const { nodeRef } = useNodesRef<ScrollView, SwiperProps>(props, ref, {})
   const innerProps = useInnerProps(props, {
-    ref: nodeRef
-  }, [
-    'indicator-dots',
-    'indicator-color',
-    'indicator-active-color',
-    'previous-margin',
-    'vertical',
-    'previous-margin',
-    'next-margin',
-    'easing-function'
-  ], { layoutRef: innerLayout })
+    additionalProps: {
+      ref: nodeRef
+    },
+    removeProps: [
+      'indicator-dots',
+      'indicator-color',
+      'indicator-active-color',
+      'previous-margin',
+      'vertical',
+      'previous-margin',
+      'next-margin',
+      'easing-function'
+    ],
+    config: { layoutRef: innerLayout }
+  })
 
   const getInnerLayout = (layout: MutableRefObject<{}>) => {
     innerLayout.current = layout.current

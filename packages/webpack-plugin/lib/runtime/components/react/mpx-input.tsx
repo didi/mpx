@@ -387,19 +387,20 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const composeStyle = { ...normalStyle, ...layoutStyle }
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: {
-      padding: 0,
-      ...composeStyle,
-      ...multiline && autoHeight && {
-        height: Math.max((composeStyle as any)?.minHeight || 35, contentHeight)
-      }
+    additionalProps: {
+      ref: nodeRef,
+      style: {
+        padding: 0,
+        ...composeStyle,
+        ...multiline && autoHeight && {
+          height: Math.max((composeStyle as any)?.minHeight || 35, contentHeight)
+        }
+      },
+      ...layoutProps
     },
-    ...layoutProps
-  },
-  [],
-  {
-    layoutRef
+    config: {
+      layoutRef
+    }
   })
 
   return (

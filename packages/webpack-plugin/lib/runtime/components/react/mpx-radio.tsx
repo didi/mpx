@@ -12,6 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import Icon from './mpx-icon'
+import { config } from '@ant-design/react-native/lib/toast/methods'
 
 export interface RadioProps {
   value?: string
@@ -160,15 +161,16 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const innerProps = useInnerProps(
       props,
       {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap,
-        catchtap: catchTap
-      },
-      [],
-      {
-        layoutRef
+        additionalProps: {
+          ref: nodeRef,
+          style: { ...innerStyle, ...layoutStyle },
+          ...layoutProps,
+          bindtap: onTap,
+          catchtap: catchTap
+        },
+        config: {
+          layoutRef
+        }
       }
     )
 

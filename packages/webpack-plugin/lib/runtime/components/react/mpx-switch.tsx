@@ -111,17 +111,21 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   }
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: { ...normalStyle, ...layoutStyle },
-    ...layoutProps,
-    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
-  }, [
-    'checked',
-    'disabled',
-    'type',
-    'color'
-  ], {
-    layoutRef
+    additionalProps: {
+      ref: nodeRef,
+      style: { ...normalStyle, ...layoutStyle },
+      ...layoutProps,
+      ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
+    },
+    removeProps: [
+      'checked',
+      'disabled',
+      'type',
+      'color'
+    ],
+    config: {
+      layoutRef
+    }
   })
 
   if (type === 'checkbox') {

@@ -383,27 +383,33 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const hasCatchTouchmove = () => !!props.catchhtouchmove || !!props.catchvtouchmove || !!props.catchtouchmove
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    ...panResponder.panHandlers,
-    onLayout,
-    ...(hasTouchmove() ? { bindtouchmove: onTouchMove } : {}),
-    ...(hasCatchTouchmove() ? { catchtouchmove: onCatchTouchMove } : {})
-  }, [
-    'children',
-    'style',
-    'direction',
-    'x',
-    'y',
-    'scale',
-    'disabled',
-    'scale-value',
-    'scale-min',
-    'scale-max',
-    'bindchange',
-    'bindscale',
-    'htouchmove',
-    'vtouchmove'
-  ], { layoutRef })
+    additionalProps: {
+      ref: nodeRef,
+      ...panResponder.panHandlers,
+      onLayout,
+      ...(hasTouchmove() ? { bindtouchmove: onTouchMove } : {}),
+      ...(hasCatchTouchmove() ? { catchtouchmove: onCatchTouchMove } : {})
+    },
+    removeProps: [
+      'children',
+      'style',
+      'direction',
+      'x',
+      'y',
+      'scale',
+      'disabled',
+      'scale-value',
+      'scale-min',
+      'scale-max',
+      'bindchange',
+      'bindscale',
+      'htouchmove',
+      'vtouchmove'
+    ],
+    config: {
+      layoutRef
+    }
+  })
 
   return (
     <Animated.View

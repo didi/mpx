@@ -168,15 +168,16 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const innerProps = useInnerProps(
       props,
       {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap,
-        catchtap: catchTap
-      },
-      [],
-      {
-        layoutRef
+        additionalProps: {
+          ref: nodeRef,
+          style: { ...innerStyle, ...layoutStyle },
+          ...layoutProps,
+          bindtap: onTap,
+          catchtap: catchTap
+        },
+        config: {
+          layoutRef
+        }
       }
     )
 

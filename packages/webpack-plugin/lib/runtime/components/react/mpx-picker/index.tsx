@@ -37,8 +37,11 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   const { nodeRef } = useNodesRef<View, PickerProps>(props, ref, {
   })
   const innerProps = useInnerProps(props, {
-    ref: nodeRef
-  }, [], { layoutRef: innerLayout })
+    additionalProps: {
+      ref: nodeRef
+    },
+    config: { layoutRef: innerLayout }
+  })
 
   const [pickerValue, setPickerValue] = useState(value as ValueType)
   const defaultValues = {

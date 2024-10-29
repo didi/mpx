@@ -109,17 +109,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: {
-      ...normalStyle,
-      ...layoutStyle,
-      position: 'relative',
-      overflow: 'hidden'
+    additionalProps: {
+      ref: nodeRef,
+      style: {
+        ...normalStyle,
+        ...layoutStyle,
+        position: 'relative',
+        overflow: 'hidden'
+      },
+      ...layoutProps
     },
-    ...layoutProps
-  }, [
-    'enable-offset'
-  ], { layoutRef })
+    config: { layoutRef }
+  })
 
   const cloneChild = (child: React.ReactNode, index: number) => {
     // const extraProps = index === 0 ? { getInnerLayout: getInnerLayout, innerProps } : {}

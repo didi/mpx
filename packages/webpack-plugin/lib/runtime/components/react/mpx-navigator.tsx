@@ -49,8 +49,10 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
   }, [openType, url, delta])
 
   const innerProps = useInnerProps(props, {
-    ref,
-    bindtap: handleClick
+    additionalProps: {
+      ref,
+      bindtap: handleClick
+    }
   })
 
   return (

@@ -374,17 +374,18 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const innerProps = useInnerProps(
     props,
     {
-      ref: nodeRef,
-      style: { ...innerStyle, ...layoutStyle },
-      ...layoutProps,
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd,
-      bindtap: onTap
-    },
-    [],
-    {
-      layoutRef,
-      disableTap: disabled
+      additionalProps: {
+        ref: nodeRef,
+        style: { ...innerStyle, ...layoutStyle },
+        ...layoutProps,
+        bindtouchstart: onTouchStart,
+        bindtouchend: onTouchEnd,
+        bindtap: onTap
+      },
+      config: {
+        layoutRef,
+        disableTap: disabled
+      }
     }
   )
 

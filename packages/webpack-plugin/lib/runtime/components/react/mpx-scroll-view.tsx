@@ -401,31 +401,35 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       pagingEnabled
     }
   }
-  const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'scroll-x',
-    'scroll-y',
-    'enable-back-to-top',
-    'paging-enabled',
-    'show-scrollbar',
-    'upper-threshold',
-    'lower-threshold',
-    'scroll-top',
-    'scroll-left',
-    'scroll-with-animation',
-    'refresher-triggered',
-    'refresher-enabled',
-    'refresher-default-style',
-    'refresher-background',
-    'children',
-    'enhanced',
-    'binddragstart',
-    'binddragging',
-    'binddragend',
-    'bindscroll',
-    'bindscrolltoupper',
-    'bindscrolltolower',
-    'bindrefresherrefresh'
-  ], { layoutRef })
+  const innerProps = useInnerProps(props, {
+    additionalProps: scrollAdditionalProps,
+    removeProps: [
+      'scroll-x',
+      'scroll-y',
+      'enable-back-to-top',
+      'paging-enabled',
+      'show-scrollbar',
+      'upper-threshold',
+      'lower-threshold',
+      'scroll-top',
+      'scroll-left',
+      'scroll-with-animation',
+      'refresher-triggered',
+      'refresher-enabled',
+      'refresher-default-style',
+      'refresher-background',
+      'children',
+      'enhanced',
+      'binddragstart',
+      'binddragging',
+      'binddragend',
+      'bindscroll',
+      'bindscrolltoupper',
+      'bindscrolltolower',
+      'bindrefresherrefresh'
+    ],
+    config: { layoutRef }
+  })
 
   const refreshColor = {
     black: ['#000'],

@@ -108,14 +108,14 @@ const useInnerProps = (
   props: Props = {},
   {
     additionalProps = {},
-    userRemoveProps = [],
+    removeProps = [],
     propsMap = {},
-    rawConfig
+    config
   }: {
     additionalProps?: AdditionalProps;
-    userRemoveProps?: RemoveProps;
-    rawConfig?: UseInnerPropsConfig;
-    propsMap?: Record<string, any>
+    removeProps?: RemoveProps;
+    propsMap?: Record<string, any>;
+    config?: UseInnerPropsConfig;
   }
 ) => {
   const ref = useRef<InnerRef>({
@@ -137,8 +137,8 @@ const useInnerProps = (
 
   const propsRef = useRef<Record<string, any>>({})
   const eventConfig: { [key: string]: string[] } = {}
-  const config = rawConfig || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
-  const removeProps = [
+  const userConfig = config || { layoutRef: { current: {} }, disableTouch: false, disableTap: false }
+  const finalRemoveProps = [
     'children',
     'enable-background',
     'enable-offset',
@@ -147,7 +147,7 @@ const useInnerProps = (
     'parent-font-size',
     'parent-width',
     'parent-height',
-    ...userRemoveProps
+    ...removeProps
   ]
 
   const transformPropsMap:Record<string, string|Function> = {}
@@ -174,8 +174,8 @@ const useInnerProps = (
 
   const propsMapKeys = Object.keys(propsMap || {})
 
-  if (!(Object.keys(eventConfig).length) || config.disableTouch) {
-    return omit(propsRef.current, [...removeProps, ...propsMapKeys])
+  if (!(Object.keys(eventConfig).length) || userConfig.disableTouch) {
+    return omit(propsRef.current, [...finalRemoveProps, ...propsMapKeys])
   }
 
   function handleEmitEvent (
@@ -189,7 +189,7 @@ const useInnerProps = (
         if (match) {
           oe.stopPropagation()
         }
-        propsRef.current[event](getTouchEvent(type, oe, propsRef.current, config))
+        propsRef.current[event](getTouchEvent(type, oe, propsRef.current, userConfig))
       }
     })
   }
@@ -252,7 +252,7 @@ const useInnerProps = (
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchend', e)
     if (ref.current.needPress[type]) {
-      if (type === 'bubble' && config.disableTap) {
+      if (type === 'bubble' && userConfig.disableTap) {
         return
       }
       handleEmitEvent(currentTapEvent, 'tap', e)
@@ -329,7 +329,7 @@ const useInnerProps = (
 
   return {
     ...events,
-    ...omit(propsRef.current, [...rawEventKeys, ...removeProps, ...propsMapKeys])
+    ...omit(propsRef.current, [...rawEventKeys, ...finalRemoveProps, ...propsMapKeys])
   }
 }
 export default useInnerProps

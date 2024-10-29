@@ -285,20 +285,20 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }, [isWidthFixMode, isHeightFixMode, isCropMode, src])
 
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: {
-      ...normalStyle,
-      ...layoutStyle,
-      ...(isHeightFixMode && { width: fixedWidth }),
-      ...(isWidthFixMode && { height: fixedHeight })
+    additionalProps: {
+      ref: nodeRef,
+      style: {
+        ...normalStyle,
+        ...layoutStyle,
+        ...(isHeightFixMode && { width: fixedWidth }),
+        ...(isWidthFixMode && { height: fixedHeight })
+      },
+      ...layoutProps
     },
-    ...layoutProps
-  },
-  [],
-  {
-    layoutRef
-  }
-  )
+    config: {
+      layoutRef
+    }
+  })
 
   // if (typeof src === 'string' && REMOTE_SVG_REGEXP.test(src)) {
   //   return (

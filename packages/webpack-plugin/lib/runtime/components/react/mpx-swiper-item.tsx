@@ -45,13 +45,13 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
   const innerProps = useInnerProps(props, {
-    style: { ...innerStyle, ...layoutStyle },
-    ref: nodeRef,
-    ...layoutProps
-  }, [
-    'children',
-    'enable-offset'
-  ], { layoutRef })
+    additionalProps: {
+      style: { ...innerStyle, ...layoutStyle },
+      ref: nodeRef,
+      ...layoutProps
+    },
+    config: { layoutRef }
+  })
 
   return (
     <View
