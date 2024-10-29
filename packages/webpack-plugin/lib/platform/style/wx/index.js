@@ -96,8 +96,8 @@ module.exports = function getSpec ({ warn, error }) {
       } else if (str[i] === ')') {
         stack--
       }
-      // 非分隔字符添加 括号内的非空分隔字符添加 // Todo 清除括号内的空格 || (stack !== 0 && str[i] === ' ')
-      if (str[i] !== char || (str[i] === char && stack !== 0 && char !== ' ')) {
+      // 非括号内 或者 非分隔字符且非空
+      if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
         temp += str[i]
       }
       if ((stack === 0 && str[i] === char) || i === str.length - 1) {
