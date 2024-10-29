@@ -106,9 +106,9 @@ export const getCustomEvent = (
 
 const useInnerProps = (
   props: Props = {},
-  additionalProps:AdditionalProps = {},
-  userRemoveProps:RemoveProps = [],
-  rawConfig: UseInnerPropsConfig
+  additionalProps?: AdditionalProps,
+  userRemoveProps?: RemoveProps,
+  rawConfig?: UseInnerPropsConfig
 ) => {
   const ref = useRef<InnerRef>({
     startTimer: {
@@ -139,10 +139,10 @@ const useInnerProps = (
     'parent-font-size',
     'parent-width',
     'parent-height',
-    ...userRemoveProps
+    ...(userRemoveProps || [])
   ]
 
-  const propsMap = additionalProps.propsMap || {}
+  const propsMap = (additionalProps || {}).propsMap || {}
   const propsMapKeys = Object.keys(propsMap || {})
   const transformPropsMap:Record<string, string|Function> = {}
   const partAdditionalProps = omit(additionalProps, ['propsMap'])
