@@ -459,7 +459,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const getIntegersFlex = ({ prop, value, selector }) => {
-    if (isNumber(value) && value >= 0 || cssVariableExp.test(value)) {
+    if ((isNumber(value) && value >= 0) || cssVariableExp.test(value)) {
       return { prop, value }
     } else {
       error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
