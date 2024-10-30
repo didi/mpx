@@ -245,11 +245,11 @@ mpx.xfetch.fetch({
         enable: true,
         // 忽略对比的参数key，仅Object类型参数支持忽略不对比这些key的值
         ignorePreParamKeys: [],
-		// 或者使用 equals，覆盖 ignorePreParamKeys
-		equals(selfConfig, cacheConfig) {
-			// return true 表示命中缓存
-			return JSON.stringify(selfConfig.params) === JSON.stringify(cacheConfig.params)
-		},
+        // 或者使用 equals，覆盖 ignorePreParamKeys
+        equals(selfConfig, cacheConfig) {
+          // return true 表示命中缓存
+          return JSON.stringify(selfConfig.params) === JSON.stringify(cacheConfig.params)
+        },
         // 缓存有效时长
         cacheInvalidationTime: 3000
     }

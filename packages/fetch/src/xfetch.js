@@ -233,8 +233,7 @@ export default class XFetch {
       }
       config = this.checkProxy(config) // proxy
 
-      let promise
-      this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
+      let promise = this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
       // 后置拦截器
       const chain = []
       this.interceptors.response.forEach(function pushResponseInterceptors (interceptor) {
