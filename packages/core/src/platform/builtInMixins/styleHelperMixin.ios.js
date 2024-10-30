@@ -16,12 +16,24 @@ function vh (value) {
   return value * height / 100
 }
 
-global.__unit = {
+const unit = {
   rpx,
   vw,
   vh
 }
-global.__hairlineWidth = StyleSheet.hairlineWidth
+
+function formatValue (value) {
+  let matched
+  if ((matched = numberRegExp.exec(value))) {
+    value = +matched[1]
+  } else if ((matched = unitRegExp.exec(value))) {
+    value = unit[matched[2]](+matched[1])
+  } else if (hairlineRegExp.test(value)) {
+    value = StyleSheet.hairlineWidth
+  }
+}
+
+global.__formatValue = formatValue
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
@@ -135,19 +147,9 @@ function mergeObjectArray (arr) {
 }
 
 function transformStyleObj (styleObj) {
-  const keys = Object.keys(styleObj)
   const transformed = {}
-  keys.forEach((prop) => {
-    let value = styleObj[prop]
-    let matched
-    if ((matched = numberRegExp.exec(value))) {
-      value = +matched[1]
-    } else if ((matched = unitRegExp.exec(value))) {
-      value = global.__unit[matched[2]](+matched[1])
-    } else if (hairlineRegExp.test(value)) {
-      value = StyleSheet.hairlineWidth
-    }
-    transformed[prop] = value
+  Object.keys(styleObj).forEach((prop) => {
+    transformed[prop] = formatValue(styleObj[prop])
   })
   return transformed
 }
