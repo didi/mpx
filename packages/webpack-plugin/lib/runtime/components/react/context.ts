@@ -26,7 +26,9 @@ export interface FormContextValue {
 }
 
 export interface IntersectionObserver {
-  throttleMeasure: () => void
+  [key: number]: {
+    throttleMeasure: () => void
+  }
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -43,4 +45,4 @@ export const PickerContext = createContext(null)
 
 export const VarContext = createContext({})
 
-export const IntersectionObserverContext = createContext<IntersectionObserver[] | null>(null)
+export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)

@@ -420,7 +420,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
-      const intersectionObservers = useRef([])
+      const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {

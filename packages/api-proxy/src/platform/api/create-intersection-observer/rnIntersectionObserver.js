@@ -1,13 +1,15 @@
-import { isArray, noop } from '@mpxjs/utils'
+import { isArray, isObject, noop } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
 
 const WindowRefStr = 'window'
 const IgnoreTarget = 'ignore'
+let idCount = 0
 
 class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
+    this.id = idCount++
     this.component = component
     this.options = options
     this.thresholds = options.thresholds.sort((a, b) => a - b) || [0]
@@ -29,9 +31,9 @@ class RNIntersectionObserver {
     this.previousIntersectionRatio = []
 
      // 添加实例添加到上下文中，滚动组件可以获取到上下文内的实例从而触发滚动
-    if (intersectionCtx && Array.isArray(intersectionCtx)) {
+    if (intersectionCtx && isObject(intersectionCtx)) {
       this.intersectionCtx = intersectionCtx
-      this.intersectionCtx.push(this)
+      this.intersectionCtx[this.id] = this
     }
     return this
   }
@@ -75,11 +77,12 @@ class RNIntersectionObserver {
     if (this.windowRect) return this.windowRect
     const navigation = getFocusedNavigation()
     const screen = Dimensions.get('screen')
+    const visibleHeight = navigation.layout.height ? (navigation.layout.height + navigation.headerHeight) : screen.height
     const windowRect = {
       top: navigation.isCustomHeader ? this.margins.top : navigation.headerHeight,
       left: this.margins.left,
       right: screen.width - this.margins.right,
-      bottom: navigation.layout.height + navigation.headerHeight - this.margins.bottom
+      bottom: visibleHeight - this.margins.bottom
     }
     this.windowRect = windowRect
     return this.windowRect
@@ -212,10 +215,7 @@ class RNIntersectionObserver {
   }
 
   disconnect () {
-    const index = this.intersectionCtx ? this.intersectionCtx.indexOf(this) : -1
-    if (index !== -1) {
-      this.intersectionCtx.splice(index, 1)
-    }
+    if (this.intersectionCtx) delete this.intersectionCtx[this.id]
   }
 }
 
