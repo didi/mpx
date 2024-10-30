@@ -1,5 +1,3 @@
-import { Dimensions } from 'react-native'
-
 class Animation {
   constructor (
     {
@@ -14,11 +12,6 @@ class Animation {
     this.id = 0
   }
 
-  __rpx (value) {
-    const { width } = Dimensions.get('screen')
-    return value * width / 750
-  }
-
   _transformUnit (...args) {
     const ret = []
     args.forEach(each => {
@@ -27,7 +20,7 @@ class Animation {
           console.error('animation api 数据单位仅支持 px、rpx')
         } else {
           const [, val, unit] = each.match(/(\d+)(px|rpx)/)
-          ret.push(unit === 'rpx' ? this.__rpx(+val) : +val)
+          ret.push(unit === 'rpx' ? global.__unit.rpx(+val) : +val)
         }
       } else {
         // 纯数字
@@ -71,7 +64,7 @@ class Animation {
   }
 
   rotate (angle) { // 旋转变换
-    this.transform.set('rotate', angle)
+    this.transform.set('rotate', `${angle}deg`)
     return this
   }
 
@@ -89,17 +82,17 @@ class Animation {
   }
 
   rotateX (angle) {
-    this.transform.set('rotateX', angle)
+    this.transform.set('rotateX', `${angle}deg`)
     return this
   }
 
   rotateY (angle) {
-    this.transform.set('rotateY', angle)
+    this.transform.set('rotateY', `${angle}deg`)
     return this
   }
 
   rotateZ (angle) {
-    this.transform.set('rotateZ', angle)
+    this.transform.set('rotateZ', `${angle}deg`)
     return this
   }
 
@@ -143,12 +136,12 @@ class Animation {
   }
 
   skewX (angle) {
-    this.transform.set('skewX', angle)
+    this.transform.set('skewX', `${angle}deg`)
     return this
   }
 
   skewY (angle) {
-    this.transform.set('skewY', angle)
+    this.transform.set('skewY', `${angle}deg`)
     return this
   }
 
@@ -250,7 +243,7 @@ class Animation {
         duration,
         delay,
         timingFunction,
-        transformOrigin
+        transformOrigin: transformOrigin.split(/\s+/)
       },
       rules: this.rules,
       transform: this.transform

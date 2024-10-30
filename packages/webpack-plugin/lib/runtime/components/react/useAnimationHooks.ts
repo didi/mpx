@@ -1,5 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react'
-import { StyleSheet } from 'react-native'
+import { useEffect, useMemo } from 'react'
 import {
   Easing,
   useSharedValue,
@@ -7,17 +6,12 @@ import {
   useAnimatedStyle,
   withSequence,
   withDelay,
-  makeMutable
-  // withRepeat,
-  // Extrapolation,
-  // interpolate,
-  // interpolateColor,
-  // runOnJS,
-  // runOnUI
+  makeMutable,
+  cancelAnimation
 } from 'react-native-reanimated'
-import type  { ViewStyle } from 'react-native'
+import type SharedValue from 'react-native-reanimated'
+import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
-import { throwReactWarning } from './utils'
 
 type TransformKey = 'translateX' | 'translateY' | 'rotate' | 'rotateX' | 'rotateY' | 'rotateZ' | 'scaleX' | 'scaleY' | 'skewX' | 'skewY'
 type NormalKey = 'opacity' | 'backgroundColor' | 'width' | 'height' | 'top' | 'right' | 'bottom' | 'left' | 'transformOrigin'
@@ -34,11 +28,11 @@ export type AnimationStepItem = {
   rules: Map<NormalKey, number | string>
   transform: Map<TransformKey, number>
 }
-
 export type AnimationProp = {
   id: number,
   actions: AnimationStepItem[]
 }
+
 // 微信 timingFunction 和 RN Easing 对应关系
 const EasingKey = {
   linear: Easing.linear,
@@ -52,10 +46,10 @@ const EasingKey = {
 const TransformInitial = {
   // matrix: 0,
   // matrix3d: 0,
-  rotate: 0,
-  rotateX: 0,
-  rotateY: 0,
-  rotateZ: 0,
+  rotate: '0deg',
+  rotateX: '0deg',
+  rotateY: '0deg',
+  rotateZ: '0deg',
   // rotate3d:[0,0,0]
   scale: 1,
   // scale3d: [1, 1, 1],
@@ -63,8 +57,8 @@ const TransformInitial = {
   scaleY: 1,
   // scaleZ: 1,
   skew: 0,
-  skewX: 0,
-  skewY: 0,
+  skewX: '0deg',
+  skewY: '0deg',
   translate: 0,
   // translate3d: 0,
   translateX: 0,
@@ -82,103 +76,103 @@ const InitialValue = {
   right: 0,
   bottom: 0,
   left: 0,
-  transformOrigin: ['center', 'center', 0]
+  transformOrigin: ['50%', '50%', 0]
 }
+const TransformOrigin = 'transformOrigin'
 // deg 角度
-const isDeg = (key: RuleKey) => ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY', 'rotate'].includes(key)
+// const isDeg = (key: RuleKey) => ['rotateX', 'rotateY', 'rotateZ', 'rotate', 'skewX', 'skewY'].includes(key)
 // 背景色
 // const isBg = (key: RuleKey) => key === 'backgroundColor'
 // transform
 const isTransform = (key: RuleKey) => Object.keys(TransformInitial).includes(key)
 
 export default function useAnimationHooks<T, P>(props: _ViewProps) {
-  const { style, animation } = props
+  const { style: originalStyle, animation } = props
   // id 标识
-  let idRef = useRef( -1)
-  const originalStyle: ViewStyle = StyleSheet.flatten(style)
+  let id = animation?.id || -1
   // 有动画样式的 style key
   const animatedStyleKeys = useSharedValue([])
-  // Todo 缓存 style 更新的时候变更
-  // 生成 key: useSharedValue(val) 的 Map
+  // ** 全量 style prop sharedValue
+  // 不能做增量的原因：
+  // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
+  // 2 尝试用 useSharedValue，因为实际触发的 style prop 需要是 sharedValue 才能驱动动画，若外层 shareValMap 也是 sharedValue，动画无法驱动。
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
       const defaultVal = getInitialVal(key, isTransform(key))
-      valMap[key] = makeMutable(isDeg(key) ? `${defaultVal}deg` : defaultVal)
+      valMap[key] = makeMutable(defaultVal)
       return valMap
     }, {})
   }, [])
-  // runOnUI(() => {
-  //   Object.keys(shareValMap).forEach((key) => {
-  //     console.info('shareValMap: valMap=', key, shareValMap[key].value)
-  //   })
-  // })()
-  // console.info(`idRef.current=${idRef.current}`)
-  // 更新 animation id
-  idRef.current = animation?.id || -1
+  // ** 获取动画样式prop & 驱动动画
   useEffect(() => {
-    if (idRef.current === -1) return
-    // console.info(`useEffect idRef.current=${idRef.current}`)
+    if (id === -1) return
     // 更新动画样式 key map
     const keys = getAnimatedStyleKeys()
     animatedStyleKeys.value = formatAnimatedKeys(keys)
     // 驱动动画
     createAnimation(keys)
-  }, [idRef.current])
+  }, [id])
+  // ** 清空动画
+  useEffect(() => {
+    return () => {
+      Object.values(shareValMap).forEach((value)=>{
+        cancelAnimation(value)
+      })
+    }
+  }, [])
   // 根据 animation action 创建&驱动动画 key => wi
   function createAnimation(animatedKeys = []) {
     const actions = animation?.actions || []
     const sequence = {}
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
-      const allRules = [
-        ...rules.entries(),
-        ...transform.entries()
-      ]
-      const easing = EasingKey[timingFunction]
-      if (!easing) {
-        throwReactWarning(`React Native 不支持 timingFunction = ${timingFunction}，请重新设置`)
+      // 设置当次中心
+      shareValMap[TransformOrigin].value = transformOrigin
+      const easing = EasingKey[timingFunction] || Easing.inOut(Easing.quad)
+      let isSetTransformOrigin = false
+      const setTransformOrigin = (finished) => {
+        'worklet'
+        // 动画结束后设置下一次transformOrigin
+        if (finished) {
+          if (index < actions.length - 1) {
+            shareValMap[TransformOrigin].value = actions[index + 1].animatedOption?.transformOrigin || InitialValue.transformOrigin
+          }
+        }
       }
-      // 添加有动画的key
-      allRules.forEach(([key, value]) => {
-        const animation = getAnimation({ key, value }, { delay, duration, easing })
-        if (!sequence[key]) {
-          sequence[key] = [animation]
-        } else {
-          sequence[key].push(animation)
-        }
-      })
-      // 本轮无动画的key补缺
+      // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
-        const defaultVal = getInitialVal(key, isTransform(key))
+        let toVal = rules.get(key) || transform.get(key)
+        if (!toVal && index === 0) {
+          // 第一轮key不存在 取默认值
+          toVal = getInitialVal(key, isTransform(key))
+        }
+        if (!toVal && index > 1) {
+          const { rules: lastRules, transform: lastTransform } = actions[index - 1]
+          // 非第一轮取上一轮的
+          toVal = lastRules.get(key) || lastTransform.get(key)
+        }
+        const animation = getAnimation({ key, value: toVal }, { delay, duration, easing }, !isSetTransformOrigin && setTransformOrigin)
+        isSetTransformOrigin = true
         if (!sequence[key]) {
-          // console.info('本轮无动画的key补缺: defaultVal', defaultVal)
-          const animation = getAnimation({ key, value: defaultVal }, { delay, duration, easing })
           sequence[key] = [animation]
-        } else if (sequence[key].length < index + 1) {
-          const { rules, transform } = actions[index - 1]
-          const toVal = rules.get(key) || transform.get(key) || defaultVal
-          // console.info(`rules.get(key)=${rules.get(key)} transform.get(key)=${transform.get(key)}`, toVal, '补缺')
-          const animation = getAnimation({ key, value: toVal }, { delay, duration, easing })
+        } else {
           sequence[key].push(animation)
         }
       })
-      // 驱动赋值
+      // 赋值驱动动画
       animatedKeys.forEach((key) => {
-        if (key === 'transformOrigin')  {
-          shareValMap[key].value = transformOrigin.split(' ')
-        } else {
+        if (key !== TransformOrigin)  {
           const animations = sequence[key]
-          // console.info(index, key, animations, 999222)
           shareValMap[key].value = withSequence(...animations)
-          // console.info(shareValMap[key].value, 999333)
         }
       })
     })
   }
   // 创建单个animation
-  function getAnimation({ key, value }, { delay, duration, easing }) {
-    // console.info('getAnimation key value', key, isDeg(key) ? `${value}deg` : value)
-    const animation = withTiming(isDeg(key) ? `${value}deg` : value, { duration, easing })
+  function getAnimation({ key, value }, { delay, duration, easing }, callback: boolean | Function = false) {
+    const animation = typeof callback === 'function'
+      ? withTiming(value, { duration, easing }, callback)
+      : withTiming(value, { duration, easing })
     return delay ? withDelay(delay, animation) : animation
   }
   // 获取初始值（prop style or 默认值）
@@ -188,33 +182,19 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
         key = key as TransformKey
-        // if (item[key] !== undefined) initialVal = item[key]
-        if (item[key] !== undefined) initialVal = isDeg(key)
-          ? +(`${item[key]}`.replace(/[^0-9]/ig,''))
-          : item[key]
+        if (item[key] !== undefined) initialVal = item[key]
       })
-      // console.info(`getInitialVal transform.${key}=${initialVal}`)
       return initialVal
     }
-    const val = originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
-    if (key === 'transformOrigin' && typeof val === 'string') {
-      return val.split(' ')
-    }
-    return val
+    return originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
   }
   // 循环 animation actions 获取所有有动画的 style prop name
   function getAnimatedStyleKeys() {
-    const actions = animation?.actions || []
-    // const arr =[...new Set([].concat(...actions.map(({ rules, transform }) => [
-    //       ...rules.keys(),
-    //       ...transform.keys()
-    //     ])))]
-    // console.info('getAnimatedStyleKeys, arr=', arr)
-    return [...new Set([].concat(...actions.map(({ rules, transform }) => [
-      'transformOrigin',
-      ...rules.keys(),
-      ...transform.keys()
-    ])))]
+    return (animation?.actions || []).reduce((keys, action) => {
+      const { rules, transform } = action
+      keys.push(...rules.keys(), ...transform.keys())
+      return keys
+    }, [TransformOrigin])
   }
   // animated key transform 格式化
   function formatAnimatedKeys(keys=[]) {
@@ -227,7 +207,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
         animatedKeys.push(key)
       }
     })
-    if (transforms.length) animatedKeys.push(['transform', transforms])
+    if (transforms.length) animatedKeys.push(transforms)
     return animatedKeys
   }
   // transform 数组转对象
@@ -238,15 +218,14 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
       return Object.assign(transformObj, item)
     }, {})
   }
-  // 生成动画样式
+  // ** 生成动画样式
   return useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.value.reduce((styles, key) => {
       // console.info('getAnimationStyles', key, shareValMap[key].value)
       if (Array.isArray(key)) {
-        const [,transformKeys] = key
         const transformStyle = getTransformObj()
-        transformKeys.forEach(transformKey => {
+        key.forEach(transformKey => {
           transformStyle[transformKey] = shareValMap[transformKey].value
         })
         styles['transform'] = Object.entries(transformStyle).map(([key, value]) => {
@@ -256,6 +235,6 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
         styles[key] = shareValMap[key].value
       }
       return styles
-    }, Object.assign({}, originalStyle) as ViewStyle)
+    }, Object.assign({}, originalStyle) as ExtendedViewStyle)
   })
 }
