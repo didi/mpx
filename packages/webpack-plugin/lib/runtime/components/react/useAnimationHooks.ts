@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   Easing,
   useSharedValue,
@@ -92,6 +92,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   let id = animation?.id || -1
   // 有动画样式的 style key
   const animatedStyleKeys = useSharedValue([])
+  const animatedKeys = useRef([TransformOrigin])
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
@@ -107,10 +108,10 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   useEffect(() => {
     if (id === -1) return
     // 更新动画样式 key map
-    const keys = getAnimatedStyleKeys()
-    animatedStyleKeys.value = formatAnimatedKeys(keys)
+    animatedKeys.current = [...new Set(getAnimatedStyleKeys())]
+    animatedStyleKeys.value = formatAnimatedKeys(animatedKeys.current)
     // 驱动动画
-    createAnimation(keys)
+    createAnimation(animatedKeys.current)
   }, [id])
   // ** 清空动画
   useEffect(() => {
@@ -126,8 +127,6 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
     const sequence = {}
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
-      // 设置当次中心
-      shareValMap[TransformOrigin].value = transformOrigin
       const easing = EasingKey[timingFunction] || Easing.inOut(Easing.quad)
       let isSetTransformOrigin = false
       const setTransformOrigin = (finished) => {
@@ -135,18 +134,24 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
         // 动画结束后设置下一次transformOrigin
         if (finished) {
           if (index < actions.length - 1) {
-            shareValMap[TransformOrigin].value = actions[index + 1].animatedOption?.transformOrigin || InitialValue.transformOrigin
+            const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
+            transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
           }
         }
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
+        if (key === TransformOrigin) {
+          // 设置当次中心
+          index === 0 && (shareValMap[TransformOrigin].value = transformOrigin)
+          return
+        }
         let toVal = rules.get(key) || transform.get(key)
         if (!toVal && index === 0) {
-          // 第一轮key不存在 取默认值
-          toVal = getInitialVal(key, isTransform(key))
+          // 第一轮key不存在 先取上一次动画的value(animation更新多次的前一次) 否则取默认值
+          toVal = shareValMap[key] ? shareValMap[key].value : getInitialVal(key, isTransform(key))
         }
-        if (!toVal && index > 1) {
+        if (!toVal && index > 0) {
           const { rules: lastRules, transform: lastTransform } = actions[index - 1]
           // 非第一轮取上一轮的
           toVal = lastRules.get(key) || lastTransform.get(key)
@@ -194,7 +199,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
       const { rules, transform } = action
       keys.push(...rules.keys(), ...transform.keys())
       return keys
-    }, [TransformOrigin])
+    }, [...animatedKeys.current])
   }
   // animated key transform 格式化
   function formatAnimatedKeys(keys=[]) {

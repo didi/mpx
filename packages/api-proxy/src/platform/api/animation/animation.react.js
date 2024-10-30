@@ -231,13 +231,16 @@ class Animation {
   // 关键帧载入
   step (arg = {}) {
     const { DEFAULT } = this
-    const {
+    let {
       duration = DEFAULT.duration,
       delay = DEFAULT.delay,
       timingFunction = DEFAULT.timingFunction,
       transformOrigin = DEFAULT.transformOrigin
     } = arg
-
+    if (typeof transformOrigin !== 'string') {
+      console.error('Value of transformOrigin only support string type, please check again')
+      transformOrigin = DEFAULT.transformOrigin
+    }
     this.steps.push({
       animatedOption: {
         duration,
