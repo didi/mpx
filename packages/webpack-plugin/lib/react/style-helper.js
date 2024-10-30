@@ -20,11 +20,8 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     if ((matched = numberRegExp.exec(value))) {
       value = matched[1]
       needStringify = false
-    } else if ((matched = unitRegExp.exec(value))) {
-      value = `global.__unit.${matched[2]}(${matched[1]})`
-      needStringify = false
-    } else if (hairlineRegExp.test(value)) {
-      value = 'global.__hairlineWidth'
+    } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
+      value = `global.__formatValue(${value})`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value

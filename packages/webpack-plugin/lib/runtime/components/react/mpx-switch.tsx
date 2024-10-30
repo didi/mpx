@@ -76,7 +76,8 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     setIsChecked(checked)
   }, [checked])
 
-  const { nodeRef } = useNodesRef<Switch, _SwitchProps>(props, ref)
+  const nodeRef = useRef(null)
+  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef)
 
   const {
     layoutRef,

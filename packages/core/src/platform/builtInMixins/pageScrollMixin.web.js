@@ -14,23 +14,21 @@ function refreshMs () {
   }
 }
 
-let loading = null
-
 function showLoading (vm) {
   const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
-  loading = document.createElement('div')
-  loading.className = 'pull-down-loading'
-  loading.style.cssText = `background-color: ${backgroundColor};`
+  vm.__mpxloading = document.createElement('div')
+  vm.__mpxloading.className = 'pull-down-loading'
+  vm.__mpxloading.style.cssText = `background-color: ${backgroundColor};`
   const dot = document.createElement('div')
   dot.className = `dot-flashing ${backgroundTextStyle}`
-  loading.append(dot)
-  vm.$el.prepend(loading)
+  vm.__mpxloading.append(dot)
+  vm.$el.prepend(vm.__mpxloading)
 }
 
 function hideLoading (vm) {
-  if (loading) {
-    vm.$el.removeChild(loading)
-    loading = null
+  if (vm.__mpxloading) {
+    vm.$el.removeChild(vm.__mpxloading)
+    vm.__mpxloading = null
   }
 }
 

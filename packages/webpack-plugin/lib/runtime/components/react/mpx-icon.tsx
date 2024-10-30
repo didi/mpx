@@ -3,7 +3,7 @@
  * ✔ size
  * ✔ color
  */
-import { JSX, forwardRef } from 'react'
+import { JSX, forwardRef, useRef } from 'react'
 import { Text, TextStyle, Image } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -75,7 +75,8 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       setHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-    const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
+    const nodeRef = useRef(null)
+    useNodesRef(props, ref, nodeRef, { defaultStyle })
 
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 

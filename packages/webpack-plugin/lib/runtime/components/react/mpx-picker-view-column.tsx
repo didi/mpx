@@ -1,6 +1,6 @@
 
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
-import React, { forwardRef, useState, useEffect, ReactElement, ReactNode } from 'react'
+import React, { forwardRef, useRef, useState, useEffect, ReactElement, ReactNode } from 'react'
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 interface ColumnProps {
@@ -38,7 +38,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textProps } = splitProps(props)
   // const { innerStyle } = splitStyle(normalStyle)
   // scrollView的ref
-  const { nodeRef: scrollViewRef } = useNodesRef(props, ref, {})
+  const scrollViewRef = useRef<ScrollView>(null)
+  useNodesRef(props, ref, scrollViewRef, {})
   // 每个元素的高度
   let [itemH, setItemH] = useState(0)
 

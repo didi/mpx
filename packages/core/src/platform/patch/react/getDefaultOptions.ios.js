@@ -40,13 +40,18 @@ function createEffect (proxy, components) {
   }
   update.id = proxy.uid
   const getComponent = (tagName) => {
+    if (!tagName) return null
     if (tagName === 'block') return Fragment
     return components[tagName] || getByPath(ReactNative, tagName)
+  }
+  const innerCreateElement = (type, ...rest) => {
+    if (!type) return null
+    return createElement(type, ...rest)
   }
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(createElement, getComponent)
+    return proxy.target.__injectedRender(innerCreateElement, getComponent)
   }, () => queueJob(update), proxy.scope)
 }
 
@@ -416,13 +421,30 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
+        const isCustom = pageConfig.navigationStyle === 'custom'
+        let opt = {}
+        if (__mpx_mode__ === 'android') {
+          opt = {
+            statusBarTranslucent: isCustom,
+            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
+            statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
+          }
+        } else if (__mpx_mode__ === 'ios') {
+          opt = {
+            headerBackTitleVisible: false
+          }
+        }
+
         navigation.setOptions({
-          headerShown: pageConfig.navigationStyle !== 'custom',
+          headerShown: !isCustom,
+          headerShadowVisible: false,
           headerTitle: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+          headerTitleAlign: 'center',
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          ...opt
         })
       }, [])
 
