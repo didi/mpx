@@ -62,7 +62,7 @@ const TransformInitial = {
   translate: 0,
   // translate3d: 0,
   translateX: 0,
-  translateY: 0,
+  translateY: 0
   // translateZ: 0,
 }
 // 动画默认初始值
@@ -86,10 +86,10 @@ const TransformOrigin = 'transformOrigin'
 // transform
 const isTransform = (key: RuleKey) => Object.keys(TransformInitial).includes(key)
 
-export default function useAnimationHooks<T, P>(props: _ViewProps) {
+export default function useAnimationHooks<T, P> (props: _ViewProps) {
   const { style: originalStyle, animation } = props
   // id 标识
-  let id = animation?.id || -1
+  const id = animation?.id || -1
   // 有动画样式的 style key
   const animatedStyleKeys = useSharedValue([])
   const animatedKeys = useRef([TransformOrigin])
@@ -116,13 +116,13 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   // ** 清空动画
   useEffect(() => {
     return () => {
-      Object.values(shareValMap).forEach((value)=>{
+      Object.values(shareValMap).forEach((value) => {
         cancelAnimation(value)
       })
     }
   }, [])
   // 根据 animation action 创建&驱动动画 key => wi
-  function createAnimation(animatedKeys = []) {
+  function createAnimation (animatedKeys = []) {
     const actions = animation?.actions || []
     const sequence = {}
     actions.forEach(({ animatedOption, rules, transform }, index) => {
@@ -166,7 +166,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
       })
       // 赋值驱动动画
       animatedKeys.forEach((key) => {
-        if (key !== TransformOrigin)  {
+        if (key !== TransformOrigin) {
           const animations = sequence[key]
           shareValMap[key].value = withSequence(...animations)
         }
@@ -174,7 +174,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
     })
   }
   // 创建单个animation
-  function getAnimation({ key, value }, { delay, duration, easing }, callback: boolean | Function = false) {
+  function getAnimation ({ key, value }, { delay, duration, easing }, callback: boolean | Function = false) {
     const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, callback)
       : withTiming(value, { duration, easing })
@@ -194,7 +194,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
     return originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
   }
   // 循环 animation actions 获取所有有动画的 style prop name
-  function getAnimatedStyleKeys() {
+  function getAnimatedStyleKeys () {
     return (animation?.actions || []).reduce((keys, action) => {
       const { rules, transform } = action
       keys.push(...rules.keys(), ...transform.keys())
@@ -202,7 +202,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
     }, [...animatedKeys.current])
   }
   // animated key transform 格式化
-  function formatAnimatedKeys(keys=[]) {
+  function formatAnimatedKeys (keys= []) {
     const animatedKeys = []
     const transforms = []
     keys.forEach(key => {
@@ -219,7 +219,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
   function getTransformObj () {
     'worklet'
     const transforms = originalStyle.transform || []
-    return transforms.reduce(( transformObj, item )=> {
+    return transforms.reduce((transformObj, item) => {
       return Object.assign(transformObj, item)
     }, {})
   }
@@ -233,7 +233,7 @@ export default function useAnimationHooks<T, P>(props: _ViewProps) {
         key.forEach(transformKey => {
           transformStyle[transformKey] = shareValMap[transformKey].value
         })
-        styles['transform'] = Object.entries(transformStyle).map(([key, value]) => {
+        styles.transform = Object.entries(transformStyle).map(([key, value]) => {
           return { [key]: value }
         })
       } else {
