@@ -40,13 +40,18 @@ function createEffect (proxy, components) {
   }
   update.id = proxy.uid
   const getComponent = (tagName) => {
+    if (!tagName) return null
     if (tagName === 'block') return Fragment
     return components[tagName] || getByPath(ReactNative, tagName)
+  }
+  const innerCreateElement = (type, ...rest) => {
+    if (!type) return null
+    return createElement(type, ...rest)
   }
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(createElement, getComponent)
+    return proxy.target.__injectedRender(innerCreateElement, getComponent)
   }, () => queueJob(update), proxy.scope)
 }
 
