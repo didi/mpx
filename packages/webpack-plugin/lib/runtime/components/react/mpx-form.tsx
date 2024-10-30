@@ -51,7 +51,8 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
-  const { nodeRef: formRef } = useNodesRef(props, ref)
+  const formRef = useRef(null)
+  useNodesRef(props, ref, formRef)
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 

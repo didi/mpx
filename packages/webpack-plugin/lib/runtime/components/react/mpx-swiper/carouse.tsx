@@ -89,7 +89,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const defaultY = (defaultHeight * initOffsetIndex) || 0
   // 内部存储上一次的offset值
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
-  const { nodeRef: scrollViewRef } = useNodesRef<ScrollView & View, CarouseProps>(props, ref, {})
+  const scrollViewRef = useRef<ScrollView & View>(null)
+  useNodesRef<ScrollView & View, CarouseProps>(props, ref, scrollViewRef, {})
   const {
     // 存储layout布局信息
     layoutRef,
