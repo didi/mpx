@@ -75,6 +75,9 @@
     },
     "react-native-gesture-handler": {
       "optional": true
+    },
+    "react-native-linear-gradient": {
+      "optional": true
     }
   },
   "publishConfig": {
