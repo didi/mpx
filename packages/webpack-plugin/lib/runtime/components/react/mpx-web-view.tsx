@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useEffect } from 'react'
+import { forwardRef, JSX, useEffect, useRef } from 'react'
 import { noop, warn } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
@@ -59,7 +59,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     bottom: 0 as number
   }
 
-  const { nodeRef: webViewRef } = useNodesRef<WebView, WebViewProps>(props, ref, {
+  const webViewRef = useRef<WebView>(null)
+  useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     defaultStyle: defaultWebViewStyle
   })
 

@@ -297,7 +297,9 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     setHeight
   } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { nodeRef } = useNodesRef(props, ref, { defaultStyle })
+  const nodeRef = useRef(null)
+
+  useNodesRef(props, ref, nodeRef, { defaultStyle })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
