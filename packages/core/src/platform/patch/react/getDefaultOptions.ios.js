@@ -68,13 +68,19 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, relation, reactFunctionComponent }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
     },
     getPageId () {
       return pageId
+    },
+    __getRelation () {
+      return relation
+    },
+    __getReactFunctionComponent () {
+      return reactFunctionComponent
     },
     __getProps () {
       const props = propsRef.current
@@ -127,6 +133,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       }
       return null
     },
+    __componentPath: currentInject.componentPath,
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
     // render helper
@@ -342,6 +349,18 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+const needRelationContext = (options) => {
+  const relations = options.relations
+  if (!relations) return false
+  return Object.keys(relations).some(path => {
+    const relation = relations[path]
+    const type = relation.type
+    return type === 'child' || type === 'descendant'
+  })
+}
+
+const RelationsContext = createContext(null)
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -349,12 +368,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
+    const reactFunctionComponent = defaultOptions
     const pageId = useContext(RouteContext)
+    const relation = useContext(RelationsContext)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, relation, reactFunctionComponent })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -403,7 +424,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    const runRenderEffect = () => {
+      if (needRelationContext(rawOptions)) {
+        return createElement(RelationsContext.Provider, {
+          value: instance
+        }, proxy.effect.run())
+      }
+
+      return proxy.effect.run()
+    }
+
+    const root = rawOptions.options?.disableMemo ? runRenderEffect() : useMemo(runRenderEffect, [proxy.stateVersion])
     if (root) {
       const rootProps = getRootProps(props)
       rootProps.style = { ...root.props.style, ...rootProps.style }
