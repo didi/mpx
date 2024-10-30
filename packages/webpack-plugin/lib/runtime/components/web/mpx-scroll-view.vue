@@ -9,6 +9,7 @@
   BScroll.use(PullDown)
 
   let mutationObserver = null
+  let resizeObserver = null
 
   export default {
     name: 'mpx-scroll-view',
@@ -403,6 +404,17 @@
           const config = { attributes: true, childList: true, subtree: true }
           mutationObserver.observe(this.$refs.wrapper, config)
         }
+        if (typeof ResizeObserver !== 'undefined') {
+          let isFirstResize = true
+          resizeObserver = new ResizeObserver(() => {
+            if (isFirstResize) {
+              isFirstResize = false
+              return
+            }
+            this.debounceRefresh()
+          })
+          resizeObserver.observe(this.$refs.wrapper)
+        }
       },
        mutationObserverHandler (mutations) {
         let needRefresh = false
@@ -431,6 +443,10 @@
         if (mutationObserver) {
           mutationObserver.disconnect()
           mutationObserver = null
+        }
+        if (resizeObserver) {
+          resizeObserver.disconnect()
+          resizeObserver = null
         }
       }
     },
