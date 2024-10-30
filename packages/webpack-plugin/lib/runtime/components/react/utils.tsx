@@ -225,7 +225,7 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     }
     replaced.replace(start, end - 1, varValue)
   })
-  return replaced.source()
+  return global.__formatValue(replaced.source())
 }
 
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
@@ -247,7 +247,7 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
         const value = '' + (getSafeAreaInset(name) ?? global.__formatValue(fallback))
         replaced.replace(start, end - 1, value)
       })
-      target[key] = replaced.source()
+      target[key] = global.__formatValue(replaced.source())
     })
   })
 }
