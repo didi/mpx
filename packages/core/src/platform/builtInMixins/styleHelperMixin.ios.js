@@ -1,5 +1,6 @@
 import { isObject, isArray, dash2hump, isFunction, cached } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
+import { getWindowInfo } from '@mpxjs/api-proxy'
 
 function rpx (value) {
   const { width } = Dimensions.get('screen')
@@ -12,8 +13,8 @@ function vw (value) {
   return value * width / 100
 }
 function vh (value) {
-  const { height } = Dimensions.get('screen')
-  return value * height / 100
+  const { windowHeight } = getWindowInfo()
+  return value * windowHeight / 100
 }
 
 const unit = {

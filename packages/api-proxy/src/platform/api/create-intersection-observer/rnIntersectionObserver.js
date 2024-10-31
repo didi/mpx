@@ -1,4 +1,4 @@
-import { isArray, isObject, noop } from '@mpxjs/utils'
+import { isArray, isObject, isString, noop } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
@@ -21,7 +21,7 @@ class RNIntersectionObserver {
     this.component._intersectionObservers.push(this)
 
     this.observerRefs = null
-    this.relativeRef = WindowRefStr
+    this.relativeRef = null
     this.margins = { top: 0, bottom: 0, left: 0, right: 0 }
     this.callback = noop
 
@@ -38,11 +38,20 @@ class RNIntersectionObserver {
     return this
   }
 
+    // 支持传递ref 或者 selector
   relativeTo (selector, margins) {
-    const relativeRef = this.component.__selectRef(selector, 'node')
+    let relativeRef
+    if (isString(selector)) {
+      relativeRef = this.component.__selectRef(selector, 'node')
+    }
+    if (isObject(selector)) {
+      relativeRef = selector.nodeRefs?.[0]
+    }
     if (relativeRef) {
       this.relativeRef = relativeRef
       this.margins = margins || this.margins
+    } else {
+      console.warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`)
     }
     return this
   }
@@ -96,28 +105,28 @@ class RNIntersectionObserver {
         targetPromiseQueue.push(this._getWindowRect())
         return
       }
-      const target = targetRefItem?.getNodeInstance()?.nodeRef?.current
-      if (!target) {
-        // 当节点前面存在后面移除的时候可能会存在拿不到target的情况，此处直接忽略留一个占位不用做计算即可
-        // console.error('intersection observer target ref not found')
+      // 当节点前面存在后面移除的时候可能会存在拿不到target的情况，此处直接忽略留一个占位不用做计算即可
+      // 测试节点移除之后 targetRefItem.getNodeInstance().nodeRef都存在，只是current不存在了
+      if (!targetRefItem || !targetRefItem.getNodeInstance().nodeRef.current) {
         targetPromiseQueue.push(Promise.resolve(IgnoreTarget))
-      } else {
-        targetPromiseQueue.push(new Promise((resolve) => {
-          target.measureInWindow(
-            (x, y, width, height) => {
-              const boundingClientRect = {
-                left: x,
-                top: y,
-                right: x + width,
-                bottom: y + height,
-                width: width,
-                height: height
-              }
-              resolve(boundingClientRect)
-            }
-          )
-        }))
+        return
       }
+      const target = targetRefItem.getNodeInstance().nodeRef.current
+      targetPromiseQueue.push(new Promise((resolve) => {
+        target.measureInWindow(
+          (x, y, width, height) => {
+            const boundingClientRect = {
+              left: x,
+              top: y,
+              right: x + width,
+              bottom: y + height,
+              width: width,
+              height: height
+            }
+            resolve(boundingClientRect)
+          }
+        )
+      }))
     })
 
     if (isArray(targetRef)) {
@@ -127,41 +136,41 @@ class RNIntersectionObserver {
     }
   }
 
-  // 计算相交区域
-  _measureIntersection ({ observeRect, relativeRect, targetIndex, isInit }) {
-    function restrictValueInRange (start = 0, end = 0, value = 0) {
-      return Math.min(Math.max(start, value), end)
-    }
-    // 如果上一个与当前这个处于同一个thresholds区间的话，则不用触发
-    function isInsectedFn (intersectionRatio, previousIntersectionRatio, thresholds) {
-    // console.log('nowintersectionRatio, previousIntersectionRatio', [intersectionRatio, previousIntersectionRatio])
-      let nowIndex = -1
-      let previousIndex = -1
-      thresholds.forEach((item, index) => {
-        if (intersectionRatio >= item) {
-          nowIndex = index
-        }
-        if (previousIntersectionRatio >= item) {
-          previousIndex = index
-        }
-      })
-      return !(nowIndex === previousIndex)
-    }
+  _restrictValueInRange (start = 0, end = 0, value = 0) {
+    return Math.min(Math.max(start, value), end)
+  }
 
+  _isInsectedFn (intersectionRatio, previousIntersectionRatio, thresholds) {
+  // console.log('nowintersectionRatio, previousIntersectionRatio', [intersectionRatio, previousIntersectionRatio])
+    let nowIndex = -1
+    let previousIndex = -1
+    thresholds.forEach((item, index) => {
+      if (intersectionRatio >= item) {
+        nowIndex = index
+      }
+      if (previousIntersectionRatio >= item) {
+        previousIndex = index
+      }
+    })
+    return !(nowIndex === previousIndex)
+  }
+
+  // 计算相交区域
+  _measureIntersection ({ observeRect, relativeRect, observeIndex, isInit }) {
     const visibleRect = {
-      left: restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.left),
-      top: restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.top),
-      right: restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.right),
-      bottom: restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.bottom)
+      left: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.left),
+      top: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.top),
+      right: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.right),
+      bottom: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.bottom)
     }
 
     const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
     const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
     const intersectionRatio = targetArea ? visibleArea / targetArea : 0
 
-    const isInsected = isInit ? intersectionRatio > this.initialRatio : isInsectedFn(intersectionRatio, this.previousIntersectionRatio[targetIndex], this.thresholds)
+    const isInsected = isInit ? intersectionRatio > this.initialRatio : this._isInsectedFn(intersectionRatio, this.previousIntersectionRatio[observeIndex], this.thresholds)
+    this.previousIntersectionRatio[observeIndex] = intersectionRatio
 
-    this.previousIntersectionRatio[targetIndex] = intersectionRatio
     return {
       intersectionRatio,
       intersectionRect: {
@@ -198,7 +207,7 @@ class RNIntersectionObserver {
         // 初次调用的
         if (isInsected) {
           this.callback({
-            index: index,
+            // index: index,
             id: this.observerRefs[index].getNodeInstance().props?.current?.id,
             dataset: this.observerRefs[index].getNodeInstance().props?.current?.dataset || {},
             intersectionRatio: Math.round(intersectionRatio * 100) / 100,
