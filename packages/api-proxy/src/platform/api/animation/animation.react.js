@@ -15,17 +15,7 @@ class Animation {
   _transformUnit (...args) {
     const ret = []
     args.forEach(each => {
-      if (isNaN(each)) {
-        if (!/(\d+)(px|rpx)/.test(each)) {
-          console.error('animation api 数据单位仅支持 px、rpx')
-        } else {
-          const [, val, unit] = each.match(/(\d+)(px|rpx)/)
-          ret.push(unit === 'rpx' ? global.__unit.rpx(+val) : +val)
-        }
-      } else {
-        // 纯数字
-        ret.push(each)
-      }
+      ret.push(global.__formatValue(each))
     })
     return ret
   }

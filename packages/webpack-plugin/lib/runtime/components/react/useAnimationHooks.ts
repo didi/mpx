@@ -97,7 +97,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   const id = animation?.id || -1
   // 有动画样式的 style key
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
-  const animatedKeys = useRef([TransformOrigin] as string[])
+  const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: Boolean})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
@@ -113,10 +113,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   useEffect(() => {
     if (id === -1) return
     // 更新动画样式 key map
-    animatedKeys.current = [...new Set(getAnimatedStyleKeys())]
-    animatedStyleKeys.value = formatAnimatedKeys(animatedKeys.current)
+    animatedKeys.current = getAnimatedStyleKeys()
+    const keys = Object.keys(animatedKeys.current)
+    animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
     // 驱动动画
-    createAnimation(animatedKeys.current)
+    createAnimation(keys)
   }, [id])
   // ** 清空动画
   useEffect(() => {
@@ -130,10 +131,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   function createAnimation (animatedKeys: string[] = []) {
     const actions = animation?.actions || []
     const sequence = {} as { [propName: keyof ExtendedViewStyle]: (string|number)[] }
+    const lastValueMap = {} as { [propName: keyof ExtendedViewStyle]: string|number }
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
       const easing = EasingKey[timingFunction] || Easing.inOut(Easing.quad)
-      let isSetTransformOrigin = false
+      let needSetCallback = !!transformOrigin
       const setTransformOrigin: AnimationCallback = (finished: boolean) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
@@ -144,42 +146,36 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
           }
         }
       }
+      if (index === 0) {
+        // 设置当次中心
+        shareValMap[TransformOrigin].value = transformOrigin
+      }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
-        if (key === TransformOrigin) {
-          // 设置当次中心
-          index === 0 && (shareValMap[TransformOrigin].value = transformOrigin)
-          return
-        }
         let toVal = rules.get(key) || transform.get(key)
-        if (!toVal && index === 0) {
-          // 第一轮key不存在 先取上一次动画的value(animation更新多次的前一次) 否则取默认值
-          toVal = shareValMap[key] ? shareValMap[key].value : getInitialVal(key, isTransform(key))
+        // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
+        if (!toVal) {
+          toVal = index > 0 ? lastValueMap[key] : shareValMap[key].value
         }
-        if (!toVal && index > 0) {
-          const { rules: lastRules, transform: lastTransform } = actions[index - 1]
-          // 非第一轮取上一轮的
-          toVal = lastRules.get(key) || lastTransform.get(key)
-        }
-        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, !isSetTransformOrigin && setTransformOrigin)
-        isSetTransformOrigin = true
+        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
+        needSetCallback = false
         if (!sequence[key]) {
           sequence[key] = [animation]
         } else {
           sequence[key].push(animation)
         }
+        // 更新一下 lastValueMap
+        lastValueMap[key] = toVal!
       })
       // 赋值驱动动画
       animatedKeys.forEach((key) => {
-        if (key !== TransformOrigin) {
-          const animations = sequence[key]
-          shareValMap[key].value = withSequence(...animations)
-        }
+        const animations = sequence[key]
+        shareValMap[key].value = withSequence(...animations)
       })
     })
   }
   // 创建单个animation
-  function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback: boolean | AnimationCallback = false) {
+  function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
     const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, callback)
       : withTiming(value, { duration, easing })
@@ -199,14 +195,17 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   }
   // 循环 animation actions 获取所有有动画的 style prop name
   function getAnimatedStyleKeys () {
-    return (animation?.actions || []).reduce((keys, action) => {
+    return (animation?.actions || []).reduce((keyMap, action) => {
       const { rules, transform } = action
-      keys.push(...rules.keys(), ...transform.keys())
-      return keys
-    }, [...animatedKeys.current])
+      const ruleArr = [...rules.keys(), ...transform.keys()]
+      ruleArr.forEach(key => {
+        if (!keyMap[key]) keyMap[key] = true
+      })
+      return keyMap
+    }, animatedKeys.current)
   }
   // animated key transform 格式化
-  function formatAnimatedKeys ( keys: string[] = []) {
+  function formatAnimatedKeys (keys: string[] = []) {
     const animatedKeys = [] as (string|string[])[]
     const transforms = [] as string[]
     keys.forEach(key => {

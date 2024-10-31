@@ -783,43 +783,27 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       style: viewStyle
     })
     : viewStyle
-
-  return animation?.actions?.length ? (
+  const childNode = wrapWithChildren(props, {
+    hasVarDec,
+    enableBackground: enableBackgroundRef.current,
+    textStyle,
+    backgroundStyle,
+    varContext: varContextRef.current,
+    textProps
+  })
+  return animation?.actions?.length
+    ? (
     <Animated.View
       {...innerProps}
       style={finalStyle}
     >
-      {
-        wrapWithChildren(
-          props,
-          {
-            hasVarDec,
-            enableBackground: enableBackgroundRef.current,
-            textStyle,
-            backgroundStyle,
-            varContext: varContextRef.current,
-            textProps
-          }
-        )
-      }
+      {childNode}
     </Animated.View>
   ) : (
     <View
       {...innerProps}
     >
-      {
-        wrapWithChildren(
-          props,
-          {
-            hasVarDec,
-            enableBackground: enableBackgroundRef.current,
-            textStyle,
-            backgroundStyle,
-            varContext: varContextRef.current,
-            textProps
-          }
-        )
-      }
+      {childNode}
     </View>
   )
 })
