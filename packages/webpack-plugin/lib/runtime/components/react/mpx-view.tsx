@@ -28,6 +28,7 @@ export interface _ViewProps extends ViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'enable-animation'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -624,7 +625,6 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
 interface WrapChildrenConfig {
   hasVarDec: boolean
   enableBackground: boolean
-  enableAnimation: boolean
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
@@ -754,9 +754,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
+  const viewStyle = { ...innerStyle, ...layoutStyle }
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
+    style: viewStyle,
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -779,9 +780,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const finalStyle = enableAnimation
     ? useAnimationHooks({
       animation,
-      style: innerProps.style
+      style: viewStyle
     })
-    : innerProps.style
+    : viewStyle
 
   return animation?.actions?.length ? (
     <Animated.View

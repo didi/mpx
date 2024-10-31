@@ -7,15 +7,17 @@ import {
   withSequence,
   withDelay,
   makeMutable,
-  cancelAnimation
+  cancelAnimation,
+  SharedValue,
+  WithTimingConfig,
+  AnimationCallback
 } from 'react-native-reanimated'
-import type SharedValue from 'react-native-reanimated'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
-type TransformKey = 'translateX' | 'translateY' | 'rotate' | 'rotateX' | 'rotateY' | 'rotateZ' | 'scaleX' | 'scaleY' | 'skewX' | 'skewY'
-type NormalKey = 'opacity' | 'backgroundColor' | 'width' | 'height' | 'top' | 'right' | 'bottom' | 'left' | 'transformOrigin'
-type RuleKey = TransformKey | NormalKey
+// type TransformKey = 'translateX' | 'translateY' | 'rotate' | 'rotateX' | 'rotateY' | 'rotateZ' | 'scaleX' | 'scaleY' | 'skewX' | 'skewY'
+// type NormalKey = 'opacity' | 'backgroundColor' | 'width' | 'height' | 'top' | 'right' | 'bottom' | 'left' | 'transformOrigin'
+// type RuleKey = TransformKey | NormalKey
 type AnimatedOption = {
   duration: number
   delay: number
@@ -23,10 +25,13 @@ type AnimatedOption = {
   timingFunction: 'linear' | 'ease' | 'ease-in' | 'ease-in-out'| 'ease-out'
   transformOrigin: string
 }
+type ExtendWithTimingConfig = WithTimingConfig & {
+  delay: number
+}
 export type AnimationStepItem = {
   animatedOption: AnimatedOption
-  rules: Map<NormalKey, number | string>
-  transform: Map<TransformKey, number>
+  rules: Map<string, number | string>
+  transform: Map<string, number>
 }
 export type AnimationProp = {
   id: number,
@@ -43,7 +48,7 @@ const EasingKey = {
   // 'step-start': '',
   // 'step-end': ''
 }
-const TransformInitial = {
+const TransformInitial: ExtendedViewStyle = {
   // matrix: 0,
   // matrix3d: 0,
   rotate: '0deg',
@@ -66,7 +71,7 @@ const TransformInitial = {
   // translateZ: 0,
 }
 // 动画默认初始值
-const InitialValue = {
+const InitialValue: ExtendedViewStyle = {
   ...TransformInitial,
   opacity: 1,
   backgroundColor: 'transparent',
@@ -84,15 +89,15 @@ const TransformOrigin = 'transformOrigin'
 // 背景色
 // const isBg = (key: RuleKey) => key === 'backgroundColor'
 // transform
-const isTransform = (key: RuleKey) => Object.keys(TransformInitial).includes(key)
+const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
 
 export default function useAnimationHooks<T, P> (props: _ViewProps) {
-  const { style: originalStyle, animation } = props
+  const { style: originalStyle = {}, animation } = props
   // id 标识
   const id = animation?.id || -1
   // 有动画样式的 style key
-  const animatedStyleKeys = useSharedValue([])
-  const animatedKeys = useRef([TransformOrigin])
+  const animatedStyleKeys = useSharedValue([] as (string|string[])[])
+  const animatedKeys = useRef([TransformOrigin] as string[])
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
@@ -102,7 +107,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       const defaultVal = getInitialVal(key, isTransform(key))
       valMap[key] = makeMutable(defaultVal)
       return valMap
-    }, {})
+    }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
   // ** 获取动画样式prop & 驱动动画
   useEffect(() => {
@@ -122,14 +127,14 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     }
   }, [])
   // 根据 animation action 创建&驱动动画 key => wi
-  function createAnimation (animatedKeys = []) {
+  function createAnimation (animatedKeys: string[] = []) {
     const actions = animation?.actions || []
-    const sequence = {}
+    const sequence = {} as { [propName: keyof ExtendedViewStyle]: (string|number)[] }
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
       const easing = EasingKey[timingFunction] || Easing.inOut(Easing.quad)
       let isSetTransformOrigin = false
-      const setTransformOrigin = (finished) => {
+      const setTransformOrigin: AnimationCallback = (finished: boolean) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
         if (finished) {
@@ -156,7 +161,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
           // 非第一轮取上一轮的
           toVal = lastRules.get(key) || lastTransform.get(key)
         }
-        const animation = getAnimation({ key, value: toVal }, { delay, duration, easing }, !isSetTransformOrigin && setTransformOrigin)
+        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, !isSetTransformOrigin && setTransformOrigin)
         isSetTransformOrigin = true
         if (!sequence[key]) {
           sequence[key] = [animation]
@@ -174,19 +179,18 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     })
   }
   // 创建单个animation
-  function getAnimation ({ key, value }, { delay, duration, easing }, callback: boolean | Function = false) {
+  function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback: boolean | AnimationCallback = false) {
     const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, callback)
       : withTiming(value, { duration, easing })
     return delay ? withDelay(delay, animation) : animation
   }
   // 获取初始值（prop style or 默认值）
-  function getInitialVal (key: RuleKey, isTransform = false) {
+  function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
     if (isTransform && originalStyle.transform?.length) {
       let initialVal = InitialValue[key]
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
-        key = key as TransformKey
         if (item[key] !== undefined) initialVal = item[key]
       })
       return initialVal
@@ -202,9 +206,9 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     }, [...animatedKeys.current])
   }
   // animated key transform 格式化
-  function formatAnimatedKeys (keys= []) {
-    const animatedKeys = []
-    const transforms = []
+  function formatAnimatedKeys ( keys: string[] = []) {
+    const animatedKeys = [] as (string|string[])[]
+    const transforms = [] as string[]
     keys.forEach(key => {
       if (isTransform(key)) {
         transforms.push(key)
@@ -221,7 +225,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     const transforms = originalStyle.transform || []
     return transforms.reduce((transformObj, item) => {
       return Object.assign(transformObj, item)
-    }, {})
+    }, {} as { [propName: string]: string | number })
   }
   // ** 生成动画样式
   return useAnimatedStyle(() => {
@@ -230,7 +234,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       // console.info('getAnimationStyles', key, shareValMap[key].value)
       if (Array.isArray(key)) {
         const transformStyle = getTransformObj()
-        key.forEach(transformKey => {
+        key.forEach((transformKey) => {
           transformStyle[transformKey] = shareValMap[transformKey].value
         })
         styles.transform = Object.entries(transformStyle).map(([key, value]) => {
