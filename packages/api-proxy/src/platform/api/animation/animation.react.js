@@ -19,6 +19,16 @@ class Animation {
     })
     return ret
   }
+  
+  _formatTransformOrigin(transformOrigin) {
+    const transformOriginArr = transformOrigin.split(/\s+/)
+    if (transformOriginArr.length === 1) {
+      transformOriginArr.push('50%', 0)
+    } else if (transformOriginArr.length === 2) {
+      transformOriginArr.push(0)
+    }
+    return transformOriginArr
+  }
 
   // 设置默认值
   _setDefault (duration, delay, timingFunction, transformOrigin) {
@@ -236,7 +246,7 @@ class Animation {
         duration,
         delay,
         timingFunction,
-        transformOrigin: transformOrigin.split(/\s+/)
+        transformOrigin: this._formatTransformOrigin(transformOrigin)
       },
       rules: this.rules,
       transform: this.transform
