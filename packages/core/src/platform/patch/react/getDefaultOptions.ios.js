@@ -419,11 +419,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
+      const rootRef = useRef(null)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
+        rootRef.current?.measureInWindow((x, y, width, height) => {
+          navigation.layout = { x, y, width, height }
+        })
         const isCustom = pageConfig.navigationStyle === 'custom'
         let opt = {}
         if (__mpx_mode__ === 'android') {
@@ -437,7 +441,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             headerBackTitleVisible: false
           }
         }
-
         navigation.setOptions({
           headerShown: !isCustom,
           headerShadowVisible: false,
@@ -460,9 +463,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             flex: 1,
             backgroundColor: pageConfig.backgroundColor || '#ffffff'
           },
-          onLayout (e) {
-            navigation.layout = e.nativeEvent.layout
-          }
+          ref: rootRef
         },
         // todo custom portal host for active route
         createElement(Provider,

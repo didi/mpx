@@ -135,7 +135,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     overflow: 'hidden'
   }
 
-  const { nodeRef } = useNodesRef(props, ref, {
+  const nodeRef = useRef(null)
+  useNodesRef(props, ref, nodeRef, {
     defaultStyle
   })
 

@@ -209,9 +209,9 @@ export default class MpxProxy {
     this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
     if (this._intersectionObservers) {
-      for (const key in intersectionObservers) {
-        this._intersectionObservers[key].disconnect()
-      }
+      this._intersectionObservers.forEach((observer) => {
+        observer.disconnect()
+      })
     }
   }
 
