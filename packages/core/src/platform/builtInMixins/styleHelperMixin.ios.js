@@ -31,6 +31,7 @@ function formatValue (value) {
   } else if (hairlineRegExp.test(value)) {
     value = StyleSheet.hairlineWidth
   }
+  return value
 }
 
 global.__formatValue = formatValue
