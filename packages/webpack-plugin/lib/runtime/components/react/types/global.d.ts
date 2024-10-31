@@ -26,6 +26,16 @@ declare module '@mpxjs/utils' {
   export function isObject (value): value is Object
   export function error (msg: string, location?: string, e?: any): void
   export function warn (msg: string, location?: string, e?: any): void
+  export function getFocusedNavigation (): {
+    insets: {
+      top: number
+      bottom: number
+      left: number
+      right: number
+    }
+  } | undefined
 }
 
-declare let global: Record<string, any>
+declare let global: {
+  __formatValue (value: string): string | number
+} & Record<string, any>
