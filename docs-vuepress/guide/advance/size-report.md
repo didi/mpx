@@ -76,8 +76,8 @@ module.exports = defineConfig({
                       entryRules: {
                           include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
                       },
-                      // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
-                      noEntryModules: {
+                      // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryRules
+                      noEntryRules: {
                           include: 'src/lib/sdk.js'
                       }
                   }
