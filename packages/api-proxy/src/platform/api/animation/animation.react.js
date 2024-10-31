@@ -13,11 +13,9 @@ class Animation {
   }
 
   _transformUnit (...args) {
-    const ret = []
-    args.forEach(each => {
-      ret.push(global.__formatValue(each))
+    return args.map(each => {
+      return global.__formatValue(each)
     })
-    return ret
   }
   
   _formatTransformOrigin(transformOrigin) {
