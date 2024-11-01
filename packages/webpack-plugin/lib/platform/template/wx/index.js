@@ -9,7 +9,7 @@ const { dash2hump } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'harmony'],
     // props预处理
     preProps: [],
     // props后处理
@@ -345,18 +345,6 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        // tt ({ name, value }, { eventRules }) {
-        //   const match = this.test.exec(name)
-        //   const prefix = match[1]
-        //   const eventName = match[2]
-        //   const modifierStr = match[3] || ''
-        //   const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
-        //   return {
-        //     // 字节将所有事件转为小写
-        //     name: prefix + rEventName.toLowerCase() + modifierStr,
-        //     value
-        //   }
-        // },
         tt ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
@@ -428,6 +416,21 @@ module.exports = function getSpec ({ warn, error }) {
           }
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
           const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
+        },
+        harmony ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'harmony' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'harmony', data: { el } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -553,6 +556,22 @@ module.exports = function getSpec ({ warn, error }) {
             }
           },
           android (eventName) {
+            const eventMap = {
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React native environment does not support [${eventName}] event!`)
+            }
+          },
+          harmony (eventName) {
             const eventMap = {
               tap: 'tap',
               longtap: 'longpress',
