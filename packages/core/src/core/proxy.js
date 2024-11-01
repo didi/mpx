@@ -137,13 +137,13 @@ export default class MpxProxy {
   }
 
   processIgnoreReactive (obj) {
-    if (isObject(obj) && this.ignoreReactivePattern) {
+    if (this.ignoreReactivePattern && isObject(obj)) {
       Object.keys(obj).forEach((key) => {
         if (this.ignoreReactivePattern.test(key)) {
           Object.defineProperty(obj, key, {
             enumerable: true,
             // set configurable to false to skip defineReactive
-            configurable: false,
+            configurable: false
           })
         }
       })
@@ -435,7 +435,7 @@ export default class MpxProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey] || (this.ignoreReactivePattern && this.this.ignoreReactivePattern.test(firstKey))) {
+        if (!this.localKeysMap[firstKey] || (this.ignoreReactivePattern && this.ignoreReactivePattern.test(firstKey))) {
           continue
         }
         // 外部clone，用于只需要clone的场景
