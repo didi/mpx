@@ -792,20 +792,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     textProps
   })
   return animation?.actions?.length
-    ? (
-    <Animated.View
+    ? (<Animated.View
       {...innerProps}
       style={finalStyle}
     >
       {childNode}
-    </Animated.View>
-  ) : (
-    <View
+    </Animated.View>)
+    : (<View
       {...innerProps}
     >
       {childNode}
-    </View>
-  )
+    </View>)
 })
 
 _View.displayName = 'mpx-view'

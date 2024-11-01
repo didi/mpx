@@ -17,8 +17,8 @@ class Animation {
       return global.__formatValue(each)
     })
   }
-  
-  _formatTransformOrigin(transformOrigin) {
+
+  _formatTransformOrigin (transformOrigin) {
     const transformOriginArr = transformOrigin.split(/\s+/)
     if (transformOriginArr.length === 1) {
       transformOriginArr.push('50%', 0)
