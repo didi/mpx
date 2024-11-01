@@ -1,8 +1,9 @@
-import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, Ref } from 'react'
-import { Dimensions, StyleSheet, LayoutChangeEvent, TextStyle } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
+import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { LayoutChangeEvent, TextStyle } from 'react-native'
+import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
+import { initialWindowMetrics } from 'react-native-safe-area-context'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -14,19 +15,26 @@ export const DEFAULT_UNLAY_STYLE = {
   opacity: 0
 }
 
-export function rpx (value: number) {
-  const { width } = Dimensions.get('screen')
-  // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-  // px = rpx * (750 / 屏幕宽度)
-  return value * width / 750
-}
-
-const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
-const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varDecRegExp = /^--.*/
 const varUseRegExp = /var\(/
 const calcUseRegExp = /calc\(/
+const envUseRegExp = /env\(/
+
+const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
+  'safe-area-inset-top': 'top',
+  'safe-area-inset-right': 'right',
+  'safe-area-inset-bottom': 'bottom',
+  'safe-area-inset-left': 'left'
+}
+
+function getSafeAreaInset (name: string) {
+  const navigation = getFocusedNavigation()
+  const insets = {
+    ...initialWindowMetrics?.insets,
+    ...navigation?.insets
+  }
+  return insets[safeAreaInsetMap[name]]
+}
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = Object.assign({}, obj)
@@ -122,9 +130,9 @@ export function groupBy<T extends Record<string, any>> (
 }
 
 export function splitStyle<T extends Record<string, any>> (styleObj: T): {
-  textStyle?: Partial<T>;
-  backgroundStyle?: Partial<T>;
-  innerStyle?: Partial<T>;
+  textStyle?: Partial<T>
+  backgroundStyle?: Partial<T>
+  innerStyle?: Partial<T>
 } {
   return groupBy(styleObj, (key) => {
     if (TEXT_STYLE_REGEX.test(key)) {
@@ -135,9 +143,9 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
       return 'innerStyle'
     }
   }) as {
-    textStyle: Partial<T>;
-    backgroundStyle: Partial<T>;
-    innerStyle: Partial<T>;
+    textStyle: Partial<T>
+    backgroundStyle: Partial<T>
+    innerStyle: Partial<T>
   }
 }
 
@@ -155,19 +163,6 @@ const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
   top: true,
   bottom: true
-}
-
-// todo calc时处理角度和时间等单位
-function formatValue (value: string) {
-  let matched
-  if ((matched = pxRegExp.exec(value))) {
-    return +matched[1]
-  } else if ((matched = rpxRegExp.exec(value))) {
-    return rpx(+matched[1])
-  } else if (hairlineRegExp.test(value)) {
-    return StyleSheet.hairlineWidth
-  }
-  return value
 }
 
 interface PercentConfig {
@@ -226,17 +221,33 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     if (varUseRegExp.test(varValue)) {
       varValue = '' + resolveVar(varValue, varContext)
     } else {
-      varValue = '' + formatValue(varValue)
+      varValue = '' + global.__formatValue(varValue)
     }
     replaced.replace(start, end - 1, varValue)
   })
-  return formatValue(replaced.source())
+  return global.__formatValue(replaced.source())
 }
 
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
       target[key] = resolveVar(value, varContext)
+    })
+  })
+}
+
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>) {
+  envKeyPaths.forEach((envKeyPath) => {
+    setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
+      const parsed = parseFunc(value, 'env')
+      const replaced = new ReplaceSource(value)
+      parsed.forEach(({ start, end, args }) => {
+        const name = args[0]
+        const fallback = args[1] || ''
+        const value = '' + (getSafeAreaInset(name) ?? global.__formatValue(fallback))
+        replaced.replace(start, end - 1, value)
+      })
+      target[key] = global.__formatValue(replaced.source())
     })
   })
 }
@@ -257,7 +268,7 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
           error(`calc(${exp}) parse error.`, undefined, e)
         }
       })
-      target[key] = formatValue(replaced.source())
+      target[key] = global.__formatValue(replaced.source())
     })
   })
 }
@@ -279,6 +290,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const varKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
   const calcKeyPaths: Array<Array<string>> = []
+  const envKeyPaths: Array<Array<string>> = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
 
@@ -298,6 +310,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       varKeyPaths.push(keyPath.slice())
     }
   }
+
   // traverse var
   traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
@@ -318,6 +331,12 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     transformVar(normalStyle, varKeyPaths, varContextRef.current)
   }
 
+  function envVisitor ({ value, keyPath }: VisitorArg) {
+    if (envUseRegExp.test(value)) {
+      envKeyPaths.push(keyPath.slice())
+    }
+  }
+
   function calcVisitor ({ value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
       calcKeyPaths.push(keyPath.slice())
@@ -328,13 +347,13 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
       hasSelfPercent = true
       percentKeyPaths.push(keyPath.slice())
-    } else if (key === 'fontSize' || key === 'lineHeight') {
+    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }
   }
 
-  // traverse calc & percent
-  traverseStyle(normalStyle, [percentVisitor, calcVisitor])
+  // traverse env & calc & percent
+  traverseStyle(normalStyle, [envVisitor, percentVisitor, calcVisitor])
 
   const percentConfig = {
     width,
@@ -345,6 +364,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     parentFontSize
   }
 
+  // apply env
+  transformEnv(normalStyle, envKeyPaths)
   // apply percent
   transformPercent(normalStyle, percentKeyPaths, percentConfig)
   // apply calc
@@ -353,7 +374,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       const resolved = resolvePercent(value, key, percentConfig)
       return typeof resolved === 'number' ? resolved : 0
     } else {
-      const formatted = formatValue(value)
+      const formatted = global.__formatValue(value)
       if (typeof formatted === 'number') {
         return formatted
       } else {
@@ -409,11 +430,9 @@ export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(a
   traverse(styleObj)
 }
 
-export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>, setter: (arg: VisitorArg) => void, needClone = false) {
+export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>, setter: (arg: VisitorArg) => void) {
   let target = styleObj
-  const firstKey = keyPath[0]
   const lastKey = keyPath[keyPath.length - 1]
-  if (needClone) target[firstKey] = diffAndCloneA(target[firstKey]).clone
   for (let i = 0; i < keyPath.length - 1; i++) {
     target = target[keyPath[i]]
     if (!target) return
@@ -427,8 +446,8 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
 }
 
 export function splitProps<T extends Record<string, any>> (props: T): {
-  textProps?: Partial<T>;
-  innerProps?: Partial<T>;
+  textProps?: Partial<T>
+  innerProps?: Partial<T>
 } {
   return groupBy(props, (key) => {
     if (TEXT_PROPS_REGEX.test(key)) {
@@ -437,8 +456,8 @@ export function splitProps<T extends Record<string, any>> (props: T): {
       return 'innerProps'
     }
   }) as {
-    textProps: Partial<T>;
-    innerProps: Partial<T>;
+    textProps: Partial<T>
+    innerProps: Partial<T>
   }
 }
 
@@ -450,7 +469,7 @@ interface LayoutConfig {
   onLayout?: (event?: LayoutChangeEvent) => void
   nodeRef: React.RefObject<any>
 }
-export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }:LayoutConfig) => {
+export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
   const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}

@@ -19,7 +19,7 @@ In computer programming, unit testing is a software testing method by which indi
 - 改进设计，促进重构
 
 此外，单测高覆盖率的项目也会给公司节省大量支出：
-![unit-test-money.png](https://cdn.nlark.com/yuque/0/2021/png/116604/1640872105786-b7b230b4-7f65-4a0f-8dbf-e8ba89f61837.png#averageHue=%23fcfbfa&clientId=u39d6bb3b-719d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=577&id=u3d713c30&margin=%5Bobject%20Object%5D&name=unit-test-money.png&originHeight=1153&originWidth=2770&originalType=binary&ratio=1&rotation=0&showTitle=false&size=227658&status=done&style=none&taskId=u33caf2b6-ceb2-43ca-9da2-c631d845598&title=&width=1385)
+![unit-test-money.png](https://cdn.nlark.com/yuque/0/2021/png/116604/1640872105786-b7b230b4-7f65-4a0f-8dbf-e8ba89f61837.png)
 据微软统计单测效益结果，如上图展示，绝大多数bug都是在coding阶段产生，并且随着需求开发进度的推进，修复bug的成本会随指数级增长，当我们在unit test阶段发现并修复这个bug是能给公司带来巨大收益的。
 
 下方介绍两种常见的项目单元测试规范：
