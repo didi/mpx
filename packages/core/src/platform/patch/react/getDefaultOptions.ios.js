@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -417,7 +417,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-
       const currentPageId = useMemo(() => ++pageId, [])
       usePageStatus(navigation, currentPageId)
 
@@ -447,7 +446,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           ...opt
         })
       }, [])
-      
+
       const rootRef = useRef(null)
       const onLayout = useCallback(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
