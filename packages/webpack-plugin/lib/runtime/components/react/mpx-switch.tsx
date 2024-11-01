@@ -115,7 +115,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     ref: nodeRef,
     style: { ...normalStyle, ...layoutStyle },
     ...layoutProps,
-    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
+    ...(!disabled && changeHandler) ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
   }, [
     'checked',
     'disabled',
