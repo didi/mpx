@@ -47,7 +47,7 @@ const getWindowInfo = function () {
 
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
-  const { screenWidth, screenHeight, safeArea } = windowInfo
+  const { screenWidth, screenHeight } = windowInfo
 
   const result = {
     brand: DeviceInfo.getBrand(),
