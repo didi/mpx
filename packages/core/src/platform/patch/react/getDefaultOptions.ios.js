@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -416,18 +416,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }))
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const rootRef = useRef(null)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
         const isCustom = pageConfig.navigationStyle === 'custom'
         let opt = {}
         if (__mpx_mode__ === 'android') {
@@ -453,39 +449,48 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           ...opt
         })
       }, [])
+
+      const rootRef = useRef(null)
+      const onLayout = useCallback(() => {
+        rootRef.current?.measureInWindow((x, y, width, height) => {
+          navigation.layout = { x, y, width, height }
+        })
+      }, [])
+
       navigation.insets = useSafeAreaInsets()
-      navigation.headerHeight = useHeaderHeight()
-      navigation.isCustomHeader = pageConfig.navigationStyle === 'custom'
 
       return createElement(GestureHandlerRootView,
-        {
+        null,
+        createElement(ReactNative.View, {
           style: {
             flex: 1,
             backgroundColor: pageConfig.backgroundColor || '#ffffff'
           },
-          ref: rootRef
+          ref: rootRef,
+          onLayout
         },
-        // todo custom portal host for active route
-        createElement(Provider,
-          null,
-          createElement(RouteContext.Provider,
-            {
-              value: currentPageId
-            },
-            createElement(IntersectionObserverContext.Provider,
+          createElement(Provider,
+            null,
+            createElement(RouteContext.Provider,
+              {
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
               {
                 value: intersectionObservers.current
               },
-              createElement(defaultOptions,
-                {
-                  navigation,
-                  route,
-                  id: currentPageId
-                }
+                createElement(defaultOptions,
+                  {
+                    navigation,
+                    route,
+                    id: currentPageId
+                  }
+                )
               )
             )
           )
         )
+        // todo custom portal host for active route
       )
     }
     return Page

@@ -5,6 +5,7 @@ import { getFocusedNavigation } from '../../../common/js'
 
 const WindowRefStr = 'window'
 const IgnoreTarget = 'ignore'
+const DefaultMargin = { top: 0, bottom: 0, left: 0, right: 0 }
 let idCount = 0
 
 class RNIntersectionObserver {
@@ -22,7 +23,7 @@ class RNIntersectionObserver {
 
     this.observerRefs = null
     this.relativeRef = null
-    this.margins = { top: 0, bottom: 0, left: 0, right: 0 }
+    this.margins = DefaultMargin
     this.callback = noop
 
     this.throttleMeasure = this.getThrottleMeasure(options.throttleTime || 100)
@@ -39,7 +40,7 @@ class RNIntersectionObserver {
   }
 
     // 支持传递ref 或者 selector
-  relativeTo (selector, margins) {
+  relativeTo (selector, margins = {}) {
     let relativeRef
     if (isString(selector)) {
       relativeRef = this.component.__selectRef(selector, 'node')
@@ -49,16 +50,16 @@ class RNIntersectionObserver {
     }
     if (relativeRef) {
       this.relativeRef = relativeRef
-      this.margins = margins || this.margins
+      this.margins = Object.assign({}, DefaultMargin, margins)
     } else {
       console.warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`)
     }
     return this
   }
 
-  relativeToViewport (margins) {
+  relativeToViewport (margins = {}) {
     this.relativeRef = WindowRefStr
-    this.margins = margins || this.margins
+    this.margins = Object.assign({}, DefaultMargin, margins)
     return this
   }
 
@@ -86,13 +87,20 @@ class RNIntersectionObserver {
     if (this.windowRect) return this.windowRect
     const navigation = getFocusedNavigation()
     const screen = Dimensions.get('screen')
-    const visibleHeight = navigation.layout.height ? (navigation.layout.height + navigation.headerHeight) : screen.height
-    const windowRect = {
-      top: navigation.isCustomHeader ? this.margins.top : navigation.headerHeight,
-      left: this.margins.left,
-      right: screen.width - this.margins.right,
-      bottom: visibleHeight - this.margins.bottom
+    const navigationLayout = navigation.layout || {
+      x: 0,
+      y: 0,
+      width: screen.width,
+      height: screen.height
     }
+
+    const windowRect = {
+      top: navigationLayout.y + this.margins.top,
+      left: navigationLayout.x + this.margins.left,
+      right: navigationLayout.width - this.margins.right,
+      bottom: navigationLayout.y + navigationLayout.height - this.margins.bottom
+    }
+
     this.windowRect = windowRect
     return this.windowRect
   }
