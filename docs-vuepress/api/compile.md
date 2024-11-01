@@ -965,6 +965,7 @@ module.exports = defineConfig({
   }
 })
 ```
+**注意：** 建议使用`autoVirtualHostRules`配置项，不要使用微信组件内部的 options virtualHost 配置，因为组件内部的 options virtualHost 在跨平台输出时无法进行兼容抹平处理。
 
 ### partialCompileRules
 
