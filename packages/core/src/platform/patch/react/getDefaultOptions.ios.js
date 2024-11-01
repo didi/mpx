@@ -454,29 +454,31 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       navigation.insets = useSafeAreaInsets()
 
       return createElement(GestureHandlerRootView,
-        {
+        null,
+        createElement(ReactNative.View, {
           style: {
             flex: 1,
             backgroundColor: pageConfig.backgroundColor || '#ffffff'
           },
           ref: rootRef
         },
-        // todo custom portal host for active route
-        createElement(Provider,
-          null,
-          createElement(RouteContext.Provider,
-            {
-              value: currentPageId
-            },
-            createElement(defaultOptions,
+          createElement(Provider,
+            null,
+            createElement(RouteContext.Provider,
               {
-                navigation,
-                route,
-                id: currentPageId
-              }
+                value: currentPageId
+              },
+              createElement(defaultOptions,
+                {
+                  navigation,
+                  route,
+                  id: currentPageId
+                }
+              )
             )
           )
         )
+        // todo custom portal host for active route
       )
     }
     return Page
