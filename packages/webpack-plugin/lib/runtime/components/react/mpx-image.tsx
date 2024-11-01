@@ -1,6 +1,6 @@
 /**
  * ✔ src
- * - mode: Partially, Only SVG format do not support
+ * ✔ mode
  * ✘ show-menu-by-longpress
  * ✔ binderror
  * ✔ bindload
@@ -16,16 +16,16 @@ import {
   View,
   ImageStyle,
   ImageResizeMode,
-  StyleSheet,
   NativeSyntheticEvent,
   ImageErrorEventData,
   LayoutChangeEvent,
   DimensionValue,
   ImageLoadEventData
 } from 'react-native'
-import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import useNodesRef, { HandlerRef } from '../useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle } from '../utils'
+import { SvgCssUri } from 'react-native-svg/css'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useNodesRef, { HandlerRef } from './useNodesRef'
+import { SVG_REGEXP, useLayout, useTransformStyle } from './utils'
 
 export type Mode =
   | 'scaleToFill'
@@ -86,11 +86,17 @@ const isNumber = (value: DimensionValue) => typeof value === 'number'
 
 const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize - imageSize) / 2
 
+function noMeetCalcRule (isSvg: boolean, mode: Mode, viewWidth: number, viewHeight: number, ratio: number) {
+  const isMeetSize = viewWidth && viewHeight && ratio
+  if (isSvg && !isMeetSize) return true
+  if (!isSvg && !['scaleToFill', 'aspectFit', 'aspectFill'].includes(mode) && !isMeetSize) return true
+  return false
+}
+
 const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): JSX.Element => {
   const {
     src = '',
     mode = 'scaleToFill',
-    // svg = false,
     style = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -129,10 +135,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const { width, height } = normalStyle
 
   const isSvg = SVG_REGEXP.test(src)
-  // const isFillMode = mode === 'aspectFill'
   const isWidthFixMode = mode === 'widthFix'
   const isHeightFixMode = mode === 'heightFix'
   const isCropMode = cropMode.includes(mode)
+  const isLayoutMode = isWidthFixMode || isHeightFixMode || isCropMode
   const resizeMode: ImageResizeMode = ModeMap.get(mode) || 'stretch'
 
   const [viewWidth, setViewWidth] = useState(isNumber(width) ? width : 0)
@@ -152,30 +158,138 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     return !fixed ? viewWidth : fixed
   }, [ratio, viewWidth, viewHeight])
 
-  const cropModeStyle: ImageStyle = useMemo(() => {
+  const modeStyle: ImageStyle = useMemo(() => {
+    if (noMeetCalcRule(isSvg, mode, viewWidth, viewHeight, ratio)) return {}
     switch (mode) {
+      case 'scaleToFill':
+      case 'aspectFit':
+        if (isSvg) {
+          const scale = ratio <= 1
+            ? imageWidth >= viewWidth ? viewWidth / imageWidth : imageWidth / viewWidth
+            : imageHeight >= viewHeight ? viewHeight / imageHeight : imageHeight / viewHeight
+          return {
+            transform: [
+              { scale },
+              ratio <= 1 ? { translateY: -(imageHeight * scale - viewHeight) / 2 / scale } : { translateX: -(imageWidth * scale - viewWidth) / 2 / scale }
+            ]
+          }
+        }
+        return {}
+      case 'aspectFill':
+        if (isSvg) {
+          const scale = ratio >= 1
+            ? imageWidth >= viewWidth ? viewWidth / imageWidth : imageWidth / viewWidth
+            : imageHeight >= viewHeight ? viewHeight / imageHeight : imageHeight / viewHeight
+          return {
+            transform: [
+              { scale },
+              ratio >= 1 ? { translateY: -(imageHeight * scale - viewHeight) / 2 / scale } : { translateX: -(imageWidth * scale - viewWidth) / 2 / scale }
+            ]
+          }
+        }
+        return {}
+      case 'widthFix':
+      case 'heightFix':
+        if (isSvg) {
+          const scale = ratio >= 1
+            ? imageWidth >= fixedWidth ? fixedWidth / imageWidth : imageWidth / fixedWidth
+            : imageHeight >= fixedHeight ? fixedHeight / imageHeight : imageHeight / fixedHeight
+          return {
+            transform: [{ scale }]
+          }
+        }
+        return {}
       case 'top':
-        return { top: 0, left: relativeCenteredSize(viewWidth, imageWidth) }
+        return {
+          transform: [
+            { translateX: relativeCenteredSize(viewWidth, imageWidth) }
+          ]
+        }
       case 'bottom':
-        return { top: 'auto', bottom: 0, left: relativeCenteredSize(viewWidth, imageWidth) }
+        return {
+          transform: [
+            { translateY: viewHeight - imageHeight },
+            { translateX: relativeCenteredSize(viewWidth, imageWidth) }
+          ]
+        }
       case 'center':
-        return { top: relativeCenteredSize(viewHeight, imageHeight), left: relativeCenteredSize(viewWidth, imageWidth) }
+        return {
+          transform: [
+            { translateY: relativeCenteredSize(viewHeight, imageHeight) },
+            { translateX: relativeCenteredSize(viewWidth, imageWidth) }
+          ]
+        }
       case 'left':
-        return { top: relativeCenteredSize(viewHeight, imageHeight), left: 0 }
+        return {
+          transform: [
+            { translateY: relativeCenteredSize(viewHeight, imageHeight) }
+          ]
+        }
       case 'right':
-        return { top: relativeCenteredSize(viewHeight, imageHeight), left: 'auto', right: 0 }
+        return {
+          transform: [
+            { translateY: relativeCenteredSize(viewHeight, imageHeight) },
+            { translateX: viewWidth - imageWidth }
+          ]
+        }
       case 'top left':
-        return { top: 0, left: 0 }
+        return {}
       case 'top right':
-        return { top: 0, left: 'auto', right: 0 }
+        return {
+          transform: [
+            { translateX: viewWidth - imageWidth }
+          ]
+        }
       case 'bottom left':
-        return { top: 'auto', bottom: 0, left: 0 }
+        return {
+          transform: [
+            { translateY: viewHeight - imageHeight }
+          ]
+        }
       case 'bottom right':
-        return { top: 'auto', bottom: 0, left: 'auto', right: 0 }
+        return {
+          transform: [
+            { translateY: viewHeight - imageHeight },
+            { translateX: viewWidth - imageWidth }
+          ]
+        }
       default:
         return {}
     }
-  }, [mode, viewWidth, viewHeight, imageWidth, imageHeight])
+  }, [isSvg, mode, viewWidth, viewHeight, imageWidth, imageHeight, ratio, fixedWidth, fixedHeight])
+
+  const onSvgLoad = (evt: LayoutChangeEvent) => {
+    const { width, height } = evt.nativeEvent.layout
+    setRatio(!width ? 0 : height / width)
+    setImageWidth(width)
+    setImageHeight(height)
+
+    bindload && bindload(
+      getCustomEvent(
+        'load',
+        evt,
+        {
+          detail: { width, height },
+          layoutRef
+        },
+        props
+      )
+    )
+  }
+
+  const onSvgError = (evt: Error) => {
+    binderror!(
+      getCustomEvent(
+        'error',
+        evt,
+        {
+          detail: { errMsg: evt?.message },
+          layoutRef
+        },
+        props
+      )
+    )
+  }
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     evt.persist()
@@ -209,18 +323,14 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   useEffect(() => {
-    if (!isSvg && (isWidthFixMode || isHeightFixMode || isCropMode)) {
+    if (!isSvg && isLayoutMode) {
       RNImage.getSize(src, (width: number, height: number) => {
-        if (isWidthFixMode || isHeightFixMode) {
-          setRatio(width === 0 ? 0 : height / width)
-        }
-        if (isCropMode) {
-          setImageWidth(width)
-          setImageHeight(height)
-        }
+        setRatio(!width ? 0 : height / width)
+        setImageWidth(width)
+        setImageHeight(height)
       })
     }
-  }, [src, isSvg, isWidthFixMode, isHeightFixMode, isCropMode])
+  }, [src, isSvg, isLayoutMode])
 
   const innerProps = useInnerProps(
     props,
@@ -242,18 +352,30 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   return (
     <View {...innerProps}>
-      <RNImage
-        source={{ uri: src }}
-        resizeMode={resizeMode}
-        onLoad={bindload && onImageLoad}
-        onError={binderror && onImageError}
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          width: isCropMode ? imageWidth : '100%',
-          height: isCropMode ? imageHeight : '100%',
-          ...(isCropMode && cropModeStyle)
-        }}
-      />
+      {
+        isSvg
+          ? <SvgCssUri
+              uri={src}
+              onLayout={onSvgLoad}
+              onError={binderror && onSvgError}
+              style={{
+                transformOrigin: 'top left',
+                ...modeStyle
+              }}
+            />
+          : <RNImage
+              source={{ uri: src }}
+              resizeMode={resizeMode}
+              onLoad={bindload && onImageLoad}
+              onError={binderror && onImageError}
+              style={{
+                transformOrigin: 'top left',
+                width: isCropMode ? imageWidth : '100%',
+                height: isCropMode ? imageHeight : '100%',
+                ...(isCropMode && modeStyle)
+              }}
+            />
+      }
     </View>
   )
 })
