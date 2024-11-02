@@ -19,13 +19,16 @@ class Animation {
   }
 
   _formatTransformOrigin (transformOrigin) {
-    const transformOriginArr = transformOrigin.split(/\s+/)
-    if (transformOriginArr.length === 1) {
-      transformOriginArr.push('50%', 0)
-    } else if (transformOriginArr.length === 2) {
-      transformOriginArr.push(0)
+    const transformOriginArr = transformOrigin.trim().split(/\s+/, 3)
+    switch (transformOriginArr.length) {
+      case 0:
+        transformOriginArr.push('50%', '50%', 0)
+      case 1:
+        transformOriginArr.push('50%', 0)
+      case 2:
+        transformOriginArr.push(0)
     }
-    return transformOriginArr
+    return transformOriginArr.map(item => global.__formatValue(item))
   }
 
   // 设置默认值
