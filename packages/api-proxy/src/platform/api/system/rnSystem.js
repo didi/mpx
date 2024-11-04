@@ -39,6 +39,7 @@ const getWindowInfo = function () {
     screenWidth: screenWidth,
     screenHeight: screenHeight,
     screenTop: screenHeight - windowHeight,
+    statusBarHeight: top,
     safeArea
   }
   return result
@@ -46,7 +47,7 @@ const getWindowInfo = function () {
 
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
-  const { screenWidth, screenHeight, safeArea } = windowInfo
+  const { screenWidth, screenHeight } = windowInfo
 
   const result = {
     brand: DeviceInfo.getBrand(),
@@ -54,7 +55,6 @@ const getSystemInfoSync = function () {
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
-    statusBarHeight: safeArea.top,
     fontSizeSetting: PixelRatio.getFontScale(),
     ...windowInfo
   }
