@@ -72,8 +72,7 @@ const TransformInitial: ExtendedViewStyle = {
   // translateZ: 0,
 }
 // 动画默认初始值
-const InitialValue: ExtendedViewStyle = {
-  ...TransformInitial,
+const InitialValue: ExtendedViewStyle = Object.assign({
   opacity: 1,
   backgroundColor: 'transparent',
   width: 0,
@@ -83,7 +82,7 @@ const InitialValue: ExtendedViewStyle = {
   bottom: 0,
   left: 0,
   transformOrigin: ['50%', '50%', 0]
-}
+}, TransformInitial)
 const TransformOrigin = 'transformOrigin'
 // deg 角度
 // const isDeg = (key: RuleKey) => ['rotateX', 'rotateY', 'rotateZ', 'rotate', 'skewX', 'skewY'].includes(key)

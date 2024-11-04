@@ -754,7 +754,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const viewStyle = { ...innerStyle, ...layoutStyle }
+  const viewStyle = Object.assign({}, innerStyle, layoutStyle)
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     style: viewStyle,
