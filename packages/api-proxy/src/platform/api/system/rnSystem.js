@@ -5,10 +5,10 @@ import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation
 
 const getWindowInfo = function () {
   const dimensionsScreen = Dimensions.get('screen')
-  const navigation = getFocusedNavigation() || {}
+  const navigation = getFocusedNavigation()
   const insets = {
-    ...(initialWindowMetrics?.insets || {}),
-    ...(navigation.insets || {})
+    ...initialWindowMetrics?.insets,
+    ...navigation?.insets
   }
   let safeArea = {}
   let { top = 0, bottom = 0, left = 0, right = 0 } = insets
@@ -17,7 +17,7 @@ const getWindowInfo = function () {
   }
   const screenHeight = dimensionsScreen.height
   const screenWidth = dimensionsScreen.width
-  const layout = navigation.layout || {}
+  const layout = navigation?.layout || {}
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   const windowHeight = layoutHeight || screenHeight

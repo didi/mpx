@@ -31,7 +31,8 @@ const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: D
   const [datevalue, setDateValue] = useState(value)
   // 存储layout布局信息
   const layoutRef = useRef({})
-  const { nodeRef: viewRef } = useNodesRef<View, DateProps>(props, ref, {
+  const viewRef = useRef<View>(null)
+  useNodesRef<View, DateProps>(props, ref, viewRef, {
   })
 
   useEffect(() => {

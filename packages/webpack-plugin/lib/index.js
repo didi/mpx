@@ -173,6 +173,7 @@ class MpxWebpackPlugin {
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.disableRequireAsync = options.disableRequireAsync || false
     options.miniNpmPackages = options.miniNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
@@ -708,7 +709,8 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode),
+          // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {

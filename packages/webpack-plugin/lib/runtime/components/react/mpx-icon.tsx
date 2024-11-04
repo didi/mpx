@@ -3,10 +3,11 @@
  * ✔ size
  * ✔ color
  */
-import { JSX, useRef, forwardRef } from 'react'
+import { JSX, forwardRef, useRef } from 'react'
 import { Text, TextStyle, Image } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { useLayout, useTransformStyle } from './utils'
 
 export type IconType =
   | 'success'
@@ -25,6 +26,11 @@ export interface IconProps {
   color?: string
   style?: TextStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 const IconTypeMap = new Map<IconType, string>([
@@ -46,49 +52,47 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       size = 23,
       color,
       style = {},
-      'enable-offset': enableOffset
+      'enable-var': enableVar,
+      'external-var-context': externalVarContext,
+      'parent-font-size': parentFontSize,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight
     } = props
 
     const uri = IconTypeMap.get(type)
 
     const defaultStyle = { width: ~~size, height: ~~size }
 
-    const layoutRef = useRef({})
-
-    const { nodeRef } = useNodesRef(props, ref, {
-      defaultStyle
-    })
-
-    const onLayout = () => {
-      nodeRef.current?.measure(
-        (
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          offsetLeft: number,
-          offsetTop: number
-        ) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        }
-      )
+    const styleObj = {
+      ...defaultStyle,
+      ...style
     }
+
+    const {
+      hasSelfPercent,
+      normalStyle,
+      setWidth,
+      setHeight
+    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+    const nodeRef = useRef(null)
+    useNodesRef(props, ref, nodeRef, { defaultStyle })
+
+    const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const innerProps = useInnerProps(
       props,
       {
         ref: nodeRef,
         style: {
-          ...defaultStyle,
-          tintColor: color,
-          ...style
+          ...normalStyle,
+          ...layoutStyle,
+          tintColor: color
         },
         source: { uri },
-        ...(enableOffset ? { onLayout } : {})
+        ...layoutProps
       },
-      [
-        'enable-offset'
-      ],
+      [],
       {
         layoutRef
       }

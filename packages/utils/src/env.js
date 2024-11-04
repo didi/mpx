@@ -26,3 +26,14 @@ export const isBrowser = typeof window !== 'undefined'
 export const isDev = process.env.NODE_ENV !== 'production'
 
 export const isReact = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android'
+
+export function getFocusedNavigation () {
+  if (global.__mpxPagesMap) {
+    for (const key in global.__mpxPagesMap) {
+      const navigation = global.__mpxPagesMap[key]?.[1]
+      if (navigation && navigation.isFocused()) {
+        return navigation
+      }
+    }
+  }
+}

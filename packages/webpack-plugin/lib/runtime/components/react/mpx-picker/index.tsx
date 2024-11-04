@@ -1,6 +1,7 @@
 import { View } from 'react-native'
 // import { PickerValue } from '@ant-design/react-native'
 import React, { forwardRef, useRef, useContext, useState } from 'react'
+import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import Selector from './selector'
@@ -10,7 +11,6 @@ import MultiSelector from './multiSelector'
 import RegionSelector from './region'
 import { PickerProps, EventType, ValueType } from './type'
 import { FormContext, FormFieldValue } from '../context'
-import { throwReactWarning } from '../utils'
 
 /**
  * ✔ mode
@@ -34,7 +34,8 @@ import { throwReactWarning } from '../utils'
 const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
   const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange } = props
   const innerLayout = useRef({})
-  const { nodeRef } = useNodesRef<View, PickerProps>(props, ref, {
+  const nodeRef = useRef(null)
+  useNodesRef<View, PickerProps>(props, ref, nodeRef, {
   })
   const innerProps = useInnerProps(props, {
     ref: nodeRef
@@ -69,7 +70,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
   }
   if (formValuesMap) {
     if (!props.name) {
-      throwReactWarning('[Mpx runtime warn]: If a form component is used, the name attribute is required.')
+      warn('If a form component is used, the name attribute is required.')
     } else {
       formValuesMap.set(props.name, { getValue, resetValue })
     }

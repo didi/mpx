@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, isFunction, cached } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction, cached, getFocusedNavigation } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
 
 function rpx (value) {
@@ -7,9 +7,35 @@ function rpx (value) {
   // px = rpx * (750 / 屏幕宽度)
   return value * width / 750
 }
+function vw (value) {
+  const { width } = Dimensions.get('screen')
+  return value * width / 100
+}
+function vh (value) {
+  const navigation = getFocusedNavigation()
+  const height = navigation?.layout?.height || Dimensions.get('screen').height
+  return value * height / 100
+}
 
-global.__rpx = rpx
-global.__hairlineWidth = StyleSheet.hairlineWidth
+const unit = {
+  rpx,
+  vw,
+  vh
+}
+
+function formatValue (value) {
+  let matched
+  if ((matched = numberRegExp.exec(value))) {
+    value = +matched[1]
+  } else if ((matched = unitRegExp.exec(value))) {
+    value = unit[matched[2]](+matched[1])
+  } else if (hairlineRegExp.test(value)) {
+    value = StyleSheet.hairlineWidth
+  }
+  return value
+}
+
+global.__formatValue = formatValue
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
@@ -80,12 +106,13 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const rpxRegExp = /^\s*(-?\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
+const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
-const parseStyleText = cached((cssText = '') => {
+const parseStyleText = cached((cssText) => {
+  if (typeof cssText !== 'string') return cssText
   const res = {}
   const arr = cssText.split(listDelimiter)
   for (let i = 0; i < arr.length; i++) {
@@ -122,19 +149,9 @@ function mergeObjectArray (arr) {
 }
 
 function transformStyleObj (styleObj) {
-  const keys = Object.keys(styleObj)
   const transformed = {}
-  keys.forEach((prop) => {
-    let value = styleObj[prop]
-    let matched
-    if ((matched = pxRegExp.exec(value))) {
-      value = +matched[1]
-    } else if ((matched = rpxRegExp.exec(value))) {
-      value = rpx(+matched[1])
-    } else if (hairlineRegExp.test(value)) {
-      value = StyleSheet.hairlineWidth
-    }
-    transformed[prop] = value
+  Object.keys(styleObj).forEach((prop) => {
+    transformed[prop] = formatValue(styleObj[prop])
   })
   return transformed
 }

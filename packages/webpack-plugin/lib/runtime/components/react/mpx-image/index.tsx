@@ -27,6 +27,7 @@ import {
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
+import { useLayout, useTransformStyle } from '../utils'
 
 export type Mode =
   | 'scaleToFill'
@@ -52,6 +53,11 @@ export interface ImageProps {
   svg?: boolean
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean;
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
@@ -109,21 +115,42 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     mode = 'scaleToFill',
     // svg = false,
     style = {},
-    'enable-offset': enableOffset,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
     bindload,
     binderror
   } = props
 
-  const { width = DEFAULT_IMAGE_WIDTH, height = DEFAULT_IMAGE_HEIGHT } = style as ImageStyle
+  const defaultStyle = {
+    width: DEFAULT_IMAGE_WIDTH,
+    height: DEFAULT_IMAGE_HEIGHT
+  }
 
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: {
-      width: DEFAULT_IMAGE_WIDTH,
-      height: DEFAULT_IMAGE_HEIGHT
-    }
+  const styleObj = {
+    ...defaultStyle,
+    ...style,
+    overflow: 'hidden'
+  }
+
+  const nodeRef = useRef(null)
+  useNodesRef(props, ref, nodeRef, {
+    defaultStyle
   })
 
-  const layoutRef = useRef({})
+  const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
+    setViewWidth(width)
+    setViewHeight(height)
+  }
+
+  const { normalStyle, hasSelfPercent, setWidth, setHeight } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout })
+
+  const { width, height } = normalStyle
+
   const preSrc = useRef<string | undefined>()
 
   const resizeMode: ImageResizeMode = ModeMap.get(mode) || 'stretch'
@@ -133,8 +160,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const source: ImageSourcePropType = typeof src === 'string' ? { uri: src } : src
 
-  const [viewWidth, setViewWidth] = useState(isNumber(width) ? (width as number) : 0)
-  const [viewHeight, setViewHeight] = useState(isNumber(height) ? (height as number) : 0)
+  const [viewWidth, setViewWidth] = useState(isNumber(width) ? width : 0)
+  const [viewHeight, setViewHeight] = useState(isNumber(height) ? height : 0)
   const [imageWidth, setImageWidth] = useState(0)
   const [imageHeight, setImageHeight] = useState(0)
   const [ratio, setRatio] = useState(0)
@@ -224,21 +251,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       )
   }
 
-  const onViewLayout = ({
-    nativeEvent: {
-      layout: { width, height }
-    }
-  }: LayoutChangeEvent) => {
-    setViewWidth(width)
-    setViewHeight(height)
-  }
-
-  const onImageLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
-  }
-
   useEffect(() => {
     if (!isWidthFixMode && !isHeightFixMode && !isCropMode) {
       setLoaded(true)
@@ -275,11 +287,15 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    ...(enableOffset ? { onLayout: onImageLayout } : {})
+    style: {
+      ...normalStyle,
+      ...layoutStyle,
+      ...(isHeightFixMode && { width: fixedWidth }),
+      ...(isWidthFixMode && { height: fixedHeight })
+    },
+    ...layoutProps
   },
-  [
-    'enable-offset'
-  ],
+  [],
   {
     layoutRef
   }
@@ -306,27 +322,17 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   // }
 
   return (
-    <View
-      style={{
-        width,
-        height,
-        ...style,
-        ...(isHeightFixMode && { width: fixedWidth }),
-        ...(isWidthFixMode && { height: fixedHeight }),
-        overflow: 'hidden'
-      }}
-      onLayout={onViewLayout}>
+    <View {...innerProps}>
       {
         loaded && <RNImage
-          {...innerProps}
           source={source}
           resizeMode={resizeMode}
           onLoad={onImageLoad}
           onError={onImageError}
           style={{
             ...StyleSheet.absoluteFillObject,
-            width: !isCropMode ? '100%' : imageWidth,
-            height: !isCropMode ? '100%' : imageHeight,
+            width: isCropMode ? imageWidth : '100%',
+            height: isCropMode ? imageHeight : '100%',
             ...(isCropMode && cropModeStyle)
           }}
         />
