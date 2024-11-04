@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient'
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   children?: ReactNode | ReactNode[]
+  animation?: object
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
