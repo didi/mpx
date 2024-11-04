@@ -193,8 +193,8 @@ module.exports = function getSpec ({ warn, error }) {
     'border-radius': ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'],
     'border-width': ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'],
     'border-color': ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
-    'margin': ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
-    'padding': ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
+    margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
+    padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
   }
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
     const original = `${prop}:${value}`
