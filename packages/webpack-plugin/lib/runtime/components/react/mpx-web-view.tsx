@@ -1,5 +1,6 @@
 import { forwardRef, JSX, useEffect, useRef } from 'react'
 import { noop, warn } from '@mpxjs/utils'
+import { View } from 'react-native'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
@@ -48,6 +49,9 @@ interface FormRef {
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
+  if (!src) {
+    return (<View></View>)
+  }
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
@@ -149,10 +153,22 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  const events = {
-    ...(bindload && { onLoad: _load }),
-    ...(binderror && { onError: _error }),
-    ...(bindmessage && { onMessage: _message })
+  const events = {}
+
+  if (bindload) {
+    Object.assign(events, {
+      onLoad: _load
+    })
+  }
+  if (binderror) {
+    Object.assign(events, {
+      onError: _error
+    })
+  }
+  if (bindmessage) {
+    Object.assign(events, {
+      onMessage: _message
+    })
   }
   return (<Portal>
     <WebView

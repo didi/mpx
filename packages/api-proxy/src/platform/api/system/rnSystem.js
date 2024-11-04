@@ -6,10 +6,8 @@ import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation
 const getWindowInfo = function () {
   const dimensionsScreen = Dimensions.get('screen')
   const navigation = getFocusedNavigation()
-  const insets = {
-    ...initialWindowMetrics?.insets,
-    ...navigation?.insets
-  }
+  const insets = {}
+  Object.assign(insets, initialWindowMetrics?.insets, navigation?.insets)
   let safeArea = {}
   let { top = 0, bottom = 0, left = 0, right = 0 } = insets
   if (Platform.OS === 'android') {
@@ -55,9 +53,9 @@ const getSystemInfoSync = function () {
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
-    fontSizeSetting: PixelRatio.getFontScale(),
-    ...windowInfo
+    fontSizeSetting: PixelRatio.getFontScale()
   }
+  Object.assign(result, windowInfo)
   defineUnsupportedProps(result, [
     'language',
     'version',
