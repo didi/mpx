@@ -256,7 +256,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // margin padding
-  const formatMargins = ({ prop, value, selector }) => {
+  const formatCompositeVal = ({ prop, value, selector }) => {
     const values = parseValues(value).splice(0, 4)
     switch (values.length) {
       // case 1:
@@ -571,8 +571,8 @@ module.exports = function getSpec ({ warn, error }) {
       },
       { // margin padding 内外边距的处理
         test: /^(margin|padding|border-width)$/,
-        ios: formatMargins,
-        android: formatMargins
+        ios: formatCompositeVal,
+        android: formatCompositeVal
       },
       { // line-height 换算
         test: 'line-height',
