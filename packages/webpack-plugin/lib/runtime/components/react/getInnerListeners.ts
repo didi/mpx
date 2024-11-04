@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { omit } from './utils'
+import { omit, extendObject } from './utils'
 import eventConfigMap from './event.config'
 import {
   Props,
@@ -29,17 +29,21 @@ const getTouchEvent = (
   } = nativeEvent
   const { id } = props
   const { layoutRef } = config
-  return {
-    ...event,
-    type,
-    timeStamp: timestamp,
-    currentTarget: {
-      ...(event.currentTarget || {}),
+
+  const currentTarget = extendObject(
+    event.currentTarget || {},
+    {
       id: id || '',
       dataset: getDataSet(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
-    },
+    }
+  )
+
+  return extendObject(event, {
+    type,
+    timeStamp: timestamp,
+    currentTarget,
     detail: {
       x: pageX,
       y: pageY
@@ -65,7 +69,7 @@ const getTouchEvent = (
     persist: event.persist,
     stopPropagation: event.stopPropagation,
     preventDefault: event.preventDefault
-  }
+  })
 }
 
 export const getDataSet = (props: Record<string, any>) => {
@@ -87,21 +91,20 @@ export const getCustomEvent = (
   { detail = {}, layoutRef }: { detail?: Record<string, unknown>; layoutRef: LayoutRef },
   props: Props = {}
 ) => {
-  return {
-    ...oe,
+  const targetInfo = extendObject(oe.target || {}, {
+    id: props.id || '',
+    dataset: getDataSet(props),
+    offsetLeft: layoutRef?.current?.offsetLeft || 0,
+    offsetTop: layoutRef?.current?.offsetTop || 0
+  })
+  return extendObject(oe, {
     type,
     detail,
-    target: {
-      ...(oe.target || {}),
-      id: props.id || '',
-      dataset: getDataSet(props),
-      offsetLeft: layoutRef?.current?.offsetLeft || 0,
-      offsetTop: layoutRef?.current?.offsetTop || 0
-    },
+    target: targetInfo,
     persist: oe.persist,
     stopPropagation: oe.stopPropagation,
     preventDefault: oe.preventDefault
-  }
+  })
 }
 
 const useInnerProps = (
