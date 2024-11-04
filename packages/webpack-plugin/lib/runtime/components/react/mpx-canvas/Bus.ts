@@ -1,48 +1,50 @@
-/**
- * @typedef {Object} Message
- * @property {string} id
- */
-
+interface Message {
+  id?: string
+  type: string
+  payload?: any
+}
 export default class Bus {
-  _paused = false;
-  _messageListeners = {};
-  _queue = [];
-  constructor (send) {
+  _paused: Boolean = false;
+  _messageListeners: { [key: string]: (message: Message) => void } = {}
+  _queue: Message[] = []
+  _send: (message: Message | Message[]) => void
+  constructor (send: (message: Message | Message[]) => void) {
     this._send = send
   }
 
-  post (message) {
+  post (message: Message): Promise<any> {
     return new Promise((resolve) => {
-      if (message.type !== "set") {
-        this._messageListeners[message.id] = resolve;
+      if (message.type !== 'set' && message.id) {
+        this._messageListeners[message.id] = resolve
       }
 
       if (!this._paused) {
-        this._send(message);
+        this._send(message)
       } else {
-        this._queue.push(message);
+        this._queue.push(message)
       }
     })
   }
 
-  handle (message) {
-    const handler = this._messageListeners[message.id];
-    delete this._messageListeners[message.id];
+  handle (message: Message): void {
+    if (!message.id) return
+    const handler = this._messageListeners[message.id]
+    delete this._messageListeners[message.id]
 
     if (handler) {
-      handler(message);
+      handler(message)
     } else {
-      console.warn("Received unexpected message", message);
+      console.warn('Received unexpected message', message)
     }
   }
 
-  pause () {
-    this._paused = true;
+  pause (): void {
+    this._paused = true
   }
 
-  resume () {
-    this._paused = false;
-    this._send(this._queue);
-    this._queue = [];
+  resume (): void {
+    this._paused = false
+    this._send(this._queue)
+    this._queue = []
   }
 }

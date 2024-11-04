@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX } from 'react'
+import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
@@ -10,7 +10,7 @@ import {
   constructors,
   WEBVIEW_TARGET
 } from './utils'
-import { useContext2D } from './CanvasRenderingContext2D'
+import { useContext2D } from './canvasRenderingContext2D'
 import html from './index.html'
 
 const stylesheet = StyleSheet.create({
@@ -87,16 +87,16 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     if (canvasRef.current) {
       const webviewPostMessage = (message) => {
         if (canvasRef.current.webview) {
-          canvasRef.current.webview.postMessage(JSON.stringify(message));
+          canvasRef.current.webview.postMessage(JSON.stringify(message))
         }
-      };
+      }
 
       // 设置bus
-      canvasRef.current.bus = new Bus(webviewPostMessage);
-      canvasRef.current.bus.pause();
+      canvasRef.current.bus = new Bus(webviewPostMessage)
+      canvasRef.current.bus.pause()
 
       // 设置listeners数组
-      canvasRef.current.listeners = [];
+      canvasRef.current.listeners = []
 
       // 设置addMessageListener方法
       canvasRef.current.addMessageListener = addMessageListener
@@ -105,7 +105,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
       canvasRef.current.removeMessageListener = removeMessageListener
 
       // 设置context2D
-      canvasRef.current.context2D = context2D;
+      canvasRef.current.context2D = context2D
 
       // 设置getContext方法
       canvasRef.current.getContext = getContext
@@ -135,7 +135,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }, [])
 
   const postMessage = useCallback(async (message) => {
-    if (!canvasRef.current?.bus) return;
+    if (!canvasRef.current?.bus) return
 
     const { stack } = new Error()
     const { type, payload } = await canvasRef.current.bus.post({
@@ -159,7 +159,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }, [])
 
   const handleMessage = useCallback((e) => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current) return
 
     let data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
@@ -172,7 +172,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
       }
       default: {
         if (data.payload) {
-          const constructor = constructors[data.meta?.constructor];
+          const constructor = constructors[data.meta?.constructor]
           if (constructor) {
             const { args, payload } = data
             const object = constructor.constructLocally(canvasRef.current, ...args)
@@ -208,10 +208,10 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
       <View {...innerProps}>
         <WebView
          ref={(element) => {
-          if (canvasRef.current) {
-            canvasRef.current.webview = element
-          }
-        }}
+           if (canvasRef.current) {
+             canvasRef.current.webview = element
+           }
+         }}
           style={[
             isAndroid9 ? stylesheet.webviewAndroid9 : stylesheet.webview,
             { height, width }

@@ -2,176 +2,128 @@ import { useEffect, useRef } from 'react'
 
 export const WEBVIEW_TARGET = '@@WEBVIEW_TARGET'
 
-/**
- * @mutable
- */
-export const constructors = {}
+export const constructors: Record<string, any> = {}
 
-const ID = () => Math.random().toString(32).slice(2)
+interface WebviewInstance {
+  [WEBVIEW_TARGET]: string
+  [key: string]: any
+  postMessage: (message: WebviewMessage) => void
+  forceUpdate?: () => void
+  addMessageListener: (listener: MessageListener) => void
+}
 
-/**
- * 特殊构造函数配置
- */
-const SPECIAL_CONSTRUCTOR = {
-  ImageData: {
-    className: 'Uint8ClampedArray',
-    paramNum: 0
+interface WebviewMessage {
+  type: 'set' | 'exec' | 'listen' | 'event'
+  payload: {
+    target?: string | { [WEBVIEW_TARGET]: string, [key: string]: any }
+    key?: string
+    value?: any
+    method?: string
+    args?: any[]
+    types?: string[]
+    type?: string
   }
 }
 
-/**
- * 保留原来的装饰器函数，因为它们在实例化时使用
- */
-export const webviewTarget = (targetName) => (target) => {
-  target.prototype[WEBVIEW_TARGET] = targetName
+type MessageListener = (message: WebviewMessage) => void
+
+const setupWebviewTarget = (instance: WebviewInstance, targetName: string): void => {
+  instance[WEBVIEW_TARGET] = targetName
 }
 
-export const webviewConstructor = (constructorName) => (target) => {
-  constructors[constructorName] = target
-  target.constructLocally = function (...args) {
-    return new target(...args, true)
-  }
-
-  target.prototype.onConstruction = function (...args) {
-    if (SPECIAL_CONSTRUCTOR[constructorName] !== undefined) {
-      const { className, paramNum } = SPECIAL_CONSTRUCTOR[constructorName]
-      args[paramNum] = { className, classArgs: [args[paramNum]] }
-    }
-    this[WEBVIEW_TARGET] = ID()
-    this.postMessage({
-      type: 'construct',
-      payload: {
-        constructor: constructorName,
-        id: this[WEBVIEW_TARGET],
-        args
-      }
-    })
-  }
-
-  target.prototype.toJSON = function () {
-    return { __ref__: this[WEBVIEW_TARGET] }
-  }
-}
-
-export const webviewMethods = (methods) => (target) => {
-  for (const method of methods) {
-    target.prototype[method] = function (...args) {
-      return this.postMessage({
-        type: 'exec',
-        payload: {
-          target: this[WEBVIEW_TARGET],
-          method,
-          args
-        }
-      })
-    }
-  }
-}
-
-export const webviewProperties = (properties) => (target) => {
-  for (const key of Object.keys(properties)) {
-    const initialValue = properties[key]
+const setupWebviewProperties = (instance: WebviewInstance, properties: Record<string, any>): void => {
+  Object.entries(properties).forEach(([key, initialValue]) => {
     const privateKey = `__${key}__`
-    target.prototype[privateKey] = initialValue
-    Object.defineProperty(target.prototype, key, {
+    instance[privateKey] = initialValue
+    Object.defineProperty(instance, key, {
       get () {
-        return this[privateKey]
+        return instance[privateKey]
       },
       set (value) {
-        this.postMessage({
+        instance.postMessage({
           type: 'set',
           payload: {
-            target: this[WEBVIEW_TARGET],
+            target: instance[WEBVIEW_TARGET],
             key,
             value
           }
         })
 
-        if (this.forceUpdate) {
-          this.forceUpdate()
+        if (instance.forceUpdate) {
+          instance.forceUpdate()
         }
 
-        return (this[privateKey] = value)
+        return (instance[privateKey] = value)
       }
     })
-  }
+  })
 }
 
-export const webviewEvents = (types) => (target) => {
-  const { onConstruction } = target.prototype
-  target.prototype.onConstruction = function () {
-    if (onConstruction) {
-      onConstruction.call(this)
+const setupWebviewMethods = (instance: WebviewInstance, methods: string[]): void => {
+  methods.forEach(method => {
+    instance[method] = (...args: any[]) => {
+      return instance.postMessage({
+        type: 'exec',
+        payload: {
+          target: instance[WEBVIEW_TARGET],
+          method,
+          args
+        }
+      })
     }
-    this.postMessage({
+  })
+}
+
+const setupWebviewEvents = (instance: WebviewInstance, eventTypes: string[]): void => {
+  if (eventTypes.length > 0) {
+    instance.postMessage({
       type: 'listen',
       payload: {
-        types,
-        target: this[WEBVIEW_TARGET]
+        types: eventTypes,
+        target: instance[WEBVIEW_TARGET]
       }
     })
-  }
-  target.prototype.addEventListener = function (type, callback) {
-    this.addMessageListener((message) => {
-      if (
-        message &&
-        message.type === 'event' &&
-        message.payload.target[WEBVIEW_TARGET] === this[WEBVIEW_TARGET] &&
-        message.payload.type === type
-      ) {
-        for (const key in message.payload.target) {
-          const value = message.payload.target[key]
-          if (key in this && this[key] !== value) {
-            this[key] = value
-          }
-        }
-        callback({
-          ...message.payload,
-          target: this
-        })
-      }
-    })
-  }
-}
 
-export const useWebviewBinding = (targetName, properties = {}, methods = [], eventTypes = []) => {
-  const instanceRef = useRef(null)
-
-  useEffect(() => {
-    if (instanceRef.current) {
-      // 设置target
-      instanceRef.current[WEBVIEW_TARGET] = targetName
-
-      // 设置properties
-      Object.entries(properties).forEach(([key, initialValue]) => {
-        const privateKey = `__${key}__`
-        instanceRef.current[privateKey] = initialValue
-      })
-
-      // 设置methods
-      methods.forEach(method => {
-        instanceRef.current[method] = (...args) => {
-          return instanceRef.current.postMessage({
-            type: 'exec',
-            payload: {
-              target: instanceRef.current[WEBVIEW_TARGET],
-              method,
-              args
+    instance.addEventListener = function (type: string, callback: (event: any) => void) {
+      this.addMessageListener((message: WebviewMessage) => {
+        if (
+          message &&
+          message.type === 'event' &&
+          message.payload.target &&
+          typeof message.payload.target === 'object' &&
+          message.payload.target[WEBVIEW_TARGET] === this[WEBVIEW_TARGET] &&
+          message.payload.type === type
+        ) {
+          for (const key in message.payload.target) {
+            const value = message.payload.target[key]
+            if (key in this && this[key] !== value) {
+              this[key] = value
             }
+          }
+          callback({
+            ...message.payload,
+            target: this
           })
         }
       })
+    }
+  }
+}
 
-      // 设置events
-      if (eventTypes.length > 0) {
-        instanceRef.current.postMessage({
-          type: 'listen',
-          payload: {
-            types: eventTypes,
-            target: instanceRef.current[WEBVIEW_TARGET]
-          }
-        })
-      }
+export const useWebviewBinding = (
+  targetName: string,
+  properties: Record<string, any> = {},
+  methods: string[] = [],
+  eventTypes: string[] = []
+) => {
+  const instanceRef = useRef<WebviewInstance | null>(null)
+
+  useEffect(() => {
+    if (instanceRef.current) {
+      setupWebviewTarget(instanceRef.current, targetName)
+      setupWebviewProperties(instanceRef.current, properties)
+      setupWebviewMethods(instanceRef.current, methods)
+      setupWebviewEvents(instanceRef.current, eventTypes)
     }
   }, [targetName, properties, methods, eventTypes])
 
