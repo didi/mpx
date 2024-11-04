@@ -965,6 +965,7 @@ module.exports = defineConfig({
   }
 })
 ```
+**注意：** 建议使用`autoVirtualHostRules`配置项，不要使用微信组件内部的 options virtualHost 配置，因为组件内部的 options virtualHost 在跨平台输出时无法进行兼容抹平处理。
 
 ### partialCompileRules
 
@@ -1090,6 +1091,25 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         retryRequireAsync: true
+      }
+    }
+  }
+})
+```
+
+### disableRequireAsync
+
+`boolean = false`
+
+Mpx 框架在输出 微信小程序、支付宝小程序、字节小程序、Web 平台时，默认支持分包异步化能力，但若在某些场景下需要关闭该能力，可配置该项。
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        disableRequireAsync: true
       }
     }
   }

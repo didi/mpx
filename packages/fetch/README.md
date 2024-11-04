@@ -213,8 +213,9 @@ mpx.xfetch.setValidator([
   }
 ])
 ```
+
 ### 支持缓存请求
-xfetch 支持配置 isPre=true 来缓存请求结果。设置 isPre=true 并发出首次请求后，在有效时间内的下一次请求，若参数和请求方法一致，则会直接返回上次请求的结果。参数或者请求方法不一致，以及不在有效时间内，都会重新请求并返回。默认缓存有效时间为 5000ms，也可通过 cacheInvalidationTime 配置。 
+xfetch 支持配置 usePre=true 来缓存请求结果。设置 usePre=true 并发出首次请求后，在有效时间内的下一次请求，若参数和请求方法一致，则会直接返回上次请求的结果。参数或者请求方法不一致，以及不在有效时间内，都会重新请求并返回。默认缓存有效时间为 3000ms
 ```js
 mpx.xfetch.fetch({
     url: 'http://xxx.com',
@@ -223,8 +224,61 @@ mpx.xfetch.fetch({
         name: 'test'
     },
     // 是否缓存请求
-    isPre: true,
-    // 缓存有效时长
-    cacheInvalidationTime: 3000
+    usePre: true
 })
 ```
+
+usePre: true 是 usePre 的简写方式，用默认的 usePre.ignorePreParamKeys 和 usePre.cacheInvalidationTime，下面代码与上面的代码等价
+可通过 usePre.cacheInvalidationTime 参数配置缓存有效时间, 默认值为 3000
+可通过 usePre.ignorePreParamKeys 来制定参数对比时忽略的key, 默认值为 []
+可通过 usePre.equals 来自定义判定命中缓存的逻辑
+
+```js
+mpx.xfetch.fetch({
+    url: 'http://xxx.com',
+    method: 'POST',
+    data: {
+        name: 'test'
+    },
+    usePre: {
+        // 是否缓存请求
+        enable: true,
+        // 忽略对比的参数key，仅Object类型参数支持忽略不对比这些key的值
+        ignorePreParamKeys: [],
+        // 或者使用 equals，覆盖 ignorePreParamKeys
+        equals(selfConfig, cacheConfig) {
+          // return true 表示命中缓存
+          return JSON.stringify(selfConfig.params) === JSON.stringify(cacheConfig.params)
+        },
+        // 缓存有效时长
+        cacheInvalidationTime: 3000
+    }
+})
+```
+
+**更加倾向于请求实时性的预先请求**
+
+**更加倾向于请求实时性的预先请求**
+
+在某些场景下（如耗时较长的页面跳转）我们期望能在提前发起请求作为缓存来加速进入页面的首次渲染，有需要能尽量保证数据的实时性时，可以传入 usePre.onUpdate 回调方法来获取最新的请求内容
+
+usePre.onUpdate 开启后，如果本次请求命中的请求缓存，依然会再次发起请求，fetch 方法返回内容变为 Promise.race([缓存请求, 实时请求])，如果 缓存请求 先完成，则等待 实时请求 完成后，会将 实时请求 的返回内容作为 usePre.onUpdate 的参数进行回调。
+
+```js
+mpx.xfetch.fetch({
+    url: 'http://xxx.com',
+    method: 'POST',
+    usePre: {
+        // 是否缓存请求
+        enable: true,
+        onUpdate(response) {
+            // 使用实时请求数据，这里的 response 依然会经过 interceptors.response 处理
+        }
+    }
+}).then(response => {
+    // 使用数据，可以通过 response.isCache 标识判断该结果是否来源于缓存
+})
+```
+
+> tips: onUpdate 中的 response 也会经过 interceptors.response 处理，所以以上代码可能会触发两次 interceptors.response
+
