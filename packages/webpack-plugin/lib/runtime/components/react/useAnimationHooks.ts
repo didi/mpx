@@ -136,7 +136,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
       const easing = EasingKey[timingFunction] || Easing.inOut(Easing.quad)
-      let needSetCallback = !!transformOrigin
+      let needSetCallback = true
       const setTransformOrigin: AnimationCallback = (finished: boolean) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
