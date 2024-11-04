@@ -151,7 +151,9 @@ const useInnerProps = (
   }
 
   if (!(Object.keys(eventConfig).length) || config.disableTouch) {
-    return omit(propsRef.current, removeProps)
+    return omit(propsRef.current, removeProps, {
+      filterUndefined: true
+    })
   }
 
   function handleEmitEvent (
@@ -305,7 +307,9 @@ const useInnerProps = (
 
   return {
     ...events,
-    ...omit(propsRef.current, [...rawEventKeys, ...removeProps])
+    ...omit(propsRef.current, [...rawEventKeys, ...removeProps], {
+      filterUndefined: true
+    })
   }
 }
 export default useInnerProps

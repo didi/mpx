@@ -401,11 +401,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     ref: scrollViewRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
-    ...(enhanced && {
-      ...(binddragstart && { bindtouchstart: onScrollTouchStart }),
-      ...(binddragging && { bindtouchmove: onScrollTouchMove }),
-      ...(binddragend && { bindtouchend: onScrollTouchEnd })
-    }),
+    bindtouchstart: enhanced && binddragstart ? onScrollTouchStart : undefined,
+    bindtouchmove: enhanced && binddragging ? onScrollTouchMove : undefined,
+    bindtouchend: enhanced && binddragend ? onScrollTouchEnd : undefined,
     onScrollBeginDrag: onScrollDrag,
     onScrollEndDrag: onScrollDrag,
     onMomentumScrollEnd: onScrollEnd,
