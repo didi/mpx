@@ -19,16 +19,19 @@ class Animation {
   }
 
   _formatTransformOrigin (transformOrigin) {
-    const transformOriginArr = transformOrigin.trim().split(/\s+/, 3)
+    const transformOriginArr = transformOrigin.trim().split(/\s+/, 3).map(item => global.__formatValue(item))
     switch (transformOriginArr.length) {
       case 0:
         transformOriginArr.push('50%', '50%', 0)
+        break
       case 1:
         transformOriginArr.push('50%', 0)
+        break
       case 2:
         transformOriginArr.push(0)
+        break
     }
-    return transformOriginArr.map(item => global.__formatValue(item))
+    return transformOriginArr
   }
 
   // 设置默认值
