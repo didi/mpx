@@ -224,6 +224,11 @@ export default class MpxProxy {
     if (this.update) this.update.active = false
     this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
+    if (this._intersectionObservers) {
+      this._intersectionObservers.forEach((observer) => {
+        observer.disconnect()
+      })
+    }
   }
 
   isUnmounted () {
