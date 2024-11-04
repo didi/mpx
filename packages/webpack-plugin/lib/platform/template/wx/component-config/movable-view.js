@@ -4,6 +4,7 @@ module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
@@ -12,6 +13,10 @@ module.exports = function ({ print }) {
       return 'mpx-movable-view'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-movable-view'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-movable-view'
     },
@@ -24,12 +29,14 @@ module.exports = function ({ print }) {
         test: /^(out-of-bounds)$/,
         ali: qaPropLog,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       },
       {
         test: /^(inertia|damping|animation)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ],
     event: [
