@@ -257,21 +257,19 @@ module.exports = function getSpec ({ warn, error }) {
 
   // margin padding
   const formatMargins = ({ prop, value, selector }) => {
-    const values = parseValues(value)
-    // format
-    let suffix = []
+    const values = parseValues(value).splice(0, 4)
     switch (values.length) {
       // case 1:
+      //   values.push(values[0], values[0], values[0])
+      //   break
       case 2:
-        suffix = ['Vertical', 'Horizontal']
+        values.push(values[0], values[1])
         break
       case 3:
-        suffix = ['Top', 'Horizontal', 'Bottom']
-        break
-      case 4:
-        suffix = ['Top', 'Right', 'Bottom', 'Left']
+        values.push(values[1])
         break
     }
+    const suffix = values.length === 1 ? [] : ['Top', 'Right', 'Bottom', 'Left']
     return values.map((value, index) => {
       const newProp = `${prop}${suffix[index] || ''}`
       // validate
@@ -572,7 +570,7 @@ module.exports = function getSpec ({ warn, error }) {
         android: getBorderRadius
       },
       { // margin padding 内外边距的处理
-        test: /^(margin|padding)$/,
+        test: /^(margin|padding|border-width)$/,
         ios: formatMargins,
         android: formatMargins
       },
