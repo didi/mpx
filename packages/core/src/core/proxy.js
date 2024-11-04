@@ -48,7 +48,7 @@ import {
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
-import { hasSymbol, inject, normalizeInject, provide } from './apiInject'
+import { hasSymbol, inject, normalizeInject, provide, removePageProvides } from '../platform/export/apiInject'
 
 let uid = 0
 
@@ -225,6 +225,10 @@ export default class MpxProxy {
       // 页面/组件销毁清除上下文的缓存
       contextMap.remove(this.uid)
     }
+    if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
+      // 页面销毁时移除对应的 provide
+      removePageProvides(this.target)
+    }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
     if (this.update) this.update.active = false
@@ -360,7 +364,7 @@ export default class MpxProxy {
     const provideOpt = this.options.provide
     if (provideOpt) {
       const provided = isFunction(provideOpt)
-        ? provideOpt.call(this.target)
+        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'provide function')
         : provideOpt
       if (!isObject(provided)) {
         return

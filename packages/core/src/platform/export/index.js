@@ -40,10 +40,10 @@ export {
 } from '../../core/proxy'
 
 export {
-  provide,
-  inject
-} from '../../core/apiInject'
-
-export {
   useI18n
 } from '../../platform/builtInMixins/i18nMixin'
+
+export {
+  provide,
+  inject
+} from './apiInject'
