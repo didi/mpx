@@ -238,7 +238,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
         })
         styles.transform = Object.entries(transformStyle).map(([key, value]) => {
           return { [key]: value }
-        }) as TransformsStyle
+        }) as Extract<'transform', TransformsStyle>
       } else {
         styles[key] = shareValMap[key].value
       }
