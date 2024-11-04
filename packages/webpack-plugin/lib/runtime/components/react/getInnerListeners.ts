@@ -145,7 +145,7 @@ const useInnerProps = (
     ...userRemoveProps
   ]
 
-  propsRef.current = { ...props, ...additionalProps }
+  propsRef.current = extendObject(props, additionalProps)
 
   for (const key in eventConfigMap) {
     if (propsRef.current[key]) {
@@ -293,7 +293,7 @@ const useInnerProps = (
 
   const transformedEventKeys: string[] = []
   for (const key in eventConfig) {
-    transformedEventKeys.push(...eventConfig[key])
+    transformedEventKeys.concat(eventConfig[key])
   }
 
   const finalEventKeys = [...new Set(transformedEventKeys)]
@@ -306,9 +306,9 @@ const useInnerProps = (
 
   const rawEventKeys = Object.keys(eventConfig)
 
-  return {
-    ...events,
-    ...omit(propsRef.current, [...rawEventKeys, ...removeProps])
-  }
+  return extendObject(
+    events,
+    omit(propsRef.current, [...rawEventKeys, ...removeProps])
+  )
 }
 export default useInnerProps
