@@ -37,21 +37,11 @@ function getSafeAreaInset (name: string) {
   return insets[safeAreaInsetMap[name]]
 }
 
-interface OmitConfig {
-  filterUndefined?: boolean;
-}
-export function omit<T, K extends string> (obj: T, fields: K[], config: OmitConfig = {}): Omit<T, K> {
+export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = Object.assign({}, obj)
   for (let i = 0; i < fields.length; i += 1) {
     const key = fields[i]
     delete shallowCopy[key]
-  }
-  if (config.filterUndefined) {
-    for (const key in shallowCopy) {
-      if (shallowCopy[key] === undefined) {
-        delete shallowCopy[key]
-      }
-    }
   }
   return shallowCopy
 }
