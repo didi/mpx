@@ -5,7 +5,7 @@
  * ✔ color
  */
 import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
-import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
+import { useRef, useEffect, forwardRef, JSX, useState, useContext, useCallback } from 'react'
 import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -51,6 +51,8 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const changeHandler = bindchange || catchchange
 
+  const checkedValueRef = useRef(checked)
+
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
   const formContext = useContext(FormContext)
@@ -76,6 +78,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     setIsChecked(checked)
   }, [checked])
 
+  useEffect(() => {
+    checkedValueRef.current = isChecked
+  }, [isChecked])
+
   const nodeRef = useRef(null)
   useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef)
 
@@ -95,13 +101,13 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }
 
-  const resetValue = () => {
+  const resetValue = useCallback(() => {
     setIsChecked(false)
-  }
+  }, [])
 
-  const getValue = () => {
-    return isChecked
-  }
+  const getValue = useCallback(() => {
+    return checkedValueRef.current
+  }, [])
 
   useEffect(() => {
     if (formValuesMap) {
@@ -116,7 +122,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
         formValuesMap.delete(props.name)
       }
     }
-  }, [])
+  }, [])   
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
