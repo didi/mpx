@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { hasOwn } from '@mpxjs/utils'
 import { omit, extendObject } from './utils'
 import eventConfigMap from './event.config'
 import {
@@ -148,7 +149,7 @@ const useInnerProps = (
   propsRef.current = extendObject(props, additionalProps)
 
   for (const key in eventConfigMap) {
-    if (propsRef.current[key]) {
+    if (hasOwn(propsRef.current, key)) {
       eventConfig[key] = eventConfigMap[key]
     }
   }
@@ -291,9 +292,11 @@ const useInnerProps = (
 
   const events: Record<string, (e: NativeTouchEvent) => void> = {}
 
-  const transformedEventKeys: string[] = []
+  let transformedEventKeys: string[] = []
   for (const key in eventConfig) {
-    transformedEventKeys.concat(eventConfig[key])
+    if (propsRef.current[key]) {
+      transformedEventKeys = transformedEventKeys.concat(eventConfig[key])
+    }
   }
 
   const finalEventKeys = [...new Set(transformedEventKeys)]
