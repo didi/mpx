@@ -13,7 +13,6 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
 const { isReact } = require('./utils/env')
 const resolve = require('./utils/resolve')
 const isUrlRequestRaw = require('./utils/is-url-request')

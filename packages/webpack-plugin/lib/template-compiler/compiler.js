@@ -1245,8 +1245,8 @@ function processEventReact (el) {
 
 function processEvent (el, options) {
   const eventConfigMap = {}
-  el.attrsList.forEach(function (attr) {
-    const parsedEvent = config[mode].event.parseEvent(attr.name)
+  el.attrsList.forEach(function ({ name, value }) {
+    const parsedEvent = config[mode].event.parseEvent(name)
 
     if (parsedEvent) {
       const type = parsedEvent.eventName
@@ -2664,17 +2664,16 @@ function closeElement (el, meta, options) {
 
   const isTemplate = postProcessTemplate(el) || processingTemplate
   if (!isNative && !isTemplate) {
-      postProcessComponentIs(el, (child) => {
-          if (!hasVirtualHost && mode === 'ali') {
-              postProcessAliComponentRootView(child, options)
-          } else {
-              postProcessIf(child)
-          }
-      })
+    postProcessComponentIs(el, (child) => {
+      if (!hasVirtualHost && mode === 'ali') {
+        postProcessAliComponentRootView(child, options)
+      } else {
+        postProcessIf(child)
+      }
+    })
     if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
       postProcessAliComponentRootView(el, options, meta)
     }
-
   }
 
   if (runtimeCompile) {
