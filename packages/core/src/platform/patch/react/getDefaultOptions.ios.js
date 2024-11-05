@@ -413,6 +413,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     return root
   }))
 
+  if (rawOptions.options?.isCustomText) {
+    defaultOptions.isCustomText = true
+  }
+
   if (type === 'page') {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
@@ -457,7 +461,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       navigation.insets = useSafeAreaInsets()
 
       return createElement(GestureHandlerRootView,
-        null,
+        {
+          style: {
+            flex: 1
+          }
+        },
         createElement(ReactNative.View, {
           style: {
             flex: 1,

@@ -139,6 +139,7 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
+    options.customTextRules = options.customTextRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
@@ -687,6 +688,7 @@ class MpxWebpackPlugin {
           projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
+          customTextRules: this.options.customTextRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
