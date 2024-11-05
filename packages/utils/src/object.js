@@ -1,4 +1,3 @@
-import { isRef, isReactive } from '@mpxjs/core'
 import { type, noop } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -113,12 +112,19 @@ function diffAndCloneA (a, b) {
 }
 
 function proxy (target, source, keys, readonly, onConflict) {
+  if (!global.__mpx) {
+    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
+  }
   keys = keys || Object.keys(source)
   keys.forEach((key) => {
     const descriptor = {
       get () {
         const val = source[key]
-        return !isReactive(source) && isRef(val) ? val.value : val
+        if (global.__mpx) {
+          return !global.__mpx.isReactive(source) && global.__mpx.isRef(val) ? val.value : val
+        } else {
+          return val
+        }
       },
       configurable: true,
       enumerable: true
@@ -126,12 +132,15 @@ function proxy (target, source, keys, readonly, onConflict) {
     descriptor.set = readonly
       ? noop
       : function (val) {
-        // 对reactive对象代理时不需要处理ref解包
-        if (!isReactive(source)) {
-          const oldVal = source[key]
-          if (isRef(oldVal) && !isRef(val)) {
-            oldVal.value = val
-            return
+        if (global.__mpx) {
+          const isRef = global.__mpx.isRef
+          // 对reactive对象代理时不需要处理ref解包
+          if (!global.__mpx.isReactive(source)) {
+            const oldVal = source[key]
+            if (isRef(oldVal) && !isRef(val)) {
+              oldVal.value = val
+              return
+            }
           }
         }
         source[key] = val

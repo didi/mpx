@@ -1,4 +1,5 @@
-import { webHandleSuccess, webHandleFail, hasOwn } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
+import { hasOwn } from '@mpxjs/utils'
 import Vue from 'vue'
 
 function setTabBarStyle (options = {}) {
@@ -20,9 +21,9 @@ function setTabBarStyle (options = {}) {
   }
 
   if (resolved) {
-    webHandleSuccess(resolved, options.success, options.complete)
+    successHandle(resolved, options.success, options.complete)
   }
-  webHandleFail(rejected, options.fail, options.complete)
+  failHandle(rejected, options.fail, options.complete)
 }
 
 function setTabBarItem (options = {}) {
@@ -49,9 +50,9 @@ function setTabBarItem (options = {}) {
   }
 
   if (resolved) {
-    webHandleSuccess(resolved, options.success, options.complete)
+    successHandle(resolved, options.success, options.complete)
   }
-  webHandleFail(rejected, options.fail, options.complete)
+  failHandle(rejected, options.fail, options.complete)
 }
 
 function showTabBar (options = {}) {
@@ -65,9 +66,9 @@ function showTabBar (options = {}) {
   }
 
   if (resolved) {
-    webHandleSuccess(resolved, options.success, options.complete)
+    successHandle(resolved, options.success, options.complete)
   }
-  webHandleFail(rejected, options.fail, options.complete)
+  failHandle(rejected, options.fail, options.complete)
 }
 
 function hideTabBar (options = {}) {
@@ -81,9 +82,9 @@ function hideTabBar (options = {}) {
   }
 
   if (resolved) {
-    webHandleSuccess(resolved, options.success, options.complete)
+    successHandle(resolved, options.success, options.complete)
   }
-  webHandleFail(rejected, options.fail, options.complete)
+  failHandle(rejected, options.fail, options.complete)
 }
 
 export {

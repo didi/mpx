@@ -10,10 +10,22 @@ module.exports = function ({ print }) {
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
     web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper'
+    },
+    android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-swiper'
     },
@@ -45,6 +57,11 @@ module.exports = function ({ print }) {
       {
         test: /^(snap-to-edge|easing-function)$/,
         qa: qaPropLog
+      },
+      {
+        test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
+        ios: iosPropLog,
+        android: androidPropLog
       }
     ],
     event: [
@@ -61,7 +78,14 @@ module.exports = function ({ print }) {
       {
         test: /^(transition)$/,
         swan: baiduEventLog,
-        jd: jdEventLog
+        jd: jdEventLog,
+        ios: iosEventLog,
+        android: androidEventLog
+      },
+      {
+        test: /^(animationfinish)$/,
+        ios: iosEventLog,
+        android: androidEventLog
       }
     ]
   }

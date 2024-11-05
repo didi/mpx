@@ -75,7 +75,34 @@ registered in parent context!`)
   if (outputPath) {
     option.componentPath = '/' + outputPath
   }
+  if (ctorType === 'app') {
+    option.data = function () {
+      return {
+        transitionName: ''
+      }
+    }
+    if (!global.__mpx.config.webConfig.disablePageTransition) {
+      option.watch = {
+        $route: {
+          handler () {
+            const actionType = global.__mpxRouter.currentActionType
 
+            switch (actionType) {
+              case 'to':
+                this.transitionName = 'mpx-slide-left'
+                break
+              case 'back':
+                this.transitionName = 'mpx-slide-right'
+                break
+              default:
+                this.transitionName = ''
+            }
+          },
+          immediate: true
+        }
+      }
+    }
+  }
   return option
 }
 
@@ -136,7 +163,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         redirect: '/' + firstPage
       })
     }
-    const webRouteConfig = global.__mpx.config.webRouteConfig
+    const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
     global.__mpxRouter = option.router = new VueRouter({
       ...webRouteConfig,
       routes: routes
@@ -160,6 +187,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
     global.__mpxRouter.eventChannelMap = {}
+    global.__mpxRouter.currentActionType = null
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
       let action = global.__mpxRouter.__mpxAction
@@ -178,7 +206,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           }
         }
       }
-
+      global.__mpxRouter.currentActionType = action.type
       const pageInRoutes = routes.some(item => item.path === to.path)
       if (!pageInRoutes) {
         if (stack.length < 1) {

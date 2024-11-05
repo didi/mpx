@@ -5,10 +5,11 @@ const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
+const { dash2hump } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android'],
     // props预处理
     preProps: [],
     // props后处理
@@ -19,7 +20,7 @@ module.exports = function getSpec ({ warn, error }) {
           if (name.startsWith('data-')) {
             return {
               name: ':' + name,
-              value: `JSON.stringify(${parsed.result})`
+              value: `__ensureString(${parsed.result})`
             }
           } else if (parsed.hasBinding) {
             return {
@@ -301,9 +302,7 @@ module.exports = function getSpec ({ warn, error }) {
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
-            name: rPrefix + rEventName.replace(/^./, (matched) => {
-              return matched.toUpperCase()
-            }) + modifierStr,
+            name: dash2hump(rPrefix + '-' + rEventName) + modifierStr,
             value
           }
         },
@@ -312,8 +311,9 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
           const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
+          if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
@@ -324,8 +324,9 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
           const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
+          if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
@@ -336,8 +337,9 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
           const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
+          if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
@@ -360,8 +362,9 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
           const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+          if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
@@ -372,8 +375,9 @@ module.exports = function getSpec ({ warn, error }) {
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
           const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
+          if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
@@ -394,6 +398,36 @@ module.exports = function getSpec ({ warn, error }) {
           const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
           const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
+        },
+        ios ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ios' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ios', data: { el } })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
+        },
+        android ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -449,6 +483,28 @@ module.exports = function getSpec ({ warn, error }) {
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
           }
+          // ios (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // },
+          // android (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // }
         }
       ],
       rules: [
@@ -479,14 +535,46 @@ module.exports = function getSpec ({ warn, error }) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
             }
+          },
+          ios (eventName) {
+            const eventMap = {
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React native environment does not support [${eventName}] event!`)
+            }
+          },
+          android (eventName) {
+            const eventMap = {
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React native environment does not support [${eventName}] event!`)
+            }
           }
         },
-        // 特殊web事件
+        // web event escape
         {
           test: /^click$/,
-          web (eventName, data) {
+          web (eventName, { isComponent }) {
             // 自定义组件根节点
-            if (data.isComponent) {
+            if (isComponent) {
               return '_' + eventName
             }
           }

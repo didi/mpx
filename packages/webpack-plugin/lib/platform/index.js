@@ -16,6 +16,9 @@ module.exports = function getRulesRunner ({
     template: {
       wx: require('./template/wx')
     },
+    style: {
+      wx: require('./style/wx')
+    },
     json: {
       wx: require('./json/wx')
     }

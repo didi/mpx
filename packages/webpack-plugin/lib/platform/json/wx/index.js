@@ -153,7 +153,6 @@ module.exports = function getSpec ({ warn, error }) {
       test: 'componentPlaceholder',
       ali: aliComponentPlaceholderFallback,
       swan: deletePath(),
-      tt: deletePath(),
       jd: deletePath()
     },
     {

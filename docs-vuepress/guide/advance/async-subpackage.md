@@ -5,6 +5,14 @@
 
 具体功能介绍和功能目的可 [点击查看](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/async.html), Mpx对于分包异步化功能进行了完整支持。
 
+当前 Mpx 框架默认支持以下平台的分包异步化能力：
+* 微信小程序
+* 支付宝小程序
+* 字节小程序
+* Web
+
+在非上述平台，异步分包代码会默认降级。
+
 ## 跨分包自定义组件引用
 >一个分包使用其他分包的自定义组件时，由于其他分包还未下载或注入，其他分包的组件处于不可用的状态。通过为其他分包的自定义组件设置 占位组件，
 我们可以先渲染占位组件作为替代，在分包下载完成后再进行替换。
@@ -88,5 +96,4 @@ require.async('../commonPackage/index.js?root=subPackageB').then(pkg => {
   })
 </script>
 ```
-- 注意项：目前该能力仅微信平台下支持，其他平台下框架将会自动降级
 

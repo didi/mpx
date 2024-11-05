@@ -98,6 +98,16 @@ plugins.push(new MpxUnocssPlugin())
 ，可以通过查阅[tailwindcss文档](https://tailwindcss.com/docs/installation)、[windicss文档](https://windicss.org/utilities/general/colors.html)或[unocss可交互文档](https://unocss.dev/interactive/)进行探索使用。
 
 关于`uno.config.js`可用配置项及`@mpxjs/unocss-plugin`及`@mpxjs/unocss-base`的配置项请参考[API文档](../../api/compile.md#mpxunocssplugin-配置)
+### vscode插件支持
+推荐使用unocss官方插件https://unocss.dev/integrations/vscode
+mpx文件则需要在unocss.config.js添加如下参数才能生效
+```js
+const { defineConfig } = require('unocss')
+
+module.exports = defineConfig({
+  include: [/\.mpx($|\?)/]
+})
+``` 
 
 ## 功能支持范围 {#config-supports}
 

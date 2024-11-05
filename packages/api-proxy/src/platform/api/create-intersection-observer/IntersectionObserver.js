@@ -1,5 +1,5 @@
 import { nextTick } from '../next-tick'
-import { parseDataset } from '../../../common/js'
+import { parseDataset } from '@mpxjs/utils'
 
 let isInit = true
 
@@ -66,12 +66,12 @@ class WebIntersectionObserver {
   }
 
   observe (targetSelector, callback) {
-    nextTick(async () => {
-      if (!targetSelector) {
-        const res = { errMsg: 'observe:targetSelector can not be empty' }
-        return Promise.reject(res)
+    nextTick(() => {
+      if (!document.querySelector(targetSelector)) {
+        console.warn(`[mpx runtime warn]: Node ${JSON.stringify(targetSelector)} is not found. Intersection observer will not trigger.`)
+        return
       }
-      this._observer = await this.initObserver()
+      this._observer = this.initObserver()
       this._callback = callback
       let targetElement = []
       if (this._options.observeAll) {

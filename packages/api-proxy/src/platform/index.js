@@ -107,3 +107,15 @@ export * from './api/window'
 
 // getEnterOptionsSync
 export * from './api/lifecycle'
+
+// getLocation, openLocation, chooseLocation
+export * from './api/location'
+
+// getExtConfig, getExtConfigSync
+export * from './api/ext'
+
+// vibrateShort, vibrateLong
+export * from './api/vibrate'
+
+// onKeyboardHeightChange, offKeyboardHeightChange, hideKeyboard
+export * from './api/keyboard'

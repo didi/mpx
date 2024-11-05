@@ -1,7 +1,7 @@
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { isFunction, error, diffAndCloneA, hasOwn, noop } from '@mpxjs/utils'
+import { error, diffAndCloneA, hasOwn, noop } from '@mpxjs/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -23,7 +23,7 @@ function transformApiForProxy (context, currentInject) {
           const validProps = Object.assign({}, options.properties, options.props)
           if (context.props) {
             Object.keys(context.props).forEach((key) => {
-              if (hasOwn(validProps, key) && !isFunction(context.props[key])) {
+              if (hasOwn(validProps, key)) {
                 props[key] = context.props[key]
               }
             })
@@ -58,6 +58,26 @@ function transformApiForProxy (context, currentInject) {
         __getRefsData: {
           get () {
             return currentInject.getRefsData
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.moduleId) {
+      Object.defineProperties(context, {
+        __moduleId: {
+          get () {
+            return currentInject.moduleId
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.dynamic) {
+      Object.defineProperties(context, {
+        __dynamic: {
+          get () {
+            return currentInject.dynamic
           },
           configurable: false
         }
@@ -102,14 +122,14 @@ function initProxy (context, rawOptions, currentInject) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
+export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const hookNames = type === 'component' ? ['onInit', 'didMount', 'didUnmount'] : ['onLoad', 'onReady', 'onUnload']
   const rootMixins = [{
     [hookNames[0]] () {
       if (rawOptions.__nativeRender__ && this.props) {
         const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
         Object.keys(this.props).forEach((key) => {
-          if (hasOwn(validProps, key) && typeof this.props[key] !== 'function') {
+          if (hasOwn(validProps, key)) {
             this.data[key] = this.props[key]
           }
         })
@@ -123,7 +143,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           const newData = {}
           // 微信原生转换支付宝时，每次props更新将其设置进data模拟微信表现
           Object.keys(nextProps).forEach((key) => {
-            if (hasOwn(validProps, key) && typeof nextProps[key] !== 'function') {
+            if (hasOwn(validProps, key)) {
               const { diff, clone } = diffAndCloneA(nextProps[key], this.props[key])
               if (diff) newData[key] = clone
             }
@@ -133,7 +153,7 @@ export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
           // 由于支付宝中props透传父级setData的值，此处发生变化的属性实例一定不同，只需浅比较即可确定发生变化的属性
           // 支付宝appx2.0版本后props传递发生变化，此处获取到的nextProps和this.props以及父组件setData的数据引用都不一致，进行了两次深克隆，此处this.props和nextProps的比对需要用deep diff
           Object.keys(nextProps).forEach(key => {
-            if (hasOwn(validProps, key) && typeof nextProps[key] !== 'function') {
+            if (hasOwn(validProps, key)) {
               const { diff, clone } = diffAndCloneA(nextProps[key], this.props[key])
               // 由于支付宝中透传父级setData的值，此处进行深clone后赋值避免父级存储的miniRenderData部分数据在此处被响应化，在子组件对props赋值时触发父组件的render
               if (diff) this[key] = clone

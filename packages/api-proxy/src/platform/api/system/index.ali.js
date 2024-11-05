@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, envError, handleSuccess, defineUnsupportedProps } from '../../../common/js'
 
 function getSystemInfo (options = {}) {
   const opts = changeOpts(options)
@@ -32,7 +32,17 @@ function getSystemInfoSync () {
   return res
 }
 
+const getDeviceInfo = function () {
+  const res = ENV_OBJ.getDeviceBaseInfo
+  defineUnsupportedProps(res, ['deviceAbi', 'benchmarkLevel', 'cpuType'])
+  return res
+}
+
+const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
+
 export {
   getSystemInfo,
-  getSystemInfoSync
+  getSystemInfoSync,
+  getDeviceInfo,
+  getWindowInfo
 }

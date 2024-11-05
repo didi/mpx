@@ -123,10 +123,8 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   if (_c("a.b")) {}
 
-  _sc("c");
-
-  _sc("a")[""];
-  _c("a.b")[""];
+  _sc("a")[_sc("c")];
+  _c("a.b")[_c("c.d")];
 
   _sc("e");
 };`
@@ -379,8 +377,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   this.name;
 
-  this.name2;
-  this.name3[""];
+  this.name3[this.name2];
 
   this.name4 && this.name4.length;
   this.name4['length'];

@@ -1,5 +1,5 @@
-const pxRegExp = /\b(\d+(\.\d+)?)px\b/
-const pxRegExpG = /\b(\d+(\.\d+)?)px\b/g
+const pxRegExp = /\b(-?\d+(\.\d+)?)px\b/
+const pxRegExpG = /\b(-?\d+(\.\d+)?)px\b/g
 // rpx
 module.exports = (options = {}) => {
   return {

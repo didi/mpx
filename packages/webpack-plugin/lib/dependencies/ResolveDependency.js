@@ -27,7 +27,7 @@ class ResolveDependency extends NullDependency {
     if (!compilation) return ''
     const mpx = compilation.__mpx__
     if (!mpx) return ''
-    const { pagesMap, componentsMap, staticResourcesMap, partialCompile } = mpx
+    const { pagesMap, componentsMap, staticResourcesMap, partialCompileRules } = mpx
     const { resourcePath } = parseRequest(resource)
     const currentComponentsMap = componentsMap[packageName]
     const mainComponentsMap = componentsMap.main
@@ -35,7 +35,7 @@ class ResolveDependency extends NullDependency {
     const mainStaticResourcesMap = staticResourcesMap.main
     const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
     if (!resolveResult) {
-      if (!partialCompile || matchCondition(resourcePath, partialCompile)) {
+      if (!partialCompileRules || matchCondition(resourcePath, partialCompileRules)) {
         compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
       }
     }

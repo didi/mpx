@@ -3,6 +3,12 @@ name: test
 on: [push, pull_request]
 
 jobs:
+  tsc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm i && npm run tsc:build
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -13,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Cache node modules
         id: cache
         uses: actions/cache@v2
@@ -36,7 +41,7 @@ jobs:
 
       - name: install deps
         if: steps.cache.outputs.cache-hit != 'true'
-        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project  && npx lerna bootstrap --no-ci
+        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project
 
       - name: copy-webpack-plugin
         run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/plugin-project

@@ -262,12 +262,12 @@ module.exports = function (content) {
               hasScoped,
               hasComment,
               isNative,
+              ctorType,
               moduleId,
               usingComponents,
               componentPlaceholder,
               usingComponentsModuleId: currentUsingComponentsModuleId
             })
-            // if (template.src) extraOptions.resourcePath = resourcePath
             break
           case 'styles':
             if (cssLang) part.lang = cssLang

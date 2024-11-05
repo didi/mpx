@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/extend-expect'
 import {
   showActionSheet
 } from '../../src/platform/api/action-sheet/index.web'
-import { dispatchTap } from '../../../../test/utils/touch'
+import { dispatchTap } from '../../test/touch'
 
 describe('test toast', () => {
   afterAll(() => {

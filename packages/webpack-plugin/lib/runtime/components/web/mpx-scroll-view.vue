@@ -9,6 +9,7 @@
   BScroll.use(PullDown)
 
   let mutationObserver = null
+  let resizeObserver = null
 
   export default {
     name: 'mpx-scroll-view',
@@ -110,7 +111,7 @@
       this.debounceRefresh = debounce(function () {
         this.refresh()
       }, 200, {
-        leading: false,
+        leading: true,
         trailing: true
       })
       this.dispatchScrollTo = throttle(function (direction) {
@@ -357,11 +358,15 @@
         let minTop
         let maxBottom
         childrenArr.forEach(item => {
-          const temp = item.getBoundingClientRect()
-          minLeft = getMinLength(minLeft, temp.left)
-          minTop = getMinLength(minTop, temp.top)
-          maxRight = getMaxLength(maxRight, temp.right)
-          maxBottom = getMaxLength(maxBottom, temp.bottom)
+            const left = item.offsetLeft
+            const top = item.offsetTop
+            const width = item.offsetWidth
+            const height = item.offsetHeight
+    
+            minLeft = getMinLength(minLeft, left)
+            minTop = getMinLength(minTop, top)
+            maxRight = getMaxLength(maxRight, left + width)
+            maxBottom = getMaxLength(maxBottom, top + height)
         })
         const width = maxRight - minLeft || 0
         const height = maxBottom - minTop || 0
@@ -399,6 +404,17 @@
           const config = { attributes: true, childList: true, subtree: true }
           mutationObserver.observe(this.$refs.wrapper, config)
         }
+        if (typeof ResizeObserver !== 'undefined') {
+          let isFirstResize = true
+          resizeObserver = new ResizeObserver(() => {
+            if (isFirstResize) {
+              isFirstResize = false
+              return
+            }
+            this.debounceRefresh()
+          })
+          resizeObserver.observe(this.$refs.wrapper)
+        }
       },
        mutationObserverHandler (mutations) {
         let needRefresh = false
@@ -427,6 +443,10 @@
         if (mutationObserver) {
           mutationObserver.disconnect()
           mutationObserver = null
+        }
+        if (resizeObserver) {
+          resizeObserver.disconnect()
+          resizeObserver = null
         }
       }
     },

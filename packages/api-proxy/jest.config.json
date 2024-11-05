@@ -9,5 +9,5 @@
   "globals": {
     "__mpx_mode__": "web"
   },
-  "setupFiles": ["../../test/unit/setup"]
+  "setupFiles": ["./test/setup"]
 }

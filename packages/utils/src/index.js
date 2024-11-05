@@ -1,73 +1,10 @@
-export {
-  warn,
-  error
-} from './log'
-
-export {
-  hasProto,
-  noop,
-  type,
-  isString,
-  isBoolean,
-  isNumber,
-  isArray,
-  isFunction,
-  isObject,
-  isEmptyObject,
-  isDef,
-  isNumberStr,
-  isValidIdentifierStr,
-  aliasReplace,
-  dash2hump,
-  hump2dash,
-  def,
-  hasChanged
-} from './base'
-
-export {
-  hasOwn,
-  isPlainObject,
-  diffAndCloneA,
-  proxy,
-  spreadProp,
-  enumerableKeys,
-  processUndefined
-} from './object'
-
-export {
-  getByPath,
-  setByPath,
-  doGetByPath,
-  getFirstKey,
-  aIsSubPathOfB
-} from './path'
-
-export {
-  arrayProtoAugment,
-  makeMap,
-  findItem,
-  remove,
-  isValidArrayIndex
-} from './array'
-
-export {
-  mergeData,
-  mergeObj,
-  mergeObjectArray
-} from './merge'
-
-export {
-  callWithErrorHandling
-} from './errorHandling'
-
-export {
-  collectDataset,
-  walkChildren,
-  parseSelector
-} from './element'
-
-export {
-  getEnvObj,
-  isBrowser,
-  isDev
-} from './env'
+export * from './log'
+export * from './base'
+export * from './object'
+export * from './path'
+export * from './array'
+export * from './merge'
+export * from './errorHandling'
+export * from './element'
+export * from './env'
+export * from './url'

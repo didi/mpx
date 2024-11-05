@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, isBrowser, throwSSRWarning } from '../../../../common/js'
+import { successHandle, failHandle, isBrowser, throwSSRWarning } from '../../../../common/js'
 
 export function getNetworkType ({ success, fail = () => {}, complete = () => {} } = {}) {
   if (!isBrowser) {
@@ -7,11 +7,11 @@ export function getNetworkType ({ success, fail = () => {}, complete = () => {} 
   }
   try {
     if (navigator.connection) {
-      webHandleSuccess({ networkType: navigator.connection.effectiveType }, success, complete)
+      successHandle({ networkType: navigator.connection.effectiveType }, success, complete)
     } else {
-      webHandleSuccess({ networkType: 'unknown' }, success, complete)
+      successHandle({ networkType: 'unknown' }, success, complete)
     }
   } catch (err) {
-    webHandleFail(err, fail, complete)
+    failHandle(err, fail, complete)
   }
 }

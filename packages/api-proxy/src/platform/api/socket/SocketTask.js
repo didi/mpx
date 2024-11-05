@@ -1,4 +1,5 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
+import { type } from '@mpxjs/utils'
 
 const socketTasks = new Set()
 
@@ -39,20 +40,18 @@ class SocketTask {
     return this._socket.readyState
   }
 
-  send (options) {
+  send (options = {}) {
     const { data = '', success, fail, complete } = options
-
-    if (this._socket.readyState === 1) {
+    if (typeof data !== 'string' || type(data) !== 'ArrayBuffer') {
+      const res = { errMsg: 'sendSocketMessage:fail Unsupported data type' }
+      failHandle(res, fail, complete)
+    } else if (this._socket.readyState === 1) {
       this._socket.send(data)
       const res = { errMsg: 'sendSocketMessage:ok' }
-      webHandleSuccess(res, success, complete)
-      return Promise.resolve(res)
+      successHandle(res, success, complete)
     } else {
       const res = { errMsg: 'sendSocketMessage:fail' }
-      webHandleFail(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
+      failHandle(res, fail, complete)
     }
   }
 
@@ -65,20 +64,22 @@ class SocketTask {
     try {
       this._socket.close()
       const res = { errMsg: 'closeSocket:ok' }
-      webHandleSuccess(res, success, complete)
-      return Promise.resolve(res)
+      successHandle(res, success, complete)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
-      webHandleFail(res, fail, complete)
-      if (!fail) {
-        return Promise.reject(res)
-      }
+      failHandle(res, fail, complete)
     }
   }
 
   addListener (socket) {
-    socket.onOpen = event => { typeof this._openCb === 'function' && this._openCb(event) }
-    socket.onmessage = event => { typeof this._messageCb === 'function' && this._messageCb(event) }
+    socket.onopen = event => {
+      typeof this._openCb === 'function' && this._openCb(event)
+    }
+    socket.onmessage = event => {
+      typeof this._messageCb === 'function' && this._messageCb({
+        data: event.data
+      })
+    }
     socket.onerror = event => {
       socketTasks.delete(this._socket)
       typeof this._errorCb === 'function' && this._errorCb(event)
@@ -91,7 +92,7 @@ class SocketTask {
       if (this._closeData) {
         this._closeCb(event)
       } else {
-        this._closeCb({ code: 2000, reason: `${event}` })
+        this._closeCb({ code: event.code, reason: event.reason })
       }
     }
   }

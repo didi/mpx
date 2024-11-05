@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
 
 function request (options = { url: '' }) {
@@ -12,7 +12,7 @@ function request (options = { url: '' }) {
     method = 'GET',
     dataType = 'json',
     responseType = 'text',
-    timeout = 60 * 1000,
+    timeout = global.__networkTimeout || 60 * 1000,
     header = {},
     success = null,
     fail = null,
@@ -32,7 +32,31 @@ function request (options = { url: '' }) {
     }, '').slice(1)
   }
 
-  const rOptions = {
+  /**
+   * axios 的其他参数
+   * baseURL
+   * transformRequest
+   * transformResponse,
+   * headers,
+   * params,
+   * paramsSerializer,
+   * withCredentials,
+   * adapter,
+   * auth,
+   * xsrfCookieName,
+   * xsrfHeaderName,
+   * onUploadProgress,
+   * onDownloadProgress,
+   * maxContentLength,
+   * maxBodyLength,
+   * validateStatus,
+   * maxRedirects,
+   * socketPath,
+   * httpAgent,
+   * httpsAgent,
+   * decompress
+   */
+  const rOptions = Object.assign(options, {
     method,
     url: options.url,
     data,
@@ -50,7 +74,7 @@ function request (options = { url: '' }) {
       // throw ETIMEDOUT error instead of generic ECONNABORTED on request timeouts
       clarifyTimeoutError: false
     }
-  }
+  })
   if (method === 'GET') {
     rOptions.params = rOptions.data || {}
     delete rOptions.data
@@ -63,20 +87,28 @@ function request (options = { url: '' }) {
       } catch (e) {
       }
     }
-    const result = {
+
+    const result = Object.assign({}, res, {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
       header: res.headers
-    }
-    webHandleSuccess(result, success, complete)
+    })
+    defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
+    successHandle(result, success, complete)
     return result
   }).catch(err => {
-    const res = { errMsg: `request:fail ${err}` }
-    webHandleFail(res, fail, complete)
-    if (!fail) {
-      return Promise.reject(res)
+    const realError = err || {}
+    const response = realError.response || {}
+    const res = {
+      errMsg: `request:fail ${err}`,
+      statusCode: response.status,
+      header: response.headers,
+      data: response.data,
+      stack: realError.stack,
+      ...realError
     }
+    failHandle(res, fail, complete)
   })
 
   return requestTask

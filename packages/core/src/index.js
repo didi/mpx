@@ -1,4 +1,4 @@
-import Vue from './vue'
+import Vue from './external/vue'
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
 
@@ -29,11 +29,12 @@ export {
   UPDATED,
   BEFOREUNMOUNT,
   UNMOUNTED,
-  SERVERPREFETCH,
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  SERVERPREFETCH,
+  REACTHOOKSEXEC
 } from './core/innerLifecycle'
 
 export {
@@ -43,7 +44,6 @@ export {
   onUpdated,
   onBeforeUnmount,
   onUnmounted,
-  onServerPrefetch,
   onLoad,
   onShow,
   onHide,
@@ -55,10 +55,14 @@ export {
   onAddToFavorites,
   onPageScroll,
   onTabItemTap,
-  onSaveExitState
+  onSaveExitState,
+  onServerPrefetch,
+  onReactHooksExec
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
+
+export { dynamic } from './dynamic/astCache'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -134,16 +138,22 @@ Mpx.config = {
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
   errorHandler: null,
+  warnHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
   forceFlushSync: false,
   webRouteConfig: {},
+  webConfig: {},
   /*
     支持两个属性
     hostWhitelists Array 类型 支持h5域名白名单安全校验
     apiImplementations webview JSSDK接口 例如getlocation
    */
-  webviewConfig: {}
+  webviewConfig: {},
+  /**
+  * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
+  */
+  rnConfig: {}
 }
 
 global.__mpx = Mpx

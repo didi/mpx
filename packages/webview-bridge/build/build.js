@@ -33,7 +33,7 @@ function buildEntry ({ input, output }) {
     .then(bundle => bundle.generate(output))
     .then(({ output: [{ code }] }) => {
       if (isProd) {
-        const minified = (banner ? banner + '\n' : '') + terser.minify(code, {
+        const minified = terser.minify(code, {
           toplevel: true,
           output: {
             ascii_only: true
