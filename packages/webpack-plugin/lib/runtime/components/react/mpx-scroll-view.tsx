@@ -38,7 +38,7 @@ import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject } from './utils'
 import { IntersectionObserverContext } from './context'
 
 interface ScrollViewProps {
@@ -157,7 +157,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const scrollViewRef = useAnimatedRef<ScrollView>()
   useNodesRef(props, ref, scrollViewRef, {
@@ -252,32 +252,35 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onContentSizeChange (width: number, height: number) {
-    scrollOptions.current = {
-      ...scrollOptions.current,
-      contentLength: selectLength({ height, width })
-    }
+    scrollOptions.current = extendObject(
+      scrollOptions.current,
+      {
+        contentLength: selectLength({ height, width })
+      }
+    )
   }
 
   function onLayout (e: LayoutChangeEvent) {
     const layout = e.nativeEvent.layout || {}
-    scrollOptions.current = {
-      ...scrollOptions.current,
-      visibleLength: selectLength(layout)
-    }
+    scrollOptions.current = extendObject(
+      scrollOptions.current,
+      {
+        visibleLength: selectLength(layout)
+      }
+    )
   }
 
   function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
     const visibleLength = selectLength(e.nativeEvent.layoutMeasurement)
     const contentLength = selectLength(e.nativeEvent.contentSize)
     const offset = selectOffset(e.nativeEvent.contentOffset)
-    scrollOptions.current = {
-      ...scrollOptions.current,
+    scrollOptions.current = extendObject(scrollOptions.current, {
       contentLength,
       offset,
       scrollLeft: position.scrollLeft,
       scrollTop: position.scrollTop,
       visibleLength
-    }
+    })
   }
 
   function onScroll (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -398,8 +401,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
   }
 
-  let scrollAdditionalProps: ScrollAdditionalProps = {
-    style: { ...innerStyle, ...layoutStyle },
+  const scrollAdditionalProps: ScrollAdditionalProps = extendObject({
+    style: extendObject(innerStyle, layoutStyle),
     pinchGestureEnabled: false,
     horizontal: scrollX && !scrollY,
     scrollEventThrottle: scrollEventThrottle,
@@ -415,15 +418,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     bindtouchend: enhanced && binddragend ? onScrollTouchEnd : undefined,
     onScrollBeginDrag: onScrollDrag,
     onScrollEndDrag: onScrollDrag,
-    onMomentumScrollEnd: onScrollEnd,
-    ...layoutProps
-  }
+    onMomentumScrollEnd: onScrollEnd
+  }, layoutProps)
   if (enhanced) {
-    scrollAdditionalProps = {
-      ...scrollAdditionalProps,
+    Object.assign(scrollAdditionalProps, {
       bounces,
       pagingEnabled
-    }
+    })
   }
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
     'scroll-x',
