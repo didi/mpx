@@ -74,7 +74,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
       const { bindtap } = propsRef.current
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
-      contextRef.current.triggerChange?.(evt)
+      contextRef.current.triggerChange(evt)
     }, [])
 
     const innerProps = useInnerProps(

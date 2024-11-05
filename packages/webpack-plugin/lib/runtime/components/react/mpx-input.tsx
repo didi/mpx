@@ -362,13 +362,21 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     return inputValue
   }
 
-  if (formValuesMap) {
-    if (!props.name) {
-      warn('If a form component is used, the name attribute is required.')
-    } else {
-      formValuesMap.set(props.name, { getValue, resetValue })
+  useEffect(() => {
+    if (formValuesMap) {
+      if (!props.name) {
+        warn('If a form component is used, the name attribute is required.')
+      } else {
+        formValuesMap.set(props.name, { getValue, resetValue })
+      }
     }
-  }
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
+  
 
   useUpdateEffect(() => {
     if (!nodeRef?.current) {

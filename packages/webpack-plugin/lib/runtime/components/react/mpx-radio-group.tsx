@@ -8,7 +8,8 @@ import {
   ReactNode,
   useContext,
   useMemo,
-  useCallback
+  useCallback,
+  useEffect
 } from 'react'
 import {
   View,
@@ -86,7 +87,7 @@ const radioGroup = forwardRef<
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const getSelectionValue = useCallback((): string | undefined => {
+  const getValue = useCallback((): string | undefined => {
     for (const key in groupValue) {
       if (groupValue[key].checked) {
         return key
@@ -94,51 +95,54 @@ const radioGroup = forwardRef<
     }
   }, [])
 
-  const getValue = useCallback(() => {
-    return getSelectionValue()
-  }, [getSelectionValue])
-
-  const resetValue = () => {
+  const resetValue = useCallback(() => {
     Object.keys(groupValue).forEach((key) => {
       groupValue[key].checked = false
       groupValue[key].setValue(false)
     })
-  }
+  }, [])
 
-  if (formValuesMap) {
-    if (!props.name) {
-      warn('If a form component is used, the name attribute is required.')
-    } else {
-      formValuesMap.set(props.name, { getValue, resetValue })
+
+  useEffect(() => {
+    if (formValuesMap) {
+      if (!props.name) {
+        warn('If a form component is used, the name attribute is required.')
+      } else {
+        formValuesMap.set(props.name, { getValue, resetValue })
+      }
     }
-  }
-
-  const notifyChange = useCallback((
-    evt: NativeSyntheticEvent<TouchEvent>
-  ) => {
-    const { bindchange } = propsRef.current
-    bindchange &&
-      bindchange(
-        getCustomEvent(
-          'tap',
-          evt,
-          {
-            layoutRef,
-            detail: {
-              value: getSelectionValue()
-            }
-          },
-          propsRef.current
-        )
-      )
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
   }, [])
 
   const contextValue = useMemo(() => {
+    const notifyChange = (
+      evt: NativeSyntheticEvent<TouchEvent>
+    ) => {
+      const { bindchange } = propsRef.current
+      bindchange &&
+        bindchange(
+          getCustomEvent(
+            'tap',
+            evt,
+            {
+              layoutRef,
+              detail: {
+                value: getValue()
+              }
+            },
+            propsRef.current
+          )
+        )
+    }
     return {
       groupValue,
       notifyChange
     }
-  }, [notifyChange])
+  }, [])
 
   const innerProps = useInnerProps(
     props,

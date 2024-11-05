@@ -4,7 +4,7 @@
  * ✔ disabled
  * ✔ color
  */
-import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
+import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
 import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
@@ -103,13 +103,20 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     return isChecked
   }
 
-  if (formValuesMap) {
-    if (!props.name) {
-      warn('If a form component is used, the name attribute is required.')
-    } else {
-      formValuesMap.set(props.name, { getValue, resetValue })
+  useEffect(() => {
+    if (formValuesMap) {
+      if (!props.name) {
+        warn('If a form component is used, the name attribute is required.')
+      } else {
+        formValuesMap.set(props.name, { getValue, resetValue })
+      }
     }
-  }
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
