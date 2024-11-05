@@ -25,7 +25,7 @@ import {
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle } from './utils'
+import { SVG_REGEXP, useLayout, useTransformStyle, renderImage } from './utils'
 
 export type Mode =
   | 'scaleToFill'
@@ -51,6 +51,7 @@ export interface ImageProps {
   'enable-offset'?: boolean;
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
+  'enable-fast-image'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -100,6 +101,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     style = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'enable-fast-image': enableFastImage,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -363,18 +365,18 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
                 ...modeStyle
               }}
             />
-          : <RNImage
-              source={{ uri: src }}
-              resizeMode={resizeMode}
-              onLoad={bindload && onImageLoad}
-              onError={binderror && onImageError}
-              style={{
+          : renderImage({
+              source: { uri: src },
+              resizeMode: resizeMode,
+              onLoad: bindload && onImageLoad,
+              onError: binderror && onImageError,
+              style: {
                 transformOrigin: 'top left',
                 width: isCropMode ? imageWidth : '100%',
                 height: isCropMode ? imageHeight : '100%',
                 ...(isCropMode && modeStyle)
-              }}
-            />
+              }
+            }, enableFastImage)
       }
     </View>
   )

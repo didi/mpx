@@ -4,6 +4,7 @@ import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } fr
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
+import FastImage from '@d11/react-native-fast-image'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -523,3 +524,9 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   }
   return children
 }
+
+export function renderImage (imageProps: Record<string, any>, enableFastImage = false) {
+  const Component = enableFastImage ? FastImage : Image
+  return <Component {...imageProps} />
+}
+
