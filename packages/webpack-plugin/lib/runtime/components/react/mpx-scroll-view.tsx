@@ -283,18 +283,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onContentSizeChange (width: number, height: number) {
-    scrollOptions.current = {
-      ...scrollOptions.current,
-      contentLength: selectLength({ height, width })
-    }
+    scrollOptions.current.contentLength = selectLength({ height, width })
   }
 
   function onLayout (e: LayoutChangeEvent) {
     const layout = e.nativeEvent.layout || {}
-    scrollOptions.current = {
-      ...scrollOptions.current,
-      visibleLength: selectLength(layout)
-    }
+    scrollOptions.current.visibleLength = selectLength(layout)
   }
 
   function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
@@ -443,11 +437,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     ref: scrollViewRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
-    ...(enhanced && {
-      ...(binddragstart && { bindtouchstart: onScrollTouchStart }),
-      ...(binddragging && { bindtouchmove: onScrollTouchMove }),
-      ...(binddragend && { bindtouchend: onScrollTouchEnd })
-    }),
+    bindtouchstart: onScrollTouchStart,
+    bindtouchmove: onScrollTouchMove,
+    bindtouchend: onScrollTouchEnd,
     onScrollBeginDrag: onScrollDrag,
     onScrollEndDrag: onScrollDrag,
     onMomentumScrollEnd: onScrollEnd,
