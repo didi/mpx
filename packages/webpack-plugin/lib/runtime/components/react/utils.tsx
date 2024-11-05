@@ -30,7 +30,7 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 
 function getSafeAreaInset (name: string) {
   const navigation = getFocusedNavigation()
-  const insets = extendObject(initialWindowMetrics?.insets, navigation?.insets || {})
+  const insets = extendObject(initialWindowMetrics?.insets || {}, navigation?.insets || {})
   return insets[safeAreaInsetMap[name]]
 }
 
