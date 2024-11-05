@@ -252,22 +252,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onContentSizeChange (width: number, height: number) {
-    scrollOptions.current = extendObject(
-      scrollOptions.current,
-      {
-        contentLength: selectLength({ height, width })
-      }
-    )
+    scrollOptions.current.contentLength = selectLength({ height, width })
   }
 
   function onLayout (e: LayoutChangeEvent) {
     const layout = e.nativeEvent.layout || {}
-    scrollOptions.current = extendObject(
-      scrollOptions.current,
-      {
-        visibleLength: selectLength(layout)
-      }
-    )
+    scrollOptions.current.visibleLength = selectLength(layout)
   }
 
   function updateScrollOptions (e: NativeSyntheticEvent<NativeScrollEvent>, position: Record<string, any>) {
