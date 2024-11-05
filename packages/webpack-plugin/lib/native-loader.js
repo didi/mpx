@@ -178,13 +178,13 @@ module.exports = function (content) {
     (jsonContent, callback) => {
       if (!jsonContent) return callback(null, {})
       let componentPlaceholder = []
-      let currentUsingComponentsModuleId = {}
+      let usingComponentsInfo = {}
       let usingComponents = [].concat(Object.keys(mpx.globalComponents))
       const finalCallback = (err) => {
-        currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, mpx.globalComponentsModuleId)
+        usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
         callback(err, {
           componentPlaceholder,
-          currentUsingComponentsModuleId,
+          usingComponentsInfo,
           usingComponents
         })
       }
@@ -209,11 +209,12 @@ module.exports = function (content) {
         }
         if (json.usingComponents) {
           usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
+          const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
           async.eachOf(json.usingComponents, (component, name, callback) => {
             if (!isUrlRequest(component)) {
               const moduleId = mpx.getModuleId(component, isApp)
               if (!isApp) {
-                currentUsingComponentsModuleId[name] = moduleId
+                setUsingComponentInfo(name, moduleId)
               }
               return callback()
             }
@@ -222,7 +223,7 @@ module.exports = function (content) {
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
               if (!isApp) {
-                currentUsingComponentsModuleId[name] = moduleId
+                setUsingComponentInfo(name, moduleId)
               }
               callback()
             })
@@ -239,7 +240,7 @@ module.exports = function (content) {
     (componentInfo, callback) => {
       const {
         componentPlaceholder,
-        currentUsingComponentsModuleId,
+        usingComponentsInfo,
         usingComponents
       } = componentInfo
 
@@ -266,7 +267,7 @@ module.exports = function (content) {
               moduleId,
               usingComponents,
               componentPlaceholder,
-              usingComponentsModuleId: currentUsingComponentsModuleId
+              usingComponentsInfo
             })
             break
           case 'styles':

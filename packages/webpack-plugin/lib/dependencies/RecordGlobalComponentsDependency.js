@@ -21,11 +21,15 @@ class RecordGlobalComponentsDependency extends NullDependency {
     Object.keys(usingComponents).forEach((key) => {
       const request = usingComponents[key]
       if (!isUrlRequest(request, mpx.projectRoot)) {
-        mpx.globalComponentsModuleId[key] = mpx.getModuleId(request, false)
+        mpx.globalComponentsInfo[key] = {
+          mid: mpx.getModuleId(request, false)
+        }
       } else {
         resolver.resolve({}, this.context, request, {}, (err, resource) => {
           if (err) return
-          mpx.globalComponentsModuleId[key] = mpx.getModuleId(resource, false)
+          mpx.globalComponentsInfo[key] = {
+            mid: mpx.getModuleId(resource, false)
+          }
         })
       }
 

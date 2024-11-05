@@ -2265,7 +2265,7 @@ function postProcessAliComponentRootView (el, options, meta) {
     { condition: /^slot$/, action: 'move' }
   ]
   const tagName = el.tag
-  const mid = options.usingComponentsModuleId[tagName] || moduleId
+  const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} ${mid} host-${mid}` }
   ]

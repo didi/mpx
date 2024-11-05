@@ -674,7 +674,7 @@ class MpxWebpackPlugin {
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
           globalComponents: {},
-          globalComponentsModuleId: {},
+          globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
           addEntryPromiseMap: new Map(),
@@ -740,14 +740,14 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
-            getModuleId: (filePath, isApp = false) => {
-                const customComponentModuleId = this.options.customComponentModuleId
-                if (typeof customComponentModuleId === 'function') {
-                    const customModuleId = customComponentModuleId(filePath, isApp)
-                    if (customModuleId) return customModuleId
-                }
-                return isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
-            },
+          getModuleId: (filePath, isApp = false) => {
+            const customComponentModuleId = this.options.customComponentModuleId
+            if (typeof customComponentModuleId === 'function') {
+              const customModuleId = customComponentModuleId(filePath, isApp)
+              if (customModuleId) return customModuleId
+            }
+            return isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+          },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
             let entryNode = entryNodeModulesMap.get(module)

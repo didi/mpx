@@ -121,14 +121,14 @@ module.exports = function (content) {
       if (!jsonContent) return callback(null, {})
       let componentPlaceholder = []
       let componentGenerics = {}
-      let currentUsingComponentsModuleId = {}
+      let usingComponentsInfo = {}
       let usingComponents = [].concat(Object.keys(mpx.globalComponents))
       const finalCallback = (err) => {
-        currentUsingComponentsModuleId = Object.assign(currentUsingComponentsModuleId, mpx.globalComponentsModuleId)
+        usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
         callback(err, {
           componentPlaceholder,
           componentGenerics,
-          currentUsingComponentsModuleId,
+          usingComponentsInfo,
           usingComponents
         })
       }
@@ -161,11 +161,13 @@ module.exports = function (content) {
         if (ret.usingComponents) {
           // fixUsingComponent(ret.usingComponents, mode)
           usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
+          const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
           async.eachOf(ret.usingComponents, (component, name, callback) => {
             if (!isUrlRequest(component)) {
               const moduleId = mpx.getModuleId(component, isApp)
+              // 避免和 RecordGlobalComponentsDependency 冲突
               if (!isApp) {
-                currentUsingComponentsModuleId[name] = moduleId
+                setUsingComponentInfo(name, moduleId)
               }
               return callback()
             }
@@ -173,8 +175,9 @@ module.exports = function (content) {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
+              // 避免和 RecordGlobalComponentsDependency 冲突
               if (!isApp) {
-                currentUsingComponentsModuleId[name] = moduleId
+                setUsingComponentInfo(name, moduleId)
               }
               callback()
             })
@@ -192,8 +195,8 @@ module.exports = function (content) {
       const {
         componentPlaceholder,
         componentGenerics,
-        currentUsingComponentsModuleId,
-        usingComponents
+        usingComponents,
+        usingComponentsInfo
       } = componentInfo
 
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
@@ -306,7 +309,7 @@ module.exports = function (content) {
           ctorType,
           moduleId,
           usingComponents,
-          usingComponentsModuleId: currentUsingComponentsModuleId,
+          usingComponentsInfo,
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
