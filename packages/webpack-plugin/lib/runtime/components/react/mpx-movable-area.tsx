@@ -7,7 +7,7 @@ import { JSX, useState, useEffect, forwardRef, ReactNode, useRef } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, wrapChildren, useLayout } from './utils'
+import { useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
 
 interface MovableAreaProps {
   style?: Record<string, any>;
@@ -52,11 +52,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef, onLayout })
 
-  const innerProps = useInnerProps(props, {
-    style: { height: areaHeight, width: areaWidth, overflow: 'hidden', ...normalStyle, ...layoutStyle },
-    ref: movableViewRef,
-    ...layoutProps
-  }, [], { layoutRef })
+  const innerProps = useInnerProps(props, extendObject({
+    style: extendObject({ height: areaHeight, width: areaWidth, overflow: 'hidden' }, normalStyle, layoutStyle),
+    ref: movableViewRef
+  }, layoutProps), [], { layoutRef })
 
   return (
     <MovableAreaContext.Provider value={{ height: areaHeight, width: areaWidth }}>
