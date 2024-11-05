@@ -2249,10 +2249,10 @@ function processBuiltInComponents (el, meta) {
 }
 
 function postProcessAliComponentRootView (el, options, meta) {
-    if (el.is && el.components) {
-        return
-    }
-    const processAttrsConditions = [
+  if (el.is && el.components) {
+    return
+  }
+  const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
     { condition: /^(on|catch)TouchMove$/, action: 'clone' },
@@ -2663,14 +2663,16 @@ function closeElement (el, meta, options) {
   }
 
   const isTemplate = postProcessTemplate(el) || processingTemplate
-  if (!isNative && !isTemplate) {
-    postProcessComponentIs(el, (child) => {
-      if (!hasVirtualHost && mode === 'ali') {
-        postProcessAliComponentRootView(child, options)
-      } else {
-        postProcessIf(child)
-      }
-    })
+  if (!isTemplate) {
+    if (!isNative) {
+      postProcessComponentIs(el, (child) => {
+        if (!hasVirtualHost && mode === 'ali') {
+          postProcessAliComponentRootView(child, options)
+        } else {
+          postProcessIf(child)
+        }
+      })
+    }
     if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
       postProcessAliComponentRootView(el, options, meta)
     }
