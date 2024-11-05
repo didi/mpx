@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect, useCallback } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -176,7 +176,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
-
+  const inputValueRef = useRef(defaultValue)
   const styleObj = {
     padding: 0,
     ...style,
@@ -354,13 +354,17 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
-  const resetValue = () => {
+  const resetValue = useCallback(() => {
     setInputValue('')
-  }
+  }, [])
 
-  const getValue = () => {
-    return inputValue
-  }
+  const getValue = useCallback(() => {
+    return inputValueRef.current
+  },[])
+
+  useEffect(() => {
+    inputValueRef.current = inputValue
+  }, [inputValue])
 
   useEffect(() => {
     if (formValuesMap) {
