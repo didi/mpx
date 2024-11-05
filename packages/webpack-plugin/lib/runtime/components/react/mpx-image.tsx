@@ -367,7 +367,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
             />
           : renderImage({
             source: { uri: src },
-            resizeMode: resizeMode,
+            resizeMode,
             onLoad: bindload && onImageLoad,
             onError: binderror && onImageError,
             style: {
