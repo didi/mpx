@@ -529,4 +529,3 @@ export function renderImage (imageProps: Record<string, any>, enableFastImage = 
   const Component = enableFastImage ? FastImage : Image
   return <Component {...imageProps} />
 }
-

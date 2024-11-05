@@ -366,17 +366,17 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
               }}
             />
           : renderImage({
-              source: { uri: src },
-              resizeMode: resizeMode,
-              onLoad: bindload && onImageLoad,
-              onError: binderror && onImageError,
-              style: {
-                transformOrigin: 'top left',
-                width: isCropMode ? imageWidth : '100%',
-                height: isCropMode ? imageHeight : '100%',
-                ...(isCropMode && modeStyle)
-              }
-            }, enableFastImage)
+            source: { uri: src },
+            resizeMode: resizeMode,
+            onLoad: bindload && onImageLoad,
+            onError: binderror && onImageError,
+            style: {
+              transformOrigin: 'top left',
+              width: isCropMode ? imageWidth : '100%',
+              height: isCropMode ? imageHeight : '100%',
+              ...(isCropMode && modeStyle)
+            }
+          }, enableFastImage)
       }
     </View>
   )
