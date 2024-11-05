@@ -4,10 +4,10 @@ import {
   isReactive,
   set,
   del,
-  isRef
+  isRef,
+  provide
 } from 'vue'
 import { injectMixins } from '../../core/injectMixins'
-import { provideApp } from './apiInject'
 
 const APIs = {
   injectMixins,
@@ -18,7 +18,7 @@ const APIs = {
   delete: del,
   isReactive,
   isRef,
-  provide: provideApp
+  provide
 }
 
 const InstanceAPIs = {}

@@ -40,8 +40,8 @@ export function removePageProvides (context) {
 
 /** 应用层 scope */
 export function provideApp (key, value) {
-  if (currentInstance) {
-    warn('mpx.provide() can not be used inside component context.')
+  if (!currentInstance) {
+    warn('mpx.provide() can only be used inside setup().')
     return
   }
   const provides = ProvidesMap.__app

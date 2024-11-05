@@ -162,14 +162,14 @@ export default class MpxProxy {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
-      // 在 data/props 初始化之前初始化 inject
+      // 在 props/data 初始化之前初始化 inject
       this.initInject()
       this.initProps()
       this.initSetup()
       this.initData()
       this.initComputed()
       this.initWatch()
-      // 在 data/props 初始化之后初始化 provide
+      // 在 props/data 初始化之后初始化 provide
       this.initProvide()
       unsetCurrentInstance()
     }
@@ -225,8 +225,14 @@ export default class MpxProxy {
       // 页面/组件销毁清除上下文的缓存
       contextMap.remove(this.uid)
     }
-    if (this.options.__type__ === 'page' && !this.options.__pageCtor__) {
-      // 页面销毁时移除对应的 provide
+    if (
+      __mpx_mode__ !== 'web' &&
+      __mpx_mode__ !== 'ios' &&
+      __mpx_mode__ !== 'android' &&
+      this.options.__type__ === 'page' &&
+      !this.options.__pageCtor__
+    ) {
+      // 小程序页面销毁时移除对应的 provide
       removePageProvides(this.target)
     }
     this.callHook(BEFOREUNMOUNT)

@@ -313,6 +313,8 @@ export interface Mpx {
 
   delete: typeof del
 
+  provide: typeof provide
+
   config: MpxConfig
 
   i18n: {
@@ -582,8 +584,7 @@ export declare function provide<T>(key: InjectionKey<T> | string | number, value
 export declare function inject<T>(key: InjectionKey<T> | string): T | undefined;
 export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T, treatDefaultAsFactory?: false): T;
 export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T | (() => T), treatDefaultAsFactory: true): T;
-export declare interface InjectionKey<T> extends Symbol {
-}
+export declare interface InjectionKey<T> extends Symbol {}
 
 // nextTick
 export function nextTick (fn: () => any): void
