@@ -14,6 +14,8 @@ module.exports = function ({ print }) {
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -26,6 +28,10 @@ module.exports = function ({ print }) {
       return 'mpx-swiper'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-swiper'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-swiper'
     },
@@ -61,7 +67,8 @@ module.exports = function ({ print }) {
       {
         test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ],
     event: [
@@ -80,12 +87,14 @@ module.exports = function ({ print }) {
         swan: baiduEventLog,
         jd: jdEventLog,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       },
       {
         test: /^(animationfinish)$/,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }
