@@ -120,6 +120,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     setHeight
   } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
+  const prevSimultaneousHandlersRef = useRef<Array<GestureHandler>>(originSimultaneousHandlers || [])
+  const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
+
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const offsetX = useSharedValue(x)
@@ -148,6 +151,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     defaultStyle: styles.container,
     gestureRef: movableGestureRef
   })
+
+  const hasSimultaneousHandlersChanged = useCallback(() => {
+    if (prevSimultaneousHandlersRef.current.length !== originSimultaneousHandlers.length) return true
+    return originSimultaneousHandlers.some((handler, index) => 
+      handler !== prevSimultaneousHandlersRef.current[index]
+    )
+  }, [originSimultaneousHandlers])
+
+  const hasWaitForHandlersChanged = useCallback(() => {
+    if (prevWaitForHandlersRef.current.length !== waitFor.length) return true
+    return waitFor.some((handler, index) => 
+      handler !== prevWaitForHandlersRef.current[index]
+    )
+  }, [waitFor])
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
@@ -330,6 +347,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const gesture = useMemo(() => {
+    prevSimultaneousHandlersRef.current = originSimultaneousHandlers
+    prevWaitForHandlersRef.current = waitFor
     const handleTriggerStart = (e: any) => {
       'worklet'
       extendEvent(e)
@@ -462,7 +481,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       })
       .withRef(movableGestureRef)
-  }, [disabled, direction, inertia, outOfBounds])
+  }, [disabled, direction, inertia, outOfBounds, hasSimultaneousHandlersChanged, hasWaitForHandlersChanged])
 
   if (simultaneousHandlers && simultaneousHandlers.length) {
     gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
