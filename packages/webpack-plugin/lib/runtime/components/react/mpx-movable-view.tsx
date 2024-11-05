@@ -19,10 +19,10 @@
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, Ref } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
-import { getCustomEvent, injectCatchEvent } from './getInnerListeners'
+import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, DEFAULT_UNLAY_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -482,8 +482,27 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   })
 
+  const injectCatchEvent = (props: Record<string, any>) => {
+    const eventHandlers: Record<string, any> = {}
+    const catchEventList = [
+      { name: 'onTouchStart', value: ['catchtouchstart'] },
+      { name: 'onTouchMove', value: ['catchtouchmove', 'catchvtouchmove', 'catchhtouchmove'] },
+      { name: 'onTouchEnd', value: ['catchtouchend'] }
+    ]
+    catchEventList.forEach(event => {
+      event.value.forEach(name => {
+        if (props[name] && !eventHandlers[event.name]) {
+          eventHandlers[event.name] = (e: NativeSyntheticEvent<TouchEvent>) => {
+            e.stopPropagation()
+          }
+        }
+      })
+    })
+    return eventHandlers
+  }
+
   const catchEventHandlers = injectCatchEvent(props)
-  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
+  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View

@@ -11,7 +11,7 @@ export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
-export const DEFAULT_UNLAY_STYLE = {
+export const HIDDEN_STYLE = {
   opacity: 0
 }
 
@@ -472,7 +472,7 @@ interface LayoutConfig {
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
+  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
   const layoutProps: Record<string, any> = {}
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
