@@ -9,4 +9,5 @@ export type ExtendedViewStyle = ViewStyle & {
   borderRadius?: string | number
   backgroundPosition?: backgroundPositionList
   [key: string]: any
+  transform?: {[key: string]: number | string}[]
 }
