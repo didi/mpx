@@ -84,7 +84,6 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   // 初始化bus和context2D
   useEffect(() => {
-    if (canvasRef.current) {
       const webviewPostMessage = (message) => {
         if (canvasRef.current.webview) {
           canvasRef.current.webview.postMessage(JSON.stringify(message))
@@ -112,7 +111,6 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
       // 设置postMessage方法
       canvasRef.current.postMessage = postMessage
-    }
   }, [])
 
   const getContext = useCallback((contextType: string) => {
@@ -159,7 +157,6 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }, [])
 
   const handleMessage = useCallback((e) => {
-    if (!canvasRef.current) return
 
     let data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {

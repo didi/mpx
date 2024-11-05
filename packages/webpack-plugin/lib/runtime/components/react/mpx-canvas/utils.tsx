@@ -36,6 +36,8 @@ const setupWebviewProperties = (instance: WebviewInstance, properties: Record<st
     const privateKey = `__${key}__`
     instance[privateKey] = initialValue
     Object.defineProperty(instance, key, {
+      configurable: true,
+      enumerable: true,
       get () {
         return instance[privateKey]
       },
@@ -52,7 +54,6 @@ const setupWebviewProperties = (instance: WebviewInstance, properties: Record<st
         if (instance.forceUpdate) {
           instance.forceUpdate()
         }
-
         return (instance[privateKey] = value)
       }
     })
@@ -116,7 +117,7 @@ export const useWebviewBinding = (
   methods: string[] = [],
   eventTypes: string[] = []
 ) => {
-  const instanceRef = useRef<WebviewInstance | null>(null)
+  const instanceRef = useRef<WebviewInstance>({})
 
   useEffect(() => {
     if (instanceRef.current) {
