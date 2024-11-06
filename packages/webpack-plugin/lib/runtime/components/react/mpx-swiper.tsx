@@ -67,15 +67,6 @@ interface CarouseState {
  * 默认的Style类型
  */
 const styles: { [key: string]: Object } = {
-  slide: {
-    backgroundColor: 'transparent'
-  },
-  container_x: {
-    position: 'relative'
-  },
-  container_y: {
-    position: 'relative'
-  },
   pagination_x: {
     position: 'absolute',
     bottom: 25,
@@ -152,20 +143,8 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const defaultHeight = (normalStyle?.height || 150)
   const defaultWidth = (normalStyle?.width || width || 375)
   const dir = horizontal === false ? 'y' : 'x'
-  // state的offset默认值
-  // const initIndex = props.circular ? props.current + 1: (props.current || 0)
-  // 记录真正的下标索引, 不包括循环前后加入的索引, 游标
-  const initIndex = props.current || 0
   // 内部存储上一次的offset值
-  const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
-  // 内部存储上一次的偏移量
-  const internalsRef = useRef({
-    offset: {
-      x: 0,
-      y: 0
-    },
-    isScrolling: false
-  })
+  const autoplayTimerRef = useRef<ReturnType <typeof setInterval> | null>(null)
 
   const {
     // 存储layout布局信息
@@ -173,12 +152,11 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     layoutProps,
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout: onWrapperLayout })
+  console.log('--------------layoutStyle', layoutStyle)
 
   const [state, setState] = useState({
     width: dir === 'x' && typeof defaultWidth === 'number' ? defaultWidth - previousMargin - nextMargin : defaultWidth,
     height: dir === 'y' && typeof defaultHeight === 'number' ? defaultHeight - previousMargin - nextMargin : defaultHeight,
-    // 真正的游标索引, 从0开始
-    index: initIndex,
     offset: {
       x: 0,
       y: 0
@@ -200,11 +178,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     'easing-function'
   ], { layoutRef: layoutRef })
 
-
-
-  /**
-   * @desc: 水平方向时，获取元素的布局，更新, 其中如果传递100%时需要依赖measure计算元算的宽高
-  */
   function onWrapperLayout (e: LayoutChangeEvent) {
     nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
@@ -256,18 +229,26 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     const pageStyle = { width: width, height: height }
     // pages = ["0", "1", "2", "0", "1"]
     const renderChild = children.slice()
-    if (props.circular && totalElements > 1) {
-      if (totalElements === 2) {
-        renderChild.concat(children).concat(children)
-      } else {
-        // 最前加两个
-        renderChild.unshift(children[totalElements - 1])
-        renderChild.unshift(children[totalElements - 2])
-        // 最后加两个
-        renderChild.push(children[0])
-        renderChild.push(children[1])
+    console.log('------------renderItems', step)
+    if (!Number.isNaN(+step)) {
+      console.log('-------------renderItems2')
+      if (props.circular && totalElements > 1) {
+        if (totalElements === 2) {
+          renderChild.concat(children).concat(children)
+        } else {
+          // 最前加两个
+          renderChild.unshift(children[totalElements - 1])
+          renderChild.unshift(children[totalElements - 2])
+          // 最后加两个
+          renderChild.push(children[0])
+          renderChild.push(children[1])
+        }
       }
-    } 
+      console.log('-------------renderItems3')
+      const targetOffset = getInitIndex()
+      offset.value = targetOffset
+      start.value = targetOffset
+    }
     // 1. 不支持循环 + margin 模式
     return renderChild.map((child, i) => {
       const extraStyle = {} as {
@@ -282,8 +263,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     })
   }
 
-  
-  const arrPages: Array<ReactNode> | ReactNode = renderItems()
 
   const targetIndex = useRef(0)
   const initOffset = getInitIndex()
@@ -291,23 +270,38 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const start = useSharedValue(initOffset);
   const step = dir === 'x' ? state.width : state.height
   const strTrans = 'translation' + dir.toUpperCase()
+  const arrPages: Array<ReactNode> | ReactNode = renderItems()
 
   function createAutoPlay () {
-    autoplayTimerRef.current && clearTimeout(autoplayTimerRef.current)
-    autoplayTimerRef.current = setTimeout(() => {
-      if (Number.isNaN(+step)) return false
-      // 获取下一个位置的坐标
+    autoplayTimerRef.current && clearInterval(autoplayTimerRef.current)
+    autoplayTimerRef.current = setInterval(() => {
+      const targetOffset = getInitIndex()
       if (!props.circular) {
-        const targetPos = -(targetIndex.current + 1) * step
+        // 获取下一个位置的坐标, 循环到最后一个元素,直接停止
+        if (targetIndex.current === totalElements - 1) {
+          autoplayTimerRef.current && clearTimeout(autoplayTimerRef.current)
+          autoplayTimerRef.current = null
+          return
+        }
+        targetIndex.current = targetIndex.current + 1
+        targetOffset[dir] = -targetIndex.current * step
       } else {
-        
+        if (targetIndex.current === totalElements - 1) {
+          targetIndex.current = 0
+        } else {
+          targetIndex.current = targetIndex.current + 1
+        }
+        targetOffset[dir] = -(targetIndex.current + 2) * step
+        console.log('---------createAutoPlay----2-', targetIndex, targetOffset)
       }
+      offset.value = targetOffset
+      start.value = targetOffset
     }, props.interval || 500)
   }
 
   useEffect(() => {
     if (props.autoplay) {
-      createAutoPlay()
+      !Number.isNaN(+step) && createAutoPlay()
     } else {
       const targetOffset = getInitIndex()
       offset.value = targetOffset
@@ -367,12 +361,10 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   }
 
   const animatedStyles = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateX: offset.value.x
-        }
-      ]
+    if (dir === 'x') {
+      return { transform: [{ translateX: offset.value.x }]}
+    } else {
+      return { transform: [{ translateY: offset.value.y }]}
     }
   })
 
@@ -405,13 +397,14 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       start.value = targetOffset
       const eventData = getCustomEvent('change', {}, { detail: { current: targetIndex.current, source: 'touch' }, layoutRef: layoutRef })
       props.bindchange && props.bindchange(eventData)
+      !Number.isNaN(+step) && createAutoPlay()
     })
     .onFinalize(() => {
     });
 
   return (<View style={[normalStyle, layoutStyle, { overflow: "scroll" }]} {...layoutProps} {...innerProps}>
     <GestureDetector gesture={gesture}>
-      <Animated.View style={[{ flexDirection: "row", width: 173 }, animatedStyles]}>
+      <Animated.View style={[{ flexDirection: "row" }, animatedStyles]}>
         {arrPages}
         {/*wrapChildren({
           children: arrPages
