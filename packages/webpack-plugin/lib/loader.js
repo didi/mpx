@@ -127,7 +127,7 @@ module.exports = function (content) {
         callback(err, {
           componentPlaceholder,
           componentGenerics,
-          usingComponentsInfo,
+          usingComponentsInfo
         })
       }
       try {
