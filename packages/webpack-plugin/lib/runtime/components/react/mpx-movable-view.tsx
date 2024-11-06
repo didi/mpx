@@ -265,13 +265,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (MovableAreaLayout.width < scaledWidth) {
       xRange = [maxX, 0]
     } else {
-      xRange = [-left, maxX < 0 ? 0 : maxX]
+      xRange = [left === 0 ? 0 : -left, maxX < 0 ? 0 : maxX]
     }
 
     if (MovableAreaLayout.height < scaledHeight) {
       yRange = [maxY, 0]
     } else {
-      yRange = [-top, maxY < 0 ? 0 : maxY]
+      yRange = [top === 0 ? 0 : -top, maxY < 0 ? 0 : maxY]
     }
     draggableXRange.value = xRange
     draggableYRange.value = yRange
