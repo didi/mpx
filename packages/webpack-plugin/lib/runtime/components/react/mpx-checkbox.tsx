@@ -25,7 +25,7 @@ import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 
 interface Selection {
@@ -101,15 +101,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
-    const defaultStyle = {
-      ...styles.wrapper,
-      ...(disabled && styles.wrapperDisabled)
-    }
+    const defaultStyle = extendObject(
+      styles.wrapper,
+      disabled ? styles.wrapperDisabled : {}
+    )
 
-    const styleObj = {
-      ...styles.container,
-      ...style
-    }
+    const styleObj = extendObject(styles.container, style)
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
@@ -151,7 +148,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
       warn('Checkbox does not support background image-related styles!')
@@ -170,13 +167,17 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap,
-        catchtap: catchTap
-      },
+      extendObject(
+        {
+          ref: nodeRef,
+          style: extendObject(innerStyle, layoutStyle)
+        },
+        layoutProps,
+        {
+          bindtap: onTap,
+          catchtap: catchTap
+        }
+      ),
       [],
       {
         layoutRef

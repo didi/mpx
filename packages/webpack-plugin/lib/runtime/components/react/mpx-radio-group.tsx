@@ -7,7 +7,7 @@ import { warn } from '@mpxjs/utils'
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, wrapChildren } from './utils'
+import { useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 
 export interface RadioGroupProps {
   name: string
@@ -51,10 +51,7 @@ const radioGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style
-  }
+  const styleObj = extendObject(defaultStyle, style)
 
   const {
     hasSelfPercent,
@@ -118,11 +115,13 @@ const radioGroup = forwardRef<
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: { ...normalStyle, ...layoutStyle },
-      ...layoutProps
-    },
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject(normalStyle, layoutStyle)
+      },
+      layoutProps
+    ),
     [],
     {
       layoutRef

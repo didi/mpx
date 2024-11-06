@@ -45,7 +45,7 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -265,28 +265,25 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     backgroundColor: plain ? 'transparent' : normalBackgroundColor
   }
 
-  const defaultViewStyle = {
-    ...styles.button,
-    ...(isMiniSize && styles.buttonMini),
-    ...viewStyle
-  }
+  const defaultViewStyle = extendObject(
+    styles.button,
+    isMiniSize ? styles.buttonMini : {},
+    viewStyle
+  )
 
-  const defaultTextStyle = {
-    ...styles.text,
-    ...(isMiniSize && styles.textMini),
-    color: plain ? plainTextColor : normalTextColor
-  }
+  const defaultTextStyle = extendObject(
+    styles.text,
+    isMiniSize ? styles.textMini : {},
+    { color: plain ? plainTextColor : normalTextColor }
+  )
 
-  const defaultStyle = {
-    ...defaultViewStyle,
-    ...defaultTextStyle
-  }
+  const defaultStyle = extendObject(defaultViewStyle, defaultTextStyle)
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style,
-    ...(applyHoverEffect && hoverStyle)
-  }
+  const styleObj = extendObject(
+    defaultStyle,
+    style,
+    applyHoverEffect ? hoverStyle : {}
+  )
 
   const {
     hasSelfPercent,
@@ -303,7 +300,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   if (backgroundStyle) {
     warn('Button does not support background image-related styles!')
@@ -375,14 +372,18 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: { ...innerStyle, ...layoutStyle },
-      ...layoutProps,
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd,
-      bindtap: onTap
-    },
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject(innerStyle, layoutStyle)
+      },
+      layoutProps,
+      {
+        bindtouchstart: onTouchStart,
+        bindtouchend: onTouchEnd,
+        bindtap: onTap
+      }
+    ),
     [],
     {
       layoutRef,

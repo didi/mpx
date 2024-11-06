@@ -7,7 +7,7 @@ import { JSX, forwardRef, useRef } from 'react'
 import { Text, TextStyle, Image } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle } from './utils'
+import { useLayout, useTransformStyle, extendObject } from './utils'
 
 export type IconType =
   | 'success'
@@ -63,10 +63,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
 
     const defaultStyle = { width: ~~size, height: ~~size }
 
-    const styleObj = {
-      ...defaultStyle,
-      ...style
-    }
+    const styleObj = extendObject(defaultStyle, style)
 
     const {
       hasSelfPercent,
@@ -82,16 +79,14 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
 
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef,
-        style: {
-          ...normalStyle,
-          ...layoutStyle,
-          tintColor: color
+      extendObject(
+        {
+          ref: nodeRef,
+          source: { uri },
+          style: extendObject(normalStyle, layoutStyle, { tintColor: color })
         },
-        source: { uri },
-        ...layoutProps
-      },
+        layoutProps
+      ),
       [],
       {
         layoutRef

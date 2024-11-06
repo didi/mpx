@@ -25,7 +25,7 @@ import {
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle } from './utils'
+import { SVG_REGEXP, useLayout, useTransformStyle, extendObject } from './utils'
 
 export type Mode =
   | 'scaleToFill'
@@ -112,11 +112,11 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     height: DEFAULT_IMAGE_HEIGHT
   }
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style,
-    overflow: 'hidden'
-  }
+  const styleObj = extendObject(
+    defaultStyle,
+    style,
+    { overflow: 'hidden' }
+  )
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, {
@@ -334,16 +334,18 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: {
-        ...normalStyle,
-        ...layoutStyle,
-        ...(isHeightFixMode && { width: fixedWidth }),
-        ...(isWidthFixMode && { height: fixedHeight })
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject(
+          normalStyle,
+          layoutStyle,
+          isHeightFixMode ? { width: fixedWidth } : {},
+          isWidthFixMode ? { height: fixedHeight } : {}
+        )
       },
-      ...layoutProps
-    },
+      layoutProps
+    ),
     [],
     {
       layoutRef
@@ -358,22 +360,24 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
               uri={src}
               onLayout={onSvgLoad}
               onError={binderror && onSvgError}
-              style={{
-                transformOrigin: 'top left',
-                ...modeStyle
-              }}
+              style={extendObject(
+                { transformOrigin: 'top left' },
+                modeStyle
+              )}
             />
           : <RNImage
               source={{ uri: src }}
               resizeMode={resizeMode}
               onLoad={bindload && onImageLoad}
               onError={binderror && onImageError}
-              style={{
-                transformOrigin: 'top left',
-                width: isCropMode ? imageWidth : '100%',
-                height: isCropMode ? imageHeight : '100%',
-                ...(isCropMode && modeStyle)
-              }}
+              style={extendObject(
+                {
+                  transformOrigin: 'top left',
+                  width: isCropMode ? imageWidth : '100%',
+                  height: isCropMode ? imageHeight : '100%'
+                },
+                isCropMode ? modeStyle : {}
+              )}
             />
       }
     </View>

@@ -55,7 +55,7 @@ import {
   TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout } from './utils'
+import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue } from './context'
@@ -177,13 +177,15 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
 
-  const styleObj = {
-    padding: 0,
-    ...style,
-    ...multiline && autoHeight && {
-      height: Math.max((style as any)?.minHeight || 35, contentHeight)
-    }
-  }
+  const styleObj = extendObject(
+    { padding: 0 },
+    style,
+    multiline && autoHeight
+      ? {
+          height: Math.max((style as any)?.minHeight || 35, contentHeight)
+        }
+      : {}
+  )
 
   const {
     hasSelfPercent,
@@ -379,28 +381,27 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       : (nodeRef.current as TextInput)?.blur()
   }, [focus])
 
-  const composeStyle = { ...normalStyle, ...layoutStyle }
-
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: {
-      padding: 0,
-      ...composeStyle,
-      ...multiline && autoHeight && {
-        height: Math.max((composeStyle as any)?.minHeight || 35, contentHeight)
+  const innerProps = useInnerProps(
+    props,
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject(normalStyle, layoutStyle)
+      },
+      layoutProps,
+      {
+        onFocus: bindfocus && onInputFocus,
+        onBlur: bindblur && onInputBlur,
+        onKeyPress: bindconfirm && onKeyPress,
+        onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
+        onSelectionChange: bindselectionchange && onSelectionChange
       }
-    },
-    ...layoutProps,
-    onFocus: bindfocus && onInputFocus,
-    onBlur: bindblur && onInputBlur,
-    onKeyPress: bindconfirm && onKeyPress,
-    onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
-    onSelectionChange: bindselectionchange && onSelectionChange
-  },
-  [],
-  {
-    layoutRef
-  })
+    ),
+    [],
+    {
+      layoutRef
+    }
+  )
 
   return (
     <TextInput
