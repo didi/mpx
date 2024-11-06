@@ -1,5 +1,5 @@
 import { View, TouchableWithoutFeedback } from 'react-native'
-// import { DatePicker } from '@ant-design/react-native'
+import { DatePicker } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { DateProps, LayoutType } from './type'
@@ -71,11 +71,11 @@ const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: D
     ref: viewRef
   }
   return (
-    <>
+    <DatePicker>
       <TouchableWithoutFeedback>
         <View {...touchProps}>{children}</View>
       </TouchableWithoutFeedback>
-    </>
+    </DatePicker>
   )
 })
 

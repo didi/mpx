@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-// import { PickerValue } from '@ant-design/react-native'
+import { PickerValue } from '@ant-design/react-native'
 import React, { forwardRef, useRef, useContext, useState } from 'react'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
@@ -86,7 +86,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     setPickerValue(event.detail.value as ValueType)
   }
 
-  const columnChange = (value: any[], index: number) => {
+  const columnChange = (value: PickerValue[], index: number) => {
     // type: "columnchange", detail: {column: 1, value: 2}
     const eventData = getCustomEvent('columnchange', {}, { detail: { column: index, value }, layoutRef: innerLayout })
     bindcolumnchange && bindcolumnchange(eventData)
@@ -103,7 +103,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
 
   const selectorProps = {
     ...commonProps,
-    value: pickerValue as any,
+    value: pickerValue as PickerValue,
     range: props.range,
     'range-key': props['range-key']
   }

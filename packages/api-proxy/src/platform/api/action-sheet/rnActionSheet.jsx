@@ -1,6 +1,6 @@
 import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-// import { Portal } from '@ant-design/react-native'
+import { Portal } from '@ant-design/react-native'
 function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   let actionSheetKey
@@ -76,10 +76,10 @@ function showActionSheet (options = {}) {
   const remove = function () {
     if (actionSheetKey) {
       slideOut()
-      // setTimeout(() => {
-      //   Portal.remove(actionSheetKey)
-      //   actionSheetKey = null
-      // }, 200)
+      setTimeout(() => {
+        Portal.remove(actionSheetKey)
+        actionSheetKey = null
+      }, 200)
     }
   }
   const selectAction = function (index) {
@@ -118,7 +118,7 @@ function showActionSheet (options = {}) {
       <View style={styles.buttonStyle}><Button color={'#000000'} title={'取消'} onPress={cancelAction}></Button></View>
     </Animated.View>
   </TouchableHighlight>
-  // actionSheetKey = Portal.add(ActionSheetView)
+  actionSheetKey = Portal.add(ActionSheetView)
   slideIn()
 }
 

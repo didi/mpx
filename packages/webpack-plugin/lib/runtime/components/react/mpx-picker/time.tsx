@@ -1,5 +1,5 @@
 import { View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
-// import { PickerView } from '@ant-design/react-native'
+import { PickerView } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { TimeProps } from './type'
@@ -233,7 +233,7 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
             </TouchableWithoutFeedback>
           </View>
         </View>
-        {/* <PickerView {...pickerProps}></PickerView> */}
+        <PickerView {...pickerProps}></PickerView>
       </View>
     )
   }

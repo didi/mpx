@@ -1,6 +1,6 @@
 import { forwardRef, JSX, useEffect, useRef } from 'react'
 import { noop, warn } from '@mpxjs/utils'
-// import { Portal } from '@ant-design/react-native'
+import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 // import { WebView } from 'react-native-webview'
@@ -150,7 +150,7 @@ const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props,
       }
     })
   }
-  return (<>
+  return (<Portal>
     <View
       style={defaultWebViewStyle}
       source={{ uri: src }}
@@ -160,7 +160,7 @@ const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props,
       onMessage={_message}
       javaScriptEnabled={true}
     ></View>
-  </>)
+  </Portal>)
 })
 
 _WebView.displayName = 'mpx-web-view'

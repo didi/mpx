@@ -2,7 +2,7 @@
  * ✔ enable
  */
 import { ReactNode } from 'react'
-// import { Portal } from '@ant-design/react-native'
+import { Portal } from '@ant-design/react-native'
 import { warn } from '@mpxjs/utils'
 interface RootPortalProps {
   enable?: boolean
@@ -15,12 +15,11 @@ const _RootPortal = (props: RootPortalProps) => {
   if (props.style) {
     warn('The root-portal component does not support the style prop.')
   }
-  // return enable
-  //   ? <Portal>
-  //     {children}
-  //   </Portal>
-  //   : <>{children}</>
-  return <>{children}</>
+  return enable
+    ? <Portal>
+      {children}
+    </Portal>
+    : <>{children}</>
 }
 
 _RootPortal.displayName = 'mpx-root-portal'

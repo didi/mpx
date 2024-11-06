@@ -1,17 +1,17 @@
 import { View, TouchableWithoutFeedback } from 'react-native'
-// import { Picker, any } from '@ant-design/react-native'
+import { Picker, PickerColumnItem } from '@ant-design/react-native'
 import { regionData } from './regionData'
 import React, { forwardRef, useState, useRef } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { RegionProps, RegionObj, LayoutType } from './type'
 
-function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth = 2): any[] {
+function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerColumnItem[] {
   const l = depth
   // 'PickerData[]' is not assignable to type 'PickerColumn | PickerColumn[]'.
-  // const obj: any[] = []
-  const obj: any[] = []
+  // const obj: PickerColumnItem[] = []
+  const obj: PickerColumnItem[] = []
   if (customItem) {
-    const objClone: any = {
+    const objClone: PickerColumnItem = {
       value: customItem,
       label: customItem,
       children: []
@@ -20,12 +20,12 @@ function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth 
     let loop = panding
     while (depth-- > 0) {
       loop.children = [{ ...objClone }]
-      loop = loop.children[0] as any
+      loop = loop.children[0] as PickerColumnItem
     }
-    obj.push(panding as any)
+    obj.push(panding as PickerColumnItem)
   }
   for (let i = 0; i < clObj.length; i++) {
-    const region: any = {
+    const region: PickerColumnItem = {
       value: clObj[i].value,
       label: clObj[i].value
     }
@@ -96,11 +96,11 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   }
 
   return (
-    <>
+    <Picker {...regionProps}>
       <TouchableWithoutFeedback>
         <View {...touchProps}>{children}</View>
       </TouchableWithoutFeedback>
-    </>
+    </Picker>
   )
 })
 
