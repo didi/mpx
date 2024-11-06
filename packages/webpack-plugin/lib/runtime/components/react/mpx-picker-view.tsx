@@ -140,17 +140,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       ...extraProps
     }
     const realElement = React.cloneElement(child as ReactElement, childProps)
-    return wrapChildren(
-      {
-        children: realElement
-      },
-      {
-        hasVarDec,
-        varContext: varContextRef.current,
-        textStyle,
-        textProps
-      }
-    )
+    return realElement
   }
 
   const renderTopMask = () => {
@@ -206,10 +196,22 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       return cloneChild(children, 0)
     }
   }
+
   return (<View {...innerProps}>
     {renderTopMask()}
     <View style={[styles.wrapper]}>
-      {renderSubChild()}
+      {/*renderSubChild()*/}
+      {wrapChildren(
+        {
+          children: renderSubChild()
+        },
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
+      )}
     </View>
     {renderBottomMask()}
     {!isSetW && renderLine()}
