@@ -12,7 +12,7 @@ module.exports = function (template, {
   srcMode,
   moduleId,
   ctorType,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -73,7 +73,7 @@ module.exports = function (template, {
         const { root, meta } = templateCompiler.parse(template.content, {
           warn,
           error,
-          usingComponents,
+          usingComponentsInfo,
           hasComment,
           isNative,
           ctorType,

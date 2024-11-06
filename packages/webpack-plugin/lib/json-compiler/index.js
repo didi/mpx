@@ -230,7 +230,7 @@ module.exports = function (content) {
   if (isApp) {
     Object.assign(mpx.globalComponents, json.usingComponents)
     // 在 rulesRunner 运行后保存全局注册组件
-    // todo 其余地方在使用mpx.usingComponents时存在缓存问题，要规避该问题需要在所有使用mpx.usingComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
+    // todo 其余地方在使用mpx.globalComponents时存在缓存问题，要规避该问题需要在所有使用mpx.globalComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
     // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
     this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, this.context))
   }

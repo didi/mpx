@@ -19,7 +19,7 @@ module.exports = function ({
   hasScoped,
   hasComment,
   isNative,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics,
   autoScope,
   callback
@@ -50,7 +50,7 @@ module.exports = function ({
             srcMode,
             moduleId,
             ctorType,
-            usingComponents,
+            usingComponentsInfo,
             componentGenerics
           }, callback)
         },

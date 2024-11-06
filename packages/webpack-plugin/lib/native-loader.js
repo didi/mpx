@@ -179,13 +179,11 @@ module.exports = function (content) {
       if (!jsonContent) return callback(null, {})
       let componentPlaceholder = []
       let usingComponentsInfo = {}
-      let usingComponents = [].concat(Object.keys(mpx.globalComponents))
       const finalCallback = (err) => {
         usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
         callback(err, {
           componentPlaceholder,
-          usingComponentsInfo,
-          usingComponents
+          usingComponentsInfo
         })
       }
       try {
@@ -208,7 +206,6 @@ module.exports = function (content) {
           componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
         }
         if (json.usingComponents) {
-          usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
           const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
           async.eachOf(json.usingComponents, (component, name, callback) => {
             if (!isUrlRequest(component)) {
@@ -240,8 +237,7 @@ module.exports = function (content) {
     (componentInfo, callback) => {
       const {
         componentPlaceholder,
-        usingComponentsInfo,
-        usingComponents
+        usingComponentsInfo
       } = componentInfo
 
       const {
@@ -265,7 +261,6 @@ module.exports = function (content) {
               isNative,
               ctorType,
               moduleId,
-              usingComponents,
               componentPlaceholder,
               usingComponentsInfo
             })

@@ -24,7 +24,6 @@ module.exports = function (raw) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
-  const usingComponents = queryObj.usingComponents || []
   const usingComponentsInfo = queryObj.usingComponentsInfo || {}
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
@@ -58,7 +57,6 @@ module.exports = function (raw) {
     warn,
     error,
     runtimeCompile,
-    usingComponents,
     componentPlaceholder,
     hasComment,
     isNative,

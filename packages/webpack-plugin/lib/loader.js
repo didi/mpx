@@ -122,14 +122,12 @@ module.exports = function (content) {
       let componentPlaceholder = []
       let componentGenerics = {}
       let usingComponentsInfo = {}
-      let usingComponents = [].concat(Object.keys(mpx.globalComponents))
       const finalCallback = (err) => {
         usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
         callback(err, {
           componentPlaceholder,
           componentGenerics,
           usingComponentsInfo,
-          usingComponents
         })
       }
       try {
@@ -160,7 +158,6 @@ module.exports = function (content) {
         }
         if (ret.usingComponents) {
           // fixUsingComponent(ret.usingComponents, mode)
-          usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
           const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
           async.eachOf(ret.usingComponents, (component, name, callback) => {
             if (!isUrlRequest(component)) {
@@ -195,7 +192,6 @@ module.exports = function (content) {
       const {
         componentPlaceholder,
         componentGenerics,
-        usingComponents,
         usingComponentsInfo
       } = componentInfo
 
@@ -219,7 +215,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponents,
+          usingComponentsInfo,
           componentGenerics,
           autoScope,
           callback
@@ -240,7 +236,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponents,
+          usingComponentsInfo,
           componentGenerics,
           autoScope,
           callback
@@ -308,7 +304,6 @@ module.exports = function (content) {
           isNative,
           ctorType,
           moduleId,
-          usingComponents,
           usingComponentsInfo,
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符

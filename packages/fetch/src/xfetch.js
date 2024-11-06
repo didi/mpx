@@ -58,7 +58,7 @@ export default class XFetch {
     if (/^POST|PUT$/i.test(config.method)) {
       const header = config.header || {}
       const contentType = header['content-type'] || header['Content-Type']
-      if (config.emulateJSON && !contentType) {
+      if (config.emulateJSON && !contentType) {po
         header['content-type'] = 'application/x-www-form-urlencoded'
         config.header = header
       }
