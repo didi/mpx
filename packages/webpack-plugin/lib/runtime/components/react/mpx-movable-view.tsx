@@ -152,20 +152,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     gestureRef: movableGestureRef
   })
 
-  const hasSimultaneousHandlersChanged = useCallback(() => {
-    if (prevSimultaneousHandlersRef.current.length !== originSimultaneousHandlers.length) return true
-    return originSimultaneousHandlers.some((handler, index) => 
-      handler !== prevSimultaneousHandlersRef.current[index]
-    )
-  }, [originSimultaneousHandlers])
+  const hasSimultaneousHandlersChanged = prevSimultaneousHandlersRef.current.length !== (originSimultaneousHandlers?.length || 0) ||
+  (originSimultaneousHandlers || []).some((handler, index) => handler !== prevSimultaneousHandlersRef.current[index])
 
-  const hasWaitForHandlersChanged = useCallback(() => {
-    if (prevWaitForHandlersRef.current.length !== waitFor.length) return true
-    return waitFor.some((handler, index) => 
-      handler !== prevWaitForHandlersRef.current[index]
-    )
-  }, [waitFor])
-
+  const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !==( waitFor?.length || 0) ||
+  (waitFor || []).some((handler, index) => handler !== prevWaitForHandlersRef.current[index])
+  
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
     if (!bindchange) return
@@ -347,8 +339,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const gesture = useMemo(() => {
-    prevSimultaneousHandlersRef.current = originSimultaneousHandlers
-    prevWaitForHandlersRef.current = waitFor
+    prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
+    prevWaitForHandlersRef.current = waitFor || []
     const handleTriggerStart = (e: any) => {
       'worklet'
       extendEvent(e)
