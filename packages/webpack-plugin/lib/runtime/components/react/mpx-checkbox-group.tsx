@@ -116,7 +116,6 @@ const CheckboxGroup = forwardRef<
       }
     }
   }, [])
-  
 
   const innerProps = useInnerProps(
     props,

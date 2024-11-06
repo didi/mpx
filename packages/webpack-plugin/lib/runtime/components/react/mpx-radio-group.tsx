@@ -102,7 +102,6 @@ const radioGroup = forwardRef<
     })
   }, [])
 
-
   useEffect(() => {
     if (formValuesMap) {
       if (!props.name) {

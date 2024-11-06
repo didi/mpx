@@ -155,9 +155,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const hasSimultaneousHandlersChanged = prevSimultaneousHandlersRef.current.length !== (originSimultaneousHandlers?.length || 0) ||
   (originSimultaneousHandlers || []).some((handler, index) => handler !== prevSimultaneousHandlersRef.current[index])
 
-  const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !==( waitFor?.length || 0) ||
+  const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !== (waitFor?.length || 0) ||
   (waitFor || []).some((handler, index) => handler !== prevWaitForHandlersRef.current[index])
-  
+
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
     if (!bindchange) return

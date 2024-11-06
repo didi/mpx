@@ -122,7 +122,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
         formValuesMap.delete(props.name)
       }
     }
-  }, [])   
+  }, [])
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,

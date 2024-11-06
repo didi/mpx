@@ -537,5 +537,3 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
     return gesture?.current ? [gesture] : []
   })) || []
 }
-
-

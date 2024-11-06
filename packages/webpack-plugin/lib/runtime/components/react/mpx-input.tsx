@@ -360,7 +360,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const getValue = useCallback(() => {
     return inputValueRef.current
-  },[])
+  }, [])
 
   useEffect(() => {
     inputValueRef.current = inputValue
@@ -380,7 +380,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       }
     }
   }, [])
-  
 
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
