@@ -26,5 +26,5 @@ module.exports = function addQuery (request, data = {}, force, removeKeys) {
     })
   }
 
-  return (loaderString ? `${loaderString}!` : '') + resourcePath + stringifyQuery(queryObj, true)
+  return (loaderString ? `${loaderString}!` : '') + resourcePath + stringifyQuery(queryObj)
 }
