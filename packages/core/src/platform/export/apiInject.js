@@ -1,4 +1,4 @@
-import { isArray, isFunction, warn } from '@mpxjs/utils'
+import { callWithErrorHandling, isArray, isFunction, isObject, warn } from '@mpxjs/utils'
 import { currentInstance } from '../../core/proxy'
 
 const ProvidesMap = {
@@ -11,13 +11,27 @@ const ProvidesMap = {
 function isNative (Ctor) {
   return typeof Ctor === 'function' && /native code/.test(Ctor.toString())
 }
-
 /** @internal */
 export const hasSymbol =
   typeof Symbol !== 'undefined' &&
   isNative(Symbol) &&
   typeof Reflect !== 'undefined' &&
   isNative(Reflect.ownKeys)
+
+/** @internal createApp() 初始化应用层 scope provide */
+export function initAppProvides (appOptions) {
+  const provideOpt = appOptions.provide
+  if (provideOpt) {
+    const provided = isFunction(provideOpt)
+      ? callWithErrorHandling(provideOpt.bind(appOptions), appOptions, 'createApp provide function')
+      : provideOpt
+    if (isObject(provided)) {
+      ProvidesMap.__app = provided
+    } else {
+      warn('App provides must be an object or a function that returns an object.')
+    }
+  }
+}
 
 function resolvePageId (context) {
   if (context && isFunction(context.getPageId)) {
@@ -36,19 +50,6 @@ export function removePageProvides (context) {
   if (ProvidesMap.__pages[pageId]) {
     delete ProvidesMap.__pages[pageId]
   }
-}
-
-/** 应用层 scope */
-export function provideApp (key, value) {
-  if (!currentInstance) {
-    warn('mpx.provide() can only be used inside setup().')
-    return
-  }
-  const provides = ProvidesMap.__app
-  if (key in provides) {
-    warn(`App provide() key [${key}] already exists, it will be overwritten.`)
-  }
-  provides[key] = value
 }
 
 export function provide (key, value) {

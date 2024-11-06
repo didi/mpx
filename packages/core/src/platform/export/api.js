@@ -2,7 +2,6 @@ import { set, del, reactive, isReactive } from '../../observer/reactive'
 import { isRef } from '../../observer/ref'
 import { watch } from '../../observer/watch'
 import { injectMixins } from '../../core/injectMixins'
-import { provideApp } from './apiInject'
 
 const APIs = {
   injectMixins,
@@ -12,8 +11,7 @@ const APIs = {
   set,
   delete: del,
   isReactive,
-  isRef,
-  provide: provideApp
+  isRef
 }
 
 const InstanceAPIs = {

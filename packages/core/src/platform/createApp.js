@@ -5,6 +5,7 @@ import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as webLifecycle from '../platform/patch/web/lifecycle'
 import Mpx from '../index'
+import { initAppProvides } from './export/apiInject'
 
 const webAppHooksMap = makeMap(mergeLifecycle(webLifecycle.LIFECYCLE).app)
 
@@ -87,6 +88,7 @@ export default function createApp (option, config = {}) {
       return appData
     }
   } else {
+    initAppProvides(defaultOptions)
     defaultOptions.onAppInit && defaultOptions.onAppInit()
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)

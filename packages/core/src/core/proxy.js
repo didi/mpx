@@ -101,6 +101,7 @@ function preProcessRenderData (renderData) {
 
 export default class MpxProxy {
   constructor (options, target, reCreated) {
+    console.log('😄 MpxProxy', options, target, reCreated)
     this.target = target
     // 兼容 getCurrentInstance.proxy
     this.proxy = target
@@ -370,7 +371,7 @@ export default class MpxProxy {
     const provideOpt = this.options.provide
     if (provideOpt) {
       const provided = isFunction(provideOpt)
-        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'provide function')
+        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'createApp provide function')
         : provideOpt
       if (!isObject(provided)) {
         return
