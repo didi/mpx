@@ -1,4 +1,4 @@
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback'
+// import ReactNativeHapticFeedback from 'react-native-haptic-feedback'
 import { Vibration } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 
@@ -8,10 +8,10 @@ const getType = function (type = 'light') {
 const vibrateShort = function (options = {}) {
   const { type = 'light', success, fail, complete } = options
   try {
-    ReactNativeHapticFeedback.trigger(getType(type), {
-      ignoreAndroidSystemSettings: true,
-      enableVibrateFallback: true
-    })
+    // ReactNativeHapticFeedback.trigger(getType(type), {
+    //   ignoreAndroidSystemSettings: true,
+    //   enableVibrateFallback: true
+    // })
     const result = {
       errMsg: 'vibrateShort:ok'
     }
