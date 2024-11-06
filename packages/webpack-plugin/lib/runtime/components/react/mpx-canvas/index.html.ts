@@ -247,40 +247,6 @@ function handleMessage(_a) {
             targets[target][key] = populateRefs(value);
             break;
         }
-        case "construct": {
-            var constructor = payload.constructor, target = payload.id, _d = payload.args, args = _d === void 0 ? [] : _d;
-            var newArgs = createObjectsFromArgs(args);
-            var object = void 0;
-            try {
-                object = new ((_c = constructors[constructor]).bind.apply(_c, __spreadArray([void 0], newArgs, false)))();
-            }
-            catch (error) {
-                throw new Error("Error while constructing ".concat(constructor, " ").concat(error.message));
-            }
-            object.__constructorName__ = constructor;
-            var message = toMessage({});
-            targets[target] = object;
-            window.ReactNativeWebView.postMessage(JSON.stringify(__assign({ id: id }, message)));
-            break;
-        }
-        case "listen": {
-            var types = payload.types, target_1 = payload.target;
-            for (var _i = 0, types_1 = types; _i < types_1.length; _i++) {
-                var eventType = types_1[_i];
-                targets[target_1].addEventListener(eventType, function (e) {
-                    var _a;
-                    var message = toMessage({
-                        type: "event",
-                        payload: {
-                            type: e.type,
-                            target: __assign(__assign({}, flattenObject(targets[target_1])), (_a = {}, _a[WEBVIEW_TARGET] = target_1, _a)),
-                        },
-                    });
-                    window.ReactNativeWebView.postMessage(JSON.stringify(__assign({ id: id }, message)));
-                });
-            }
-            break;
-        }
     }
 }
 var handleError = function (err, message) {

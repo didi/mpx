@@ -21,6 +21,7 @@ const PROPERTIES = {
 }
 
 const METHODS = [
+  // draw、createCircularGradient、setFillStyle、 setFontSize、 setGlobalAlpha、 setLineCap、setLineJoin、setLineWidth、setMiterLimit、setShadow、setStrokeStyle、 setTextAlign、setTextBaseline 不支持
   'arc',
   'arcTo',
   'beginPath',
@@ -58,10 +59,11 @@ const METHODS = [
 ]
 
 export function useContext2D (canvas: any) {
-  const contextRef = useWebviewBinding(
-    'context2D',
-    PROPERTIES,
-    METHODS
+  const contextRef = useWebviewBinding({
+    targetName: 'context2D',
+    properties: PROPERTIES,
+    methods: METHODS
+  }
   )
 
   useEffect(() => {

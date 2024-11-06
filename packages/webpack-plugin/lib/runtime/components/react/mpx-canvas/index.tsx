@@ -1,14 +1,23 @@
+/**
+ * ✘ type
+ * ✘ canvas-id
+ * ✘ disable-scroll
+ * ✔ bindtouchstart
+ * ✔ bindtouchmove
+ * ✔ bindtouchend
+ * ✔ bindtouchcancel
+ * ✔ bindlongtap
+ * ✔ binderror
+ */
 import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import { useLayout, useTransformStyle } from '../utils'
-import useInnerProps from '../getInnerListeners'
+import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import Bus from './Bus'
 import {
-  useWebviewBinding,
-  constructors,
-  WEBVIEW_TARGET
+  useWebviewBinding
 } from './utils'
 import { useContext2D } from './canvasRenderingContext2D'
 import html from './index.html'
@@ -48,15 +57,13 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const { style = {}, originWhitelist = ['*'], 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
   const { width, height } = style
   const [isLoaded, setIsLoaded] = useState(false)
-  const listenersRef = useRef([])
   const nodeRef = useRef(null)
 
-  const canvasRef = useWebviewBinding(
-    'canvas',
-    { width, height },
-    ['toDataURL'],
-    []
-  )
+  const canvasRef = useWebviewBinding({
+    targetName: 'canvas',
+    properties: { width, height },
+    methods: ['toDataURL']
+  })
 
   const {
     normalStyle,
@@ -84,33 +91,24 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   // 初始化bus和context2D
   useEffect(() => {
-      const webviewPostMessage = (message) => {
-        if (canvasRef.current.webview) {
-          canvasRef.current.webview.postMessage(JSON.stringify(message))
-        }
+    const webviewPostMessage = (message) => {
+      if (canvasRef.current.webview) {
+        canvasRef.current.webview.postMessage(JSON.stringify(message))
       }
+    }
 
-      // 设置bus
-      canvasRef.current.bus = new Bus(webviewPostMessage)
-      canvasRef.current.bus.pause()
+    // 设置bus
+    canvasRef.current.bus = new Bus(webviewPostMessage)
+    canvasRef.current.bus.pause()
 
-      // 设置listeners数组
-      canvasRef.current.listeners = []
+    // 设置context2D
+    canvasRef.current.context2D = context2D
 
-      // 设置addMessageListener方法
-      canvasRef.current.addMessageListener = addMessageListener
+    // 设置getContext方法
+    canvasRef.current.getContext = getContext
 
-      // 设置removeMessageListener方法
-      canvasRef.current.removeMessageListener = removeMessageListener
-
-      // 设置context2D
-      canvasRef.current.context2D = context2D
-
-      // 设置getContext方法
-      canvasRef.current.getContext = getContext
-
-      // 设置postMessage方法
-      canvasRef.current.postMessage = postMessage
+    // 设置postMessage方法
+    canvasRef.current.postMessage = postMessage
   }, [])
 
   const getContext = useCallback((contextType: string) => {
@@ -120,22 +118,8 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     return null
   }, [])
 
-  const addMessageListener = useCallback((listener) => {
-    listenersRef.current.push(listener)
-    return () => removeMessageListener(listener)
-  }, [])
-
-  const removeMessageListener = useCallback((listener) => {
-    const index = listenersRef.current.indexOf(listener)
-    if (index > -1) {
-      listenersRef.current.splice(index, 1)
-    }
-  }, [])
-
   const postMessage = useCallback(async (message) => {
     if (!canvasRef.current?.bus) return
-
-    const { stack } = new Error()
     const { type, payload } = await canvasRef.current.bus.post({
       id: Math.random(),
       ...message
@@ -143,9 +127,17 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
     switch (type) {
       case 'error': {
-        const error = new Error(payload.message)
-        error.stack = stack
-        throw error
+        const { binderror } = props
+        binderror &&
+          binderror(
+            getCustomEvent('error', {}, {
+              detail: {
+                errMsg: payload.message
+              },
+              layoutRef
+            }, props)
+          )
+        break
       }
       case 'json': {
         return payload
@@ -156,39 +148,29 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     }
   }, [])
 
-  const handleMessage = useCallback((e) => {
-
-    let data = JSON.parse(e.nativeEvent.data)
+  const onMessage = useCallback((e) => {
+    const data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
-      case 'log': {
-        console.log(...data.payload)
+      case 'error': {
+        const { binderror } = props
+        binderror &&
+          binderror(
+            getCustomEvent('error', e, {
+              detail: {
+                errMsg: data.payload.message
+              },
+              layoutRef
+            }, props)
+          )
         break
       }
-      case 'error': {
-        throw new Error(data.payload.message)
-      }
       default: {
-        if (data.payload) {
-          const constructor = constructors[data.meta?.constructor]
-          if (constructor) {
-            const { args, payload } = data
-            const object = constructor.constructLocally(canvasRef.current, ...args)
-            Object.assign(object, payload, {
-              [WEBVIEW_TARGET]: data.meta.target
-            })
-            data = {
-              ...data,
-              payload: object
-            }
-          }
-          canvasRef.current.listeners.forEach(listener => listener(data.payload))
-        }
         canvasRef.current.bus.handle(data)
       }
     }
   }, [])
 
-  const handleLoad = useCallback(() => {
+  const onLoad = useCallback(() => {
     setIsLoaded(true)
     if (canvasRef.current?.bus) {
       canvasRef.current.bus.resume()
@@ -215,8 +197,8 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
           ]}
           source={{ html }}
           originWhitelist={originWhitelist}
-          onMessage={handleMessage}
-          onLoad={handleLoad}
+          onMessage={onMessage}
+          onLoad={onLoad}
           overScrollMode="never"
           mixedContentMode="always"
           scalesPageToFit={false}
@@ -242,8 +224,8 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         style={[stylesheet.webview, { height, width }]}
         source={{ html }}
         originWhitelist={originWhitelist}
-        onMessage={handleMessage}
-        onLoad={handleLoad}
+        onMessage={onMessage}
+        onLoad={onLoad}
         scrollEnabled={false}
       />
     </View>

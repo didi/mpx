@@ -1,3 +1,4 @@
+import { warn } from '@mpxjs/utils'
 interface Message {
   id?: string
   type: string
@@ -34,7 +35,7 @@ export default class Bus {
     if (handler) {
       handler(message)
     } else {
-      console.warn('Received unexpected message', message)
+      warn(`Received unexpected message: ${message}`)
     }
   }
 
