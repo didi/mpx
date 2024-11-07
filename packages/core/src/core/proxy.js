@@ -370,7 +370,7 @@ export default class MpxProxy {
     const provideOpt = this.options.provide
     if (provideOpt) {
       const provided = isFunction(provideOpt)
-        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'createApp provide function')
+        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'provide function')
         : provideOpt
       if (!isObject(provided)) {
         return
