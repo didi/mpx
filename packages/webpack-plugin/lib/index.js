@@ -1815,7 +1815,7 @@ try {
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
 
-        if (isWeb(mpx.mode)) {
+        if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
@@ -1832,7 +1832,7 @@ try {
             }
           })
           // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
-          if (mpxStyleLoaderIndex === -1 && queryObj.mpxStyleOptions) {
+          if (mpxStyleLoaderIndex === -1) {
             let loaderIndex = -1
             if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
               loaderIndex = cssLoaderIndex
