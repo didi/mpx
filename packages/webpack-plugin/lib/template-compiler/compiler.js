@@ -115,7 +115,7 @@ let i18nInjectableComputed = []
 let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
-let usingComponentsKeys = []
+let usingComponents = []
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -631,7 +631,9 @@ function parse (template, options) {
   hasOptionalChaining = false
   processingTemplate = false
   rulesResultMap.clear()
-  usingComponentsKeys = Object.keys(options.usingComponentsInfo)
+
+  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
+  usingComponents = Object.keys(options.usingComponentsInfo)
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -654,7 +656,7 @@ function parse (template, options) {
     type: 'template',
     testKey: 'tag',
     data: {
-      usingComponents: usingComponentsKeys
+      usingComponents
     },
     warn: _warn,
     error: _error
@@ -797,7 +799,7 @@ function parse (template, options) {
 
   if (!tagNames.has('component') && options.checkUsingComponents) {
     const arr = []
-    usingComponentsKeys.forEach((item) => {
+    usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
         arr.push(item)
       }
@@ -973,7 +975,7 @@ function processComponentIs (el, options) {
 
   const range = getAndRemoveAttr(el, 'range').val
   const isInRange = makeMap(range || '')
-  el.components = (usingComponentsKeys).filter(i => {
+  el.components = (usingComponents).filter(i => {
     if (!range) return true
     return isInRange(i)
   })
@@ -2145,7 +2147,7 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el, options) {
-  return usingComponentsKeys.indexOf(el.tag) !== -1 || el.tag === 'component'
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
 function processExternalClasses (el, options) {

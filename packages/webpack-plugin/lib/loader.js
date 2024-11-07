@@ -209,12 +209,12 @@ module.exports = function (content) {
         finalCallback(err)
       }
     },
-    (componentInfo, callback) => {
+    (jsonInfo, callback) => {
       const {
         componentPlaceholder,
         componentGenerics,
         usingComponentsInfo
-      } = componentInfo
+      } = jsonInfo
 
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
@@ -236,7 +236,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentGenerics,
           autoScope,
           callback
@@ -257,7 +257,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentGenerics,
           autoScope,
           callback
@@ -325,7 +325,7 @@ module.exports = function (content) {
           isNative,
           ctorType,
           moduleId,
-          usingComponentsInfo,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
