@@ -152,7 +152,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     layoutProps,
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout: onWrapperLayout })
-  console.log('--------------layoutStyle', layoutStyle)
+  console.log('--------------layoutStyle', layoutStyle, layoutRef.current)
 
   const [state, setState] = useState({
     width: dir === 'x' && typeof defaultWidth === 'number' ? defaultWidth - previousMargin - nextMargin : defaultWidth,
@@ -304,6 +304,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       !Number.isNaN(+step) && createAutoPlay()
     } else {
       const targetOffset = getInitIndex()
+      console.log('---------useEffect---',targetOffset)
       offset.value = targetOffset
       start.value = targetOffset
     }
@@ -362,8 +363,10 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
 
   const animatedStyles = useAnimatedStyle(() => {
     if (dir === 'x') {
+      console.log(1111)
       return { transform: [{ translateX: offset.value.x }]}
     } else {
+      console.log(2222, offset.value.y)
       return { transform: [{ translateY: offset.value.y }]}
     }
   })
@@ -397,14 +400,14 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       start.value = targetOffset
       const eventData = getCustomEvent('change', {}, { detail: { current: targetIndex.current, source: 'touch' }, layoutRef: layoutRef })
       props.bindchange && props.bindchange(eventData)
-      !Number.isNaN(+step) && createAutoPlay()
+      props.autoplay && !Number.isNaN(+step) && createAutoPlay()
     })
     .onFinalize(() => {
     });
-
+  
   return (<View style={[normalStyle, layoutStyle, { overflow: "scroll" }]} {...layoutProps} {...innerProps}>
     <GestureDetector gesture={gesture}>
-      <Animated.View style={[{ flexDirection: "row" }, animatedStyles]}>
+      <Animated.View style={[{ flexDirection: dir === 'x' ? 'row' : 'column' }, animatedStyles]}>
         {arrPages}
         {/*wrapChildren({
           children: arrPages
