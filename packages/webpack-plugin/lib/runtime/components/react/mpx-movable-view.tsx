@@ -17,7 +17,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, Ref } from 'react'
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -161,6 +161,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   if (hasSimultaneousHandlersChanged || hasWaitForHandlersChanged) {
     gestureSwitch.current = !gestureSwitch.current
   }
+
+  prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
+  prevWaitForHandlersRef.current = waitFor || []
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
@@ -343,9 +346,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const gesture = useMemo(() => {
-    prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
-    prevWaitForHandlersRef.current = waitFor || []
-
     const handleTriggerStart = (e: any) => {
       'worklet'
       extendEvent(e)
