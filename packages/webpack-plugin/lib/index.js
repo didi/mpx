@@ -744,7 +744,7 @@ class MpxWebpackPlugin {
             if (isApp) return MPX_APP_MODULE_ID
             const customComponentModuleId = this.options.customComponentModuleId
             if (typeof customComponentModuleId === 'function') {
-              const customModuleId = customComponentModuleId(filePath, isApp)
+              const customModuleId = customComponentModuleId(filePath)
               if (customModuleId) return customModuleId
             }
             return '_' + mpx.pathHash(filePath)

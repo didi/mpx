@@ -172,7 +172,13 @@ module.exports = function (content) {
             // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
             this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, mpx.globalComponentsInfo, this.context))
           }
-          const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
+          const setUsingComponentInfo = (name, moduleId) => {
+            if (isApp) {
+              mpx.globalComponentsInfo[name] = { mid: moduleId }
+            } else {
+              usingComponentsInfo[name] = { mid: moduleId }
+            }
+          }
           async.eachOf(usingComponents, (component, name, callback) => {
             if (isApp) {
               mpx.globalComponents[name] = addQuery(component, {
@@ -181,22 +187,14 @@ module.exports = function (content) {
             }
             if (!isUrlRequest(component)) {
               const moduleId = mpx.getModuleId(component, isApp)
-              if (!isApp) {
-                setUsingComponentInfo(name, moduleId)
-              } else {
-                mpx.globalComponentsInfo[name] = { mid: moduleId }
-              }
+              setUsingComponentInfo(name, moduleId)
               return callback()
             }
             resolve(this.context, component, loaderContext, (err, resource) => {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
-              if (!isApp) {
-                setUsingComponentInfo(name, moduleId)
-              } else {
-                mpx.globalComponentsInfo[name] = { mid: moduleId }
-              }
+              setUsingComponentInfo(name, moduleId)
               callback()
             })
           }, (err) => {
