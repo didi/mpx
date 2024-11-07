@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect, useCallback } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,

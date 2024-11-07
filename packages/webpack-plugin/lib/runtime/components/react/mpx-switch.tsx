@@ -5,7 +5,7 @@
  * ✔ color
  */
 import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
-import { useRef, useEffect, forwardRef, JSX, useState, useContext, useCallback } from 'react'
+import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
 import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'

@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, useCallback, useMemo } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
