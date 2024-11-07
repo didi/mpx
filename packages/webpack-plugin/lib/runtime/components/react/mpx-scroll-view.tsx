@@ -114,6 +114,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     binddragstart,
     binddragging,
     binddragend,
+    bindtouchstart,
+    bindtouchmove,
+    bindtouchend,
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
@@ -387,7 +390,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
   function onScrollTouchMove (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchmove } = props
     bindtouchmove && bindtouchmove(e)
     if (enhanced) {
       binddragging &&
@@ -404,7 +406,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onScrollTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchend } = props
     bindtouchend && bindtouchend(e)
     if (enhanced) {
       binddragend &&
@@ -437,9 +438,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     ref: scrollViewRef,
     onScroll: onScroll,
     onContentSizeChange: onContentSizeChange,
-    bindtouchstart: onScrollTouchStart,
-    bindtouchmove: onScrollTouchMove,
-    bindtouchend: onScrollTouchEnd,
+    bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) ? onScrollTouchStart : undefined,
+    bindtouchmove: ((enhanced && binddragging) || bindtouchend) ? onScrollTouchMove : undefined,
+    bindtouchend: ((enhanced && binddragend) || bindtouchend) ? onScrollTouchEnd : undefined,
     onScrollBeginDrag: onScrollDrag,
     onScrollEndDrag: onScrollDrag,
     onMomentumScrollEnd: onScrollEnd,

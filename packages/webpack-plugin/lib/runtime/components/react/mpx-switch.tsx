@@ -51,8 +51,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const changeHandler = bindchange || catchchange
 
-  const checkedValueRef = useRef(checked)
-
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
   const formContext = useContext(FormContext)
@@ -78,10 +76,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     setIsChecked(checked)
   }, [checked])
 
-  useEffect(() => {
-    checkedValueRef.current = isChecked
-  }, [isChecked])
-
   const nodeRef = useRef(null)
   useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef)
 
@@ -101,22 +95,23 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }
 
-  const resetValue = useCallback(() => {
+  const resetValue = () => {
     setIsChecked(false)
-  }, [])
+  }
 
-  const getValue = useCallback(() => {
-    return checkedValueRef.current
-  }, [])
+  const getValue = () => {
+    return isChecked
+  }
+
+  if (formValuesMap) {
+    if (!props.name) {
+      warn('If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
+    }
+  }
 
   useEffect(() => {
-    if (formValuesMap) {
-      if (!props.name) {
-        warn('If a form component is used, the name attribute is required.')
-      } else {
-        formValuesMap.set(props.name, { getValue, resetValue })
-      }
-    }
     return () => {
       if (formValuesMap && props.name) {
         formValuesMap.delete(props.name)

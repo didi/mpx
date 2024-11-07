@@ -87,29 +87,29 @@ const radioGroup = forwardRef<
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const getValue = useCallback((): string | undefined => {
+  const getValue = (): string | undefined => {
     for (const key in groupValue) {
       if (groupValue[key].checked) {
         return key
       }
     }
-  }, [])
+  }
 
-  const resetValue = useCallback(() => {
+  const resetValue = () => {
     Object.keys(groupValue).forEach((key) => {
       groupValue[key].checked = false
       groupValue[key].setValue(false)
     })
-  }, [])
+  }
 
-  useEffect(() => {
-    if (formValuesMap) {
-      if (!props.name) {
-        warn('If a form component is used, the name attribute is required.')
-      } else {
-        formValuesMap.set(props.name, { getValue, resetValue })
-      }
+  if (formValuesMap) {
+    if (!props.name) {
+      warn('If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
     }
+  }
+  useEffect(() => {
     return () => {
       if (formValuesMap && props.name) {
         formValuesMap.delete(props.name)

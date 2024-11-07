@@ -176,7 +176,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
-  const inputValueRef = useRef(defaultValue)
+
   const styleObj = {
     padding: 0,
     ...style,
@@ -354,26 +354,23 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
-  const resetValue = useCallback(() => {
+  const resetValue = () => {
     setInputValue('')
-  }, [])
+  }
 
-  const getValue = useCallback(() => {
-    return inputValueRef.current
-  }, [])
+  const getValue = () => {
+    return inputValue
+  }
 
-  useEffect(() => {
-    inputValueRef.current = inputValue
-  }, [inputValue])
-
-  useEffect(() => {
-    if (formValuesMap) {
-      if (!props.name) {
-        warn('If a form component is used, the name attribute is required.')
-      } else {
-        formValuesMap.set(props.name, { getValue, resetValue })
-      }
+  if (formValuesMap) {
+    if (!props.name) {
+      warn('If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
     }
+  }
+
+  useEffect(() => {
     return () => {
       if (formValuesMap && props.name) {
         formValuesMap.delete(props.name)

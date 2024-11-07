@@ -85,7 +85,7 @@ const CheckboxGroup = forwardRef<
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const getValue = useCallback((): string[] => {
+  const getValue = (): string[] => {
     const arr: string[] = []
     for (const key in groupValue) {
       if (groupValue[key].checked) {
@@ -93,23 +93,24 @@ const CheckboxGroup = forwardRef<
       }
     }
     return arr
-  }, [])
+  }
 
-  const resetValue = useCallback(() => {
+  const resetValue = () => {
     Object.keys(groupValue).forEach((key) => {
       groupValue[key].checked = false
       groupValue[key].setValue(false)
     })
-  }, [])
+  }
+
+  if (formValuesMap) {
+    if (!props.name) {
+      warn('If a form component is used, the name attribute is required.')
+    } else {
+      formValuesMap.set(props.name, { getValue, resetValue })
+    }
+  }
 
   useEffect(() => {
-    if (formValuesMap) {
-      if (!props.name) {
-        warn('If a form component is used, the name attribute is required.')
-      } else {
-        formValuesMap.set(props.name, { getValue, resetValue })
-      }
-    }
     return () => {
       if (formValuesMap && props.name) {
         formValuesMap.delete(props.name)
