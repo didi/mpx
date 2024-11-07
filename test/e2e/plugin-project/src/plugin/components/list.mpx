@@ -1,7 +1,7 @@
 <template>
   <view class="list">
     <view wx:for="{{listData}}" wx:key="index">{{item}}</view>
-<!--    <mp-view></mp-view>-->
+    <mp-view></mp-view>
   </view>
 </template>
 
@@ -13,7 +13,10 @@
 </style>
 
 <script type="application/json">
-  {
-    "component": true
+{
+  "component": true,
+  "componentGenerics": {
+    "mp-view": true
   }
+}
 </script>

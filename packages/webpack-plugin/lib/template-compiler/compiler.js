@@ -2246,9 +2246,6 @@ function processBuiltInComponents (el, meta) {
 }
 
 function postProcessAliComponentRootView (el, options, meta) {
-  if (el.is && el.components) {
-    return
-  }
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
     { condition: /^(on|catch)TouchStart$/, action: 'clone' },
@@ -2670,7 +2667,7 @@ function closeElement (el, meta, options) {
         }
       })
     }
-    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
+    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }
@@ -2719,7 +2716,7 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el, callback) {
+function postProcessComponentIs (el, postProcessChild) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2741,7 +2738,7 @@ function postProcessComponentIs (el, callback) {
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
-      callback(newChild)
+      postProcessChild(newChild)
     })
 
     if (!el.parent) {
