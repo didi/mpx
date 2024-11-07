@@ -20,6 +20,7 @@ module.exports = ({ id }) => {
           }
           return
         }
+        if (node.selector === ':host') return
         node.selector = selectorParser(selectors => {
           selectors.each(selector => {
             let node = null

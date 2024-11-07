@@ -2264,7 +2264,7 @@ function postProcessAliComponentRootView (el, options, meta) {
   const tagName = el.tag
   const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
   const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} ${mid} host-${mid}` }
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${mid}` }
   ]
   const newAttrs = []
   const allAttrs = cloneAttrsList(el.attrsList)
