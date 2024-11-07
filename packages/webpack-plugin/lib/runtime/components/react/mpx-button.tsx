@@ -174,11 +174,13 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
     }
   }, [])
 
-  const loadingStyle = {
-    ...styles.loading,
-    transform: [{ rotate }],
-    marginRight: alone ? 0 : 5
-  }
+  const loadingStyle = extendObject(
+    styles.loading,
+    {
+      transform: [{ rotate }],
+      marginRight: alone ? 0 : 5
+    }
+  )
 
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }

@@ -46,7 +46,6 @@ export interface CheckboxProps extends Selection {
   'parent-height'?: number;
   children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const styles = StyleSheet.create({
@@ -91,8 +90,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
-      bindtap,
-      catchtap
+      bindtap
     } = props
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
@@ -119,14 +117,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      if (disabled) return
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-      onChange(evt)
-    }
-
-    const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      if (disabled) return
-      catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
+      bindtap!(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
 
@@ -174,8 +165,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         },
         layoutProps,
         {
-          bindtap: onTap,
-          catchtap: catchTap
+          bindtap: !disabled && onTap
         }
       ),
       [],
