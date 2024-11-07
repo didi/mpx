@@ -1,4 +1,4 @@
-import { callWithErrorHandling, isArray, isFunction, isObject, warn } from '@mpxjs/utils'
+import { callWithErrorHandling, isFunction, isObject, warn } from '@mpxjs/utils'
 import { currentInstance } from '../../core/proxy'
 
 const ProvidesMap = {
@@ -7,16 +7,6 @@ const ProvidesMap = {
   /** 页面 scope */
   __pages: Object.create(null)
 }
-
-function isNative (Ctor) {
-  return typeof Ctor === 'function' && /native code/.test(Ctor.toString())
-}
-/** @internal */
-export const hasSymbol =
-  typeof Symbol !== 'undefined' &&
-  isNative(Symbol) &&
-  typeof Reflect !== 'undefined' &&
-  isNative(Reflect.ownKeys)
 
 /** @internal createApp() 初始化应用层 scope provide */
 export function initAppProvides (appOptions) {
@@ -87,16 +77,4 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
   } else {
     warn(`injection "${String(key)}" not found.`)
   }
-}
-
-/** @internal */
-export function normalizeInject (raw) {
-  if (isArray(raw)) {
-    const res = {}
-    for (let i = 0; i < raw.length; i++) {
-      res[raw[i]] = raw[i]
-    }
-    return res
-  }
-  return raw
 }

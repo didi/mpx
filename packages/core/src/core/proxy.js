@@ -48,7 +48,7 @@ import {
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
-import { hasSymbol, inject, normalizeInject, provide, removePageProvides } from '../platform/export/apiInject'
+import { inject, provide, removePageProvides } from '../platform/export/apiInject'
 
 let uid = 0
 
@@ -101,7 +101,6 @@ function preProcessRenderData (renderData) {
 
 export default class MpxProxy {
   constructor (options, target, reCreated) {
-    console.log('😄 MpxProxy', options, target, reCreated)
     this.target = target
     // 兼容 getCurrentInstance.proxy
     this.proxy = target
@@ -376,8 +375,7 @@ export default class MpxProxy {
       if (!isObject(provided)) {
         return
       }
-      const keys = hasSymbol ? Reflect.ownKeys(provided) : Object.keys(provided)
-      keys.forEach(key => {
+      Object.keys(provided).forEach(key => {
         provide(key, provided[key])
       })
     }
@@ -392,7 +390,11 @@ export default class MpxProxy {
 
   resolveInject (injectOpt) {
     if (isArray(injectOpt)) {
-      injectOpt = normalizeInject(injectOpt)
+      const normalized = {}
+      for (let i = 0; i < injectOpt.length; i++) {
+        normalized[injectOpt[i]] = injectOpt[i]
+      }
+      injectOpt = normalized
     }
     const injectObj = {}
     for (const key in injectOpt) {

@@ -122,8 +122,6 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
 }
 
-type InjectKey = string | Symbol
-
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
   data?: D
   properties?: P
@@ -139,9 +137,9 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
 
   initData?: Record<string, any>
 
-  provide?: Record<string | symbol, any> | (() => Record<string | symbol, any>)
+  provide?: Record<string, any> | (() => Record<string, any>)
   inject?:
-    | { [key: string]: InjectKey | { from?: InjectKey; default?: any } }
+    | { [key: string]: string | Symbol | { from?: string | Symbol; default?: any } }
     | Array<string>
 
   [index: string]: any
