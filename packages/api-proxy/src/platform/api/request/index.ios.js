@@ -4,10 +4,9 @@ import { Platform } from 'react-native'
 const request = function (options) {
   if (parseInt(Platform.Version, 10) >= 17) {
     Object.assign(options, {
-      paramsSerializer: (params) =>
-        qs.stringify(params, {
-          format: 'RFC3986'
-        })
+      paramsSerializer: {
+        indexes: null
+      }
     })
   }
   return requestFun(options)
