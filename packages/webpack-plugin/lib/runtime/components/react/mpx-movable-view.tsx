@@ -122,7 +122,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const prevSimultaneousHandlersRef = useRef<Array<GestureHandler>>(originSimultaneousHandlers || [])
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
-
+  const gestureSwitch = useRef(false)
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const offsetX = useSharedValue(x)
@@ -147,6 +147,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const nodeRef = useRef<View>(null)
 
+  prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
+  prevWaitForHandlersRef.current = waitFor || []
+
   useNodesRef(props, ref, nodeRef, {
     defaultStyle: styles.container,
     gestureRef: movableGestureRef
@@ -157,6 +160,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !== (waitFor?.length || 0) ||
   (waitFor || []).some((handler, index) => handler !== prevWaitForHandlersRef.current[index])
+
+  if (hasSimultaneousHandlersChanged || hasWaitForHandlersChanged) {
+    gestureSwitch.current = !gestureSwitch.current
+  }
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
@@ -339,8 +346,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const gesture = useMemo(() => {
-    prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
-    prevWaitForHandlersRef.current = waitFor || []
     const handleTriggerStart = (e: any) => {
       'worklet'
       extendEvent(e)
@@ -379,7 +384,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       bindtouchend && runOnJS(bindtouchend)(e)
       catchtouchend && runOnJS(catchtouchend)(e)
     }
-    return Gesture.Pan()
+    const gesturePan = Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
@@ -473,15 +478,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       })
       .withRef(movableGestureRef)
-  }, [disabled, direction, inertia, outOfBounds, hasSimultaneousHandlersChanged, hasWaitForHandlersChanged])
+    if (simultaneousHandlers && simultaneousHandlers.length) {
+      gesturePan.simultaneousWithExternalGesture(...simultaneousHandlers)
+    }
 
-  if (simultaneousHandlers && simultaneousHandlers.length) {
-    gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
-  }
-
-  if (waitForHandlers && waitForHandlers.length) {
-    gesture.requireExternalGestureToFail(...waitForHandlers)
-  }
+    if (waitForHandlers && waitForHandlers.length) {
+      gesturePan.requireExternalGestureToFail(...waitForHandlers)
+    }
+    return gesturePan
+  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
