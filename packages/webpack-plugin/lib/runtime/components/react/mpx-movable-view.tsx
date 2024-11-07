@@ -147,9 +147,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const nodeRef = useRef<View>(null)
 
-  prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
-  prevWaitForHandlersRef.current = waitFor || []
-
   useNodesRef(props, ref, nodeRef, {
     defaultStyle: styles.container,
     gestureRef: movableGestureRef
@@ -346,6 +343,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const gesture = useMemo(() => {
+    prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
+    prevWaitForHandlersRef.current = waitFor || []
+
     const handleTriggerStart = (e: any) => {
       'worklet'
       extendEvent(e)
