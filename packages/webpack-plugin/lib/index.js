@@ -1831,7 +1831,8 @@ try {
               mpxStyleLoaderIndex = index
             }
           })
-          if (mpxStyleLoaderIndex === -1) {
+          // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
+          if (mpxStyleLoaderIndex === -1 && queryObj.mpxStyleOptions) {
             let loaderIndex = -1
             if (cssLoaderIndex > -1 && vueStyleLoaderIndex === -1) {
               loaderIndex = cssLoaderIndex
