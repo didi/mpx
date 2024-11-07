@@ -17,10 +17,13 @@ import { useLayout, useTransformStyle } from '../utils'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import Bus from './Bus'
 import {
-  useWebviewBinding
+  useWebviewBinding,
+  constructors,
+  WEBVIEW_TARGET
 } from './utils'
-import { useContext2D } from './canvasRenderingContext2D'
+import { useContext2D } from './CanvasRenderingContext2D'
 import html from './index.html'
+import './CanvasGradient'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -149,7 +152,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }, [])
 
   const onMessage = useCallback((e) => {
-    const data = JSON.parse(e.nativeEvent.data)
+    let data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
       case 'error': {
         const { binderror } = props
@@ -165,6 +168,22 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         break
       }
       default: {
+        if (data.payload) {
+          // createLinearGradient 方法调用需要在 constructors 中需要注册 CanvasGradient
+          const constructor = constructors[data.meta.constructor]
+          if (constructor) {
+            const { args, payload } = data
+            // RN 端同步生成一个 CanvasGradient 的实例
+            const object = constructor.constructLocally(canvasRef.current, ...args)
+            Object.assign(object, payload, {
+              [WEBVIEW_TARGET]: data.meta.target
+            })
+            data = {
+              ...data,
+              payload: object
+            }
+          }
+        }
         canvasRef.current.bus.handle(data)
       }
     }

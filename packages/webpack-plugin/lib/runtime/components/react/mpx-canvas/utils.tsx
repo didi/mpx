@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 export const WEBVIEW_TARGET = '@@WEBVIEW_TARGET'
 
-export const constructors = {}
+export const constructors: Record<string, any> = {}
 
 interface WebviewInstance {
   [WEBVIEW_TARGET]: string

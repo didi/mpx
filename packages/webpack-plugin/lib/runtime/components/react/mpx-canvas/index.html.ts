@@ -180,26 +180,12 @@ var toArgs = function (result) {
     var args = [];
     for (var key in result) {
         if (result[key] !== undefined && key !== "@@WEBVIEW_TARGET") {
-            if (typedArrays[result[key].constructor.name] !== undefined) {
-                result[key] = Array.from(result[key]);
-            }
             args.push(result[key]);
         }
     }
     return args;
 };
-var createObjectsFromArgs = function (args) {
-    var _a;
-    for (var index = 0; index < args.length; index += 1) {
-        var currentArg = args[index];
-        if (currentArg && currentArg.className !== undefined) {
-            var className = currentArg.className, classArgs = currentArg.classArgs;
-            var object = new ((_a = constructors[className]).bind.apply(_a, __spreadArray([void 0], classArgs, false)))();
-            args[index] = object;
-        }
-    }
-    return args;
-};
+
 var canvas = document.createElement("canvas");
 var autoScaledCanvas = new AutoScaledCanvas(canvas);
 var targets = {
@@ -207,14 +193,7 @@ var targets = {
     context2D: canvas.getContext("2d"),
 };
 var constructors = {
-    Image: Image,
-    Path2D: Path2D,
     CanvasGradient: CanvasGradient,
-    ImageData: ImageData,
-    Uint8ClampedArray: Uint8ClampedArray,
-};
-var typedArrays = {
-    Uint8ClampedArray: Uint8ClampedArray,
 };
 
 var populateRefs = function (arg) {
