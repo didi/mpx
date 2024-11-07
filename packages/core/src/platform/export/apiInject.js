@@ -48,7 +48,7 @@ export function provide (key, value) {
     warn('provide() can only be used inside setup().')
     return
   }
-  if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
+  if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
     // 小程序无法实现组件父级引用，所以 provide scope 设置为组件所在页面
     const provides = resolvePageProvides(instance.target)
     provides[key] = value
@@ -62,7 +62,7 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
     return
   }
   let provides = Object.create(null)
-  const isMiniProgram = __mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android'
+  const isMiniProgram = __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android'
   if (isMiniProgram) {
     provides = resolvePageProvides(instance.target)
   }
