@@ -145,6 +145,11 @@ module.exports = function (content) {
         if (ctorType !== 'app') {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
         }
+        if (isApp) {
+          rulesRunnerOptions.data = {
+            globalComponents: mpx.globalComponents
+          }
+        }
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
         try {
           if (rulesRunner) rulesRunner(ret)
@@ -158,8 +163,8 @@ module.exports = function (content) {
         if (ret.componentGenerics) {
           componentGenerics = Object.assign({}, ret.componentGenerics)
         }
-        if (ret.usingComponents) {
-          // fixUsingComponent(ret.usingComponents, mode)
+        const usingComponents = isApp ? mpx.globalComponents : ret.usingComponents
+        if (usingComponents) {
           if (isApp) {
             // Object.assign(mpx.globalComponents, json.usingComponents)
             // 在 rulesRunner 运行后保存全局注册组件
@@ -168,7 +173,7 @@ module.exports = function (content) {
             this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, mpx.globalComponentsInfo, this.context))
           }
           const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
-          async.eachOf(ret.usingComponents, (component, name, callback) => {
+          async.eachOf(usingComponents, (component, name, callback) => {
             if (isApp) {
               mpx.globalComponents[name] = addQuery(component, {
                 context: this.context
