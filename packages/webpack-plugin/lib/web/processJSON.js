@@ -12,7 +12,7 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
-const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
+// const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 
 module.exports = function (json, {
   loaderContext,
@@ -111,12 +111,12 @@ module.exports = function (json, {
     if (rulesRunner) {
       rulesRunner(jsonObj)
     }
-    if (isApp) {
-      // 收集全局组件
-      Object.assign(mpx.globalComponents, jsonObj.usingComponents)
-      // 在 rulesRunner 运行后保存全局注册组件
-      loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, loaderContext.context))
-    }
+    // if (isApp) {
+    //   // 收集全局组件
+    //   Object.assign(mpx.globalComponents, jsonObj.usingComponents)
+    //   // 在 rulesRunner 运行后保存全局注册组件
+    //   loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, loaderContext.context))
+    // }
   } catch (e) {
     return callback(e)
   }

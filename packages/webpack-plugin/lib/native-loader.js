@@ -228,7 +228,7 @@ module.exports = function (content) {
             finalCallback(err)
           })
         } else {
-          finalCallback(null)
+          finalCallback()
         }
       } catch (e) {
         return finalCallback(e)

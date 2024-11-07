@@ -21,6 +21,7 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const getRulesRunner = require('./platform')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
+const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 
 module.exports = function (content) {
   this.cacheable()
@@ -114,7 +115,7 @@ module.exports = function (content) {
       getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
         if (err) return callback(err)
         if (parts.json) parts.json.content = content
-        callback(null, content || '{}')
+        callback(null, content)
       })
     },
     (jsonContent, callback) => {
@@ -123,6 +124,7 @@ module.exports = function (content) {
       let componentGenerics = {}
       let usingComponentsInfo = {}
       const finalCallback = (err) => {
+        if (err) return
         usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
         callback(err, {
           componentPlaceholder,
@@ -158,13 +160,26 @@ module.exports = function (content) {
         }
         if (ret.usingComponents) {
           // fixUsingComponent(ret.usingComponents, mode)
+          if (isApp) {
+            // Object.assign(mpx.globalComponents, json.usingComponents)
+            // 在 rulesRunner 运行后保存全局注册组件
+            // todo 其余地方在使用mpx.globalComponents时存在缓存问题，要规避该问题需要在所有使用mpx.globalComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
+            // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
+            this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, mpx.globalComponentsInfo, this.context))
+          }
           const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
           async.eachOf(ret.usingComponents, (component, name, callback) => {
+            if (isApp) {
+              mpx.globalComponents[name] = addQuery(component, {
+                context: this.context
+              })
+            }
             if (!isUrlRequest(component)) {
               const moduleId = mpx.getModuleId(component, isApp)
-              // 避免和 RecordGlobalComponentsDependency 冲突
               if (!isApp) {
                 setUsingComponentInfo(name, moduleId)
+              } else {
+                mpx.globalComponentsInfo[name] = { mid: moduleId }
               }
               return callback()
             }
@@ -172,9 +187,10 @@ module.exports = function (content) {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
-              // 避免和 RecordGlobalComponentsDependency 冲突
               if (!isApp) {
                 setUsingComponentInfo(name, moduleId)
+              } else {
+                mpx.globalComponentsInfo[name] = { mid: moduleId }
               }
               callback()
             })
@@ -182,7 +198,7 @@ module.exports = function (content) {
             finalCallback(err)
           })
         } else {
-          finalCallback(null)
+          finalCallback()
         }
       } catch (err) {
         finalCallback(err)

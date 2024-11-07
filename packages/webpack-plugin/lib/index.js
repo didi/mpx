@@ -741,12 +741,13 @@ class MpxWebpackPlugin {
             return dep
           },
           getModuleId: (filePath, isApp = false) => {
+            if (isApp) return MPX_APP_MODULE_ID
             const customComponentModuleId = this.options.customComponentModuleId
             if (typeof customComponentModuleId === 'function') {
               const customModuleId = customComponentModuleId(filePath, isApp)
               if (customModuleId) return customModuleId
             }
-            return isApp ? MPX_APP_MODULE_ID : 'm' + mpx.pathHash(filePath)
+            return '_' + mpx.pathHash(filePath)
           },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
