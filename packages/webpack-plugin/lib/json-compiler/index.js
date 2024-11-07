@@ -206,11 +206,7 @@ module.exports = function (content) {
     type: 'json',
     waterfall: true,
     warn: emitWarning,
-    error: emitError,
-    data: {
-      // polyfill global usingComponents & record globalComponents
-      globalComponents: mpx.globalComponents
-    }
+    error: emitError
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'

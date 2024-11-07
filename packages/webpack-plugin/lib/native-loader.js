@@ -13,6 +13,8 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const isUrlRequestRaw = require('./utils/is-url-request')
 const resolve = require('./utils/resolve')
+const addQuery = require('./utils/add-query')
+const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
@@ -178,11 +180,14 @@ module.exports = function (content) {
     (jsonContent, callback) => {
       if (!jsonContent) return callback(null, {})
       let componentPlaceholder = []
+      let componentGenerics = {}
       let usingComponentsInfo = {}
       const finalCallback = (err) => {
+        if (err) return
         usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
         callback(err, {
           componentPlaceholder,
+          componentGenerics,
           usingComponentsInfo
         })
       }
@@ -199,19 +204,46 @@ module.exports = function (content) {
         if (ctorType !== 'app') {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
         }
+        if (isApp) {
+          rulesRunnerOptions.data = {
+            globalComponents: mpx.globalComponents
+          }
+        }
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        if (rulesRunner) rulesRunner(json)
+        try {
+          if (rulesRunner) rulesRunner(json)
+        } catch (e) {
+          return finalCallback(e)
+        }
 
         if (json.componentPlaceholder) {
           componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
         }
-        if (json.usingComponents) {
+        if (json.componentGenerics) {
+          componentGenerics = Object.assign({}, json.componentGenerics)
+        }
+        const usingComponents = isApp ? mpx.globalComponents : json.usingComponents
+        if (usingComponents) {
+          if (isApp) {
+            Object.assign(mpx.globalComponents, json.usingComponents)
+            // 在 rulesRunner 运行后保存全局注册组件
+            // todo 其余地方在使用mpx.globalComponents时存在缓存问题，要规避该问题需要在所有使用mpx.globalComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
+            // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
+            this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, mpx.globalComponentsInfo, this.context))
+          }
           const setUsingComponentInfo = (name, moduleId) => { usingComponentsInfo[name] = { mid: moduleId } }
           async.eachOf(json.usingComponents, (component, name, callback) => {
+            if (isApp) {
+              mpx.globalComponents[name] = addQuery(component, {
+                context: this.context
+              })
+            }
             if (!isUrlRequest(component)) {
               const moduleId = mpx.getModuleId(component, isApp)
               if (!isApp) {
                 setUsingComponentInfo(name, moduleId)
+              } else {
+                mpx.globalComponentsInfo[name] = { mid: moduleId }
               }
               return callback()
             }
@@ -221,6 +253,8 @@ module.exports = function (content) {
               const moduleId = mpx.getModuleId(rawResourcePath, isApp)
               if (!isApp) {
                 setUsingComponentInfo(name, moduleId)
+              } else {
+                mpx.globalComponentsInfo[name] = { mid: moduleId }
               }
               callback()
             })
@@ -234,11 +268,12 @@ module.exports = function (content) {
         return finalCallback(e)
       }
     },
-    (componentInfo, callback) => {
+    (jsonInfo, callback) => {
       const {
         componentPlaceholder,
+        componentGenerics,
         usingComponentsInfo
-      } = componentInfo
+      } = jsonInfo
 
       const {
         getRequire
@@ -261,8 +296,9 @@ module.exports = function (content) {
               isNative,
               ctorType,
               moduleId,
+              componentGenerics,
               componentPlaceholder,
-              usingComponentsInfo
+              usingComponentsInfo: JSON.stringify(usingComponentsInfo)
             })
             break
           case 'styles':
