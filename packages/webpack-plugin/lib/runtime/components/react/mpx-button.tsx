@@ -381,12 +381,24 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       },
       layoutProps,
       {
-        bindtouchstart: onTouchStart,
-        bindtouchend: onTouchEnd,
-        bindtap: onTap
+        bindtouchstart: (bindtouchstart || !disabled) && onTouchStart,
+        bindtouchend: (bindtouchend || !disabled) && onTouchEnd,
+        bindtap: !disabled && onTap
       }
     ),
-    [],
+    [
+      'disabled',
+      'size',
+      'type',
+      'plain',
+      'loading',
+      'hover-class',
+      'hover-style',
+      'hover-start-time',
+      'hover-stay-time',
+      'open-type',
+      'form-type'
+    ],
     {
       layoutRef,
       disableTap: disabled

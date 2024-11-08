@@ -125,7 +125,9 @@ const CheckboxGroup = forwardRef<
       },
       layoutProps
     ),
-    [],
+    [
+      'name'
+    ],
     {
       layoutRef
     }

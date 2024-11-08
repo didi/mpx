@@ -168,7 +168,11 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
           bindtap: !disabled && onTap
         }
       ),
-      [],
+      [
+        'value',
+        'disabled',
+        'checked'
+      ],
       {
         layoutRef
       }
