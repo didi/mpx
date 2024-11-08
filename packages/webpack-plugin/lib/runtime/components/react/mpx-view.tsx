@@ -7,6 +7,9 @@
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
+import Animated from 'react-native-reanimated'
+import useAnimationHooks from './useAnimationHooks'
+import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
@@ -14,6 +17,7 @@ import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
+  animation?: AnimationProp
   children?: ReactNode | ReactNode[]
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
@@ -24,6 +28,7 @@ export interface _ViewProps extends ViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'enable-animation'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -650,9 +655,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
+    'parent-height': parentHeight,
+    animation
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -747,9 +754,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
+  const viewStyle = Object.assign({}, innerStyle, layoutStyle)
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
+    style: viewStyle,
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -764,25 +772,37 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
-  return (
-    <View
+  enableAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableAnimation)
+  if (enableAnimationRef.current !== enableAnimation) {
+    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+  const finalStyle = enableAnimation
+    ? useAnimationHooks({
+      animation,
+      style: viewStyle
+    })
+    : viewStyle
+  const childNode = wrapWithChildren(props, {
+    hasVarDec,
+    enableBackground: enableBackgroundRef.current,
+    textStyle,
+    backgroundStyle,
+    varContext: varContextRef.current,
+    textProps
+  })
+  return animation?.actions?.length
+    ? (<Animated.View
+      {...innerProps}
+      style={finalStyle}
+    >
+      {childNode}
+    </Animated.View>)
+    : (<View
       {...innerProps}
     >
-      {
-        wrapWithChildren(
-          props,
-          {
-            hasVarDec,
-            enableBackground: enableBackgroundRef.current,
-            textStyle,
-            backgroundStyle,
-            varContext: varContextRef.current,
-            textProps
-          }
-        )
-      }
-    </View>
-  )
+      {childNode}
+    </View>)
 })
 
 _View.displayName = 'MpxView'

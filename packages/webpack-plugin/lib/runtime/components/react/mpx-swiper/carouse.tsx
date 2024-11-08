@@ -87,6 +87,8 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   const initOffsetIndex = initIndex + (props.circular && totalElements > 1 ? 1 : 0)
   const defaultX = (defaultWidth * initOffsetIndex) || 0
   const defaultY = (defaultHeight * initOffsetIndex) || 0
+  // 主动scorllTo时是否要出发onScrollEnd
+  const needTriggerScrollEnd = useRef(true)
   // 内部存储上一次的offset值
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
   const scrollViewRef = useRef<ScrollView & View>(null)
@@ -100,22 +102,21 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   // 内部存储上一次的偏移量
   const internalsRef = useRef({
     offset: {
-      x: defaultX || 0,
-      y: defaultY || 0
+      x: 0,
+      y: 0
     },
     isScrolling: false
   })
   const isDragRef = useRef(false)
   const [state, setState] = useState({
-    children: newChild,
     width: dir === 'x' && typeof defaultWidth === 'number' ? defaultWidth - previousMargin - nextMargin : defaultWidth,
     height: dir === 'y' && typeof defaultHeight === 'number' ? defaultHeight - previousMargin - nextMargin : defaultHeight,
     // 真正的游标索引, 从0开始
     index: initIndex,
     total: totalElements,
     offset: {
-      x: dir === 'x' ? defaultX : 0,
-      y: dir === 'y' ? defaultY : 0
+      x: 0,
+      y: 0
     },
     dir
   } as CarouseState)
@@ -138,25 +139,38 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
 
   useEffect(() => {
     // 确认这个是变化的props变化的时候才执行，还是初始化的时候就执行
-    if (!props.autoplay && props.current !== state.index) {
+    if (!props.autoplay && props.current !== undefined && props.current !== state.index) {
       const initIndex = props.current || 0
       // 这里要排除超过元素个数的设置
-      const initOffsetIndex = initIndex + (props.circular && totalElements > 1 ? 1 : 0)
-      const defaultX = (defaultWidth * initOffsetIndex) || 0
-      const offset = {
-        x: dir === 'x' ? defaultX : 0,
-        y: dir === 'y' ? defaultY : 0
+      const { nextIndex, nextOffset } = getMultiNextConfig(props.current)
+      // 1. 安卓需要主动更新下内部状态, 2. IOS不能触发完wcrollTo之后立即updateState, 会造成滑动两次
+      // 2. setTimeout 是fix 当再渲染过程中触发scrollTo失败的问题
+      if (Platform.OS === 'ios') {
+        needTriggerScrollEnd.current = false
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            ...nextOffset,
+            animated: true
+          })
+        }, 50)
+      } else {
+        updateState(nextIndex, nextOffset)
       }
-      state.offset = offset
-      internalsRef.current.offset = offset
-      setState((preState) => {
-        return {
-          ...preState,
-          offset
-        }
-      })
     }
-  }, [props.current])
+  }, [props.current, state.width, state.height])
+
+  function getMultiNextConfig (target: number) {
+    const step = state.dir === 'x' ? state.width : state.height
+    const targetPos = step * props.current
+    const targetOffset = {
+      x: dir === 'x' ? targetPos : 0,
+      y: dir === 'y' ? targetPos : 0
+    }
+    return {
+      nextIndex: target,
+      nextOffset: targetOffset
+    }
+  }
   /**
    * @desc: 更新状态: index和offset, 并响应索引变化的事件
    * scrollViewOffset: 移动到的目标位置
@@ -208,7 +222,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
       nextIndex = isBack ? nextIndex - 2 : nextIndex
     }
     if (!props.circular) {
-      // nextIndex = isBack ? nextIndex - 2 : nextIndex
       nextOffset = Object.assign({}, currentOffset, { [state.dir]: step * nextIndex })
     } else {
       if (isBack) {
@@ -254,13 +267,12 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
       createAutoPlay()
       return
     }
-    if (!Array.isArray(state.children)) {
+    if (!Array.isArray(props.children)) {
       return
     }
     const step = state.dir === 'x' ? state.width : state.height
     const { nextOffset, autoMoveOffset, isAutoEnd } = getNextConfig(state.offset)
     // 这里可以scroll到下一个元素, 但是把scrollView的偏移量在设置为content,视觉效果就没了吧
-    // scrollViewRef.current?.scrollTo({ x: nextOffset['x'], y: nextOffset['y'], animated: true })
     if (Platform.OS === 'ios') {
       if (!isAutoEnd) {
         scrollViewRef.current?.scrollTo({ x: nextOffset.x, y: nextOffset.y, animated: true })
@@ -286,7 +298,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
         // 安卓无法实现视觉的无缝连接, 只能回到真正的位置, 且安卓调用scrollTo不能触发onMomentumScrollEnd,还未找到为啥
         if (state.dir === 'x') {
           scrollViewRef.current?.scrollTo({ x: step, y: step, animated: true })
-          // scrollViewRef.current?.scrollTo({ x: autoMoveOffset.x, y: autoMoveOffset.y, animated: true })
         } else {
           scrollViewRef.current?.scrollTo({ x: autoMoveOffset.x, y: step, animated: true })
         }
@@ -304,9 +315,15 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
 
   /**
    * 当用户开始拖动结束
+   * 注意: 当手动调用scrollTo的时候, 安卓不会触发onMomentumScrollEnd, IOS会触发onMomentumScrollEnd
    */
   function onScrollEnd (event: NativeSyntheticEvent<NativeScrollEvent>) {
-    // 这里安卓好像没有触发onScrollEnd, 调用scrollTo的时候
+    if (Platform.OS === 'ios' && !needTriggerScrollEnd.current) {
+      const { nextIndex, nextOffset } = getMultiNextConfig(props.current)
+      updateState(nextIndex, nextOffset)
+      needTriggerScrollEnd.current = true
+      return
+    }
     if (totalElements === 1) {
       return
     }
@@ -334,57 +351,41 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
    * @desc: 水平方向时，获取元素的布局，更新, 其中如果传递100%时需要依赖measure计算元算的宽高
   */
   function onWrapperLayout (e: LayoutChangeEvent) {
-    if (hasSelfPercent) {
-      const { width, height } = e?.nativeEvent?.layout || {}
-      setWidth(width || 0)
-      setHeight(height || 0)
-    }
-    if (props.enableOffset) {
-      scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-        layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-        const isWDiff = state.width !== width
-        const isHDiff = state.height !== height
-        if (isWDiff || isHDiff) {
-          const changeState = {
-            width: isWDiff ? width : state.width,
-            height: isHDiff ? height : state.height
-          }
-          const attr = state.dir === 'x' ? 'width' : 'height'
-          changeState[attr] = changeState[attr] - previousMargin - nextMargin
-          const correctOffset = Object.assign({}, state.offset, {
-            [state.dir]: initOffsetIndex * (state.dir === 'x' ? changeState.width : changeState.height)
-          })
-          state.offset = correctOffset
-          state.width = changeState.width
-          state.height = changeState.height
-          setState((preState) => {
-            return {
-              ...preState,
-              offset: correctOffset,
-              width: changeState.width,
-              height: changeState.height
-            }
-          })
-          scrollViewRef.current?.scrollTo({ x: correctOffset.x, y: correctOffset.y, animated: false })
+    scrollViewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+      const isWDiff = state.width !== width
+      const isHDiff = state.height !== height
+      if (isWDiff || isHDiff) {
+        const changeState = {
+          width: isWDiff ? width : state.width,
+          height: isHDiff ? height : state.height
         }
-        props.getInnerLayout && props.getInnerLayout(layoutRef)
-      })
-    }
+        const attr = state.dir === 'x' ? 'width' : 'height'
+        changeState[attr] = changeState[attr] - previousMargin - nextMargin
+        const correctOffset = Object.assign({}, state.offset, {
+          [state.dir]: initOffsetIndex * (state.dir === 'x' ? changeState.width : changeState.height)
+        })
+        state.width = changeState.width
+        state.height = changeState.height
+        // 这里setState之后,会再触发重新渲染, renderScrollView会再次触发onScrollEnd,
+        setState((preState) => {
+          return {
+            ...preState,
+            width: changeState.width,
+            height: changeState.height
+          }
+        })
+      }
+      props.getInnerLayout && props.getInnerLayout(layoutRef)
+    })
   }
 
   function getOffset (): Array<number> {
     const step = state.dir === 'x' ? state.width : state.height
     if (!step || Number.isNaN(+step)) return []
     const offsetArray = []
-    if (previousMargin) {
-      offsetArray.push(0)
-      for (let i = 1; i < totalElements; i++) {
-        offsetArray.push(i * step - previousMargin)
-      }
-    } else {
-      for (let i = 0; i < totalElements; i++) {
-        offsetArray.push(i * step)
-      }
+    for (let i = 0; i < totalElements; i++) {
+      offsetArray.push(i * step)
     }
     return offsetArray
   }
@@ -394,7 +395,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     const scrollElementProps = {
       ref: scrollViewRef,
       horizontal: props.horizontal,
-      pagingEnabled: false,
+      pagingEnabled: true,
       snapToOffsets: offsetsArray,
       decelerationRate: 0.99, // 'fast'
       showsHorizontalScrollIndicator: false,
@@ -461,20 +462,21 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   }
 
   function renderPages () {
-    const { width, height, total, children } = state
+    const { width, height } = state
+    const { children } = props
     const { circular } = props
     const pageStyle = { width: width, height: height }
     // 设置了previousMargin或者nextMargin,
     // 1. 元素的宽度是减去这两个数目之和
     // 2. previousMargin设置marginLeft正值, nextmargin设置marginRight负值
     // 3. 第一个元素设置previousMargin 和 nextMargin, 最后一个元素
-    if (total > 1 && Array.isArray(children)) {
+    if (totalElements > 1 && Array.isArray(children)) {
       let arrElements: (Array<ReactNode>) = []
       // pages = ["2", "0", "1", "2", "0"]
       const pages = Array.isArray(children) ? Object.keys(children) : []
       /* 无限循环的时候 */
       if (circular) {
-        pages.unshift(total - 1 + '')
+        pages.unshift(totalElements - 1 + '')
         pages.push('0')
       }
       arrElements = pages.map((page, i) => {
@@ -486,7 +488,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
         } else if (i === pages.length - 1 && typeof width === 'number') {
           nextMargin && (extraStyle.marginRight = nextMargin)
         }
-        // return (<View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>{children[+page]}</View>)
         return (<View style={[pageStyle, styles.slide, extraStyle]} key={'page' + i}>
           {wrapChildren(
             {
