@@ -7,8 +7,10 @@ const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
 const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
 const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
 const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
+const { isWeb, isReact } = require('@mpxjs/webpack-plugin/lib/utils/env')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const UnoCSSWebpackPlugin = require('./web-plugin')
+const UnoCSSRNWebpackPlugin = require('./rn-plugin')
 const transformerDirectives = require('@unocss/transformer-directives').default
 const transformerVariantGroup = require('@unocss/transformer-variant-group')
 const {
@@ -234,11 +236,12 @@ class MpxUnocssPlugin {
       return
     }
     const mode = this.mode = mpxPluginInstance.options.mode
-    if (mode === 'web') {
+    if (isWeb(mode) || isReact(mode)) {
       const { webOptions } = this.options
-      if (!getPlugin(compiler, UnoCSSWebpackPlugin)) {
+      const webpackPlugin = isReact(mode) ? UnoCSSRNWebpackPlugin : UnoCSSWebpackPlugin
+      if (!getPlugin(compiler, webpackPlugin)) {
         // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
-        compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
+        compiler.options.plugins.push(new webpackPlugin(webOptions))
       }
       compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
         for (const dep of compilation.fileDependencies) {
@@ -256,7 +259,7 @@ class MpxUnocssPlugin {
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
-      if (mode === 'web') return
+      if (isWeb(mode) || isReact(mode)) return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS

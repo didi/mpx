@@ -23,7 +23,7 @@ module.exports = function (styles, {
         new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
       )
     }
-    const { mode, srcMode } = loaderContext.getMpx()
+    const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -56,6 +56,12 @@ module.exports = function (styles, {
           error
         })
         if (ctorType === 'app') {
+          if (hasUnoCSS) {
+            output += `global.__getUnoClassMap = function() {
+              const formatValue = global.__formatValue
+              return __unocssMap__
+            };\n`
+          }
           output += `global.__getAppClassMap = function() {
             return ${shallowStringify(classMap)};
           };\n`

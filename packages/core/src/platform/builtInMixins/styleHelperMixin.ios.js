@@ -166,6 +166,9 @@ export default function styleHelperMixin () {
         const result = {}
         const classMap = {}
         // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
+        if (isFunction(global.__getUnoClassMap)) {
+          Object.assign(classMap, global.__getUnoClassMap());
+        }
         if (isFunction(global.__getAppClassMap)) {
           Object.assign(classMap, global.__getAppClassMap())
         }
@@ -175,7 +178,7 @@ export default function styleHelperMixin () {
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
-          const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
+          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               Object.assign(result, classMap[className])
