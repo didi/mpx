@@ -37,34 +37,34 @@ function formatValue (value) {
 
 global.__formatValue = formatValue
 
-const escapeReg = /[()[\]{}#!.:,%'"+$]/g
-const escapeMap = {
-  '(': '_pl_',
-  ')': '_pr_',
-  '[': '_bl_',
-  ']': '_br_',
-  '{': '_cl_',
-  '}': '_cr_',
-  '#': '_h_',
-  '!': '_i_',
-  '/': '_s_',
-  '.': '_d_',
-  ':': '_c_',
-  ',': '_2c_',
-  '%': '_p_',
-  '\'': '_q_',
-  '"': '_dq_',
-  '+': '_a_',
-  $: '_si_'
-}
+// const escapeReg = /[()[\]{}#!.:,%'"+$]/g
+// const escapeMap = {
+//   '(': '_pl_',
+//   ')': '_pr_',
+//   '[': '_bl_',
+//   ']': '_br_',
+//   '{': '_cl_',
+//   '}': '_cr_',
+//   '#': '_h_',
+//   '!': '_i_',
+//   '/': '_s_',
+//   '.': '_d_',
+//   ':': '_c_',
+//   ',': '_2c_',
+//   '%': '_p_',
+//   '\'': '_q_',
+//   '"': '_dq_',
+//   '+': '_a_',
+//   $: '_si_'
+// }
 
-const mpEscape = cached((str) => {
-  return str.replace(escapeReg, function (match) {
-    if (escapeMap[match]) return escapeMap[match]
-    // unknown escaped
-    return '_u_'
-  })
-})
+// const mpEscape = cached((str) => {
+//   return str.replace(escapeReg, function (match) {
+//     if (escapeMap[match]) return escapeMap[match]
+//     // unknown escaped
+//     return '_u_'
+//   })
+// })
 
 function concat (a = '', b = '') {
   return a ? b ? (a + ' ' + b) : a : b
@@ -167,7 +167,7 @@ export default function styleHelperMixin () {
         const classMap = {}
         // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
         if (isFunction(global.__getUnoClassMap)) {
-          Object.assign(classMap, global.__getUnoClassMap());
+          Object.assign(classMap, global.__getUnoClassMap())
         }
         if (isFunction(global.__getAppClassMap)) {
           Object.assign(classMap, global.__getAppClassMap())

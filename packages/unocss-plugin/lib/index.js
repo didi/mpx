@@ -238,10 +238,10 @@ class MpxUnocssPlugin {
     const mode = this.mode = mpxPluginInstance.options.mode
     if (isWeb(mode) || isReact(mode)) {
       const { webOptions } = this.options
-      const webpackPlugin = isReact(mode) ? UnoCSSRNWebpackPlugin : UnoCSSWebpackPlugin
-      if (!getPlugin(compiler, webpackPlugin)) {
+      const WebpackPlugin = isReact(mode) ? UnoCSSRNWebpackPlugin : UnoCSSWebpackPlugin
+      if (!getPlugin(compiler, WebpackPlugin)) {
         // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
-        compiler.options.plugins.push(new webpackPlugin(webOptions))
+        compiler.options.plugins.push(new WebpackPlugin(webOptions))
       }
       compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
         for (const dep of compilation.fileDependencies) {

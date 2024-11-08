@@ -1,7 +1,7 @@
 const WebpackSources = require('webpack-sources')
 const node_path = require('node:path')
 const { createContext, normalizeAbsolutePath } = require('../web-plugin/utils')
-const { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('../web-plugin/consts')
+const { RESOLVED_ID_RE } = require('../web-plugin/consts')
 const { getClassMap } = require('@mpxjs/webpack-plugin/lib/react/style-helper')
 const shallowStringify = require('@mpxjs/webpack-plugin/lib/utils/shallow-stringify')
 
