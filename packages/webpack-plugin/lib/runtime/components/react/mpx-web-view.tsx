@@ -38,15 +38,6 @@ type MessageData = {
   callbackId?: number
 }
 
-interface NativeEvent {
-  url: string,
-  data: string
-}
-
-interface FormRef {
-  postMessage: (value: any) => void;
-}
-
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
   if (!src) {

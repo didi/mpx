@@ -1,9 +1,10 @@
-import { useEffect, useRef, ReactNode, ReactElement, FunctionComponent, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
+import type { ExtendedFunctionComponent } from './types/common'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -94,15 +95,16 @@ export const getRestProps = (transferProps: any = {}, originProps: any = {}, del
 
 export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
-    const displayName = (ele.type as FunctionComponent)?.displayName
-    return displayName === 'mpx-text' || displayName === 'Text'
+    const displayName = (ele.type as ExtendedFunctionComponent)?.displayName
+    const isCustomText = (ele.type as ExtendedFunctionComponent)?.isCustomText
+    return displayName === 'mpx-text' || displayName === 'Text' || !!isCustomText
   }
   return false
 }
 
 export function isEmbedded (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
-    const displayName = (ele.type as FunctionComponent)?.displayName || ''
+    const displayName = (ele.type as ExtendedFunctionComponent)?.displayName || ''
     return ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName)
   }
   return false
