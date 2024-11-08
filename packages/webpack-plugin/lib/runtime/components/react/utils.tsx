@@ -533,3 +533,10 @@ export function renderImage (
 
   return <Component {...imageProps} />
 }
+
+export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>) {
+  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
+    if (key in styleObj) acc[key] = styleObj[key]
+    return acc
+  }, {})
+}
