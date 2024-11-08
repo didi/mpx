@@ -42,7 +42,7 @@
     "@babel/preset-env": "^7.10.4",
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "^1.4.17",
-    "@mpxjs/mpx-jest": "0.0.27",
+    "@mpxjs/mpx-jest": "0.0.31",
     "@mpxjs/webpack-plugin": "^2.9.58",
     "@mpxjs/template-engine": "^2.8.7",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
