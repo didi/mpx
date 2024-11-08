@@ -122,7 +122,7 @@ const radioGroup = forwardRef<
       },
       layoutProps
     ),
-    [],
+    ['name'],
     {
       layoutRef
     }

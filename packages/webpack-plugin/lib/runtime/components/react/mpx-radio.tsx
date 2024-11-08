@@ -159,7 +159,11 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
           bindtap: !disabled && onTap
         }
       ),
-      [],
+      [
+        'value',
+        'disabled',
+        'checked'
+      ],
       {
         layoutRef
       }

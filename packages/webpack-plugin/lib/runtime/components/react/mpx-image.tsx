@@ -346,7 +346,11 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       },
       layoutProps
     ),
-    [],
+    [
+      'src',
+      'mode',
+      'svg'
+    ],
     {
       layoutRef
     }
