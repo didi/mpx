@@ -42,7 +42,9 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const movableViewRef = useRef(null)
-  useNodesRef(props, ref, movableViewRef)
+  useNodesRef(props, ref, movableViewRef, {
+    style: normalStyle
+  })
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width = 10, height = 10 } = e.nativeEvent.layout

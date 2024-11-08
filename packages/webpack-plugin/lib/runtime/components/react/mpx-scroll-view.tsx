@@ -161,6 +161,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const scrollViewRef = useAnimatedRef<ScrollView>()
   useNodesRef(props, ref, scrollViewRef, {
+    style: normalStyle,
     scrollOffset: scrollOptions,
     node: {
       scrollEnabled: scrollX || scrollY,

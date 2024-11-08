@@ -689,7 +689,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const nodeRef = useRef(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
-    defaultStyle
+    style: normalStyle
   })
 
   const dataRef = useRef<{

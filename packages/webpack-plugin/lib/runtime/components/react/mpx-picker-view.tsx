@@ -67,7 +67,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, width: indicatorW } = indicatorStyle
   const nodeRef = useRef(null)
-  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
   //  picker-view 设置的color等textStyle,在小程序上的表现是可以继承到最内层的text样式, 但是RN内部column是slot无法设置, 需要业务自己在column内的元素上设置
   const {
     normalStyle,
@@ -77,6 +76,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
+
+  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
+
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const {

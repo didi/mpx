@@ -119,9 +119,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   )
 
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef, {
-    defaultStyle
-  })
 
   const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
     setViewWidth(width)
@@ -129,6 +126,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  useNodesRef(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout })
 

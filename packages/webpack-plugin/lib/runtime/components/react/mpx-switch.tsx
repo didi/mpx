@@ -77,7 +77,9 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   }, [checked])
 
   const nodeRef = useRef(null)
-  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef)
+  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const {
     layoutRef,
