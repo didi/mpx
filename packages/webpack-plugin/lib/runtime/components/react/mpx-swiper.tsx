@@ -1,5 +1,5 @@
-import { View, NativeSyntheticEvent, Dimensions, NativeScrollPoint,NativeScrollEvent, LayoutChangeEvent } from 'react-native'
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { View, NativeSyntheticEvent, Dimensions, LayoutChangeEvent } from 'react-native'
+import { GestureDetector, Gesture, GestureUpdateEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 
 import { JSX, forwardRef, useRef, useEffect, useState, ReactNode } from 'react'
@@ -12,7 +12,7 @@ import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } fr
  * ✔ indicator-active-color
  * ✔ autoplay
  * ✔ current
- * ✔ interval(暂时不支持, Android可以, IOS不可以)
+ * ✔ interval
  * ✔ duration
  * ✔ circular
  * ✔ vertical
@@ -23,6 +23,7 @@ import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } fr
  * ✘ snap-to-edge
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
+type StrTransType = 'translationX' | 'translationY'
 interface SwiperProps {
   children?: ReactNode;
   circular?: boolean;
@@ -77,7 +78,6 @@ const styles: { [key: string]: Object } = {
     justifyContent: 'center',
     alignItems: 'center'
   },
-
   pagination_y: {
     position: 'absolute',
     right: 15,
@@ -100,6 +100,14 @@ const dotCommonStyle = {
   marginBottom: 3
 }
 
+const easeMap = {
+  'default': Easing.ease,
+  'linear': Easing.linear,
+  'easeInCubic': Easing.in(Easing.cubic),
+  'easeOutCubic': Easing.out(Easing.cubic),
+  'easeInOutCubic': Easing.inOut(Easing.cubic)
+}
+
 const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
     'indicator-dots': showsPagination,
@@ -114,6 +122,8 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   } = props
   const previousMargin = props['previous-margin'] ? parseInt(props['previous-margin']) : 0
   const nextMargin = props['next-margin'] ? parseInt(props['next-margin']) : 0
+  const easeingFunc = props['easing-function'] || 'default'
+  const easeDuration = props['duration'] || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
 
   const nodeRef = useRef<View>(null)
@@ -152,16 +162,10 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     layoutProps,
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout: onWrapperLayout })
-  console.log('--------------layoutStyle', layoutStyle, layoutRef.current)
 
   const [state, setState] = useState({
     width: dir === 'x' && typeof defaultWidth === 'number' ? defaultWidth - previousMargin - nextMargin : defaultWidth,
-    height: dir === 'y' && typeof defaultHeight === 'number' ? defaultHeight - previousMargin - nextMargin : defaultHeight,
-    offset: {
-      x: 0,
-      y: 0
-    },
-    dir
+    height: dir === 'y' && typeof defaultHeight === 'number' ? defaultHeight - previousMargin - nextMargin : defaultHeight
   } as CarouseState)
 
   const innerProps = useInnerProps(props, {
@@ -175,6 +179,10 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     'vertical',
     'previous-margin',
     'next-margin',
+    'easing-function',
+    'autoplay',
+    'circular',
+    'interval',
     'easing-function'
   ], { layoutRef: layoutRef })
 
@@ -188,7 +196,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
           width: isWDiff ? width : state.width,
           height: isHDiff ? height : state.height
         }
-        const attr = state.dir === 'x' ? 'width' : 'height'
+        const attr = dir === 'x' ? 'width' : 'height'
         changeState[attr] = changeState[attr] - previousMargin - nextMargin
         state.width = changeState.width
         state.height = changeState.height
@@ -229,9 +237,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     const pageStyle = { width: width, height: height }
     // pages = ["0", "1", "2", "0", "1"]
     const renderChild = children.slice()
-    console.log('------------renderItems', step)
     if (!Number.isNaN(+step)) {
-      console.log('-------------renderItems2')
       if (props.circular && totalElements > 1) {
         if (totalElements === 2) {
           renderChild.concat(children).concat(children)
@@ -244,10 +250,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
           renderChild.push(children[1])
         }
       }
-      console.log('-------------renderItems3')
-      const targetOffset = getInitIndex()
-      offset.value = targetOffset
-      start.value = targetOffset
     }
     // 1. 不支持循环 + margin 模式
     return renderChild.map((child, i) => {
@@ -265,17 +267,18 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
 
 
   const targetIndex = useRef(0)
-  const initOffset = getInitIndex()
+  const initOffset = getInitOffset()
   const offset = useSharedValue(initOffset)
   const start = useSharedValue(initOffset);
   const step = dir === 'x' ? state.width : state.height
   const strTrans = 'translation' + dir.toUpperCase()
+  const isAutoFirst = useRef(true)
   const arrPages: Array<ReactNode> | ReactNode = renderItems()
 
   function createAutoPlay () {
     autoplayTimerRef.current && clearInterval(autoplayTimerRef.current)
     autoplayTimerRef.current = setInterval(() => {
-      const targetOffset = getInitIndex()
+      const targetOffset = { x: 0, y: 0 }
       if (!props.circular) {
         // 获取下一个位置的坐标, 循环到最后一个元素,直接停止
         if (targetIndex.current === totalElements - 1) {
@@ -285,32 +288,59 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         }
         targetIndex.current = targetIndex.current + 1
         targetOffset[dir] = -targetIndex.current * step
+
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        })
+        start.value = targetOffset
       } else {
         if (targetIndex.current === totalElements - 1) {
           targetIndex.current = 0
+          targetOffset[dir] = -(totalElements + 2) * step
+          // 执行动画到下一帧
+          offset.value = withTiming(targetOffset, {
+            duration: easeDuration
+          })
+          const initOffset = { x: 0, y: 0 }
+          initOffset[dir] = -step * 2
+          // 将开始位置设置为真正的位置
+          setTimeout(() => {
+            offset.value = initOffset
+            start.value = initOffset
+          }, easeDuration)
         } else {
           targetIndex.current = targetIndex.current + 1
+          targetOffset[dir] = -(targetIndex.current + 2) * step
+          // 执行动画到下一帧
+          offset.value = withTiming(targetOffset, {
+            duration: easeDuration,
+            easing: easeMap[easeingFunc]
+          })
+          start.value = targetOffset
         }
-        targetOffset[dir] = -(targetIndex.current + 2) * step
         console.log('---------createAutoPlay----2-', targetIndex, targetOffset)
       }
-      offset.value = targetOffset
-      start.value = targetOffset
     }, props.interval || 500)
   }
 
   useEffect(() => {
-    if (props.autoplay) {
-      !Number.isNaN(+step) && createAutoPlay()
+    if (props.autoplay && !Number.isNaN(+step)) {
+      if (isAutoFirst.current) {
+        isAutoFirst.current = false
+        const targetOffset = getInitOffset()
+        offset.value = targetOffset
+        start.value = targetOffset
+      }
+      createAutoPlay()
     } else {
-      const targetOffset = getInitIndex()
-      console.log('---------useEffect---',targetOffset)
+      const targetOffset = getInitOffset()
       offset.value = targetOffset
       start.value = targetOffset
     }
   }, [props.autoplay, props.current, state.width, state.height])
 
-  function getInitIndex () {
+  function getInitOffset () {
     if (Number.isNaN(+step)) return { x: 0, y: 0 }
     const targetOffset = { x: 0, y: 0 }
     if(props.circular) {
@@ -322,30 +352,53 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     return targetOffset
   }
 
-  function getTargetPosition (e) {
+  function getTargetPosition (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
     let targetPos = 0
+    let resetPos = 0
     const posView = e[dir]
+    // 移动的距离
+    const transDistance = e[strTrans as StrTransType]
     // 移动的目标步长
-    const moveDistance  = Math.ceil(Math.abs(e[strTrans]) / step) * step
+    const moveDistance  = Math.ceil(Math.abs(transDistance) / step) * step
     // 移动的目标步长之后的坐标, e[strTrans] < 0) 代表正向滚动 否则反向
-    const moveTargetPos = e[strTrans] < 0 ? posView + moveDistance : posView - moveDistance
+    const moveTargetPos = transDistance < 0 ? posView + moveDistance : posView - moveDistance
     // 目标索引值
     const index = Math.floor(moveTargetPos / step)
+    // 是否临界点
+    let isCriticalItem = false
     if (!props.circular) {
       targetIndex.current = index
       targetPos = -targetIndex.current * step
     } else {
-      if (e[strTrans] < 0) {
+      // 正向滚动
+      if (transDistance< 0) {
         const a1 = index - (totalElements + 2)
         const a2 = index - 2
         targetIndex.current = a1 >= 0 ? a1 : a2
-        targetPos = -(targetIndex.current + 2) * step
+        // targetPos = -(targetIndex.current + 2) * step
+        targetPos = -index * step
+        isCriticalItem = a1 >= 0
+        if (isCriticalItem) {
+          resetPos = -(a1 + 2) * step
+        }
       } else {
-        targetIndex.current = index > 1 ? index - 2 : ( index === 0 ? totalElements - 2 : totalElements - 1)
-        targetPos = -(targetIndex.current + 2) * step
+        // 反向滚动
+        isCriticalItem = [0, 1].includes(index)
+        targetIndex.current = isCriticalItem ? index + 2 : index - 2
+        // targetIndex.current = index > 1 ? index - 2 : ( index === 0 ? totalElements - 2 : totalElements - 1)
+        // targetPos = -(targetIndex.current + 2) * step
+        targetPos = -index * step
+        if (isCriticalItem) {
+          resetPos = -(index + totalElements) * step
+        }
       }
     }
     return {
+      isCriticalItem,
+      resetOffset: {
+        x: dir === 'x' ? resetPos : 0,
+        y: dir === 'y' ? resetPos : 0
+      },
       targetOffset: {
         x: dir === 'x' ? targetPos : offset.value.x,
         y: dir === 'y' ? targetPos : offset.value.y
@@ -353,20 +406,28 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     }
   }
 
-  function canMove (e) {
-    if (!props.circular && (e[strTrans] < 0 && e[dir] >= (totalElements - 1) * step || e[strTrans] > 0 && e[dir] <= step)) {
-      return false
+  function canMove (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
+    // 移动的距离
+    const transDistance = e[strTrans as StrTransType]
+    if (props.circular) {
+      return true;
+    } else if (transDistance < 0) {
+      // 正向滚动e[strTrans] < 0
+      var moveTarget = e[dir] + Math.abs(transDistance);
+      var posEnd = (totalElements - 1) * step;
+      return moveTarget <= posEnd;
+    } else if (transDistance > 0) {
+      // 反向滚动 e[dir] < step 代表第一个元素不能再滚动, e[dir] > step
+      return e[dir] > step && e[dir] - transDistance >=0
     } else {
-      return true
+      return true;
     }
   }
 
   const animatedStyles = useAnimatedStyle(() => {
     if (dir === 'x') {
-      console.log(1111)
       return { transform: [{ translateX: offset.value.x }]}
     } else {
-      console.log(2222, offset.value.y)
       return { transform: [{ translateY: offset.value.y }]}
     }
   })
@@ -388,35 +449,42 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       if (!canMove(e)) {
         return
       }
-      const { targetOffset } = getTargetPosition(e)
-      console.log('------------onEnd1', e, targetOffset)
-      console.log('------------onEnd2', offset.value.x)
-      /*
-      withTiming(offset.value, {
-        easing: Easing.bounce,
-      });
-      */
-      offset.value = targetOffset
-      start.value = targetOffset
+      const { isCriticalItem, targetOffset, resetOffset } = getTargetPosition(e)
+      if (isCriticalItem) {
+        // 执行动画到下一帧
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration
+        })
+        // 动画执行完成将开始位置设置为真正的位置
+        setTimeout(() => {
+          offset.value = resetOffset
+          start.value = resetOffset
+        }, easeDuration)
+      } else {
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        })
+        start.value = targetOffset
+      }
       const eventData = getCustomEvent('change', {}, { detail: { current: targetIndex.current, source: 'touch' }, layoutRef: layoutRef })
       props.bindchange && props.bindchange(eventData)
       props.autoplay && !Number.isNaN(+step) && createAutoPlay()
     })
     .onFinalize(() => {
     });
-  
-  return (<View style={[normalStyle, layoutStyle, { overflow: "scroll" }]} {...layoutProps} {...innerProps}>
+
+  return (<View style={[normalStyle, layoutStyle, { overflow: "scroll", justifyContent: "flex-start" }]} {...layoutProps} {...innerProps}>
     <GestureDetector gesture={gesture}>
       <Animated.View style={[{ flexDirection: dir === 'x' ? 'row' : 'column' }, animatedStyles]}>
-        {arrPages}
-        {/*wrapChildren({
+        {wrapChildren({
           children: arrPages
         }, {
           hasVarDec,
           varContext: varContextRef.current,
           textStyle,
           textProps
-        })*/}
+        })}
       </Animated.View>
     </GestureDetector>
       {showsPagination && renderPagination()}
