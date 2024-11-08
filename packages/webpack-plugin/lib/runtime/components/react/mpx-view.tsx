@@ -9,7 +9,7 @@ import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, clon
 import useInnerProps from './getInnerListeners'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
 import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
@@ -228,10 +228,7 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
     }
   }
 
-  imageProps.style = {
-    ...imageProps.style as ImageStyle,
-    ...style
-  }
+  imageProps.style = extendObject(imageProps.style, style)
 }
 
 // background-size 转换
@@ -282,11 +279,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       } as { width: NumberVal, height: NumberVal }
     }
   }
+
   // 样式合并
-  imageProps.style = {
-    ...imageProps.style as ImageStyle,
-    ...dimensions
-  }
+  imageProps.style = extendObject(imageProps.style, dimensions)
 }
 
 // background-image转换为source
@@ -471,10 +466,9 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
       return prev
     }, { colors: [], locations: [] })
 
-  return {
-    ...linearInfo,
+  return extendObject(linearInfo, {
     direction: direction.trim()
-  }
+  })
 }
 
 function parseBgImage (text: string): {
@@ -658,21 +652,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const [isHover, setIsHover] = useState(false)
 
   // 默认样式
-  const defaultStyle: ExtendedViewStyle = {
-    // flex 布局相关的默认样式
-    ...style.display === 'flex' && {
-      flexDirection: 'row',
-      flexBasis: 'auto',
-      flexShrink: 1,
-      flexWrap: 'nowrap'
-    }
-  }
+  const defaultStyle: ExtendedViewStyle = extendObject(
+    style.display === 'flex'
+      ? {
+          flexDirection: 'row',
+          flexBasis: 'auto',
+          flexShrink: 1,
+          flexWrap: 'nowrap'
+        }
+      : {})
 
-  const styleObj: ExtendedViewStyle = {
-    ...defaultStyle,
-    ...style,
-    ...(isHover ? hoverStyle : null)
-  }
+  const styleObj: ExtendedViewStyle = extendObject(defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
   const {
     normalStyle,
@@ -689,7 +679,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentHeight
   })
 
-  const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
@@ -747,22 +737,25 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
-    ...layoutProps,
-    ...(hoverStyle && {
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd
+  const innerProps = useInnerProps(
+    props,
+    extendObject({
+      ref: nodeRef,
+      style: extendObject(innerStyle, layoutStyle)
+    }, layoutProps, hoverStyle
+      ? {
+          bindtouchstart: onTouchStart,
+          bindtouchend: onTouchEnd
+        }
+      : {}
+    ), [
+      'hover-start-time',
+      'hover-stay-time',
+      'hover-style',
+      'hover-class'
+    ], {
+      layoutRef
     })
-  }, [
-    'hover-start-time',
-    'hover-stay-time',
-    'hover-style',
-    'hover-class'
-  ], {
-    layoutRef
-  })
 
   return (
     <View

@@ -12,7 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-import { useTransformStyle, useLayout } from './utils'
+import { useTransformStyle, useLayout, extendObject } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -111,12 +111,13 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }
 
-  const innerProps = useInnerProps(props, {
+  const innerProps = useInnerProps(props, extendObject({
     ref: nodeRef,
-    style: { ...normalStyle, ...layoutStyle },
-    ...layoutProps,
-    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
-  }, [
+    style: extendObject(normalStyle, layoutStyle)
+  },
+  layoutProps,
+  !disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {})
+  , [
     'checked',
     'disabled',
     'type',
