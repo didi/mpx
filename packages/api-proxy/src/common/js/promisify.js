@@ -1,3 +1,4 @@
+import { noop } from '@mpxjs/utils'
 import { ENV_OBJ } from './utils'
 
 // 特别指定的不进行Promise封装的方法
@@ -66,18 +67,25 @@ function promisify (listObj, whiteList, customBlackList) {
     if (typeof listObj[key] !== 'function') {
       return
     }
-
     result[key] = function (...args) {
       const obj = args[0] || {}
+      const rawSuccess = obj.success || noop
+      const rawFail = obj.fail || noop
       // 不需要转换 or 用户已定义回调，则不处理
-      if (!promisifyFilter(key) || obj.success || obj.fail) {
+      if (!promisifyFilter(key)) {
         return listObj[key].apply(ENV_OBJ, args)
       } else { // 其他情况进行转换
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
-          obj.success = resolve
-          obj.fail = reject
+          obj.success = (res) => { 
+            resolve(res)
+            rawSuccess(res)
+          }
+          obj.fail = (res) => {
+            reject(res)
+            rawFail(res)
+          }
           returned = listObj[key].apply(ENV_OBJ, args)
         })
         promise.__returned = returned
