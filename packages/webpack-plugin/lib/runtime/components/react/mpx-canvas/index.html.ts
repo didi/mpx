@@ -172,7 +172,7 @@ var toMessage = function (result) {
     }
     return {
         type: "json",
-        payload: JSON.stringify(result),
+        payload: typeof result === 'string' ? result : JSON.stringify(result),
         meta: {},
     };
 };

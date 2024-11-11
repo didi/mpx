@@ -78,8 +78,7 @@ const setupWebviewMethods = (instance: WebviewInstance, methods: string[]): void
 export const useWebviewBinding = ({
   targetName,
   properties = {},
-  methods = [],
-  constructorName = ''
+  methods = []
 }: {
   targetName: string;
   properties?: Record<string, any>;
