@@ -1,4 +1,4 @@
-import { setupWebviewProperties, setupWebviewMethods, setupWebviewTarget } from './utils'
+import { registerWebviewProperties, registerWebviewMethods, registerWebviewTarget } from './utils'
 
 const PROPERTIES = {
   fillStyle: '#000',
@@ -60,9 +60,9 @@ export default class CanvasRenderingContext2D {
   canvas: any
   constructor(canvas) {
     this.canvas = canvas
-    setupWebviewTarget(this, 'context2D')
-    setupWebviewProperties(this, PROPERTIES)
-    setupWebviewMethods(this, METHODS)
+    registerWebviewTarget(this, 'context2D')
+    registerWebviewProperties(this, PROPERTIES)
+    registerWebviewMethods(this, METHODS)
   }
 
   postMessage(message) {

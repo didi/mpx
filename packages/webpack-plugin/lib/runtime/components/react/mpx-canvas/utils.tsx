@@ -29,11 +29,11 @@ interface WebviewMessage {
 
 type MessageListener = (message: WebviewMessage) => void
 
-export const setupWebviewTarget = (instance: WebviewInstance, targetName: string): void => {
+export const registerWebviewTarget = (instance: WebviewInstance, targetName: string): void => {
   instance[WEBVIEW_TARGET] = targetName
 }
 
-export const setupWebviewProperties = (instance: WebviewInstance, properties: Record<string, any>): void => {
+export const registerWebviewProperties = (instance: WebviewInstance, properties: Record<string, any>): void => {
   Object.entries(properties).forEach(([key, initialValue]) => {
     const privateKey = `__${key}__`
     instance[privateKey] = initialValue
@@ -62,7 +62,7 @@ export const setupWebviewProperties = (instance: WebviewInstance, properties: Re
   })
 }
 
-export const setupWebviewMethods = (instance: WebviewInstance, methods: string[]): void => {
+export const registerWebviewMethods = (instance: WebviewInstance, methods: string[]): void => {
   methods.forEach(method => {
     instance[method] = (...args: any[]) => {
       return instance.postMessage({
@@ -77,7 +77,7 @@ export const setupWebviewMethods = (instance: WebviewInstance, methods: string[]
   })
 }
 
-export const setupWebviewConstructor = (instance: WebviewInstance, constructorName: string) => {
+export const registerWebviewConstructor = (instance: WebviewInstance, constructorName: string) => {
   constructors[constructorName] = instance
   instance.constructLocally = function (...args) {
     // Pass noOnConstruction
@@ -116,9 +116,9 @@ export const useWebviewBinding = ({
 
   useEffect(() => {
     if (instanceRef.current) {
-      setupWebviewTarget(instanceRef.current, targetName)
-      setupWebviewProperties(instanceRef.current, properties)
-      setupWebviewMethods(instanceRef.current, methods)
+      registerWebviewTarget(instanceRef.current, targetName)
+      registerWebviewProperties(instanceRef.current, properties)
+      registerWebviewMethods(instanceRef.current, methods)
     }
   }, [targetName, properties, methods])
 
