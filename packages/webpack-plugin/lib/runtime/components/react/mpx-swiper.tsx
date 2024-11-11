@@ -155,13 +155,14 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const step = useSharedValue(initStep)
 
   function getInitOffset () {
-    if (Number.isNaN(+step.value)) return { x: 0, y: 0 }
+    const stepValue = dir.value === 'x' ? widthState : heightState
+    if (Number.isNaN(+stepValue)) return { x: 0, y: 0 }
     const targetOffset = { x: 0, y: 0 }
     if(props.circular && totalElements.value > 1) {
       const targetIndex = (props.current || 0) + 2
-      targetOffset[dir.value as dirType] = -step.value * targetIndex
+      targetOffset[dir.value as dirType] = -stepValue * targetIndex
     } else if (props.current && props.current > 0){
-      targetOffset[dir.value as dirType] = -props.current * step.value
+      targetOffset[dir.value as dirType] = -props.current * stepValue
     }
     
     return targetOffset
@@ -227,6 +228,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     })
   }
 
+  const animatedPagerStyles = useAnimatedStyle(() => {
+    return {
+     
+    }
+  })
+
   function renderPagination () {
     if (totalElements.value <= 1) return null
     const dots: Array<ReactNode> = []
@@ -234,17 +241,24 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     const dotStyle = Object.assign({ backgroundColor: dotColor || 'rgba(0,0,0,.2)' }, dotCommonStyle)
     for (let i = 0; i < totalElements.value; i++) {
       if (i === targetIndex.value) {
-        dots.push(<View style={[activeDotStyle]} key={i}></View>)
+        dots.push(<Animated.View style={[activeDotStyle, animatedPagerStyles]} key={i}></Animated.View>)
       } else {
-        dots.push(<View style={[dotStyle]} key={i}></View>)
+        dots.push(<Animated.View style={[dotStyle, animatedPagerStyles]} key={i}></Animated.View>)
       }
     }
     // 这里也可以用动画实现
+    return (
+      <View pointerEvents="none" style = {[styles['pagination_' + [dir.value as dirType]]]}>
+        {dots}
+      </View>
+    )
+    /*
     return (
       <View pointerEvents="none" style={[styles['pagination_' + [dir.value as dirType]]]}>
         {dots}
       </View>
     )
+    */
   }
 
   function renderItems () {
@@ -281,14 +295,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   function handleEvent () {
     'worklet';
     console.log('-----------handleEvent', targetIndex.value);
-    /*
-    runOnJS(() => {
+    runOnJS((current: number) => {
       console.log('-------------22222', 1)
-      // const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      // props.bindchange && props.bindchange(eventData)
-      // props.autoplay && createAutoPlay()
-    })()
-    */
+      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+      props.bindchange && props.bindchange(eventData)
+      props.autoplay && createAutoPlay()
+    })(targetIndex.value)
   }
 
   function createAutoPlay () {
@@ -350,11 +362,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   })
 
   useEffect(() => {
+    // 这里stepValue 有时候拿不到
     const stepValue = dir.value === 'x' ? widthState : heightState
     if (!Number.isNaN(+stepValue)) {
       step.value = stepValue
     }
-    if (props.autoplay && !Number.isNaN(+step.value)) {
+    if (props.autoplay && !Number.isNaN(+stepValue)) {
       if (isAutoFirst.current) {
         isAutoFirst.current = false
         const targetOffset = getInitOffset()
@@ -414,9 +427,11 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       } else {
         // 反向滚动
         isCriticalItem = [0, 1].includes(index)
-        // targetIndex.value = isCriticalItem ? index + 2 : index - 2
-        // realTarget = isCriticalItem ? index + 2 : index - 2
-        realTarget = isCriticalItem ? index + 1 : index - 2
+        if (isCriticalItem) {
+          realTarget = index === 0 ? totalElements.value - 2 : totalElements.value - 1
+        } else {
+          realTarget = index - 2
+        }
         targetPos = -index * step.value
         if (isCriticalItem) {
           resetPos = -(index + totalElements.value) * step.value
@@ -513,6 +528,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         }, () => {
           targetIndex.value = realTarget
           start.value = targetOffset
+          targetIndex.value = realTarget
           resetAutoTime()
           handleEvent()
         })
