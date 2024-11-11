@@ -292,17 +292,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     })
   }
 
-  function handleEvent () {
-    'worklet';
-    console.log('-----------handleEvent', targetIndex.value);
-    runOnJS((current: number) => {
-      console.log('-------------22222', 1)
-      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      props.bindchange && props.bindchange(eventData)
-      props.autoplay && createAutoPlay()
-    })(targetIndex.value)
-  }
-
   function createAutoPlay () {
     'worklet';
     const targetOffset = { x: 0, y: 0 }
@@ -320,7 +309,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       }, () => {
         start.value = targetOffset
         targetIndex.value = nextIndex
-        handleEvent()
       })
     } else {
       if (nextIndex === totalElements.value - 1) {
@@ -336,7 +324,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
           offset.value = initOffset
           start.value = initOffset
           targetIndex.value = nextIndex
-          handleEvent()
         })
       } else {
         nextIndex = targetIndex.value + 1
@@ -348,10 +335,15 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         }, () => {
           start.value = targetOffset
           targetIndex.value = nextIndex
-          handleEvent()
         })
       }
     }
+  }
+
+  function handleSwiperChange (current: number) {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+    props.bindchange && props.bindchange(eventData)
+    props.autoplay && createAutoPlay()
   }
 
   useAnimatedReaction(() => timestamp.value, (newTime, preTime) => {
@@ -359,6 +351,11 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     if (canPlay) {
       createAutoPlay()
     }
+  })
+
+  useAnimatedReaction(() => targetIndex.value, (newIndex, preIndex) => {
+    // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
+    runOnJS(handleSwiperChange)(newIndex)
   })
 
   useEffect(() => {
@@ -493,9 +490,11 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
 
   const gesture = Gesture.Pan()
     .onBegin(() => {
+      'worklet'
       canLoop.value = false
     })
     .onUpdate((e) => {
+      'worklet'
       if (!canMove(e)) {
         return
       }
@@ -505,6 +504,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       };
     })
     .onEnd((e) => {
+      'worklet'
       if (!canMove(e)) {
         return
       }
@@ -519,7 +519,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
           start.value = resetOffset
           targetIndex.value = realTarget
           resetAutoTime()
-          handleEvent()
         })
       } else {
         offset.value = withTiming(targetOffset, {
@@ -530,12 +529,9 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
           start.value = targetOffset
           targetIndex.value = realTarget
           resetAutoTime()
-          handleEvent()
         })
       }
     })
-    .onFinalize(() => {
-    });
   return (<View style={[normalStyle, layoutStyle, { overflow: "scroll", justifyContent: "flex-start" }]} {...layoutProps} {...innerProps}>
     <GestureDetector gesture={gesture}>
       <Animated.View style={[{ flexDirection: dir.value === 'x' ? 'row' : 'column' }, animatedStyles]}>
