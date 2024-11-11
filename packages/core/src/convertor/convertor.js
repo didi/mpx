@@ -58,7 +58,8 @@ const rulesMap = {
   wxToDd: { ...defaultConvertRule, ...wxToDdRule },
   wxToJd: { ...defaultConvertRule, ...wxToJdRule },
   wxToIos: { ...defaultConvertRule, ...wxToReactRule },
-  wxToAndroid: { ...defaultConvertRule, ...wxToReactRule }
+  wxToAndroid: { ...defaultConvertRule, ...wxToReactRule },
+  wxToHarmony: { ...defaultConvertRule, ...wxToReactRule }
 }
 
 export function getConvertRule (convertMode) {

@@ -5,14 +5,14 @@ import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptio
 import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
 import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
 import { getDefaultOptions as getReactDefaultOptions } from './react/getDefaultOptions'
-import { error } from '@mpxjs/utils'
+import { error, isReact } from '@mpxjs/utils'
 
 export default function createFactory (type) {
   return (options = {}, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
+    if (__mpx_mode__ !== 'web' && !isReact) {
       if (customCtor) {
         ctor = customCtor
         customCtorType = customCtorType || type
@@ -40,7 +40,7 @@ export default function createFactory (type) {
     }
 
     let getDefaultOptions
-    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+    if (isReact) {
       getDefaultOptions = getReactDefaultOptions
     } else if (__mpx_mode__ === 'web') {
       getDefaultOptions = getWebDefaultOptions
@@ -60,7 +60,7 @@ export default function createFactory (type) {
     // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
     rawOptions.mixins = getBuiltInMixins({ type, rawOptions, currentInject })
     const defaultOptions = getDefaultOptions({ type, rawOptions, currentInject })
-    if (__mpx_mode__ === 'web' || __mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+    if (__mpx_mode__ === 'web' || isReact) {
       global.__mpxOptionsMap = global.__mpxOptionsMap || {}
       global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     } else if (ctor) {

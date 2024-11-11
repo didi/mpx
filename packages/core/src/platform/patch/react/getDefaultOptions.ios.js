@@ -427,7 +427,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
         const isCustom = pageConfig.navigationStyle === 'custom'
         let opt = {}
-        if (__mpx_mode__ === 'android') {
+        if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
           opt = {
             statusBarTranslucent: isCustom,
             statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色

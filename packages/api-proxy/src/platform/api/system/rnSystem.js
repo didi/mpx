@@ -12,7 +12,7 @@ const getWindowInfo = function () {
   }
   let safeArea = {}
   let { top = 0, bottom = 0, left = 0, right = 0 } = insets
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android' || Platform.OS === 'harmony') {
     top = StatusBar.currentHeight || 0
   }
   const screenHeight = dimensionsScreen.height
@@ -101,7 +101,7 @@ const getSystemInfo = function (options = {}) {
 
 const getDeviceInfo = function () {
   const deviceInfo = {}
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android' || Platform.OS === 'harmony') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
