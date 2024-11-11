@@ -2481,12 +2481,22 @@ function processAtMode (el) {
       // 判断 env 是否匹配
       // 判断 mode 是否匹配
       // 额外处理attr value 场景
+
+      const compareMode = (defineMode, mode) => {
+        if (defineMode === mode) return true
+        // android 和 harmony 平台兜底使用 ios mode 进行兼容
+        if (['android', 'harmony'].includes(mode)) {
+          if (defineMode === 'ios') return true
+        }
+        return false
+      }
+
       for (let [defineMode, defineEnvArr] of conditionMap.entries()) {
         const isImplicitMode = defineMode[0] === '_'
         if (isImplicitMode) defineMode = defineMode.slice(1)
 
         const isNoMode = defineMode === 'noMode'
-        const isMatchMode = isNoMode || defineMode === mode
+        const isMatchMode = isNoMode || compareMode(defineMode, mode)
         const isMatchEnv = !defineEnvArr.length || defineEnvArr.includes(env)
         let matchStatus = statusEnum.MISMATCH
         // 是否为针对于节点的条件判断，否为节点属性
