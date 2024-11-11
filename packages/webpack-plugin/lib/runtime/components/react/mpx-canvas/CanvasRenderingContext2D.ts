@@ -1,5 +1,4 @@
-import { useEffect } from 'react'
-import { useWebviewBinding } from './utils'
+import { setupWebviewProperties, setupWebviewMethods, setupWebviewTarget } from './utils'
 
 const PROPERTIES = {
   fillStyle: '#000',
@@ -57,21 +56,16 @@ const METHODS = [
   'transform',
   'translate'
 ]
-
-export function useContext2D (canvas: any) {
-  const contextRef = useWebviewBinding({
-    targetName: 'context2D',
-    properties: PROPERTIES,
-    methods: METHODS
+export default class CanvasRenderingContext2D {
+  canvas: any
+  constructor(canvas) {
+    this.canvas = canvas
+    setupWebviewTarget(this, 'context2D')
+    setupWebviewProperties(this, PROPERTIES)
+    setupWebviewMethods(this, METHODS)
   }
-  )
 
-  useEffect(() => {
-    if (canvas && contextRef.current) {
-      contextRef.current.canvas = canvas
-      contextRef.current.postMessage = (message: any) => canvas.postMessage(message)
-    }
-  }, [canvas])
-
-  return contextRef.current
+  postMessage(message) {
+    return this.canvas.postMessage(message)
+  }
 }

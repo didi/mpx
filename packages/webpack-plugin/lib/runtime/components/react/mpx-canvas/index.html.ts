@@ -194,8 +194,13 @@ var targets = {
 };
 var constructors = {
     CanvasGradient: CanvasGradient,
+    Image: Image
 };
-
+Image.bind =
+    Image.bind ||
+        function () {
+            return Image;
+        };
 var populateRefs = function (arg) {
     if (arg && arg.__ref__) {
         return targets[arg.__ref__];

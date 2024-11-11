@@ -4,6 +4,8 @@ export const WEBVIEW_TARGET = '@@WEBVIEW_TARGET'
 
 export const constructors: Record<string, any> = {}
 
+export const ID = () => Math.random().toString(32).slice(2)
+
 interface WebviewInstance {
   [WEBVIEW_TARGET]: string
   [key: string]: any
@@ -27,11 +29,11 @@ interface WebviewMessage {
 
 type MessageListener = (message: WebviewMessage) => void
 
-const setupWebviewTarget = (instance: WebviewInstance, targetName: string): void => {
+export const setupWebviewTarget = (instance: WebviewInstance, targetName: string): void => {
   instance[WEBVIEW_TARGET] = targetName
 }
 
-const setupWebviewProperties = (instance: WebviewInstance, properties: Record<string, any>): void => {
+export const setupWebviewProperties = (instance: WebviewInstance, properties: Record<string, any>): void => {
   Object.entries(properties).forEach(([key, initialValue]) => {
     const privateKey = `__${key}__`
     instance[privateKey] = initialValue
@@ -60,7 +62,7 @@ const setupWebviewProperties = (instance: WebviewInstance, properties: Record<st
   })
 }
 
-const setupWebviewMethods = (instance: WebviewInstance, methods: string[]): void => {
+export const setupWebviewMethods = (instance: WebviewInstance, methods: string[]): void => {
   methods.forEach(method => {
     instance[method] = (...args: any[]) => {
       return instance.postMessage({
@@ -75,6 +77,31 @@ const setupWebviewMethods = (instance: WebviewInstance, methods: string[]): void
   })
 }
 
+export const setupWebviewConstructor = (instance: WebviewInstance, constructorName: string) => {
+  constructors[constructorName] = instance
+  instance.constructLocally = function (...args) {
+    // Pass noOnConstruction
+    return new instance(...args, true)
+  }
+  /**
+   * Arguments should be identical to the arguments passed to the constructor
+   * just without the canvas instance
+   */
+  instance.prototype.onConstruction = function (...args) {
+    this[WEBVIEW_TARGET] = ID()
+    this.postMessage({
+      type: 'construct',
+      payload: {
+        constructor: constructorName,
+        id: this[WEBVIEW_TARGET],
+        args
+      }
+    })
+  }
+  instance.prototype.toJSON = function () {
+    return { __ref__: this[WEBVIEW_TARGET] }
+  }
+}
 export const useWebviewBinding = ({
   targetName,
   properties = {},

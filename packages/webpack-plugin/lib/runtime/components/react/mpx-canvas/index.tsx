@@ -21,9 +21,10 @@ import {
   constructors,
   WEBVIEW_TARGET
 } from './utils'
-import { useContext2D } from './CanvasRenderingContext2D'
-import html from './index.html'
+import CanvasRenderingContext2D from './CanvasRenderingContext2D'
+import html from './index.html.ts'
 import './CanvasGradient'
+import { createImage as canvasCreateImage } from './Image'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -90,7 +91,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     layoutRef
   })
 
-  const context2D = useContext2D(canvasRef.current)
+  const context2D = new CanvasRenderingContext2D(canvasRef.current)
 
   // 初始化bus和context2D
   useEffect(() => {
@@ -104,16 +105,22 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.bus = new Bus(webviewPostMessage)
     canvasRef.current.bus.pause()
 
-    // 设置context2D
+    // 设置 context 2D
     canvasRef.current.context2D = context2D
 
-    // 设置getContext方法
+    // 设置 getContext 方法
     canvasRef.current.getContext = getContext
 
-    // 设置postMessage方法
+    // 设置 createImage 方法
+    canvasRef.current.createImage = createImage
+
+    // 设置 postMessage 方法
     canvasRef.current.postMessage = postMessage
   }, [])
 
+  const createImage = (width?: Number, height?: Number) => {
+    return canvasCreateImage(canvasRef.current, width, height)
+  }
   const getContext = useCallback((contextType: string) => {
     if (contextType === '2d') {
       return context2D
