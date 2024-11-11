@@ -399,7 +399,23 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onSelectionChange: bindselectionchange && onSelectionChange
       }
     ),
-    [],
+    [
+      'type',
+      'keyboardType',
+      'password',
+      'placeholder-style',
+      'disabled',
+      'maxlength',
+      'auto-focus',
+      'focus',
+      'confirm-type',
+      'confirm-hold',
+      'cursor',
+      'cursor-color',
+      'selection-start',
+      'selection-end',
+      'multiline'
+    ],
     {
       layoutRef
     }
