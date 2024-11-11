@@ -1,14 +1,15 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, createContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, error, getByPath, collectDataset, hump2dash } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
-import { createSelectorQuery } from '@mpxjs/api-proxy'
+import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
+import { IntersectionObserverContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -68,7 +69,7 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx }) {
   const instance = Object.create({
     setData (data, callback) {
       return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
@@ -183,8 +184,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     createSelectorQuery () {
       return createSelectorQuery().in(this)
     },
-    createIntersectionObserver () {
-      error('createIntersectionObserver is not supported in react native, please use ref instead')
+    createIntersectionObserver (opt) {
+      return createIntersectionObserver(this, opt, intersectionCtx)
     },
     ...rawOptions.methods
   }, {
@@ -349,12 +350,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
+    const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -413,18 +415,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     return root
   }))
 
+  if (rawOptions.options?.isCustomText) {
+    defaultOptions.isCustomText = true
+  }
+
   if (type === 'page') {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const rootRef = useRef(null)
       const currentPageId = useMemo(() => ++pageId, [])
+      const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
         const isCustom = pageConfig.navigationStyle === 'custom'
         let opt = {}
         if (__mpx_mode__ === 'android') {
@@ -451,36 +454,54 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      const rootRef = useRef(null)
+      const onLayout = useCallback(() => {
+        rootRef.current?.measureInWindow((x, y, width, height) => {
+          navigation.layout = { x, y, width, height }
+        })
+      }, [])
+
       navigation.insets = useSafeAreaInsets()
 
       return createElement(GestureHandlerRootView,
         {
           style: {
+            flex: 1
+          }
+        },
+        createElement(ReactNative.View, {
+          style: {
             flex: 1,
             backgroundColor: pageConfig.backgroundColor || '#ffffff'
           },
-          ref: rootRef
+          ref: rootRef,
+          onLayout
         },
-        // todo custom portal host for active route
-        createElement(Provider,
-          null,
-          createElement(RouteContext.Provider,
-            {
-              value: currentPageId
-            },
-            createElement(defaultOptions,
+          createElement(Provider,
+            null,
+            createElement(RouteContext.Provider,
               {
-                navigation,
-                route,
-                id: currentPageId
-              }
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
+              {
+                value: intersectionObservers.current
+              },
+                createElement(defaultOptions,
+                  {
+                    navigation,
+                    route,
+                    id: currentPageId
+                  }
+                )
+              )
             )
           )
         )
+        // todo custom portal host for active route
       )
     }
     return Page
   }
-
   return defaultOptions
 }

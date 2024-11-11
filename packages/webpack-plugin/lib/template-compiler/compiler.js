@@ -101,6 +101,7 @@ let moduleId
 let isNative
 let hasScoped
 let hasVirtualHost
+let isCustomText
 let runtimeCompile
 let rulesRunner
 let currentEl
@@ -617,6 +618,7 @@ function parse (template, options) {
   isNative = options.isNative
   hasScoped = options.hasScoped
   hasVirtualHost = options.hasVirtualHost
+  isCustomText = options.isCustomText
   filePath = options.filePath
   i18n = options.i18n
   runtimeCompile = options.runtimeCompile
@@ -661,6 +663,14 @@ function parse (template, options) {
   const stack = []
   let root
   const meta = {}
+  if (isCustomText) {
+    meta.options = meta.options || {}
+    meta.options.isCustomText = true
+  }
+  if (hasVirtualHost) {
+    meta.options = meta.options || {}
+    meta.options.virtualHost = true
+  }
   let currentParent
   let multiRootError
   // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
@@ -736,23 +746,22 @@ function parse (template, options) {
       const children = currentParent.children
       if (currentParent.tag !== 'text') {
         text = text.trim()
+      } else {
+        text = text.trim() ? text : ''
       }
-
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
 
       if (text) {
-        if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
-          const el = {
-            type: 3,
-            // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
-            text: decodeInMustache(text),
-            parent: currentParent
-          }
-          children.push(el)
-          runtimeCompile ? processTextDynamic(el) : processText(el)
+        const el = {
+          type: 3,
+          // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
+          text: decodeInMustache(text),
+          parent: currentParent
         }
+        children.push(el)
+        runtimeCompile ? processTextDynamic(el) : processText(el)
       }
     },
     comment: function comment (text) {
@@ -2233,7 +2242,7 @@ function processBuiltInComponents (el, meta) {
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
       if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/${tag}`
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
       } else {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
       }
@@ -2311,11 +2320,6 @@ function postProcessAliComponentRootView (el, options, meta) {
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
     if (ctorType === 'component') {
-      if (mode === 'wx' && hasVirtualHost) {
-        // wx组件注入virtualHost配置
-        meta.options = meta.options || {}
-        meta.options.virtualHost = true
-      }
       if (isWeb(mode) && !hasVirtualHost) {
         // ali组件根节点实体化
         const rootView = createASTElement('view', [
@@ -2332,7 +2336,8 @@ function getVirtualHostRoot (options, meta) {
         return rootView
       }
       if (isReact(mode) && !hasVirtualHost) {
-        const rootView = createASTElement('view', [
+        const tagName = isCustomText ? 'text' : 'view'
+        const rootView = createASTElement(tagName, [
           {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
@@ -2526,7 +2531,7 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (el, meta, options) {
+function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp

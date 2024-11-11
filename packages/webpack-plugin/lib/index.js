@@ -139,6 +139,7 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
+    options.customTextRules = options.customTextRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
@@ -173,6 +174,7 @@ class MpxWebpackPlugin {
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.disableRequireAsync = options.disableRequireAsync || false
     options.miniNpmPackages = options.miniNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
@@ -687,6 +689,7 @@ class MpxWebpackPlugin {
           projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
+          customTextRules: this.options.customTextRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
@@ -708,7 +711,8 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode),
+          // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1810,8 +1814,8 @@ try {
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-
-        if (isWeb(mpx.mode)) {
+        // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
+        if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1

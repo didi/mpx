@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, isFunction, cached } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, isFunction, cached, getFocusedNavigation } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
 
 function rpx (value) {
@@ -12,7 +12,8 @@ function vw (value) {
   return value * width / 100
 }
 function vh (value) {
-  const { height } = Dimensions.get('screen')
+  const navigation = getFocusedNavigation()
+  const height = navigation?.layout?.height || Dimensions.get('screen').height
   return value * height / 100
 }
 
