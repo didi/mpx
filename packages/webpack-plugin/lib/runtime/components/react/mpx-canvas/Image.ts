@@ -9,29 +9,32 @@ const PROPERTIES = {
 
 export class Image {
   canvas: any;
-  width: Number;
-  height: Number;
-  constructor (canvas: any, width: Number, height: Number, noOnConstruction?: Boolean) {
-    registerWebviewProperties(this, PROPERTIES)
+  width: number;
+  height: number;
+
+  constructor (canvas: any, width?: number, height?: number, noOnConstruction = false) {
     this.canvas = canvas
+    registerWebviewProperties(this, PROPERTIES)
+
     if (width) {
       this.width = width
     }
     if (height) {
       this.height = height
     }
+
     if (!noOnConstruction) {
       this.onConstruction()
     }
   }
 
-  postMessage = (message: any) => {
+  postMessage (message: any) {
     return this.canvas.postMessage(message)
   }
 }
 
-export function createImage (canvas, height, width) {
-  return new Image(canvas, height, width)
+export function createImage (canvas, width, height) {
+  return new Image(canvas, width, height)
 }
 
 // 注册构造器

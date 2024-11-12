@@ -160,6 +160,7 @@ var toMessage = function (result) {
             result[WEBVIEW_TARGET] = id;
             targets[id] = result;
         }
+
         return {
             type: "json",
             payload: flattenObject(result),
@@ -181,6 +182,19 @@ var toArgs = function (result) {
     for (var key in result) {
         if (result[key] !== undefined && key !== "@@WEBVIEW_TARGET") {
             args.push(result[key]);
+        }
+    }
+    return args;
+};
+
+var createObjectsFromArgs = function (args) {
+    var _a;
+    for (var index = 0; index < args.length; index += 1) {
+        var currentArg = args[index];
+        if (currentArg && currentArg.className !== undefined) {
+            var className = currentArg.className, classArgs = currentArg.classArgs;
+            var object = new ((_a = constructors[className]).bind.apply(_a, __spreadArray([void 0], classArgs, false)))();
+            args[index] = object;
         }
     }
     return args;
@@ -229,6 +243,22 @@ function handleMessage(_a) {
         case "set": {
             var target = payload.target, key = payload.key, value = payload.value;
             targets[target][key] = populateRefs(value);
+            break;
+        }
+        case "construct": {
+            var constructor = payload.constructor, target = payload.id, _d = payload.args, args = _d === void 0 ? [] : _d;
+            var newArgs = createObjectsFromArgs(args);
+            var object = void 0;
+            try {
+                object = new ((_c = constructors[constructor]).bind.apply(_c, __spreadArray([void 0], newArgs, false)))();
+            }
+            catch (error) {
+                throw new Error("Error while constructing ".concat(constructor, " ").concat(error.message));
+            }
+            object.__constructorName__ = constructor;
+            var message = toMessage({});
+            targets[target] = object;
+            window.ReactNativeWebView.postMessage(JSON.stringify(__assign({ id: id }, message)));
             break;
         }
     }

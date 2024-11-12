@@ -1,5 +1,6 @@
-import { ID, WEBVIEW_TARGET, registerWebviewTarget, registerWebviewConstructor, registerWebviewMethods } from './utils'
+import { ID, WEBVIEW_TARGET, registerWebviewConstructor, registerWebviewMethods } from './utils'
 
+const METHODS = ['addColorStop']
 export default class CanvasGradient {
   private canvas: any;
   [WEBVIEW_TARGET]: string;
@@ -7,8 +8,7 @@ export default class CanvasGradient {
   constructor (canvas: any, noOnConstruction = false) {
     this.canvas = canvas
     this[WEBVIEW_TARGET] = ID()
-    registerWebviewTarget(this, 'CanvasGradient')
-    registerWebviewMethods(this, ['addColorStop'])
+    registerWebviewMethods(this, METHODS)
     if (!noOnConstruction) {
       this.onConstruction()
     }
@@ -19,5 +19,5 @@ export default class CanvasGradient {
   }
 }
 
-// 注册构造器
+// 注册构造器, 需要通过 createLinearGradient 调用
 registerWebviewConstructor(CanvasGradient, 'CanvasGradient')
