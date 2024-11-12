@@ -48,7 +48,7 @@ interface FormRef {
 }
 
 const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
-  const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
+  const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
