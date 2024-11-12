@@ -94,9 +94,9 @@ module.exports = function (raw) {
     const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
-  // currentInject -> _cj
+  // currentInject -> _j
   resultSource += `
-global._cj = {
+global._j = {
   moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
@@ -119,7 +119,7 @@ global._cj = {
           ignoreMap
         })
       resultSource += `
-global._cj.render = function (_i, _c, _r, _sc) {
+global._j.render = function (_i, _c, _r, _sc) {
 ${bindResult.code}
 _r(${optimizeRenderLevel === 2 ? 'true' : ''});
 };\n`
@@ -141,20 +141,20 @@ ${e.stack}`)
 
   if (meta.computed) {
     resultSource += bindThis.transform(`
-global._cj.injectComputed = {
+global._j.injectComputed = {
   ${meta.computed.join(',')}
 };`).code + '\n'
   }
 
   if (meta.refs) {
     resultSource += `
-global._cj.getRefsData = function () {
+global._j.getRefsData = function () {
   return ${JSON.stringify(meta.refs)};
 };\n`
   }
 
   if (meta.options) {
-    resultSource += `global._cj.injectOptions = ${JSON.stringify(meta.options)};` + '\n'
+    resultSource += `global._j.injectOptions = ${JSON.stringify(meta.options)};` + '\n'
   }
 
   this.emitFile(resourcePath, '', undefined, {

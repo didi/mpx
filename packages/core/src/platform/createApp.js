@@ -82,8 +82,8 @@ export default function createApp (option, config = {}) {
 
   if (__mpx_mode__ === 'web') {
     global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-    // currentModuleId -> _mid
-    global.__mpxOptionsMap[global._mid] = defaultOptions
+    // currentModuleId -> _id
+    global.__mpxOptionsMap[global._id] = defaultOptions
     global.getApp = function () {
       if (!isBrowser) {
         console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')

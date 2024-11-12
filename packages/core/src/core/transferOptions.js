@@ -5,10 +5,10 @@ import { warn, findItem } from '@mpxjs/utils'
 
 export default function transferOptions (options, type, needConvert = true) {
   let currentInject
-  // currentModuleId -> _mid
-  // currentInject -> _cj
-  if (global._cj && global._cj.moduleId === global._mid) {
-    currentInject = global._cj
+  // currentModuleId -> _id
+  // currentInject -> _j
+  if (global._j && global._j.moduleId === global._id) {
+    currentInject = global._j
   }
   // 文件编译路径
   options.mpxFileResource = global.currentResource

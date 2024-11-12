@@ -241,8 +241,8 @@ module.exports = function (content) {
       }
 
       // 注入模块id及资源路径
-      // currentModuleId -> _mid
-      let output = `global._mid = ${JSON.stringify(moduleId)}\n`
+      // currentModuleId -> _id
+      let output = `global._id = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
