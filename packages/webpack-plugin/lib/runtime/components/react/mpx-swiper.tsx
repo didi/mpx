@@ -139,7 +139,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     parentWidth,
     parentHeight
   })
-  const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
   const defaultHeight = (normalStyle?.height || 150)
@@ -155,7 +155,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const step = useSharedValue(initStep)
 
   function getInitOffset () {
-    const stepValue = dir.value === 'x' ? widthState : heightState
+    const stepValue = getStepValue()
     if (Number.isNaN(+stepValue)) return { x: 0, y: 0 }
     const targetOffset = { x: 0, y: 0 }
     if(props.circular && totalElements.value > 1) {
@@ -262,13 +262,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   }
 
   function renderItems () {
-    // const { width, height } = state
     const pageStyle = { width: widthState, height: heightState }
     // pages = ["0", "1", "2", "0", "1"]
-    const renderChild = children.slice()
+    let renderChild = children.slice()
     if (props.circular && totalElements.value > 1) {
       if (totalElements.value === 2) {
-        renderChild.concat(children).concat(children)
+        renderChild = renderChild.concat(children).concat(children)
       } else {
         // 最前加两个
         renderChild.unshift(children[totalElements.value - 1])
@@ -288,8 +287,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       } else if (i === totalElements.value - 1 && typeof width === 'number') {
         nextMargin && (extraStyle.marginRight = nextMargin)
       }
-      return (<View style={[pageStyle, extraStyle]} key={ 'page' + i}>{child}</View>)
+      return (<View style={[pageStyle, extraStyle]} key={ 'page' + i}>
+        {child}
+      </View>)
     })
+
+    
   }
 
   function createAutoPlay () {
@@ -343,7 +346,10 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   function handleSwiperChange (current: number) {
     const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
     props.bindchange && props.bindchange(eventData)
-    props.autoplay && createAutoPlay()
+  }
+
+  function getStepValue () {
+    return dir.value === 'x' ? widthState : heightState 
   }
 
   useAnimatedReaction(() => timestamp.value, (newTime, preTime) => {
@@ -360,7 +366,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
 
   useEffect(() => {
     // 这里stepValue 有时候拿不到
-    const stepValue = dir.value === 'x' ? widthState : heightState
+    const stepValue = getStepValue()
     if (!Number.isNaN(+stepValue)) {
       step.value = stepValue
     }
@@ -375,6 +381,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       const targetOffset = getInitOffset()
       offset.value = targetOffset
       start.value = targetOffset
+      props.current && (targetIndex.value = props.current)
     }
   }, [props.autoplay, props.current, widthState, heightState])
 
@@ -398,15 +405,13 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     // 移动的目标步长
     const moveDistance  = Math.ceil(Math.abs(transDistance) / step.value) * step.value
     // 移动的目标步长之后的坐标, e[strTrans] < 0) 代表正向滚动 否则反向
-    const moveTargetPos = transDistance < 0 ? posView + moveDistance : posView - moveDistance
+    const moveTargetPos = transDistance < 0 ? posView + moveDistance - previousMargin : posView - moveDistance - previousMargin
     // 目标索引值
     let index = Math.floor(moveTargetPos / step.value)
     let realTarget = targetIndex.value
     // 是否临界点
     let isCriticalItem = false
     if (!props.circular) {
-      // targetIndex.value = index
-      // targetPos = -targetIndex.value * step.value
       realTarget = index
       targetPos = -realTarget * step.value
     } else {
@@ -460,7 +465,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     } else if (transDistance < 0) {
       // 正向滚动e[strTrans] < 0
       var moveTarget = e[dir.value as dirType] + Math.abs(transDistance);
-      var posEnd = (totalElements.value - 1) * step.value;
+      var posEnd = (totalElements.value - 1) * step.value + previousMargin;
       return moveTarget <= posEnd;
     } else if (transDistance > 0) {
       // 反向滚动 e[dir.value] < step.value 代表第一个元素不能再滚动, e[dir.value] > step.value
