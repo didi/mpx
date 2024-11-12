@@ -11,6 +11,10 @@ export class Image {
   canvas: any;
   width: number;
   height: number;
+  private _loadListener: any;
+  private _errorListener: any;
+  private __onload: Function | undefined;
+  private _onerror: Function | undefined;
 
   constructor (canvas: any, width?: number, height?: number, noOnConstruction = false) {
     this.canvas = canvas
@@ -59,6 +63,34 @@ export class Image {
         })
       }
     })
+  }
+
+  set onload (callback: Function | undefined) {
+    this.__onload = callback
+    if (this._loadListener) {
+      this.canvas.removeMessageListener(this._loadListener)
+    }
+    if (callback) {
+      this._loadListener = this.addEventListener('load', callback)
+    }
+  }
+
+  get onload (): Function | undefined {
+    return this._onload
+  }
+
+  set onerror (callback: Function | undefined) {
+    this._onerror = callback
+    if (this._errorListener) {
+      this.canvas.removeMessageListener(this._errorListener)
+    }
+    if (callback) {
+      this._errorListener = this.addEventListener('error', callback)
+    }
+  }
+
+  get onerror (): Function | undefined {
+    return this._onerror
   }
 }
 
