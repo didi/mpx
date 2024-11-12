@@ -261,6 +261,27 @@ function handleMessage(_a) {
             window.ReactNativeWebView.postMessage(JSON.stringify(__assign({ id: id }, message)));
             break;
         }
+              case "listen": {
+      const { types, target } = payload;
+      for (const eventType of types) {
+        targets[target].addEventListener(eventType, (e) => {
+          const message = toMessage({
+            type: "event",
+            payload: {
+              type: e.type,
+              target: {
+                ...flattenObject(targets[target]),
+                [WEBVIEW_TARGET]: target,
+              },
+            },
+          });
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({ id, ...message }),
+          );
+        });
+      }
+      break;
+    }
     }
 }
 var handleError = function (err, message) {

@@ -116,6 +116,13 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
     // 设置 postMessage 方法
     canvasRef.current.postMessage = postMessage
+
+    // 设置 listeners
+    canvasRef.current.listeners = []
+
+    canvasRef.current.addMessageListener = addMessageListener
+
+    canvasRef.current.removeMessageListener = removeMessageListener
   }, [])
 
   const createImage = (width?: Number, height?: Number) => {
@@ -158,6 +165,15 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     }
   }, [])
 
+  const addMessageListener = (listener) => {
+    canvasRef.current.listeners.push(listener)
+    return () => canvasRef.current.removeMessageListener(listener)
+  }
+
+  const removeMessageListener = (listener) => {
+    canvasRef.current.listeners.splice(canvasRef.current.listeners.indexOf(listener), 1)
+  }
+
   const onMessage = useCallback((e) => {
     let data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
@@ -189,6 +205,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
               ...data,
               payload: object
             }
+          }
+          for (const listener of canvasRef.current.listeners) {
+            listener(data.payload)
           }
         }
         canvasRef.current.bus.handle(data)
