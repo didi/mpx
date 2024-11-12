@@ -115,9 +115,9 @@ module.exports = function (content) {
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      let usingComponentsNameMap = {}
+      const usingComponentsNameMap = {}
       for (const name in mpx.usingComponents) {
-        usingComponentsNameMap[name] = name //compressName._generateName()
+        usingComponentsNameMap[name] = name // compressName._generateName()
       }
       let componentPlaceholder = []
       let componentGenerics = {}
@@ -349,10 +349,9 @@ module.exports = function (content) {
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
       output += getRequire('json', json, {
-        ...(json.src ? {
-          ...queryObj,
-          resourcePath
-        } : null),
+        ...(json.src
+          ? { ...queryObj, resourcePath }
+          : null),
         usingComponentsNameMap: JSON.stringify(usingComponentsNameMap)
       }) + '\n'
 

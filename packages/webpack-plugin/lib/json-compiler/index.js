@@ -18,7 +18,7 @@ const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
-const { generateVariableNameBySource, isProductionLikeMode } = require('../utils/optimize-compress')
+const { isProductionLikeMode } = require('../utils/optimize-compress')
 
 module.exports = function (content) {
   const nativeCallback = this.async()

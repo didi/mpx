@@ -12,7 +12,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
-const { isProductionLikeMode, generateVariableNameBySource } = require('../utils/optimize-compress')
+const { isProductionLikeMode } = require('../utils/optimize-compress')
 
 const no = function () {
   return false
@@ -2240,7 +2240,7 @@ function processOptimizeSize (root, options) {
     }
   })
   // template中的使用到的组件不会经过压缩，如果使用自定义组件会出现问题，如果存在template，发出报错
-  if (nativeTags.has('template')) error$1(`使用template模板无法开启组件名压缩`)
+  if (nativeTags.has('template')) error$1('使用template模板无法开启组件名压缩')
   // 校验压缩后的组件名是否与原生组件冲突
   for (const name of Object.values(usingComponentsNameMap)) {
     if (nativeTags.has(name)) {
