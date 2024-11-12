@@ -176,10 +176,13 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const strTrans = 'translation' + dir.value.toUpperCase()
   const isAutoFirst = useRef(true)
   const arrPages: Array<ReactNode> | ReactNode = renderItems()
-  // 定时器替代setInterval
+  // timestamp标识何时能滚动, 定时器替代setInterval
   const timestamp = useSharedValue(0);
-  // 是否可以开始轮播
+  // canLoop 标识是否能滚动
   const canLoop = useSharedValue(true)
+  // 标记可以开始loop的时间戳
+  let enableTime = useSharedValue(Date.now())
+  // 备注如果用runOnJs的setInterval的方式, 不晓得为什么props.autoplay的配置还会触发变化理论是个死值;
 
   const {
     // 存储layout布局信息
@@ -389,7 +392,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     if (props.autoplay && totalElements.value > 1) {
       const intervalTimer = props.interval || 500
       const intervalId = setInterval(() => {
-        timestamp.value = Date.now();
+        // 正常无人工干预轮播
+        if (timestamp.value !== 0 && canLoop.value) {
+          timestamp.value = Date.now();
+        } else if (timestamp.value === 0 && Date.now() - enableTime.value > intervalTimer) {
+          timestamp.value = Date.now();
+        }
       }, intervalTimer);
       return () => clearInterval(intervalId);
     }
@@ -411,6 +419,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     let realTarget = targetIndex.value
     // 是否临界点
     let isCriticalItem = false
+    console.log('----------getTarget', posView, transDistance, moveDistance, moveTargetPos, index)
     if (!props.circular) {
       realTarget = index
       targetPos = -realTarget * step.value
@@ -426,6 +435,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         if (isCriticalItem) {
           resetPos = -(a1 + 2) * step.value
         }
+        console.log('---------zheng-', a1, a2, realTarget, resetPos, isCriticalItem)
       } else {
         // 反向滚动
         isCriticalItem = [0, 1].includes(index)
@@ -438,6 +448,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         if (isCriticalItem) {
           resetPos = -(index + totalElements.value) * step.value
         }
+        console.log('----------fan', isCriticalItem, realTarget, targetPos, resetPos)
       }
     }
     return {
@@ -481,6 +492,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       // 再经过interval后执行动画
       timestamp.value = 0
       canLoop.value = true
+      enableTime.value = Date.now()
     }
   }
 
