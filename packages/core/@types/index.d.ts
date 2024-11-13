@@ -259,13 +259,15 @@ interface MpxConfig {
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  errorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
+  errorHandler: (msg: String, location: String, e: Error) => any | null
+  warnHandler: (msg: String, location: String, e: Error) => any | null
   proxyEventHandler: (e: WechatMiniprogram.CustomEvent) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,
   webConfig: object,
-  webviewConfig?: WebviewConfig
+  webviewConfig: WebviewConfig,
+  rnConfig: object,
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

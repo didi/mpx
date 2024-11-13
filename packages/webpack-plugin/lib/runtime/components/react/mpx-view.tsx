@@ -7,6 +7,9 @@
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
+import Animated from 'react-native-reanimated'
+import useAnimationHooks from './useAnimationHooks'
+import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle } from './utils'
@@ -14,6 +17,7 @@ import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
+  animation?: AnimationProp
   children?: ReactNode | ReactNode[]
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
@@ -25,6 +29,7 @@ export interface _ViewProps extends ViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'enable-animation'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -521,6 +526,21 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
   return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
 
+function inheritStyle (innerStyle: ExtendedViewStyle = {} ) {
+  const { borderWidth,  borderRadius } = innerStyle
+  let borderStyles =  ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
+  return pickStyle(innerStyle, borderStyles, borderWidth && borderRadius ? (key, val) => {
+    // 盒子内圆角borderWith与borderRadius的关系
+    // 当borderRadius 小于 当borderWith 内边框为直角
+    // 当borderRadius 大于等于 当borderWith 内边框为圆角
+    if (borderStyles.includes(key)) {
+      const borderVal =  +val - borderWidth 
+      return borderVal > 0 ? borderVal : 0
+    }
+    return val
+  } : void 0)
+}
+
 function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
@@ -604,7 +624,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, 
     }
   }
 
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...pickStyle(innerStyle, ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
     {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
     {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
   </View>
@@ -646,9 +666,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
     'enable-fast-image': enableFastImage,
+    'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
+    'parent-height': parentHeight,
+    animation
   } = props
 
   const [isHover, setIsHover] = useState(false)
@@ -743,9 +765,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
+  const viewStyle = Object.assign({}, innerStyle, layoutStyle)
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
+    style: viewStyle,
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -760,27 +783,39 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
-  return (
-    <View
+  enableAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableAnimation)
+  if (enableAnimationRef.current !== enableAnimation) {
+    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+  const finalStyle = enableAnimation
+    ? useAnimationHooks({
+      animation,
+      style: viewStyle
+    })
+    : viewStyle
+  const childNode = wrapWithChildren(props, {
+    hasVarDec,
+    enableBackground: enableBackgroundRef.current,
+    textStyle,
+    backgroundStyle,
+    varContext: varContextRef.current,
+    textProps,
+    innerStyle,
+    enableFastImage
+  })
+  return animation?.actions?.length
+    ? (<Animated.View
+      {...innerProps}
+      style={finalStyle}
+    >
+      {childNode}
+    </Animated.View>)
+    : (<View
       {...innerProps}
     >
-      {
-        wrapWithChildren(
-          props,
-          {
-            hasVarDec,
-            enableBackground: enableBackgroundRef.current,
-            textStyle,
-            backgroundStyle,
-            varContext: varContextRef.current,
-            textProps,
-            innerStyle,
-            enableFastImage
-          }
-        )
-      }
-    </View>
-  )
+      {childNode}
+    </View>)
 })
 
 _View.displayName = 'mpx-view'

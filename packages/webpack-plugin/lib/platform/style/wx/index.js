@@ -190,12 +190,16 @@ module.exports = function getSpec ({ warn, error }) {
     flex: ['flexGrow', 'flexShrink', 'flexBasis'],
     // flex-flow: <'flex-direction'> or flex-flow: <'flex-direction'> and <'flex-wrap'>
     'flex-flow': ['flexDirection', 'flexWrap'],
-    'border-radius': ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
+    'border-radius': ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'],
+    'border-width': ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'],
+    'border-color': ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
+    margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
+    padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
   }
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
     const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
-    const values = parseValues(value)
+    const values = Array.isArray(value) ? value : parseValues(value)
     const cssMap = []
     let idx = 0
     let propsIdx = 0
@@ -255,32 +259,20 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
 
-  // margin padding
-  const formatMargins = ({ prop, value, selector }) => {
-    const values = parseValues(value)
-    // format
-    let suffix = []
+  const formatCompositeVal = ({ prop, value, selector }, { mode }) => {
+    const values = parseValues(value).splice(0, 4)
     switch (values.length) {
-      // case 1:
+      case 1:
+        verifyValues({ prop, value, selector }, false)
+        return { prop, value }
       case 2:
-        suffix = ['Vertical', 'Horizontal']
+        values.push(...values)
         break
       case 3:
-        suffix = ['Top', 'Horizontal', 'Bottom']
-        break
-      case 4:
-        suffix = ['Top', 'Right', 'Bottom', 'Left']
+        values.push(values[1])
         break
     }
-    return values.map((value, index) => {
-      const newProp = `${prop}${suffix[index] || ''}`
-      // validate
-      verifyValues({ prop: hump2dash(newProp), value, selector }, false)
-      return {
-        prop: newProp,
-        value: value
-      }
-    })
+    return formatAbbreviation({ prop, value: values, selector }, { mode })
   }
 
   // line-height
@@ -372,22 +364,6 @@ module.exports = function getSpec ({ warn, error }) {
     }
     unsupportedPropError({ prop, value, selector }, { mode })
     return false
-  }
-
-  // border-radius 缩写转换
-  const getBorderRadius = ({ prop, value, selector }, { mode }) => {
-    const values = parseValues(value)
-    if (values.length === 1) {
-      verifyValues({ prop, value, selector }, false)
-      return { prop, value }
-    } else {
-      if (values.length === 2) {
-        values.push(...values)
-      } else if (values.length === 3) {
-        values.push(values[1])
-      }
-      return formatAbbreviation({ prop, value: values.join(' ') }, { mode })
-    }
   }
 
   // transform 转换
@@ -566,15 +542,10 @@ module.exports = function getSpec ({ warn, error }) {
         ios: checkBackgroundImage,
         android: checkBackgroundImage
       },
-      {
-        test: 'border-radius',
-        ios: getBorderRadius,
-        android: getBorderRadius
-      },
       { // margin padding 内外边距的处理
-        test: /^(margin|padding)$/,
-        ios: formatMargins,
-        android: formatMargins
+        test: /^(margin|padding|border-radius|border-width|border-color)$/,
+        ios: formatCompositeVal,
+        android: formatCompositeVal
       },
       { // line-height 换算
         test: 'line-height',
