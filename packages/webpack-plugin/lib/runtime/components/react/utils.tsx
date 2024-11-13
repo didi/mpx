@@ -537,7 +537,7 @@ export function renderImage (
   return <Component {...imageProps} />
 }
 
-export function pickStyle(styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
+export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
   return pickedKeys.reduce<Record<string, any>>((acc, key) => {
     if (key in styleObj) {
       acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]

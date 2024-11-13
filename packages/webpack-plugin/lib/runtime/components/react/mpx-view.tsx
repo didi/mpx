@@ -531,19 +531,23 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
   return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
 
-function inheritStyle (innerStyle: ExtendedViewStyle = {} ) {
-  const { borderWidth,  borderRadius } = innerStyle
-  let borderStyles =  ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
-  return pickStyle(innerStyle, borderStyles, borderWidth && borderRadius ? (key, val) => {
-    // 盒子内圆角borderWith与borderRadius的关系
-    // 当borderRadius 小于 当borderWith 内边框为直角
-    // 当borderRadius 大于等于 当borderWith 内边框为圆角
-    if (borderStyles.includes(key)) {
-      const borderVal =  +val - borderWidth 
-      return borderVal > 0 ? borderVal : 0
-    }
-    return val
-  } : void 0)
+function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
+  const { borderWidth, borderRadius } = innerStyle
+  const borderStyles = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
+  return pickStyle(innerStyle,
+    borderStyles,
+    borderWidth && borderRadius
+      ? (key, val) => {
+        // 盒子内圆角borderWith与borderRadius的关系
+        // 当borderRadius 小于 当borderWith 内边框为直角
+        // 当borderRadius 大于等于 当borderWith 内边框为圆角
+          if (borderStyles.includes(key)) {
+            const borderVal = +val - borderWidth
+            return borderVal > 0 ? borderVal : 0
+          }
+          return val
+        }
+      : undefined)
 }
 
 function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
