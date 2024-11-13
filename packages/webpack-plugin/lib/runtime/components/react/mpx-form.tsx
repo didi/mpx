@@ -10,7 +10,7 @@ import { JSX, useRef, forwardRef, ReactNode } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren } from './utils'
+import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject } from './utils'
 interface FormProps {
   style?: Record<string, any>;
   children: ReactNode;
@@ -49,10 +49,12 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const formRef = useRef(null)
-  useNodesRef(props, ref, formRef)
+  useNodesRef(props, ref, formRef, {
+    style: normalStyle
+  })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 
@@ -83,11 +85,11 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     formValuesMap.forEach(item => item.resetValue())
   }
 
-  const innerProps = useInnerProps(props, {
-    style: { ...innerStyle, ...layoutStyle },
-    ref: formRef,
-    ...layoutProps
-  }, [
+  const innerProps = useInnerProps(props, extendObject({
+    style: extendObject(innerStyle, layoutStyle),
+    ref: formRef
+  }, layoutProps)
+  , [
     'bindsubmit',
     'bindreset'
   ], { layoutRef })

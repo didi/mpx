@@ -25,7 +25,7 @@ import {
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle, renderImage } from './utils'
+import { SVG_REGEXP, useLayout, useTransformStyle, extendObject, renderImage } from './utils'
 
 export type Mode =
   | 'scaleToFill'
@@ -114,16 +114,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     height: DEFAULT_IMAGE_HEIGHT
   }
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style,
-    overflow: 'hidden'
-  }
+  const styleObj = extendObject(
+    defaultStyle,
+    style,
+    { overflow: 'hidden' }
+  )
 
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef, {
-    defaultStyle
-  })
 
   const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
     setViewWidth(width)
@@ -131,6 +128,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  useNodesRef(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout })
 
@@ -336,17 +337,23 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: {
-        ...normalStyle,
-        ...layoutStyle,
-        ...(isHeightFixMode && { width: fixedWidth }),
-        ...(isWidthFixMode && { height: fixedHeight })
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject(
+          normalStyle,
+          layoutStyle,
+          isHeightFixMode ? { width: fixedWidth } : {},
+          isWidthFixMode ? { height: fixedHeight } : {}
+        )
       },
-      ...layoutProps
-    },
-    [],
+      layoutProps
+    ),
+    [
+      'src',
+      'mode',
+      'svg'
+    ],
     {
       layoutRef
     }
@@ -360,11 +367,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
               uri={src}
               onLayout={onSvgLoad}
               onError={binderror && onSvgError}
-              style={{
-                transformOrigin: 'top left',
-                ...modeStyle
-              }}
+              style={extendObject(
+                { transformOrigin: 'top left' },
+                modeStyle
+              )}
             />
+<<<<<<< HEAD
           : renderImage({
             source: { uri: src },
             resizeMode,
@@ -377,6 +385,22 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
               ...(isCropMode && modeStyle)
             }
           }, enableFastImage)
+=======
+          : <RNImage
+              source={{ uri: src }}
+              resizeMode={resizeMode}
+              onLoad={bindload && onImageLoad}
+              onError={binderror && onImageError}
+              style={extendObject(
+                {
+                  transformOrigin: 'top left',
+                  width: isCropMode ? imageWidth : '100%',
+                  height: isCropMode ? imageHeight : '100%'
+                },
+                isCropMode ? modeStyle : {}
+              )}
+            />
+>>>>>>> f1ad87f6a4279fdea82c7902fa6574d5edd87eaa
       }
     </View>
   )

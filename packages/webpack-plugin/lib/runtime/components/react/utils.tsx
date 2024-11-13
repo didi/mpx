@@ -32,10 +32,7 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 
 function getSafeAreaInset (name: string) {
   const navigation = getFocusedNavigation()
-  const insets = {
-    ...initialWindowMetrics?.insets,
-    ...navigation?.insets
-  }
+  const insets = extendObject(initialWindowMetrics?.insets || {}, navigation?.insets || {})
   return insets[safeAreaInsetMap[name]]
 }
 
@@ -91,10 +88,10 @@ export const parseUrl = (cssUrl = '') => {
 }
 
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
-  return {
-    ...transferProps,
-    ...omit(originProps, deletePropsKey)
-  }
+  return extendObject(
+    transferProps,
+    omit(originProps, deletePropsKey)
+  )
 }
 
 export function isText (ele: ReactNode): ele is ReactElement {
@@ -515,7 +512,7 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   if (textStyle || textProps) {
     children = Children.map(children, (child) => {
       if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
+        const style = extendObject(textStyle || {}, child.props.style)
         return cloneElement(child, { ...textProps, style })
       }
       return child
@@ -525,6 +522,10 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
     children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
   }
   return children
+}
+
+export function extendObject (...args: Record<string, any>[]) {
+  return Object.assign({}, ...args)
 }
 
 export function renderImage (
