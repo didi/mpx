@@ -538,6 +538,7 @@ export const debounce = <T extends AnyFunc>(
   }
   wrapper.clear = () => {
     timer && clearTimeout(timer)
+    timer = null
   }
   return wrapper
 }

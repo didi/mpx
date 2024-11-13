@@ -72,12 +72,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onSelectChangeDebounce = useDebouncedCallback(onSelectChange, 300)
 
-  useEffect(() => {
-    return () => {
-      onSelectChangeDebounce.clear()
-    }
-  }, [onSelectChangeDebounce])
-
   const onScrollViewLayout = () => {
     getInnerLayout && getInnerLayout(layoutRef)
   }
