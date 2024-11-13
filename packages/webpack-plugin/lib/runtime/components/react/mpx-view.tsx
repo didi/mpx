@@ -122,6 +122,17 @@ const applyHandlers = (handlers: Handler[], args: any[]) => {
   }
 }
 
+const normalizeStyle = (style: ExtendedViewStyle = {}) => {
+  ['backgroundSize', 'backgroundPosition'].forEach(name => {
+    if (style[name] && typeof style[name] === 'string') {
+      if (style[name].trim()) {
+        style[name] = style[name].split(' ')
+      }
+    }
+  })
+  return style
+}
+
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
 
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
@@ -504,7 +515,7 @@ function normalizeBackgroundSize (backgroundSize: Exclude<ExtendedViewStyle['bac
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
-  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
+  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = normalizeStyle(imageStyle) || {}
   const { type, src, linearInfo } = parseBgImage(backgroundImage)
 
   return {
