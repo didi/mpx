@@ -13,8 +13,6 @@ interface ColumnProps {
   onColumnLayoutChange: Function,
   getInnerLayout: Function,
   onSelectChange: AnyFunc,
-  onChanging: AnyFunc,
-  onChanged: AnyFunc,
   style: {
     [key: string]: any
   },
@@ -37,8 +35,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     columnIndex,
     initialIndex,
     onSelectChange,
-    onChanging,
-    onChanged,
     onColumnLayoutChange,
     getInnerLayout,
     style,
@@ -117,7 +113,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onMomentumScrollBegin = () => {
-    onChanging(columnIndex)
     onSelectChangeDebounce.clear()
   }
 
@@ -127,12 +122,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
     const { y: scrollY } = e.nativeEvent.contentOffset
     let calcIndex = Math.round(scrollY / itemRawH)
+    activeIndex.current = calcIndex
     if (calcIndex === initialIndex) {
-      onChanged(columnIndex)
       onSelectChangeDebounce.clear()
     } else {
       calcIndex = Math.max(0, Math.min(calcIndex, maxIndex)) || 0
-      activeIndex.current = calcIndex
       onSelectChangeDebounce(calcIndex)
     }
   }

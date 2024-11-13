@@ -1,6 +1,5 @@
 import { View } from 'react-native'
 import React, { forwardRef, useState, useRef } from 'react'
-import { LinearGradient, LinearGradientProps } from 'react-native-linear-gradient'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { parseInlineStyle, useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
@@ -61,18 +60,20 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
+
   // indicatorStyle 需要转换为rn的style
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, width: indicatorW } = indicatorStyle
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
-  const changingCnt = useRef(0)
-  const changedValue = useRef(value)
   const [pickH, setPickH] = useState(0)
   const isSetW = indicatorW !== undefined ? 1 : 0
   const itemH = pickH / 5
   const maskPos: PosType = {}
+  const activeValueRef = useRef(value)
+  activeValueRef.current = value
+
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
   // picker-view 设置的color等textStyle,在小程序上的表现是可以继承到最内层的text样式,
   // 但是RN内部column是slot无法设置, 需要业务自己在column内的元素上设置
@@ -84,14 +85,14 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  const { textStyle } = splitStyle(normalStyle)
-  const { textProps } = splitProps(props)
   const {
     // 存储layout布局信息
     layoutRef,
     layoutProps,
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
+  const { textProps } = splitProps(props)
+  const { textStyle } = splitStyle(normalStyle)
 
   if (normalStyle?.height && pickH && pickH !== normalStyle.height) {
     maskPos.height = itemH * 2 + Math.ceil((normalStyle.height - pickH) / 2)
@@ -103,35 +104,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setPickH(layoutConfig.height)
   }
 
-  const hasChanged = () => {
-    if (value.length === 1) {
-      return true
-    }
-    return !changingCnt.current
+  const onSelectChange = (columnIndex: number, selectedIndex: number) => {
+    const activeValue = activeValueRef.current
+    activeValue[columnIndex] = selectedIndex
+    const eventData = getCustomEvent(
+      'change',
+      {},
+      { detail: { value: activeValue, source: 'change' }, layoutRef }
+    )
+    bindchange?.(eventData)
   }
 
-  const onChanging = (columnIndex: number) => {
-    changingCnt.current |= 1 << columnIndex
-  }
-
-  const onChanged = (columnIndex: number) => {
-    changingCnt.current &= ~(1 << columnIndex)
-  }
-
-  const onSelectChange = (columnIndex: number, selIndex: number) => {
-    onChanged(columnIndex)
-    changedValue.current[columnIndex] = selIndex
-    if (hasChanged()) {
-      const eventData = getCustomEvent(
-        'change',
-        {},
-        { detail: { value: changedValue.current, source: 'change' }, layoutRef }
-      )
-      bindchange?.(eventData)
-    }
-  }
-
-  const onInitialSelectChange = (value: number[]) => {
+  const onInitialChange = (value: number[]) => {
     const eventData = getCustomEvent(
       'change',
       {},
@@ -156,12 +140,12 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     { layoutRef }
   )
 
-  const cloneChild = (child: React.ReactElement, index: number, data: React.ReactNode[], initialIndex: number) => {
+  const cloneChild = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
     const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = {
       ...childProps,
-      columnData: data,
+      columnData,
       ref: cloneRef,
       columnIndex: index,
       key: `pick-view-${index}`,
@@ -171,8 +155,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       },
       onColumnLayoutChange,
       onSelectChange: onSelectChange.bind(null, index),
-      onChanging,
-      onChanged,
       initialIndex,
       ...extraProps
     }
@@ -225,18 +207,15 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const validValue: number[] = []
     let isInvalid = false
     columns.forEach((item: React.ReactElement, index) => {
-      const data = React.Children.toArray(item?.props?.children)
-      const validIdx = validateChildInitialIndex(index, data)
-      if (validIdx !== value[index]) {
+      const columnData = React.Children.toArray(item?.props?.children)
+      const validIndex = validateChildInitialIndex(index, columnData)
+      if (validIndex !== value[index]) {
         isInvalid = true
       }
-      validValue.push(validIdx)
-      renderedChildren.push(cloneChild(item, index, data, validIdx))
+      validValue.push(validIndex)
+      renderedChildren.push(cloneChild(item, index, columnData, validIndex))
     })
-    if (isInvalid) {
-      changedValue.current = validValue
-      onInitialSelectChange(validValue)
-    }
+    isInvalid && onInitialChange(validValue)
     return renderedChildren
   }
 

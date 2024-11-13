@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
@@ -548,6 +548,17 @@ export const useDebouncedCallback = <T extends AnyFunc>(
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
   const debounced = useMemo(() => debounce(func, delay), [func])
   return debounced
+}
+
+export const useStableCallback = <T extends AnyFunc | null | undefined>(
+  callback: T
+): T extends AnyFunc ? T : () => void => {
+  const ref = useRef<T>(callback)
+  ref.current = callback
+  return useCallback<any>(
+    (...args: any[]) => ref.current?.(...args),
+    []
+  )
 }
 
 export const usePrevious = <T, >(value: T): T | undefined => {
