@@ -1,4 +1,4 @@
-import { hasOwn, noop, isFunction } from '@mpxjs/utils'
+import { hasOwn, noop, isFunction, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
@@ -140,9 +140,14 @@ export function filterOptions (options) {
       if (!hasOwn(newOptions, 'properties')) {
         newOptions.properties = transformProperties(Object.assign({}, options.props, options.properties))
       }
-    } else if (key === 'methods' && options.__pageCtor__) {
-      // 构造器为Page时抽取所有methods方法到顶层
-      Object.assign(newOptions, options[key])
+    } else if (key === 'methods') {
+      const newMethods = wrapMethodsWithErrorHandling(options[key])
+      if (options.__pageCtor__) {
+        // 构造器为Page时抽取所有methods方法到顶层
+        Object.assign(newOptions, newMethods)
+      } else {
+        newOptions[key] = newMethods
+      }
     } else {
       newOptions[key] = options[key]
     }

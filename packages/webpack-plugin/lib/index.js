@@ -348,7 +348,14 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    let addModePlugin
+    if (['android', 'harmony'].includes(this.options.mode)) {
+      // 'android' | 'harmony' 下 使用mode = 'ios' 进行兼容兜底
+      addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file', 'ios')
+    } else {
+      addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    }
+
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
