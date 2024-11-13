@@ -38,9 +38,9 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   useNodesRef(props, ref, movableViewRef)
 
   const contextValue = useMemo(() => ({
-    height: style.height || 10,
-    width: style.width || 10
-  }), [style.width, style.height])
+    height: normalStyle.height || 10,
+    width: normalStyle.width || 10
+  }), [normalStyle.width, normalStyle.height])
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef })
 

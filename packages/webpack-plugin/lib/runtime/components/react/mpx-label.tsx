@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, useCallback, useMemo } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -74,7 +74,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
       const { bindtap } = propsRef.current
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
-      contextRef.current.triggerChange?.(evt)
+      contextRef.current.triggerChange(evt)
     }, [])
 
     const innerProps = useInnerProps(

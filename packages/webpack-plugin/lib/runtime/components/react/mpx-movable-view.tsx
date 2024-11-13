@@ -17,7 +17,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, Ref } from 'react'
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -118,8 +118,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
+  const prevSimultaneousHandlersRef = useRef<Array<GestureHandler>>(originSimultaneousHandlers || [])
+  const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
+  const gestureSwitch = useRef(false)
   const { textStyle, innerStyle } = splitStyle(normalStyle)
 
   const offsetX = useSharedValue(x)
@@ -148,6 +151,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     defaultStyle: styles.container,
     gestureRef: movableGestureRef
   })
+
+  const hasSimultaneousHandlersChanged = prevSimultaneousHandlersRef.current.length !== (originSimultaneousHandlers?.length || 0) ||
+  (originSimultaneousHandlers || []).some((handler, index) => handler !== prevSimultaneousHandlersRef.current[index])
+
+  const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !== (waitFor?.length || 0) ||
+  (waitFor || []).some((handler, index) => handler !== prevWaitForHandlersRef.current[index])
+
+  if (hasSimultaneousHandlersChanged || hasWaitForHandlersChanged) {
+    gestureSwitch.current = !gestureSwitch.current
+  }
+
+  prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
+  prevWaitForHandlersRef.current = waitFor || []
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
@@ -250,19 +266,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const maxY = MovableAreaLayout.height - scaledHeight - top
     const maxX = MovableAreaLayout.width - scaledWidth - left
 
-    let xRange:[min: number, max: number]
-    let yRange:[min: number, max: number]
+    let xRange: [min: number, max: number]
+    let yRange: [min: number, max: number]
 
     if (MovableAreaLayout.width < scaledWidth) {
       xRange = [maxX, 0]
     } else {
-      xRange = [-left, maxX < 0 ? 0 : maxX]
+      xRange = [left === 0 ? 0 : -left, maxX < 0 ? 0 : maxX]
     }
 
     if (MovableAreaLayout.height < scaledHeight) {
       yRange = [maxY, 0]
     } else {
-      yRange = [-top, maxY < 0 ? 0 : maxY]
+      yRange = [top === 0 ? 0 : -top, maxY < 0 ? 0 : maxY]
     }
     draggableXRange.value = xRange
     draggableYRange.value = yRange
@@ -329,47 +345,46 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     e.touches = e.allTouches
   }, [])
 
-  const handleTriggerStart = (e: any) => {
-    'worklet'
-    extendEvent(e)
-    bindtouchstart && runOnJS(bindtouchstart)(e)
-    catchtouchstart && runOnJS(catchtouchstart)(e)
-  }
-
-  const handleTriggerMove = (e: any) => {
-    'worklet'
-    extendEvent(e)
-    const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
-    const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
-
-    if (hasTouchmove) {
-      if (touchEvent.value === 'htouchmove') {
-        bindhtouchmove && runOnJS(bindhtouchmove)(e)
-      } else if (touchEvent.value === 'vtouchmove') {
-        bindvtouchmove && runOnJS(bindvtouchmove)(e)
-      }
-      bindtouchmove && runOnJS(bindtouchmove)(e)
-    }
-
-    if (hasCatchTouchmove) {
-      if (touchEvent.value === 'htouchmove') {
-        catchhtouchmove && runOnJS(catchhtouchmove)(e)
-      } else if (touchEvent.value === 'vtouchmove') {
-        catchvtouchmove && runOnJS(catchvtouchmove)(e)
-      }
-      catchtouchmove && runOnJS(catchtouchmove)(e)
-    }
-  }
-
-  const handleTriggerEnd = (e: any) => {
-    'worklet'
-    extendEvent(e)
-    bindtouchend && runOnJS(bindtouchend)(e)
-    catchtouchend && runOnJS(catchtouchend)(e)
-  }
-
   const gesture = useMemo(() => {
-    return Gesture.Pan()
+    const handleTriggerStart = (e: any) => {
+      'worklet'
+      extendEvent(e)
+      bindtouchstart && runOnJS(bindtouchstart)(e)
+      catchtouchstart && runOnJS(catchtouchstart)(e)
+    }
+
+    const handleTriggerMove = (e: any) => {
+      'worklet'
+      extendEvent(e)
+      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
+      const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
+
+      if (hasTouchmove) {
+        if (touchEvent.value === 'htouchmove') {
+          bindhtouchmove && runOnJS(bindhtouchmove)(e)
+        } else if (touchEvent.value === 'vtouchmove') {
+          bindvtouchmove && runOnJS(bindvtouchmove)(e)
+        }
+        bindtouchmove && runOnJS(bindtouchmove)(e)
+      }
+
+      if (hasCatchTouchmove) {
+        if (touchEvent.value === 'htouchmove') {
+          catchhtouchmove && runOnJS(catchhtouchmove)(e)
+        } else if (touchEvent.value === 'vtouchmove') {
+          catchvtouchmove && runOnJS(catchvtouchmove)(e)
+        }
+        catchtouchmove && runOnJS(catchtouchmove)(e)
+      }
+    }
+
+    const handleTriggerEnd = (e: any) => {
+      'worklet'
+      extendEvent(e)
+      bindtouchend && runOnJS(bindtouchend)(e)
+      catchtouchend && runOnJS(catchtouchend)(e)
+    }
+    const gesturePan = Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
@@ -463,15 +478,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       })
       .withRef(movableGestureRef)
-  }, [disabled, direction, inertia, outOfBounds, handleTriggerMove, handleTriggerStart, handleTriggerEnd])
+    if (simultaneousHandlers && simultaneousHandlers.length) {
+      gesturePan.simultaneousWithExternalGesture(...simultaneousHandlers)
+    }
 
-  if (simultaneousHandlers && simultaneousHandlers.length) {
-    gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
-  }
-
-  if (waitForHandlers && waitForHandlers.length) {
-    gesture.requireExternalGestureToFail(...waitForHandlers)
-  }
+    if (waitForHandlers && waitForHandlers.length) {
+      gesturePan.requireExternalGestureToFail(...waitForHandlers)
+    }
+    return gesturePan
+  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
@@ -508,7 +523,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       <Animated.View
         ref={nodeRef}
         onLayout={onLayout}
-        style={[styles.container, innerStyle, animatedStyles, layoutStyle]}
+        style={[innerStyle, animatedStyles, layoutStyle]}
         {...catchEventHandlers}
       >
         {
@@ -521,7 +536,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               textProps
             }
           )
-      }
+        }
       </Animated.View>
     </GestureDetector>
   )

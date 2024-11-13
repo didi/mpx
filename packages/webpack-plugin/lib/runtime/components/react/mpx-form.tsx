@@ -29,7 +29,6 @@ interface FormProps {
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: FormProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(fromProps)
-  const formValuesMap = useRef(new Map()).current
   const {
     style,
     'enable-var': enableVar,
@@ -58,33 +57,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 
-  const submit = useCallback(() => {
-    const { bindsubmit } = propsRef.current
-    const formValue: Record<string, any> = {}
-    for (const name of formValuesMap.keys()) {
-      if (formValuesMap.get(name).getValue) {
-        formValue[name] = formValuesMap.get(name).getValue()
-      }
-    }
-    bindsubmit && bindsubmit(getCustomEvent(
-      'submit',
-      {},
-      {
-        detail: {
-          value: formValue
-        },
-        layoutRef
-      },
-      propsRef.current
-    ))
-  }, [])
-
-  const reset = useCallback(() => {
-    const { bindreset } = propsRef.current
-    bindreset && bindreset()
-    formValuesMap.forEach(item => item.resetValue())
-  }, [])
-
   const innerProps = useInnerProps(props, {
     style: { ...innerStyle, ...layoutStyle },
     ref: formRef,
@@ -95,12 +67,39 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   ], { layoutRef })
 
   const contextValue = useMemo(() => {
+    const formValuesMap = new Map()
+    const submit = () => {
+      const { bindsubmit } = propsRef.current
+      const formValue: Record<string, any> = {}
+      for (const name of formValuesMap.keys()) {
+        if (formValuesMap.get(name).getValue) {
+          formValue[name] = formValuesMap.get(name).getValue()
+        }
+      }
+      bindsubmit && bindsubmit(getCustomEvent(
+        'submit',
+        {},
+        {
+          detail: {
+            value: formValue
+          },
+          layoutRef
+        },
+        propsRef.current
+      ))
+    }
+
+    const reset = () => {
+      const { bindreset } = propsRef.current
+      bindreset && bindreset()
+      formValuesMap.forEach(item => item.resetValue())
+    }
     return {
       formValuesMap,
       submit,
       reset
     }
-  }, [submit, reset])
+  }, [])
   return (
     <View
       {...innerProps}
@@ -116,7 +115,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
               textProps
             }
           )
-      }
+        }
       </FormContext.Provider>
     </View>
   )

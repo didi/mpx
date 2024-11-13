@@ -370,6 +370,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
+
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return

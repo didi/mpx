@@ -7,8 +7,8 @@ import {
   forwardRef,
   ReactNode,
   useContext,
-  useCallback,
-  useMemo
+  useMemo,
+  useEffect
 } from 'react'
 import {
   View,
@@ -84,7 +84,7 @@ const CheckboxGroup = forwardRef<
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const getSelectionValue = useCallback((): string[] => {
+  const getValue = (): string[] => {
     const arr: string[] = []
     for (const key in groupValue) {
       if (groupValue[key].checked) {
@@ -92,18 +92,14 @@ const CheckboxGroup = forwardRef<
       }
     }
     return arr
-  }, [])
+  }
 
-  const getValue = useCallback(() => {
-    return getSelectionValue()
-  }, [getSelectionValue])
-
-  const resetValue = useCallback(() => {
+  const resetValue = () => {
     Object.keys(groupValue).forEach((key) => {
       groupValue[key].checked = false
       groupValue[key].setValue(false)
     })
-  }, [])
+  }
 
   if (formValuesMap) {
     if (!props.name) {
@@ -113,24 +109,12 @@ const CheckboxGroup = forwardRef<
     }
   }
 
-  const notifyChange = useCallback((
-    evt: NativeSyntheticEvent<TouchEvent>
-  ) => {
-    const { bindchange } = propsRef.current
-    bindchange &&
-      bindchange(
-        getCustomEvent(
-          'tap',
-          evt,
-          {
-            layoutRef,
-            detail: {
-              value: getSelectionValue()
-            }
-          },
-          propsRef.current
-        )
-      )
+  useEffect(() => {
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
   }, [])
 
   const innerProps = useInnerProps(
@@ -147,11 +131,30 @@ const CheckboxGroup = forwardRef<
   )
 
   const contextValue = useMemo(() => {
+    const notifyChange = (
+      evt: NativeSyntheticEvent<TouchEvent>
+    ) => {
+      const { bindchange } = propsRef.current
+      bindchange &&
+        bindchange(
+          getCustomEvent(
+            'tap',
+            evt,
+            {
+              layoutRef,
+              detail: {
+                value: getValue()
+              }
+            },
+            propsRef.current
+          )
+        )
+    }
     return {
       groupValue,
       notifyChange
     }
-  }, [notifyChange])
+  }, [])
   return (
     <View {...innerProps}>
       <CheckboxGroupContext.Provider value={contextValue}>
