@@ -1,7 +1,7 @@
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { error, diffAndCloneA, hasOwn, noop } from '@mpxjs/utils'
+import { error, diffAndCloneA, hasOwn, noop, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 
 function transformApiForProxy (context, currentInject) {
   const rawSetData = context.setData.bind(context)
@@ -100,8 +100,14 @@ function filterOptions (options, type) {
       if (!hasOwn(newOptions, 'props')) {
         newOptions.props = Object.assign({}, options.props, options.properties)
       }
-    } else if (key === 'methods' && type === 'page') {
-      Object.assign(newOptions, options[key])
+    } else if (key === 'methods') {
+      const newMethods = wrapMethodsWithErrorHandling(options[key])
+      if (type === 'page') {
+        // 构造器为Page时抽取所有methods方法到顶层
+        Object.assign(newOptions, newMethods)
+      } else {
+        newOptions[key] = newMethods
+      }
     } else {
       newOptions[key] = options[key]
     }
