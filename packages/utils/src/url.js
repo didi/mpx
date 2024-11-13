@@ -1,7 +1,7 @@
 import { isArray, type, forEach } from './base'
 
 function encode (val) {
-  return encodeURIComponent(val).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/g, '$').replace(/%2C/gi, ',').replace(/%5B/gi, '[').replace(/%5D/gi, ']')
+  return encodeURIComponent(val)
 }
 
 function decode (val) {
