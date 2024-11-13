@@ -11,7 +11,7 @@ const getWindowInfo = function () {
     ...navigation?.insets
   }
   let safeArea = {}
-  let { top = 0, bottom = 0, left = 0, right = 0 } = insets
+  const { top = 0, bottom = 0, left = 0, right = 0 } = insets
   const screenHeight = dimensionsScreen.height
   const screenWidth = dimensionsScreen.width
   const layout = navigation?.layout || {}
