@@ -1,5 +1,5 @@
 import DeviceInfo from 'react-native-device-info'
-import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
+import { Platform, PixelRatio, Dimensions } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation } from '../../../common/js'
 
@@ -12,9 +12,6 @@ const getWindowInfo = function () {
   }
   let safeArea = {}
   let { top = 0, bottom = 0, left = 0, right = 0 } = insets
-  if (Platform.OS === 'android') {
-    top = StatusBar.currentHeight || 0
-  }
   const screenHeight = dimensionsScreen.height
   const screenWidth = dimensionsScreen.width
   const layout = navigation?.layout || {}
