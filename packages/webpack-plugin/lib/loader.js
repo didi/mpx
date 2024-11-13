@@ -1,4 +1,3 @@
-const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
@@ -14,14 +13,11 @@ const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDepen
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { isReact } = require('./utils/env')
-const resolve = require('./utils/resolve')
-const isUrlRequestRaw = require('./utils/is-url-request')
+const preProcessJson = require('./utils/pre-process-json')
 const path = require('path')
 const processWeb = require('./web')
 const processReact = require('./react')
-const getRulesRunner = require('./platform')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
-const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 
 module.exports = function (content) {
   this.cacheable()
@@ -52,9 +48,6 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
-  const root = mpx.projectRoot
-
-  const isUrlRequest = r => isUrlRequestRaw(r, root)
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -120,86 +113,24 @@ module.exports = function (content) {
     },
     (jsonContent, callback) => {
       if (!jsonContent) return callback(null, {})
-      let componentPlaceholder = []
-      let componentGenerics = {}
-      let usingComponentsInfo = {}
-      const finalCallback = (err) => {
-        if (err) return
-        if (isApp) {
-          // 在 rulesRunner 运行后保存全局注册组件
-          // todo 其余地方在使用mpx.globalComponents时存在缓存问题，要规避该问题需要在所有使用mpx.globalComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
-          // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
-          this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, usingComponentsInfo, this.context))
-        }
-        callback(err, {
-          componentPlaceholder,
-          componentGenerics,
-          usingComponentsInfo: Object.assign({}, usingComponentsInfo, mpx.globalComponentsInfo)
-        })
-      }
-      try {
-        const ret = JSON5.parse(jsonContent)
-        const rulesRunnerOptions = {
-          mode,
-          srcMode,
-          type: 'json',
-          waterfall: true,
-          warn: emitWarning,
-          error: emitError
-        }
-        if (ctorType !== 'app') {
-          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        }
-        if (isApp) {
-          rulesRunnerOptions.data = {
-            globalComponents: mpx.globalComponents
-          }
-        }
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        try {
-          if (rulesRunner) rulesRunner(ret)
-        } catch (e) {
-          return finalCallback(e)
-        }
-
-        if (ret.componentPlaceholder) {
-          componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-        }
-        if (ret.componentGenerics) {
-          componentGenerics = Object.assign({}, ret.componentGenerics)
-        }
-        const usingComponents = ret.usingComponents
-        if (usingComponents) {
-          const setUsingComponentInfo = (name, moduleId) => {
-            usingComponentsInfo[name] = { mid: moduleId }
-          }
-          async.eachOf(usingComponents, (component, name, callback) => {
-            if (isApp) {
-              mpx.globalComponents[name] = addQuery(component, {
-                context: this.context
-              })
-            }
-            if (!isUrlRequest(component)) {
-              const moduleId = mpx.getModuleId(component, isApp)
-              setUsingComponentInfo(name, moduleId)
-              return callback()
-            }
-            resolve(this.context, component, loaderContext, (err, resource) => {
-              if (err) return callback(err)
-              const { rawResourcePath } = parseRequest(resource)
-              const moduleId = mpx.getModuleId(rawResourcePath, isApp)
-              setUsingComponentInfo(name, moduleId)
-              callback()
-            })
-          }, (err) => {
-            finalCallback(err)
-          })
-        } else {
-          finalCallback()
-        }
-      } catch (err) {
-        finalCallback(err)
-      }
+      const thisContext = this.context
+      preProcessJson({
+        jsonContent,
+        mpx,
+        isApp,
+        srcMode,
+        mode,
+        emitWarning,
+        emitError,
+        ctorType,
+        pagesMap,
+        resourcePath,
+        loaderContext,
+        thisContext
+      }, (err, jsonInfo) => {
+        if (err) return callback(err)
+        callback(null, jsonInfo)
+      })
     },
     (jsonInfo, callback) => {
       const {

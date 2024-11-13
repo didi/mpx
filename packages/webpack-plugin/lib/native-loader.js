@@ -1,5 +1,4 @@
 const path = require('path')
-const JSON5 = require('json5')
 const parseRequest = require('./utils/parse-request')
 const config = require('./config')
 const createHelpers = require('./helpers')
@@ -7,14 +6,10 @@ const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
 const { JSON_JS_EXT } = require('./utils/const')
-const getRulesRunner = require('./platform')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const isUrlRequestRaw = require('./utils/is-url-request')
-const resolve = require('./utils/resolve')
-const addQuery = require('./utils/add-query')
-const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
+const preProcessJson = require('./utils/pre-process-json')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
@@ -44,9 +39,6 @@ module.exports = function (content) {
   const typeExtMap = config[srcMode].typeExtMap
   const typeResourceMap = {}
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const root = mpx.projectRoot
-
-  const isUrlRequest = r => isUrlRequestRaw(r, root)
 
   const CSS_LANG_EXT_MAP = {
     less: '.less',
@@ -179,92 +171,24 @@ module.exports = function (content) {
     },
     (jsonContent, callback) => {
       if (!jsonContent) return callback(null, {})
-      let componentPlaceholder = []
-      let componentGenerics = {}
-      let usingComponentsInfo = {}
-      const finalCallback = (err) => {
-        if (err) return
-        usingComponentsInfo = Object.assign(usingComponentsInfo, mpx.globalComponentsInfo)
-        callback(err, {
-          componentPlaceholder,
-          componentGenerics,
-          usingComponentsInfo
-        })
-      }
-      try {
-        const json = JSON5.parse(jsonContent)
-        const rulesRunnerOptions = {
-          mode,
-          srcMode,
-          type: 'json',
-          waterfall: true,
-          warn: emitWarning,
-          error: emitError
-        }
-        if (ctorType !== 'app') {
-          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        }
-        if (isApp) {
-          rulesRunnerOptions.data = {
-            globalComponents: mpx.globalComponents
-          }
-        }
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        try {
-          if (rulesRunner) rulesRunner(json)
-        } catch (e) {
-          return finalCallback(e)
-        }
-
-        if (json.componentPlaceholder) {
-          componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
-        }
-        if (json.componentGenerics) {
-          componentGenerics = Object.assign({}, json.componentGenerics)
-        }
-        const usingComponents = isApp ? mpx.globalComponents : json.usingComponents
-        if (usingComponents) {
-          if (isApp) {
-            Object.assign(mpx.globalComponents, json.usingComponents)
-            // 在 rulesRunner 运行后保存全局注册组件
-            // todo 其余地方在使用mpx.globalComponents时存在缓存问题，要规避该问题需要在所有使用mpx.globalComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
-            // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
-            this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.globalComponents, mpx.globalComponentsInfo, this.context))
-          }
-          const setUsingComponentInfo = (name, moduleId) => {
-            if (isApp) {
-              mpx.globalComponentsInfo[name] = { mid: moduleId }
-            } else {
-              usingComponentsInfo[name] = { mid: moduleId }
-            }
-          }
-          async.eachOf(json.usingComponents, (component, name, callback) => {
-            if (isApp) {
-              mpx.globalComponents[name] = addQuery(component, {
-                context: this.context
-              })
-            }
-            if (!isUrlRequest(component)) {
-              const moduleId = mpx.getModuleId(component, isApp)
-              setUsingComponentInfo(name, moduleId)
-              return callback()
-            }
-            resolve(this.context, component, loaderContext, (err, resource) => {
-              if (err) return callback(err)
-              const { rawResourcePath } = parseRequest(resource)
-              const moduleId = mpx.getModuleId(rawResourcePath, isApp)
-              setUsingComponentInfo(name, moduleId)
-              callback()
-            })
-          }, (err) => {
-            finalCallback(err)
-          })
-        } else {
-          finalCallback()
-        }
-      } catch (e) {
-        return finalCallback(e)
-      }
+      const thisContext = this.context
+      preProcessJson({
+        jsonContent,
+        mpx,
+        isApp,
+        srcMode,
+        mode,
+        emitWarning,
+        emitError,
+        ctorType,
+        pagesMap,
+        resourcePath,
+        loaderContext,
+        thisContext
+      }, (err, jsonInfo) => {
+        if (err) return callback(err)
+        callback(null, jsonInfo)
+      })
     },
     (jsonInfo, callback) => {
       const {
