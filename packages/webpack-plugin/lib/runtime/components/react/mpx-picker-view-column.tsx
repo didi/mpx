@@ -1,9 +1,10 @@
 
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
-import React, { forwardRef, useRef, useState, useEffect, useMemo } from 'react'
+import React, { forwardRef, useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, useDebouncedCallback } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import type { AnyFunc } from './types/common'
+import { createFaces } from './faces'
 
 interface ColumnProps {
   children?: React.ReactNode,
@@ -45,6 +46,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
+
   const {
     normalStyle,
     hasVarDec,
@@ -58,43 +60,19 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {})
 
-  // 每个元素的原始高度
-  const [itemRawH, setItemRawH] = useState(0)
-  // 原始高度四舍五入后的高度
-  const [itemRoundH, setItemRoundH] = useState(0)
-
+  const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
   const maxIndex = useMemo(() => realChilds.length - 1, [realChilds])
-
   const activeIndex = useRef(initialIndex)
 
-  useEffect(() => {
-    if (!itemRawH) {
-      return
-    }
-    const offsetY = itemRawH * initialIndex
-    scrollViewRef.current?.scrollTo({ x: 0, y: offsetY, animated: true })
-  }, [initialIndex, itemRawH])
+  const initialOffset = useMemo(() => ({
+    x: 0,
+    y: itemRawH * initialIndex
+  }), [itemRawH])
 
-  const onScrollViewLayout = () => {
-    getInnerLayout && getInnerLayout(layoutRef)
-  }
-
-  const {
-    // 存储layout布局信息
-    layoutRef,
-    layoutProps
-  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: onScrollViewLayout })
-
-  const onItemLayout = (e: LayoutChangeEvent) => {
-    const layout = e.nativeEvent.layout
-    if (layout.height && itemRawH !== layout.height) {
-      const rawH = layout.height
-      const roundH = Math.round(rawH)
-      setItemRawH(rawH)
-      setItemRoundH(roundH)
-      onColumnLayoutChange && onColumnLayoutChange({ height: rawH * 5 })
-    }
-  }
+  const snapToOffsets = useMemo(
+    () => realChilds.map((_, i) => i * itemRawH),
+    [realChilds, itemRawH]
+  )
 
   const onSelectChangeDebounce = useDebouncedCallback(onSelectChange, 300)
 
@@ -103,6 +81,30 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       onSelectChangeDebounce.clear()
     }
   }, [onSelectChangeDebounce])
+
+  const onScrollViewLayout = () => {
+    getInnerLayout && getInnerLayout(layoutRef)
+  }
+
+  const {
+    layoutRef,
+    layoutProps
+  } = useLayout({
+    props,
+    hasSelfPercent,
+    setWidth,
+    setHeight,
+    nodeRef: scrollViewRef,
+    onLayout: onScrollViewLayout
+  })
+
+  const onItemLayout = (e: LayoutChangeEvent) => {
+    const { height } = e.nativeEvent.layout
+    if (height && itemRawH !== height) {
+      setItemRawH(height)
+      onColumnLayoutChange && onColumnLayoutChange({ height: height * 5 })
+    }
+  }
 
   const onTouchStart = () => {
     onSelectChangeDebounce.clear()
@@ -120,23 +122,56 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    onChanged(columnIndex)
-    if (!scrollViewRef.current || !itemRoundH) {
+    if (!scrollViewRef.current || !itemRawH) {
       return
     }
     const { y: scrollY } = e.nativeEvent.contentOffset
-    let calcIndex = Math.round(scrollY / itemRoundH)
+    let calcIndex = Math.round(scrollY / itemRawH)
     if (calcIndex === initialIndex) {
-      // 选中不变时微调
-      scrollViewRef.current.scrollTo({ x: 0, y: calcIndex * itemRawH, animated: true })
+      onChanged(columnIndex)
       onSelectChangeDebounce.clear()
     } else {
-      // 选中变化时重渲染
       calcIndex = Math.max(0, Math.min(calcIndex, maxIndex)) || 0
       activeIndex.current = calcIndex
       onSelectChangeDebounce(calcIndex)
     }
   }
+
+  const offsetY = useRef(new Animated.Value(0)).current
+
+  const onScroll = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: offsetY } } }], {
+        useNativeDriver: true
+      }),
+    [offsetY]
+  )
+
+  const faces = useMemo(() => createFaces(itemRawH, 5), [itemRawH])
+
+  const getTransform = useCallback(
+    (index: number) => {
+      const inputRange = faces.map((f) => itemRawH * (index + f.index))
+      return {
+        opacity: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => x.opacity),
+          extrapolate: 'clamp'
+        }),
+        rotateX: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => `${x.deg}deg`),
+          extrapolate: 'extend'
+        }),
+        translateY: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => x.offsetY),
+          extrapolate: 'extend'
+        })
+      }
+    },
+    [offsetY, faces, itemRawH]
+  )
 
   const renderInnerchild = () => {
     const arrChild = realChilds.map((item: React.ReactNode, index: number) => {
@@ -144,19 +179,35 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       const strKey = `picker-${columnIndex}-column-${index}`
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
       const iHeight = (arrHeight[0] || DefaultItemHeight) as number
-      return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>
-        {wrapChildren(
-          {
-            children: item
-          },
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )}
-      </View>
+      const { opacity, rotateX, translateY } = getTransform(index)
+      return (
+        <Animated.View
+          key={strKey}
+          {...InnerProps}
+          style={[
+            {
+              height: iHeight,
+              width: '100%',
+              opacity,
+              transform: [
+                { translateY }, // first translateY, then rotateX for correct transformation.
+                { rotateX },
+                { perspective: 1000 } // without this line this Animation will not render on Android https://reactnative.dev/docs/animations#bear-in-mind
+              ]
+            }
+          ]}
+        >
+          {wrapChildren(
+            { children: item },
+            {
+              hasVarDec,
+              varContext: varContextRef.current,
+              textStyle,
+              textProps
+            }
+          )}
+        </Animated.View>
+      )
     })
     const totalHeight = itemRawH * 5
     let fix = 0
@@ -173,24 +224,26 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const renderScollView = () => {
     return (
       <Animated.ScrollView
-        horizontal={false}
         ref={scrollViewRef}
         bounces={true}
-        scrollsToTop={false}
-        removeClippedSubviews={true}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
+        horizontal={false}
         pagingEnabled={false}
-        snapToInterval={itemRawH}
-        automaticallyAdjustContentInsets={false}
+        removeClippedSubviews={true}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         {...layoutProps}
+        scrollEventThrottle={16}
+        contentOffset={initialOffset}
+        snapToOffsets={snapToOffsets}
+        onScroll={onScroll}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMomentumScrollBegin={onMomentumScrollBegin}
         onMomentumScrollEnd={onMomentumScrollEnd}
       >
         {renderInnerchild()}
-    </Animated.ScrollView>)
+      </Animated.ScrollView>
+    )
   }
 
   return (

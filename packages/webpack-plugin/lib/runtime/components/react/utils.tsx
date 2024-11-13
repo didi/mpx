@@ -549,3 +549,11 @@ export const useDebouncedCallback = <T extends AnyFunc>(
   const debounced = useMemo(() => debounce(func, delay), [func])
   return debounced
 }
+
+export const usePrevious = <T, >(value: T): T | undefined => {
+  const ref = useRef<T | undefined>(undefined)
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
+}

@@ -49,16 +49,6 @@ const styles: { [key: string]: Object } = {
     justifyContent: 'space-around',
     overflow: 'hidden',
     alignItems: 'center'
-  },
-  maskTop: {
-    position: 'absolute',
-    width: 1000,
-    zIndex: 100
-  },
-  maskBottom: {
-    position: 'absolute',
-    width: 1000,
-    zIndex: 100
   }
 }
 
@@ -129,6 +119,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const onSelectChange = (columnIndex: number, selIndex: number) => {
+    onChanged(columnIndex)
     changedValue.current[columnIndex] = selIndex
     if (hasChanged()) {
       const eventData = getCustomEvent(
@@ -199,36 +190,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     )
   }
 
-  const renderTopMask = () => {
-    const linearProps: LinearGradientProps = {
-      colors: ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.2)'],
-      style: [
-        styles.maskTop,
-        {
-          height: maskPos.height,
-          top: 0,
-          pointerEvents: 'none'
-        }
-      ]
-    }
-    return (<LinearGradient {...linearProps}/>)
-  }
-
-  const renderBottomMask = () => {
-    const linearProps: LinearGradientProps = {
-      colors: ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.8)'],
-      style: [
-        styles.maskBottom,
-        {
-          height: maskPos.height,
-          bottom: 0,
-          pointerEvents: 'none'
-        }
-      ]
-    }
-    return <LinearGradient {...linearProps}></LinearGradient>
-  }
-
   const renderLine = () => {
     return (
       <View
@@ -236,13 +197,17 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
           {
             position: 'absolute',
             top: '50%',
+            left: '3%',
+            right: '3%',
             transform: [{ translateY: -(itemH / 2) }],
             height: itemH,
             borderTopWidth: 1,
             borderBottomWidth: 1,
             borderColor: '#f0f0f0',
-            width: '100%',
-            zIndex: 101
+            backgroundColor: '#ebebeb',
+            borderRadius: 10,
+            width: '94%',
+            zIndex: -1
           }
         ]}
         pointerEvents="none"
@@ -277,9 +242,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
 
   return (
     <View {...innerProps}>
-      {renderTopMask()}
       <View style={[styles.wrapper]}>{renderSubChild()}</View>
-      {renderBottomMask()}
       {!isSetW && renderLine()}
     </View>
   )
