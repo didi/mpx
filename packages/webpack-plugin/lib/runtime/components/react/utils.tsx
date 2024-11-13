@@ -1,10 +1,10 @@
-import { useEffect, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import type { ExtendedFunctionComponent } from './types/common'
+import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -523,4 +523,29 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
     children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
   }
   return children
+}
+
+export const debounce = <T extends AnyFunc>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  let timer: any
+  const wrapper = (...args: ReadonlyArray<any>) => {
+    timer && clearTimeout(timer)
+    timer = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+  wrapper.clear = () => {
+    timer && clearTimeout(timer)
+  }
+  return wrapper
+}
+
+export const useDebouncedCallback = <T extends AnyFunc>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  const debounced = useMemo(() => debounce(func, delay), [func])
+  return debounced
 }
