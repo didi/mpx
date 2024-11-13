@@ -1,5 +1,5 @@
 import { useEffect, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image} from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
