@@ -230,7 +230,8 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }, [])
 
   useNodesRef(props, ref, nodeRef, {
-    node: canvasRef.current
+    node: canvasRef.current,
+    context: context2D
   })
 
   if (Platform.OS === 'android') {
