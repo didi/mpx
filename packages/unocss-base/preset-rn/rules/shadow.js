@@ -5,6 +5,7 @@ const findShadowColorRule = () => {
     if (rule[0] instanceof RegExp && rule[0].test('shadow')) {
       return rule
     }
+    return false
   }) || []
 }
 
