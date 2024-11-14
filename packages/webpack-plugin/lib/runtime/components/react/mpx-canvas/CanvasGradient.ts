@@ -7,7 +7,7 @@ export default class CanvasGradient {
   constructor (canvas: any, noOnConstruction = false) {
     this.canvas = canvas
     registerWebviewMethods(this, METHODS)
-    if (!noOnConstruction) {
+    if (this.onConstruction && !noOnConstruction) {
       this.onConstruction()
     }
   }

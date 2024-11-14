@@ -1,4 +1,4 @@
-import { WEBVIEW_TARGET, registerWebviewProperties, registerWebviewConstructor } from './utils'
+import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, registerWebviewConstructor } from './utils'
 
 const PROPERTIES = {
   crossOrigin: undefined,
@@ -43,8 +43,8 @@ export class Image {
     return this.canvas.postMessage(message)
   }
 
-  addEventListener (type, callback) {
-    return this.canvas.addMessageListener((message) => {
+  addEventListener (type, callbackFn) {
+    return this.canvas.addMessageListener((message: WebviewMessage) => {
       if (
         message &&
         message.type === 'event' &&
@@ -57,7 +57,7 @@ export class Image {
             this[key] = value
           }
         }
-        callback({
+        callbackFn({
           ...message.payload,
           target: this
         })

@@ -19,10 +19,11 @@ import Bus from './Bus'
 import {
   useWebviewBinding,
   constructors,
-  WEBVIEW_TARGET
+  WEBVIEW_TARGET,
+  WebviewMessage
 } from './utils'
 import CanvasRenderingContext2D from './CanvasRenderingContext2D'
-import html from './index.html.ts'
+import html from './index.html'
 import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
 import { createImageData as canvasCreateImageData } from './ImageData'
@@ -96,7 +97,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   // 初始化bus和context2D
   useEffect(() => {
-    const webviewPostMessage = (message) => {
+    const webviewPostMessage = (message: WebviewMessage) => {
       if (canvasRef.current.webview) {
         canvasRef.current.webview.postMessage(JSON.stringify(message))
       }
@@ -128,7 +129,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.createImageData = createImageData
   }, [])
 
-  const createImageData = (dataArray, width?: Number, height?: Number) => {
+  const createImageData = (dataArray: Array<number>, width?: Number, height?: Number) => {
     return canvasCreateImageData(canvasRef.current, dataArray, width, height)
   }
   const createImage = (width?: Number, height?: Number) => {
@@ -141,7 +142,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     return null
   }, [])
 
-  const postMessage = useCallback(async (message) => {
+  const postMessage = useCallback(async (message: WebviewMessage) => {
     if (!canvasRef.current?.bus) return
     const { type, payload } = await canvasRef.current.bus.post({
       id: Math.random(),
@@ -171,16 +172,16 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     }
   }, [])
 
-  const addMessageListener = (listener) => {
+  const addMessageListener = (listener: any) => {
     canvasRef.current.listeners.push(listener)
     return () => canvasRef.current.removeMessageListener(listener)
   }
 
-  const removeMessageListener = (listener) => {
+  const removeMessageListener = (listener: any) => {
     canvasRef.current.listeners.splice(canvasRef.current.listeners.indexOf(listener), 1)
   }
 
-  const onMessage = useCallback((e) => {
+  const onMessage = useCallback((e: { nativeEvent: { data: string } }) => {
     let data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
       case 'error': {

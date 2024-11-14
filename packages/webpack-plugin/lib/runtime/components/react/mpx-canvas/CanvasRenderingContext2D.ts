@@ -1,4 +1,4 @@
-import { registerWebviewProperties, registerWebviewMethods, registerWebviewTarget } from './utils'
+import { WebviewMessage, registerWebviewProperties, registerWebviewMethods, registerWebviewTarget } from './utils'
 
 const PROPERTIES = {
   fillStyle: '#000',
@@ -20,7 +20,6 @@ const PROPERTIES = {
 }
 
 const METHODS = [
-  // draw、createCircularGradient、setFillStyle、 setFontSize、 setGlobalAlpha、 setLineCap、setLineJoin、setLineWidth、setMiterLimit、setShadow、setStrokeStyle、 setTextAlign、setTextBaseline 不支持
   'arc',
   'arcTo',
   'beginPath',
@@ -57,15 +56,15 @@ const METHODS = [
   'translate'
 ]
 export default class CanvasRenderingContext2D {
-  canvas: any
-  constructor(canvas) {
+  canvas: Record<string, any>
+  constructor (canvas: Record<string, any>) {
     this.canvas = canvas
     registerWebviewTarget(this, 'context2D')
     registerWebviewProperties(this, PROPERTIES)
     registerWebviewMethods(this, METHODS)
   }
 
-  postMessage(message) {
+  postMessage (message: WebviewMessage) {
     return this.canvas.postMessage(message)
   }
 }

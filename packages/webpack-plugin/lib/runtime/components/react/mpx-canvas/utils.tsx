@@ -6,22 +6,24 @@ export const constructors: Record<string, any> = {}
 
 export const ID = () => Math.random().toString(32).slice(2)
 
-const SPECIAL_CONSTRUCTOR = {
+const SPECIAL_CONSTRUCTOR: Record<string, { className: string, paramNum: number }> = {
   ImageData: {
     className: 'Uint8ClampedArray',
     paramNum: 0
   }
 }
 
-interface WebviewInstance {
-  [WEBVIEW_TARGET]: string
-  [key: string]: any
+interface Instance {
   postMessage: (message: WebviewMessage) => void
+  addMessageListener?: (listener: MessageListener) => void
+  onConstruction?:(...args: any[]) => void
+  constructLocally?:(...args: unknown[]) => void
   forceUpdate?: () => void
-  addMessageListener: (listener: MessageListener) => void
+  [WEBVIEW_TARGET]?: string
+  [key: string]: any
 }
 
-interface WebviewMessage {
+export interface WebviewMessage {
   type: 'set' | 'exec' | 'listen' | 'event'
   payload: {
     target?: string | { [WEBVIEW_TARGET]: string, [key: string]: any }
@@ -36,11 +38,11 @@ interface WebviewMessage {
 
 type MessageListener = (message: WebviewMessage) => void
 
-export const registerWebviewTarget = (instance: WebviewInstance, targetName: string): void => {
+export const registerWebviewTarget = (instance: Instance, targetName: string): void => {
   instance[WEBVIEW_TARGET] = targetName
 }
 
-export const registerWebviewProperties = (instance: WebviewInstance, properties: Record<string, any>): void => {
+export const registerWebviewProperties = (instance: Instance, properties: Record<string, any>): void => {
   Object.entries(properties).forEach(([key, initialValue]) => {
     const privateKey = `__${key}__`
     instance[privateKey] = initialValue
@@ -69,7 +71,7 @@ export const registerWebviewProperties = (instance: WebviewInstance, properties:
   })
 }
 
-export const registerWebviewMethods = (instance: WebviewInstance, methods: string[]): void => {
+export const registerWebviewMethods = (instance: Instance, methods: string[]): void => {
   methods.forEach(method => {
     instance[method] = (...args: any[]) => {
       return instance.postMessage({
@@ -84,14 +86,13 @@ export const registerWebviewMethods = (instance: WebviewInstance, methods: strin
   })
 }
 
-export const registerWebviewConstructor = (instance: WebviewInstance, constructorName: string) => {
+export const registerWebviewConstructor = (instance: Instance, constructorName: string): void => {
   constructors[constructorName] = instance
-  instance.constructLocally = function (...args) {
-    // Pass noOnConstruction
-    return new instance(...args, true)
+  instance.constructLocally = function (...args: unknown[]): Instance {
+    return new (instance as any)(...args, true)
   }
 
-  instance.prototype.onConstruction = function (...args) {
+  instance.constructor.prototype.onConstruction = function (...args: any[]): void {
     if (SPECIAL_CONSTRUCTOR[constructorName] !== undefined) {
       const { className, paramNum } = SPECIAL_CONSTRUCTOR[constructorName]
       args[paramNum] = { className, classArgs: [args[paramNum]] }
@@ -120,13 +121,13 @@ export const useWebviewBinding = ({
   methods?: string[];
   constructorName?: string
 }) => {
-  const instanceRef = useRef<WebviewInstance>({})
+  const instanceRef = useRef({})
 
   useEffect(() => {
     if (instanceRef.current) {
-      registerWebviewTarget(instanceRef.current, targetName)
-      registerWebviewProperties(instanceRef.current, properties)
-      registerWebviewMethods(instanceRef.current, methods)
+      registerWebviewTarget(instanceRef.current as Instance, targetName)
+      registerWebviewProperties(instanceRef.current as Instance, properties)
+      registerWebviewMethods(instanceRef.current as Instance, methods)
     }
   }, [targetName, properties, methods])
 
