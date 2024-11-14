@@ -47,16 +47,19 @@ function WebpackPlugin (configOrPath, defaults) {
             }
           }
           const result = await uno.generate(tokens, { minify: true })
+          if (uno._mpx2rnUnsuportedRules && uno._mpx2rnUnsuportedRules.length) {
+            compilation.errors.push(`[Mpx Unocss]: all those '${uno._mpx2rnUnsuportedRules.join(',')}' class utilities is not supported in react native mode`)
+          }
           const classMap = getClassMap({
             content: result.css,
-            filename: 'xxx',
+            filename: 'mpx2rn-unocss',
             mode,
             srcMode,
             warn: (msg) => {
-              console.log('RN getClassMap warn is:', msg)
+              compilation.warnings.push(msg)
             },
             error: (msg) => {
-              console.log('RN getClassMap error is:', msg)
+              compilation.errors.push(msg)
             },
             formatValueFn: 'formatValue'
           })
