@@ -6,6 +6,13 @@ export const constructors: Record<string, any> = {}
 
 export const ID = () => Math.random().toString(32).slice(2)
 
+const SPECIAL_CONSTRUCTOR = {
+  ImageData: {
+    className: 'Uint8ClampedArray',
+    paramNum: 0
+  }
+}
+
 interface WebviewInstance {
   [WEBVIEW_TARGET]: string
   [key: string]: any
@@ -83,11 +90,12 @@ export const registerWebviewConstructor = (instance: WebviewInstance, constructo
     // Pass noOnConstruction
     return new instance(...args, true)
   }
-  /**
-   * Arguments should be identical to the arguments passed to the constructor
-   * just without the canvas instance
-   */
+
   instance.prototype.onConstruction = function (...args) {
+    if (SPECIAL_CONSTRUCTOR[constructorName] !== undefined) {
+      const { className, paramNum } = SPECIAL_CONSTRUCTOR[constructorName]
+      args[paramNum] = { className, classArgs: [args[paramNum]] }
+    }
     this[WEBVIEW_TARGET] = ID()
     this.postMessage({
       type: 'construct',

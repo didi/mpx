@@ -25,6 +25,7 @@ import CanvasRenderingContext2D from './CanvasRenderingContext2D'
 import html from './index.html.ts'
 import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
+import { createImageData as canvasCreateImageData } from './ImageData'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -123,8 +124,13 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.addMessageListener = addMessageListener
 
     canvasRef.current.removeMessageListener = removeMessageListener
+
+    canvasRef.current.createImageData = createImageData
   }, [])
 
+  const createImageData = (dataArray, width?: Number, height?: Number) => {
+    return canvasCreateImageData(canvasRef.current, dataArray, width, height)
+  }
   const createImage = (width?: Number, height?: Number) => {
     return canvasCreateImage(canvasRef.current, width, height)
   }

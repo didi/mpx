@@ -90,6 +90,10 @@ var flattenObject = function (object) {
     if (typeof object !== "object" || object === null) {
         return object;
     }
+     // 处理 TypedArray
+    if (object instanceof Uint8ClampedArray) {
+        return Array.from(object);
+    }
     var flatObject = {};
     for (var key in object) {
         flattenObjectCopyValue(flatObject, object, key);
@@ -160,7 +164,6 @@ var toMessage = function (result) {
             result[WEBVIEW_TARGET] = id;
             targets[id] = result;
         }
-
         return {
             type: "json",
             payload: flattenObject(result),
@@ -193,6 +196,7 @@ var createObjectsFromArgs = function (args) {
         var currentArg = args[index];
         if (currentArg && currentArg.className !== undefined) {
             var className = currentArg.className, classArgs = currentArg.classArgs;
+            // new ImageData，第一个参数需要是 Uint8ClampedArray
             var object = new ((_a = constructors[className]).bind.apply(_a, __spreadArray([void 0], classArgs, false)))();
             args[index] = object;
         }
@@ -208,13 +212,26 @@ var targets = {
 };
 var constructors = {
     CanvasGradient: CanvasGradient,
-    Image: Image
+    Image: Image,
+    ImageData: ImageData,
+    Uint8ClampedArray: Uint8ClampedArray,
 };
+
 Image.bind =
     Image.bind ||
         function () {
             return Image;
         };
+ImageData.bind =
+    ImageData.bind ||
+        function () {
+            return ImageData;
+        };
+Uint8ClampedArray.bind =
+    Uint8ClampedArray.bind ||
+        function () {
+            return Uint8ClampedArray;
+        };  
 var populateRefs = function (arg) {
     if (arg && arg.__ref__) {
         return targets[arg.__ref__];
