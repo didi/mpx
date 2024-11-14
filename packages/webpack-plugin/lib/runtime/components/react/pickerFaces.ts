@@ -1,12 +1,12 @@
 export const degToRad = (deg: number) => (Math.PI * deg) / 180
 
 export type Faces = {
-  index: number;
-  deg: number;
-  offsetY: number;
-  opacity: number;
-  screenHeight: number;
-};
+  index: number
+  deg: number
+  offsetY: number
+  opacity: number
+  screenHeight: number
+}
 
 /**
  * Calculates the height of the element after rotating it relative to the user's screen.

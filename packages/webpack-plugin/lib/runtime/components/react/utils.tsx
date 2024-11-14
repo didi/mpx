@@ -531,19 +531,18 @@ export const debounce = <T extends AnyFunc>(
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
   let timer: any
   const wrapper = (...args: ReadonlyArray<any>) => {
-    timer && clearTimeout(timer)
+    clearTimeout(timer)
     timer = setTimeout(() => {
       func(...args)
     }, delay)
   }
   wrapper.clear = () => {
-    timer && clearTimeout(timer)
-    timer = null
+    clearTimeout(timer)
   }
   return wrapper
 }
 
-export const useDebouncedCallback = <T extends AnyFunc>(
+export const useDebounceCallback = <T extends AnyFunc>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
