@@ -164,27 +164,18 @@ module.exports = function (content) {
       }, callback)
     },
     (callback) => {
-      getJSONContent({
-        src: typeResourceMap.json,
-        useJSONJS
-      }, null, this, callback)
-    },
-    (jsonContent, callback) => {
-      if (!jsonContent) return callback(null, {})
-      const thisContext = this.context
       preProcessJson({
-        jsonContent,
-        mpx,
+        partsJson: {
+          src: typeResourceMap.json,
+          useJSONJS
+        },
         isApp,
         srcMode,
-        mode,
         emitWarning,
         emitError,
         ctorType,
-        pagesMap,
         resourcePath,
-        loaderContext,
-        thisContext
+        loaderContext
       }, (err, jsonInfo) => {
         if (err) return callback(err)
         callback(null, jsonInfo)

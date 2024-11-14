@@ -105,28 +105,15 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
-        if (err) return callback(err)
-        if (parts.json) parts.json.content = content
-        callback(null, content)
-      })
-    },
-    (jsonContent, callback) => {
-      if (!jsonContent) return callback(null, {})
-      const thisContext = this.context
       preProcessJson({
-        jsonContent,
-        mpx,
+        partsJSON: parts.json || {},
         isApp,
         srcMode,
-        mode,
         emitWarning,
         emitError,
         ctorType,
-        pagesMap,
         resourcePath,
-        loaderContext,
-        thisContext
+        loaderContext
       }, (err, jsonInfo) => {
         if (err) return callback(err)
         callback(null, jsonInfo)
