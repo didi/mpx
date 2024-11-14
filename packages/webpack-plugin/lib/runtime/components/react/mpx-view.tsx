@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text, KeyboardAvoidingView } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -23,6 +23,7 @@ export interface _ViewProps extends ViewProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'enable-background'?: boolean
+  'enable-keyboard'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
@@ -645,6 +646,17 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   ]
 }
 
+function wrapElement(innerProps:_ViewProps, childNode: ReactNode | ReactNode[], style: _ViewProps, enableKeyboard?: boolean, enableAnimation?: boolean): JSX.Element {
+  let Component:React.ComponentType<any>  = View
+  if (enableKeyboard) {
+    Component = KeyboardAvoidingView
+  } else if (enableAnimation) {
+    Component = Animated.View
+  }
+
+  return <Component style={style}  {...innerProps}>{childNode}</Component>
+}
+
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
@@ -655,6 +667,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-keyboard': enableKeyboard,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
@@ -791,18 +804,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     varContext: varContextRef.current,
     textProps
   })
-  return animation?.actions?.length
-    ? (<Animated.View
-      {...innerProps}
-      style={finalStyle}
-    >
-      {childNode}
-    </Animated.View>)
-    : (<View
-      {...innerProps}
-    >
-      {childNode}
-    </View>)
+  return wrapElement(innerProps, childNode, finalStyle, enableKeyboard, !!animation?.actions?.length)
 })
 
 _View.displayName = 'mpx-view'
