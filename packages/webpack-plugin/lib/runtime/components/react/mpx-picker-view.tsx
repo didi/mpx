@@ -201,10 +201,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const renderOverlay = () => (
-    <PickerOverlay
-      itemHeight={pickMaxH}
-      overlayContainerStyle={{ paddingHorizontal: '3%' }}
-    />
+    <PickerOverlay itemHeight={pickMaxH} />
   )
 
   return (

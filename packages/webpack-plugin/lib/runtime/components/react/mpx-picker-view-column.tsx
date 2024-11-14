@@ -1,7 +1,6 @@
 
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
-import Reanimated, { useAnimatedRef, useScrollViewOffset, useAnimatedStyle, interpolate, Extrapolation, AnimatedRef } from 'react-native-reanimated'
-import React, { forwardRef, useState, useMemo, useCallback } from 'react'
+import React, { forwardRef, useRef, useState, useMemo, useCallback } from 'react'
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { createFaces } from './pickerFaces'
@@ -53,11 +52,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   } = useTransformStyle(style, { enableVar, externalVarContext })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-
-  const animatedRef = useAnimatedRef<ScrollView>()
-  const offsetYShared = useScrollViewOffset(animatedRef as AnimatedRef<Reanimated.ScrollView>)
-
-  useNodesRef(props, ref, animatedRef, {})
+  const scrollViewRef = useRef<ScrollView>(null)
+  useNodesRef(props, ref, scrollViewRef, {})
 
   const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
   const maxIndex = useMemo(() => realChilds.length - 1, [realChilds])
@@ -65,7 +61,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const initialOffset = useMemo(() => ({
     x: 0,
     y: itemRawH * initialIndex
-  }), [itemRawH])
+  }), [itemRawH, initialIndex])
 
   const snapToOffsets = useMemo(
     () => realChilds.map((_, i) => i * itemRawH),
@@ -84,7 +80,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     hasSelfPercent,
     setWidth,
     setHeight,
-    nodeRef: animatedRef,
+    nodeRef: scrollViewRef,
     onLayout: onScrollViewLayout
   })
 
@@ -108,21 +104,40 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }
 
+  const offsetY = useRef(new Animated.Value(0)).current
+
+  const onScroll = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: offsetY } } }], {
+        useNativeDriver: true
+      }),
+    [offsetY]
+  )
+
   const faces = useMemo(() => createFaces(itemRawH, visibleCount), [itemRawH])
 
-  const getAnimatedStyles = useCallback(
-    (index: number) =>
-      useAnimatedStyle(() => {
-        const inputRange = faces.map((f) => itemRawH * (index + f.index))
-        return {
-          opacity: interpolate(offsetYShared.value, inputRange, faces.map((x) => x.opacity), Extrapolation.CLAMP),
-          transform: [
-            { rotateX: interpolate(offsetYShared.value, inputRange, faces.map((x) => x.deg), Extrapolation.EXTEND) + 'deg' },
-            { translateY: interpolate(offsetYShared.value, inputRange, faces.map((x) => x.offsetY), Extrapolation.EXTEND) }
-          ]
-        }
-      }),
-    [offsetYShared, faces, itemRawH]
+  const getTransform = useCallback(
+    (index: number) => {
+      const inputRange = faces.map((f) => itemRawH * (index + f.index))
+      return {
+        opacity: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => x.opacity),
+          extrapolate: 'clamp'
+        }),
+        rotateX: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => `${x.deg}deg`),
+          extrapolate: 'extend'
+        }),
+        translateY: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => x.offsetY),
+          extrapolate: 'extend'
+        })
+      }
+    },
+    [offsetY, faces, itemRawH]
   )
 
   const renderInnerchild = () => {
@@ -131,18 +146,34 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       const strKey = `picker-column-${columnIndex}-${index}`
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
       const iHeight = (arrHeight[0] || DefaultItemHeight) as number
-      const animatedStyles = getAnimatedStyles(index)
+      const { opacity, rotateX, translateY } = getTransform(index)
       return (
-        <Reanimated.View
+        <Animated.View
           key={strKey}
           {...InnerProps}
-          style={[{ height: iHeight, width: '100%' }, animatedStyles]}
+          style={[
+            {
+              height: iHeight,
+              width: '100%',
+              opacity,
+              transform: [
+                { translateY },
+                { rotateX },
+                { perspective: 1000 } // 适配 Android
+              ]
+            }
+          ]}
         >
           {wrapChildren(
             { children: item },
-            { hasVarDec, varContext: varContextRef.current, textStyle, textProps }
+            {
+              hasVarDec,
+              varContext: varContextRef.current,
+              textStyle,
+              textProps
+            }
           )}
-        </Reanimated.View>
+        </Animated.View>
       )
     })
     let offset = 0
@@ -157,7 +188,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const renderScollView = () => {
     return (
       <Animated.ScrollView
-        ref={animatedRef}
+        ref={scrollViewRef}
         bounces={true}
         horizontal={false}
         pagingEnabled={false}
@@ -168,6 +199,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         scrollEventThrottle={16}
         contentOffset={initialOffset}
         snapToOffsets={snapToOffsets}
+        onScroll={onScroll}
         onMomentumScrollEnd={onMomentumScrollEnd}
       >
         {renderInnerchild()}
