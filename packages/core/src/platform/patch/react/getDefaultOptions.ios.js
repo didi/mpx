@@ -371,7 +371,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
       if (isFirst) {
         const onConflict = proxy.createProxyConflictHandler('react hooks result')
-        Object.keys((key) => {
+        Object.keys(hooksResult).forEach((key) => {
           if (key in proxy.target) {
             onConflict(key)
           }
