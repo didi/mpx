@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling, proxy as proxyTarget } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -369,7 +369,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
     if (isObject(hooksResult)) {
       hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
-      proxyTarget(proxy.target, hooksResult, undefined, false, proxy.createProxyConflictHandler('react hooks result'))
+      if (isFirst) {
+        const onConflict = proxy.createProxyConflictHandler('react hooks result')
+        Object.keys((key) => {
+          if (key in proxy.target) {
+            onConflict(key)
+          }
+          proxy.target[key] = hooksResult[key]
+        })
+      } else {
+        Object.assign(proxy.target, hooksResult)
+      }
     }
 
     useEffect(() => {
