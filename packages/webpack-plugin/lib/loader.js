@@ -73,9 +73,8 @@ module.exports = function (content) {
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
-  const isApp = ctorType === 'app'
 
-  if (isApp) {
+  if (ctorType === 'app') {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
@@ -88,7 +87,7 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = mpx.getModuleId(resourcePath, isApp)
+  const moduleId = mpx.getModuleId(resourcePath, ctorType === 'app')
 
   const parts = parseComponent(content, {
     filePath,
@@ -107,7 +106,6 @@ module.exports = function (content) {
     (callback) => {
       preProcessJson({
         partsJSON: parts.json || {},
-        isApp,
         srcMode,
         emitWarning,
         emitError,
@@ -190,7 +188,7 @@ module.exports = function (content) {
       }
 
       // 为app注入i18n
-      if (i18n && isApp) {
+      if (i18n && ctorType === 'app') {
         const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
         const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
         const i18nWxsRequest = i18nWxsLoaderPath + '!' + i18nWxsPath
@@ -264,7 +262,7 @@ module.exports = function (content) {
         })
       }
 
-      if (parts.styles.filter(style => !style.src).length === 0 && isApp && mode === 'ali') {
+      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
         output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
       }
 

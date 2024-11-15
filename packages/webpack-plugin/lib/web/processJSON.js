@@ -94,7 +94,11 @@ module.exports = function (json, {
       type: 'json',
       waterfall: true,
       warn: emitWarning,
-      error: emitError
+      error: emitError,
+      data: {
+        // polyfill global usingComponents & record globalComponents
+        globalComponents: mpx.globalComponents
+      }
     }
 
     if (!isApp) {

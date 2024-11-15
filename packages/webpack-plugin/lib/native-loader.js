@@ -132,7 +132,6 @@ module.exports = function (content) {
     ctorType = queryObj.isComponent ? 'component' : 'page'
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
   }
-  const isApp = ctorType === 'app'
 
   if (ctorType === 'app') {
     const appName = getEntryName(this)
@@ -169,7 +168,6 @@ module.exports = function (content) {
           src: typeResourceMap.json,
           useJSONJS
         },
-        isApp,
         srcMode,
         emitWarning,
         emitError,
