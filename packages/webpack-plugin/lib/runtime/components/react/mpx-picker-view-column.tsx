@@ -18,7 +18,7 @@ interface ColumnProps {
   'enable-var': boolean
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
-    height?: number
+    height: number
     itemHeight: string
   }
   columnIndex: number
@@ -56,6 +56,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {})
 
+  const { height: pickerH } = wrapperStyle
   const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
   const maxIndex = useMemo(() => realChilds.length - 1, [realChilds])
   const touching = useRef(false)
@@ -73,13 +74,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   const contentContainerStyle = useMemo(() => {
-    const { height = itemRawH * visibleCount } = wrapperStyle
     return [
       {
-        paddingVertical: (height - itemRawH) / 2
+        paddingVertical: (pickerH - itemRawH) / 2
       }
     ]
-  }, [itemRawH, wrapperStyle])
+  }, [pickerH, itemRawH])
 
   useEffect(() => {
     if (
