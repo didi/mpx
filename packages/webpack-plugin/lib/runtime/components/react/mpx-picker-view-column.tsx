@@ -261,5 +261,5 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 })
 
-_PickerViewColumn.displayName = 'mpx-picker-view-column'
+_PickerViewColumn.displayName = 'MpxPickerViewColumn'
 export default _PickerViewColumn

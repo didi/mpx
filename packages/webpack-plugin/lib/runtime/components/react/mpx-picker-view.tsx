@@ -82,7 +82,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const activeValueRef = useRef(value)
   activeValueRef.current = value
 
-  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
   const {
     normalStyle,
     hasVarDec,
@@ -91,6 +90,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
+  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
   const {
     // 存储layout布局信息
     layoutRef,
@@ -211,6 +211,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 })
 
-_PickerView.displayName = 'mpx-picker-view'
+_PickerView.displayName = 'MpxPickerView'
 
 export default _PickerView
