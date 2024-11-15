@@ -1,5 +1,4 @@
 import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, registerWebviewConstructor, CanvasInstance } from './utils'
-import { MutableRefObject } from 'react'
 
 const PROPERTIES = {
   crossOrigin: undefined,
@@ -17,7 +16,6 @@ export class Image {
   private _errorListener: any;
   private _onload: ((...args: any[]) => void);
   private _onerror: ((...args: any[]) => void);
-  onConstruction?: ((...args: any[]) => void);
   [key: string]: any;
 
   constructor (canvas: CanvasInstance, width?: number, height?: number, noOnConstruction = false) {
@@ -49,7 +47,7 @@ export class Image {
 
   addEventListener (type: 'load' | 'error', callbackFn: Function) {
     return this.canvas.addMessageListener((message: WebviewMessage) => {
-      const target = message.payload.target as { [key: string]: any } || {}
+      const target = message?.payload?.target as { [key: string]: any } || {}
       if (
         message &&
         message.type === 'event' &&
