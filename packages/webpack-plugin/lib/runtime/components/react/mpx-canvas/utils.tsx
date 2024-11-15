@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { WebView } from 'react-native-webview'
+import Bus from './Bus'
 
 export const WEBVIEW_TARGET = '@@WEBVIEW_TARGET'
 
@@ -12,21 +14,19 @@ const SPECIAL_CONSTRUCTOR: Record<string, { className: string, paramNum: number 
     paramNum: 0
   }
 }
-
 interface Instance {
-  postMessage: (message: WebviewMessage) => void
-  addMessageListener?: (listener: MessageListener) => void
-  onConstruction?:(...args: any[]) => void
-  constructLocally?:(...args: unknown[]) => void
-  forceUpdate?: () => void
-  [WEBVIEW_TARGET]?: string
-  [key: string]: any
+  new (...args: any[]): {
+    postMessage: (message: any) => void;
+    [key: string]: any;
+  }
+  postMessage: (message: WebviewMessage) => void;
+  [key: string]: any;
 }
 
 export interface WebviewMessage {
   type: 'set' | 'exec' | 'listen' | 'event'
   payload: {
-    target?: string | { [WEBVIEW_TARGET]: string, [key: string]: any }
+    target?: string | { [key: string]: any }
     key?: string
     value?: any
     method?: string
@@ -34,6 +34,19 @@ export interface WebviewMessage {
     types?: string[]
     type?: string
   }
+}
+
+export interface CanvasInstance {
+  webview: WebView | null;
+  bus: Bus | null;
+  context2D: CanvasRenderingContext2D;
+  getContext: (contextType: string) => CanvasRenderingContext2D | null;
+  createImage: (width?: number, height?: number) => any;
+  postMessage: (message: WebviewMessage) => Promise<any>;
+  listeners: Array<(payload: any) => void>;
+  addMessageListener: (listener: (payload: any) => void) => () => void;
+  removeMessageListener: (listener: (payload: any) => void) => void;
+  createImageData: (dataArray: number[], width?: number, height?: number) => any;
 }
 
 type MessageListener = (message: WebviewMessage) => void
@@ -118,8 +131,7 @@ export const useWebviewBinding = ({
 }: {
   targetName: string;
   properties?: Record<string, any>;
-  methods?: string[];
-  constructorName?: string
+  methods?: string[]
 }) => {
   const instanceRef = useRef({})
 

@@ -1,4 +1,5 @@
-import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, registerWebviewConstructor } from './utils'
+import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, registerWebviewConstructor, CanvasInstance } from './utils'
+import { MutableRefObject } from 'react'
 
 const PROPERTIES = {
   crossOrigin: undefined,
@@ -8,15 +9,18 @@ const PROPERTIES = {
 }
 
 export class Image {
+  [WEBVIEW_TARGET]: string;
   canvas: any;
   width: number;
   height: number;
   private _loadListener: any;
   private _errorListener: any;
-  private __onload: Function | undefined;
-  private _onerror: Function | undefined;
+  private _onload: ((...args: any[]) => void);
+  private _onerror: ((...args: any[]) => void);
+  onConstruction?: ((...args: any[]) => void);
+  [key: string]: any;
 
-  constructor (canvas: any, width?: number, height?: number, noOnConstruction = false) {
+  constructor (canvas: CanvasInstance, width?: number, height?: number, noOnConstruction = false) {
     this.canvas = canvas
     registerWebviewProperties(this, PROPERTIES)
 
@@ -43,16 +47,17 @@ export class Image {
     return this.canvas.postMessage(message)
   }
 
-  addEventListener (type, callbackFn) {
+  addEventListener (type: 'load' | 'error', callbackFn: Function) {
     return this.canvas.addMessageListener((message: WebviewMessage) => {
+      const target = message.payload.target as { [key: string]: any } || {}
       if (
         message &&
         message.type === 'event' &&
-        message.payload.target[WEBVIEW_TARGET] === this[WEBVIEW_TARGET] &&
+        target[WEBVIEW_TARGET] === this[WEBVIEW_TARGET] &&
         message.payload.type === type
       ) {
-        for (const key in message.payload.target) {
-          const value = message.payload.target[key]
+        for (const key in target) {
+          const value = target[key]
           if (key in this && this[key] !== value) {
             this[key] = value
           }
@@ -65,8 +70,8 @@ export class Image {
     })
   }
 
-  set onload (callback: Function | undefined) {
-    this.__onload = callback
+  set onload (callback: ((...args: any[]) => void)) {
+    this._onload = callback
     if (this._loadListener) {
       this.canvas.removeMessageListener(this._loadListener)
     }
@@ -79,7 +84,7 @@ export class Image {
     return this._onload
   }
 
-  set onerror (callback: Function | undefined) {
+  set onerror (callback: ((...args: any[]) => void)) {
     this._onerror = callback
     if (this._errorListener) {
       this.canvas.removeMessageListener(this._errorListener)
@@ -94,7 +99,7 @@ export class Image {
   }
 }
 
-export function createImage (canvas, width, height) {
+export function createImage (canvas: CanvasInstance, width?: number, height?: number) {
   return new Image(canvas, width, height)
 }
 

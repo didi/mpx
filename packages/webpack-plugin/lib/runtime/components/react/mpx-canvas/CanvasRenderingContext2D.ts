@@ -1,4 +1,4 @@
-import { WebviewMessage, registerWebviewProperties, registerWebviewMethods, registerWebviewTarget } from './utils'
+import { CanvasInstance, WebviewMessage, registerWebviewProperties, registerWebviewMethods, registerWebviewTarget } from './utils'
 
 const PROPERTIES = {
   direction: 'inherit',
@@ -73,8 +73,8 @@ const METHODS = [
   'translate'
 ]
 export default class CanvasRenderingContext2D {
-  canvas: Record<string, any>
-  constructor (canvas: Record<string, any>) {
+  canvas: CanvasInstance
+  constructor (canvas: CanvasInstance) {
     this.canvas = canvas
     registerWebviewTarget(this, 'context2D')
     registerWebviewProperties(this, PROPERTIES)

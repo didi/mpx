@@ -1,10 +1,10 @@
-import { registerWebviewConstructor, registerWebviewMethods } from './utils'
+import { CanvasInstance, registerWebviewConstructor, registerWebviewMethods } from './utils'
 
 const METHODS = ['addColorStop']
 export default class CanvasGradient {
-  private canvas: any;
+  private canvas: CanvasInstance;
 
-  constructor (canvas: any, noOnConstruction = false) {
+  constructor (canvas: CanvasInstance, noOnConstruction = false) {
     this.canvas = canvas
     registerWebviewMethods(this, METHODS)
     if (this.onConstruction && !noOnConstruction) {

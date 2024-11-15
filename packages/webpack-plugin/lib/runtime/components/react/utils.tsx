@@ -524,3 +524,7 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   }
   return children
 }
+
+export function extendObject (...args: Record<string, any>[]) {
+  return Object.assign({}, ...args)
+}

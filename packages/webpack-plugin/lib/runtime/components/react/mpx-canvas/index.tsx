@@ -9,18 +9,20 @@
  * ✔ bindlongtap
  * ✔ binderror
  */
-import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent } from 'react'
+import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
-import { useLayout, useTransformStyle } from '../utils'
+import { useLayout, useTransformStyle, extendObject } from '../utils'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import Bus from './Bus'
 import {
   useWebviewBinding,
   constructors,
   WEBVIEW_TARGET,
-  WebviewMessage
+  WebviewMessage,
+  ID,
+  CanvasInstance
 } from './utils'
 import CanvasRenderingContext2D from './CanvasRenderingContext2D'
 import html from './html'
@@ -61,22 +63,15 @@ interface CanvasProps {
 
 const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasProps>((props: CanvasProps = {}, ref): JSX.Element => {
   const { style = {}, originWhitelist = ['*'], 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
-  const { width, height } = style
   const [isLoaded, setIsLoaded] = useState(false)
   const nodeRef = useRef(null)
-
-  const canvasRef = useWebviewBinding({
-    targetName: 'canvas',
-    properties: { width, height },
-    methods: ['toDataURL']
-  })
 
   const {
     normalStyle,
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, {
+  } = useTransformStyle(extendObject(style, stylesheet.container), {
     enableVar,
     externalVarContext,
     parentFontSize,
@@ -84,10 +79,17 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     parentHeight
   })
 
+  const { width, height } = normalStyle
+  const canvasRef = useWebviewBinding({
+    targetName: 'canvas',
+    properties: { width, height },
+    methods: ['toDataURL']
+  }) as MutableRefObject<CanvasInstance>
+
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: { ...normalStyle, ...layoutStyle, ...stylesheet.container, ...{ width, height, opacity: isLoaded ? 1 : 0 }, ...style },
+    style: extendObject(normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
     ...layoutProps
   }, [], {
     layoutRef
@@ -132,7 +134,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const createImageData = (dataArray: Array<number>, width?: Number, height?: Number) => {
     return canvasCreateImageData(canvasRef.current, dataArray, width, height)
   }
-  const createImage = (width?: Number, height?: Number) => {
+  const createImage = (width?: number, height?: number) => {
     return canvasCreateImage(canvasRef.current, width, height)
   }
   const getContext = useCallback((contextType: string) => {
@@ -145,7 +147,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const postMessage = useCallback(async (message: WebviewMessage) => {
     if (!canvasRef.current?.bus) return
     const { type, payload } = await canvasRef.current.bus.post({
-      id: Math.random(),
+      id: ID(),
       ...message
     })
 
@@ -217,7 +219,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
             listener(data.payload)
           }
         }
-        canvasRef.current.bus.handle(data)
+        if (canvasRef.current.bus) {
+          canvasRef.current.bus.handle(data)
+        }
       }
     }
   }, [])
@@ -230,6 +234,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }, [])
 
   useNodesRef(props, ref, nodeRef, {
+    style: normalStyle,
     node: canvasRef.current,
     context: context2D
   })
