@@ -5,7 +5,7 @@ import {
 export default class ImageData {
   constructor (canvas, dataArray, width, height, noOnConstruction) {
     this.canvas = canvas
-    if (!noOnConstruction) {
+    if (this.onConstruction && !noOnConstruction) {
       this.onConstruction(dataArray, width, height)
     }
   }

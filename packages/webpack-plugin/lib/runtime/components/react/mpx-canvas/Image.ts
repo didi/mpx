@@ -27,7 +27,7 @@ export class Image {
       this.height = height
     }
 
-    if (!noOnConstruction) {
+    if (this.onConstruction && !noOnConstruction) {
       this.onConstruction()
       this.postMessage({
         type: 'listen',
