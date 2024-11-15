@@ -165,8 +165,6 @@ module.exports = function getSpec ({ warn, error }) {
       swan: componentNameCapitalToHyphen('usingComponents')
     },
     {
-      // todo ali 2.0已支持全局组件，待移除
-      ali: addGlobalComponents,
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
@@ -373,8 +371,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: fillGlobalComponents,
         qq: fillGlobalComponents,
         swan: fillGlobalComponents,
         tt: fillGlobalComponents,
@@ -382,8 +378,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: deletePath({ noLog: true }),
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
         tt: deletePath({ noLog: true }),
