@@ -131,7 +131,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.createImageData = createImageData
   }, [])
 
-  const createImageData = (dataArray: Array<number>, width?: Number, height?: Number) => {
+  const createImageData = (dataArray: Array<number>, width: number, height: number) => {
     return canvasCreateImageData(canvasRef.current, dataArray, width, height)
   }
   const createImage = (width?: number, height?: number) => {
