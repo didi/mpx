@@ -70,6 +70,8 @@ module.exports = function ({
                 } catch (e) {
                     return finalCallback(e)
                 }
+                //isApp 时 json rules 中 fillGlobalComponents 方法会对 data.globalComponents 反写，执行 rulesRunner 之后 usingComponents中即有app.json中usingComponents内容
+                //page | component 时 直接获取 ret.usingComponents 内容
               Object.assign(usingComponents, ret.usingComponents)
 
                 if (ret.componentPlaceholder) {
@@ -84,7 +86,7 @@ module.exports = function ({
                     }
                     async.eachOf(usingComponents, (component, name, callback) => {
                         if (ctorType === 'app') {
-                            mpx.globalComponents[name] = addQuery(component, {
+                            usingComponents[name] = addQuery(component, {
                                 context: thisContext
                             })
                         }

@@ -102,6 +102,10 @@ module.exports = function (json, {
 
     if (!isApp) {
       rulesRunnerOptions.mainKey = ctorType
+      rulesRunnerOptions.data = {
+        // polyfill global usingComponents & record globalComponents
+        globalComponents: mpx.globalComponents
+      }
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
