@@ -50,7 +50,6 @@ module.exports = function ({
             }
             try {
                 const ret = JSON5.parse(jsonContent)
-                Object.assign(usingComponents, ret.usingComponents)
                 const rulesRunnerOptions = {
                     mode,
                     srcMode,
@@ -71,6 +70,7 @@ module.exports = function ({
                 } catch (e) {
                     return finalCallback(e)
                 }
+              Object.assign(usingComponents, ret.usingComponents)
 
                 if (ret.componentPlaceholder) {
                     componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
