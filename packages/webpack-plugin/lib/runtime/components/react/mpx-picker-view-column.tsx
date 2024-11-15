@@ -76,7 +76,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     const { height = itemRawH * visibleCount } = wrapperStyle
     return [
       {
-        paddingVertical: Math.max(0, (height - itemRawH) / 2)
+        paddingVertical: (height - itemRawH) / 2
       }
     ]
   }, [itemRawH, wrapperStyle])
@@ -233,6 +233,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         bounces={true}
         horizontal={false}
         pagingEnabled={false}
+        nestedScrollEnabled={true}
         removeClippedSubviews={true}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
