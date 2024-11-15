@@ -23,7 +23,7 @@ import {
   WebviewMessage
 } from './utils'
 import CanvasRenderingContext2D from './CanvasRenderingContext2D'
-import html from './index.html'
+import html from './html'
 import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
 import { createImageData as canvasCreateImageData } from './ImageData'

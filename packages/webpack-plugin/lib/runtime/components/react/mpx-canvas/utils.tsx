@@ -92,7 +92,7 @@ export const registerWebviewConstructor = (instance: Instance, constructorName: 
     return new (instance as any)(...args, true)
   }
 
-  instance.constructor.prototype.onConstruction = function (...args: any[]): void {
+  instance.prototype.onConstruction = function (...args: any[]): void {
     if (SPECIAL_CONSTRUCTOR[constructorName] !== undefined) {
       const { className, paramNum } = SPECIAL_CONSTRUCTOR[constructorName]
       args[paramNum] = { className, classArgs: [args[paramNum]] }
