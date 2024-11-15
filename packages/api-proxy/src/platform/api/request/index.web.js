@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
+import { serialize } from '@mpxjs/utils'
 
 function request (options = { url: '' }) {
   const CancelToken = axios.CancelToken
@@ -27,9 +28,7 @@ function request (options = { url: '' }) {
     (header['Content-Type'] === 'application/x-www-form-urlencoded' ||
       header['content-type'] === 'application/x-www-form-urlencoded')
   ) {
-    data = Object.keys(data).reduce((pre, curKey) => {
-      return `${pre}&${encodeURIComponent(curKey)}=${encodeURIComponent(data[curKey])}`
-    }, '').slice(1)
+    data = serialize(data)
   }
 
   /**

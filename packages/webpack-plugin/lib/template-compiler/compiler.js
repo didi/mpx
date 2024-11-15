@@ -2146,7 +2146,7 @@ function processStyle (el, meta) {
 }
 
 function isRealNode (el) {
-  const virtualNodeTagMap = ['block', 'template', 'import', config[mode].wxs.tag].reduce((map, item) => {
+  const virtualNodeTagMap = ['block', 'template', 'import', 'slot', config[mode].wxs.tag].reduce((map, item) => {
     map[item] = true
     return map
   }, {})
@@ -2155,6 +2155,10 @@ function isRealNode (el) {
 
 function isComponentNode (el, options) {
   return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
+function isReactComponent (el, options) {
+  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
@@ -2603,16 +2607,19 @@ function processElement (el, root, options, meta) {
   }
 
   if (isReact(mode)) {
+    const pass = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processRefReact(el, meta)
-    processStyleReact(el, options)
-    processEventReact(el)
-    processComponentIs(el, options)
-    processSlotReact(el, meta)
+    if (!pass) {
+      processRefReact(el, meta)
+      processStyleReact(el, options)
+      processEventReact(el)
+      processComponentIs(el, options)
+      processSlotReact(el, meta)
+    }
     processAttrs(el, options)
     return
   }
