@@ -50,6 +50,7 @@ module.exports = function ({
       }
       try {
         const ret = JSON5.parse(jsonContent)
+        const rulesMeta = {}
         const rulesRunnerOptions = {
           mode,
           srcMode,
@@ -59,7 +60,8 @@ module.exports = function ({
           error: emitError,
           data: {
             globalComponents: usingComponents
-          }
+          },
+          meta: rulesMeta
         }
         if (ctorType !== 'app') {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
@@ -70,9 +72,9 @@ module.exports = function ({
         } catch (e) {
           return finalCallback(e)
         }
-        // isApp 时 json rules 中 fillGlobalComponents 方法会对 data.globalComponents 反写，执行 rulesRunner 之后 usingComponents中即有app.json中usingComponents内容
+        // 不支持全局组件的平台，runRules 时会删除 app.json 中的 usingComponents, 同时 fillGlobalComponents 方法会对 rulesMeta 赋值 usingComponents，通过 rulesMeta 来重新获取 globalComponents
         // page | component 时 直接获取 ret.usingComponents 内容
-        Object.assign(usingComponents, ret.usingComponents)
+        Object.assign(usingComponents, ret.usingComponents || rulesMeta.globalComponents)
 
         if (ret.componentPlaceholder) {
           componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))

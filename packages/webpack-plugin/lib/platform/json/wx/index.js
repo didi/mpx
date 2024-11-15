@@ -84,10 +84,8 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
-  function fillGlobalComponents (input, { globalComponents }) {
-    if (globalComponents) {
-      Object.assign(globalComponents, input.usingComponents)
-    }
+  function fillGlobalComponents (input, { globalComponents }, meta) {
+    meta.globalComponents = input.usingComponents
     return input
   }
 
