@@ -31,7 +31,7 @@ const visibleCount = 5
 
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const {
-    columnData: realChilds,
+    columnData,
     columnIndex,
     initialIndex,
     onSelectChange,
@@ -58,10 +58,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const { height: pickerH } = wrapperStyle
   const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
-  const maxIndex = useMemo(() => realChilds.length - 1, [realChilds])
+  const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const touching = useRef(false)
   const scrolling = useRef(false)
   const prevIndex = usePrevious(initialIndex)
+  const prevMaxIndex = usePrevious(maxIndex)
+  const activeIndex = useRef(initialIndex)
 
   const initialOffset = useMemo(() => ({
     x: 0,
@@ -69,8 +71,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }), [itemRawH])
 
   const snapToOffsets = useMemo(
-    () => realChilds.map((_, i) => i * itemRawH),
-    [realChilds, itemRawH]
+    () => columnData.map((_, i) => i * itemRawH),
+    [columnData, itemRawH]
   )
 
   const contentContainerStyle = useMemo(() => {
@@ -88,10 +90,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       touching.current ||
       scrolling.current ||
       prevIndex == null ||
-      prevIndex === initialIndex
+      initialIndex === prevIndex ||
+      initialIndex === activeIndex.current ||
+      maxIndex !== prevMaxIndex
     ) {
       return
     }
+
+    activeIndex.current = initialIndex
     scrollViewRef.current.scrollTo({
       x: 0,
       y: itemRawH * initialIndex,
@@ -114,6 +120,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef,
     onLayout: onScrollViewLayout
   })
+
+  const onContentSizeChange = (w: number, h: number) => {
+    scrollViewRef.current?.scrollTo({
+      x: 0,
+      y: itemRawH * initialIndex,
+      animated: false
+    })
+  }
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
@@ -146,6 +160,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
     const { y: scrollY } = e.nativeEvent.contentOffset
     let calcIndex = Math.round(scrollY / itemRawH)
+    activeIndex.current = calcIndex
     if (calcIndex !== initialIndex) {
       calcIndex = Math.max(0, Math.min(calcIndex, maxIndex)) || 0
       onSelectChange(calcIndex)
@@ -189,7 +204,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   const renderInnerchild = () => {
-    return realChilds.map((item: React.ReactNode, index: number) => {
+    return columnData.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = `picker-column-${columnIndex}-${index}`
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
@@ -242,6 +257,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         contentContainerStyle={contentContainerStyle}
         contentOffset={initialOffset}
         snapToOffsets={snapToOffsets}
+        onContentSizeChange={onContentSizeChange}
         onScroll={onScroll}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
