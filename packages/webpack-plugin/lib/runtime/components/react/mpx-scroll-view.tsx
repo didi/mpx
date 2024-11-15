@@ -33,12 +33,13 @@
  */
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef } from 'react'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren } from './utils'
+import { IntersectionObserverContext } from './context'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -60,6 +61,7 @@ interface ScrollViewProps {
   'scroll-top'?: number;
   'scroll-left'?: number;
   'enable-offset'?: boolean;
+  'enable-trigger-intersection-observer'?: boolean;
   'enable-var'?: boolean;
   'external-var-context'?: Record<string, any>;
   'parent-font-size'?: number;
@@ -107,6 +109,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
+    'enable-trigger-intersection-observer': enableTriggerIntersectionObserver = false,
     'paging-enabled': pagingEnabled = false,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
@@ -139,6 +142,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intersectionObservers = useContext(IntersectionObserverContext)
 
   const {
     normalStyle,
@@ -285,6 +289,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    if (enableTriggerIntersectionObserver && intersectionObservers) {
+      for (const key in intersectionObservers) {
+        intersectionObservers[key].throttleMeasure()
+      }
+    }
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -407,6 +416,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-x',
     'scroll-y',
     'enable-back-to-top',
+    'enable-trigger-intersection-observer',
     'paging-enabled',
     'show-scrollbar',
     'upper-threshold',

@@ -25,6 +25,7 @@ import {
   processUndefined,
   getFirstKey,
   callWithErrorHandling,
+  wrapMethodsWithErrorHandling,
   warn,
   error,
   getEnvObj
@@ -106,6 +107,7 @@ export default class MpxProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
+    this.ignoreReactivePattern = this.options.options?.ignoreReactivePattern
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
@@ -133,6 +135,21 @@ export default class MpxProxy {
       this.pendingUpdatedFlag = false
     }
     this.initApi()
+  }
+
+  processIgnoreReactive (obj) {
+    if (this.ignoreReactivePattern && isObject(obj)) {
+      Object.keys(obj).forEach((key) => {
+        if (this.ignoreReactivePattern.test(key)) {
+          Object.defineProperty(obj, key, {
+            enumerable: true,
+            // set configurable to false to skip defineReactive
+            configurable: false
+          })
+        }
+      })
+    }
+    return obj
   }
 
   created () {
@@ -208,6 +225,11 @@ export default class MpxProxy {
     if (this.update) this.update.active = false
     this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
+    if (this._intersectionObservers) {
+      this._intersectionObservers.forEach((observer) => {
+        observer.disconnect()
+      })
+    }
   }
 
   isUnmounted () {
@@ -249,14 +271,14 @@ export default class MpxProxy {
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
     }
-    reactive(this.props)
+    reactive(this.processIgnoreReactive(this.props))
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
 
   initSetup () {
     const setup = this.options.setup
     if (setup) {
-      const setupResult = callWithErrorHandling(setup, this, 'setup function', [
+      let setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
           triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
@@ -273,6 +295,7 @@ export default class MpxProxy {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
       }
+      setupResult = wrapMethodsWithErrorHandling(setupResult, this)
       proxy(this.target, setupResult, undefined, false, this.createProxyConflictHandler('setup result'))
       this.collectLocalKeys(setupResult, (key, val) => !isFunction(val))
     }
@@ -287,7 +310,7 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    reactive(this.data)
+    reactive(this.processIgnoreReactive(this.data))
     proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
@@ -419,7 +442,7 @@ export default class MpxProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey]) {
+        if (!this.localKeysMap[firstKey] || (this.ignoreReactivePattern && this.ignoreReactivePattern.test(firstKey))) {
           continue
         }
         // 外部clone，用于只需要clone的场景
