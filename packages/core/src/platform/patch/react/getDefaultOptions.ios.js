@@ -366,7 +366,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const proxy = instance.__mpxProxy
 
-    proxy.callHook(REACTHOOKSEXEC)
+    proxy.callHook(REACTHOOKSEXEC, [props])
 
     useEffect(() => {
       if (!isFirst) {
