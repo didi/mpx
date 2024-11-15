@@ -1,7 +1,7 @@
 
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
-import React, { forwardRef, useRef, useState, useMemo, useCallback } from 'react'
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
+import React, { forwardRef, useRef, useState, useMemo, useCallback, useEffect } from 'react'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, usePrevious } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { createFaces } from './pickerFaces'
 
@@ -57,16 +57,46 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
   const maxIndex = useMemo(() => realChilds.length - 1, [realChilds])
+  const touching = useRef(false)
+  const scrolling = useRef(false)
+  const prevIndex = usePrevious(initialIndex)
 
   const initialOffset = useMemo(() => ({
     x: 0,
     y: itemRawH * initialIndex
-  }), [itemRawH, initialIndex])
+  }), [itemRawH])
 
   const snapToOffsets = useMemo(
     () => realChilds.map((_, i) => i * itemRawH),
     [realChilds, itemRawH]
   )
+
+  const contentContainerStyle = useMemo(() => {
+    const { height = itemRawH * visibleCount } = wrapperStyle
+    return [
+      {
+        paddingVertical: Math.max(0, (height - itemRawH) / 2)
+      }
+    ]
+  }, [itemRawH, wrapperStyle])
+
+  useEffect(() => {
+    if (
+      !scrollViewRef.current ||
+      !itemRawH ||
+      touching.current ||
+      scrolling.current ||
+      prevIndex == null ||
+      prevIndex === initialIndex
+    ) {
+      return
+    }
+    scrollViewRef.current.scrollTo({
+      x: 0,
+      y: itemRawH * initialIndex,
+      animated: false
+    })
+  }, [itemRawH, initialIndex])
 
   const onScrollViewLayout = () => {
     getInnerLayout && getInnerLayout(layoutRef)
@@ -92,7 +122,24 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }
 
+  const onTouchStart = () => {
+    touching.current = true
+  }
+
+  const onTouchEnd = () => {
+    touching.current = false
+  }
+
+  const onTouchCancel = () => {
+    touching.current = false
+  }
+
+  const onMomentumScrollBegin = () => {
+    scrolling.current = true
+  }
+
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrolling.current = false
     if (!itemRawH) {
       return
     }
@@ -141,7 +188,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   const renderInnerchild = () => {
-    const arrChild = realChilds.map((item: React.ReactNode, index: number) => {
+    return realChilds.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = `picker-column-${columnIndex}-${index}`
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
@@ -176,13 +223,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         </Animated.View>
       )
     })
-    let offset = 0
-    if (wrapperStyle.height) {
-      offset = Math.ceil((wrapperStyle.height - itemRawH) / 2)
-    }
-    arrChild.unshift(<View key={'picker-column-dummy-head'} style={[{ height: offset }]}></View>)
-    arrChild.push(<View key={'picker-column-dummy-tail'} style={[{ height: offset }]}></View>)
-    return arrChild
   }
 
   const renderScollView = () => {
@@ -197,9 +237,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         showsHorizontalScrollIndicator={false}
         {...layoutProps}
         scrollEventThrottle={16}
+        contentContainerStyle={contentContainerStyle}
         contentOffset={initialOffset}
         snapToOffsets={snapToOffsets}
         onScroll={onScroll}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
+        onMomentumScrollBegin={onMomentumScrollBegin}
         onMomentumScrollEnd={onMomentumScrollEnd}
       >
         {renderInnerchild()}
