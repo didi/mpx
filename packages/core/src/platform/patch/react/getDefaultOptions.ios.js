@@ -367,8 +367,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const proxy = instance.__mpxProxy
 
     let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
-    hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
-    proxyTarget(proxy.target, hooksResult, undefined, false, proxy.createProxyConflictHandler('react hooks result'))
+    if (isObject(hooksResult)) {
+      hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
+      proxyTarget(proxy.target, hooksResult, undefined, false, proxy.createProxyConflictHandler('react hooks result'))
+    }
 
     useEffect(() => {
       if (!isFirst) {
