@@ -2,7 +2,7 @@
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
 import React, { forwardRef, useRef, useState, useMemo, useCallback, useEffect } from 'react'
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, usePrevious } from './utils'
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef'
 import { createFaces } from './pickerFaces'
 
 interface ColumnProps {
@@ -26,6 +26,7 @@ interface ColumnProps {
 
 // 默认的单个选项高度
 const DefaultItemHeight = 36
+// 默认一屏可见选项个数
 const visibleCount = 5
 
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {

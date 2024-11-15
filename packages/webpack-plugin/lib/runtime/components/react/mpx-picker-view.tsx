@@ -1,7 +1,7 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef, useMemo } from 'react'
+import React, { forwardRef, useState, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from './useNodesRef'
 import {
   useLayout,
   splitProps,
@@ -76,14 +76,13 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, overlay: showOverlay } = indicatorStyle
+  const [pickMaxH, setPickMaxH] = useState(0)
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
-  const [pickMaxH, setPickMaxH] = useState(0)
   const activeValueRef = useRef(value)
   activeValueRef.current = value
+
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
-  // picker-view 设置的color等textStyle,在小程序上的表现是可以继承到最内层的text样式,
-  // 但是RN内部column是slot无法设置, 需要业务自己在column内的元素上设置
   const {
     normalStyle,
     hasVarDec,
