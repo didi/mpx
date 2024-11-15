@@ -180,9 +180,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const timestamp = useSharedValue(0);
   // canLoop 标识是否能滚动
   const canLoop = useSharedValue(true)
-  // 标记可以开始loop的时间戳
-  let enableTime = useSharedValue(Date.now())
-  // 备注如果用runOnJs的setInterval的方式, 不晓得为什么props.autoplay的配置还会触发变化理论是个死值;
+  let intervalId:ReturnType<typeof setInterval>
 
   const {
     // 存储layout布局信息
@@ -255,13 +253,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         {dots}
       </View>
     )
-    /*
-    return (
-      <View pointerEvents="none" style={[styles['pagination_' + [dir.value as dirType]]]}>
-        {dots}
-      </View>
-    )
-    */
   }
 
   function renderItems () {
@@ -355,16 +346,41 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     return dir.value === 'x' ? widthState : heightState 
   }
 
-  useAnimatedReaction(() => timestamp.value, (newTime, preTime) => {
-    const canPlay = props.autoplay && newTime > 0 && newTime !== preTime && canLoop.value && totalElements.value > 1
-    if (canPlay) {
-      createAutoPlay()
+
+  function createIntervalHandler () {
+    if (props.autoplay && totalElements.value > 1 && !intervalId) {
+      const intervalTimer = props.interval || 500
+      intervalId = setInterval(() => {
+        createAutoPlay()
+      }, intervalTimer);
+      isProcessingInterval = false
     }
-  })
+  }
+
+  function cancelIntervalHandler () {
+    clearInterval(intervalId)
+    // @ts-ignore
+    intervalId = 0
+  }
 
   useAnimatedReaction(() => targetIndex.value, (newIndex, preIndex) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    runOnJS(handleSwiperChange)(newIndex)
+    const isInit = !preIndex && newIndex === 0
+    if (!isInit && props.bindchange) {
+      runOnJS(handleSwiperChange)(newIndex)
+    }
+  })
+
+  useAnimatedReaction(() => canLoop.value, (loopv, oldLoop) => {
+    // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
+    console.log('----------useAnimatedReaction-----', loopv, oldLoop, intervalId)
+    if (props.autoplay) {
+      if (!loopv) {
+        runOnJS(cancelIntervalHandler)()
+      } else if (!intervalId && oldLoop !== null){
+        runOnJS(createIntervalHandler)()
+      }
+    }
   })
 
   useEffect(() => {
@@ -388,111 +404,95 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     }
   }, [props.autoplay, props.current, widthState, heightState])
 
-  useEffect(() => {
-    if (props.autoplay && totalElements.value > 1) {
-      const intervalTimer = props.interval || 500
-      const intervalId = setInterval(() => {
-        // 正常无人工干预轮播
-        if (timestamp.value !== 0 && canLoop.value) {
-          timestamp.value = Date.now();
-        } else if (timestamp.value === 0 && Date.now() - enableTime.value > intervalTimer) {
-          timestamp.value = Date.now();
-        }
-      }, intervalTimer);
-      return () => clearInterval(intervalId);
-    }
-  }, []);
 
   function getTargetPosition (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
     'worklet';
-    let targetPos = 0
-    let resetPos = 0
-    const posView = e[dir.value as dirType]
-    // 移动的距离
-    const transDistance = e[strTrans as StrTransType]
-    // 移动的目标步长
-    const moveDistance  = Math.ceil(Math.abs(transDistance) / step.value) * step.value
-    // 移动的目标步长之后的坐标, e[strTrans] < 0) 代表正向滚动 否则反向
-    const moveTargetPos = transDistance < 0 ? posView + moveDistance - previousMargin : posView - moveDistance - previousMargin
-    // 目标索引值
-    let index = Math.floor(moveTargetPos / step.value)
-    let realTarget = targetIndex.value
+    let resetOffsetPos = 0
+    let moveToIndex = 0
+    let selectedIndex = targetIndex.value
     // 是否临界点
     let isCriticalItem = false
-    console.log('----------getTarget', posView, transDistance, moveDistance, moveTargetPos, index)
+    // 真实滚动到的偏移量坐标
+    let moveToTargetPos = 0
+    // 移动的距离
+    const transDistance = e[strTrans as StrTransType]
+    // 移动的步长
+    const moveStep = Math.ceil(Math.abs(transDistance) / step.value)
+    // 目标索引, 向下滚动>0, 索引变小, 向上滚<0 索引变大;  向左滚>0 索引变大, 向右滚<0, 索引变大
+    let index = transDistance < 0 ? targetIndex.value + moveStep : targetIndex.value - moveStep
+    // 用户一直拖拽, 拖拽出区域松手后的位置, 若未超出区域, 按正常逻辑走, 若超出区域, 单独计算矫正
+    let isCorrect = false
+    // 实际应该定位的索引值
     if (!props.circular) {
-      realTarget = index
-      targetPos = -realTarget * step.value
+      selectedIndex = index
+      moveToTargetPos = selectedIndex * step.value
     } else {
-      // 正向滚动
-      if (transDistance< 0) {
-        const a1 = index - (totalElements.value + 2)
-        const a2 = index - 2
-        // targetIndex.value = a1 >= 0 ? a1 : a2
-        realTarget = a1 >= 0 ? a1 : a2
-        targetPos = -index * step.value
-        isCriticalItem = a1 >= 0
+      // Y轴向下滚动, transDistance > 0, 索引变小
+      // X轴向左滚动, transDistance > 0, 索引变小
+      if (transDistance > 0) {
+        // 滚动到的位置索引
+        moveToIndex = targetIndex.value + 2 - moveStep
+        moveToTargetPos = moveToIndex * step.value - previousMargin
+        isCriticalItem = [0, 1].includes(moveToIndex)
         if (isCriticalItem) {
-          resetPos = -(a1 + 2) * step.value
-        }
-        console.log('---------zheng-', a1, a2, realTarget, resetPos, isCriticalItem)
-      } else {
-        // 反向滚动
-        isCriticalItem = [0, 1].includes(index)
-        if (isCriticalItem) {
-          realTarget = index === 0 ? totalElements.value - 2 : totalElements.value - 1
+          selectedIndex = totalElements.value - 2 + moveToIndex
+          resetOffsetPos = (totalElements.value + moveToIndex ) * step.value
         } else {
-          realTarget = index - 2
+          selectedIndex = targetIndex.value - moveStep
         }
-        targetPos = -index * step.value
+      } else {
+        // Y轴向上滚动, transDistance < 0, 索引变大
+        // X轴向右滚动, transDistance < 0, 索引变大
+        moveToIndex = targetIndex.value + moveStep + 2
+        if (moveToIndex > totalElements.value + 4 - 1) {
+          moveToIndex = totalElements.value + 4 - 1
+        }
+        moveToTargetPos = moveToIndex * step.value - previousMargin
+        isCriticalItem = [totalElements.value + 2, totalElements.value + 3].includes(moveToIndex)
         if (isCriticalItem) {
-          resetPos = -(index + totalElements.value) * step.value
+          selectedIndex = moveToIndex - ( totalElements.value + 2 )
+          resetOffsetPos = (selectedIndex + 2) * step.value
+        } else {
+          selectedIndex = targetIndex.value + moveStep
         }
-        console.log('----------fan', isCriticalItem, realTarget, targetPos, resetPos)
+      }
+      // 若计算出来的坐标是有问题的
+      console.log('===============================0', selectedIndex)
+      if (selectedIndex < 0 || selectedIndex > totalElements.value -1) {
+        const scrollNum = Math.ceil(Math.abs(transDistance) / step.value)
+        selectedIndex = (targetIndex.value +  scrollNum) % totalElements.value
+        moveToTargetPos = (selectedIndex + 2) * step.value
+        resetOffsetPos = moveToTargetPos
+        isCorrect = true
+        console.log('==============================1', selectedIndex, moveToTargetPos, resetOffsetPos)
       }
     }
     return {
-      realTarget,
+      isCorrect,
+      selectedIndex,
       isCriticalItem,
       resetOffset: {
-        x: dir.value === 'x' ? resetPos : 0,
-        y: dir.value === 'y' ? resetPos : 0
+        x: dir.value === 'x' ? -resetOffsetPos : 0,
+        y: dir.value === 'y' ? -resetOffsetPos : 0
       },
       targetOffset: {
-        x: dir.value === 'x' ? targetPos : offset.value.x,
-        y: dir.value === 'y' ? targetPos : offset.value.y
+        x: dir.value === 'x' ? -moveToTargetPos : offset.value.x,
+        y: dir.value === 'y' ? -moveToTargetPos : offset.value.y
       }
     }
   }
 
   function canMove (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
     'worklet';
-    // 移动的距离
-    const transDistance = e[strTrans as StrTransType]
-    if (totalElements.value <= 1) {
-      return false
-    } else if (props.circular) {
-      return true;
-    } else if (transDistance < 0) {
-      // 正向滚动e[strTrans] < 0
-      var moveTarget = e[dir.value as dirType] + Math.abs(transDistance);
-      var posEnd = (totalElements.value - 1) * step.value + previousMargin;
-      return moveTarget <= posEnd;
-    } else if (transDistance > 0) {
-      // 反向滚动 e[dir.value] < step.value 代表第一个元素不能再滚动, e[dir.value] > step.value
-      return e[dir.value as dirType] > step.value && e[dir.value as dirType] - transDistance > 0 && targetIndex.value >= 1
+    if (!props.circular) {
+      const transDistance = e[strTrans as StrTransType]
+      if (transDistance < 0) {
+        return targetIndex.value < totalElements.value - 1
+      } else {
+        return targetIndex.value > 0
+      }
     } else {
-      return true;
-    }
-  }
-
-  function resetAutoTime () {
-    'worklet';
-    if (props.autoplay && canLoop.value === false) {
-      // 再经过interval后执行动画
-      timestamp.value = 0
-      canLoop.value = true
-      enableTime.value = Date.now()
+      return true
     }
   }
 
@@ -504,66 +504,142 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     }
   })
 
+  function reachBoundary (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
+    'worklet';
+    // 移动的距离
+    const transDistance = e[strTrans as StrTransType]
+    let isBoundary = false
+    let resetOffset = 0
+    let moveToTargetPos = 0
+    let selectedIndex = 0
+    // Y轴向下滚动, transDistance > 0, 索引变小
+    // X轴向左滚动, transDistance > 0, 索引变小
+    const currentOffset = offset.value[dir.value]
+    const itemLength = step.value * totalElements.value
+
+    if (transDistance > 0) {
+      // 用户一直拖拽 translateXY一直变大, offset的值也一直变大, 这个时候应该loop
+      const moveStep = Math.floor(transDistance / itemLength) + 2
+
+      if (currentOffset < 0 && step.value > Math.abs(currentOffset)) {
+        isBoundary = true
+        moveToTargetPos = (totalElements.value - 1 + 2 ) * step.value
+        resetOffset = itemLength * moveStep
+        selectedIndex = totalElements.value - 1
+      }
+    } else if (transDistance < 0) {
+      // const moveStep = Math.ceil(Math.abs(transDistance) / itemLength) - 2
+      const endOffset = (totalElements.value + 3) * step.value
+      console.log('-----------------------aaaaaaa', endOffset, currentOffset)
+      // -----------------aaaaaaa 80 -32
+      if (currentOffset < 0 && currentOffset < -endOffset) {
+        isBoundary = true
+        selectedIndex = 0
+        resetOffset = step.value
+        moveToTargetPos = 2 * step.value
+      }
+    }
+    return {
+      isBoundary,
+      moveToTargetPos: {
+        x: dir.value === 'x' ? -moveToTargetPos : 0,
+        y: dir.value === 'y' ? -moveToTargetPos : 0
+      },
+      resetOffset: {
+        x: dir.value === 'x' ? -resetOffset : 0,
+        y: dir.value === 'y' ? -resetOffset : 0
+      },
+      selectedIndex
+    }
+  }
+
+  const updateProcessing = useSharedValue(false)
 
   const gesture = Gesture.Pan()
-    .onBegin(() => {
+    .onBegin((e) => {
       'worklet'
       canLoop.value = false
     })
     .onUpdate((e) => {
       'worklet'
-      if (!canMove(e)) {
+      if (!props.circular && !canMove(e)) {
         return
       }
-      offset.value = {
-        x: e.translationX + start.value.x,
-        y: e.translationY + start.value.y,
-      };
+      // 处理用户拖拽到临界点的场景
+      const { isBoundary, resetOffset, moveToTargetPos, selectedIndex } = reachBoundary(e)
+      if (isBoundary) {
+        start.value = resetOffset
+        offset.value =  moveToTargetPos
+        // targetIndex.value = selectedIndex todo 不更新
+        updateProcessing.value = true
+        console.log('--------------------------onUpdate-0-', start.value[dir.value], offset.value[dir.value], targetIndex.value)
+      } else {
+        offset.value = {
+          x: e.translationX + start.value.x,
+          y: e.translationY + start.value.y,
+        };
+        updateProcessing.value = false
+      }
     })
     .onEnd((e) => {
       'worklet'
-      if (!canMove(e)) {
+      if (props.circular && !canMove(e)) {
         return
       }
-      const { isCriticalItem, targetOffset, resetOffset, realTarget } = getTargetPosition(e)
+      const { isCriticalItem, targetOffset, resetOffset, selectedIndex, isCorrect } = getTargetPosition(e)
+      if (isCorrect) {
+        targetIndex.value = selectedIndex
+        start.value = resetOffset
+        offset.value = targetOffset
+        return
+      }
       if (isCriticalItem) {
-        // 执行动画到下一帧
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration
-        }, () => {
-          // 动画执行完成后归位真正的offset
-          offset.value = resetOffset
-          start.value = resetOffset
-          targetIndex.value = realTarget
-          resetAutoTime()
-        })
-      } else {
+        console.log('---------------------------onEnd-0---', targetOffset, resetOffset, selectedIndex)
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
         }, () => {
-          targetIndex.value = realTarget
+          targetIndex.value = selectedIndex
+          start.value = resetOffset
+          offset.value = resetOffset
+          canLoop.value = true
+        })
+      } else {
+        console.log('---------------------------onEnd-1---', targetOffset, resetOffset, selectedIndex)
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        }, () => {
+          targetIndex.value = selectedIndex
           start.value = targetOffset
-          targetIndex.value = realTarget
-          resetAutoTime()
+          offset.value = targetOffset
+          canLoop.value = true
         })
       }
     })
-  return (<View style={[normalStyle, layoutStyle, { overflow: "scroll", justifyContent: "flex-start" }]} {...layoutProps} {...innerProps}>
-    <GestureDetector gesture={gesture}>
-      <Animated.View style={[{ flexDirection: dir.value === 'x' ? 'row' : 'column' }, animatedStyles]}>
-        {wrapChildren({
-          children: arrPages
-        }, {
-          hasVarDec,
-          varContext: varContextRef.current,
-          textStyle,
-          textProps
-        })}
-      </Animated.View>
-    </GestureDetector>
-      {showsPagination && renderPagination()}
-  </View>)
+  
+  function renderSwiper () {
+   return (<View style={[normalStyle, layoutStyle, { overflow: "scroll", display: "flex", justifyContent: "flex-start" }]} {...layoutProps} {...innerProps}>
+        <Animated.View style={[{ flexDirection: dir.value === 'x' ? 'row' : 'column' }, animatedStyles]}>
+          {wrapChildren({
+            children: arrPages
+          }, {
+            hasVarDec,
+            varContext: varContextRef.current,
+            textStyle,
+            textProps
+          })}
+        </Animated.View>
+        {showsPagination && renderPagination()}
+    </View>)
+  }
+  if (totalElements.value === 1) {
+    return renderSwiper()
+  } else {
+    return (<GestureDetector gesture={gesture}>
+      {renderSwiper()}
+    </GestureDetector>)
+  }
 })
 _SwiperWrapper.displayName = 'mpx-swiper'
 
