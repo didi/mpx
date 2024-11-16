@@ -30,6 +30,8 @@ export interface _ViewProps extends ViewProps {
   'parent-width'?: number
   'parent-height'?: number
   'enable-animation'?: boolean
+  'content-container-style'?: Record<string, any>
+  behavior?: 'height' | 'position' | 'padding'
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -646,15 +648,15 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   ]
 }
 
-function wrapElement(innerProps:_ViewProps, childNode: ReactNode | ReactNode[], style: _ViewProps, enableKeyboard?: boolean, enableAnimation?: boolean): JSX.Element {
-  let Component:React.ComponentType<any>  = View
+function wrapElement (innerProps:_ViewProps, childNode: ReactNode | ReactNode[], style: _ViewProps, enableKeyboard?: boolean, enableAnimation?: boolean): JSX.Element {
+  let Component:React.ComponentType<any> = View
   if (enableKeyboard) {
     Component = KeyboardAvoidingView
   } else if (enableAnimation) {
     Component = Animated.View
   }
 
-  return <Component style={style}  {...innerProps}>{childNode}</Component>
+  return <Component style={style} {...innerProps}>{childNode}</Component>
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
@@ -670,8 +672,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-keyboard': enableKeyboard,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
+    'content-container-style': contentContainerStyle,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    behavior = 'padding',
     animation
   } = props
 
@@ -771,6 +775,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     style: viewStyle,
+    ...enableKeyboard
+      ? {
+          contentContainerStyle: contentContainerStyle || { flex: 1, paddingBottom: 20 },
+          behavior
+        }
+      : {},
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
