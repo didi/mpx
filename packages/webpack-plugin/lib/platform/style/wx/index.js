@@ -201,6 +201,10 @@ module.exports = function getSpec ({ warn, error }) {
     const props = AbbreviationMap[prop]
     const values = Array.isArray(value) ? value : parseValues(value)
     const cssMap = []
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
+      return cssMap
+    }
     let idx = 0
     let propsIdx = 0
     const diff = values.length - props.length
@@ -302,7 +306,9 @@ module.exports = function getSpec ({ warn, error }) {
         // background-image 仅支持背景图
         const imgUrl = value.match(urlExp)?.[0]
         const linerVal = value.match(linerExp)?.[0]
-        if (imgUrl) {
+        if (cssVariableExp.test(value)) {
+          return { prop, value }
+        } else if (imgUrl) {
           return { prop, value: imgUrl }
         } else if (linerVal) {
           return { prop, value: linerVal }
@@ -344,6 +350,10 @@ module.exports = function getSpec ({ warn, error }) {
       }
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
+        if (cssVariableExp.test(value)) {
+          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
+          return
+        }
         const bgMap = []
         const values = parseValues(value)
         values.forEach(item => {
