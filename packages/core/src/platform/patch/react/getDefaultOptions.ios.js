@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -347,6 +347,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
@@ -365,7 +366,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const proxy = instance.__mpxProxy
 
-    proxy.callHook(REACTHOOKSEXEC)
+    let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
+    if (isObject(hooksResult)) {
+      hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
+      if (isFirst) {
+        const onConflict = proxy.createProxyConflictHandler('react hooks result')
+        Object.keys(hooksResult).forEach((key) => {
+          if (key in proxy.target) {
+            onConflict(key)
+          }
+          proxy.target[key] = hooksResult[key]
+        })
+      } else {
+        Object.assign(proxy.target, hooksResult)
+      }
+    }
 
     useEffect(() => {
       if (!isFirst) {
@@ -415,6 +430,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     return root
   }))
 
+  if (rawOptions.options?.isCustomText) {
+    defaultOptions.isCustomText = true
+  }
+
   if (type === 'page') {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
@@ -460,7 +479,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       navigation.insets = useSafeAreaInsets()
 
       return createElement(GestureHandlerRootView,
-        null,
+        {
+          style: {
+            flex: 1
+          }
+        },
         createElement(ReactNative.View, {
           style: {
             flex: 1,
@@ -476,9 +499,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 value: currentPageId
               },
               createElement(IntersectionObserverContext.Provider,
-              {
-                value: intersectionObservers.current
-              },
+                {
+                  value: intersectionObservers.current
+                },
                 createElement(defaultOptions,
                   {
                     navigation,

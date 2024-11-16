@@ -139,6 +139,7 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
+    options.customTextRules = options.customTextRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
@@ -347,7 +348,14 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    let addModePlugin
+    if (['android', 'harmony'].includes(this.options.mode)) {
+      // 'android' | 'harmony' 下 使用mode = 'ios' 进行兼容兜底
+      addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file', 'ios')
+    } else {
+      addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    }
+
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
@@ -688,6 +696,7 @@ class MpxWebpackPlugin {
           projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
+          customTextRules: this.options.customTextRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
@@ -1812,8 +1821,8 @@ try {
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-
-        if (isWeb(mpx.mode)) {
+        // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
+        if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
