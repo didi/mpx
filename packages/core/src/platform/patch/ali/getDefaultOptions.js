@@ -185,5 +185,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const newOptions = filterOptions(rawOptions, type)
   newOptions.mixins = newOptions.behaviors
   delete newOptions.behaviors
+  if (newOptions.relations) {
+    // ali relations 需要设置 options.relations = true
+    newOptions.options = newOptions.options || {}
+    newOptions.options.relations = true
+  }
   return newOptions
 }
