@@ -25,7 +25,7 @@ interface ColumnProps {
 }
 
 // 默认的单个选项高度
-const DefaultItemHeight = 36
+const DefaultPickerItemH = 36
 // 默认一屏可见选项个数
 const visibleCount = 5
 
@@ -56,7 +56,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {})
 
-  const { height: pickerH } = wrapperStyle
+  const { height: pickerH, itemHeight = DefaultPickerItemH } = wrapperStyle
   const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const touching = useRef(false)
@@ -203,12 +203,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     [offsetY, faces, itemRawH]
   )
 
-  const renderInnerchild = () => {
-    return columnData.map((item: React.ReactNode, index: number) => {
+  const renderInnerchild = () =>
+    columnData.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = `picker-column-${columnIndex}-${index}`
-      const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
-      const iHeight = (arrHeight[0] || DefaultItemHeight) as number
+      const match = (itemHeight + '').match(/\d+/g) || [0]
+      const iHeight = +match[0] || DefaultPickerItemH
       const { opacity, rotateX, translateY } = getTransform(index)
       return (
         <Animated.View
@@ -239,7 +239,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         </Animated.View>
       )
     })
-  }
 
   const renderScollView = () => {
     return (
