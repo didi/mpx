@@ -566,7 +566,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     })
     .onEnd((e) => {
       'worklet'
-      if (props.circular && !canMove(e)) {
+      if (!props.circular && !canMove(e)) {
         return
       }
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(e)
