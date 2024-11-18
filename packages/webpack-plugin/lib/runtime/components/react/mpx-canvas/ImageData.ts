@@ -1,11 +1,11 @@
 import {
   WebviewMessage,
-  registerWebviewConstructor,
   CanvasInstance
 } from './utils'
 
 export default class ImageData {
   canvas: CanvasInstance;
+  [key: string]: any;
   constructor (canvas: CanvasInstance, dataArray: number[], width: number, height: number, noOnConstruction?: boolean) {
     this.canvas = canvas
     if (this.onConstruction && !noOnConstruction) {
@@ -21,6 +21,3 @@ export default class ImageData {
 export function createImageData (canvas: CanvasInstance, dataArray: number[], width: number, height: number) {
   return new ImageData(canvas, dataArray, width, height)
 }
-
-// 注册构造器
-registerWebviewConstructor(ImageData, 'ImageData')

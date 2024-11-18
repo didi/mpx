@@ -1,4 +1,4 @@
-import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, registerWebviewConstructor, CanvasInstance } from './utils'
+import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, CanvasInstance } from './utils'
 
 const PROPERTIES = {
   crossOrigin: undefined,
@@ -41,7 +41,7 @@ export class Image {
     }
   }
 
-  postMessage (message: any) {
+  postMessage (message: WebviewMessage) {
     return this.canvas.postMessage(message)
   }
 
@@ -78,7 +78,7 @@ export class Image {
     }
   }
 
-  get onload (): Function | undefined {
+  get onload (): ((...args: any[]) => void) {
     return this._onload
   }
 
@@ -92,7 +92,7 @@ export class Image {
     }
   }
 
-  get onerror (): Function | undefined {
+  get onerror () : ((...args: any[]) => void) {
     return this._onerror
   }
 }
@@ -100,6 +100,3 @@ export class Image {
 export function createImage (canvas: CanvasInstance, width?: number, height?: number) {
   return new Image(canvas, width, height)
 }
-
-// 注册构造器
-registerWebviewConstructor(Image, 'Image')

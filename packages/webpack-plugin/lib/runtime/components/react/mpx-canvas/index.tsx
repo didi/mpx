@@ -22,13 +22,15 @@ import {
   WEBVIEW_TARGET,
   WebviewMessage,
   ID,
-  CanvasInstance
+  CanvasInstance,
+  registerWebviewConstructor
 } from './utils'
 import CanvasRenderingContext2D from './CanvasRenderingContext2D'
 import html from './html'
 import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
 import { createImageData as canvasCreateImageData } from './ImageData'
+import { ConstructorsRegistry } from './constructorsRegistry'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -95,10 +97,12 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     layoutRef
   })
 
-  const context2D = new CanvasRenderingContext2D(canvasRef.current)
+  const context2D = new CanvasRenderingContext2D(canvasRef.current) as any
 
   // 初始化bus和context2D
   useEffect(() => {
+    ConstructorsRegistry.register(registerWebviewConstructor)
+
     const webviewPostMessage = (message: WebviewMessage) => {
       if (canvasRef.current.webview) {
         canvasRef.current.webview.postMessage(JSON.stringify(message))

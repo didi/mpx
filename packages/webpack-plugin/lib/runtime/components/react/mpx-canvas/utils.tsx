@@ -14,17 +14,20 @@ const SPECIAL_CONSTRUCTOR: Record<string, { className: string, paramNum: number 
     paramNum: 0
   }
 }
-interface Instance {
-  new (...args: any[]): {
-    postMessage: (message: any) => void;
-    [key: string]: any;
-  }
-  postMessage: (message: WebviewMessage) => void;
+
+export interface Instance {
+  postMessage: (...args: any[]) => void;
+  [WEBVIEW_TARGET]?: string;
   [key: string]: any;
 }
 
+export interface WebviewConstructor {
+  new (...args: any[]): Instance;
+  constructLocally?: (...args: unknown[]) => Instance;
+}
+
 export interface WebviewMessage {
-  type: 'set' | 'exec' | 'listen' | 'event'
+  type: 'set' | 'exec' | 'listen' | 'event' | 'construct'
   payload: {
     target?: string | { [key: string]: any }
     key?: string
@@ -33,6 +36,8 @@ export interface WebviewMessage {
     args?: any[]
     types?: string[]
     type?: string
+    constructor?: string | Function
+    id?: string
   }
 }
 
@@ -48,8 +53,6 @@ export interface CanvasInstance {
   removeMessageListener: (listener: (payload: any) => void) => void;
   createImageData: (dataArray: number[], width?: number, height?: number) => any;
 }
-
-type MessageListener = (message: WebviewMessage) => void
 
 export const registerWebviewTarget = (instance: Instance, targetName: string): void => {
   instance[WEBVIEW_TARGET] = targetName
@@ -99,13 +102,13 @@ export const registerWebviewMethods = (instance: Instance, methods: string[]): v
   })
 }
 
-export const registerWebviewConstructor = (instance: Instance, constructorName: string): void => {
-  constructors[constructorName] = instance
-  instance.constructLocally = function (...args: unknown[]): Instance {
-    return new (instance as any)(...args, true)
+export const registerWebviewConstructor = (constructor: WebviewConstructor, constructorName: string): void => {
+  constructors[constructorName] = constructor
+  constructor.constructLocally = function (...args: unknown[]): Instance {
+    return new (constructor as any)(...args, true)
   }
 
-  instance.prototype.onConstruction = function (...args: any[]): void {
+  constructor.prototype.onConstruction = function (...args: any[]): void {
     if (SPECIAL_CONSTRUCTOR[constructorName] !== undefined) {
       const { className, paramNum } = SPECIAL_CONSTRUCTOR[constructorName]
       args[paramNum] = { className, classArgs: [args[paramNum]] }
@@ -120,7 +123,7 @@ export const registerWebviewConstructor = (instance: Instance, constructorName: 
       }
     })
   }
-  instance.prototype.toJSON = function () {
+  constructor.prototype.toJSON = function () {
     return { __ref__: this[WEBVIEW_TARGET] }
   }
 }
