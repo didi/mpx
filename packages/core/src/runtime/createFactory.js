@@ -7,7 +7,7 @@ const factoryMap = {
 module.exports = (type) => (...args) => {
   if (type === 'Behavior') {
     if (__mpx_mode__ === 'ali') {
-      return Mixin.apply(null, args.concat({ isNative: true }))
+      return Mixin.apply(null, args)
     }
     if (args[0]) {
       Object.defineProperty(args[0], '__mpx_behaviors_to_mixins__', {

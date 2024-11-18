@@ -108,10 +108,17 @@ function filterOptions (options, type) {
       } else {
         newOptions[key] = newMethods
       }
+    } else if (key === 'behaviors') {
+      newOptions.mixins = options[key]
     } else {
       newOptions[key] = options[key]
     }
   })
+  if (newOptions.relations) {
+    // ali relations 需要设置 options.relations = true
+    newOptions.options = newOptions.options || {}
+    newOptions.options.relations = true
+  }
   return newOptions
 }
 
@@ -182,13 +189,5 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
-  const newOptions = filterOptions(rawOptions, type)
-  newOptions.mixins = newOptions.behaviors
-  delete newOptions.behaviors
-  if (newOptions.relations) {
-    // ali relations 需要设置 options.relations = true
-    newOptions.options = newOptions.options || {}
-    newOptions.options.relations = true
-  }
-  return newOptions
+  return filterOptions(rawOptions, type)
 }
