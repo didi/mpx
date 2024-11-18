@@ -182,5 +182,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }]
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
-  return filterOptions(rawOptions, type)
+  const newOptions = filterOptions(rawOptions, type)
+  newOptions.mixins = newOptions.behaviors
+  delete newOptions.behaviors
+  return newOptions
 }
