@@ -1,7 +1,7 @@
 import { callWithErrorHandling, isFunction, isObject, warn } from '@mpxjs/utils'
 import { currentInstance } from '../../core/proxy'
 
-const ProvidesMap = {
+const providesMap = {
   /** 全局 scope */
   __app: Object.create(null),
   /** 页面 scope */
@@ -16,7 +16,7 @@ export function initAppProvides (appOptions) {
       ? callWithErrorHandling(provideOpt.bind(appOptions), appOptions, 'createApp provide function')
       : provideOpt
     if (isObject(provided)) {
-      ProvidesMap.__app = provided
+      providesMap.__app = provided
     } else {
       warn('App provides must be an object or a function that returns an object.')
     }
@@ -31,14 +31,14 @@ function resolvePageId (context) {
 
 function resolvePageProvides (context) {
   const pageId = resolvePageId(context)
-  return ProvidesMap.__pages[pageId] || (ProvidesMap.__pages[pageId] = Object.create(null))
+  return providesMap.__pages[pageId] || (providesMap.__pages[pageId] = Object.create(null))
 }
 
 /** @internal */
 export function removePageProvides (context) {
   const pageId = resolvePageId(context)
-  if (ProvidesMap.__pages[pageId]) {
-    delete ProvidesMap.__pages[pageId]
+  if (providesMap.__pages[pageId]) {
+    delete providesMap.__pages[pageId]
   }
 }
 
@@ -48,11 +48,9 @@ export function provide (key, value) {
     warn('provide() can only be used inside setup().')
     return
   }
-  if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
-    // 小程序无法实现组件父级引用，所以 provide scope 设置为组件所在页面
-    const provides = resolvePageProvides(instance.target)
-    provides[key] = value
-  }
+  // 小程序无法实现组件父级引用，所以 provide scope 设置为组件所在页面
+  const provides = resolvePageProvides(instance.target)
+  provides[key] = value
 }
 
 export function inject (key, defaultValue, treatDefaultAsFactory = false) {
@@ -61,15 +59,11 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
     warn('inject() can only be used inside setup()')
     return
   }
-  let provides = Object.create(null)
-  const isMiniProgram = __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android'
-  if (isMiniProgram) {
-    provides = resolvePageProvides(instance.target)
-  }
+  const provides = resolvePageProvides(instance.target)
   if (key in provides) {
     return provides[key]
-  } else if (isMiniProgram && key in ProvidesMap.__app) {
-    return ProvidesMap.__app[key]
+  } else if (key in providesMap.__app) {
+    return providesMap.__app[key]
   } else if (arguments.length > 1) {
     return treatDefaultAsFactory && isFunction(defaultValue)
       ? defaultValue.call(instance && instance.target)

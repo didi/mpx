@@ -13,6 +13,7 @@ import {
   isObject,
   isEmptyObject,
   isPlainObject,
+  isWeb,
   doGetByPath,
   getByPath,
   setByPath,
@@ -225,13 +226,7 @@ export default class MpxProxy {
       // 页面/组件销毁清除上下文的缓存
       contextMap.remove(this.uid)
     }
-    if (
-      __mpx_mode__ !== 'web' &&
-      __mpx_mode__ !== 'ios' &&
-      __mpx_mode__ !== 'android' &&
-      this.options.__type__ === 'page' &&
-      !this.options.__pageCtor__
-    ) {
+    if (!isWeb && this.options.__type__ === 'page') {
       // 小程序页面销毁时移除对应的 provide
       removePageProvides(this.target)
     }
