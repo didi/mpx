@@ -163,7 +163,7 @@ module.exports = function (content) {
     },
     (callback) => {
       preProcessJson({
-        partsJSON: {
+        json: {
           src: typeResourceMap.json,
           useJSONJS
         },

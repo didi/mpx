@@ -9,8 +9,7 @@ const getRulesRunner = require('../platform')
 const async = require('async')
 
 module.exports = function ({
-  partsJSON,
-  jsonContent,
+  json,
   srcMode,
   emitWarning,
   emitError,
@@ -19,12 +18,12 @@ module.exports = function ({
   loaderContext
 }, callback) {
   const mpx = loaderContext.getMpx()
-  const thisContext = loaderContext.context
+  const context = loaderContext.context
   const mode = mpx.mode
   const pagesMap = mpx.pagesMap
   async.waterfall([
     (callback) => {
-      getJSONContent(partsJSON, null, loaderContext, callback)
+      getJSONContent(json, null, loaderContext, callback)
     },
     (jsonContent, callback) => {
       if (!jsonContent) return callback(null, {})
@@ -32,7 +31,7 @@ module.exports = function ({
       let componentGenerics = {}
       const usingComponentsInfo = {}
       const usingComponents = {}
-      partsJSON.content = jsonContent
+      json.content = jsonContent
 
       const finalCallback = (err) => {
         if (err) return callback(err)
@@ -40,7 +39,7 @@ module.exports = function ({
           // 在 rulesRunner 运行后保存全局注册组件
           // todo 其余地方在使用mpx.globalComponents时存在缓存问题，要规避该问题需要在所有使用mpx.globalComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
           // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
-          loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(usingComponents, usingComponentsInfo, thisContext))
+          loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(usingComponents, usingComponentsInfo, context))
         }
         callback(null, {
           componentPlaceholder,
@@ -58,9 +57,6 @@ module.exports = function ({
           waterfall: true,
           warn: emitWarning,
           error: emitError,
-          data: {
-            globalComponents: usingComponents
-          },
           meta: rulesMeta
         }
         if (ctorType !== 'app') {
@@ -74,7 +70,7 @@ module.exports = function ({
         }
         // 不支持全局组件的平台，runRules 时会删除 app.json 中的 usingComponents, 同时 fillGlobalComponents 方法会对 rulesMeta 赋值 usingComponents，通过 rulesMeta 来重新获取 globalComponents
         // page | component 时 直接获取 ret.usingComponents 内容
-        Object.assign(usingComponents, ret.usingComponents || rulesMeta.globalComponents)
+        Object.assign(usingComponents, ret.usingComponents || rulesMeta.usingComponents)
 
         if (ret.componentPlaceholder) {
           componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
@@ -89,7 +85,7 @@ module.exports = function ({
           async.eachOf(usingComponents, (component, name, callback) => {
             if (ctorType === 'app') {
               usingComponents[name] = addQuery(component, {
-                context: thisContext
+                context
               })
             }
             if (!isUrlRequest(component)) {
@@ -97,7 +93,7 @@ module.exports = function ({
               setUsingComponentInfo(name, moduleId)
               return callback()
             }
-            resolve(thisContext, component, loaderContext, (err, resource) => {
+            resolve(context, component, loaderContext, (err, resource) => {
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, ctorType === 'app')

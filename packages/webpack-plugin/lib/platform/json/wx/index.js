@@ -85,7 +85,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   function fillGlobalComponents (input, { globalComponents }, meta) {
-    meta.globalComponents = input.usingComponents
+    meta.usingComponents = input.usingComponents
     return input
   }
 

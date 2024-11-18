@@ -104,7 +104,7 @@ module.exports = function (content) {
   async.waterfall([
     (callback) => {
       preProcessJson({
-        partsJSON: parts.json || {},
+        json: parts.json || {},
         srcMode,
         emitWarning,
         emitError,
