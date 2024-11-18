@@ -30,9 +30,7 @@
   }
 
   function getVnodeKey (vnode) {
-    if (vnode && vnode.componentOptions) {
-      return vnode.componentOptions.Ctor.cid + (vnode.componentOptions.tag ? ('::' + (vnode.componentOptions.tag)) : '')
-    }
+    return vnode.tag + (vnode.key ? `::${vnode.key}` : '')
   }
 
   export default {
@@ -41,15 +39,16 @@
     render: function render () {
       const slot = this.$slots.default
       const vnode = getFirstComponentChild(slot)
-      if (!isBrowser) {
+      if (!isBrowser || !vnode) {
         return vnode || (slot && slot[0])
       }
-      const vnodeKey = getVnodeKey(vnode)
       const router = global.__mpxRouter
-      if (vnodeKey && router && vnode.data.routerView) {
+      if (router) {
+        // 存在routeCount的情况下修改vnode.key避免patch时复用旧节点实例
+        if (router.currentRoute.query.routeCount) vnode.key = router.currentRoute.query.routeCount
+        const vnodeKey = getVnodeKey(vnode)
         if (router.needCache) {
           router.needCache.vnode = vnode
-          router.needCache.vnodeKey = vnodeKey
           router.needCache = null
         }
 
@@ -65,29 +64,23 @@
             removeItem.vnode.componentInstance.$destroy()
           }
         })
+        // 在执行完destroy后再同步lastStack信息，让用户在destroy钩子中还能够访问到销毁之前的页面栈，与小程序保持一致
+        router.lastStack = router.stack.slice()
         router.needRemove.length = 0
 
         const stack = router.stack
         if (stack.length) {
-          // 只要历史栈缓存中存在对应的页面存活实例，就进行复用
+          // 只要历史栈缓存中存在对应的页面存活实例且vnodeKey相同，就进行复用
           for (let i = stack.length; i > 0; i--) {
             const current = stack[i - 1]
-            if (current.vnode && current.vnodeKey === vnodeKey && current.vnode.componentInstance) {
+            if (current.vnode && getVnodeKey(current.vnode) === vnodeKey && current.vnode.componentInstance) {
               vnode.componentInstance = current.vnode.componentInstance
-              // 避免组件实例复用但是vnode.key不一致带来的bad case
-              vnode.key = current.vnode.key
               break
             }
           }
         }
 
-        if (router.__mpxAction) {
-          if (router.__mpxAction.type === 'reLaunch') {
-            // reLaunch时修改新vnode的key, 确保任何情况下都新创建组件实例
-            vnode.key = (vnode.key || '') + router.__mpxAction.reLaunchCount
-          }
-          router.__mpxAction = null
-        }
+        if (router.__mpxAction) router.__mpxAction = null
         vnode.data.keepAlive = true
       }
 

@@ -4,7 +4,7 @@
     <div v-show="isShow" class="popover__top">
       <div class="popover__content">
         <div class="popover__inner">
-          <img v-if="code" width="110" :src="code" alt="code" loading="lazy" />
+          <img v-if="code" width="300" :src="code" alt="code" loading="lazy" />
           <div v-if="title">{{title}}</div>
         </div>
         <div class="popover__arrow"></div>
@@ -56,11 +56,11 @@ export default {
   display inline-block
   .popover__top
     position absolute
-    width 150px
-    height 158px
+    width 300px
+    height 300px
     background #fff
-    left -55px
-    top -168px
+    left -150px
+    top -350px
     border-radius 4px
   .popover__content
     position relative

@@ -1,0 +1,29 @@
+{
+    "compileType": "miniprogram",
+    "condition": {},
+    "setting": {
+        "postcss": true,
+        "babelSetting": {
+            "ignore": [],
+            "disablePlugins": [],
+            "outputPath": ""
+        },
+        "coverView": false,
+        "minified": false,
+        "enhance": false,
+        "showShadowRootInWxmlPanel": false,
+        "packNpmRelationList": [],
+        "ignoreUploadUnusedFiles": true
+    },
+    "editorSetting": {
+        "tabIndent": "insertSpaces",
+        "tabSize": 4
+    },
+    "libVersion": "3.3.4",
+    "packOptions": {
+        "ignore": [],
+        "include": []
+    },
+    "appid": "wx585aa5f078190a5a",
+    "projectname": "mpx-api-proxy"
+}

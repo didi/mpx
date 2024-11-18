@@ -10,10 +10,9 @@
 欢迎访问[https://mpxjs.cn](https://mpxjs.cn)，跟随我们提供的文档指南使用Mpx进行跨端小程序开发。
 
 ## 近期更新
+基于 Mpx 的移动端基础组件库 [mpx-cube-ui](https://www.mpxjs.cn/mpx-cube-ui/guide/intro.html) 已经开源，更多详情查看[这里](https://mpxjs.cn/articles/mpx-cube-ui.html)。
 
-Mpx 2.8 版本正式发布，完整支持组合式 API，更多详情查看[这里](https://mpxjs.cn/articles/2.8-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.8.html)，相关指南及 API 参考文档已更新。
-
-`@mpxjs/cli` 3.2 版本正式发布，基于 `@vue/cli` 插件化架构实现的全新脚手架，更多详情查看[这里](https://github.com/mpx-ecology/mpx-cli)。
+Mpx 2.9 版本正式发布，支持原子类、SSR和构建产物体积优化，更多详情查看[这里](https://mpxjs.cn/articles/2.9-release.html)，迁移指南查看[这里](https://mpxjs.cn/guide/migrate/2.9.html)，相关指南及 API 参考文档已更新。
 
 ## 简介
 
@@ -21,7 +20,7 @@ Mpx是一款致力于提升小程序开发体验和用户体验的增强型小�
 
 Mpx具有以下功能特性：
 * [数据响应](https://www.mpxjs.cn/guide/basic/reactive.html) (赋值响应 / [watch](https://www.mpxjs.cn/api/global-api.html#watch) / computed)
-* [组合式 API](#todo link)
+* [组合式 API](https://mpxjs.cn/guide/composition-api/composition-api.html)
 * 增强模板语法 ([动态组件](https://www.mpxjs.cn/guide/basic/component.html#%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6) / [样式绑定 / 类名绑定 ](https://www.mpxjs.cn/guide/basic/class-style-binding.html#%E7%B1%BB%E5%90%8D%E7%BB%91%E5%AE%9A) / [内联事件函数](https://www.mpxjs.cn/guide/basic/event.html) / [双向绑定](https://www.mpxjs.cn/guide/basic/two-way-binding.html) / [refs](https://www.mpxjs.cn/guide/basic/refs.html))
 * 极致性能 ([运行时性能优化](https://www.mpxjs.cn/guide/understand/runtime.html) / [包体积优化](https://www.mpxjs.cn/guide/understand/compile.html#%E5%88%86%E5%8C%85%E5%A4%84%E7%90%86) / 框架运行时体积14KB)
 * [高效强大的编译构建](https://www.mpxjs.cn/guide/understand/compile.html#%E5%88%86%E5%8C%85%E5%A4%84%E7%90%86) (基于webpack5 / 支持持久化缓存 / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
@@ -30,15 +29,18 @@ Mpx具有以下功能特性：
 * [状态管理](https://www.mpxjs.cn/guide/advance/store.html) (Vuex规范 / 支持多实例Store)
 * 跨团队开发 ([packages](https://www.mpxjs.cn/guide/advance/subpackage.html))
 * 逻辑复用 ([mixins](https://www.mpxjs.cn/guide/advance/mixin.html))
-* [周边能力支持](https://www.mpxjs.cn/guide/extend/) (fetch / api增强 / mock / webview-bridge)
+* [周边能力](https://www.mpxjs.cn/guide/extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
 * 多平台增强 (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
 * [跨平台编译](https://www.mpxjs.cn/guide/advance/platform.html) (一套代码跨端输出到微信、支付宝、百度、字节、QQ、京东、快应用(web) 和 [web平台](https://www.mpxjs.cn/guide/advance/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb) 中运行)
 * [TypeScript支持](https://www.mpxjs.cn/guide/tool/ts.html) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](https://www.mpxjs.cn/guide/tool/i18n.html)
-* [单元测试支持](https://www.mpxjs.cn/guide/tool/unit-test.html)
-* [E2E测试支持](https://www.mpxjs.cn/guide/tool/e2e-test.html)
-* [组件维度运行时渲染方案](https://github.com/didi/mpx/pull/919) (即将到来)
+* [单元测试](https://www.mpxjs.cn/guide/tool/unit-test.html)
+* [E2E测试](https://www.mpxjs.cn/guide/tool/e2e-test.html)
+* [原子类](https://mpxjs.cn/guide/advance/utility-first-css.html)
+* [SSR](https://mpxjs.cn/guide/advance/ssr.html)
+* 运行时渲染方案
+* 跨端输出RN（即将到来）
 
 ## 快速开始
 
@@ -140,7 +142,7 @@ npm run build
       }
     },
     handleTap (index) {
-      // 处理函数直接通过参数获取当前点击的index，清晰简洁
+      // 处理函数直接通过参数获取当前点击的index，清晰简洁.
       this.list[index].active = !this.list[index].active
     },
     onReady () {
@@ -191,17 +193,19 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 |@mpxjs/store|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fstore.svg)](https://badge.fury.io/js/%40mpxjs%2Fstore)|类vuex store|
 |@mpxjs/pinia|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fpinia.svg)](https://badge.fury.io/js/%40mpxjs%2Fpinia)|mpx pinia store|
 |@mpxjs/fetch|[![npm version](https://badge.fury.io/js/%40mpxjs%2Ffetch.svg)](https://badge.fury.io/js/%40mpxjs%2Ffetch)|mpx网络请求库，处理wx并发请求限制|
+|@mpxjs/unocss-plugin|[![npm version](https://badge.fury.io/js/@mpxjs%2Funocss-plugin.svg)](https://badge.fury.io/js/@mpxjs%2Funocss-plugin)|mpx unocss插件，支持使用unocss原子类|
+|@mpxjs/unocss-base|[![npm version](https://badge.fury.io/js/@mpxjs%2Funocss-base.svg)](https://badge.fury.io/js/@mpxjs%2Funocss-base)|mpx unocss预设|
 |@mpxjs/cli|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fcli.svg)](https://badge.fury.io/js/%40mpxjs%2Fcli)|mpx脚手架命令行工具|
 |@mpxjs/webview-bridge|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge.svg)](https://badge.fury.io/js/%40mpxjs%2Fwebview-bridge)|为跨小程序平台的H5项目提供通用的webview-bridge|
-|@mpxjs/mock|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmock.svg)](https://badge.fury.io/js/%40mpxjs%2Fmock)|结合mockjs提供数据mock能力|
 |@mpxjs/utils|[![npm version](https://badge.fury.io/js/%40mpxjs%2Futils.svg)](https://badge.fury.io/js/%40mpxjs%2Futils)|mpx运行时工具库|
 |@mpxjs/babel-plugin-inject-page-events|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events.svg)](https://badge.fury.io/js/%40mpxjs%2Fbabel-plugin-inject-page-events)|组合式API页面事件处理插件|
+|@mpxjs/mpx-cube-ui|[![npm version](https://badge.fury.io/js/%40mpxjs%2Fmpx-cube-ui.svg)](https://badge.fury.io/js/%40mpxjs%2Fmpx-cube-ui)|基于 Mpx 的移动端基础组件库|
 
 ## 开发团队
 
 核心团队: [hiyuki](https://github.com/hiyuki), [Blackgan3](https://github.com/Blackgan3), [anotherso1a](https://github.com/anotherso1a), [CommanderXL](https://github.com/CommanderXL), [yandadaFreedom](https://github.com/yandadaFreedom), [wangxiaokou](https://github.com/wangxiaokou), [OnlyProbie](https://github.com/OnlyProbie), [pagnkelly](https://github.com/pagnkelly), [thuman](https://github.com/thuman), [theniceangel](https://github.com/theniceangel), [dolymood](https://github.com/dolymood)
 
-外部贡献者：[sky-admin](https://github.com/sky-admin), [pkingwa](https://github.com/pkingwa), [httpsxiao](https://github.com/httpsxiao), [lsycxyj](https://github.com/lsycxyj), [okxiaoliang4](https://github.com/okxiaoliang4), [tangminFE](https://github.com/tangminFE), [codepan](https://github.com/codepan), [zqjimlove](https://github.com/zqjimlove), [xuehebinglan](https://github.com/xuehebinglan), [wangxiaokou](https://github.com/wangxiaokou), [zhaoyiming0803](https://github.com/zhaoyiming0803), [ctxrr](https://github.com/ctxrr), [JanssenZhang](https://github.com/JanssenZhang), [heiye9](https://github.com/heiye9), [lj0812](https://github.com/lj0812), [SuperHuangXu](https://github.com/SuperHuangXu), [twtylkmrh](https://github.com/twtylkmrh), [NineSwordsMonster](https://github.com/NineSwordsMonster)
+外部贡献者：[sky-admin](https://github.com/sky-admin), [pkingwa](https://github.com/pkingwa), [httpsxiao](https://github.com/httpsxiao), [lsycxyj](https://github.com/lsycxyj), [okxiaoliang4](https://github.com/okxiaoliang4), [tangminFE](https://github.com/tangminFE), [codepan](https://github.com/codepan), [zqjimlove](https://github.com/zqjimlove), [xuehebinglan](https://github.com/xuehebinglan), [zhaoyiming0803](https://github.com/zhaoyiming0803), [ctxrr](https://github.com/ctxrr), [JanssenZhang](https://github.com/JanssenZhang), [heiye9](https://github.com/heiye9), [lj0812](https://github.com/lj0812), [SuperHuangXu](https://github.com/SuperHuangXu), [twtylkmrh](https://github.com/twtylkmrh), [NineSwordsMonster](https://github.com/NineSwordsMonster)
 
 ## 成功案例
 
@@ -231,9 +235,9 @@ Mpx的核心设计思路为增强，不同于业内大部分小程序框架将we
 
 提供 微信群 / QQ群 两种交流方式.
 
-#### 添加MPX入群客服等待受邀入群
+#### 添加MPX入群小助手等待受邀入群
 
-![微信](https://dpubstatic.udache.com/static/dpubimg/82e2e776-71e8-4ca5-8878-33b0d5020b6d.jpg)
+![微信](https://dpubstatic.udache.com/static/dpubimg/6DN0ebkbjgI2P9QjJr8jr_WechatIMG3.jpeg)
 
 
 #### 扫码进入QQ群

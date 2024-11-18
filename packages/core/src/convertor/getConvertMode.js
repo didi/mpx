@@ -6,7 +6,9 @@ const convertModes = {
   'wx-qq': 'wxToQq',
   'wx-tt': 'wxToTt',
   'wx-jd': 'wxToJd',
-  'wx-dd': 'wxToDd'
+  'wx-dd': 'wxToDd',
+  'wx-ios': 'wxToIos',
+  'wx-android': 'wxToAndroid'
 }
 
 export function getConvertMode (srcMode) {

@@ -1,19 +1,22 @@
-import Vue from '../../vue'
+import {
+  watch,
+  reactive,
+  isReactive,
+  set,
+  del,
+  isRef
+} from 'vue'
 import { injectMixins } from '../../core/injectMixins'
-
-const vm = new Vue()
-const observable = Vue.observable.bind(Vue)
-const watch = vm.$watch.bind(vm)
-const set = Vue.set.bind(Vue)
-const del = Vue.delete.bind(Vue)
 
 const APIs = {
   injectMixins,
   mixin: injectMixins,
-  observable,
+  observable: reactive,
   watch,
   set,
-  delete: del
+  delete: del,
+  isReactive,
+  isRef
 }
 
 const InstanceAPIs = {}

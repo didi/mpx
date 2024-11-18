@@ -142,4 +142,7 @@
     display block
     position relative
     resize none
+    border: none
+    outline: none
+    background: transparent
 </style>

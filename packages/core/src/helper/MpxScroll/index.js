@@ -21,7 +21,7 @@ export default class MpxScroll {
     // 下拉阻尼系数
     this.ratio = 0.5
 
-    this.el = getElement('.page')
+    this.el = getElement('page')
     this.touchstartY = 0
     this.currentY = 0
     this.translateY = 0

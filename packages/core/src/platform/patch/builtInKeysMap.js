@@ -7,6 +7,7 @@ if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
   builtInKeys = [
     'proto',
     'mixins',
+    'initData',
     'mpxCustomKeysForBlend',
     'mpxConvertMode',
     'mpxFileResource',
@@ -20,6 +21,7 @@ if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
     'dataFn',
     'proto',
     'mixins',
+    'initData',
     'watch',
     'computed',
     'mpxCustomKeysForBlend',

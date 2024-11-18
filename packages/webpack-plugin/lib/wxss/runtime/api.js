@@ -2,26 +2,27 @@
   MIT License http://www.opensource.org/licenses/mit-license.php
   Author Tobias Koppers @sokra
 */
-module.exports = (cssWithMappingToString) => {
-  const list = []
+/* eslint no-var: off */
+module.exports = function (cssWithMappingToString) {
+  var list = []
 
   // return the list of modules as css string
   list.toString = function toString () {
-    return this.map((item) => {
-      let content = ''
+    return this.map(function (item) {
+      var content = ''
 
-      const needLayer = typeof item[5] !== 'undefined'
+      var needLayer = typeof item[5] !== 'undefined'
 
       if (item[4]) {
-        content += `@supports (${item[4]}) {`
+        content += '@supports (' + item[4] + ') {'
       }
 
       if (item[2]) {
-        content += `@media ${item[2]} {`
+        content += '@media ' + item[2] + '{'
       }
 
       if (needLayer) {
-        content += `@layer${item[5].length > 0 ? ` ${item[5]}` : ''} {`
+        content += '@layer' + (item[5].length > 0 ? item[5] : '') + '{'
       }
 
       content += cssWithMappingToString(item)
@@ -48,11 +49,11 @@ module.exports = (cssWithMappingToString) => {
       modules = [[null, modules, undefined]]
     }
 
-    const alreadyImportedModules = {}
+    var alreadyImportedModules = {}
 
     if (dedupe) {
-      for (let k = 0; k < this.length; k++) {
-        const id = this[k][0]
+      for (var k = 0; k < this.length; k++) {
+        var id = this[k][0]
 
         if (id != null) {
           alreadyImportedModules[id] = true
@@ -60,8 +61,8 @@ module.exports = (cssWithMappingToString) => {
       }
     }
 
-    for (let k = 0; k < modules.length; k++) {
-      const item = [].concat(modules[k])
+    for (var k1 = 0; k1 < modules.length; k1++) {
+      var item = [].concat(modules[k1])
 
       if (dedupe && alreadyImportedModules[item[0]]) {
         continue
@@ -71,9 +72,7 @@ module.exports = (cssWithMappingToString) => {
         if (typeof item[5] === 'undefined') {
           item[5] = layer
         } else {
-          item[1] = `@layer${item[5].length > 0 ? ` ${item[5]}` : ''} {${
-            item[1]
-          }}`
+          item[1] = '@layer' + (item[5].length > 0 ? item[5] : '') + '{' + item[1] + '}'
           item[5] = layer
         }
       }
@@ -82,16 +81,16 @@ module.exports = (cssWithMappingToString) => {
         if (!item[2]) {
           item[2] = media
         } else {
-          item[1] = `@media ${item[2]} {${item[1]}}`
+          item[1] = '@media' + item[2] + item[1]
           item[2] = media
         }
       }
 
       if (supports) {
         if (!item[4]) {
-          item[4] = `${supports}`
+          item[4] = String(supports)
         } else {
-          item[1] = `@supports (${item[4]}) {${item[1]}}`
+          item[1] = '@supports (' + item[4] + ')' + '{' + item[1] + '}'
           item[4] = supports
         }
       }

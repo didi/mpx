@@ -7,10 +7,6 @@ let isFlushPending = false
 const queue = []
 let flushIndex = 0
 
-const pendingPreFlushCbs = []
-let activePreFlushCbs = null
-let preFlushIndex = 0
-
 const pendingPostFlushCbs = []
 let activePostFlushCbs = null
 let postFlushIndex = 0
@@ -22,6 +18,15 @@ const RECURSION_LIMIT = 100
 
 const getId = (job) => job.id == null ? Infinity : job.id
 
+const comparator = (a, b) => {
+  const diff = getId(a) - getId(b)
+  if (diff === 0) {
+    if (a.pre && !b.pre) return -1
+    if (b.pre && !a.pre) return 1
+  }
+  return diff
+}
+
 function findInsertionIndex (id) {
   // the start index should be `flushIndex + 1`
   let start = flushIndex + 1
@@ -29,8 +34,13 @@ function findInsertionIndex (id) {
 
   while (start < end) {
     const middle = (start + end) >>> 1
-    const middleJobId = getId(queue[middle])
-    middleJobId < id ? (start = middle + 1) : (end = middle)
+    const middleJob = queue[middle]
+    const middleJobId = getId(middleJob)
+    if (middleJobId < id || (middleJobId === id && middleJob.pre)) {
+      start = middle + 1
+    } else {
+      end = middle
+    }
   }
 
   return start
@@ -41,22 +51,14 @@ export function nextTick (fn) {
   return fn ? p.then(this ? fn.bind(this) : fn) : p
 }
 
-export function queuePreFlushCb (cb) {
-  queueCb(cb, activePreFlushCbs, pendingPreFlushCbs, preFlushIndex)
-}
-
 export function queuePostFlushCb (cb) {
-  queueCb(cb, activePostFlushCbs, pendingPostFlushCbs, postFlushIndex)
-}
-
-function queueCb (cb, activeQueue, pendingQueue, index) {
   if (isArray(cb)) {
-    pendingQueue.push(...cb)
+    pendingPostFlushCbs.push(...cb)
   } else if (
-    !activeQueue ||
-    !activeQueue.includes(cb, cb.allowRecurse ? index + 1 : index)
+    !activePostFlushCbs ||
+    !activePostFlushCbs.includes(cb, cb.allowRecurse ? postFlushIndex + 1 : postFlushIndex)
   ) {
-    pendingQueue.push(cb)
+    pendingPostFlushCbs.push(cb)
   }
   queueFlush()
 }
@@ -92,32 +94,30 @@ function queueFlush () {
   }
 }
 
-export function flushPreFlushCbs (seen) {
-  if (pendingPreFlushCbs.length) {
-    activePreFlushCbs = [...new Set(pendingPreFlushCbs)]
-    pendingPreFlushCbs.length = 0
-    if (isDev) seen = seen || new Map()
-    for (
-      preFlushIndex = 0;
-      preFlushIndex < activePreFlushCbs.length;
-      preFlushIndex++
-    ) {
-      if (isDev && checkRecursiveUpdates(seen, activePreFlushCbs[preFlushIndex])) continue
-      activePreFlushCbs[preFlushIndex]()
+export function flushPreFlushCbs (instance, seen) {
+  if (isDev) seen = seen || new Map()
+  for (let i = isFlushing ? flushIndex + 1 : 0; i < queue.length; i++) {
+    const cb = queue[i]
+    if (cb && cb.pre) {
+      if (instance && cb.id !== instance.uid) continue
+      if (isDev && checkRecursiveUpdates(seen, cb)) continue
+      queue.splice(i, 1)
+      i--
+      cb()
     }
-    activePreFlushCbs = null
-    preFlushIndex = 0
-    // recursively flush until it drains
-    flushPreFlushCbs(seen)
   }
 }
 
 export function flushPostFlushCbs (seen) {
   if (pendingPostFlushCbs.length) {
-    activePostFlushCbs = [...new Set(pendingPostFlushCbs)]
+    const deduped = [...new Set(pendingPostFlushCbs)]
     pendingPostFlushCbs.length = 0
+    if (activePostFlushCbs) {
+      activePostFlushCbs.push(...deduped)
+      return
+    }
+    activePostFlushCbs = deduped
     if (isDev) seen = seen || new Map()
-
     // activePostFlushCbs.sort((a, b) => getId(a) - getId(b))
     for (
       postFlushIndex = 0;
@@ -129,8 +129,6 @@ export function flushPostFlushCbs (seen) {
     }
     activePostFlushCbs = null
     postFlushIndex = 0
-    // recursively flush until it drains
-    flushPostFlushCbs(seen)
   }
 }
 
@@ -140,16 +138,14 @@ function flushJobs (seen) {
 
   if (isDev) seen = seen || new Map()
 
-  flushPreFlushCbs(seen)
-
-  queue.sort((a, b) => getId(a) - getId(b))
+  queue.sort(comparator)
 
   try {
     for (flushIndex = 0; flushIndex < queue.length; flushIndex++) {
       const job = queue[flushIndex]
       if (job && job.active !== false) {
         if (isDev && checkRecursiveUpdates(seen, job)) continue
-        callWithErrorHandling(job, null, 'render job')
+        callWithErrorHandling(job, null, 'scheduler')
       }
     }
   } finally {
@@ -162,11 +158,7 @@ function flushJobs (seen) {
     currentFlushPromise = null
     // some postFlushCb queued jobs!
     // keep flushing until it drains.
-    if (
-      queue.length ||
-      pendingPreFlushCbs.length ||
-      pendingPostFlushCbs.length
-    ) {
+    if (queue.length || pendingPostFlushCbs.length) {
       flushJobs(seen)
     }
   }

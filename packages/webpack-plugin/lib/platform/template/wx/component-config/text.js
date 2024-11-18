@@ -6,13 +6,16 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
     web (tag, { el }) {
-      if (el.hasEvent) {
+      if (el.hasModel) {
         el.isBuiltIn = true
       }
+
       if (el.isBuiltIn) {
         return 'mpx-text'
       } else {
@@ -22,6 +25,14 @@ module.exports = function ({ print }) {
     tenon (tag, { el }) {
       el.isBuiltIn = true
       return 'tenon-text'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-text'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-text'
     },
     props: [
       {
@@ -34,6 +45,11 @@ module.exports = function ({ print }) {
         tt: ttPropLog,
         qq: qqPropLog,
         qa: qaPropLog
+      },
+      {
+        test: /^(space|decode)$/,
+        ios: iosPropLog,
+        android: androidPropLog
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,

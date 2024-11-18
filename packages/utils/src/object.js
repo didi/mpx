@@ -1,4 +1,3 @@
-import { isRef, isReactive } from '@mpxjs/core'
 import { type, noop } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -33,9 +32,9 @@ function diffAndCloneA (a, b) {
   let curPath = ''
   let diff = false
 
-  function deepDiffAndCloneA (a, b, currentDiff) {
+  function deepDiffAndCloneA (a, b, currentDiff, bIsEmpty) {
     const setDiff = (val) => {
-      if (val) {
+      if (val && !currentDiff) {
         currentDiff = val
         if (curPath) {
           diffData = diffData || {}
@@ -44,8 +43,9 @@ function diffAndCloneA (a, b) {
       }
     }
     let clone = a
+    setDiff(bIsEmpty)
     if (typeof a !== 'object' || a === null) {
-      if (!currentDiff) setDiff(a !== b)
+      setDiff(a !== b)
     } else {
       const toString = Object.prototype.toString
       const className = toString.call(a)
@@ -56,12 +56,12 @@ function diffAndCloneA (a, b) {
         const keys = Object.keys(a)
         length = keys.length
         clone = {}
-        if (!currentDiff) setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
+        setDiff(!sameClass || length < Object.keys(b).length || !Object.keys(b).every((key) => hasOwn(a, key)))
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           const key = keys[i]
           curPath += `.${key}`
-          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff)
+          clone[key] = deepDiffAndCloneA(a[key], sameClass ? b[key] : undefined, currentDiff, !(sameClass && hasOwn(b, key)))
           curPath = lastPath
         }
         // 继承原始对象的freeze/seal/preventExtensions操作
@@ -75,11 +75,11 @@ function diffAndCloneA (a, b) {
       } else if (Array.isArray(a)) {
         length = a.length
         clone = []
-        if (!currentDiff) setDiff(!sameClass || length < b.length)
+        setDiff(!sameClass || length < b.length)
         lastPath = curPath
         for (let i = 0; i < length; i++) {
           curPath += `[${i}]`
-          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff)
+          clone[i] = deepDiffAndCloneA(a[i], sameClass ? b[i] : undefined, currentDiff, !(sameClass && i < b.length))
           curPath = lastPath
         }
         // 继承原始数组的freeze/seal/preventExtensions操作
@@ -91,11 +91,11 @@ function diffAndCloneA (a, b) {
           Object.preventExtensions(clone)
         }
       } else if (a instanceof RegExp) {
-        if (!currentDiff) setDiff(!sameClass || '' + a !== '' + b)
+        setDiff(!sameClass || '' + a !== '' + b)
       } else if (a instanceof Date) {
-        if (!currentDiff) setDiff(!sameClass || +a !== +b)
+        setDiff(!sameClass || +a !== +b)
       } else {
-        if (!currentDiff) setDiff(!sameClass || a !== b)
+        setDiff(!sameClass || a !== b)
       }
     }
     if (currentDiff) {
@@ -112,12 +112,19 @@ function diffAndCloneA (a, b) {
 }
 
 function proxy (target, source, keys, readonly, onConflict) {
+  if (!global.__mpx) {
+    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
+  }
   keys = keys || Object.keys(source)
   keys.forEach((key) => {
     const descriptor = {
       get () {
         const val = source[key]
-        return !isReactive(source) && isRef(val) ? val.value : val
+        if (global.__mpx) {
+          return !global.__mpx.isReactive(source) && global.__mpx.isRef(val) ? val.value : val
+        } else {
+          return val
+        }
       },
       configurable: true,
       enumerable: true
@@ -125,12 +132,15 @@ function proxy (target, source, keys, readonly, onConflict) {
     descriptor.set = readonly
       ? noop
       : function (val) {
-        // 对reactive对象代理时不需要处理ref解包
-        if (!isReactive(source)) {
-          const oldVal = source[key]
-          if (isRef(oldVal) && !isRef(val)) {
-            oldVal.value = val
-            return
+        if (global.__mpx) {
+          const isRef = global.__mpx.isRef
+          // 对reactive对象代理时不需要处理ref解包
+          if (!global.__mpx.isReactive(source)) {
+            const oldVal = source[key]
+            if (isRef(oldVal) && !isRef(val)) {
+              oldVal.value = val
+              return
+            }
           }
         }
         source[key] = val

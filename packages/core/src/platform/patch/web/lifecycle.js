@@ -9,7 +9,8 @@ const COMPONENT_HOOKS = [
   'deactivated',
   'beforeDestroy',
   'destroyed',
-  'errorCaptured'
+  'errorCaptured',
+  'serverPrefetch'
 ]
 
 const PAGE_HOOKS = [
@@ -38,7 +39,9 @@ const APP_HOOKS = [
   'onError',
   'onPageNotFound',
   'onUnhandledRejection',
-  'onThemeChange'
+  'onThemeChange',
+  'onSSRAppCreated',
+  'onAppInit'
 ]
 
 export const LIFECYCLE = {

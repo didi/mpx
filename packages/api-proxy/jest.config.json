@@ -5,5 +5,9 @@
   "testEnvironment": "jsdom",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy"
-  }
+  },
+  "globals": {
+    "__mpx_mode__": "web"
+  },
+  "setupFiles": ["./test/setup"]
 }

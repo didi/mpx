@@ -1,6 +1,3 @@
 {
-  "packages": [
-    "packages/*"
-  ],
-  "version": "2.8.25-alpha.21"
+  "version": "2.9.66"
 }

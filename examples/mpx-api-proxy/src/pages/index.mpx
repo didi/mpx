@@ -1,0 +1,22 @@
+<template>
+  <view>
+    <view bindtap="treeSharking">treeSharing</view>
+    <view bindtap="notTreeSharking">notTreeSharing</view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { navigateTo } from '@mpxjs/api-proxy'
+
+createPage({
+  methods: {
+    treeSharking() {
+      navigateTo({ url: './treeSharking' })
+    },
+    notTreeSharking() {
+      navigateTo({ url: './notTreeSharking' })
+    }
+  }
+})
+</script>

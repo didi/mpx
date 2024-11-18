@@ -2,7 +2,7 @@ import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
 import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
-import { diffAndCloneA, warn } from '@mpxjs/utils'
+import { diffAndCloneA, warn, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import { UPDATED, CREATED, MOUNTED, UNMOUNTED } from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
@@ -18,6 +18,8 @@ function filterOptions (options) {
           options.dataFn && options.dataFn.call(this)
         )
       }
+    } else if (key === 'methods') {
+      newOptions[key] = wrapMethodsWithErrorHandling(options[key])
     } else {
       newOptions[key] = options[key]
     }

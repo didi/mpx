@@ -15,7 +15,7 @@
     "watch:web": "npm run watch --mode=web",
     "serve": "npx http-server dist/web",
     "help": "node ./build/build.js --help",
-    "test": "jest --no-cache"
+    "test": "jest"
   },
   "_moduleAliases": {
     "@mpxjs/webpack-plugin": "../../packages/webpack-plugin"
@@ -23,8 +23,10 @@
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.7.1",
-    "@mpxjs/core": "^2.7.2",
+    "@mpxjs/api-proxy": "^2.9.58",
+    "@mpxjs/core": "^2.9.58",
+    "@mpxjs/utils": "^2.9.58",
+    "semver": "^7.5.4",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
   },
@@ -38,8 +40,9 @@
     "@babel/preset-env": "^7.10.4",
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
-    "@mpxjs/mpx-jest": "0.0.16",
-    "@mpxjs/webpack-plugin": "^2.7.2",
+    "@mpxjs/mpx-jest": "0.0.27",
+    "@mpxjs/webpack-plugin": "^2.9.58",
+    "@mpxjs/template-engine": "^2.8.7",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",

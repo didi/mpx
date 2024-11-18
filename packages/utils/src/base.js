@@ -1,4 +1,4 @@
-const noop = () => {}
+const noop = () => { }
 
 function isString (str) {
   return typeof str === 'string'
@@ -39,6 +39,28 @@ function isEmptyObject (obj) {
   return true
 }
 
+function forEach (obj, fn) {
+  if (obj === null || typeof obj === 'undefined') {
+    return
+  }
+
+  if (typeof obj !== 'object') {
+    obj = [obj]
+  }
+
+  if (isArray(obj)) {
+    for (let i = 0, l = obj.length; i < l; i++) {
+      fn(obj[i], i, obj)
+    }
+  } else {
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn(obj[key], key, obj)
+      }
+    }
+  }
+}
+
 function isNumberStr (str) {
   return /^\d+$/.test(str)
 }
@@ -49,17 +71,25 @@ function isValidIdentifierStr (str) {
 
 const hasProto = '__proto__' in {}
 
-function dash2hump (value) {
-  return value.replace(/-([a-z])/g, function (match, p1) {
-    return p1.toUpperCase()
-  })
+function cached (fn) {
+  const cache = Object.create(null)
+  return function cachedFn (str) {
+    const hit = cache[str]
+    return hit || (cache[str] = fn(str))
+  }
 }
 
-function hump2dash (value) {
+const dash2hump = cached((value) => {
+  return value.replace(/-([a-z])/g, function (_, p1) {
+    return p1.toUpperCase()
+  })
+})
+
+const hump2dash = cached((value) => {
   return value.replace(/[A-Z]/g, function (match) {
     return '-' + match.toLowerCase()
   })
-}
+})
 
 function def (obj, key, val, enumerable) {
   Object.defineProperty(obj, key, {
@@ -112,5 +142,7 @@ export {
   dash2hump,
   hump2dash,
   def,
-  hasChanged
+  hasChanged,
+  forEach,
+  cached
 }

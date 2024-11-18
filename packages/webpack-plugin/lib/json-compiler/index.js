@@ -5,7 +5,6 @@ const parseComponent = require('../parser')
 const config = require('../config')
 const parseRequest = require('../utils/parse-request')
 const evalJSONJS = require('../utils/eval-json-js')
-const fixUsingComponent = require('../utils/fix-using-component')
 const getRulesRunner = require('../platform/index')
 const addQuery = require('../utils/add-query')
 const getJSONContent = require('../utils/get-json-content')
@@ -13,8 +12,14 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
+const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
+const normalize = require('../utils/normalize')
+const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
+const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -39,10 +44,12 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
+  const projectRoot = mpx.projectRoot
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+  const runtimeCompile = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -54,6 +61,29 @@ module.exports = function (content) {
     this.emitError(
       new Error('[json compiler][' + this.resource + ']: ' + msg)
     )
+  }
+
+  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
+    const componentPlaceholder = json.componentPlaceholder || {}
+    if (componentPlaceholder[name]) return
+    componentPlaceholder[name] = placeholder
+    json.componentPlaceholder = componentPlaceholder
+    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
+  }
+  const normalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      const placeholderMap = mode === 'ali'
+        ? {
+          view: { name: 'mpx-view', resource: mpxViewPath },
+          text: { name: 'mpx-text', resource: mpxTextPath }
+        }
+        : {}
+      placeholder = placeholderMap[placeholder] || { name: placeholder }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    return placeholder
   }
 
   const {
@@ -135,6 +165,9 @@ module.exports = function (content) {
       if (!json.usingComponents) {
         json.usingComponents = {}
       }
+      if (!json.component && mode === 'swan') {
+        json.component = true
+      }
     }
   } else if (componentsMap[resourcePath]) {
     // component
@@ -143,9 +176,15 @@ module.exports = function (content) {
     }
   }
 
-  if (json.usingComponents) {
-    // todo 迁移到rulesRunner中进行
-    fixUsingComponent(json.usingComponents, mode, emitWarning)
+  const dependencyComponentsMap = {}
+
+  if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
+    mpx.collectDynamicSlotDependencies(packageName)
+  }
+
+  if (runtimeCompile) {
+    json.usingComponents = json.usingComponents || {}
   }
 
   // 快应用补全json配置，必填项
@@ -163,25 +202,18 @@ module.exports = function (content) {
 
   const rulesRunnerOptions = {
     mode,
-    mpx,
     srcMode,
     type: 'json',
     waterfall: true,
     warn: emitWarning,
-    error: emitError
+    error: emitError,
+    data: {
+      // polyfill global usingComponents & record globalComponents
+      globalComponents: mpx.usingComponents
+    }
   }
   if (!isApp) {
     rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-    // polyfill global usingComponents
-    // todo 传入rulesRunner中进行按平台转换
-    rulesRunnerOptions.data = {
-      globalComponents: mpx.usingComponents
-    }
-  } else {
-    // 保存全局注册组件
-    if (json.usingComponents) {
-      this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(json.usingComponents, this.context))
-    }
   }
 
   const rulesRunner = getRulesRunner(rulesRunnerOptions)
@@ -190,19 +222,74 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
+  if (isApp) {
+    Object.assign(mpx.usingComponents, json.usingComponents)
+    // 在 rulesRunner 运行后保存全局注册组件
+    // todo 其余地方在使用mpx.usingComponents时存在缓存问题，要规避该问题需要在所有使用mpx.usingComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
+    // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
+    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
+  }
+
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
-          callback()
+          if (runtimeCompile) {
+            // 替换组件的 hashName，并删除原有的组件配置
+            const hashName = 'm' + mpx.pathHash(resourcePath)
+            components[hashName] = entry
+            delete components[name]
+            dependencyComponentsMap[name] = {
+              hashName,
+              resourcePath,
+              isDynamic: queryObj.isDynamic
+            }
+          }
+          if (tarRoot) {
+            if (placeholder) {
+              placeholder = normalizePlaceholder(placeholder)
+              if (placeholder.resource) {
+                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
+                  if (err) return callback(err)
+                  fillInComponentPlaceholder(name, placeholder.name, entry)
+                  callback()
+                })
+              } else {
+                fillInComponentPlaceholder(name, placeholder.name)
+                callback()
+              }
+            } else {
+              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
+                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+                emitError(errMsg)
+              }
+              callback()
+            }
+          } else {
+            callback()
+          }
         })
-      }, callback)
+      }, (err) => {
+        if (err) return callback(err)
+        const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
+        if (runtimeCompile) {
+          components.element = mpxCustomElementPath
+          components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
+
+          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
+        }
+        if (queryObj.mpxCustomElement) {
+          components.element = mpxCustomElementPath
+          Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
+        }
+        callback()
+      })
     } else {
       callback()
     }
@@ -213,14 +300,20 @@ module.exports = function (content) {
     const localPages = []
     const subPackagesCfg = {}
     const pageKeySet = new Set()
-
+    const defaultPagePath = require.resolve('../runtime/components/wx/default-page.mpx')
     const processPages = (pages, context, tarRoot = '', callback) => {
       if (pages) {
+        const pagesCache = []
         async.each(pages, (page, callback) => {
-          processPage(page, context, tarRoot, (err, entry, { isFirst, key } = {}) => {
+          processPage(page, context, tarRoot, (err, entry, { isFirst, key, resource } = {}) => {
             if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
             if (pageKeySet.has(key)) return callback()
+            if (resource.startsWith(defaultPagePath)) {
+              pagesCache.push(entry)
+              return callback()
+            }
             pageKeySet.add(key)
+
             if (tarRoot && subPackagesCfg) {
               subPackagesCfg[tarRoot].pages.push(entry)
             } else {
@@ -233,7 +326,19 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, callback)
+        }, (err) => {
+          if (err) return callback(err)
+          if (tarRoot && subPackagesCfg) {
+            if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
+              subPackagesCfg[tarRoot].pages.push(pagesCache[0])
+            }
+          } else {
+            if (!localPages.length && pagesCache[0]) {
+              localPages.push(pagesCache[0])
+            }
+          }
+          callback()
+        })
       } else {
         callback()
       }
@@ -378,11 +483,11 @@ module.exports = function (content) {
         }
         const tarRoot = subPackage.tarRoot || subPackage.root || ''
         const srcRoot = subPackage.srcRoot || subPackage.root || ''
-        if (!tarRoot || subPackagesCfg[tarRoot]) return callback()
+        if (!tarRoot) return callback()
 
         context = path.join(context, srcRoot)
         const otherConfig = getOtherConfig(subPackage)
-        subPackagesCfg[tarRoot] = {
+        subPackagesCfg[tarRoot] = subPackagesCfg[tarRoot] || {
           root: tarRoot,
           pages: []
         }
@@ -468,14 +573,43 @@ module.exports = function (content) {
     }
 
     const processCustomTabBar = (tabBar, context, callback) => {
-      if (tabBar && tabBar.custom) {
-        processComponent('./custom-tab-bar/index', context, { outputPath: 'custom-tab-bar/index' }, (err, entry) => {
+      const outputCustomKey = config[mode].tabBar.customKey
+      if (tabBar && tabBar[outputCustomKey]) {
+        const srcCustomKey = config[srcMode].tabBar.customKey
+        const srcPath = resolveTabBarPath(srcCustomKey)
+        const outputPath = resolveTabBarPath(outputCustomKey)
+        processComponent(`./${srcPath}`, context, {
+          outputPath,
+          extraOptions: {
+            replaceContent: 'true'
+          }
+        }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
-            delete tabBar.custom
+            delete tabBar[srcCustomKey]
             return callback()
           }
           if (err) return callback(err)
-          tabBar.custom = entry // hack for javascript parser call hook.
+          tabBar[outputCustomKey] = entry // hack for javascript parser call hook.
+          callback()
+        })
+      } else {
+        callback()
+      }
+    }
+
+    const processAppBar = (appBar, context, callback) => {
+      if (appBar) {
+        processComponent('./app-bar/index', context, {
+          outputPath: 'app-bar/index',
+          extraOptions: {
+            replaceContent: 'true'
+          }
+        }, (err, entry) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            return callback()
+          }
+          if (err) return callback(err)
+          appBar.custom = entry // hack for javascript parser call hook.
           callback()
         })
       } else {
@@ -559,6 +693,9 @@ module.exports = function (content) {
       },
       (callback) => {
         processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+      },
+      (callback) => {
+        processAppBar(json.appBar, this.context, callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -569,7 +706,8 @@ module.exports = function (content) {
       for (const root in subPackagesCfg) {
         const subPackageCfg = subPackagesCfg[root]
         // 分包不存在 pages，输出 subPackages 字段会报错
-        if (subPackageCfg.pages.length) {
+        // tt模式下分包异步允许一个分包不存在 pages
+        if (subPackageCfg.pages.length || mode === 'tt') {
           if (!json.subPackages) {
             json.subPackages = []
           }

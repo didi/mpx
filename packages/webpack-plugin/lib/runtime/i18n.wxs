@@ -122,7 +122,9 @@ function compile (tokens, values) {
 }
 
 function interpolate (message, values) {
-  values = values || {}
+  if (!values) {
+    return [message]
+  }
   var tokens = _tokenCaches[message]
   if (!tokens) {
     tokens = parseMessage(message)
@@ -269,7 +271,11 @@ function getMessage (messages, locale, fallbackLocale, key) {
 
 function resolve (messages, locale, key) {
   if (messages && messages[locale] && key) {
-    return getPathValue(messages[locale], key)
+    var format = getPathValue(messages[locale], key)
+    if (format == null) {
+      format = messages[locale][key]
+    }
+    return format
   }
 }
 

@@ -1,4 +1,4 @@
-import { hasOwn } from '@mpxjs/utils'
+import { hasOwn, noop, isFunction, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
@@ -16,18 +16,20 @@ function transformProperties (properties) {
         type: null
       }
     }
-    if (typeof rawFiled === 'function') {
+    if (isFunction(rawFiled)) {
       newFiled = {
         type: rawFiled
       }
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
-    newFiled.observer = function (value) {
+    const rawObserver = rawFiled?.observer
+    newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
         this[key] = value
         this.__mpxProxy.propsUpdated()
       }
+      rawObserver && rawObserver.call(this, value, oldValue)
     }
     newProps[key] = newFiled
   })
@@ -83,21 +85,39 @@ function transformApiForProxy (context, currentInject) {
 
   // 绑定注入的render
   if (currentInject) {
-    if (currentInject.render) {
-      Object.defineProperties(context, {
-        __injectedRender: {
-          get () {
-            return currentInject.render
-          },
-          configurable: false
-        }
-      })
-    }
+    Object.defineProperties(context, {
+      __injectedRender: {
+        get () {
+          return currentInject.render || noop
+        },
+        configurable: false
+      }
+    })
     if (currentInject.getRefsData) {
       Object.defineProperties(context, {
         __getRefsData: {
           get () {
             return currentInject.getRefsData
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.moduleId) {
+      Object.defineProperties(context, {
+        __moduleId: {
+          get () {
+            return currentInject.moduleId
+          },
+          configurable: false
+        }
+      })
+    }
+    if (currentInject.dynamic) {
+      Object.defineProperties(context, {
+        __dynamic: {
+          get () {
+            return currentInject.dynamic
           },
           configurable: false
         }
@@ -120,9 +140,14 @@ export function filterOptions (options) {
       if (!hasOwn(newOptions, 'properties')) {
         newOptions.properties = transformProperties(Object.assign({}, options.props, options.properties))
       }
-    } else if (key === 'methods' && options.__pageCtor__) {
-      // 构造器为Page时抽取所有methods方法到顶层
-      Object.assign(newOptions, options[key])
+    } else if (key === 'methods') {
+      const newMethods = wrapMethodsWithErrorHandling(options[key])
+      if (options.__pageCtor__) {
+        // 构造器为Page时抽取所有methods方法到顶层
+        Object.assign(newOptions, newMethods)
+      } else {
+        newOptions[key] = newMethods
+      }
     } else {
       newOptions[key] = options[key]
     }
@@ -143,7 +168,7 @@ export function initProxy (context, rawOptions, currentInject) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {}, currentInject }) {
+export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   let hookNames = ['attached', 'ready', 'detached']
   // 当用户传入page作为构造器构造页面时，修改所有关键hooks
   if (rawOptions.__pageCtor__) {
