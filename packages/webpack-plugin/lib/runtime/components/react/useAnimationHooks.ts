@@ -16,9 +16,6 @@ import {
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
-// type TransformKey = 'translateX' | 'translateY' | 'rotate' | 'rotateX' | 'rotateY' | 'rotateZ' | 'scaleX' | 'scaleY' | 'skewX' | 'skewY'
-// type NormalKey = 'opacity' | 'backgroundColor' | 'width' | 'height' | 'top' | 'right' | 'bottom' | 'left' | 'transformOrigin'
-// type RuleKey = TransformKey | NormalKey
 type AnimatedOption = {
   duration: number
   delay: number
@@ -84,15 +81,72 @@ const InitialValue: ExtendedViewStyle = Object.assign({
   transformOrigin: ['50%', '50%', 0]
 }, TransformInitial)
 const TransformOrigin = 'transformOrigin'
-// deg 角度
-// const isDeg = (key: RuleKey) => ['rotateX', 'rotateY', 'rotateZ', 'rotate', 'skewX', 'skewY'].includes(key)
-// 背景色
-// const isBg = (key: RuleKey) => key === 'backgroundColor'
 // transform
 const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
+// parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
+const parseTransform = (transformStr: string) => {
+  const values = transformStr.trim().split(/\s+/)
+  const transform: {[propName: string]: string|number|number[]}[] = []
+  values.forEach(item => {
+    const match = item.match(/([/\w]+)\(([^)]+)\)/)
+    if (match && match.length >= 3) {
+      let key = match[1]
+      const val = match[2]
+      switch (key) {
+        case 'translateX':
+        case 'translateY':
+        case 'scaleX':
+        case 'scaleY':
+        case 'rotateX':
+        case 'rotateY':
+        case 'rotateZ':
+        case 'rotate':
+        case 'skewX':
+        case 'skewY':
+        case 'perspective':
+          // 单个值处理
+          transform.push({ [key]: global.__formatValue(val) })
+          break
+        case 'matrix':
+        case 'matrix3d':
+          transform.push({ [key]: val.split(',').map(val => +val) })
+          break
+        case 'translate':
+        case 'scale':
+        case 'skew':
+        case 'rotate3d': // x y z angle
+        case 'translate3d': // x y 支持 z不支持
+        case 'scale3d': // x y 支持 z不支持
+        {
+          // 2 个以上的值处理
+          key = key.replace('3d', '')
+          const vals = val.split(',', key === 'rotate' ? 4 : 3)
+          // scale(.5) === scaleX(.5) scaleY(.5) 这里处理一下
+          if (vals.length === 1 && key === 'scale') {
+            vals.push(vals[0])
+          }
+          const xyz = ['X', 'Y', 'Z']
+          transform.push(...vals.map((v, index) => {
+            return { [`${key}${xyz[index] || ''}`]: global.__formatValue(v.trim()) }
+          }))
+          break
+        }
+      }
+    }
+  })
+  return transform
+}
+// format style
+const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
+  if (!style.transform || Array.isArray(style.transform)) return style
+  return Object.assign({}, style, {
+    transform: parseTransform(style.transform)
+  })
+}
 
 export default function useAnimationHooks<T, P> (props: _ViewProps) {
-  const { style: originalStyle = {}, animation } = props
+  const { style = {}, animation } = props
+  const originalStyle = formatStyle(style)
   // id 标识
   const id = animation?.id || -1
   // 有动画样式的 style key
@@ -183,7 +237,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   }
   // 获取初始值（prop style or 默认值）
   function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
-    if (isTransform && originalStyle.transform?.length) {
+    if (isTransform && Array.isArray(originalStyle.transform)) {
       let initialVal = InitialValue[key]
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
