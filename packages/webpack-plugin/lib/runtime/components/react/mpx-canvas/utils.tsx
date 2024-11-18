@@ -144,7 +144,7 @@ export const useWebviewBinding = ({
       registerWebviewProperties(instanceRef.current as Instance, properties)
       registerWebviewMethods(instanceRef.current as Instance, methods)
     }
-  }, [targetName, properties, methods])
+  }, [])
 
   return instanceRef
 }

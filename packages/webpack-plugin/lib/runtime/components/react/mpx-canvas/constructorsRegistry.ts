@@ -1,7 +1,7 @@
 import { Image } from './Image'
 import CanvasGradient from './CanvasGradient'
 import ImageData from './ImageData'
-import { Instance, WebviewConstructor } from './utils'
+import { WebviewConstructor } from './utils'
 
 export enum ConstructorType {
   Image = 'Image',
@@ -11,23 +11,28 @@ export enum ConstructorType {
 
 interface Constructor {
   type: ConstructorType
-  instance: new (...args: any[]) => Instance
+  instance: WebviewConstructor
 }
 
-export class ConstructorsRegistry {
-  private static constructors: Constructor[] = [
-    { type: ConstructorType.Image, instance: Image },
-    { type: ConstructorType.CanvasGradient, instance: CanvasGradient },
-    { type: ConstructorType.ImageData, instance: ImageData }
-  ]
+const constructors: Constructor[] = [
+  { type: ConstructorType.Image, instance: Image },
+  { type: ConstructorType.CanvasGradient, instance: CanvasGradient },
+  { type: ConstructorType.ImageData, instance: ImageData }
+]
 
-  static register (registerWebviewConstructor: Function): void {
-    this.constructors.forEach(({ type, instance }) => {
+export function useConstructorsRegistry () {
+  const register = (registerWebviewConstructor: Function): void => {
+    constructors.forEach(({ type, instance }) => {
       registerWebviewConstructor(instance, type)
     })
   }
 
-  static get (type: ConstructorType): WebviewConstructor | undefined {
-    return this.constructors.find(c => c.type === type)?.instance
+  const getConstructor = (type: ConstructorType): WebviewConstructor | undefined => {
+    return constructors.find(c => c.type === type)?.instance
+  }
+
+  return {
+    register,
+    getConstructor
   }
 }

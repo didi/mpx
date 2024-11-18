@@ -30,7 +30,7 @@ import html from './html'
 import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
 import { createImageData as canvasCreateImageData } from './ImageData'
-import { ConstructorsRegistry } from './constructorsRegistry'
+import { useConstructorsRegistry } from './constructorsRegistry'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -88,6 +88,8 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     methods: ['toDataURL']
   }) as MutableRefObject<CanvasInstance>
 
+  const { register } = useConstructorsRegistry()
+
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
@@ -99,10 +101,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   const context2D = new CanvasRenderingContext2D(canvasRef.current) as any
 
+  register(registerWebviewConstructor)
   // 初始化bus和context2D
   useEffect(() => {
-    ConstructorsRegistry.register(registerWebviewConstructor)
-
     const webviewPostMessage = (message: WebviewMessage) => {
       if (canvasRef.current.webview) {
         canvasRef.current.webview.postMessage(JSON.stringify(message))
