@@ -675,7 +675,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'content-container-style': contentContainerStyle,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    behavior = 'padding',
+    behavior = 'position',
     animation
   } = props
 
