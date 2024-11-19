@@ -1,7 +1,7 @@
 import DeviceInfo from 'react-native-device-info'
 import { PixelRatio } from 'react-native'
-import { getWindowInfo } from './rnWindowInfo'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
+import { getWindowInfo } from './rnWindowInfo'
 
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
