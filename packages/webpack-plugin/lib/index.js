@@ -159,7 +159,6 @@ class MpxWebpackPlugin {
       return externalsMap[external] || external
     })
     options.projectRoot = options.projectRoot || process.cwd()
-    options.projectName = options.projectName || 'AwesomeProject'
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
@@ -693,7 +692,6 @@ class MpxWebpackPlugin {
           env: this.options.env,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
           customTextRules: this.options.customTextRules,
