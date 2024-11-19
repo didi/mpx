@@ -1,5 +1,5 @@
 import DeviceInfo from 'react-native-device-info'
-import { Platform, PixelRatio } from 'react-native'
+import { PixelRatio } from 'react-native'
 import { getWindowInfo } from './rnWindowInfo'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 
@@ -60,7 +60,7 @@ const getSystemInfo = function (options = {}) {
 
 const getDeviceInfo = function () {
   const deviceInfo = {}
-  if (Platform.OS === 'android') {
+  if (__mpx_mode__ === 'android') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
