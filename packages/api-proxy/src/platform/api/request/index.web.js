@@ -22,7 +22,7 @@ function request (options = { url: '' }) {
   } = options
   method = method.toUpperCase()
   if (method === 'GET') {
-    url = buildUrl(url, data, serialize)
+    url = buildUrl(url, data)
     data = {}
   }
 
