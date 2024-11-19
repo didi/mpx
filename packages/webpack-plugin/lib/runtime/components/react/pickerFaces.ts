@@ -1,4 +1,7 @@
-export const degToRad = (deg: number) => (Math.PI * deg) / 180
+/**
+ * Borrowed from open-source code: https://github.com/quidone/react-native-wheel-picker
+ * Special thanks to the authors for their contribution to the open-source community.
+ */
 
 export type Faces = {
   index: number
@@ -8,11 +11,9 @@ export type Faces = {
   screenHeight: number
 }
 
-/**
- * Calculates the height of the element after rotating it relative to the user's screen.
- * @param degree - the angle relative to the screen plane.
- * @param itemHeight - original height
- */
+export const degToRad = (deg: number) => (Math.PI * deg) / 180
+
+// Calculates the height of the element after rotating it relative to the user's screen.
 const calcHeight = (degree: number, itemHeight: number) =>
   itemHeight * Math.cos(degToRad(degree))
 
