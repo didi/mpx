@@ -88,7 +88,7 @@ export default function createApp (option, config = {}) {
       return appData
     }
   } else {
-    initAppProvides(defaultOptions)
+    initAppProvides(rawOptions)
     defaultOptions.onAppInit && defaultOptions.onAppInit()
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)

@@ -3,10 +3,12 @@ import { currentInstance } from '../../core/proxy'
 
 const providesMap = {
   /** 全局 scope */
-  __app: Object.create(null),
+  __app: null,
   /** 页面 scope */
   __pages: Object.create(null)
 }
+
+global.__mpxProvidesMap = providesMap
 
 /** @internal createApp() 初始化应用层 scope provide */
 export function initAppProvides (appOptions) {
@@ -34,14 +36,6 @@ function resolvePageProvides (context) {
   return providesMap.__pages[pageId] || (providesMap.__pages[pageId] = Object.create(null))
 }
 
-/** @internal */
-export function removePageProvides (context) {
-  const pageId = resolvePageId(context)
-  if (providesMap.__pages[pageId]) {
-    delete providesMap.__pages[pageId]
-  }
-}
-
 export function provide (key, value) {
   const instance = currentInstance
   if (!instance) {
@@ -62,7 +56,7 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
   const provides = resolvePageProvides(instance.target)
   if (key in provides) {
     return provides[key]
-  } else if (key in providesMap.__app) {
+  } else if (isObject(providesMap.__app) && key in providesMap.__app) {
     return providesMap.__app[key]
   } else if (arguments.length > 1) {
     return treatDefaultAsFactory && isFunction(defaultValue)

@@ -49,7 +49,7 @@ import {
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
-import { inject, provide, removePageProvides } from '../platform/export/apiInject'
+import { inject, provide } from '../platform/export/apiInject'
 
 let uid = 0
 
@@ -228,7 +228,13 @@ export default class MpxProxy {
     }
     if (!isWeb && this.options.__type__ === 'page') {
       // 小程序页面销毁时移除对应的 provide
-      removePageProvides(this.target)
+      if (isFunction(this.target.getPageId)) {
+        const pageId = this.target.getPageId()
+        const providesMap = global.__mpxProvidesMap
+        if (providesMap.__pages[pageId]) {
+          delete providesMap.__pages[pageId]
+        }
+      }
     }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
