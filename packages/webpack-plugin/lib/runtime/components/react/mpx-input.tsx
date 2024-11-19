@@ -374,6 +374,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
+  useEffect(() => {
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
+
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
@@ -446,6 +454,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   )
 })
 
-Input.displayName = 'mpx-input'
+Input.displayName = 'MpxInput'
 
 export default Input

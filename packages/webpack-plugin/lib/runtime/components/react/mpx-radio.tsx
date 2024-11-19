@@ -222,6 +222,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
   }
 )
 
-Radio.displayName = 'mpx-radio'
+Radio.displayName = 'MpxRadio'
 
 export default Radio

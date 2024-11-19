@@ -800,6 +800,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     </View>)
 })
 
-_View.displayName = 'mpx-view'
+_View.displayName = 'MpxView'
 
 export default _View
