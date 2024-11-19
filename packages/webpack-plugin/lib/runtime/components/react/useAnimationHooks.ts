@@ -152,7 +152,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   // 有动画样式的 style key
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
-  const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
+  const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
+  // const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
@@ -175,15 +176,15 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     createAnimation(keys)
   }, [id])
   // 同步style更新
-  useEffect(() => {
-    Object.keys(animatedKeys.current).forEach(key => {
-      const originVal = getOriginalStyleVal(key, isTransform(key))
-      if (originVal && animatedKeys.current[key] !== originVal) {
-        animatedKeys.current[key] = originVal
-        shareValMap[key].value = originVal
-      }
-    })
-  }, [style])
+  // useEffect(() => {
+  //   Object.keys(animatedKeys.current).forEach(key => {
+  //     const originVal = getOriginalStyleVal(key, isTransform(key))
+  //     if (originVal && animatedKeys.current[key] !== originVal) {
+  //       animatedKeys.current[key] = originVal
+  //       shareValMap[key].value = originVal
+  //     }
+  //   })
+  // }, [style])
   // ** 清空动画
   useEffect(() => {
     return () => {
@@ -246,31 +247,43 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       : withTiming(value, { duration, easing })
     return delay ? withDelay(delay, animation) : animation
   }
-  // 从 prop style 中获取样式初始值 没有为undefined
-  function getOriginalStyleVal(key: keyof ExtendedViewStyle, isTransform = false) {
+  function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
     if (isTransform && Array.isArray(originalStyle.transform)) {
-      let initialVal = undefined // InitialValue[key]
+      let initialVal = InitialValue[key]
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
         if (item[key] !== undefined) initialVal = item[key]
       })
       return initialVal
     }
-    return originalStyle[key] // === undefined ? InitialValue[key] : originalStyle[key]
+    return originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
   }
+  // 从 prop style 中获取样式初始值 没有为undefined
+  // function getOriginalStyleVal (key: keyof ExtendedViewStyle, isTransform = false) {
+  //   if (isTransform && Array.isArray(originalStyle.transform)) {
+  //     let initialVal = undefined // InitialValue[key]
+  //     // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
+  //     originalStyle.transform.forEach(item => {
+  //       if (item[key] !== undefined) initialVal = item[key]
+  //     })
+  //     return initialVal
+  //   }
+  //   return originalStyle[key] // === undefined ? InitialValue[key] : originalStyle[key]
+  // }
   // 获取动画shareVal初始值（prop style or 默认值）
-  function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
-    const originalVal = getOriginalStyleVal(key, isTransform)
-    return originalVal === undefined ? InitialValue[key] : originalStyle[key]
-  }
+  // function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
+  //   const originalVal = getOriginalStyleVal(key, isTransform)
+  //   return originalVal === undefined ? InitialValue[key] : originalStyle[key]
+  // }
   // 循环 animation actions 获取所有有动画的 style prop name
   function getAnimatedStyleKeys () {
     return (animation?.actions || []).reduce((keyMap, action) => {
       const { rules, transform } = action
       const ruleArr = [...rules.keys(), ...transform.keys()]
       ruleArr.forEach(key => {
-        const originalVal = getOriginalStyleVal(key, isTransform(key))
-        if (!keyMap[key]) keyMap[key] = originalVal === undefined ? false : originalVal
+        // const originalVal = getOriginalStyleVal(key, isTransform(key))
+        // if (!keyMap[key]) keyMap[key] = originalVal === undefined ? false : originalVal
+        if (!keyMap[key]) keyMap[key] = true
       })
       return keyMap
     }, animatedKeys.current)
