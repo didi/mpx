@@ -366,7 +366,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const proxy = instance.__mpxProxy
 
-    proxy.callHook(REACTHOOKSEXEC)
+    let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
+    if (isObject(hooksResult)) {
+      hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
+      if (isFirst) {
+        const onConflict = proxy.createProxyConflictHandler('react hooks result')
+        Object.keys(hooksResult).forEach((key) => {
+          if (key in proxy.target) {
+            onConflict(key)
+          }
+          proxy.target[key] = hooksResult[key]
+        })
+      } else {
+        Object.assign(proxy.target, hooksResult)
+      }
+    }
 
     useEffect(() => {
       if (!isFirst) {
