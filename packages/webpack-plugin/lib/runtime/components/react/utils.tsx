@@ -530,9 +530,11 @@ export function extendObject (...args: Record<string, any>[]) {
 
 export function renderImage (
   imageProps: ImageProps | FastImageProps,
-  enableFastImage = false
+  enableFastImage = false,
+  isRennder: boolean = true
 ) {
   const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
+  if (!isRennder) return <></>
 
   return <Component {...imageProps} />
 }

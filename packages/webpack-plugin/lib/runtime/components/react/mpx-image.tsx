@@ -385,7 +385,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
               },
               isCropMode ? modeStyle : {}
             )
-          }, enableFastImage)
+          }, enableFastImage, enableFastImage && props['enable-offset'] && !isSvg && isLayoutMode ? !!(imageWidth && imageHeight && viewWidth && viewHeight) : true)
       }
     </View>
   )
