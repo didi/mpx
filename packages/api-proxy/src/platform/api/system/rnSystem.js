@@ -1,6 +1,6 @@
 import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio } from 'react-native'
-import { getWindowInfo } from './windowInfoRn'
+import { getWindowInfo } from './rnWindowInfo'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 
 const getSystemInfoSync = function () {
@@ -12,10 +12,6 @@ const getSystemInfoSync = function () {
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    brand: 'Apple',
-    model: '?',
-    system: 'iOS 11.0',
-    platform: 'iOS',
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
     statusBarHeight: safeArea.top,
     fontSizeSetting: PixelRatio.getFontScale(),
@@ -65,7 +61,7 @@ const getSystemInfo = function (options = {}) {
 const getDeviceInfo = function () {
   const deviceInfo = {}
   if (Platform.OS === 'android') {
-    const deviceAbi = []
+    const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
   defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
@@ -74,12 +70,7 @@ const getDeviceInfo = function () {
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024),
-    brand: 'Apple',
-    model: '?',
-    system: 'iOS 11.0',
-    platform: 'emulator',
-    memorySize: 8192
+    memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
   })
   return deviceInfo
 }
