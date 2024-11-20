@@ -1,20 +1,5 @@
 import { successHandle, failHandle } from '../../../common/js'
-import { parseQuery } from '@mpxjs/utils'
-
-function parseUrl (url) {
-  let path = url
-  let query = ''
-  const queryIndex = url.indexOf('?')
-  if (queryIndex >= 0) {
-    path = url.slice(0, queryIndex)
-    query = url.slice(queryIndex)
-  }
-  const queryObj = parseQuery(query || '?')
-  return {
-    path,
-    queryObj
-  }
-}
+import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 
 function getBasePath (navigation) {
   if (navigation) {
