@@ -41,7 +41,8 @@ const APP_HOOKS = [
   'onUnhandledRejection',
   'onThemeChange',
   'onSSRAppCreated',
-  'onAppInit'
+  'onAppInit',
+  'provide'
 ]
 
 export const LIFECYCLE = {

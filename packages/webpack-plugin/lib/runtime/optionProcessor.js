@@ -374,18 +374,10 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     option.pinia = global.__mpxPinia
   }
 
-  try {
-    // 注入顶层 createApp() 的 provide
-    const vm = global.getApp()
-    const provide = vm.provide
-    option.provide = typeof provide === 'function' ? provide.call(vm) : provide
-  } catch (e) {}
-
   const app = new Vue({
     ...option,
     render: (h) => h(App)
   })
-
   return {
     app,
     ...option
