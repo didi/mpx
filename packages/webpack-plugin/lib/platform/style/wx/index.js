@@ -304,15 +304,9 @@ module.exports = function getSpec ({ warn, error }) {
     const linerExp = /linear-gradient\(.*\)\s*$/
     switch (prop) {
       case bgPropMap.image: {
-        // background-image 仅支持背景图
-        const imgUrl = value.match(urlExp)?.[0]
-        const linerVal = value.match(linerExp)?.[0]
-        if (cssVariableExp.test(value)) {
+        // background-image 支持背景图/渐变/css var
+        if (cssVariableExp.test(value) || urlExp.test(value) || linerExp.test(value)) {
           return { prop, value }
-        } else if (imgUrl) {
-          return { prop, value: imgUrl }
-        } else if (linerVal) {
-          return { prop, value: linerVal }
         } else {
           error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
           return false
