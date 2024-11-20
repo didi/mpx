@@ -488,7 +488,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
         } else if (i === pages.length - 1 && typeof width === 'number') {
           nextMargin && (extraStyle.marginRight = nextMargin)
         }
-        return (<View style={[pageStyle, styles.slide, extraStyle]} key={ 'page' + i}>
+        return (<View style={[pageStyle, styles.slide, extraStyle]} key={'page' + i}>
           {wrapChildren(
             {
               children: children[+page]
@@ -520,6 +520,6 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   </View>)
 })
 
-_Carouse.displayName = '_Carouse'
+_Carouse.displayName = 'MpxCarouse'
 
 export default _Carouse
