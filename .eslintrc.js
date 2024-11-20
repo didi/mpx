@@ -21,6 +21,7 @@ module.exports = {
     Component: 'readonly',
     Page: 'readonly',
     App: 'readonly',
+    Mixin: 'readonly',
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
     __mpx_dynamic_runtime__: 'readonly',

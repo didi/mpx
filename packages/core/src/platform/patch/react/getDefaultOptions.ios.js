@@ -366,7 +366,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const proxy = instance.__mpxProxy
 
-    proxy.callHook(REACTHOOKSEXEC)
+    let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
+    if (isObject(hooksResult)) {
+      hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
+      if (isFirst) {
+        const onConflict = proxy.createProxyConflictHandler('react hooks result')
+        Object.keys(hooksResult).forEach((key) => {
+          if (key in proxy.target) {
+            onConflict(key)
+          }
+          proxy.target[key] = hooksResult[key]
+        })
+      } else {
+        Object.assign(proxy.target, hooksResult)
+      }
+    }
 
     useEffect(() => {
       if (!isFirst) {
@@ -392,6 +406,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
+        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+          global.__mpxAppOnLaunch(props.navigation)
+        }
         proxy.callHook(ONLOAD, [props.route.params || {}])
       }
       proxy.mounted()
@@ -430,26 +447,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        let opt = {}
+        const opt = {}
         if (__mpx_mode__ === 'android') {
-          opt = {
-            statusBarTranslucent: isCustom,
-            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
-            statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
-          }
-        } else if (__mpx_mode__ === 'ios') {
-          opt = {
-            headerBackTitleVisible: false
-          }
+          // opt = {
+          //   statusBarTranslucent: isCustom,
+          //   statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
+          //   statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
+          // }
         }
         navigation.setOptions({
           headerShown: !isCustom,
-          headerShadowVisible: false,
-          headerTitle: pageConfig.navigationBarTitleText || '',
+          title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTitleAlign: 'center',
+          // headerTitleAlign: 'center',
           headerTintColor: pageConfig.navigationBarTextStyle || 'white',
           ...opt
         })
