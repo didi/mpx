@@ -3,10 +3,9 @@ import { noop, warn } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-// import { WebView } from 'react-native-webview'
-import { View } from 'react-native'
+import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-// import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -47,7 +46,7 @@ interface FormRef {
   postMessage: (value: any) => void;
 }
 
-const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
+const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
   if (props.style) {
     warn('The web-view component does not support the style prop.')
@@ -82,7 +81,7 @@ const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props,
       handleUnload()
     }
   }, [])
-  const _load = function (res: any) {
+  const _load = function (res: WebViewNavigationEvent) {
     const result = {
       type: 'load',
       timeStamp: res.timeStamp,
@@ -92,7 +91,7 @@ const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props,
     }
     bindload(result)
   }
-  const _error = function (res: any) {
+  const _error = function (res: WebViewErrorEvent) {
     const result = {
       type: 'error',
       timeStamp: res.timeStamp,
@@ -102,7 +101,7 @@ const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props,
     }
     binderror(result)
   }
-  const _message = function (res: any) {
+  const _message = function (res: WebViewMessageEvent) {
     let data: MessageData = {}
     let asyncCallback
     const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
@@ -151,15 +150,15 @@ const _WebView = forwardRef<HandlerRef<any, WebViewProps>, WebViewProps>((props,
     })
   }
   return (<Portal>
-    <View
-      style={defaultWebViewStyle}
-      source={{ uri: src }}
-      ref={webViewRef}
-      onLoad={_load}
-      onError={_error}
-      onMessage={_message}
-      javaScriptEnabled={true}
-    ></View>
+    <WebView
+        style={defaultWebViewStyle}
+        source={{ uri: src }}
+        ref={webViewRef}
+        onLoad={_load}
+        onError={_error}
+        onMessage={_message}
+        javaScriptEnabled={true}
+    ></WebView>
   </Portal>)
 })
 
