@@ -1,4 +1,5 @@
 import { useRef, useImperativeHandle, RefObject, ForwardedRef } from 'react'
+import { useAnimatedRef } from 'react-native-reanimated'
 
 type Obj = Record<string, any>
 
