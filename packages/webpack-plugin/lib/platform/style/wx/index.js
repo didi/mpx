@@ -301,11 +301,11 @@ module.exports = function getSpec ({ warn, error }) {
       all: 'background'
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
-    const linerExp = /linear-gradient\(.*\)\s*$/
+    const linearExp = /linear-gradient\(.*\)/
     switch (prop) {
       case bgPropMap.image: {
         // background-image 支持背景图/渐变/css var
-        if (cssVariableExp.test(value) || urlExp.test(value) || linerExp.test(value)) {
+        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
           return { prop, value }
         } else {
           error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
@@ -353,7 +353,7 @@ module.exports = function getSpec ({ warn, error }) {
         const values = parseValues(value)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
-          const linerVal = item.match(linerExp)?.[0]
+          const linerVal = item.match(linearExp)?.[0]
           if (url) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (linerVal) {
