@@ -1,6 +1,6 @@
 import { successHandle, failHandle } from '../../../common/js'
 import { type } from '@mpxjs/utils'
-// import { getStringAsync, setStringAsync } from 'expo-clipboard'
+import { getStringAsync, setStringAsync } from 'expo-clipboard'
 
 const setClipboardData = function (options = {}) {
   const { data, success, fail, complete } = options
