@@ -9,10 +9,14 @@ module.exports = function ({
   loaderContext
 }, callback) {
 <<<<<<< HEAD
+<<<<<<< HEAD
   const { i18n } = loaderContext.getMpx()
 =======
   const { i18n, rnConfig } = loaderContext.getMpx()
 >>>>>>> fix-style-rules-20241104
+=======
+  const { i18n, rnConfig } = loaderContext.getMpx()
+>>>>>>> feat-drn-universal-card
 
   let output = 'import { AppRegistry } from \'react-native\'\n'
 
@@ -21,17 +25,23 @@ module.exports = function ({
   }
   // 此处可添加前置于App执行的语句
 <<<<<<< HEAD
+<<<<<<< HEAD
   output += `var App = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default\n`
   // output += `AppRegistry.registerComponent(${JSON.stringify(projectName)}, () => App)\n`
   output += '__webpack_exports__["default"] = App\n'
 =======
+=======
+>>>>>>> feat-drn-universal-card
   output += `var app = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default\n`
   if (rnConfig.projectName) {
     output += `AppRegistry.registerComponent(${JSON.stringify(rnConfig.projectName)}, () => app)\n`
   } else {
     output += 'export default app\n'
   }
+<<<<<<< HEAD
 >>>>>>> fix-style-rules-20241104
+=======
+>>>>>>> feat-drn-universal-card
 
   callback(null, {
     output
