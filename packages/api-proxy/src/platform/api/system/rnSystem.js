@@ -6,7 +6,7 @@ import { getWindowInfo } from './rnWindowInfo'
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
   const { screenWidth, screenHeight, safeArea } = windowInfo
-  
+
   const result = {
     // brand: DeviceInfo.getBrand(),
     // model: DeviceInfo.getModel(),

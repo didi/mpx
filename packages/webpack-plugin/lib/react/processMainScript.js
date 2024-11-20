@@ -9,9 +9,9 @@ module.exports = function ({
                              loaderContext
                            }, callback) {
   const { i18n, rnConfig } = loaderContext.getMpx()
-  
+
   let output = 'import { AppRegistry } from \'react-native\'\n'
-  
+
   if (i18n) {
     output += buildI18n({ loaderContext })
   }
@@ -22,7 +22,7 @@ module.exports = function ({
   } else {
     output += 'export default app\n'
   }
-  
+
   callback(null, {
     output
   })
