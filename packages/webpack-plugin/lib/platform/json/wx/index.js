@@ -84,10 +84,9 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
-  function fillGlobalComponents (input, { globalComponents }) {
-    if (globalComponents) {
-      Object.assign(globalComponents, input.usingComponents)
-    }
+  function fillGlobalComponents (input, { globalComponents }, meta) {
+    // 通过meta进行globalComponents的透传
+    meta.usingComponents = input.usingComponents
     return input
   }
 
@@ -165,8 +164,6 @@ module.exports = function getSpec ({ warn, error }) {
       swan: componentNameCapitalToHyphen('usingComponents')
     },
     {
-      // todo ali 2.0已支持全局组件，待移除
-      ali: addGlobalComponents,
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
@@ -373,8 +370,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: fillGlobalComponents,
         qq: fillGlobalComponents,
         swan: fillGlobalComponents,
         tt: fillGlobalComponents,
@@ -382,8 +377,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: deletePath({ noLog: true }),
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
         tt: deletePath({ noLog: true }),
