@@ -40,7 +40,7 @@ function createAppInstance (appData) {
 export default function createApp (option, config = {}) {
   const appData = {}
 
-  const { NavigationContainer, createNavigationContainerRef, createNativeStackNavigator, SafeAreaProvider } = global.__navigationHelper
+  const { NavigationContainer, createNavigationContainerRef, createStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
@@ -51,7 +51,7 @@ export default function createApp (option, config = {}) {
   }
   const pages = currentInject.getPages() || {}
   const firstPage = currentInject.firstPage
-  const Stack = createNativeStackNavigator()
+  const Stack = createStackNavigator()
   const navigationRef = createNavigationContainerRef()
   const pageScreens = Object.entries(pages).map(([key, item]) => {
     return createElement(Stack.Screen, {
@@ -60,7 +60,7 @@ export default function createApp (option, config = {}) {
     })
   })
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-  const onStateChange = () => {
+  const onStateChange = (state) => {
     if (global.__navigationHelper.lastSuccessCallback) {
       global.__navigationHelper.lastSuccessCallback()
       global.__navigationHelper.lastSuccessCallback = null

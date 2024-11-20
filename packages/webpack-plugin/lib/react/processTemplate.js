@@ -27,7 +27,8 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    autoVirtualHostRules
+    autoVirtualHostRules,
+    customTextRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -84,7 +85,8 @@ module.exports = function (template, {
         globalComponents: [],
         // web模式下实现抽象组件
         componentGenerics,
-        hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
+        hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+        isCustomText: matchCondition(resourcePath, customTextRules)
       })
 
       if (meta.wxsContentMap) {

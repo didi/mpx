@@ -25,7 +25,7 @@ module.exports = function (script, {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { createStackNavigator } from '@react-navigation/stack'
 import { Provider } from '@ant-design/react-native'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -33,7 +33,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createNavigationContainerRef: createNavigationContainerRef,
-  createNativeStackNavigator: createNativeStackNavigator,
+  createStackNavigator: createStackNavigator,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
   Provider: Provider,
