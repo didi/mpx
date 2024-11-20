@@ -2,7 +2,6 @@
   "name": "@mpxjs/utils",
   "version": "2.9.67",
   "description": "A toolkit for mpx framework",
-  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

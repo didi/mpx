@@ -41,6 +41,7 @@ module.exports = class AddModePlugin {
       obj.path = addInfix(resourcePath, mode, extname)
       obj.relativePath = request.relativePath && addInfix(request.relativePath, mode, extname)
       resolver.doResolve(target, Object.assign({}, request, obj), 'add mode: ' + mode, resolveContext, (err, result) => {
+        let a = request.path
         if (this.defaultMode && !result) {
           queryObj.infix = `${queryInfix || ''}.${defaultMode}`
           obj.query = stringifyQuery(queryObj)
