@@ -8,6 +8,7 @@ const RecordLoaderContentDependency = require('../dependencies/RecordLoaderConte
 
 module.exports = function ({
   parts,
+  jsonContent,
   loaderContext,
   pagesMap,
   componentsMap,
@@ -63,7 +64,7 @@ module.exports = function ({
           }, callback)
         },
         (callback) => {
-          processJSON(parts.json, {
+          processJSON(jsonContent, {
             loaderContext,
             ctorType,
             pagesMap,

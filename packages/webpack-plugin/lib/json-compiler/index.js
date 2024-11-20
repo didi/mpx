@@ -207,7 +207,7 @@ module.exports = function (content) {
     warn: emitWarning,
     error: emitError,
     data: {
-      // polyfill global usingComponents & record globalComponents
+      // polyfill global usingComponents
       globalComponents: mpx.globalComponents
     }
   }

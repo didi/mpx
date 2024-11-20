@@ -85,6 +85,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   function fillGlobalComponents (input, { globalComponents }, meta) {
+    // 通过meta进行globalComponents的透传
     meta.usingComponents = input.usingComponents
     return input
   }

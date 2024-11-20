@@ -13,7 +13,7 @@ const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
-module.exports = function (json, {
+module.exports = function (jsonContent, {
   loaderContext,
   ctorType,
   pagesMap,
@@ -81,12 +81,12 @@ module.exports = function (json, {
 
   const isApp = ctorType === 'app'
 
-  if (!json) {
+  if (!jsonContent) {
     return callback()
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON5.parse(json.content)
+    jsonObj = JSON5.parse(jsonContent)
     // 处理runner
     const rulesRunnerOptions = {
       mode,
@@ -96,7 +96,7 @@ module.exports = function (json, {
       warn: emitWarning,
       error: emitError,
       data: {
-        // polyfill global usingComponents & record globalComponents
+        // polyfill global usingComponents
         globalComponents: mpx.globalComponents
       }
     }

@@ -120,9 +120,9 @@ module.exports = function (content) {
       const {
         componentPlaceholder,
         componentGenerics,
-        usingComponentsInfo
+        usingComponentsInfo,
+        jsonContent
       } = jsonInfo
-
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
@@ -132,6 +132,7 @@ module.exports = function (content) {
       if (mode === 'web') {
         return processWeb({
           parts,
+          jsonContent,
           loaderContext,
           pagesMap,
           componentsMap,
@@ -153,6 +154,7 @@ module.exports = function (content) {
       if (isReact(mode)) {
         return processReact({
           parts,
+          jsonContent,
           loaderContext,
           pagesMap,
           componentsMap,

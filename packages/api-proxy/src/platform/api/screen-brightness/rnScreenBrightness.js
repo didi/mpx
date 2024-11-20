@@ -1,4 +1,4 @@
-import * as Brightness from 'expo-brightness'
+// import * as Brightness from 'expo-brightness'
 import { successHandle, failHandle } from '../../../common/js'
 
 function getScreenBrightness (options = {}) {

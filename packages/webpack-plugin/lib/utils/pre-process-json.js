@@ -31,8 +31,6 @@ module.exports = function ({
       let componentGenerics = {}
       const usingComponentsInfo = {}
       const usingComponents = {}
-      json.content = jsonContent
-
       const finalCallback = (err) => {
         if (err) return callback(err)
         if (ctorType === 'app') {
@@ -44,7 +42,8 @@ module.exports = function ({
         callback(null, {
           componentPlaceholder,
           componentGenerics,
-          usingComponentsInfo: Object.assign({}, usingComponentsInfo, mpx.globalComponentsInfo)
+          usingComponentsInfo: Object.assign({}, usingComponentsInfo, mpx.globalComponentsInfo),
+          jsonContent
         })
       }
       try {
