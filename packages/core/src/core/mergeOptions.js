@@ -322,11 +322,6 @@ function composeHooks (target, includes) {
             if (typeof hooks[i] === 'function') {
               const data = hooks[i].apply(this, args)
               data !== undefined && (result = data)
-            } else {
-              // 修复web顶层传入provide对象时，provide appHook被视为函数执行失败问题
-              if (key === 'provide' && typeof hooks[i] === 'object') {
-                result = hooks[i]
-              }
             }
           }
           return result

@@ -3,7 +3,7 @@ import { currentInstance } from '../../core/proxy'
 
 const providesMap = {
   /** 全局 scope */
-  __app: null,
+  __app: Object.create(null),
   /** 页面 scope */
   __pages: Object.create(null)
 }
@@ -56,7 +56,7 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
   const provides = resolvePageProvides(instance.target)
   if (key in provides) {
     return provides[key]
-  } else if (isObject(providesMap.__app) && key in providesMap.__app) {
+  } else if (key in providesMap.__app) {
     return providesMap.__app[key]
   } else if (arguments.length > 1) {
     return treatDefaultAsFactory && isFunction(defaultValue)

@@ -15,7 +15,7 @@ function filterOptions (options, appData) {
     if (builtInKeysMap[key]) {
       return
     }
-    if (__mpx_mode__ === 'web' && !webAppHooksMap[key]) {
+    if (__mpx_mode__ === 'web' && !webAppHooksMap[key] && key !== 'provide') {
       appData[key] = options[key]
     } else {
       newOptions[key] = options[key]
