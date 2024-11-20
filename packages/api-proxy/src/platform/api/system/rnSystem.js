@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // import DeviceInfo from 'react-native-device-info'
 import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
@@ -43,6 +44,12 @@ const getWindowInfo = function () {
   }
   return result
 }
+=======
+import DeviceInfo from 'react-native-device-info'
+import { PixelRatio } from 'react-native'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
+import { getWindowInfo } from './rnWindowInfo'
+>>>>>>> fix-style-rules-20241104
 
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
@@ -105,8 +112,13 @@ const getSystemInfo = function (options = {}) {
 
 const getDeviceInfo = function () {
   const deviceInfo = {}
+<<<<<<< HEAD
   if (Platform.OS === 'android') {
     const deviceAbi = []
+=======
+  if (__mpx_mode__ === 'android') {
+    const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
+>>>>>>> fix-style-rules-20241104
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
   defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])

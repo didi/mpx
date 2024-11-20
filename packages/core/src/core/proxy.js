@@ -25,6 +25,7 @@ import {
   processUndefined,
   getFirstKey,
   callWithErrorHandling,
+  wrapMethodsWithErrorHandling,
   warn,
   error,
   getEnvObj
@@ -277,7 +278,7 @@ export default class MpxProxy {
   initSetup () {
     const setup = this.options.setup
     if (setup) {
-      const setupResult = callWithErrorHandling(setup, this, 'setup function', [
+      let setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
           triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
@@ -294,6 +295,7 @@ export default class MpxProxy {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
       }
+      setupResult = wrapMethodsWithErrorHandling(setupResult, this)
       proxy(this.target, setupResult, undefined, false, this.createProxyConflictHandler('setup result'))
       this.collectLocalKeys(setupResult, (key, val) => !isFunction(val))
     }

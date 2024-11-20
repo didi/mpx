@@ -201,6 +201,11 @@ module.exports = function getSpec ({ warn, error }) {
     const props = AbbreviationMap[prop]
     const values = Array.isArray(value) ? value : parseValues(value)
     const cssMap = []
+    // 复合属性不支持单个css var（css var可以接收单个值可以是复合值，复合值运行时不处理，这里前置提示一下）
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
+      return cssMap
+    }
     let idx = 0
     let propsIdx = 0
     const diff = values.length - props.length
@@ -302,7 +307,9 @@ module.exports = function getSpec ({ warn, error }) {
         // background-image 仅支持背景图
         const imgUrl = value.match(urlExp)?.[0]
         const linerVal = value.match(linerExp)?.[0]
-        if (imgUrl) {
+        if (cssVariableExp.test(value)) {
+          return { prop, value }
+        } else if (imgUrl) {
           return { prop, value: imgUrl }
         } else if (linerVal) {
           return { prop, value: linerVal }
@@ -344,6 +351,10 @@ module.exports = function getSpec ({ warn, error }) {
       }
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
+        if (cssVariableExp.test(value)) {
+          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
+          return false
+        }
         const bgMap = []
         const values = parseValues(value)
         values.forEach(item => {
@@ -404,7 +415,7 @@ module.exports = function getSpec ({ warn, error }) {
             {
               // 2 个以上的值处理
               key = key.replace('3d', '')
-              const vals = val.split(',').splice(0, key === 'rotate' ? 4 : 3)
+              const vals = val.split(',', key === 'rotate' ? 4 : 3)
               // scale(.5) === scaleX(.5) scaleY(.5)
               if (vals.length === 1 && key === 'scale') {
                 vals.push(vals[0])
