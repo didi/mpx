@@ -406,6 +406,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
+        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+          global.__mpxAppOnLaunch(props.navigation)
+        }
         proxy.callHook(ONLOAD, [props.route.params || {}])
       }
       proxy.mounted()
@@ -454,9 +457,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         }
         navigation.setOptions({
           headerShown: !isCustom,
-          headerBackButtonDisplayMode: 'minimal',
-          // headerShadowVisible: false,
-          headerMode: 'float',
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
