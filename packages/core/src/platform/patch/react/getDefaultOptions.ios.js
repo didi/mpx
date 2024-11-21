@@ -447,24 +447,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        const opt = {}
-        if (__mpx_mode__ === 'android') {
-          // opt = {
-          //   statusBarTranslucent: isCustom,
-          //   statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
-          //   statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
-          // }
-        }
         navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          // headerTitleAlign: 'center',
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          ...opt
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
+        if (__mpx_mode__ === 'android') {
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content') // 控制statusbar背景颜色
+          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+          ReactNative.StatusBar.setBackgroundColor(isCustom ? 'transparent' : pageConfig.statusBarColor) // 控制statusbar背景颜色
+        }
       }, [])
 
       const rootRef = useRef(null)
