@@ -106,9 +106,9 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       this.__dispatchedSlotSet = new WeakSet()
     },
     __getSlot (name) {
+      const result = []
       const { children } = propsRef.current
       if (children) {
-        const result = []
         if (Array.isArray(children)) {
           children.forEach(child => {
             if (child?.props?.slot === name) {
@@ -126,7 +126,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
           return true
         })
       }
-      return null
+      return result
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,

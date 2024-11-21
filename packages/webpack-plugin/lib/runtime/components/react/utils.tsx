@@ -1,10 +1,10 @@
-import { useEffect, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import type { ExtendedFunctionComponent } from './types/common'
+import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -523,9 +523,50 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   return children
 }
 
-export function extendObject (...args: Record<string, any>[]) {
-  return Object.assign({}, ...args)
+export const debounce = <T extends AnyFunc>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  let timer: any
+  const wrapper = (...args: ReadonlyArray<any>) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+  wrapper.clear = () => {
+    clearTimeout(timer)
+  }
+  return wrapper
 }
+
+export const useDebounceCallback = <T extends AnyFunc>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  const debounced = useMemo(() => debounce(func, delay), [func])
+  return debounced
+}
+
+export const useStableCallback = <T extends AnyFunc | null | undefined>(
+  callback: T
+): T extends AnyFunc ? T : () => void => {
+  const ref = useRef<T>(callback)
+  ref.current = callback
+  return useCallback<any>(
+    (...args: any[]) => ref.current?.(...args),
+    []
+  )
+}
+
+export const usePrevious = <T, >(value: T): T | undefined => {
+  const ref = useRef<T | undefined>(undefined)
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
+}
+
 export interface GestureHandler {
   nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>;
   current?: unknown;
@@ -539,4 +580,8 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
     }
     return gesture?.current ? [gesture] : []
   })) || []
+}
+
+export function extendObject (...args: Record<string, any>[]) {
+  return Object.assign({}, ...args)
 }
