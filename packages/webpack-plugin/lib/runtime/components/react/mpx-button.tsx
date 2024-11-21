@@ -45,7 +45,7 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext } from './context'
@@ -313,11 +313,15 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     if (!openType) return
     const handleEvent = getOpenTypeEvent(openType)
 
-    if (openType === 'share') {
-      handleEvent && handleEvent({
+    if (openType === 'share' && handleEvent) {
+      const event = {
         from: 'button',
         target: getCustomEvent('tap', evt, { layoutRef }, props).target
-      })
+      }
+      const currentPage = getCurrentPage()
+      // const instance = global.__mpx.getCurrentInstance()
+      // handleEvent(currentPage?.onShareAppMessage ? currentPage.onShareAppMessage.call(instance, event) : event)
+      handleEvent(currentPage?.onShareAppMessage ? currentPage.onShareAppMessage(event) : event)
     }
 
     if (openType === 'getUserInfo' && handleEvent && bindgetuserinfo) {

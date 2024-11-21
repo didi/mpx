@@ -587,3 +587,9 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 export function extendObject (...args: Record<string, any>[]) {
   return Object.assign({}, ...args)
 }
+
+export function getCurrentPage () {
+  if (!global.getCurrentPages) return
+  const pages = global.getCurrentPages()
+  return pages[pages.length - 1]
+}
