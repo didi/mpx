@@ -62,6 +62,6 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
   )
 })
 
-_Navigator.displayName = 'mpx-navigator'
+_Navigator.displayName = 'MpxNavigator'
 
 export default _Navigator

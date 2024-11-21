@@ -1,5 +1,5 @@
 
-import { View, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
+import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
 import React, { forwardRef, useRef, useState, useEffect, ReactElement, ReactNode } from 'react'
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
@@ -100,9 +100,21 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       const strKey = 'picker' + props.prefix + '-column' + index
       const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
       const iHeight = (arrHeight[0] || defaultItemHeight) as number
-      return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>{item}</View>
+      return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>
+        {wrapChildren(
+          {
+            children: item
+          },
+          {
+            hasVarDec,
+            varContext: varContextRef.current,
+            textStyle,
+            textProps
+          }
+        )}
+      </View>
     })
-    const totalHeight = (itemH || defaultItemHeight) * 5
+    const totalHeight = itemH * 5
     if (wrapperStyle.height && totalHeight !== wrapperStyle.height) {
       const fix = Math.ceil((totalHeight - wrapperStyle.height) / 2)
       arrChild.unshift(<View key="picker-column-0" style={[{ height: itemH - fix }]}></View>)
@@ -117,9 +129,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
     return arrChild
   }
-  const innerChild = renderInnerchild()
+
   const renderScollView = () => {
-    return (<ScrollView
+    return (<Animated.ScrollView
       horizontal={false}
       ref={scrollViewRef}
       bounces={false}
@@ -132,18 +144,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       automaticallyAdjustContentInsets={false}
       {...layoutProps}
       onMomentumScrollEnd={onMomentumScrollEnd}>
-        {wrapChildren(
-          {
-            children: innerChild
-          },
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )}
-    </ScrollView>)
+        {renderInnerchild()}
+    </Animated.ScrollView>)
   }
 
   return (<SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
