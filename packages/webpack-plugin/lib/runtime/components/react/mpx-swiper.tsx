@@ -92,9 +92,7 @@ const dotCommonStyle = {
 }
 // 默认前后补位的元素个数
 const patchElementNum = 2
-// preMargin 和 nextMargin
-const visibleCount = 3
-const longPressRatio = 2
+const longPressRatio = 100
 const quickMoveTime = 200
 const quickMoveDuration = 200
 
@@ -189,9 +187,8 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const touchfinish = useSharedValue(false)
   // 记录用户点击时绝对定位坐标
   const preRelativePos = useSharedValue(0)
-  let a = useSharedValue(0)
-  let intervalId = useSharedValue(0)
-  let timerId = useSharedValue(0)
+  const intervalId = useRef(0 as number | ReturnType<typeof setTimeout>)
+  const timerId = useRef(0 as number | ReturnType<typeof setTimeout>);
   const gestureTime = useSharedValue(0)
   const customTrans = useSharedValue(0)
   const {
@@ -267,22 +264,8 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     )
   }
 
-  const faces = [
-    { index: -1, targetIndex: 0, scaleXY: 0.8},
-    { index: 0, targetIndex: 1, scaleXY: 1.2 },
-    { index: 1, targetIndex: 2, scaleXY: 0.8}
-  ]
-
-  const getTransform = useCallback((index: number) => {
-    const inputRange = faces.map((f) => (index + f.index))
-    return {
-      scaleXY: interpolate(targetIndex.value, inputRange, faces.map((x) => x.scaleXY))
-    }
-  }, [targetIndex])
-
   function renderItems () {
     const pageStyle = { width: widthState, height: heightState }
-    // pages = ["0", "1", "2", "0", "1"]
     let renderChild = children.slice()
     if (props.circular && totalElements.value > 1) {
       if (totalElements.value === 2) {
@@ -296,21 +279,19 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         renderChild.push(children[1])
       }
     }
-    // 1. 不支持循环 + margin 模式
     return renderChild.map((child, index) => {
-      // 可能会有变大变小
-      // const { scaleXY } = getTransform(index)
-      const extraStyle = {} as {
-        [key: string]: any
-      }
+      const extraStyle = {} as { [key: string]: any }
       if (index === 0 && dir.value === 'x' && typeof width === 'number') {
         previousMargin && (extraStyle.marginLeft = previousMargin)
       } else if (index === totalElements.value - 1 && typeof width === 'number') {
         nextMargin && (extraStyle.marginRight = nextMargin)
       }
+      
       return (<Animated.View
-        style={[pageStyle, extraStyle]}
-        
+        style={[
+          pageStyle,
+          extraStyle  
+        ]}
         key={ 'page' + index}>
         {child}
       </Animated.View>)
@@ -377,22 +358,22 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   }
 
   function handlerInterval (loopv: boolean, oldLoop: boolean | null) {
-    clearInterval(intervalId.value)
+    clearInterval(intervalId.current)
     if (canLoop.value && oldLoop !== true) {
       const intervalTimer = props.interval || 500
-      clearTimeout(timerId.value)
-      timerId.value = setTimeout(() => {
+      clearTimeout(timerId.current)
+      timerId.current = setTimeout(() => {
         if (props.autoplay && totalElements.value > 1 && canLoop.value) {
-          intervalId.value = setInterval(() => {
+          intervalId.current = setInterval(() => {
             // canLoop变化比较快的情况下
             if (canLoop.value) {
               createAutoPlay()
             } else {
-              clearInterval(intervalId.value)
+              clearInterval(intervalId.current)
             }
-          }, intervalTimer);
+          }, intervalTimer)
         }
-      }, intervalTimer)
+      }, 500)
     }
   }
 
@@ -550,7 +531,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
 
   function handleBack () {
     'worklet';
-    // 向右trans > 0, 向左trans < 0
+    // 向右trans > 0, 向左trans < 0， 向右滑动的back， 向左滑动的back
     const posScrollRight = -(patchElementNum + targetIndex.value) * step.value
     const posScrollLeft = -(patchElementNum + targetIndex.value) * step.value
     const pos = customTrans.value < 0 ? posScrollRight : posScrollLeft
