@@ -2619,8 +2619,8 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
+    processRefReact(el, meta)
     if (!pass) {
-      processRefReact(el, meta)
       processStyleReact(el, options)
       processEventReact(el)
       processComponentIs(el, options)
