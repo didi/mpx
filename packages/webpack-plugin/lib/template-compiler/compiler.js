@@ -1066,6 +1066,7 @@ function processStyleReact (el, options) {
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
+  // todo hover:xxx -> hover:class 的处理
 
   let staticHoverClass = ''
   if (hoverClassReg.test(el.tag)) {
