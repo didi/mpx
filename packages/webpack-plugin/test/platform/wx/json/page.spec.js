@@ -40,9 +40,7 @@ describe('json should transform page json correct', function () {
     })
     expect(output).toEqual({
       usingComponents: {
-        'my-list': './list',
-        'mpx-dialog': '@mpxjs/cube-ui/components/mpx-dialog',
-        'mpx-toast': '@mpxjs/cube-ui/components/mpx-toast'
+        'my-list': './list'
       }
     })
     expect(warnFn).not.toHaveBeenCalled()

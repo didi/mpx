@@ -1,6 +1,6 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { diffAndCloneA, hasOwn } from '@mpxjs/utils'
+import { diffAndCloneA, hasOwn, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
 import {
@@ -27,6 +27,8 @@ function filterOptions (options) {
           )
         }
       }
+    } else if (key === 'methods') {
+      newOptions[key] = wrapMethodsWithErrorHandling(options[key])
     } else {
       newOptions[key] = options[key]
     }
@@ -62,7 +64,7 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
       }
       const setupRes = rawSetup(props, newContext)
       unsetCurrentInstance(instance.__mpxProxy)
-      return setupRes
+      return wrapMethodsWithErrorHandling(setupRes, instance.__mpxProxy)
     }
   }
   const rootMixins = [{

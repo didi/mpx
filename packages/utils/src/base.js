@@ -28,6 +28,14 @@ function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+function isPromise (val) {
+  return (
+    (isObject(val) || isFunction(val)) &&
+    isFunction(val.then) &&
+    isFunction(val.catch)
+  )
+}
+
 function isEmptyObject (obj) {
   if (!obj) {
     return true
@@ -134,6 +142,7 @@ export {
   isArray,
   isFunction,
   isObject,
+  isPromise,
   isEmptyObject,
   isDef,
   isNumberStr,
