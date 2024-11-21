@@ -488,14 +488,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
 
-  const animatedStyles = useAnimatedStyle(() => {
-    if (dir.value === 'x') {
-      return { transform: [{ translateX: offset.value.x }]}
-    } else {
-      return { transform: [{ translateY: offset.value.y }]}
-    }
-  })
-
   function handleEnd (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
     'worklet';
     const subtractTime = Date.now() - gestureTime.value
@@ -683,7 +675,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         handleEnd(e)
       }
     })
-  
+
+  const animatedStyles = useAnimatedStyle(() => {
+    if (dir.value === 'x') {
+      return { transform: [{ translateX: offset.value.x }]}
+    } else {
+      return { transform: [{ translateY: offset.value.y }]}
+    }
+  })
+
   function renderSwiper () {
     return (<View style={[normalStyle, layoutStyle, { overflow: "scroll", display: "flex", justifyContent: "flex-start" }]} {...layoutProps} {...innerProps}>
         <Animated.View style={[{ flexDirection: dir.value === 'x' ? 'row' : 'column' }, animatedStyles]}>
