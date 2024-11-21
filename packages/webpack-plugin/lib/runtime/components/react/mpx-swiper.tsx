@@ -186,7 +186,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 标识手指触摸和抬起
   const touchfinish = useSharedValue(false)
   // 记录用户点击时绝对定位坐标
-  const preRelativePos = useSharedValue(0)
+  const preAbsolutePos = useSharedValue(0)
   const intervalId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>);
   const gestureTime = useSharedValue(0)
@@ -560,7 +560,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'worklet';
     // 移动的距离
     const transDistance = e[strTrans]
-    const moveDistance = e[strAbso] - preRelativePos.value
+    const moveDistance = e[strAbso] - preAbsolutePos.value
     const elementsLength = step.value * totalElements.value
     let isBoundary = false
     let resetOffset = 0
@@ -619,7 +619,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         y: dir.value === 'y' ? offset.value.y : 0
       }
       cancelAnimation(offset)
-      preRelativePos.value = e[strAbso]
+      preAbsolutePos.value = e[strAbso]
       canLoop.value = false
       gestureTime.value = Date.now()
     })
@@ -629,7 +629,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       touchfinish.value = true
       const touchEventData = e.changedTouches[0]
       // 只点击不会触发onEnd事件
-      if (Math.ceil(preRelativePos.value) === Math.ceil(touchEventData[strAbso])) {
+      if (Math.ceil(preAbsolutePos.value) === Math.ceil(touchEventData[strAbso])) {
         const transObj: { [key in StrTransType]: number } = {
           translationX: 0,
           translationY: 0
@@ -644,7 +644,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       if (!props.circular && !canMove(e)) {
         return
       }
-      const moveDistance = e[strAbso] - preRelativePos.value
+      const moveDistance = e[strAbso] - preAbsolutePos.value
       customTrans.value = moveDistance
       // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
       const { isBoundary, resetOffset, moveToTargetPos } = reachBoundary(e)
