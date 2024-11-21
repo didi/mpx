@@ -1,11 +1,11 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
-const addQuery = require('../utils/add-query')
 
 class RecordGlobalComponentsDependency extends NullDependency {
-  constructor (usingComponents, context) {
+  constructor (globalComponents, globalComponentsInfo, context) {
     super()
-    this.usingComponents = usingComponents
+    this.globalComponents = globalComponents
+    this.globalComponentsInfo = globalComponentsInfo
     this.context = context
   }
 
@@ -15,26 +15,25 @@ class RecordGlobalComponentsDependency extends NullDependency {
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
-    const { usingComponents, context } = this
-    Object.keys(usingComponents).forEach((key) => {
-      const request = usingComponents[key]
-      mpx.usingComponents[key] = addQuery(request, {
-        context
-      })
-    })
+    const { globalComponents, globalComponentsInfo } = this
+
+    mpx.globalComponents = globalComponents
+    mpx.globalComponentsInfo = globalComponentsInfo
     return callback()
   }
 
   serialize (context) {
     const { write } = context
-    write(this.usingComponents)
+    write(this.globalComponents)
+    write(this.globalComponentsInfo)
     write(this.context)
     super.serialize(context)
   }
 
   deserialize (context) {
     const { read } = context
-    this.usingComponents = read()
+    this.globalComponents = read()
+    this.globalComponentsInfo = read()
     this.context = read()
     super.deserialize(context)
   }
