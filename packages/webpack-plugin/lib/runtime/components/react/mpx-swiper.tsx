@@ -104,7 +104,7 @@ const easeMap = {
   'easeInOutCubic': Easing.inOut(Easing.cubic)
 }
 
-const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
+const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
     'indicator-dots': showsPagination,
     'indicator-color': dotColor = 'rgba(0, 0, 0, .3)',
@@ -708,6 +708,6 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     </GestureDetector>)
   }
 })
-_SwiperWrapper.displayName = 'mpx-swiper'
+SwiperWrapper.displayName = 'MpxSwiperWrapper'
 
-export default _SwiperWrapper
+export default SwiperWrapper

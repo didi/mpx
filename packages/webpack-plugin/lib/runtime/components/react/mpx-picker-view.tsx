@@ -60,7 +60,7 @@ const styles: { [key: string]: Object } = {
     zIndex: 100
   }
 }
-const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
+const PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
   const { children, value = [], bindchange, style, 'enable-var': enableVar, 'external-var-context': externalVarContext } = props
   // indicatorStyle 需要转换为rn的style
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
@@ -216,6 +216,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   </View>)
 })
 
-_PickerView.displayName = 'mpx-picker-view'
+PickerView.displayName = 'MpxPickerView'
 
-export default _PickerView
+export default PickerView

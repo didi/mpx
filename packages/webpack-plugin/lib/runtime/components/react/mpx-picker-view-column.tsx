@@ -23,7 +23,7 @@ interface ColumnProps {
 const defaultItemHeight = 36
 // 每个Column 都有个外层的高度, 内部的元素高度
 // 默认的高度
-const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
+const PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout, style, wrapperStyle, 'enable-var': enableVar, 'external-var-context': externalVarContext } = props
   // PickerViewColumn
   const {
@@ -153,5 +153,5 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   </SafeAreaView>)
 })
 
-_PickerViewColumn.displayName = 'mpx-picker-view-column'
-export default _PickerViewColumn
+PickerViewColumn.displayName = 'MpxPickerViewColumn'
+export default PickerViewColumn
