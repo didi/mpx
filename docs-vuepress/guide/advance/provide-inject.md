@@ -2,7 +2,7 @@
 
 ## 适用场景
 
-通常情况下，从父组件向子组件传递数据时，我们会使用 props 向下传递。如果在一颗组件层级嵌套很深的组件树中，某个深层的子组件依赖一个较远的祖先组件中的部分数据。在这种情况下，如果仅使用 props 则必须将其沿着组件链路逐级传递下去，这就是 **props 逐级透传**（props drilling）问题。
+通常情况下，从父组件向子组件传递数据时，我们会使用 props 向下传递。如果在一颗组件层级嵌套很深的组件树中，某个深层的子组件依赖一个较远的祖先组件中的部分数据。在这种情况下，如果仅使用 props 则必须将其沿着组件链路逐级传递下去，这就是 **prop 逐级透传（prop-drilling）** 问题。
 
 使用 `provide` 和 `inject` 可以帮助我们解决这一麻烦问题：一个父组件相对于其所有的后代组件，会作为**依赖提供者**。任何后代的组件树，无论层级有多深，都可以**注入**由父组件提供给整条链路的依赖。
 
@@ -14,7 +14,7 @@
 
 在组合式语法中，需要使用到 `provide()` 函数，`provide()` 函数接收两个参数：
 
-1. 第一个参数被称为**注入名**，是一个字符串，后代组件会用注入名来查找期望注入的值。一个组件可以多次调用 `provide()`，使用不同的注入名，注入不同的依赖值。
+1. 第一个参数被称为**注入名**，是一个字符串或者 `Symbol`，后代组件会用注入名来查找期望注入的值。一个组件可以多次调用 `provide()`，使用不同的注入名，注入不同的依赖值。使用 Symbol 作为注入名时，只能使用组合式语法而非选项式语法。
 2. 第二个参数是提供的**值**，值可以是任意类型，包括响应式的状态，比如一个 `ref`、`reactive` 或者 `computed` 计算值。
 
 ```ts
@@ -23,6 +23,10 @@ import { computed, provide, ref } from '@mpxjs/core'
 
 // 静态数据
 provide(/* 注入名 */ 'message', /* 值 */ 'hello!')
+
+// 使用 Symbol 作为注入名
+const key = Symbol()
+provide(key, 'hello!')
 
 // 响应式数据
 const count = ref(1)
@@ -35,7 +39,7 @@ provide('double', double)
 
 ### 选项式语法
 
-如果是在选项式语法的 setup() 中，用法和上述组合式语法一致。另外针对选项式语法，我们也提供了 provide 选项，它是**一个对象或返回一个对象的函数**。
+选项式语法的 setup() 中，用法和组合式 API 一致。另外针对选项式语法，我们也提供了 `provide` 选项，它是**一个对象或返回一个对象的函数**。
 
 对于 provide 对象上的每一个属性，后代组件会用其 key 为注入名查找期望注入的值，属性的值就是要提供的数据。
 
@@ -107,9 +111,11 @@ const value = inject('key', () => new ExpensiveClass(), true)
 </script>
 ```
 
+如果提供的值是一个 ref，注入进来的会是该 ref 对象，而不会自动解包为其内部的值。这使得注入方能够通过 ref 对象和提供方保持响应性链接。
+
 ### 选项式语法
 
-选项式语法的 setup() 中，用法和组合式 API 一致。另外针对选项式语法，`inject` 选项支持**数组**和**对象**两种形式：
+选项式语法的 setup() 中，用法和组合式 API 一致。另外针对选项式语法，另外针对选项式语法，我们也提供了 `inject` 选项，它是**一个数组或一个对象**。
 
 1. **数组**形式使用。数组中的每一项对应一个注入名，注入的属性会以同名的 key 暴露到组件实例上。如下示例中，注入名 `"message"` 在注入后以 `this.message` 的形式暴露。另外，`inject` 会在组件自身的状态**之前**被解析，意味着你可以在 `data()` 中访问到注入的属性。
 
@@ -131,7 +137,7 @@ createComponent({
 </script>
 ```
 
-2. **对象**形式使用。相比数组形式，对象形式支持注入**别名**和**默认值**。如下示例，通过 `from` 属性指定注入来源名，通过 `default` 属性指定默认值。
+2. **对象**形式使用。相比数组形式，对象形式支持注入**别名**和**默认值**。如下示例，通过 `from` 属性指定原注入名，通过 `default` 属性指定默认值。
 
 ```ts
 <script>
@@ -140,11 +146,11 @@ import { createComponent } from '@mpxjs/core'
 createComponent({
   inject: {
     message: {
-      from: 'message',         // 当与原注入名同名时，这个属性是可选的
+      from: 'message', // 'message' 是原注入名，当与原注入名同名时，这个属性是可选的
       default: 'default value' // 默认值
     },
     user: {
-      default: () => ({ name: 'John' }) // 使用工厂函数创建默认值
+      default: () => ({ name: 'Wang' }) // 使用工厂函数创建默认值
     }
   }
 })
@@ -153,19 +159,19 @@ createComponent({
 
 ## 避免注入名潜在冲突
 
-如果你正在构建大型的应用，包含非常多的依赖提供，那么随处定义的注入名可能存在潜在的冲突。在 Mpx 实现中，同名的注入名会覆盖前面已有的注入名对应的提供值。
+如果你正在构建大型的应用，包含非常多的依赖提供，那么随处定义的注入名容易存在潜在的同名冲突。在 Mpx 实现中，同名的注入名会覆盖之前已有的注入名对应的提供值。
 
-针对大型应用的最佳实践，我们通常推荐在一个单独的文件中导出这些注入名，可以结合不同业务范围来统一注入名的命名和管理规范。以下示例仅提供几种命名规范的参考，具体命名管理请结合实际业务场景来确定。
+针对大型应用的最佳实践，我们通常推荐在一个单独的文件中导出这些注入名，可以结合业务模块功能来统一注入名的命名和管理规范。*以下示例仅供参考，具体实现请依据自身实际场景确定。*
 
 ```ts
-// 创建公用的命名管理文件
+/** 推荐创建一个单独的文件来管理和导出注入名 */
 
 // 1. 使用枚举类型
 export const InjectionKeys = {
   user: 'user',
   auth: 'auth',
   product: 'product',
-};
+}
 
 // 2. 按业务模块功能划分命名，不容易命名冲突，可读性高
 export const InjectionKeys = {
@@ -181,34 +187,33 @@ export const InjectionKeys = {
     list: 'product:list',
     details: 'product:details',
   },
-};
+}
 
-// 3. 使用 Symbol 类型
+// 3. 使用 Symbol 创建唯一注入名，或再结合命名空间
 export const InjectionKeys = {
   user: Symbol('user'),
   auth: Symbol('auth'),
   product: Symbol('product'),
-};
+}
 
 // 4. 自行实现类似 Symbol polyfill 的命名生成函数
-export const createInjectionKey = (module: string, key: string) => `${module}:${key}`
+export const createInjectionKey = (module, key) => `${module}:${key}`
 export const InjectionKeys = {
   user: createInjectionKey('user', 'service'),
   auth: createInjectionKey('auth', 'token'),
   product: createInjectionKey('product', 'list'),
-};
-
+}
 ```
 
 ## TS 类型支持
 
-直接使用字符串注入 key 时，注入值的类型默认推导会是 unknown，需要通过泛型参数显式声明。因为无法保证运行时一定存在这个 provide，所以推导类型仍然可能是 undefined。当提供了一个默认值后，这个 undefined 类型就可以成功被移除。
+直接使用字符串注入 key 时，注入值的类型默认推导会是 unknown，需要通过泛型参数显式声明。因为无法保证运行时一定存在这个 provide，所以推导类型也可能是 undefined。当提供了一个默认值后，这个 undefined 类型就可以成功被移除。
 
 ```ts
 <script setup lang="ts">
 import { inject } from '@mpxjs/core'
 
-const foo = inject('foo') // 类型：undefined
+const foo = inject('foo') // 类型：unknown
 const foo = inject<string>('foo') // 类型：string | undefined
 const foo = inject<string>('foo', 'default value') // 类型：string ✅
 </script>
@@ -220,26 +225,23 @@ const foo = inject<string>('foo', 'default value') // 类型：string ✅
 const foo = inject('foo') as string
 ```
 
-直接使用字符串作为注入名容易产生潜在的同名冲突，更推荐使用统一管理的变量 key 来作为注入名。我们提供了 `InjectionKey` 泛型接口，使用它包装注入名类型后，可以用来在不同组件之间同步注入值的类型：
+如果使用 `Symbol` 作为注入名，可以使用我们提供的 `InjectionKey` 泛型接口，使用它对注入名进行注解或者断言后，可以用来在不同组件之间同步注入值的类型。建议将注入 key 放在单独文件，这样方便在多个组件中导入使用。
 
-```ts{4}
-<script setup lang="ts">
+```ts{5}
 import { provide, inject } from '@mpxjs/core'
 import type { InjectionKey } from '@mpxjs/core'
 
-const key = Symbol() as InjectionKey<string>
+export const key: InjectionKey<string> = Symbol() // 类型注解
+// const key = Symbol() as InjectionKey<string> // 类型断言写法等效
 
-provide(key, 'foo') // 若提供的是非字符串值会导致错误
+provide(key, 'foo') // 若默认值是非字符串则会 TS 类型报错
 
 const foo = inject(key) // ✅ foo 的类型：string | undefined
 const foo = inject(key, 'default value') // ✅ foo 的类型：string
-const foo = inject(key, 1) // ❌ TS 类型报错：Argument of type 'number' is not assignable to parameter of type 'string'.
-</script>
+const foo = inject(key, 1) // ❌ 默认值是非字符串则会 TS 类型报错
 ```
-
-建议将注入 key 的类型放在一个单独的文件中，这样它就可以被多个组件导入。
 
 ## 跨端差异
 
-- Mpx 输出 Web 端后，使用规则与 Vue 对齐，provide/inject 的生效范围严格遵行父子组件关系，只有父组件可以成功向子孙组件 provide。
-- Mpx 输出小程序端会略微不同，由于小程序原生框架限制，无法在子组件获取真实渲染时的父组件引用关系，所以不能像 Vue 那样基于父组件原型继承来实现。在 Mpx 底层实现中，我们将组件层的 provide 挂载在所属页面实例上，相当于将组件 scope 提升到页面 scope，可以理解成一种“降级模拟”。当然，这并不影响父组件向子孙组件 provide 的能力，只是会额外存在“**副作用**”：同一页面中的组件可以向页面中其他所有在其之后渲染子组件提供依赖。比如同一页面下的组件 A 可以向后渲染的兄弟组件 B 的子孙组件提供数据，这在 Web 端是不允许的。因此，针对小程序端可能出现的“副作用”需要开发者自行保证，可以结合上述注入名的管理优化来规避。
+- Mpx 输出 Web 端后，使用规则与 Vue 一致，`provide/inject` 的生效范围严格遵行父子组件关系，只有父组件可以成功向子孙组件提供依赖。
+- Mpx 输出小程序端会略有不同，由于小程序原生框架限制，暂时无法在子组件获取真实渲染时的父组件引用关系，所以不能像 Vue 那样基于父组件原型继承来实现 `provide`。在 Mpx 底层实现中，我们将组件层的 `provide` 挂载在所属页面实例上，相当于将组件 scope 提升到页面 scope，可以理解成一种“降级模拟”。当然，这并不影响父组件向子孙组件 `provide` 的能力，只是会额外存在“**副作用**”：同一页面中的组件可以向页面中其他所有在其之后渲染子组件提供依赖。比如同一页面下的组件 A 可以向后渲染的兄弟组件 B 的子孙组件提供数据，这在 Web 端是不允许的。因此，针对小程序端可能出现的“副作用”需要开发者自行保证，可以结合上述注入名的管理优化来规避。
