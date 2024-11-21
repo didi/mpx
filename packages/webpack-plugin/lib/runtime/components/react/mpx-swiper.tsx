@@ -1,8 +1,8 @@
 import { View, NativeSyntheticEvent, Dimensions, LayoutChangeEvent } from 'react-native'
-import { GestureDetector, Gesture, GestureUpdateEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, interpolate } from 'react-native-reanimated';
+import { GestureDetector, Gesture, GestureUpdateEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, interpolate } from 'react-native-reanimated'
 
-import { JSX, forwardRef, useRef, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
+import { JSX, forwardRef, useRef, useEffect, useState, ReactNode } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
@@ -78,6 +78,11 @@ const styles: { [key: string]: Object } = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  swiper: {
+    overflow: 'scroll',
+    display: 'flex',
+    justifyContent: 'flex-start'
   }
 }
 
@@ -97,11 +102,11 @@ const quickMoveTime = 200
 const quickMoveDuration = 200
 
 const easeMap = {
-  'default': Easing.linear,
-  'linear': Easing.linear,
-  'easeInCubic': Easing.in(Easing.cubic),
-  'easeOutCubic': Easing.out(Easing.cubic),
-  'easeInOutCubic': Easing.inOut(Easing.cubic)
+  default: Easing.linear,
+  linear: Easing.linear,
+  easeInCubic: Easing.in(Easing.cubic),
+  easeOutCubic: Easing.out(Easing.cubic),
+  easeInOutCubic: Easing.inOut(Easing.cubic)
 }
 
 const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
@@ -119,7 +124,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const previousMargin = props['previous-margin'] ? parseInt(props['previous-margin']) : 0
   const nextMargin = props['next-margin'] ? parseInt(props['next-margin']) : 0
   const easeingFunc = props['easing-function'] || 'default'
-  const easeDuration = props['duration'] || 500
+  const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
 
   const nodeRef = useRef<View>(null)
@@ -152,22 +157,20 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const [widthState, setWidthState] = useState(initWidth)
   const [heightState, setHeightState] = useState(initHeight)
   const dir = useSharedValue(horizontal === false ? 'y' : 'x')
-  const pstep =  dir.value === 'x' ? widthState : heightState
+  const pstep = dir.value === 'x' ? widthState : heightState
   const initStep = Number.isNaN(pstep) ? 0 : pstep
   const step = useSharedValue(initStep)
-
 
   function getInitOffset () {
     const stepValue = getStepValue()
     if (Number.isNaN(+stepValue)) return { x: 0, y: 0 }
     const targetOffset = { x: 0, y: 0 }
-    if(props.circular && totalElements.value > 1) {
+    if (props.circular && totalElements.value > 1) {
       const targetIndex = (props.current || 0) + 2
       targetOffset[dir.value as dirType] = -stepValue * targetIndex
-    } else if (props.current && props.current > 0){
+    } else if (props.current && props.current > 0) {
       targetOffset[dir.value as dirType] = -props.current * stepValue
     }
-    
     return targetOffset
   }
 
@@ -175,7 +178,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const targetIndex = useSharedValue(0)
   const initOffset = getInitOffset()
   const offset = useSharedValue(initOffset)
-  const start = useSharedValue(initOffset);
+  const start = useSharedValue(initOffset)
   const strTrans = 'translation' + dir.value.toUpperCase() as StrTransType
   const strAbso = 'absolute' + dir.value.toUpperCase() as StrAbsoType
   const strVelocity = 'velocity' + dir.value.toUpperCase() as StrVelocity
@@ -188,7 +191,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 记录用户点击时绝对定位坐标
   const preAbsolutePos = useSharedValue(0)
   const intervalId = useRef(0 as number | ReturnType<typeof setTimeout>)
-  const timerId = useRef(0 as number | ReturnType<typeof setTimeout>);
+  const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const gestureTime = useSharedValue(0)
   const customTrans = useSharedValue(0)
   const {
@@ -198,9 +201,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout: onWrapperLayout })
 
-
   const innerProps = useInnerProps(props, {
-    ref: nodeRef,
+    ref: nodeRef
   }, [
     'style',
     'indicator-dots',
@@ -255,7 +257,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           dotStyle
         ]}
         key={i}>
-      </Animated.View>) 
+      </Animated.View>)
     }
     return (
       <View pointerEvents="none" style = {[styles['pagination_' + [dir.value as dirType]]]}>
@@ -286,11 +288,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       } else if (index === totalElements.value - 1 && typeof width === 'number') {
         nextMargin && (extraStyle.marginRight = nextMargin)
       }
-      
       return (<Animated.View
         style={[
           pageStyle,
-          extraStyle  
+          extraStyle
         ]}
         key={ 'page' + index}>
         {child}
@@ -299,7 +300,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function createAutoPlay () {
-    'worklet';
+    'worklet'
     const targetOffset = { x: 0, y: 0 }
     let nextIndex = targetIndex.value
     if (!props.circular) {
@@ -354,7 +355,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function getStepValue () {
-    return dir.value === 'x' ? widthState : heightState 
+    return dir.value === 'x' ? widthState : heightState
   }
 
   function handlerInterval (loopv: boolean, oldLoop: boolean | null) {
@@ -407,7 +408,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
     } else {
       const targetOffset = getInitOffset()
-      if (props.current !== undefined && (props.current !== targetIndex.value || props.current === 0 && targetIndex.value > 0)) {
+      if (props.current !== undefined && (props.current !== targetIndex.value || (props.current === 0 && targetIndex.value > 0))) {
         targetIndex.value = props.current
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
@@ -424,9 +425,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [props.autoplay, props.current, widthState, heightState])
 
-
   function getTargetPosition (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
-    'worklet';
+    'worklet'
     let resetOffsetPos = 0
     let selectedIndex = targetIndex.value
     // 是否临界点
@@ -438,7 +438,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     // 当前的位置
     const currentOffset = offset.value[dir.value as dirType]
     const currentIndex = Math.abs(currentOffset) / step.value
-    let moveToIndex = transDistance < 0 ? Math.ceil(currentIndex) : Math.floor(currentIndex)
+    const moveToIndex = transDistance < 0 ? Math.ceil(currentIndex) : Math.floor(currentIndex)
     // 实际应该定位的索引值
     if (!props.circular) {
       selectedIndex = moveToIndex
@@ -458,7 +458,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         selectedIndex = moveToIndex - 2
         moveToTargetPos = moveToIndex * step.value
       }
-
     }
     return {
       selectedIndex,
@@ -475,7 +474,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function canMove (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
-    'worklet';
+    'worklet'
     if (!props.circular) {
       const transDistance = e[strTrans]
       if (transDistance < 0) {
@@ -489,7 +488,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function handleEnd (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
-    'worklet';
+    'worklet'
     const subtractTime = Date.now() - gestureTime.value
     const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(e)
     // 用户快速连续操作小于100ms, 快速切换有些生硬,调整下时间
@@ -522,7 +521,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function handleBack () {
-    'worklet';
+    'worklet'
     // 向右trans > 0, 向左trans < 0， 向右滑动的back， 向左滑动的back
     const posScrollRight = -(patchElementNum + targetIndex.value) * step.value
     const posScrollLeft = -(patchElementNum + targetIndex.value) * step.value
@@ -536,7 +535,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       easing: easeMap[easeingFunc]
     }, () => {
       if (touchfinish.value !== false) {
-        start.value =targetOffset
+        start.value = targetOffset
         offset.value = targetOffset
         canLoop.value = true
       }
@@ -544,7 +543,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function handleLongPress (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
-    'worklet';
+    'worklet'
     const currentOffset = Math.abs(offset.value[dir.value as dirType])
     const half = currentOffset % step.value > step.value / 2
     // 向右trans > 0, 向左trans < 0
@@ -557,7 +556,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function reachBoundary (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
-    'worklet';
+    'worklet'
     // 移动的距离
     const transDistance = e[strTrans]
     const moveDistance = e[strAbso] - preAbsolutePos.value
@@ -580,7 +579,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       if (currentOffset > -posReverseEnd) {
         isBoundary = true
         moveToTargetPos = (patchElementNum + totalElements.value - 1) * step.value
-        resetOffset =  moveStep * elementsLength
+        resetOffset = moveStep * elementsLength
       }
     } else if (transDistance > 0) {
       const posEnd = (patchElementNum - 1) * step.value
@@ -595,7 +594,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         resetOffset = moveStep * elementsLength + patchElementNum * step.value
         moveToTargetPos = posReverseEnd
       }
-
     }
     return {
       isBoundary,
@@ -633,7 +631,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const transObj: { [key in StrTransType]: number } = {
           translationX: 0,
           translationY: 0
-        };
+        }
         transObj[strTrans] = customTrans.value
         handleLongPress(transObj as GestureUpdateEvent<PanGestureHandlerEventPayload>)
       }
@@ -650,12 +648,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const { isBoundary, resetOffset, moveToTargetPos } = reachBoundary(e)
       if (isBoundary && props.circular && !touchfinish.value) {
         start.value = resetOffset
-        offset.value =  moveToTargetPos
+        offset.value = moveToTargetPos
       } else {
         offset.value = {
           x: moveDistance + start.value.x,
-          y: moveDistance + start.value.y,
-        };
+          y: moveDistance + start.value.y
+        }
       }
     })
     .onEnd((e) => {
@@ -666,7 +664,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const { isBoundary, resetOffset: reachReset, moveToTargetPos } = reachBoundary(e)
       if (props.circular && isBoundary) {
         start.value = reachReset
-        offset.value =  moveToTargetPos
+        offset.value = moveToTargetPos
         return
       }
       if (Math.abs(e[strVelocity]) < longPressRatio) {
@@ -678,14 +676,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   const animatedStyles = useAnimatedStyle(() => {
     if (dir.value === 'x') {
-      return { transform: [{ translateX: offset.value.x }]}
+      return { transform: [{ translateX: offset.value.x }] }
     } else {
-      return { transform: [{ translateY: offset.value.y }]}
+      return { transform: [{ translateY: offset.value.y }] }
     }
   })
 
   function renderSwiper () {
-    return (<View style={[normalStyle, layoutStyle, { overflow: "scroll", display: "flex", justifyContent: "flex-start" }]} {...layoutProps} {...innerProps}>
+    return (<View style={[normalStyle, layoutStyle, styles.swiper]} {...layoutProps} {...innerProps}>
         <Animated.View style={[{ flexDirection: dir.value === 'x' ? 'row' : 'column' }, animatedStyles]}>
           {wrapChildren({
             children: arrPages
