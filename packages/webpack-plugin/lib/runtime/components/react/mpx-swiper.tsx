@@ -1,12 +1,11 @@
 import { View, NativeSyntheticEvent, Dimensions, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture, GestureUpdateEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, interpolateColor } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, interpolate } from 'react-native-reanimated';
 
 import { JSX, forwardRef, useRef, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
-import { createFaces } from './swiperFaces'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -17,15 +16,16 @@ import { createFaces } from './swiperFaces'
  * ✔ duration
  * ✔ circular
  * ✔ vertical
- * ✘ display-multiple-items
  * ✔ previous-margin
  * ✔ next-margin
  * ✔ easing-function  ="easeOutCubic"
+ * ✘ display-multiple-items
  * ✘ snap-to-edge
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
 type StrTransType = 'translationX' | 'translationY'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
+type StrVelocity = 'velocityX' | 'velocityY'
 
 type dirType = 'x' | 'y'
 interface SwiperProps {
@@ -94,9 +94,12 @@ const dotCommonStyle = {
 const patchElementNum = 2
 // preMargin 和 nextMargin
 const visibleCount = 3
+const longPressRatio = 2
+const quickMoveTime = 200
+const quickMoveDuration = 200
 
 const easeMap = {
-  'default': Easing.ease,
+  'default': Easing.linear,
   'linear': Easing.linear,
   'easeInCubic': Easing.in(Easing.cubic),
   'easeOutCubic': Easing.out(Easing.cubic),
@@ -177,13 +180,20 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const start = useSharedValue(initOffset);
   const strTrans = 'translation' + dir.value.toUpperCase() as StrTransType
   const strAbso = 'absolute' + dir.value.toUpperCase() as StrAbsoType
+  const strVelocity = 'velocity' + dir.value.toUpperCase() as StrVelocity
   const isAutoFirst = useRef(true)
   const arrPages: Array<ReactNode> | ReactNode = renderItems()
   // canLoop 标识是否能滚动
   const canLoop = useSharedValue(!!props.autoplay)
+  // 标识手指触摸和抬起
+  const touchfinish = useSharedValue(false)
   // 记录用户点击时绝对定位坐标
   const preRelativePos = useSharedValue(0)
-  let intervalId:ReturnType<typeof setInterval>
+  let a = useSharedValue(0)
+  let intervalId = useSharedValue(0)
+  let timerId = useSharedValue(0)
+  const gestureTime = useSharedValue(0)
+  const customTrans = useSharedValue(0)
   const {
     // 存储layout布局信息
     layoutRef,
@@ -257,6 +267,19 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     )
   }
 
+  const faces = [
+    { index: -1, targetIndex: 0, scaleXY: 0.8},
+    { index: 0, targetIndex: 1, scaleXY: 1.2 },
+    { index: 1, targetIndex: 2, scaleXY: 0.8}
+  ]
+
+  const getTransform = useCallback((index: number) => {
+    const inputRange = faces.map((f) => (index + f.index))
+    return {
+      scaleXY: interpolate(targetIndex.value, inputRange, faces.map((x) => x.scaleXY))
+    }
+  }, [targetIndex])
+
   function renderItems () {
     const pageStyle = { width: widthState, height: heightState }
     // pages = ["0", "1", "2", "0", "1"]
@@ -276,7 +299,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     // 1. 不支持循环 + margin 模式
     return renderChild.map((child, index) => {
       // 可能会有变大变小
-      // const { scaleXY } = getTransform(index, targetIndex.value)
+      // const { scaleXY } = getTransform(index)
       const extraStyle = {} as {
         [key: string]: any
       }
@@ -286,15 +309,12 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
         nextMargin && (extraStyle.marginRight = nextMargin)
       }
       return (<Animated.View
-        style={[pageStyle, extraStyle, {
-        }]}
+        style={[pageStyle, extraStyle]}
         
         key={ 'page' + index}>
         {child}
       </Animated.View>)
     })
-
-    
   }
 
   function createAutoPlay () {
@@ -356,25 +376,24 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     return dir.value === 'x' ? widthState : heightState 
   }
 
-
-  function createIntervalHandler () {
-    const intervalTimer = props.interval || 500
-    if (props.autoplay && totalElements.value > 1 && !intervalId && canLoop.value) {
-      intervalId = setInterval(() => {
-        // canLoop变化比较快的情况下, 会触发重复执行
-        if (canLoop.value) {
-          createAutoPlay()
-        } else {
-          cancelIntervalHandler()
+  function handlerInterval (loopv: boolean, oldLoop: boolean | null) {
+    clearInterval(intervalId.value)
+    if (canLoop.value && oldLoop !== true) {
+      const intervalTimer = props.interval || 500
+      clearTimeout(timerId.value)
+      timerId.value = setTimeout(() => {
+        if (props.autoplay && totalElements.value > 1 && canLoop.value) {
+          intervalId.value = setInterval(() => {
+            // canLoop变化比较快的情况下
+            if (canLoop.value) {
+              createAutoPlay()
+            } else {
+              clearInterval(intervalId.value)
+            }
+          }, intervalTimer);
         }
-      }, intervalTimer);
+      }, intervalTimer)
     }
-  }
-
-  function cancelIntervalHandler () {
-    intervalId && clearInterval(intervalId)
-    // @ts-ignore
-    intervalId = 0
   }
 
   useAnimatedReaction(() => targetIndex.value, (newIndex, preIndex) => {
@@ -388,11 +407,7 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   useAnimatedReaction(() => canLoop.value, (loopv, oldLoop) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (props.autoplay) {
-      if (!loopv) {
-        runOnJS(cancelIntervalHandler)()
-      } else if (!intervalId && oldLoop !== true){
-        runOnJS(createIntervalHandler)()
-      }
+      runOnJS(handlerInterval)(loopv, oldLoop)
     }
   }, [canLoop.value])
 
@@ -500,32 +515,114 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
     }
   })
 
+  function handleEnd (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
+    'worklet';
+    const subtractTime = Date.now() - gestureTime.value
+    const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(e)
+    // 用户快速连续操作小于100ms, 快速切换有些生硬,调整下时间
+    const durationTime = subtractTime <= quickMoveTime ? quickMoveDuration : easeDuration
+    if (isCriticalItem) {
+      offset.value = withTiming(targetOffset, {
+        duration: durationTime,
+        easing: easeMap[easeingFunc]
+      }, () => {
+        targetIndex.value = selectedIndex
+        if (touchfinish.value !== false) {
+          start.value = resetOffset
+          offset.value = resetOffset
+          canLoop.value = true
+        }
+      })
+    } else {
+      offset.value = withTiming(targetOffset, {
+        duration: durationTime,
+        easing: easeMap[easeingFunc]
+      }, () => {
+        targetIndex.value = selectedIndex
+        if (touchfinish.value !== false) {
+          start.value = targetOffset
+          offset.value = targetOffset
+          canLoop.value = true
+        }
+      })
+    }
+  }
+
+  function handleBack () {
+    'worklet';
+    // 向右trans > 0, 向左trans < 0
+    const posScrollRight = -(patchElementNum + targetIndex.value) * step.value
+    const posScrollLeft = -(patchElementNum + targetIndex.value) * step.value
+    const pos = customTrans.value < 0 ? posScrollRight : posScrollLeft
+    const targetOffset = {
+      x: dir.value === 'x' ? pos : 0,
+      y: dir.value === 'y' ? pos : 0
+    }
+    offset.value = withTiming(targetOffset, {
+      duration: easeDuration,
+      easing: easeMap[easeingFunc]
+    }, () => {
+      if (touchfinish.value !== false) {
+        start.value =targetOffset
+        offset.value = targetOffset
+        canLoop.value = true
+      }
+    })
+  }
+
+  function handleLongPress (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
+    'worklet';
+    const currentOffset = Math.abs(offset.value[dir.value as dirType])
+    const half = currentOffset % step.value > step.value / 2
+    // 向右trans > 0, 向左trans < 0
+    const isExceedHalf = customTrans.value < 0 ? half : !half
+    if (isExceedHalf) {
+      handleEnd(e)
+    } else {
+      handleBack()
+    }
+  }
+
   function reachBoundary (e: GestureUpdateEvent<PanGestureHandlerEventPayload>) {
     'worklet';
     // 移动的距离
     const transDistance = e[strTrans]
+    const moveDistance = e[strAbso] - preRelativePos.value
     const elementsLength = step.value * totalElements.value
     let isBoundary = false
     let resetOffset = 0
     let moveToTargetPos = 0
-    // Y轴向下滚动, transDistance > 0
+    // Y轴向下滚动, transDistance > 0, 向上滚动 < 0
     // X轴向左滚动, transDistance > 0
     const currentOffset = offset.value[dir.value as dirType]
-    const moveStep = Math.ceil((e[strAbso] - preRelativePos.value) / elementsLength)
+    const moveStep = Math.ceil(moveDistance / elementsLength)
     if (transDistance < 0) {
       const posEnd = (totalElements.value + patchElementNum + 1) * step.value
-      if (currentOffset < -posEnd) {
+      const posReverseEnd = (patchElementNum - 1) * step.value
+      if (currentOffset < -posEnd + step.value && currentOffset + posEnd > -2) {
         isBoundary = true
         moveToTargetPos = (totalElements.value + patchElementNum) * step.value
-        resetOffset = moveStep * elementsLength
+        resetOffset = Math.abs(moveStep) === 0 ? patchElementNum * step.value + moveDistance : moveStep * elementsLength
+      }
+      if (currentOffset > -posReverseEnd) {
+        isBoundary = true
+        moveToTargetPos = (patchElementNum + totalElements.value - 1) * step.value
+        resetOffset =  moveStep * elementsLength
       }
     } else if (transDistance > 0) {
       const posEnd = (patchElementNum - 1) * step.value
+      const posReverseEnd = (patchElementNum + totalElements.value) * step.value
       if (currentOffset > -posEnd) {
         isBoundary = true
-        resetOffset = moveStep * elementsLength + step.value
+        resetOffset = moveStep * elementsLength + step.value + (moveStep === 1 ? moveDistance : 0)
         moveToTargetPos = (patchElementNum - 1) * step.value
       }
+      if (currentOffset < -posReverseEnd) {
+        isBoundary = true
+        resetOffset = moveStep * elementsLength + patchElementNum * step.value
+        moveToTargetPos = posReverseEnd
+      }
+
     }
     return {
       isBoundary,
@@ -543,21 +640,45 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
   const gestureHandler = Gesture.Pan()
     .onBegin((e) => {
       'worklet'
+      touchfinish.value = false
+      start.value = {
+        x: dir.value === 'x' ? offset.value.x : 0,
+        y: dir.value === 'y' ? offset.value.y : 0
+      }
+      cancelAnimation(offset)
       preRelativePos.value = e[strAbso]
       canLoop.value = false
+      gestureTime.value = Date.now()
+    })
+    .onTouchesUp((e) => {
+      'worklet'
+      cancelAnimation(offset)
+      touchfinish.value = true
+      const touchEventData = e.changedTouches[0]
+      // 只点击不会触发onEnd事件
+      if (Math.ceil(preRelativePos.value) === Math.ceil(touchEventData[strAbso])) {
+        const transObj: { [key in StrTransType]: number } = {
+          translationX: 0,
+          translationY: 0
+        };
+        transObj[strTrans] = customTrans.value
+        handleLongPress(transObj as GestureUpdateEvent<PanGestureHandlerEventPayload>)
+      }
     })
     .onUpdate((e) => {
       'worklet'
+      cancelAnimation(offset)
       if (!props.circular && !canMove(e)) {
         return
       }
-      // 处理用户拖拽到临界点的场景
+      const moveDistance = e[strAbso] - preRelativePos.value
+      customTrans.value = moveDistance
+      // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
       const { isBoundary, resetOffset, moveToTargetPos } = reachBoundary(e)
-      if (isBoundary && props.circular) {
+      if (isBoundary && props.circular && !touchfinish.value) {
         start.value = resetOffset
         offset.value =  moveToTargetPos
       } else {
-        const moveDistance = e[strAbso] - preRelativePos.value
         offset.value = {
           x: moveDistance + start.value.x,
           y: moveDistance + start.value.y,
@@ -569,27 +690,16 @@ const _SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((p
       if (!props.circular && !canMove(e)) {
         return
       }
-      const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(e)
-      if (isCriticalItem) {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, () => {
-          targetIndex.value = selectedIndex
-          start.value = resetOffset
-          offset.value = resetOffset
-          canLoop.value = true
-        })
+      const { isBoundary, resetOffset: reachReset, moveToTargetPos } = reachBoundary(e)
+      if (props.circular && isBoundary) {
+        start.value = reachReset
+        offset.value =  moveToTargetPos
+        return
+      }
+      if (Math.abs(e[strVelocity]) < longPressRatio) {
+        handleLongPress(e)
       } else {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, () => {
-          targetIndex.value = selectedIndex
-          start.value = targetOffset
-          offset.value = targetOffset
-          canLoop.value = true
-        })
+        handleEnd(e)
       }
     })
   
