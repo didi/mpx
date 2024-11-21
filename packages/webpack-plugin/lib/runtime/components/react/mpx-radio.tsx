@@ -111,7 +111,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap!(getCustomEvent('tap', evt, { layoutRef }, props))
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
 

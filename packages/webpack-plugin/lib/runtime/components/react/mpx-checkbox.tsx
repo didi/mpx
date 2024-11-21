@@ -46,6 +46,7 @@ export interface CheckboxProps extends Selection {
   'parent-height'?: number;
   children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  _onChange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown, { checked }: { checked: boolean }) => void
 }
 
 const styles = StyleSheet.create({
@@ -90,7 +91,8 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
-      bindtap
+      bindtap,
+      _onChange
     } = props
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
@@ -114,10 +116,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         groupValue[value].checked = checked
       }
       notifyChange && notifyChange(evt)
+      // Called when the switch type attribute is checkbox
+      _onChange && _onChange(evt, { checked })
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap!(getCustomEvent('tap', evt, { layoutRef }, props))
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
 

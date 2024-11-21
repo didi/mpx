@@ -178,7 +178,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const [contentHeight, setContentHeight] = useState(0)
 
   const styleObj = extendObject(
-    { padding: 0 },
+    { padding: 0, backgroundColor: '#fff' },
     style,
     multiline && autoHeight
       ? {
