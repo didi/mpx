@@ -4,10 +4,11 @@
  */
 import { View, ViewProps, ViewStyle } from 'react-native'
 import { useRef, forwardRef, JSX, useState } from 'react'
-import useInnerProps from './getInnerListeners'
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, useLayout } from './utils'
+import useInnerProps from '../getInnerListeners'
+import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import { useTransformStyle, useLayout } from '../utils'
 import { WebView, WebViewMessageEvent } from 'react-native-webview'
+import { generateHTML } from './html'
 
 type Node = {
   type: 'node' | 'text'
@@ -61,7 +62,6 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     'parent-height': parentHeight
   } = props
 
-  const webview = useRef<WebView>(null)
   const nodeRef = useRef(null)
   const [webViewHeight, setWebViewHeight] = useState(0)
 
@@ -104,25 +104,12 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
   return (
     <View
       {...innerProps}
-      style={normalStyle}
     >
       <WebView
-        ref={webview}
-        source={{ html: '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>' + html }}
-        onMessage={(event: WebViewMessageEvent) =>
+        source={{ html: generateHTML(html) }}
+        onMessage={(event: WebViewMessageEvent) => {
           setWebViewHeight(+event.nativeEvent.data)
-        }
-        // https://github.com/react-native-webview/react-native-webview/issues/341
-        injectedJavaScript={`
-          document.documentElement.style.padding = 0;
-          document.documentElement.style.margin = 0;
-          document.body.style.padding = 0;
-          document.body.style.margin = 0;
-          window.ReactNativeWebView.postMessage(document.body.scrollHeight);
-          true;
-        `}
-        onLoadEnd={() => webview.current?.injectJavaScript('window.ReactNativeWebView.postMessage(document.body.scrollHeight);') // android
-      }
+        }}
       >
       </WebView>
     </View>
