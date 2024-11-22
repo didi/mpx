@@ -583,3 +583,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
     return gesture?.current ? [gesture] : []
   })) || []
 }
+
+export function extendObject (...args: Record<string, any>[]) {
+  return Object.assign({}, ...args)
+}
