@@ -458,7 +458,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         if (__mpx_mode__ === 'android') {
           ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content') // 控制statusbar背景颜色
           ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          ReactNative.StatusBar.setBackgroundColor(isCustom ? 'transparent' : pageConfig.statusBarColor) // 控制statusbar背景颜色
+          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+          color && ReactNative.StatusBar.setBackgroundColor(color) // 控制statusbar背景颜色
         }
       }, [])
 
