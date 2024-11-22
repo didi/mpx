@@ -456,10 +456,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
         if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content') // 控制statusbar背景颜色
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
           ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
           const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color) // 控制statusbar背景颜色
+          color && ReactNative.StatusBar.setBackgroundColor(color)
         }
       }, [])
 
