@@ -348,14 +348,19 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    let addModePlugin
-    if (['android', 'harmony'].includes(this.options.mode)) {
-      // 'android' | 'harmony' 下 使用mode = 'ios' 进行兼容兜底
-      addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file', 'ios')
-    } else {
-      addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    const addModeOptions = {
+      fileConditionRules: this.options.fileConditionRules
     }
-
+    const mode = this.options.mode
+    if (mode === 'web' || mode === 'ios' || mode === 'android' || mode === 'harmony') {
+      // 'web' | 'ios' | 'android' | 'harmony' 下，使用implicitMode强制进行平台转换
+      addModeOptions.implicitMode = true
+    }
+    if (mode === 'android' || mode === 'harmony') {
+      // 'android' | 'harmony' 下，使用 mode = 'ios' 进行兼容兜底
+      addModeOptions.defaultMode = 'ios'
+    }
+    const addModePlugin = new AddModePlugin('before-file', this.options.mode, addModeOptions, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
