@@ -319,8 +319,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
         target: getCustomEvent('tap', evt, { layoutRef }, props).target
       }
       const currentPage = getCurrentPage()
-      // const instance = global.__mpx.getCurrentInstance()
-      // handleEvent(currentPage?.onShareAppMessage ? currentPage.onShareAppMessage.call(instance, event) : event)
       handleEvent(currentPage?.onShareAppMessage ? currentPage.onShareAppMessage(event) : event)
     }
 
