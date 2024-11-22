@@ -105,28 +105,35 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
     },
-    __getSlot (name) {
-      const result = []
+    __getSlot (name, slot) {
       const { children } = propsRef.current
       if (children) {
-        if (Array.isArray(children)) {
+        let result = []
+        if (Array.isArray(children) && !hasOwn(children, '__slot')) {
           children.forEach(child => {
-            if (child?.props?.slot === name) {
+            if (hasOwn(child, '__slot')) {
+              if (child.__slot === name) result.push(...child)
+            } else if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (children?.props?.slot === name) {
+          if (hasOwn(children, '__slot')) {
+            if (children.__slot === name) result.push(...children)
+          } else if (children?.props?.slot === name) {
             result.push(children)
           }
         }
-        return result.filter(item => {
+        result = result.filter(item => {
           if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
           this.__dispatchedSlotSet.add(item)
           return true
         })
+        if (!result.length) return null
+        result.__slot = slot
+        return result
       }
-      return result
+      return null
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
