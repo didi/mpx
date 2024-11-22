@@ -31,7 +31,7 @@ export const generateHTML = (html: string) => {
   <script>
     function sendHeight() {
       const dom = document.getElementById('rich-text')
-      window.ReactNativeWebView.postMessage(height: dom.scrollHeight, width: dom.scrollWidth);
+      window.ReactNativeWebView.postMessage(dom.scrollHeight);
     }
     window.onload = sendHeight;
 </script>
