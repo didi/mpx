@@ -77,6 +77,8 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
           classMapKeys.push(selector.nodes[0].value)
+        } else if (selector.nodes.length === 2 && selector.nodes[0].type === 'class' && selector.nodes[1].type === 'pseudo') {
+          classMapKeys.push(selector.nodes[0].value + selector.nodes[1].value)
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
         }

@@ -8,6 +8,7 @@ const {
   breaks,
   textOverflows,
   textWraps,
+  fontSmoothings,
   // fontVariantNumeric,
   // fontVariantNumericBase,
   verticalAligns
@@ -63,6 +64,7 @@ module.exports = [
     writingOrientationsAndModes,
     textDecorations,
     textWraps,
+    fontSmoothings,
     // newFontVariantNumberic,
     newVerticalAlign
   )

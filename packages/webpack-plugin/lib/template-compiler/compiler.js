@@ -1061,17 +1061,48 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
+const pseudoClassUtility = /(hover|active|focus):\S*/
+const groupByPseudo = function (staticClass) {
+  return staticClass
+    .split(' ')
+    .map(item => {
+      const result = item.match(pseudoClassUtility)
+      if (result) {
+        return {
+          key: result[1],
+          value: item + ':' + result[1]
+        }
+      }
+      return null
+    })
+    .filter(Boolean)
+    .reduce((preV, curV) => {
+      const res = { ...preV }
+      const { key, value } = curV
+      res[key] = res[key] || []
+      res[key].push(value)
+      return res
+    }, {})
+}
+
 function processStyleReact (el, options) {
   // process class/wx:class/style/wx:style/wx:show for react native
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
-  // todo hover:xxx -> hover:class 的处理
 
   let staticHoverClass = ''
   if (hoverClassReg.test(el.tag)) {
     staticHoverClass = el.attrsMap['hover-class'] || ''
     staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
+  }
+
+  if (options.hasUnoCSS) {
+    // todo 原有的 class 可以剔除掉
+    const unoPseudoClass = groupByPseudo(staticClass)
+    if (unoPseudoClass.hover) {
+      staticHoverClass = staticHoverClass + unoPseudoClass.hover.join(' ')
+    }
   }
 
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
