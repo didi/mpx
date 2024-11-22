@@ -336,7 +336,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
             height: isCropMode ? imageHeight : '100%',
             ...(isCropMode && cropModeStyle)
           }
-        }, enableFastImage, enableFastImage && (!isWidthFixMode || !isHeightFixMode) ? !!(fixedHeight && fixedWidth) : true)
+        }, enableFastImage, enableFastImage && (isWidthFixMode || isHeightFixMode) ? !!(fixedHeight && fixedWidth) : true)
       }
     </View>
   )
