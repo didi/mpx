@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { NativeSyntheticEvent } from 'react-native'
+import { collectDataset } from '@mpxjs/utils'
 import { omit } from './utils'
 import eventConfigMap from './event.config'
 import {
@@ -9,7 +9,6 @@ import {
   UseInnerPropsConfig,
   InnerRef,
   SetTimeoutReturnType,
-  DataSetType,
   LayoutRef,
   NativeTouchEvent
 } from './types/getInnerListeners'
@@ -37,7 +36,7 @@ const getTouchEvent = (
     currentTarget: {
       ...(event.currentTarget || {}),
       id: id || '',
-      dataset: getDataSet(props),
+      dataset: collectDataset(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
     },
@@ -69,19 +68,6 @@ const getTouchEvent = (
   }
 }
 
-export const getDataSet = (props: Record<string, any>) => {
-  const result: DataSetType = {}
-
-  for (const key in props) {
-    if (key.indexOf('data-') === 0) {
-      const newKey = key.substr(5)
-      result[newKey] = props[key]
-    }
-  }
-
-  return result
-}
-
 export const getCustomEvent = (
   type = '',
   oe: any = {},
@@ -95,7 +81,7 @@ export const getCustomEvent = (
     target: {
       ...(oe.target || {}),
       id: props.id || '',
-      dataset: getDataSet(props),
+      dataset: collectDataset(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
     },
