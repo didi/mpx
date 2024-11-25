@@ -53,6 +53,10 @@ interface MovableViewProps {
   bindvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   catchvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindlongpress?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  catchlongpress?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindtap?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  catchtap?: (event: NativeSyntheticEvent<TouchEvent>) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
   'out-of-bounds'?: boolean;
   'wait-for'?: Array<GestureHandler>;
@@ -108,7 +112,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindlongpress,
+    catchlongpress,
+    bindtap,
+    catchtap
   } = props
 
   const {
@@ -139,6 +147,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
+  const startTimer = useSharedValue<any>(null)
+  const needTap = useSharedValue(true)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -384,9 +394,38 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       bindtouchend && runOnJS(bindtouchend)(e)
       catchtouchend && runOnJS(catchtouchend)(e)
     }
+
+    const handleTriggerPress = (e: any) => {
+      'worklet'
+      extendEvent(e)
+      bindlongpress && runOnJS(bindlongpress)(e)
+      catchlongpress && runOnJS(catchlongpress)(e)
+    }
+
+    const handleTriggerTap = (e: any) => {
+      'worklet'
+      extendEvent(e)
+      bindtap && runOnJS(bindtap)(e)
+      catchtap && runOnJS(catchtap)(e)
+    }
+
+    const checkIsNeedTap = (e: NativeTouchEvent) => {
+      const tapDetailInfo = startPosition.value || { x: 0, y: 0 }
+      const nativeEvent = e.nativeEvent
+      const currentPageX = nativeEvent.changedTouches[0].x
+      const currentPageY = nativeEvent.changedTouches[0].y
+      if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+        needTap.value = false
+        startTimer.value && clearTimeout(startTimer.value)
+        startTimer.value = null
+      }
+    }
+
     const gesturePan = Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
+        startTimer.value = null
+        needTap.value = true
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         isMoving.value = false
         startPosition.value = {
@@ -394,9 +433,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           y: changedTouches.y
         }
         handleTriggerStart(e)
+        if (catchlongpress || bindlongpress) {
+          startTimer.value = setTimeout(() => {
+            needTap.value = false
+            handleTriggerPress(e)
+          }, 350)
+        }
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
+        checkIsNeedTap(e)
         isMoving.value = true
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         if (isFirstTouch.value) {
@@ -428,9 +474,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet'
+        checkIsNeedTap(e)
         isFirstTouch.value = true
         isMoving.value = false
         handleTriggerEnd(e)
+        if (needTap.value) {
+          handleTriggerTap(e)
+        }
         if (disabled) return
         if (!inertia) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
@@ -500,9 +550,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const injectCatchEvent = (props: Record<string, any>) => {
     const eventHandlers: Record<string, any> = {}
     const catchEventList = [
-      { name: 'onTouchStart', value: ['catchtouchstart'] },
-      { name: 'onTouchMove', value: ['catchtouchmove', 'catchvtouchmove', 'catchhtouchmove'] },
-      { name: 'onTouchEnd', value: ['catchtouchend'] }
+      { name: 'onTouchStart', value: ['catchtouchstart', 'catchtap', 'catchlongpress'] },
+      { name: 'onTouchMove', value: ['catchtouchmove', 'catchvtouchmove', 'catchhtouchmove', 'catchtap', 'catchlongpress'] },
+      { name: 'onTouchEnd', value: ['catchtouchend', 'catchtap', 'catchlongpress'] }
     ]
     catchEventList.forEach(event => {
       event.value.forEach(name => {
