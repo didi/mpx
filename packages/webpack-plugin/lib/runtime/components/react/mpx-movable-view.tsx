@@ -409,11 +409,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       catchtap && runOnJS(catchtap)(e)
     }
 
-    const checkIsNeedTap = (e: NativeTouchEvent) => {
+    const checkIsNeedTap = (e: GestureTouchEvent) => {
       const tapDetailInfo = startPosition.value || { x: 0, y: 0 }
-      const nativeEvent = e.nativeEvent
-      const currentPageX = nativeEvent.changedTouches[0].x
-      const currentPageY = nativeEvent.changedTouches[0].y
+      const currentPageX = e.changedTouches[0].x
+      const currentPageY = e.changedTouches[0].y
       if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
         needTap.value = false
         startTimer.value && clearTimeout(startTimer.value)
