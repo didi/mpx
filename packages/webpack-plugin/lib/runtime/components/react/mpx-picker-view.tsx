@@ -76,6 +76,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
+  const showOverlay = Object.keys(pickerOverlayStyle).length > 0
   const [pickMaxH, setPickMaxH] = useState(0)
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
@@ -215,7 +216,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   return (
     <View {...innerProps}>
       <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-      {renderOverlay()}
+      {showOverlay && renderOverlay()}
     </View>
   )
 })
