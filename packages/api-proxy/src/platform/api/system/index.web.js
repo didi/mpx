@@ -1,10 +1,6 @@
 import { envError, isBrowser, throwSSRWarning, successHandle } from '../../../common/js'
 
-function getSystemInfoSync () {
-  if (!isBrowser) {
-    throwSSRWarning('getSystemInfoSync API is running in non browser environments')
-    return
-  }
+const getDeviceInfo = function () {
   const ua = navigator.userAgent.split('(')[1]?.split(')')[0] || ''
   const phones = new Map([
     ['iPhone', /iPhone|iPad|iPod|iOS/i],
@@ -37,20 +33,57 @@ function getSystemInfoSync () {
   } else {
     system = `Android ${ua.replace(/^.*Android ([\d.]+);.*$/, '$1')}`
   }
-
   return {
-    brand: brand,
+    abi: null,
+    deviceAbi: null,
+    benchmarkLevel: null,
+    brand,
     model: brand,
+    system,
+    platform: navigator.platform,
+    cpuType: null,
+    memorySize: null
+  }
+}
+
+const getWindowInfo = function () {
+  return {
     pixelRatio: window.devicePixelRatio,
     screenWidth: window.screen.width,
     screenHeight: window.screen.height,
     windowWidth: document.documentElement.clientWidth,
     windowHeight: document.documentElement.clientHeight,
     statusBarHeight: null,
+    safeArea: null,
+    screenTop: null
+  }
+}
+
+function getSystemInfoSync () {
+  if (!isBrowser) {
+    throwSSRWarning('getSystemInfoSync API is running in non browser environments')
+    return
+  }
+
+  const {
+    pixelRatio,
+    screenWidth,
+    screenHeight,
+    windowWidth,
+    windowHeight,
+    statusBarHeight,
+    safeArea
+  } = getWindowInfo()
+  const {
+    benchmarkLevel,
+    brand,
+    model,
+    system,
+    platform
+  } = getDeviceInfo()
+  const result = Object.assign({
     language: navigator.language,
     version: null,
-    system,
-    platform: navigator.platform,
     fontSizeSetting: null,
     SDKVersion: null,
     benchmarkLevel: null,
@@ -64,9 +97,23 @@ function getSystemInfoSync () {
     notificationSoundAuthorized: null,
     bluetoothEnabled: null,
     locationEnabled: null,
-    wifiEnabled: null,
-    safeArea: null
-  }
+    wifiEnabled: null
+  }, {
+    pixelRatio,
+    screenWidth,
+    screenHeight,
+    windowWidth,
+    windowHeight,
+    statusBarHeight,
+    safeArea
+  }, {
+    benchmarkLevel,
+    brand,
+    model,
+    system,
+    platform
+  })
+  return result
 }
 
 function getSystemInfo (options = {}) {
@@ -79,13 +126,12 @@ function getSystemInfo (options = {}) {
   successHandle(res, options.success, options.complete)
 }
 
-const getDeviceInfo = envError('getDeviceInfo')
-
-const getWindowInfo = envError('getWindowInfo')
+const getLaunchOptionsSync = envError('getLaunchOptionsSync')
 
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
-  getWindowInfo
+  getWindowInfo,
+  getLaunchOptionsSync
 }

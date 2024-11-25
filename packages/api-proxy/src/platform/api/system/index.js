@@ -8,9 +8,12 @@ const getDeviceInfo = ENV_OBJ.getDeviceInfo || envError('getDeviceInfo')
 
 const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
 
+const getLaunchOptionsSync = ENV_OBJ.getLaunchOptionsSync || envError('getLaunchOptionsSync')
+
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
-  getWindowInfo
+  getWindowInfo,
+  getLaunchOptionsSync
 }
