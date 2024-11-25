@@ -277,7 +277,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function createAutoPlay () {
-    'worklet'
     const targetOffset = { x: 0, y: 0 }
     let nextIndex = targetIndex.value
     if (!props.circular) {
