@@ -43,20 +43,20 @@ interface MovableViewProps {
   disabled?: boolean;
   animation?: boolean;
   bindchange?: (event: unknown) => void;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchhtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchvtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindlongpress?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchlongpress?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtap?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  catchtap?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  bindtouchstart?: (event: GestureTouchEvent) => void;
+  catchtouchstart?: (event: GestureTouchEvent) => void;
+  bindtouchmove?: (event: GestureTouchEvent) => void;
+  catchtouchmove?: (event: GestureTouchEvent) => void;
+  catchtouchend?: (event: GestureTouchEvent) => void;
+  bindtouchend?: (event: GestureTouchEvent) => void;
+  bindhtouchmove?: (event:GestureTouchEvent) => void;
+  bindvtouchmove?: (event: GestureTouchEvent) => void;
+  catchhtouchmove?: (event: GestureTouchEvent) => void;
+  catchvtouchmove?: (event: GestureTouchEvent) => void;
+  bindlongpress?: (event: GestureTouchEvent) => void;
+  catchlongpress?: (event:GestureTouchEvent) => void;
+  bindtap?: (event: GestureTouchEvent) => void;
+  catchtap?: (event: GestureTouchEvent) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
   'out-of-bounds'?: boolean;
   'wait-for'?: Array<GestureHandler>;
@@ -395,13 +395,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       catchtouchend && runOnJS(catchtouchend)(e)
     }
 
-    const handleTriggerPress = (e: any) => {
-      'worklet'
-      extendEvent(e)
-      bindlongpress && runOnJS(bindlongpress)(e)
-      catchlongpress && runOnJS(catchlongpress)(e)
-    }
-
     const handleTriggerTap = (e: any) => {
       'worklet'
       extendEvent(e)
@@ -409,15 +402,28 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       catchtap && runOnJS(catchtap)(e)
     }
 
+    const clearStartTimer = () => {
+      startTimer.value && clearTimeout(startTimer.value)
+      startTimer.value = null
+    }
+
     const checkIsNeedTap = (e: GestureTouchEvent) => {
+      'worklet'
       const tapDetailInfo = startPosition.value || { x: 0, y: 0 }
-      const currentPageX = e.changedTouches[0].x
-      const currentPageY = e.changedTouches[0].y
-      if (Math.abs(currentPageX - tapDetailInfo.x) > 1 || Math.abs(currentPageY - tapDetailInfo.y) > 1) {
+      const currentX = e.changedTouches[0].x
+      const currentY = e.changedTouches[0].y
+      if ((Math.abs(currentX - tapDetailInfo.x) > 1 || Math.abs(currentY - tapDetailInfo.y) > 1) && (needTap.value || startTimer.value)) {
         needTap.value = false
-        startTimer.value && clearTimeout(startTimer.value)
-        startTimer.value = null
+        runOnJS(clearStartTimer)()
       }
+    }
+
+    const handleLongPress = (e: GestureTouchEvent) => {
+      startTimer.value = setTimeout(() => {
+        needTap.value = false
+        bindlongpress && bindlongpress(e)
+        catchlongpress && catchlongpress(e)
+      }, 350)
     }
 
     const gesturePan = Gesture.Pan()
@@ -433,10 +439,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
         handleTriggerStart(e)
         if (catchlongpress || bindlongpress) {
-          startTimer.value = setTimeout(() => {
-            needTap.value = false
-            handleTriggerPress(e)
-          }, 350)
+          runOnJS(handleLongPress)(e)
         }
       })
       .onTouchesMove((e: GestureTouchEvent) => {
