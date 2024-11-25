@@ -78,7 +78,7 @@ function navigateBack (options = {}) {
   if (navigation && navigationHelper) {
     const delta = options.delta || 1
     const routeLength = navigation.getState().routes.length
-    if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength - 1)) {
+    if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
