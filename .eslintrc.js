@@ -54,6 +54,7 @@ module.exports = {
         '@typescript-eslint/ban-types': 0,
         '@typescript-eslint/no-empty-interface': 0,
         '@typescript-eslint/no-unused-vars': 0,
+        '@typescript-eslint/no-non-null-assertion': 0,
         camelcase: 0,
       }
     }

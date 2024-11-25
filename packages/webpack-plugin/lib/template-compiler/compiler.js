@@ -1374,7 +1374,8 @@ function processEvent (el, options) {
 function processSlotReact (el, meta) {
   if (el.tag === 'slot') {
     el.slot = {
-      name: getAndRemoveAttr(el, 'name').val
+      name: getAndRemoveAttr(el, 'name').val,
+      slot: getAndRemoveAttr(el, 'slot').val
     }
     meta.options = meta.options || {}
     meta.options.disableMemo = true
@@ -2619,8 +2620,8 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
+    processRefReact(el, meta)
     if (!pass) {
-      processRefReact(el, meta)
       processStyleReact(el, options)
       processEventReact(el)
       processComponentIs(el, options)

@@ -21,6 +21,7 @@ export function callWithErrorHandling (fn, instance, info, args) {
 }
 
 export function wrapMethodsWithErrorHandling (methods, instance) {
+  if (process.env.NODE_ENV === 'production') return methods
   const newMethods = {}
   Object.keys(methods).forEach((key) => {
     if (isFunction(methods[key])) {

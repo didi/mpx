@@ -105,26 +105,33 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
     },
-    __getSlot (name) {
+    __getSlot (name, slot) {
       const { children } = propsRef.current
       if (children) {
-        const result = []
-        if (Array.isArray(children)) {
+        let result = []
+        if (Array.isArray(children) && !hasOwn(children, '__slot')) {
           children.forEach(child => {
-            if (child?.props?.slot === name) {
+            if (hasOwn(child, '__slot')) {
+              if (child.__slot === name) result.push(...child)
+            } else if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (children?.props?.slot === name) {
+          if (hasOwn(children, '__slot')) {
+            if (children.__slot === name) result.push(...children)
+          } else if (children?.props?.slot === name) {
             result.push(children)
           }
         }
-        return result.filter(item => {
+        result = result.filter(item => {
           if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
           this.__dispatchedSlotSet.add(item)
           return true
         })
+        if (!result.length) return null
+        result.__slot = slot
+        return result
       }
       return null
     },
@@ -447,24 +454,20 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        const opt = {}
-        if (__mpx_mode__ === 'android') {
-          // opt = {
-          //   statusBarTranslucent: isCustom,
-          //   statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
-          //   statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
-          // }
-        }
         navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          // headerTitleAlign: 'center',
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          ...opt
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
+        if (__mpx_mode__ === 'android') {
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+          color && ReactNative.StatusBar.setBackgroundColor(color)
+        }
       }, [])
 
       const rootRef = useRef(null)
