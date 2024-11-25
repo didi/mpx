@@ -181,13 +181,22 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     return Math.max(0, Math.min(value[index] || 0, data.length - 1))
   }
 
+  const flatColumnChildren = (data: React.ReactElement) => {
+    const columnData = React.Children.toArray(data?.props?.children)
+    if (columnData.length === 1 && React.isValidElement(columnData[0]) && columnData[0].type === React.Fragment) {
+      // 只有一个 Fragment 嵌套情况
+      return React.Children.toArray(columnData[0].props.children)
+    }
+    return columnData
+  }
+
   const renderPickerColumns = () => {
     const columns = React.Children.toArray(children)
     const renderColumns: React.ReactNode[] = []
     const validValue: number[] = []
     let isInvalid = false
     columns.forEach((item: React.ReactElement, index) => {
-      const columnData = React.Children.toArray(item?.props?.children)
+      const columnData = flatColumnChildren(item)
       const validIndex = validateChildInitialIndex(index, columnData)
       if (validIndex !== value[index]) {
         isInvalid = true
