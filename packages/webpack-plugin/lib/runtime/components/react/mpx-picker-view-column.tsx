@@ -42,7 +42,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
-  console.log(`[mpx-picker-view-column-${columnIndex}] render`, initialIndex)
+
   const {
     normalStyle,
     hasVarDec,
