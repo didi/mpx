@@ -400,6 +400,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [props.current, widthState, heightState])
 
+  useEffect(() => {
+    if (totalElements.value !== children.length) {
+      totalElements.value = children.length
+    }
+  }, [props.children])
+
   function getTargetPosition (eventData: EventDataType) {
     'worklet'
     // 移动的距离
