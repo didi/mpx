@@ -1,6 +1,6 @@
 import { View, NativeSyntheticEvent, Dimensions, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, interpolate } from 'react-native-reanimated'
 
 import React, { JSX, forwardRef, useRef, useEffect, useState, ReactNode, ReactElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -82,6 +82,11 @@ const styles: { [key: string]: Object } = {
     justifyContent: 'center',
     alignItems: 'center'
   },
+  pagerWrapper: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignSelf: 'center',
+  },
   swiper: {
     overflow: 'scroll',
     display: 'flex',
@@ -96,7 +101,11 @@ const dotCommonStyle = {
   marginLeft: 3,
   marginRight: 3,
   marginTop: 3,
-  marginBottom: 3
+  marginBottom: 3,
+  zIndex: 98
+}
+const activeDotStyle = {
+  zIndex: 99
 }
 // 默认前后补位的元素个数
 const patchElementNum = 1
@@ -217,30 +226,45 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     setHeightState(realHeight)
   }
 
+  const dotAnimatedStyle = useAnimatedStyle(() => {
+    const step = dir.value === 'x' ? widthState : heightState
+    const moveStep = dotCommonStyle.width + dotCommonStyle.marginLeft + dotCommonStyle.marginRight
+    if (isNaN(+step)) return {}
+    const inputRange = [-step, 0, step]
+    const outputRange = [-moveStep, 0, moveStep]
+    return {
+      transform: [{
+        translateX: interpolate(-offset.value[dir.value as dirType], inputRange, outputRange)
+      }]
+    }
+  })
+
   function renderPagination () {
-    if (totalElements.value <= 1) return null
+    const stepValue = getStepValue()
+    if (totalElements.value <= 1 || isNaN(+stepValue)) return null
+    const activeColor = activeDotColor || '#007aff'
+    const unActionColor = dotColor || 'rgba(0,0,0,.2)'
+    // 正常渲染所有dots
     const dots: Array<ReactNode> = []
     for (let i = 0; i < totalElements.value; i++) {
-      const dotStyle = useAnimatedStyle(() => {
-        const activeColor = activeDotColor || '#007aff'
-        const unActionColor = dotColor || 'rgba(0,0,0,.2)'
-        return {
-          backgroundColor: i === targetIndex.value ? activeColor : unActionColor
-        }
-      })
-      dots.push(<Animated.View
-        style={[
-          dotCommonStyle,
-          dotStyle
-        ]}
-        key={i}>
-      </Animated.View>)
+      dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
     }
     return (
       <View pointerEvents="none" style = {[styles['pagination_' + [dir.value as dirType]]]}>
-        {dots}
+        <View style = {[styles.pagerWrapper]}>
+          <Animated.View style={[
+            dotCommonStyle,
+            activeDotStyle,
+            {
+              backgroundColor: activeColor,
+              position: 'absolute'
+            },
+            dotAnimatedStyle
+          ]}
+          />
+          {dots}
       </View>
-    )
+    </View>)
   }
 
   function renderItems () {
@@ -330,6 +354,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function getStepValue () {
+    'worklet'
     return dir.value === 'x' ? widthState : heightState
   }
 
@@ -457,11 +482,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function canMove (eventData: EventDataType) {
     'worklet'
     const { translation } = eventData
+    const stepValue = getStepValue()
+    const currentOffset = Math.abs(offset.value[dir.value as dirType])
     if (!props.circular) {
       if (translation < 0) {
-        return targetIndex.value < totalElements.value - 1
+        return currentOffset + Math.abs(translation) < stepValue * (totalElements.value - 1)
       } else {
-        return targetIndex.value >= 0
+        return currentOffset - Math.abs(translation) > 0
       }
     } else {
       return true
@@ -626,7 +653,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     })
     .onEnd((e) => {
       'worklet'
-      const moveDistance = e[strAbso] - preAbsolutePos.value
       const eventData = {
         translation: e[strTrans]
       }
