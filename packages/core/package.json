@@ -39,7 +39,8 @@
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
-    "vue-i18n-bridge": "^9.2.2"
+    "vue-i18n-bridge": "^9.2.2",
+    "@d11/react-native-fast-image": "^8.6.12"
   },
   "peerDependenciesMeta": {
     "vue": {
@@ -82,6 +83,9 @@
       "optional": true
     },
     "react-native-linear-gradient": {
+      "optional": true
+    },
+    "@d11/react-native-fast-image": {
       "optional": true
     }
   },
