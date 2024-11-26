@@ -595,7 +595,7 @@ export function renderImage (
   isRender = true
 ) {
   const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
-  if (!isRender) return <></>
+  if (!isRender) return null
   return <Component {...imageProps} />
 }
 
