@@ -27,7 +27,7 @@ import {
 } from 'react-native'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
-import { useLayout, useTransformStyle, renderImage } from '../utils'
+import { useLayout, useTransformStyle } from '../utils'
 
 export type Mode =
   | 'scaleToFill'
@@ -56,7 +56,6 @@ export interface ImageProps {
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
-  'enable-fast-image'?: boolean
   'parent-width'?: number
   'parent-height'?: number
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
@@ -121,7 +120,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'enable-fast-image': enableFastImage,
     bindload,
     binderror
   } = props
@@ -325,18 +323,18 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   return (
     <View {...innerProps}>
       {
-        loaded && renderImage({
-          source,
-          resizeMode,
-          onLoad: onImageLoad,
-          onError: onImageError,
-          style: {
+        loaded && <RNImage
+          source={source}
+          resizeMode={resizeMode}
+          onLoad={onImageLoad}
+          onError={onImageError}
+          style={{
             ...StyleSheet.absoluteFillObject,
             width: isCropMode ? imageWidth : '100%',
             height: isCropMode ? imageHeight : '100%',
             ...(isCropMode && cropModeStyle)
-          }
-        }, enableFastImage, enableFastImage && (isWidthFixMode || isHeightFixMode) ? !!(fixedHeight && fixedWidth) : true)
+          }}
+        />
       }
     </View>
   )

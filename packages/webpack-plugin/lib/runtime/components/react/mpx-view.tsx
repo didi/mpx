@@ -782,9 +782,22 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = Object.assign({}, innerStyle, layoutStyle)
+
+  enableAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableAnimation)
+  if (enableAnimationRef.current !== enableAnimation) {
+    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+  const finalStyle = enableAnimation
+    ? useAnimationHooks({
+      animation,
+      style: viewStyle
+    })
+    : viewStyle
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: viewStyle,
+    style: finalStyle,
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -799,17 +812,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
-  enableAnimation = enableAnimation || !!animation
-  const enableAnimationRef = useRef(enableAnimation)
-  if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-  const finalStyle = enableAnimation
-    ? useAnimationHooks({
-      animation,
-      style: viewStyle
-    })
-    : viewStyle
   const childNode = wrapWithChildren(props, {
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
@@ -820,10 +822,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     innerStyle,
     enableFastImage
   })
-  return animation?.actions?.length
+  return enableAnimation
     ? (<Animated.View
       {...innerProps}
-      style={finalStyle}
     >
       {childNode}
     </Animated.View>)
