@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useEffect, useRef, useContext } from 'react'
+import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
 import { noop, warn } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
@@ -54,10 +54,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     warn('The web-view component does not support the style prop.')
   }
   const pageId = useContext(RouteContext)
-  const currentPage = getCurrentPage(pageId)
-  if (currentPage) {
-    currentPage.__webViewUrl = src
-  }
+  const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
+
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,
@@ -81,6 +79,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       layoutRef: webViewRef
     }))
   }
+
+  useEffect(() => {
+    if (currentPage) {
+      currentPage.__webViewUrl = src
+    }
+  }, [src, currentPage])
 
   useEffect(() => {
     // 组件卸载时执行

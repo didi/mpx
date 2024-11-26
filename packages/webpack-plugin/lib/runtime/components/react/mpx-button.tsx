@@ -331,7 +331,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       }
       if (currentPage) {
         const defaultMessage = {
-          title: global.__mpx.rnConfig.projectName || 'AwesomeProject',
+          title: global.__mpx.config.rnConfig.projectName || 'AwesomeProject',
           path: currentPage.route || ''
         }
         if (currentPage.onShareAppMessage) {
@@ -349,7 +349,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
         }
       } else {
         warn('Current page not found')
-        handleEvent(event)
+        // Todo handleEvent(event)
       }
     }
 
