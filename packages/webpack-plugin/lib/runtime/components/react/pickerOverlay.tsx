@@ -3,29 +3,14 @@ import { StyleSheet, View, ViewStyle } from 'react-native'
 
 type OverlayProps = {
   itemHeight: number
-  overlayItemStyle?: Record<string, any>
+  overlayItemStyle?: ViewStyle
   overlayContainerStyle?: ViewStyle
 }
 
-const transPx2Number = (value?: string | number) => {
-  if (typeof value === 'string') {
-    const match = value.toString().match(/\d+/g)
-    if (match) {
-      return +match[0]
-    }
-  }
-  return value
-}
-
 const Overlay = ({ itemHeight, overlayItemStyle, overlayContainerStyle }: OverlayProps) => {
-  let { width, borderRadius, ...restStyle } = overlayItemStyle || {}
-  width = transPx2Number(width)
-  borderRadius = transPx2Number(borderRadius)
   return (
     <View style={[styles.overlayContainer, overlayContainerStyle]} pointerEvents={'none'}>
-      <View
-        style={[styles.selection, { height: itemHeight, width, borderRadius }, restStyle]}
-      />
+      <View style={[styles.selection, { height: itemHeight }, overlayItemStyle]} />
     </View>
   )
 }

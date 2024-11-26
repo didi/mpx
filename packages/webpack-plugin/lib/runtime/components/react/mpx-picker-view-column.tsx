@@ -20,7 +20,7 @@ interface ColumnProps {
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
-    itemHeight: string
+    itemHeight: number
   }
   pickerOverlayStyle: Record<string, any>
   columnIndex: number
@@ -64,17 +64,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const touching = useRef(false)
   const scrolling = useRef(false)
+  const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
-  const activeIndex = useRef(initialIndex)
-
-  const pickerItemH = useMemo(
-    () => {
-      const match = (itemHeight + '').match(/\d+/g) || [0]
-      return +match[0] || DefaultPickerItemH
-    },
-    [itemHeight]
-  )
 
   const initialOffset = useMemo(() => ({
     x: 0,
@@ -225,7 +217,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           {...InnerProps}
           style={[
             {
-              height: pickerItemH,
+              height: itemHeight,
               width: '100%',
               opacity,
               transform: [
@@ -279,7 +271,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const renderOverlay = () => (
-    <PickerOverlay itemHeight={pickerItemH} overlayItemStyle={pickerOverlayStyle} />
+    <PickerOverlay itemHeight={itemHeight} overlayItemStyle={pickerOverlayStyle} />
   )
 
   return (
