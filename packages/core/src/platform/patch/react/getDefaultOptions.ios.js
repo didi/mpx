@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -105,28 +105,35 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
     },
-    __getSlot (name) {
-      const result = []
+    __getSlot (name, slot) {
       const { children } = propsRef.current
       if (children) {
-        if (Array.isArray(children)) {
+        let result = []
+        if (isArray(children) && !hasOwn(children, '__slot')) {
           children.forEach(child => {
-            if (child?.props?.slot === name) {
+            if (isObject(child) && hasOwn(child, '__slot')) {
+              if (child.__slot === name) result.push(...child)
+            } else if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (children?.props?.slot === name) {
+          if (isObject(children) && hasOwn(children, '__slot')) {
+            if (children.__slot === name) result.push(...children)
+          } else if (children?.props?.slot === name) {
             result.push(children)
           }
         }
-        return result.filter(item => {
+        result = result.filter(item => {
           if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
           this.__dispatchedSlotSet.add(item)
           return true
         })
+        if (!result.length) return null
+        result.__slot = slot
+        return result
       }
-      return result
+      return null
     },
     __injectedRender: currentInject.render || noop,
     __getRefsData: currentInject.getRefsData || noop,
@@ -134,7 +141,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     _i (val, fn) {
       let i, l, keys, key
       const result = []
-      if (Array.isArray(val) || typeof val === 'string') {
+      if (isArray(val) || typeof val === 'string') {
         for (i = 0, l = val.length; i < l; i++) {
           result.push(fn.call(this, val[i], i))
         }

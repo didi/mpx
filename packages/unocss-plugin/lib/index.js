@@ -62,7 +62,7 @@ function normalizeRules (rules, root) {
       }
       rule = toPosix(rule)
       return {
-        test: (file) => minimatch(file, rule)
+        test: (file) => minimatch(file, rule, { dot: true })
       }
     }
     return false

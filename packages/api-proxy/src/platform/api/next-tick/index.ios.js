@@ -1,1 +1,7 @@
-export * from './index.ali'
+function nextTick (fn) {
+  Promise.resolve().then(fn)
+}
+
+export {
+  nextTick
+}

@@ -82,7 +82,8 @@ function collectDataset (props, needParse = false) {
     if (hasOwn(props, key)) {
       const matched = datasetReg.exec(key)
       if (matched) {
-        dataset[matched[1]] = props[key]
+        const attrName = matched[1].replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+        dataset[attrName] = props[key]
       }
     }
   }
