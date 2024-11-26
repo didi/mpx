@@ -9,7 +9,7 @@ export default class Bus {
   _messageListeners: { [key: string]: (message: Message) => void } = {}
   _queue: Message[] = []
   _send: (message: Message | Message[]) => void
-  _timeoutId: NodeJS.Timeout | null = null; // 用于存储定时器 ID
+  _timeoutId: NodeJS.Timeout | null = null
   constructor (send: (message: Message | Message[]) => void) {
     this._send = send
   }
