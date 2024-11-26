@@ -85,7 +85,7 @@ const styles: { [key: string]: Object } = {
   pagerWrapper: {
     position: 'absolute',
     flexDirection: 'row',
-    alignSelf: 'center',
+    alignSelf: 'center'
   },
   swiper: {
     overflow: 'scroll',
@@ -175,11 +175,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 记录选中元素的索引值
   const targetIndex = useSharedValue(props.current || 0)
   // 记录元素的偏移量
-  const offset = useSharedValue({ x: 0, y: 0 })
+  const offset = useSharedValue(0)
   const strTrans = 'translation' + dir.value.toUpperCase() as StrTransType
   const strAbso = 'absolute' + dir.value.toUpperCase() as StrAbsoType
   const strVelocity = 'velocity' + dir.value.toUpperCase() as StrVelocity
-  const isAutoFirst = useRef(true)
   const arrPages: Array<ReactNode> | ReactNode = renderItems()
   // autoplay的状态下是否被暂停
   const paused = useRef(false)
@@ -193,6 +192,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 用户点击未移动状态下,记录用户上一次操作的transtion 的 direction
   const customTrans = useSharedValue(0)
   const intervalTimer = props.interval || 500
+  totalElements.value = children.length
   const {
     // 存储layout布局信息
     layoutRef,
@@ -234,7 +234,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const outputRange = [-moveStep, 0, moveStep]
     return {
       transform: [{
-        translateX: interpolate(-offset.value[dir.value as dirType], inputRange, outputRange)
+        translateX: interpolate(-offset.value, inputRange, outputRange)
       }]
     }
   })
@@ -301,16 +301,16 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function createAutoPlay () {
-    const targetOffset = { x: 0, y: 0 }
+    let targetOffset = 0
     let nextIndex = targetIndex.value
     if (!props.circular) {
       // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
       if (targetIndex.value === totalElements.value - 1) {
-        runOnJS(stopLoop)()
+        pauseLoop()
         return
       }
       nextIndex += 1
-      targetOffset[dir.value as dirType] = -nextIndex * step.value
+      targetOffset = -nextIndex * step.value
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
@@ -322,20 +322,19 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 默认向右, 向下
       if (nextIndex === totalElements.value - 1) {
         nextIndex = 0
-        targetOffset[dir.value as dirType] = -(totalElements.value + patchElementNum) * step.value
+        targetOffset = -(totalElements.value + patchElementNum) * step.value
         // 执行动画到下一帧
         offset.value = withTiming(targetOffset, {
           duration: easeDuration
         }, () => {
-          const initOffset = { x: 0, y: 0 }
-          initOffset[dir.value as dirType] = -step.value * patchElementNum
+          const initOffset = -step.value * patchElementNum
           // 将开始位置设置为真正的位置
           offset.value = initOffset
           targetIndex.value = nextIndex
         })
       } else {
         nextIndex = targetIndex.value + 1
-        targetOffset[dir.value as dirType] = -(nextIndex + patchElementNum) * step.value
+        targetOffset = -(nextIndex + patchElementNum) * step.value
         // 执行动画到下一帧
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
@@ -360,13 +359,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   function getInitOffset () {
     const stepValue = getStepValue()
-    if (isNaN(+stepValue)) return { x: 0, y: 0 }
-    const targetOffset = { x: 0, y: 0 }
+    if (isNaN(+stepValue)) return 0
+    let targetOffset = 0
     if (props.circular && totalElements.value > 1) {
       const targetIndex = (props.current || 0) + patchElementNum
-      targetOffset[dir.value as dirType] = -stepValue * targetIndex
+      targetOffset = -stepValue * targetIndex
     } else if (props.current && props.current > 0) {
-      targetOffset[dir.value as dirType] = -props.current * stepValue
+      targetOffset = -props.current * stepValue
     }
     return targetOffset
   }
@@ -380,7 +379,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
 
-  function stopLoop () {
+  function pauseLoop () {
     paused.current = true
     clearTimeout(timerId.current)
   }
@@ -415,21 +414,23 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         easing: easeMap[easeingFunc]
       }, () => {
         offset.value = targetOffset
-        isAutoFirst.current = false
-        props.autoplay && isAutoFirst.current && loop()
       })
-    } else if (isAutoFirst.current) {
-      isAutoFirst.current = false
-      offset.value = targetOffset
-      props.autoplay && loop()
     }
   }, [props.current, widthState, heightState])
 
   useEffect(() => {
-    if (totalElements.value !== children.length) {
-      totalElements.value = children.length
+    const stepValue = getStepValue()
+    if (isNaN(+stepValue)) {
+      return
     }
-  }, [props.children])
+    const targetOffset = getInitOffset()
+    if (props.autoplay) {
+      offset.value = targetOffset
+      loop()
+    } else {
+      pauseLoop()
+    }
+  }, [props.autoplay, widthState, heightState])
 
   function getTargetPosition (eventData: EventDataType) {
     'worklet'
@@ -442,7 +443,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     // 真实滚动到的偏移量坐标
     let moveToTargetPos = 0
     // 当前的位置
-    const currentOffset = offset.value[dir.value as dirType]
+    const currentOffset = offset.value
     const currentIndex = Math.abs(currentOffset) / step.value
     const moveToIndex = translation < 0 ? Math.ceil(currentIndex) : Math.floor(currentIndex)
     // 实际应该定位的索引值
@@ -468,14 +469,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     return {
       selectedIndex,
       isCriticalItem,
-      resetOffset: {
-        x: dir.value === 'x' ? -resetOffsetPos : 0,
-        y: dir.value === 'y' ? -resetOffsetPos : 0
-      },
-      targetOffset: {
-        x: dir.value === 'x' ? -moveToTargetPos : offset.value.x,
-        y: dir.value === 'y' ? -moveToTargetPos : offset.value.y
-      }
+      resetOffset: -resetOffsetPos,
+      targetOffset: -moveToTargetPos
     }
   }
 
@@ -483,7 +478,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'worklet'
     const { translation } = eventData
     const stepValue = getStepValue()
-    const currentOffset = Math.abs(offset.value[dir.value as dirType])
+    const currentOffset = Math.abs(offset.value)
     if (!props.circular) {
       if (translation < 0) {
         return currentOffset + Math.abs(translation) < stepValue * (totalElements.value - 1)
@@ -527,14 +522,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'worklet'
     const { translation } = eventData
     // 向右滑动的back:trans < 0， 向左滑动的back: trans < 0
-    const currentOffset = Math.abs(offset.value[dir.value as dirType])
+    const currentOffset = Math.abs(offset.value)
     const curIndex = currentOffset / step.value
     const moveToIndex = (translation < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElementNum
-    const pos = (moveToIndex + patchElementNum) * step.value
-    const targetOffset = {
-      x: dir.value === 'x' ? -pos : 0,
-      y: dir.value === 'y' ? -pos : 0
-    }
+    const targetOffset = (moveToIndex + patchElementNum) * step.value
     offset.value = withTiming(targetOffset, {
       duration: easeDuration,
       easing: easeMap[easeingFunc]
@@ -550,7 +541,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function handleLongPress (eventData: EventDataType) {
     'worklet'
     const { translation } = eventData
-    const currentOffset = Math.abs(offset.value[dir.value as dirType])
+    const currentOffset = Math.abs(offset.value)
     const half = currentOffset % step.value > step.value / 2
     // 向右trans < 0, 向左trans > 0
     const isExceedHalf = translation < 0 ? half : !half
@@ -570,7 +561,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     let isBoundary = false
     let resetOffset = 0
     // Y轴向下滚动, transDistance > 0, 向上滚动 < 0 X轴向左滚动, transDistance > 0
-    const currentOffset = offset.value[dir.value as dirType]
+    const currentOffset = offset.value
     const moveStep = Math.ceil(translation / elementsLength)
     if (translation < 0) {
       const posEnd = (totalElements.value + patchElementNum + 1) * step.value
@@ -597,10 +588,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     return {
       isBoundary,
-      resetOffset: {
-        x: dir.value === 'x' ? -resetOffset : 0,
-        y: dir.value === 'y' ? -resetOffset : 0
-      }
+      resetOffset: -resetOffset
     }
   }
 
@@ -609,7 +597,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'worklet'
       touchfinish.value = false
       cancelAnimation(offset)
-      runOnJS(stopLoop)()
+      runOnJS(pauseLoop)()
       preAbsolutePos.value = e[strAbso]
     })
     .onStart(() => {
@@ -632,10 +620,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       if (isBoundary && props.circular && !touchfinish.value) {
         offset.value = resetOffset
       } else {
-        offset.value = {
-          x: moveDistance + offset.value.x,
-          y: moveDistance + offset.value.y
-        }
+        offset.value = moveDistance + offset.value
       }
       preAbsolutePos.value = touchEventData[strAbso]
     })
@@ -668,9 +653,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   const animatedStyles = useAnimatedStyle(() => {
     if (dir.value === 'x') {
-      return { transform: [{ translateX: offset.value.x }] }
+      return { transform: [{ translateX: offset.value }] }
     } else {
-      return { transform: [{ translateY: offset.value.y }] }
+      return { transform: [{ translateY: offset.value }] }
     }
   })
 
