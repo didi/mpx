@@ -80,7 +80,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
-  activeValueRef.current = value
+  activeValueRef.current = value.slice()
 
   const {
     normalStyle,
