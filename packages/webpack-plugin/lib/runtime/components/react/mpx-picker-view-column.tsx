@@ -217,7 +217,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           {...InnerProps}
           style={[
             {
-              height: itemHeight,
+              height: itemHeight || DefaultPickerItemH,
               width: '100%',
               opacity,
               transform: [
