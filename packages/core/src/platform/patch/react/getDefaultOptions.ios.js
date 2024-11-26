@@ -9,7 +9,7 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { IntersectionObserverContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -272,8 +272,6 @@ function hasPageHook (mpxProxy, hookNames) {
     return false
   })
 }
-
-const RouteContext = createContext(null)
 
 const triggerPageStatusHook = (mpxProxy, event) => {
   mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
