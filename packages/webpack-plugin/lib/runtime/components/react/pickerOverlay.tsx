@@ -1,10 +1,10 @@
 import React from 'react'
-import { StyleSheet, View, ViewStyle } from 'react-native'
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 
 type OverlayProps = {
   itemHeight: number
-  overlayItemStyle?: ViewStyle
-  overlayContainerStyle?: ViewStyle
+  overlayItemStyle?: StyleProp<ViewStyle>
+  overlayContainerStyle?: StyleProp<ViewStyle>
 }
 
 const Overlay = ({ itemHeight, overlayItemStyle, overlayContainerStyle }: OverlayProps) => {
