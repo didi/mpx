@@ -71,12 +71,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     defaultStyle: defaultWebViewStyle
   })
 
-  const _messageList: any[] = []
+  const _messageList = useRef<any[]>([])
   const handleUnload = () => {
     // 这里是 WebView 销毁前执行的逻辑
     bindmessage(getCustomEvent('messsage', {}, {
       detail: {
-        data: _messageList
+        data: _messageList.current
       },
       layoutRef: webViewRef
     }))
@@ -128,7 +128,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        _messageList.push(postData.data)
+        _messageList.current.push(postData.data)
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })
