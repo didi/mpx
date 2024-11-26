@@ -134,6 +134,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.removeMessageListener = removeMessageListener
 
     canvasRef.current.createImageData = createImageData
+    return () => {
+      canvasRef.current.bus?.clearBatchingTimeout()
+    }
   }, [])
 
   const createImageData = (dataArray: Array<number>, width: number, height: number) => {
