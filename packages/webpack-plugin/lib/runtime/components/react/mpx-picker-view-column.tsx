@@ -70,7 +70,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const pickerItemH = useMemo(
     () => {
-      const match = (itemHeight + '').match(/^(\d+)px$/) || [0]
+      const match = (itemHeight + '').match(/\d+/g) || [0]
       return +match[0] || DefaultPickerItemH
     },
     [itemHeight]

@@ -7,18 +7,24 @@ type OverlayProps = {
   overlayContainerStyle?: ViewStyle
 }
 
-const Overlay = ({ itemHeight, overlayItemStyle, overlayContainerStyle }: OverlayProps) => {
-  const itemWidth = overlayItemStyle?.width
-  if (typeof itemWidth === 'string') {
-    const match = itemWidth.match(/^(\d+)px$/)
+const transPx2Number = (value?: string | number) => {
+  if (typeof value === 'string') {
+    const match = value.toString().match(/\d+/g)
     if (match) {
-      overlayItemStyle!.width = +match[1]
+      return +match[0]
     }
   }
+  return value
+}
+
+const Overlay = ({ itemHeight, overlayItemStyle, overlayContainerStyle }: OverlayProps) => {
+  let { width, borderRadius, ...restStyle } = overlayItemStyle || {}
+  width = transPx2Number(width)
+  borderRadius = transPx2Number(borderRadius)
   return (
     <View style={[styles.overlayContainer, overlayContainerStyle]} pointerEvents={'none'}>
       <View
-        style={[{ height: itemHeight }, styles.selection, overlayItemStyle]}
+        style={[styles.selection, { height: itemHeight, width, borderRadius }, restStyle]}
       />
     </View>
   )
