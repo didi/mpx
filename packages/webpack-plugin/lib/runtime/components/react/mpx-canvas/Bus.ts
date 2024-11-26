@@ -58,6 +58,6 @@ export default class Bus {
       this._send(this._queue)
       this._queue = []
       this._timeoutId = null
-    }, 10)
+    }, 16)
   }
 }
