@@ -180,9 +180,13 @@ export default function createApp (option, config = {}) {
         createElement(Stack.Navigator,
           {
             initialRouteName,
-            headerBackButtonDisplayMode: 'minimal',
-            headerMode: 'float',
-            gestureEnabled: true
+            screenOptions: {
+              gestureEnabled: true,
+              // 7.x替换headerBackTitleVisible
+              // headerBackButtonDisplayMode: 'minimal',
+              headerBackTitleVisible: false,
+              headerMode: 'float'
+            }
           },
           ...getPageScreens(initialRouteName, initialParams)
         )
