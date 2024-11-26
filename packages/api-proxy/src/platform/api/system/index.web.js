@@ -1,4 +1,4 @@
-import { envError, isBrowser, throwSSRWarning, successHandle } from '../../../common/js'
+import { isBrowser, throwSSRWarning, successHandle } from '../../../common/js'
 
 const getDeviceInfo = function () {
   const ua = navigator.userAgent.split('(')[1]?.split(')')[0] || ''
@@ -141,7 +141,6 @@ const getLaunchOptionsSync = function () {
   }
   return global.__mpxEnterOptions || {}
 }
-
 
 export {
   getSystemInfo,
