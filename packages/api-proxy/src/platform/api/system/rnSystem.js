@@ -85,10 +85,16 @@ const getLaunchOptionsSync = function () {
   }
 }
 
+const getEnterOptionsSync = function () {
+  const result = getLaunchOptionsSync()
+  return result
+}
+
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
   getWindowInfo,
-  getLaunchOptionsSync
+  getLaunchOptionsSync,
+  getEnterOptionsSync
 }

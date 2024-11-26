@@ -10,10 +10,13 @@ const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
 
 const getLaunchOptionsSync = ENV_OBJ.getLaunchOptionsSync || envError('getLaunchOptionsSync')
 
+const getEnterOptionsSync = ENV_OBJ.getEnterOptionsSync || envError('getEnterOptionsSync')
+
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
   getWindowInfo,
-  getLaunchOptionsSync
+  getLaunchOptionsSync,
+  getEnterOptionsSync
 }

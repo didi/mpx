@@ -128,10 +128,13 @@ function getSystemInfo (options = {}) {
 
 const getLaunchOptionsSync = envError('getLaunchOptionsSync')
 
+const getEnterOptionsSync = envError('getEnterOptionsSync')
+
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
   getWindowInfo,
-  getLaunchOptionsSync
+  getLaunchOptionsSync,
+  getEnterOptionsSync
 }
