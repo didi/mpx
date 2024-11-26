@@ -27,7 +27,9 @@ export {
   // effectScope
   effectScope,
   getCurrentScope,
-  onScopeDispose
+  onScopeDispose,
+  provide,
+  inject
 } from 'vue'
 
 export {

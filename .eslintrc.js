@@ -21,6 +21,7 @@ module.exports = {
     Component: 'readonly',
     Page: 'readonly',
     App: 'readonly',
+    Mixin: 'readonly',
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
     __mpx_dynamic_runtime__: 'readonly',
@@ -53,6 +54,7 @@ module.exports = {
         '@typescript-eslint/ban-types': 0,
         '@typescript-eslint/no-empty-interface': 0,
         '@typescript-eslint/no-unused-vars': 0,
+        '@typescript-eslint/no-non-null-assertion': 0,
         camelcase: 0,
       }
     }

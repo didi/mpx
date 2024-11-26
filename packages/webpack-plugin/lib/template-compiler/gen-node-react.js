@@ -56,8 +56,8 @@ function genNode (node) {
             return map
           }, {})
           if (node.slot) {
-            const name = node.slot.name
-            exp += `__getSlot(${name ? s(name) : ''})`
+            const { name, slot } = node.slot
+            exp += `__getSlot(${name ? s(name) : ''}${slot ? `, ${s(slot)}` : ''})`
           } else {
             exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
             if (node.attrsList.length) {

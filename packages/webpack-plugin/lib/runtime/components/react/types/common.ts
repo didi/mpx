@@ -16,3 +16,5 @@ export type ExtendedViewStyle = ViewStyle & {
 export type ExtendedFunctionComponent = FunctionComponent & {
   isCustomText?: boolean
 }
+
+export type AnyFunc = (...args: ReadonlyArray<any>) => any

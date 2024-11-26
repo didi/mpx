@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
@@ -105,26 +105,33 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       this.__refs = {}
       this.__dispatchedSlotSet = new WeakSet()
     },
-    __getSlot (name) {
+    __getSlot (name, slot) {
       const { children } = propsRef.current
       if (children) {
-        const result = []
-        if (Array.isArray(children)) {
+        let result = []
+        if (isArray(children) && !hasOwn(children, '__slot')) {
           children.forEach(child => {
-            if (child?.props?.slot === name) {
+            if (isObject(child) && hasOwn(child, '__slot')) {
+              if (child.__slot === name) result.push(...child)
+            } else if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (children?.props?.slot === name) {
+          if (isObject(children) && hasOwn(children, '__slot')) {
+            if (children.__slot === name) result.push(...children)
+          } else if (children?.props?.slot === name) {
             result.push(children)
           }
         }
-        return result.filter(item => {
+        result = result.filter(item => {
           if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
           this.__dispatchedSlotSet.add(item)
           return true
         })
+        if (!result.length) return null
+        result.__slot = slot
+        return result
       }
       return null
     },
@@ -134,7 +141,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     _i (val, fn) {
       let i, l, keys, key
       const result = []
-      if (Array.isArray(val) || typeof val === 'string') {
+      if (isArray(val) || typeof val === 'string') {
         for (i = 0, l = val.length; i < l; i++) {
           result.push(fn.call(this, val[i], i))
         }
@@ -366,7 +373,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const proxy = instance.__mpxProxy
 
-    proxy.callHook(REACTHOOKSEXEC)
+    let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
+    if (isObject(hooksResult)) {
+      hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
+      if (isFirst) {
+        const onConflict = proxy.createProxyConflictHandler('react hooks result')
+        Object.keys(hooksResult).forEach((key) => {
+          if (key in proxy.target) {
+            onConflict(key)
+          }
+          proxy.target[key] = hooksResult[key]
+        })
+      } else {
+        Object.assign(proxy.target, hooksResult)
+      }
+    }
 
     useEffect(() => {
       if (!isFirst) {
@@ -392,6 +413,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
+        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+          global.__mpxAppOnLaunch(props.navigation)
+        }
         proxy.callHook(ONLOAD, [props.route.params || {}])
       }
       proxy.mounted()
@@ -430,29 +454,20 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        let opt = {}
-        if (__mpx_mode__ === 'android') {
-          opt = {
-            statusBarTranslucent: isCustom,
-            statusBarStyle: pageConfig.statusBarStyle, // 枚举值 'auto' | 'dark' | 'light' 控制statusbar字体颜色
-            statusBarColor: isCustom ? 'transparent' : pageConfig.statusBarColor // 控制statusbar背景颜色
-          }
-        } else if (__mpx_mode__ === 'ios') {
-          opt = {
-            headerBackTitleVisible: false
-          }
-        }
         navigation.setOptions({
           headerShown: !isCustom,
-          headerShadowVisible: false,
-          headerTitle: pageConfig.navigationBarTitleText || '',
+          title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTitleAlign: 'center',
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          ...opt
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
+        if (__mpx_mode__ === 'android') {
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+          color && ReactNative.StatusBar.setBackgroundColor(color)
+        }
       }, [])
 
       const rootRef = useRef(null)

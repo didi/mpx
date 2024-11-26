@@ -1,10 +1,10 @@
-import { useEffect, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import type { ExtendedFunctionComponent } from './types/common'
+import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -12,7 +12,7 @@ export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
-export const DEFAULT_UNLAY_STYLE = {
+export const HIDDEN_STYLE = {
   opacity: 0
 }
 
@@ -78,7 +78,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
     const [k, v, ...rest] = style.split(':')
     if (rest.length || !v || !k) return styleObj
     const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
-    return Object.assign(styleObj, { [key]: v.trim() })
+    return Object.assign(styleObj, { [key]: global.__formatValue(v.trim()) })
   }, {})
 }
 
@@ -99,7 +99,7 @@ export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as ExtendedFunctionComponent)?.displayName
     const isCustomText = (ele.type as ExtendedFunctionComponent)?.isCustomText
-    return displayName === 'mpx-text' || displayName === 'Text' || !!isCustomText
+    return displayName === 'MpxText' || displayName === 'Text' || !!isCustomText
   }
   return false
 }
@@ -474,7 +474,7 @@ interface LayoutConfig {
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? DEFAULT_UNLAY_STYLE : {}
+  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
   const layoutProps: Record<string, any> = {}
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
@@ -523,4 +523,67 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
     children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
   }
   return children
+}
+
+export const debounce = <T extends AnyFunc> (
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  let timer: any
+  const wrapper = (...args: ReadonlyArray<any>) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+  wrapper.clear = () => {
+    clearTimeout(timer)
+  }
+  return wrapper
+}
+
+export const useDebounceCallback = <T extends AnyFunc> (
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  const debounced = useMemo(() => debounce(func, delay), [func])
+  return debounced
+}
+
+export const useStableCallback = <T extends AnyFunc | null | undefined> (
+  callback: T
+): T extends AnyFunc ? T : () => void => {
+  const ref = useRef<T>(callback)
+  ref.current = callback
+  return useCallback<any>(
+    (...args: any[]) => ref.current?.(...args),
+    []
+  )
+}
+
+export const usePrevious = <T, > (value: T): T | undefined => {
+  const ref = useRef<T | undefined>(undefined)
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
+}
+
+export interface GestureHandler {
+  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>
+  current?: unknown
+}
+
+export function flatGesture (gestures: Array<GestureHandler> = []) {
+  return (gestures && gestures.flatMap((gesture: GestureHandler) => {
+    if (gesture && gesture.nodeRefs) {
+      return gesture.nodeRefs
+        .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
+    }
+    return gesture?.current ? [gesture] : []
+  })) || []
+}
+
+export function extendObject (...args: Record<string, any>[]) {
+  return Object.assign({}, ...args)
 }
