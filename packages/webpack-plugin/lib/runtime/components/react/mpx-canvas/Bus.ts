@@ -60,4 +60,11 @@ export default class Bus {
       this._timeoutId = null
     }, 16)
   }
+
+  clearBatchingTimeout (): void {
+    if (this._timeoutId) {
+      clearTimeout(this._timeoutId)
+      this._timeoutId = null
+    }
+  }
 }
