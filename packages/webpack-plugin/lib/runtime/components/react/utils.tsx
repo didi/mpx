@@ -1,9 +1,10 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
-import { LayoutChangeEvent, TextStyle } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
+import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -585,4 +586,21 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 
 export function extendObject (...args: Record<string, any>[]) {
   return Object.assign({}, ...args)
+}
+
+export function renderImage (
+  imageProps: ImageProps | FastImageProps,
+  enableFastImage = false
+) {
+  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
+  return <Component {...imageProps} />
+}
+
+export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
+  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
+    if (key in styleObj) {
+      acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]
+    }
+    return acc
+  }, {})
 }
