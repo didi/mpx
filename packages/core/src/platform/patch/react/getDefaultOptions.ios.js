@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, useState } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -9,7 +9,7 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -446,6 +446,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
+      const [enabled, setEnabled] = useState(false)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
@@ -483,30 +484,46 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             flex: 1
           }
         },
-        createElement(ReactNative.View, {
-          style: {
-            flex: 1,
-            backgroundColor: pageConfig.backgroundColor || '#ffffff'
+        createElement(
+          KeyboardAvoidContext.Provider,
+          {
+            value: setEnabled
           },
-          ref: rootRef,
-          onLayout
-        },
-          createElement(Provider,
-            null,
-            createElement(RouteContext.Provider,
-              {
-                value: currentPageId
+          createElement(
+            ReactNative.KeyboardAvoidingView,
+            {
+              contentContainerStyle: {
+                flex: 1
               },
-              createElement(IntersectionObserverContext.Provider,
-                {
-                  value: intersectionObservers.current
-                },
-                createElement(defaultOptions,
+              behavior: 'position',
+              enabled
+            },
+            createElement(ReactNative.View, {
+              style: {
+                flex: 1,
+                backgroundColor: pageConfig.backgroundColor || '#ffffff'
+              },
+              ref: rootRef,
+              onLayout
+            },
+              createElement(Provider,
+                null,
+                createElement(RouteContext.Provider,
                   {
-                    navigation,
-                    route,
-                    id: currentPageId
-                  }
+                    value: currentPageId
+                  },
+                  createElement(IntersectionObserverContext.Provider,
+                    {
+                      value: intersectionObservers.current
+                    },
+                    createElement(defaultOptions,
+                      {
+                        navigation,
+                        route,
+                        id: currentPageId
+                      }
+                    )
+                  )
                 )
               )
             )

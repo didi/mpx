@@ -31,6 +31,10 @@ export interface IntersectionObserver {
   }
 }
 
+export interface KeyboardAvoidContextValue {
+  setEnabled: (enabled: boolean) => void
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -48,3 +52,5 @@ export const VarContext = createContext({})
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
 export const RouteContext = createContext<number | null>(null)
+
+export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
