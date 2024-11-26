@@ -13,7 +13,6 @@ import {
   useStableCallback
 } from './utils'
 import type { AnyFunc } from './types/common'
-import PickerOverlay from './pickerOverlay'
 /**
  * ✔ value
  * ✔ bindchange
@@ -76,7 +75,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
-  const showOverlay = Object.keys(indicatorStyle).length === 0
   const [pickMaxH, setPickMaxH] = useState(0)
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
@@ -162,6 +160,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       onColumnItemRawHChange,
       onSelectChange: onSelectChange.bind(null, index),
       initialIndex,
+      pickerOverlayStyle,
       ...extraProps
     }
     const realElement = React.cloneElement(child, wrappedProps)
@@ -209,14 +208,9 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     return renderColumns
   }
 
-  const renderOverlay = () => (
-    <PickerOverlay itemHeight={pickMaxH} overlayItemStyle={pickerOverlayStyle} />
-  )
-
   return (
     <View {...innerProps}>
       <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-      {showOverlay && renderOverlay()}
     </View>
   )
 })

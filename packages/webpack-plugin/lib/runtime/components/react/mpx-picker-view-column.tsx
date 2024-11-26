@@ -4,6 +4,7 @@ import React, { forwardRef, useRef, useState, useMemo, useCallback, useEffect } 
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, usePrevious } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { createFaces } from './pickerFaces'
+import PickerOverlay from './pickerOverlay'
 
 interface ColumnProps {
   children?: React.ReactNode
@@ -21,6 +22,7 @@ interface ColumnProps {
     height: number
     itemHeight: string
   }
+  pickerOverlayStyle: Record<string, any>
   columnIndex: number
 }
 
@@ -39,6 +41,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     getInnerLayout,
     style,
     wrapperStyle,
+    pickerOverlayStyle,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
@@ -64,6 +67,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
   const activeIndex = useRef(initialIndex)
+
+  const pickerItemH = useMemo(
+    () => {
+      const match = (itemHeight + '').match(/^(\d+)px$/) || [0]
+      return +match[0] || DefaultPickerItemH
+    },
+    [itemHeight]
+  )
 
   const initialOffset = useMemo(() => ({
     x: 0,
@@ -207,8 +218,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     columnData.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = `picker-column-${columnIndex}-${index}`
-      const match = (itemHeight + '').match(/\d+/g) || [0]
-      const iHeight = +match[0] || DefaultPickerItemH
       const { opacity, rotateX, translateY } = getTransform(index)
       return (
         <Animated.View
@@ -216,7 +225,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           {...InnerProps}
           style={[
             {
-              height: iHeight,
+              height: pickerItemH,
               width: '100%',
               opacity,
               transform: [
@@ -269,9 +278,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     )
   }
 
+  const renderOverlay = () => (
+    <PickerOverlay itemHeight={pickerItemH} overlayItemStyle={pickerOverlayStyle} />
+  )
+
   return (
     <SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
       {renderScollView()}
+      {renderOverlay()}
     </SafeAreaView>
   )
 })
