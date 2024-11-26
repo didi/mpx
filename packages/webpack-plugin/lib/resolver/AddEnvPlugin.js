@@ -4,6 +4,7 @@ const parseQuery = require('loader-utils').parseQuery
 const addInfix = require('../utils/add-infix')
 const { matchCondition } = require('../utils/match-condition')
 const { JSON_JS_EXT } = require('../utils/const')
+const isCSSFileName = require('../utils/is-css-file-name')
 
 module.exports = class AddEnvPlugin {
   constructor (source, env, fileConditionRules, target) {
@@ -34,7 +35,8 @@ module.exports = class AddEnvPlugin {
       if (!extname || !matchCondition(resourcePath, this.fileConditionRules)) return callback()
       const queryObj = parseQuery(request.query || '?')
       queryObj.infix = `${queryObj.infix || ''}.${env}`
-      obj.query = stringifyQuery(queryObj)
+      // css | stylus | less | sass 中 import file 过滤query，避免在对应的 loader 中无法读取到文件
+      if (!isCSSFileName(extname)) obj.query = stringifyQuery(queryObj)
       obj.path = addInfix(resourcePath, env, extname)
       obj.relativePath = request.relativePath && addInfix(request.relativePath, env, extname)
       resolver.doResolve(target, Object.assign({}, request, obj), 'add env: ' + env, resolveContext, callback)

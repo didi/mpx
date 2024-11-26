@@ -4,6 +4,7 @@ const parseQuery = require('loader-utils').parseQuery
 const { matchCondition } = require('../utils/match-condition')
 const addInfix = require('../utils/add-infix')
 const { JSON_JS_EXT } = require('../utils/const')
+const isCSSFileName = require('../utils/is-css-file-name')
 
 module.exports = class AddModePlugin {
   constructor (source, mode, options, target) {
@@ -37,13 +38,19 @@ module.exports = class AddModePlugin {
       const queryInfix = queryObj.infix
       if (!implicitMode) queryObj.mode = mode
       queryObj.infix = `${queryInfix || ''}.${mode}`
-      obj.query = stringifyQuery(queryObj)
+      // css | stylus | less | sass 中 import file 过滤query，避免在对应的 loader 中无法读取到文件
+      if (!isCSSFileName(extname)) {
+        obj.query = stringifyQuery(queryObj)
+      }
       obj.path = addInfix(resourcePath, mode, extname)
       obj.relativePath = request.relativePath && addInfix(request.relativePath, mode, extname)
       resolver.doResolve(target, Object.assign({}, request, obj), 'add mode: ' + mode, resolveContext, (err, result) => {
         if (defaultMode && !result) {
           queryObj.infix = `${queryInfix || ''}.${defaultMode}`
-          obj.query = stringifyQuery(queryObj)
+          // css | stylus | less | sass 中 import file 过滤query，避免在对应的 loader 中无法读取到文件
+          if (!isCSSFileName(extname)) {
+            obj.query = stringifyQuery(queryObj)
+          }
           obj.path = addInfix(resourcePath, defaultMode, extname)
           resolver.doResolve(target, Object.assign({}, request, obj), 'add mode: ' + defaultMode, resolveContext, (err, result) => {
             callback(err, result)
