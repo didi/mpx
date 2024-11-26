@@ -79,7 +79,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
     const [k, v, ...rest] = style.split(':')
     if (rest.length || !v || !k) return styleObj
     const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
-    return Object.assign(styleObj, { [key]: v.trim() })
+    return Object.assign(styleObj, { [key]: global.__formatValue(v.trim()) })
   }, {})
 }
 
@@ -526,7 +526,7 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   return children
 }
 
-export const debounce = <T extends AnyFunc>(
+export const debounce = <T extends AnyFunc> (
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
@@ -543,7 +543,7 @@ export const debounce = <T extends AnyFunc>(
   return wrapper
 }
 
-export const useDebounceCallback = <T extends AnyFunc>(
+export const useDebounceCallback = <T extends AnyFunc> (
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
@@ -551,7 +551,7 @@ export const useDebounceCallback = <T extends AnyFunc>(
   return debounced
 }
 
-export const useStableCallback = <T extends AnyFunc | null | undefined>(
+export const useStableCallback = <T extends AnyFunc | null | undefined> (
   callback: T
 ): T extends AnyFunc ? T : () => void => {
   const ref = useRef<T>(callback)
@@ -562,7 +562,7 @@ export const useStableCallback = <T extends AnyFunc | null | undefined>(
   )
 }
 
-export const usePrevious = <T, >(value: T): T | undefined => {
+export const usePrevious = <T, > (value: T): T | undefined => {
   const ref = useRef<T | undefined>(undefined)
   useEffect(() => {
     ref.current = value
@@ -571,8 +571,8 @@ export const usePrevious = <T, >(value: T): T | undefined => {
 }
 
 export interface GestureHandler {
-  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>;
-  current?: unknown;
+  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>
+  current?: unknown
 }
 
 export function flatGesture (gestures: Array<GestureHandler> = []) {

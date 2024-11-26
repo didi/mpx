@@ -1374,7 +1374,8 @@ function processEvent (el, options) {
 function processSlotReact (el, meta) {
   if (el.tag === 'slot') {
     el.slot = {
-      name: getAndRemoveAttr(el, 'name').val
+      name: getAndRemoveAttr(el, 'name').val,
+      slot: getAndRemoveAttr(el, 'slot').val
     }
     meta.options = meta.options || {}
     meta.options.disableMemo = true

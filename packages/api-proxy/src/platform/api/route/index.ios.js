@@ -1,5 +1,6 @@
 import { successHandle, failHandle } from '../../../common/js'
 import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
+import { nextTick } from '../next-tick'
 
 function getBasePath (navigation) {
   if (navigation) {
@@ -75,14 +76,23 @@ function navigateBack (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
-    navigation.pop(options.delta || 1)
-    navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'navigateBack:ok' }
-      successHandle(res, options.success, options.complete)
-    }
-    navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `navigateBack:fail ${msg}` }
-      failHandle(res, options.fail, options.complete)
+    const delta = options.delta || 1
+    const routeLength = navigation.getState().routes.length
+    if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
+      nextTick(() => {
+        const res = { errMsg: 'navigateBack:ok' }
+        successHandle(res, options.success, options.complete)
+      })
+    } else {
+      navigation.pop(delta)
+      navigationHelper.lastSuccessCallback = () => {
+        const res = { errMsg: 'navigateBack:ok' }
+        successHandle(res, options.success, options.complete)
+      }
+      navigationHelper.lastFailCallback = (msg) => {
+        const res = { errMsg: `navigateBack:fail ${msg}` }
+        failHandle(res, options.fail, options.complete)
+      }
     }
   }
 }
