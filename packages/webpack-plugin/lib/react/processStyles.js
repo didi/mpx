@@ -56,10 +56,24 @@ module.exports = function (styles, {
           error
         })
         if (ctorType === 'app') {
-          output += `global.__appClassMap = ${shallowStringify(classMap)};\n`
+          output += `
+          let __appClassMap
+          global.__getAppClassMap = function() {
+            if(!__appClassMap) {
+              __appClassMap = ${shallowStringify(classMap)};
+            }
+            return __appClassMap;
+          };\n`
         } else {
-          output += `global.currentInject.injectMethods = {
-            __classMap: ${shallowStringify(classMap)}
+          output += `
+          let __classMap
+          global.currentInject.injectMethods = {
+            __getClassMap: function() {
+              if(!__classMap) {
+                __classMap = ${shallowStringify(classMap)};
+              }
+              return __classMap;
+            }
           };\n`
         }
       } catch (e) {
