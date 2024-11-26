@@ -1,11 +1,13 @@
-import { forwardRef, JSX, useEffect, useRef } from 'react'
+import { forwardRef, JSX, useEffect, useRef, useContext } from 'react'
 import { noop, warn } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
+import { getCurrentPage } from './utils'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation } from 'react-native-webview/lib/WebViewTypes'
+import { RouteContext } from './context'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -50,6 +52,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
   if (props.style) {
     warn('The web-view component does not support the style prop.')
+  }
+  const pageId = useContext(RouteContext)
+  const currentPage = getCurrentPage(pageId)
+  if (currentPage) {
+    currentPage.__webViewUrl = src
   }
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
@@ -100,6 +107,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     }
     binderror(result)
+  }
+  const _changeUrl = function (navState: WebViewNavigation) {
+    if (currentPage) {
+      currentPage.__webViewUrl = navState.url
+    }
   }
   const _message = function (res: WebViewMessageEvent) {
     let data: MessageData = {}
@@ -157,6 +169,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onLoad={_load}
       onError={_error}
       onMessage={_message}
+      onNavigationStateChange={_changeUrl}
       javaScriptEnabled={true}
     ></WebView>
   </Portal>)
