@@ -126,15 +126,22 @@ function getSystemInfo (options = {}) {
   successHandle(res, options.success, options.complete)
 }
 
-const getLaunchOptionsSync = envError('getLaunchOptionsSync')
-
-function getEnterOptionsSync () {
+const getEnterOptionsSync = function () {
   if (!isBrowser) {
     throwSSRWarning('getEnterOptionsSync API is running in non browser environments')
     return
   }
   return global.__mpxEnterOptions || {}
 }
+
+const getLaunchOptionsSync = function () {
+  if (!isBrowser) {
+    throwSSRWarning('getLaunchOptionsSync API is running in non browser environments')
+    return
+  }
+  return global.__mpxEnterOptions || {}
+}
+
 
 export {
   getSystemInfo,
