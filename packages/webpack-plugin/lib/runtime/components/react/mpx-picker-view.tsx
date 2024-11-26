@@ -10,7 +10,8 @@ import {
   parseInlineStyle,
   useTransformStyle,
   useDebounceCallback,
-  useStableCallback
+  useStableCallback,
+  extendObject
 } from './utils'
 import type { AnyFunc } from './types/common'
 /**
@@ -130,16 +131,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
 
   const innerProps = useInnerProps(
     props,
-    {
+    extendObject({
       ref: nodeRef,
-      style: {
-        ...normalStyle,
-        ...layoutStyle,
-        position: 'relative',
-        overflow: 'hidden'
-      },
-      ...layoutProps
-    },
+      style: extendObject(
+        normalStyle,
+        layoutStyle,
+        {
+          position: 'relative',
+          overflow: 'hidden'
+        }
+      ),
+      layoutProps
+    }),
     ['enable-offset'],
     { layoutRef }
   )
@@ -147,22 +150,24 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
     const extraProps = {}
     const childProps = child?.props || {}
-    const wrappedProps = {
-      ...childProps,
-      columnData,
-      ref: cloneRef,
-      columnIndex: index,
-      key: `pick-view-${index}`,
-      wrapperStyle: {
-        height: normalStyle?.height || 0,
-        itemHeight: indicatorH || 0
+    const wrappedProps = extendObject(
+      childProps,
+      {
+        columnData,
+        ref: cloneRef,
+        columnIndex: index,
+        key: `pick-view-${index}`,
+        wrapperStyle: {
+          height: normalStyle?.height || 0,
+          itemHeight: indicatorH || 0
+        },
+        onColumnItemRawHChange,
+        onSelectChange: onSelectChange.bind(null, index),
+        initialIndex,
+        pickerOverlayStyle
       },
-      onColumnItemRawHChange,
-      onSelectChange: onSelectChange.bind(null, index),
-      initialIndex,
-      pickerOverlayStyle,
-      ...extraProps
-    }
+      extraProps
+    )
     const realElement = React.cloneElement(child, wrappedProps)
     return wrapChildren(
       {
