@@ -16,6 +16,7 @@ declare module 'react-native-svg/css' {
 
 declare module '@mpxjs/utils' {
   export function isEmptyObject (obj: Object): boolean
+  export function isFunction (fn: unknown): boolean
   export function hasOwn (obj: Object, key: string): boolean
   export function noop (...arg: any): void
   export function diffAndCloneA<A, B> (a: A, b?: B): {

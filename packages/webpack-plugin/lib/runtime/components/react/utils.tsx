@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isFunction, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
@@ -588,8 +588,8 @@ export function extendObject (...args: Record<string, any>[]) {
   return Object.assign({}, ...args)
 }
 
-export function getCurrentPage () {
+export function getCurrentPage (pageId: number | null) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
-  return pages[pages.length - 1]
+  return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
 }
