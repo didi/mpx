@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text, KeyboardAvoidingView, Platform  } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -775,7 +775,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     style: viewStyle,
     ...enableKeyboard
       ? {
-          behavior: behavior || Platform.OS == 'ios' ? 'padding' : 'height'
+          behavior: behavior || Platform.OS === 'ios' ? 'padding' : 'height'
         }
       : {},
     ...layoutProps,
@@ -787,7 +787,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-start-time',
     'hover-stay-time',
     'hover-style',
-    'hover-class'
+    'hover-class',
+    'behavior'
   ], {
     layoutRef
   })
