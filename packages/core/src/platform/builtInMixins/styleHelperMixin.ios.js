@@ -1,19 +1,22 @@
-import { isObject, isArray, dash2hump, isFunction, cached, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
 
+let { width, height } = Dimensions.get('screen')
+
+Dimensions.addEventListener('change', ({ screen }) => {
+  width = screen.width
+  height = screen.height
+})
+
 function rpx (value) {
-  const { width } = Dimensions.get('screen')
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
   return value * width / 750
 }
 function vw (value) {
-  const { width } = Dimensions.get('screen')
   return value * width / 100
 }
 function vh (value) {
-  const navigation = getFocusedNavigation()
-  const height = navigation?.layout?.height || Dimensions.get('screen').height
   return value * height / 100
 }
 
@@ -24,14 +27,15 @@ const unit = {
 }
 
 function formatValue (value) {
-  let matched
-  if ((matched = numberRegExp.exec(value))) {
-    value = +matched[1]
-  } else if ((matched = unitRegExp.exec(value))) {
-    value = unit[matched[2]](+matched[1])
-  } else if (hairlineRegExp.test(value)) {
-    value = StyleSheet.hairlineWidth
+  const matched = unitRegExp.exec(value)
+  if (matched) {
+    if (!matched[2] || matched[2] === 'px') {
+      return +matched[1]
+    } else {
+      return unit[matched[2]](+matched[1])
+    }
   }
+  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
   return value
 }
 
@@ -106,8 +110,7 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
-const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
@@ -164,14 +167,8 @@ export default function styleHelperMixin () {
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const result = {}
-        const classMap = {}
-        // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-        if (isFunction(global.__getAppClassMap)) {
-          Object.assign(classMap, global.__getAppClassMap())
-        }
-        if (isFunction(this.__getClassMap)) {
-          Object.assign(classMap, this.__getClassMap())
-        }
+        const classMap = this.__getClassMap?.() || {}
+        const appClassMap = global.__getAppClassMap?.() || {}
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -179,6 +176,9 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               Object.assign(result, classMap[className])
+            } else if (appClassMap[className]) {
+              // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
+              Object.assign(result, appClassMap[className])
             } else if (this.props[className] && isObject(this.props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.props[className])

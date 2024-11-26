@@ -3,13 +3,13 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
 import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
 import { queueJob } from '../../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { IntersectionObserverContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -109,16 +109,16 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       const { children } = propsRef.current
       if (children) {
         let result = []
-        if (Array.isArray(children) && !hasOwn(children, '__slot')) {
+        if (isArray(children) && !hasOwn(children, '__slot')) {
           children.forEach(child => {
-            if (hasOwn(child, '__slot')) {
+            if (isObject(child) && hasOwn(child, '__slot')) {
               if (child.__slot === name) result.push(...child)
             } else if (child?.props?.slot === name) {
               result.push(child)
             }
           })
         } else {
-          if (hasOwn(children, '__slot')) {
+          if (isObject(children) && hasOwn(children, '__slot')) {
             if (children.__slot === name) result.push(...children)
           } else if (children?.props?.slot === name) {
             result.push(children)
@@ -141,7 +141,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     _i (val, fn) {
       let i, l, keys, key
       const result = []
-      if (Array.isArray(val) || typeof val === 'string') {
+      if (isArray(val) || typeof val === 'string') {
         for (i = 0, l = val.length; i < l; i++) {
           result.push(fn.call(this, val[i], i))
         }
@@ -272,8 +272,6 @@ function hasPageHook (mpxProxy, hookNames) {
     return false
   })
 }
-
-const RouteContext = createContext(null)
 
 const triggerPageStatusHook = (mpxProxy, event) => {
   mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
