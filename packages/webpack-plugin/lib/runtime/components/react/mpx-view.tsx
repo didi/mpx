@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text, KeyboardAvoidingView } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text, KeyboardAvoidingView, Platform  } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -30,7 +30,6 @@ export interface _ViewProps extends ViewProps {
   'parent-width'?: number
   'parent-height'?: number
   'enable-animation'?: boolean
-  'content-container-style'?: Record<string, any>
   behavior?: 'height' | 'position' | 'padding'
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -672,10 +671,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-keyboard': enableKeyboard,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
-    'content-container-style': contentContainerStyle,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    behavior = 'position',
+    behavior,
     animation
   } = props
 
@@ -777,8 +775,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     style: viewStyle,
     ...enableKeyboard
       ? {
-          contentContainerStyle: contentContainerStyle || { flex: 1, paddingBottom: 20 },
-          behavior
+          behavior: behavior || Platform.OS == 'ios' ? 'padding' : 'height'
         }
       : {},
     ...layoutProps,
