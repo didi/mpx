@@ -330,17 +330,22 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
         webViewUrl: currentPage?.__webViewUrl
       }
       if (currentPage) {
-        const { promise, ...message } = currentPage.onShareAppMessage(event) || {}
-        if (promise) {
-          Promise.race([Promise.resolve(promise), timer(message)])
-            .then((msg) => {
-              handleEvent(Object.assign({
-                title: global.__mpx.rnConfig.projectName || 'AwesomeProject',
-                path: currentPage.route || ''
-              }, msg))
-            })
+        const defaultMessage = {
+          title: global.__mpx.rnConfig.projectName || 'AwesomeProject',
+          path: currentPage.route || ''
+        }
+        if (currentPage.onShareAppMessage) {
+          const { promise, ...message } = currentPage.onShareAppMessage(event) || {}
+          if (promise) {
+            Promise.race([Promise.resolve(promise), timer(message)])
+              .then((msg) => {
+                handleEvent(Object.assign({}, defaultMessage, msg))
+              })
+          } else {
+            handleEvent(Object.assign({}, defaultMessage, message))
+          }
         } else {
-          handleEvent(message)
+          handleEvent(defaultMessage)
         }
       } else {
         warn('Current page not found')
