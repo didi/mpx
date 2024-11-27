@@ -71,7 +71,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const initialOffset = useMemo(() => ({
     x: 0,
     y: itemRawH * initialIndex
-  }), [itemRawH])
+  }), [itemRawH, initialIndex])
 
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
@@ -123,14 +123,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef,
     onLayout: onScrollViewLayout
   })
-
-  const onContentSizeChange = (w: number, h: number) => {
-    scrollViewRef.current?.scrollTo({
-      x: 0,
-      y: itemRawH * initialIndex,
-      animated: false
-    })
-  }
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
@@ -257,7 +249,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         contentContainerStyle={contentContainerStyle}
         contentOffset={initialOffset}
         snapToOffsets={snapToOffsets}
-        onContentSizeChange={onContentSizeChange}
         onScroll={onScroll}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
