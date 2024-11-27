@@ -358,14 +358,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const gesture = useMemo(() => {
     const handleTriggerStart = (e: any) => {
       'worklet'
-      extendEvent(e)
       bindtouchstart && runOnJS(bindtouchstart)(e)
       catchtouchstart && runOnJS(catchtouchstart)(e)
     }
 
     const handleTriggerMove = (e: any) => {
       'worklet'
-      extendEvent(e)
       const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
       const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
 
@@ -390,16 +388,22 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
     const handleTriggerEnd = (e: any) => {
       'worklet'
-      extendEvent(e)
       bindtouchend && runOnJS(bindtouchend)(e)
       catchtouchend && runOnJS(catchtouchend)(e)
     }
 
     const handleTriggerTap = (e: any) => {
       'worklet'
-      extendEvent(e)
       bindtap && runOnJS(bindtap)(e)
       catchtap && runOnJS(catchtap)(e)
+    }
+
+    const handleLongPress = (e: GestureTouchEvent) => {
+      startTimer.value = setTimeout(() => {
+        needTap.value = false
+        bindlongpress && bindlongpress(e)
+        catchlongpress && catchlongpress(e)
+      }, 350)
     }
 
     const clearStartTimer = () => {
@@ -414,29 +418,24 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       const currentY = e.changedTouches[0].y
       if ((Math.abs(currentX - tapDetailInfo.x) > 1 || Math.abs(currentY - tapDetailInfo.y) > 1) && (needTap.value || startTimer.value)) {
         needTap.value = false
-        runOnJS(clearStartTimer)()
+        if (catchlongpress || bindlongpress) {
+          runOnJS(clearStartTimer)()
+        }
       }
-    }
-
-    const handleLongPress = (e: GestureTouchEvent) => {
-      startTimer.value = setTimeout(() => {
-        needTap.value = false
-        bindlongpress && bindlongpress(e)
-        catchlongpress && catchlongpress(e)
-      }, 350)
     }
 
     const gesturePan = Gesture.Pan()
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         startTimer.value = null
         needTap.value = true
-        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         isMoving.value = false
         startPosition.value = {
           x: changedTouches.x,
           y: changedTouches.y
         }
+        extendEvent(e)
         handleTriggerStart(e)
         if (catchlongpress || bindlongpress) {
           runOnJS(handleLongPress)(e)
@@ -444,13 +443,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         checkIsNeedTap(e)
         isMoving.value = true
-        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         if (isFirstTouch.value) {
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
+        extendEvent(e)
         handleTriggerMove(e)
         if (disabled) return
         const changeX = changedTouches.x - startPosition.value.x
@@ -476,12 +476,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet'
-        checkIsNeedTap(e)
         isFirstTouch.value = true
         isMoving.value = false
+        extendEvent(e)
         handleTriggerEnd(e)
+        checkIsNeedTap(e)
         if (needTap.value) {
           handleTriggerTap(e)
+        }
+        if (catchlongpress || bindlongpress) {
+          runOnJS(clearStartTimer)()
         }
         if (disabled) return
         if (!inertia) {
