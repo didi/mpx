@@ -1,5 +1,5 @@
 import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
-import { noop, warn } from '@mpxjs/utils'
+import { noop, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
@@ -48,6 +48,8 @@ interface FormRef {
   postMessage: (value: any) => void;
 }
 
+const navigation = getFocusedNavigation()
+
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
   if (props.style) {
@@ -81,12 +83,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   useEffect(() => {
-    if (currentPage) {
-      currentPage.__webViewUrl = src
-    }
-  }, [src, currentPage])
-
-  useEffect(() => {
     // 组件卸载时执行
     return () => {
       handleUnload()
@@ -112,9 +108,18 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
+
+  const webViewTitle = useRef<string>('')
+  const webViewUrl = useRef<string>('')
   const _changeUrl = function (navState: WebViewNavigation) {
-    if (currentPage) {
-      currentPage.__webViewUrl = navState.url
+    if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
+      if (webViewTitle.current !== navState.title) {
+        navigation && navigation.setOptions({ headerTitle: navState.title })
+      }
+      if (currentPage && webViewUrl.current !== navState.url) {
+        webViewUrl.current = navState.url
+        currentPage.__webViewUrl = navState.url
+      }
     }
   }
   const _message = function (res: WebViewMessageEvent) {
