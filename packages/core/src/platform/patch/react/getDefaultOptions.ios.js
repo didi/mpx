@@ -447,6 +447,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const [enabled, setEnabled] = useState(false)
+      const keyboardAvoidContextValue = useRef({ setEnabled })
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
@@ -487,11 +488,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         createElement(
           KeyboardAvoidContext.Provider,
           {
-            value: setEnabled
+            value: keyboardAvoidContextValue
           },
           createElement(
             ReactNative.KeyboardAvoidingView,
             {
+              style: {
+                flex: 1
+              },
               contentContainerStyle: {
                 flex: 1
               },

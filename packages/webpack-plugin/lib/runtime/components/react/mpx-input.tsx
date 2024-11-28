@@ -52,7 +52,8 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData
+  TextInputSubmitEditingEventData,
+  Keyboard
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout } from './utils'
@@ -263,7 +264,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    adjustPosition && kyboardAvoidContext?.setEnabled(true)
+    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(true)
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -281,7 +282,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    adjustPosition && kyboardAvoidContext?.setEnabled(false)
+    if (adjustPosition) {
+      kyboardAvoidContext?.current?.setEnabled?.(false)
+      Keyboard.dismiss()
+    }
   }
 
   const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
