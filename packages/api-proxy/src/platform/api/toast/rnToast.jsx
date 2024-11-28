@@ -85,7 +85,7 @@ function showToast (options = {}) {
     ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
       <View style={styles.toastContent}>
         <Text numberOfLines={2} style={{ ...styles.toastText, ...(icon === 'none' ? {
-            height: 36
+            height: 18
           } : {}) }}>{title}</Text>
       </View>
     </View>
