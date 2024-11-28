@@ -71,23 +71,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     defaultStyle: defaultWebViewStyle
   })
 
-  const _messageList = useRef<any[]>([])
-  const handleUnload = () => {
-    // 这里是 WebView 销毁前执行的逻辑
-    bindmessage(getCustomEvent('messsage', {}, {
-      detail: {
-        data: _messageList.current
-      },
-      layoutRef: webViewRef
-    }))
-  }
-
-  useEffect(() => {
-    // 组件卸载时执行
-    return () => {
-      handleUnload()
-    }
-  }, [])
   const _load = function (res: WebViewNavigationEvent) {
     const result = {
       type: 'load',
@@ -137,7 +120,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        _messageList.current.push(postData.data)
+        bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
+          detail: {
+            data: postData.data
+          },
+          layoutRef: webViewRef
+        }))
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })
