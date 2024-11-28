@@ -508,7 +508,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
               ref: rootRef,
-              onLayout
+              onLayout,
+              onTouchStart: () => {
+                enabled && ReactNative.Keyboard.dismiss()
+              }
             },
               createElement(Provider,
                 null,

@@ -52,8 +52,7 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData,
-  Keyboard
+  TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout } from './utils'
@@ -282,10 +281,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    if (adjustPosition) {
-      kyboardAvoidContext?.current?.setEnabled?.(false)
-      Keyboard.dismiss()
-    }
+    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(false)
   }
 
   const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
