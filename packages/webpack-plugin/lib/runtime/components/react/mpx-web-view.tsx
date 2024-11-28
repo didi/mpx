@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useEffect, useRef } from 'react'
+import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
 import { noop, warn } from '@mpxjs/utils'
 import { View } from 'react-native'
 import { Portal } from '@ant-design/react-native'
@@ -6,7 +6,9 @@ import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
+import { getCurrentPage } from './utils'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation } from 'react-native-webview/lib/WebViewTypes'
+import { RouteContext } from './context'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -46,6 +48,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
+  const pageId = useContext(RouteContext)
+  const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
+
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,
@@ -59,16 +64,22 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     style: defaultWebViewStyle
   })
 
-  const _messageList: any[] = []
+  const _messageList = useRef<any[]>([])
   const handleUnload = () => {
     // 这里是 WebView 销毁前执行的逻辑
     bindmessage(getCustomEvent('messsage', {}, {
       detail: {
-        data: _messageList
+        data: _messageList.current
       },
       layoutRef: webViewRef
     }))
   }
+
+  useEffect(() => {
+    if (currentPage) {
+      currentPage.__webViewUrl = src
+    }
+  }, [src, currentPage])
 
   useEffect(() => {
     // 组件卸载时执行
@@ -96,6 +107,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
+  const _changeUrl = function (navState: WebViewNavigation) {
+    if (currentPage) {
+      currentPage.__webViewUrl = navState.url
+    }
+  }
   const _message = function (res: WebViewMessageEvent) {
     let data: MessageData = {}
     let asyncCallback
@@ -111,7 +127,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        _messageList.push(postData.data)
+        _messageList.current.push(postData.data)
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })
@@ -167,6 +183,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       source={{ uri: src }}
       ref={webViewRef}
       {...events}
+      onNavigationStateChange={_changeUrl}
       javaScriptEnabled={true}
     ></WebView>
   </Portal>)

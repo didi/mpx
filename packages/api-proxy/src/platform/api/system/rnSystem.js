@@ -74,9 +74,26 @@ const getDeviceInfo = function () {
   return deviceInfo
 }
 
+const getLaunchOptionsSync = function () {
+  const options = global.__mpxEnterOptions || {}
+  const { path, scene, query } = options
+  return {
+    path,
+    scene,
+    query
+  }
+}
+
+const getEnterOptionsSync = function () {
+  const result = getLaunchOptionsSync()
+  return result
+}
+
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
-  getWindowInfo
+  getWindowInfo,
+  getLaunchOptionsSync,
+  getEnterOptionsSync
 }
