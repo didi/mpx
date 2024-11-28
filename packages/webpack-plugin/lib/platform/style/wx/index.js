@@ -460,6 +460,11 @@ module.exports = function getSpec ({ warn, error }) {
       values = values.splice(0, 3)
     }
     const cssMap = []
+    // 复合属性不支持单个css var（css var可以接收单个值可以是复合值，复合值运行时不处理，这里前置提示一下）
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
+      return { prop, value }
+    }
     const lastOne = values[values.length - 1]
     const isAuto = lastOne === 'auto'
     // 枚举值 none initial
@@ -483,11 +488,13 @@ module.exports = function getSpec ({ warn, error }) {
       // 单值 flex: 1 1 <flex-basis>
       // 双值 flex: <flex-grow> 1 <flex-basis>
       // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+      let isUsed = false
       for (let i = 0; i < 2; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) || cssVariableExp.test(value) ? values[i] : 1 })
+        isUsed = isNumber(values[i]) || cssVariableExp.test(values[i])
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isUsed ? values[i] : 1 })
         item && cssMap.push(item)
       }
-      if (!isAuto) {
+      if (!isAuto && !isUsed) {
         // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
         cssMap.push({
           prop: 'flexBasis',
