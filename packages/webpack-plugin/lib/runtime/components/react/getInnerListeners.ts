@@ -1,7 +1,7 @@
-import { useRef } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
 import { omit, extendObject } from './utils'
-import eventConfigMap from './event.config'
+import { eventConfigMap, createTouchEventList } from './event.config'
 import {
   Props,
   AdditionalProps,
@@ -12,6 +12,19 @@ import {
   LayoutRef,
   NativeTouchEvent
 } from './types/getInnerListeners'
+
+const BUBBLE_TOUCH_START = ['catchtouchstart', 'bindtouchstart']
+const BUBBLE_PRESS = ['catchlongpress', 'bindlongpress']
+const CAPTURE_TOUCH_START = ['capture-catchtouchstart', 'capture-bindtouchstart']
+const CAPTURE_PRESS = ['capture-catchlongpress', 'capture-bindlongpress']
+const BUBBLE_TOUCH_MOVE = ['catchtouchmove', 'bindtouchmove']
+const CAPTURE_TOUCH_MOVE = ['capture-catchtouchmove', 'capture-bindtouchmove']
+const BUBBLE_TOUCH_END = ['catchtouchend', 'bindtouchend']
+const CAPTURE_TOUCH_END = ['capture-catchtouchend', 'capture-bindtouchend']
+const BUBBLE_TAP = ['catchtap', 'bindtap']
+const CAPTURE_TAP = ['capture-catchtap', 'capture-bindtap']
+const BUBBLE_TOUCH_CANCEL = ['catchtouchcancel', 'bindtouchcancel']
+const CAPTURE_TOUCH_CANCEL = ['capture-catchtouchcancel', 'capture-bindtouchcancel']
 
 const getTouchEvent = (
   type: string,
@@ -144,11 +157,7 @@ const useInnerProps = (
     return omit(propsRef.current, removeProps)
   }
 
-  function handleEmitEvent (
-    events: string[],
-    type: string,
-    oe: NativeTouchEvent
-  ) {
+  const handleEmitEvent = (events: string[], type: string, oe: NativeTouchEvent) => {
     events.forEach(event => {
       if (propsRef.current[event]) {
         const match = /^(catch|capture-catch):?(.*?)(?:\.(.*))?$/.exec(event)
@@ -160,7 +169,7 @@ const useInnerProps = (
     })
   }
 
-  function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  const checkIsNeedPress = (e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     const tapDetailInfo = ref.current.mpxPressInfo.detail || { x: 0, y: 0 }
     const nativeEvent = e.nativeEvent
     const currentPageX = nativeEvent.changedTouches[0].pageX
@@ -172,12 +181,8 @@ const useInnerProps = (
     }
   }
 
-  function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  const handleTouchstart = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     e.persist()
-    const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
-    const bubblePressEvent = ['catchlongpress', 'bindlongpress']
-    const captureTouchEvent = ['capture-catchtouchstart', 'capture-bindtouchstart']
-    const capturePressEvent = ['capture-catchlongpress', 'capture-bindlongpress']
     ref.current.startTimer[type] = null
     ref.current.needPress[type] = true
     const nativeEvent = e.nativeEvent
@@ -185,8 +190,8 @@ const useInnerProps = (
       x: nativeEvent.changedTouches[0].pageX,
       y: nativeEvent.changedTouches[0].pageY
     }
-    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
-    const currentPressEvent = type === 'bubble' ? bubblePressEvent : capturePressEvent
+    const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_START : CAPTURE_TOUCH_START
+    const currentPressEvent = type === 'bubble' ? BUBBLE_PRESS : CAPTURE_PRESS
     handleEmitEvent(currentTouchEvent, 'touchstart', e)
     const { catchlongpress, bindlongpress, 'capture-catchlongpress': captureCatchlongpress, 'capture-bindlongpress': captureBindlongpress } = propsRef.current
     if (catchlongpress || bindlongpress || captureCatchlongpress || captureBindlongpress) {
@@ -195,25 +200,19 @@ const useInnerProps = (
         handleEmitEvent(currentPressEvent, 'longpress', e)
       }, 350)
     }
-  }
+  }, [])
 
-  function handleTouchmove (e: NativeTouchEvent, type: 'bubble' | 'capture') {
-    const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
-    const captureTouchEvent = ['capture-catchtouchmove', 'capture-bindtouchmove']
-    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
+  const handleTouchmove = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
+    const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_MOVE : CAPTURE_TOUCH_MOVE
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
     checkIsNeedPress(e, type)
-  }
+  }, [])
 
-  function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture') {
+  const handleTouchend = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     // move event may not be triggered
     checkIsNeedPress(e, type)
-    const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
-    const bubbleTapEvent = ['catchtap', 'bindtap']
-    const captureTouchEvent = ['capture-catchtouchend', 'capture-bindtouchend']
-    const captureTapEvent = ['capture-catchtap', 'capture-bindtap']
-    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
-    const currentTapEvent = type === 'bubble' ? bubbleTapEvent : captureTapEvent
+    const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_END : CAPTURE_TOUCH_END
+    const currentTapEvent = type === 'bubble' ? BUBBLE_TAP : CAPTURE_TAP
     ref.current.startTimer[type] && clearTimeout(ref.current.startTimer[type] as SetTimeoutReturnType)
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchend', e)
@@ -223,72 +222,35 @@ const useInnerProps = (
       }
       handleEmitEvent(currentTapEvent, 'tap', e)
     }
-  }
+  }, [])
 
-  function handleTouchcancel (e: NativeTouchEvent, type: 'bubble' | 'capture') {
-    const bubbleTouchEvent = ['catchtouchcancel', 'bindtouchcancel']
-    const captureTouchEvent = ['capture-catchtouchcancel', 'capture-bindtouchcancel']
-    const currentTouchEvent = type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
+  const handleTouchcancel = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
+    const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_CANCEL : CAPTURE_TOUCH_CANCEL
     ref.current.startTimer[type] && clearTimeout(ref.current.startTimer[type] as SetTimeoutReturnType)
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchcancel', e)
-  }
+  }, [])
 
-  const touchEventList = [{
-    eventName: 'onTouchStart',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchstart(e, 'bubble')
-    }
-  }, {
-    eventName: 'onTouchMove',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchmove(e, 'bubble')
-    }
-  }, {
-    eventName: 'onTouchEnd',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchend(e, 'bubble')
-    }
-  }, {
-    eventName: 'onTouchCancel',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchcancel(e, 'bubble')
-    }
-  }, {
-    eventName: 'onTouchStartCapture',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchstart(e, 'capture')
-    }
-  }, {
-    eventName: 'onTouchMoveCapture',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchmove(e, 'capture')
-    }
-  }, {
-    eventName: 'onTouchEndCapture',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchend(e, 'capture')
-    }
-  }, {
-    eventName: 'onTouchCancelCapture',
-    handler: (e: NativeTouchEvent) => {
-      handleTouchcancel(e, 'capture')
-    }
-  }]
+  const touchEventList = useMemo(() =>
+    createTouchEventList(
+      handleTouchstart,
+      handleTouchmove,
+      handleTouchend,
+      handleTouchcancel
+    ), []
+  )
 
   const events: Record<string, (e: NativeTouchEvent) => void> = {}
 
-  let transformedEventKeys: string[] = []
+  const transformedEventKeys = new Set<string>()
   for (const key in eventConfig) {
     if (propsRef.current[key]) {
-      transformedEventKeys = transformedEventKeys.concat(eventConfig[key])
+      eventConfig[key].forEach(eventKey => transformedEventKeys.add(eventKey))
     }
   }
 
-  const finalEventKeys = [...new Set(transformedEventKeys)]
-
   touchEventList.forEach(item => {
-    if (finalEventKeys.includes(item.eventName)) {
+    if (transformedEventKeys.has(item.eventName)) {
       events[item.eventName] = item.handler
     }
   })

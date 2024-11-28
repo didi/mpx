@@ -1,8 +1,9 @@
+import { NativeTouchEvent } from './types/getInnerListeners'
 interface EventConfig {
   [key: string]: string[];
 }
 
-const eventConfigMap: EventConfig = {
+export const eventConfigMap: EventConfig = {
   bindtap: ['onTouchStart', 'onTouchMove', 'onTouchEnd'],
   bindlongpress: ['onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel'],
   bindtouchstart: ['onTouchStart'],
@@ -29,4 +30,49 @@ const eventConfigMap: EventConfig = {
   'capture-catchtouchcancel': ['onTouchCancelCapture']
 }
 
-export default eventConfigMap
+export const createTouchEventList = (
+  handleTouchstart: TouchEventHandler,
+  handleTouchmove: TouchEventHandler,
+  handleTouchend: TouchEventHandler,
+  handleTouchcancel: TouchEventHandler
+) => [{
+  eventName: 'onTouchStart',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchstart(e, 'bubble')
+  }
+}, {
+  eventName: 'onTouchMove',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchmove(e, 'bubble')
+  }
+}, {
+  eventName: 'onTouchEnd',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchend(e, 'bubble')
+  }
+}, {
+  eventName: 'onTouchCancel',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchcancel(e, 'bubble')
+  }
+}, {
+  eventName: 'onTouchStartCapture',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchstart(e, 'capture')
+  }
+}, {
+  eventName: 'onTouchMoveCapture',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchmove(e, 'capture')
+  }
+}, {
+  eventName: 'onTouchEndCapture',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchend(e, 'capture')
+  }
+}, {
+  eventName: 'onTouchCancelCapture',
+  handler: (e: NativeTouchEvent) => {
+    handleTouchcancel(e, 'capture')
+  }
+}]
