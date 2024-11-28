@@ -45,10 +45,10 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { FormContext } from './context'
+import { RouteContext, FormContext } from './context'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -128,7 +128,8 @@ const styles = StyleSheet.create({
   }
 })
 
-const getOpenTypeEvent = (openType: OpenType) => {
+const getOpenTypeEvent = (openType?: OpenType) => {
+  if (!openType) return
   if (!global.__mpx?.config?.rnConfig) {
     warn('Environment not supported')
     return
@@ -147,6 +148,12 @@ const getOpenTypeEvent = (openType: OpenType) => {
 
   return event
 }
+
+const timer = (data: any, time = 3000) => new Promise((resolve) => {
+  setTimeout(() => {
+    resolve(data)
+  }, time)
+})
 
 const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
@@ -210,6 +217,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     bindtouchstart,
     bindtouchend
   } = props
+
+  const pageId = useContext(RouteContext)
 
   const formContext = useContext(FormContext)
 
@@ -310,17 +319,41 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    if (!openType) return
     const handleEvent = getOpenTypeEvent(openType)
+    if (!handleEvent) return
 
     if (openType === 'share') {
-      handleEvent && handleEvent({
+      const currentPage = getCurrentPage(pageId)
+      const event = {
         from: 'button',
-        target: getCustomEvent('tap', evt, { layoutRef }, props).target
-      })
+        target: getCustomEvent('tap', evt, { layoutRef }, props).target,
+        webViewUrl: currentPage?.__webViewUrl
+      }
+      if (currentPage) {
+        const defaultMessage = {
+          title: global.__mpx.config.rnConfig.projectName || 'AwesomeProject',
+          path: currentPage.route || ''
+        }
+        if (currentPage.onShareAppMessage) {
+          const { promise, ...message } = currentPage.onShareAppMessage(event) || {}
+          if (promise) {
+            Promise.race([Promise.resolve(promise), timer(message)])
+              .then((msg) => {
+                handleEvent(Object.assign({}, defaultMessage, msg))
+              })
+          } else {
+            handleEvent(Object.assign({}, defaultMessage, message))
+          }
+        } else {
+          handleEvent(defaultMessage)
+        }
+      } else {
+        warn('Current page not found')
+        // Todo handleEvent(event)
+      }
     }
 
-    if (openType === 'getUserInfo' && handleEvent && bindgetuserinfo) {
+    if (openType === 'getUserInfo' && bindgetuserinfo) {
       Promise.resolve(handleEvent)
         .then((userInfo) => {
           if (typeof userInfo === 'object') {
