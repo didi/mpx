@@ -460,9 +460,7 @@ module.exports = function getSpec ({ warn, error }) {
       values = values.splice(0, 3)
     }
     const cssMap = []
-    // 复合属性不支持单个css var（css var可以接收单个值可以是复合值，复合值运行时不处理，这里前置提示一下）
     if (values.length === 1 && cssVariableExp.test(value)) {
-      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
       return { prop, value }
     }
     const lastOne = values[values.length - 1]
