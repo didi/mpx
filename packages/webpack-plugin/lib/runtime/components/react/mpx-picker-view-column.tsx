@@ -26,8 +26,6 @@ interface ColumnProps {
   columnIndex: number
 }
 
-const DefaultPickerItemH = 36
-
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const {
     columnData,
@@ -56,8 +54,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {})
 
-  const { height: pickerH, itemHeight = DefaultPickerItemH } = wrapperStyle
-  const [itemRawH, setItemRawH] = useState(0)
+  const { height: pickerH, itemHeight } = wrapperStyle
+  const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const touching = useRef(false)
   const scrolling = useRef(false)
@@ -180,7 +178,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           {...InnerProps}
           style={[
             {
-              height: itemHeight || DefaultPickerItemH,
+              height: itemHeight,
               width: '100%'
             }
           ]}
@@ -235,7 +233,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderMask = () => (
     <PickerMask
-      height={paddingHeight}
       itemHeight={itemHeight}
       maskContainerStyle={pickerMaskStyle}
     />

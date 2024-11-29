@@ -64,6 +64,8 @@ const styles: { [key: string]: Object } = {
   }
 }
 
+const DefaultPickerItemH = 36
+
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
   const {
     children,
@@ -154,8 +156,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnIndex: index,
         key: `pick-view-${index}`,
         wrapperStyle: {
-          height: normalStyle?.height || 0,
-          itemHeight: indicatorH || 0
+          height: normalStyle?.height || DefaultPickerItemH,
+          itemHeight: indicatorH || DefaultPickerItemH
         },
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,

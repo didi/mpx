@@ -3,41 +3,19 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import LinearGradient from 'react-native-linear-gradient'
 
 type OverlayProps = {
-  height: number;
-  itemHeight: number;
-  maskContainerStyle?: StyleProp<ViewStyle>;
-};
+  itemHeight: number
+  maskContainerStyle?: StyleProp<ViewStyle>
+}
 
 const _PickerViewMask = ({
-  height,
   itemHeight,
   maskContainerStyle
 }: OverlayProps) => {
   return (
-    <View
-      style={[styles.overlayContainer, maskContainerStyle]}
-      pointerEvents={'none'}
-    >
-      <LinearGradient
-        colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0.5)']}
-        style={[
-          {
-            position: 'relative',
-            top: 0,
-            height
-          }
-        ]}
-      />
-      <LinearGradient
-        colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,1)']}
-        style={[
-          {
-            position: 'relative',
-            top: itemHeight,
-            height
-          }
-        ]}
-      />
+    <View style={[styles.overlayContainer, maskContainerStyle]} pointerEvents={'none'}>
+      <LinearGradient colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0.5)']} style={{ flex: 1 }} />
+      <View style={{ height: itemHeight }} />
+      <LinearGradient colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,1)']} style={{ flex: 1 }} />
     </View>
   )
 }
