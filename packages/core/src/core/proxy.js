@@ -8,10 +8,12 @@ import Mpx from '../index'
 import {
   noop,
   type,
+  isArray,
   isFunction,
   isObject,
   isEmptyObject,
   isPlainObject,
+  isWeb,
   doGetByPath,
   getByPath,
   setByPath,
@@ -25,6 +27,7 @@ import {
   processUndefined,
   getFirstKey,
   callWithErrorHandling,
+  wrapMethodsWithErrorHandling,
   warn,
   error,
   getEnvObj
@@ -47,6 +50,7 @@ import {
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
+import { inject, provide } from '../platform/export/apiInject'
 
 let uid = 0
 
@@ -160,11 +164,15 @@ export default class MpxProxy {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
+      // 在 props/data 初始化之前初始化 inject
+      this.initInject()
       this.initProps()
       this.initSetup()
       this.initData()
       this.initComputed()
       this.initWatch()
+      // 在 props/data 初始化之后初始化 provide
+      this.initProvide()
       unsetCurrentInstance()
     }
 
@@ -218,6 +226,16 @@ export default class MpxProxy {
     if (__mpx_dynamic_runtime__) {
       // 页面/组件销毁清除上下文的缓存
       contextMap.remove(this.uid)
+    }
+    if (!isWeb && this.options.__type__ === 'page') {
+      // 小程序页面销毁时移除对应的 provide
+      if (isFunction(this.target.getPageId)) {
+        const pageId = this.target.getPageId()
+        const providesMap = global.__mpxProvidesMap
+        if (providesMap.__pages[pageId]) {
+          delete providesMap.__pages[pageId]
+        }
+      }
     }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
@@ -277,7 +295,7 @@ export default class MpxProxy {
   initSetup () {
     const setup = this.options.setup
     if (setup) {
-      const setupResult = callWithErrorHandling(setup, this, 'setup function', [
+      let setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
           triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
@@ -294,6 +312,7 @@ export default class MpxProxy {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
       }
+      setupResult = wrapMethodsWithErrorHandling(setupResult, this)
       proxy(this.target, setupResult, undefined, false, this.createProxyConflictHandler('setup result'))
       this.collectLocalKeys(setupResult, (key, val) => !isFunction(val))
     }
@@ -348,6 +367,55 @@ export default class MpxProxy {
         }
       })
     }
+  }
+
+  initProvide () {
+    const provideOpt = this.options.provide
+    if (provideOpt) {
+      const provided = isFunction(provideOpt)
+        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'provide function')
+        : provideOpt
+      if (!isObject(provided)) {
+        return
+      }
+      Object.keys(provided).forEach(key => {
+        provide(key, provided[key])
+      })
+    }
+  }
+
+  initInject () {
+    const injectOpt = this.options.inject
+    if (injectOpt) {
+      this.resolveInject(injectOpt)
+    }
+  }
+
+  resolveInject (injectOpt) {
+    if (isArray(injectOpt)) {
+      const normalized = {}
+      for (let i = 0; i < injectOpt.length; i++) {
+        normalized[injectOpt[i]] = injectOpt[i]
+      }
+      injectOpt = normalized
+    }
+    const injectObj = {}
+    for (const key in injectOpt) {
+      const opt = injectOpt[key]
+      let injected
+      if (isObject(opt)) {
+        if ('default' in opt) {
+          injected = inject(opt.from || key, opt.default, true)
+        } else {
+          injected = inject(opt.from || key)
+        }
+      } else {
+        injected = inject(opt)
+      }
+      injectObj[key] = injected
+    }
+    proxy(this.target, injectObj, undefined, false, this.createProxyConflictHandler('inject'))
+    this.collectLocalKeys(injectObj)
   }
 
   watch (source, cb, options) {

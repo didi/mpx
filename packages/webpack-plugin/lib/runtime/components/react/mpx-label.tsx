@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -25,6 +25,7 @@ export interface LabelProps {
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   (labelProps, ref): JSX.Element => {
     const { textProps, innerProps: props = {} } = splitProps(labelProps)
+    const propsRef = useRef<any>({})
 
     const {
       style = {},
@@ -32,9 +33,10 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       'external-var-context': externalVarContext,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
-      'parent-height': parentHeight,
-      bindtap
+      'parent-height': parentHeight
     } = props
+
+    propsRef.current = props
 
     const defaultStyle = {
       flexDirection: 'row'
@@ -69,10 +71,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       triggerChange: noop
     })
 
-    const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-      contextRef.current.triggerChange?.(evt)
-    }
+    const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
+      const { bindtap } = propsRef.current
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
+      contextRef.current.triggerChange(evt)
+    }, [])
 
     const innerProps = useInnerProps(
       props,
@@ -106,6 +109,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   }
 )
 
-Label.displayName = 'mpx-label'
+Label.displayName = 'MpxLabel'
 
 export default Label

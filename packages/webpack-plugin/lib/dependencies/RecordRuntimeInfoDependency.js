@@ -23,7 +23,7 @@ class RecordRuntimeInfoDependency extends NullDependency {
       template: {},
       json: {},
       style: [],
-      moduleId: '_' + mpx.pathHash(this.resourcePath)
+      moduleId: mpx.getModuleId(this.resourcePath)
     }
 
     const infoConfig = componentInfo[this.blockType]

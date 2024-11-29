@@ -101,6 +101,7 @@ let moduleId
 let isNative
 let hasScoped
 let hasVirtualHost
+let isCustomText
 let runtimeCompile
 let rulesRunner
 let currentEl
@@ -115,6 +116,7 @@ let i18nInjectableComputed = []
 let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
+let usingComponents = []
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -617,6 +619,7 @@ function parse (template, options) {
   isNative = options.isNative
   hasScoped = options.hasScoped
   hasVirtualHost = options.hasVirtualHost
+  isCustomText = options.isCustomText
   filePath = options.filePath
   i18n = options.i18n
   runtimeCompile = options.runtimeCompile
@@ -630,6 +633,9 @@ function parse (template, options) {
   hasOptionalChaining = false
   processingTemplate = false
   rulesResultMap.clear()
+
+  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
+  usingComponents = Object.keys(options.usingComponentsInfo)
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -652,7 +658,7 @@ function parse (template, options) {
     type: 'template',
     testKey: 'tag',
     data: {
-      usingComponents: options.usingComponents
+      usingComponents
     },
     warn: _warn,
     error: _error
@@ -661,6 +667,14 @@ function parse (template, options) {
   const stack = []
   let root
   const meta = {}
+  if (isCustomText) {
+    meta.options = meta.options || {}
+    meta.options.isCustomText = true
+  }
+  if (hasVirtualHost) {
+    meta.options = meta.options || {}
+    meta.options.virtualHost = true
+  }
   let currentParent
   let multiRootError
   // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
@@ -736,23 +750,22 @@ function parse (template, options) {
       const children = currentParent.children
       if (currentParent.tag !== 'text') {
         text = text.trim()
+      } else {
+        text = text.trim() ? text : ''
       }
-
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
 
       if (text) {
-        if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
-          const el = {
-            type: 3,
-            // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
-            text: decodeInMustache(text),
-            parent: currentParent
-          }
-          children.push(el)
-          runtimeCompile ? processTextDynamic(el) : processText(el)
+        const el = {
+          type: 3,
+          // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
+          text: decodeInMustache(text),
+          parent: currentParent
         }
+        children.push(el)
+        runtimeCompile ? processTextDynamic(el) : processText(el)
       }
     },
     comment: function comment (text) {
@@ -795,7 +808,7 @@ function parse (template, options) {
 
   if (!tagNames.has('component') && options.checkUsingComponents) {
     const arr = []
-    options.usingComponents.forEach((item) => {
+    usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
         arr.push(item)
       }
@@ -971,7 +984,7 @@ function processComponentIs (el, options) {
 
   const range = getAndRemoveAttr(el, 'range').val
   const isInRange = makeMap(range || '')
-  el.components = (options.usingComponents || []).filter(i => {
+  el.components = (usingComponents).filter(i => {
     if (!range) return true
     return isInRange(i)
   })
@@ -1361,7 +1374,8 @@ function processEvent (el, options) {
 function processSlotReact (el, meta) {
   if (el.tag === 'slot') {
     el.slot = {
-      name: getAndRemoveAttr(el, 'name').val
+      name: getAndRemoveAttr(el, 'name').val,
+      slot: getAndRemoveAttr(el, 'slot').val
     }
     meta.options = meta.options || {}
     meta.options.disableMemo = true
@@ -1754,6 +1768,15 @@ function processRefReact (el, meta) {
       value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
     }])
   }
+
+  if (el.tag === 'mpx-scroll-view' && el.attrsMap['scroll-into-view']) {
+    addAttrs(el, [
+      {
+        name: '__selectRef',
+        value: '{{ this.__selectRef.bind(this) }}'
+      }
+    ])
+  }
 }
 
 function processRef (el, options, meta) {
@@ -2128,7 +2151,7 @@ function processStyle (el, meta) {
 }
 
 function isRealNode (el) {
-  const virtualNodeTagMap = ['block', 'template', 'import', config[mode].wxs.tag].reduce((map, item) => {
+  const virtualNodeTagMap = ['block', 'template', 'import', 'slot', config[mode].wxs.tag].reduce((map, item) => {
     map[item] = true
     return map
   }, {})
@@ -2136,7 +2159,11 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el, options) {
-  return options.usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+}
+
+function isReactComponent (el, options) {
+  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
@@ -2254,8 +2281,10 @@ function postProcessAliComponentRootView (el, options, meta) {
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
+  const tagName = el.tag
+  const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
   const processAppendAttrsRules = [
-    { name: 'class', value: `${MPX_ROOT_VIEW} host-${moduleId}` }
+    { name: 'class', value: `${MPX_ROOT_VIEW} host-${mid}` }
   ]
   const newAttrs = []
   const allAttrs = cloneAttrsList(el.attrsList)
@@ -2311,11 +2340,6 @@ function postProcessAliComponentRootView (el, options, meta) {
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
     if (ctorType === 'component') {
-      if (mode === 'wx' && hasVirtualHost) {
-        // wx组件注入virtualHost配置
-        meta.options = meta.options || {}
-        meta.options.virtualHost = true
-      }
       if (isWeb(mode) && !hasVirtualHost) {
         // ali组件根节点实体化
         const rootView = createASTElement('view', [
@@ -2332,7 +2356,8 @@ function getVirtualHostRoot (options, meta) {
         return rootView
       }
       if (isReact(mode) && !hasVirtualHost) {
-        const rootView = createASTElement('view', [
+        const tagName = isCustomText ? 'text' : 'view'
+        const rootView = createASTElement(tagName, [
           {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
@@ -2526,7 +2551,7 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (el, meta, options) {
+function processInjectWxs (el, meta) {
   if (el.injectWxsProps && el.injectWxsProps.length) {
     el.injectWxsProps.forEach((injectWxsProp) => {
       const { injectWxsPath, injectWxsModuleName } = injectWxsProp
@@ -2589,16 +2614,19 @@ function processElement (el, root, options, meta) {
   }
 
   if (isReact(mode)) {
+    const pass = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el, options)
-    processEventReact(el)
-    processComponentIs(el, options)
-    processSlotReact(el, meta)
+    if (!pass) {
+      processStyleReact(el, options)
+      processEventReact(el)
+      processComponentIs(el, options)
+      processSlotReact(el, meta)
+    }
     processAttrs(el, options)
     return
   }
@@ -2651,11 +2679,19 @@ function closeElement (el, meta, options) {
   }
 
   const isTemplate = postProcessTemplate(el) || processingTemplate
-  if (!isNative && !isTemplate) {
-    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali') {
+  if (!isTemplate) {
+    if (!isNative) {
+      postProcessComponentIs(el, (child) => {
+        if (!hasVirtualHost && mode === 'ali') {
+          postProcessAliComponentRootView(child, options)
+        } else {
+          postProcessIf(child)
+        }
+      })
+    }
+    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
-    postProcessComponentIs(el)
   }
 
   if (runtimeCompile) {
@@ -2702,7 +2738,7 @@ function cloneAttrsList (attrsList) {
   })
 }
 
-function postProcessComponentIs (el) {
+function postProcessComponentIs (el, postProcessChild) {
   if (el.is && el.components) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
@@ -2724,7 +2760,7 @@ function postProcessComponentIs (el) {
       })
       newChild.exps = el.exps
       addChild(tempNode, newChild)
-      postProcessIf(newChild)
+      postProcessChild(newChild)
     })
 
     if (!el.parent) {

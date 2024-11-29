@@ -1,31 +1,51 @@
 
 import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
-import React, { forwardRef, useRef, useState, useEffect, ReactElement, ReactNode } from 'react'
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
-import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
+import React, { forwardRef, useRef, useState, useMemo, useCallback, useEffect } from 'react'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, usePrevious } from './utils'
+import useNodesRef, { HandlerRef } from './useNodesRef'
+import { createFaces } from './pickerFaces'
+import PickerOverlay from './pickerOverlay'
+
 interface ColumnProps {
-  children: React.ReactNode,
-  selectedIndex: number,
-  onColumnLayoutChange: Function,
-  getInnerLayout: Function,
-  onSelectChange: Function,
+  children?: React.ReactNode
+  columnData: React.ReactNode[]
+  initialIndex: number
+  onColumnItemRawHChange: Function
+  getInnerLayout: Function
+  onSelectChange: Function
   style: {
     [key: string]: any
-  },
+  }
   'enable-var': boolean
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
-    height?: number,
-    itemHeight: string
-  },
-  prefix: number
+    height: number
+    itemHeight: number
+  }
+  pickerOverlayStyle: Record<string, any>
+  columnIndex: number
 }
-const defaultItemHeight = 36
-// 每个Column 都有个外层的高度, 内部的元素高度
-// 默认的高度
+
+// 默认的单个选项高度
+const DefaultPickerItemH = 36
+// 默认一屏可见选项个数
+const visibleCount = 5
+
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
-  const { children, selectedIndex, onColumnLayoutChange, onSelectChange, getInnerLayout, style, wrapperStyle, 'enable-var': enableVar, 'external-var-context': externalVarContext } = props
-  // PickerViewColumn
+  const {
+    columnData,
+    columnIndex,
+    initialIndex,
+    onSelectChange,
+    onColumnItemRawHChange,
+    getInnerLayout,
+    style,
+    wrapperStyle,
+    pickerOverlayStyle,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext
+  } = props
+
   const {
     normalStyle,
     hasVarDec,
@@ -36,122 +56,231 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   } = useTransformStyle(style, { enableVar, externalVarContext })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  // const { innerStyle } = splitStyle(normalStyle)
-  // scrollView的ref
   const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {})
-  // 每个元素的高度
-  let [itemH, setItemH] = useState(0)
+
+  const { height: pickerH, itemHeight = DefaultPickerItemH } = wrapperStyle
+  const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
+  const maxIndex = useMemo(() => columnData.length - 1, [columnData])
+  const touching = useRef(false)
+  const scrolling = useRef(false)
+  const activeIndex = useRef(initialIndex)
+  const prevIndex = usePrevious(initialIndex)
+  const prevMaxIndex = usePrevious(maxIndex)
+
+  const initialOffset = useMemo(() => ({
+    x: 0,
+    y: itemRawH * initialIndex
+  }), [itemRawH])
+
+  const snapToOffsets = useMemo(
+    () => columnData.map((_, i) => i * itemRawH),
+    [columnData, itemRawH]
+  )
+
+  const contentContainerStyle = useMemo(() => {
+    return [
+      {
+        paddingVertical: Math.round(pickerH - itemRawH) / 2
+      }
+    ]
+  }, [pickerH, itemRawH])
 
   useEffect(() => {
-    if (selectedIndex && itemH) {
-      const offsetY = selectedIndex * itemH
-      scrollViewRef.current?.scrollTo({ x: 0, y: offsetY, animated: true })
+    if (
+      !scrollViewRef.current ||
+      !itemRawH ||
+      touching.current ||
+      scrolling.current ||
+      prevIndex == null ||
+      initialIndex === prevIndex ||
+      initialIndex === activeIndex.current ||
+      maxIndex !== prevMaxIndex
+    ) {
+      return
     }
-  }, [selectedIndex, itemH])
+
+    activeIndex.current = initialIndex
+    scrollViewRef.current.scrollTo({
+      x: 0,
+      y: itemRawH * initialIndex,
+      animated: false
+    })
+  }, [itemRawH, initialIndex])
 
   const onScrollViewLayout = () => {
     getInnerLayout && getInnerLayout(layoutRef)
   }
 
   const {
-    // 存储layout布局信息
     layoutRef,
     layoutProps
-  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: onScrollViewLayout })
+  } = useLayout({
+    props,
+    hasSelfPercent,
+    setWidth,
+    setHeight,
+    nodeRef: scrollViewRef,
+    onLayout: onScrollViewLayout
+  })
+
+  const onContentSizeChange = (w: number, h: number) => {
+    scrollViewRef.current?.scrollTo({
+      x: 0,
+      y: itemRawH * initialIndex,
+      animated: false
+    })
+  }
 
   const onItemLayout = (e: LayoutChangeEvent) => {
-    const layout = e.nativeEvent.layout
-    if (layout.height && itemH !== layout.height) {
-      itemH = layout.height
-      setItemH(layout.height)
-      onColumnLayoutChange && onColumnLayoutChange({ height: layout.height * 5 })
+    const { height: rawH } = e.nativeEvent.layout
+    if (rawH && itemRawH !== rawH) {
+      setItemRawH(rawH)
+      onColumnItemRawHChange(rawH)
     }
+  }
+
+  const onTouchStart = () => {
+    touching.current = true
+  }
+
+  const onTouchEnd = () => {
+    touching.current = false
+  }
+
+  const onTouchCancel = () => {
+    touching.current = false
+  }
+
+  const onMomentumScrollBegin = () => {
+    scrolling.current = true
   }
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (scrollViewRef && itemH) {
-      const { y: scrollY } = e.nativeEvent.contentOffset
-      const selIndex = Math.floor(scrollY / itemH)
-      onSelectChange(selIndex)
+    scrolling.current = false
+    if (!itemRawH) {
+      return
+    }
+    const { y: scrollY } = e.nativeEvent.contentOffset
+    let calcIndex = Math.round(scrollY / itemRawH)
+    activeIndex.current = calcIndex
+    if (calcIndex !== initialIndex) {
+      calcIndex = Math.max(0, Math.min(calcIndex, maxIndex)) || 0
+      onSelectChange(calcIndex)
     }
   }
 
-  const renderInnerchild = () => {
-    // Fragment 节点
-    let realElement: Array<ReactNode> = []
-    const getRealChilds = () => {
-      if (Array.isArray(children)) {
-        realElement = children
-      } else {
-        const tempChild = children as ReactElement
-        if (tempChild.props.children && tempChild.props.children) {
-          realElement = tempChild.props.children
-        } else {
-          realElement = [children]
-        }
+  const offsetY = useRef(new Animated.Value(0)).current
+
+  const onScroll = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: offsetY } } }], {
+        useNativeDriver: true
+      }),
+    [offsetY]
+  )
+
+  const faces = useMemo(() => createFaces(itemRawH, visibleCount), [itemRawH])
+
+  const getTransform = useCallback(
+    (index: number) => {
+      const inputRange = faces.map((f) => itemRawH * (index + f.index))
+      return {
+        opacity: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => x.opacity),
+          extrapolate: 'clamp'
+        }),
+        rotateX: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => `${x.deg}deg`),
+          extrapolate: 'extend'
+        }),
+        translateY: offsetY.interpolate({
+          inputRange: inputRange,
+          outputRange: faces.map((x) => x.offsetY),
+          extrapolate: 'extend'
+        })
       }
-      return realElement
-    }
+    },
+    [offsetY, faces, itemRawH]
+  )
 
-    const realChilds = getRealChilds()
-    const arrChild = realChilds.map((item: React.ReactNode, index: number) => {
+  const renderInnerchild = () =>
+    columnData.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
-      const strKey = 'picker' + props.prefix + '-column' + index
-      const arrHeight = (wrapperStyle.itemHeight + '').match(/\d+/g) || []
-      const iHeight = (arrHeight[0] || defaultItemHeight) as number
-      return <View key={strKey} {...InnerProps} style={[{ height: iHeight, width: '100%' }]}>
-        {wrapChildren(
-          {
-            children: item
-          },
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )}
-      </View>
+      const strKey = `picker-column-${columnIndex}-${index}`
+      const { opacity, rotateX, translateY } = getTransform(index)
+      return (
+        <Animated.View
+          key={strKey}
+          {...InnerProps}
+          style={[
+            {
+              height: itemHeight || DefaultPickerItemH,
+              width: '100%',
+              opacity,
+              transform: [
+                { translateY },
+                { rotateX },
+                { perspective: 1000 } // 适配 Android
+              ]
+            }
+          ]}
+        >
+          {wrapChildren(
+            { children: item },
+            {
+              hasVarDec,
+              varContext: varContextRef.current,
+              textStyle,
+              textProps
+            }
+          )}
+        </Animated.View>
+      )
     })
-    const totalHeight = itemH * 5
-    if (wrapperStyle.height && totalHeight !== wrapperStyle.height) {
-      const fix = Math.ceil((totalHeight - wrapperStyle.height) / 2)
-      arrChild.unshift(<View key="picker-column-0" style={[{ height: itemH - fix }]}></View>)
-      arrChild.unshift(<View key="picker-column-1" style={[{ height: itemH }]}></View>)
-      arrChild.push(<View key="picker-column-2" style={[{ height: itemH }]}></View>)
-      arrChild.push(<View key="picker-column-3" style={[{ height: itemH - fix }]}></View>)
-    } else {
-      arrChild.unshift(<View key="picker-column-0" style={[{ height: itemH }]}></View>)
-      arrChild.unshift(<View key="picker-column-1" style={[{ height: itemH }]}></View>)
-      arrChild.push(<View key="picker-column-2" style={[{ height: itemH }]}></View>)
-      arrChild.push(<View key="picker-column-3" style={[{ height: itemH }]}></View>)
-    }
-    return arrChild
-  }
 
   const renderScollView = () => {
-    return (<Animated.ScrollView
-      horizontal={false}
-      ref={scrollViewRef}
-      bounces={false}
-      scrollsToTop={false}
-      removeClippedSubviews={true}
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      pagingEnabled={false}
-      snapToInterval={itemH}
-      automaticallyAdjustContentInsets={false}
-      {...layoutProps}
-      onMomentumScrollEnd={onMomentumScrollEnd}>
+    return (
+      <Animated.ScrollView
+        ref={scrollViewRef}
+        bounces={true}
+        horizontal={false}
+        pagingEnabled={false}
+        nestedScrollEnabled={true}
+        removeClippedSubviews={true}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        {...layoutProps}
+        scrollEventThrottle={16}
+        contentContainerStyle={contentContainerStyle}
+        contentOffset={initialOffset}
+        snapToOffsets={snapToOffsets}
+        onContentSizeChange={onContentSizeChange}
+        onScroll={onScroll}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+      >
         {renderInnerchild()}
-    </Animated.ScrollView>)
+      </Animated.ScrollView>
+    )
   }
 
-  return (<SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
-    { renderScollView() }
-  </SafeAreaView>)
+  const renderOverlay = () => (
+    <PickerOverlay itemHeight={itemHeight} overlayItemStyle={pickerOverlayStyle} />
+  )
+
+  return (
+    <SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
+      {renderScollView()}
+      {renderOverlay()}
+    </SafeAreaView>
+  )
 })
 
-_PickerViewColumn.displayName = 'mpx-picker-view-column'
+_PickerViewColumn.displayName = 'MpxPickerViewColumn'
 export default _PickerViewColumn
