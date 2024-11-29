@@ -391,7 +391,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-
   return (
     <View {...innerProps}>
       {
