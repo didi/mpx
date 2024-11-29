@@ -73,15 +73,15 @@ class EffectScope {
     }
   }
 
-  resume () {
+  resume (ignoreDirty = false) {
     if (this.active) {
       let i, l
       for (i = 0, l = this.effects.length; i < l; i++) {
-        this.effects[i].resume()
+        this.effects[i].resume(ignoreDirty)
       }
       if (this.scopes) {
         for (i = 0, l = this.scopes.length; i < l; i++) {
-          this.scopes[i].resume()
+          this.scopes[i].resume(ignoreDirty)
         }
       }
     }

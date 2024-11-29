@@ -1,20 +1,12 @@
 <template>
-  <video
-    ref="_mpx_video_ref"
-    :class="classList"
-    webkit-playsinline="true" playsinline="true" x5-playsinline="true"
-    :src="src"
-    :controls="showControlsTool"
-    :autoplay="autoplay"
-    :loop="loop"
-    :muted="mutedCopy"
-    :poster="poster"
+  <div
+   ref="_mpx_video_ref"
   >
-  </video>
+  </div>
 </template>
-
 <script>
-  import { inheritEvent, extendEvent } from './getInnerListeners'
+  import { inheritEvent } from './getInnerListeners'
+  import miniPlayer from './mini-video-controls.min.js'
 
   export default {
     name: 'mpx-video',
@@ -54,12 +46,16 @@
         type: Boolean,
         default: false
       },
-      initialTime: { // done
+      initialTime: {
         type: Number,
         default: 0
       },
       direction: Number,
       showProgress: { // done
+        type: Boolean,
+        default: true
+      },
+      showBottomProgress: { // done
         type: Boolean,
         default: true
       },
@@ -123,132 +119,184 @@
       showScreenLockButton: {
         type: Boolean,
         default: false
-      }
+      },
+      playsinline: {
+      type: Boolean,
+      default: true
+    }
     },
     data () {
       return {
-        showControlsTool: this.controls,
-        mutedCopy: this.muted,
-        classList: ''
+      }
+    },
+    computed: {
+      playsinlineAttr () {
+        if (!this.playsinline) return {}
+        return {
+          'webkit-playsinline': true,
+          'playsinline': true,
+          'x5-playsinline': true,
+          'x5-video-orientation': 'landscape|portrait'
+        }
+      }
+  },
+  watch: {
+      muted: function (val) {
+        const volume = val ? 0 : 0.5
+        this._player.volume(volume, true, false)
+        this._player.video.muted = val
+      },
+      controls: function (show) {
+        this.$emit('controlstoggle', inheritEvent('controlstoggle', {}, { show }))
       }
     },
     mounted () {
+      const videoNode = this.$refs['_mpx_video_ref']
+      this._player = new miniPlayer({
+        container: videoNode,
+        autoplay: this.autoplay,
+        loop: this.loop,
+        hotkey: true,
+        airplay: false,
+        video: {
+          url: this.src,
+          pic: this.controls ? this.poster : '' // log 若 controls 属性值为 false 则设置 poster 无效
+        }
+      })
+      this.initPlayer()
       this.initStyle()
       this.initEvent()
     },
     methods: {
-      initStyle () {
-        const videoNode = this.$refs['_mpx_video_ref']
+      initPlayer () {
+        if (this.playsinline) {
+          this._player.video.setAttribute('webkit-playsinline', true)
+          this._player.video.setAttribute('playsinline', true)
+          this._player.video.setAttribute('x5-playsinline', true)
+          this._player.video.setAttribute('x5-video-orientation', true)
+        }
+        if (this.muted) {
+          this._player.volume(0, true, false)
+          this._player.video.muted = this.muted
+        }
+        let muted = this.muted
+        this._player.template.volumeButtonIcon.addEventListener('click', () => {
+          muted = !muted
+          const volume = muted ? 0 : 0.5
+          this._player.volume(volume, true, false)
+          this._player.video.muted = muted
+        })
         if (this.initialTime) {
-          videoNode.currentTime = this.initialTime
+          this._player.seek(this.initialTime)
         }
-        if (this.autoplay) { // log 解决autoplay无法自动播放问题
-          this.mutedCopy = true
-        }
-        if (!this.showProgress) this.classList += ' mpx-no-show_progress'
-        if (!this.showFullscreenBtn) this.classList += ' mpx-no-show_fullscreen_btn'
-        if (!this.showPlayBtn) this.classList += ' mpx-no-show_play_btn'
-        if (!this.showCenterPlayBtn) this.classList += ' mpx-no-show_center_play_btn'
-        if (!this.showMuteBtn) this.classList += ' mpx-no-show_mute_btn'
+      },
+      initStyle () {
+
+        if (!this.controls) this._player.container.classList.add('mpx-no-show_controls')
+
+        if (!this.showBottomProgress) this._player.container.classList.add('mpx-no-show_progress')
+
+        /**
+           showProgress若不设置，宽度大于240时才会显示
+        */
+        if (!this.showProgress || (this._player.container.offsetWidth < 240 && this.showProgress)) this._player.container.classList.add('mpx-no-show_progress')
+
+        if (!this.showFullscreenBtn) this._player.container.classList.add('mpx-no-show_fullscreen_btn')
+
+        if (!this.showPlayBtn) this._player.container.classList.add('mpx-no-show_play_btn')
+
+        if (!this.showCenterPlayBtn) this._player.container.classList.add('mpx-no-show_center_play_btn')
+
+        if (!this.showMuteBtn) this._player.container.classList.add('mpx-no-show_mute_btn')
       },
       initEvent () {
-        const videoNode = this.$refs['_mpx_video_ref']
-
-        videoNode.addEventListener('play', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('play', e)
+        this._player.on('play', (e) => {
+          this.$emit('play', inheritEvent('play', e, {}))
         })
 
-        videoNode.addEventListener('pause', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('pause', e)
+        this._player.on('pause', (e) => {
+          this.$emit('pause', inheritEvent('pause', e, {}))
         })
 
-        videoNode.addEventListener('ended', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('ended', e)
+        this._player.on('ended', (e) => {
+          this.$emit('ended', inheritEvent('ended', e, {}))
         })
 
-        videoNode.addEventListener('timeupdate', (e) => {
-          const eNode = e.target
-          extendEvent(e, { detail: { currentTime: eNode.currentTime, duration: eNode.duration } })
-          this.$emit('timeupdate', e)
+        this._player.on('timeupdate', (e) => {
+          this.$emit('timeupdate', inheritEvent('timeupdate', e, {}))
         })
 
-        videoNode.addEventListener('error', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('error', e)
+        this._player.on('error', (e) => {
+          this.$emit('error', inheritEvent('error', e, {}))
         })
 
-        videoNode.addEventListener('waiting', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('waiting', e)
+        this._player.on('waiting', (e) => {
+          this.$emit('waiting', inheritEvent('waiting', e, {}))
+        })
+        this._player.on('loadedmetadata', (e) => {
+          this.$emit('loadedmetadata', inheritEvent('loadedmetadata', e, {}))
         })
 
-        videoNode.addEventListener('loadedmetadata', (e) => {
-          const eNode = e.target
-          extendEvent(e, { detail: { width: eNode.videoWidth, height: eNode.videoHeight, duration: eNode.duration } })
-          this.$emit('loadedmetadata', e)
-        })
-
-        videoNode.addEventListener('progress', (e) => {
+        this._player.on('progress', (e) => {
           const eNode = e.target
           const buffered = (eNode?.buffered?.end(0)) / (eNode?.duration)
-          extendEvent(e, { detail: { buffered: buffered * 100 } })
-          this.$emit('progress', e)
+          this.$emit('progress', inheritEvent('progress', e, { buffered: buffered * 100 }))
         })
 
-        videoNode.addEventListener('seeked', (e) => {
+        this._player.on('seeked', (e) => {
           const eNode = e.target
-          const ne = inheritEvent('seekcomplete', e, { position: eNode.currentTime })
-          this.$emit('seekcomplete', ne)
+          this.$emit('seekcomplete', inheritEvent('seekcomplete', e, { position: eNode.currentTime  }))
+        })
+        this._player.on('fullscreen', (e = {}) => {
+          this.$emit('fullscreenchange', inheritEvent('fullscreenchange', new Event(e), { fullScreen: true }))
+        })
+        this._player.on('fullscreen_cancel', (e = {}) => {
+          this.$emit('fullscreenchange', inheritEvent('fullscreenchange', new Event(e), { fullScreen: false }))
         })
 
-        videoNode.addEventListener('fullscreenchange', (e) => {
-          //  TODO direction
-          extendEvent(e, { detail: { fullScreen: false } })
-          if (document.isFullScreen) {
-            e.detail.fullScreen = true
-            this.$emit('fullscreenchange', e)
-          } else {
-            e.detail.fullScreen = false
-            this.$emit('fullscreenchange', e)
-          }
-        })
+        // this._player.on('enterpictureinpicture', (e) => {
+        //   this.$emit('enterpictureinpicture', inheritEvent('enterpictureinpicture', e, {}))
+        // })
 
-        videoNode.addEventListener('enterpictureinpicture', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('enterpictureinpicture', e)
-        })
+        // this._player.on('leavepictureinpicture', (e) => {
+        //   this.$emit('leavepictureinpicture', inheritEvent('leavepictureinpicture', e, {}))
+        // })
 
-        videoNode.addEventListener('leavepictureinpicture', (e) => {
-          extendEvent(e, { detail: {} })
-          this.$emit('leavepictureinpicture', e)
-        })
       }
     }
   }
 </script>
 
 <style lang="stylus">
-  .mpx-video-container
-    .mpx-no-show_progress
-      &::-webkit-media-controls-timeline
-        display none !important
 
-    .mpx-no-show_fullscreen_btn
-      &::-webkit-media-controls-fullscreen-button
-        display none !important
+ .vjs-chapters-button,.dplayer-full-in-icon,.dplayer-setting
+   display: none !important
 
-    .mpx-no-show_play_btn
-      &::-webkit-media-controls-play-button
-        display none !important
+ .mpx-no-show_controls
+   .dplayer-controller
+     display none !important
+   .dplayer-controller-mask
+     display none !important
+   .dplayer-mobile-play
+     display none !important
 
-    .mpx-no-show_center_play_btn
-      &::-webkit-media-controls-start-playback-button
-        display none !important
+ .mpx-no-show_progress
+   .dplayer-bar-wrap
+     display none !important
 
-    .mpx-no-show_mute_btn
-      &::-webkit-media-controls-mute-button
-        display none !important
+ .mpx-no-show_fullscreen_btn
+   .dplayer-full-icon
+     visibility hidden !important
+
+ .mpx-no-show_play_btn
+   .dplayer-play-icon
+     display none !important
+
+ .mpx-no-show_center_play_btn
+   .dplayer-mobile-play
+     display none !important
+
+ .mpx-no-show_mute_btn
+   .dplayer-volume-icon
+     display none !important
 </style>

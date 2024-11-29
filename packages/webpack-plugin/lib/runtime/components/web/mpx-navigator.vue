@@ -36,7 +36,7 @@
       }
     },
     mounted () {
-      this.$on('tap', () => {
+      this.$el.addEventListener('tap', () => {
         const mpx = global.__mpx
         if (mpx) {
           switch (this.openType) {
@@ -47,6 +47,11 @@
               break
             case 'reLaunch':
               mpx.reLaunch && mpx.reLaunch({
+                url: this.url
+              })
+              break
+            case 'switchTab':
+              mpx.switchTab && mpx.switchTab({
                 url: this.url
               })
               break

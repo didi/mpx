@@ -7,6 +7,14 @@ module.exports = function () {
       el.isBuiltIn = true
       return 'mpx-radio'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-radio'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-radio'
+    },
     event: [
       {
         test: 'tap',

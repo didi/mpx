@@ -1,19 +1,10 @@
-import { setByPath, error, hasOwn } from '@mpxjs/utils'
+import { setByPath, error, dash2hump, collectDataset } from '@mpxjs/utils'
 import Mpx from '../../index'
+import contextMap from '../../dynamic/vnode/context'
 
-const datasetReg = /^data-(.+)$/
-
-function collectDataset (props) {
-  const dataset = {}
-  for (const key in props) {
-    if (hasOwn(props, key)) {
-      const matched = datasetReg.exec(key)
-      if (matched) {
-        dataset[matched[1]] = props[key]
-      }
-    }
-  }
-  return dataset
+function logCallbackNotFound (context, callbackName) {
+  const location = context.__mpxProxy && context.__mpxProxy.options.mpxFileResource
+  error(`Instance property [${callbackName}] is not function, please check.`, location)
 }
 
 export default function proxyEventMixin () {
@@ -27,6 +18,7 @@ export default function proxyEventMixin () {
       }
       const location = this.__mpxProxy.options.mpxFileResource
       const type = $event.type
+      // thanos 平台特殊事件标识
       const emitMode = $event.detail && $event.detail.mpxEmit
       if (!type) {
         error('Event object must have [type] property!', location)
@@ -35,7 +27,9 @@ export default function proxyEventMixin () {
       let fallbackType = ''
       if (type === 'begin' || type === 'end') {
         // 地图的 regionchange 事件会派发 e.type 为 begin 和 end 的事件
-        fallbackType = 'regionchange'
+        fallbackType = __mpx_mode__ === 'ali' ? 'regionChange' : 'regionchange'
+      } else if (/-([a-z])/.test(type)) {
+        fallbackType = dash2hump(type)
       } else if (__mpx_mode__ === 'ali') {
         fallbackType = type.replace(/^./, i => i.toLowerCase())
       }
@@ -46,22 +40,19 @@ export default function proxyEventMixin () {
       }
       const eventConfigs = target.dataset.eventconfigs || {}
       const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
+      // 如果有 mpxuid 说明是运行时组件，那么需要设置对应的上下文
+      const rootRuntimeContext = contextMap.get(target.dataset.mpxuid)
+      const context = rootRuntimeContext || this
       let returnedValue
       curEventConfig.forEach((item) => {
         const callbackName = item[0]
         if (emitMode) {
+          // thanos 平台特殊事件标识处理
           $event = $event.detail.data
         }
         if (callbackName) {
           const params = item.length > 1
             ? item.slice(1).map(item => {
-              // 暂不支持$event.xxx的写法
-              // if (/^\$event/.test(item)) {
-              //   this.__mpxTempEvent = $event
-              //   const value = getByPath(this, item.replace('$event', '__mpxTempEvent'))
-              //   // 删除临时变量
-              //   delete this.__mpxTempEvent
-              //   return value
               if (item === '__mpx_event__') {
                 return $event
               } else {
@@ -69,10 +60,10 @@ export default function proxyEventMixin () {
               }
             })
             : [$event]
-          if (typeof this[callbackName] === 'function') {
-            returnedValue = this[callbackName].apply(this, params)
+          if (typeof context[callbackName] === 'function') {
+            returnedValue = context[callbackName].apply(context, params)
           } else {
-            error(`Instance property [${callbackName}] is not function, please check.`, location)
+            logCallbackNotFound(context, callbackName)
           }
         }
       })
@@ -99,15 +90,8 @@ export default function proxyEventMixin () {
           const eventObj = {
             type: eventName,
             timeStamp,
-            target: {
-              id,
-              dataset,
-              targetDataset: dataset
-            },
-            currentTarget: {
-              id,
-              dataset
-            },
+            target: { id, dataset, targetDataset: dataset },
+            currentTarget: { id, dataset },
             detail: eventDetail
           }
           handler.call(this, eventObj)

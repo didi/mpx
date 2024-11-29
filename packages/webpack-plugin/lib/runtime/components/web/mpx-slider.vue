@@ -156,12 +156,12 @@
           let eventName = 'changing'
           let moveStartX = event.targetTouches[0] && event.targetTouches[0].pageX
           this.setLineValue(moveStartX)
-          this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
+          this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this))
         }
       },
       sliderTouchEnd (event) {
         let eventName = 'change'
-        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
+        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this))
         this.isDrag = false
       },
       sliderClick (event) {
@@ -170,7 +170,7 @@
         }
         this.setLineValue(event.pageX)
         let eventName = 'change'
-        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this.$refs.slider))
+        this.$emit(eventName, getCustomEvent(eventName, { value: this.sliderValue }, this))
       },
       setLineValue (moveStartX) {
         moveStartX = moveStartX - this.startX
@@ -200,7 +200,7 @@
         } else {
           value = this.getValue()
         }
-        this.$emit('change', getCustomEvent('change', { value: value }, this.$refs.slider))
+        this.$emit('change', getCustomEvent('change', { value: value }, this))
       }
     }
   }

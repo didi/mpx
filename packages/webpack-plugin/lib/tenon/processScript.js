@@ -1,46 +1,38 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
-const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
-const builtInLoaderPath = normalize.lib('built-in-loader')
+const shallowStringify = require('../utils/shallow-stringify')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const createJSONHelper = require('../json-compiler/helper')
-const createHelpers = require('../helpers')
 const async = require('async')
-const hasOwn = require('../utils/has-own')
+const createJSONHelper = require('../json-compiler/helper')
+const addQuery = require('../utils/add-query')
 
-function shallowStringify (obj) {
-  const arr = []
-  for (const key in obj) {
-    if (hasOwn(obj, key)) {
-      let value = obj[key]
-      if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
-      }
-      arr.push(`'${key}':${value}`)
-    }
-  }
-  return `{${arr.join(',')}}`
-}
 
-module.exports = function (script, options, callback) {
-  const ctorType = options.ctorType
-  const builtInComponentsMap = options.builtInComponentsMap
-  const localComponentsMap = options.localComponentsMap
-  const localPagesMap = options.localPagesMap
-  const srcMode = options.srcMode
-  const loaderContext = options.loaderContext
-  const moduleId = options.moduleId
-  const isProduction = options.isProduction
-  const componentId = options.componentId
-  // const i18n = options.i18n
-  const jsonConfig = options.jsonConfig
-  // const tabBar = jsonConfig.tabBar
-  const tabBarMap = options.tabBarMap
-  // const tabBarStr = options.tabBarStr
-  const genericsInfo = options.genericsInfo
-  const componentGenerics = options.componentGenerics
-  const forceDisableBuiltInLoader = options.forceDisableBuiltInLoader
+
+const {
+  buildComponentsMap,
+  getRequireScript,
+  buildGlobalParams,
+  stringifyRequest
+} = require('./script-helper')
+
+module.exports = function (script, {
+  loaderContext,
+  ctorType,
+  srcMode,
+  moduleId,
+  isProduction,
+  componentGenerics,
+  jsonConfig,
+  outputPath,
+  builtInComponentsMap,
+  genericsInfo,
+  wxsModuleMap,
+  localComponentsMap,
+  localPagesMap
+}, callback) {
+  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
+
 
   // add entry
   // const checkEntryDeps = (callback) => {
@@ -90,9 +82,9 @@ module.exports = function (script, options, callback) {
     emitError
   })
 
-  const { getRequire } = createHelpers(loaderContext)
+  // const { getRequire } = createHelpers(loaderContext)
 
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  // const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
   // let tabBarPagesMap = {}
   // if (tabBar && tabBarMap) {
   //   // 挂载tabBar组件
@@ -143,111 +135,52 @@ module.exports = function (script, options, callback) {
       const attrs = Object.assign({}, script.attrs)
       // src改为内联require，删除
       delete attrs.src
+      // script setup通过mpx处理，删除该属性避免vue报错
+      delete attrs.setup
       return attrs
     },
     content (script) {
-      let content = `\n  import processOption, { getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
-      // add import
-      if (ctorType === 'app') {
-        content += `  import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
-  import Vue from 'vue'
-  const VueRouter = {}
-  global.getApp = function(){}
-  global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n
-  global.currentPagePath = ""\n`
+      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+      let hasApp = true
+      if (!appInfo.name) {
+        hasApp = false
       }
-      // 注入wxs模块
-      // content += '  const wxsModules = {}\n'
-      // if (options.wxsModuleMap) {
-      //   Object.keys(options.wxsModuleMap).forEach((module) => {
-      //     const src = loaderUtils.urlToRequest(options.wxsModuleMap[module], options.projectRoot)
-      //     const expression = `require(${stringifyRequest(src)})`
-      //     content += `  wxsModules.${module} = ${expression}\n`
-      //   })
-      // }
-      const firstPage = ''
-      const pagesMap = {}
-      const componentsMap = {}
 
-      Object.keys(localComponentsMap).forEach((componentName) => {
-        const componentCfg = localComponentsMap[componentName]
-        const componentRequest = stringifyRequest(componentCfg.resource)
-        if (componentCfg.async) {
-          componentsMap[componentName] = `()=>import(${componentRequest}).then(res => getComponent(res))`
-        } else {
-          componentsMap[componentName] = `getComponent(require(${componentRequest}))`
-        }
-      })
 
-      Object.keys(builtInComponentsMap).forEach((componentName) => {
-        const componentCfg = builtInComponentsMap[componentName]
-        const componentRequest = forceDisableBuiltInLoader ? stringifyRequest(componentCfg.resource) : stringifyRequest('builtInComponent.vue!=!' + builtInLoaderPath + '!' + componentCfg.resource)
-        componentsMap[componentName] = `getComponent(require(${componentRequest}), { __mpxBuiltIn: true })`
-      })
-      content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-      content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-      if (!isProduction) {
-        content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
-      }
-      // 传递ctorType以补全js内容
-      const extraOptions = {
-        ctorType,
-        lang: script.lang || 'js'
-      }
-      // 使用 require 引入 script
-      content += `  ${getRequire('script', script, extraOptions)}\n`
+      // 获取组件集合
+      const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
 
-      // createApp/Page/Component执行完成后立刻获取当前的option并暂存
-      content += `  const currentOption = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
-        // 存储当前page路径
-        content += `  global.currentPagePath = ${JSON.stringify(loaderContext._compilation.__mpx__.pagesMap[loaderContext.resourcePath])}\n`
-        const uselessOptions = new Set([
-          'usingComponents',
-          'style',
-          'singlePage'
-        ])
-        Object.keys(jsonConfig)
-          .filter(key => !uselessOptions.has(key))
-          .forEach(key => {
-            pageConfig[key] = jsonConfig[key]
-          })
+        Object.assign(pageConfig, jsonConfig)
+        delete pageConfig.usingComponents
+        // content += `import * as Tenon from '@hummer/tenon-vue'\n`
+        // content += `var page = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { page: true }))}).default\n`
       }
 
-      // 配置平台转换通过createFactory在core中convertor中定义和进行
-      // 通过processOption进行组件注册和路由注入
-      content += `  export default processOption(
-    currentOption,
-    ${JSON.stringify(ctorType)},
-    ${JSON.stringify(firstPage)},
-    ${JSON.stringify(componentId)},
-    ${JSON.stringify(pageConfig)},
+      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
+      content += getRequireScript({ ctorType, script, loaderContext })
+      content += `
+  export default processComponentOption({
+    option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
+    ctorType: ${JSON.stringify(ctorType)},
+    outputPath: ${JSON.stringify(outputPath)},
+    pageConfig: ${JSON.stringify(pageConfig)},
     // @ts-ignore
-    ${shallowStringify(pagesMap)},
-    // @ts-ignore
-    ${shallowStringify(componentsMap)},
-    ${JSON.stringify(tabBarMap)},
-    ${JSON.stringify(componentGenerics)},
-    ${JSON.stringify(genericsInfo)},
-    undefined`
+    componentsMap: ${shallowStringify(componentsMap)},
+    componentGenerics: ${JSON.stringify(componentGenerics)},
+    genericsInfo: ${JSON.stringify(genericsInfo)},
+    wxsMixin: null,
+    hasApp: ${hasApp}
+  })\n`
 
-      //   if (ctorType === 'app') {
-      //     content += `,
-      // Vue,
-      // VueRouter`
-      //     if (i18n) {
-      //       content += `,
-      // i18n`
-      //     }
-      //   }
-      content += '\n  )\n__dynamic_page_slot__\n'
+  content += '\n__dynamic_page_slot__\n'
+
       return content
     }
   })
+
   output += '\n'
   // 处理pages
   const pageSet = new Set()

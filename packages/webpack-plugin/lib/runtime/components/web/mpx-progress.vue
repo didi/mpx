@@ -113,7 +113,9 @@
         ref: 'progress',
         on: {
           transitionend: () => {
-            this.$emit('activeend', getCustomEvent('activeend'))
+            this.$emit('activeend', getCustomEvent('activeend', {
+              curPercent: this.percent
+            }, this))
           }
         }
       })

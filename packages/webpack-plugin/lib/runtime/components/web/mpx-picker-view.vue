@@ -97,13 +97,13 @@
       },
       notifyChange() {
         const value = this.getValue()
-        this.$emit('change', getCustomEvent('change', {value}))
+        this.$emit('change', getCustomEvent('change', { value }, this))
       },
-      notifyPickstart(value) {
-        this.$emit('pickstart', getCustomEvent('pickstart', {value}))
+      notifyPickstart() {
+        this.$emit('pickstart', getCustomEvent('pickstart', {}, this))
       },
-      notifyPickend(value) {
-        this.$emit('pickend', getCustomEvent('pickend', {value}))
+      notifyPickend() {
+        this.$emit('pickend', getCustomEvent('pickend', {}, this))
       }
     }
   }
@@ -163,7 +163,7 @@
     height: 100%
     overflow: hidden
     text-align: center
-    font-size: 14px
+    font-size: 16px
     position: relative
 
     &.mpx-picker-fade-enter, &.mpx-picker-fade-leave-active

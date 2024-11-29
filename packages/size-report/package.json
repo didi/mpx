@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.8.23-alpha",
+  "version": "2.9.41",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
@@ -22,8 +22,8 @@
     "bundle",
     "analyzer"
   ],
-  "author": "xuegan@didiglobal.com",
-  "license": "ISC",
+  "author": "xuegan",
+  "license": "Apache-2.0",
   "dependencies": {
     "ejs": "^3.1.6",
     "express": "^4.17.1",
@@ -36,7 +36,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "^2.8.0"
+    "@mpxjs/webpack-plugin": "^2.9.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

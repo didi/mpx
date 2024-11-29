@@ -14,10 +14,6 @@ jobs:
           PATTERNS: |
             +(docs|docs-vuepress)/**/*
             +(docs|docs-vuepress)/.*/**/*
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16'
-
       # vuepress生成最终文档
       - name: generate docs file
         if: env.GIT_DIFF

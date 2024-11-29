@@ -2,9 +2,12 @@
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import BScroll from '@better-scroll/core'
   import Slide from '@better-scroll/slide'
+  import ObserveDOM from '@better-scroll/observe-dom'
   import throttle from 'lodash/throttle'
+  import { processSize } from '../../utils'
 
   BScroll.use(Slide)
+  BScroll.use(ObserveDOM)
 
   export default {
     name: 'mpx-swiper',
@@ -37,13 +40,21 @@
         type: String,
         default: 'default'
       },
-      scrollOptions: Object
+      previousMargin: String,
+      nextMargin: String,
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
     },
     data () {
       return {
         currentIndex: this.current,
         currentChildLength: 0,
-        lastChildLength: 0
+        lastChildLength: 0,
+        init: false
       }
     },
     computed: {
@@ -81,13 +92,20 @@
           default:
             return
         }
-      }
+      },
+      _previousMargin () {
+        return processSize(this.previousMargin) || 0
+      },
+      _nextMargin () {
+        return processSize(this.nextMargin) || 0
+      },
     },
     updated () {
-      this.currentChildLength = this.$children && this.$children.length
+      this.setCurrentChildLength()
     },
     watch: {
       current (val) {
+        this.currentIndex = val
         if (this.bs) {
           this.lastX = this.bs.x
           this.lastY = this.bs.y
@@ -95,7 +113,7 @@
         this.changeSource = ''
         this.goto(val)
       },
-      currentChildLength(val) {
+      currentChildLength (val) {
         if (val < this.lastChildLength && val < this.currentIndex) {
           this.goto(0, 0)
         }
@@ -119,65 +137,129 @@
       this.itemIds = []
     },
     mounted () {
-      const originBsOptions = {
-        scrollX: !this.vertical,
-        scrollY: this.vertical,
-        slide: {
-          loop: this.circular,
-          threshold: 0.5,
-          speed: this.duration,
-          easing: this.easing,
-          interval: this.interval,
-          autoplay: this.autoplay,
-          startPageXIndex: this.vertical ? 0 : this.current,
-          startPageYIndex: this.vertical? this.current : 0
-        },
-        momentum: false,
-        bounce: false,
-        probeType: 3,
-        stopPropagation: true
+      if (!this.scrollOptions.closeResizeObserver) {
+        this.createResizeObserver()
       }
-      const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
-      this.bs = new BScroll(this.$refs.wrapper, bsOptions)
-      this.bs.on('slideWillChange', (page) => {
-        this.currentIndex = this.vertical ? page.pageY : page.pageX
-        this.$emit('change', getCustomEvent('change', {
-          current: this.currentIndex,
-          currentItemId: this.itemIds[this.currentIndex] || '',
-          source: this.changeSource
-        }))
-      })
-
-      this.bs.on('scrollEnd', () => {
-        this.$emit('animationfinish', getCustomEvent('animationfinish', {
-          current: this.currentIndex,
-          currentItemId: this.itemIds[this.currentIndex] || '',
-          source: this.changeSource
-        }))
-      })
-      this.bs.on('scroll', throttle(({ x, y }) => {
-        this.$emit('transition', getCustomEvent('transition', {
-          dx: this.lastX - x,
-          dy: this.lastY - y
-        }))
-      }, 30, {
-        leading: true,
-        trailing: false
-      }))
-
-      this.bs.on('beforeScrollStart', () => {
-        if (this.bs) {
-          this.lastX = this.bs.x
-          this.lastY = this.bs.y
-        }
-        this.changeSource = 'touch'
-      })
+      this.setCurrentChildLength()
+      this.initBs()
     },
     beforeDestroy () {
-      this.bs && this.bs.destroy()
-      delete this.bs
+      this.destroyBs()
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
     },
     methods: {
+      destroyBs () {
+        if (!this.bs) return
+        this.bs.destroy()
+        delete this.bs
+      },
+      initLayerComputed () {
+        const wrapper = this.$refs.wrapper
+        const computedStyle = getComputedStyle(wrapper)
+        const innerWrapper = this.$refs.innerWrapper
+        let width = wrapper.clientWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)
+        let height = wrapper.clientHeight - parseInt(computedStyle.paddingTop) - parseInt(computedStyle.paddingBottom)
+        if (!this.vertical) {
+          if (this._previousMargin || this._nextMargin) {
+            if (this._previousMargin) {
+              innerWrapper.style.marginLeft = `${this._previousMargin}px`
+              width = width - this._previousMargin
+            }
+            if (this._nextMargin) {
+              width = width - this._nextMargin
+            }
+          }
+        } else {
+          if (this._previousMargin || this._nextMargin) {
+            if (this._previousMargin) {
+              innerWrapper.style.marginTop = `${this._previousMargin}px`
+              height = height - this._previousMargin
+            }
+            if (this._nextMargin) {
+              height = height - this._nextMargin
+            }
+          }
+        }
+        innerWrapper.style.height = `${height}px`
+        innerWrapper.style.width = `${width}px`
+      },
+      initBs () {
+        this.destroyBs()
+        this.initLayerComputed()
+        const originBsOptions = {
+          scrollX: !this.vertical,
+          scrollY: this.vertical,
+          slide: {
+            loop: this.circular,
+            threshold: 0.5,
+            speed: this.duration,
+            easing: this.easing,
+            interval: this.interval,
+            autoplay: this.autoplay,
+            startPageXIndex: this.vertical ? 0 : this.currentIndex,
+            startPageYIndex: this.vertical ? this.currentIndex : 0
+          },
+          momentum: false,
+          bounce: false,
+          probeType: 3,
+          bindToWrapper: true,
+          stopPropagation: true
+        }
+        const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
+        this.bs = new BScroll(this.$refs.innerWrapper, bsOptions)
+        this.bs.scroller.hooks.on('beforeRefresh', () => {
+          this.initLayerComputed()
+        })
+        this.bs.on('slidePageChanged', (page) => {
+          this.currentIndex = this.vertical ? page.pageY : page.pageX
+          this.$emit('change', getCustomEvent('change', {
+            current: this.currentIndex,
+            currentItemId: this.itemIds[this.currentIndex] || '',
+            source: this.changeSource
+          }, this))
+        })
+
+        this.bs.on('scrollEnd', () => {
+          this.$emit('animationfinish', getCustomEvent('animationfinish', {
+            current: this.currentIndex,
+            currentItemId: this.itemIds[this.currentIndex] || '',
+            source: this.changeSource
+          }, this))
+        })
+        this.bs.on('scroll', throttle(({ x, y }) => {
+          this.$emit('transition', getCustomEvent('transition', {
+            dx: this.lastX - x,
+            dy: this.lastY - y
+          }, this))
+        }, 30, {
+          leading: true,
+          trailing: false
+        }))
+
+        this.bs.on('beforeScrollStart', () => {
+          if (this.bs) {
+            this.lastX = this.bs.x
+            this.lastY = this.bs.y
+          }
+          this.changeSource = 'touch'
+        })
+      },
+      createResizeObserver () {
+        if (typeof ResizeObserver !== 'undefined'){
+          this.resizeObserver = new ResizeObserver(entries => {
+            if (!this.init) {
+              this.init = true
+              return
+            }
+            this.initBs()
+          })
+          const elementToObserve = document.querySelector('.mpx-swiper');
+          this.resizeObserver.observe(elementToObserve);
+        }
+      },
       refresh () {
         this.bs && this.bs.refresh()
       },
@@ -186,6 +268,9 @@
         const y = this.vertical ? index : 0
         const speed = time === 0 ? 0 : this.duration
         this.bs && this.bs.goToPage(x, y, speed)
+      },
+      setCurrentChildLength () {
+        this.currentChildLength = this.$children && this.$children.length
       }
     },
     render (createElement) {
@@ -194,13 +279,13 @@
         on: getInnerListeners(this, { ignoredListeners: ['change', 'animationfinish', 'transition'] }),
         ref: 'wrapper'
       }
+
       const content = createElement('div', {
         class: {
           'mpx-swiper-content': true,
           vertical: this.vertical
         }
       }, this.$slots.default)
-
       const children = [content]
       if (this.indicatorDots) {
         const items = this.$slots.default.filter((VNode) => VNode.tag && VNode.tag.endsWith('mpx-swiper-item'))
@@ -227,7 +312,14 @@
         }, dotsItems)
         children.push(dots)
       }
-      return createElement('div', data, children)
+
+      const innerWrapper = createElement('div', {
+        ref: 'innerWrapper',
+        class: {
+          'mpx-swiper-wrapper': true
+        }
+      }, children)
+      return createElement('div', data, [innerWrapper])
     }
   }
 </script>
@@ -236,7 +328,6 @@
   .mpx-swiper
     overflow hidden
     position relative
-
 
   .mpx-swiper-content
     width 100%

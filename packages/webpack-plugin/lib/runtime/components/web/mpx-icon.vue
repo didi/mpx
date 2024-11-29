@@ -2,16 +2,31 @@
   import getInnerListeners from './getInnerListeners'
   import { processSize } from '../../utils'
 
-  let defaultColor = {
-    success: '#09BB07',
-    'success_no_circle': '#09BB07',
-    info: '#10AEFF',
-    warn: '#F76260',
-    waiting: '#10AEFF',
-    cancel: '#F43530',
-    download: '#09BB07',
-    search: '#B2B2B2',
-    clear: '#B2B2B2'
+  let defaultColor
+  if (global.__style === 'v2') {
+    defaultColor = {
+      success: '#07c160',
+      'success_no_circle': '#07c160',
+      info: '#10AEFF',
+      warn: '#F76260',
+      waiting: '#10AEFF',
+      cancel: '#F43530',
+      download: '#13bf69',
+      search: '#7d7979',
+      clear: '#B2B2B2'
+    }
+  } else {
+    defaultColor = {
+      success: '#09BB07',
+      'success_no_circle': '#09BB07',
+      info: '#10AEFF',
+      warn: '#F76260',
+      waiting: '#10AEFF',
+      cancel: '#F43530',
+      download: '#09BB07',
+      search: '#B2B2B2',
+      clear: '#B2B2B2'
+    }
   }
 
   export default {
@@ -51,17 +66,6 @@
               color: color,
               width: sizeStr,
               height: sizeStr
-            }
-            defaultColor = {
-              success: '#07c160',
-              'success_no_circle': '#07c160',
-              info: '#10AEFF',
-              warn: '#F76260',
-              waiting: '#10AEFF',
-              cancel: '#F43530',
-              download: '#13bf69',
-              search: '#7d7979',
-              clear: '#B2B2B2'
             }
         }
       }
@@ -118,11 +122,8 @@
     &.mpx-icon-waiting-v2,
     &.mpx-icon-search-v2,
     &.mpx-icon-clear-v2,
-    &.mpx-icon-success_no_circle-v2,
-    &.mpx-icon-download-v2
+    &.mpx-icon-success_no_circle-v2
       display: inline-block
-      width: 64px
-      height: 64px
       mask-position: 50% 50%
       -webkit-mask-position: 50% 50%
       -webkit-mask-repeat: no-repeat

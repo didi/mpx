@@ -31,85 +31,72 @@ npm i @mpxjs/size-report --save-dev
 在项目 webpack.config 文件中配置使用 `@mpxjs/size-report` 插件即可使用，简单示例如下：
 
 ```js
-const MpxSizeReportPlugin = require('@mpxjs/size-report')
-
-{
-  plugins: [
-    new MpxSizeReportPlugin(
-        {
-            // 本地可视化服务相关配置
-            server: {
-                enable: true, // 是否启动本地服务，非必填，默认 true
-                autoOpenBrowser: true, // 是否自动打开可视化平台页面，非必填，默认 true
-                port: 0, // 本地服务端口，非必填，默认 0(随机端口)
-                host: '127.0.0.1', // 本地服务host，非必填
-            },
-            // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
-            filename: '../report.json',
-            // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
-            threshold: {
-                size: '16MB',
-                packages: '2MB'
-            },
-            // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
-            groups: [
-                {
-                    // 分组名称
-                    name: 'vant',
-                    // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
-                    entryRules: {
-                        include: '@vant/weapp'
-                    }
-                },
-                {
-                    name: 'pageGroup',
-                    // 每个分组中可分别配置阈值，如果不配置则表示
-                    threshold: '500KB',
-                    entryRules: {
-                        include: ['src/pages/index', 'src/pages/user']
-                    }
-                },
-                {
-                    name: 'someSdk',
-                    entryRules: {
-                        include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
-                    },
-                    // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryModules
-                    noEntryModules: {
-                        include: 'src/lib/sdk.js'
-                    }
-                }
-            ],
-            // 是否收集页面维度体积详情，默认 false
-            reportPages: true,
-            // 是否收集资源维度体积详情，默认 false
-            reportAssets: true,
-            // 是否收集冗余资源，默认 false
-            reportRedundance: true,
-            // 展示某些分包资源的引用来源信息，默认为 []
-            showEntrysPackages: ['main']
-        }
-    )
-
-  ]
-
-}
-```
-::: tip @mpxjs/cli@3.x 版本配置如下
-```javascript
 // vue.config.js
 const MpxSizeReportPlugin = require('@mpxjs/size-report')
 module.exports = defineConfig({
   configureWebpack() {
     return {
       plugins: [
-        new MpxSizeReportPlugin(...)
+        new MpxSizeReportPlugin(
+          {
+              // 本地可视化服务相关配置
+              server: {
+                  enable: true, // 是否启动本地服务，非必填，默认 true
+                  autoOpenBrowser: true, // 是否自动打开可视化平台页面，非必填，默认 true
+                  port: 0, // 本地服务端口，非必填，默认 0(随机端口)
+                  host: '127.0.0.1', // 本地服务host，非必填
+              },
+              // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
+              filename: '../report.json',
+              // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
+              threshold: {
+                  size: '16MB',
+                  packages: '2MB'
+              },
+              // 配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
+              groups: [
+                  {
+                      // 分组名称
+                      name: 'vant',
+                      // 配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry，如下所示的分组配置将计算项目中引入的 vant 组件带来的体积占用
+                      entryRules: {
+                          include: '@vant/weapp'
+                      }
+                  },
+                  {
+                      name: 'pageGroup',
+                      // 每个分组中可分别配置阈值，如果不配置则表示
+                      threshold: '500KB',
+                      entryRules: {
+                          include: ['src/pages/index', 'src/pages/user']
+                      }
+                  },
+                  {
+                      name: 'someSdk',
+                      entryRules: {
+                          include: ['@somegroup/someSdk/index', '@somegroup/someSdk2/index']
+                      },
+                      // 有的时候你可能希望计算纯 js 入口引入的体积（不包含组件和页面），这种情况下需要使用 noEntryRules
+                      noEntryRules: {
+                          include: 'src/lib/sdk.js'
+                      }
+                  }
+              ],
+              // 是否收集页面维度体积详情，默认 false
+              reportPages: true,
+              // 是否收集资源维度体积详情，默认 false
+              reportAssets: true,
+              // 是否收集冗余资源，默认 false
+              reportRedundance: true,
+              // 展示某些分包资源的引用来源信息，默认为 []
+              showEntrysPackages: ['main']
+          }
+      )
       ]
     }
   }
 })
 ```
-:::
 
 参考上述示例进行配置后，构建代码后，dist 目录下会产出 report.json 文件，里边是项目的具体体积信息，关于输入 json 的简单示例如下：
 

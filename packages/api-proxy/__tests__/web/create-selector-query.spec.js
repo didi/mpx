@@ -1,4 +1,4 @@
-import { createSelectorQuery } from '../../src/web/api/create-selector-query'
+import { createSelectorQuery } from '../../src/platform/api/create-selector-query/index.web'
 import Vue from 'vue/dist/vue.common.prod'
 
 describe('test create-selector-query', () => {
@@ -13,8 +13,8 @@ describe('test create-selector-query', () => {
       template: `
         <div>
           <div class="class1">child class1</div>
-          <div class="class2" data-re="class2" style="background-color:red">child class2</div>
-          <div class="class2" data-re="class2" style="background-color:red">child class2</div>
+          <div class="class2" data-re='"class2"' style="background-color:red">child class2</div>
+          <div class="class2" data-re='"class2"' style="background-color:red">child class2</div>
         </div>
       `,
       mounted () {

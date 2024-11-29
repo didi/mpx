@@ -6,6 +6,11 @@
     "\\.(css|styl)$": "identity-obj-proxy"
   },
   "testEnvironment": "jsdom",
-  "testMatch": ["**/packages/**/?(*.)+(spec|test).[jt]s?(x)"],
-  "testPathIgnorePatterns": ["dist", "node_modules"]
+  "testMatch": [
+    "**/packages/**/?(*.)+(spec|test).[jt]s?(x)"
+  ],
+  "testPathIgnorePatterns": ["dist", "node_modules"],
+  "projects": [
+    "<rootDir>/packages/*/jest.config.json"
+  ]
 }

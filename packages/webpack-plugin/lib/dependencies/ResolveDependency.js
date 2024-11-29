@@ -1,6 +1,7 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
+const { matchCondition } = require('../utils/match-condition')
 
 class ResolveDependency extends NullDependency {
   constructor (resource, packageName, issuerResource, range) {
@@ -22,28 +23,29 @@ class ResolveDependency extends NullDependency {
   }
 
   getResolved () {
-    const { resource, packageName, compilation } = this
+    const { resource, packageName, compilation, issuerResource } = this
     if (!compilation) return ''
     const mpx = compilation.__mpx__
     if (!mpx) return ''
-    const { pagesMap, componentsMap, staticResourcesMap } = mpx
+    const { pagesMap, componentsMap, staticResourcesMap, partialCompileRules } = mpx
     const { resourcePath } = parseRequest(resource)
     const currentComponentsMap = componentsMap[packageName]
     const mainComponentsMap = componentsMap.main
     const currentStaticResourcesMap = staticResourcesMap[packageName]
     const mainStaticResourcesMap = staticResourcesMap.main
-    return pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
+    const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
+    if (!resolveResult) {
+      if (!partialCompileRules || matchCondition(resourcePath, partialCompileRules)) {
+        compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+      }
+    }
+    return resolveResult
   }
 
   // resolved可能会动态变更，需用此更新hash
   updateHash (hash, context) {
     this.resolved = this.getResolved()
-    const { resource, issuerResource, compilation } = this
-    if (this.resolved) {
-      hash.update(this.resolved)
-    } else {
-      compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
-    }
+    hash.update(this.resolved)
     super.updateHash(hash, context)
   }
 

@@ -3,30 +3,34 @@ const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const templateCompiler = require('../../../template-compiler/compiler')
-const parseMustache = templateCompiler.parseMustache
-const stringifyWithResolveComputed = templateCompiler.stringifyWithResolveComputed
+const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
+const { dash2hump } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'tenon'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'tenon'],
     // props预处理
     preProps: [],
     // props后处理
     postProps: [
       {
         web ({ name, value }) {
-          const parsed = parseMustache(value)
-          if (parsed.hasBinding) {
+          const parsed = parseMustacheWithContext(value)
+          if (name.startsWith('data-')) {
             return {
-              name: name === 'animation' ? 'v-' + name : ':' + name,
+              name: ':' + name,
+              value: `__ensureString(${parsed.result})`
+            }
+          } else if (parsed.hasBinding) {
+            return {
+              name: name === 'animation' ? 'v-animation' : ':' + name,
               value: parsed.result
             }
           }
         },
         tenon ({ name, value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-' + name : ':' + name,
@@ -43,7 +47,7 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'wx:for',
         swan (obj, data) {
           const attrsMap = data.el.attrsMap
-          const parsed = parseMustache(obj.value)
+          const parsed = parseMustacheWithContext(obj.value)
           let listName = parsed.result
           const el = data.el
 
@@ -57,7 +61,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
 
           if (keyName) {
-            const parsed = parseMustache(keyName)
+            const parsed = parseMustacheWithContext(keyName)
             if (parsed.hasBinding) {
               // keyStr = ` trackBy ${parsed.result.slice(1, -1)}`
             } else if (keyName === '*this') {
@@ -87,7 +91,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -97,7 +101,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         tenon ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -167,7 +171,7 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'wx:model',
         web ({ value }, { el }) {
-          el.hasEvent = true
+          el.hasModel = true
           const attrsMap = el.attrsMap
           const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
           const stringify = JSON.stringify
@@ -280,17 +284,9 @@ module.exports = function getSpec ({ warn, error }) {
           }
           const styleBinding = []
           el.isStyleParsed = true
-          el.attrsList.forEach((item) => {
-            const parsed = parseMustache(item.value)
-            if (item.name === 'style') {
-              if (parsed.hasBinding || parsed.result.indexOf('rpx') > -1) {
-                styleBinding.push(parseMustache(item.value).result)
-              } else {
-                styleBinding.push(JSON.stringify(item.value))
-              }
-            } else if (item.name === 'wx:style') {
-              styleBinding.push(parseMustache(item.value).result)
-            }
+          el.attrsList.filter(item => this.test.test(item.name)).forEach((item) => {
+            const parsed = parseMustacheWithContext(item.value)
+            styleBinding.push(parsed.result)
           })
           return {
             name: ':style',
@@ -300,17 +296,36 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         // 样式类名绑定
-        test: /^wx:(class)$/,
-        web ({ value }) {
-          const parsed = parseMustache(value)
-          return {
-            name: ':class',
-            value: parsed.result
+        test: /^(class|wx:class)$/,
+        web ({ name, value }, { el }) {
+          if (el.classMerged) return false
+          const classBinding = []
+          el.attrsList.filter(item => this.test.test(item.name)).forEach(({ name, value }) => {
+            const parsed = parseMustacheWithContext(value)
+            if (name === 'wx:class') {
+              classBinding.push(parsed.result)
+            } else if (name === 'class' && parsed.hasBinding === true) {
+              el.classMerged = true
+              classBinding.push(parsed.result)
+            }
+          })
+
+          if (el.classMerged) {
+            return {
+              name: ':class',
+              value: `[${classBinding}]`
+            }
+          } else if (name === 'wx:class') {
+            // 对于纯静态class不做合并转换
+            return {
+              name: ':class',
+              value: classBinding[0]
+            }
           }
         },
         tenon ({ name, value }) {
           const dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           return {
             name: ':' + dir,
             value: parsed.result
@@ -364,7 +379,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }
@@ -375,7 +390,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         tenon ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }
@@ -396,26 +411,48 @@ module.exports = function getSpec ({ warn, error }) {
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
-            name: rPrefix + rEventName.replace(/^./, (matched) => {
-              return matched.toUpperCase()
-            }) + modifierStr,
+            name: dash2hump(rPrefix + '-' + rEventName) + modifierStr,
             value
           }
         },
         swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'swan' })
+          const modifierStr = match[3] || ''
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
+          if (rEventName.includes('-')) rPrefix += ':'
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         qq ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'qq' })
+          const modifierStr = match[3] || ''
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
+          if (rEventName.includes('-')) rPrefix += ':'
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'jd' })
+          const modifierStr = match[3] || ''
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
+          if (rEventName.includes('-')) rPrefix += ':'
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         // tt ({ name, value }, { eventRules }) {
         //   const match = this.test.exec(name)
@@ -431,15 +468,35 @@ module.exports = function getSpec ({ warn, error }) {
         // },
         tt ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'tt' })
+          const modifierStr = match[3] || ''
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+          if (rEventName.includes('-')) rPrefix += ':'
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
         dd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
+          const prefix = match[1]
           const eventName = match[2]
-          runRules(eventRules, eventName, { mode: 'dd' })
+          const modifierStr = match[3] || ''
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
+          if (rEventName.includes('-')) rPrefix += ':'
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
         },
-        web ({ name, value }, { eventRules, el }) {
+        web ({ name, value }, { eventRules, el, usingComponents }) {
+          const parsed = parseMustacheWithContext(value)
+          if (parsed.hasBinding) {
+            value = '__invokeHandler(' + parsed.result + ', $event)'
+          }
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
@@ -447,10 +504,39 @@ module.exports = function getSpec ({ warn, error }) {
           const meta = {
             modifierStr
           }
-          // 记录event监听信息用于后续判断是否需要使用内置基础组件
-          el.hasEvent = true
+          const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
+        },
+        ios ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ios' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ios', data: { el } })
+          return {
+            name: rPrefix + rEventName + meta.modifierStr,
+            value
+          }
+        },
+        android ({ name, value }, { eventRules, el }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          const meta = {
+            modifierStr
+          }
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'android' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'android', data: { el } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -523,6 +609,28 @@ module.exports = function getSpec ({ warn, error }) {
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
           }
+          // ios (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // },
+          // android (prefix) {
+          //   const prefixMap = {
+          //     bind: 'on',
+          //     catch: 'catch'
+          //   }
+          //   if (!prefixMap[prefix]) {
+          //     error(`React native environment does not support [${prefix}] event handling!`)
+          //     return
+          //   }
+          //   return prefixMap[prefix]
+          // }
         }
       ],
       rules: [
@@ -537,7 +645,11 @@ module.exports = function getSpec ({ warn, error }) {
               touchcancel: 'touchCancel',
               tap: 'tap',
               longtap: 'longTap',
-              longpress: 'longTap'
+              longpress: 'longTap',
+              transitionend: 'transitionEnd',
+              animationstart: 'animationStart',
+              animationiteration: 'animationIteration',
+              animationend: 'animationEnd'
             }
             if (eventMap[eventName]) {
               return eventMap[eventName]
@@ -548,6 +660,48 @@ module.exports = function getSpec ({ warn, error }) {
           web (eventName) {
             if (eventName === 'touchforcechange') {
               error(`Web environment does not support [${eventName}] event!`)
+            }
+          },
+          ios (eventName) {
+            const eventMap = {
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React native environment does not support [${eventName}] event!`)
+            }
+          },
+          android (eventName) {
+            const eventMap = {
+              tap: 'tap',
+              longtap: 'longpress',
+              longpress: 'longpress',
+              touchstart: 'touchstart',
+              touchmove: 'touchmove',
+              touchend: 'touchend',
+              touchcancel: 'touchcancel'
+            }
+            if (eventMap[eventName]) {
+              return eventMap[eventName]
+            } else {
+              error(`React native environment does not support [${eventName}] event!`)
+            }
+          }
+        },
+        // web event escape
+        {
+          test: /^click$/,
+          web (eventName, { isComponent }) {
+            // 自定义组件根节点
+            if (isComponent) {
+              return '_' + eventName
             }
           }
         }

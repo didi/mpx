@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/store",
-  "version": "2.8.25-alpha.18",
+  "version": "2.9.65",
   "description": "A store for mpx framework",
   "main": "src/index.js",
   "types": "@types/index.d.ts",
@@ -16,7 +16,7 @@
     "store"
   ],
   "author": "donghongping",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/didi/mpx/issues"
   },
@@ -26,10 +26,10 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.8.25-alpha.18"
+    "@mpxjs/utils": "^2.9.65"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.8.25-alpha.18"
+    "@mpxjs/core": "^2.9.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

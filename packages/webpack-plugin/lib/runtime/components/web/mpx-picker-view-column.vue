@@ -15,7 +15,13 @@
   export default {
     name: 'mpx-picker-view-column',
     props: {
-      value: Array
+      value: Array,
+      scrollOptions: {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
     },
     data() {
       return {
@@ -64,7 +70,9 @@
               rotate: -5,
               wheelWrapperClass: 'wheel-scroll'
             },
-            probeType: 3
+            probeType: 3,
+            bindToWrapper: true,
+            ...this.scrollOptions
           })
           this.wheels[0].on('scrollStart', function () {
             if (this.pickerView) {

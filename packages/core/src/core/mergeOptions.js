@@ -132,7 +132,9 @@ function extractObservers (options) {
         },
         deep: true,
         // 延迟触发首次回调，处理转换支付宝时在observer中查询组件的行为，如vant/picker中，如不考虑该特殊情形可用immediate代替
-        immediateAsync: true
+        // immediateAsync: true
+        // 为了数据响应的标准化，不再提供immediateAsync选项，之前处理vant等原生组件跨平台转换遇到的问题推荐使用条件编译patch进行处理
+        immediate: true
       })
     }
   })
@@ -174,7 +176,9 @@ function extractObservers (options) {
             }
           },
           deep,
-          immediateAsync: watchProp
+          // immediateAsync: watchProp
+          // 为了数据响应的标准化，不再提供immediateAsync选项，之前处理vant等原生组件跨平台转换遇到的问题推荐使用条件编译patch进行处理
+          immediate: watchProp
         })
       }
     })
@@ -310,17 +314,19 @@ export function mergeToArray (parent, child, key) {
 function composeHooks (target, includes) {
   Object.keys(target).forEach(key => {
     if (!includes || includes[key]) {
-      const hooksArr = target[key]
-      hooksArr && (target[key] = function (...args) {
-        let result
-        for (let i = 0; i < hooksArr.length; i++) {
-          if (typeof hooksArr[i] === 'function') {
-            const data = hooksArr[i].apply(this, args)
-            data !== undefined && (result = data)
+      const hooks = target[key]
+      if (Array.isArray(hooks)) {
+        target[key] = function (...args) {
+          let result
+          for (let i = 0; i < hooks.length; i++) {
+            if (typeof hooks[i] === 'function') {
+              const data = hooks[i].apply(this, args)
+              data !== undefined && (result = data)
+            }
           }
+          return result
         }
-        return result
-      })
+      }
     }
   })
 }

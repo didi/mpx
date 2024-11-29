@@ -1,7 +1,8 @@
 /* eslint-disable no-undef */
-import { buildUrl, getEnvObj, serialize, transformRes } from './util'
+import { buildUrl, serialize, transformRes } from './util'
+import { request as requestApi } from '@mpxjs/api-proxy/src/platform/api/request'
 
-export default function request (config, mpx) {
+export default function request (config) {
   return new Promise((resolve, reject) => {
     const paramsSerializer = config.paramsSerializer || serialize
     const bodySerializer = config.bodySerializer || paramsSerializer
@@ -20,12 +21,15 @@ export default function request (config, mpx) {
 
     const rawSuccess = config.success
     const rawFail = config.fail
+    // eslint-disable-next-line prefer-const
     let requestTask
     let cancelMsg
+    let cancelFlag = false
     const cancelToken = config.cancelToken
     if (cancelToken) {
       cancelToken.then((msg) => {
         cancelMsg = msg
+        cancelFlag = true
         requestTask && requestTask.abort()
       })
     }
@@ -36,29 +40,15 @@ export default function request (config, mpx) {
     }
     config.fail = function (res) {
       res = Object.assign({ requestConfig: config }, transformRes(res))
-      const err = cancelMsg !== undefined ? cancelMsg : res
-      typeof rawFail === 'function' && rawFail.call(this, err)
-      reject(err)
-    }
-    const envObj = getEnvObj()
-
-    if (envObj && typeof envObj.request === 'function') {
-      requestTask = envObj.request(config)
-      return
+      if (cancelFlag) {
+        res.errMsg = cancelMsg || res.errMsg
+        res.__CANCEL__ = true
+      }
+      typeof rawFail === 'function' && rawFail.call(this, res)
+      reject(res)
     }
 
-    if (__mpx_mode__ === 'ali' && typeof envObj.httpRequest === 'function') {
-      requestTask = envObj.httpRequest(config)
-      return
-    }
-
-    mpx = mpx || global.__mpx
-    if (typeof mpx !== 'undefined' && typeof mpx.request === 'function') {
-      // mpx
-      const res = mpx.request(config)
-      requestTask = res.__returned || res
-      return
-    }
-    console.error('no available request adapter for current platform')
+    requestTask = requestApi(config)
+    return requestTask
   })
 }

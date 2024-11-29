@@ -79,7 +79,7 @@
         } else {
           value = this.getValue()
         }
-        this.$emit('change', getCustomEvent('change', { value }, this.$refs.checkboxGroup))
+        this.$emit('change', getCustomEvent('change', { value }, this))
       }
     }
   }

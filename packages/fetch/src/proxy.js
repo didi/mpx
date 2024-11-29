@@ -65,7 +65,8 @@ function doProxy (config, proxy, matchParams) {
     const finalHeader = Object.assign(header, pHeader)
     const finalParams = deepMerge(params, pParams)
     const likeGet = /^GET|DELETE|HEAD$/i.test(method)
-    const finalData = deepMerge(likeGet ? params : data, pData)
+    const curData = likeGet ? params : data
+    const finalData = typeof curData === 'object' ? deepMerge(curData, pData) : curData
     const finalMethod = pMethod || method
 
     finalConfig = {

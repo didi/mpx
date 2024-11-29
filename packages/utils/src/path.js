@@ -1,5 +1,3 @@
-import { set } from '@mpxjs/core'
-
 let curStack
 let targetStacks
 let property
@@ -128,7 +126,7 @@ function doGetByPath (context, pathStrOrArr, transfer) {
   return outPutByPath(context, pathStrOrArr, isSimple, transfer)
 }
 
-function isExistAttr (obj, attr) {
+function isExist (obj, attr) {
   const type = typeof obj
   const isNullOrUndefined = obj === null || obj === undefined
   if (isNullOrUndefined) {
@@ -141,35 +139,30 @@ function isExistAttr (obj, attr) {
 }
 
 function getByPath (data, pathStrOrArr, defaultVal, errTip) {
-  const results = []
-  let normalizedArr = []
-  if (Array.isArray(pathStrOrArr)) {
-    normalizedArr = [pathStrOrArr]
-  } else if (typeof pathStrOrArr === 'string') {
-    normalizedArr = pathStrOrArr.split(',').map(str => str.trim())
-  }
-
-  normalizedArr.forEach(path => {
-    if (!path) return
-    const result = doGetByPath(data, path, (value, key) => {
-      let newValue
-      if (isExistAttr(value, key)) {
-        newValue = value[key]
-      } else {
-        newValue = errTip
-      }
-      return newValue
-    })
-    // 小程序setData时不允许undefined数据
-    results.push(result === undefined ? defaultVal : result)
+  const result = doGetByPath(data, pathStrOrArr, (value, key) => {
+    let newValue
+    if (isExist(value, key)) {
+      newValue = value[key]
+    } else {
+      newValue = errTip
+    }
+    return newValue
   })
-  return results.length > 1 ? results : results[0]
+  // 小程序setData时不允许undefined数据
+  return result === undefined ? defaultVal : result
 }
 
 function setByPath (data, pathStrOrArr, value) {
+  if (!global.__mpx) {
+    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "setByPath" may encounter some potential problems!')
+  }
   doGetByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      set(current, key, value)
+      if (global.__mpx) {
+        global.__mpx.set(current, key, value)
+      } else {
+        current[key] = value
+      }
     } else if (!current[key]) {
       current[key] = {}
     }

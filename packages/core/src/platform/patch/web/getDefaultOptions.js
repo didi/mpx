@@ -1,9 +1,16 @@
 import builtInKeysMap from '../builtInKeysMap'
 import mergeOptions from '../../../core/mergeOptions'
-import { diffAndCloneA, hasOwn } from '@mpxjs/utils'
+import { diffAndCloneA, hasOwn, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import { getCurrentInstance as getCurrentVueInstance } from '../../export/index'
 import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../../core/proxy'
-import { BEFORECREATE, BEFOREUPDATE, UPDATED, BEFOREUNMOUNT, UNMOUNTED } from '../../../core/innerLifecycle'
+import {
+  BEFORECREATE,
+  BEFOREUPDATE,
+  UPDATED,
+  BEFOREUNMOUNT,
+  UNMOUNTED,
+  SERVERPREFETCH
+} from '../../../core/innerLifecycle'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -20,6 +27,8 @@ function filterOptions (options) {
           )
         }
       }
+    } else if (key === 'methods') {
+      newOptions[key] = wrapMethodsWithErrorHandling(options[key])
     } else {
       newOptions[key] = options[key]
     }
@@ -37,7 +46,7 @@ function initProxy (context, rawOptions) {
   }
 }
 
-export function getDefaultOptions (type, { rawOptions = {} }) {
+export function getDefaultOptions ({ type, rawOptions = {} }) {
   const rawSetup = rawOptions.setup
   if (rawSetup) {
     rawOptions.setup = (props) => {
@@ -55,7 +64,7 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       }
       const setupRes = rawSetup(props, newContext)
       unsetCurrentInstance(instance.__mpxProxy)
-      return setupRes
+      return wrapMethodsWithErrorHandling(setupRes, instance.__mpxProxy)
     }
   }
   const rootMixins = [{
@@ -78,7 +87,13 @@ export function getDefaultOptions (type, { rawOptions = {} }) {
       if (this.__mpxProxy) this.__mpxProxy.callHook(BEFOREUNMOUNT)
     },
     destroyed () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(UNMOUNTED)
+      if (this.__mpxProxy) {
+        this.__mpxProxy.state = UNMOUNTED
+        this.__mpxProxy.callHook(UNMOUNTED)
+      }
+    },
+    serverPrefetch () {
+      if (this.__mpxProxy) return this.__mpxProxy.callHook(SERVERPREFETCH)
     }
   }]
   // 为了在builtMixin中可以使用某些rootMixin实现的特性（如数据响应等），此处builtInMixin在rootMixin之后执行，但是当builtInMixin使用存在对应内建生命周期的目标平台声明周期写法时，可能会出现用户生命周期比builtInMixin中的生命周期先执行的情况，为了避免这种情况发生，builtInMixin应该尽可能使用内建生命周期来编写

@@ -1,8 +1,8 @@
 {
   "name": "@mpxjs/babel-plugin-inject-page-events",
-  "version": "2.8.23-alpha",
+  "version": "2.9.5",
   "description": "babel plugin for inject page events in composition-api",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "main": "src/index.js",
   "scripts": {},
   "publishConfig": {

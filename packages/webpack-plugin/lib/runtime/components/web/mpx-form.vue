@@ -76,11 +76,11 @@
     methods: {
       submit () {
         const value = getFormValue(this.$slots.default)
-        this.$emit('submit', getCustomEvent('submit', { value }))
+        this.$emit('submit', getCustomEvent('submit', { value }, this))
       },
       reset () {
         setFormValue(this.$slots.default, this.initialValue)
-        this.$emit('reset', getCustomEvent('reset', { value: this.initialValue }))
+        this.$emit('reset', getCustomEvent('reset', { value: this.initialValue }, this))
       }
     }
   }

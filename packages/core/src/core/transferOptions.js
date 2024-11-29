@@ -7,6 +7,10 @@ export default function transferOptions (options, type, needConvert = true) {
   let currentInject
   if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
     currentInject = global.currentInject
+  } else {
+    currentInject = {
+      moduleId: global.currentModuleId
+    }
   }
   // 文件编译路径
   options.mpxFileResource = global.currentResource
@@ -18,8 +22,12 @@ export default function transferOptions (options, type, needConvert = true) {
     // 编译计算属性注入
     options.computed = Object.assign({}, currentInject.injectComputed, options.computed)
   }
+  if (currentInject && currentInject.injectMethods) {
+    // 编译methods注入
+    options.methods = Object.assign({}, currentInject.injectMethods, options.methods)
+  }
   if (currentInject && currentInject.injectOptions) {
-    // 编译option注入,优先微信中的单独配置
+    // 编译options注入,优先微信中的单独配置
     options.options = Object.assign({}, currentInject.injectOptions, options.options)
   }
   if (currentInject && currentInject.pageEvents) {

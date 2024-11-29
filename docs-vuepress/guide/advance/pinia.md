@@ -22,8 +22,26 @@ import mpx from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
 const pinia = createPinia()
-mpx.use(pinia)
 ```
+
+如果你的应用想使用 SSR 渲染模式，请将 pinia 的创建放在 `onAppInit` 钩子中执行
+```js
+// app.mpx
+
+import mpx, { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  // ...
+  onAppInit () {
+    const pinia = createPinia()
+    return {
+      pinia
+    }
+  }
+})
+```
+
 ### 创建 store
 
 然后调用`defineStore`方法，传入 store 唯一标识（id），来创建一个 store，支持 Setup 和 Options 两种风格的 store。
@@ -137,9 +155,9 @@ createComponent({
     setupStore.count = 2
     // 作为 store 的一个属性，我们可以直接访问任何 getter(与 state )
     setupStore.myName // pinia
-    
+
     function onIncrementClick() {
-      // 调用 action 方法  
+      // 调用 action 方法
       setupStore.increment()
       console.log('New Count:', setupStore.count)
     }
@@ -184,5 +202,4 @@ import { onStoreAction } from 'xxx/onStoreAction'
 
 const pinia = createPinia()
 pinia.use(onStoreAction)
-mpx.use(pinia)
 ```

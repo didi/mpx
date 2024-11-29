@@ -1,19 +1,22 @@
-// @mpxjs/webpack-plugin 2.7.x -> @mpxjs/core 2.7.x
-// @mpxjs/webpack-plugin 2.8.x -> @mpxjs/core 2.8.x
 const coreVersion = require('@mpxjs/core/package.json').version
-const packageName = require('../../package.json').name
-const packageVersion = require('../../package.json').version
+const utilsVersion = require('@mpxjs/utils/package.json').version
+const corePath = require.resolve('@mpxjs/core')
+const utilsPath = require.resolve('@mpxjs/utils')
+const semverLt = require('semver/functions/lt')
 
-// skip check prerelease version
-if (!/-\w+$/.test(packageVersion) && packageVersion.slice(0, 3) !== coreVersion.slice(0, 3)) {
-  const corePath = require.resolve('@mpxjs/core')
-  const packagePath = require.resolve('../../package.json')
-  throw new Error(
-    `@mpxjs/core packages version mismatch:
-    -@mpxjs/core@${coreVersion}(${corePath})
-    -${packageName}@${packageVersion}(${packagePath})
-    This may cause things to work incorrectly, Make sure to use the same minor version for both.
-    For example: @mpxjs/core@2.7.x with @mpxjs/webpack-plugin@2.7.x
+const leastCoreVersion = '2.8.59'
+const leastUtilsVersion = '2.8.59'
+
+function compare (version, leastVersion, npmName, npmPath) {
+  if (semverLt(version, leastVersion)) {
+    throw new Error(
+      `${npmName} packages version mismatch:
+    -${npmName}@${version}(${npmPath})
+    This may cause things to work incorrectly, Make sure the usage version is greater than ${leastVersion}.
     `
-  )
+    )
+  }
 }
+
+compare(coreVersion, leastCoreVersion, '@mpxjs/core', corePath)
+compare(utilsVersion, leastUtilsVersion, '@mpxjs/utils', utilsPath)

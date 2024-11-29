@@ -6,6 +6,14 @@ module.exports = function () {
     web (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-icon'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-icon'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-icon'
     }
   }
 }

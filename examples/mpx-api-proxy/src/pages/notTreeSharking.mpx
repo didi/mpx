@@ -1,0 +1,78 @@
+<template>
+  <view>
+    <view class="api-proxy-block">
+      <view class="title">getUserInfo</view>
+      <button bindtap="getUserInfo">getUserInfo</button>
+    </view>
+
+    <view class="api-proxy-block">
+      <view class="title">request</view>
+      <button bindtap="request">request</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">NavigationBar</view>
+      <button bindtap="setNavigationBarColor">setNavigationBarColor</button>
+    </view>
+    <view class="api-proxy-block">
+      <view class="title">route</view>
+      <button bindtap="navigateBackHandle">navigateBack</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+import apiProxy from '@mpxjs/api-proxy'
+mpx.use(apiProxy, { usePromise: true })
+createPage({
+  methods: {
+    getUserInfo() {
+      mpx.getUserInfo({
+        success(res) {
+          console.log(res, '========getUserInfo: success')
+        },
+        fail(res) {
+          console.log(res, '========getUserInfo: fail')
+        }
+      })
+    },
+    request() {
+      mpx.request({
+        url: 'https://api.udache.com/gulfstream/passenger-center/v2/other/PGetTakeBusQrCodeDetail',
+        data: {
+          x: '1',
+          y: '2'
+        },
+        header: {
+          'content-type': 'application/json'
+        }
+      }).then((res) => {
+        console.log(res.data, 'request: success')
+      }).catch((err) => {
+        console.log(err, 'request: fail')
+      })
+    },
+    setNavigationBarColor() {
+      mpx.setNavigationBarColor({
+        frontColor: '#ffffff',
+        backgroundColor: '#000000'
+      }).then((res) => {
+        console.log(res, 'setNavigationBarColor: success')
+      }).catch((err) => {
+        console.log(err, 'setNavigationBarColor: fail')
+      })
+    },
+    navigateBackHandle() {
+      mpx.navigateBack()
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+    }
+  }
+</script>

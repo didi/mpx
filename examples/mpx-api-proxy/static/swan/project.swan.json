@@ -1,0 +1,14 @@
+{
+  "compilation-args": {
+    "common": {
+      "ignoreTransJs": true,
+      "ignoreUglify": true
+    },
+    "options": [],
+    "selected": -3
+  },
+  "projectname": "mpx-api-proxy",
+  "setting": {
+    "urlCheck": true
+  }
+}

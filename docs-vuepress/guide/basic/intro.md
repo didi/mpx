@@ -36,7 +36,7 @@ Mpx使用类似Vue的单文件开发模式，小程序原本的template/js/style
 * [wx:show隐藏显示](./conditional-render.md)
 * [component动态组件](./component.md#动态组件)
 * [事件处理内联传参](./event.md)
-* [模板条件编译](./template.md)
+* [模板条件编译](./conditional-render.md)
 
 ### 极致性能
 

@@ -9,10 +9,11 @@ module.exports = function (styles, options, callback) {
           const attrs = Object.assign({}, style.attrs)
           if (options.autoScope) attrs.scoped = true
           attrs.mpxStyleOptions = JSON.stringify({
-            // scoped: !!options.autoScope,
+            scoped: attrs.scoped,
             // query中包含module字符串会被新版vue-cli中的默认rules当做css-module处理
             mid: options.moduleId
           })
+          delete attrs.scoped
           return attrs
         }
       })

@@ -8,37 +8,25 @@ function objectKeys (obj) {
       '[': ']',
       '(': ')'
     }
-    var shiftMap = {
-      'n': '\n',
-      'b': '\b',
-      'f': '\f',
-      'r': '\r',
-      't': '\t'
-    }
     if (typeof obj === 'object') {
       var objStr = JSON.stringify(obj)
       if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
-        var key = ''
         var inKey = true
         var stack = []
-        var shift = false
+        var keyStart = 0
+        var keyEnd = 0
         for (var i = 1; i < objStr.length - 1; i++) {
           var item = objStr[i]
+          var lastItem = objStr[i - 1]
           if (inKey) {
-            if (item === ':') {
-              keys.push(key.slice(1, -1))
-              key = ''
+            if (item === ':' && keyEnd === i - 1) {
+              keys.push(objStr.slice(keyStart + 1, keyEnd))
               inKey = false
             } else {
-              if (shift === false && item === '\\') {
-                shift = true
-                continue
+              if (item === '"' && lastItem !== '\\') {
+                keyStart = keyEnd
+                keyEnd = i
               }
-              if (shift) {
-                item = shiftMap[item] || item
-                shift = false
-              }
-              key += item
             }
           } else {
             if (stackMap[item]) {
@@ -89,39 +77,69 @@ function isArray (arr) {
   }
 }
 
-function isDef (v) {
-  return v !== undefined && v !== null
+var escapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  // wxs can not use '\'' as key
+  // wxs环境中'\''!=="'"，此文件不能格式化，否则会导致程序错误
+  "'": '_q_',
+  // wxs can not use '"' as key
+  '"': '_dq_',
+  '+': '_a_',
+  '$': '_si_'
+}
+
+var escapeReg = genRegExp('[()[\]{}#!/.:,%\'"+$]', 'g')
+
+function mpEscape (str) {
+  return str.replace(escapeReg, function (match) {
+    if (escapeMap[match]) return escapeMap[match]
+    // fix wxs can not use '}' as key
+    if (match === '}') return '_cr_'
+    // unknown escaped
+    return '_u_'
+  })
 }
 
 function stringifyDynamicClass (value) {
-  if (!value) return ''
   if (isArray(value)) {
-    return stringifyArray(value)
+    value = stringifyArray(value)
+  } else if (isObject(value)) {
+    value = stringifyObject(value)
   }
-  if (isObject(value)) {
-    return stringifyObject(value)
-  }
+
   if (typeof value === 'string') {
     return value
+  } else {
+    return ''
   }
-  return ''
 }
 
 function stringifyArray (value) {
   var res = ''
-  var stringified
+  var classString
   for (var i = 0; i < value.length; i++) {
-    if (isDef(stringified = stringifyDynamicClass(value[i])) && stringified !== '') {
+    if ((classString = stringifyDynamicClass(value[i]))) {
       if (res) res += ' '
-      res += stringified
+      res += classString
     }
   }
   return res
 }
 
-var mpxDashReg = genRegExp('(.+)MpxDash$')
-// 转义字符在wxs正则中存在平台兼容性问题，用[$]规避使用转义字符
-var mpxDashReplaceReg = genRegExp('[$]', 'g')
+var mpxEscapeReg = genRegExp('(.+)MpxEscape$')
+var dashEscapeReg = genRegExp('_da_', 'g')
+var spaceEscapeReg = genRegExp('_sp_', 'g')
 
 function stringifyObject (value) {
   var res = ''
@@ -130,8 +148,8 @@ function stringifyObject (value) {
     var key = objKeys[i]
     if (value[key]) {
       if (res) res += ' '
-      if (mpxDashReg.test(key)) {
-        key = mpxDashReg.exec(key)[1].replace(mpxDashReplaceReg, '-')
+      if (mpxEscapeReg.test(key)) {
+        key = mpxEscapeReg.exec(key)[1].replace(dashEscapeReg, '-').replace(spaceEscapeReg, ' ')
       }
       res += key
     }
@@ -209,7 +227,7 @@ module.exports = {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
-    return concat(staticClass, stringifyDynamicClass(dynamicClass))
+    return concat(staticClass, mpEscape(stringifyDynamicClass(dynamicClass)))
   },
   stringifyStyle: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)

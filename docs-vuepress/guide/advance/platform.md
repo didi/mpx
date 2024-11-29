@@ -50,30 +50,16 @@ packages|支持|支持|支持|支持|部分支持，无法分包
 
 如果你是自行搭建的mpx项目，你只需要进行简单的配置修改，打开项目的webpack配置，找到@mpxjs/webpack-plugin的声明位置，传入mode和srcMode参数即可，示例如下
 
-```js
-// 下面的示例配置能够将mpx微信小程序源码编译为支付宝小程序
+```javascript
 new MpxwebpackPlugin({
-  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
+  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt|jd|web|ios|android)
   mode: 'ali',
   // srcMode为mpx编译的源码平台，目前仅支持wx   
   srcMode: 'wx'
 })
 ```
 
-::: tip @mpxjs/cli@3.x 版本配置如下
-
-```javascript
-// vue.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
-    }
-  }
-})
-```
-
-通过在 `npm script` 当中定义 `targets` 来设置mpx编译的目标平台
+使用 @mpxjs/cli 创建的项目，可以通过在 `npm script` 当中定义 `targets` 来设置编译的目标平台
 
 ```javascript
 // 项目 package.json
@@ -83,7 +69,7 @@ module.exports = defineConfig({
   }
 }
 ```
-:::
+
 ### 跨平台差异抹平
 
 为了实现小程序的跨平台编译，我们在编译和运行时做了很多工作以抹平小程序开发中各个方面的跨平台差异
@@ -116,22 +102,94 @@ module.exports = defineConfig({
 
 #### api调用差异抹平
 
-对于api调用，mpx提供了一个api调用代理插件来抹平跨平台api调用的差异，使用时需要在项目中安装使用`@mpxjs/api-proxy`，并且在调用小程序api时统一使用mpx对象进行调用，示例如下：
+对于api调用，mpx提供了一个api调用代理插件来抹平跨平台api调用的差异，使用时需要在项目中安装使用`@mpxjs/api-proxy`，可以通过两种方式使用
+#### 方式一：在调用小程序api时统一使用mpx对象进行调用，示例如下：
+安装插件支持options传入，options说明如下：
+
+| 参数名称         | 类型                | 含义                       | 是否必填  | 默认值                    | 备注                    |
+|--------------|-------------------|--------------------------|-------|------------------------|-----------------------|
+| ~~platform~~ | ~~Object~~        | ~~各平台之间的转换~~	            | ~~否~~ | ~~{ from:'', to:'' }~~ | 已删除                   |
+| usePromise   | Boolean           | 是否将 api 转化为 promise 格式使用 | -     | -                      | -                     |
+| ~~exclude~~  | ~~Array(String)~~ | ~~跨平台时不需要转换的 api~~       | -     | -                      | 已删除                     |
+| whiteList    | Array(String)     | 强行转化为 promise 格式的 api    | 否     | []                     | 需要 usePromise 设为 true |
+| blackList    | Array(String)     | 不转换 promise 格式的 api      | 否     | []                     | 需要 usePromise 设为 true |
+| custom       | Object            | 提供用户在各渠道下自定义api开放能力      | 否     | []                     | -                     |
+
+#### 普通形式
 
 ```js
-// 请在app.mpx中安装mpx插件
-import mpx, { createApp } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
+
+mpx.showModal({
+  title: '标题',
+  content: '这是一个弹窗',
+  success (res) {
+    if (res.cancel) {
+      console.log('用户点击取消')
+    }
+  }
+})
+```
+
+#### 使用promise形式
+
+```js
+import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, {
-  // 开启api promisify
   usePromise: true
 })
 
-createApp({
-  onLaunch() {
-    // 调用小程序api时使用mpx.xxx，而不要使用wx.xxx或者my.xxx
-    mpx.request({url: 'xxx'})
+mpx.showActionSheet({
+  itemList: ['A', 'B', 'C']
+})
+.then(res => {
+  console.log(res.tapIndex)
+})
+.catch(err => {
+  console.log(err)
+})
+```
+
+#### 用户自定义
+
+```js
+import mpx from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+import { scanCode } from '@test/scanCode'
+
+mpx.use(apiProxy, {
+  custom: {
+    web: {
+      scanCode
+    }
+  }
+})
+// 在web下调用的实际是用户自定义部分的scanCode
+mpx.scanCode({
+  onlyFromCamera: true,
+  success (res) {
+    console.log(res, 'scanCode, success')
+  },
+  fail (res) {
+    console.log(res, 'scanCode, fail')
+  }
+})
+```
+#### 方式二：直接在`@mpxjs/api-proxy`导出想使用的方法
+```js
+// 独立使用 支持treesharking能力
+import { showModal } from '@mpxjs/api-proxy'
+
+showModal({
+  title: '标题',
+  content: '这是一个弹窗',
+  success (res) {
+    console.log('弹框展示成功')
   }
 })
 ```
@@ -169,33 +227,21 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
 ```js
   // 对于npm包中的文件依赖
   import npmModule from 'somePackage/lib/index'
-  
-  // 配置以下alias后，当mode为ali时，会优先加载项目目录中定义的projectRoot/somePackage/lib/index文件
-  const webpackConf = {
-    resolve: {
-      alias: {
-        'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
-      }
-    }
-  }
-```
 
-:::tip @mpxjs/cli@3.x 版本配置如下
-```javascript
-// vue.config.js
-module.exports = defineConfig({
-  configureWebpack() {
-    return {
-      resolve: {
-        alias: {
-          'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+  // 配置以下alias后，当mode为ali时，会优先加载项目目录中定义的projectRoot/somePackage/lib/index文件
+  // vue.config.js
+  module.exports = defineConfig({
+    configureWebpack() {
+      return {
+        resolve: {
+          alias: {
+            'somePackage/lib/index.ali': 'projectRoot/somePackage/lib/index'
+          }
         }
       }
     }
-  }
-})
+  })
 ```
-:::
 
 ### 区块维度条件编译
 
@@ -301,16 +347,16 @@ module.exports = {
 比如业务中需要通过 button 按钮获取用户信息，虽然可以使用代码维度条件编译来解决，但是增加了很多代码量：
 
 ```html
-<button 
-  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}" 
-  open-type="getUserInfo" 
+<button
+  wx:if="{{__mpx_mode__ === 'wx' || __mpx_mode__ === 'swan'}}"
+  open-type="getUserInfo"
   bindgetuserinfo="getUserInfo">
   获取用户信息
 </button>
 
-<button 
-  wx:elif="{{__mpx_mode__ === 'ali'}}" 
-  open-type="getAuthorize" 
+<button
+  wx:elif="{{__mpx_mode__ === 'ali'}}"
+  open-type="getAuthorize"
   scope="userInfo"
   onTap="onTap">
   获取用户信息
@@ -320,21 +366,51 @@ module.exports = {
 而用属性维度的编译则方便很多：
 
 ```html
-<button 
-  open-type@wx|swan="getUserInfo" 
+<button
+  open-type@wx|swan="getUserInfo"
   bindgetuserinfo@wx|swan="getUserInfo"
-  open-type@ali="getAuthorize" 
+  open-type@ali="getAuthorize"
   scope@ali="userInfo"
   onTap@ali="onTap">
   获取用户信息
 </button>
 ```
 
-属性维度的编译也可以对整个节点进行条件编译，例如只想在百度小程序中输出某个节点：
+属性维度的编译也可以对整个节点进行条件编译，例如只想在支付宝小程序中输出某个节点：
 
 ```html
-<view @swan>this is view</view>
+<view @ali>this is view</view>
 ```
+需要注意使用上述用法时，节点自身在构建时框架不会对节点属性进行平台语法转换，但对于其子节点，框架并不会继承父级节点 mode，会进行正常跨平台语法转换。
+```html
+<!--错误示例-->
+<view @ali bindtap="otherClick">
+    <view bindtap="someClick">tap click</view>
+</view>
+// srcMode 为 wx 跨端输出 ali 结果为
+<view @ali bindtap="otherClick">
+    <view onTap="someClick">tap click</view>
+</view>
+```
+上述示例为错误写法，假如srcMode为微信小程序，用上述写法构建输出支付宝小程序时，父节点 bindtap 不会被转为 onTap，在支付宝平台执行时事件会无响应。
+
+正确写法如下：
+```html
+<!--正确示例-->
+<view @ali onTap="otherClick">
+    <view bindtap="someClick">tap click</view>
+</view>
+// 输出 ali 产物
+<view @ali onTap="otherClick">
+    <view onTap="someClick">tap click</view>
+</view>
+```
+有时开发者期望使用 @ali 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力
+```html
+<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
+<view @_ali bindtap="someClick">test</view>
+```
+在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
 
 有时候我们不仅需要对节点属性进行条件编译，可能还需要对节点标签进行条件编译。
 
@@ -344,31 +420,18 @@ module.exports = {
 <view mpxTagName@swan="cover-view">will be cover-view in swan</view>
 ```
 
-### 通过 env 实现自定义目标环境的条件编译
+### 通过 env 实现自定义目标环境的条件编译 {#use-env}
 
 Mpx 支持在以上四种条件编译的基础上，通过自定义 env 的形式实现在不同环境下编译产出不同的代码。
 
 实例化 MpxWebpackPlugin 的时候，传入配置 env。
 
 ```javascript
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-new MpxWebpackPlugin({
-  // mode为mpx编译的目标平台，可选值有(wx|ali|swan|qq|tt)
-  mode: 'ali',
-  // srcMode为mpx编译的源码平台，目前仅支持wx   
-  srcMode: 'wx',
-  // env为mpx编译的目标环境，需自定义
-  env: 'didi'
-})
-```
-
-::: tip @mpxjs/cli@3.x 版本配置如下
-```javascript
 // vue.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
-      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx   
+      srcMode: 'wx' // srcMode为mpx编译的源码平台，目前仅支持wx
       plugin: {
         env: "didi" // env为mpx编译的目标环境，需自定义
       }
@@ -376,7 +439,6 @@ module.exports = defineConfig({
   }
 })
 ```
-:::
 
 #### 文件维度条件编译
 
@@ -452,6 +514,13 @@ env 属性维度的编译同样支持对整个节点或者节点标签名进行�
 <view @:didi>this is a  view component</view>
 <view mpxTagName@:didi="cover-view">this is a  view component</view>
 ```
+如果只声明了 env，没有声明 mode，跨平台输出时框架对于节点属性默认会进行转换：
+```html
+<!--srcMode为wx，跨平台输出ali时，bindtap会被转为onTap-->
+<view @:didi bindtap="someClick">this is a  view component</view>
+<view bindtap@:didi ="someClick">this is a  view component</view>
+```
+
 ### 其他注意事项
 
 * 当目标平台为支付宝时，需要启用支付宝最新的component2编译才能保障框架正常工作，关于component2[点此查看详情](https://docs.alipay.com/mini/framework/custom-component-overview)；
@@ -539,7 +608,7 @@ radio|是
 radio-group|是
 rich-text|是
 scroll-view|是|scroll-view 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
-swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal` 
+swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal`
 swiper-item|是
 switch|是
 slider|是
@@ -561,11 +630,13 @@ onShow|是
 onHide|是
 onUnload|是
 onError|是
+onServerPrefetch｜是
 created|是
 attached|是
 ready|是
 detached|是
 updated|是
+serverPrefetch|是
 
 #### 应用级事件
 

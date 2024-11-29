@@ -1,83 +1,82 @@
 /**
- * mpxjs webview bridge v2.7.22
- * (c) 2022 @mpxjs team
+ * mpxjs webview bridge v2.9.53
+ * (c) 2024 @mpxjs team
  * @license Apache
  */
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
+function _defineProperty(e, r, t) {
+  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[r] = t, e;
+}
+function ownKeys(e, r) {
+  var t = Object.keys(e);
   if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    enumerableOnly && (symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    })), keys.push.apply(keys, symbols);
+    var o = Object.getOwnPropertySymbols(e);
+    r && (o = o.filter(function (r) {
+      return Object.getOwnPropertyDescriptor(e, r).enumerable;
+    })), t.push.apply(t, o);
   }
-
-  return keys;
+  return t;
 }
-
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = null != arguments[i] ? arguments[i] : {};
-    i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
-      _defineProperty(target, key, source[key]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
-      Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+function _objectSpread2(e) {
+  for (var r = 1; r < arguments.length; r++) {
+    var t = null != arguments[r] ? arguments[r] : {};
+    r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+      _defineProperty(e, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
     });
   }
-
-  return target;
+  return e;
 }
-
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
+function _toPrimitive(t, r) {
+  if ("object" != typeof t || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r || "default");
+    if ("object" != typeof i) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-
-  return obj;
+  return ("string" === r ? String : Number)(t);
+}
+function _toPropertyKey(t) {
+  var i = _toPrimitive(t, "string");
+  return "symbol" == typeof i ? i : i + "";
 }
 
 function loadScript(url) {
   var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-      _ref$time = _ref.time,
-      time = _ref$time === void 0 ? 5000 : _ref$time,
-      _ref$crossOrigin = _ref.crossOrigin,
-      crossOrigin = _ref$crossOrigin === void 0 ? false : _ref$crossOrigin;
-
+    _ref$time = _ref.time,
+    time = _ref$time === void 0 ? 5000 : _ref$time,
+    _ref$crossOrigin = _ref.crossOrigin,
+    crossOrigin = _ref$crossOrigin === void 0 ? false : _ref$crossOrigin;
   function request() {
     return new Promise(function (resolve, reject) {
       var sc = document.createElement('script');
       sc.type = 'text/javascript';
-      sc.async = 'async'; // 可选地增加 crossOrigin 特性
+      sc.async = 'async';
 
+      // 可选地增加 crossOrigin 特性
       if (crossOrigin) {
         sc.crossOrigin = 'anonymous';
       }
-
       sc.onload = sc.onreadystatechange = function () {
         if (!this.readyState || /^(loaded|complete)$/.test(this.readyState)) {
           resolve();
           sc.onload = sc.onreadystatechange = null;
         }
       };
-
       sc.onerror = function () {
         reject(new Error("load ".concat(url, " error")));
         sc.onerror = null;
       };
-
       sc.src = url;
       document.getElementsByTagName('head')[0].appendChild(sc);
     });
   }
-
   function timeout() {
     return new Promise(function (resolve, reject) {
       setTimeout(function () {
@@ -85,10 +84,10 @@ function loadScript(url) {
       }, time);
     });
   }
-
   return Promise.race([request(), timeout()]);
 }
 
+var sdkReady;
 var SDK_URL_MAP = _objectSpread2({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -96,351 +95,201 @@ var SDK_URL_MAP = _objectSpread2({
   qq: {
     url: 'https://qqq.gtimg.cn/miniprogram/webview_jssdk/qqjssdk-1.0.0.js'
   },
-  ali: {
+  my: {
     url: 'https://appx/web-view.min.js'
   },
-  baidu: {
+  swan: {
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
-    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+    url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
   }
 }, window.sdkUrlMap);
-
-var ENV_PATH_MAP = {
-  wx: ['wx', 'miniProgram'],
-  qq: ['qq', 'miniProgram'],
-  ali: ['my'],
-  baidu: ['swan', 'webView'],
-  tt: ['tt', 'miniProgram']
-};
-var env = null;
-var isOrigin;
-window.addEventListener('message', function (event) {
-  isOrigin = event.data === event.origin;
-
-  if (isOrigin) {
-    env = 'web';
-    window.parent.postMessage({
-      type: 'load',
-      detail: {
-        load: true
-      }
-    }, '*');
+function getMpxWebViewId() {
+  var href = location.href;
+  var reg = /mpx_webview_id=(\d+)/g;
+  var matchVal = reg.exec(href);
+  var result;
+  if (matchVal && matchVal[1]) {
+    result = +matchVal[1];
   }
-}, false); // 环境判断
-
+  return result;
+}
+var env = null;
+var callbackId = 0;
+var clientUid = getMpxWebViewId();
+var callbacks = {};
+// 环境判断逻辑
 var systemUA = navigator.userAgent;
-
-if (systemUA.indexOf('AlipayClient') > -1) {
-  env = 'ali';
+if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
+  env = 'my';
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
-} else if (systemUA.indexOf('swan') > -1) {
-  env = 'baidu';
+} else if (systemUA.indexOf('swan/') > -1) {
+  env = 'swan';
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt';
 } else {
-  window.parent.postMessage({
-    type: 'load',
-    detail: {
-      load: true
-    }
-  }, '*');
-}
-
-function postMessage(type, data) {
-  var eventType;
-
-  switch (type) {
-    case 'postMessage':
-      eventType = 'message';
-      break;
-
-    case 'navigateBack':
-      eventType = 'navigateBack';
-      break;
-
-    case 'navigateTo':
-      eventType = 'navigateTo';
-      break;
-
-    case 'redirectTo':
-      eventType = 'redirectTo';
-      break;
-
-    case 'switchTab':
-      eventType = 'switchTab';
-      break;
-
-    case 'reLaunch':
-      eventType = 'reLaunch';
-      break;
-
-    case 'getEnv':
-      eventType = 'getEnv';
-      break;
-  }
-
-  if (type !== 'getEnv' && isOrigin) {
-    window.parent.postMessage({
-      type: eventType,
-      detail: {
-        data: data
+  env = 'web';
+  window.addEventListener('message', function (event) {
+    // 接收web-view的回调
+    var data = event.data;
+    var msgData = data;
+    try {
+      if (typeof data === 'string') {
+        msgData = JSON.parse(data);
       }
-    }, '*');
+    } catch (e) {}
+    var _msgData = msgData,
+      callbackId = _msgData.callbackId,
+      error = _msgData.error,
+      result = _msgData.result;
+    if (callbackId !== undefined && callbacks[callbackId]) {
+      if (error) {
+        callbacks[callbackId](error);
+      } else {
+        callbacks[callbackId](null, result);
+      }
+      delete callbacks[callbackId];
+    }
+  }, false);
+}
+var initWebviewBridge = function initWebviewBridge() {
+  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  getWebviewApi();
+};
+var webviewSdkready = false;
+function runWebviewApiMethod(callback) {
+  if (webviewSdkready) {
+    callback();
   } else {
-    data({
-      miniprogram: false
+    sdkReady.then(function () {
+      webviewSdkready = true;
+      callback();
     });
   }
 }
-
-var webviewApiList = {};
-
-function getEnvWebviewVariable() {
-  return ENV_PATH_MAP[env].reduce(function (acc, cur) {
-    return acc[cur];
-  }, window);
-}
-
-function getEnvVariable() {
-  return window[ENV_PATH_MAP[env][0]];
-}
-
-var initWebviewBridge = function initWebviewBridge() {
-  if (env === null) {
-    console.log('mpxjs/webview: 未识别的环境，当前仅支持 微信、支付宝、百度、头条 QQ 小程序');
-    getWebviewApi();
-    return;
+var webviewBridge = {
+  config: function config(_config) {
+    if (env !== 'wx') {
+      console.warn('非微信环境不需要配置config');
+      return;
+    }
+    runWebviewApiMethod(function () {
+      if (window.wx) {
+        window.wx.config(_config);
+      }
+    });
   }
-
-  var sdkReady = !window[env] ? SDK_URL_MAP[env]['url'] ? loadScript(SDK_URL_MAP[env]['url'], {
-    crossOrigin: !!SDK_URL_MAP[env]['crossOrigin']
-  }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
-  getWebviewApi(sdkReady);
 };
-
-var getWebviewApi = function getWebviewApi(sdkReady) {
-  var webviewApiNameList = {
-    navigateTo: 'navigateTo',
-    navigateBack: 'navigateBack',
-    switchTab: 'switchTab',
-    reLaunch: 'reLaunch',
-    redirectTo: 'redirectTo',
-    getEnv: 'getEnv',
-    postMessage: 'postMessage',
-    getLoadError: 'getLoadError',
-    onMessage: {
-      ali: true
+function filterData(data) {
+  if (Object.prototype.toString.call(data) !== '[object Object]') {
+    return data;
+  }
+  var newData = {};
+  for (var item in data) {
+    if (typeof data[item] !== 'function') {
+      newData[item] = data[item];
+    }
+  }
+  return newData;
+}
+function postMessage(type) {
+  var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  if (type !== 'getEnv') {
+    var currentCallbackId = ++callbackId;
+    callbacks[currentCallbackId] = function (err, res) {
+      if (err) {
+        data.fail && data.fail(err);
+        data.complete && data.complete(err);
+      } else {
+        data.success && data.success(res);
+        data.complete && data.complete(res);
+      }
+      delete callbacks[currentCallbackId];
+    };
+    var postParams = {
+      type: type,
+      callbackId: callbackId,
+      payload: filterData(data)
+    };
+    if (clientUid !== undefined) {
+      postParams.clientUid = clientUid;
+    }
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams));
+    } else {
+      window.parent.postMessage && window.parent.postMessage(postParams, '*');
+    }
+  } else {
+    data({
+      webapp: true
+    });
+  }
+}
+var getWebviewApi = function getWebviewApi() {
+  var multiApiMap = {
+    wx: {
+      keyName: 'miniProgram',
+      api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'postMessage', 'getEnv']
+    },
+    tt: {
+      keyName: 'miniProgram',
+      api: ['redirectTo', 'navigateTo', 'switchTab', 'reLaunch', 'navigateBack', 'setSwipeBackModeSync', 'postMessage', 'getEnv', 'checkJsApi', 'chooseImage', 'compressImage', 'previewImage', 'uploadFile', 'getNetworkType', 'openLocation', 'getLocation']
+    },
+    swan: {
+      keyName: 'webView',
+      api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage']
+    },
+    qq: {
+      keyName: 'miniProgram',
+      api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage']
     }
   };
-
-  var _loop = function _loop(item) {
-    var apiName = typeof webviewApiNameList[item] === 'string' ? webviewApiNameList[item] : !webviewApiNameList[item][env] ? false : typeof webviewApiNameList[item][env] === 'string' ? webviewApiNameList[item][env] : item;
-
-    webviewApiList[item] = function () {
+  var singleApiMap = {
+    wx: ['checkJSApi', 'chooseImage', 'previewImage', 'uploadImage', 'downloadImage', 'getLocalImgData', 'startRecord', 'stopRecord', 'onVoiceRecordEnd', 'playVoice', 'pauseVoice', 'stopVoice', 'onVoicePlayEnd', 'uploadVoice', 'downloadVoice', 'translateVoice', 'getNetworkType', 'openLocation', 'getLocation', 'startSearchBeacons', 'stopSearchBeacons', 'onSearchBeacons', 'scanQRCode', 'chooseCard', 'addCard', 'openCard'],
+    my: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'chooseImage', 'previewImage', 'getLocation', 'openLocation', 'alert', 'showLoading', 'hideLoading', 'getNetworkType', 'startShare', 'tradePay', 'postMessage', 'onMessage', 'getEnv'],
+    swan: ['makePhoneCall', 'setClipboardData', 'getNetworkType', 'openLocation', 'getLocation', 'chooseLocation', 'chooseImage', 'previewImage', 'openShare', 'navigateToSmartProgram'],
+    web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLoadError', 'getLocation'],
+    tt: []
+  };
+  var multiApi = multiApiMap[env] || {};
+  var singleApi = singleApiMap[env] || [];
+  var multiApiLists = multiApi.api || [];
+  multiApiLists.forEach(function (item) {
+    webviewBridge[item] = function () {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
-
+      runWebviewApiMethod(function () {
+        var _window$env$multiApi$;
+        (_window$env$multiApi$ = window[env][multiApi.keyName])[item].apply(_window$env$multiApi$, args);
+      });
+    };
+  });
+  singleApi.forEach(function (item) {
+    webviewBridge[item] = function () {
+      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
+      }
       if (env === 'web') {
-        return postMessage.apply(void 0, [item].concat(args)); // console.log(`${env}小程序不支持 ${item} 方法`)
+        postMessage.apply(void 0, [item].concat(args));
+      } else if (env === 'wx') {
+        runWebviewApiMethod(function () {
+          window[env] && window[env].ready(function () {
+            var _window$env;
+            (_window$env = window[env])[item].apply(_window$env, args);
+          });
+        });
       } else {
-        return sdkReady.then(function () {
-          var _getEnvWebviewVariabl;
-
-          if (apiName === 'getLoadError') {
-            return Promise.resolve('js加载完成');
-          }
-
-          (_getEnvWebviewVariabl = getEnvWebviewVariable())[apiName].apply(_getEnvWebviewVariabl, args);
+        runWebviewApiMethod(function () {
+          var _window$env2;
+          (_window$env2 = window[env])[item].apply(_window$env2, args);
         });
       }
     };
-  };
-
-  for (var item in webviewApiNameList) {
-    _loop(item);
-  }
+  });
 };
-
-var getAdvancedApi = function getAdvancedApi(config, mpx) {
-  // 微信的非小程序相关api需要config配置
-  if (!mpx) {
-    console.log('需要提供挂载方法的mpx对象');
-    return;
-  }
-
-  if (window.wx) {
-    if (config) {
-      console.log('微信环境下需要配置wx.config才能挂载方法');
-      return;
-    }
-
-    window.wx.config(config);
-  } // key为导出的标准名，对应平台不支持的话为undefined
-
-
-  var ApiList = {
-    'checkJSApi': {
-      wx: 'checkJSApi'
-    },
-    'chooseImage': {
-      wx: 'chooseImage',
-      baidu: 'chooseImage',
-      ali: 'chooseImage'
-    },
-    'previewImage': {
-      wx: 'previewImage',
-      baidu: 'previewImage',
-      ali: 'previewImage'
-    },
-    'uploadImage': {
-      wx: 'uploadImage'
-    },
-    'downloadImage': {
-      wx: 'downloadImage'
-    },
-    'getLocalImgData': {
-      wx: 'getLocalImgData'
-    },
-    'startRecord': {
-      wx: 'startRecord'
-    },
-    'stopRecord': {
-      wx: 'stopRecord'
-    },
-    'onVoiceRecordEnd': {
-      wx: 'onVoiceRecordEnd'
-    },
-    'playVoice': {
-      wx: 'playVoice'
-    },
-    'pauseVoice': {
-      wx: 'pauseVoice'
-    },
-    'stopVoice': {
-      wx: 'stopVoice'
-    },
-    'onVoicePlayEnd': {
-      wx: 'onVoicePlayEnd'
-    },
-    'uploadVoice': {
-      wx: 'uploadVoice'
-    },
-    'downloadVoice': {
-      wx: 'downloadVoice'
-    },
-    'translateVoice': {
-      wx: 'translateVoice'
-    },
-    'getNetworkType': {
-      wx: 'getNetworkType',
-      baidu: 'getNetworkType',
-      ali: 'getNetworkType'
-    },
-    'openLocation': {
-      wx: 'openLocation',
-      baidu: 'openLocation',
-      ali: 'openLocation'
-    },
-    'getLocation': {
-      wx: 'getLocation',
-      baidu: 'getLocation',
-      ali: 'getLocation'
-    },
-    'startSearchBeacons': {
-      wx: 'startSearchBeacons'
-    },
-    'stopSearchBeacons': {
-      wx: 'stopSearchBeacons'
-    },
-    'onSearchBeacons': {
-      wx: 'onSearchBeacons'
-    },
-    'scanQRCode': {
-      wx: 'scanQRCode'
-    },
-    'chooseCard': {
-      wx: 'chooseCard'
-    },
-    'addCard': {
-      wx: 'addCard'
-    },
-    'openCard': {
-      wx: 'openCard'
-    },
-    'alert': {
-      ali: 'alert'
-    },
-    'showLoading': {
-      ali: 'showLoading'
-    },
-    'hideLoading': {
-      ali: 'hideLoading'
-    },
-    'setStorage': {
-      ali: 'setStorage'
-    },
-    'getStorage': {
-      ali: 'getStorage'
-    },
-    'removeStorage': {
-      ali: 'removeStorage'
-    },
-    'clearStorage': {
-      ali: 'clearStorage'
-    },
-    'getStorageInfo': {
-      ali: 'getStorageInfo'
-    },
-    'startShare': {
-      ali: 'startShare'
-    },
-    'tradePay': {
-      ali: 'tradePay'
-    },
-    'onMessage': {
-      ali: 'onMessage'
-    }
-  };
-
-  var _loop2 = function _loop2(item) {
-    mpx[item] = function () {
-      if (!ApiList[item][env]) {
-        console.error("\u6B64\u73AF\u5883\u4E0D\u652F\u6301".concat(item, "\u65B9\u6CD5"));
-      } else {
-        var _getEnvVariable;
-
-        console.log(ApiList[item][env], 'ApiList[item][env]');
-
-        (_getEnvVariable = getEnvVariable())[ApiList[item][env]].apply(_getEnvVariable, arguments);
-      }
-    };
-  };
-
-  for (var item in ApiList) {
-    _loop2(item);
-  }
-};
-
 initWebviewBridge();
 
-var bridgeFunction = _objectSpread2(_objectSpread2({}, webviewApiList), {}, {
-  getAdvancedApi: getAdvancedApi,
-  mpxEnv: env
-});
-
-var navigateTo = webviewApiList.navigateTo,
-    navigateBack = webviewApiList.navigateBack,
-    switchTab = webviewApiList.switchTab,
-    reLaunch = webviewApiList.reLaunch,
-    redirectTo = webviewApiList.redirectTo,
-    getEnv = webviewApiList.getEnv,
-    postMessage$1 = webviewApiList.postMessage,
-    getLoadError = webviewApiList.getLoadError;
-var getAdvancedApi$1 = bridgeFunction.getAdvancedApi; // 此处导出的对象包含所有的api
-
-export default bridgeFunction;
-export { getAdvancedApi$1 as getAdvancedApi, getEnv, getLoadError, navigateBack, navigateTo, postMessage$1 as postMessage, reLaunch, redirectTo, switchTab };
+export default webviewBridge;

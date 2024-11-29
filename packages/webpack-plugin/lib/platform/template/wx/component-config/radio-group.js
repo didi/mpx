@@ -6,6 +6,14 @@ module.exports = function () {
     web (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-radio-group'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-radio-group'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-radio-group'
     }
   }
 }

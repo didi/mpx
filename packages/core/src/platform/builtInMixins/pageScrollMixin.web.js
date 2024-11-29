@@ -14,23 +14,21 @@ function refreshMs () {
   }
 }
 
-let loading = null
-
 function showLoading (vm) {
   const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
-  loading = document.createElement('div')
-  loading.className = 'pull-down-loading'
-  loading.style.cssText = `background-color: ${backgroundColor};`
+  vm.__mpxloading = document.createElement('div')
+  vm.__mpxloading.className = 'pull-down-loading'
+  vm.__mpxloading.style.cssText = `background-color: ${backgroundColor};`
   const dot = document.createElement('div')
   dot.className = `dot-flashing ${backgroundTextStyle}`
-  loading.append(dot)
-  vm.$el.prepend(loading)
+  vm.__mpxloading.append(dot)
+  vm.$el.prepend(vm.__mpxloading)
 }
 
 function hideLoading (vm) {
-  if (loading) {
-    vm.$el.removeChild(loading)
-    loading = null
+  if (vm.__mpxloading) {
+    vm.$el.removeChild(vm.__mpxloading)
+    vm.__mpxloading = null
   }
 }
 
@@ -41,6 +39,7 @@ export default function pageScrollMixin (mixinType) {
   return {
     mounted () {
       this.__lastScrollY = 0
+      this.__originalOverflow = document.body.style.overflow
     },
     activated () {
       if (!refreshMs()) {
@@ -72,19 +71,22 @@ export default function pageScrollMixin (mixinType) {
       }
     },
     deactivated () {
-      if (ms) {
+      if (ms) { // 保存滚动位置, 用于 keep-alive
         this.__lastScrollY = getScrollTop()
-        ms.destroy()
-        hideLoading(this)
       }
+      this.__uninstallMpxScroll()
     },
     beforeDestroy () {
-      if (ms) {
-        ms.destroy()
-        hideLoading(this)
-      }
+      this.__uninstallMpxScroll()
     },
     methods: {
+      __uninstallMpxScroll () {
+        if (ms) {
+          ms.destroy()
+          hideLoading(this)
+          document.body.style.overflow = this.__originalOverflow // 恢复原有 overflow, 避免影响其他页面
+        }
+      },
       __mpxPullDownHandler (autoStop = false, isRefresh = false) {
         this.__pullingDown = true
         // 同微信保持一致

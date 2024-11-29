@@ -5,9 +5,12 @@ const config = require('../config')
 const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
+const genDynamicTemplate = require('../runtime-render/gen-dynamic-template')
 
-function randomIdent () {
-  return 'xxxHTMLLINKxxx' + Math.random() + Math.random() + 'xxx'
+let count = 0
+
+function countIdent () {
+  return `__HTMLLINK__${count++}__`
 }
 
 module.exports = function (content) {
@@ -19,11 +22,19 @@ module.exports = function (content) {
   const { queryObj } = parseRequest(this.resource)
   const hasScoped = false
   const hasComment = false
-  const isNative = true
+  const isNative = false
 
   const mode = mpx.mode
   const localSrcMode = queryObj.mode
   const customAttributes = options.attributes || mpx.attributes || []
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const isDynamic = queryObj.isDynamic
+
+  const exportsString = 'module.exports = '
+
+  if (isDynamic) {
+    return exportsString + JSON.stringify(genDynamicTemplate(packageName)) + ';'
+  }
 
   const { getRequestString } = createHelpers(this)
 
@@ -57,7 +68,7 @@ module.exports = function (content) {
 
     let ident
     do {
-      ident = randomIdent()
+      ident = countIdent()
     } while (data[ident])
     data[ident] = link
     const x = content.pop()
@@ -69,9 +80,7 @@ module.exports = function (content) {
   content = content.join('')
   content = JSON.stringify(content)
 
-  const exportsString = 'module.exports = '
-
-  return exportsString + content.replace(/xxxHTMLLINKxxx[0-9.]+xxx/g, (match) => {
+  return exportsString + content.replace(/__HTMLLINK__\d+__/g, (match) => {
     if (!data[match]) return match
 
     const link = data[match]

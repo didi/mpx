@@ -776,7 +776,7 @@ class MPXProxy {
       this.miniRenderData = {}
       for (let key in renderData) { // 遍历数据访问路径
         if (renderData.hasOwnProperty(key)) {
-          let item = renderData[key] 
+          let item = renderData[key]
           let data = item[0]
           let firstKey = item[1] // 某个字段 path 的第一个 key 值
           if (this.localKeys.indexOf(firstKey) > -1) {
@@ -817,7 +817,7 @@ class MPXProxy {
  * @param {Object} renderData
  * @return {Object} processedRenderData
  */
-export function preprocessRenderData (renderData) { 
+export function preprocessRenderData (renderData) {
   // method for get key path array
   const processKeyPathMap = (keyPathMap) => {
     let keyPath = Object.keys(keyPathMap)

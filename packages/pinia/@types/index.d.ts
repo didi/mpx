@@ -172,7 +172,7 @@ export declare type _ExtractStateFromSetupStore_Keys<SS> = keyof {
 /**
  * Get the currently active pinia if there is any.
  */
-export declare const getActivePinia: () => Pinia | undefined;
+export declare const getActivePinia: () => Pinia | undefined
 
 /**
  * Type of an object of Getters that infers the argument. For internal usage only.
@@ -250,7 +250,7 @@ export declare type _MapActionsReturn<A> = {
  * Alias for `mapState()`. You should use `mapState()` instead.
  * @deprecated use `mapState()` instead.
  */
-export declare const mapGetters: typeof mapState;
+export declare const mapGetters: typeof mapState
 
 /**
  * Allows using state and getters from one store without using the composition
@@ -420,19 +420,19 @@ export declare enum MutationType {
      * - `store.$state.name = 'new name'`
      * - `store.list.push('new item')`
      */
-    direct = "direct",
+    direct = 'direct',
     /**
      * Mutated the state with `$patch` and an object
      *
      * - `store.$patch({ name: 'newName' })`
      */
-    patchObject = "patch object",
+    patchObject = 'patch object',
     /**
      * Mutated the state with `$patch` and a function
      *
      * - `store.$patch(state => state.name = 'newName')`
      */
-    patchFunction = "patch function"
+    patchFunction = 'patch function'
 }
 
 /**
@@ -532,7 +532,7 @@ export declare type PiniaStorePlugin = PiniaPlugin;
  *
  * @param _Vue - `Vue` imported from 'vue'.
  */
-export declare const PiniaVuePlugin: Plugin_2;
+export declare const PiniaVuePlugin: Plugin_2
 
 /**
  * Sets or unsets the active pinia. Used in SSR and internally when calling
@@ -540,7 +540,7 @@ export declare const PiniaVuePlugin: Plugin_2;
  *
  * @param pinia - Pinia instance
  */
-export declare const setActivePinia: (pinia: Pinia | undefined) => Pinia | undefined;
+export declare const setActivePinia: (pinia: Pinia | undefined) => Pinia | undefined
 
 /**
  * Changes the suffix added by `mapStores()`. Can be set to an empty string.

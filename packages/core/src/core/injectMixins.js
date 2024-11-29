@@ -19,7 +19,7 @@ export function injectMixins (mixins, options = {}) {
     }
   }
 
-  let types = options.types || ['app', 'page', 'component']
+  let types = options.types || ['page', 'component']
   const stage = options.stage || -1
 
   if (typeof types === 'string') {

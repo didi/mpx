@@ -1,9 +1,3 @@
-import {
-  effectScope as vueEffectScope,
-  getCurrentScope as getCurrentVueScope,
-  onScopeDispose
-} from 'vue'
-
 export {
   // watch
   watchEffect,
@@ -29,26 +23,12 @@ export {
   // computed
   computed,
   // instance
-  getCurrentInstance
-} from 'vue'
-
-const noop = () => {
-}
-
-const fixEffectScope = (scope) => {
-  scope.pause = noop
-  scope.resume = noop
-}
-
-const effectScope = (detached) => fixEffectScope(vueEffectScope(detached))
-const getCurrentScope = () => fixEffectScope(getCurrentVueScope())
-
-export {
+  getCurrentInstance,
   // effectScope
   effectScope,
   getCurrentScope,
   onScopeDispose
-}
+} from 'vue'
 
 export {
   // i18n

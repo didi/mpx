@@ -1,0 +1,18 @@
+<template>
+  <wxs module="xs" src="~@mpxjs/template-engine/dist/utils.wxs"/>
+</template>
+
+<script src="./custom-element-script.js"></script>
+
+<style>
+
+</style>
+
+<script name="json">
+
+const json = require('./custom-element-json')
+
+module.exports = {
+  ...json
+}
+</script>

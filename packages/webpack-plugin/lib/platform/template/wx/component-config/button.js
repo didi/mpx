@@ -32,6 +32,12 @@ module.exports = function ({ print }) {
   const tenonEventLog = print({ platform: 'tenon', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
+  const iosValueLogError = print({ platform: 'ios', tag: TAG_NAME, isError: true, type: 'value' })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidValueLogError = print({ platform: 'android', tag: TAG_NAME, isError: true, type: 'value' })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -42,6 +48,14 @@ module.exports = function ({ print }) {
     tenon (tag, { el }) {
       el.isBuiltIn = true
       return 'tenon-button'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
     },
     props: [
       {
@@ -108,10 +122,22 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            const supportList = ['share', 'getPhoneNumber', 'contact']
+            const supportList = ['share', 'getPhoneNumber', 'contact', 'im', 'openSetting']
             if (value && supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
+          }
+        },
+        ios ({ name, value }) {
+          const supported = ['share']
+          if (!supported.includes(value)) {
+            iosValueLogError({ name, value })
+          }
+        },
+        android ({ name, value }) {
+          const supported = ['share']
+          if (!supported.includes(value)) {
+            androidValueLogError({ name, value })
           }
         }
       },
@@ -154,6 +180,11 @@ module.exports = function ({ print }) {
       {
         test: /^(open-type|lang|session-from|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|bindgetuserinfo|bindcontact|bindgetphonenumber|binderror|bindopensetting|bindlaunchapp)$/,
         qa: qaPropLog
+      },
+      {
+        test: /^(lang|from-type|hover-class|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|phone-number-no-quota-toast|bindgetuserinfo|bindcontact|createliveactivity|bindgetphonenumber|bindgetrealtimephonenumber|binderror|bindopensetting|bindlaunchapp|bindchooseavatar|bindagreeprivacyauthorization)$/,
+        ios: iosPropLog,
+        android: androidPropLog
       }
     ],
     event: [
@@ -187,6 +218,11 @@ module.exports = function ({ print }) {
         test: /^(getuserinfo|contact|error|launchapp|opensetting|getphonenumber)$/,
         web: webEventLog,
         tenon: tenonEventLog
+      },
+      {
+        test: /^(getuserinfo|contact|getphonenumber|bindgetrealtimephonenumber|error|opensetting|launchapp|chooseavatar|agreeprivacyauthorization)$/,
+        ios: iosEventLog,
+        android: androidEventLog
       }
     ]
   }

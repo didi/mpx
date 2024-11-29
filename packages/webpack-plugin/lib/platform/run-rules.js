@@ -32,7 +32,7 @@ module.exports = function runRules (rules = [], input, options = {}) {
       if (result !== undefined) {
         input = result
       }
-      if (!waterfall) break
+      if (!(rule.waterfall || waterfall)) break
     }
   }
   return input
