@@ -31,10 +31,10 @@ export const eventConfigMap: EventConfig = {
 }
 
 export const createTouchEventList = (
-  handleTouchstart: TouchEventHandler,
-  handleTouchmove: TouchEventHandler,
-  handleTouchend: TouchEventHandler,
-  handleTouchcancel: TouchEventHandler
+  handleTouchstart: (e: NativeTouchEvent, type: 'bubble' | 'capture') => void,
+  handleTouchmove: (e: NativeTouchEvent, type: 'bubble' | 'capture') => void,
+  handleTouchend: (e: NativeTouchEvent, type: 'bubble' | 'capture') => void,
+  handleTouchcancel:(e: NativeTouchEvent, type: 'bubble' | 'capture') => void
 ) => [{
   eventName: 'onTouchStart',
   handler: (e: NativeTouchEvent) => {

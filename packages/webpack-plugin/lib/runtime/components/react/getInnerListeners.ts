@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo } from 'react'
+import { useRef } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
 import { omit, extendObject } from './utils'
 import { eventConfigMap, createTouchEventList } from './event.config'
@@ -181,7 +181,7 @@ const useInnerProps = (
     }
   }
 
-  const handleTouchstart = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
+  const handleTouchstart = (e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     e.persist()
     ref.current.startTimer[type] = null
     ref.current.needPress[type] = true
@@ -200,15 +200,15 @@ const useInnerProps = (
         handleEmitEvent(currentPressEvent, 'longpress', e)
       }, 350)
     }
-  }, [])
+  }
 
-  const handleTouchmove = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
+  const handleTouchmove = (e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_MOVE : CAPTURE_TOUCH_MOVE
     handleEmitEvent(currentTouchEvent, 'touchmove', e)
     checkIsNeedPress(e, type)
-  }, [])
+  }
 
-  const handleTouchend = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
+  const handleTouchend = (e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     // move event may not be triggered
     checkIsNeedPress(e, type)
     const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_END : CAPTURE_TOUCH_END
@@ -222,35 +222,30 @@ const useInnerProps = (
       }
       handleEmitEvent(currentTapEvent, 'tap', e)
     }
-  }, [])
+  }
 
-  const handleTouchcancel = useCallback((e: NativeTouchEvent, type: 'bubble' | 'capture') => {
+  const handleTouchcancel = (e: NativeTouchEvent, type: 'bubble' | 'capture') => {
     const currentTouchEvent = type === 'bubble' ? BUBBLE_TOUCH_CANCEL : CAPTURE_TOUCH_CANCEL
     ref.current.startTimer[type] && clearTimeout(ref.current.startTimer[type] as SetTimeoutReturnType)
     ref.current.startTimer[type] = null
     handleEmitEvent(currentTouchEvent, 'touchcancel', e)
-  }, [])
+  }
 
-  const touchEventList = useMemo(() =>
-    createTouchEventList(
-      handleTouchstart,
-      handleTouchmove,
-      handleTouchend,
-      handleTouchcancel
-    ), []
-  )
+  const touchEventList = createTouchEventList(handleTouchstart, handleTouchmove, handleTouchend, handleTouchcancel)
 
   const events: Record<string, (e: NativeTouchEvent) => void> = {}
 
-  const transformedEventKeys = new Set<string>()
+  let transformedEventKeys: string[] = []
   for (const key in eventConfig) {
     if (propsRef.current[key]) {
-      eventConfig[key].forEach(eventKey => transformedEventKeys.add(eventKey))
+      transformedEventKeys = transformedEventKeys.concat(eventConfig[key])
     }
   }
 
+  const finalEventKeys = [...new Set(transformedEventKeys)]
+
   touchEventList.forEach(item => {
-    if (transformedEventKeys.has(item.eventName)) {
+    if (finalEventKeys.includes(item.eventName)) {
       events[item.eventName] = item.handler
     }
   })
