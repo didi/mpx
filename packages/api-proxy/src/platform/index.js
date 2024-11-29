@@ -26,7 +26,7 @@ export * from './api/canvas'
 export * from './api/check-session'
 
 // setClipboardData, getClipboardData
-export * from './api/clipboard-data'
+// export * from './api/clipboard-data'
 
 // createIntersectionObserver
 export * from './api/create-intersection-observer'
@@ -77,7 +77,7 @@ export * from './api/route'
 export * from './api/scan-code'
 
 // setScreenBrightness, getScreenBrightness
-export * from './api/screen-brightness'
+// export * from './api/screen-brightness'
 
 // setNavigationBarTitle, setNavigationBarColor
 export * from './api/set-navigation-bar'
@@ -104,9 +104,6 @@ export * from './api/video'
 
 // onWindowResize, offWindowResize
 export * from './api/window'
-
-// getEnterOptionsSync
-export * from './api/lifecycle'
 
 // getLocation, openLocation, chooseLocation
 export * from './api/location'

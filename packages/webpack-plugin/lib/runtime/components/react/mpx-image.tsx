@@ -55,6 +55,7 @@ export interface ImageProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'enable-fast-image'?: boolean
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
@@ -110,6 +111,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
+    'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     bindload,
@@ -423,7 +425,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
               height: isCropMode ? imageHeight : '100%',
               ...(isCropMode && modeStyle)
             }
-          })
+          }, enableFastImage)
       }
     </View>
   )
