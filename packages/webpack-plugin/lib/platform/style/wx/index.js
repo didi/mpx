@@ -489,7 +489,7 @@ module.exports = function getSpec ({ warn, error }) {
       let isUsed = false
       for (let i = 0; i < 2; i++) {
         isUsed = isNumber(values[i]) || cssVariableExp.test(values[i])
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isUsed ? values[i] : 1 })
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isUsed ? values[i] : 1, selector })
         item && cssMap.push(item)
       }
       if (!isAuto && !isUsed) {
@@ -510,7 +510,7 @@ module.exports = function getSpec ({ warn, error }) {
     }
     // 循环赋值
     for (let i = 0; i < values.length; i++) {
-      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i], selector })
       item && cssMap.push(item)
     }
     return cssMap
