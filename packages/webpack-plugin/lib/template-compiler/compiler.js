@@ -2060,7 +2060,7 @@ function processWrapTextReact (el) {
 // }
 
 function injectWxs (meta, module, src) {
-  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode) || isWeb(mode)) {
+  if (runtimeCompile || addWxsModule(meta, module, src) || isReact(mode) || isWeb(mode) || isTenon(mode)) {
     return
   }
 
@@ -2596,7 +2596,7 @@ function processElement (el, root, options, meta) {
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
-    processIfForWeb(el)
+    processIfWeb(el)
     // processWebExternalClassesHack(el, options)
     // processComponentGenericsForWeb(el, options, meta)
     return

@@ -21,6 +21,11 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const getRulesRunner = require('./platform')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
+const loaderUtils = require('loader-utils')
+
+function stringifyRequest (loaderContext, request) {
+  return loaderUtils.stringifyRequest(loaderContext, request)
+}
 
 module.exports = function (content) {
   this.cacheable()
@@ -154,10 +159,11 @@ module.exports = function (content) {
       }
 
       if (mode === 'tenon') {
+        let output = ''
         if (ctorType === 'app' && !queryObj.app) {
           const request = addQuery(this.resource, { app: true })
           output += `
-      import App from ${stringifyRequest(request)}
+      import App from ${stringifyRequest(loaderContext, request)}
       import * as Tenon from '@hummer/tenon-vue'
 
       Tenon.render(App)\n`
@@ -169,7 +175,7 @@ module.exports = function (content) {
           console.log(resourcePath)
           const request = addQuery(resourcePath, { page: true })
           output += `
-      import page from ${stringifyRequest(request)}
+      import page from ${stringifyRequest(loaderContext, request)}
       import * as Tenon from '@hummer/tenon-vue'
 
       Tenon.render(page)\n`
@@ -177,16 +183,21 @@ module.exports = function (content) {
           return callback(null, output)
         }
         return processForTenon({
-          mpx,
-          loaderContext,
-          isProduction,
-          queryObj,
-          filePath,
           parts,
-          ctorType,
-          autoScope,
+          loaderContext,
+          pagesMap,
           componentsMap,
+          queryObj,
+          ctorType,
+          srcMode,
           moduleId,
+          isProduction,
+          hasScoped,
+          hasComment,
+          isNative,
+          usingComponents,
+          componentGenerics,
+          autoScope,
           callback
         })
       }

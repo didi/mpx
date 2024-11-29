@@ -1,4 +1,5 @@
-import { webHandleSuccess, webHandleFail, warn, hasOwn } from '../../../common/js'
+import { successHandle, failHandle, warn } from '../../../common/js'
+import { hasOwn } from '@mpxjs/utils'
 const { Storage } = __GLOBAL__
 
 function setStorage (options = {}) {
@@ -8,11 +9,11 @@ function setStorage (options = {}) {
     setStorageSync(key, data)
 
     const res = { errMsg: 'setStorage:ok' }
-    webHandleSuccess(res, success, complete)
+    successHandle(res, success, complete)
     return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `setStorage:fail ${err}` }
-    webHandleFail(res, fail, complete)
+    failHandle(res, fail, complete)
     return Promise.reject(res)
   }
 }
@@ -34,11 +35,11 @@ function getStorage (options = {}) {
 
   if (result) {
     const res = { errMsg: 'getStorage:ok', data: data }
-    webHandleSuccess(res, success, complete)
+    successHandle(res, success, complete)
     return Promise.resolve(res)
   } else {
     const res = { errMsg: 'getStorage:fail', data: null }
-    webHandleFail(res, fail, complete)
+    failHandle(res, fail, complete)
     return Promise.reject(res)
   }
 }
@@ -70,11 +71,11 @@ function getStorageInfo (options = {}) {
     const info = getStorageInfoSync()
 
     const res = Object.assign({}, { errMsg: 'getStorageInfo:ok' }, info)
-    webHandleSuccess(res, success, complete)
+    successHandle(res, success, complete)
     return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `getStorageInfo:fail ${err}` }
-    webHandleFail(res, fail, complete)
+    failHandle(res, fail, complete)
     return Promise.reject(res)
   }
 }
@@ -94,11 +95,11 @@ function removeStorage (options = { key: '' }) {
     removeStorageSync(key)
 
     const res = { errMsg: 'removeStorage:ok' }
-    webHandleSuccess(res, success, complete)
+    successHandle(res, success, complete)
     return Promise.resolve(res)
   } catch (err) {
     const res = { errMsg: `removeStorage:fail ${err}` }
-    webHandleFail(res, fail, complete)
+    failHandle(res, fail, complete)
     return Promise.reject(res)
   }
 }
@@ -115,11 +116,11 @@ function clearStorage (options = {}) {
   //   clearStorageSync()
 
   //   const res = { errMsg: 'clearStorage:ok' }
-  //   webHandleSuccess(res, success, complete)
+  //   successHandle(res, success, complete)
   //   return Promise.resolve(res)
   // } catch (err) {
   //   const res = { errMsg: `clearStorage:fail ${err}` }
-  //   webHandleFail(res, fail, complete)
+  //   failHandle(res, fail, complete)
   //   return Promise.reject(res)
   // }
 }

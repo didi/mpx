@@ -62,6 +62,7 @@ const noop = () => {
 const fixEffectScope = (scope) => {
   scope.pause = noop
   scope.resume = noop
+  return scope
 }
 
 const effectScope = (detached) => fixEffectScope(vueEffectScope(detached))

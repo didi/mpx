@@ -1,4 +1,4 @@
-import { warn, webHandleSuccess, webHandleFail } from '../../../common/js'
+import { warn, successHandle, failHandle } from '../../../common/js'
 import SocketTask from './SocketTask'
 
 function connectSocket (options = { url: '' }) {
@@ -6,10 +6,10 @@ function connectSocket (options = { url: '' }) {
 
   try {
     const socketTask = new SocketTask(url, protocols)
-    webHandleSuccess({ errMsg: 'connectSocket:ok' }, success, complete)
+    successHandle({ errMsg: 'connectSocket:ok' }, success, complete)
     return socketTask
   } catch (e) {
-    webHandleFail({ errMsg: `connectSocket:fail ${e}` }, fail, complete)
+    failHandle({ errMsg: `connectSocket:fail ${e}` }, fail, complete)
   }
 }
 

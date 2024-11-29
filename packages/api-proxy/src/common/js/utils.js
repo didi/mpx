@@ -54,27 +54,6 @@ function genFromMap () {
   return result
 }
 
-function getEnvObj () {
-  switch (__mpx_mode__) {
-    case 'wx':
-      return wx
-    case 'ali':
-      return my
-    case 'swan':
-      return swan
-    case 'qq':
-      return qq
-    case 'tt':
-      return tt
-    case 'jd':
-      return jd
-    case 'qa':
-      return qa
-    case 'dd':
-      return dd
-  }
-}
-
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
@@ -131,5 +110,6 @@ export {
   defineUnsupportedProps,
   successHandle,
   failHandle,
-  getFocusedNavigation
+  getFocusedNavigation,
+  genFromMap
 }

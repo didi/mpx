@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail, warn } from '../../../common/js'
+import { successHandle, failHandle, warn } from '../../../common/js'
 const { WebSocket } = __GLOBAL__
 
 class SocketTask {
@@ -39,7 +39,7 @@ class SocketTask {
     const { data = '', success, complete } = options
     WebSocket.send(data)
     const res = { errMsg: 'sendSocketMessage:ok' }
-    webHandleSuccess(res, success, complete)
+    successHandle(res, success, complete)
     return Promise.resolve(res)
   }
 
@@ -52,11 +52,11 @@ class SocketTask {
     try {
       WebSocket.close()
       const res = { errMsg: 'closeSocket:ok' }
-      webHandleSuccess(res, success, complete)
+      successHandle(res, success, complete)
       return Promise.resolve(res)
     } catch (err) {
       const res = { errMsg: `closeSocket:fail ${err}` }
-      webHandleFail(res, fail, complete)
+      failHandle(res, fail, complete)
       if (!fail) {
         return Promise.reject(res)
       }

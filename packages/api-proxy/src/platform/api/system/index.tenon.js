@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../../common/js'
+import { successHandle } from '../../../common/js'
 const { Hummer } = __GLOBAL__
 
 function getSystemInfoSync () {
@@ -45,7 +45,7 @@ function getSystemInfoSync () {
 function getSystemInfo (options = {}) {
   const info = getSystemInfoSync()
   const res = Object.assign({ errMsg: 'getSystemInfo:ok' }, info)
-  webHandleSuccess(res, options.success, options.complete)
+  successHandle(res, options.success, options.complete)
   return Promise.resolve(res)
 }
 

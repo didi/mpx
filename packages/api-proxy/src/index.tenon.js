@@ -1,5 +1,5 @@
-import * as allApi from './tenon/api'
-import { EventChannel } from './tenon/api/event-channel'
+import * as allApi from './platform/index'
+import { EventChannel } from './platform/api/event-channel'
 import { genFromMap } from './common/js'
 
 export default function install (target) {

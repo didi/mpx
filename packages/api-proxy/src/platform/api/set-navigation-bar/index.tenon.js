@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../../common/js'
+import { successHandle } from '../../../common/js'
 const {
   Hummer
 } = __GLOBAL__
@@ -6,7 +6,7 @@ const {
 function setNavigationBarTitle (options = {}) {
   const { title, success, complete } = options
   Hummer.setTitle(title)
-  webHandleSuccess({ errMsg: 'setTitle:ok' }, success, complete)
+  successHandle({ errMsg: 'setTitle:ok' }, success, complete)
 }
 
 function setNavigationBarColor (options = {}) {}

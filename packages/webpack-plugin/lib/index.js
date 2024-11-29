@@ -323,7 +323,7 @@ class MpxWebpackPlugin {
       }
     }
 
-    if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
+    if (!isWeb(this.options.mode) && !isReact(this.options.mode) && !isTenon(this.options.mode)) {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
@@ -392,7 +392,7 @@ class MpxWebpackPlugin {
     let splitChunksOptions = null
     let splitChunksPlugin = null
     // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
-    if (optimization.splitChunks !== false && !isReact(this.options.mode)) {
+    if (optimization.splitChunks !== false && !isReact(this.options.mode) && !isTenon(this.options.mode)) {
       splitChunksOptions = Object.assign({
         chunks: 'all',
         usedExports: optimization.usedExports === true,

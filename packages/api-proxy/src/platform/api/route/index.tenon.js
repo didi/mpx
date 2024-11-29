@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../../common/js'
+import { successHandle } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 const { Navigator } = __GLOBAL__
 
@@ -41,7 +41,7 @@ function redirectTo (options = {}) {
         () => {}
       )
       const res = { errMsg: 'redirectTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
       resolve(res)
     })
   }
@@ -64,7 +64,7 @@ function navigateTo (options = {}) {
         params: Object.assign({}, query, options.query || {})
       })
       const res = { errMsg: 'redirectTo:ok', eventChannel }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
       resolve(res)
     })
   }
@@ -77,7 +77,7 @@ function navigateBack (options = {}) {
       animated: true
     })
     const res = { errMsg: 'navigateBack:ok' }
-    webHandleSuccess(res, options.success, options.complete)
+    successHandle(res, options.success, options.complete)
     return Promise.resolve(res)
   }
 }
@@ -90,7 +90,7 @@ function reLaunch (options = {}) {
     Navigator.popToRootPage()
 
     const res = { errMsg: 'reLaunch:ok' }
-    webHandleSuccess(res, options.success, options.complete)
+    successHandle(res, options.success, options.complete)
     return Promise.resolve(res)
   }
 }
@@ -112,7 +112,7 @@ function switchTab (options = {}) {
         () => {}
       )
       const res = { errMsg: 'redirectTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
       resolve(res)
     })
   }

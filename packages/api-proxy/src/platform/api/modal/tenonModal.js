@@ -1,4 +1,4 @@
-import { ToPromise, webHandleSuccess } from '../../../common/js'
+import { ToPromise, successHandle } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 import { getClassStyle } from '@hummer/tenon-vue'
 
@@ -122,7 +122,7 @@ export default class Modal extends ToPromise {
         cancel: true,
         confirm: false
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
       this.toPromiseResolve(result)
     })
 
@@ -133,7 +133,7 @@ export default class Modal extends ToPromise {
         cancel: false,
         confirm: true
       }
-      webHandleSuccess(result, opts.success, opts.complete)
+      successHandle(result, opts.success, opts.complete)
       this.toPromiseResolve(result)
     })
 

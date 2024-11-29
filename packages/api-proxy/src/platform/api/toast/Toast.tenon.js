@@ -1,4 +1,4 @@
-import { webHandleSuccess } from '../../../common/js'
+import { successHandle } from '../../../common/js'
 import '../../../common/stylus/Toast.styl'
 
 import { getClassStyle } from '@hummer/tenon-vue'
@@ -79,7 +79,7 @@ export default class Toast {
     opts.duration >= 0 && this.hide({ duration: opts.duration }, type)
 
     const errMsg = type === 'loading' ? 'showLoading:ok' : 'showToast:ok'
-    webHandleSuccess({ errMsg }, opts.success, opts.complete)
+    successHandle({ errMsg }, opts.success, opts.complete)
     return Promise.resolve({ errMsg })
   }
 
@@ -88,7 +88,7 @@ export default class Toast {
 
     const duration = options.duration || 0
     const errMsg = type === 'loading' ? 'hideLoading:ok' : 'hideToast:ok'
-    webHandleSuccess({ errMsg }, options.success, options.complete)
+    successHandle({ errMsg }, options.success, options.complete)
 
     if (this.hideTimer) {
       clearTimeout(this.hideTimer)

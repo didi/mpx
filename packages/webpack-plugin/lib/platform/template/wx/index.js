@@ -30,7 +30,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         tenon ({ name, value }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (parsed.hasBinding) {
             return {
               name: name === 'animation' ? 'v-' + name : ':' + name,
@@ -101,7 +101,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         tenon ({ value }, { el }) {
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           const attrsMap = el.attrsMap
           const itemName = attrsMap['wx:for-item'] || 'item'
           const indexName = attrsMap['wx:for-index'] || 'index'
@@ -325,7 +325,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         tenon ({ name, value }) {
           const dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           return {
             name: ':' + dir,
             value: parsed.result
@@ -390,7 +390,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         tenon ({ name, value }) {
           let dir = this.test.exec(name)[1]
-          const parsed = parseMustache(value)
+          const parsed = parseMustacheWithContext(value)
           if (dir === 'elif') {
             dir = 'else-if'
           }

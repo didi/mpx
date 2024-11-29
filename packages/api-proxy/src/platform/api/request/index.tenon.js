@@ -1,4 +1,4 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import { buildQueryStringUrl, parseHeader, tryJsonParse } from './tenonUtil'
 const { Request } = __GLOBAL__
 const requestFn = new Request()
@@ -67,7 +67,7 @@ function request (options = {}) {
           statusCode: status,
           header: resHeader
         }
-        webHandleSuccess(result, success, complete)
+        successHandle(result, success, complete)
         resolve(result)
       } else {
         if (responseType === 'json') {
@@ -75,7 +75,7 @@ function request (options = {}) {
         }
         header = parseHeader(header)
         const res = { errMsg: `request:fail ${error.msg}`, data: resData, header }
-        webHandleFail(res, fail, complete)
+        failHandle(res, fail, complete)
         reject(res)
       }
     })
