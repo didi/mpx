@@ -105,9 +105,6 @@ export * from './api/video'
 // onWindowResize, offWindowResize
 export * from './api/window'
 
-// getEnterOptionsSync
-export * from './api/lifecycle'
-
 // getLocation, openLocation, chooseLocation
 export * from './api/location'
 

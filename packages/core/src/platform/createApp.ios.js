@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, parseUrlQuery } from '@mpxjs/utils'
+import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import Mpx from '../index'
@@ -143,8 +143,21 @@ export default function createApp (option, config = {}) {
 
       const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
         if (currentState === 'active') {
+          let options = global.__mpxEnterOptions
+          const navigation = getFocusedNavigation()
+          if (navigation) {
+            const state = navigation.getState()
+            const current = state.routes[state.index]
+            options = {
+              path: current.name,
+              query: current.params,
+              scene: 0,
+              shareTicket: '',
+              referrerInfo: {}
+            }
+          }
           global.__mpxAppCbs.show.forEach((cb) => {
-            cb(global.__mpxEnterOptions)
+            cb(options)
           })
           global.__mpxAppFocusedState.value = 'show'
         } else if (currentState === 'inactive') {
@@ -180,9 +193,13 @@ export default function createApp (option, config = {}) {
         createElement(Stack.Navigator,
           {
             initialRouteName,
-            headerBackButtonDisplayMode: 'minimal',
-            headerMode: 'float',
-            gestureEnabled: true
+            screenOptions: {
+              gestureEnabled: true,
+              // 7.x替换headerBackTitleVisible
+              // headerBackButtonDisplayMode: 'minimal',
+              headerBackTitleVisible: false,
+              headerMode: 'float'
+            }
           },
           ...getPageScreens(initialRouteName, initialParams)
         )
@@ -191,7 +208,7 @@ export default function createApp (option, config = {}) {
   })
 
   global.getCurrentPages = function () {
-    const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+    const navigation = getFocusedNavigation()
     if (navigation) {
       return navigation.getState().routes.map((route) => {
         return global.__mpxPagesMap[route.key] && global.__mpxPagesMap[route.key][0]

@@ -4,15 +4,15 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks from './useAnimationHooks'
 import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle } from './utils'
 import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
@@ -24,6 +24,7 @@ export interface _ViewProps extends ViewProps {
   'hover-stay-time'?: number
   'enable-background'?: boolean
   'enable-var'?: boolean
+  'enable-fast-image'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
@@ -76,9 +77,11 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string,
+  source?: {uri: string },
   colors: Array<string>,
   locations?: Array<number>
   angle?: number
+  resizeMode?: 'cover' | 'stretch'
 }
 
 const linearMap = new Map([
@@ -280,13 +283,14 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       if (!dimensions) return
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
-      (imageProps.style as ImageStyle).resizeMode = 'stretch'
+      imageProps.resizeMode = 'stretch'
       dimensions = {
         width: isPercent(width) ? width : +width,
         height: isPercent(height) ? height : +height
       } as { width: NumberVal, height: NumberVal }
     }
   }
+
   // 样式合并
   imageProps.style = {
     ...imageProps.style as ImageStyle,
@@ -296,8 +300,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
 
 // background-image转换为source
 function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo) {
-  if (preImageInfo.src) {
-    imageProps.src = preImageInfo.src
+  const src = preImageInfo.src
+  if (src) {
+    imageProps.source = { uri: src }
   }
 }
 
@@ -326,8 +331,8 @@ function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
 const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) => {
   // 初始化
   const imageProps: ImageProps = {
+    resizeMode: 'cover',
     style: {
-      resizeMode: 'cover' as ImageResizeMode,
       position: 'absolute'
       // ...StyleSheet.absoluteFillObject
     },
@@ -533,7 +538,26 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
   return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle) {
+function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
+  const { borderWidth, borderRadius } = innerStyle
+  const borderStyles = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
+  return pickStyle(innerStyle,
+    borderStyles,
+    borderWidth && borderRadius
+      ? (key, val) => {
+        // 盒子内圆角borderWith与borderRadius的关系
+        // 当borderRadius 小于 当borderWith 内边框为直角
+        // 当borderRadius 大于等于 当borderWith 内边框为圆角
+          if (borderStyles.includes(key)) {
+            const borderVal = +val - borderWidth
+            return borderVal > 0 ? borderVal : 0
+          }
+          return val
+        }
+      : undefined)
+}
+
+function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -616,9 +640,9 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     }
   }
 
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
     {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
-    {show && type === 'image' && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
+    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
   </View>
 }
 
@@ -629,9 +653,11 @@ interface WrapChildrenConfig {
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
   textProps?: Record<string, any>
+  innerStyle?: Record<string, any>
+  enableFastImage?: boolean
 }
 
-function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {
+function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps, innerStyle, enableFastImage }: WrapChildrenConfig) {
   const children = wrapChildren(props, {
     hasVarDec,
     varContext,
@@ -640,7 +666,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle) : null,
+    enableBackground ? wrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
@@ -655,6 +681,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-fast-image': enableFastImage,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
@@ -755,9 +782,22 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = Object.assign({}, innerStyle, layoutStyle)
+
+  enableAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableAnimation)
+  if (enableAnimationRef.current !== enableAnimation) {
+    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+  const finalStyle = enableAnimation
+    ? useAnimationHooks({
+      animation,
+      style: viewStyle
+    })
+    : viewStyle
+
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: viewStyle,
+    style: finalStyle,
     ...layoutProps,
     ...(hoverStyle && {
       bindtouchstart: onTouchStart,
@@ -772,29 +812,19 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutRef
   })
 
-  enableAnimation = enableAnimation || !!animation
-  const enableAnimationRef = useRef(enableAnimation)
-  if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-  const finalStyle = enableAnimation
-    ? useAnimationHooks({
-      animation,
-      style: viewStyle
-    })
-    : viewStyle
   const childNode = wrapWithChildren(props, {
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
     textStyle,
     backgroundStyle,
     varContext: varContextRef.current,
-    textProps
+    textProps,
+    innerStyle,
+    enableFastImage
   })
-  return animation?.actions?.length
+  return enableAnimation
     ? (<Animated.View
       {...innerProps}
-      style={finalStyle}
     >
       {childNode}
     </Animated.View>)
