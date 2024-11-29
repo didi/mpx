@@ -611,4 +611,3 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
     return acc
   }, {})
 }
-g
