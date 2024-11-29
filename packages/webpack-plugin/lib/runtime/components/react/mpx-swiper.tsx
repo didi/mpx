@@ -1,6 +1,6 @@
 import { View, NativeSyntheticEvent, Dimensions, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, interpolate } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, interpolateColor, interpolate, Extrapolation } from 'react-native-reanimated'
 
 import React, { JSX, forwardRef, useRef, useEffect, useState, ReactNode, ReactElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -85,7 +85,8 @@ const styles: { [key: string]: Object } = {
   pagerWrapper: {
     position: 'absolute',
     flexDirection: 'row',
-    alignSelf: 'center'
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   swiper: {
     overflow: 'scroll',
@@ -173,7 +174,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const step = useSharedValue(initStep)
   const totalElements = useSharedValue(children.length)
   // 记录选中元素的索引值
-  const targetIndex = useSharedValue(props.current || 0)
+  const targetIndex = useSharedValue(0)
   // 记录元素的偏移量
   const offset = useSharedValue(0)
   const strTrans = 'translation' + dir.value.toUpperCase() as StrTransType
@@ -228,17 +229,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   const dotAnimatedStyle = useAnimatedStyle(() => {
     const step = dir.value === 'x' ? widthState : heightState
-    const moveStep = dotCommonStyle.width + dotCommonStyle.marginLeft + dotCommonStyle.marginRight
     if (isNaN(+step)) return {}
-    const inputRange = [-step, 0, step]
-    const outputRange = [-moveStep, 0, moveStep]
+    const dotStep = dotCommonStyle.width + dotCommonStyle.marginRight + dotCommonStyle.marginLeft
     return {
       transform: [{
-        translateX: interpolate(-offset.value, inputRange, outputRange)
+        translateX: targetIndex.value * dotStep
       }]
     }
   })
-
+  
   function renderPagination () {
     const stepValue = getStepValue()
     if (totalElements.value <= 1 || isNaN(+stepValue)) return null
@@ -257,7 +256,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             activeDotStyle,
             {
               backgroundColor: activeColor,
-              position: 'absolute'
+              position: 'absolute',
+              left: 0
             },
             dotAnimatedStyle
           ]}
@@ -415,6 +415,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }, () => {
         offset.value = targetOffset
       })
+    } else {
+      offset.value = targetOffset
     }
   }, [props.current, widthState, heightState])
 
@@ -425,11 +427,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     const targetOffset = getInitOffset()
     if (props.autoplay) {
+      pauseLoop()
       offset.value = targetOffset
-      loop()
+      resumeLoop()
     } else {
       pauseLoop()
     }
+    return () => { pauseLoop() }
   }, [props.autoplay, widthState, heightState])
 
   function getTargetPosition (eventData: EventDataType) {
@@ -525,7 +529,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const currentOffset = Math.abs(offset.value)
     const curIndex = currentOffset / step.value
     const moveToIndex = (translation < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElementNum
-    const targetOffset = (moveToIndex + patchElementNum) * step.value
+    const targetOffset = -(moveToIndex + patchElementNum) * step.value
     offset.value = withTiming(targetOffset, {
       duration: easeDuration,
       easing: easeMap[easeingFunc]
@@ -545,7 +549,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const half = currentOffset % step.value > step.value / 2
     // 向右trans < 0, 向左trans > 0
     const isExceedHalf = translation < 0 ? half : !half
-    if (isExceedHalf) {
+    if (+translation === 0) {
+      runOnJS(resumeLoop)()
+    } else if (isExceedHalf) {
       handleEnd(eventData)
     } else {
       handleBack(eventData)
@@ -566,7 +572,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     if (translation < 0) {
       const posEnd = (totalElements.value + patchElementNum + 1) * step.value
       const posReverseEnd = (patchElementNum - 1) * step.value
-      if (currentOffset < -posEnd + step.value && currentOffset + posEnd > -2) {
+      if (currentOffset < -posEnd + step.value) {
         isBoundary = true
         resetOffset = Math.abs(moveStep) === 0 ? patchElementNum * step.value + translation : moveStep * elementsLength
       }
