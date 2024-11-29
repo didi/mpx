@@ -1,16 +1,15 @@
 
-import { View, Animated, SafeAreaView, NativeScrollEvent, NativeSyntheticEvent, LayoutChangeEvent, ScrollView } from 'react-native'
-import React, { forwardRef, useRef, useState, useMemo, useCallback, useEffect } from 'react'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, View } from 'react-native'
+import React, { forwardRef, useRef, useState, useMemo, useEffect } from 'react'
 import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, usePrevious } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { createFaces } from './pickerFaces'
-import PickerOverlay from './pickerOverlay'
+import PickerOverlay from './pickerViewOverlay'
+import PickerMask from './pickerViewMask'
 
 interface ColumnProps {
   children?: React.ReactNode
   columnData: React.ReactNode[]
   initialIndex: number
-  onColumnItemRawHChange: Function
   getInnerLayout: Function
   onSelectChange: Function
   style: {
@@ -26,10 +25,7 @@ interface ColumnProps {
   columnIndex: number
 }
 
-// 默认的单个选项高度
 const DefaultPickerItemH = 36
-// 默认一屏可见选项个数
-const visibleCount = 5
 
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const {
@@ -37,7 +33,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     columnIndex,
     initialIndex,
     onSelectChange,
-    onColumnItemRawHChange,
     getInnerLayout,
     style,
     wrapperStyle,
@@ -60,7 +55,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   useNodesRef(props, ref, scrollViewRef, {})
 
   const { height: pickerH, itemHeight = DefaultPickerItemH } = wrapperStyle
-  const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
+  const [itemRawH, setItemRawH] = useState(0)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const touching = useRef(false)
   const scrolling = useRef(false)
@@ -71,20 +66,32 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const initialOffset = useMemo(() => ({
     x: 0,
     y: itemRawH * initialIndex
-  }), [itemRawH, initialIndex])
+  }), [itemRawH])
 
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
     [columnData, itemRawH]
   )
 
+  const paddingHeight = useMemo(
+    () => Math.round(pickerH - itemRawH) / 2,
+    [pickerH, itemRawH]
+  )
+
   const contentContainerStyle = useMemo(() => {
-    return [
-      {
-        paddingVertical: Math.round(pickerH - itemRawH) / 2
-      }
-    ]
-  }, [pickerH, itemRawH])
+    return [{ paddingVertical: paddingHeight }]
+  }, [paddingHeight])
+
+  const onContentSizeChange = (_w: number, h: number) => {
+    if (itemRawH * initialIndex > h) {
+      return
+    }
+    scrollViewRef.current?.scrollTo({
+      x: 0,
+      y: itemRawH * initialIndex,
+      animated: false
+    })
+  }
 
   useEffect(() => {
     if (
@@ -128,7 +135,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     const { height: rawH } = e.nativeEvent.layout
     if (rawH && itemRawH !== rawH) {
       setItemRawH(rawH)
-      onColumnItemRawHChange(rawH)
     }
   }
 
@@ -162,61 +168,18 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }
 
-  const offsetY = useRef(new Animated.Value(0)).current
-
-  const onScroll = useMemo(
-    () =>
-      Animated.event([{ nativeEvent: { contentOffset: { y: offsetY } } }], {
-        useNativeDriver: true
-      }),
-    [offsetY]
-  )
-
-  const faces = useMemo(() => createFaces(itemRawH, visibleCount), [itemRawH])
-
-  const getTransform = useCallback(
-    (index: number) => {
-      const inputRange = faces.map((f) => itemRawH * (index + f.index))
-      return {
-        opacity: offsetY.interpolate({
-          inputRange: inputRange,
-          outputRange: faces.map((x) => x.opacity),
-          extrapolate: 'clamp'
-        }),
-        rotateX: offsetY.interpolate({
-          inputRange: inputRange,
-          outputRange: faces.map((x) => `${x.deg}deg`),
-          extrapolate: 'extend'
-        }),
-        translateY: offsetY.interpolate({
-          inputRange: inputRange,
-          outputRange: faces.map((x) => x.offsetY),
-          extrapolate: 'extend'
-        })
-      }
-    },
-    [offsetY, faces, itemRawH]
-  )
-
   const renderInnerchild = () =>
     columnData.map((item: React.ReactNode, index: number) => {
       const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
       const strKey = `picker-column-${columnIndex}-${index}`
-      const { opacity, rotateX, translateY } = getTransform(index)
       return (
-        <Animated.View
+        <View
           key={strKey}
           {...InnerProps}
           style={[
             {
               height: itemHeight || DefaultPickerItemH,
-              width: '100%',
-              opacity,
-              transform: [
-                { translateY },
-                { rotateX },
-                { perspective: 1000 } // 适配 Android
-              ]
+              width: '100%'
             }
           ]}
         >
@@ -229,13 +192,13 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
               textProps
             }
           )}
-        </Animated.View>
+        </View>
       )
     })
 
   const renderScollView = () => {
     return (
-      <Animated.ScrollView
+      <ScrollView
         ref={scrollViewRef}
         bounces={true}
         horizontal={false}
@@ -247,9 +210,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         {...layoutProps}
         scrollEventThrottle={16}
         contentContainerStyle={contentContainerStyle}
+        onContentSizeChange={onContentSizeChange}
         contentOffset={initialOffset}
         snapToOffsets={snapToOffsets}
-        onScroll={onScroll}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onTouchCancel={onTouchCancel}
@@ -257,17 +220,28 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         onMomentumScrollEnd={onMomentumScrollEnd}
       >
         {renderInnerchild()}
-      </Animated.ScrollView>
+      </ScrollView>
     )
   }
 
   const renderOverlay = () => (
-    <PickerOverlay itemHeight={itemHeight} overlayItemStyle={pickerOverlayStyle} />
+    <PickerOverlay
+      itemHeight={itemHeight}
+      overlayItemStyle={pickerOverlayStyle}
+    />
+  )
+
+  const renderMask = () => (
+    <PickerMask
+      height={paddingHeight}
+      itemHeight={itemHeight}
+    />
   )
 
   return (
     <SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
       {renderScollView()}
+      {renderMask()}
       {renderOverlay()}
     </SafeAreaView>
   )

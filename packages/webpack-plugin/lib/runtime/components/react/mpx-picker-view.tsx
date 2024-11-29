@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import {
@@ -76,7 +76,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
-  const [pickMaxH, setPickMaxH] = useState(0)
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
@@ -99,12 +98,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
-
-  const onColumnItemRawHChange = (height: number) => {
-    if (height > pickMaxH) {
-      setPickMaxH(height)
-    }
-  }
 
   const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 300)
 
@@ -161,7 +154,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
           height: normalStyle?.height || 0,
           itemHeight: indicatorH || 0
         },
-        onColumnItemRawHChange,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
         pickerOverlayStyle
