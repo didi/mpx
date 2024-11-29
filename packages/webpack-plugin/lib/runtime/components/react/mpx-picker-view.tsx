@@ -21,8 +21,9 @@ import type { AnyFunc } from './types/common'
  * ✘ bindpickend
  * ✘ mask-class
  * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
+ * WebView Only:
  * ✘ indicator-class
- * ✘ mask-style
+ * ✔ mask-style
  * ✘ immediate-change
  */
 
@@ -36,6 +37,7 @@ interface PickerViewProps {
     [key: string]: any
   }
   'indicator-style'?: string
+  'mask-style'?: string
   'enable-var': boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset': boolean
@@ -75,6 +77,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // indicatorStyle 需要转换为rn的style
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
+  const pickerMaskStyle = parseInlineStyle(props['mask-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
@@ -156,7 +159,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         },
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
-        pickerOverlayStyle
+        pickerOverlayStyle,
+        pickerMaskStyle
       },
       extraProps
     )

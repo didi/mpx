@@ -21,6 +21,7 @@ interface ColumnProps {
     height: number
     itemHeight: number
   }
+  pickerMaskStyle: Record<string, any>
   pickerOverlayStyle: Record<string, any>
   columnIndex: number
 }
@@ -36,6 +37,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     getInnerLayout,
     style,
     wrapperStyle,
+    pickerMaskStyle,
     pickerOverlayStyle,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
@@ -235,6 +237,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     <PickerMask
       height={paddingHeight}
       itemHeight={itemHeight}
+      maskContainerStyle={pickerMaskStyle}
     />
   )
 
