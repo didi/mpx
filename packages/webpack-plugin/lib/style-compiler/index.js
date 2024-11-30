@@ -58,9 +58,9 @@ module.exports = function (css, map) {
       plugins.push(transSpecial({ id }))
     }
 
-    plugins.push(pluginCondStrip({
-      defs
-    }))
+    // plugins.push(pluginCondStrip({
+    //   defs
+    // }))
 
     for (const item of transRpxRules) {
       const {

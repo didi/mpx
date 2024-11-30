@@ -36,7 +36,7 @@ module.exports = class AddEnvPlugin {
       const queryObj = parseQuery(request.query || '?')
       queryObj.infix = `${queryObj.infix || ''}.${env}`
       // css | stylus | less | sass 中 import file 过滤query，避免在对应的 loader 中无法读取到文件
-      if (!isCSSFileName(extname)) obj.query = stringifyQuery(queryObj)
+      obj.query = stringifyQuery(queryObj)
       obj.path = addInfix(resourcePath, env, extname)
       obj.relativePath = request.relativePath && addInfix(request.relativePath, env, extname)
       resolver.doResolve(target, Object.assign({}, request, obj), 'add env: ' + env, resolveContext, callback)

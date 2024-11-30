@@ -54,6 +54,7 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
+const styleStripConditaionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -1775,7 +1776,7 @@ try {
       })
 
       const typeLoaderProcessInfo = {
-        styles: ['node_modules/css-loader', wxssLoaderPath, styleCompilerPath],
+        styles: ['node_modules/css-loader', wxssLoaderPath, styleCompilerPath, styleStripConditaionalPath],
         template: ['node_modules/html-loader', wxmlLoaderPath, templateCompilerPath]
       }
 
@@ -1801,9 +1802,18 @@ try {
                 }
               })
               if (insertBeforeIndex > -1) {
-                loaders.splice(insertBeforeIndex + 1, 0, {
-                  loader: info[2]
-                })
+                if (type === 'styles') {
+                  loaders.splice(insertBeforeIndex + 1, 0, {
+                    loader: info[2]
+                  }, {
+                    loader: info[3]
+                  })
+                } else {
+                  loaders.splice(insertBeforeIndex + 1, 0, {
+                    loader: info[2]
+                  })
+                }
+
               }
               break
             }

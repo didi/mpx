@@ -48,9 +48,7 @@ module.exports = class AddModePlugin {
         if (defaultMode && !result) {
           queryObj.infix = `${queryInfix || ''}.${defaultMode}`
           // css | stylus | less | sass 中 import file 过滤query，避免在对应的 loader 中无法读取到文件
-          if (!isCSSFileName(extname)) {
-            obj.query = stringifyQuery(queryObj)
-          }
+          obj.query = stringifyQuery(queryObj)
           obj.path = addInfix(resourcePath, defaultMode, extname)
           resolver.doResolve(target, Object.assign({}, request, obj), 'add mode: ' + defaultMode, resolveContext, (err, result) => {
             callback(err, result)
