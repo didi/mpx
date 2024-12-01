@@ -6,6 +6,7 @@ import * as wxLifecycle from '../platform/patch/wx/lifecycle'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
+import { Image } from 'react-native'
 import { ref } from '../observer/ref'
 
 const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
@@ -198,6 +199,13 @@ export default function createApp (option, config = {}) {
               // 7.x替换headerBackTitleVisible
               // headerBackButtonDisplayMode: 'minimal',
               headerBackTitleVisible: false,
+              headerBackImage: () => {
+                // TODO tintColor 这个主题色给的不准，black/rgb(0, 122, 255) 交替
+                return createElement(Image, {
+                  source: { uri: 'https://ut-static.udache.com/webx/mini-pics/LOM1ERyWvD8fZinQKr93I_qu_scene_title_bar_back_icon.png' },
+                  style: { width: 40, height: 30, paddingLeft: 15, paddingTop: 5, paddingRight: 5, paddingBottom: 5 }
+                })
+              },
               headerMode: 'float'
             }
           },
