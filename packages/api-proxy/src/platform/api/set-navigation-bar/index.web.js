@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning, successHandle } from '../../../common/js'
+import { isBrowser, envError, throwSSRWarning, successHandle } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   if (!isBrowser) {
@@ -26,7 +26,10 @@ function setNavigationBarColor (options = {}) {
   successHandle({ errMsg: 'setNavigationBarColor:ok' }, success, complete)
 }
 
+const hideHomeButton = envError('hideHomeButton')
+
 export {
   setNavigationBarTitle,
-  setNavigationBarColor
+  setNavigationBarColor,
+  hideHomeButton
 }
