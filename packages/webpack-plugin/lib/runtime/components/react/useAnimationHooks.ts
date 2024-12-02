@@ -218,11 +218,14 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
-        let toVal = (rules.get(key) || transform.get(key))
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
-        if (toVal === undefined) {
-          toVal = index > 0 ? lastValueMap[key] : shareValMap[key].value
-        }
+        let toVal = rules.get(key) !== undefined
+          ? rules.get(key)
+          : transform.get(key) !== undefined
+            ? transform.get(key)
+            : index > 0
+              ? lastValueMap[key]
+              : shareValMap[key].value
         const animation = getAnimation({ key, value: toVal }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
         needSetCallback = false
         if (!sequence[key]) {
