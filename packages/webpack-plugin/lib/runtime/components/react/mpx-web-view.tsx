@@ -1,5 +1,5 @@
 import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
-import { noop, warn } from '@mpxjs/utils'
+import { noop, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
@@ -69,29 +69,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     defaultStyle: defaultWebViewStyle
   })
 
-  const _messageList = useRef<any[]>([])
-  const handleUnload = () => {
-    // 这里是 WebView 销毁前执行的逻辑
-    bindmessage(getCustomEvent('messsage', {}, {
-      detail: {
-        data: _messageList.current
-      },
-      layoutRef: webViewRef
-    }))
-  }
-
-  useEffect(() => {
-    if (currentPage) {
-      currentPage.__webViewUrl = src
-    }
-  }, [src, currentPage])
-
-  useEffect(() => {
-    // 组件卸载时执行
-    return () => {
-      handleUnload()
-    }
-  }, [])
   const _load = function (res: WebViewNavigationEvent) {
     const result = {
       type: 'load',
@@ -112,9 +89,19 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
+
+  const webViewTitle = useRef<string>('')
+  const webViewUrl = useRef<string>('')
   const _changeUrl = function (navState: WebViewNavigation) {
-    if (currentPage) {
-      currentPage.__webViewUrl = navState.url
+    if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
+      if (webViewTitle.current !== navState.title) {
+        const navigation = getFocusedNavigation()
+        navigation && navigation.setOptions({ headerTitle: navState.title })
+      }
+      if (currentPage && webViewUrl.current !== navState.url) {
+        webViewUrl.current = navState.url
+        currentPage.__webViewUrl = navState.url
+      }
     }
   }
   const _message = function (res: WebViewMessageEvent) {
@@ -132,7 +119,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        _messageList.current.push(postData.data)
+        bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
+          detail: {
+            data: postData.data
+          },
+          layoutRef: webViewRef
+        }))
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })

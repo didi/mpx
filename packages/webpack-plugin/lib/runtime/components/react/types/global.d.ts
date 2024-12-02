@@ -34,7 +34,8 @@ declare module '@mpxjs/utils' {
       bottom: number
       left: number
       right: number
-    }
+    },
+    setOptions: (params: Record<string, any>) => void
   } | undefined
 }
 
