@@ -226,7 +226,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
             : index > 0
               ? lastValueMap[key]
               : shareValMap[key].value
-        const animation = getAnimation({ key, value: toVal }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
+        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
         needSetCallback = false
         if (!sequence[key]) {
           sequence[key] = [animation]
@@ -234,7 +234,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
           sequence[key].push(animation)
         }
         // 更新一下 lastValueMap
-        lastValueMap[key] = toVal
+        lastValueMap[key] = toVal!
       })
       // 赋值驱动动画
       animatedKeys.forEach((key) => {
