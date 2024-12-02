@@ -17,7 +17,7 @@
  * ✔ cursor-color
  * ✔ selection-start
  * ✔ selection-end
- * ✘ adjust-position
+ * ✔ adjust-position
  * ✘ hold-keyboard
  * ✘ safe-password-cert-path
  * ✘ safe-password-length
@@ -58,7 +58,7 @@ import { warn } from '@mpxjs/utils'
 import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { FormContext, FormFieldValue } from './context'
+import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -98,6 +98,7 @@ export interface InputProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'adjust-position': boolean,
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -146,6 +147,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    'adjust-position': adjustPosition = false,
     bindinput,
     bindfocus,
     bindblur,
@@ -158,6 +160,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   } = props
 
   const formContext = useContext(FormContext)
+
+  const kyboardAvoidContext = useContext(KeyboardAvoidContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -259,6 +263,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
+    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(true)
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -276,6 +281,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
+    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(false)
   }
 
   const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -399,8 +405,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       }
     },
     ...layoutProps,
-    onFocus: bindfocus && onInputFocus,
-    onBlur: bindblur && onInputBlur,
+    onFocus: (bindfocus || adjustPosition) && onInputFocus,
+    onBlur: (bindblur || adjustPosition) && onInputBlur,
     onKeyPress: bindconfirm && onKeyPress,
     onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
     onSelectionChange: bindselectionchange && onSelectionChange
