@@ -104,7 +104,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 300)
+  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 200)
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     bindchangeDebounce.clear()
@@ -146,7 +146,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
-    const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
       childProps,
@@ -159,12 +158,12 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
           height: normalStyle?.height || DefaultPickerItemH,
           itemHeight: indicatorH || DefaultPickerItemH
         },
+        columnStyle: normalStyle,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
         pickerOverlayStyle,
         pickerMaskStyle
-      },
-      extraProps
+      }
     )
     const realElement = React.cloneElement(child, wrappedProps)
     return wrapChildren(

@@ -1,7 +1,7 @@
 
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, View } from 'react-native'
-import React, { forwardRef, useRef, useState, useMemo, useEffect } from 'react'
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, usePrevious } from './utils'
+import React, { forwardRef, useRef, useState, useMemo, useEffect, cloneElement } from 'react'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, extendObject, wrapChildren } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
 import PickerMask from './pickerViewMask'
@@ -9,6 +9,7 @@ import PickerMask from './pickerViewMask'
 interface ColumnProps {
   children?: React.ReactNode
   columnData: React.ReactNode[]
+  columnStyle: Record<string, any>
   initialIndex: number
   getInnerLayout: Function
   onSelectChange: Function
@@ -30,6 +31,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const {
     columnData,
     columnIndex,
+    columnStyle,
     initialIndex,
     onSelectChange,
     getInnerLayout,
@@ -49,7 +51,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  const { textStyle } = splitStyle(normalStyle)
+  const { textStyle: textStyleFromParent = {} } = splitStyle(columnStyle)
+  const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {})
@@ -169,30 +172,29 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const renderInnerchild = () =>
-    columnData.map((item: React.ReactNode, index: number) => {
-      const InnerProps = index === 0 ? { onLayout: onItemLayout } : {}
-      const strKey = `picker-column-${columnIndex}-${index}`
-      return (
-        <View
-          key={strKey}
-          {...InnerProps}
-          style={[
-            {
-              height: itemHeight,
-              width: '100%'
-            }
-          ]}
-        >
-          {wrapChildren(
-            { children: item },
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )}
-        </View>
+    columnData.map((item: React.ReactElement, index: number) => {
+      const restProps = index === 0 ? { onLayout: onItemLayout } : {}
+      const itemProps = extendObject(
+        {
+          key: `picker-column-item-${index}`,
+          style: extendObject(
+            { height: itemHeight, width: '100%' },
+            textStyleFromParent,
+            textStyle,
+            item.props.style
+          )
+        },
+        restProps
+      )
+      const realItem = cloneElement(item, itemProps)
+      return wrapChildren(
+        { children: realItem },
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
       )
     })
 
@@ -208,6 +210,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         {...layoutProps}
+        decelerationRate="fast"
         scrollEventThrottle={16}
         contentContainerStyle={contentContainerStyle}
         onContentSizeChange={onContentSizeChange}
