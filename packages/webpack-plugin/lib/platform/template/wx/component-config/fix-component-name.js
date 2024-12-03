@@ -17,7 +17,6 @@ module.exports = function () {
     skipNormalize: true,
     supportedModes: ['web', 'ios', 'android'],
     test: (input) => isOriginTag(input) || isBuildInTag(input),
-    // 所有平台使用相同的处理逻辑
     web: handleComponentTag,
     ios: handleComponentTag,
     android: handleComponentTag
