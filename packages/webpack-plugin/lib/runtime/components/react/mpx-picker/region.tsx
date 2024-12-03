@@ -38,14 +38,16 @@ function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth 
 }
 
 const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((props: RegionProps, ref): React.JSX.Element => {
-  const { children, value, bindchange, bindcancel, disabled } = props
+  const { children, value, bindchange, bindcancel, disabled, style } = props
   const formatRegionData = formateRegionData(regionData, props['custom-item'])
 
   const [regionvalue, setRegionValue] = useState(value)
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, RegionProps>(props, ref, viewRef, {
+  const nodeRef = useRef<View>(null)
+  useNodesRef<View, RegionProps>(props, ref, nodeRef, {
+    style
   })
 
   const onChange = (value: string[]): void => {
@@ -83,6 +85,7 @@ const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((pr
   }
 
   const regionProps = {
+    ref: nodeRef,
     data: formatRegionData,
     value: regionvalue,
     onChange,
