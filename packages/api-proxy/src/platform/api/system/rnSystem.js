@@ -32,6 +32,7 @@ const getWindowInfo = function () {
     screenWidth: screenWidth,
     screenHeight: screenHeight,
     screenTop: screenHeight - windowHeight,
+    statusBarHeight: safeArea.top,
     safeArea
   }
   return result
