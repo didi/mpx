@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import {
@@ -21,8 +21,9 @@ import type { AnyFunc } from './types/common'
  * ✘ bindpickend
  * ✘ mask-class
  * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
+ * WebView Only:
  * ✘ indicator-class
- * ✘ mask-style
+ * ✔ mask-style
  * ✘ immediate-change
  */
 
@@ -36,6 +37,7 @@ interface PickerViewProps {
     [key: string]: any
   }
   'indicator-style'?: string
+  'mask-style'?: string
   'enable-var': boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset': boolean
@@ -62,6 +64,8 @@ const styles: { [key: string]: Object } = {
   }
 }
 
+const DefaultPickerItemH = 36
+
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
   const {
     children,
@@ -75,8 +79,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   // indicatorStyle 需要转换为rn的style
   // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
+  const pickerMaskStyle = parseInlineStyle(props['mask-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
-  const [pickMaxH, setPickMaxH] = useState(0)
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
@@ -100,13 +104,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  const onColumnItemRawHChange = (height: number) => {
-    if (height > pickMaxH) {
-      setPickMaxH(height)
-    }
-  }
-
-  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 300)
+  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 10)
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     bindchangeDebounce.clear()
@@ -148,7 +146,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
-    const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
       childProps,
@@ -158,15 +155,15 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnIndex: index,
         key: `pick-view-${index}`,
         wrapperStyle: {
-          height: normalStyle?.height || 0,
-          itemHeight: indicatorH || 0
+          height: normalStyle?.height || DefaultPickerItemH,
+          itemHeight: indicatorH || DefaultPickerItemH
         },
-        onColumnItemRawHChange,
+        columnStyle: normalStyle,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
-        pickerOverlayStyle
-      },
-      extraProps
+        pickerOverlayStyle,
+        pickerMaskStyle
+      }
     )
     const realElement = React.cloneElement(child, wrappedProps)
     return wrapChildren(
