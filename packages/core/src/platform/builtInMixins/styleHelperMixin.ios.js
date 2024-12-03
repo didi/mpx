@@ -200,6 +200,34 @@ export default function styleHelperMixin () {
           })
         }
         return result
+      },
+      __getDynamicClass (dynamicClass, mediaQueryClass) {
+        return [dynamicClass, this.__getMediaQueryClass(mediaQueryClass)]
+      },
+      __getMediaQueryClass (mediaQueryClass = []) {
+        if (!mediaQueryClass.length) return ''
+        // todo 后续可优化，cache 能力
+        const { width, height } = Dimensions.get('screen')
+        const { entries, entriesMap } = global.__getUnoBreakpoints()
+        return mediaQueryClass.map(([className, breakpoints = []]) => {
+          const res = breakpoints.every(([prefix = '', point = 0]) => {
+            if (prefix === 'landscape') return width > height
+            if (prefix === 'portrait') return width <= height
+            const size = formatValue(entriesMap[point] || point)
+            const index = entries.findIndex(item => item[0] === point)
+            const isGtPrefix = prefix.startsWith('min-')
+            const isLtPrefix = prefix.startsWith('lt-') || prefix.startsWith('<') || prefix.startsWith('max-')
+            const isAtPrefix = prefix.startsWith('at-') || prefix.startsWith('~')
+            if (isGtPrefix) return width > size
+            if (isLtPrefix) return width < size
+            if (isAtPrefix && (index && index < entries.length - 1)) {
+              return width >= size && width < formatValue(entries[index + 1][1])
+            }
+            return width > size
+          })
+
+          return res ? className : ''
+        })
       }
     }
   }

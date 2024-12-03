@@ -1061,28 +1061,95 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-const pseudoClassUtility = /(hover|active|focus):\S*/
-const groupByPseudo = function (staticClass) {
-  return staticClass
-    .split(' ')
-    .map(item => {
-      const result = item.match(pseudoClassUtility)
-      if (result) {
+let unoVariantCached = null
+const initVariants = (unoCtx) => {
+  if (unoVariantCached) return unoVariantCached
+  const { config } = unoCtx
+  const separators = config.separators.join('|')
+  const breakpoints = Object.keys(config.theme.breakpoints).join('|')
+  const sizePseudoReg = /(max-|min-)\\[([^\\]]*)\]:/
+  const breakPointsReg = new RegExp(`([al]t-|[<~]|max-)?(${breakpoints})(?:${separators})`)
+  const orientationReg = new RegExp(`(landscape|portrait)(?:${separators})`)
+  const pseudoClassReg = new RegExp(`(hover)(?:${separators})`) // 目前仅处理了 hover 状态
+  unoVariantCached = {
+    sizePseudo: {
+      rule: sizePseudoReg,
+      matcher (input) {
         return {
-          key: result[1],
-          value: item + ':' + result[1]
+          prefix: input[1],
+          point: input[2]
         }
       }
-      return null
-    })
-    .filter(Boolean)
-    .reduce((preV, curV) => {
-      const res = { ...preV }
-      const { key, value } = curV
-      res[key] = res[key] || []
-      res[key].push(value)
-      return res
-    }, {})
+    },
+    breakPoints: {
+      rule: breakPointsReg,
+      matcher (input) {
+        return {
+          prefix: input[1],
+          point: input[2]
+        }
+      }
+    },
+    orientation: {
+      rule: orientationReg,
+      matcher (input) {
+        return {
+          prefix: input[1],
+          point: ''
+        }
+      }
+    },
+    pseudoClassReg
+  }
+  return unoVariantCached
+}
+
+function processVariants (staticClass = '', variants) {
+  const pseudoClass = {}
+  const pseudoWithMediaQueryClass = []
+  const mediaQueryClass = []
+  const bReg = [variants.sizePseudo, variants.breakPoints, variants.orientation]
+  const newStaticClass = staticClass.split(/\s+/).map(rawClass => {
+    let applied = true
+    const className = rawClass
+    const mediaQuery = []
+    while (applied) {
+      applied = false
+      for (const v of bReg) {
+        const match = rawClass.match(v.rule)
+        if (match) {
+          const { prefix, point } = v.matcher(match)
+          mediaQuery.push([prefix || '', point])
+          rawClass = rawClass.replace(match[0], '')
+          applied = true
+          break
+        }
+      }
+      if (!applied) {
+        break
+      }
+    }
+    const pseudoMatch = rawClass.match(variants.pseudoClassReg)
+    if (pseudoMatch) {
+      const pseudo = pseudoMatch[1]
+      if (mediaQuery.length) {
+        pseudoWithMediaQueryClass.push([className + ':' + pseudo, mediaQuery])
+      } else {
+        pseudoClass[pseudo] = pseudoClass[pseudo] || []
+        pseudoClass[pseudo].push(className + ':' + pseudo)
+      }
+    } else if (!pseudoMatch && mediaQuery.length) {
+      mediaQueryClass.push([className, mediaQuery])
+    }
+
+    return (!mediaQuery.length && !pseudoMatch) ? rawClass : ''
+  }).filter(Boolean).join(' ')
+  return {
+    newStaticClass,
+    pseudoClass,
+    pseudoWithMediaQueryClass,
+    mediaQueryClass
+  }
 }
 
 function processStyleReact (el, options) {
@@ -1097,12 +1164,17 @@ function processStyleReact (el, options) {
     staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
   }
 
+  let mediaQueryClass = []
+  let pseudoWithMediaQueryClass = []
   if (options.hasUnoCSS) {
-    // todo 原有的 class 可以剔除掉
-    const unoPseudoClass = groupByPseudo(staticClass)
-    if (unoPseudoClass.hover) {
-      staticHoverClass = staticHoverClass + unoPseudoClass.hover.join(' ')
+    const variants = initVariants(options.unoCtx)
+    const result = processVariants(staticClass, variants)
+    staticClass = result.newStaticClass
+    if (result.pseudoClass.hover) {
+      staticHoverClass = staticHoverClass + result.pseudoClass.hover.join(' ')
     }
+    mediaQueryClass = result.mediaQueryClass
+    pseudoWithMediaQueryClass = result.pseudoWithMediaQueryClass
   }
 
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
@@ -1114,7 +1186,7 @@ function processStyleReact (el, options) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
   }
 
-  if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
+  if (dynamicClass || staticClass || dynamicStyle || staticStyle || show || mediaQueryClass.length) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
     const dynamicClassExp = parseMustacheWithContext(dynamicClass).result
     const staticStyleExp = parseMustacheWithContext(staticStyle).result
@@ -1124,15 +1196,16 @@ function processStyleReact (el, options) {
     addAttrs(el, [{
       name: 'style',
       // runtime helper
-      value: `{{this.__getStyle(${staticClassExp}, ${dynamicClassExp}, ${staticStyleExp}, ${dynamicStyleExp}${show === undefined ? '' : `, !(${showExp})`})}}`
+      value: `{{this.__getStyle(${staticClassExp}, ${mediaQueryClass.length ? `this.__getDynamicClass(${dynamicClassExp}, ${stringify(mediaQueryClass)})` : dynamicClassExp} , ${staticStyleExp}, ${dynamicStyleExp}${show === undefined ? '' : `, !(${showExp})`})}}`
     }])
   }
 
-  if (staticHoverClass && staticHoverClass !== 'none') {
+  // todo pseudo element 的动态计算
+  if ((staticHoverClass && staticHoverClass !== 'none') || pseudoWithMediaQueryClass.length) {
     const staticClassExp = parseMustacheWithContext(staticHoverClass).result
     addAttrs(el, [{
       name: 'hover-style',
-      value: `{{this.__getStyle(${staticClassExp})}}`
+      value: `{{this.__getStyle(${staticClassExp}, ${pseudoWithMediaQueryClass.length ? `this.__getMediaQueryClass(${stringify(pseudoWithMediaQueryClass)})` : ''})}}`
     }])
   }
 

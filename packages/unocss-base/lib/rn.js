@@ -3,6 +3,16 @@ const presetRn = require('../preset-rn')
 module.exports = function presetRnMpx (options = {}) {
   return {
     name: '@mpxjs/unocss-preset-rn',
-    ...presetRn
+    ...presetRn,
+    theme: {
+      letterSpacing: {
+        tighter: '-0.5px',
+        tight: '-0.25px',
+        normal: '0px',
+        wide: '0.25px',
+        wider: '0.5px',
+        widest: '1px'
+      }
+    }
   }
 }

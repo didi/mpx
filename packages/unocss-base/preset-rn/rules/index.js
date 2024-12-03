@@ -6,6 +6,7 @@ const shadow = require('./shadow')
 const behaviors = require('./behaviors')
 const layout = require('./layout')
 const filters = require('./filters')
+const staticRule = require('./static')
 
 module.exports = [
   ...color,
@@ -15,5 +16,6 @@ module.exports = [
   ...shadow,
   ...behaviors,
   ...layout,
-  ...filters
+  ...filters,
+  ...staticRule
 ]

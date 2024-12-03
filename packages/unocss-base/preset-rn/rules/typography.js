@@ -1,5 +1,11 @@
-const { transformEmptyRule, findRawRules, ruleFallback } = require('../../utils/index')
-const { rules } = require('@unocss/preset-wind')
+const { transformEmptyRule, ruleFallback } = require('../../utils/index')
+const {
+  writingModes,
+  writingOrientations,
+  hyphens
+  // fontVariantNumericBase,
+  // fontVariantNumeric
+} = require('@unocss/preset-wind/rules')
 const {
   textStrokes,
   textIndents,
@@ -9,15 +15,9 @@ const {
   textOverflows,
   textWraps,
   fontSmoothings,
-  // fontVariantNumeric,
-  // fontVariantNumericBase,
   verticalAligns
 } = require('@unocss/preset-mini/rules')
 
-// write-orientation & write-mode
-const writingOrientationsAndModes = findRawRules(/^write-?.*/, rules)
-// hyphens
-const hyphens = findRawRules(/^hyphens-.*/, rules)
 // decoration
 const textDecorations = [
   // size
@@ -27,7 +27,7 @@ const textDecorations = [
   [/^(?:underline|decoration)-offset-(.+)$/]
 ]
 
-// font-variant-numberic
+// todo 覆写 font-variant-numberic，和 RN 支持的属性拉齐
 // const newFontVariantNumberic = fontVariantNumeric.map(item => {
 //   const rule = item[0]
 //   const rawResult = item[1]()
@@ -61,7 +61,8 @@ module.exports = [
     breaks,
     textOverflows,
     hyphens,
-    writingOrientationsAndModes,
+    writingModes,
+    writingOrientations,
     textDecorations,
     textWraps,
     fontSmoothings,
