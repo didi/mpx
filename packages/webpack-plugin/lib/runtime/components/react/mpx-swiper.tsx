@@ -237,7 +237,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }]
     }
   })
-  
+
   function renderPagination () {
     const stepValue = getStepValue()
     if (totalElements.value <= 1 || isNaN(+stepValue)) return null
