@@ -147,7 +147,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'adjust-position': adjustPosition = false,
+    'adjust-position': adjustPosition = true,
     bindinput,
     bindfocus,
     bindblur,
@@ -250,7 +250,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindfocus!(
+    bindfocus && bindfocus(
       getCustomEvent(
         'focus',
         evt,
@@ -263,11 +263,11 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(true)
+    !adjustPosition && kyboardAvoidContext?.setEnabled?.(false)
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindblur!(
+    bindblur && bindblur(
       getCustomEvent(
         'blur',
         evt,
@@ -281,7 +281,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(false)
+    !adjustPosition && kyboardAvoidContext?.setEnabled?.(true)
   }
 
   const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -405,8 +405,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       }
     },
     ...layoutProps,
-    onFocus: (bindfocus || adjustPosition) && onInputFocus,
-    onBlur: (bindblur || adjustPosition) && onInputBlur,
+    onFocus: (bindfocus || !adjustPosition) && onInputFocus,
+    onBlur: (bindblur || !adjustPosition) && onInputBlur,
     onKeyPress: bindconfirm && onKeyPress,
     onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
     onSelectionChange: bindselectionchange && onSelectionChange
