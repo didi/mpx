@@ -125,6 +125,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     hyphenTagName({ print }),
     label({ print }),
     component(),
-    rootPortal({ print }),
-  ];
+    rootPortal({ print })
+  ]
 }
