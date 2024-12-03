@@ -1,5 +1,5 @@
 
-import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, View } from 'react-native'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import React, { forwardRef, useRef, useState, useMemo, useEffect, cloneElement } from 'react'
 import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, extendObject, wrapChildren } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -58,6 +58,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   useNodesRef(props, ref, scrollViewRef, {})
 
   const { height: pickerH, itemHeight } = wrapperStyle
+  const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const touching = useRef(false)
@@ -85,17 +86,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     return [{ paddingVertical: paddingHeight }]
   }, [paddingHeight])
 
-  const onContentSizeChange = (_w: number, h: number) => {
-    if (itemRawH * initialIndex > h) {
-      return
-    }
-    scrollViewRef.current?.scrollTo({
-      x: 0,
-      y: itemRawH * initialIndex,
-      animated: false
-    })
-  }
-
   useEffect(() => {
     if (
       !scrollViewRef.current ||
@@ -118,7 +108,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     })
   }, [itemRawH, initialIndex])
 
-  const onScrollViewLayout = () => {
+  const _onLayout = () => {
     getInnerLayout && getInnerLayout(layoutRef)
   }
 
@@ -131,8 +121,22 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setWidth,
     setHeight,
     nodeRef: scrollViewRef,
-    onLayout: onScrollViewLayout
+    onLayout: _onLayout
   })
+
+  const onScrollViewLayout = (e: LayoutChangeEvent) => {
+    const widthInt = Math.round(e.nativeEvent.layout.width)
+    if (widthInt !== scrollViewWidth) {
+      setScrollViewWidth(widthInt)
+    }
+  }
+
+  const onContentSizeChange = (_w: number, h: number) => {
+    const y = itemRawH * initialIndex
+    if (y <= h) {
+      scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+    }
+  }
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
@@ -210,17 +214,19 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         {...layoutProps}
+        style={[{ width: scrollViewWidth }]}
         decelerationRate="fast"
         scrollEventThrottle={16}
-        contentContainerStyle={contentContainerStyle}
-        onContentSizeChange={onContentSizeChange}
         contentOffset={initialOffset}
         snapToOffsets={snapToOffsets}
+        onLayout={onScrollViewLayout}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onTouchCancel={onTouchCancel}
         onMomentumScrollBegin={onMomentumScrollBegin}
         onMomentumScrollEnd={onMomentumScrollEnd}
+        onContentSizeChange={onContentSizeChange}
+        contentContainerStyle={contentContainerStyle}
       >
         {renderInnerchild()}
       </ScrollView>
@@ -242,12 +248,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   return (
-    <SafeAreaView style={[{ display: 'flex', flex: 1 }]}>
+    <SafeAreaView style={styles.wrapper}>
       {renderScollView()}
       {renderMask()}
       {renderOverlay()}
     </SafeAreaView>
   )
+})
+
+const styles = StyleSheet.create({
+  wrapper: { display: 'flex', flex: 1 }
 })
 
 _PickerViewColumn.displayName = 'MpxPickerViewColumn'
