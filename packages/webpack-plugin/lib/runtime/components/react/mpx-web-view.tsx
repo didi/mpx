@@ -48,8 +48,6 @@ interface FormRef {
   postMessage: (value: any) => void;
 }
 
-const navigation = getFocusedNavigation()
-
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
   const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
   if (props.style) {
@@ -97,6 +95,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
       if (webViewTitle.current !== navState.title) {
+        const navigation = getFocusedNavigation()
         navigation && navigation.setOptions({ headerTitle: navState.title })
       }
       if (currentPage && webViewUrl.current !== navState.url) {

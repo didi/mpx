@@ -398,7 +398,7 @@ module.exports = function getSpec ({ warn, error }) {
             break
           case 'matrix':
           case 'matrix3d':
-            transform.push({ [key]: val.split(',').map(val => +val) })
+            transform.push({ [key]: parseValues(val, ',').map(val => +val) })
             break
           case 'translate':
           case 'scale':
@@ -409,7 +409,7 @@ module.exports = function getSpec ({ warn, error }) {
             {
               // 2 个以上的值处理
               key = key.replace('3d', '')
-              const vals = val.split(',', key === 'rotate' ? 4 : 3)
+              const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
               // scale(.5) === scaleX(.5) scaleY(.5)
               if (vals.length === 1 && key === 'scale') {
                 vals.push(vals[0])
@@ -456,10 +456,13 @@ module.exports = function getSpec ({ warn, error }) {
   const formatFlex = ({ prop, value, selector }) => {
     let values = parseValues(value)
     if (values.length > 3) {
-      error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
+      warn(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      return { prop, value }
+    }
     const lastOne = values[values.length - 1]
     const isAuto = lastOne === 'auto'
     // 枚举值 none initial
@@ -477,17 +480,19 @@ module.exports = function getSpec ({ warn, error }) {
     }
     // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
     // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
-    if (!isNumber(lastOne) || !cssVariableExp.test(value)) {
+    if (!isNumber(lastOne) || cssVariableExp.test(value)) {
       // 添加 grow 和 shrink
       // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
       // 单值 flex: 1 1 <flex-basis>
       // 双值 flex: <flex-grow> 1 <flex-basis>
       // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+      let isUsed = false
       for (let i = 0; i < 2; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) || cssVariableExp.test(value) ? values[i] : 1 })
+        isUsed = isNumber(values[i]) || cssVariableExp.test(values[i])
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isUsed ? values[i] : 1, selector })
         item && cssMap.push(item)
       }
-      if (!isAuto) {
+      if (!isAuto && !isUsed) {
         // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
         cssMap.push({
           prop: 'flexBasis',
@@ -505,7 +510,7 @@ module.exports = function getSpec ({ warn, error }) {
     }
     // 循环赋值
     for (let i = 0; i < values.length; i++) {
-      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
+      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i], selector })
       item && cssMap.push(item)
     }
     return cssMap
@@ -514,7 +519,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatFontFamily = ({ prop, value, selector }) => {
     // 去掉引号 取逗号分隔后的第一个
     const newVal = value.replace(/"|'/g, '').trim()
-    const values = newVal.split(',').filter(i => i)
+    const values = parseValues(newVal, ',')
     if (!newVal || !values.length) {
       error(`Value of [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       return false

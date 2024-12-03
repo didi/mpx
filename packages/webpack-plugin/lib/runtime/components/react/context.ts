@@ -5,6 +5,10 @@ export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
+export type KeyboardAvoidContextValue = MutableRefObject<{
+  setEnabled: (enabled: boolean) => void
+}>
+
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
 }
@@ -48,3 +52,5 @@ export const VarContext = createContext({})
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
 export const RouteContext = createContext<number | null>(null)
+
+export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
