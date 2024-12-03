@@ -28,7 +28,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
   const root = postcss.parse(content, {
     from: filename
   })
-  
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
