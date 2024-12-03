@@ -29,7 +29,8 @@ module.exports = function (template, {
     checkUsingComponents,
     autoVirtualHostRules,
     customTextRules,
-    hasUnoCSS
+    hasUnoCSS,
+    unoCtx
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -88,7 +89,8 @@ module.exports = function (template, {
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         isCustomText: matchCondition(resourcePath, customTextRules),
-        hasUnoCSS
+        hasUnoCSS,
+        unoCtx
       })
 
       if (meta.wxsContentMap) {

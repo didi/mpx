@@ -57,6 +57,9 @@ module.exports = function (styles, {
         })
         if (ctorType === 'app') {
           if (hasUnoCSS) {
+            output += `global.__getUnoBreakpoints = function () {
+              return __unocssBreakpoints__
+            };\n`
             output += `global.__getUnoClassMap = function() {
               const formatValue = global.__formatValue
               return __unocssMap__
