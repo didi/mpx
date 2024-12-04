@@ -476,32 +476,45 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      const withKeyboardAvoidingView = (element) => {
+        if (__mpx_mode__ === 'ios') {
+          return createElement(
+            KeyboardAvoidContext.Provider,
+            {
+              value: setEnabled
+            },
+            createElement(
+              ReactNative.KeyboardAvoidingView,
+              {
+                style: {
+                  flex: 1
+                },
+                contentContainerStyle: {
+                  flex: 1
+                },
+                behavior: 'position',
+                enabled
+              },
+              element
+            )
+          )
+        }
+        return element
+      }
+
       navigation.insets = useSafeAreaInsets()
 
-      return createElement(GestureHandlerRootView,
+      return createElement(
+        GestureHandlerRootView,
         {
           style: {
             flex: 1
           }
         },
-        createElement(
-          KeyboardAvoidContext.Provider,
-          {
-            value: setEnabled
-          },
+        withKeyboardAvoidingView(
           createElement(
-            ReactNative.KeyboardAvoidingView,
+            ReactNative.View,
             {
-              style: {
-                flex: 1
-              },
-              contentContainerStyle: {
-                flex: 1
-              },
-              behavior: 'position',
-              enabled
-            },
-            createElement(ReactNative.View, {
               style: {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
@@ -512,23 +525,22 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
               }
             },
-              createElement(Provider,
-                null,
-                createElement(RouteContext.Provider,
+            createElement(Provider,
+              null,
+              createElement(RouteContext.Provider,
+                {
+                  value: currentPageId
+                },
+                createElement(IntersectionObserverContext.Provider,
                   {
-                    value: currentPageId
+                    value: intersectionObservers.current
                   },
-                  createElement(IntersectionObserverContext.Provider,
+                  createElement(defaultOptions,
                     {
-                      value: intersectionObservers.current
-                    },
-                    createElement(defaultOptions,
-                      {
-                        navigation,
-                        route,
-                        id: currentPageId
-                      }
-                    )
+                      navigation,
+                      route,
+                      id: currentPageId
+                    }
                   )
                 )
               )
