@@ -278,7 +278,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const defaultViewStyle = extendObject(
     styles.button,
-    isMiniSize ? styles.buttonMini : {},
+    isMiniSize ? styles.buttonMini : null,
     viewStyle
   )
 

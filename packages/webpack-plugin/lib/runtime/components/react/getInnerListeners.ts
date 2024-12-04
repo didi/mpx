@@ -31,7 +31,7 @@ const getTouchEvent = (
   const { layoutRef } = config
 
   const currentTarget = extendObject(
-    event.currentTarget || {},
+    event.currentTarget,
     {
       id: id || '',
       dataset: collectDataset(props),
