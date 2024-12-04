@@ -1226,14 +1226,8 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      getAndRemoveAttr(el, name)
       if (name && value) {
-        addAttrs(el, [
-          {
-            name,
-            value: `{{${value}}}`
-          }
-        ])
+        modifyAttr(el, name, `{{${value}}}`)
       }
     }
 
