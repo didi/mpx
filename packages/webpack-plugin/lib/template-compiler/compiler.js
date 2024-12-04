@@ -1205,7 +1205,7 @@ function processEventReact (el) {
 
   // let wrapper
   for (const type in eventConfigMap) {
-    let { configs } = eventConfigMap[type]
+    const { configs } = eventConfigMap[type]
     const needBind = configs.length > 1 || (configs.length === 1 && configs[0].hasArgs)
     if (needBind) {
       configs.forEach(({ name }) => {
@@ -1217,7 +1217,7 @@ function processEventReact (el) {
           } while (has)
         }
       })
-      const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`;
+      const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`
       addAttrs(el, [
         {
           name: type,
