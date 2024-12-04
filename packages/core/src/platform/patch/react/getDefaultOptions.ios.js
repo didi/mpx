@@ -27,7 +27,7 @@ function getSystemInfo () {
 
 function createEffect (proxy, components) {
   const update = proxy.update = () => {
-    // pre render for props update
+    // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
     //   proxy.updatePreRender()
     // }
