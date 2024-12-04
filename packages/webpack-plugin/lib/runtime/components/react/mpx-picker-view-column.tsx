@@ -125,8 +125,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const onScrollViewLayout = (e: LayoutChangeEvent) => {
-    const widthInt = Math.round(e.nativeEvent.layout.width)
-    if (widthInt !== scrollViewWidth) {
+    const width = e.nativeEvent.layout.width
+    const widthInt = Math.round(width)
+    if (width !== widthInt && widthInt !== scrollViewWidth) {
       setScrollViewWidth(widthInt)
     }
   }
