@@ -1164,7 +1164,7 @@ function processEventReact (el) {
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        eventConfigMap[type].configs.push(Object.assign({ name, value }, parsedFunc))
       }
     }
   })
@@ -1206,25 +1206,37 @@ function processEventReact (el) {
   // let wrapper
   for (const type in eventConfigMap) {
     let { configs } = eventConfigMap[type]
-    configs.forEach(({ name }) => {
-      if (name) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, name).has
-        } while (has)
+    const needBind = configs.length > 1 || (configs.length === 1 && configs[0].hasArgs)
+    if (needBind) {
+      configs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+        }
+      })
+      const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`;
+      addAttrs(el, [
+        {
+          name: type,
+          value
+        }
+      ])
+    } else {
+      const { name, value } = configs[0]
+      getAndRemoveAttr(el, name)
+      if (name && value) {
+        addAttrs(el, [
+          {
+            name,
+            value: `{{${value}}}`
+          }
+        ])
       }
-    })
-    configs = configs.map((item) => {
-      return item.expStr
-    })
-    const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
-    addAttrs(el, [
-      {
-        name: type,
-        value
-      }
-    ])
+    }
+
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
     // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
     //   if (!wrapper) {
