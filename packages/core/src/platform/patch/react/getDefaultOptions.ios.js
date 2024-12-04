@@ -446,8 +446,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const [enabled, setEnabled] = useState(false)
-      const keyboardAvoidContextValue = useRef({ setEnabled })
+      const [enabled, setEnabled] = useState(true)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
@@ -488,7 +487,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         createElement(
           KeyboardAvoidContext.Provider,
           {
-            value: keyboardAvoidContextValue
+            value: setEnabled
           },
           createElement(
             ReactNative.KeyboardAvoidingView,
@@ -510,7 +509,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
               ref: rootRef,
               onLayout,
               onTouchStart: () => {
-                enabled && ReactNative.Keyboard.dismiss()
+                ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
               }
             },
               createElement(Provider,

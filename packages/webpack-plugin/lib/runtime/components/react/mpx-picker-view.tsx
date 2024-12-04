@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import {
@@ -9,8 +9,6 @@ import {
   wrapChildren,
   parseInlineStyle,
   useTransformStyle,
-  useDebounceCallback,
-  useStableCallback,
   extendObject
 } from './utils'
 import type { AnyFunc } from './types/common'
@@ -21,21 +19,21 @@ import type { AnyFunc } from './types/common'
  * ✘ bindpickend
  * ✘ mask-class
  * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
+ * WebView Only:
  * ✘ indicator-class
- * ✘ mask-style
+ * ✔ mask-style
  * ✘ immediate-change
  */
 
 interface PickerViewProps {
   children: React.ReactNode
-  // 初始的defaultValue数组中的数字依次表示 picker-view 内的 picker-view-column 选择的第几项（下标从 0 开始），
-  // 数字大于 picker-view-column 可选项长度时，选择最后一项。
   value?: Array<number>
   bindchange?: AnyFunc
   style: {
     [key: string]: any
   }
   'indicator-style'?: string
+  'mask-style'?: string
   'enable-var': boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset': boolean
@@ -62,6 +60,8 @@ const styles: { [key: string]: Object } = {
   }
 }
 
+const DefaultPickerItemH = 36
+
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
   const {
     children,
@@ -71,12 +71,9 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
-
-  // indicatorStyle 需要转换为rn的style
-  // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
+  const pickerMaskStyle = parseInlineStyle(props['mask-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
-  const [pickMaxH, setPickMaxH] = useState(0)
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
@@ -92,7 +89,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useTransformStyle(style, { enableVar, externalVarContext })
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
   const {
-    // 存储layout布局信息
     layoutRef,
     layoutProps,
     layoutStyle
@@ -100,16 +96,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  const onColumnItemRawHChange = (height: number) => {
-    if (height > pickMaxH) {
-      setPickMaxH(height)
-    }
-  }
-
-  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 300)
-
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
-    bindchangeDebounce.clear()
     const activeValue = activeValueRef.current
     activeValue[columnIndex] = selectedIndex
     const eventData = getCustomEvent(
@@ -117,7 +104,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {},
       { detail: { value: activeValue, source: 'change' }, layoutRef }
     )
-    bindchangeDebounce(eventData)
+    bindchange?.(eventData)
   }
 
   const onInitialChange = (value: number[]) => {
@@ -126,7 +113,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {},
       { detail: { value, source: 'change' }, layoutRef }
     )
-    bindchange?.(eventData) // immediate
+    bindchange?.(eventData)
   }
 
   const innerProps = useInnerProps(
@@ -148,7 +135,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
-    const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
       childProps,
@@ -158,15 +144,15 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnIndex: index,
         key: `pick-view-${index}`,
         wrapperStyle: {
-          height: normalStyle?.height || 0,
-          itemHeight: indicatorH || 0
+          height: normalStyle?.height || DefaultPickerItemH,
+          itemHeight: indicatorH || DefaultPickerItemH
         },
-        onColumnItemRawHChange,
+        columnStyle: normalStyle,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
-        pickerOverlayStyle
-      },
-      extraProps
+        pickerOverlayStyle,
+        pickerMaskStyle
+      }
     )
     const realElement = React.cloneElement(child, wrappedProps)
     return wrapChildren(
