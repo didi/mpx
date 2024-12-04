@@ -161,7 +161,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const formContext = useContext(FormContext)
 
-  const kyboardAvoidContext = useContext(KeyboardAvoidContext)
+  const setKeyboardAvoidEnabled = useContext(KeyboardAvoidContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -383,7 +383,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }, [])
 
   useEffect(() => {
-    kyboardAvoidContext?.setEnabled?.(adjustPosition)
+    setKeyboardAvoidEnabled?.(adjustPosition)
   }, [adjustPosition])
 
   useUpdateEffect(() => {

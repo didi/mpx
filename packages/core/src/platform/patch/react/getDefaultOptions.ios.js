@@ -487,7 +487,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         createElement(
           KeyboardAvoidContext.Provider,
           {
-            value: { setEnabled }
+            value: setEnabled
           },
           createElement(
             ReactNative.KeyboardAvoidingView,
