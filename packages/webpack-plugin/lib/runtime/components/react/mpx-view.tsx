@@ -236,7 +236,7 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
     }
   }
 
-  imageProps.style = extendObject(imageProps.style, style)
+  extendObject(imageProps.style, style)
 }
 
 // background-size 转换
@@ -289,7 +289,7 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   }
 
   // 样式合并
-  imageProps.style = extendObject(imageProps.style, dimensions)
+  extendObject(imageProps.style, dimensions)
 }
 
 // background-image转换为source
@@ -475,7 +475,7 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
       return prev
     }, { colors: [], locations: [] })
 
-  return extendObject(linearInfo, {
+  return extendObject({}, linearInfo, {
     direction: direction.trim()
   })
 }
@@ -685,17 +685,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const [isHover, setIsHover] = useState(false)
 
   // 默认样式
-  const defaultStyle: ExtendedViewStyle = extendObject(
-    style.display === 'flex'
-      ? {
-          flexDirection: 'row',
-          flexBasis: 'auto',
-          flexShrink: 1,
-          flexWrap: 'nowrap'
-        }
-      : {})
+  const defaultStyle: ExtendedViewStyle = style.display === 'flex'
+    ? {
+        flexDirection: 'row',
+        flexBasis: 'auto',
+        flexShrink: 1,
+        flexWrap: 'nowrap'
+      }
+    : {}
 
-  const styleObj: ExtendedViewStyle = extendObject(defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
+  const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
   const {
     normalStyle,
@@ -770,7 +769,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const viewStyle = extendObject(innerStyle, layoutStyle)
+  const viewStyle = extendObject({}, innerStyle, layoutStyle)
 
   enableAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableAnimation)

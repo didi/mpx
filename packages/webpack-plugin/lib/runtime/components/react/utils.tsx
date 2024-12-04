@@ -32,7 +32,7 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 
 function getSafeAreaInset (name: string) {
   const navigation = getFocusedNavigation()
-  const insets = extendObject(initialWindowMetrics?.insets || {}, navigation?.insets || {})
+  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
 }
 
@@ -89,6 +89,7 @@ export const parseUrl = (cssUrl = '') => {
 
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
   return extendObject(
+    {},
     transferProps,
     omit(originProps, deletePropsKey)
   )
@@ -512,8 +513,8 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   if (textStyle || textProps) {
     children = Children.map(children, (child) => {
       if (isText(child)) {
-        const style = extendObject(textStyle || {}, child.props.style)
-        return cloneElement(child, { ...textProps, style })
+        const style = extendObject({}, textStyle, child.props.style)
+        return cloneElement(child, extendObject({}, textProps, { style }))
       }
       return child
     })
@@ -582,7 +583,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export function extendObject (target: Record<string, any>, ...sources: (Record<string, any> | null | undefined)[]) {
+export function extendObject (target: Record<string, any> = {}, ...sources: (Record<string, any> | null | undefined)[]) {
   return Object.assign(target, ...sources)
 }
 

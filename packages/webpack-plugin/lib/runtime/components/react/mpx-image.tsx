@@ -113,6 +113,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const styleObj = extendObject(
+    {},
     defaultStyle,
     style,
     { overflow: 'hidden' }
@@ -339,6 +340,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       {
         ref: nodeRef,
         style: extendObject(
+          {},
           normalStyle,
           layoutStyle,
           isHeightFixMode ? { width: fixedWidth } : {},

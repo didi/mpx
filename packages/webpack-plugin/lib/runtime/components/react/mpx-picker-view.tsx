@@ -138,6 +138,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     extendObject({
       ref: nodeRef,
       style: extendObject(
+        {},
         normalStyle,
         layoutStyle,
         {
@@ -155,6 +156,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
+      {},
       childProps,
       {
         columnData,

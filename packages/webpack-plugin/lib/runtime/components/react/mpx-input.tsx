@@ -396,7 +396,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     extendObject(
       {
         ref: nodeRef,
-        style: extendObject(normalStyle, layoutStyle)
+        style: extendObject({}, normalStyle, layoutStyle)
       },
       layoutProps,
       {

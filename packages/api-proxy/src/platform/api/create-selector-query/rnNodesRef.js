@@ -84,8 +84,7 @@ const getComputedStyle = (config = []) => {
   return wrapFn((nodeInstance, resolve) => {
     config = new Set(config)
     const res = {}
-    const finalStyle = nodeInstance.instance.style
-    const computedStyle = finalStyle || {}
+    const computedStyle = nodeInstance.instance.style || {}
     config.forEach((key) => {
       const humpKey = dash2hump(key)
       // 取 style 的 key 是根据传入的 key 来设置，传什么设置什么 key，只不过取值需要做兼容
