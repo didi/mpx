@@ -147,7 +147,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'adjust-position': adjustPosition = false,
+    'adjust-position': adjustPosition = true,
     bindinput,
     bindfocus,
     bindblur,
@@ -174,7 +174,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const tmpValue = useRef<string>()
+  const tmpValue = useRef<string | undefined>(defaultValue)
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
 
@@ -263,7 +263,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(true)
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -281,7 +280,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-    adjustPosition && kyboardAvoidContext?.current?.setEnabled?.(false)
   }
 
   const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -384,6 +382,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }, [])
 
+  useEffect(() => {
+    kyboardAvoidContext?.setEnabled?.(adjustPosition)
+  }, [adjustPosition])
+
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
@@ -405,8 +407,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       }
     },
     ...layoutProps,
-    onFocus: (bindfocus || adjustPosition) && onInputFocus,
-    onBlur: (bindblur || adjustPosition) && onInputBlur,
+    onFocus: bindfocus && onInputFocus,
+    onBlur: bindblur && onInputBlur,
     onKeyPress: bindconfirm && onKeyPress,
     onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
     onSelectionChange: bindselectionchange && onSelectionChange
