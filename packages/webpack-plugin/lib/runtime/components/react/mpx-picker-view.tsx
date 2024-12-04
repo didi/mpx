@@ -9,8 +9,6 @@ import {
   wrapChildren,
   parseInlineStyle,
   useTransformStyle,
-  useDebounceCallback,
-  useStableCallback,
   extendObject
 } from './utils'
 import type { AnyFunc } from './types/common'
@@ -29,8 +27,6 @@ import type { AnyFunc } from './types/common'
 
 interface PickerViewProps {
   children: React.ReactNode
-  // 初始的defaultValue数组中的数字依次表示 picker-view 内的 picker-view-column 选择的第几项（下标从 0 开始），
-  // 数字大于 picker-view-column 可选项长度时，选择最后一项。
   value?: Array<number>
   bindchange?: AnyFunc
   style: {
@@ -75,9 +71,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
-
-  // indicatorStyle 需要转换为rn的style
-  // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const pickerMaskStyle = parseInlineStyle(props['mask-style'])
   const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
@@ -96,7 +89,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useTransformStyle(style, { enableVar, externalVarContext })
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
   const {
-    // 存储layout布局信息
     layoutRef,
     layoutProps,
     layoutStyle
@@ -104,10 +96,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 10)
-
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
-    bindchangeDebounce.clear()
     const activeValue = activeValueRef.current
     activeValue[columnIndex] = selectedIndex
     const eventData = getCustomEvent(
@@ -115,7 +104,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {},
       { detail: { value: activeValue, source: 'change' }, layoutRef }
     )
-    bindchangeDebounce(eventData)
+    bindchange?.(eventData)
   }
 
   const onInitialChange = (value: number[]) => {
@@ -124,7 +113,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {},
       { detail: { value, source: 'change' }, layoutRef }
     )
-    bindchange?.(eventData) // immediate
+    bindchange?.(eventData)
   }
 
   const innerProps = useInnerProps(
