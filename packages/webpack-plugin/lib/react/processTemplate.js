@@ -115,12 +115,16 @@ module.exports = function (template, {
         try {
           const ignoreMap = Object.assign({
             createElement: true,
-            getComponent: true
+            getComponent: true,
+            getValue: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
-            ignoreMap
+            ignoreMap,
+            customBindThis (path, t) {
+              path.replaceWith(t.callExpression(t.identifier('getValue'), [t.stringLiteral(path.node.name)]))
+            }
           })
-          output += `global.currentInject.render = function (createElement, getComponent) {
+          output += `global.currentInject.render = function (createElement, getComponent, getValue) {
   return ${bindResult.code}
 };\n`
         } catch (e) {
