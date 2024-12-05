@@ -1,4 +1,4 @@
-import { hasOwn, isObject, error } from '@mpxjs/utils'
+import { hasOwn, error } from '@mpxjs/utils'
 import genVnodeTree from './vnode/render'
 import contextMap from './vnode/context'
 import { CREATED } from '../core/innerLifecycle'
@@ -56,7 +56,7 @@ function dynamicRenderHelperMixin () {
     methods: {
       _g (astData, moduleId) {
         const location = this.__mpxProxy && this.__mpxProxy.options.mpxFileResource
-        if (astData && isObject(astData) && hasOwn(astData, 'template')) {
+        if (hasOwn(astData, 'template')) {
           const vnodeTree = genVnodeTree(astData, [this], { moduleId, location })
           return vnodeTree
         } else {
