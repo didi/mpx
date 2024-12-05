@@ -115,8 +115,7 @@ module.exports = function (template, {
         try {
           const ignoreMap = Object.assign({
             createElement: true,
-            getComponent: true,
-            getValue: true
+            getComponent: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
@@ -124,7 +123,7 @@ module.exports = function (template, {
             //   path.replaceWith(t.callExpression(t.identifier('getValue'), [t.stringLiteral(path.node.name)]))
             // }
           })
-          output += `global.currentInject.render = function (createElement, getComponent, getValue) {
+          output += `global.currentInject.render = function (createElement, getComponent) {
   return ${bindResult.code}
 };\n`
         } catch (e) {
